@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import {
   ConnectionRequestStatus,
   ConnectionRequestType,
@@ -7,7 +8,7 @@ import {
   ShowStatus
 } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-import { parseArtistMediaContent } from '../src/lib/media';
+import { buildArtistMediaCollection } from '../src/lib/media';
 import { calculateTicketOrderPayouts, PROMOTER_POOL_PERCENT } from '../src/lib/ticketing';
 
 const prisma = new PrismaClient();
@@ -22,6 +23,55 @@ const profileHexIds = {
   southLoopSignal: '0x63df1b49ac72e8055d1af40bc98e2673',
   riverwestEcho: '0xce9041ab56d2f3e87c0b1a64d829f75e'
 } as const;
+
+const mediaHexIds = {
+  novaPulseStudioCut: '0x6f0a4de2b75c9a1084ef26d30bc91a7d',
+  southLoopSignalLiveCut: '0xa1c39e57d24bf68031fa7cd42e9850b6'
+} as const;
+
+async function upsertArtistMediaAsset({
+  profileId,
+  hexId,
+  title,
+  notes,
+  originalFileName,
+  mimeType,
+  sourceFileUrl
+}: {
+  profileId: string;
+  hexId: string;
+  title: string;
+  notes: string | null;
+  originalFileName: string;
+  mimeType: string;
+  sourceFileUrl: URL;
+}) {
+  const fileData = await readFile(sourceFileUrl);
+  const fileDataBase64 = fileData.toString('base64');
+
+  return prisma.artistMediaAsset.upsert({
+    where: { hexId },
+    update: {
+      profileId,
+      title,
+      notes,
+      originalFileName,
+      mimeType,
+      fileSizeBytes: fileData.length,
+      fileDataBase64
+    },
+    create: {
+      hexId,
+      profileId,
+      title,
+      notes,
+      originalFileName,
+      mimeType,
+      fileSizeBytes: fileData.length,
+      fileDataBase64
+    }
+  });
+}
 
 async function upsertDemoUser({
   email,
@@ -308,6 +358,16 @@ async function main() {
     }
   });
 
+  await upsertArtistMediaAsset({
+    profileId: artist.id,
+    hexId: mediaHexIds.novaPulseStudioCut,
+    title: 'Afterglow Session Upload',
+    notes: 'Demo uploaded directly to the artist page.',
+    originalFileName: 'afterglow-session-upload.wav',
+    mimeType: 'audio/wav',
+    sourceFileUrl: new URL('../public/audio/samples/signal-chime.wav', import.meta.url)
+  });
+
   const listener = await prisma.profile.upsert({
     where: { slug: 'night-owl' },
     update: {
@@ -549,6 +609,16 @@ async function main() {
       ownerId: chicagoArtistOwner.id,
       hypeCount: 35
     }
+  });
+
+  await upsertArtistMediaAsset({
+    profileId: chicagoArtist.id,
+    hexId: mediaHexIds.southLoopSignalLiveCut,
+    title: 'Lakefront Rehearsal Upload',
+    notes: 'Demo uploaded directly to the artist page.',
+    originalFileName: 'lakefront-rehearsal-upload.wav',
+    mimeType: 'audio/wav',
+    sourceFileUrl: new URL('../public/audio/samples/sweep-rise.wav', import.meta.url)
   });
 
   const regionalPromoter = await prisma.profile.upsert({
@@ -1009,8 +1079,32 @@ async function main() {
     }
   });
 
-  const novaEntries = parseArtistMediaContent(artist.mediaContent).entries;
-  const chicagoEntries = parseArtistMediaContent(chicagoArtist.mediaContent).entries;
+  const novaUploads = await prisma.artistMediaAsset.findMany({
+    where: { profileId: artist.id },
+    select: {
+      hexId: true,
+      title: true,
+      notes: true,
+      mimeType: true,
+      fileSizeBytes: true,
+      createdAt: true
+    },
+    orderBy: { createdAt: 'desc' }
+  });
+  const chicagoUploads = await prisma.artistMediaAsset.findMany({
+    where: { profileId: chicagoArtist.id },
+    select: {
+      hexId: true,
+      title: true,
+      notes: true,
+      mimeType: true,
+      fileSizeBytes: true,
+      createdAt: true
+    },
+    orderBy: { createdAt: 'desc' }
+  });
+  const novaEntries = buildArtistMediaCollection(artist.mediaContent, novaUploads).entries;
+  const chicagoEntries = buildArtistMediaCollection(chicagoArtist.mediaContent, chicagoUploads).entries;
 
   await prisma.mediaListen.createMany({
     data: [

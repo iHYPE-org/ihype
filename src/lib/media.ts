@@ -3,13 +3,31 @@ export type ArtistMediaEntry = {
   hexId: string;
   title: string;
   url: string;
+  shareUrl: string;
   notes: string | null;
+  source: 'LINKED' | 'UPLOADED';
+  mimeType?: string | null;
+  fileSizeBytes?: number | null;
+  createdAt?: Date | null;
 };
 
 export type ParsedArtistMediaContent = {
   notes: string | null;
   entries: ArtistMediaEntry[];
 };
+
+export type ArtistMediaUploadRecord = {
+  hexId: string;
+  title: string;
+  notes: string | null;
+  mimeType: string;
+  fileSizeBytes: number;
+  createdAt: Date;
+};
+
+export function getArtistMediaApiPath(hexId: string) {
+  return `/api/media/${hexId}`;
+}
 
 function isValidUrl(value: string) {
   try {
@@ -81,7 +99,9 @@ function parseMediaLine(line: string, index: number): ArtistMediaEntry | null {
     hexId,
     title,
     url,
-    notes
+    shareUrl: url,
+    notes,
+    source: 'LINKED'
   };
 }
 
@@ -110,5 +130,37 @@ export function parseArtistMediaContent(content: string | null | undefined): Par
   return {
     notes: noteLines.length ? noteLines.join('\n\n') : null,
     entries
+  };
+}
+
+export function buildUploadedArtistMediaEntries(uploads: ArtistMediaUploadRecord[]): ArtistMediaEntry[] {
+  return uploads.map((upload) => {
+    const streamUrl = getArtistMediaApiPath(upload.hexId);
+
+    return {
+      id: upload.hexId,
+      hexId: upload.hexId,
+      title: upload.title,
+      url: streamUrl,
+      shareUrl: streamUrl,
+      notes: upload.notes,
+      source: 'UPLOADED',
+      mimeType: upload.mimeType,
+      fileSizeBytes: upload.fileSizeBytes,
+      createdAt: upload.createdAt
+    };
+  });
+}
+
+export function buildArtistMediaCollection(
+  content: string | null | undefined,
+  uploads: ArtistMediaUploadRecord[] = []
+): ParsedArtistMediaContent {
+  const parsedContent = parseArtistMediaContent(content);
+  const uploadedEntries = buildUploadedArtistMediaEntries(uploads);
+
+  return {
+    notes: parsedContent.notes,
+    entries: [...uploadedEntries, ...parsedContent.entries]
   };
 }

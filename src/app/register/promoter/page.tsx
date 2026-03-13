@@ -10,7 +10,6 @@ export default function PromoterRegisterPage() {
     <RegisterForm
       defaultRole="DJ"
       intro="Promoter accounts can curate artist uploads into streaming-only iHYPE shows, so the artist upload and limited use license policy applies here too. Review and accept it before creating your account."
-      lockedRole
       title="Promoter sign up"
     />
   );

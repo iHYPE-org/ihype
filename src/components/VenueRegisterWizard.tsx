@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+import { RegisterAccountChoices } from '@/components/RegisterAccountChoices';
 import {
   getProfileDesignStyleVars,
   normalizeProfileAccentTone,
@@ -178,15 +179,15 @@ export function VenueRegisterWizard() {
       <div className="venue-register-layout">
         <section className="panel register-panel venue-wizard">
           <div className="register-header">
+            <RegisterAccountChoices activeRole="VENUE" />
             <h1>Venue sign up</h1>
             <p className="kicker">
               Build the venue identity, location notes, and future show framing before the page goes live.
             </p>
             <div className="register-role-links">
               <Link className="button small secondary" href="/register">
-                Back to all sign up
+                Back to listener sign up
               </Link>
-              <div className="badge">Role locked: Venue</div>
             </div>
           </div>
 

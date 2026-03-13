@@ -1,24 +1,15 @@
 'use client';
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { ArtistUploadPolicy } from '@/components/ArtistUploadPolicy';
+import { RegisterAccountChoices } from '@/components/RegisterAccountChoices';
 
 export type RegisterRole = 'FAN' | 'ARTIST' | 'DJ' | 'VENUE';
 
 type RegisterFormProps = {
   defaultRole?: RegisterRole;
-  lockedRole?: boolean;
   title?: string;
   intro?: string;
-};
-
-const roleLabels: Record<RegisterRole, string> = {
-  FAN: 'Listener',
-  ARTIST: 'Artist',
-  DJ: 'Promoter',
-  VENUE: 'Venue'
 };
 
 function requiresArtistUploadPolicy(role: RegisterRole) {
@@ -31,25 +22,17 @@ function getAudienceLabel(role: RegisterRole) {
 
 export function RegisterForm({
   defaultRole = 'FAN',
-  lockedRole = false,
   title = 'Create account',
   intro = 'Create your account, then sign in with your email and password to start building your page.'
 }: RegisterFormProps) {
-  const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
-  const [selectedRole, setSelectedRole] = useState<RegisterRole>(defaultRole);
   const [acceptedPolicy, setAcceptedPolicy] = useState(false);
+  const selectedRole = defaultRole;
 
-  const showPolicy = useMemo(() => requiresArtistUploadPolicy(selectedRole), [selectedRole]);
+  const showPolicy = requiresArtistUploadPolicy(selectedRole);
 
   async function handleSubmit(formData: FormData) {
     setMessage(null);
-
-    if (!lockedRole && selectedRole === 'VENUE') {
-      router.push('/register/venue');
-      return;
-    }
-
     const payload = Object.fromEntries(formData.entries()) as Record<string, FormDataEntryValue | boolean>;
 
     payload.role = selectedRole;
@@ -76,69 +59,26 @@ export function RegisterForm({
       <div className="register-grid">
         <div className="panel register-panel">
           <div className="register-header">
+            <RegisterAccountChoices activeRole={selectedRole} />
             <h1>{title}</h1>
             <p className="kicker">{intro}</p>
-            {!lockedRole ? (
-              <div className="register-role-links">
-                <Link className="button small secondary" href="/register/artist">
-                  Artist sign up
-                </Link>
-                <Link className="button small secondary" href="/register/promoter">
-                  Promoter sign up
-                </Link>
-                <Link className="button small secondary" href="/register/venue">
-                  Venue sign up
-                </Link>
-              </div>
-            ) : (
-              <div className="badge">Role locked: {roleLabels[selectedRole]}</div>
-            )}
           </div>
 
           <form className="form" action={handleSubmit}>
-            <div className="grid grid-2">
-              <label className="field">
-                <span>Name</span>
-                <input name="name" required />
-              </label>
-              <label className="field">
-                <span>Email</span>
-                <input name="email" required type="email" />
-              </label>
-            </div>
+            <label className="field">
+              <span>Name</span>
+              <input name="name" required />
+            </label>
 
-            <div className="grid grid-2">
-              <label className="field">
-                <span>Password</span>
-                <input minLength={8} name="password" required type="password" />
-              </label>
-              {lockedRole ? (
-                <label className="field">
-                  <span>Role</span>
-                  <input disabled value={roleLabels[selectedRole]} />
-                </label>
-              ) : (
-                <label className="field">
-                  <span>Role</span>
-                  <select
-                    defaultValue={defaultRole}
-                    name="role"
-                    onChange={(event) => {
-                      const nextRole = event.target.value as RegisterRole;
-                      setSelectedRole(nextRole);
-                      if (!requiresArtistUploadPolicy(nextRole)) {
-                        setAcceptedPolicy(false);
-                      }
-                    }}
-                  >
-                    <option value="FAN">Listener</option>
-                    <option value="ARTIST">Artist</option>
-                    <option value="DJ">Promoter</option>
-                    <option value="VENUE">Venue</option>
-                  </select>
-                </label>
-              )}
-            </div>
+            <label className="field">
+              <span>Email</span>
+              <input name="email" required type="email" />
+            </label>
+
+            <label className="field">
+              <span>Password</span>
+              <input minLength={8} name="password" required type="password" />
+            </label>
 
             {showPolicy ? (
               <label className="checkbox-row register-checkbox">
@@ -154,14 +94,8 @@ export function RegisterForm({
               </label>
             ) : null}
 
-            {!lockedRole && selectedRole === 'VENUE' ? (
-              <div className="empty">
-                Venue accounts now use a guided sign up wizard for page design, hours, local guidance, and future show sections.
-              </div>
-            ) : null}
-
             <button className="button" type="submit">
-              {!lockedRole && selectedRole === 'VENUE' ? 'Open venue wizard' : 'Create account'}
+              Create account
             </button>
             {message ? <p className="meta">{message}</p> : null}
           </form>

@@ -2,11 +2,12 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { parseArtistMediaContent } from '@/lib/media';
+import { buildArtistMediaCollection } from '@/lib/media';
 import { ShowCard } from '@/components/ShowCard';
 import { HypeButton } from '@/components/HypeButton';
 import { ProfilePageEditor } from '@/components/ProfilePageEditor';
 import { ArtistMediaPlaylist } from '@/components/ArtistMediaPlaylist';
+import { ArtistMediaUploadManager } from '@/components/ArtistMediaUploadManager';
 import { DEFAULT_PROFILE_DESIGN_PRESET, getProfileDesignStyleVars } from '@/lib/profile-design';
 
 const artistSections = ['about', 'journal', 'media', 'tour', 'merch', 'stats'] as const;
@@ -37,9 +38,24 @@ export default async function ArtistPage({
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const activeSection = getActiveSection(resolvedSearchParams.section);
 
-  const profile = await db.profile.findUnique({ where: { slug } });
+  const profile = await db.profile.findUnique({
+    where: { slug },
+    include: {
+      mediaUploads: {
+        select: {
+          hexId: true,
+          title: true,
+          notes: true,
+          mimeType: true,
+          fileSizeBytes: true,
+          createdAt: true
+        },
+        orderBy: { createdAt: 'desc' }
+      }
+    }
+  });
   if (!profile || profile.type !== 'ARTIST') return notFound();
-  const media = parseArtistMediaContent(profile.mediaContent);
+  const media = buildArtistMediaCollection(profile.mediaContent, profile.mediaUploads);
 
   const shows = await db.show.findMany({
     where: { headlinerProfileId: profile.id },
@@ -88,10 +104,10 @@ export default async function ArtistPage({
               { key: 'journalContent', label: 'Journal', kind: 'textarea' },
               {
                 key: 'mediaContent',
-                label: 'Media',
+                label: 'Media notes / legacy links',
                 kind: 'textarea',
                 placeholder:
-                  'Add notes, then one upload per line.\nMidnight Demo | https://example.com/demo.mp3 | Live room mix\nAfterglow Cut | https://example.com/afterglow.mp3 | Alt take'
+                  'Optional notes for your media section, plus any legacy external links you still want to keep.\nMidnight Demo | https://example.com/demo.mp3 | Live room mix'
               },
               { key: 'tourContent', label: 'Tour intro', kind: 'textarea', rows: 4 },
               { key: 'merchContent', label: 'Merch', kind: 'textarea' }
@@ -163,16 +179,18 @@ export default async function ArtistPage({
             <>
               <h2>Media</h2>
               {media.notes ? <div className="artist-copy">{media.notes}</div> : null}
+              {isOwner ? <ArtistMediaUploadManager profileId={profile.id} /> : null}
               {media.entries.length ? (
                 <ArtistMediaPlaylist
                   artistName={profile.name}
                   artistSlug={profile.slug}
                   artworkUrl={profile.heroImage}
                   entries={media.entries}
+                  isOwner={isOwner}
                 />
               ) : (
                 <div className="empty">
-                  No playable uploads yet. Artists can add audio lines in the editor using:
+                  No playable uploads yet. Artists can upload audio below or keep using legacy external links in the editor:
                   <br />
                   <code>Track title | https://example.com/song.mp3 | Notes</code>
                 </div>

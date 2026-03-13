@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { useMediaPlayer, type MediaTrack } from '@/components/GlobalMediaPlayer';
 import type { ArtistMediaEntry } from '@/lib/media';
@@ -9,14 +10,17 @@ type ArtistMediaPlaylistProps = {
   artistSlug: string;
   artworkUrl: string | null;
   entries: ArtistMediaEntry[];
+  isOwner?: boolean;
 };
 
 export function ArtistMediaPlaylist({
   artistName,
   artistSlug,
   artworkUrl,
-  entries
+  entries,
+  isOwner = false
 }: ArtistMediaPlaylistProps) {
+  const router = useRouter();
   const { currentTrack, isPlaying, playTrack, togglePlayback } = useMediaPlayer();
   const [message, setMessage] = useState<string | null>(null);
 
@@ -35,12 +39,40 @@ export function ArtistMediaPlaylist({
     [artistName, artistSlug, artworkUrl, entries]
   );
 
-  async function copyToClipboard(value: string, label: string) {
+  async function copyToClipboard(value: string, label: string, options?: { treatAsLink?: boolean }) {
     try {
-      await navigator.clipboard.writeText(value);
+      const normalizedValue = options?.treatAsLink
+        ? value.startsWith('http://') || value.startsWith('https://')
+          ? value
+          : new URL(value, window.location.origin).toString()
+        : value;
+      await navigator.clipboard.writeText(normalizedValue);
       setMessage(`${label} copied.`);
     } catch {
       setMessage(`Could not copy ${label.toLowerCase()}.`);
+    }
+  }
+
+  async function removeUpload(entry: ArtistMediaEntry) {
+    if (!window.confirm(`Remove ${entry.title} from your artist page?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/artist-media/${entry.hexId}`, {
+        method: 'DELETE'
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        setMessage(data.error ?? 'Could not remove this upload.');
+        return;
+      }
+
+      setMessage(`${entry.title} removed.`);
+      router.refresh();
+    } catch {
+      setMessage('Could not remove this upload.');
     }
   }
 
@@ -88,9 +120,21 @@ export function ArtistMediaPlaylist({
               >
                 Copy ID
               </button>
+              <button
+                className="button small secondary"
+                onClick={() => copyToClipboard(entry.shareUrl, 'Share link', { treatAsLink: true })}
+                type="button"
+              >
+                Copy link
+              </button>
               <a className="button small secondary" href={track.url} rel="noreferrer" target="_blank">
                 Open audio
               </a>
+              {isOwner && entry.source === 'UPLOADED' ? (
+                <button className="button small secondary" onClick={() => removeUpload(entry)} type="button">
+                  Delete
+                </button>
+              ) : null}
             </div>
           </article>
         );

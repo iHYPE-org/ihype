@@ -108,9 +108,27 @@ model Profile {
   hostedShows                   Show[]                   @relation("VenueShows")
   headlinerShows                Show[]                   @relation("HeadlinerShows")
   promotedShows                 Show[]                   @relation("PromotedShows")
+  mediaUploads                  ArtistMediaAsset[]
   profileHypes                  ProfileHypeEvent[]
   venueConnectionRequests       VenueConnectionRequest[] @relation("VenueConnectionRequests")
   recommendedConnectionRequests VenueConnectionRequest[] @relation("RecommendedProfileConnectionRequests")
+}
+
+model ArtistMediaAsset {
+  id               String   @id @default(cuid())
+  hexId            String   @unique
+  title            String
+  notes            String?
+  originalFileName String
+  mimeType         String
+  fileSizeBytes    Int
+  fileDataBase64   String
+  profileId        String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  profile          Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, createdAt])
 }
 
 model Show {

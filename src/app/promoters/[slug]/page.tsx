@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { parseArtistMediaContent } from '@/lib/media';
+import { buildArtistMediaCollection } from '@/lib/media';
 import { ShowCard } from '@/components/ShowCard';
 import { HypeButton } from '@/components/HypeButton';
 import { ProfilePageEditor } from '@/components/ProfilePageEditor';
@@ -69,14 +69,25 @@ export default async function PromoterPage({
       ? db.profile.findMany({
           where: {
             type: 'ARTIST',
-            mediaContent: { not: null }
+            OR: [{ mediaContent: { not: null } }, { mediaUploads: { some: {} } }]
           },
           select: {
             id: true,
             slug: true,
             name: true,
             heroImage: true,
-            mediaContent: true
+            mediaContent: true,
+            mediaUploads: {
+              select: {
+                hexId: true,
+                title: true,
+                notes: true,
+                mimeType: true,
+                fileSizeBytes: true,
+                createdAt: true
+              },
+              orderBy: { createdAt: 'desc' }
+            }
           },
           orderBy: { name: 'asc' }
         })
@@ -94,7 +105,7 @@ export default async function PromoterPage({
       slug: artistProfile.slug,
       name: artistProfile.name,
       heroImage: artistProfile.heroImage,
-      entries: parseArtistMediaContent(artistProfile.mediaContent).entries
+      entries: buildArtistMediaCollection(artistProfile.mediaContent, artistProfile.mediaUploads).entries
     }))
     .filter((artistProfile) => artistProfile.entries.length > 0);
   const bannerStyle = profile.heroImage
