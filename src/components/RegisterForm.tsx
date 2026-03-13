@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { ArtistUploadPolicy } from '@/components/ArtistUploadPolicy';
 import { RegisterAccountChoices } from '@/components/RegisterAccountChoices';
@@ -27,7 +26,6 @@ export function RegisterForm({
   title = 'Create account',
   intro = 'Create your account, then sign in with your email and password to start building your page.'
 }: RegisterFormProps) {
-  const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
   const [acceptedPolicy, setAcceptedPolicy] = useState(false);
   const selectedRole = defaultRole;
@@ -56,7 +54,7 @@ export function RegisterForm({
       return;
     }
 
-    const destination = data.profilePath ?? '/dashboard';
+    const destination = data.profilePath ?? '/auth/landing';
     const signInResult = await signIn('credentials', {
       email,
       password,
@@ -73,8 +71,7 @@ export function RegisterForm({
       return;
     }
 
-    router.push(destination);
-    router.refresh();
+    window.location.assign(signInResult?.url ?? destination);
   }
 
   return (

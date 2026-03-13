@@ -7,10 +7,9 @@ import { signIn } from 'next-auth/react';
 type ResetStage = 'request' | 'confirm';
 
 export default function LoginPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const requestedCallbackUrl = searchParams.get('callbackUrl');
-  const callbackUrl = requestedCallbackUrl || '/dashboard';
+  const callbackUrl = requestedCallbackUrl || '/auth/landing';
   const defaultEmail = searchParams.get('email') || '';
 
   const [email, setEmail] = useState(defaultEmail);
@@ -32,17 +31,6 @@ export default function LoginPage() {
     setResetEmail(defaultEmail);
   }, [defaultEmail]);
 
-  async function resolveLandingPath() {
-    const response = await fetch('/api/auth/landing');
-
-    if (!response.ok) {
-      return callbackUrl;
-    }
-
-    const data = (await response.json()) as { path?: string };
-    return data.path || callbackUrl;
-  }
-
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setPending(true);
@@ -61,13 +49,7 @@ export default function LoginPage() {
       return;
     }
 
-    const destination =
-      !requestedCallbackUrl || requestedCallbackUrl === '/dashboard'
-        ? await resolveLandingPath()
-        : result?.url ?? callbackUrl;
-
-    router.push(destination);
-    router.refresh();
+    window.location.assign(result?.url ?? callbackUrl);
   }
 
   async function handleResetRequest(event: React.FormEvent<HTMLFormElement>) {

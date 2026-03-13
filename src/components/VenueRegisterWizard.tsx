@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { RegisterAccountChoices } from '@/components/RegisterAccountChoices';
 import {
@@ -114,7 +113,6 @@ function getLocationLine(values: VenueRegisterFormValues) {
 }
 
 export function VenueRegisterWizard() {
-  const router = useRouter();
   const [stepIndex, setStepIndex] = useState(0);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -174,7 +172,7 @@ export function VenueRegisterWizard() {
       return;
     }
 
-    const destination = data.profilePath ?? '/dashboard';
+    const destination = data.profilePath ?? '/auth/landing';
     const signInResult = await signIn('credentials', {
       email: formValues.email,
       password: formValues.password,
@@ -192,8 +190,7 @@ export function VenueRegisterWizard() {
       return;
     }
 
-    router.push(destination);
-    router.refresh();
+    window.location.assign(signInResult?.url ?? destination);
     setPending(false);
   }
 
