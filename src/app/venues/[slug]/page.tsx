@@ -2,9 +2,10 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { getProfileDesignStyleVars } from '@/lib/profile-design';
 import { ShowCard } from '@/components/ShowCard';
 import { HypeButton } from '@/components/HypeButton';
-import { ProfilePageEditor } from '@/components/ProfilePageEditor';
+import { VenuePageWizard } from '@/components/VenuePageWizard';
 import { VenueEventScheduler } from '@/components/VenueEventScheduler';
 import { VenueConnectionRequestActions } from '@/components/VenueConnectionRequestActions';
 import { VenueConnectionRequestForm } from '@/components/VenueConnectionRequestForm';
@@ -112,6 +113,10 @@ export default async function VenuePage({
   const promoterOptions = bookableProfiles
     .filter((bookableProfile) => bookableProfile.type === 'DJ')
     .map((bookableProfile) => ({ id: bookableProfile.id, name: bookableProfile.name }));
+  const pageDesignStyle = getProfileDesignStyleVars(profile.themePreset, {
+    accentTone: profile.themeAccentTone,
+    backdropTone: profile.themeBackdropTone
+  });
   const bannerStyle = profile.heroImage
     ? {
         backgroundImage: `linear-gradient(rgba(7, 11, 20, 0.45), rgba(7, 11, 20, 0.88)), url(${profile.heroImage})`
@@ -119,7 +124,7 @@ export default async function VenuePage({
     : undefined;
 
   return (
-    <main className="container section">
+    <main className="container section profile-design-shell" style={pageDesignStyle}>
       <header className="artist-banner panel" style={bannerStyle}>
         <div className="artist-banner-copy">
           <div className="badge">VENUE</div>
@@ -127,37 +132,59 @@ export default async function VenuePage({
           <p className="artist-headline">{profile.headline || 'Set the tone for the room and what kind of nights belong here.'}</p>
           <p className="subtitle">{profile.bio}</p>
           <p className="meta">{[profile.city, profile.country].filter(Boolean).join(', ')}</p>
+          <p className="meta">Share ID: <Link href={`/profiles/${profile.hexId}`}>{profile.hexId}</Link></p>
+          {profile.addressLine1 ? <p className="meta">{[profile.addressLine1, profile.postalCode].filter(Boolean).join(', ')}</p> : null}
+          {profile.hoursText ? <p className="meta">{profile.hoursText}</p> : null}
           <div className="tag-row">{profile.genres.map((genre) => <span key={genre} className="tag">{genre}</span>)}</div>
           <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} entityLabel="venue" />
         </div>
       </header>
 
       {isOwner ? (
-        <ProfilePageEditor
-          description="Edit your venue banner plus the About and Request sections."
-          fields={[
-            { key: 'headline', label: 'Headline banner', placeholder: 'What makes this room distinct?' },
-            { key: 'heroImage', label: 'Banner image URL', kind: 'url', placeholder: 'https://example.com/venue.jpg' },
-            { key: 'bio', label: 'Short intro', kind: 'textarea', rows: 3 },
-            { key: 'aboutContent', label: 'About', kind: 'textarea' },
-            { key: 'requestContent', label: 'Request guidance', kind: 'textarea' }
-          ]}
-          initialValues={{
-            headline: profile.headline ?? '',
-            bio: profile.bio ?? '',
-            heroImage: profile.heroImage ?? '',
-            aboutContent: profile.aboutContent ?? '',
-            journalContent: profile.journalContent ?? '',
-            mediaContent: profile.mediaContent ?? '',
-            tourContent: profile.tourContent ?? '',
-            merchContent: profile.merchContent ?? '',
-            requestContent: profile.requestContent ?? '',
-            recommendContent: profile.recommendContent ?? '',
-            topFiveContent: profile.topFiveContent ?? ''
-          }}
-          profileId={profile.id}
-          title="Customize your venue page"
-        />
+        <>
+          <VenuePageWizard
+            initialValues={{
+              headline: profile.headline ?? '',
+              bio: profile.bio ?? '',
+              heroImage: profile.heroImage ?? '',
+              aboutContent: profile.aboutContent ?? '',
+              requestContent: profile.requestContent ?? '',
+              addressLine1: profile.addressLine1 ?? '',
+              hoursText: profile.hoursText ?? '',
+              city: profile.city ?? '',
+              stateRegion: profile.stateRegion ?? '',
+              postalCode: profile.postalCode ?? '',
+              country: profile.country ?? '',
+              parkingDetails: profile.parkingDetails ?? '',
+              stayRecommendations: profile.stayRecommendations ?? '',
+              upcomingContent: profile.upcomingContent ?? '',
+              previousShowHighlights: profile.previousShowHighlights ?? '',
+              themePreset: profile.themePreset,
+              themeAccentTone: profile.themeAccentTone ?? '',
+              themeBackdropTone: profile.themeBackdropTone ?? ''
+            }}
+            previousShows={previousShows.map((show) => ({
+              id: show.id,
+              title: show.title,
+              startsAt: show.startsAt.toISOString()
+            }))}
+            profileId={profile.id}
+            profileName={profile.name}
+            upcomingShows={upcomingShows.map((show) => ({
+              id: show.id,
+              title: show.title,
+              startsAt: show.startsAt.toISOString()
+            }))}
+          />
+
+          <div className="request-history">
+            <VenueEventScheduler
+              venueProfileId={profile.id}
+              bookedActs={bookedActs}
+              promoterOptions={promoterOptions}
+            />
+          </div>
+        </>
       ) : null}
 
       <section className="section">
@@ -177,6 +204,41 @@ export default async function VenuePage({
           {activeSection === 'about' ? (
             <>
               <h2>About</h2>
+              {(profile.addressLine1 || profile.hoursText || profile.parkingDetails || profile.stayRecommendations) ? (
+                <div className="grid grid-2">
+                  {profile.addressLine1 ? (
+                    <div className="stat">
+                      <strong>Address</strong>
+                      {[
+                        profile.addressLine1,
+                        profile.city,
+                        profile.stateRegion,
+                        profile.postalCode
+                      ]
+                        .filter(Boolean)
+                        .join(', ')}
+                    </div>
+                  ) : null}
+                  {profile.hoursText ? (
+                    <div className="stat">
+                      <strong>Hours</strong>
+                      {profile.hoursText}
+                    </div>
+                  ) : null}
+                  {profile.parkingDetails ? (
+                    <div className="stat">
+                      <strong>Parking</strong>
+                      {profile.parkingDetails}
+                    </div>
+                  ) : null}
+                  {profile.stayRecommendations ? (
+                    <div className="stat">
+                      <strong>Stay nearby</strong>
+                      {profile.stayRecommendations}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
               <div className="artist-copy">{profile.aboutContent || profile.bio || 'This venue has not filled out the About section yet.'}</div>
             </>
           ) : null}
@@ -184,6 +246,7 @@ export default async function VenuePage({
           {activeSection === 'upcoming' ? (
             <>
               <h2>Upcoming</h2>
+              {profile.upcomingContent ? <div className="artist-copy">{profile.upcomingContent}</div> : null}
               <div className="grid grid-2">
                 {upcomingShows.length ? upcomingShows.map((show) => <ShowCard key={show.id} show={show} />) : <div className="empty">No upcoming shows yet.</div>}
               </div>
@@ -193,6 +256,7 @@ export default async function VenuePage({
           {activeSection === 'previous' ? (
             <>
               <h2>Previous</h2>
+              {profile.previousShowHighlights ? <div className="artist-copy">{profile.previousShowHighlights}</div> : null}
               <div className="grid grid-2">
                 {previousShows.length ? previousShows.map((show) => <ShowCard key={show.id} show={show} />) : <div className="empty">No previous shows yet.</div>}
               </div>
@@ -275,15 +339,6 @@ export default async function VenuePage({
                 </div>
               ) : null}
 
-              {isOwner ? (
-                <div className="request-history">
-                  <VenueEventScheduler
-                    venueProfileId={profile.id}
-                    bookedActs={bookedActs}
-                    promoterOptions={promoterOptions}
-                  />
-                </div>
-              ) : null}
             </>
           ) : null}
 

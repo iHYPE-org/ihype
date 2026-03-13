@@ -158,7 +158,7 @@ const risks = [
 ];
 
 export const metadata = {
-  title: 'Launch Readiness | ihype.org',
+  title: 'Launch Readiness | iHYPE.org',
   description: 'Curated launch-readiness plan for the HYPE Network Chicago pilot and September 6, 2026 launch target.'
 };
 

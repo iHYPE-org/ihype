@@ -8,7 +8,7 @@ This bundle is prepared for OpenAI Codex.
 
 ## How to use
 1. Unzip this archive.
-2. Open the `hypewave-production-app` folder as your project in Codex.
+2. Open this project folder as your project in Codex.
 3. Trust the project so Codex can load `.codex/config.toml`.
 4. Start Codex from the repository root.
 

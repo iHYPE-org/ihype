@@ -1,10 +1,11 @@
 import { notFound } from 'next/navigation';
-import { db } from '@/lib/db';
-import { formatShowTime } from '@/lib/utils';
 import { HypeButton } from '@/components/HypeButton';
 import { TicketSaleCard } from '@/components/TicketSaleCard';
+import { db } from '@/lib/db';
 import { getShowVisibilitySignals } from '@/lib/integrity';
+import { parseShowProductionPlan } from '@/lib/show-composer';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
+import { formatShowTime } from '@/lib/utils';
 
 export default async function ShowDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -22,22 +23,23 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ slu
   });
 
   if (!show) return notFound();
-  const visibility = getShowVisibilitySignals(show);
 
-  const playbackUrl = show.streamPlaybackId
-    ? `https://stream.mux.com/${show.streamPlaybackId}.m3u8`
-    : null;
+  const visibility = getShowVisibilitySignals(show);
+  const productionPlan = parseShowProductionPlan(show.productionPlan);
+  const playbackUrl = show.streamPlaybackId ? `https://stream.mux.com/${show.streamPlaybackId}.m3u8` : null;
 
   return (
     <main className="container section">
       <div className="profile-header">
         <div className="badge">{show.status}</div>
-        <h1 className="title" style={{ fontSize: '2.7rem' }}>{show.title}</h1>
+        <h1 className="title" style={{ fontSize: '2.7rem' }}>
+          {show.title}
+        </h1>
         <p className="subtitle">{show.description}</p>
         <p className="meta">
           {formatShowTime(show.startsAt)}
-          {show.venueProfile ? ` • ${show.venueProfile.name}` : ''}
-          {show.headlinerProfile ? ` • ${show.headlinerProfile.name}` : ''}
+          {show.venueProfile ? ` | ${show.venueProfile.name}` : ''}
+          {show.headlinerProfile ? ` | ${show.headlinerProfile.name}` : ''}
         </p>
       </div>
 
@@ -45,53 +47,227 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ slu
         <section className="panel" style={{ padding: '1rem' }}>
           <div className="video-shell">
             {playbackUrl ? (
-              <video className="video-frame" controls playsInline autoPlay muted={show.status === 'LIVE'}>
+              <video autoPlay={show.status === 'LIVE'} className="video-frame" controls muted={show.status === 'LIVE'} playsInline>
                 <source src={playbackUrl} type="application/x-mpegURL" />
               </video>
             ) : (
-              <div className="show-art" style={{ minHeight: 320 }}>Connect your stream provider to go live</div>
+              <div className="show-art" style={{ minHeight: 320 }}>
+                Connect your stream provider to go live
+              </div>
             )}
           </div>
-          <HypeButton targetType="show" targetId={show.id} initialCount={show.hypeCount} entityLabel="show" />
+          <HypeButton entityLabel="show" initialCount={show.hypeCount} targetId={show.id} targetType="show" />
         </section>
 
         <aside className="panel" style={{ padding: '1.25rem' }}>
           <h2>Show details</h2>
           <div className="tag-row">
-            {show.tags.map((tag) => <span key={tag} className="tag">{tag}</span>)}
+            {show.tags.map((tag) => (
+              <span className="tag" key={tag}>
+                {tag}
+              </span>
+            ))}
           </div>
           <table className="table">
             <tbody>
-              <tr><th>Status</th><td>{show.status}</td></tr>
-              <tr><th>Stream provider</th><td>{show.streamProvider ?? 'Not configured'}</td></tr>
-              <tr><th>Venue</th><td>{show.venueProfile?.name ?? 'TBA'}</td></tr>
-              <tr><th>Headliner</th><td>{show.headlinerProfile?.name ?? 'TBA'}</td></tr>
-              <tr><th>Promoter</th><td>{show.promoterProfile?.name ?? 'Promoter pool unassigned'}</td></tr>
-              <tr><th>Ticketing</th><td>{show.isTicketed ? 'Enabled' : 'Not enabled'}</td></tr>
+              <tr>
+                <th>Status</th>
+                <td>{show.status}</td>
+              </tr>
+              <tr>
+                <th>Stream provider</th>
+                <td>{show.streamProvider ?? 'Not configured'}</td>
+              </tr>
+              <tr>
+                <th>Venue</th>
+                <td>{show.venueProfile?.name ?? 'TBA'}</td>
+              </tr>
+              <tr>
+                <th>Headliner</th>
+                <td>{show.headlinerProfile?.name ?? 'TBA'}</td>
+              </tr>
+              <tr>
+                <th>Promoter</th>
+                <td>{show.promoterProfile?.name ?? 'Promoter pool unassigned'}</td>
+              </tr>
+              <tr>
+                <th>Ticketing</th>
+                <td>{show.isTicketed ? 'Enabled' : 'Not enabled'}</td>
+              </tr>
               {show.isTicketed ? (
                 <>
-                  <tr><th>Ticket price</th><td>{formatCurrencyFromCents(show.ticketPriceCents)}</td></tr>
-                  <tr><th>Tickets sold</th><td>{show.ticketsSoldCount}</td></tr>
-                  <tr><th>Capacity</th><td>{show.ticketCapacity ?? 'Open'}</td></tr>
-                  <tr><th>Gross sales</th><td>{formatCurrencyFromCents(show.ticketPriceCents * show.ticketsSoldCount)}</td></tr>
-                  <tr><th>Venue split</th><td>{show.venuePayoutPercent ?? 0}%</td></tr>
-                  <tr><th>Artist split</th><td>{show.artistPayoutPercent ?? 0}%</td></tr>
-                  <tr><th>Promoter pool</th><td>{show.promoterPayoutPercent}%</td></tr>
+                  <tr>
+                    <th>Ticket price</th>
+                    <td>{formatCurrencyFromCents(show.ticketPriceCents)}</td>
+                  </tr>
+                  <tr>
+                    <th>Tickets sold</th>
+                    <td>{show.ticketsSoldCount}</td>
+                  </tr>
+                  <tr>
+                    <th>Capacity</th>
+                    <td>{show.ticketCapacity ?? 'Open'}</td>
+                  </tr>
+                  <tr>
+                    <th>Gross sales</th>
+                    <td>{formatCurrencyFromCents(show.ticketPriceCents * show.ticketsSoldCount)}</td>
+                  </tr>
+                  <tr>
+                    <th>Venue split</th>
+                    <td>{show.venuePayoutPercent ?? 0}%</td>
+                  </tr>
+                  <tr>
+                    <th>Artist split</th>
+                    <td>{show.artistPayoutPercent ?? 0}%</td>
+                  </tr>
+                  <tr>
+                    <th>Promoter pool</th>
+                    <td>{show.promoterPayoutPercent}%</td>
+                  </tr>
                 </>
               ) : null}
-              <tr><th>Hype</th><td>{show.hypeCount}</td></tr>
-              <tr><th>Heuristics</th><td>{visibility.version}</td></tr>
+              <tr>
+                <th>Hype</th>
+                <td>{show.hypeCount}</td>
+              </tr>
+              <tr>
+                <th>Heuristics</th>
+                <td>{visibility.version}</td>
+              </tr>
             </tbody>
           </table>
 
           <div className="explanation-block">
             <h3>Why you&apos;re seeing this</h3>
             <ul className="launch-list">
-              {visibility.reasons.map((reason) => <li key={reason}>{reason}</li>)}
+              {visibility.reasons.map((reason) => (
+                <li key={reason}>{reason}</li>
+              ))}
             </ul>
           </div>
         </aside>
       </div>
+
+      {productionPlan ? (
+        <section className="section">
+          <div className="panel composer-plan-panel">
+            <div className="composer-header">
+              <div>
+                <div className="badge">Production plan</div>
+                <h2>Promoter run of show</h2>
+                <p className="kicker">
+                  This show was assembled from copied artist uploads, recorded voice-over cues, and a 16-pad royalty-free sample rack.
+                </p>
+              </div>
+            </div>
+
+            <div className="composer-grid">
+              <div className="composer-column">
+                <div className="composer-card">
+                  <h3>Artist media</h3>
+                  {productionPlan.mediaItems.length ? (
+                    <div className="composer-library-list">
+                      {productionPlan.mediaItems.map((item) => (
+                        <div className="composer-media-card" key={item.mediaId}>
+                          <div>
+                            <div className="composer-media-code">{item.mediaId}</div>
+                            <strong>{item.title}</strong>
+                            <p className="meta">
+                              {item.artistName}
+                              {item.notes ? ` | ${item.notes}` : ''}
+                            </p>
+                          </div>
+                          <div className="composer-media-actions">
+                            <a className="button small secondary" href={item.url} rel="noreferrer" target="_blank">
+                              Open audio
+                            </a>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="empty">No artist media is attached to this show.</div>
+                  )}
+                </div>
+              </div>
+
+              <div className="composer-column">
+                <div className="composer-card">
+                  <h3>Voice-over cues</h3>
+                  {productionPlan.voiceOvers.length ? (
+                    <div className="composer-voice-list">
+                      {productionPlan.voiceOvers.map((voiceCue) => (
+                        <div className="composer-voice-card" key={voiceCue.id}>
+                          <strong>{voiceCue.title}</strong>
+                          <p className="meta">
+                            {voiceCue.durationSeconds ? `${voiceCue.durationSeconds}s` : 'Open duration'}
+                            {voiceCue.cueAfterMediaId ? ` | cue after ${voiceCue.cueAfterMediaId}` : ''}
+                          </p>
+                          {voiceCue.script ? <p>{voiceCue.script}</p> : <p className="meta">Recorded take with no text notes.</p>}
+                          {voiceCue.recordingDataUrl ? (
+                            <audio className="composer-audio-preview" controls src={voiceCue.recordingDataUrl} />
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="empty">No voice-over cues were saved for this show.</div>
+                  )}
+                </div>
+
+                <div className="composer-card">
+                  <h3>Sample pad assignments</h3>
+                  {productionPlan.samplePads.length ? (
+                    <div className="composer-sample-grid">
+                      {productionPlan.samplePads
+                        .slice()
+                        .sort((left, right) => (left.assignedPad ?? 99) - (right.assignedPad ?? 99))
+                        .map((sample) => (
+                          <div className="composer-sample-card" key={`${sample.sampleId}-${sample.assignedPad ?? 'open'}`}>
+                            <div>
+                              {sample.assignedPad ? (
+                                <div className="composer-media-code">Pad {String(sample.assignedPad).padStart(2, '0')}</div>
+                              ) : null}
+                              <strong>{sample.title}</strong>
+                              <p className="meta">{sample.notes ?? 'Royalty-free sample.'}</p>
+                              <div className="composer-media-code">{sample.sampleId}</div>
+                            </div>
+                            <a className="button small secondary" href={sample.url}>
+                              Open sample
+                            </a>
+                          </div>
+                        ))}
+                    </div>
+                  ) : (
+                    <div className="empty">No sample pads were saved for this show.</div>
+                  )}
+                </div>
+              </div>
+
+              <div className="composer-column">
+                <div className="composer-card">
+                  <h3>Show sequence</h3>
+                  {productionPlan.sequence.length ? (
+                    <div className="composer-sequence-list">
+                      {productionPlan.sequence.map((item, index) => (
+                        <div className="composer-sequence-card" key={item.id}>
+                          <div>
+                            <span className="composer-sequence-index">{String(index + 1).padStart(2, '0')}</span>
+                            <strong>{item.label}</strong>
+                          </div>
+                          <div className="composer-media-code">{item.kind}</div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="empty">No run-of-show sequence was saved.</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       {show.isTicketed && show.venueProfile && show.headlinerProfile && show.venuePayoutPercent !== null && show.artistPayoutPercent !== null ? (
         <section className="section">

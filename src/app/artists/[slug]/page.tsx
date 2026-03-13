@@ -7,6 +7,7 @@ import { ShowCard } from '@/components/ShowCard';
 import { HypeButton } from '@/components/HypeButton';
 import { ProfilePageEditor } from '@/components/ProfilePageEditor';
 import { ArtistMediaPlaylist } from '@/components/ArtistMediaPlaylist';
+import { DEFAULT_PROFILE_DESIGN_PRESET, getProfileDesignStyleVars } from '@/lib/profile-design';
 
 const artistSections = ['about', 'journal', 'media', 'tour', 'merch', 'stats'] as const;
 
@@ -50,14 +51,16 @@ export default async function ArtistPage({
   const upcomingShows = shows.filter((show) => show.status === 'LIVE' || show.startsAt >= now);
   const previousShows = shows.filter((show) => show.status === 'ENDED' || (show.startsAt < now && show.status !== 'LIVE'));
   const isOwner = session?.user?.id === profile.ownerId;
+  const sharedThemePreset = isOwner || profile.fanShareEnabled ? profile.themePreset : DEFAULT_PROFILE_DESIGN_PRESET;
   const bannerStyle = profile.heroImage
     ? {
         backgroundImage: `linear-gradient(rgba(7, 11, 20, 0.45), rgba(7, 11, 20, 0.88)), url(${profile.heroImage})`
       }
     : undefined;
+  const pageDesignStyle = getProfileDesignStyleVars(sharedThemePreset);
 
   return (
-    <main className="container section">
+    <main className="container section profile-design-shell" style={pageDesignStyle}>
       <header className="artist-banner panel" style={bannerStyle}>
         <div className="artist-banner-copy">
           <div className="badge">ARTIST</div>
@@ -65,46 +68,67 @@ export default async function ArtistPage({
           <p className="artist-headline">{profile.headline || 'Build your headline banner and tell people what this chapter sounds like.'}</p>
           <p className="subtitle">{profile.bio}</p>
           <p className="meta">{[profile.city, profile.country].filter(Boolean).join(', ')}</p>
+          <p className="meta">Share ID: <Link href={`/profiles/${profile.hexId}`}>{profile.hexId}</Link></p>
           <div className="tag-row">{profile.genres.map((genre) => <span key={genre} className="tag">{genre}</span>)}</div>
           <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} entityLabel="artist" />
         </div>
       </header>
 
       {isOwner ? (
-        <ProfilePageEditor
-          description="Edit your banner and the About, Journal, Media, Tour, and Merch sections."
-          fields={[
-            { key: 'headline', label: 'Headline banner', placeholder: 'The line people see first' },
-            { key: 'heroImage', label: 'Banner image URL', kind: 'url', placeholder: 'https://example.com/banner.jpg' },
-            { key: 'bio', label: 'Short intro', kind: 'textarea', rows: 3 },
-            { key: 'aboutContent', label: 'About', kind: 'textarea' },
-            { key: 'journalContent', label: 'Journal', kind: 'textarea' },
-            {
-              key: 'mediaContent',
-              label: 'Media',
-              kind: 'textarea',
-              placeholder:
-                'Add notes, then one upload per line.\nMidnight Demo | https://example.com/demo.mp3 | Live room mix\nAfterglow Cut | https://example.com/afterglow.mp3 | Alt take'
-            },
-            { key: 'tourContent', label: 'Tour intro', kind: 'textarea', rows: 4 },
-            { key: 'merchContent', label: 'Merch', kind: 'textarea' }
-          ]}
-          initialValues={{
-            headline: profile.headline ?? '',
-            bio: profile.bio ?? '',
-            heroImage: profile.heroImage ?? '',
-            aboutContent: profile.aboutContent ?? '',
-            journalContent: profile.journalContent ?? '',
-            mediaContent: profile.mediaContent ?? '',
-            tourContent: profile.tourContent ?? '',
-            merchContent: profile.merchContent ?? '',
-            requestContent: profile.requestContent ?? '',
-            recommendContent: profile.recommendContent ?? '',
-            topFiveContent: profile.topFiveContent ?? ''
-          }}
-          profileId={profile.id}
-          title="Customize your artist page"
-        />
+        <>
+          <ProfilePageEditor
+            allowFanShareToggle
+            description="Edit your banner, section copy, and the fan-facing design preset before you share it."
+            enableDesignCustomizer
+            fields={[
+              { key: 'headline', label: 'Headline banner', placeholder: 'The line people see first' },
+              { key: 'heroImage', label: 'Banner image URL', kind: 'url', placeholder: 'https://example.com/banner.jpg' },
+              { key: 'bio', label: 'Short intro', kind: 'textarea', rows: 3 },
+              { key: 'aboutContent', label: 'About', kind: 'textarea' },
+              { key: 'journalContent', label: 'Journal', kind: 'textarea' },
+              {
+                key: 'mediaContent',
+                label: 'Media',
+                kind: 'textarea',
+                placeholder:
+                  'Add notes, then one upload per line.\nMidnight Demo | https://example.com/demo.mp3 | Live room mix\nAfterglow Cut | https://example.com/afterglow.mp3 | Alt take'
+              },
+              { key: 'tourContent', label: 'Tour intro', kind: 'textarea', rows: 4 },
+              { key: 'merchContent', label: 'Merch', kind: 'textarea' }
+            ]}
+            initialValues={{
+              headline: profile.headline ?? '',
+              bio: profile.bio ?? '',
+              heroImage: profile.heroImage ?? '',
+              aboutContent: profile.aboutContent ?? '',
+              journalContent: profile.journalContent ?? '',
+              mediaContent: profile.mediaContent ?? '',
+              tourContent: profile.tourContent ?? '',
+              merchContent: profile.merchContent ?? '',
+              requestContent: profile.requestContent ?? '',
+              recommendContent: profile.recommendContent ?? '',
+              topFiveContent: profile.topFiveContent ?? '',
+              themePreset: profile.themePreset,
+              fanShareEnabled: profile.fanShareEnabled
+            }}
+            previewGenres={profile.genres}
+            previewRoleLabel="ARTIST"
+            previewTabs={['About', 'Journal', 'Media', 'Tour', 'Merch', 'Stats']}
+            profileId={profile.id}
+            profileName={profile.name}
+            title="Customize your artist page"
+          />
+
+          <div className="panel profile-share-status-panel">
+            <div className="badge">Fan Share</div>
+            <h2>{profile.fanShareEnabled ? 'Fans can see your custom page design.' : 'Your custom page design is still private.'}</h2>
+            <p className="meta">
+              {profile.fanShareEnabled
+                ? 'Listeners who visit this page now see the saved preset, layout mood, and visual styling you picked.'
+                : 'Turn on "share with fans" in the customizer when you want listeners to see the saved design instead of the default artist look.'}
+            </p>
+          </div>
+        </>
       ) : null}
 
       <section className="section">

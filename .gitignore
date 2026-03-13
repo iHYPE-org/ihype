@@ -9,3 +9,9 @@ coverage
 .DS_Store
 prisma/dev.db
 dev-server.log
+
+.vercel
+.env*.local
+dev-server.err.log
+cloudflared.log
+.tools

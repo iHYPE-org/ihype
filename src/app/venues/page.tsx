@@ -11,6 +11,7 @@ export default async function VenuesIndexPage() {
       id: true,
       type: true,
       slug: true,
+      hexId: true,
       name: true,
       city: true,
       country: true,

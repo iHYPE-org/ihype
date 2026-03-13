@@ -15,6 +15,8 @@ export type MediaTrack = {
   title: string;
   artistName: string;
   url: string;
+  mediaId?: string | null;
+  artistProfileSlug?: string | null;
   notes?: string | null;
   artworkUrl?: string | null;
 };
@@ -25,6 +27,8 @@ type MediaPlayerContextValue = {
   currentTime: number;
   duration: number;
   volume: number;
+  canGoBack: boolean;
+  canGoForward: boolean;
   playTrack: (track: MediaTrack, queue?: MediaTrack[]) => void;
   togglePlayback: () => void;
   playNext: () => void;
@@ -127,8 +131,10 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
       setCurrentIndex((index) => {
         if (index >= 0 && index < queue.length - 1) {
           const nextIndex = index + 1;
-          setCurrentTrack(queue[nextIndex] ?? null);
+          const nextTrack = queue[nextIndex] ?? null;
+          setCurrentTrack(nextTrack);
           setIsPlaying(true);
+          persistMediaListen(nextTrack);
           return nextIndex;
         }
 
@@ -181,6 +187,26 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
     }
   }, [currentTrack, isPlaying]);
 
+  function persistMediaListen(track: MediaTrack | null) {
+    if (!track?.mediaId) {
+      return;
+    }
+
+    void fetch('/api/media-listens', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mediaId: track.mediaId,
+        title: track.title,
+        mediaUrl: track.url,
+        artistName: track.artistName,
+        artistProfileSlug: track.artistProfileSlug ?? undefined
+      })
+    }).catch(() => {
+      // Keep playback resilient if activity logging fails.
+    });
+  }
+
   function playTrack(track: MediaTrack, nextQueue?: MediaTrack[]) {
     const resolvedQueue = nextQueue ?? queue;
     const nextIndex = resolvedQueue.findIndex((item) => item.id === track.id);
@@ -188,6 +214,7 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
     setCurrentIndex(nextIndex);
     setCurrentTrack(track);
     setIsPlaying(true);
+    persistMediaListen(track);
   }
 
   function togglePlayback() {
@@ -209,8 +236,10 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
     }
 
     setCurrentIndex(nextIndex);
-    setCurrentTrack(queue[nextIndex] ?? null);
+    const nextTrack = queue[nextIndex] ?? null;
+    setCurrentTrack(nextTrack);
     setIsPlaying(true);
+    persistMediaListen(nextTrack);
   }
 
   function playPrevious() {
@@ -231,8 +260,10 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
     }
 
     setCurrentIndex(previousIndex);
-    setCurrentTrack(queue[previousIndex] ?? null);
+    const previousTrack = queue[previousIndex] ?? null;
+    setCurrentTrack(previousTrack);
     setIsPlaying(true);
+    persistMediaListen(previousTrack);
   }
 
   function seekTo(time: number) {
@@ -256,6 +287,8 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
       currentTime,
       duration,
       volume,
+      canGoBack: currentIndex > 0 || currentTime > 4,
+      canGoForward: currentIndex >= 0 && currentIndex < queue.length - 1,
       playTrack,
       togglePlayback,
       playNext,
@@ -266,82 +299,10 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
     [currentIndex, currentTrack, currentTime, duration, isPlaying, queue, volume]
   );
 
-  const canGoBack = currentIndex > 0 || currentTime > 4;
-  const canGoForward = currentIndex >= 0 && currentIndex < queue.length - 1;
-
   return (
     <MediaPlayerContext.Provider value={contextValue}>
       {children}
       <audio ref={audioRef} preload="metadata" />
-      <div className="media-player-dock" role="region" aria-label="Global artist media player">
-        <div className="container media-player-shell">
-          <div className="media-player-summary">
-            <span className="media-player-eyebrow">Artist uploads</span>
-            <strong>{currentTrack?.title ?? 'Bottom media player ready'}</strong>
-            <span className="media-player-caption">
-              {currentTrack
-                ? `${currentTrack.artistName}${currentTrack.notes ? ` | ${currentTrack.notes}` : ''}`
-                : 'Open an artist page and tap Play in dock to keep listening while you browse.'}
-            </span>
-          </div>
-
-          <div className="media-player-controls">
-            <button
-              className="media-player-button"
-              disabled={!canGoBack}
-              onClick={playPrevious}
-              type="button"
-            >
-              Prev
-            </button>
-            <button
-              className="media-player-button media-player-button-primary"
-              disabled={!currentTrack}
-              onClick={togglePlayback}
-              type="button"
-            >
-              {isPlaying ? 'Pause' : 'Play'}
-            </button>
-            <button
-              className="media-player-button"
-              disabled={!canGoForward}
-              onClick={playNext}
-              type="button"
-            >
-              Next
-            </button>
-          </div>
-
-          <div className="media-player-progress">
-            <span>{formatTime(currentTime)}</span>
-            <input
-              aria-label="Playback position"
-              className="media-player-range"
-              max={duration || 0}
-              min={0}
-              onChange={(event) => seekTo(Number(event.target.value))}
-              step={0.1}
-              type="range"
-              value={Math.min(currentTime, duration || 0)}
-            />
-            <span>{formatTime(duration)}</span>
-          </div>
-
-          <label className="media-player-volume">
-            <span>Vol</span>
-            <input
-              aria-label="Playback volume"
-              className="media-player-range"
-              max={1}
-              min={0}
-              onChange={(event) => setVolume(Number(event.target.value))}
-              step={0.05}
-              type="range"
-              value={volume}
-            />
-          </label>
-        </div>
-      </div>
     </MediaPlayerContext.Provider>
   );
 }
@@ -354,4 +315,84 @@ export function useMediaPlayer() {
   }
 
   return context;
+}
+
+export function HeaderMediaPlayer() {
+  const {
+    currentTrack,
+    isPlaying,
+    currentTime,
+    duration,
+    volume,
+    canGoBack,
+    canGoForward,
+    togglePlayback,
+    playNext,
+    playPrevious,
+    seekTo,
+    setVolume
+  } = useMediaPlayer();
+
+  return (
+    <div className="header-player" role="region" aria-label="Global artist media player">
+      <div className="header-player-main">
+        <div className="header-player-copy">
+          <strong>{currentTrack?.title ?? 'Player standby'}</strong>
+          <span className="header-player-caption">
+            {currentTrack
+              ? `${currentTrack.artistName}${currentTrack.notes ? ` | ${currentTrack.notes}` : ''}`
+              : 'Play any artist upload to keep listening while you browse.'}
+          </span>
+        </div>
+
+        <div className="header-player-controls">
+          <button className="media-player-button" disabled={!canGoBack} onClick={playPrevious} type="button">
+            Prev
+          </button>
+          <button
+            className="media-player-button media-player-button-primary"
+            disabled={!currentTrack}
+            onClick={togglePlayback}
+            type="button"
+          >
+            {isPlaying ? 'Pause' : 'Play'}
+          </button>
+          <button className="media-player-button" disabled={!canGoForward} onClick={playNext} type="button">
+            Next
+          </button>
+        </div>
+      </div>
+
+      <div className="header-player-rail">
+        <div className="header-player-progress">
+          <span>{formatTime(currentTime)}</span>
+          <input
+            aria-label="Playback position"
+            className="media-player-range"
+            max={duration || 0}
+            min={0}
+            onChange={(event) => seekTo(Number(event.target.value))}
+            step={0.1}
+            type="range"
+            value={Math.min(currentTime, duration || 0)}
+          />
+          <span>{formatTime(duration)}</span>
+        </div>
+
+        <label className="header-player-volume">
+          <span>Vol</span>
+          <input
+            aria-label="Playback volume"
+            className="media-player-range"
+            max={1}
+            min={0}
+            onChange={(event) => setVolume(Number(event.target.value))}
+            step={0.05}
+            type="range"
+            value={volume}
+          />
+        </label>
+      </div>
+    </div>
+  );
 }

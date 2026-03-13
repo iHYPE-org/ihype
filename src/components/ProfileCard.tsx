@@ -1,8 +1,10 @@
 import Link from 'next/link';
+import { shortenHexId } from '@/lib/hex-id';
 
 type ProfileCardProfile = {
   type: 'ARTIST' | 'DJ' | 'VENUE' | 'LISTENER';
   slug: string;
+  hexId: string;
   name: string;
   city: string | null;
   country: string | null;
@@ -37,6 +39,12 @@ export function ProfileCard({ profile }: { profile: ProfileCardProfile }) {
       <div className="badge">{getProfileLabel(profile.type)}</div>
       <h3>{profile.name}</h3>
       <p className="meta">{[profile.city, profile.country].filter(Boolean).join(', ')}</p>
+      <p className="meta">
+        Share ID:{' '}
+        <Link href={`/profiles/${profile.hexId}`}>
+          {shortenHexId(profile.hexId)}
+        </Link>
+      </p>
       <p className="meta">Hype: {profile.hypeCount}</p>
       <p>{profile.bio}</p>
       <div className="tag-row">

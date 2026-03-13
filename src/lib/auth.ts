@@ -84,12 +84,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Credentials({
       credentials: {
         email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
-        otp: { label: 'Authentication code', type: 'text' },
-        challengeToken: { label: 'Challenge token', type: 'text' }
+        password: { label: 'Password', type: 'password' }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password || !credentials?.otp || !credentials?.challengeToken) {
+        if (!credentials?.email || !credentials?.password) {
           return null;
         }
 
@@ -101,49 +99,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const isValid = await bcrypt.compare(String(credentials.password), user.passwordHash);
         if (!isValid) return null;
-
-        const challenge = await db.mfaChallenge.findUnique({
-          where: { token: String(credentials.challengeToken) }
-        });
-
-        if (!challenge || challenge.userId !== user.id || challenge.expiresAt < new Date()) {
-          return null;
-        }
-
-        const encryptedSecret = user.mfaSecret ?? challenge.secretCiphertext;
-        if (!encryptedSecret) {
-          return null;
-        }
-
-        const { decryptMfaSecret, verifyTotpCode } = await import('@/lib/mfa');
-        let secret: string;
-        try {
-          secret = await decryptMfaSecret(encryptedSecret);
-        } catch {
-          return null;
-        }
-
-        const isCodeValid = await verifyTotpCode(String(credentials.otp), secret);
-        if (!isCodeValid) return null;
-
-        await db.$transaction([
-          db.mfaChallenge.deleteMany({
-            where: {
-              OR: [{ token: challenge.token }, { userId: user.id }, { expiresAt: { lt: new Date() } }]
-            }
-          }),
-          ...(user.mfaSecret
-            ? []
-            : [
-                db.user.update({
-                  where: { id: user.id },
-                  data: {
-                    mfaSecret: encryptedSecret,
-                    mfaEnabledAt: new Date()
-                  }
-                })
-              ])
-        ]);
 
         return {
           id: user.id,

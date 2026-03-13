@@ -3,13 +3,15 @@ import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { ProfileType } from '@prisma/client';
 import { db } from '@/lib/db';
+import { createHexId } from '@/lib/hex-id';
 import { slugify } from '@/lib/utils';
 
 const schema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
   password: z.string().min(8),
-  role: z.enum(['FAN', 'ARTIST', 'DJ', 'VENUE']).default('FAN')
+  role: z.enum(['FAN', 'ARTIST', 'DJ', 'VENUE']).default('FAN'),
+  acceptedArtistUploadPolicy: z.boolean().optional().default(false)
 });
 
 function getProfileType(role: 'FAN' | 'ARTIST' | 'DJ' | 'VENUE'): ProfileType {
@@ -65,9 +67,27 @@ function getProfileCopy(type: ProfileType, name: string) {
   };
 }
 
+async function generateUniqueProfileHexId() {
+  let hexId = createHexId();
+
+  while (await db.profile.findUnique({ where: { hexId } })) {
+    hexId = createHexId();
+  }
+
+  return hexId;
+}
+
 export async function POST(request: Request) {
   try {
     const body = schema.parse(await request.json());
+
+    if ((body.role === 'ARTIST' || body.role === 'DJ') && !body.acceptedArtistUploadPolicy) {
+      return NextResponse.json(
+        { error: 'Artists and promoters must accept the iHYPE artist upload and limited use license policy.' },
+        { status: 400 }
+      );
+    }
+
     const normalizedEmail = body.email.toLowerCase();
     const existing = await db.user.findUnique({ where: { email: normalizedEmail } });
 
@@ -86,6 +106,7 @@ export async function POST(request: Request) {
     });
 
     const profileType = getProfileType(body.role);
+    const hexId = await generateUniqueProfileHexId();
     const baseSlug = slugify(body.name);
     let slug = baseSlug || `profile-${user.id.slice(0, 6)}`;
     let suffix = 1;
@@ -98,6 +119,7 @@ export async function POST(request: Request) {
     const profile = await db.profile.create({
       data: {
         slug,
+        hexId,
         type: profileType,
         name: body.name,
         ownerId: user.id,
@@ -108,7 +130,8 @@ export async function POST(request: Request) {
     return NextResponse.json({
       id: user.id,
       email: user.email,
-      mfaRequired: true,
+      mfaRequired: false,
+      profileHexId: profile.hexId,
       profileSlug: profile.slug,
       profilePath: getProfilePath(profile.type, profile.slug)
     });

@@ -2,6 +2,13 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  getProfileDesignPreset,
+  getProfileDesignStyleVars,
+  normalizeProfileDesignPreset,
+  profileDesignPresets,
+  type ProfileDesignPreset
+} from '@/lib/profile-design';
 
 type EditableFieldKey =
   | 'headline'
@@ -14,7 +21,9 @@ type EditableFieldKey =
   | 'merchContent'
   | 'requestContent'
   | 'recommendContent'
-  | 'topFiveContent';
+  | 'topFiveContent'
+  | 'addressLine1'
+  | 'hoursText';
 
 type EditableField = {
   key: EditableFieldKey;
@@ -24,36 +33,120 @@ type EditableField = {
   placeholder?: string;
 };
 
+type ProfilePageInitialValues = Partial<Record<EditableFieldKey, string>> & {
+  themePreset?: string;
+  fanShareEnabled?: boolean;
+};
+
+type ProfilePageFormValues = Record<EditableFieldKey, string> & {
+  themePreset: ProfileDesignPreset;
+  fanShareEnabled: boolean;
+};
+
 type ProfilePageEditorProps = {
   profileId: string;
+  profileName: string;
   title: string;
   description: string;
   fields: EditableField[];
-  initialValues: Record<EditableFieldKey, string>;
+  initialValues: ProfilePageInitialValues;
+  enableDesignCustomizer?: boolean;
+  allowFanShareToggle?: boolean;
+  previewTabs?: string[];
+  previewGenres?: string[];
+  previewRoleLabel?: string;
 };
+
+const defaultFormValues: Record<EditableFieldKey, string> = {
+  headline: '',
+  bio: '',
+  heroImage: '',
+  aboutContent: '',
+  journalContent: '',
+  mediaContent: '',
+  tourContent: '',
+  merchContent: '',
+  requestContent: '',
+  recommendContent: '',
+  topFiveContent: '',
+  addressLine1: '',
+  hoursText: ''
+};
+
+function getPreviewSnippet(value: string, fallback: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return fallback;
+  return trimmed.length > 180 ? `${trimmed.slice(0, 177).trimEnd()}...` : trimmed;
+}
 
 export function ProfilePageEditor({
   profileId,
+  profileName,
   title,
   description,
   fields,
-  initialValues
+  initialValues,
+  enableDesignCustomizer = false,
+  allowFanShareToggle = false,
+  previewTabs = [],
+  previewGenres = [],
+  previewRoleLabel = 'PROFILE'
 }: ProfilePageEditorProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
-  const [formValues, setFormValues] = useState<Record<EditableFieldKey, string>>(initialValues);
+  const [formValues, setFormValues] = useState<ProfilePageFormValues>({
+    ...defaultFormValues,
+    ...initialValues,
+    themePreset: normalizeProfileDesignPreset(initialValues.themePreset),
+    fanShareEnabled: Boolean(initialValues.fanShareEnabled)
+  });
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const selectedPreset = getProfileDesignPreset(formValues.themePreset);
+  const aboutPreview = getPreviewSnippet(
+    formValues.aboutContent || formValues.bio,
+    'Your page preview updates live as you switch presets and edit the copy.'
+  );
+  const featurePreview = getPreviewSnippet(
+    formValues.journalContent ||
+      formValues.mediaContent ||
+      formValues.topFiveContent ||
+      formValues.tourContent ||
+      formValues.merchContent ||
+      formValues.recommendContent,
+    'Use the preset picker to try a few different moods before you save.'
+  );
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setPending(true);
     setMessage(null);
 
+    const payload: Record<string, unknown> = {
+      headline: formValues.headline,
+      bio: formValues.bio,
+      heroImage: formValues.heroImage,
+      aboutContent: formValues.aboutContent,
+      journalContent: formValues.journalContent,
+      mediaContent: formValues.mediaContent,
+      tourContent: formValues.tourContent,
+      merchContent: formValues.merchContent,
+      requestContent: formValues.requestContent,
+      recommendContent: formValues.recommendContent,
+      topFiveContent: formValues.topFiveContent,
+      addressLine1: formValues.addressLine1,
+      hoursText: formValues.hoursText
+    };
+
+    if (enableDesignCustomizer) {
+      payload.themePreset = formValues.themePreset;
+      payload.fanShareEnabled = allowFanShareToggle ? formValues.fanShareEnabled : false;
+    }
+
     const response = await fetch(`/api/profile-pages/${profileId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formValues)
+      body: JSON.stringify(payload)
     });
 
     const data = await response.json();
@@ -107,6 +200,105 @@ export function ProfilePageEditor({
               )}
             </label>
           ))}
+
+          {enableDesignCustomizer ? (
+            <section className="profile-design-customizer">
+              <div className="profile-design-customizer-header">
+                <div>
+                  <h3>Visual preset</h3>
+                  <p className="meta">Try a few looks and preview the page before you save it.</p>
+                </div>
+                <span className="badge">{selectedPreset.label}</span>
+              </div>
+
+              <div className="profile-design-preset-grid">
+                {profileDesignPresets.map((preset) => (
+                  <button
+                    className={
+                      preset.id === formValues.themePreset
+                        ? 'profile-design-preset-card active'
+                        : 'profile-design-preset-card'
+                    }
+                    key={preset.id}
+                    onClick={() => setFormValues((current) => ({ ...current, themePreset: preset.id }))}
+                    type="button"
+                  >
+                    <span>{preset.label}</span>
+                    <small>{preset.description}</small>
+                  </button>
+                ))}
+              </div>
+
+              {allowFanShareToggle ? (
+                <label className="profile-design-share-toggle">
+                  <input
+                    checked={formValues.fanShareEnabled}
+                    onChange={(event) =>
+                      setFormValues((current) => ({ ...current, fanShareEnabled: event.target.checked }))
+                    }
+                    type="checkbox"
+                  />
+                  <div>
+                    <strong>Share this customized look with fans</strong>
+                    <p className="meta">When this is on, listeners see the saved preset on your public artist page.</p>
+                  </div>
+                </label>
+              ) : null}
+
+              <div className="profile-design-preview-shell profile-design-shell" style={getProfileDesignStyleVars(formValues.themePreset)}>
+                <div className="profile-design-preview-card">
+                  <div className="profile-design-preview-hero">
+                    <div className="profile-design-preview-topline">
+                      <span className="badge">{previewRoleLabel}</span>
+                      {allowFanShareToggle && formValues.fanShareEnabled ? (
+                        <span className="profile-design-share-pill">Shared with fans</span>
+                      ) : null}
+                    </div>
+                    <strong>{profileName}</strong>
+                    <p className="profile-design-preview-headline">
+                      {formValues.headline || 'Headline preview goes here.'}
+                    </p>
+                    <p className="profile-design-preview-copy">
+                      {formValues.bio || 'This short intro updates live while you shape the final page mood.'}
+                    </p>
+                    {previewGenres.length ? (
+                      <div className="tag-row">
+                        {previewGenres.slice(0, 3).map((genre) => (
+                          <span className="tag" key={genre}>
+                            {genre}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {previewTabs.length ? (
+                    <div className="profile-design-preview-tabs">
+                      {previewTabs.map((tab, index) => (
+                        <span
+                          className={index === 0 ? 'profile-design-preview-tab active' : 'profile-design-preview-tab'}
+                          key={tab}
+                        >
+                          {tab}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  <div className="profile-design-preview-body">
+                    <article className="profile-design-preview-panel">
+                      <span className="profile-design-preview-label">About</span>
+                      <p>{aboutPreview}</p>
+                    </article>
+                    <article className="profile-design-preview-panel">
+                      <span className="profile-design-preview-label">Featured</span>
+                      <p>{featurePreview}</p>
+                    </article>
+                  </div>
+                </div>
+              </div>
+            </section>
+          ) : null}
 
           <div className="cta-row">
             <button className="button" disabled={pending} type="submit">

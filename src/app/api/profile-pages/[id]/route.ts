@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { profileAccentToneIds, profileBackdropToneIds, profileDesignPresetIds } from '@/lib/profile-design';
 
 const schema = z.object({
   headline: z.string().trim().max(140).optional(),
@@ -14,7 +15,21 @@ const schema = z.object({
   merchContent: z.string().trim().max(5000).optional(),
   requestContent: z.string().trim().max(5000).optional(),
   recommendContent: z.string().trim().max(5000).optional(),
-  topFiveContent: z.string().trim().max(5000).optional()
+  topFiveContent: z.string().trim().max(5000).optional(),
+  addressLine1: z.string().trim().max(200).optional(),
+  hoursText: z.string().trim().max(200).optional(),
+  city: z.string().trim().max(120).optional(),
+  stateRegion: z.string().trim().max(120).optional(),
+  postalCode: z.string().trim().max(32).optional(),
+  country: z.string().trim().max(120).optional(),
+  parkingDetails: z.string().trim().max(5000).optional(),
+  stayRecommendations: z.string().trim().max(5000).optional(),
+  upcomingContent: z.string().trim().max(5000).optional(),
+  previousShowHighlights: z.string().trim().max(5000).optional(),
+  themePreset: z.enum(profileDesignPresetIds).optional(),
+  themeAccentTone: z.enum(profileAccentToneIds).optional(),
+  themeBackdropTone: z.enum(profileBackdropToneIds).optional(),
+  fanShareEnabled: z.boolean().optional()
 });
 
 export async function PATCH(
@@ -56,7 +71,21 @@ export async function PATCH(
         merchContent: body.merchContent || null,
         requestContent: body.requestContent || null,
         recommendContent: body.recommendContent || null,
-        topFiveContent: body.topFiveContent || null
+        topFiveContent: body.topFiveContent || null,
+        addressLine1: body.addressLine1 || null,
+        hoursText: body.hoursText || null,
+        city: body.city || null,
+        stateRegion: body.stateRegion || null,
+        postalCode: body.postalCode || null,
+        country: body.country || null,
+        parkingDetails: body.parkingDetails || null,
+        stayRecommendations: body.stayRecommendations || null,
+        upcomingContent: body.upcomingContent || null,
+        previousShowHighlights: body.previousShowHighlights || null,
+        themePreset: body.themePreset ?? undefined,
+        themeAccentTone: body.themeAccentTone ?? undefined,
+        themeBackdropTone: body.themeBackdropTone ?? undefined,
+        fanShareEnabled: body.fanShareEnabled ?? undefined
       }
     });
 

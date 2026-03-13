@@ -2,10 +2,10 @@ import './globals.css';
 import Link from 'next/link';
 import { ReactNode } from 'react';
 import { auth, signOut } from '@/lib/auth';
-import { MediaPlayerProvider } from '@/components/GlobalMediaPlayer';
+import { HeaderMediaPlayer, MediaPlayerProvider } from '@/components/GlobalMediaPlayer';
 
 export const metadata = {
-  title: 'ihype.org',
+  title: 'iHYPE.org',
   description: 'Streaming-first music discovery for artists, promoters, venues, and listeners.'
 };
 
@@ -18,15 +18,14 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <MediaPlayerProvider>
           <header className="nav">
             <div className="container nav-inner">
-              <Link href="/" className="brand">
-                ihype<span>.org</span>
+              <Link href="/" className="nav-logo nav-logo-left" aria-label="iHYPE.org home">
+                <span className="nav-logo-word">iHYPE</span>
+                <span className="nav-logo-dot">.org</span>
               </Link>
-              <nav className="nav-links nav-links-primary">
-                <Link href="/artists">Artists</Link>
-                <Link href="/promoters">Promoters</Link>
-                <Link href="/venues">Venues</Link>
-              </nav>
-              <div className="nav-links nav-links-auth">
+              <div className="nav-player-slot nav-player-slot-centered">
+                <HeaderMediaPlayer />
+              </div>
+              <div className="nav-links nav-links-auth nav-links-compact nav-auth-slot">
                 {session?.user ? (
                   <>
                     <Link href="/dashboard">Dashboard</Link>
@@ -54,7 +53,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           </header>
           {children}
           <footer className="footer container">
-            ihype.org production starter. Streaming-first music discovery, because the internet apparently needed more
+            iHYPE.org production starter. Streaming-first music discovery, because the internet apparently needed more
             late-night dashboards. <Link href="/launch-readiness">Launch readiness</Link>{' '}
             <Link href="/integrity">Integrity</Link>
           </footer>

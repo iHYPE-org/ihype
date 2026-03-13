@@ -6,6 +6,9 @@ import { ShowCard } from '@/components/ShowCard';
 import { HypeButton } from '@/components/HypeButton';
 import { ProfilePageEditor } from '@/components/ProfilePageEditor';
 import { ListenerAvatarCreator } from '@/components/ListenerAvatarCreator';
+import { ListenerVenueMap } from '@/components/ListenerVenueMap';
+import { getProfileDesignStyleVars } from '@/lib/profile-design';
+import { detectRequestLocation } from '@/lib/request-location';
 
 const listenerSections = ['about', 'upcoming', 'previous', 'top5', 'stats'] as const;
 
@@ -48,7 +51,7 @@ export default async function ListenerPage({
   const profile = await db.profile.findUnique({ where: { slug } });
   if (!profile || profile.type !== 'LISTENER') return notFound();
 
-  const [hypedShows, sentRecommendations] = await Promise.all([
+  const [hypedShows, sentRecommendations, viewerLocation, venues] = await Promise.all([
     db.hypeEvent.findMany({
       where: { userId: profile.ownerId },
       include: {
@@ -64,6 +67,28 @@ export default async function ListenerPage({
     db.venueConnectionRequest.findMany({
       where: { requesterId: profile.ownerId },
       orderBy: { createdAt: 'desc' }
+    }),
+    detectRequestLocation(),
+    db.profile.findMany({
+      where: {
+        type: 'VENUE',
+        latitude: { not: null },
+        longitude: { not: null }
+      },
+      orderBy: [{ verified: 'desc' }, { name: 'asc' }],
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        addressLine1: true,
+        hoursText: true,
+        city: true,
+        stateRegion: true,
+        country: true,
+        postalCode: true,
+        latitude: true,
+        longitude: true
+      }
     })
   ]);
 
@@ -87,9 +112,10 @@ export default async function ListenerPage({
         backgroundImage: `linear-gradient(rgba(7, 11, 20, 0.45), rgba(7, 11, 20, 0.88)), url(${profile.heroImage})`
       }
     : undefined;
+  const pageDesignStyle = getProfileDesignStyleVars(profile.themePreset);
 
   return (
-    <main className="container section">
+    <main className="container section profile-design-shell" style={pageDesignStyle}>
       <header className="artist-banner panel" style={bannerStyle}>
         <div className="profile-banner-row">
           {profile.avatarImage ? (
@@ -103,6 +129,7 @@ export default async function ListenerPage({
             <p className="artist-headline">{profile.headline || 'Capture the shows, artists, and moments you keep coming back to.'}</p>
             <p className="subtitle">{profile.bio}</p>
             <p className="meta">{[profile.city, profile.country].filter(Boolean).join(', ')}</p>
+            <p className="meta">Share ID: <Link href={`/profiles/${profile.hexId}`}>{profile.hexId}</Link></p>
             <div className="tag-row">{profile.genres.map((genre) => <span key={genre} className="tag">{genre}</span>)}</div>
             <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} entityLabel="listener page" />
           </div>
@@ -119,6 +146,7 @@ export default async function ListenerPage({
           />
           <ProfilePageEditor
             description="Edit your listener banner plus the About and Top 5 sections."
+            enableDesignCustomizer
             fields={[
               { key: 'headline', label: 'Headline banner', placeholder: 'How should your page feel?' },
               { key: 'heroImage', label: 'Banner image URL', kind: 'url', placeholder: 'https://example.com/listener.jpg' },
@@ -137,13 +165,21 @@ export default async function ListenerPage({
               merchContent: profile.merchContent ?? '',
               requestContent: profile.requestContent ?? '',
               recommendContent: profile.recommendContent ?? '',
-              topFiveContent: profile.topFiveContent ?? ''
+              topFiveContent: profile.topFiveContent ?? '',
+              themePreset: profile.themePreset,
+              fanShareEnabled: profile.fanShareEnabled
             }}
+            previewGenres={profile.genres}
+            previewRoleLabel="LISTENER"
+            previewTabs={['About', 'Upcoming', 'Previous', 'Top 5', 'Stats']}
             profileId={profile.id}
+            profileName={profile.name}
             title="Customize your listener page"
           />
         </>
       ) : null}
+
+      <ListenerVenueMap venues={venues} viewerLocation={viewerLocation} />
 
       <section className="section">
         <nav className="section-tabs" aria-label="Listener page sections">

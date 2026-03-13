@@ -7,9 +7,21 @@ import {
   ShowStatus
 } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { parseArtistMediaContent } from '../src/lib/media';
 import { calculateTicketOrderPayouts, PROMOTER_POOL_PERCENT } from '../src/lib/ticketing';
 
 const prisma = new PrismaClient();
+const profileHexIds = {
+  neonHarbor: '0x8f19c2a47d3b55e1d0aa41b7f32c9d6e',
+  djEcho: '0x1ae44d83f0c297b5e6d24a09c3b7156f',
+  novaPulse: '0x75c1e4ab28df90b6317ac85e4f29d0c2',
+  nightOwl: '0x2d6f8ab4109ce57d33baf624e19c7a50',
+  pulseScout: '0x9cb34fe2a7815d0e64c8b2f1d7aa3c45',
+  midwestMove: '0x4e1dc9f07ab32568c2d4ef9a3107b85d',
+  lakefrontFrequency: '0xb8a20c6ef39d5174ac2f807e1b6d43c9',
+  southLoopSignal: '0x63df1b49ac72e8055d1af40bc98e2673',
+  riverwestEcho: '0xce9041ab56d2f3e87c0b1a64d829f75e'
+} as const;
 
 async function upsertDemoUser({
   email,
@@ -63,7 +75,7 @@ async function main() {
 
   const venueOwner = await upsertDemoUser({
     email: 'venue@ihype.org',
-    legacyEmail: 'venue@hypewave.fm',
+    legacyEmail: 'venue@ihype.org',
     name: 'Venue Owner',
     passwordHash,
     role: Role.VENUE
@@ -71,7 +83,7 @@ async function main() {
 
   const djOwner = await upsertDemoUser({
     email: 'dj@ihype.org',
-    legacyEmail: 'dj@hypewave.fm',
+    legacyEmail: 'dj@ihype.org',
     name: 'DJ Echo',
     passwordHash,
     role: Role.DJ
@@ -79,7 +91,7 @@ async function main() {
 
   const artistOwner = await upsertDemoUser({
     email: 'artist@ihype.org',
-    legacyEmail: 'artist@hypewave.fm',
+    legacyEmail: 'artist@ihype.org',
     name: 'Nova Pulse',
     passwordHash,
     role: Role.ARTIST
@@ -87,7 +99,7 @@ async function main() {
 
   const fan = await upsertDemoUser({
     email: 'fan@ihype.org',
-    legacyEmail: 'fan@hypewave.fm',
+    legacyEmail: 'fan@ihype.org',
     name: 'Night Owl',
     passwordHash,
     role: Role.FAN
@@ -95,7 +107,7 @@ async function main() {
 
   const pulseScoutFan = await upsertDemoUser({
     email: 'pulse-scout@ihype.org',
-    legacyEmail: 'pulse-scout@hypewave.fm',
+    legacyEmail: 'pulse-scout@ihype.org',
     name: 'Pulse Scout',
     passwordHash,
     role: Role.FAN
@@ -103,7 +115,7 @@ async function main() {
 
   const midwestMoveFan = await upsertDemoUser({
     email: 'midwest-move@ihype.org',
-    legacyEmail: 'midwest-move@hypewave.fm',
+    legacyEmail: 'midwest-move@ihype.org',
     name: 'Midwest Move',
     passwordHash,
     role: Role.FAN
@@ -111,7 +123,7 @@ async function main() {
 
   const chicagoVenueOwner = await upsertDemoUser({
     email: 'chi-venue@ihype.org',
-    legacyEmail: 'chi-venue@hypewave.fm',
+    legacyEmail: 'chi-venue@ihype.org',
     name: 'Lakefront Frequency',
     passwordHash,
     role: Role.VENUE
@@ -119,7 +131,7 @@ async function main() {
 
   const chicagoArtistOwner = await upsertDemoUser({
     email: 'chi-artist@ihype.org',
-    legacyEmail: 'chi-artist@hypewave.fm',
+    legacyEmail: 'chi-artist@ihype.org',
     name: 'South Loop Signal',
     passwordHash,
     role: Role.ARTIST
@@ -127,7 +139,7 @@ async function main() {
 
   const regionalPromoterOwner = await upsertDemoUser({
     email: 'regional-promoter@ihype.org',
-    legacyEmail: 'regional-promoter@hypewave.fm',
+    legacyEmail: 'regional-promoter@ihype.org',
     name: 'Riverwest Echo',
     passwordHash,
     role: Role.DJ
@@ -136,18 +148,28 @@ async function main() {
   const venue = await prisma.profile.upsert({
     where: { slug: 'neon-harbor' },
     update: {
+      hexId: profileHexIds.neonHarbor,
       type: ProfileType.VENUE,
       name: 'Neon Harbor',
       headline: 'Brooklyn warehouse energy with room for the next breakout set.',
       bio: 'Warehouse venue streaming underground sets every weekend.',
       aboutContent: 'Neon Harbor is a raw room tuned for late arrivals, all-night sets, and artists who want the crowd close enough to feel every build.',
       requestContent: 'Recommend artists who can own a warehouse room, bring a real live concept, or fit a future livestream bill.',
+      parkingDetails: 'Street parking opens up after 7PM, plus a paid lot on Bogart with rideshare pickup at the south gate.',
+      stayRecommendations: 'For touring artists, stay near Wyckoff or Jefferson for quick post-show food, late-night coffee, and easy car service pickups.',
+      upcomingContent: 'Upcoming nights lean toward warehouse live sets, visual-heavy headline rooms, and crossover bills that can turn stream hype into a packed floor.',
+      previousShowHighlights: 'Past runs here have sold through late, stretched into sunrise, and turned smaller livestreams into repeat in-room bookings.',
+      addressLine1: '41 Bogart Street',
+      hoursText: 'Thu-Sat 8PM-4AM',
       city: 'Brooklyn',
       stateRegion: 'NY',
       country: 'USA',
       postalCode: '11206',
       latitude: 40.7043,
       longitude: -73.9415,
+      themePreset: 'midnight-neon',
+      themeAccentTone: 'laser-rose',
+      themeBackdropTone: 'warehouse-smoke',
       genres: ['House', 'Techno'],
       verified: true,
       ownerId: venueOwner.id,
@@ -155,18 +177,28 @@ async function main() {
     },
     create: {
       slug: 'neon-harbor',
+      hexId: profileHexIds.neonHarbor,
       type: ProfileType.VENUE,
       name: 'Neon Harbor',
       headline: 'Brooklyn warehouse energy with room for the next breakout set.',
       bio: 'Warehouse venue streaming underground sets every weekend.',
       aboutContent: 'Neon Harbor is a raw room tuned for late arrivals, all-night sets, and artists who want the crowd close enough to feel every build.',
       requestContent: 'Recommend artists who can own a warehouse room, bring a real live concept, or fit a future livestream bill.',
+      parkingDetails: 'Street parking opens up after 7PM, plus a paid lot on Bogart with rideshare pickup at the south gate.',
+      stayRecommendations: 'For touring artists, stay near Wyckoff or Jefferson for quick post-show food, late-night coffee, and easy car service pickups.',
+      upcomingContent: 'Upcoming nights lean toward warehouse live sets, visual-heavy headline rooms, and crossover bills that can turn stream hype into a packed floor.',
+      previousShowHighlights: 'Past runs here have sold through late, stretched into sunrise, and turned smaller livestreams into repeat in-room bookings.',
+      addressLine1: '41 Bogart Street',
+      hoursText: 'Thu-Sat 8PM-4AM',
       city: 'Brooklyn',
       stateRegion: 'NY',
       country: 'USA',
       postalCode: '11206',
       latitude: 40.7043,
       longitude: -73.9415,
+      themePreset: 'midnight-neon',
+      themeAccentTone: 'laser-rose',
+      themeBackdropTone: 'warehouse-smoke',
       genres: ['House', 'Techno'],
       verified: true,
       ownerId: venueOwner.id,
@@ -177,6 +209,7 @@ async function main() {
   const dj = await prisma.profile.upsert({
     where: { slug: 'dj-echo' },
     update: {
+      hexId: profileHexIds.djEcho,
       type: ProfileType.DJ,
       name: 'DJ Echo',
       headline: 'Promoting the kind of nights that linger after the lights come up.',
@@ -197,6 +230,7 @@ async function main() {
     },
     create: {
       slug: 'dj-echo',
+      hexId: profileHexIds.djEcho,
       type: ProfileType.DJ,
       name: 'DJ Echo',
       headline: 'Promoting the kind of nights that linger after the lights come up.',
@@ -220,6 +254,7 @@ async function main() {
   const artist = await prisma.profile.upsert({
     where: { slug: 'nova-pulse' },
     update: {
+      hexId: profileHexIds.novaPulse,
       type: ProfileType.ARTIST,
       name: 'Nova Pulse',
       headline: 'Modular romance, skyline hooks, and a headline banner built for the next run.',
@@ -236,6 +271,8 @@ async function main() {
       postalCode: '90012',
       latitude: 34.0537,
       longitude: -118.2428,
+      themePreset: 'fan-club',
+      fanShareEnabled: true,
       genres: ['Synth Pop', 'Indie Electronic'],
       songUploadCount: 19,
       verified: true,
@@ -244,6 +281,7 @@ async function main() {
     },
     create: {
       slug: 'nova-pulse',
+      hexId: profileHexIds.novaPulse,
       type: ProfileType.ARTIST,
       name: 'Nova Pulse',
       headline: 'Modular romance, skyline hooks, and a headline banner built for the next run.',
@@ -260,6 +298,8 @@ async function main() {
       postalCode: '90012',
       latitude: 34.0537,
       longitude: -118.2428,
+      themePreset: 'fan-club',
+      fanShareEnabled: true,
       genres: ['Synth Pop', 'Indie Electronic'],
       songUploadCount: 19,
       verified: true,
@@ -271,6 +311,7 @@ async function main() {
   const listener = await prisma.profile.upsert({
     where: { slug: 'night-owl' },
     update: {
+      hexId: profileHexIds.nightOwl,
       type: ProfileType.LISTENER,
       name: 'Night Owl',
       headline: 'Collecting favorite sets, favorite rooms, and the artists who keep the week alive.',
@@ -283,12 +324,14 @@ async function main() {
       postalCode: '10003',
       latitude: 40.7314,
       longitude: -73.9897,
+      themePreset: 'silver-signal',
       genres: ['Indie Electronic', 'Techno', 'Synth Pop'],
       ownerId: fan.id,
       hypeCount: 12
     },
     create: {
       slug: 'night-owl',
+      hexId: profileHexIds.nightOwl,
       type: ProfileType.LISTENER,
       name: 'Night Owl',
       headline: 'Collecting favorite sets, favorite rooms, and the artists who keep the week alive.',
@@ -301,6 +344,7 @@ async function main() {
       postalCode: '10003',
       latitude: 40.7314,
       longitude: -73.9897,
+      themePreset: 'silver-signal',
       genres: ['Indie Electronic', 'Techno', 'Synth Pop'],
       ownerId: fan.id,
       hypeCount: 12
@@ -310,6 +354,7 @@ async function main() {
   const pulseScout = await prisma.profile.upsert({
     where: { slug: 'pulse-scout' },
     update: {
+      hexId: profileHexIds.pulseScout,
       type: ProfileType.LISTENER,
       name: 'Pulse Scout',
       headline: 'Tracking the next city that starts bubbling before everybody else notices.',
@@ -328,6 +373,7 @@ async function main() {
     },
     create: {
       slug: 'pulse-scout',
+      hexId: profileHexIds.pulseScout,
       type: ProfileType.LISTENER,
       name: 'Pulse Scout',
       headline: 'Tracking the next city that starts bubbling before everybody else notices.',
@@ -349,6 +395,7 @@ async function main() {
   const midwestMove = await prisma.profile.upsert({
     where: { slug: 'midwest-move' },
     update: {
+      hexId: profileHexIds.midwestMove,
       type: ProfileType.LISTENER,
       name: 'Midwest Move',
       headline: 'Following the rooms, routes, and crossover bills that connect the region.',
@@ -367,6 +414,7 @@ async function main() {
     },
     create: {
       slug: 'midwest-move',
+      hexId: profileHexIds.midwestMove,
       type: ProfileType.LISTENER,
       name: 'Midwest Move',
       headline: 'Following the rooms, routes, and crossover bills that connect the region.',
@@ -388,18 +436,28 @@ async function main() {
   const chicagoVenue = await prisma.profile.upsert({
     where: { slug: 'lakefront-frequency' },
     update: {
+      hexId: profileHexIds.lakefrontFrequency,
       type: ProfileType.VENUE,
       name: 'Lakefront Frequency',
       headline: 'Chicago open-air energy with enough room for a headline livestream and a neighborhood crowd.',
       bio: 'Chicago venue profile for riverfront sets, outdoor broadcasts, and city-scale launch nights.',
       aboutContent: 'Lakefront Frequency is built for skyline broadcasts, dance-floor airflow, and Chicago crowds that show up early when the right signal hits.',
       requestContent: 'Recommend artists who can hold an outdoor room, travel well across the Midwest, and convert stream momentum into a real booking.',
+      parkingDetails: 'Validated parking is available in the lower Riverwalk deck, with overflow rideshare pickup on Columbus just after load-out.',
+      stayRecommendations: 'Out-of-town crews usually stay near the Loop or River North for quick access, post-show food, and morning train connections.',
+      upcomingContent: 'The calendar is stacked with riverfront live sets, skyline broadcasts, and Midwest crossover bills built for both locals and travelers.',
+      previousShowHighlights: 'Previous nights here have mixed outdoor energy, hometown lineups, and big visual moments that translate well from stream to ticket sales.',
+      addressLine1: '205 E Riverwalk Plaza',
+      hoursText: 'Fri-Sun 6PM-1AM',
       city: 'Chicago',
       stateRegion: 'IL',
       country: 'USA',
       postalCode: '60601',
       latitude: 41.8853,
       longitude: -87.6216,
+      themePreset: 'sunset-paper',
+      themeAccentTone: 'sunset-gold',
+      themeBackdropTone: 'city-lights',
       genres: ['House', 'Indie Electronic'],
       verified: true,
       ownerId: chicagoVenueOwner.id,
@@ -407,18 +465,28 @@ async function main() {
     },
     create: {
       slug: 'lakefront-frequency',
+      hexId: profileHexIds.lakefrontFrequency,
       type: ProfileType.VENUE,
       name: 'Lakefront Frequency',
       headline: 'Chicago open-air energy with enough room for a headline livestream and a neighborhood crowd.',
       bio: 'Chicago venue profile for riverfront sets, outdoor broadcasts, and city-scale launch nights.',
       aboutContent: 'Lakefront Frequency is built for skyline broadcasts, dance-floor airflow, and Chicago crowds that show up early when the right signal hits.',
       requestContent: 'Recommend artists who can hold an outdoor room, travel well across the Midwest, and convert stream momentum into a real booking.',
+      parkingDetails: 'Validated parking is available in the lower Riverwalk deck, with overflow rideshare pickup on Columbus just after load-out.',
+      stayRecommendations: 'Out-of-town crews usually stay near the Loop or River North for quick access, post-show food, and morning train connections.',
+      upcomingContent: 'The calendar is stacked with riverfront live sets, skyline broadcasts, and Midwest crossover bills built for both locals and travelers.',
+      previousShowHighlights: 'Previous nights here have mixed outdoor energy, hometown lineups, and big visual moments that translate well from stream to ticket sales.',
+      addressLine1: '205 E Riverwalk Plaza',
+      hoursText: 'Fri-Sun 6PM-1AM',
       city: 'Chicago',
       stateRegion: 'IL',
       country: 'USA',
       postalCode: '60601',
       latitude: 41.8853,
       longitude: -87.6216,
+      themePreset: 'sunset-paper',
+      themeAccentTone: 'sunset-gold',
+      themeBackdropTone: 'city-lights',
       genres: ['House', 'Indie Electronic'],
       verified: true,
       ownerId: chicagoVenueOwner.id,
@@ -429,6 +497,7 @@ async function main() {
   const chicagoArtist = await prisma.profile.upsert({
     where: { slug: 'south-loop-signal' },
     update: {
+      hexId: profileHexIds.southLoopSignal,
       type: ProfileType.ARTIST,
       name: 'South Loop Signal',
       headline: 'Chicago-built club pressure with enough melody to travel past the skyline.',
@@ -445,6 +514,8 @@ async function main() {
       postalCode: '60605',
       latitude: 41.8679,
       longitude: -87.6243,
+      themePreset: 'sunset-paper',
+      fanShareEnabled: true,
       genres: ['House', 'Electronic'],
       songUploadCount: 11,
       verified: true,
@@ -453,6 +524,7 @@ async function main() {
     },
     create: {
       slug: 'south-loop-signal',
+      hexId: profileHexIds.southLoopSignal,
       type: ProfileType.ARTIST,
       name: 'South Loop Signal',
       headline: 'Chicago-built club pressure with enough melody to travel past the skyline.',
@@ -469,6 +541,8 @@ async function main() {
       postalCode: '60605',
       latitude: 41.8679,
       longitude: -87.6243,
+      themePreset: 'sunset-paper',
+      fanShareEnabled: true,
       genres: ['House', 'Electronic'],
       songUploadCount: 11,
       verified: true,
@@ -480,6 +554,7 @@ async function main() {
   const regionalPromoter = await prisma.profile.upsert({
     where: { slug: 'riverwest-echo' },
     update: {
+      hexId: profileHexIds.riverwestEcho,
       type: ProfileType.DJ,
       name: 'Riverwest Echo',
       headline: 'Milwaukee promoter energy with enough reach to move a Midwest weekend.',
@@ -500,6 +575,7 @@ async function main() {
     },
     create: {
       slug: 'riverwest-echo',
+      hexId: profileHexIds.riverwestEcho,
       type: ProfileType.DJ,
       name: 'Riverwest Echo',
       headline: 'Milwaukee promoter energy with enough reach to move a Midwest weekend.',
@@ -923,6 +999,70 @@ async function main() {
 
   await prisma.ticketOrder.createMany({
     data: orderDefinitions
+  });
+
+  await prisma.mediaListen.deleteMany({
+    where: {
+      userId: {
+        in: [fan.id, pulseScoutFan.id, midwestMoveFan.id]
+      }
+    }
+  });
+
+  const novaEntries = parseArtistMediaContent(artist.mediaContent).entries;
+  const chicagoEntries = parseArtistMediaContent(chicagoArtist.mediaContent).entries;
+
+  await prisma.mediaListen.createMany({
+    data: [
+      {
+        userId: fan.id,
+        mediaId: novaEntries[0]?.hexId ?? '0x-demo-nova-1',
+        title: novaEntries[0]?.title ?? 'Afterglow Demo',
+        mediaUrl: novaEntries[0]?.url ?? 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+        artistName: artist.name,
+        artistProfileSlug: artist.slug
+      },
+      {
+        userId: fan.id,
+        mediaId: novaEntries[1]?.hexId ?? '0x-demo-nova-2',
+        title: novaEntries[1]?.title ?? 'Cityline Rework',
+        mediaUrl: novaEntries[1]?.url ?? 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+        artistName: artist.name,
+        artistProfileSlug: artist.slug
+      },
+      {
+        userId: fan.id,
+        mediaId: chicagoEntries[0]?.hexId ?? '0x-demo-south-loop-1',
+        title: chicagoEntries[0]?.title ?? 'Lakefront Pressure',
+        mediaUrl: chicagoEntries[0]?.url ?? 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+        artistName: chicagoArtist.name,
+        artistProfileSlug: chicagoArtist.slug
+      },
+      {
+        userId: pulseScoutFan.id,
+        mediaId: chicagoEntries[0]?.hexId ?? '0x-demo-south-loop-1',
+        title: chicagoEntries[0]?.title ?? 'Lakefront Pressure',
+        mediaUrl: chicagoEntries[0]?.url ?? 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+        artistName: chicagoArtist.name,
+        artistProfileSlug: chicagoArtist.slug
+      },
+      {
+        userId: pulseScoutFan.id,
+        mediaId: chicagoEntries[1]?.hexId ?? '0x-demo-south-loop-2',
+        title: chicagoEntries[1]?.title ?? 'Red Line Lights',
+        mediaUrl: chicagoEntries[1]?.url ?? 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
+        artistName: chicagoArtist.name,
+        artistProfileSlug: chicagoArtist.slug
+      },
+      {
+        userId: midwestMoveFan.id,
+        mediaId: novaEntries[1]?.hexId ?? '0x-demo-nova-2',
+        title: novaEntries[1]?.title ?? 'Cityline Rework',
+        mediaUrl: novaEntries[1]?.url ?? 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+        artistName: artist.name,
+        artistProfileSlug: artist.slug
+      }
+    ]
   });
 }
 

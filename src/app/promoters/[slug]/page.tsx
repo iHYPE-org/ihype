@@ -2,9 +2,11 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { parseArtistMediaContent } from '@/lib/media';
 import { ShowCard } from '@/components/ShowCard';
 import { HypeButton } from '@/components/HypeButton';
 import { ProfilePageEditor } from '@/components/ProfilePageEditor';
+import { PromoterShowCreationTool } from '@/components/PromoterShowCreationTool';
 
 const promoterSections = ['about', 'upcoming', 'previous', 'recommend', 'stats'] as const;
 
@@ -28,6 +30,14 @@ function formatRequestStatus(value: 'PENDING' | 'BOOKED' | 'DISMISSED') {
   return 'Pending';
 }
 
+function formatShowDate(value: Date) {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  }).format(value);
+}
+
 export default async function PromoterPage({
   params,
   searchParams
@@ -42,24 +52,51 @@ export default async function PromoterPage({
 
   const profile = await db.profile.findUnique({ where: { slug } });
   if (!profile || profile.type !== 'DJ') return notFound();
+  const isOwner = session?.user?.id === profile.ownerId;
 
-  const [shows, sentRecommendations] = await Promise.all([
+  const [shows, sentRecommendations, artistProfiles] = await Promise.all([
     db.show.findMany({
-      where: { headlinerProfileId: profile.id },
-      include: { venueProfile: true, headlinerProfile: true },
+      where: { promoterProfileId: profile.id },
+      include: { venueProfile: true, headlinerProfile: true, promoterProfile: true },
       orderBy: { startsAt: 'asc' }
     }),
     db.venueConnectionRequest.findMany({
       where: { requesterId: profile.ownerId, requesterType: 'PROMOTER' },
       include: { venueProfile: true, artistProfile: true },
       orderBy: { createdAt: 'desc' }
-    })
+    }),
+    isOwner
+      ? db.profile.findMany({
+          where: {
+            type: 'ARTIST',
+            mediaContent: { not: null }
+          },
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            heroImage: true,
+            mediaContent: true
+          },
+          orderBy: { name: 'asc' }
+        })
+      : Promise.resolve([])
   ]);
 
   const now = new Date();
   const upcomingShows = shows.filter((show) => show.status === 'LIVE' || show.startsAt >= now);
   const previousShows = shows.filter((show) => show.status === 'ENDED' || (show.startsAt < now && show.status !== 'LIVE'));
-  const isOwner = session?.user?.id === profile.ownerId;
+  const recentShows = [...shows].sort((left, right) => right.startsAt.getTime() - left.startsAt.getTime()).slice(0, 6);
+  const recentRecommendations = sentRecommendations.slice(0, 6);
+  const artistLibraries = artistProfiles
+    .map((artistProfile) => ({
+      profileId: artistProfile.id,
+      slug: artistProfile.slug,
+      name: artistProfile.name,
+      heroImage: artistProfile.heroImage,
+      entries: parseArtistMediaContent(artistProfile.mediaContent).entries
+    }))
+    .filter((artistProfile) => artistProfile.entries.length > 0);
   const bannerStyle = profile.heroImage
     ? {
         backgroundImage: `linear-gradient(rgba(7, 11, 20, 0.45), rgba(7, 11, 20, 0.88)), url(${profile.heroImage})`
@@ -75,6 +112,7 @@ export default async function PromoterPage({
           <p className="artist-headline">{profile.headline || 'Set the tone for the nights, talent, and scenes you champion.'}</p>
           <p className="subtitle">{profile.bio}</p>
           <p className="meta">{[profile.city, profile.country].filter(Boolean).join(', ')}</p>
+          <p className="meta">Share ID: <Link href={`/profiles/${profile.hexId}`}>{profile.hexId}</Link></p>
           <div className="tag-row">{profile.genres.map((genre) => <span key={genre} className="tag">{genre}</span>)}</div>
           <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} entityLabel="promoter" />
         </div>
@@ -104,8 +142,73 @@ export default async function PromoterPage({
             topFiveContent: profile.topFiveContent ?? ''
           }}
           profileId={profile.id}
+          profileName={profile.name}
           title="Customize your promoter page"
         />
+      ) : null}
+
+      {isOwner ? (
+        <section className="section promoter-owner-modules">
+          <PromoterShowCreationTool
+            artists={artistLibraries}
+            initialPromoterProfileId={profile.id}
+            promoters={[{ profileId: profile.id, name: profile.name, slug: profile.slug }]}
+          />
+
+          <div className="panel promoter-owner-history-panel">
+            <div className="promoter-owner-module-head">
+              <div className="badge">History</div>
+              <h2>Recent promoter activity</h2>
+              <p className="meta">Track the latest shows and venue recommendations without burying them inside the page tabs.</p>
+            </div>
+
+            <div className="promoter-history-grid">
+              <div className="promoter-history-card">
+                <div className="promoter-history-card-head">
+                  <h3>Shows</h3>
+                  <span className="meta">{shows.length} total</span>
+                </div>
+                {recentShows.length ? (
+                  <div className="promoter-history-list">
+                    {recentShows.map((show) => (
+                      <article className="promoter-history-item" key={show.id}>
+                        <div>
+                          <strong>{show.title}</strong>
+                          <p className="meta">{formatShowDate(show.startsAt)}</p>
+                        </div>
+                        <span className="tag">{show.status}</span>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="empty">No show history yet.</div>
+                )}
+              </div>
+
+              <div className="promoter-history-card">
+                <div className="promoter-history-card-head">
+                  <h3>Recommendations</h3>
+                  <span className="meta">{sentRecommendations.length} sent</span>
+                </div>
+                {recentRecommendations.length ? (
+                  <div className="promoter-history-list">
+                    {recentRecommendations.map((request) => (
+                      <article className="promoter-history-item" key={request.id}>
+                        <div>
+                          <strong>{request.venueProfile.name}</strong>
+                          <p className="meta">{request.artistProfile?.name ?? request.artistName}</p>
+                        </div>
+                        <span className="tag">{formatRequestStatus(request.status)}</span>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="empty">No recommendation history yet.</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
       ) : null}
 
       <section className="section">
@@ -151,36 +254,6 @@ export default async function PromoterPage({
             <>
               <h2>Recommend</h2>
               <div className="artist-copy">{profile.recommendContent || 'Use this section to explain the rooms, artists, and collaborations you like to champion.'}</div>
-
-              {isOwner ? (
-                <div className="request-history">
-                  <h3>Your venue recommendations</h3>
-                  {sentRecommendations.length ? (
-                    <table className="table">
-                      <thead>
-                        <tr>
-                          <th>Venue</th>
-                          <th>Artist</th>
-                          <th>Status</th>
-                          <th>Notify</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {sentRecommendations.map((request) => (
-                          <tr key={request.id}>
-                            <td>{request.venueProfile.name}</td>
-                            <td>{request.artistProfile?.name ?? request.artistName}</td>
-                            <td>{formatRequestStatus(request.status)}</td>
-                            <td>{request.notifyOnBooking ? 'Yes' : 'No'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  ) : (
-                    <div className="empty">You have not sent any venue recommendations yet.</div>
-                  )}
-                </div>
-              ) : null}
             </>
           ) : null}
 

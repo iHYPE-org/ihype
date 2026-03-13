@@ -1,4 +1,4 @@
-# HypeWave Codex project instructions
+# iHYPE Codex project instructions
 
 ## Project goal
 This repository contains a production-oriented Next.js app for hosting artist, DJ, and venue pages with live streaming shows, account support, hype voting, Prisma/Postgres data storage, and Vercel deployment config.

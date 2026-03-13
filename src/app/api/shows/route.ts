@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { sortShowsForFeed } from '@/lib/integrity';
+import { showProductionPlanSchema } from '@/lib/show-composer';
 import { PROMOTER_POOL_PERCENT, validateTicketSplit } from '@/lib/ticketing';
 import { slugify } from '@/lib/utils';
 
@@ -19,7 +20,8 @@ const schema = z.object({
   ticketCapacity: z.coerce.number().int().positive().optional(),
   venuePayoutPercent: z.coerce.number().int().min(0).max(95).optional(),
   artistPayoutPercent: z.coerce.number().int().min(0).max(95).optional(),
-  tags: z.array(z.string()).default([])
+  tags: z.array(z.string()).default([]),
+  productionPlan: showProductionPlanSchema.optional()
 });
 
 export async function GET() {
@@ -74,6 +76,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Promoter must be a promoter profile' }, { status: 400 });
     }
 
+    if (body.promoterProfileId && promoterProfile?.ownerId !== session.user.id && !body.venueProfileId) {
+      return NextResponse.json({ error: 'Only the promoter owner can create streaming shows from this promoter page' }, { status: 403 });
+    }
+
+    if (body.productionPlan && !body.promoterProfileId) {
+      return NextResponse.json({ error: 'A promoter profile is required when saving a production plan' }, { status: 400 });
+    }
+
     if (body.isTicketed) {
       if (!body.ticketPriceCents || !body.ticketCapacity) {
         return NextResponse.json({ error: 'Ticket price and capacity are required for ticketed events' }, { status: 400 });
@@ -121,7 +131,8 @@ export async function POST(request: Request) {
         ticketCapacity: body.isTicketed ? body.ticketCapacity : null,
         venuePayoutPercent: body.isTicketed ? body.venuePayoutPercent : null,
         artistPayoutPercent: body.isTicketed ? body.artistPayoutPercent : null,
-        promoterPayoutPercent: PROMOTER_POOL_PERCENT
+        promoterPayoutPercent: PROMOTER_POOL_PERCENT,
+        productionPlan: body.productionPlan
       }
     });
 

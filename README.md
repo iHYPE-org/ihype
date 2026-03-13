@@ -14,10 +14,10 @@ A production-oriented Next.js application for hosting artist, DJ, and venue page
 - Streaming shows are the main homepage content.
 - Pages for artists, DJs, and venues.
 - Listener pages with AI cartoon avatar generation.
+- Platform-wide profile hex IDs for listeners, artists, promoters, and venues, plus universal share links at `/profiles/<hexId>`.
 - Curated in-app launch-readiness page for the Chicago pilot and September 6, 2026 launch target.
 - Public integrity page plus transparency snapshot endpoint with versioned feed heuristics and explainable show surfacing.
 - Account registration and login.
-- Mandatory authenticator-app MFA on every login, with first-login enrollment for new or reset accounts.
 - Essential auth cookies only, with session cookies shortened and non-session auth cookies scoped to `/api/auth`.
 - Hype button that works like an upvote, one hype per account per show.
 - Authenticated API route for creating shows.
@@ -67,7 +67,7 @@ Password for all demo users:
 demo12345
 ```
 
-Demo logins now require MFA on every sign-in. On first login after seeding, each demo account will prompt you to enroll a TOTP authenticator app before the session is created.
+Demo logins currently use email and password only.
 
 ## Important production notes
 

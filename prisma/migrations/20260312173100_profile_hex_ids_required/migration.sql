@@ -1,0 +1,2 @@
+ALTER TABLE "Profile"
+ALTER COLUMN "hexId" SET NOT NULL;

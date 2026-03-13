@@ -58,6 +58,7 @@ model User {
   profiles                Profile[]
   shows                   Show[]                   @relation("CreatedShows")
   hypeEvents              HypeEvent[]
+  mediaListens            MediaListen[]
   profileHypeEvents       ProfileHypeEvent[]
   venueConnectionRequests VenueConnectionRequest[]
 }
@@ -65,6 +66,7 @@ model User {
 model Profile {
   id                            String                   @id @default(cuid())
   slug                          String                   @unique
+  hexId                         String                   @unique
   type                          ProfileType
   name                          String
   headline                      String?
@@ -77,6 +79,8 @@ model Profile {
   requestContent                String?
   recommendContent              String?
   topFiveContent                String?
+  addressLine1                  String?
+  hoursText                     String?
   city                          String?
   stateRegion                   String?
   country                       String?
@@ -85,8 +89,16 @@ model Profile {
   longitude                     Float?
   heroImage                     String?
   avatarImage                   String?
+  themePreset                   String                   @default("midnight-neon")
+  themeAccentTone               String?
+  themeBackdropTone             String?
+  fanShareEnabled               Boolean                  @default(false)
   genres                        String[]
   songUploadCount               Int                      @default(0)
+  parkingDetails                String?
+  stayRecommendations           String?
+  upcomingContent               String?
+  previousShowHighlights        String?
   verified                      Boolean                  @default(false)
   hypeCount                     Int                      @default(0)
   ownerId                       String
@@ -106,6 +118,7 @@ model Show {
   slug                  String        @unique
   title                 String
   description           String?
+  productionPlan        Json?
   status                ShowStatus    @default(DRAFT)
   startsAt              DateTime
   endsAt                DateTime?
@@ -150,6 +163,20 @@ model TicketOrder {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
   show                Show     @relation(fields: [showId], references: [id], onDelete: Cascade)
+}
+
+model MediaListen {
+  id                String   @id @default(cuid())
+  userId            String
+  mediaId           String
+  title             String
+  mediaUrl          String
+  artistName        String
+  artistProfileSlug String?
+  createdAt         DateTime @default(now())
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, mediaId])
 }
 
 model MfaChallenge {

@@ -1,5 +1,6 @@
 export type ArtistMediaEntry = {
   id: string;
+  hexId: string;
   title: string;
   url: string;
   notes: string | null;
@@ -37,6 +38,23 @@ function buildTitleFromUrl(value: string) {
   }
 }
 
+function createHexHash(value: string) {
+  let hashA = 0x811c9dc5;
+  let hashB = 0x9e3779b9;
+
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index);
+    hashA ^= code;
+    hashA = Math.imul(hashA, 0x01000193);
+    hashB ^= code + 0x9e3779b9 + (hashB << 6) + (hashB >> 2);
+    hashB >>>= 0;
+  }
+
+  return `${(hashA >>> 0).toString(16).padStart(8, '0')}${(hashB >>> 0)
+    .toString(16)
+    .padStart(8, '0')}`;
+}
+
 function parseMediaLine(line: string, index: number): ArtistMediaEntry | null {
   const parts = line
     .split('|')
@@ -56,9 +74,11 @@ function parseMediaLine(line: string, index: number): ArtistMediaEntry | null {
   const metadataParts = parts.filter((_, partIndex) => partIndex !== urlIndex);
   const title = metadataParts[0] || buildTitleFromUrl(url);
   const notes = metadataParts.slice(1).join(' | ') || null;
+  const hexId = `0x${createHexHash(`${title}|${url}|${notes ?? ''}|${index}`)}`;
 
   return {
-    id: `media-${index}-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'track'}`,
+    id: hexId,
+    hexId,
     title,
     url,
     notes

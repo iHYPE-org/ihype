@@ -7,8 +7,8 @@ import { sortShowsForFeed } from '@/lib/integrity';
 export const revalidate = 60;
 
 export const metadata = {
-  title: 'Integrity & Transparency | ihype.org',
-  description: 'Public heuristics ledger, transparency snapshot, and explainability notes for the ihype.org feed.'
+  title: 'Integrity & Transparency | iHYPE.org',
+  description: 'Public heuristics ledger, transparency snapshot, and explainability notes for the iHYPE.org feed.'
 };
 
 export default async function IntegrityPage() {
