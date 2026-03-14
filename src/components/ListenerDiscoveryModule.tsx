@@ -71,12 +71,14 @@ function profileMatches(profile: ListenerDiscoveryProfile, filters: Record<strin
     .filter(Boolean)
     .join(' ')
     .toLowerCase();
+  const zipHaystack = (profile.postalCode ?? '').toLowerCase();
   const tourHaystack = profile.relatedShowTitles.join(' ').toLowerCase();
 
   if (filters.keyword && !keywordHaystack.includes(filters.keyword)) return false;
   if (filters.genre && !genreHaystack.includes(filters.genre)) return false;
   if (filters.subgenre && !subgenreHaystack.includes(filters.subgenre)) return false;
   if (filters.location && !locationHaystack.includes(filters.location)) return false;
+  if (filters.zipCode && !zipHaystack.includes(filters.zipCode)) return false;
   if (filters.tour && !tourHaystack.includes(filters.tour)) return false;
 
   return true;
@@ -98,6 +100,7 @@ export function ListenerDiscoveryModule({
     genre: '',
     subgenre: '',
     location: '',
+    zipCode: '',
     tour: ''
   });
 
@@ -167,9 +170,20 @@ export function ListenerDiscoveryModule({
           <span>Location</span>
           <input
             onChange={(event) => setFilters((current) => ({ ...current, location: event.target.value }))}
-            placeholder="ZIP, city, state, country"
+            placeholder="City, state, country"
             type="search"
             value={filters.location}
+          />
+        </label>
+
+        <label className="listener-discovery-field">
+          <span>ZIP code</span>
+          <input
+            inputMode="numeric"
+            onChange={(event) => setFilters((current) => ({ ...current, zipCode: event.target.value }))}
+            placeholder="60601"
+            type="search"
+            value={filters.zipCode}
           />
         </label>
 
@@ -195,13 +209,14 @@ export function ListenerDiscoveryModule({
             className="text-link"
             onClick={() =>
               setFilters({
-                keyword: '',
-                genre: '',
-                subgenre: '',
-                location: '',
-                tour: ''
-              })
-            }
+              keyword: '',
+              genre: '',
+              subgenre: '',
+              location: '',
+              zipCode: '',
+              tour: ''
+            })
+          }
             type="button"
           >
             Clear search

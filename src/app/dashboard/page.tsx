@@ -342,7 +342,7 @@ export default async function DashboardPage() {
               <div className="fan-dashboard-discovery-column">
                 <ListenerDiscoveryModule
                   className="fan-dashboard-discovery-module"
-                  description="Search artists, promoters, venues, genres, subgenres, locations, and tours from one fast fan module."
+                  description="Search artists, promoters, venues, genres, subgenres, locations, ZIP codes, and tours from one fast fan module."
                   profiles={listenerDiscoveryResults}
                   title="Globe + events search"
                 />
