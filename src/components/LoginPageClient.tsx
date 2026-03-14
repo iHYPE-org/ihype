@@ -2,8 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 
 type ResetStage = 'request' | 'confirm';
+
+function getAuthErrorMessage(error: string | null) {
+  if (!error) return null;
+  return 'Invalid email or password.';
+}
 
 export function LoginPageClient() {
   const searchParams = useSearchParams();
@@ -15,16 +21,11 @@ export function LoginPageClient() {
   const [email, setEmail] = useState(defaultEmail);
   const [password, setPassword] = useState('');
   const [pending, setPending] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [csrfToken, setCsrfToken] = useState('');
-  const [csrfReady, setCsrfReady] = useState(false);
-  const [csrfStatus, setCsrfStatus] = useState<'loading' | 'ready' | 'error'>('loading');
-  const [csrfAttemptCount, setCsrfAttemptCount] = useState(0);
-  const [csrfReloadKey, setCsrfReloadKey] = useState(0);
+  const [message, setMessage] = useState<string | null>(getAuthErrorMessage(authError));
 
   const [showReset, setShowReset] = useState(false);
   const [resetStage, setResetStage] = useState<ResetStage>('request');
-  const [resetEmail, setResetEmail] = useState('');
+  const [resetEmail, setResetEmail] = useState(defaultEmail);
   const [resetCode, setResetCode] = useState('');
   const [resetPassword, setResetPassword] = useState('');
   const [resetConfirmPassword, setResetConfirmPassword] = useState('');
@@ -37,83 +38,33 @@ export function LoginPageClient() {
   }, [defaultEmail]);
 
   useEffect(() => {
-    let cancelled = false;
-    let retryTimeout: ReturnType<typeof setTimeout> | null = null;
+    setMessage(getAuthErrorMessage(authError));
+  }, [authError]);
 
-    async function loadCsrfToken(attempt: number) {
-      if (!cancelled) {
-        setCsrfReady(false);
-        setCsrfStatus('loading');
-        setCsrfAttemptCount(attempt);
+  async function handleSignIn(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPending(true);
+    setMessage(null);
+
+    try {
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+        callbackUrl
+      });
+
+      if (result?.error) {
+        setMessage('Invalid email or password.');
+        return;
       }
 
-      try {
-        const response = await fetch('/api/auth/csrf', {
-          cache: 'no-store',
-          credentials: 'same-origin',
-          headers: {
-            Accept: 'application/json'
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`csrf_${response.status}`);
-        }
-
-        const data = (await response.json()) as { csrfToken?: string };
-
-        if (!data.csrfToken) {
-          throw new Error('csrf_missing');
-        }
-
-        if (!cancelled) {
-          setCsrfToken(data.csrfToken);
-          setCsrfReady(true);
-          setCsrfStatus('ready');
-          setMessage(
-            authError === 'MissingCSRF'
-              ? 'Secure sign-in was refreshed. You can try again now.'
-              : null
-          );
-        }
-      } catch {
-        if (!cancelled) {
-          setCsrfToken('');
-          setCsrfReady(false);
-          if (attempt < 3) {
-            const retryDelayMs = attempt === 1 ? 500 : 1500;
-            retryTimeout = setTimeout(() => {
-              void loadCsrfToken(attempt + 1);
-            }, retryDelayMs);
-            return;
-          }
-
-          setCsrfStatus('error');
-          setMessage('Secure sign-in is taking longer than expected. Retry below or reload the page.');
-        }
-      }
+      window.location.assign(result?.url ?? callbackUrl);
+    } catch {
+      setMessage('Sign in failed. Please try again.');
+    } finally {
+      setPending(false);
     }
-
-    void loadCsrfToken(1);
-
-    return () => {
-      cancelled = true;
-      if (retryTimeout) {
-        clearTimeout(retryTimeout);
-      }
-    };
-  }, [authError, csrfReloadKey]);
-
-  function getAuthErrorMessage() {
-    if (authError === 'MissingCSRF' && csrfStatus !== 'ready') {
-      return 'Secure sign-in was not ready yet. Please try again now that the page has loaded.';
-    }
-
-    if (authError) {
-      return 'Invalid email or password.';
-    }
-
-    return null;
   }
 
   async function handleResetRequest(event: React.FormEvent<HTMLFormElement>) {
@@ -203,81 +154,36 @@ export function LoginPageClient() {
             Admin access uses admin@ihype.org with password demo12345.
           </p>
 
-          {csrfReady ? (
-            <form
-              action="/api/auth/callback/credentials"
-              className="form"
-              method="post"
-              onSubmit={(event) => {
-                if (!csrfToken) {
-                  event.preventDefault();
-                  setMessage('Secure sign-in is still preparing. Please try again in a moment.');
-                  return;
-                }
-
-                setPending(true);
-                setMessage(null);
-              }}
-            >
-              <input name="csrfToken" type="hidden" value={csrfToken} />
-              <input name="callbackUrl" type="hidden" value={callbackUrl} />
-              <label className="field">
-                <span>Email</span>
-                <input
-                  name="email"
-                  onChange={(event) => {
-                    setEmail(event.target.value);
-                    if (!resetEmail) {
-                      setResetEmail(event.target.value);
-                    }
-                  }}
-                  required
-                  type="email"
-                  value={email}
-                />
-              </label>
-              <label className="field">
-                <span>Password</span>
-                <input
-                  name="password"
-                  onChange={(event) => setPassword(event.target.value)}
-                  required
-                  type="password"
-                  value={password}
-                />
-              </label>
-              <button className="button" disabled={pending} type="submit">
-                {pending ? 'Signing in...' : 'Sign in'}
-              </button>
-            </form>
-          ) : (
-            <div className="form">
-              <label className="field">
-                <span>Email</span>
-                <input disabled placeholder="Preparing sign-in..." type="email" value={email} />
-              </label>
-              <label className="field">
-                <span>Password</span>
-                <input disabled placeholder="Preparing sign-in..." type="password" value="" />
-              </label>
-              <button className="button" disabled type="button">
-                Preparing sign-in...
-              </button>
-              <div className="auth-inline-actions">
-                <button
-                  className="text-link"
-                  onClick={() => {
-                    setMessage(null);
-                    setCsrfReloadKey((current) => current + 1);
-                  }}
-                  type="button"
-                >
-                  {csrfStatus === 'error' ? 'Retry secure sign-in' : 'Refresh secure sign-in'}
-                </button>
-                <span className="meta">Attempt {Math.max(csrfAttemptCount, 1)} of 3</span>
-              </div>
-            </div>
-          )}
+          <form className="form" onSubmit={handleSignIn}>
+            <label className="field">
+              <span>Email</span>
+              <input
+                name="email"
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  if (!resetEmail) {
+                    setResetEmail(event.target.value);
+                  }
+                }}
+                required
+                type="email"
+                value={email}
+              />
+            </label>
+            <label className="field">
+              <span>Password</span>
+              <input
+                name="password"
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                type="password"
+                value={password}
+              />
+            </label>
+            <button className="button" disabled={pending} type="submit">
+              {pending ? 'Signing in...' : 'Sign in'}
+            </button>
+          </form>
 
           <div className="auth-inline-actions">
             <button
@@ -294,7 +200,6 @@ export function LoginPageClient() {
             </button>
           </div>
 
-          {getAuthErrorMessage() ? <p className="status-note">{getAuthErrorMessage()}</p> : null}
           {message ? <p className="status-note">{message}</p> : null}
         </div>
 
