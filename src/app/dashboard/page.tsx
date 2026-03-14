@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { ProfileType } from '@prisma/client';
+import { ListenerDiscoveryModule } from '@/components/ListenerDiscoveryModule';
+import type { ListenerDiscoveryProfile } from '@/components/ListenerDiscoveryModule';
+import { ListenerVenueMap } from '@/components/ListenerVenueMap';
 import { PromoterShowCreationTool } from '@/components/PromoterShowCreationTool';
 import { getSafeImageUrl } from '@/lib/asset-safety';
 import { auth } from '@/lib/auth';
@@ -8,6 +11,7 @@ import { db } from '@/lib/db';
 import { shortenHexId } from '@/lib/hex-id';
 import { buildArtistMediaCollection } from '@/lib/media';
 import { isAdminSession } from '@/lib/permissions';
+import { detectRequestLocation } from '@/lib/request-location';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 
 function formatRequesterType(value: 'LISTENER' | 'PROMOTER') {
@@ -183,116 +187,220 @@ export default async function DashboardPage() {
     ? parseTopFiveItems(listenerProfile.topFiveContent, fallbackTopFiveArtists)
     : [];
   const listenerAvatarImage = listenerProfile ? getSafeImageUrl(listenerProfile.avatarImage) : null;
+  const listenerDiscoveryProfiles = isListenerOnlyDashboard
+    ? await db.profile.findMany({
+        where: {
+          type: { in: ['ARTIST', 'DJ', 'VENUE'] }
+        },
+        orderBy: [{ verified: 'desc' }, { name: 'asc' }],
+        select: {
+          id: true,
+          type: true,
+          slug: true,
+          hexId: true,
+          name: true,
+          headline: true,
+          bio: true,
+          genres: true,
+          city: true,
+          stateRegion: true,
+          country: true,
+          postalCode: true,
+          addressLine1: true,
+          hoursText: true,
+          latitude: true,
+          longitude: true
+        }
+      })
+    : [];
+  const listenerDiscoveryProfileIds = listenerDiscoveryProfiles.map((profile) => profile.id);
+  const listenerRelatedShows =
+    isListenerOnlyDashboard && listenerDiscoveryProfileIds.length
+      ? await db.show.findMany({
+          where: {
+            OR: [
+              { headlinerProfileId: { in: listenerDiscoveryProfileIds } },
+              { promoterProfileId: { in: listenerDiscoveryProfileIds } },
+              { venueProfileId: { in: listenerDiscoveryProfileIds } }
+            ]
+          },
+          select: {
+            title: true,
+            headlinerProfileId: true,
+            promoterProfileId: true,
+            venueProfileId: true
+          },
+          orderBy: [{ startsAt: 'asc' }, { createdAt: 'desc' }]
+        })
+      : [];
+  const listenerRelatedShowTitles = new Map<string, string[]>();
+
+  for (const show of listenerRelatedShows) {
+    for (const profileId of [show.headlinerProfileId, show.promoterProfileId, show.venueProfileId]) {
+      if (!profileId) continue;
+      const existingTitles = listenerRelatedShowTitles.get(profileId) ?? [];
+      if (!existingTitles.includes(show.title)) {
+        listenerRelatedShowTitles.set(profileId, [...existingTitles, show.title].slice(0, 3));
+      }
+    }
+  }
+
+  const listenerDiscoveryResults: ListenerDiscoveryProfile[] = listenerDiscoveryProfiles.map((profile) => ({
+    id: profile.id,
+    type: profile.type === 'DJ' || profile.type === 'VENUE' ? profile.type : 'ARTIST',
+    slug: profile.slug,
+    hexId: profile.hexId,
+    name: profile.name,
+    headline: profile.headline,
+    bio: profile.bio,
+    genres: profile.genres,
+    city: profile.city,
+    stateRegion: profile.stateRegion,
+    country: profile.country,
+    postalCode: profile.postalCode,
+    relatedShowTitles: listenerRelatedShowTitles.get(profile.id) ?? []
+  }));
+  const listenerVenueMapVenues = listenerDiscoveryProfiles
+    .filter((profile) => profile.type === 'VENUE')
+    .map((profile) => ({
+      id: profile.id,
+      slug: profile.slug,
+      name: profile.name,
+      addressLine1: profile.addressLine1,
+      hoursText: profile.hoursText,
+      city: profile.city,
+      stateRegion: profile.stateRegion,
+      country: profile.country,
+      postalCode: profile.postalCode,
+      latitude: profile.latitude,
+      longitude: profile.longitude
+    }));
+  const listenerViewerLocation = isListenerOnlyDashboard ? await detectRequestLocation() : null;
 
   if (isListenerOnlyDashboard && listenerProfile) {
     return (
       <main className="container section listener-dashboard-page">
         <section className="listener-dashboard-shell">
-          <div className="listener-dashboard-layout">
-            <div className="listener-dashboard-column listener-dashboard-column-left">
-              <article className="panel listener-dashboard-profile-panel">
-                <div className="listener-dashboard-module-head">
-                  <h3>Profile</h3>
-                  <Link className="button small secondary" href={`/listeners/${listenerProfile.slug}`}>
-                    Edit profile
-                  </Link>
-                </div>
+          <div className="listener-dashboard-stack">
+            <article className="panel listener-dashboard-profile-panel">
+              <div className="listener-dashboard-module-head">
+                <h3>Profile</h3>
+                <Link className="button small secondary" href={`/listeners/${listenerProfile.slug}`}>
+                  Edit profile
+                </Link>
+              </div>
 
-                <div className="listener-dashboard-profile-body">
-                  {listenerAvatarImage ? (
-                    <img
-                      alt={`${listenerProfile.name} avatar`}
-                      className="profile-avatar profile-avatar-large"
-                      src={listenerAvatarImage}
-                    />
-                  ) : (
-                    <div className="profile-avatar profile-avatar-large profile-avatar-fallback">
-                      {getInitials(listenerProfile.name)}
-                    </div>
-                  )}
-
-                  <div className="listener-dashboard-profile-copy">
-                    <h2>{listenerProfile.name}</h2>
-                    <p className="listener-dashboard-hero-meta">Member since {getMemberYear(listenerProfile.createdAt)}</p>
-                    <p className="listener-dashboard-hero-meta">
-                      Share ID:{' '}
-                      <Link href={`/profiles/${listenerProfile.hexId}`}>
-                        {shortenHexId(listenerProfile.hexId)}
-                      </Link>
-                    </p>
-                    <p className="subtitle">
-                      {listenerProfile.headline || listenerProfile.bio || 'Shape your listener page, save your soundtrack, and keep your favorite rooms close.'}
-                    </p>
-                  </div>
-                </div>
-              </article>
-
-              <section className="panel listener-dashboard-playlist">
-                <div className="listener-dashboard-module-head">
-                  <h3>Playlist</h3>
-                  <span className="meta">{recentPlaylist.length ? `${recentPlaylist.length} recent` : 'Nothing queued yet'}</span>
-                </div>
-
-                {recentPlaylist.length ? (
-                  <div className="listener-dashboard-playlist-list">
-                    {recentPlaylist.map((listen) => (
-                      <article className="listener-dashboard-track" key={listen.id}>
-                        <span className="listener-dashboard-track-order">{listen.order.toString().padStart(2, '0')}</span>
-                        <div>
-                          <strong>{listen.title}</strong>
-                          <p className="meta">
-                            {listen.artistProfileSlug ? (
-                              <Link href={`/artists/${listen.artistProfileSlug}`}>{listen.artistName}</Link>
-                            ) : (
-                              listen.artistName
-                            )}
-                          </p>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
+              <div className="listener-dashboard-profile-body">
+                {listenerAvatarImage ? (
+                  <img
+                    alt={`${listenerProfile.name} avatar`}
+                    className="profile-avatar profile-avatar-large"
+                    src={listenerAvatarImage}
+                  />
                 ) : (
-                  <div className="empty">Your recent listens will start building a dashboard playlist here.</div>
+                  <div className="profile-avatar profile-avatar-large profile-avatar-fallback">
+                    {getInitials(listenerProfile.name)}
+                  </div>
                 )}
-              </section>
-            </div>
 
-            <div className="listener-dashboard-column listener-dashboard-column-right">
-              <section className="panel listener-dashboard-topfive-panel">
-                <div className="listener-dashboard-module-head">
-                  <h3>Top 5</h3>
+                <div className="listener-dashboard-profile-copy">
+                  <h2>{listenerProfile.name}</h2>
+                  <p className="listener-dashboard-hero-meta">Member since {getMemberYear(listenerProfile.createdAt)}</p>
+                  <p className="listener-dashboard-hero-meta">
+                    Share ID:{' '}
+                    <Link href={`/profiles/${listenerProfile.hexId}`}>
+                      {shortenHexId(listenerProfile.hexId)}
+                    </Link>
+                  </p>
+                  <p className="subtitle">
+                    {listenerProfile.headline || listenerProfile.bio || 'Shape your listener page, save your soundtrack, and keep your favorite rooms close.'}
+                  </p>
                 </div>
+              </div>
 
-                {listenerTopFive.length ? (
-                  <div className="listener-dashboard-topfive-grid">
-                    {listenerTopFive.map((item, index) => (
-                      <div
-                        className={index === 0 ? 'listener-dashboard-topfive-pill featured' : 'listener-dashboard-topfive-pill'}
-                        key={item}
-                      >
-                        {item}
+              <div className="listener-dashboard-profile-stats">
+                {dashboardStats.map((stat) => (
+                  <div className="listener-dashboard-profile-stat" key={stat.label}>
+                    <span>{stat.label}</span>
+                    <strong>{stat.value}</strong>
+                  </div>
+                ))}
+              </div>
+            </article>
+
+            <ListenerDiscoveryModule profiles={listenerDiscoveryResults} />
+
+            <ListenerVenueMap venues={listenerVenueMapVenues} viewerLocation={listenerViewerLocation} />
+
+            <div className="listener-dashboard-layout">
+              <div className="listener-dashboard-column listener-dashboard-column-left">
+                <section className="panel listener-dashboard-playlist">
+                  <div className="listener-dashboard-module-head">
+                    <h3>Playlist</h3>
+                    <span className="meta">{recentPlaylist.length ? `${recentPlaylist.length} recent` : 'Nothing queued yet'}</span>
+                  </div>
+
+                  {recentPlaylist.length ? (
+                    <div className="listener-dashboard-playlist-list">
+                      {recentPlaylist.map((listen) => (
+                        <article className="listener-dashboard-track" key={listen.id}>
+                          <span className="listener-dashboard-track-order">{listen.order.toString().padStart(2, '0')}</span>
+                          <div>
+                            <strong>{listen.title}</strong>
+                            <p className="meta">
+                              {listen.artistProfileSlug ? (
+                                <Link href={`/artists/${listen.artistProfileSlug}`}>{listen.artistName}</Link>
+                              ) : (
+                                listen.artistName
+                              )}
+                            </p>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="empty">Your recent listens will start building a dashboard playlist here.</div>
+                  )}
+                </section>
+              </div>
+
+              <div className="listener-dashboard-column listener-dashboard-column-right">
+                <section className="panel listener-dashboard-topfive-panel">
+                  <div className="listener-dashboard-module-head">
+                    <h3>Top 5</h3>
+                  </div>
+
+                  {listenerTopFive.length ? (
+                    <div className="listener-dashboard-topfive-grid">
+                      {listenerTopFive.map((item, index) => (
+                        <div
+                          className={index === 0 ? 'listener-dashboard-topfive-pill featured' : 'listener-dashboard-topfive-pill'}
+                          key={item}
+                        >
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="empty">Add a top five list on your listener page to pin favorites here.</div>
+                  )}
+                </section>
+
+                <section className="panel listener-dashboard-stats-panel">
+                  <div className="listener-dashboard-module-head">
+                    <h3>Stats</h3>
+                  </div>
+
+                  <div className="listener-dashboard-stat-lines">
+                    {dashboardStats.map((stat) => (
+                      <div className="listener-dashboard-stat-line" key={stat.label}>
+                        <span>{stat.label}</span>
+                        <strong>{stat.value}</strong>
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <div className="empty">Add a top five list on your listener page to pin favorites here.</div>
-                )}
-              </section>
-
-              <section className="panel listener-dashboard-stats-panel">
-                <div className="listener-dashboard-module-head">
-                  <h3>Stats</h3>
-                </div>
-
-                <div className="listener-dashboard-stat-lines">
-                  {dashboardStats.map((stat) => (
-                    <div className="listener-dashboard-stat-line" key={stat.label}>
-                      <span>{stat.label}</span>
-                      <strong>{stat.value}</strong>
-                    </div>
-                  ))}
-                </div>
-              </section>
+                </section>
+              </div>
             </div>
           </div>
         </section>

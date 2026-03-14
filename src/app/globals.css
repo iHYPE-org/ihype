@@ -860,6 +860,10 @@ button, input, select, textarea { font: inherit; }
 .listener-dashboard-shell {
   min-height: calc(100vh - 9.5rem);
 }
+.listener-dashboard-stack {
+  display: grid;
+  gap: 1rem;
+}
 .listener-dashboard-layout {
   display: grid;
   gap: 1rem;
@@ -907,10 +911,136 @@ button, input, select, textarea { font: inherit; }
   margin: 0.25rem 0 0;
   max-width: 52ch;
 }
+.listener-dashboard-profile-stats {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-top: 1.2rem;
+}
+.listener-dashboard-profile-stat {
+  padding: 0.95rem 1rem;
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+}
+.listener-dashboard-profile-stat span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.listener-dashboard-profile-stat strong {
+  display: block;
+  margin-top: 0.45rem;
+  font-size: 1.4rem;
+}
 .listener-dashboard-hero-meta {
   margin: 0;
   color: var(--muted);
   font-size: 0.92rem;
+}
+.listener-dashboard-discovery-panel {
+  padding: 1.35rem;
+}
+.listener-discovery-form-grid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.listener-discovery-keyword-field {
+  grid-column: span 2;
+}
+.listener-discovery-tour-field {
+  grid-column: span 2;
+}
+.listener-discovery-field {
+  display: grid;
+  gap: 0.35rem;
+}
+.listener-discovery-field span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.listener-discovery-results-head {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+.listener-discovery-results-grid {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 1rem;
+}
+.listener-discovery-results-panel {
+  padding: 1rem;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+}
+.listener-discovery-results-panel-head {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.9rem;
+}
+.listener-discovery-results-panel-head h4 {
+  margin: 0;
+}
+.listener-discovery-results-list {
+  display: grid;
+  gap: 0.75rem;
+}
+.listener-discovery-result {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.9rem;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+  color: inherit;
+  text-decoration: none;
+}
+.listener-discovery-result:hover,
+.listener-discovery-result:focus-visible {
+  border-color: rgba(35,208,216,0.28);
+  transform: translateY(-1px);
+}
+.listener-discovery-result-title {
+  display: flex;
+  gap: 0.65rem;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.listener-discovery-result-title strong {
+  font-size: 1rem;
+}
+.listener-discovery-result-title span {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+.listener-discovery-result p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+.listener-discovery-result-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.listener-discovery-result-meta span {
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(35,208,216,0.12);
+  color: #d7fbff;
+  font-size: 0.75rem;
 }
 .listener-dashboard-playlist {
   min-height: 0;
@@ -3496,6 +3626,11 @@ button, input, select, textarea { font: inherit; }
   .listener-dashboard-shell { min-height: auto; }
   .listener-dashboard-column-left,
   .listener-dashboard-column-right { grid-template-rows: auto; }
+  .listener-dashboard-profile-stats,
+  .listener-discovery-form-grid,
+  .listener-discovery-results-grid { grid-template-columns: 1fr; }
+  .listener-discovery-keyword-field,
+  .listener-discovery-tour-field { grid-column: span 1; }
   .listener-dashboard-playlist,
   .listener-dashboard-stats-panel { min-height: 0; }
   .listener-dashboard-topfive-grid { grid-template-columns: 1fr; }
