@@ -31,7 +31,9 @@ export type EditableFieldKey =
   | 'recommendContent'
   | 'topFiveContent'
   | 'addressLine1'
+  | 'contactInfo'
   | 'hoursText'
+  | 'hometown'
   | 'city'
   | 'stateRegion'
   | 'postalCode'
@@ -90,7 +92,9 @@ const defaultFormValues: Record<EditableFieldKey, string> = {
   recommendContent: '',
   topFiveContent: '',
   addressLine1: '',
+  contactInfo: '',
   hoursText: '',
+  hometown: '',
   city: '',
   stateRegion: '',
   postalCode: '',
@@ -167,7 +171,9 @@ export function ProfilePageEditor({
       recommendContent: formValues.recommendContent,
       topFiveContent: formValues.topFiveContent,
       addressLine1: formValues.addressLine1,
+      contactInfo: formValues.contactInfo,
       hoursText: formValues.hoursText,
+      hometown: formValues.hometown,
       city: formValues.city,
       stateRegion: formValues.stateRegion,
       postalCode: formValues.postalCode,

@@ -8,20 +8,27 @@ import { HypeButton } from '@/components/HypeButton';
 import { ProfilePageEditor } from '@/components/ProfilePageEditor';
 import { ArtistMediaPlaylist } from '@/components/ArtistMediaPlaylist';
 import { ArtistMediaUploadManager } from '@/components/ArtistMediaUploadManager';
+import { OwnershipVerificationPanel } from '@/components/OwnershipVerificationPanel';
+import { MarketRecommendationsPanel } from '@/components/MarketRecommendationsPanel';
 import { getSafeBackgroundImageStyle, getSafeImageUrl } from '@/lib/asset-safety';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { DEFAULT_PROFILE_DESIGN_PRESET, getProfileDesignStyleVars } from '@/lib/profile-design';
+import { getAdvertisingRecommendations } from '@/lib/market-recommendations';
 
-const artistSections = ['about', 'journal', 'media', 'tour', 'merch', 'stats'] as const;
+const artistSections = ['media', 'events', 'about', 'merch', 'stats'] as const;
 
 type ArtistSection = (typeof artistSections)[number];
 
 function getActiveSection(section: string | string[] | undefined): ArtistSection {
+  if (section === 'journal' || section === 'tour') {
+    return section === 'tour' ? 'events' : 'about';
+  }
+
   if (typeof section === 'string' && artistSections.includes(section as ArtistSection)) {
     return section as ArtistSection;
   }
 
-  return 'about';
+  return 'media';
 }
 
 function getSectionLabel(section: ArtistSection) {
@@ -68,6 +75,19 @@ export default async function ArtistPage({
   const now = new Date();
   const upcomingShows = shows.filter((show) => show.status === 'LIVE' || show.startsAt >= now);
   const previousShows = shows.filter((show) => show.status === 'ENDED' || (show.startsAt < now && show.status !== 'LIVE'));
+  const recommendations = await getAdvertisingRecommendations({
+    profile: {
+      type: 'ARTIST',
+      city: profile.city,
+      country: profile.country
+    },
+    stats: {
+      pageHype: profile.hypeCount,
+      upcomingCount: upcomingShows.length,
+      previousCount: previousShows.length,
+      songUploads: profile.songUploadCount
+    }
+  });
   const isOwner = canManageOwnedResource(session, profile.ownerId);
   const sharedThemePreset = isOwner || profile.fanShareEnabled ? profile.themePreset : DEFAULT_PROFILE_DESIGN_PRESET;
   const bannerStyle = getSafeBackgroundImageStyle(profile.heroImage);
@@ -94,6 +114,14 @@ export default async function ArtistPage({
 
       {isOwner ? (
         <>
+          <OwnershipVerificationPanel
+            contactInfo={profile.contactInfo}
+            profileId={profile.id}
+            roleLabel="artist"
+            verificationNotes={profile.verificationNotes}
+            verificationStatus={profile.verificationStatus}
+          />
+
           <ProfilePageEditor
             allowFanShareToggle
             description="Edit your banner, section copy, and the fan-facing design preset before you share it."
@@ -101,6 +129,8 @@ export default async function ArtistPage({
             fields={[
               { key: 'headline', label: 'Headline banner', placeholder: 'The line people see first' },
               { key: 'heroImage', label: 'Banner image URL', kind: 'url', placeholder: 'https://example.com/banner.jpg' },
+              { key: 'contactInfo', label: 'Contact info', placeholder: 'manager@artist.com | +1 555 101 3030' },
+              { key: 'hometown', label: 'Hometown', placeholder: 'Chicago, IL' },
               { key: 'bio', label: 'Short intro', kind: 'textarea', rows: 3 },
               { key: 'aboutContent', label: 'About', kind: 'textarea' },
               { key: 'journalContent', label: 'Journal', kind: 'textarea' },
@@ -132,8 +162,8 @@ export default async function ArtistPage({
               fanShareEnabled: profile.fanShareEnabled
             }}
             previewGenres={profile.genres}
-            previewRoleLabel="ARTIST"
-            previewTabs={['About', 'Journal', 'Media', 'Tour', 'Merch', 'Stats']}
+              previewRoleLabel="ARTIST"
+            previewTabs={['Media', 'Events', 'About', 'Merch', 'Stats']}
             profileId={profile.id}
             profileName={profile.name}
             title="Customize your artist page"
@@ -151,6 +181,8 @@ export default async function ArtistPage({
         </>
       ) : null}
 
+      <MarketRecommendationsPanel recommendations={recommendations} roleLabel="artist" />
+
       <section className="section">
         <nav className="section-tabs" aria-label="Artist page sections">
           {artistSections.map((section) => (
@@ -165,20 +197,6 @@ export default async function ArtistPage({
         </nav>
 
         <div className="panel artist-section-panel">
-          {activeSection === 'about' ? (
-            <>
-              <h2>About</h2>
-              <div className="artist-copy">{profile.aboutContent || profile.bio || 'This artist has not filled out the About section yet.'}</div>
-            </>
-          ) : null}
-
-          {activeSection === 'journal' ? (
-            <>
-              <h2>Journal</h2>
-              <div className="artist-copy">{profile.journalContent || 'No journal entries yet.'}</div>
-            </>
-          ) : null}
-
           {activeSection === 'media' ? (
             <>
               <h2>Media</h2>
@@ -202,9 +220,9 @@ export default async function ArtistPage({
             </>
           ) : null}
 
-          {activeSection === 'tour' ? (
+          {activeSection === 'events' ? (
             <>
-              <h2>Tour</h2>
+              <h2>Events</h2>
               <div className="artist-copy">{profile.tourContent || 'No tour notes yet.'}</div>
 
               <div className="artist-tour-shows">
@@ -220,6 +238,22 @@ export default async function ArtistPage({
                   {previousShows.length ? previousShows.map((show) => <ShowCard key={show.id} show={show} />) : <div className="empty">No previous dates yet.</div>}
                 </div>
               </div>
+            </>
+          ) : null}
+
+          {activeSection === 'about' ? (
+            <>
+              <h2>About</h2>
+              <div className="artist-copy">
+                {profile.aboutContent || profile.bio || 'This artist has not filled out the About section yet.'}
+              </div>
+              {profile.journalContent ? (
+                <div className="artist-copy">
+                  <strong>Journal</strong>
+                  <br />
+                  {profile.journalContent}
+                </div>
+              ) : null}
             </>
           ) : null}
 

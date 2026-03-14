@@ -22,6 +22,15 @@ type TicketSaleCardProps = {
   promoterName: string | null;
 };
 
+type IssuedTicket = {
+  id: string;
+  serializedId: string;
+  status: string;
+  verificationUrl: string;
+  qrCodeDataUrl: string;
+  label: string;
+};
+
 export function TicketSaleCard({
   showId,
   title,
@@ -41,6 +50,7 @@ export function TicketSaleCard({
   const [quantity, setQuantity] = useState('1');
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [issuedTickets, setIssuedTickets] = useState<IssuedTicket[]>([]);
 
   const remainingTickets = ticketCapacity === null ? null : Math.max(ticketCapacity - ticketsSoldCount, 0);
   const requestedQuantity = Math.max(1, Number(quantity || 1));
@@ -99,6 +109,7 @@ export function TicketSaleCard({
       setBuyerName('');
       setBuyerEmail('');
       setQuantity('1');
+      setIssuedTickets((data.tickets ?? []) as IssuedTicket[]);
       setMessage(`Order ${data.order.confirmationCode} confirmed. ${data.message}`);
       router.refresh();
     } else {
@@ -115,7 +126,7 @@ export function TicketSaleCard({
           <div className="badge">Ticket Sales</div>
           <h2>{title}</h2>
           <p className="kicker">
-            No platform commission. Revenue is allocated automatically between the venue, the artist, and the promoter pool per ticket sold.
+            Secure ticket portal over SSL/TLS. Every ticket gets a serialized token and venue-verification QR code, with no platform commission taken from the split.
           </p>
         </div>
         <div className="ticket-price-badge">
@@ -207,6 +218,24 @@ export function TicketSaleCard({
           </div>
         </form>
       )}
+
+      {issuedTickets.length ? (
+        <div className="ticket-issued-grid">
+          {issuedTickets.map((ticket) => (
+            <article className="ticket-issued-card" key={ticket.id}>
+              <img alt={`${ticket.label} QR`} className="ticket-issued-qr" src={ticket.qrCodeDataUrl} />
+              <div className="ticket-issued-copy">
+                <strong>{ticket.label}</strong>
+                <span>{ticket.serializedId}</span>
+                <span>{ticket.status}</span>
+                <a className="button small secondary" href={ticket.verificationUrl} target="_blank" rel="noreferrer">
+                  Open verification
+                </a>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : null}
     </section>
   );
 }

@@ -9,6 +9,10 @@ type ProfileCardProfile = {
   slug: string;
   hexId: string;
   name: string;
+  contactInfo: string | null;
+  addressLine1: string | null;
+  hoursText: string | null;
+  hometown: string | null;
   city: string | null;
   country: string | null;
   hypeCount: number;
@@ -50,6 +54,12 @@ export function ProfileCard({ profile }: { profile: ProfileCardProfile }) {
       <div className="badge">{getProfileLabel(profile.type)}</div>
       <h3>{profile.name}</h3>
       <p className="meta">{[profile.city, profile.country].filter(Boolean).join(', ')}</p>
+      {profile.type === 'VENUE' && (profile.addressLine1 || profile.hoursText || profile.contactInfo) ? (
+        <p className="meta">
+          {[profile.addressLine1, profile.hoursText, profile.contactInfo].filter(Boolean).join(' | ')}
+        </p>
+      ) : null}
+      {profile.type === 'ARTIST' && profile.hometown ? <p className="meta">Hometown: {profile.hometown}</p> : null}
       <p className="meta">
         {shortenHexId(profile.hexId)} | {profile.hypeCount} hype
       </p>

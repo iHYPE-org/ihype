@@ -3,6 +3,12 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { calculateTicketOrderPayouts } from '@/lib/ticketing';
+import {
+  buildTicketQrCodeDataUrl,
+  buildTicketVerificationUrl,
+  createSerializedTicketId,
+  formatTicketStatus
+} from '@/lib/tickets';
 
 const schema = z.object({
   buyerName: z.string().min(2),
@@ -51,7 +57,7 @@ export async function POST(
       promoterPayoutPercent: show.promoterPayoutPercent
     });
 
-    const order = await db.$transaction(async (tx) => {
+    const { createdOrder, createdTickets } = await db.$transaction(async (tx) => {
       const createdOrder = await tx.ticketOrder.create({
         data: {
           confirmationCode: randomUUID().split('-')[0].toUpperCase(),
@@ -66,6 +72,21 @@ export async function POST(
         }
       });
 
+      const createdTickets = await Promise.all(
+        Array.from({ length: body.quantity }, (_, index) =>
+          tx.ticket.create({
+            data: {
+              serializedId: createSerializedTicketId(),
+              ticketOrderId: createdOrder.id,
+              showId: show.id,
+              venueProfileId: show.venueProfileId,
+              holderName: body.buyerName.trim(),
+              holderEmail: body.buyerEmail.trim().toLowerCase()
+            }
+          })
+        )
+      );
+
       await tx.show.update({
         where: { id: show.id },
         data: {
@@ -75,14 +96,27 @@ export async function POST(
         }
       });
 
-      return createdOrder;
+      return { createdOrder, createdTickets };
     });
+
+    const tickets = await Promise.all(
+      createdTickets.map(async (ticket, index) => ({
+        id: ticket.id,
+        serializedId: ticket.serializedId,
+        status: formatTicketStatus(ticket.status),
+        verificationUrl: buildTicketVerificationUrl(ticket.serializedId),
+        qrCodeDataUrl: await buildTicketQrCodeDataUrl(ticket.serializedId),
+        label: `Ticket ${index + 1}`
+      }))
+    );
 
     return NextResponse.json(
       {
-        order,
+        order: createdOrder,
+        tickets,
         payouts,
-        message: `Tickets confirmed for ${show.title}. No platform commission was taken from this order.`
+        message:
+          `Tickets confirmed for ${show.title}. Each ticket now has a serialized token and verification QR code. No platform commission was taken from this order.`
       },
       { status: 201 }
     );

@@ -10,6 +10,10 @@ export type DirectoryBrowserProfile = {
   slug: string;
   hexId: string;
   name: string;
+  contactInfo: string | null;
+  addressLine1: string | null;
+  hoursText: string | null;
+  hometown: string | null;
   city: string | null;
   stateRegion: string | null;
   country: string | null;
@@ -32,6 +36,10 @@ function profileMatchesQuery(profile: DirectoryBrowserProfile, query: string) {
 
   const haystack = [
     profile.name,
+    profile.contactInfo,
+    profile.addressLine1,
+    profile.hoursText,
+    profile.hometown,
     profile.city,
     profile.stateRegion,
     profile.country,

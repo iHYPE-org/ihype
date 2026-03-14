@@ -8,14 +8,18 @@ import { createHexId } from '@/lib/hex-id';
 import { profileAccentToneIds, profileBackdropToneIds, profileDesignPresetIds } from '@/lib/profile-design';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
+import { getUsernameValidationMessage, isValidUsername, normalizeUsername } from '@/lib/usernames';
 import { slugify } from '@/lib/utils';
 
 const schema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
+  username: z.string().min(3).max(30),
   password: z.string().min(8),
   role: z.enum(['FAN', 'ARTIST', 'DJ', 'VENUE']).default('FAN'),
   acceptedArtistUploadPolicy: z.boolean().optional().default(false),
+  contactInfo: z.string().trim().max(200).optional(),
+  hometown: z.string().trim().max(160).optional(),
   headline: z.string().trim().max(140).optional(),
   bio: z.string().trim().max(280).optional(),
   heroImage: z.string().trim().url().or(z.literal('')).optional(),
@@ -90,6 +94,8 @@ function getVenueProfileOverrides(body: z.infer<typeof schema>) {
     aboutContent: body.aboutContent || null,
     requestContent: body.requestContent || null,
     addressLine1: body.addressLine1 || null,
+    contactInfo: body.contactInfo || null,
+    hometown: body.hometown || null,
     hoursText: body.hoursText || null,
     city: body.city || null,
     stateRegion: body.stateRegion || null,
@@ -103,6 +109,14 @@ function getVenueProfileOverrides(body: z.infer<typeof schema>) {
     themeAccentTone: body.themeAccentTone ?? undefined,
     themeBackdropTone: body.themeBackdropTone ?? undefined
   };
+}
+
+function getVerificationStatusForType(type: ProfileType) {
+  if (type === 'ARTIST' || type === 'VENUE') {
+    return 'PENDING' as const;
+  }
+
+  return 'UNVERIFIED' as const;
 }
 
 async function generateUniqueProfileHexId() {
@@ -136,6 +150,11 @@ export async function POST(request: Request) {
     }
 
     const body = schema.parse(await request.json());
+    const normalizedUsername = normalizeUsername(body.username);
+
+    if (!isValidUsername(normalizedUsername)) {
+      return NextResponse.json({ error: getUsernameValidationMessage() }, { status: 400 });
+    }
 
     if ((body.role === 'ARTIST' || body.role === 'DJ') && !body.acceptedArtistUploadPolicy) {
       return NextResponse.json(
@@ -145,10 +164,22 @@ export async function POST(request: Request) {
     }
 
     const normalizedEmail = body.email.toLowerCase();
-    const existing = await db.user.findUnique({ where: { email: normalizedEmail } });
+    const existing = await db.user.findFirst({
+      where: {
+        OR: [{ email: normalizedEmail }, { username: normalizedUsername }]
+      }
+    });
 
     if (existing) {
-      return NextResponse.json({ error: 'Email already exists' }, { status: 409 });
+      return NextResponse.json(
+        {
+          error:
+            existing.email === normalizedEmail
+              ? 'Email already exists'
+              : 'Username is already taken'
+        },
+        { status: 409 }
+      );
     }
 
     const passwordHash = await bcrypt.hash(body.password, 10);
@@ -156,6 +187,7 @@ export async function POST(request: Request) {
       data: {
         name: body.name,
         email: normalizedEmail,
+        username: normalizedUsername,
         passwordHash,
         role: body.role
       }
@@ -179,6 +211,13 @@ export async function POST(request: Request) {
         type: profileType,
         name: body.name,
         ownerId: user.id,
+        contactInfo: body.contactInfo || null,
+        hometown: body.hometown || null,
+        city: body.city || body.hometown || null,
+        postalCode: body.postalCode || null,
+        verificationStatus: getVerificationStatusForType(profileType),
+        verificationSubmittedAt:
+          profileType === 'ARTIST' || profileType === 'VENUE' ? new Date() : null,
         ...getProfileCopy(profileType, body.name),
         ...(profileType === 'VENUE' ? getVenueProfileOverrides(body) : {})
       }
@@ -187,6 +226,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       id: user.id,
       email: user.email,
+      username: user.username,
       mfaRequired: false,
       profileHexId: profile.hexId,
       profileSlug: profile.slug,

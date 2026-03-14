@@ -8,12 +8,13 @@ import { ProfilePageEditor } from '@/components/ProfilePageEditor';
 import { ListenerAvatarCreator } from '@/components/ListenerAvatarCreator';
 import { ListenerVenueMap } from '@/components/ListenerVenueMap';
 import { FanPageCompanion } from '@/components/FanPageCompanion';
+import { FanRecommendationsPanel } from '@/components/FanRecommendationsPanel';
 import { getSafeBackgroundImageStyle, getSafeImageUrl } from '@/lib/asset-safety';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getProfileDesignStyleVars } from '@/lib/profile-design';
 import { detectRequestLocation } from '@/lib/request-location';
 
-const listenerSections = ['about', 'upcoming', 'previous', 'top5', 'stats'] as const;
+const listenerSections = ['about', 'recommend', 'upcoming', 'previous', 'top5', 'stats'] as const;
 
 type ListenerSection = (typeof listenerSections)[number];
 
@@ -54,14 +55,15 @@ export default async function ListenerPage({
   const profile = await db.profile.findUnique({ where: { slug } });
   if (!profile || profile.type !== 'LISTENER') return notFound();
 
-  const [hypedShows, sentRecommendations, viewerLocation, venues] = await Promise.all([
+  const [hypedShows, sentRecommendations, viewerLocation, venues, activeShows, profileHypes, promoterShows] = await Promise.all([
     db.hypeEvent.findMany({
       where: { userId: profile.ownerId },
       include: {
         show: {
           include: {
             venueProfile: true,
-            headlinerProfile: true
+            headlinerProfile: true,
+            promoterProfile: true
           }
         }
       },
@@ -92,6 +94,42 @@ export default async function ListenerPage({
         latitude: true,
         longitude: true
       }
+    }),
+    db.show.findMany({
+      where: {
+        status: { in: ['SCHEDULED', 'LIVE'] }
+      },
+      include: {
+        venueProfile: true,
+        headlinerProfile: true,
+        promoterProfile: true
+      },
+      orderBy: [{ startsAt: 'asc' }, { hypeCount: 'desc' }],
+      take: 16
+    }),
+    db.profileHypeEvent.findMany({
+      where: { userId: profile.ownerId },
+      include: {
+        profile: {
+          select: {
+            id: true,
+            type: true
+          }
+        }
+      }
+    }),
+    db.show.findMany({
+      where: {
+        promoterProfileId: { not: null },
+        headlinerProfileId: { not: null }
+      },
+      include: {
+        promoterProfile: true,
+        headlinerProfile: true,
+        venueProfile: true
+      },
+      orderBy: [{ startsAt: 'desc' }, { hypeCount: 'desc' }],
+      take: 24
     })
   ]);
 
@@ -100,6 +138,73 @@ export default async function ListenerPage({
   const upcomingShows = shows.filter((show) => show.status === 'LIVE' || show.startsAt >= now);
   const previousShows = shows.filter((show) => show.status === 'ENDED' || (show.startsAt < now && show.status !== 'LIVE'));
   const isOwner = canManageOwnedResource(session, profile.ownerId);
+  const likedArtistIds = new Set<string>(
+    [
+      ...profileHypes
+        .filter((entry) => entry.profile.type === 'ARTIST')
+        .map((entry) => entry.profile.id),
+      ...shows
+        .map((show) => show.headlinerProfileId)
+        .filter((headlinerProfileId): headlinerProfileId is string => Boolean(headlinerProfileId))
+    ]
+  );
+  const nearbyShows = activeShows
+    .filter((show) => {
+      const venueProfile = show.venueProfile;
+      if (!venueProfile) return false;
+
+      if (viewerLocation?.postalCode && venueProfile.postalCode === viewerLocation.postalCode) return true;
+      if (viewerLocation?.city && venueProfile.city === viewerLocation.city) return true;
+      if (viewerLocation?.stateRegion && venueProfile.stateRegion === viewerLocation.stateRegion) return true;
+
+      return false;
+    })
+    .slice(0, 4);
+  const trendingShows = [...activeShows]
+    .sort((left, right) => right.hypeCount * 3 + right.ticketsSoldCount - (left.hypeCount * 3 + left.ticketsSoldCount))
+    .slice(0, 4);
+  const promoterMatches = Array.from(
+    promoterShows.reduce(
+      (map, show) => {
+        if (!show.promoterProfile || !show.headlinerProfile || !likedArtistIds.has(show.headlinerProfile.id)) {
+          return map;
+        }
+
+        const current = map.get(show.promoterProfile.id) ?? {
+          id: show.promoterProfile.id,
+          slug: show.promoterProfile.slug,
+          name: show.promoterProfile.name,
+          city: show.promoterProfile.city,
+          stateRegion: show.promoterProfile.stateRegion,
+          matchedArtistNames: new Set<string>(),
+          sharedShowCount: 0
+        };
+
+        current.matchedArtistNames.add(show.headlinerProfile.name);
+        current.sharedShowCount += 1;
+        map.set(show.promoterProfile.id, current);
+        return map;
+      },
+      new Map<
+        string,
+        {
+          id: string;
+          slug: string;
+          name: string;
+          city: string | null;
+          stateRegion: string | null;
+          matchedArtistNames: Set<string>;
+          sharedShowCount: number;
+        }
+      >()
+    ).values()
+  )
+    .map((entry) => ({
+      ...entry,
+      matchedArtistNames: [...entry.matchedArtistNames]
+    }))
+    .sort((left, right) => right.sharedShowCount - left.sharedShowCount)
+    .slice(0, 5);
   const defaultAvatarPrompt = [
     `Cartoon avatar for ${profile.name}.`,
     profile.genres.length ? `Inspired by ${profile.genres.join(', ')}.` : '',
@@ -214,6 +319,15 @@ export default async function ListenerPage({
               <h2>About</h2>
               <div className="artist-copy">{profile.aboutContent || profile.bio || 'This fan has not filled out the About section yet.'}</div>
             </>
+          ) : null}
+
+          {activeSection === 'recommend' ? (
+            <FanRecommendationsPanel
+              nearbyShows={nearbyShows}
+              promoterMatches={promoterMatches}
+              trendingShows={trendingShows}
+              zipLabel={viewerLocation?.postalCode ?? null}
+            />
           ) : null}
 
           {activeSection === 'upcoming' ? (

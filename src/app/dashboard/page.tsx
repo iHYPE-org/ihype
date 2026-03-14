@@ -3,6 +3,7 @@ import { ProfileType } from '@prisma/client';
 import { redirect } from 'next/navigation';
 import { ArtistMediaUploadManager } from '@/components/ArtistMediaUploadManager';
 import { ListenerAvatarCreator } from '@/components/ListenerAvatarCreator';
+import { OwnershipVerificationPanel } from '@/components/OwnershipVerificationPanel';
 import { ProfilePageEditor, type ProfilePageEditorField } from '@/components/ProfilePageEditor';
 import { VenuePageWizard } from '@/components/VenuePageWizard';
 import { auth } from '@/lib/auth';
@@ -97,6 +98,7 @@ function getProfileEditorConfig(profile: DashboardProfile) {
       fields: [
         { key: 'headline', label: 'Headline banner', placeholder: 'How should your fan page feel?' },
         { key: 'heroImage', label: 'Banner image URL', kind: 'url', placeholder: 'https://example.com/fan.jpg' },
+        { key: 'postalCode', label: 'Home ZIP code', placeholder: '60601' },
         { key: 'city', label: 'City', placeholder: 'Chicago' },
         { key: 'stateRegion', label: 'State / province', placeholder: 'Illinois' },
         { key: 'country', label: 'Country', placeholder: 'United States' },
@@ -117,6 +119,8 @@ function getProfileEditorConfig(profile: DashboardProfile) {
       fields: [
         { key: 'headline', label: 'Headline banner', placeholder: 'The line people see first' },
         { key: 'heroImage', label: 'Banner image URL', kind: 'url', placeholder: 'https://example.com/banner.jpg' },
+        { key: 'contactInfo', label: 'Contact info', placeholder: 'manager@artist.com | +1 555 101 3030' },
+        { key: 'hometown', label: 'Hometown', placeholder: 'Chicago, IL' },
         { key: 'city', label: 'City', placeholder: 'Chicago' },
         { key: 'stateRegion', label: 'State / province', placeholder: 'Illinois' },
         { key: 'country', label: 'Country', placeholder: 'United States' },
@@ -145,6 +149,7 @@ function getProfileEditorConfig(profile: DashboardProfile) {
     fields: [
       { key: 'headline', label: 'Headline banner', placeholder: 'How do you want artists and venues to read this page?' },
       { key: 'heroImage', label: 'Banner image URL', kind: 'url', placeholder: 'https://example.com/promoter.jpg' },
+      { key: 'contactInfo', label: 'Contact info', placeholder: 'bookings@promoter.com | +1 555 101 9090' },
       { key: 'city', label: 'City', placeholder: 'Chicago' },
       { key: 'stateRegion', label: 'State / province', placeholder: 'Illinois' },
       { key: 'country', label: 'Country', placeholder: 'United States' },
@@ -171,7 +176,9 @@ function getProfileInitialValues(profile: DashboardProfile) {
     recommendContent: profile.recommendContent ?? '',
     topFiveContent: profile.topFiveContent ?? '',
     addressLine1: profile.addressLine1 ?? '',
+    contactInfo: profile.contactInfo ?? '',
     hoursText: profile.hoursText ?? '',
+    hometown: profile.hometown ?? '',
     city: profile.city ?? '',
     stateRegion: profile.stateRegion ?? '',
     postalCode: profile.postalCode ?? '',
@@ -363,6 +370,16 @@ export default async function DashboardPage() {
                     />
                   ) : null}
 
+                  {profile.type === 'ARTIST' || profile.type === 'VENUE' ? (
+                    <OwnershipVerificationPanel
+                      contactInfo={profile.contactInfo}
+                      profileId={profile.id}
+                      roleLabel={profile.type === 'ARTIST' ? 'artist' : 'venue'}
+                      verificationNotes={profile.verificationNotes}
+                      verificationStatus={profile.verificationStatus}
+                    />
+                  ) : null}
+
                   {profile.type === 'VENUE' ? (
                     <VenuePageWizard
                       initialValues={{
@@ -372,7 +389,9 @@ export default async function DashboardPage() {
                         aboutContent: profile.aboutContent ?? '',
                         requestContent: profile.requestContent ?? '',
                         addressLine1: profile.addressLine1 ?? '',
+                        contactInfo: profile.contactInfo ?? '',
                         hoursText: profile.hoursText ?? '',
+                        hometown: profile.hometown ?? '',
                         city: profile.city ?? '',
                         stateRegion: profile.stateRegion ?? '',
                         postalCode: profile.postalCode ?? '',

@@ -19,8 +19,10 @@ import {
 
 type VenueRegisterFormValues = {
   name: string;
+  username: string;
   email: string;
   password: string;
+  contactInfo: string;
   headline: string;
   bio: string;
   heroImage: string;
@@ -43,8 +45,10 @@ type VenueRegisterFormValues = {
 
 const defaultFormValues: VenueRegisterFormValues = {
   name: '',
+  username: '',
   email: '',
   password: '',
+  contactInfo: '',
   headline: '',
   bio: '',
   heroImage: '',
@@ -109,7 +113,7 @@ function getLocationLine(values: VenueRegisterFormValues) {
     .filter(Boolean)
     .join(', ');
 
-  return [mainLine, values.country].filter(Boolean).join(' · ');
+  return [mainLine, values.country].filter(Boolean).join(' | ');
 }
 
 export function VenueRegisterWizard() {
@@ -174,7 +178,7 @@ export function VenueRegisterWizard() {
 
     const destination = data.profilePath ?? '/auth/landing';
     const signInResult = await signIn('credentials', {
-      email: formValues.email,
+      identifier: formValues.username || formValues.email,
       password: formValues.password,
       redirect: false,
       callbackUrl: destination
@@ -204,6 +208,13 @@ export function VenueRegisterWizard() {
             <p className="kicker">
               Build the venue identity, location notes, and future show framing before the page goes live.
             </p>
+            <div className="register-secondary-strip" aria-label="Secondary venue modules">
+              {['Verification', 'Page Builder', 'Event Calendar', 'Ticketing'].map((module) => (
+                <span className="register-secondary-pill" key={module}>
+                  {module}
+                </span>
+              ))}
+            </div>
             <div className="register-role-links">
               <Link className="button small secondary" href="/register">
                 Back to fan sign up
@@ -248,7 +259,17 @@ export function VenueRegisterWizard() {
                       </label>
 
                       <label className="field">
-                        <span>Owner email</span>
+                        <span>Username</span>
+                        <input
+                          name="username"
+                          onChange={(event) => updateField('username', event.target.value)}
+                          required
+                          value={formValues.username}
+                        />
+                      </label>
+
+                      <label className="field">
+                        <span>Recovery email</span>
                         <input
                           name="email"
                           onChange={(event) => updateField('email', event.target.value)}
@@ -266,6 +287,15 @@ export function VenueRegisterWizard() {
                           required
                           type="password"
                           value={formValues.password}
+                        />
+                      </label>
+
+                      <label className="field venue-wizard-field-span">
+                        <span>Venue contact info</span>
+                        <input
+                          onChange={(event) => updateField('contactInfo', event.target.value)}
+                          placeholder="bookings@venue.com | +1 555 101 3030"
+                          value={formValues.contactInfo}
                         />
                       </label>
 

@@ -6,10 +6,12 @@ import { buildArtistMediaCollection } from '@/lib/media';
 import { ShowCard } from '@/components/ShowCard';
 import { HypeButton } from '@/components/HypeButton';
 import { ProfilePageEditor } from '@/components/ProfilePageEditor';
-import { PromoterShowCreationTool } from '@/components/PromoterShowCreationTool';
+import { PromoterOwnerWorkspace } from '@/components/PromoterOwnerWorkspace';
+import { MarketRecommendationsPanel } from '@/components/MarketRecommendationsPanel';
 import { getSafeBackgroundImageStyle } from '@/lib/asset-safety';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getProfileDesignStyleVars } from '@/lib/profile-design';
+import { getAdvertisingRecommendations } from '@/lib/market-recommendations';
 
 const promoterSections = ['about', 'upcoming', 'previous', 'recommend', 'stats'] as const;
 
@@ -116,6 +118,25 @@ export default async function PromoterPage({
     accentTone: profile.themeAccentTone,
     backdropTone: profile.themeBackdropTone
   });
+  const recommendations = await getAdvertisingRecommendations({
+    profile: {
+      type: 'DJ',
+      city: profile.city,
+      country: profile.country
+    },
+    stats: {
+      pageHype: profile.hypeCount,
+      upcomingCount: upcomingShows.length,
+      previousCount: previousShows.length,
+      recommendationsSent: sentRecommendations.length
+    }
+  });
+  const lifetimeStats = {
+    totalShows: shows.length,
+    totalHype: shows.reduce((sum, show) => sum + show.hypeCount, 0),
+    totalTicketsSold: shows.reduce((sum, show) => sum + show.ticketsSoldCount, 0),
+    totalFans: new Set(sentRecommendations.map((request) => request.requesterId)).size + profile.hypeCount
+  };
 
   return (
     <main className="container section profile-design-shell" style={pageDesignStyle}>
@@ -126,6 +147,7 @@ export default async function PromoterPage({
           <p className="artist-headline">{profile.headline || 'Set the tone for the nights, talent, and scenes you champion.'}</p>
           <p className="subtitle">{profile.bio}</p>
           <p className="meta">{[profile.city, profile.country].filter(Boolean).join(', ')}</p>
+          {profile.contactInfo ? <p className="meta">{profile.contactInfo}</p> : null}
           <p className="meta">Share ID: <Link href={`/profiles/${profile.hexId}`}>{profile.hexId}</Link></p>
           <div className="tag-row">{profile.genres.map((genre) => <span key={genre} className="tag">{genre}</span>)}</div>
           <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} entityLabel="promoter" />
@@ -139,6 +161,7 @@ export default async function PromoterPage({
           fields={[
             { key: 'headline', label: 'Headline banner', placeholder: 'How do you want artists and venues to read this page?' },
             { key: 'heroImage', label: 'Banner image URL', kind: 'url', placeholder: 'https://example.com/promoter.jpg' },
+            { key: 'contactInfo', label: 'Contact info', placeholder: 'bookings@promoter.com | +1 555 101 9090' },
             { key: 'city', label: 'City', placeholder: 'Chicago' },
             { key: 'stateRegion', label: 'State / province', placeholder: 'Illinois' },
             { key: 'country', label: 'Country', placeholder: 'United States' },
@@ -158,6 +181,7 @@ export default async function PromoterPage({
             requestContent: profile.requestContent ?? '',
             recommendContent: profile.recommendContent ?? '',
             topFiveContent: profile.topFiveContent ?? '',
+            contactInfo: profile.contactInfo ?? '',
             city: profile.city ?? '',
             stateRegion: profile.stateRegion ?? '',
             country: profile.country ?? '',
@@ -175,68 +199,31 @@ export default async function PromoterPage({
       ) : null}
 
       {isOwner ? (
-        <section className="section promoter-owner-modules">
-          <PromoterShowCreationTool
-            artists={artistLibraries}
-            initialPromoterProfileId={profile.id}
-            promoters={[{ profileId: profile.id, name: profile.name, slug: profile.slug }]}
-          />
-
-          <div className="panel promoter-owner-history-panel">
-            <div className="promoter-owner-module-head">
-              <div className="badge">History</div>
-              <h2>Recent promoter activity</h2>
-              <p className="meta">Track the latest shows and venue recommendations without burying them inside the page tabs.</p>
-            </div>
-
-            <div className="promoter-history-grid">
-              <div className="promoter-history-card">
-                <div className="promoter-history-card-head">
-                  <h3>Shows</h3>
-                  <span className="meta">{shows.length} total</span>
-                </div>
-                {recentShows.length ? (
-                  <div className="promoter-history-list">
-                    {recentShows.map((show) => (
-                      <article className="promoter-history-item" key={show.id}>
-                        <div>
-                          <strong>{show.title}</strong>
-                          <p className="meta">{formatShowDate(show.startsAt)}</p>
-                        </div>
-                        <span className="tag">{show.status}</span>
-                      </article>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="empty">No show history yet.</div>
-                )}
-              </div>
-
-              <div className="promoter-history-card">
-                <div className="promoter-history-card-head">
-                  <h3>Recommendations</h3>
-                  <span className="meta">{sentRecommendations.length} sent</span>
-                </div>
-                {recentRecommendations.length ? (
-                  <div className="promoter-history-list">
-                    {recentRecommendations.map((request) => (
-                      <article className="promoter-history-item" key={request.id}>
-                        <div>
-                          <strong>{request.venueProfile.name}</strong>
-                          <p className="meta">{request.artistProfile?.name ?? request.artistName}</p>
-                        </div>
-                        <span className="tag">{formatRequestStatus(request.status)}</span>
-                      </article>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="empty">No recommendation history yet.</div>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
+        <PromoterOwnerWorkspace
+          artists={artistLibraries}
+          lifetimeStats={lifetimeStats}
+          promoter={{ profileId: profile.id, name: profile.name, slug: profile.slug }}
+          recentShows={recentShows.map((show) => ({
+            id: show.id,
+            title: show.title,
+            status: show.status,
+            startsAtLabel: formatShowDate(show.startsAt),
+            venueName: show.venueProfile?.name ?? null,
+            venuePostalCode: show.venueProfile?.postalCode ?? null,
+            ticketsSoldCount: show.ticketsSoldCount,
+            hypeCount: show.hypeCount,
+            showPath: `/shows/${show.slug}`
+          }))}
+          recommendations={recentRecommendations.map((request) => ({
+            id: request.id,
+            venueName: request.venueProfile.name,
+            artistName: request.artistProfile?.name ?? request.artistName,
+            status: formatRequestStatus(request.status)
+          }))}
+        />
       ) : null}
+
+      <MarketRecommendationsPanel recommendations={recommendations} roleLabel="promoter" />
 
       <section className="section">
         <nav className="section-tabs" aria-label="Promoter page sections">

@@ -8,27 +8,27 @@ type ResetStage = 'request' | 'confirm';
 
 function getAuthErrorMessage(error: string | null) {
   if (!error) return null;
-  return 'Invalid email or password.';
+  return 'Invalid email, username, or password.';
 }
 
 export function LoginPageClient() {
   const searchParams = useSearchParams();
   const requestedCallbackUrl = searchParams.get('callbackUrl');
   const callbackUrl = requestedCallbackUrl || '/auth/landing';
-  const defaultEmail = searchParams.get('email') || '';
+  const defaultIdentifier = searchParams.get('email') || searchParams.get('identifier') || '';
   const authError = searchParams.get('error');
 
   const [loginState, loginFormAction, loginPending] = useActionState(loginAction, {
     error: getAuthErrorMessage(authError),
-    email: defaultEmail
+    identifier: defaultIdentifier
   });
-  const [email, setEmail] = useState(defaultEmail);
+  const [identifier, setIdentifier] = useState(defaultIdentifier);
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState<string | null>(getAuthErrorMessage(authError));
 
   const [showReset, setShowReset] = useState(false);
   const [resetStage, setResetStage] = useState<ResetStage>('request');
-  const [resetEmail, setResetEmail] = useState(defaultEmail);
+  const [resetEmail, setResetEmail] = useState(defaultIdentifier);
   const [resetCode, setResetCode] = useState('');
   const [resetPassword, setResetPassword] = useState('');
   const [resetConfirmPassword, setResetConfirmPassword] = useState('');
@@ -36,16 +36,16 @@ export function LoginPageClient() {
   const [resetMessage, setResetMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    setEmail(defaultEmail);
-    setResetEmail(defaultEmail);
-  }, [defaultEmail]);
+    setIdentifier(defaultIdentifier);
+    setResetEmail(defaultIdentifier);
+  }, [defaultIdentifier]);
 
   useEffect(() => {
-    if (loginState.email && loginState.email !== email) {
-      setEmail(loginState.email);
+    if (loginState.identifier && loginState.identifier !== identifier) {
+      setIdentifier(loginState.identifier);
     }
     setMessage(loginState.error);
-  }, [authError, email, loginState.email, loginState.error]);
+  }, [authError, identifier, loginState.identifier, loginState.error]);
 
   async function handleResetRequest(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -59,7 +59,7 @@ export function LoginPageClient() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          email: resetEmail || email
+          email: resetEmail || identifier
         })
       });
 
@@ -70,8 +70,7 @@ export function LoginPageClient() {
         return;
       }
 
-      const nextEmail = resetEmail || email;
-      setEmail(nextEmail);
+      const nextEmail = resetEmail || identifier;
       setResetEmail(nextEmail);
       setResetStage('confirm');
       setResetMessage(data.message ?? 'Check your inbox for the six-digit reset passcode.');
@@ -98,7 +97,7 @@ export function LoginPageClient() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          email: resetEmail || email,
+          email: resetEmail || identifier,
           code: resetCode,
           password: resetPassword,
           confirmPassword: resetConfirmPassword
@@ -131,24 +130,24 @@ export function LoginPageClient() {
           <h1>Sign in</h1>
           <p className="kicker">
             Use your iHYPE account to jump back into your fan, artist, promoter, venue, or admin workspace.
-            Demo logins are fan@ihype.org, promoter@ihype.org, artist@ihype.org, venue@ihype.org, and admin@ihype.org, all using demo12345.
+            Sign in with either email or username. Demo logins are fan@ihype.org, promoter@ihype.org, artist@ihype.org, venue@ihype.org, and admin@ihype.org, all using demo12345.
           </p>
 
           <form className="form" action={loginFormAction}>
             <input name="callbackUrl" type="hidden" value={callbackUrl} />
             <label className="field">
-              <span>Email</span>
+              <span>Email or username</span>
               <input
-                name="email"
+                name="identifier"
                 onChange={(event) => {
-                  setEmail(event.target.value);
+                  setIdentifier(event.target.value);
                   if (!resetEmail) {
                     setResetEmail(event.target.value);
                   }
                 }}
                 required
-                type="email"
-                value={email}
+                type="text"
+                value={identifier}
               />
             </label>
             <label className="field">
@@ -173,7 +172,7 @@ export function LoginPageClient() {
                 setShowReset((current) => !current);
                 setResetMessage(null);
                 setResetStage('request');
-                setResetEmail(email);
+                setResetEmail('');
               }}
               type="button"
             >

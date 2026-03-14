@@ -5,49 +5,49 @@ import { signIn } from '@/lib/auth';
 
 export type LoginActionState = {
   error: string | null;
-  email: string;
+  identifier: string;
 };
 
 export async function loginAction(
   _previousState: LoginActionState,
   formData: FormData
 ): Promise<LoginActionState> {
-  const email = String(formData.get('email') ?? '')
+  const identifier = String(formData.get('identifier') ?? '')
     .trim()
     .toLowerCase();
   const password = String(formData.get('password') ?? '');
   const redirectTo = String(formData.get('callbackUrl') ?? '/auth/landing');
 
-  if (!email || !password) {
+  if (!identifier || !password) {
     return {
-      error: 'Enter your email and password.',
-      email
+      error: 'Enter your email or username and password.',
+      identifier
     };
   }
 
   try {
     await signIn('credentials', {
-      email,
+      identifier,
       password,
       redirectTo
     });
 
     return {
       error: null,
-      email
+      identifier
     };
   } catch (error) {
     if (error instanceof AuthError) {
       if (error.type === 'CredentialsSignin') {
         return {
-          error: 'Invalid email or password.',
-          email
+          error: 'Invalid email, username, or password.',
+          identifier
         };
       }
 
       return {
         error: 'Sign in failed. Please try again.',
-        email
+        identifier
       };
     }
 

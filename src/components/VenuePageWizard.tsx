@@ -28,7 +28,9 @@ type VenueWizardInitialValues = {
   aboutContent?: string;
   requestContent?: string;
   addressLine1?: string;
+  contactInfo?: string;
   hoursText?: string;
+  hometown?: string;
   city?: string;
   stateRegion?: string;
   postalCode?: string;
@@ -49,7 +51,9 @@ type VenueWizardFormValues = {
   aboutContent: string;
   requestContent: string;
   addressLine1: string;
+  contactInfo: string;
   hoursText: string;
+  hometown: string;
   city: string;
   stateRegion: string;
   postalCode: string;
@@ -78,7 +82,9 @@ const defaultFormValues: VenueWizardFormValues = {
   aboutContent: '',
   requestContent: '',
   addressLine1: '',
+  contactInfo: '',
   hoursText: '',
+  hometown: '',
   city: '',
   stateRegion: '',
   postalCode: '',
@@ -143,7 +149,7 @@ function getLocationLine(values: VenueWizardFormValues) {
     .filter(Boolean)
     .join(', ');
 
-  return [mainLine, values.country].filter(Boolean).join(' · ');
+  return [mainLine, values.country].filter(Boolean).join(' | ');
 }
 
 export function VenuePageWizard({
@@ -208,7 +214,9 @@ export function VenuePageWizard({
         aboutContent: formValues.aboutContent,
         requestContent: formValues.requestContent,
         addressLine1: formValues.addressLine1,
+        contactInfo: formValues.contactInfo,
         hoursText: formValues.hoursText,
+        hometown: formValues.hometown,
         city: formValues.city,
         stateRegion: formValues.stateRegion,
         postalCode: formValues.postalCode,
@@ -404,6 +412,15 @@ export function VenuePageWizard({
                       />
                     </label>
 
+                    <label className="field venue-wizard-field-span">
+                      <span>Venue contact info</span>
+                      <input
+                        onChange={(event) => updateField('contactInfo', event.target.value)}
+                        placeholder="bookings@venue.com | +1 555 101 3030"
+                        value={formValues.contactInfo}
+                      />
+                    </label>
+
                     <label className="field">
                       <span>City</span>
                       <input onChange={(event) => updateField('city', event.target.value)} value={formValues.city} />
@@ -436,6 +453,15 @@ export function VenuePageWizard({
                         onChange={(event) => updateField('hoursText', event.target.value)}
                         placeholder="Thu-Sat 8PM-2AM"
                         value={formValues.hoursText}
+                      />
+                    </label>
+
+                    <label className="field venue-wizard-field-span">
+                      <span>Local stay area</span>
+                      <input
+                        onChange={(event) => updateField('hometown', event.target.value)}
+                        placeholder="Rainey Street / Downtown"
+                        value={formValues.hometown}
                       />
                     </label>
                   </div>

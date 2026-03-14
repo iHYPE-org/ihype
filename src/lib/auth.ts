@@ -85,11 +85,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Credentials({
       credentials: {
-        email: { label: 'Email', type: 'email' },
+        identifier: { label: 'Email or username', type: 'text' },
         password: { label: 'Password', type: 'password' }
       },
       async authorize(credentials, request) {
-        if (!credentials?.email || !credentials?.password) {
+        if (!credentials?.identifier || !credentials?.password) {
           return null;
         }
 
@@ -104,8 +104,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
-        const user = await db.user.findUnique({
-          where: { email: String(credentials.email).toLowerCase() }
+        const identifier = String(credentials.identifier).trim().toLowerCase();
+        const user = await db.user.findFirst({
+          where: {
+            OR: [{ email: identifier }, { username: identifier }]
+          }
         });
 
         if (!user?.passwordHash) return null;

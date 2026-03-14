@@ -9,6 +9,7 @@ import {
 } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { buildArtistMediaCollection } from '../src/lib/media';
+import { createSerializedTicketId } from '../src/lib/tickets';
 import { calculateTicketOrderPayouts, PROMOTER_POOL_PERCENT } from '../src/lib/ticketing';
 
 const prisma = new PrismaClient();
@@ -84,19 +85,21 @@ async function upsertArtistMediaAsset({
 async function upsertDemoUser({
   email,
   legacyEmail,
+  username,
   name,
   passwordHash,
   role
 }: {
   email: string;
   legacyEmail: string;
+  username: string;
   name: string;
   passwordHash: string;
   role: Role;
 }) {
   const existingUser = await prisma.user.findFirst({
     where: {
-      OR: [{ email }, { email: legacyEmail }]
+      OR: [{ email }, { email: legacyEmail }, { username }]
     }
   });
 
@@ -105,6 +108,7 @@ async function upsertDemoUser({
       where: { id: existingUser.id },
       data: {
         email,
+        username,
         name,
         passwordHash,
         role,
@@ -117,6 +121,7 @@ async function upsertDemoUser({
   return prisma.user.create({
     data: {
       email,
+      username,
       name,
       passwordHash,
       role,
@@ -141,6 +146,7 @@ async function main() {
   await upsertDemoUser({
     email: 'admin@ihype.org',
     legacyEmail: 'admin@ihype.org',
+    username: 'admin',
     name: 'iHYPE Admin',
     passwordHash,
     role: Role.ADMIN
@@ -149,6 +155,7 @@ async function main() {
   const venueOwner = await upsertDemoUser({
     email: 'venue@ihype.org',
     legacyEmail: 'venue@ihype.org',
+    username: 'venue',
     name: 'Venue Owner',
     passwordHash,
     role: Role.VENUE
@@ -157,6 +164,7 @@ async function main() {
   const djOwner = await upsertDemoUser({
     email: 'promoter@ihype.org',
     legacyEmail: 'dj@ihype.org',
+    username: 'promoter',
     name: 'DJ Echo',
     passwordHash,
     role: Role.DJ
@@ -165,6 +173,7 @@ async function main() {
   const artistOwner = await upsertDemoUser({
     email: 'artist@ihype.org',
     legacyEmail: 'artist@ihype.org',
+    username: 'artist',
     name: 'Nova Pulse',
     passwordHash,
     role: Role.ARTIST
@@ -173,6 +182,7 @@ async function main() {
   const fan = await upsertDemoUser({
     email: 'fan@ihype.org',
     legacyEmail: 'fan@ihype.org',
+    username: 'fan',
     name: 'Night Owl',
     passwordHash,
     role: Role.FAN
@@ -1453,6 +1463,39 @@ async function main() {
 
   await prisma.ticketOrder.createMany({
     data: orderDefinitions
+  });
+
+  const seededOrders = await prisma.ticketOrder.findMany({
+    where: {
+      confirmationCode: {
+        in: orderDefinitions.map((definition) => definition.confirmationCode)
+      }
+    },
+    select: {
+      id: true,
+      buyerName: true,
+      buyerEmail: true,
+      quantity: true,
+      showId: true,
+      show: {
+        select: {
+          venueProfileId: true
+        }
+      }
+    }
+  });
+
+  await prisma.ticket.createMany({
+    data: seededOrders.flatMap((order) =>
+      Array.from({ length: order.quantity }, (_, index) => ({
+        serializedId: createSerializedTicketId(),
+        ticketOrderId: order.id,
+        showId: order.showId,
+        venueProfileId: order.show.venueProfileId,
+        holderName: `${order.buyerName} Ticket ${index + 1}`,
+        holderEmail: order.buyerEmail
+      }))
+    )
   });
 
   await prisma.mediaListen.deleteMany({

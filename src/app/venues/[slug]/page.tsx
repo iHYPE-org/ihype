@@ -9,8 +9,11 @@ import { VenuePageWizard } from '@/components/VenuePageWizard';
 import { VenueEventScheduler } from '@/components/VenueEventScheduler';
 import { VenueConnectionRequestActions } from '@/components/VenueConnectionRequestActions';
 import { VenueConnectionRequestForm } from '@/components/VenueConnectionRequestForm';
+import { OwnershipVerificationPanel } from '@/components/OwnershipVerificationPanel';
+import { MarketRecommendationsPanel } from '@/components/MarketRecommendationsPanel';
 import { getSafeBackgroundImageStyle } from '@/lib/asset-safety';
 import { canManageOwnedResource } from '@/lib/permissions';
+import { getAdvertisingRecommendations } from '@/lib/market-recommendations';
 
 const venueSections = ['about', 'upcoming', 'previous', 'request', 'stats'] as const;
 
@@ -120,6 +123,20 @@ export default async function VenuePage({
     backdropTone: profile.themeBackdropTone
   });
   const bannerStyle = getSafeBackgroundImageStyle(profile.heroImage);
+  const recommendations = await getAdvertisingRecommendations({
+    profile: {
+      type: 'VENUE',
+      city: profile.city,
+      country: profile.country
+    },
+    stats: {
+      pageHype: profile.hypeCount,
+      upcomingCount: upcomingShows.length,
+      previousCount: previousShows.length,
+      requestCount: totalRequestCount,
+      ticketsSold: totalTicketsSold
+    }
+  });
 
   return (
     <main className="container section profile-design-shell" style={pageDesignStyle}>
@@ -132,6 +149,7 @@ export default async function VenuePage({
           <p className="meta">{[profile.city, profile.country].filter(Boolean).join(', ')}</p>
           <p className="meta">Share ID: <Link href={`/profiles/${profile.hexId}`}>{profile.hexId}</Link></p>
           {profile.addressLine1 ? <p className="meta">{[profile.addressLine1, profile.postalCode].filter(Boolean).join(', ')}</p> : null}
+          {profile.contactInfo ? <p className="meta">{profile.contactInfo}</p> : null}
           {profile.hoursText ? <p className="meta">{profile.hoursText}</p> : null}
           <div className="tag-row">{profile.genres.map((genre) => <span key={genre} className="tag">{genre}</span>)}</div>
           <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} entityLabel="venue" />
@@ -140,6 +158,14 @@ export default async function VenuePage({
 
       {isOwner ? (
         <>
+          <OwnershipVerificationPanel
+            contactInfo={profile.contactInfo}
+            profileId={profile.id}
+            roleLabel="venue"
+            verificationNotes={profile.verificationNotes}
+            verificationStatus={profile.verificationStatus}
+          />
+
           <VenuePageWizard
             initialValues={{
               headline: profile.headline ?? '',
@@ -148,6 +174,8 @@ export default async function VenuePage({
               aboutContent: profile.aboutContent ?? '',
               requestContent: profile.requestContent ?? '',
               addressLine1: profile.addressLine1 ?? '',
+              contactInfo: profile.contactInfo ?? '',
+              hometown: profile.hometown ?? '',
               hoursText: profile.hoursText ?? '',
               city: profile.city ?? '',
               stateRegion: profile.stateRegion ?? '',
@@ -184,6 +212,8 @@ export default async function VenuePage({
           </div>
         </>
       ) : null}
+
+      <MarketRecommendationsPanel recommendations={recommendations} roleLabel="venue" />
 
       <section className="section">
         <nav className="section-tabs" aria-label="Venue page sections">

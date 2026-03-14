@@ -13,6 +13,74 @@ type RegisterFormProps = {
   intro?: string;
 };
 
+type RoleConfig = {
+  title: string;
+  intro: string;
+  primaryFields: Array<{
+    name: string;
+    label: string;
+    type?: 'text' | 'email' | 'password';
+    placeholder?: string;
+    required?: boolean;
+  }>;
+  secondaryModules: string[];
+};
+
+const roleConfigs: Record<RegisterRole, RoleConfig> = {
+  FAN: {
+    title: 'Fan sign up',
+    intro: 'Build a fan identity first, then shape your avatar, page look, and top 5 from your dashboard.',
+    primaryFields: [
+      { name: 'name', label: 'Avatar name', placeholder: 'Night Owl' },
+      { name: 'postalCode', label: 'Home ZIP code', placeholder: '60601' },
+      { name: 'username', label: 'Username', placeholder: 'nightowl' },
+      { name: 'email', label: 'Recovery email', type: 'email', placeholder: 'fan@ihype.org' },
+      { name: 'password', label: 'Password', type: 'password' }
+    ],
+    secondaryModules: ['Avatar Builder', 'Page Builder', 'Top 5']
+  },
+  ARTIST: {
+    title: 'Artist sign up',
+    intro:
+      'Artist accounts can upload media, run events, and share a custom look with fans. Review the upload license before creating the page.',
+    primaryFields: [
+      { name: 'name', label: 'Artist name', placeholder: 'Nova Pulse' },
+      { name: 'contactInfo', label: 'Contact info', placeholder: 'manager@artist.com | +1 555 101 2020' },
+      { name: 'hometown', label: 'Hometown', placeholder: 'Chicago, IL' },
+      { name: 'username', label: 'Username', placeholder: 'novapulse' },
+      { name: 'email', label: 'Recovery email', type: 'email', placeholder: 'artist@ihype.org' },
+      { name: 'password', label: 'Password', type: 'password' }
+    ],
+    secondaryModules: ['Page Builder', 'Media Upload', 'Event Calendar']
+  },
+  DJ: {
+    title: 'Promoter sign up',
+    intro:
+      'Promoter accounts can build a page, design an avatar, and create shows from artist uploads after accepting the limited-use policy.',
+    primaryFields: [
+      { name: 'name', label: 'Promoter name', placeholder: 'DJ Echo' },
+      { name: 'username', label: 'Username', placeholder: 'djecho' },
+      { name: 'email', label: 'Recovery email', type: 'email', placeholder: 'promoter@ihype.org' },
+      { name: 'password', label: 'Password', type: 'password' }
+    ],
+    secondaryModules: ['Page Builder', 'Avatar Builder', 'Show Creator']
+  },
+  VENUE: {
+    title: 'Venue sign up',
+    intro:
+      'Venue accounts include ownership verification, a room page builder, calendar tools, and ticketing setup.',
+    primaryFields: [
+      { name: 'name', label: 'Venue name', placeholder: 'Neon Harbor' },
+      { name: 'addressLine1', label: 'Venue address', placeholder: '41 Bogart Street' },
+      { name: 'contactInfo', label: 'Venue contact info', placeholder: 'bookings@venue.com | +1 555 303 4040' },
+      { name: 'username', label: 'Username', placeholder: 'neonharbor' },
+      { name: 'email', label: 'Recovery email', type: 'email', placeholder: 'venue@ihype.org' },
+      { name: 'password', label: 'Password', type: 'password' }
+    ],
+    secondaryModules: ['Verification', 'Page Builder', 'Event Calendar', 'Ticketing']
+  }
+};
+
 function requiresArtistUploadPolicy(role: RegisterRole) {
   return role === 'ARTIST' || role === 'DJ';
 }
@@ -23,13 +91,13 @@ function getAudienceLabel(role: RegisterRole) {
 
 export function RegisterForm({
   defaultRole = 'FAN',
-  title = 'Create account',
-  intro = 'Create your account, then sign in with your email and password to start building your page.'
+  title,
+  intro
 }: RegisterFormProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [acceptedPolicy, setAcceptedPolicy] = useState(false);
   const selectedRole = defaultRole;
-
+  const roleConfig = roleConfigs[selectedRole];
   const showPolicy = requiresArtistUploadPolicy(selectedRole);
 
   async function handleSubmit(formData: FormData) {
@@ -56,7 +124,7 @@ export function RegisterForm({
 
     const destination = data.profilePath ?? '/auth/landing';
     const signInResult = await signIn('credentials', {
-      email,
+      identifier: String(data.username ?? email),
       password,
       redirect: false,
       callbackUrl: destination
@@ -80,25 +148,30 @@ export function RegisterForm({
         <div className="panel register-panel">
           <div className="register-header">
             <RegisterAccountChoices activeRole={selectedRole} />
-            <h1>{title}</h1>
-            <p className="kicker">{intro}</p>
+            <h1>{title ?? roleConfig.title}</h1>
+            <p className="kicker">{intro ?? roleConfig.intro}</p>
+            <div className="register-secondary-strip" aria-label="Secondary setup modules">
+              {roleConfig.secondaryModules.map((module) => (
+                <span className="register-secondary-pill" key={module}>
+                  {module}
+                </span>
+              ))}
+            </div>
           </div>
 
-          <form className="form" action={handleSubmit}>
-            <label className="field">
-              <span>Name</span>
-              <input name="name" required />
-            </label>
-
-            <label className="field">
-              <span>Email</span>
-              <input name="email" required type="email" />
-            </label>
-
-            <label className="field">
-              <span>Password</span>
-              <input minLength={8} name="password" required type="password" />
-            </label>
+          <form className="form register-form-stack" action={handleSubmit}>
+            {roleConfig.primaryFields.map((field) => (
+              <label className="field" key={field.name}>
+                <span>{field.label}</span>
+                <input
+                  minLength={field.name === 'password' ? 8 : undefined}
+                  name={field.name}
+                  placeholder={field.placeholder}
+                  required={field.required ?? true}
+                  type={field.type ?? 'text'}
+                />
+              </label>
+            ))}
 
             {showPolicy ? (
               <label className="checkbox-row register-checkbox">
