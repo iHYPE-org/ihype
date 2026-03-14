@@ -37,6 +37,10 @@ export function LoginPageClient() {
     let cancelled = false;
 
     async function loadCsrfToken() {
+      if (!cancelled) {
+        setCsrfReady(false);
+      }
+
       try {
         const response = await fetch('/api/auth/csrf', {
           cache: 'no-store',
@@ -64,6 +68,18 @@ export function LoginPageClient() {
       cancelled = true;
     };
   }, []);
+
+  function getAuthErrorMessage() {
+    if (authError === 'MissingCSRF') {
+      return 'Secure sign-in was not ready yet. Please try again now that the page has loaded.';
+    }
+
+    if (authError) {
+      return 'Invalid email or password.';
+    }
+
+    return null;
+  }
 
   async function handleResetRequest(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -152,46 +168,68 @@ export function LoginPageClient() {
             Admin access uses admin@ihype.org with password demo12345.
           </p>
 
-          <form
-            action="/api/auth/callback/credentials"
-            className="form"
-            method="post"
-            onSubmit={() => {
-              setPending(true);
-              setMessage(null);
-            }}
-          >
-            <input name="csrfToken" type="hidden" value={csrfToken} />
-            <input name="callbackUrl" type="hidden" value={callbackUrl} />
-            <label className="field">
-              <span>Email</span>
-              <input
-                name="email"
-                onChange={(event) => {
-                  setEmail(event.target.value);
-                  if (!resetEmail) {
-                    setResetEmail(event.target.value);
-                  }
-                }}
-                required
-                type="email"
-                value={email}
-              />
-            </label>
-            <label className="field">
-              <span>Password</span>
-              <input
-                name="password"
-                onChange={(event) => setPassword(event.target.value)}
-                required
-                type="password"
-                value={password}
-              />
-            </label>
-            <button className="button" disabled={pending || !csrfReady} type="submit">
-              {pending ? 'Signing in...' : csrfReady ? 'Sign in' : 'Preparing sign-in...'}
-            </button>
-          </form>
+          {csrfReady ? (
+            <form
+              action="/api/auth/callback/credentials"
+              className="form"
+              method="post"
+              onSubmit={(event) => {
+                if (!csrfToken) {
+                  event.preventDefault();
+                  setMessage('Secure sign-in is still preparing. Please try again in a moment.');
+                  return;
+                }
+
+                setPending(true);
+                setMessage(null);
+              }}
+            >
+              <input name="csrfToken" type="hidden" value={csrfToken} />
+              <input name="callbackUrl" type="hidden" value={callbackUrl} />
+              <label className="field">
+                <span>Email</span>
+                <input
+                  name="email"
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+                    if (!resetEmail) {
+                      setResetEmail(event.target.value);
+                    }
+                  }}
+                  required
+                  type="email"
+                  value={email}
+                />
+              </label>
+              <label className="field">
+                <span>Password</span>
+                <input
+                  name="password"
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                  type="password"
+                  value={password}
+                />
+              </label>
+              <button className="button" disabled={pending} type="submit">
+                {pending ? 'Signing in...' : 'Sign in'}
+              </button>
+            </form>
+          ) : (
+            <div className="form">
+              <label className="field">
+                <span>Email</span>
+                <input disabled placeholder="Preparing sign-in..." type="email" value={email} />
+              </label>
+              <label className="field">
+                <span>Password</span>
+                <input disabled placeholder="Preparing sign-in..." type="password" value="" />
+              </label>
+              <button className="button" disabled type="button">
+                Preparing sign-in...
+              </button>
+            </div>
+          )}
 
           <div className="auth-inline-actions">
             <button
@@ -208,7 +246,7 @@ export function LoginPageClient() {
             </button>
           </div>
 
-          {authError ? <p className="status-note">Invalid email or password.</p> : null}
+          {getAuthErrorMessage() ? <p className="status-note">{getAuthErrorMessage()}</p> : null}
           {message ? <p className="status-note">{message}</p> : null}
         </div>
 
