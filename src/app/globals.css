@@ -245,6 +245,70 @@ button, input, select, textarea { font: inherit; }
   padding-top: 1.2rem;
   padding-bottom: 3rem;
 }
+.home-discovery-hero {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1.2fr) minmax(240px, 0.8fr);
+  padding: 1.6rem;
+  border-radius: 34px;
+  background:
+    radial-gradient(circle at top right, rgba(35,208,216,0.12), transparent 24%),
+    radial-gradient(circle at bottom left, rgba(143,91,255,0.12), transparent 30%),
+    linear-gradient(135deg, rgba(12,18,32,0.94), rgba(8,12,24,0.98));
+}
+.home-discovery-hero-copy {
+  display: grid;
+  gap: 0.8rem;
+}
+.home-discovery-title {
+  margin: 0;
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  line-height: 0.94;
+  letter-spacing: -0.05em;
+  max-width: 11ch;
+}
+.home-discovery-stats {
+  display: grid;
+  gap: 0.8rem;
+}
+.home-discovery-stat {
+  display: grid;
+  gap: 0.3rem;
+  padding: 1rem;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+}
+.home-discovery-stat span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.home-discovery-stat strong {
+  font-size: 1.5rem;
+  line-height: 1.04;
+}
+.home-simple-directory-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+.home-simple-directory-card {
+  display: grid;
+  gap: 0.65rem;
+  padding: 1.25rem;
+  border-radius: 28px;
+}
+.home-simple-directory-card strong {
+  font-size: 1.28rem;
+  line-height: 1.08;
+}
+.home-simple-directory-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
 .home-submenu-shell {
   display: grid;
   gap: 1rem;
@@ -4589,7 +4653,9 @@ button, input, select, textarea { font: inherit; }
   .dashboard-stat-grid { grid-template-columns: 1fr; }
   .dashboard-editor-hero,
   .dashboard-editor-card-summary,
-  .profile-design-tone-grid { grid-template-columns: 1fr; }
+  .profile-design-tone-grid,
+  .home-discovery-hero,
+  .home-simple-directory-grid { grid-template-columns: 1fr; }
   .dashboard-editor-card-art {
     width: 88px;
     height: 88px;

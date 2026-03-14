@@ -37,47 +37,36 @@ const adminPerspectiveOptions: Array<{ value: AdminPerspective; label: string; h
 
 const defaultNavItems: NavItem[] = [
   { href: '/', label: 'Discover', match: '/' },
-  { href: '/shows', label: 'Shows', match: '/shows' },
   { href: '/artists', label: 'Artists', match: '/artists' },
   { href: '/promoters', label: 'Promoters', match: '/promoters' },
-  { href: '/venues', label: 'Venues', match: '/venues' },
-  { href: '/fans', label: 'Fans', match: '/fans' },
-  { href: '/integrity', label: 'Integrity', match: '/integrity' }
+  { href: '/venues', label: 'Venues', match: '/venues' }
 ];
 
 const perspectiveNavItems: Record<AdminPerspective, NavItem[]> = {
-  ADMIN: defaultNavItems,
+  ADMIN: [{ href: '/dashboard', label: 'Dashboard', match: '/dashboard' }, ...defaultNavItems],
   LISTENER: [
     { href: '/', label: 'Discover', match: '/' },
-    { href: '/shows', label: 'Shows', match: '/shows' },
     { href: '/artists', label: 'Artists', match: '/artists' },
     { href: '/promoters', label: 'Promoters', match: '/promoters' },
-    { href: '/venues', label: 'Venues', match: '/venues' },
-    { href: '/fans', label: 'Fans', match: '/fans' }
+    { href: '/venues', label: 'Venues', match: '/venues' }
   ],
   ARTIST: [
+    { href: '/', label: 'Discover', match: '/' },
     { href: '/artists', label: 'Artists', match: '/artists' },
-    { href: '/shows', label: 'Shows', match: '/shows' },
     { href: '/promoters', label: 'Promoters', match: '/promoters' },
-    { href: '/venues', label: 'Venues', match: '/venues' },
-    { href: '/fans', label: 'Fans', match: '/fans' },
-    { href: '/', label: 'Discover', match: '/' }
+    { href: '/venues', label: 'Venues', match: '/venues' }
   ],
   PROMOTER: [
+    { href: '/', label: 'Discover', match: '/' },
     { href: '/promoters', label: 'Promoters', match: '/promoters' },
-    { href: '/shows', label: 'Shows', match: '/shows' },
     { href: '/artists', label: 'Artists', match: '/artists' },
-    { href: '/venues', label: 'Venues', match: '/venues' },
-    { href: '/fans', label: 'Fans', match: '/fans' },
-    { href: '/', label: 'Discover', match: '/' }
+    { href: '/venues', label: 'Venues', match: '/venues' }
   ],
   VENUE: [
+    { href: '/', label: 'Discover', match: '/' },
     { href: '/venues', label: 'Venues', match: '/venues' },
-    { href: '/shows', label: 'Shows', match: '/shows' },
     { href: '/artists', label: 'Artists', match: '/artists' },
-    { href: '/promoters', label: 'Promoters', match: '/promoters' },
-    { href: '/fans', label: 'Fans', match: '/fans' },
-    { href: '/', label: 'Discover', match: '/' }
+    { href: '/promoters', label: 'Promoters', match: '/promoters' }
   ]
 };
 

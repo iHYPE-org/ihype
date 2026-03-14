@@ -10,7 +10,7 @@ export default async function PromotersIndexPage() {
     <ProfileDirectoryPage
       badge="PROMOTERS"
       currentHref="/promoters"
-      description="Promoter pages combine show programming, recommendation history, and demand signals from the scenes they build."
+      description="Find the promoters building scenes, opening rooms, and moving real hype around artists and venues."
       profiles={promoters}
       title="Promoter directory"
     />

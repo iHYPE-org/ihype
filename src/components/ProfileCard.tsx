@@ -1,8 +1,10 @@
 import Link from 'next/link';
+import { HypeButton } from '@/components/HypeButton';
 import { getSafeImageUrl } from '@/lib/asset-safety';
 import { shortenHexId } from '@/lib/hex-id';
 
 type ProfileCardProfile = {
+  id: string;
   type: 'ARTIST' | 'DJ' | 'VENUE' | 'LISTENER';
   slug: string;
   hexId: string;
@@ -28,9 +30,15 @@ function getProfileLabel(type: ProfileCardProfile['type']) {
   return type;
 }
 
+function getProfileSummary(bio: string | null) {
+  if (!bio) return null;
+  return bio.length > 160 ? `${bio.slice(0, 157).trimEnd()}...` : bio;
+}
+
 export function ProfileCard({ profile }: { profile: ProfileCardProfile }) {
   const basePath = getProfileBasePath(profile.type);
   const avatarImage = getSafeImageUrl(profile.avatarImage);
+  const summary = getProfileSummary(profile.bio);
 
   return (
     <article className="card">
@@ -43,18 +51,16 @@ export function ProfileCard({ profile }: { profile: ProfileCardProfile }) {
       <h3>{profile.name}</h3>
       <p className="meta">{[profile.city, profile.country].filter(Boolean).join(', ')}</p>
       <p className="meta">
-        Share ID:{' '}
-        <Link href={`/profiles/${profile.hexId}`}>
-          {shortenHexId(profile.hexId)}
-        </Link>
+        {shortenHexId(profile.hexId)} | {profile.hypeCount} hype
       </p>
-      <p className="meta">Hype: {profile.hypeCount}</p>
-      <p>{profile.bio}</p>
+      {summary ? <p>{summary}</p> : null}
       <div className="tag-row">
         {profile.genres.map((genre) => <span key={genre} className="tag">{genre}</span>)}
       </div>
+      <HypeButton entityLabel={getProfileLabel(profile.type).toLowerCase()} initialCount={profile.hypeCount} targetId={profile.id} targetType="profile" />
       <div className="cta-row">
         <Link className="button small secondary" href={`/${basePath}/${profile.slug}`}>View page</Link>
+        <Link className="button small secondary" href={`/profiles/${profile.hexId}`}>Share</Link>
       </div>
     </article>
   );

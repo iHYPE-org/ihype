@@ -10,7 +10,7 @@ export default async function VenuesIndexPage() {
     <ProfileDirectoryPage
       badge="VENUES"
       currentHref="/venues"
-      description="Venue pages surface room identity, booking context, requests, and the show history building around each location."
+      description="Search venue pages by city and signal, then hype the rooms you want fans and artists to rally around."
       profiles={venues}
       title="Venue directory"
     />

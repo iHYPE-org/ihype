@@ -33,10 +33,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <SiteSubnav />
           {children}
           <footer className="footer container">
-            <span>iHYPE.org connects artists, promoters, venues, and fans through live signals, transparent hype, and direct discovery.</span>{' '}
-            <Link href="/launch-readiness">Launch readiness</Link>{' '}
-            <Link href="/integrity">Integrity</Link>{' '}
-            <Link href="/shows">Shows</Link>
+            <span>iHYPE.org helps fans find and hype artists, promoters, and venues.</span>{' '}
+            <Link href="/artists">Artists</Link>{' '}
+            <Link href="/promoters">Promoters</Link>{' '}
+            <Link href="/venues">Venues</Link>{' '}
+            <Link href="/register">Join</Link>
           </footer>
         </AppProviders>
       </body>

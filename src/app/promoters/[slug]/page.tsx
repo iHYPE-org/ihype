@@ -7,9 +7,7 @@ import { ShowCard } from '@/components/ShowCard';
 import { HypeButton } from '@/components/HypeButton';
 import { ProfilePageEditor } from '@/components/ProfilePageEditor';
 import { PromoterShowCreationTool } from '@/components/PromoterShowCreationTool';
-import { MarketRecommendationsPanel } from '@/components/MarketRecommendationsPanel';
 import { getSafeBackgroundImageStyle } from '@/lib/asset-safety';
-import { getAdvertisingRecommendations } from '@/lib/market-recommendations';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getProfileDesignStyleVars } from '@/lib/profile-design';
 
@@ -104,19 +102,6 @@ export default async function PromoterPage({
   const previousShows = shows.filter((show) => show.status === 'ENDED' || (show.startsAt < now && show.status !== 'LIVE'));
   const recentShows = [...shows].sort((left, right) => right.startsAt.getTime() - left.startsAt.getTime()).slice(0, 6);
   const recentRecommendations = sentRecommendations.slice(0, 6);
-  const advertisingRecommendations = await getAdvertisingRecommendations({
-    profile: {
-      type: 'DJ',
-      city: profile.city,
-      country: profile.country
-    },
-    stats: {
-      pageHype: profile.hypeCount,
-      upcomingCount: upcomingShows.length,
-      previousCount: previousShows.length,
-      recommendationsSent: sentRecommendations.length
-    }
-  });
   const artistLibraries = artistProfiles
     .map((artistProfile) => ({
       profileId: artistProfile.id,
@@ -252,8 +237,6 @@ export default async function PromoterPage({
           </div>
         </section>
       ) : null}
-
-      <MarketRecommendationsPanel recommendations={advertisingRecommendations} roleLabel="promoter page" />
 
       <section className="section">
         <nav className="section-tabs" aria-label="Promoter page sections">

@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { ProfileDirectoryBrowser, type DirectoryBrowserProfile } from '@/components/ProfileDirectoryBrowser';
 
 type DirectoryProfile = DirectoryBrowserProfile;
@@ -35,7 +34,6 @@ export function ProfileDirectoryPage({
   currentHref: string;
 }) {
   const topMarkets = getTopMarkets(profiles);
-  const totalHype = profiles.reduce((sum, profile) => sum + profile.hypeCount, 0);
 
   return (
     <main className="container section">
@@ -44,14 +42,6 @@ export function ProfileDirectoryPage({
           <div className="badge">{badge}</div>
           <h1 className="directory-title">{title}</h1>
           <p className="subtitle">{description}</p>
-          <div className="cta-row">
-            <Link className="button" href="/shows">
-              Browse live shows
-            </Link>
-            <Link className="button secondary" href="/integrity">
-              View transparency
-            </Link>
-          </div>
         </div>
 
         <div className="directory-hero-stats">
@@ -60,8 +50,8 @@ export function ProfileDirectoryPage({
             <strong>{profiles.length}</strong>
           </div>
           <div className="directory-stat">
-            <span>Total hype</span>
-            <strong>{totalHype}</strong>
+            <span>Focus</span>
+            <strong>Find + hype</strong>
           </div>
           <div className="directory-stat">
             <span>Top markets</span>
