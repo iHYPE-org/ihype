@@ -238,9 +238,9 @@ export default async function HomePage({
                 <div className="home-section-header">
                   <div>
                     <div className="badge">Geography</div>
-                    <h2>See where shows, venues, and listening energy are clustering.</h2>
+                    <h2>Start at full orbit, then dive into the nearest public activity layer.</h2>
                   </div>
-                  <p className="kicker">Local, regional, national, and global layers stay visible without burying the room-level details.</p>
+                  <p className="kicker">The globe eases toward nearby network activity without exposing any viewer location details.</p>
                 </div>
 
                 <div className="home-lens-grid">
@@ -268,7 +268,7 @@ export default async function HomePage({
                     </div>
 
                     <div className="home-hotspot-block">
-                      <h3>Postal hotspots</h3>
+                      <h3>Public zip hotspots</h3>
                       <div className="home-hotspot-list">
                         {hotspots.map((point) => (
                           <div className="home-hotspot" key={point.id}>
@@ -289,7 +289,7 @@ export default async function HomePage({
                     <div className="home-section-header">
                       <div>
                         <div className="badge">Map</div>
-                        <h2>Postal activity map</h2>
+                        <h2>Orbital activity globe</h2>
                       </div>
                     </div>
                     <ActivityMap points={activityPoints} scopes={activityScopes} />

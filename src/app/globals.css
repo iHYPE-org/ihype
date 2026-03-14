@@ -1363,6 +1363,12 @@ button, input, select, textarea { font: inherit; }
   border-radius: 999px;
   padding: 0.65rem 0.95rem;
   cursor: pointer;
+  transition: border-color 180ms ease, background 180ms ease, color 180ms ease, transform 180ms ease;
+}
+.scope-pill:hover,
+.scope-pill:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(35,208,216,0.25);
 }
 .scope-pill.active {
   color: var(--text);
@@ -1371,43 +1377,226 @@ button, input, select, textarea { font: inherit; }
 }
 .map-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.8fr);
+  grid-template-columns: minmax(0, 1.38fr) minmax(300px, 0.82fr);
   gap: 1rem;
+  align-items: stretch;
 }
 .activity-map-stage {
   position: relative;
-  min-height: 520px;
-  border-radius: 22px;
+  min-height: 560px;
+  border-radius: 26px;
   overflow: hidden;
   border: 1px solid var(--line);
   background:
-    radial-gradient(circle at 18% 28%, rgba(35,208,216,0.1), transparent 18%),
-    radial-gradient(circle at 62% 34%, rgba(143,91,255,0.12), transparent 22%),
-    radial-gradient(circle at 78% 68%, rgba(35,208,216,0.08), transparent 20%),
-    linear-gradient(180deg, rgba(7,11,20,0.35), rgba(7,11,20,0.92)),
-    linear-gradient(135deg, rgba(18,32,58,0.98), rgba(11,17,32,0.98));
+    radial-gradient(circle at 50% 14%, rgba(255,255,255,0.08), transparent 24%),
+    radial-gradient(circle at 20% 30%, rgba(35,208,216,0.12), transparent 18%),
+    radial-gradient(circle at 78% 22%, rgba(143,91,255,0.16), transparent 24%),
+    radial-gradient(circle at 50% 86%, rgba(35,208,216,0.12), transparent 18%),
+    linear-gradient(180deg, rgba(5,8,16,0.3), rgba(5,8,16,0.94)),
+    linear-gradient(145deg, rgba(13,26,48,0.98), rgba(7,10,18,0.98));
+  isolation: isolate;
 }
+.activity-map-stars,
+.activity-map-dust,
 .activity-map-grid {
   position: absolute;
   inset: 0;
+  pointer-events: none;
+}
+.activity-map-stars {
+  background:
+    radial-gradient(circle at 10% 18%, rgba(255,255,255,0.95) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 24% 70%, rgba(255,255,255,0.72) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 42% 26%, rgba(255,255,255,0.95) 0 1.1px, transparent 1.8px),
+    radial-gradient(circle at 63% 60%, rgba(255,255,255,0.75) 0 1.1px, transparent 1.8px),
+    radial-gradient(circle at 84% 20%, rgba(255,255,255,0.95) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 78% 76%, rgba(255,255,255,0.7) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 56% 48%, rgba(255,255,255,0.52) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 28% 46%, rgba(255,255,255,0.65) 0 1px, transparent 1.8px);
+  opacity: 0.9;
+}
+.activity-map-dust {
+  background:
+    radial-gradient(circle at 24% 32%, rgba(35,208,216,0.12), transparent 18%),
+    radial-gradient(circle at 76% 24%, rgba(143,91,255,0.16), transparent 24%),
+    radial-gradient(circle at 56% 66%, rgba(255,255,255,0.08), transparent 16%);
+  filter: blur(10px);
+  opacity: 0.85;
+}
+.activity-map-grid {
   background-image:
     linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
   background-size: calc(100% / 12) calc(100% / 6);
-  opacity: 0.5;
+  opacity: 0.22;
+  transform: perspective(1100px) rotateX(72deg) scale(1.08);
+  transform-origin: center 16%;
+}
+.activity-map-orbit {
+  position: absolute;
+  inset: 1rem 1rem 3.85rem;
+  display: grid;
+  place-items: center;
+  transition: transform 1400ms cubic-bezier(0.18, 0.82, 0.22, 1), filter 900ms ease;
+}
+.globe-phase-space .activity-map-orbit {
+  filter: saturate(0.85) blur(0.3px);
+}
+.globe-phase-approach .activity-map-orbit {
+  filter: saturate(1) drop-shadow(0 0 20px rgba(35,208,216,0.16));
+}
+.globe-phase-zip .activity-map-orbit {
+  filter: saturate(1.12) drop-shadow(0 0 28px rgba(35,208,216,0.18));
+}
+.activity-globe-shell {
+  position: relative;
+  width: min(84%, 540px);
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+}
+.activity-globe-atmosphere {
+  position: absolute;
+  inset: -10%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 28% 28%, rgba(120,232,255,0.18), transparent 38%),
+    radial-gradient(circle at 68% 70%, rgba(143,91,255,0.12), transparent 34%),
+    radial-gradient(circle, rgba(65,198,255,0.22), transparent 68%);
+  filter: blur(18px);
+}
+.activity-globe-sphere {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid rgba(182,232,255,0.2);
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255,255,255,0.18), transparent 12%),
+    radial-gradient(circle at 34% 32%, rgba(40,255,231,0.18), transparent 26%),
+    radial-gradient(circle at 68% 68%, rgba(143,91,255,0.18), transparent 24%),
+    linear-gradient(180deg, rgba(22,74,130,0.95), rgba(9,20,42,0.98));
+  box-shadow:
+    inset -42px -50px 90px rgba(0,0,0,0.45),
+    inset 14px 18px 48px rgba(255,255,255,0.08),
+    0 26px 54px rgba(0,0,0,0.35);
+}
+.activity-globe-sphere::before,
+.activity-globe-sphere::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.activity-globe-sphere::before {
+  background:
+    radial-gradient(circle at 20% 24%, rgba(255,255,255,0.18), transparent 16%),
+    radial-gradient(circle at 50% 100%, rgba(0,0,0,0.38), transparent 45%);
+}
+.activity-globe-sphere::after {
+  inset: 8% 10% 14%;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.08);
+  opacity: 0.55;
+}
+.activity-globe-latitude,
+.activity-globe-longitude,
+.activity-globe-continent {
+  position: absolute;
+  pointer-events: none;
+}
+.activity-globe-latitude {
+  left: 10%;
+  width: 80%;
+  border-top: 1px solid rgba(255,255,255,0.14);
+  border-radius: 50%;
+}
+.latitude-a {
+  top: 28%;
+  height: 16%;
+}
+.latitude-b {
+  top: 46%;
+  height: 8%;
+}
+.latitude-c {
+  top: 60%;
+  height: 18%;
+}
+.activity-globe-longitude {
+  top: 10%;
+  height: 80%;
+  border-left: 1px solid rgba(255,255,255,0.12);
+  border-radius: 50%;
+}
+.longitude-a {
+  left: 28%;
+  width: 16%;
+}
+.longitude-b {
+  left: 48%;
+  width: 8%;
+}
+.longitude-c {
+  left: 62%;
+  width: 16%;
+}
+.activity-globe-continent {
+  background: linear-gradient(180deg, rgba(95,255,211,0.28), rgba(31,171,144,0.12));
+  filter: blur(0.5px);
+  opacity: 0.95;
+}
+.continent-a {
+  top: 26%;
+  left: 18%;
+  width: 28%;
+  height: 18%;
+  border-radius: 42% 58% 54% 46% / 44% 38% 62% 56%;
+  transform: rotate(-10deg);
+}
+.continent-b {
+  top: 46%;
+  left: 52%;
+  width: 24%;
+  height: 18%;
+  border-radius: 50% 50% 40% 60% / 38% 52% 48% 62%;
+  transform: rotate(18deg);
+}
+.continent-c {
+  top: 62%;
+  left: 34%;
+  width: 20%;
+  height: 12%;
+  border-radius: 60% 40% 52% 48% / 54% 48% 52% 46%;
+  transform: rotate(-6deg);
 }
 .map-marker {
   position: absolute;
   transform: translate(-50%, -50%);
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.28);
-  background: rgba(35,208,216,0.18);
+  border: 1px solid rgba(183,240,255,0.5);
+  background: radial-gradient(circle, rgba(224,252,255,0.98), rgba(35,208,216,0.52) 62%, rgba(35,208,216,0.14));
   color: var(--text);
   cursor: pointer;
   display: grid;
   place-items: center;
   padding: 0;
-  box-shadow: 0 0 0 6px rgba(35,208,216,0.06);
+  box-shadow: 0 0 0 5px rgba(35,208,216,0.08);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+.map-marker::after {
+  content: '';
+  position: absolute;
+  inset: -32%;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.18);
+  animation: map-marker-pulse 2600ms ease-out infinite;
+}
+.map-marker:hover,
+.map-marker:focus-visible {
+  transform: translate(-50%, -50%) scale(1.08);
+  box-shadow: 0 0 0 7px rgba(35,208,216,0.14);
 }
 .map-marker span {
   position: absolute;
@@ -1419,22 +1608,34 @@ button, input, select, textarea { font: inherit; }
   padding: 0.3rem 0.5rem;
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(7,11,20,0.92);
+  background: rgba(7,11,20,0.88);
+  backdrop-filter: blur(10px);
 }
 .map-marker.active {
-  background: rgba(143,91,255,0.32);
-  border-color: rgba(143,91,255,0.48);
-  box-shadow: 0 0 0 8px rgba(143,91,255,0.1);
+  background: radial-gradient(circle, rgba(255,220,250,1), rgba(255,123,215,0.72) 58%, rgba(143,91,255,0.2));
+  border-color: rgba(255,136,225,0.65);
+  box-shadow: 0 0 0 8px rgba(255,106,214,0.14);
+}
+.map-marker.active::after {
+  border-color: rgba(255,136,225,0.35);
 }
 .map-caption {
   position: absolute;
   left: 1rem;
+  right: 1rem;
   bottom: 1rem;
+  padding: 0.8rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(5,9,18,0.72);
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
+  text-align: center;
+  backdrop-filter: blur(12px);
 }
 .map-detail {
   padding: 1.25rem;
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
 }
 .map-detail-stats {
   display: grid;
@@ -1442,8 +1643,35 @@ button, input, select, textarea { font: inherit; }
   gap: 0.75rem;
   margin-top: 1rem;
 }
+.map-detail .stat {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  color: var(--muted);
+}
+.map-detail .stat strong {
+  font-size: 1.18rem;
+  color: var(--text);
+}
 .map-detail-block {
   margin-top: 1rem;
+}
+@keyframes map-marker-pulse {
+  0% {
+    transform: scale(0.76);
+    opacity: 0.75;
+  }
+  70% {
+    transform: scale(1.18);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
 }
 .listener-location-panel {
   padding: 1.35rem;
@@ -3768,6 +3996,19 @@ button, input, select, textarea { font: inherit; }
   .venue-wizard-footer,
   .venue-wizard-nav { flex-direction: column; align-items: stretch; }
   .map-panel-header, .map-layout { grid-template-columns: 1fr; flex-direction: column; }
+  .activity-map-stage { min-height: 460px; }
+  .activity-map-orbit { inset: 0.85rem 0.85rem 3.65rem; }
+  .activity-globe-shell { width: min(92%, 430px); }
+  .map-marker span {
+    font-size: 0.68rem;
+    padding: 0.24rem 0.42rem;
+  }
+  .map-caption {
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    padding: 0.72rem 0.85rem;
+  }
   .listener-location-header, .listener-location-layout { grid-template-columns: 1fr; flex-direction: column; }
   .promoter-history-grid { grid-template-columns: 1fr; }
   .launch-risk-table { grid-template-columns: 1fr; }
