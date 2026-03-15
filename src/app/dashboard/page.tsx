@@ -354,27 +354,33 @@ export default async function DashboardPage({
               </p>
               <div className="dashboard-editor-link-row">
                 <Link className="dashboard-editor-link" href={getProfilePath(activeProfile.type, activeProfile.slug)}>
-                  Open public page
+                  {activeProfile.type === 'LISTENER' ? 'View my page' : 'Open public page'}
                 </Link>
-                <Link className="dashboard-editor-link" href={`/profiles/${activeProfile.hexId}`}>
-                  Open share link
-                </Link>
+                {activeProfile.type !== 'LISTENER' ? (
+                  <Link className="dashboard-editor-link" href={`/profiles/${activeProfile.hexId}`}>
+                    Open share link
+                  </Link>
+                ) : null}
               </div>
             </div>
 
             <div className="dashboard-editor-hero-stats">
               <article className="dashboard-editor-hero-pill">
-                <span>Share ID</span>
+                <span>{activeProfile.type === 'LISTENER' ? 'My ID' : 'Share ID'}</span>
                 <strong>{shortenHexId(activeProfile.hexId)}</strong>
               </article>
-              <article className="dashboard-editor-hero-pill">
-                <span>Editable pages</span>
-                <strong>{sortedProfiles.length}</strong>
-              </article>
-              <article className="dashboard-editor-hero-pill">
-                <span>Scope</span>
-                <strong>{isAdmin ? 'All profiles' : 'Your profiles'}</strong>
-              </article>
+              {activeProfile.type !== 'LISTENER' ? (
+                <>
+                  <article className="dashboard-editor-hero-pill">
+                    <span>Editable pages</span>
+                    <strong>{sortedProfiles.length}</strong>
+                  </article>
+                  <article className="dashboard-editor-hero-pill">
+                    <span>Scope</span>
+                    <strong>{isAdmin ? 'All profiles' : 'Your profiles'}</strong>
+                  </article>
+                </>
+              ) : null}
             </div>
           </>
         ) : (
@@ -404,7 +410,7 @@ export default async function DashboardPage({
 
       {sortedProfiles.length && activeProfile ? (
         <div className="dashboard-editor-stack">
-          {sortedProfiles.length > 1 ? (
+          {sortedProfiles.length > 1 && activeProfile.type !== 'LISTENER' ? (
             <section className="panel dashboard-editor-card dashboard-editor-selector-card">
               <div className="dashboard-editor-module-head">
                 <div>
@@ -474,9 +480,13 @@ export default async function DashboardPage({
                     <div className="dashboard-editor-card-copy">
                       <div className="dashboard-editor-card-meta">
                         <span className="badge">{getProfileLabel(profile.type)}</span>
-                        <Link className="dashboard-editor-chip" href={`/profiles/${profile.hexId}`}>
-                          {shortenHexId(profile.hexId)}
-                        </Link>
+                        {isFanProfile ? (
+                          <span className="dashboard-editor-chip">{shortenHexId(profile.hexId)}</span>
+                        ) : (
+                          <Link className="dashboard-editor-chip" href={`/profiles/${profile.hexId}`}>
+                            {shortenHexId(profile.hexId)}
+                          </Link>
+                        )}
                         {locationLine ? <span className="dashboard-editor-chip">{locationLine}</span> : null}
                       </div>
 
