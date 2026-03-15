@@ -5374,6 +5374,264 @@ button, input, select, textarea { font: inherit; }
   display: flex;
   justify-content: flex-end;
 }
+.discover-module-panel {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+  border-radius: 32px;
+}
+.discover-module-head {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.discover-module-head h3 {
+  margin: 0.3rem 0 0;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  line-height: 0.98;
+}
+.discover-recommendation-grid,
+.discover-ticket-grid,
+.discover-signup-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+.discover-recommendation-card,
+.discover-ticket-card,
+.discover-signup-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+}
+.discover-recommendation-topline,
+.discover-ticket-topline {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  align-items: center;
+}
+.discover-recommendation-card h4,
+.discover-ticket-card h4,
+.discover-signup-card strong {
+  margin: 0;
+  font-size: 1.12rem;
+  line-height: 1.1;
+}
+.discover-recommendation-card p,
+.discover-ticket-card p,
+.discover-signup-card p,
+.discover-signup-card span {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.discover-recommendation-list {
+  display: grid;
+  gap: 0.75rem;
+}
+.discover-recommendation-item {
+  display: grid;
+  gap: 0.22rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.discover-recommendation-item strong {
+  color: #fff4e1;
+}
+.discover-recommendation-item span {
+  color: #8bf2ff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.discover-recommendation-item p {
+  margin: 0;
+}
+.discover-character-layout,
+.discover-creator-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.95fr) minmax(0, 1.05fr);
+  gap: 1rem;
+  align-items: stretch;
+}
+.discover-character-stage,
+.discover-creator-surface {
+  position: relative;
+  overflow: hidden;
+  min-height: 360px;
+  border-radius: 28px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background:
+    radial-gradient(circle at top left, rgba(35,208,216,0.14), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(255,103,196,0.18), transparent 28%),
+    linear-gradient(135deg, rgba(12,18,32,0.94), rgba(8,12,24,0.98));
+}
+.discover-character-glow {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(10px);
+}
+.discover-character-glow-a {
+  inset: 14% auto auto 10%;
+  width: 180px;
+  height: 180px;
+  background: rgba(35,208,216,0.22);
+}
+.discover-character-glow-b {
+  inset: auto 12% 10% auto;
+  width: 210px;
+  height: 210px;
+  background: rgba(255,103,196,0.18);
+}
+.discover-character-card {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 160px;
+  height: 198px;
+  border-radius: 36px;
+  transform: translate(-50%, -50%);
+  border: 2px solid rgba(255,255,255,0.12);
+  background:
+    radial-gradient(circle at 30% 28%, rgba(255,255,255,0.16), transparent 18%),
+    linear-gradient(160deg, rgba(46,230,214,0.3), rgba(143,91,255,0.34), rgba(255,103,196,0.28));
+  box-shadow: 0 30px 60px rgba(0,0,0,0.34);
+}
+.discover-character-eyes,
+.discover-character-mouth {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.discover-character-eyes {
+  top: 62px;
+  width: 74px;
+  height: 18px;
+}
+.discover-character-eyes::before,
+.discover-character-eyes::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #fff7ec;
+  box-shadow: 0 0 14px rgba(255,255,255,0.42);
+}
+.discover-character-eyes::before {
+  left: 8px;
+}
+.discover-character-eyes::after {
+  right: 8px;
+}
+.discover-character-mouth {
+  top: 110px;
+  width: 46px;
+  height: 18px;
+  border-bottom: 3px solid rgba(255,247,236,0.92);
+  border-radius: 0 0 999px 999px;
+}
+.discover-character-bubble {
+  position: absolute;
+  left: 50%;
+  bottom: 1.25rem;
+  width: min(86%, 360px);
+  padding: 0.9rem 1rem;
+  border-radius: 22px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(8,12,24,0.82);
+  color: #fff0df;
+  font-size: 0.94rem;
+  line-height: 1.5;
+}
+.discover-tool-copy {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+}
+.discover-tool-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.discover-tool-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.46rem 0.72rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  color: #ffe7d1;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.discover-step-list {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding-left: 1.2rem;
+  color: var(--muted);
+}
+.discover-step-list li {
+  line-height: 1.6;
+}
+.discover-signup-card {
+  transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+.discover-signup-card:hover,
+.discover-signup-card:focus-visible {
+  transform: translateY(-3px);
+  border-color: rgba(46,230,214,0.22);
+  background: rgba(35,208,216,0.08);
+}
+.discover-creator-surface {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+  padding: 1rem;
+  align-items: center;
+}
+.discover-creator-deck,
+.discover-creator-mixer {
+  display: grid;
+  gap: 0.3rem;
+  padding: 1rem;
+  min-height: 220px;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  align-content: start;
+}
+.discover-creator-deck span,
+.discover-creator-mixer span {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.discover-creator-deck strong,
+.discover-creator-mixer strong {
+  font-size: 1.05rem;
+  line-height: 1.18;
+}
+.discover-creator-mixer {
+  min-height: 260px;
+  background:
+    radial-gradient(circle at top center, rgba(255,196,87,0.14), transparent 20%),
+    rgba(255,255,255,0.05);
+}
 .profile-card {
   display: grid;
   gap: 0.9rem;
@@ -5718,7 +5976,13 @@ button, input, select, textarea { font: inherit; }
   .directory-hero,
   .home-browse-card-grid { grid-template-columns: 1fr; }
   .discover-banner-links,
-  .discover-topfive-grid { grid-template-columns: 1fr; }
+  .discover-topfive-grid,
+  .discover-recommendation-grid,
+  .discover-ticket-grid,
+  .discover-signup-grid,
+  .discover-character-layout,
+  .discover-creator-layout,
+  .discover-creator-surface { grid-template-columns: 1fr; }
   .discover-module-control,
   .discover-topfive-topline {
     flex-direction: column;
