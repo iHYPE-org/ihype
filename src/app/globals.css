@@ -2181,6 +2181,186 @@ button, input, select, textarea { font: inherit; }
 .map-detail-block {
   margin-top: 1rem;
 }
+.earth-globe-panel {
+  padding: 1.35rem;
+}
+.earth-globe-stage {
+  min-height: 560px;
+}
+.earth-globe-path-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+.earth-globe-path-line {
+  fill: none;
+  stroke: rgba(255, 174, 76, 0.86);
+  stroke-width: 0.55;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 6px rgba(255, 174, 76, 0.28));
+  stroke-dasharray: 1.8 1.2;
+}
+.earth-globe-viewer-marker,
+.earth-globe-venue,
+.earth-globe-route-marker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+.earth-globe-viewer-marker {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 2px solid rgba(255,255,255,0.9);
+  background: #ff6b91;
+  box-shadow:
+    0 0 0 8px rgba(255,107,145,0.12),
+    0 0 24px rgba(255,107,145,0.24);
+}
+.earth-globe-viewer-marker span,
+.earth-globe-venue span {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 8px);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 0.25rem 0.48rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(7,11,20,0.9);
+  color: var(--text);
+}
+.earth-globe-venue {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.42);
+  background: linear-gradient(180deg, rgba(35,208,216,0.92), rgba(35,208,216,0.48));
+  box-shadow:
+    0 0 0 6px rgba(35,208,216,0.08),
+    0 0 18px rgba(35,208,216,0.16);
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+.earth-globe-venue.nearby {
+  background: linear-gradient(180deg, rgba(255,196,87,0.95), rgba(255,134,67,0.55));
+  box-shadow:
+    0 0 0 7px rgba(255,174,76,0.1),
+    0 0 22px rgba(255,174,76,0.22);
+}
+.earth-globe-venue:hover,
+.earth-globe-venue:focus-visible,
+.earth-globe-venue.active {
+  transform: translate(-50%, -50%) scale(1.08);
+  background: linear-gradient(180deg, rgba(143,91,255,0.96), rgba(143,91,255,0.5));
+  box-shadow:
+    0 0 0 8px rgba(143,91,255,0.12),
+    0 0 24px rgba(143,91,255,0.22);
+}
+.earth-globe-route-marker {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.76);
+  background: rgba(255,255,255,0.9);
+  box-shadow: 0 0 0 4px rgba(255,255,255,0.08);
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, border-color 160ms ease;
+}
+.earth-globe-route-marker.past {
+  background: rgba(255,174,76,0.96);
+  border-color: rgba(255,220,168,0.95);
+  box-shadow:
+    0 0 0 4px rgba(255,174,76,0.12),
+    0 0 18px rgba(255,174,76,0.2);
+}
+.earth-globe-route-marker.upcoming {
+  background: rgba(35,208,216,0.96);
+  border-color: rgba(210,255,255,0.92);
+  box-shadow:
+    0 0 0 4px rgba(35,208,216,0.12),
+    0 0 18px rgba(35,208,216,0.2);
+}
+.earth-globe-route-marker.live {
+  background: rgba(255,107,145,0.98);
+  border-color: rgba(255,226,234,0.95);
+  box-shadow:
+    0 0 0 5px rgba(255,107,145,0.14),
+    0 0 20px rgba(255,107,145,0.22);
+}
+.earth-globe-route-marker:hover,
+.earth-globe-route-marker:focus-visible,
+.earth-globe-route-marker.active {
+  transform: translate(-50%, -50%) scale(1.15);
+}
+.earth-globe-detail {
+  padding: 1.2rem;
+}
+.earth-globe-detail-stack {
+  display: grid;
+  gap: 0.9rem;
+}
+.earth-globe-detail-card {
+  display: grid;
+  gap: 0.45rem;
+  padding: 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+}
+.earth-globe-detail-card h3,
+.earth-globe-route-spotlight strong {
+  margin: 0.2rem 0 0;
+}
+.earth-globe-route-spotlight {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+}
+.earth-globe-route-spotlight p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+.earth-globe-route-spotlight .button {
+  margin-top: 0.35rem;
+}
+.earth-globe-route-list {
+  display: grid;
+  gap: 0.65rem;
+}
+.earth-globe-route-item {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+.earth-globe-route-item strong {
+  color: var(--text);
+}
+.earth-globe-route-item span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.earth-globe-route-item:hover,
+.earth-globe-route-item:focus-visible,
+.earth-globe-route-item.active {
+  transform: translateY(-1px);
+  border-color: rgba(35,208,216,0.24);
+  background: rgba(35,208,216,0.08);
+}
 @keyframes map-marker-pulse {
   0% {
     transform: scale(0.76);

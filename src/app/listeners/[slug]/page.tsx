@@ -6,7 +6,7 @@ import { ShowCard } from '@/components/ShowCard';
 import { HypeButton } from '@/components/HypeButton';
 import { ProfilePageEditor } from '@/components/ProfilePageEditor';
 import { ListenerAvatarCreator } from '@/components/ListenerAvatarCreator';
-import { ListenerVenueMap } from '@/components/ListenerVenueMap';
+import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
 import { FanPageCompanion } from '@/components/FanPageCompanion';
 import { FanRecommendationsPanel } from '@/components/FanRecommendationsPanel';
 import { getSafeBackgroundImageStyle, getSafeImageUrl } from '@/lib/asset-safety';
@@ -38,6 +38,14 @@ function getInitials(name: string) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('');
+}
+
+function formatShowDate(value: Date) {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  }).format(value);
 }
 
 export default async function ListenerPage({
@@ -221,6 +229,28 @@ export default async function ListenerPage({
     backdropTone: profile.themeBackdropTone
   });
   const avatarImage = getSafeImageUrl(profile.avatarImage);
+  const globeRouteStops = previousShows
+    .filter(
+      (show) =>
+        show.venueProfile?.latitude != null &&
+        show.venueProfile.longitude != null
+    )
+    .sort((left, right) => left.startsAt.getTime() - right.startsAt.getTime())
+    .map((show) => ({
+      id: show.id,
+      title: show.title,
+      href: `/shows/${show.slug}`,
+      venueName: show.venueProfile?.name ?? 'Venue',
+      venueSlug: show.venueProfile?.slug ?? null,
+      city: show.venueProfile?.city ?? null,
+      stateRegion: show.venueProfile?.stateRegion ?? null,
+      country: show.venueProfile?.country ?? null,
+      postalCode: show.venueProfile?.postalCode ?? null,
+      latitude: show.venueProfile?.latitude ?? null,
+      longitude: show.venueProfile?.longitude ?? null,
+      startsAtLabel: formatShowDate(show.startsAt),
+      timing: 'past' as const
+    }));
 
   return (
     <main className="container section profile-design-shell fan-page-shell" data-fan-companion-root style={pageDesignStyle}>
@@ -297,7 +327,15 @@ export default async function ListenerPage({
       ) : null}
 
       <div data-fan-companion-label="venue radar">
-        <ListenerVenueMap venues={venues} viewerLocation={viewerLocation} />
+        <NetworkEarthGlobe
+          description="Start at the detected ZIP from this request, highlight nearby venues, then zoom out to browse farther scenes and trace the shows this fan has already attended."
+          emptyRouteLabel="No previous attended shows are mapped yet."
+          routeLabel="Attended shows"
+          routeStops={globeRouteStops}
+          title="Earth globe for nearby venues and attended shows"
+          venues={venues}
+          viewerLocation={viewerLocation}
+        />
       </div>
 
       <section className="section" data-fan-companion-label={`${getSectionLabel(activeSection)} section`}>

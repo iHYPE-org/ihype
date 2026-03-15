@@ -10,10 +10,12 @@ import { ArtistMediaPlaylist } from '@/components/ArtistMediaPlaylist';
 import { ArtistMediaUploadManager } from '@/components/ArtistMediaUploadManager';
 import { OwnershipVerificationPanel } from '@/components/OwnershipVerificationPanel';
 import { MarketRecommendationsPanel } from '@/components/MarketRecommendationsPanel';
+import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
 import { getSafeBackgroundImageStyle, getSafeImageUrl } from '@/lib/asset-safety';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { DEFAULT_PROFILE_DESIGN_PRESET, getProfileDesignStyleVars } from '@/lib/profile-design';
 import { getAdvertisingRecommendations } from '@/lib/market-recommendations';
+import { detectRequestLocation } from '@/lib/request-location';
 
 const artistSections = ['about', 'media', 'tour', 'merch'] as const;
 
@@ -38,6 +40,14 @@ function getActiveSection(section: string | string[] | undefined): ArtistSection
 function getSectionLabel(section: ArtistSection) {
   if (section === 'tour') return 'Tour';
   return section.charAt(0).toUpperCase() + section.slice(1);
+}
+
+function formatShowDate(value: Date) {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  }).format(value);
 }
 
 export default async function ArtistPage({
@@ -71,11 +81,35 @@ export default async function ArtistPage({
   if (!profile || profile.type !== 'ARTIST') return notFound();
   const media = buildArtistMediaCollection(profile.mediaContent, profile.mediaUploads);
 
-  const shows = await db.show.findMany({
-    where: { headlinerProfileId: profile.id },
-    include: { venueProfile: true, headlinerProfile: true },
-    orderBy: { startsAt: 'asc' }
-  });
+  const [shows, viewerLocation, venues] = await Promise.all([
+    db.show.findMany({
+      where: { headlinerProfileId: profile.id },
+      include: { venueProfile: true, headlinerProfile: true },
+      orderBy: { startsAt: 'asc' }
+    }),
+    detectRequestLocation(),
+    db.profile.findMany({
+      where: {
+        type: 'VENUE',
+        latitude: { not: null },
+        longitude: { not: null }
+      },
+      orderBy: [{ verified: 'desc' }, { name: 'asc' }],
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        addressLine1: true,
+        hoursText: true,
+        city: true,
+        stateRegion: true,
+        country: true,
+        postalCode: true,
+        latitude: true,
+        longitude: true
+      }
+    })
+  ]);
 
   const now = new Date();
   const upcomingShows = shows.filter((show) => show.status === 'LIVE' || show.startsAt >= now);
@@ -101,6 +135,32 @@ export default async function ArtistPage({
     backdropTone: isOwner || profile.fanShareEnabled ? profile.themeBackdropTone : undefined
   });
   const artworkUrl = getSafeImageUrl(profile.heroImage);
+  const globeRouteStops = shows
+    .filter(
+      (show) =>
+        show.venueProfile?.latitude != null &&
+        show.venueProfile.longitude != null
+    )
+    .map((show) => ({
+      id: show.id,
+      title: show.title,
+      href: `/shows/${show.slug}`,
+      venueName: show.venueProfile?.name ?? 'Venue',
+      venueSlug: show.venueProfile?.slug ?? null,
+      city: show.venueProfile?.city ?? null,
+      stateRegion: show.venueProfile?.stateRegion ?? null,
+      country: show.venueProfile?.country ?? null,
+      postalCode: show.venueProfile?.postalCode ?? null,
+      latitude: show.venueProfile?.latitude ?? null,
+      longitude: show.venueProfile?.longitude ?? null,
+      startsAtLabel: formatShowDate(show.startsAt),
+      timing:
+        show.status === 'LIVE'
+          ? ('live' as const)
+          : show.startsAt >= now
+            ? ('upcoming' as const)
+            : ('past' as const)
+    }));
 
   return (
     <main className="container section profile-design-shell" style={pageDesignStyle}>
@@ -245,6 +305,16 @@ export default async function ArtistPage({
             <>
               <h2>Tour</h2>
               <div className="artist-copy">{profile.tourContent || 'No tour notes yet.'}</div>
+
+              <NetworkEarthGlobe
+                description="Start from the visitor ZIP, highlight nearby venues, then zoom out to trace the artist tour path across current and previous show stops."
+                emptyRouteLabel="No tour stops are mapped yet."
+                routeLabel="Tour path"
+                routeStops={globeRouteStops}
+                title="Earth globe for nearby venues and tour paths"
+                venues={venues}
+                viewerLocation={viewerLocation}
+              />
 
               <div className="artist-tour-shows">
                 <h3>Upcoming</h3>

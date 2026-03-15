@@ -8,10 +8,12 @@ import { HypeButton } from '@/components/HypeButton';
 import { ProfilePageEditor } from '@/components/ProfilePageEditor';
 import { PromoterOwnerWorkspace } from '@/components/PromoterOwnerWorkspace';
 import { MarketRecommendationsPanel } from '@/components/MarketRecommendationsPanel';
+import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
 import { getSafeBackgroundImageStyle } from '@/lib/asset-safety';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getProfileDesignStyleVars } from '@/lib/profile-design';
 import { getAdvertisingRecommendations } from '@/lib/market-recommendations';
+import { detectRequestLocation } from '@/lib/request-location';
 
 const promoterSections = ['about', 'shows', 'events'] as const;
 
@@ -69,7 +71,7 @@ export default async function PromoterPage({
   if (!profile || profile.type !== 'DJ') return notFound();
   const isOwner = canManageOwnedResource(session, profile.ownerId);
 
-  const [shows, sentRecommendations, artistProfiles] = await Promise.all([
+  const [shows, sentRecommendations, artistProfiles, viewerLocation, venues] = await Promise.all([
     db.show.findMany({
       where: { promoterProfileId: profile.id },
       include: { venueProfile: true, headlinerProfile: true, promoterProfile: true },
@@ -107,6 +109,29 @@ export default async function PromoterPage({
           orderBy: { name: 'asc' }
         })
       : Promise.resolve([])
+    ,
+    detectRequestLocation(),
+    db.profile.findMany({
+      where: {
+        type: 'VENUE',
+        latitude: { not: null },
+        longitude: { not: null }
+      },
+      orderBy: [{ verified: 'desc' }, { name: 'asc' }],
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        addressLine1: true,
+        hoursText: true,
+        city: true,
+        stateRegion: true,
+        country: true,
+        postalCode: true,
+        latitude: true,
+        longitude: true
+      }
+    })
   ]);
 
   const now = new Date();
@@ -147,6 +172,28 @@ export default async function PromoterPage({
     totalTicketsSold: shows.reduce((sum, show) => sum + show.ticketsSoldCount, 0),
     totalFans: new Set(sentRecommendations.map((request) => request.requesterId)).size + profile.hypeCount
   };
+  const globeRouteStops = previousShows
+    .filter(
+      (show) =>
+        show.venueProfile?.latitude != null &&
+        show.venueProfile.longitude != null
+    )
+    .sort((left, right) => left.startsAt.getTime() - right.startsAt.getTime())
+    .map((show) => ({
+      id: show.id,
+      title: show.title,
+      href: `/shows/${show.slug}`,
+      venueName: show.venueProfile?.name ?? 'Venue',
+      venueSlug: show.venueProfile?.slug ?? null,
+      city: show.venueProfile?.city ?? null,
+      stateRegion: show.venueProfile?.stateRegion ?? null,
+      country: show.venueProfile?.country ?? null,
+      postalCode: show.venueProfile?.postalCode ?? null,
+      latitude: show.venueProfile?.latitude ?? null,
+      longitude: show.venueProfile?.longitude ?? null,
+      startsAtLabel: formatShowDate(show.startsAt),
+      timing: 'past' as const
+    }));
 
   return (
     <main className="container section profile-design-shell" style={pageDesignStyle}>
@@ -279,6 +326,17 @@ export default async function PromoterPage({
             <>
               <h2>Events</h2>
               <div className="artist-copy">{profile.recommendContent || 'Use this section to explain the rooms, artists, and collaborations you like to champion.'}</div>
+
+              <NetworkEarthGlobe
+                description="Start from the visitor ZIP, highlight nearby venues, then zoom out to browse outside the current location and trace previous promoted shows."
+                emptyRouteLabel="No previous promoted shows are mapped yet."
+                routeLabel="Promoted history"
+                routeStops={globeRouteStops}
+                title="Earth globe for nearby venues and promoted-show history"
+                venues={venues}
+                viewerLocation={viewerLocation}
+              />
+
               <div className="grid grid-2">
                 {recentShows.length ? (
                   recentShows.map((show) => (
