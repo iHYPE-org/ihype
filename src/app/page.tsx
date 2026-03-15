@@ -1,189 +1,253 @@
 import Link from 'next/link';
 import { ProfileCard } from '@/components/ProfileCard';
+import {
+  NetworkEarthGlobe,
+  type NetworkEarthRouteStop,
+  type NetworkEarthVenue
+} from '@/components/NetworkEarthGlobe';
 import { getHomePageData } from '@/lib/public-data';
+import { detectRequestLocation } from '@/lib/request-location';
 
 export const revalidate = 60;
 
+type DiscoverView = 'globe' | 'top5';
+type TopFiveGroup = 'artists' | 'promoters' | 'venues';
+
 function getProfilesByType<T extends 'ARTIST' | 'DJ' | 'VENUE'>(
   profiles: Awaited<ReturnType<typeof getHomePageData>>['profiles'],
-  type: T
+  type: T,
+  count = 6
 ) {
   return profiles
     .filter((profile) => profile.type === type)
     .sort((left, right) => right.hypeCount - left.hypeCount)
-    .slice(0, 6);
+    .slice(0, count);
 }
 
-export default async function HomePage() {
-  const { profiles, transparencySnapshot } = await getHomePageData();
-  const featuredArtists = getProfilesByType(profiles, 'ARTIST');
-  const featuredPromoters = getProfilesByType(profiles, 'DJ');
-  const featuredVenues = getProfilesByType(profiles, 'VENUE');
+function getDiscoverView(value?: string | string[]): DiscoverView {
+  return value === 'top5' ? 'top5' : 'globe';
+}
 
-  const directoryCards = [
+function getTopFiveGroup(value?: string | string[]): TopFiveGroup {
+  if (value === 'promoters' || value === 'venues') {
+    return value;
+  }
+
+  return 'artists';
+}
+
+function buildRouteStops(
+  rankedShows: Awaited<ReturnType<typeof getHomePageData>>['rankedShows']
+): NetworkEarthRouteStop[] {
+  const now = Date.now();
+
+  return rankedShows
+    .filter((show) => show.venueProfile?.latitude != null && show.venueProfile?.longitude != null)
+    .slice(0, 16)
+    .map((show) => ({
+      id: show.id,
+      title: show.title,
+      href: `/shows/${show.slug}`,
+      venueName: show.venueProfile?.name ?? 'Venue TBA',
+      city: show.venueProfile?.city ?? null,
+      stateRegion: show.venueProfile?.stateRegion ?? null,
+      country: show.venueProfile?.country ?? null,
+      postalCode: show.venueProfile?.postalCode ?? null,
+      latitude: show.venueProfile?.latitude ?? null,
+      longitude: show.venueProfile?.longitude ?? null,
+      startsAtLabel: new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+      }).format(show.startsAt),
+      timing:
+        show.status === 'LIVE'
+          ? 'live'
+          : show.startsAt.getTime() < now
+            ? 'past'
+            : 'upcoming'
+    }));
+}
+
+export default async function HomePage({
+  searchParams
+}: {
+  searchParams?: Promise<{ view?: string | string[]; top?: string | string[] }>;
+}) {
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const activeView = getDiscoverView(resolvedSearchParams.view);
+  const activeTopFiveGroup = getTopFiveGroup(resolvedSearchParams.top);
+
+  const [{ profiles, rankedShows, transparencySnapshot }, viewerLocation] = await Promise.all([
+    getHomePageData(),
+    detectRequestLocation()
+  ]);
+
+  const topArtists = getProfilesByType(profiles, 'ARTIST', 5);
+  const topPromoters = getProfilesByType(profiles, 'DJ', 5);
+  const topVenues = getProfilesByType(profiles, 'VENUE', 5);
+
+  const topFiveGroups: Record<
+    TopFiveGroup,
     {
+      badge: string;
+      heading: string;
+      copy: string;
+      href: string;
+      profiles: typeof topArtists;
+    }
+  > = {
+    artists: {
+      badge: 'Artists',
+      heading: 'Top 5 artists',
+      copy: 'The most hyped artist pages in the network right now.',
       href: '/artists',
-      title: 'Artists',
-      count: transparencySnapshot.counters.totalArtists,
-      copy: 'Search artists, open their pages fast, and hype the acts you want to push forward.'
+      profiles: topArtists
     },
-    {
+    promoters: {
+      badge: 'Promoters',
+      heading: 'Top 5 promoters',
+      copy: 'Promoters pulling the strongest signal from fans right now.',
       href: '/promoters',
-      title: 'Promoters',
-      count: transparencySnapshot.counters.totalPromoters,
-      copy: 'Find the promoters shaping nights in your scene and hype the ones building momentum.'
+      profiles: topPromoters
     },
-    {
+    venues: {
+      badge: 'Venues',
+      heading: 'Top 5 venues',
+      copy: 'Rooms and spaces fans are pushing higher across the network.',
       href: '/venues',
-      title: 'Venues',
-      count: transparencySnapshot.counters.totalVenues,
-      copy: 'Browse venues by city and signal, then hype the rooms you want to see stay active.'
+      profiles: topVenues
     }
-  ];
-  const spotlightCards = [
-    {
-      label: 'Artist pulse',
-      name: featuredArtists[0]?.name ?? 'Waiting on the next breakout act',
-      href: '/artists'
-    },
-    {
-      label: 'Promoter heat',
-      name: featuredPromoters[0]?.name ?? 'New promoters loading in',
-      href: '/promoters'
-    },
-    {
-      label: 'Venue spotlight',
-      name: featuredVenues[0]?.name ?? 'Fresh rooms about to light up',
-      href: '/venues'
-    }
-  ];
+  };
+
+  const globeVenues: NetworkEarthVenue[] = profiles
+    .filter((profile) => profile.type === 'VENUE')
+    .map((profile) => ({
+      id: profile.id,
+      slug: profile.slug,
+      name: profile.name,
+      addressLine1: profile.addressLine1,
+      hoursText: profile.hoursText,
+      city: profile.city,
+      stateRegion: profile.stateRegion,
+      country: profile.country,
+      postalCode: profile.postalCode,
+      latitude: profile.latitude,
+      longitude: profile.longitude
+    }));
+  const globeRouteStops = buildRouteStops(rankedShows);
+  const activeTopFive = topFiveGroups[activeTopFiveGroup];
 
   return (
-    <main className="container section home-refresh-shell">
-      <section className="panel home-discovery-hero home-discovery-hero-energized">
-        <div className="home-discovery-hero-copy">
-          <div className="badge">Fan-first discovery</div>
-          <h1 className="home-discovery-title">Find artists, promoters, and venues worth hyping.</h1>
-          <p className="subtitle">
-            iHYPE is now centered on one simple loop: browse the network, open the pages that feel real, and
-            hype the people and places pushing the scene forward.
+    <main className="container section discover-page-shell">
+      <section className="panel discover-banner">
+        <div className="discover-banner-copy">
+          <div className="discover-logo-lockup">
+            <span className="discover-logo-mark">iHYPE</span>
+            <strong className="discover-logo-word">Discover</strong>
+          </div>
+          <h1 className="discover-banner-title">Find the next artist, promoter, or venue worth hyping.</h1>
+          <p className="subtitle discover-banner-subtitle">
+            Start with direct browse lanes, or drop into the globe and top-five signal to see where the
+            network is pulling hardest.
           </p>
-          <div className="cta-row">
-            <Link className="button" href="/artists">
-              Browse artists
-            </Link>
-            <Link className="button secondary" href="/promoters">
-              Browse promoters
-            </Link>
-            <Link className="button secondary" href="/venues">
-              Browse venues
-            </Link>
-          </div>
-          <div className="home-scene-radar">
-            {spotlightCards.map((card) => (
-              <Link className="home-scene-radar-card" href={card.href} key={card.label}>
-                <span>{card.label}</span>
-                <strong>{card.name}</strong>
-              </Link>
-            ))}
-          </div>
         </div>
 
-        <div className="home-discovery-stats">
-          <article className="home-discovery-stat">
-            <span>Artists</span>
+        <div className="discover-banner-links">
+          <Link className="discover-banner-link" href="/artists">
+            <span>Browse Artists</span>
             <strong>{transparencySnapshot.counters.totalArtists}</strong>
-          </article>
-          <article className="home-discovery-stat">
-            <span>Promoters</span>
+          </Link>
+          <Link className="discover-banner-link" href="/promoters">
+            <span>Browse Promoters</span>
             <strong>{transparencySnapshot.counters.totalPromoters}</strong>
-          </article>
-          <article className="home-discovery-stat">
-            <span>Venues</span>
+          </Link>
+          <Link className="discover-banner-link" href="/venues">
+            <span>Browse Venues</span>
             <strong>{transparencySnapshot.counters.totalVenues}</strong>
-          </article>
-          <article className="home-discovery-stat">
-            <span>Total profile hype</span>
-            <strong>{profiles.reduce((sum, profile) => sum + profile.hypeCount, 0)}</strong>
-          </article>
-          <div className="home-signal-column">
-            <span className="home-signal-column-label">Scene signal</span>
-            <p>
-              Browse fast, open pages that feel real, and use hype to push the strongest artists,
-              venues, and promoters higher.
-            </p>
-          </div>
+          </Link>
         </div>
       </section>
 
-      <section className="section">
-        <div className="home-simple-directory-grid">
-          {directoryCards.map((card) => (
-            <Link className="home-simple-directory-card panel home-simple-directory-card-energized" href={card.href} key={card.href}>
-              <span className="badge">{card.title}</span>
-              <strong>{card.count} to explore</strong>
-              <p>{card.copy}</p>
-              <span className="home-card-arrow">Open lane</span>
+      <section className="discover-module-shell" id="discover-module">
+        <div className="panel discover-module-control">
+          <div>
+            <div className="badge">Discover modules</div>
+            <h2 className="discover-module-title">Pick a lane and keep it open.</h2>
+          </div>
+          <div className="discover-module-tabs">
+            <Link
+              className={activeView === 'globe' ? 'discover-module-tab active' : 'discover-module-tab'}
+              href="/?view=globe#discover-module"
+            >
+              Globe Browse
             </Link>
-          ))}
-        </div>
-      </section>
-
-      <section className="section">
-        <div className="directory-section-head">
-          <div>
-            <div className="badge">Artists</div>
-            <h2>Top artist pages right now</h2>
+            <Link
+              className={activeView === 'top5' ? 'discover-module-tab active' : 'discover-module-tab'}
+              href="/?view=top5#discover-module"
+            >
+              Top 5
+            </Link>
           </div>
-          <Link className="home-inline-link" href="/artists">
-            View all artists
-          </Link>
         </div>
-        <div className="grid grid-3">
-          {featuredArtists.length ? (
-            featuredArtists.map((profile) => <ProfileCard key={profile.id} profile={profile} />)
-          ) : (
-            <div className="empty">No artist pages are live yet.</div>
-          )}
-        </div>
-      </section>
 
-      <section className="section">
-        <div className="directory-section-head">
-          <div>
-            <div className="badge">Promoters</div>
-            <h2>Promoters building traction</h2>
-          </div>
-          <Link className="home-inline-link" href="/promoters">
-            View all promoters
-          </Link>
-        </div>
-        <div className="grid grid-3">
-          {featuredPromoters.length ? (
-            featuredPromoters.map((profile) => <ProfileCard key={profile.id} profile={profile} />)
-          ) : (
-            <div className="empty">No promoter pages are live yet.</div>
-          )}
-        </div>
-      </section>
+        {activeView === 'globe' ? (
+          <NetworkEarthGlobe
+            badge="Earth Browse"
+            description="Start near the viewer request ZIP, then zoom out into regional, national, and global venue discovery."
+            emptyRouteLabel="No routed show stops are available in the current globe scope."
+            routeLabel="Live scene path"
+            routeStops={globeRouteStops}
+            title="Globe venue discovery"
+            venues={globeVenues}
+            viewerLocation={viewerLocation}
+          />
+        ) : (
+          <section className="panel discover-topfive-panel">
+            <div className="discover-topfive-topline">
+              <div>
+                <div className="badge">{activeTopFive.badge}</div>
+                <h3>{activeTopFive.heading}</h3>
+                <p className="kicker">{activeTopFive.copy}</p>
+              </div>
+              <div className="discover-topfive-tabs">
+                <Link
+                  className={activeTopFiveGroup === 'artists' ? 'discover-topfive-tab active' : 'discover-topfive-tab'}
+                  href="/?view=top5&top=artists#discover-module"
+                >
+                  Artists
+                </Link>
+                <Link
+                  className={activeTopFiveGroup === 'promoters' ? 'discover-topfive-tab active' : 'discover-topfive-tab'}
+                  href="/?view=top5&top=promoters#discover-module"
+                >
+                  Promoters
+                </Link>
+                <Link
+                  className={activeTopFiveGroup === 'venues' ? 'discover-topfive-tab active' : 'discover-topfive-tab'}
+                  href="/?view=top5&top=venues#discover-module"
+                >
+                  Venues
+                </Link>
+              </div>
+            </div>
 
-      <section className="section">
-        <div className="directory-section-head">
-          <div>
-            <div className="badge">Venues</div>
-            <h2>Venue pages with signal</h2>
-          </div>
-          <Link className="home-inline-link" href="/venues">
-            View all venues
-          </Link>
-        </div>
-        <div className="grid grid-3">
-          {featuredVenues.length ? (
-            featuredVenues.map((profile) => <ProfileCard key={profile.id} profile={profile} />)
-          ) : (
-            <div className="empty">No venue pages are live yet.</div>
-          )}
-        </div>
+            <div className="discover-topfive-grid">
+              {activeTopFive.profiles.length ? (
+                activeTopFive.profiles.map((profile) => <ProfileCard key={profile.id} profile={profile} />)
+              ) : (
+                <div className="empty">No pages are live in this Top 5 lane yet.</div>
+              )}
+            </div>
+
+            <div className="discover-topfive-footer">
+              <Link className="button secondary" href={activeTopFive.href}>
+                Open full {activeTopFive.badge.toLowerCase()} directory
+              </Link>
+            </div>
+          </section>
+        )}
       </section>
     </main>
   );
