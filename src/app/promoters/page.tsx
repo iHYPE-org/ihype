@@ -11,7 +11,6 @@ export default async function PromotersIndexPage() {
       badge="PROMOTERS"
       currentHref="/promoters"
       description="Promoter discover is where promoters browse the network and open the tools connected to booking, routing, and audience growth."
-      moduleLabel="Promoter modules"
       modules={['Sign Up Wizard', 'Show Creator', 'Globe Search', 'Ticket Hub', 'Recommendation Engine']}
       profiles={promoters}
       title="Promoter discover"

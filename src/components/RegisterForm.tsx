@@ -1,8 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { ArtistUploadPolicy } from '@/components/ArtistUploadPolicy';
+import { AuthConnectionMap } from '@/components/PageConnectionMap';
 import { RegisterAccountChoices } from '@/components/RegisterAccountChoices';
 
 export type RegisterRole = 'FAN' | 'ARTIST' | 'DJ' | 'VENUE';
@@ -89,6 +91,13 @@ function getAudienceLabel(role: RegisterRole) {
   return role === 'ARTIST' ? 'artist' : 'promoter';
 }
 
+function getRegisterHref(role: RegisterRole) {
+  if (role === 'ARTIST') return '/register/artist';
+  if (role === 'DJ') return '/register/promoter';
+  if (role === 'VENUE') return '/register/venue';
+  return '/register';
+}
+
 export function RegisterForm({
   defaultRole = 'FAN',
   title,
@@ -99,6 +108,7 @@ export function RegisterForm({
   const [isThirteenOrOlder, setIsThirteenOrOlder] = useState(false);
   const selectedRole = defaultRole;
   const roleConfig = roleConfigs[selectedRole];
+  const registerHref = getRegisterHref(selectedRole);
   const showPolicy = requiresArtistUploadPolicy(selectedRole);
   const showAgeGate = selectedRole === 'FAN';
 
@@ -160,6 +170,11 @@ export function RegisterForm({
                 </span>
               ))}
             </div>
+            <div className="register-role-links">
+              <Link className="button small secondary" href="/login">
+                Already have an account?
+              </Link>
+            </div>
           </div>
 
           <form className="form register-form-stack" action={handleSubmit}>
@@ -209,6 +224,8 @@ export function RegisterForm({
             </button>
             {message ? <p className="meta">{message}</p> : null}
           </form>
+
+          <AuthConnectionMap active="register" registerHref={registerHref} />
         </div>
 
         {showPolicy ? <ArtistUploadPolicy audienceLabel={getAudienceLabel(selectedRole)} /> : null}

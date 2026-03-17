@@ -11,7 +11,6 @@ export default async function ArtistsIndexPage() {
       badge="ARTISTS"
       currentHref="/artists"
       description="Artist discover is where artists browse the scene, track opportunities, and move between the tools tied to artist growth."
-      moduleLabel="Artist modules"
       modules={['Sign Up Wizard', 'Globe Search', 'Ticket Hub', 'Recommendation Engine']}
       profiles={artists}
       title="Artist discover"

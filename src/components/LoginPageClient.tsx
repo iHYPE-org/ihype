@@ -1,8 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import { useActionState, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { loginAction } from '@/app/login/actions';
+import { AuthConnectionMap } from '@/components/PageConnectionMap';
 
 type ResetStage = 'request' | 'confirm';
 
@@ -166,6 +168,9 @@ export function LoginPageClient() {
           </form>
 
           <div className="auth-inline-actions">
+            <Link className="text-link" href="/register">
+              Open sign up wizard
+            </Link>
             <button
               className="text-link"
               onClick={() => {
@@ -182,6 +187,8 @@ export function LoginPageClient() {
 
           {message ? <p className="status-note">{message}</p> : null}
         </div>
+
+        <AuthConnectionMap active="login" />
 
         {showReset ? (
           <div className="panel auth-panel auth-reset-panel">

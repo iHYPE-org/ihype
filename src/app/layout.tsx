@@ -1,10 +1,10 @@
 import './globals.css';
-import Link from 'next/link';
 import { ReactNode } from 'react';
 import { AdminPerspectiveBar } from '@/components/AdminPerspective';
 import { HeaderMediaPlayer } from '@/components/GlobalMediaPlayer';
 import { AppProviders } from '@/components/AppProviders';
 import { HeaderAuthLinks } from '@/components/HeaderAuthLinks';
+import { HeaderLogo } from '@/components/HeaderLogo';
 
 export const metadata = {
   title: 'iHYPE.org',
@@ -25,12 +25,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <AdminPerspectiveBar />
             <header className="nav">
               <div className="container nav-inner">
-                <Link href="/" className="nav-logo nav-logo-left" aria-label="Go to iHYPE home">
-                  <span className="nav-logo-mark">
-                    <span className="nav-logo-word">iHYPE</span>
-                    <span className="nav-logo-dot">.org</span>
-                  </span>
-                </Link>
+                <HeaderLogo />
                 <div className="nav-player-slot nav-player-slot-centered">
                   <HeaderMediaPlayer />
                 </div>

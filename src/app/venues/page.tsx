@@ -11,7 +11,6 @@ export default async function VenuesIndexPage() {
       badge="VENUES"
       currentHref="/venues"
       description="Venue discover is where venues browse the wider network and move between the tools connected to visibility, discovery, and ticketing."
-      moduleLabel="Venue modules"
       modules={['Sign Up Wizard', 'Globe Search', 'Ticket Hub', 'Recommendation Engine']}
       profiles={venues}
       title="Venue discover"

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { signIn } from 'next-auth/react';
+import { AuthConnectionMap } from '@/components/PageConnectionMap';
 import { RegisterAccountChoices } from '@/components/RegisterAccountChoices';
 import {
   getProfileDesignStyleVars,
@@ -216,6 +217,9 @@ export function VenueRegisterWizard() {
               ))}
             </div>
             <div className="register-role-links">
+              <Link className="button small secondary" href="/login">
+                Already have an account?
+              </Link>
               <Link className="button small secondary" href="/register">
                 Back to fan sign up
               </Link>
@@ -628,6 +632,8 @@ export function VenueRegisterWizard() {
                 </div>
               </aside>
             </div>
+
+            <AuthConnectionMap active="register" registerHref="/register/venue" />
           </form>
         </section>
       </div>
