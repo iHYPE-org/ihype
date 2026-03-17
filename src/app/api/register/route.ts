@@ -17,6 +17,7 @@ const schema = z.object({
   username: z.string().min(3).max(30),
   password: z.string().min(8),
   role: z.enum(['FAN', 'ARTIST', 'DJ', 'VENUE']).default('FAN'),
+  isThirteenOrOlder: z.boolean().optional().default(false),
   acceptedArtistUploadPolicy: z.boolean().optional().default(false),
   contactInfo: z.string().trim().max(200).optional(),
   hometown: z.string().trim().max(160).optional(),
@@ -163,6 +164,13 @@ export async function POST(request: Request) {
       );
     }
 
+    if (body.role === 'FAN' && !body.isThirteenOrOlder) {
+      return NextResponse.json(
+        { error: 'Fans must confirm they are 13 or older to use the iHYPE character lab.' },
+        { status: 400 }
+      );
+    }
+
     const normalizedEmail = body.email.toLowerCase();
     const existing = await db.user.findFirst({
       where: {
@@ -189,6 +197,7 @@ export async function POST(request: Request) {
         email: normalizedEmail,
         username: normalizedUsername,
         passwordHash,
+        isThirteenOrOlder: body.role === 'FAN' ? body.isThirteenOrOlder : true,
         role: body.role
       }
     });

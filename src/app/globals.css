@@ -3019,6 +3019,42 @@ button, input, select, textarea { font: inherit; }
   color: var(--text) !important;
   font-size: 0.92rem;
 }
+.avatar-creator-sprite-preview {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.35rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(7, 12, 24, 0.58);
+}
+.avatar-creator-sprite-preview span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.avatar-creator-sprite-preview p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.avatar-creator-sprite-image {
+  width: 100%;
+  max-width: 220px;
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background:
+    linear-gradient(90deg, rgba(255,255,255,0.02) 49%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.02) 51%),
+    linear-gradient(180deg, rgba(255,255,255,0.02) 49%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.02) 51%),
+    rgba(255,255,255,0.03);
+  object-fit: cover;
+}
+.avatar-creator-sprite-preview-empty {
+  border-style: dashed;
+}
 .avatar-creator-chip-row {
   display: flex;
   flex-wrap: wrap;
@@ -3217,6 +3253,7 @@ button, input, select, textarea { font: inherit; }
   animation: fan-companion-bob 4.8s ease-in-out infinite;
 }
 .fan-page-companion-avatar,
+.fan-page-companion-sprite,
 .fan-page-companion-fallback {
   position: relative;
   z-index: 1;
@@ -3229,6 +3266,14 @@ button, input, select, textarea { font: inherit; }
 .fan-page-companion-avatar {
   object-fit: cover;
   background: rgba(255,255,255,0.04);
+}
+.fan-page-companion-sprite {
+  background-color: rgba(255,255,255,0.04);
+  background-position: 0 0;
+  background-repeat: no-repeat;
+  background-size: 200% 200%;
+  image-rendering: auto;
+  animation: fan-companion-sprite 1.1s steps(1) infinite;
 }
 .fan-page-companion-fallback {
   font-size: 1.1rem;
@@ -3260,10 +3305,21 @@ button, input, select, textarea { font: inherit; }
   from { transform: translate(-50%, -50%) rotate(0deg); }
   to { transform: translate(-50%, -50%) rotate(360deg); }
 }
+@keyframes fan-companion-sprite {
+  0%,
+  24.9% { background-position: 0% 0%; }
+  25%,
+  49.9% { background-position: 100% 0%; }
+  50%,
+  74.9% { background-position: 0% 100%; }
+  75%,
+  100% { background-position: 100% 100%; }
+}
 @media (prefers-reduced-motion: reduce) {
   .fan-page-companion-shell,
   .fan-page-companion-orbit-one,
-  .fan-page-companion-orbit-two {
+  .fan-page-companion-orbit-two,
+  .fan-page-companion-sprite {
     animation: none;
   }
 }
@@ -5205,6 +5261,86 @@ button, input, select, textarea { font: inherit; }
   gap: 1.15rem;
   padding-top: 1.35rem;
 }
+.discover-index-banner {
+  display: grid;
+  gap: 1.1rem;
+  justify-items: center;
+  padding: 1.55rem;
+  border-radius: 38px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background:
+    radial-gradient(circle at top left, rgba(255,196,87,0.14), transparent 24%),
+    radial-gradient(circle at 82% 18%, rgba(255,103,196,0.18), transparent 28%),
+    linear-gradient(135deg, rgba(12,18,32,0.96), rgba(8,12,24,0.98));
+  text-align: center;
+}
+.discover-index-links {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.85rem;
+  width: 100%;
+}
+.discover-role-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.1rem;
+  align-items: start;
+}
+.discover-role-column {
+  display: grid;
+  gap: 0.9rem;
+  align-content: start;
+}
+.discover-role-pill,
+.discover-role-module {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 58px;
+  padding: 0.8rem 1rem;
+  border-radius: 24px;
+  border: 2px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.16);
+}
+.discover-role-pill {
+  min-height: 66px;
+  color: #fff8ee;
+  font-size: 0.94rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.discover-role-module-stack {
+  display: grid;
+  gap: 0.7rem;
+}
+.discover-role-module {
+  color: #fff3e7;
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+.discover-role-module:hover,
+.discover-role-module:focus-visible,
+.discover-role-module.active {
+  transform: translateY(-2px);
+  border-color: rgba(35,208,216,0.28);
+  background: linear-gradient(135deg, rgba(35,208,216,0.16), rgba(255,103,196,0.12));
+  box-shadow: 0 16px 34px rgba(0,0,0,0.2);
+}
+.discover-role-detail-shell {
+  display: grid;
+}
+.discover-module-panel-active {
+  padding: 1.4rem;
+}
+.discover-empty-panel {
+  justify-items: center;
+  text-align: center;
+}
 .discover-banner {
   display: grid;
   gap: 1.2rem;
@@ -5255,8 +5391,14 @@ button, input, select, textarea { font: inherit; }
   letter-spacing: -0.06em;
   max-width: 11ch;
 }
+.discover-index-banner .discover-banner-title {
+  max-width: 14ch;
+}
 .discover-banner-subtitle {
   max-width: 58ch;
+}
+.discover-index-banner .discover-banner-subtitle {
+  max-width: 66ch;
 }
 .discover-banner-links {
   display: grid;
@@ -5594,6 +5736,9 @@ button, input, select, textarea { font: inherit; }
   transform: translateY(-3px);
   border-color: rgba(46,230,214,0.22);
   background: rgba(35,208,216,0.08);
+}
+.discover-signup-card-featured {
+  max-width: 420px;
 }
 .discover-creator-surface {
   display: grid;
@@ -5975,6 +6120,8 @@ button, input, select, textarea { font: inherit; }
   .home-transparency-grid,
   .directory-hero,
   .home-browse-card-grid { grid-template-columns: 1fr; }
+  .discover-index-links,
+  .discover-role-grid,
   .discover-banner-links,
   .discover-topfive-grid,
   .discover-recommendation-grid,

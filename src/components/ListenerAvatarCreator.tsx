@@ -9,6 +9,8 @@ type AvatarOption = {
   label: string;
   description: string | null;
   avatarImage: string;
+  spriteSheetImage: string | null;
+  spritePrompt: string | null;
   revisedPrompt: string | null;
 };
 
@@ -18,6 +20,7 @@ type ListenerAvatarCreatorProps = {
   profileName: string;
   defaultPrompt: string;
   initialAvatarImage: string | null;
+  initialSpriteSheet?: string | null;
   defaultOpen?: boolean;
   hideToggle?: boolean;
 };
@@ -65,6 +68,7 @@ export function ListenerAvatarCreator({
   profileName,
   defaultPrompt,
   initialAvatarImage,
+  initialSpriteSheet = null,
   defaultOpen = false,
   hideToggle = false
 }: ListenerAvatarCreatorProps) {
@@ -74,6 +78,7 @@ export function ListenerAvatarCreator({
   const [selectedPresetId, setSelectedPresetId] = useState<(typeof avatarStylePresets)[number]['id']>('night-runner');
   const [selectedMoodId, setSelectedMoodId] = useState<(typeof avatarMoodOptions)[number]['id']>('electric');
   const [avatarImage, setAvatarImage] = useState(initialAvatarImage);
+  const [spriteSheetImage, setSpriteSheetImage] = useState(initialSpriteSheet);
   const [options, setOptions] = useState<AvatarOption[]>([]);
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -83,14 +88,17 @@ export function ListenerAvatarCreator({
   const selectedMood = avatarMoodOptions.find((mood) => mood.id === selectedMoodId) ?? avatarMoodOptions[0];
   const selectedOption = options.find((option) => option.id === selectedOptionId) ?? null;
   const previewImage = selectedOption?.avatarImage ?? avatarImage;
+  const previewSpriteSheet = selectedOption?.spriteSheetImage ?? spriteSheetImage;
   const generationPrompt = [characterPhrase.trim(), selectedPreset.prompt, selectedMood.prompt]
     .filter(Boolean)
     .join(' ');
   const compactStatus = selectedOption
-    ? 'Draft character selected and ready to save.'
-    : avatarImage
-      ? 'Saved page companion is attached to this fan page.'
-      : 'No page companion saved yet.';
+    ? 'Draft sprite companion selected and ready to save.'
+    : spriteSheetImage
+      ? 'Saved sprite companion is attached to this fan page.'
+      : avatarImage
+        ? 'Saved character preview is attached to this fan page.'
+        : 'No page companion saved yet.';
 
   async function handleGenerate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -140,7 +148,9 @@ export function ListenerAvatarCreator({
         action: 'save',
         profileId,
         profileHexId,
-        avatarImage: selectedOption.avatarImage
+        avatarImage: selectedOption.avatarImage,
+        spritePrompt: selectedOption.spritePrompt,
+        spriteSheetImage: selectedOption.spriteSheetImage ?? undefined
       })
     });
 
@@ -148,7 +158,8 @@ export function ListenerAvatarCreator({
 
     if (response.ok) {
       setAvatarImage(data.avatarImage ?? selectedOption.avatarImage);
-      setMessage(`Page companion saved to ${shortenHexId(data.fanHexId ?? profileHexId)} for future fan interactions.`);
+      setSpriteSheetImage(data.companionSpriteSheet ?? selectedOption.spriteSheetImage ?? null);
+      setMessage(`Sprite companion saved to ${shortenHexId(data.fanHexId ?? profileHexId)} for future fan interactions.`);
       router.refresh();
     } else {
       setMessage(data.error ?? 'Could not save this avatar');
@@ -161,9 +172,9 @@ export function ListenerAvatarCreator({
     <section className="panel avatar-creator">
       <div className="avatar-creator-header avatar-creator-header-compact">
         <div>
-          <h2>Animated fan character lab</h2>
+          <h2>Animated fan sprite lab</h2>
           <p className="kicker">
-            Build or refresh the animated page companion attached to your fan ID.
+            Build a family-friendly AI sprite companion attached to your fan ID.
           </p>
           <p className="meta">Fan ID: {profileHexId}</p>
         </div>
@@ -196,6 +207,7 @@ export function ListenerAvatarCreator({
             <div className="avatar-creator-chip-row">
               <span className="avatar-creator-chip">{selectedPreset.label}</span>
               <span className="avatar-creator-chip">{selectedMood.label}</span>
+              <span className="avatar-creator-chip">13+ family-friendly</span>
               {selectedOption ? <span className="avatar-creator-chip">Unsaved render</span> : null}
             </div>
             {message ? <span className="meta">{message}</span> : null}
@@ -227,11 +239,23 @@ export function ListenerAvatarCreator({
                 <div className="avatar-creator-chip-row">
                   <span className="avatar-creator-chip">{selectedPreset.label}</span>
                   <span className="avatar-creator-chip">{selectedMood.label}</span>
-                  <span className="avatar-creator-chip">Motion-ready</span>
+                  <span className="avatar-creator-chip">Sprite-ready</span>
+                  <span className="avatar-creator-chip">13+ family-friendly</span>
                   {selectedOption ? <span className="avatar-creator-chip">Selected render</span> : null}
                 </div>
                 {selectedOption?.description ? (
                   <p className="avatar-creator-stage-description">{selectedOption.description}</p>
+                ) : null}
+                {previewSpriteSheet ? (
+                  <div className="avatar-creator-sprite-preview">
+                    <span>Saved sprite sheet</span>
+                    <img alt={`${profileName} sprite sheet`} className="avatar-creator-sprite-image" src={previewSpriteSheet} />
+                  </div>
+                ) : selectedOption ? (
+                  <div className="avatar-creator-sprite-preview avatar-creator-sprite-preview-empty">
+                    <span>Sprite sheet</span>
+                    <p>Saving this option will render a matching animated sprite set for your fan page.</p>
+                  </div>
                 ) : null}
               </div>
             </div>
@@ -291,7 +315,7 @@ export function ListenerAvatarCreator({
                   disabled={pending}
                   type="submit"
                 >
-                  {pending ? 'Generating...' : 'Generate animated avatars'}
+                  {pending ? 'Generating...' : 'Generate AI sprite options'}
                 </button>
                 <button
                   className="button small secondary"
@@ -306,7 +330,7 @@ export function ListenerAvatarCreator({
                   onClick={handleSaveSelection}
                   type="button"
                 >
-                  Save as page companion
+                  Save sprite companion
                 </button>
               </div>
 
@@ -333,7 +357,7 @@ export function ListenerAvatarCreator({
                   <div className="avatar-option-meta">
                     <strong>{option.label}</strong>
                     {option.description ? <p>{option.description}</p> : null}
-                    <span>{option.id === selectedOptionId ? `Selected for ${shortenHexId(profileHexId)}` : 'Choose'}</span>
+                    <span>{option.id === selectedOptionId ? `Selected for ${shortenHexId(profileHexId)}` : 'Choose sprite'}</span>
                   </div>
                 </button>
               ))}

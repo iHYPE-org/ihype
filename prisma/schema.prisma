@@ -60,6 +60,7 @@ model User {
   email                   String                   @unique
   username                String                   @unique
   passwordHash            String?
+  isThirteenOrOlder       Boolean                  @default(true)
   mfaSecret               String?
   mfaEnabledAt            DateTime?
   image                   String?
@@ -107,6 +108,7 @@ model Profile {
   longitude                     Float?
   heroImage                     String?
   avatarImage                   String?
+  companionSpriteSheet          String?
   themePreset                   String                   @default("midnight-neon")
   themeAccentTone               String?
   themeBackdropTone             String?

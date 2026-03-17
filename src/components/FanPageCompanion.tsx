@@ -4,6 +4,7 @@ import { CSSProperties, useEffect, useMemo, useState } from 'react';
 
 type FanPageCompanionProps = {
   avatarImage: string | null;
+  spriteSheetImage: string | null;
   fanName: string;
   initials: string;
 };
@@ -50,7 +51,7 @@ function getCompanionMessage(label: string) {
   return `Drifting through ${label}.`;
 }
 
-export function FanPageCompanion({ avatarImage, fanName, initials }: FanPageCompanionProps) {
+export function FanPageCompanion({ avatarImage, spriteSheetImage, fanName, initials }: FanPageCompanionProps) {
   const [activeLabel, setActiveLabel] = useState('your fan page');
   const [pointerOffset, setPointerOffset] = useState({ x: 0, y: 0 });
   const [scrollPulse, setScrollPulse] = useState(0);
@@ -133,7 +134,13 @@ export function FanPageCompanion({ avatarImage, fanName, initials }: FanPageComp
       <div className="fan-page-companion-shell">
         <span className="fan-page-companion-orbit fan-page-companion-orbit-one" />
         <span className="fan-page-companion-orbit fan-page-companion-orbit-two" />
-        {avatarImage ? (
+        {spriteSheetImage ? (
+          <span
+            aria-label={`${fanName} sprite companion`}
+            className="fan-page-companion-sprite"
+            style={{ backgroundImage: `url(${spriteSheetImage})` }}
+          />
+        ) : avatarImage ? (
           <img alt={`${fanName} page companion`} className="fan-page-companion-avatar" src={avatarImage} />
         ) : (
           <div className="profile-avatar profile-avatar-fallback fan-page-companion-fallback">{initials}</div>

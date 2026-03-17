@@ -219,7 +219,7 @@ export default async function ListenerPage({
     [profile.city, profile.country].filter(Boolean).join(', ')
       ? `Set the mood around ${[profile.city, profile.country].filter(Boolean).join(', ')}.`
       : '',
-    'Expressive, music-obsessed, colorful, and friendly.'
+    'Expressive, music-obsessed, colorful, friendly, and family-friendly.'
   ]
     .filter(Boolean)
     .join(' ');
@@ -254,7 +254,12 @@ export default async function ListenerPage({
 
   return (
     <main className="container section profile-design-shell fan-page-shell" data-fan-companion-root style={pageDesignStyle}>
-      <FanPageCompanion avatarImage={avatarImage} fanName={profile.name} initials={getInitials(profile.name)} />
+      <FanPageCompanion
+        avatarImage={avatarImage}
+        fanName={profile.name}
+        initials={getInitials(profile.name)}
+        spriteSheetImage={getSafeImageUrl(profile.companionSpriteSheet)}
+      />
 
       <header className="artist-banner panel" data-fan-companion-label="profile pulse" style={bannerStyle}>
         <div className="profile-banner-row">
@@ -282,6 +287,7 @@ export default async function ListenerPage({
             <ListenerAvatarCreator
               defaultPrompt={defaultAvatarPrompt}
               initialAvatarImage={profile.avatarImage}
+              initialSpriteSheet={profile.companionSpriteSheet}
               profileId={profile.id}
               profileHexId={profile.hexId}
               profileName={profile.name}

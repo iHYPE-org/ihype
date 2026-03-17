@@ -29,7 +29,7 @@ type RoleConfig = {
 const roleConfigs: Record<RegisterRole, RoleConfig> = {
   FAN: {
     title: 'Fan sign up',
-    intro: 'Build a fan identity first, then shape your avatar, page look, and top 5 from your dashboard.',
+    intro: 'Build a fan identity first, then shape your family-friendly sprite companion, page look, and top 5 from your dashboard.',
     primaryFields: [
       { name: 'name', label: 'Avatar name', placeholder: 'Night Owl' },
       { name: 'postalCode', label: 'Home ZIP code', placeholder: '60601' },
@@ -96,9 +96,11 @@ export function RegisterForm({
 }: RegisterFormProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [acceptedPolicy, setAcceptedPolicy] = useState(false);
+  const [isThirteenOrOlder, setIsThirteenOrOlder] = useState(false);
   const selectedRole = defaultRole;
   const roleConfig = roleConfigs[selectedRole];
   const showPolicy = requiresArtistUploadPolicy(selectedRole);
+  const showAgeGate = selectedRole === 'FAN';
 
   async function handleSubmit(formData: FormData) {
     setMessage(null);
@@ -108,6 +110,7 @@ export function RegisterForm({
 
     payload.role = selectedRole;
     payload.acceptedArtistUploadPolicy = showPolicy ? acceptedPolicy : true;
+    payload.isThirteenOrOlder = showAgeGate ? isThirteenOrOlder : true;
 
     const response = await fetch('/api/register', {
       method: 'POST',
@@ -183,6 +186,20 @@ export function RegisterForm({
                 />
                 <span>
                   I agree to the iHYPE.org Artist Upload &amp; Limited Use License Policy for {getAudienceLabel(selectedRole)} accounts.
+                </span>
+              </label>
+            ) : null}
+
+            {showAgeGate ? (
+              <label className="checkbox-row register-checkbox">
+                <input
+                  checked={isThirteenOrOlder}
+                  onChange={(event) => setIsThirteenOrOlder(event.target.checked)}
+                  required
+                  type="checkbox"
+                />
+                <span>
+                  I am 13 or older and understand that the character lab only creates family-friendly companions.
                 </span>
               </label>
             ) : null}

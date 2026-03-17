@@ -13,7 +13,7 @@ A production-oriented Next.js application for hosting artist, DJ, and venue page
 
 - Streaming shows are the main homepage content.
 - Pages for artists, DJs, and venues.
-- Fan pages with AI cartoon avatar generation.
+- Fan pages with AI sprite-companion generation for 13+ fans, with family-friendly character output.
 - Platform-wide profile hex IDs for fans, artists, promoters, and venues, plus universal share links at `/profiles/<hexId>`.
 - Curated in-app launch-readiness page for the Chicago pilot and September 6, 2026 launch target.
 - Public integrity page plus transparency snapshot endpoint with versioned feed heuristics and explainable show surfacing.

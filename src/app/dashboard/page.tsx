@@ -93,7 +93,7 @@ function buildFanAvatarPrompt(profile: DashboardProfile) {
     [profile.city, profile.country].filter(Boolean).join(', ')
       ? `Set the mood around ${[profile.city, profile.country].filter(Boolean).join(', ')}.`
       : '',
-    'Expressive, music-obsessed, colorful, and friendly.'
+    'Expressive, music-obsessed, colorful, friendly, and family-friendly.'
   ]
     .filter(Boolean)
     .join(' ');
@@ -551,6 +551,7 @@ export default async function DashboardPage({
                           defaultPrompt={buildFanAvatarPrompt(profile)}
                           hideToggle
                           initialAvatarImage={profile.avatarImage}
+                          initialSpriteSheet={profile.companionSpriteSheet}
                           profileHexId={profile.hexId}
                           profileId={profile.id}
                           profileName={profile.name}

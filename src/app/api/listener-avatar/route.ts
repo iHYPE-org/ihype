@@ -17,10 +17,12 @@ const saveSchema = z.object({
   action: z.literal('save'),
   profileId: z.string().cuid(),
   profileHexId: z.string().regex(/^0x[a-f0-9]+$/i, 'A valid fan hex ID is required.'),
-  avatarImage: z.string().startsWith('data:image/').max(8_000_000)
+  avatarImage: z.string().startsWith('data:image/').max(8_000_000),
+  spritePrompt: z.string().trim().min(3).max(2_000).optional(),
+  spriteSheetImage: z.string().startsWith('data:image/').max(16_000_000).optional()
 });
 
-function buildAvatarPrompt({
+function buildAvatarPortraitPrompt({
   name,
   city,
   country,
@@ -41,9 +43,46 @@ function buildAvatarPrompt({
   const topFiveLine = topFiveContent ? `Top five notes: ${topFiveContent.slice(0, 220)}.` : '';
 
   return [
-    `Create an original high-definition animated character portrait for the music fan profile "${name}".`,
-    'Turn the fan phrase into one animated original character only, three-quarter head-and-shoulders composition, centered character, clean silhouette, expressive pose, polished cel-shaded detail.',
+    `Create one original high-definition animated character for the music fan profile "${name}".`,
+    'Make it a family-friendly, full-body, original character only with a clean silhouette, expressive pose, polished cel-shaded detail, and game-ready readability.',
     'Animated illustration finish, nightlife energy, music-discovery personality, layered lighting, bold but curated color palette, transparent background, no text, no watermark, no logos.',
+    'Keep it family friendly: no nudity, no sexualized styling, no gore, no horror, no alcohol, no smoking, no drugs, no weapons, and no hateful symbols.',
+    'Avoid matching any copyrighted character or celebrity likeness.',
+    genreLine,
+    locationLine,
+    topFiveLine,
+    `Fan phrase: ${userPrompt}`
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
+
+function buildAvatarSpritePrompt({
+  name,
+  city,
+  country,
+  genres,
+  topFiveContent,
+  userPrompt
+}: {
+  name: string;
+  city: string | null;
+  country: string | null;
+  genres: string[];
+  topFiveContent: string | null;
+  userPrompt: string;
+}) {
+  const location = [city, country].filter(Boolean).join(', ');
+  const genreLine = genres.length ? `Music taste cues: ${genres.join(', ')}.` : '';
+  const locationLine = location ? `Location inspiration: ${location}.` : '';
+  const topFiveLine = topFiveContent ? `Top five notes: ${topFiveContent.slice(0, 220)}.` : '';
+
+  return [
+    `Create one original family-friendly full-body sprite sheet for the music fan profile "${name}".`,
+    'Use a 2x2 grid with four equal animation frames: idle bounce, wave hello, point toward music, and celebrate with a hype reaction.',
+    'Keep the same character design, outfit, proportions, and palette across every frame so the sheet feels production-ready and consistent.',
+    'Transparent background, clean readable silhouette, cel-shaded finish, polished 2D sprite art, no text, no watermark, no logos.',
+    'Keep it family friendly: no nudity, no sexualized styling, no gore, no horror, no alcohol, no smoking, no drugs, no weapons, and no hateful symbols.',
     'Avoid matching any copyrighted character or celebrity likeness.',
     genreLine,
     locationLine,
@@ -199,6 +238,70 @@ function buildFallbackAvatarDataUrl({
   return encodeSvgAsDataUrl(svg);
 }
 
+function buildFallbackSpriteSheetDataUrl({
+  seed,
+  label
+}: {
+  seed: string;
+  label: string;
+}) {
+  const skin = pickDeterministic(fallbackSkinTones, seed, 'sprite-skin');
+  const hair = pickDeterministic(fallbackHairTones, seed, 'sprite-hair');
+  const accent = pickDeterministic(fallbackAccentTones, seed, 'sprite-accent');
+  const jacket = pickDeterministic(['#f4f6ff', '#d7e7ff', '#f2d7ff', '#d8fff0'], seed, 'sprite-jacket');
+  const shirt = pickDeterministic(['#0f1728', '#162033', '#31244f', '#183942'], seed, 'sprite-shirt');
+  const halo = pickDeterministic(fallbackBackdropTones, seed, 'sprite-halo');
+
+  const framePoses = [
+    { x: 0, y: 0, bounce: 0, leftArm: -18, rightArm: 18, leftLeg: -7, rightLeg: 7, label: 'idle' },
+    { x: 512, y: 0, bounce: -10, leftArm: -26, rightArm: 30, leftLeg: -4, rightLeg: 8, label: 'wave' },
+    { x: 0, y: 512, bounce: -4, leftArm: -8, rightArm: 38, leftLeg: -9, rightLeg: 11, label: 'point' },
+    { x: 512, y: 512, bounce: -18, leftArm: -34, rightArm: 34, leftLeg: -2, rightLeg: 2, label: 'celebrate' }
+  ] as const;
+
+  const frames = framePoses
+    .map((pose) => {
+      const centerX = pose.x + 256;
+      const centerY = pose.y + 276 + pose.bounce;
+      const shoulderY = centerY - 44;
+      const handY = centerY + 6;
+      const legTopY = centerY + 54;
+      const sparkleX = pose.x + 96 + (createHash('sha256').update(`${seed}:${pose.label}`).digest()[0] % 80);
+
+      return `
+        <g aria-label="${pose.label}">
+          <rect x="${pose.x}" y="${pose.y}" width="512" height="512" rx="34" fill="${halo}" fill-opacity="0.16" />
+          <circle cx="${centerX}" cy="${pose.y + 108}" r="70" fill="${accent}" fill-opacity="0.12" />
+          <ellipse cx="${centerX}" cy="${pose.y + 430}" rx="94" ry="24" fill="#060911" fill-opacity="0.18" />
+          <path d="M${centerX - 60} ${centerY + 16}c18 30 39 44 60 44 20 0 42-14 60-44v118c-18 18-39 27-60 27-21 0-42-9-60-27Z" fill="${jacket}" />
+          <path d="M${centerX - 36} ${centerY + 40}c12 12 24 18 36 18s24-6 36-18v64c-11 8-23 12-36 12s-25-4-36-12Z" fill="${shirt}" />
+          <path d="M${centerX - 8} ${centerY - 8}v56" stroke="${skin}" stroke-width="16" stroke-linecap="round" />
+          <path d="M${centerX - 42} ${shoulderY}c-18 15-28 31-28 49" stroke="${skin}" stroke-width="14" stroke-linecap="round" />
+          <path d="M${centerX + 42} ${shoulderY}c18 ${pose.rightArm} 30 34 30 52" stroke="${skin}" stroke-width="14" stroke-linecap="round" />
+          <path d="M${centerX - 22} ${legTopY}c-6 26 ${pose.leftLeg} 58 ${pose.leftLeg + 2} 90" stroke="${skin}" stroke-width="14" stroke-linecap="round" />
+          <path d="M${centerX + 22} ${legTopY}c6 26 ${pose.rightLeg} 58 ${pose.rightLeg - 2} 90" stroke="${skin}" stroke-width="14" stroke-linecap="round" />
+          <circle cx="${centerX}" cy="${centerY - 72}" r="52" fill="${skin}" />
+          <path d="M${centerX - 50} ${centerY - 82}c10-40 42-60 80-50 24 6 40 26 42 58-18-14-39-21-64-21-22 0-41 4-58 13Z" fill="${hair}" />
+          <circle cx="${centerX - 18}" cy="${centerY - 78}" r="5" fill="#10121b" />
+          <circle cx="${centerX + 18}" cy="${centerY - 78}" r="5" fill="#10121b" />
+          <path d="M${centerX - 16} ${centerY - 52}c10 8 22 8 32 0" fill="none" stroke="#7a4231" stroke-width="6" stroke-linecap="round" />
+          <circle cx="${sparkleX}" cy="${pose.y + 118}" r="8" fill="#ffffff" fill-opacity="0.75" />
+          <circle cx="${pose.x + 408}" cy="${pose.y + 378}" r="6" fill="${accent}" fill-opacity="0.65" />
+        </g>
+      `;
+    })
+    .join('');
+
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="${label}">
+      <rect width="1024" height="1024" fill="transparent" />
+      ${frames}
+    </svg>
+  `;
+
+  return encodeSvgAsDataUrl(svg);
+}
+
 function buildFallbackOptions({
   profile,
   prompt,
@@ -224,6 +327,11 @@ function buildFallbackOptions({
         seed,
         label: variant.label
       }),
+      spriteSheetImage: buildFallbackSpriteSheetDataUrl({
+        seed,
+        label: `${variant.label} sprite sheet`
+      }),
+      spritePrompt: variant.spritePrompt,
       revisedPrompt: `Fallback character sketch based on: ${prompt}`
     };
   });
@@ -240,21 +348,34 @@ function buildRandomVariantPrompt() {
   return {
     label: mood,
     description: `${hair}, ${outfit}, ${accessory === 'no accessory' ? 'clean styling' : accessory}, ${palette}`,
-    prompt: `Make the character feel like a music fan with ${hair}, ${accessory}, ${outfit}, ${mood}, and a ${palette} palette. Use a ${backdrop}. Keep it original, detailed, polished, and cute.`
+    prompt: `Make the character feel like a music fan with ${hair}, ${accessory}, ${outfit}, ${mood}, and a ${palette} palette. Use a ${backdrop}. Keep it original, detailed, polished, and cute.`,
+    spritePrompt: `Use the same character with ${hair}, ${accessory}, ${outfit}, ${mood}, and a ${palette} palette in a 2x2 full-body sprite sheet for idle, wave, point, and celebrate poses. Keep it original, family-friendly, polished, and readable.`
   };
+}
+
+async function generateSpriteSheetWithOpenAI(openai: OpenAI, prompt: string, user: string) {
+  const result = await openai.images.generate({
+    model: 'gpt-image-1',
+    prompt,
+    size: '1024x1024',
+    quality: 'high',
+    background: 'transparent',
+    output_format: 'png',
+    user
+  });
+
+  const image = result.data?.[0];
+  if (!image?.b64_json) {
+    return null;
+  }
+
+  return `data:image/png;base64,${image.b64_json}`;
 }
 
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Login required' }, { status: 401 });
-  }
-
-  if (!env.OPENAI_API_KEY) {
-    return NextResponse.json(
-      { error: 'Avatar generation is not configured yet. Add OPENAI_API_KEY first.' },
-      { status: 503 }
-    );
   }
 
   try {
@@ -274,7 +395,13 @@ export async function POST(request: Request) {
         country: true,
         genres: true,
         topFiveContent: true,
-        avatarImage: true
+        avatarImage: true,
+        companionSpriteSheet: true,
+        owner: {
+          select: {
+            isThirteenOrOlder: true
+          }
+        }
       }
     });
 
@@ -286,6 +413,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Only the fan who owns this page can generate an avatar' }, { status: 403 });
     }
 
+    if (!profile.owner.isThirteenOrOlder) {
+      return NextResponse.json(
+        { error: 'The character lab is only available to fans who confirmed they are 13 or older.' },
+        { status: 403 }
+      );
+    }
+
     if (isSaveRequest) {
       const body = saveSchema.parse(rawBody);
 
@@ -293,41 +427,106 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'That avatar can only be tagged to its matching fan ID.' }, { status: 400 });
       }
 
+      let companionSpriteSheet = body.spriteSheetImage ?? null;
+
+      if (!companionSpriteSheet) {
+        const fallbackPrompt = body.spritePrompt ?? buildAvatarSpritePrompt({
+          name: profile.name,
+          city: profile.city,
+          country: profile.country,
+          genres: profile.genres,
+          topFiveContent: profile.topFiveContent,
+          userPrompt: 'Family-friendly animated music fan sprite companion.'
+        });
+
+        if (env.OPENAI_API_KEY) {
+          try {
+            const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
+            companionSpriteSheet = await generateSpriteSheetWithOpenAI(
+              openai,
+              fallbackPrompt,
+              `${profile.hexId}-fan-sprite-save`
+            );
+          } catch {
+            companionSpriteSheet = null;
+          }
+        }
+
+        if (!companionSpriteSheet) {
+          companionSpriteSheet = buildFallbackSpriteSheetDataUrl({
+            seed: `${profile.hexId}:saved-sprite`,
+            label: `${profile.name} saved sprite companion`
+          });
+        }
+      }
+
       await db.profile.update({
         where: { id: profile.id },
-        data: { avatarImage: body.avatarImage }
+        data: {
+          avatarImage: body.avatarImage,
+          companionSpriteSheet
+        }
       });
 
       return NextResponse.json({
         avatarImage: body.avatarImage,
+        companionSpriteSheet,
         fanHexId: profile.hexId
       });
     }
-
-    const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
     const body = generateSchema.parse(rawBody);
+    const openai = env.OPENAI_API_KEY ? new OpenAI({ apiKey: env.OPENAI_API_KEY }) : null;
 
     const options: Array<{
       id: string;
       label: string;
       description: string | null;
       avatarImage: string;
+      spriteSheetImage: string | null;
+      spritePrompt: string | null;
       revisedPrompt: string | null;
     }> = [];
+
+    if (!openai) {
+      return NextResponse.json({
+        options: buildFallbackOptions({
+          profile: {
+            id: profile.id,
+            hexId: profile.hexId,
+            name: profile.name
+          },
+          prompt: body.prompt,
+          variantCount: body.variantCount
+        }),
+        fanHexId: profile.hexId,
+        generationMode: 'fallback',
+        notice: 'OpenAI image generation is not configured right now, so iHYPE generated local sprite-ready character sketches instead.',
+        savedAvatarImage: profile.avatarImage ?? null
+      });
+    }
 
     try {
       for (let index = 0; index < body.variantCount; index += 1) {
         const variant = buildRandomVariantPrompt();
+        const portraitPrompt = buildAvatarPortraitPrompt({
+          name: profile.name,
+          city: profile.city,
+          country: profile.country,
+          genres: profile.genres,
+          topFiveContent: profile.topFiveContent,
+          userPrompt: [body.prompt, variant.prompt].filter(Boolean).join(' ')
+        });
+        const spritePrompt = buildAvatarSpritePrompt({
+          name: profile.name,
+          city: profile.city,
+          country: profile.country,
+          genres: profile.genres,
+          topFiveContent: profile.topFiveContent,
+          userPrompt: [body.prompt, variant.spritePrompt].filter(Boolean).join(' ')
+        });
         const result = await openai.images.generate({
           model: 'gpt-image-1',
-          prompt: buildAvatarPrompt({
-            name: profile.name,
-            city: profile.city,
-            country: profile.country,
-            genres: profile.genres,
-            topFiveContent: profile.topFiveContent,
-            userPrompt: [body.prompt, variant.prompt].filter(Boolean).join(' ')
-          }),
+          prompt: portraitPrompt,
           size: '1024x1024',
           quality: 'high',
           background: 'transparent',
@@ -343,8 +542,10 @@ export async function POST(request: Request) {
         options.push({
           id: `option-${index + 1}`,
           label: variant.label,
-          description: variant.description,
+          description: `${variant.description}. Family-friendly sprite set is generated when you save this option.`,
           avatarImage: `data:image/png;base64,${image.b64_json}`,
+          spriteSheetImage: null,
+          spritePrompt,
           revisedPrompt: image.revised_prompt ?? null
         });
       }
@@ -365,9 +566,10 @@ export async function POST(request: Request) {
         generationMode: 'fallback',
         notice:
           openAiError.code === 'billing_hard_limit_reached'
-            ? 'OpenAI image credits are unavailable right now, so iHYPE generated local character sketches instead.'
-            : 'The OpenAI image service is temporarily unavailable, so iHYPE generated local character sketches instead.',
-        savedAvatarImage: profile.avatarImage ?? null
+            ? 'OpenAI image credits are unavailable right now, so iHYPE generated local sprite-ready character sketches instead.'
+            : 'The OpenAI image service is temporarily unavailable, so iHYPE generated local sprite-ready character sketches instead.',
+        savedAvatarImage: profile.avatarImage ?? null,
+        savedSpriteSheet: profile.companionSpriteSheet ?? null
       });
     }
 
@@ -384,8 +586,9 @@ export async function POST(request: Request) {
         }),
         fanHexId: profile.hexId,
         generationMode: 'fallback',
-        notice: 'The OpenAI image service returned empty results, so iHYPE generated local character sketches instead.',
-        savedAvatarImage: profile.avatarImage ?? null
+        notice: 'The OpenAI image service returned empty results, so iHYPE generated local sprite-ready character sketches instead.',
+        savedAvatarImage: profile.avatarImage ?? null,
+        savedSpriteSheet: profile.companionSpriteSheet ?? null
       });
     }
 
@@ -393,7 +596,8 @@ export async function POST(request: Request) {
       options,
       fanHexId: profile.hexId,
       generationMode: 'openai',
-      savedAvatarImage: profile.avatarImage ?? null
+      savedAvatarImage: profile.avatarImage ?? null,
+      savedSpriteSheet: profile.companionSpriteSheet ?? null
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

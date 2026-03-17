@@ -88,7 +88,8 @@ async function upsertDemoUser({
   username,
   name,
   passwordHash,
-  role
+  role,
+  isThirteenOrOlder = true
 }: {
   email: string;
   legacyEmail: string;
@@ -96,6 +97,7 @@ async function upsertDemoUser({
   name: string;
   passwordHash: string;
   role: Role;
+  isThirteenOrOlder?: boolean;
 }) {
   const existingUser = await prisma.user.findFirst({
     where: {
@@ -111,6 +113,7 @@ async function upsertDemoUser({
         username,
         name,
         passwordHash,
+        isThirteenOrOlder,
         role,
         mfaSecret: null,
         mfaEnabledAt: null
@@ -124,6 +127,7 @@ async function upsertDemoUser({
       username,
       name,
       passwordHash,
+      isThirteenOrOlder,
       role,
       mfaSecret: null,
       mfaEnabledAt: null
@@ -185,6 +189,7 @@ async function main() {
     username: 'fan',
     name: 'Night Owl',
     passwordHash,
+    isThirteenOrOlder: true,
     role: Role.FAN
   });
   const pulseScoutFan = fan;
