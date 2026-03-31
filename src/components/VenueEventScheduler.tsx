@@ -8,6 +8,14 @@ type BookedAct = {
   id: string;
   name: string;
   type: 'ARTIST' | 'DJ';
+  requestCount?: number;
+  availabilitySummary?: string;
+  nextShowAtLabel?: string | null;
+  rationale?: string;
+  suggestedSlots?: Array<{
+    value: string;
+    label: string;
+  }>;
 };
 
 type PromoterOption = {
@@ -15,21 +23,37 @@ type PromoterOption = {
   name: string;
 };
 
+type ScheduledEvent = {
+  id: string;
+  title: string;
+  startsAtLabel: string;
+  status: string;
+  headlinerName: string | null;
+};
+
 type VenueEventSchedulerProps = {
   venueProfileId: string;
   bookedActs: BookedAct[];
   promoterOptions: PromoterOption[];
+  preferredActId?: string;
+  recommendedActs?: BookedAct[];
+  scheduledEvents?: ScheduledEvent[];
 };
 
 export function VenueEventScheduler({
   venueProfileId,
   bookedActs,
-  promoterOptions
+  promoterOptions,
+  preferredActId,
+  recommendedActs = [],
+  scheduledEvents = []
 }: VenueEventSchedulerProps) {
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [headlinerProfileId, setHeadlinerProfileId] = useState(bookedActs[0]?.id ?? '');
+  const [headlinerProfileId, setHeadlinerProfileId] = useState(
+    preferredActId && bookedActs.some((act) => act.id === preferredActId) ? preferredActId : bookedActs[0]?.id ?? ''
+  );
   const [promoterProfileId, setPromoterProfileId] = useState('');
   const [startsAt, setStartsAt] = useState('');
   const [endsAt, setEndsAt] = useState('');
@@ -116,11 +140,12 @@ export function VenueEventScheduler({
     <div className="panel ticketing-panel">
       <div className="ticketing-panel-header">
         <div>
-          <div className="badge">Venue Scheduling</div>
-          <h3>Schedule a ticketed event for a booked act</h3>
+          <div className="badge">Event ticketing engine</div>
+          <h3>Schedule a ticketed event around artist availability</h3>
           <p className="kicker">
-            Ticket sales keep platform commission at 0%. The promoter pool stays fixed at {formatPercent(PROMOTER_POOL_PERCENT)},
-            and the venue plus artist split the remaining {formatPercent(REMAINING_PAYOUT_PERCENT)}.
+            Ticket sales keep platform commission at 0%. Fan request signals and artist schedules help surface the best matches,
+            while the promoter pool stays fixed at {formatPercent(PROMOTER_POOL_PERCENT)} and the venue plus artist split the remaining{' '}
+            {formatPercent(REMAINING_PAYOUT_PERCENT)}.
           </p>
         </div>
       </div>
@@ -134,7 +159,7 @@ export function VenueEventScheduler({
             </label>
 
             <label className="field">
-              <span>Booked act</span>
+              <span>Artist or act</span>
               <select value={headlinerProfileId} onChange={(event) => setHeadlinerProfileId(event.target.value)} required>
                 {bookedActs.map((act) => (
                   <option key={act.id} value={act.id}>
@@ -144,6 +169,67 @@ export function VenueEventScheduler({
               </select>
             </label>
           </div>
+
+          {recommendedActs.length || scheduledEvents.length ? (
+            <div className="ticketing-engine-grid">
+              {recommendedActs.length ? (
+                <div className="ticketing-engine-column">
+                  <div className="badge">Recommended artists</div>
+                  <div className="ticketing-engine-act-list">
+                    {recommendedActs.map((act) => (
+                      <article className="ticketing-engine-act-card" key={act.id}>
+                        <div className="ticketing-engine-act-head">
+                          <strong>{act.name}</strong>
+                          <span>{act.requestCount ?? 0} request{act.requestCount === 1 ? '' : 's'}</span>
+                        </div>
+                        {act.rationale ? <p>{act.rationale}</p> : null}
+                        {act.availabilitySummary ? <p>{act.availabilitySummary}</p> : null}
+                        {act.nextShowAtLabel ? <span>Next show: {act.nextShowAtLabel}</span> : null}
+                        <div className="ticketing-engine-slot-row">
+                          <button
+                            className="button small secondary"
+                            onClick={() => setHeadlinerProfileId(act.id)}
+                            type="button"
+                          >
+                            Use act
+                          </button>
+                          {act.suggestedSlots?.slice(0, 2).map((slot) => (
+                            <button
+                              className="ticketing-slot-pill"
+                              key={slot.value}
+                              onClick={() => {
+                                setHeadlinerProfileId(act.id);
+                                setStartsAt(slot.value);
+                              }}
+                              type="button"
+                            >
+                              {slot.label}
+                            </button>
+                          ))}
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {scheduledEvents.length ? (
+                <aside className="ticketing-engine-column ticketing-engine-column-calendar">
+                  <div className="badge">Venue calendar</div>
+                  <div className="ticketing-engine-calendar-list">
+                    {scheduledEvents.map((event) => (
+                      <article className="ticketing-engine-calendar-item" key={event.id}>
+                        <strong>{event.title}</strong>
+                        <span>{event.startsAtLabel}</span>
+                        {event.headlinerName ? <span>{event.headlinerName}</span> : null}
+                        <span>{event.status}</span>
+                      </article>
+                    ))}
+                  </div>
+                </aside>
+              ) : null}
+            </div>
+          ) : null}
 
           <label className="field">
             <span>Description</span>
@@ -166,6 +252,24 @@ export function VenueEventScheduler({
               <input type="datetime-local" value={endsAt} onChange={(event) => setEndsAt(event.target.value)} />
             </label>
           </div>
+
+          {selectedAct?.suggestedSlots?.length ? (
+            <div className="ticketing-engine-slot-picker">
+              <span>Suggested open dates for {selectedAct.name}</span>
+              <div className="ticketing-engine-slot-row">
+                {selectedAct.suggestedSlots.map((slot) => (
+                  <button
+                    className="ticketing-slot-pill"
+                    key={slot.value}
+                    onClick={() => setStartsAt(slot.value)}
+                    type="button"
+                  >
+                    {slot.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           <div className="grid grid-3">
             <label className="field">
@@ -248,8 +352,7 @@ export function VenueEventScheduler({
 
           {selectedAct ? (
             <div className="empty">
-              Scheduling with <strong>{selectedAct.name}</strong>. Ticket revenue is split between the venue, the booked act,
-              and the fixed promoter pool.
+              Scheduling with <strong>{selectedAct.name}</strong>. {selectedAct.availabilitySummary ?? 'Availability is open.'} Ticket revenue is split between the venue, the booked act, and the fixed promoter pool.
             </div>
           ) : null}
 
@@ -261,7 +364,7 @@ export function VenueEventScheduler({
           </div>
         </form>
       ) : (
-        <div className="empty">Mark a recommendation as booked to unlock event scheduling for that act.</div>
+        <div className="empty">Fan request and booking signals will populate this event ticketing engine once artists start landing in the recommendation flow.</div>
       )}
     </div>
   );

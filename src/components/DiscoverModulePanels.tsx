@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { ShowCard } from '@/components/ShowCard';
+import type { VenueBookingScopeGroup } from '@/lib/venue-booking';
 
 type DiscoverShow = Parameters<typeof ShowCard>[0]['show'];
 
@@ -154,6 +155,62 @@ export function DiscoverCreatorPanel({
           </Link>
         </div>
       ) : null}
+    </DiscoverModuleShell>
+  );
+}
+
+export function VenueBookingRecommendationEngine({
+  currentHref,
+  scopes
+}: {
+  currentHref: string;
+  scopes: VenueBookingScopeGroup[];
+}) {
+  return (
+    <DiscoverModuleShell
+      badge="Recommendation engine"
+      description="Fan request signals are grouped by local, regional, national, and global scope so venues can see who to book next."
+      title="Venue booking recommendations"
+    >
+      <div className="venue-booking-scope-grid">
+        {scopes.map((scope) => (
+          <section className="venue-booking-scope-card" key={scope.key}>
+            <div className="venue-booking-scope-head">
+              <div>
+                <strong>{scope.label}</strong>
+                <p>{scope.description}</p>
+              </div>
+            </div>
+
+            {scope.artists.length ? (
+              <div className="venue-booking-artist-list">
+                {scope.artists.map((artist) => (
+                  <article className="venue-booking-artist-card" key={`${scope.key}-${artist.id}`}>
+                    <div className="venue-booking-artist-topline">
+                      <strong>{artist.name}</strong>
+                      <span>{artist.requestCount} fan request{artist.requestCount === 1 ? '' : 's'}</span>
+                    </div>
+                    <p>{[artist.city, artist.stateRegion ?? artist.country].filter(Boolean).join(', ') || 'Location building'}</p>
+                    <p>{artist.rationale}</p>
+                    <p>{artist.availabilitySummary}</p>
+                    {artist.nextShowAtLabel ? <span>Next scheduled show: {artist.nextShowAtLabel}</span> : null}
+                    <div className="cta-row">
+                      <Link className="button small secondary" href={`${currentHref}?module=event-creator&artist=${artist.id}`}>
+                        Use in event creator
+                      </Link>
+                      <Link className="button small secondary" href={`/artists/${artist.slug}`}>
+                        Open artist
+                      </Link>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="empty">No fan-requested artists are concentrated in this scope yet.</div>
+            )}
+          </section>
+        ))}
+      </div>
     </DiscoverModuleShell>
   );
 }

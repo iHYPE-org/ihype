@@ -4,8 +4,8 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import {
   DiscoverCreatorPanel,
-  DiscoverRecommendationPanel,
-  DiscoverStatsPanel
+  DiscoverStatsPanel,
+  VenueBookingRecommendationEngine
 } from '@/components/DiscoverModulePanels';
 import { ProfileDirectoryPage } from '@/components/ProfileDirectoryPage';
 import { RoleModuleSubheader } from '@/components/RoleModuleSubheader';
@@ -16,17 +16,37 @@ import {
 } from '@/lib/discover-modules';
 import { getDirectoryProfiles } from '@/lib/public-data';
 import { ShowCard } from '@/components/ShowCard';
+import {
+  buildVenueBookingRecommendations,
+  buildVenueCalendarEvents
+} from '@/lib/venue-booking';
 
 export const dynamic = 'force-dynamic';
+
+type VenueSchedulerAct = {
+  id: string;
+  name: string;
+  type: 'ARTIST' | 'DJ';
+  requestCount?: number;
+  availabilitySummary?: string;
+  nextShowAtLabel?: string | null;
+  rationale?: string;
+  suggestedSlots?: Array<{
+    value: string;
+    label: string;
+  }>;
+};
 
 export default async function VenuesIndexPage({
   searchParams
 }: {
-  searchParams?: Promise<{ module?: string | string[] }>;
+  searchParams?: Promise<{ module?: string | string[]; artist?: string | string[] }>;
 }) {
   const session = await auth();
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const activeModule = resolveDiscoverModule('venues', resolvedSearchParams.module);
+  const preferredArtistId =
+    typeof resolvedSearchParams.artist === 'string' ? resolvedSearchParams.artist : undefined;
   const venues = await getDirectoryProfiles('VENUE');
 
   const [venueShows, totalRequestCount] = await Promise.all([
@@ -69,29 +89,60 @@ export default async function VenuesIndexPage({
       />
     );
   } else if (activeModule === 'recommendation-engine') {
-    modulePanel = (
-      <DiscoverRecommendationPanel
-        badge="Recommendation engine"
-        description="Use current venue demand and show movement to decide which artists, dates, and campaigns deserve the next push."
-        opportunities={[
-          {
-            title: 'Lean into the strongest room market',
-            summary: `${topMarkets[0] ?? 'The top current market'} is carrying the strongest venue density right now.`,
-            detail: 'Package your best room visuals and upcoming nights around the city cluster already moving.'
-          },
-          {
-            title: 'Book against demand',
-            summary: `${totalRequestCount} requests have already been pushed toward venue pages in the current network snapshot.`,
-            detail: 'Pair repeat request patterns with artist availability before the window cools off.'
-          },
-          {
-            title: 'Promote the room as much as the lineup',
-            summary: `${totalTicketsSold} tickets have already moved through venue-listed shows.`,
-            detail: 'Lead campaigns with access, neighborhood convenience, and the headline night together.'
+    const fanRequests = await db.venueConnectionRequest.findMany({
+      where: {
+        requesterType: 'LISTENER',
+        artistProfileId: { not: null }
+      },
+      include: {
+        artistProfile: {
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            type: true,
+            city: true,
+            stateRegion: true,
+            country: true
           }
-        ]}
-        title="Venue recommendation engine"
-      />
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const requestedArtistIds = Array.from(
+      new Set(
+        fanRequests
+          .map((request) => request.artistProfileId)
+          .filter((artistProfileId): artistProfileId is string => Boolean(artistProfileId))
+      )
+    );
+
+    const artistShows = requestedArtistIds.length
+      ? await db.show.findMany({
+          where: {
+            headlinerProfileId: { in: requestedArtistIds },
+            status: { in: ['SCHEDULED', 'LIVE'] }
+          },
+          select: {
+            id: true,
+            title: true,
+            startsAt: true,
+            status: true,
+            headlinerProfileId: true
+          },
+          orderBy: { startsAt: 'asc' }
+        })
+      : [];
+
+    const bookingRecommendations = buildVenueBookingRecommendations({
+      requests: fanRequests,
+      artistShows,
+      venueShows: []
+    });
+
+    modulePanel = (
+      <VenueBookingRecommendationEngine currentHref="/venues" scopes={bookingRecommendations.scopeGroups} />
     );
   } else {
     const ownedVenue =
@@ -109,7 +160,7 @@ export default async function VenuesIndexPage({
         : null;
 
     if (ownedVenue) {
-      const [bookableProfiles, connectionRequests] = await Promise.all([
+      const [bookableProfiles, connectionRequests, fanRequests, ownedVenueShows] = await Promise.all([
         db.profile.findMany({
           where: { type: { in: ['ARTIST', 'DJ'] } },
           orderBy: [{ verified: 'desc' }, { name: 'asc' }],
@@ -130,10 +181,79 @@ export default async function VenuesIndexPage({
               }
             }
           }
+        }),
+        db.venueConnectionRequest.findMany({
+          where: {
+            requesterType: 'LISTENER',
+            artistProfileId: { not: null }
+          },
+          include: {
+            artistProfile: {
+              select: {
+                id: true,
+                slug: true,
+                name: true,
+                type: true,
+                city: true,
+                stateRegion: true,
+                country: true
+              }
+            }
+          },
+          orderBy: { createdAt: 'desc' }
+        }),
+        db.show.findMany({
+          where: {
+            venueProfileId: ownedVenue.id,
+            status: { in: ['SCHEDULED', 'LIVE'] }
+          },
+          select: {
+            id: true,
+            title: true,
+            startsAt: true,
+            status: true,
+            headlinerProfile: {
+              select: {
+                name: true
+              }
+            }
+          },
+          orderBy: { startsAt: 'asc' }
         })
       ]);
 
-      const bookedActs = Array.from(
+      const requestedArtistIds = Array.from(
+        new Set(
+          fanRequests
+            .map((request) => request.artistProfileId)
+            .filter((artistProfileId): artistProfileId is string => Boolean(artistProfileId))
+        )
+      );
+
+      const artistShows = requestedArtistIds.length
+        ? await db.show.findMany({
+            where: {
+              headlinerProfileId: { in: requestedArtistIds },
+              status: { in: ['SCHEDULED', 'LIVE'] }
+            },
+            select: {
+              id: true,
+              title: true,
+              startsAt: true,
+              status: true,
+              headlinerProfileId: true
+            },
+            orderBy: { startsAt: 'asc' }
+          })
+        : [];
+
+      const bookingRecommendations = buildVenueBookingRecommendations({
+        requests: fanRequests,
+        artistShows,
+        venueShows: ownedVenueShows
+      });
+
+      const bookedActs: VenueSchedulerAct[] = Array.from(
         new Map(
           connectionRequests
             .filter((request) => request.artistProfile)
@@ -148,19 +268,43 @@ export default async function VenuesIndexPage({
         ).values()
       );
 
+      const selectableActMap = new Map<string, VenueSchedulerAct>();
+
+      for (const artist of bookingRecommendations.actOptions) {
+        selectableActMap.set(artist.id, {
+          id: artist.id,
+          name: artist.name,
+          type: artist.type,
+          requestCount: artist.requestCount,
+          availabilitySummary: artist.availabilitySummary,
+          nextShowAtLabel: artist.nextShowAtLabel,
+          rationale: artist.rationale,
+          suggestedSlots: artist.suggestedSlots
+        });
+      }
+
+      for (const artist of bookedActs) {
+        selectableActMap.set(artist.id, artist);
+      }
+
+      const selectableActs = Array.from(selectableActMap.values());
+
       const promoterOptions = bookableProfiles
         .filter((bookableProfile) => bookableProfile.type === 'DJ')
         .map((bookableProfile) => ({ id: bookableProfile.id, name: bookableProfile.name }));
 
       modulePanel = (
         <DiscoverCreatorPanel
-          badge="Event creator"
-          description="Build the next venue event directly from your discover lane."
-          title="Venue event creator"
+          badge="Event ticketing engine"
+          description="Connect fan-requested artists, artist tour availability, and your venue calendar into the next ticketed event."
+          title="Venue event ticketing engine"
         >
           <VenueEventScheduler
-            bookedActs={bookedActs}
+            bookedActs={selectableActs}
             promoterOptions={promoterOptions}
+            preferredActId={preferredArtistId}
+            recommendedActs={bookingRecommendations.actOptions}
+            scheduledEvents={buildVenueCalendarEvents(ownedVenueShows)}
             venueProfileId={ownedVenue.id}
           />
         </DiscoverCreatorPanel>
@@ -170,9 +314,9 @@ export default async function VenuesIndexPage({
         <DiscoverCreatorPanel
           actionHref={session?.user ? '/dashboard' : '/login'}
           actionLabel={session?.user ? 'Open dashboard' : 'Sign in as venue'}
-          badge="Event creator"
-          description="Venue event scheduling opens once you are signed into a venue-owned profile."
-          title="Venue event creator"
+          badge="Event ticketing engine"
+          description="Venue event creation opens once you are signed into a venue-owned profile, and it uses fan-requested artists plus calendar availability."
+          title="Venue event ticketing engine"
         >
           <div className="discover-creator-grid">
             <div className="discover-creator-column">

@@ -2630,6 +2630,77 @@ button, input, select, textarea { font: inherit; }
   align-items: flex-start;
   margin-bottom: 1rem;
 }
+.ticketing-engine-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.ticketing-engine-column {
+  display: grid;
+  gap: 0.8rem;
+}
+.ticketing-engine-column-calendar {
+  align-content: start;
+}
+.ticketing-engine-act-list,
+.ticketing-engine-calendar-list {
+  display: grid;
+  gap: 0.75rem;
+}
+.ticketing-engine-act-card,
+.ticketing-engine-calendar-item {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.95rem 1rem;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+}
+.ticketing-engine-act-card p,
+.ticketing-engine-act-card span,
+.ticketing-engine-calendar-item span {
+  margin: 0;
+  color: var(--muted);
+}
+.ticketing-engine-act-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: center;
+}
+.ticketing-engine-slot-picker {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: -0.2rem;
+}
+.ticketing-engine-slot-picker > span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.ticketing-engine-slot-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+.ticketing-slot-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(35,208,216,0.18);
+  background: rgba(35,208,216,0.08);
+  color: #d8f8ff;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.ticketing-slot-pill:hover {
+  border-color: rgba(35,208,216,0.32);
+  background: rgba(35,208,216,0.16);
+}
 .ticket-price-badge {
   min-width: 140px;
   padding: 1rem;
@@ -5367,6 +5438,54 @@ button, input, select, textarea { font: inherit; }
 .discover-simple-link span {
   color: var(--muted);
 }
+.venue-booking-scope-grid {
+  display: grid;
+  gap: 1rem;
+}
+.venue-booking-scope-card {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem 1.05rem;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.09);
+  background:
+    radial-gradient(circle at top right, rgba(35,208,216,0.1), transparent 28%),
+    rgba(255,255,255,0.04);
+}
+.venue-booking-scope-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: start;
+}
+.venue-booking-scope-head p {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+}
+.venue-booking-artist-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.85rem;
+}
+.venue-booking-artist-card {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.95rem 1rem;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.05);
+}
+.venue-booking-artist-card p,
+.venue-booking-artist-card span {
+  margin: 0;
+  color: var(--muted);
+}
+.venue-booking-artist-topline {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: center;
+}
 .directory-module-shell {
   display: grid;
   gap: 1rem;
@@ -6421,6 +6540,10 @@ button, input, select, textarea { font: inherit; }
   }
   .market-recommendations-header,
   .market-recommendations-grid { grid-template-columns: 1fr; flex-direction: column; }
+  .ticketing-engine-grid,
+  .venue-booking-artist-list {
+    grid-template-columns: 1fr;
+  }
   .listener-dashboard-layout,
   .fan-dashboard-middle,
   .promoter-dashboard-workspace,
