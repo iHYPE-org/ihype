@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
 
@@ -27,7 +27,7 @@ const AdminPerspectiveContext = createContext<AdminPerspectiveContextValue>({
   setPerspective: () => {}
 });
 
-const adminPerspectiveOptions: Array<{ value: AdminPerspective; label: string; href: string }> = [
+export const adminPerspectiveOptions: Array<{ value: AdminPerspective; label: string; href: string }> = [
   { value: 'ADMIN', label: 'Admin', href: '/dashboard' },
   { value: 'LISTENER', label: 'Fan', href: '/fans' },
   { value: 'ARTIST', label: 'Artist', href: '/artists' },
@@ -124,6 +124,39 @@ export function getSiteNavItemsForPerspective(
 
 export function getPerspectiveHomeHref(perspective: AdminPerspective) {
   return adminPerspectiveOptions.find((option) => option.value === perspective)?.href ?? '/dashboard';
+}
+
+type AdminPerspectiveHeaderSelectProps = {
+  className?: string;
+};
+
+export function AdminPerspectiveHeaderSelect({ className }: AdminPerspectiveHeaderSelectProps) {
+  const router = useRouter();
+  const { isAdmin, perspective, setPerspective } = useAdminPerspective();
+
+  if (!isAdmin) {
+    return null;
+  }
+
+  return (
+    <label className={className ?? 'admin-perspective-select admin-perspective-select-header'}>
+      <span>View as</span>
+      <select
+        onChange={(event) => {
+          const nextPerspective = event.target.value as AdminPerspective;
+          setPerspective(nextPerspective);
+          router.push(getPerspectiveHomeHref(nextPerspective));
+        }}
+        value={perspective}
+      >
+        {adminPerspectiveOptions.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
 }
 
 export function AdminPerspectiveBar() {

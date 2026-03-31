@@ -3,11 +3,11 @@
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { logoutAction } from '@/app/logout/actions';
-import { getPerspectiveHomeHref, useAdminPerspective } from '@/components/AdminPerspective';
+import { AdminPerspectiveHeaderSelect, useAdminPerspective } from '@/components/AdminPerspective';
 
 export function HeaderAuthLinks() {
   const { data: session, status } = useSession();
-  const { isAdmin, perspective } = useAdminPerspective();
+  const { isAdmin } = useAdminPerspective();
 
   if (status === 'loading') {
     return (
@@ -18,24 +18,18 @@ export function HeaderAuthLinks() {
   }
 
   if (session?.user) {
-    const primaryHref = isAdmin ? getPerspectiveHomeHref(perspective) : '/dashboard';
-    const primaryLabel = isAdmin ? 'Open View' : 'Dashboard';
-
     return (
-      <div className="nav-links nav-links-auth nav-links-compact nav-auth-slot">
-        <Link href={primaryHref}>{primaryLabel}</Link>
-        <span className="nav-divider">|</span>
-        {isAdmin ? (
-          <>
-            <Link href="/dashboard">Admin</Link>
-            <span className="nav-divider">|</span>
-          </>
-        ) : null}
-        <form action={logoutAction} className="nav-inline-form">
-          <button className="nav-text-button" type="submit">
-            Sign Out
-          </button>
-        </form>
+      <div className="nav-auth-slot nav-auth-cluster">
+        <div className="nav-links nav-links-auth nav-links-compact">
+          <Link href="/dashboard">{isAdmin ? 'Admin' : 'Dashboard'}</Link>
+          <span className="nav-divider">|</span>
+          <form action={logoutAction} className="nav-inline-form">
+            <button className="nav-text-button" type="submit">
+              Sign Out
+            </button>
+          </form>
+        </div>
+        {isAdmin ? <AdminPerspectiveHeaderSelect className="admin-perspective-select admin-perspective-select-header" /> : null}
       </div>
     );
   }

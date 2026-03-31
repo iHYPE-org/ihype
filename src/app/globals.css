@@ -115,6 +115,18 @@ button, input, select, textarea { font: inherit; }
   background: rgba(255,255,255,0.04);
   color: var(--text);
 }
+.admin-perspective-select-header {
+  gap: 0.18rem;
+  min-width: 118px;
+}
+.admin-perspective-select-header span {
+  font-size: 0.6rem;
+}
+.admin-perspective-select-header select {
+  min-width: 118px;
+  padding: 0.42rem 0.72rem;
+  font-size: 0.76rem;
+}
 .admin-perspective-actions {
   display: flex;
   gap: 0.5rem;
@@ -218,6 +230,13 @@ button, input, select, textarea { font: inherit; }
 }
 .nav-auth-slot {
   justify-self: end;
+}
+.nav-auth-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.7rem;
+  min-width: 0;
 }
 .nav-divider {
   color: rgba(255,255,255,0.4);
@@ -6530,6 +6549,18 @@ button, input, select, textarea { font: inherit; }
     grid-area: auth;
     justify-self: end;
     width: auto;
+  }
+  .nav-auth-cluster {
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    justify-content: flex-end;
+  }
+  .admin-perspective-select-header {
+    min-width: 104px;
+  }
+  .admin-perspective-select-header select {
+    min-width: 104px;
+    padding-inline: 0.62rem;
   }
   .nav-player-slot-centered {
     grid-area: player;

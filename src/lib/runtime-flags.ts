@@ -17,8 +17,6 @@ function parseBooleanFlag(value: string | undefined, defaultValue: boolean) {
 }
 
 const demoIdentifiers = new Set([
-  'admin',
-  'admin@ihype.org',
   'fan',
   'fan@ihype.org',
   'artist',

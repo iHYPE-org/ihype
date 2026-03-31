@@ -1,6 +1,5 @@
 import './globals.css';
 import { ReactNode } from 'react';
-import { AdminPerspectiveBar } from '@/components/AdminPerspective';
 import { HeaderMediaPlayer } from '@/components/GlobalMediaPlayer';
 import { AppProviders } from '@/components/AppProviders';
 import { HeaderAuthLinks } from '@/components/HeaderAuthLinks';
@@ -22,7 +21,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <span className="site-background-grid" />
           </div>
           <div className="site-shell">
-            <AdminPerspectiveBar />
             <header className="nav">
               <div className="container nav-inner">
                 <HeaderLogo />
