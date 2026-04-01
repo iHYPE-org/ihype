@@ -202,6 +202,7 @@ export default async function ListenersIndexPage({
 
   return (
     <ProfileDirectoryPage
+      activeModule={activeModule}
       badge="FANS"
       currentHref="/fans"
       description="Fan discover keeps the focus on nearby rooms, the next events worth watching, and the signals that turn hype into action."

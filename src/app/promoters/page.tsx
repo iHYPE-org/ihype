@@ -200,6 +200,7 @@ export default async function PromotersIndexPage({
 
   return (
     <ProfileDirectoryPage
+      activeModule={activeModule}
       badge="PROMOTERS"
       currentHref="/promoters"
       description="Promoter discover keeps the focus on show momentum, room pressure, and the tools that move concepts into booked nights."

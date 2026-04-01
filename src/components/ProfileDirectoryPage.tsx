@@ -1,6 +1,6 @@
 import { ProfileDirectoryBrowser, type DirectoryBrowserProfile } from '@/components/ProfileDirectoryBrowser';
 import type { ReactNode } from 'react';
-import { getTopMarketLabels } from '@/lib/discover-modules';
+import { getTopMarketLabels, type DiscoverModuleId } from '@/lib/discover-modules';
 
 type DirectoryProfile = DirectoryBrowserProfile;
 
@@ -10,6 +10,7 @@ export function ProfileDirectoryPage({
   description,
   profiles,
   currentHref,
+  activeModule,
   modulePanel,
   moduleSubheader
 }: {
@@ -18,6 +19,7 @@ export function ProfileDirectoryPage({
   description: string;
   profiles: DirectoryProfile[];
   currentHref: string;
+  activeModule: DiscoverModuleId;
   modulePanel?: ReactNode;
   moduleSubheader?: ReactNode;
 }) {
@@ -51,21 +53,35 @@ export function ProfileDirectoryPage({
           </div>
         </section>
 
-        {modulePanel}
+        {activeModule === 'discover' ? (
+          <section className="section">
+            <div className="panel discover-module-panel">
+              <div className="discover-module-header">
+                <div>
+                  <div className="badge">Discover</div>
+                  <h2>Browse {title.replace(/ discover$/i, '')}</h2>
+                </div>
+                <p className="meta">
+                  Search the live directory, compare markets, and open the pages worth following next.
+                </p>
+              </div>
 
-        {topMarkets.length ? (
-          <section className="section directory-market-strip" aria-label="Top markets">
-            {topMarkets.map((market) => (
-              <span className="directory-market-pill" key={market}>
-                {market}
-              </span>
-            ))}
+              {topMarkets.length ? (
+                <div className="discover-market-strip" aria-label="Top markets">
+                  {topMarkets.map((market) => (
+                    <span className="discover-market-pill" key={market}>
+                      {market}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+
+              <ProfileDirectoryBrowser currentHref={currentHref} profiles={profiles} />
+            </div>
           </section>
-        ) : null}
-
-        <section className="section">
-          <ProfileDirectoryBrowser currentHref={currentHref} profiles={profiles} />
-        </section>
+        ) : (
+          modulePanel
+        )}
       </main>
     </>
   );

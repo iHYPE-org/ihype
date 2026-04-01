@@ -142,6 +142,7 @@ export default async function ArtistsIndexPage({
 
   return (
     <ProfileDirectoryPage
+      activeModule={activeModule}
       badge="ARTISTS"
       currentHref="/artists"
       description="Artist discover is where artists read the shape of the scene, follow where attention is building, and line up their next route."

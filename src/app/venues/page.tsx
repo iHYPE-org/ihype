@@ -352,6 +352,7 @@ export default async function VenuesIndexPage({
 
   return (
     <ProfileDirectoryPage
+      activeModule={activeModule}
       badge="VENUES"
       currentHref="/venues"
       description="Venue discover keeps the focus on room performance, booking demand, and the nights that deserve a bigger push."
