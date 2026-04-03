@@ -3,9 +3,11 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMediaPlayer } from '@/components/GlobalMediaPlayer';
+import { getAdvertisingClipsForScope } from '@/lib/advertising';
 import {
   royaltyFreeSampleClips,
   samplePadSlots,
+  type AdvertisingScope,
   type ShowMediaItem,
   type ShowProductionPlan,
   type ShowSamplePad,
@@ -19,6 +21,9 @@ type ArtistLibraryEntry = {
   title: string;
   url: string;
   notes: string | null;
+  mimeType?: string | null;
+  mediaType?: 'audio' | 'video';
+  previewImageUrl?: string | null;
 };
 
 type ArtistLibrary = {
@@ -46,6 +51,10 @@ type DraggedMediaPayload = {
   mediaItem: ShowMediaItem;
 };
 
+type DraggedSamplePayload = {
+  sample: PadAssignment;
+};
+
 type PadMenuState = {
   slotNumber: number;
   x: number;
@@ -55,6 +64,8 @@ type PadMenuState = {
 type PadAssignment = ShowSamplePad & {
   localOnly?: boolean;
 };
+
+type ShowSaveIntent = 'preview' | 'broadcast';
 
 const PAD_COLORS = ['#ff6b6b', '#f59e0b', '#f4d03f', '#22c55e', '#23d0d8', '#3b82f6', '#8f5bff', '#ec4899'];
 
@@ -79,6 +90,7 @@ function createClientId(prefix: string) {
 function buildSequenceLabel(kind: ShowSequenceItem['kind'], label: string) {
   if (kind === 'VOICE_OVER') return `Voice-over: ${label}`;
   if (kind === 'SAMPLE') return `Sample pad: ${label}`;
+  if (kind === 'AD') return `Ad break: ${label}`;
   return `Media: ${label}`;
 }
 
@@ -96,6 +108,14 @@ function buildHexId() {
 
 function getDefaultPadColor(slotNumber: number) {
   return PAD_COLORS[(slotNumber - 1) % PAD_COLORS.length] ?? '#23d0d8';
+}
+
+function isVideoMedia(mediaItem: { mediaType?: 'audio' | 'video'; mimeType?: string | null; url: string }) {
+  return (
+    mediaItem.mediaType === 'video' ||
+    mediaItem.mimeType?.startsWith('video/') ||
+    /\.(mp4|mov|webm|m4v)$/i.test(mediaItem.url)
+  );
 }
 
 function getSupportedRecordingMimeType() {
@@ -155,6 +175,7 @@ export function PromoterShowCreationTool({
   const [microphoneSupported, setMicrophoneSupported] = useState(false);
   const [padMenu, setPadMenu] = useState<PadMenuState | null>(null);
   const [draggedMedia, setDraggedMedia] = useState<DraggedMediaPayload | null>(null);
+  const [draggedSample, setDraggedSample] = useState<DraggedSamplePayload | null>(null);
   const [playlistDropIndex, setPlaylistDropIndex] = useState<number | null>(null);
   const [crossfaderPosition, setCrossfaderPosition] = useState(50);
   const [deckATrackId, setDeckATrackId] = useState<string | null>(null);
@@ -162,8 +183,12 @@ export function PromoterShowCreationTool({
   const [padColorMap, setPadColorMap] = useState<Record<number, string>>({});
   const [activePadSlot, setActivePadSlot] = useState<number | null>(null);
   const [isTakePreviewPlaying, setIsTakePreviewPlaying] = useState(false);
+  const [previewMediaItem, setPreviewMediaItem] = useState<ShowMediaItem | null>(null);
+  const [saveIntent, setSaveIntent] = useState<ShowSaveIntent>('preview');
+  const [lastSavedShowHref, setLastSavedShowHref] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const advertisingScope: AdvertisingScope = 'local';
 
   const playableArtists = useMemo(() => artists.filter((artist) => artist.entries.length > 0), [artists]);
   const availableSampleClips = useMemo<PadAssignment[]>(
@@ -174,6 +199,7 @@ export function PromoterShowCreationTool({
   const selectedPromoter = promoters.find((promoter) => promoter.profileId === selectedPromoterProfileId) ?? promoters[0] ?? null;
   const recordedVoiceCount = voiceOvers.filter((voiceCue) => Boolean(voiceCue.recordingDataUrl)).length;
   const cueSequence = sequence.filter((sequenceItem) => sequenceItem.kind !== 'MEDIA');
+  const advertisingClips = useMemo(() => getAdvertisingClipsForScope(advertisingScope), [advertisingScope]);
   const deckALevel = Math.max(0, 100 - crossfaderPosition);
   const deckBLevel = crossfaderPosition;
   const deckATrack = selectedMedia.find((mediaItem) => mediaItem.mediaId === deckATrackId) ?? null;
@@ -214,7 +240,11 @@ export function PromoterShowCreationTool({
     if (deckBTrackId && !selectedMedia.some((mediaItem) => mediaItem.mediaId === deckBTrackId)) {
       setDeckBTrackId(null);
     }
-  }, [deckATrackId, deckBTrackId, selectedMedia]);
+
+    if (previewMediaItem && !selectedMedia.some((mediaItem) => mediaItem.mediaId === previewMediaItem.mediaId)) {
+      setPreviewMediaItem(null);
+    }
+  }, [deckATrackId, deckBTrackId, previewMediaItem, selectedMedia]);
 
   useEffect(() => {
     return () => {
@@ -433,6 +463,10 @@ export function PromoterShowCreationTool({
     setPlaylistDropIndex(null);
   }
 
+  function clearSampleDragState() {
+    setDraggedSample(null);
+  }
+
   function openPadMenuAt(slotNumber: number, x: number, y: number) {
     const viewportPadding = 12;
     const menuWidth = 236;
@@ -482,12 +516,21 @@ export function PromoterShowCreationTool({
       url: entry.url,
       artistProfileId: artist.profileId,
       artistName: artist.name,
-      notes: entry.notes
+      notes: entry.notes,
+      mimeType: entry.mimeType,
+      mediaType: entry.mediaType ?? (isVideoMedia({ url: entry.url, mimeType: entry.mimeType }) ? 'video' : 'audio'),
+      previewImageUrl: entry.previewImageUrl ?? artist.heroImage
     };
     addOrMoveMediaInPlaylist(mediaItem);
   }
 
   function playPlaylistMedia(mediaItem: ShowMediaItem, artworkUrl?: string | null) {
+    if (isVideoMedia(mediaItem)) {
+      setPreviewMediaItem(mediaItem);
+      setMessage(`${mediaItem.title} loaded into the preview monitor.`);
+      return;
+    }
+
     playTrack(
       {
         id: mediaItem.mediaId,
@@ -498,16 +541,18 @@ export function PromoterShowCreationTool({
         notes: mediaItem.notes,
         artworkUrl: artworkUrl ?? null
       },
-      selectedMedia.map((entry) => ({
-        id: entry.mediaId,
-        title: entry.title,
-        artistName: entry.artistName,
-        url: entry.url,
-        mediaId: entry.mediaId,
-        notes: entry.notes,
-        artworkUrl:
-          artists.find((artist) => artist.profileId === entry.artistProfileId)?.heroImage ?? null
-      }))
+      selectedMedia
+        .filter((entry) => !isVideoMedia(entry))
+        .map((entry) => ({
+          id: entry.mediaId,
+          title: entry.title,
+          artistName: entry.artistName,
+          url: entry.url,
+          mediaId: entry.mediaId,
+          notes: entry.notes,
+          artworkUrl:
+            artists.find((artist) => artist.profileId === entry.artistProfileId)?.heroImage ?? null
+        }))
     );
   }
 
@@ -516,7 +561,9 @@ export function PromoterShowCreationTool({
   }
 
   function buildDeckQueue(mediaItem: ShowMediaItem) {
-    return selectedMedia.map((entry) => ({
+    return selectedMedia
+      .filter((entry) => !isVideoMedia(entry))
+      .map((entry) => ({
       id: entry.mediaId,
       title: entry.title,
       artistName: entry.artistName,
@@ -524,7 +571,7 @@ export function PromoterShowCreationTool({
       mediaId: entry.mediaId,
       notes: entry.notes,
       artworkUrl: getTrackArtwork(entry)
-    }));
+      }));
   }
 
   function loadDeck(deck: 'A' | 'B', mediaItem: ShowMediaItem) {
@@ -540,6 +587,12 @@ export function PromoterShowCreationTool({
   function playDeckTrack(deck: 'A' | 'B', mediaItem: ShowMediaItem | null) {
     if (!mediaItem) {
       setMessage(`Load a playlist song onto Deck ${deck} first.`);
+      return;
+    }
+
+    if (isVideoMedia(mediaItem)) {
+      setPreviewMediaItem(mediaItem);
+      setMessage(`${mediaItem.title} loaded onto Deck ${deck} and opened in the preview monitor.`);
       return;
     }
 
@@ -675,6 +728,10 @@ export function PromoterShowCreationTool({
     setDraggedMedia({ source: 'playlist', mediaItem });
   }
 
+  function handleSampleDragStart(sample: PadAssignment) {
+    setDraggedSample({ sample });
+  }
+
   function handlePlaylistDragOver(event: React.DragEvent<HTMLElement>, index: number) {
     if (!draggedMedia) {
       return;
@@ -692,6 +749,24 @@ export function PromoterShowCreationTool({
     event.preventDefault();
     addOrMoveMediaInPlaylist(draggedMedia.mediaItem, index);
     clearPlaylistDragState();
+  }
+
+  function handlePadDragOver(event: React.DragEvent<HTMLButtonElement>) {
+    if (!draggedSample) {
+      return;
+    }
+
+    event.preventDefault();
+  }
+
+  function handlePadDrop(event: React.DragEvent<HTMLButtonElement>, slotNumber: number) {
+    if (!draggedSample) {
+      return;
+    }
+
+    event.preventDefault();
+    assignSampleToPad(slotNumber, draggedSample.sample.sampleId);
+    clearSampleDragState();
   }
 
   function triggerPad(slotNumber: number) {
@@ -877,6 +952,7 @@ export function PromoterShowCreationTool({
       script: trimmedScript,
       durationSeconds: recordedVoiceTake?.durationSeconds ?? parsedDuration,
       cueAfterMediaId: voiceCueAfterMediaId || undefined,
+      overdubMediaId: voiceCueAfterMediaId || undefined,
       recordingDataUrl: recordedVoiceTake?.dataUrl,
       recordingMimeType: recordedVoiceTake?.mimeType
     };
@@ -931,6 +1007,7 @@ export function PromoterShowCreationTool({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage(null);
+    setLastSavedShowHref(null);
 
     if (!title.trim()) {
       setMessage('Give the show a title.');
@@ -960,10 +1037,17 @@ export function PromoterShowCreationTool({
       mediaItems: selectedMedia,
       voiceOvers,
       samplePads: persistedSamplePads,
-      sequence
+      sequence,
+      advertising: {
+        enabled: true,
+        scope: advertisingScope,
+        frequency: 3,
+        clips: advertisingClips
+      }
     };
 
     const startsAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+    const nextStatus = saveIntent === 'broadcast' ? 'LIVE' : 'DRAFT';
 
     setPending(true);
 
@@ -973,11 +1057,12 @@ export function PromoterShowCreationTool({
       body: JSON.stringify({
         title: title.trim(),
         description: description.trim() || undefined,
+        status: nextStatus,
         startsAt,
         headlinerProfileId,
         promoterProfileId: selectedPromoterProfileId,
         isTicketed: false,
-        tags: ['streaming-only', 'promoter-curated'],
+        tags: ['streaming-only', 'promoter-curated', 'ad-supported', nextStatus === 'LIVE' ? 'broadcast-live' : 'preview-draft'],
         productionPlan
       })
     });
@@ -985,6 +1070,7 @@ export function PromoterShowCreationTool({
     const data = await response.json();
 
     if (response.ok) {
+      const nextShowHref = `/shows/${data.slug}`;
       setTitle('');
       setDescription('');
       setHeadlinerProfileId(artists[0]?.profileId ?? '');
@@ -999,8 +1085,14 @@ export function PromoterShowCreationTool({
       setVoiceDuration('20');
       setVoiceCueAfterMediaId('');
       setRecordedVoiceTake(null);
+      setPreviewMediaItem(null);
+      setLastSavedShowHref(nextShowHref);
       setPending(false);
-      setMessage(`Show created. ${data.title} is ready.`);
+      setMessage(
+        nextStatus === 'LIVE'
+          ? `Broadcast live. ${data.title} is now playable for fans.`
+          : `Preview saved. ${data.title} is ready for promoter-only review.`
+      );
       router.refresh();
       return;
     }
@@ -1037,7 +1129,11 @@ export function PromoterShowCreationTool({
           <div className="composer-song-screen">
             <span className="composer-song-screen-label">Track</span>
             <strong>{track?.title ?? 'Standby'}</strong>
-            <span>{track ? track.artistName : 'Playlist drop zone'}</span>
+            <span>
+              {track
+                ? `${track.artistName}${isVideoMedia(track) ? ' | video' : ' | song'}`
+                : 'Playlist drop zone'}
+            </span>
             {track ? <div className="composer-media-code">{track.mediaId}</div> : null}
           </div>
           <div className="composer-jog-wheel">
@@ -1062,12 +1158,12 @@ export function PromoterShowCreationTool({
         <div className={headerCopyClassName}>
           <div className={sectionBadgeClassName}>Show Creation</div>
           <h2>Promoter builder</h2>
-          <p className="meta">Drag in. Load decks. Cue pads. Publish.</p>
+          <p className="meta">Drag in artist media. Record overdubs. Drop sampler clips. Preview, then broadcast.</p>
         </div>
         <div className={summaryStripClassName}>
           <div className="stat">
             <strong>{selectedMedia.length}</strong>
-            Songs
+            Media
           </div>
           <div className="stat">
             <strong>{cueSequence.length}</strong>
@@ -1078,8 +1174,8 @@ export function PromoterShowCreationTool({
             Takes
           </div>
           <div className="stat">
-            <strong>{padAssignments.length}</strong>
-            Pads
+            <strong>{advertisingClips.length}</strong>
+            Ad clips
           </div>
         </div>
       </div>
@@ -1201,12 +1297,48 @@ export function PromoterShowCreationTool({
                 {recordedVoiceTake ? <span className="meta">{recordedVoiceTake.durationSeconds}s take ready.</span> : null}
               </div>
 
+              {previewMediaItem ? (
+                <div className="composer-preview-monitor">
+                  <div className="composer-preview-monitor-head">
+                    <div className={sectionBadgeClassName}>Preview</div>
+                    <span className="meta">
+                      {previewMediaItem.mediaType === 'video' ? 'Video monitor' : 'Media monitor'}
+                    </span>
+                  </div>
+                  {isVideoMedia(previewMediaItem) ? (
+                    <video
+                      className="composer-preview-video"
+                      controls
+                      poster={previewMediaItem.previewImageUrl ?? undefined}
+                      src={previewMediaItem.url}
+                    />
+                  ) : (
+                    <audio className="composer-audio-preview" controls src={previewMediaItem.url} />
+                  )}
+                </div>
+              ) : null}
+
               <div className="composer-sampler-toolbar composer-sampler-toolbar-inline">
                 <div className={sectionBadgeClassName}>Sampler</div>
                 <label className="button small secondary composer-local-upload-button">
                   <input accept="audio/*" multiple onChange={handleCustomSampleUpload} type="file" />
                   Upload
                 </label>
+              </div>
+
+              <div className="composer-sample-bank">
+                {availableSampleClips.map((sample) => (
+                  <button
+                    className="composer-sample-chip"
+                    draggable
+                    key={sample.sampleId}
+                    onDragEnd={clearSampleDragState}
+                    onDragStart={() => handleSampleDragStart(sample)}
+                    type="button"
+                  >
+                    {sample.title}
+                  </button>
+                ))}
               </div>
 
               <div className="composer-mpc-shell composer-mpc-shell-minimal composer-mpc-shell-inline">
@@ -1235,6 +1367,8 @@ export function PromoterShowCreationTool({
                         key={slotNumber}
                         onClick={() => triggerPad(slotNumber)}
                         onContextMenu={(event) => handlePadContextMenu(event, slotNumber)}
+                        onDragOver={handlePadDragOver}
+                        onDrop={(event) => handlePadDrop(event, slotNumber)}
                         onKeyDown={(event) => handlePadKeyboardMenu(event, slotNumber)}
                         style={{ '--pad-color': padColor } as CSSProperties}
                         title={assignment?.title ?? `Pad ${String(slotNumber).padStart(2, '0')}`}
@@ -1385,6 +1519,7 @@ export function PromoterShowCreationTool({
                     {selectedMedia.map((mediaItem, index) => {
                       const heroImage = artists.find((artist) => artist.profileId === mediaItem.artistProfileId)?.heroImage ?? null;
                       const isCurrentTrack = currentTrack?.url === mediaItem.url;
+                      const isVideoItem = isVideoMedia(mediaItem);
 
                       return (
                         <div className="composer-playlist-stack" key={mediaItem.mediaId}>
@@ -1398,7 +1533,10 @@ export function PromoterShowCreationTool({
                               <span className="composer-sequence-index">{String(index + 1).padStart(2, '0')}</span>
                               <div>
                                 <strong>{mediaItem.title}</strong>
-                                <p className="meta">{mediaItem.artistName}</p>
+                                <p className="meta">
+                                  {mediaItem.artistName}
+                                  {isVideoItem ? ' | video' : ' | song'}
+                                </p>
                                 <div className="composer-media-code">{mediaItem.mediaId}</div>
                               </div>
                             </div>
@@ -1406,7 +1544,7 @@ export function PromoterShowCreationTool({
                               <button
                                 className="button small secondary"
                                 onClick={() => {
-                                  if (isCurrentTrack) {
+                                  if (!isVideoItem && isCurrentTrack) {
                                     togglePlayback();
                                   } else {
                                     playPlaylistMedia(mediaItem, heroImage);
@@ -1414,7 +1552,7 @@ export function PromoterShowCreationTool({
                                 }}
                                 type="button"
                               >
-                                {isCurrentTrack && isPlaying ? 'Pause' : 'Play'}
+                                {isVideoItem ? 'Preview' : isCurrentTrack && isPlaying ? 'Pause' : 'Play'}
                               </button>
                               <button
                                 className="button small secondary"
@@ -1464,6 +1602,7 @@ export function PromoterShowCreationTool({
                     </div>
                     {artist.entries.map((entry) => {
                       const isCurrentTrack = currentTrack?.url === entry.url;
+                      const isVideoEntry = entry.mediaType === 'video';
                       return (
                         <article
                           className="composer-media-card composer-media-card-draggable"
@@ -1477,13 +1616,17 @@ export function PromoterShowCreationTool({
                               url: entry.url,
                               artistProfileId: artist.profileId,
                               artistName: artist.name,
-                              notes: entry.notes
+                              notes: entry.notes,
+                              mimeType: entry.mimeType,
+                              mediaType: entry.mediaType ?? (isVideoEntry ? 'video' : 'audio'),
+                              previewImageUrl: entry.previewImageUrl ?? artist.heroImage
                             })
                           }
                         >
                           <div>
                             <div className="composer-media-code">{entry.hexId}</div>
                             <strong>{entry.title}</strong>
+                            <p className="meta">{isVideoEntry ? 'Video' : 'Song'}</p>
                             {entry.notes ? <p className="meta">{entry.notes}</p> : null}
                           </div>
                           <div className="composer-media-actions">
@@ -1497,36 +1640,52 @@ export function PromoterShowCreationTool({
                             <button
                               className="button small secondary"
                               onClick={() => {
-                                if (isCurrentTrack) {
+                                if (!isVideoEntry && isCurrentTrack) {
                                   togglePlayback();
                                 } else {
-                                  playTrack(
-                                    {
-                                      id: `${artist.slug}-${entry.hexId}`,
-                                      title: entry.title,
-                                      artistName: artist.name,
-                                      url: entry.url,
+                                  if (isVideoEntry) {
+                                    setPreviewMediaItem({
                                       mediaId: entry.hexId,
-                                      artistProfileSlug: artist.slug,
-                                      notes: entry.notes,
-                                      artworkUrl: artist.heroImage
-                                    },
-                                    artist.entries.map((item) => ({
-                                      id: `${artist.slug}-${item.hexId}`,
-                                      title: item.title,
+                                      title: entry.title,
+                                      url: entry.url,
+                                      artistProfileId: artist.profileId,
                                       artistName: artist.name,
-                                      url: item.url,
-                                      mediaId: item.hexId,
-                                      artistProfileSlug: artist.slug,
-                                      notes: item.notes,
-                                      artworkUrl: artist.heroImage
-                                    }))
-                                  );
+                                      notes: entry.notes,
+                                      mimeType: entry.mimeType,
+                                      mediaType: 'video',
+                                      previewImageUrl: entry.previewImageUrl ?? artist.heroImage
+                                    });
+                                  } else {
+                                    playTrack(
+                                      {
+                                        id: `${artist.slug}-${entry.hexId}`,
+                                        title: entry.title,
+                                        artistName: artist.name,
+                                        url: entry.url,
+                                        mediaId: entry.hexId,
+                                        artistProfileSlug: artist.slug,
+                                        notes: entry.notes,
+                                        artworkUrl: artist.heroImage
+                                      },
+                                      artist.entries
+                                        .filter((item) => item.mediaType !== 'video')
+                                        .map((item) => ({
+                                          id: `${artist.slug}-${item.hexId}`,
+                                          title: item.title,
+                                          artistName: artist.name,
+                                          url: item.url,
+                                          mediaId: item.hexId,
+                                          artistProfileSlug: artist.slug,
+                                          notes: item.notes,
+                                          artworkUrl: artist.heroImage
+                                        }))
+                                    );
+                                  }
                                 }
                               }}
                               type="button"
                             >
-                              {isCurrentTrack && isPlaying ? 'Pause' : 'Prev'}
+                              {isVideoEntry ? 'Preview' : isCurrentTrack && isPlaying ? 'Pause' : 'Prev'}
                             </button>
                             <button className="button small" onClick={() => addMedia(artist, entry)} type="button">
                               Add
@@ -1571,7 +1730,7 @@ export function PromoterShowCreationTool({
                 />
               </label>
               <label className="field">
-                <span>After</span>
+                <span>Overdub on</span>
                 <select onChange={(event) => setVoiceCueAfterMediaId(event.target.value)} value={voiceCueAfterMediaId}>
                   <option value="">No cue</option>
                   {selectedMedia.map((mediaItem) => (
@@ -1664,9 +1823,27 @@ export function PromoterShowCreationTool({
         </div>
 
         <div className="cta-row">
-          <button className="button" disabled={pending} type="submit">
-            {pending ? 'Creating show...' : 'Create streaming show'}
+          <button
+            className="button secondary"
+            disabled={pending}
+            onClick={() => setSaveIntent('preview')}
+            type="submit"
+          >
+            {pending && saveIntent === 'preview' ? 'Saving preview...' : 'Save preview draft'}
           </button>
+          <button
+            className="button"
+            disabled={pending}
+            onClick={() => setSaveIntent('broadcast')}
+            type="submit"
+          >
+            {pending && saveIntent === 'broadcast' ? 'Broadcasting...' : 'Broadcast live'}
+          </button>
+          {lastSavedShowHref ? (
+            <a className="button small secondary" href={lastSavedShowHref}>
+              Open saved show
+            </a>
+          ) : null}
           {message ? <span className="meta">{message}</span> : null}
         </div>
       </form>

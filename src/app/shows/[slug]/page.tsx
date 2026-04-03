@@ -1,14 +1,18 @@
+import { auth } from '@/lib/auth';
 import { notFound } from 'next/navigation';
 import { HypeButton } from '@/components/HypeButton';
+import { ShowSequencePlayer } from '@/components/ShowSequencePlayer';
 import { TicketSaleCard } from '@/components/TicketSaleCard';
 import { db } from '@/lib/db';
 import { getShowVisibilitySignals } from '@/lib/integrity';
+import { isAdminSession } from '@/lib/permissions';
 import { parseShowProductionPlan } from '@/lib/show-composer';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { formatShowTime } from '@/lib/utils';
 import { ShowPlaybackTracker } from '@/components/ShowPlaybackTracker';
 
 export default async function ShowDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const session = await auth();
   const { slug } = await params;
   const show = await db.show.findUnique({
     where: { slug },
@@ -24,6 +28,12 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ slu
   });
 
   if (!show) return notFound();
+  const canPreviewDraft =
+    Boolean(session?.user?.id) &&
+    (session?.user?.id === show.creatorId || (session ? isAdminSession(session) : false));
+  if (show.status === 'DRAFT' && !canPreviewDraft) {
+    return notFound();
+  }
 
   const visibility = getShowVisibilitySignals(show);
   const productionPlan = parseShowProductionPlan(show.productionPlan);
@@ -56,13 +66,26 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ slu
                 showSlug={show.slug}
                 title={show.title}
               />
+            ) : productionPlan ? (
+              <ShowSequencePlayer
+                autoPlay={show.status === 'LIVE'}
+                isPreview={show.status === 'DRAFT'}
+                productionPlan={productionPlan}
+                showId={show.id}
+                showSlug={show.slug}
+                title={show.title}
+              />
             ) : (
               <div className="show-art" style={{ minHeight: 320 }}>
                 Connect your stream provider to go live
               </div>
             )}
           </div>
-          <HypeButton entityLabel="show" initialCount={show.hypeCount} targetId={show.id} targetType="show" />
+          {show.status !== 'DRAFT' ? (
+            <HypeButton entityLabel="show" initialCount={show.hypeCount} targetId={show.id} targetType="show" />
+          ) : (
+            <p className="meta">Draft previews stay private until the promoter broadcasts the show live.</p>
+          )}
         </section>
 
         <aside className="panel" style={{ padding: '1.25rem' }}>
@@ -158,14 +181,14 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ slu
         <section className="section">
           <div className="panel composer-plan-panel">
             <div className="composer-header">
-              <div>
-                <div className="badge">Production plan</div>
-                <h2>Promoter run of show</h2>
-                <p className="kicker">
-                  This show was assembled from copied artist uploads, recorded voice-over cues, and a 16-pad royalty-free sample rack.
-                </p>
+                <div>
+                  <div className="badge">Production plan</div>
+                  <h2>Promoter run of show</h2>
+                  <p className="kicker">
+                  This show was assembled from artist songs and videos, recorded voice-over overdubs, sampler pads, and ad breaks inserted after every three media slots.
+                  </p>
+                </div>
               </div>
-            </div>
 
             <div className="composer-grid">
               <div className="composer-column">
@@ -185,7 +208,7 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ slu
                           </div>
                           <div className="composer-media-actions">
                             <a className="button small secondary" href={item.url} rel="noreferrer" target="_blank">
-                              Open audio
+                              Open media
                             </a>
                           </div>
                         </div>

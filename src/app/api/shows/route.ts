@@ -11,6 +11,7 @@ import { slugify } from '@/lib/utils';
 const schema = z.object({
   title: z.string().min(3),
   description: z.string().optional(),
+  status: z.enum(['DRAFT', 'SCHEDULED', 'LIVE']).default('SCHEDULED'),
   startsAt: z.string().datetime(),
   endsAt: z.string().datetime().optional(),
   venueProfileId: z.string().cuid().optional(),
@@ -28,7 +29,7 @@ const schema = z.object({
 export async function GET() {
   const shows = await db.show.findMany({
     include: { venueProfile: true, headlinerProfile: true },
-    where: { status: { not: 'CANCELED' } }
+    where: { status: { in: ['SCHEDULED', 'LIVE', 'ENDED'] } }
   });
   return NextResponse.json(sortShowsForFeed(shows));
 }
@@ -132,14 +133,14 @@ export async function POST(request: Request) {
         headlinerProfileId: body.headlinerProfileId,
         promoterProfileId: body.promoterProfileId,
         tags: body.tags,
-        status: 'SCHEDULED',
         isTicketed: body.isTicketed,
         ticketPriceCents: body.isTicketed ? body.ticketPriceCents : 0,
         ticketCapacity: body.isTicketed ? body.ticketCapacity : null,
         venuePayoutPercent: body.isTicketed ? body.venuePayoutPercent : null,
         artistPayoutPercent: body.isTicketed ? body.artistPayoutPercent : null,
         promoterPayoutPercent: PROMOTER_POOL_PERCENT,
-        productionPlan: body.productionPlan
+        productionPlan: body.productionPlan,
+        status: body.status
       }
     });
 

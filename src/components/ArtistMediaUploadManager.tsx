@@ -21,7 +21,7 @@ export function ArtistMediaUploadManager({ profileId }: ArtistMediaUploadManager
 
     const file = fileInputRef.current?.files?.[0];
     if (!file) {
-      setMessage('Choose an audio file first.');
+      setMessage('Choose an audio or video file first.');
       return;
     }
 
@@ -42,7 +42,7 @@ export function ArtistMediaUploadManager({ profileId }: ArtistMediaUploadManager
       const data = await response.json();
 
       if (!response.ok) {
-        setMessage(data.error ?? 'Could not upload this track.');
+        setMessage(data.error ?? 'Could not upload this media item.');
         return;
       }
 
@@ -54,7 +54,7 @@ export function ArtistMediaUploadManager({ profileId }: ArtistMediaUploadManager
       setMessage(`Uploaded ${data.asset.title}. Share ID: ${data.asset.hexId}`);
       router.refresh();
     } catch {
-      setMessage('Could not upload this track.');
+      setMessage('Could not upload this media item.');
     } finally {
       setPending(false);
     }
@@ -65,15 +65,17 @@ export function ArtistMediaUploadManager({ profileId }: ArtistMediaUploadManager
       <div className="artist-media-upload-header">
         <div>
           <div className="badge">Upload</div>
-          <h3>Post audio to your page</h3>
-          <p className="meta">Uploads get a unique hex ID, show up in your public media section, and can be copied into promoter playlists.</p>
+          <h3>Post media to your page</h3>
+          <p className="meta">
+            Uploads get a unique hex ID, show up in your public media section, and can be copied into promoter playlists.
+          </p>
         </div>
-        <span className="meta">Audio only · max 10MB per file</span>
+        <span className="meta">Audio 10MB max / Video 16MB max</span>
       </div>
 
       <form className="artist-media-upload-form" onSubmit={handleSubmit}>
         <label className="field">
-          <span>Track title</span>
+          <span>Title</span>
           <input
             onChange={(event) => setTitle(event.target.value)}
             placeholder="Leave blank to use the file name"
@@ -85,20 +87,20 @@ export function ArtistMediaUploadManager({ profileId }: ArtistMediaUploadManager
           <span>Notes</span>
           <textarea
             onChange={(event) => setNotes(event.target.value)}
-            placeholder="Version notes, mix notes, live room details, or release context."
+            placeholder="Version notes, video notes, live room details, or release context."
             rows={3}
             value={notes}
           />
         </label>
 
         <label className="field">
-          <span>Audio file</span>
-          <input accept="audio/*" ref={fileInputRef} required type="file" />
+          <span>Media file</span>
+          <input accept="audio/*,video/*" ref={fileInputRef} required type="file" />
         </label>
 
         <div className="cta-row">
           <button className="button" disabled={pending} type="submit">
-            {pending ? 'Uploading...' : 'Upload track'}
+            {pending ? 'Uploading...' : 'Upload media'}
           </button>
           {message ? <span className="meta">{message}</span> : null}
         </div>

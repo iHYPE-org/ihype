@@ -1,11 +1,16 @@
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { ProfileDirectoryPage } from '@/components/ProfileDirectoryPage';
-import { FanRecommendationsPanel } from '@/components/FanRecommendationsPanel';
+import {
+  DiscoverCreatorPanel,
+  DiscoverEventsPanel,
+  DiscoverMyPagePanel,
+  DiscoverStatsPanel
+} from '@/components/DiscoverModulePanels';
 import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
-import { DiscoverTicketHubPanel } from '@/components/DiscoverModulePanels';
+import { ProfileDirectoryPage } from '@/components/ProfileDirectoryPage';
 import { RoleModuleSubheader } from '@/components/RoleModuleSubheader';
 import { resolveDiscoverModule } from '@/lib/discover-modules';
+import { getProfileDesignStyleVars } from '@/lib/profile-design';
 import { detectRequestLocation } from '@/lib/request-location';
 import { getDirectoryProfiles } from '@/lib/public-data';
 
@@ -29,7 +34,16 @@ export default async function ListenersIndexPage({
   const activeModule = resolveDiscoverModule('fans', resolvedSearchParams.module);
   const listeners = await getDirectoryProfiles('LISTENER');
 
-  const [viewerLocation, venues, activeShows, profileHypes, myFanProfile] = await Promise.all([
+  const [
+    viewerLocation,
+    venues,
+    activeShows,
+    profileHypes,
+    myFanProfile,
+    myShowHypes,
+    fullSongListenCount,
+    fullShowListenCount
+  ] = await Promise.all([
     detectRequestLocation(),
     db.profile.findMany({
       where: {
@@ -85,95 +99,55 @@ export default async function ListenersIndexPage({
           },
           select: {
             id: true,
-            slug: true
+            slug: true,
+            name: true,
+            headline: true,
+            bio: true,
+            city: true,
+            country: true,
+            hexId: true,
+            hypeCount: true,
+            genres: true,
+            themePreset: true,
+            themeAccentTone: true,
+            themeBackdropTone: true,
+            themeFontPreset: true
           }
         })
-      : Promise.resolve(null)
+      : Promise.resolve(null),
+    session?.user?.id
+      ? db.hypeEvent.findMany({
+          where: { userId: session.user.id },
+          include: {
+            show: {
+              include: {
+                venueProfile: true,
+                headlinerProfile: true,
+                promoterProfile: true
+              }
+            }
+          },
+          orderBy: { createdAt: 'desc' }
+        })
+      : Promise.resolve([]),
+    session?.user?.id
+      ? db.mediaListen.count({
+          where: {
+            userId: session.user.id,
+            completedAt: { not: null }
+          }
+        })
+      : Promise.resolve(0),
+    session?.user?.id
+      ? db.showListen.count({
+          where: {
+            userId: session.user.id
+          }
+        })
+      : Promise.resolve(0)
   ]);
 
-  const fanQuickLinks = myFanProfile
-    ? [
-        { label: 'My Page', href: `/fans/${myFanProfile.slug}` },
-        { label: 'My Stats', href: `/fans/${myFanProfile.slug}?section=stats` }
-      ]
-    : [];
-
-  const likedArtistIds = new Set(
-    profileHypes
-      .filter((entry) => entry.profile.type === 'ARTIST')
-      .map((entry) => entry.profile.id)
-  );
-
-  const nearbyShows = activeShows
-    .filter((show) => {
-      const venueProfile = show.venueProfile;
-      if (!venueProfile) {
-        return false;
-      }
-
-      if (viewerLocation?.postalCode && venueProfile.postalCode === viewerLocation.postalCode) {
-        return true;
-      }
-
-      if (viewerLocation?.city && venueProfile.city === viewerLocation.city) {
-        return true;
-      }
-
-      if (viewerLocation?.stateRegion && venueProfile.stateRegion === viewerLocation.stateRegion) {
-        return true;
-      }
-
-      return false;
-    })
-    .slice(0, 4);
-
-  const trendingShows = [...activeShows]
-    .sort((left, right) => right.hypeCount * 3 + right.ticketsSoldCount - (left.hypeCount * 3 + left.ticketsSoldCount))
-    .slice(0, 4);
-
-  const promoterMatches = Array.from(
-    activeShows.reduce(
-      (map, show) => {
-        if (!show.promoterProfile || !show.headlinerProfile || !likedArtistIds.has(show.headlinerProfile.id)) {
-          return map;
-        }
-
-        const current = map.get(show.promoterProfile.id) ?? {
-          id: show.promoterProfile.id,
-          slug: show.promoterProfile.slug,
-          name: show.promoterProfile.name,
-          city: show.promoterProfile.city,
-          stateRegion: show.promoterProfile.stateRegion,
-          matchedArtistNames: new Set<string>(),
-          sharedShowCount: 0
-        };
-
-        current.matchedArtistNames.add(show.headlinerProfile.name);
-        current.sharedShowCount += 1;
-        map.set(show.promoterProfile.id, current);
-        return map;
-      },
-      new Map<
-        string,
-        {
-          id: string;
-          slug: string;
-          name: string;
-          city: string | null;
-          stateRegion: string | null;
-          matchedArtistNames: Set<string>;
-          sharedShowCount: number;
-        }
-      >()
-    ).values()
-  )
-    .map((entry) => ({
-      ...entry,
-      matchedArtistNames: [...entry.matchedArtistNames]
-    }))
-    .sort((left, right) => right.sharedShowCount - left.sharedShowCount)
-    .slice(0, 5);
-
+  const now = new Date();
   const globeRouteStops = activeShows
     .filter((show) => show.venueProfile?.latitude != null && show.venueProfile.longitude != null)
     .map((show) => ({
@@ -192,10 +166,18 @@ export default async function ListenersIndexPage({
       timing: show.status === 'LIVE' ? ('live' as const) : ('upcoming' as const)
     }));
 
-  const ticketHubShows = [...activeShows]
-    .filter((show) => show.isTicketed)
-    .sort((left, right) => right.ticketsSoldCount + right.hypeCount * 2 - (left.ticketsSoldCount + left.hypeCount * 2))
-    .slice(0, 6);
+  const myShows = myShowHypes.map((entry) => entry.show);
+  const myUpcomingShows = myShows.filter((show) => show.status === 'LIVE' || show.startsAt >= now);
+  const myPastShows = myShows.filter((show) => show.status === 'ENDED' || (show.startsAt < now && show.status !== 'LIVE'));
+  const myEvents = [...myUpcomingShows, ...myPastShows];
+  const hypePoints = myShows.length + profileHypes.length;
+  const pageStyle = myFanProfile
+    ? getProfileDesignStyleVars(myFanProfile.themePreset, {
+        accentTone: myFanProfile.themeAccentTone,
+        backdropTone: myFanProfile.themeBackdropTone,
+        fontPreset: myFanProfile.themeFontPreset
+      })
+    : undefined;
 
   const discoverPanel = (
     <NetworkEarthGlobe
@@ -209,34 +191,69 @@ export default async function ListenersIndexPage({
     />
   );
 
-  const modulePanel =
-    activeModule === 'recommendation-engine' ? (
-      <FanRecommendationsPanel
-        nearbyShows={nearbyShows}
-        promoterMatches={promoterMatches}
-        trendingShows={trendingShows}
-        zipLabel={viewerLocation?.postalCode ?? null}
-      />
-    ) : (
-      <DiscoverTicketHubPanel shows={ticketHubShows} />
-    );
+  const lockedPanel = (
+    <DiscoverCreatorPanel
+      actionHref={session?.user ? '/register/fan' : '/login'}
+      actionLabel={session?.user ? 'Create fan profile' : 'Sign in as fan'}
+      badge="Fan access"
+      description="Sign in with a fan account to open your page preview, stats, and event history."
+      title="Fan tools"
+    >
+      <div className="empty">Your fan modules unlock once you are signed into a fan-owned account.</div>
+    </DiscoverCreatorPanel>
+  );
+
+  const modulePanel = !myFanProfile ? (
+    lockedPanel
+  ) : activeModule === 'my-page' ? (
+    <DiscoverMyPagePanel
+      description="Preview the public fan page other people see when they open your profile."
+      editHref={`/dashboard?profile=${myFanProfile.id}&edit=menu`}
+      headline={myFanProfile.headline || 'Capture the artists, venues, and moments you keep coming back to.'}
+      metaLine={[myFanProfile.city, myFanProfile.country].filter(Boolean).join(', ') || `My ID ${myFanProfile.hexId}`}
+      name={myFanProfile.name}
+      previewStyle={pageStyle}
+      previewTabs={['About', 'Recommend', 'Upcoming', 'Top 5', 'Stats']}
+      publicHref={`/fans/${myFanProfile.slug}`}
+      roleLabel="Fan"
+      summary={myFanProfile.bio || `My ID ${myFanProfile.hexId}`}
+      tags={myFanProfile.genres}
+      title="My fan page"
+    />
+  ) : activeModule === 'stats' ? (
+    <DiscoverStatsPanel
+      badge="Stats"
+      description="Track the listening and event signals that make up your fan footprint across iHYPE."
+      stats={[
+        { label: 'Hype points', value: hypePoints },
+        { label: 'Full songs listened', value: fullSongListenCount },
+        { label: 'Full shows listened', value: fullShowListenCount },
+        { label: 'Events attended', value: myPastShows.length },
+        { label: 'Upcoming events', value: myUpcomingShows.length }
+      ]}
+      title="My fan stats"
+    />
+  ) : activeModule === 'events' ? (
+    <DiscoverEventsPanel
+      badge="Events"
+      description="Review the shows you have already backed and the ones still ahead."
+      emptyLabel="No saved events are on your fan page yet."
+      shows={myEvents}
+      title="My fan events"
+    />
+  ) : (
+    lockedPanel
+  );
 
   return (
     <ProfileDirectoryPage
       activeModule={activeModule}
       badge="FANS"
       currentHref="/fans"
-      discoverPanel={discoverPanel}
       description="Fan discover keeps the focus on nearby rooms, the next events worth watching, and the signals that turn hype into action."
+      discoverPanel={discoverPanel}
       modulePanel={modulePanel}
-      moduleSubheader={
-        <RoleModuleSubheader
-          activeModule={activeModule}
-          currentHref="/fans"
-          extraLinks={fanQuickLinks}
-          role="fans"
-        />
-      }
+      moduleSubheader={<RoleModuleSubheader activeModule={activeModule} currentHref="/fans" role="fans" />}
       profiles={listeners}
       title="Fan discover"
     />

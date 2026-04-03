@@ -11,6 +11,7 @@ export function ProfileDirectoryPage({
   profiles,
   currentHref,
   activeModule,
+  discoverPanel,
   modulePanel,
   moduleSubheader,
   discoverPanel
@@ -21,6 +22,7 @@ export function ProfileDirectoryPage({
   profiles: DirectoryProfile[];
   currentHref: string;
   activeModule: DiscoverModuleId;
+  discoverPanel?: ReactNode;
   modulePanel?: ReactNode;
   moduleSubheader?: ReactNode;
   discoverPanel?: ReactNode;

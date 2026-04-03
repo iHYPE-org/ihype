@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { ShowCard } from '@/components/ShowCard';
 import type { VenueBookingScopeGroup } from '@/lib/venue-booking';
 
@@ -126,6 +126,128 @@ export function DiscoverTicketHubPanel({
       ) : (
         <div className="empty">No ticketed shows are open right now.</div>
       )}
+    </DiscoverModuleShell>
+  );
+}
+
+export function DiscoverEventsPanel({
+  badge,
+  title,
+  description,
+  shows,
+  emptyLabel
+}: {
+  badge: string;
+  title: string;
+  description: string;
+  shows: DiscoverShow[];
+  emptyLabel: string;
+}) {
+  return (
+    <DiscoverModuleShell badge={badge} description={description} title={title}>
+      {shows.length ? (
+        <div className="grid grid-2">
+          {shows.map((show) => (
+            <ShowCard key={show.id} show={show} />
+          ))}
+        </div>
+      ) : (
+        <div className="empty">{emptyLabel}</div>
+      )}
+    </DiscoverModuleShell>
+  );
+}
+
+export function DiscoverMyPagePanel({
+  roleLabel,
+  title,
+  description,
+  name,
+  headline,
+  summary,
+  metaLine,
+  publicHref,
+  editHref,
+  previewTabs = [],
+  tags = [],
+  previewStyle
+}: {
+  roleLabel: string;
+  title: string;
+  description: string;
+  name: string;
+  headline: string;
+  summary: string;
+  metaLine?: string | null;
+  publicHref: string;
+  editHref: string;
+  previewTabs?: string[];
+  tags?: string[];
+  previewStyle?: CSSProperties;
+}) {
+  return (
+    <DiscoverModuleShell badge="My page" description={description} title={title}>
+      <div className="discover-creator-grid">
+        <div className="discover-creator-column">
+          <div className="profile-design-preview-shell profile-design-shell" style={previewStyle}>
+            <div className="profile-design-preview-card">
+              <div className="profile-design-preview-hero">
+                <div className="profile-design-preview-topline">
+                  <span className="badge">{roleLabel}</span>
+                </div>
+                <strong>{name}</strong>
+                <p className="profile-design-preview-headline">{headline}</p>
+                <p className="profile-design-preview-copy">{summary}</p>
+                {metaLine ? <p className="profile-design-preview-copy">{metaLine}</p> : null}
+                {tags.length ? (
+                  <div className="tag-row">
+                    {tags.slice(0, 4).map((tag) => (
+                      <span className="tag" key={tag}>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+
+              {previewTabs.length ? (
+                <div className="profile-design-preview-tabs">
+                  {previewTabs.map((tab, index) => (
+                    <span
+                      className={index === 0 ? 'profile-design-preview-tab active' : 'profile-design-preview-tab'}
+                      key={tab}
+                    >
+                      {tab}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        <div className="discover-creator-column">
+          <div className="discover-simple-list">
+            <div className="discover-simple-link">
+              <strong>Public page</strong>
+              <span>Open the live page exactly the way other people see it.</span>
+            </div>
+            <div className="discover-simple-link">
+              <strong>Edit page</strong>
+              <span>Jump back to your dashboard editor to change the layout, look, and content.</span>
+            </div>
+          </div>
+
+          <div className="cta-row">
+            <Link className="button secondary" href={publicHref}>
+              View my page
+            </Link>
+            <Link className="button secondary" href={editHref}>
+              Edit page
+            </Link>
+          </div>
+        </div>
+      </div>
     </DiscoverModuleShell>
   );
 }

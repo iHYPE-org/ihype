@@ -6,9 +6,11 @@ export type ArtistMediaEntry = {
   shareUrl: string;
   notes: string | null;
   source: 'LINKED' | 'UPLOADED';
+  mediaType?: 'audio' | 'video';
   mimeType?: string | null;
   fileSizeBytes?: number | null;
   createdAt?: Date | null;
+  previewImageUrl?: string | null;
 };
 
 export type ParsedArtistMediaContent = {
@@ -36,6 +38,23 @@ function isValidUrl(value: string) {
   } catch {
     return false;
   }
+}
+
+function inferMediaType(value: { mimeType?: string | null; url?: string }) {
+  if (value.mimeType?.startsWith('video/')) {
+    return 'video' as const;
+  }
+
+  if (value.mimeType?.startsWith('audio/')) {
+    return 'audio' as const;
+  }
+
+  const url = value.url ?? '';
+  if (/\.(mp4|mov|webm|m4v)$/i.test(url)) {
+    return 'video' as const;
+  }
+
+  return 'audio' as const;
 }
 
 function buildTitleFromUrl(value: string) {
@@ -101,7 +120,8 @@ function parseMediaLine(line: string, index: number): ArtistMediaEntry | null {
     url,
     shareUrl: url,
     notes,
-    source: 'LINKED'
+    source: 'LINKED',
+    mediaType: inferMediaType({ url })
   };
 }
 
@@ -145,6 +165,7 @@ export function buildUploadedArtistMediaEntries(uploads: ArtistMediaUploadRecord
       shareUrl: streamUrl,
       notes: upload.notes,
       source: 'UPLOADED',
+      mediaType: inferMediaType({ mimeType: upload.mimeType, url: streamUrl }),
       mimeType: upload.mimeType,
       fileSizeBytes: upload.fileSizeBytes,
       createdAt: upload.createdAt

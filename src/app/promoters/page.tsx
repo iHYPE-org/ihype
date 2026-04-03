@@ -1,24 +1,20 @@
-import Link from 'next/link';
-import type { ReactNode } from 'react';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { buildArtistMediaCollection } from '@/lib/media';
 import {
   DiscoverCreatorPanel,
-  DiscoverRecommendationPanel,
+  DiscoverEventsPanel,
+  DiscoverMyPagePanel,
   DiscoverStatsPanel
 } from '@/components/DiscoverModulePanels';
 import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
 import { ProfileDirectoryPage } from '@/components/ProfileDirectoryPage';
 import { PromoterShowCreationTool } from '@/components/PromoterShowCreationTool';
 import { RoleModuleSubheader } from '@/components/RoleModuleSubheader';
-import {
-  getTopMarketLabels,
-  resolveDiscoverModule
-} from '@/lib/discover-modules';
-import { getDirectoryProfiles } from '@/lib/public-data';
+import { resolveDiscoverModule } from '@/lib/discover-modules';
+import { getProfileDesignStyleVars } from '@/lib/profile-design';
 import { detectRequestLocation } from '@/lib/request-location';
-import { ShowCard } from '@/components/ShowCard';
+import { getDirectoryProfiles } from '@/lib/public-data';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,20 +36,7 @@ export default async function PromotersIndexPage({
   const activeModule = resolveDiscoverModule('promoters', resolvedSearchParams.module);
   const promoters = await getDirectoryProfiles('DJ');
 
-  const [promoterShows, viewerLocation, venues] = await Promise.all([
-    db.show.findMany({
-      where: {
-        status: { not: 'CANCELED' },
-        promoterProfileId: { not: null }
-      },
-      include: {
-        venueProfile: true,
-        headlinerProfile: true,
-        promoterProfile: true
-      },
-      orderBy: [{ startsAt: 'asc' }, { hypeCount: 'desc' }],
-      take: 18
-    }),
+  const [viewerLocation, venues, promoterShows, myPromoterProfile] = await Promise.all([
     detectRequestLocation(),
     db.profile.findMany({
       where: {
@@ -75,13 +58,82 @@ export default async function PromotersIndexPage({
         latitude: true,
         longitude: true
       }
-    })
+    }),
+    db.show.findMany({
+      where: {
+        status: { not: 'CANCELED' },
+        promoterProfileId: { not: null }
+      },
+      include: {
+        venueProfile: true,
+        headlinerProfile: true,
+        promoterProfile: true
+      },
+      orderBy: [{ startsAt: 'asc' }, { hypeCount: 'desc' }],
+      take: 18
+    }),
+    session?.user?.id
+      ? db.profile.findFirst({
+          where: {
+            ownerId: session.user.id,
+            type: 'DJ'
+          },
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            headline: true,
+            bio: true,
+            city: true,
+            stateRegion: true,
+            country: true,
+            hexId: true,
+            hypeCount: true,
+            verified: true,
+            genres: true,
+            themePreset: true,
+            themeAccentTone: true,
+            themeBackdropTone: true,
+            themeFontPreset: true
+          }
+        })
+      : Promise.resolve(null)
   ]);
 
-  const totalPromoterHype = promoters.reduce((sum, promoter) => sum + promoter.hypeCount, 0);
-  const totalTicketsSold = promoterShows.reduce((sum, show) => sum + show.ticketsSoldCount, 0);
-  const topMarkets = getTopMarketLabels(promoters);
+  const myPromoterShows = myPromoterProfile
+    ? await db.show.findMany({
+        where: {
+          promoterProfileId: myPromoterProfile.id,
+          status: { not: 'CANCELED' }
+        },
+        include: {
+          venueProfile: true,
+          headlinerProfile: true,
+          promoterProfile: true
+        },
+        orderBy: [{ startsAt: 'asc' }, { hypeCount: 'desc' }],
+        take: 16
+      })
+    : [];
+
   const now = new Date();
+  const liveOrUpcomingPromoterShows = myPromoterShows.filter(
+    (show) => show.status === 'LIVE' || show.startsAt >= now
+  );
+  const ticketsSold = myPromoterShows.reduce((sum, show) => sum + show.ticketsSoldCount, 0);
+  const venueCount = new Set(
+    myPromoterShows
+      .map((show) => show.venueProfileId)
+      .filter((venueProfileId): venueProfileId is string => Boolean(venueProfileId))
+  ).size;
+  const pageStyle = myPromoterProfile
+    ? getProfileDesignStyleVars(myPromoterProfile.themePreset, {
+        accentTone: myPromoterProfile.themeAccentTone,
+        backdropTone: myPromoterProfile.themeBackdropTone,
+        fontPreset: myPromoterProfile.themeFontPreset
+      })
+    : undefined;
+
   const globeRouteStops = promoterShows
     .filter((show) => show.venueProfile?.latitude != null && show.venueProfile.longitude != null)
     .map((show) => ({
@@ -104,88 +156,94 @@ export default async function PromotersIndexPage({
             ? ('upcoming' as const)
             : ('past' as const)
     }));
+
   const discoverPanel = (
     <NetworkEarthGlobe
-      description="Start at the detected ZIP for this request, highlight nearby venues, then zoom out to browse promoted routes and active room clusters."
-      emptyRouteLabel="No promoter show routes are mapped yet."
-      routeLabel="Promoter route"
+      description="Browse promoter-led nights near the detected request ZIP, then zoom back out to follow bigger event lanes."
+      emptyRouteLabel="No promoter-led routes are mapped yet."
+      routeLabel="Promoted history"
       routeStops={globeRouteStops}
-      title="Earth globe for nearby venues and promoter routes"
+      title="Earth globe for promoter routes"
       venues={venues}
       viewerLocation={viewerLocation}
     />
   );
 
-  let modulePanel: ReactNode;
+  const lockedPanel = (
+    <DiscoverCreatorPanel
+      actionHref={session?.user ? '/register/promoter' : '/login'}
+      actionLabel={session?.user ? 'Create promoter profile' : 'Sign in as promoter'}
+      badge="Promoter access"
+      description="Sign in with a promoter account to preview your page, open stats, and build shows."
+      title="Promoter tools"
+    >
+      <div className="empty">Your promoter modules unlock once you are signed into a promoter-owned account.</div>
+    </DiscoverCreatorPanel>
+  );
 
-  if (activeModule === 'stats') {
-    modulePanel = (
-      <DiscoverStatsPanel
-        badge="Stats"
-        description="A quick read on promoter reach, promoted shows, and the amount of ticket movement already happening through the network."
-        highlights={topMarkets}
-        stats={[
-          { label: 'Promoters', value: promoters.length },
-          { label: 'Verified', value: promoters.filter((promoter) => promoter.verified).length },
-          { label: 'Live + upcoming shows', value: promoterShows.filter((show) => show.status === 'LIVE' || show.status === 'SCHEDULED').length },
-          { label: 'Promoter hype', value: totalPromoterHype },
-          { label: 'Tickets sold', value: totalTicketsSold }
-        ]}
-        title="Promoter network stats"
-      />
-    );
-  } else if (activeModule === 'recommendation-engine') {
-    modulePanel = (
-      <DiscoverRecommendationPanel
-        badge="Recommendation engine"
-        description="Use current promoter signals to decide which cities, artists, and rooms deserve the next push."
-        opportunities={[
-          {
-            title: 'Own the strongest room cluster',
-            summary: `${topMarkets[0] ?? 'The leading city cluster'} is carrying the most promoter momentum right now.`,
-            detail: 'Lead with your tightest room concept and strongest recent show result in that market.'
-          },
-          {
-            title: 'Package outcome, not just concept',
-            summary: `${totalTicketsSold} tickets have moved through promoter-led shows already in the current data snapshot.`,
-            detail: 'Use sold-through nights and repeat artist partnerships as the ad proof point.'
-          },
-          {
-            title: 'Keep the artist pipeline active',
-            summary: `${promoterShows.length} promoted shows are visible across the current network queue.`,
-            detail: 'When a style lane starts moving, turn it into a repeatable show format before attention cools off.'
+  let modulePanel = lockedPanel;
+
+  if (myPromoterProfile) {
+    if (activeModule === 'my-page') {
+      modulePanel = (
+        <DiscoverMyPagePanel
+          description="Preview the public promoter page artists, fans, and venues see when they open your profile."
+          editHref={`/dashboard?profile=${myPromoterProfile.id}&edit=menu`}
+          headline={myPromoterProfile.headline || 'Shape the public identity, event look, and show language for your promoter page.'}
+          metaLine={
+            [myPromoterProfile.city, myPromoterProfile.stateRegion ?? myPromoterProfile.country]
+              .filter(Boolean)
+              .join(', ') || `My ID ${myPromoterProfile.hexId}`
           }
-        ]}
-        title="Promoter recommendation engine"
-      />
-    );
-  } else {
-    const ownedPromoter =
-      session?.user?.id
-        ? await db.profile.findFirst({
-            where: {
-              ownerId: session.user.id,
-              type: 'DJ'
-            },
-            select: {
-              id: true,
-              slug: true,
-              name: true
-            }
-          })
-        : null;
-
-    if (ownedPromoter) {
+          name={myPromoterProfile.name}
+          previewStyle={pageStyle}
+          previewTabs={['About', 'Shows', 'Events']}
+          publicHref={`/promoters/${myPromoterProfile.slug}`}
+          roleLabel="Promoter"
+          summary={myPromoterProfile.bio || `My ID ${myPromoterProfile.hexId}`}
+          tags={myPromoterProfile.genres}
+          title="My promoter page"
+        />
+      );
+    } else if (activeModule === 'stats') {
+      modulePanel = (
+        <DiscoverStatsPanel
+          badge="Stats"
+          description="A quick read on the event momentum tied to your promoter profile."
+          stats={[
+            { label: 'Fan hype', value: myPromoterProfile.hypeCount },
+            { label: 'Total shows', value: myPromoterShows.length },
+            { label: 'Live + upcoming', value: liveOrUpcomingPromoterShows.length },
+            { label: 'Tickets sold', value: ticketsSold },
+            { label: 'Venues worked', value: venueCount }
+          ]}
+          title="My promoter stats"
+        />
+      );
+    } else if (activeModule === 'events') {
+      modulePanel = (
+        <DiscoverEventsPanel
+          badge="Events"
+          description="Review the nights already attached to your promoter page."
+          emptyLabel="No promoter events are attached to your page yet."
+          shows={myPromoterShows}
+          title="My promoter events"
+        />
+      );
+    } else if (activeModule === 'show-creator') {
       const artistProfiles = await db.profile.findMany({
         where: {
           type: 'ARTIST',
-          OR: [{ mediaContent: { not: null } }, { mediaUploads: { some: {} } }]
+          OR: [{ mediaContent: { not: null } }, { mediaUploads: { some: {} } }, { featureVideoUrl: { not: null } }]
         },
         select: {
           id: true,
           slug: true,
+          hexId: true,
           name: true,
           heroImage: true,
+          galleryImage: true,
+          featureVideoUrl: true,
           mediaContent: true,
           mediaUploads: {
             select: {
@@ -203,64 +261,44 @@ export default async function PromotersIndexPage({
       });
 
       const artists = artistProfiles
-        .map((artistProfile) => ({
-          profileId: artistProfile.id,
-          slug: artistProfile.slug,
-          name: artistProfile.name,
-          heroImage: artistProfile.heroImage,
-          entries: buildArtistMediaCollection(artistProfile.mediaContent, artistProfile.mediaUploads).entries
-        }))
+        .map((artistProfile) => {
+          const builtEntries = buildArtistMediaCollection(artistProfile.mediaContent, artistProfile.mediaUploads).entries;
+          const featureVideoEntry = artistProfile.featureVideoUrl
+            ? [
+                {
+                  id: `${artistProfile.hexId.slice(0, -2)}fe`,
+                  hexId: `${artistProfile.hexId.slice(0, -2)}fe`,
+                  title: `${artistProfile.name} feature video`,
+                  url: artistProfile.featureVideoUrl,
+                  notes: 'Feature video from the artist page builder.',
+                  mimeType: 'video/mp4',
+                  mediaType: 'video' as const,
+                  previewImageUrl: artistProfile.galleryImage ?? artistProfile.heroImage ?? null
+                }
+              ]
+            : [];
+
+          return {
+            profileId: artistProfile.id,
+            slug: artistProfile.slug,
+            name: artistProfile.name,
+            heroImage: artistProfile.heroImage,
+            entries: [...featureVideoEntry, ...builtEntries]
+          };
+        })
         .filter((artistProfile) => artistProfile.entries.length > 0);
 
       modulePanel = (
         <DiscoverCreatorPanel
-          badge="Show creator"
-          description="Build the next promoter-led show without leaving your discover lane."
+          badge="Show Creator"
+          description="Build the next promoter-led show without leaving your promoter lane."
           title="Promoter show creator"
         >
           <PromoterShowCreationTool
             artists={artists}
-            initialPromoterProfileId={ownedPromoter.id}
-            promoters={[{ profileId: ownedPromoter.id, name: ownedPromoter.name, slug: ownedPromoter.slug }]}
+            initialPromoterProfileId={myPromoterProfile.id}
+            promoters={[{ profileId: myPromoterProfile.id, name: myPromoterProfile.name, slug: myPromoterProfile.slug }]}
           />
-        </DiscoverCreatorPanel>
-      );
-    } else {
-      modulePanel = (
-        <DiscoverCreatorPanel
-          actionHref={session?.user ? '/dashboard' : '/login'}
-          actionLabel={session?.user ? 'Open dashboard' : 'Sign in as promoter'}
-          badge="Show creator"
-          description="Promoter show creation unlocks once you are signed into a promoter-owned profile."
-          title="Promoter show creator"
-        >
-          <div className="discover-creator-grid">
-            <div className="discover-creator-column">
-              <h3>Recent promoted nights</h3>
-              {promoterShows.length ? (
-                <div className="grid grid-2">
-                  {promoterShows.slice(0, 4).map((show) => (
-                    <ShowCard key={show.id} show={show} />
-                  ))}
-                </div>
-              ) : (
-                <div className="empty">No promoter-led nights are listed yet.</div>
-              )}
-            </div>
-
-            <div className="discover-creator-column">
-              <h3>Promoters to watch</h3>
-              <div className="discover-simple-list">
-                {promoters.slice(0, 5).map((promoter) => (
-                  <Link className="discover-simple-link" href={`/promoters/${promoter.slug}`} key={promoter.id}>
-                    <strong>{promoter.name}</strong>
-                    <span>{[promoter.city, promoter.stateRegion ?? promoter.country].filter(Boolean).join(', ') || 'Location building'}</span>
-                    <span>{promoter.hypeCount} hype</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
         </DiscoverCreatorPanel>
       );
     }
@@ -271,8 +309,8 @@ export default async function PromotersIndexPage({
       activeModule={activeModule}
       badge="PROMOTERS"
       currentHref="/promoters"
-      discoverPanel={discoverPanel}
       description="Promoter discover keeps the focus on show momentum, room pressure, and the tools that move concepts into booked nights."
+      discoverPanel={discoverPanel}
       modulePanel={modulePanel}
       moduleSubheader={<RoleModuleSubheader activeModule={activeModule} currentHref="/promoters" role="promoters" />}
       profiles={promoters}

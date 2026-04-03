@@ -4,7 +4,8 @@ import { db, withDbRetry } from '@/lib/db';
 import { createHexId } from '@/lib/hex-id';
 import { canManageOwnedResource } from '@/lib/permissions';
 
-const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_AUDIO_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_VIDEO_FILE_SIZE_BYTES = 16 * 1024 * 1024;
 
 function deriveTitleFromFileName(value: string) {
   const trimmed = value.trim();
@@ -37,15 +38,26 @@ export async function POST(request: Request) {
     }
 
     if (!(file instanceof File)) {
-      return NextResponse.json({ error: 'Choose an audio file to upload.' }, { status: 400 });
+      return NextResponse.json({ error: 'Choose an audio or video file to upload.' }, { status: 400 });
     }
 
-    if (!file.type.startsWith('audio/')) {
-      return NextResponse.json({ error: 'Only audio files can be uploaded.' }, { status: 400 });
+    if (!file.type.startsWith('audio/') && !file.type.startsWith('video/')) {
+      return NextResponse.json({ error: 'Only audio and video files can be uploaded.' }, { status: 400 });
     }
 
-    if (file.size > MAX_FILE_SIZE_BYTES) {
-      return NextResponse.json({ error: 'Audio uploads are limited to 10MB.' }, { status: 400 });
+    const maxFileSizeBytes = file.type.startsWith('video/')
+      ? MAX_VIDEO_FILE_SIZE_BYTES
+      : MAX_AUDIO_FILE_SIZE_BYTES;
+
+    if (file.size > maxFileSizeBytes) {
+      return NextResponse.json(
+        {
+          error: file.type.startsWith('video/')
+            ? 'Video uploads are limited to 16MB.'
+            : 'Audio uploads are limited to 10MB.'
+        },
+        { status: 400 }
+      );
     }
 
     const profile = await withDbRetry(() =>
@@ -120,6 +132,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('Artist media upload failed', error);
-    return NextResponse.json({ error: 'Could not upload this track.' }, { status: 500 });
+    return NextResponse.json({ error: 'Could not upload this media item.' }, { status: 500 });
   }
 }

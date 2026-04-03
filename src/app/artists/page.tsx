@@ -1,22 +1,18 @@
-import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
 import {
   DiscoverCreatorPanel,
-  DiscoverRecommendationPanel,
+  DiscoverEventsPanel,
+  DiscoverMyPagePanel,
   DiscoverStatsPanel
 } from '@/components/DiscoverModulePanels';
+import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
 import { ProfileDirectoryPage } from '@/components/ProfileDirectoryPage';
 import { RoleModuleSubheader } from '@/components/RoleModuleSubheader';
-import {
-  getTopMarketLabels,
-  resolveDiscoverModule
-} from '@/lib/discover-modules';
-import { getDirectoryProfiles } from '@/lib/public-data';
+import { resolveDiscoverModule } from '@/lib/discover-modules';
+import { getProfileDesignStyleVars } from '@/lib/profile-design';
 import { detectRequestLocation } from '@/lib/request-location';
-import { getTransparencySnapshot } from '@/lib/transparency';
-import { ShowCard } from '@/components/ShowCard';
+import { getDirectoryProfiles } from '@/lib/public-data';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,36 +34,7 @@ export default async function ArtistsIndexPage({
   const activeModule = resolveDiscoverModule('artists', resolvedSearchParams.module);
   const artists = await getDirectoryProfiles('ARTIST');
 
-  const [transparencySnapshot, artistShows, topVenues, viewerLocation, venues] = await Promise.all([
-    getTransparencySnapshot(),
-    db.show.findMany({
-      where: {
-        status: { not: 'CANCELED' },
-        headlinerProfile: {
-          is: { type: 'ARTIST' }
-        }
-      },
-      include: {
-        venueProfile: true,
-        headlinerProfile: true
-      },
-      orderBy: [{ startsAt: 'asc' }, { hypeCount: 'desc' }],
-      take: 16
-    }),
-    db.profile.findMany({
-      where: { type: 'VENUE' },
-      orderBy: [{ verified: 'desc' }, { hypeCount: 'desc' }, { name: 'asc' }],
-      take: 5,
-      select: {
-        id: true,
-        slug: true,
-        name: true,
-        city: true,
-        stateRegion: true,
-        country: true,
-        hypeCount: true
-      }
-    }),
+  const [viewerLocation, venues, artistShows, myArtistProfile] = await Promise.all([
     detectRequestLocation(),
     db.profile.findMany({
       where: {
@@ -89,12 +56,76 @@ export default async function ArtistsIndexPage({
         latitude: true,
         longitude: true
       }
-    })
+    }),
+    db.show.findMany({
+      where: {
+        status: { not: 'CANCELED' },
+        headlinerProfile: {
+          is: { type: 'ARTIST' }
+        }
+      },
+      include: {
+        venueProfile: true,
+        headlinerProfile: true,
+        promoterProfile: true
+      },
+      orderBy: [{ startsAt: 'asc' }, { hypeCount: 'desc' }],
+      take: 18
+    }),
+    session?.user?.id
+      ? db.profile.findFirst({
+          where: {
+            ownerId: session.user.id,
+            type: 'ARTIST'
+          },
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            headline: true,
+            bio: true,
+            city: true,
+            stateRegion: true,
+            country: true,
+            hexId: true,
+            hypeCount: true,
+            verified: true,
+            genres: true,
+            themePreset: true,
+            themeAccentTone: true,
+            themeBackdropTone: true,
+            themeFontPreset: true
+          }
+        })
+      : Promise.resolve(null)
   ]);
 
-  const upcomingArtistShows = artistShows.filter((show) => show.status === 'LIVE' || show.startsAt >= new Date()).slice(0, 4);
-  const topMarkets = getTopMarketLabels(artists);
-  const totalArtistHype = artists.reduce((sum, artist) => sum + artist.hypeCount, 0);
+  const myArtistShows = myArtistProfile
+    ? await db.show.findMany({
+        where: {
+          headlinerProfileId: myArtistProfile.id,
+          status: { not: 'CANCELED' }
+        },
+        include: {
+          venueProfile: true,
+          headlinerProfile: true,
+          promoterProfile: true
+        },
+        orderBy: [{ startsAt: 'asc' }, { hypeCount: 'desc' }],
+        take: 16
+      })
+    : [];
+
+  const now = new Date();
+  const liveOrUpcomingArtistShows = myArtistShows.filter((show) => show.status === 'LIVE' || show.startsAt >= now);
+  const pageStyle = myArtistProfile
+    ? getProfileDesignStyleVars(myArtistProfile.themePreset, {
+        accentTone: myArtistProfile.themeAccentTone,
+        backdropTone: myArtistProfile.themeBackdropTone,
+        fontPreset: myArtistProfile.themeFontPreset
+      })
+    : undefined;
+
   const globeRouteStops = artistShows
     .filter((show) => show.venueProfile?.latitude != null && show.venueProfile.longitude != null)
     .map((show) => ({
@@ -110,108 +141,85 @@ export default async function ArtistsIndexPage({
       latitude: show.venueProfile?.latitude ?? null,
       longitude: show.venueProfile?.longitude ?? null,
       startsAtLabel: formatShowDate(show.startsAt),
-      timing:
-        show.status === 'LIVE'
-          ? ('live' as const)
-          : show.startsAt >= new Date()
-            ? ('upcoming' as const)
-            : ('past' as const)
+      timing: show.status === 'LIVE' ? ('live' as const) : ('upcoming' as const)
     }));
+
   const discoverPanel = (
     <NetworkEarthGlobe
-      description="Start at the detected ZIP for this request, highlight nearby venues, then zoom out to browse artist routes and active rooms."
-      emptyRouteLabel="No artist routes are mapped yet."
-      routeLabel="Artist route"
+      description="Browse artist-led dates on the map, starting near the detected request ZIP and then zooming back out into larger tour lanes."
+      emptyRouteLabel="No artist tour routes are mapped yet."
+      routeLabel="Tour path"
       routeStops={globeRouteStops}
-      title="Earth globe for nearby venues and artist routes"
+      title="Earth globe for artist tour routes"
       venues={venues}
       viewerLocation={viewerLocation}
     />
   );
 
-  const modulePanel =
-    activeModule === 'stats' ? (
-      <DiscoverStatsPanel
-        badge="Stats"
-        description="A snapshot of what the artist network looks like right now across profiles, shows, and uploaded media."
-        highlights={topMarkets}
-        stats={[
-          { label: 'Artists', value: artists.length },
-          { label: 'Verified', value: artists.filter((artist) => artist.verified).length },
-          { label: 'Live + upcoming shows', value: artistShows.filter((show) => show.status === 'LIVE' || show.status === 'SCHEDULED').length },
-          { label: 'Artist hype', value: totalArtistHype },
-          { label: 'Songs uploaded', value: transparencySnapshot.counters.totalSongsUploaded }
-        ]}
-        title="Artist network stats"
-      />
-    ) : activeModule === 'recommendation-engine' ? (
-      <DiscoverRecommendationPanel
-        badge="Recommendation engine"
-        description="Use the strongest artist markets and current show pressure to decide where to advertise, book, and grow next."
-        opportunities={[
-          {
-            title: 'Lead with the hottest market',
-            summary: `${topMarkets[0] ?? 'Your hometown cluster'} is carrying the strongest current artist density.`,
-            detail: 'Run your next awareness push where artist supply and fan attention are already compounding.'
-          },
-          {
-            title: 'Turn uploads into booking proof',
-            summary: `${transparencySnapshot.counters.totalSongsUploaded} artist and promoter uploads are already feeding discovery across the network.`,
-            detail: 'Use your strongest playable track and updated banner look as the opening creative for new rooms.'
-          },
-          {
-            title: 'Tie growth to live dates',
-            summary: `${artistShows.filter((show) => show.status === 'LIVE' || show.status === 'SCHEDULED').length} artist-led shows are visible in the current queue.`,
-            detail: 'When you have a date, point promotion at that market first and let the tour narrative do the rest.'
-          }
-        ]}
-        title="Artist recommendation engine"
-      />
-    ) : (
-      <DiscoverCreatorPanel
-        actionHref={session?.user ? '/dashboard' : '/login'}
-        actionLabel={session?.user ? 'Open artist dashboard' : 'Sign in as artist'}
-        badge="Tour creator"
-        description="Shape your next route by watching where shows are already landing and which venues are pulling the most heat."
-        title="Build the next artist route"
-      >
-        <div className="discover-creator-grid">
-          <div className="discover-creator-column">
-            <h3>Upcoming artist pressure</h3>
-            {upcomingArtistShows.length ? (
-              <div className="grid grid-2">
-                {upcomingArtistShows.map((show) => (
-                  <ShowCard key={show.id} show={show} />
-                ))}
-              </div>
-            ) : (
-              <div className="empty">No artist-led dates are queued yet.</div>
-            )}
-          </div>
+  const lockedPanel = (
+    <DiscoverCreatorPanel
+      actionHref={session?.user ? '/register/artist' : '/login'}
+      actionLabel={session?.user ? 'Create artist profile' : 'Sign in as artist'}
+      badge="Artist access"
+      description="Sign in with an artist account to preview your page, open stats, and manage your event lane."
+      title="Artist tools"
+    >
+      <div className="empty">Your artist modules unlock once you are signed into an artist-owned account.</div>
+    </DiscoverCreatorPanel>
+  );
 
-          <div className="discover-creator-column">
-            <h3>Venues to watch</h3>
-            <div className="discover-simple-list">
-              {topVenues.map((venue) => (
-                <Link className="discover-simple-link" href={`/venues/${venue.slug}`} key={venue.id}>
-                  <strong>{venue.name}</strong>
-                  <span>{[venue.city, venue.stateRegion ?? venue.country].filter(Boolean).join(', ') || 'Location building'}</span>
-                  <span>{venue.hypeCount} hype</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-      </DiscoverCreatorPanel>
-    );
+  const modulePanel = !myArtistProfile ? (
+    lockedPanel
+  ) : activeModule === 'my-page' ? (
+    <DiscoverMyPagePanel
+      description="Preview the public artist page listeners and bookers see when they open your profile."
+      editHref={`/dashboard?profile=${myArtistProfile.id}&edit=menu`}
+      headline={myArtistProfile.headline || 'Shape the live look, media, and event presence for your artist page.'}
+      metaLine={
+        [myArtistProfile.city, myArtistProfile.stateRegion ?? myArtistProfile.country].filter(Boolean).join(', ') ||
+        `My ID ${myArtistProfile.hexId}`
+      }
+      name={myArtistProfile.name}
+      previewStyle={pageStyle}
+      previewTabs={['About', 'Media', 'Tour', 'Merch']}
+      publicHref={`/artists/${myArtistProfile.slug}`}
+      roleLabel="Artist"
+      summary={myArtistProfile.bio || `My ID ${myArtistProfile.hexId}`}
+      tags={myArtistProfile.genres}
+      title="My artist page"
+    />
+  ) : activeModule === 'stats' ? (
+    <DiscoverStatsPanel
+      badge="Stats"
+      description="A quick read on the artist page signals attached to your profile."
+      stats={[
+        { label: 'Fan hype', value: myArtistProfile.hypeCount },
+        { label: 'Total events', value: myArtistShows.length },
+        { label: 'Live + upcoming', value: liveOrUpcomingArtistShows.length },
+        { label: 'Verified', value: myArtistProfile.verified ? 'Yes' : 'No' },
+        { label: 'Artists in network', value: artists.length }
+      ]}
+      title="My artist stats"
+    />
+  ) : activeModule === 'events' ? (
+    <DiscoverEventsPanel
+      badge="Events"
+      description="Review the dates already tied to your artist page."
+      emptyLabel="No artist events are attached to your page yet."
+      shows={myArtistShows}
+      title="My artist events"
+    />
+  ) : (
+    lockedPanel
+  );
 
   return (
     <ProfileDirectoryPage
       activeModule={activeModule}
       badge="ARTISTS"
       currentHref="/artists"
-      discoverPanel={discoverPanel}
       description="Artist discover is where artists read the shape of the scene, follow where attention is building, and line up their next route."
+      discoverPanel={discoverPanel}
       modulePanel={modulePanel}
       moduleSubheader={<RoleModuleSubheader activeModule={activeModule} currentHref="/artists" role="artists" />}
       profiles={artists}
