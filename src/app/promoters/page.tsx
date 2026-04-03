@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { buildArtistMediaCollection } from '@/lib/media';
 import {
   DiscoverCreatorPanel,
+  DiscoverExplorerPanel,
   DiscoverEventsPanel,
   DiscoverMyPagePanel,
   DiscoverStatsPanel
@@ -12,6 +13,7 @@ import { ProfileDirectoryPage } from '@/components/ProfileDirectoryPage';
 import { PromoterShowCreationTool } from '@/components/PromoterShowCreationTool';
 import { RoleModuleSubheader } from '@/components/RoleModuleSubheader';
 import { resolveDiscoverModule } from '@/lib/discover-modules';
+import { getSharedDiscoverFeed } from '@/lib/discover-feed';
 import { getProfileDesignStyleVars } from '@/lib/profile-design';
 import { detectRequestLocation } from '@/lib/request-location';
 import { getDirectoryProfiles } from '@/lib/public-data';
@@ -34,7 +36,12 @@ export default async function PromotersIndexPage({
   const session = await auth();
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const activeModule = resolveDiscoverModule('promoters', resolvedSearchParams.module);
-  const promoters = await getDirectoryProfiles('DJ');
+  const [promoters, artistsForDiscover, venuesForDiscover] = await Promise.all([
+    getDirectoryProfiles('DJ'),
+    getDirectoryProfiles('ARTIST'),
+    getDirectoryProfiles('VENUE')
+  ]);
+  const discoverProfiles = [...artistsForDiscover, ...promoters, ...venuesForDiscover];
 
   const [viewerLocation, venues, promoterShows, myPromoterProfile] = await Promise.all([
     detectRequestLocation(),
@@ -133,6 +140,10 @@ export default async function PromotersIndexPage({
         fontPreset: myPromoterProfile.themeFontPreset
       })
     : undefined;
+  const discoverFeed = await getSharedDiscoverFeed(viewerLocation);
+  const viewerLocationLabel =
+    [viewerLocation?.city, viewerLocation?.stateRegion ?? viewerLocation?.country].filter(Boolean).join(', ') ||
+    'your area';
 
   const globeRouteStops = promoterShows
     .filter((show) => show.venueProfile?.latitude != null && show.venueProfile.longitude != null)
@@ -166,6 +177,18 @@ export default async function PromotersIndexPage({
       title="Earth globe for promoter routes"
       venues={venues}
       viewerLocation={viewerLocation}
+    />
+  );
+  const discoverModuleContent = (
+    <DiscoverExplorerPanel
+      currentHref="/promoters"
+      globePanel={discoverPanel}
+      hypedNearMe={discoverFeed.hypedNearMe}
+      mediaEntries={discoverFeed.mediaEntries}
+      newArtists={discoverFeed.newArtists}
+      newPromoters={discoverFeed.newPromoters}
+      profiles={discoverProfiles}
+      viewerLocationLabel={viewerLocationLabel}
     />
   );
 
@@ -310,10 +333,10 @@ export default async function PromotersIndexPage({
       badge="PROMOTERS"
       currentHref="/promoters"
       description="Promoter discover keeps the focus on show momentum, room pressure, and the tools that move concepts into booked nights."
-      discoverPanel={discoverPanel}
+      discoverModuleContent={discoverModuleContent}
       modulePanel={modulePanel}
       moduleSubheader={<RoleModuleSubheader activeModule={activeModule} currentHref="/promoters" role="promoters" />}
-      profiles={promoters}
+      profiles={discoverProfiles}
       title="Promoter discover"
     />
   );

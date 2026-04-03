@@ -12,6 +12,7 @@ export function ProfileDirectoryPage({
   currentHref,
   activeModule,
   discoverPanel,
+  discoverModuleContent,
   modulePanel,
   moduleSubheader
 }: {
@@ -22,6 +23,7 @@ export function ProfileDirectoryPage({
   currentHref: string;
   activeModule: DiscoverModuleId;
   discoverPanel?: ReactNode;
+  discoverModuleContent?: ReactNode;
   modulePanel?: ReactNode;
   moduleSubheader?: ReactNode;
 }) {
@@ -58,37 +60,37 @@ export function ProfileDirectoryPage({
           </section>
         ) : null}
 
-        {isDiscoverModule ? (
-          <section className="section">
-            <div className="panel discover-module-panel">
-              <div className="discover-module-header">
-                <div>
-                  <div className="badge">Discover</div>
-                  <h2>Browse {title.replace(/ discover$/i, '')}</h2>
+        {isDiscoverModule
+          ? discoverModuleContent ?? (
+              <section className="section">
+                <div className="panel discover-module-panel">
+                  <div className="discover-module-header">
+                    <div>
+                      <div className="badge">Discover</div>
+                      <h2>Browse {title.replace(/ discover$/i, '')}</h2>
+                    </div>
+                    <p className="meta">
+                      Search the live directory, compare markets, and open the pages worth following next.
+                    </p>
+                  </div>
+
+                  {topMarkets.length ? (
+                    <div className="discover-market-strip" aria-label="Top markets">
+                      {topMarkets.map((market) => (
+                        <span className="discover-market-pill" key={market}>
+                          {market}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  <ProfileDirectoryBrowser currentHref={currentHref} profiles={profiles} />
                 </div>
-                <p className="meta">
-                  Search the live directory, compare markets, and open the pages worth following next.
-                </p>
-              </div>
 
-              {topMarkets.length ? (
-                <div className="discover-market-strip" aria-label="Top markets">
-                  {topMarkets.map((market) => (
-                    <span className="discover-market-pill" key={market}>
-                      {market}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-
-              <ProfileDirectoryBrowser currentHref={currentHref} profiles={profiles} />
-            </div>
-
-            {discoverPanel}
-          </section>
-        ) : (
-          modulePanel
-        )}
+                {discoverPanel}
+              </section>
+            )
+          : modulePanel}
       </main>
     </>
   );

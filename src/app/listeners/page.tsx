@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import {
   DiscoverCreatorPanel,
+  DiscoverExplorerPanel,
   DiscoverEventsPanel,
   DiscoverMyPagePanel,
   DiscoverStatsPanel
@@ -10,6 +11,7 @@ import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
 import { ProfileDirectoryPage } from '@/components/ProfileDirectoryPage';
 import { RoleModuleSubheader } from '@/components/RoleModuleSubheader';
 import { resolveDiscoverModule } from '@/lib/discover-modules';
+import { getSharedDiscoverFeed } from '@/lib/discover-feed';
 import { getProfileDesignStyleVars } from '@/lib/profile-design';
 import { detectRequestLocation } from '@/lib/request-location';
 import { getDirectoryProfiles } from '@/lib/public-data';
@@ -32,7 +34,12 @@ export default async function ListenersIndexPage({
   const session = await auth();
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const activeModule = resolveDiscoverModule('fans', resolvedSearchParams.module);
-  const listeners = await getDirectoryProfiles('LISTENER');
+  const [artists, promoters, venuesForBrowse] = await Promise.all([
+    getDirectoryProfiles('ARTIST'),
+    getDirectoryProfiles('DJ'),
+    getDirectoryProfiles('VENUE')
+  ]);
+  const discoverProfiles = [...artists, ...promoters, ...venuesForBrowse];
 
   const [
     viewerLocation,
@@ -178,6 +185,10 @@ export default async function ListenersIndexPage({
         fontPreset: myFanProfile.themeFontPreset
       })
     : undefined;
+  const discoverFeed = await getSharedDiscoverFeed(viewerLocation);
+  const viewerLocationLabel =
+    [viewerLocation?.city, viewerLocation?.stateRegion ?? viewerLocation?.country].filter(Boolean).join(', ') ||
+    'your area';
 
   const discoverPanel = (
     <NetworkEarthGlobe
@@ -188,6 +199,18 @@ export default async function ListenersIndexPage({
       title="Earth globe for nearby venues and active show routes"
       venues={venues}
       viewerLocation={viewerLocation}
+    />
+  );
+  const discoverModuleContent = (
+    <DiscoverExplorerPanel
+      currentHref="/fans"
+      globePanel={discoverPanel}
+      hypedNearMe={discoverFeed.hypedNearMe}
+      mediaEntries={discoverFeed.mediaEntries}
+      newArtists={discoverFeed.newArtists}
+      newPromoters={discoverFeed.newPromoters}
+      profiles={discoverProfiles}
+      viewerLocationLabel={viewerLocationLabel}
     />
   );
 
@@ -251,10 +274,10 @@ export default async function ListenersIndexPage({
       badge="FANS"
       currentHref="/fans"
       description="Fan discover keeps the focus on nearby rooms, the next events worth watching, and the signals that turn hype into action."
-      discoverPanel={discoverPanel}
+      discoverModuleContent={discoverModuleContent}
       modulePanel={modulePanel}
       moduleSubheader={<RoleModuleSubheader activeModule={activeModule} currentHref="/fans" role="fans" />}
-      profiles={listeners}
+      profiles={discoverProfiles}
       title="Fan discover"
     />
   );

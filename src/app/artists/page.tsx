@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import {
   DiscoverCreatorPanel,
+  DiscoverExplorerPanel,
   DiscoverEventsPanel,
   DiscoverMyPagePanel,
   DiscoverStatsPanel
@@ -10,6 +11,7 @@ import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
 import { ProfileDirectoryPage } from '@/components/ProfileDirectoryPage';
 import { RoleModuleSubheader } from '@/components/RoleModuleSubheader';
 import { resolveDiscoverModule } from '@/lib/discover-modules';
+import { getSharedDiscoverFeed } from '@/lib/discover-feed';
 import { getProfileDesignStyleVars } from '@/lib/profile-design';
 import { detectRequestLocation } from '@/lib/request-location';
 import { getDirectoryProfiles } from '@/lib/public-data';
@@ -32,7 +34,12 @@ export default async function ArtistsIndexPage({
   const session = await auth();
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const activeModule = resolveDiscoverModule('artists', resolvedSearchParams.module);
-  const artists = await getDirectoryProfiles('ARTIST');
+  const [artists, promotersForDiscover, venuesForDiscover] = await Promise.all([
+    getDirectoryProfiles('ARTIST'),
+    getDirectoryProfiles('DJ'),
+    getDirectoryProfiles('VENUE')
+  ]);
+  const discoverProfiles = [...artists, ...promotersForDiscover, ...venuesForDiscover];
 
   const [viewerLocation, venues, artistShows, myArtistProfile] = await Promise.all([
     detectRequestLocation(),
@@ -125,6 +132,10 @@ export default async function ArtistsIndexPage({
         fontPreset: myArtistProfile.themeFontPreset
       })
     : undefined;
+  const discoverFeed = await getSharedDiscoverFeed(viewerLocation);
+  const viewerLocationLabel =
+    [viewerLocation?.city, viewerLocation?.stateRegion ?? viewerLocation?.country].filter(Boolean).join(', ') ||
+    'your area';
 
   const globeRouteStops = artistShows
     .filter((show) => show.venueProfile?.latitude != null && show.venueProfile.longitude != null)
@@ -153,6 +164,18 @@ export default async function ArtistsIndexPage({
       title="Earth globe for artist tour routes"
       venues={venues}
       viewerLocation={viewerLocation}
+    />
+  );
+  const discoverModuleContent = (
+    <DiscoverExplorerPanel
+      currentHref="/artists"
+      globePanel={discoverPanel}
+      hypedNearMe={discoverFeed.hypedNearMe}
+      mediaEntries={discoverFeed.mediaEntries}
+      newArtists={discoverFeed.newArtists}
+      newPromoters={discoverFeed.newPromoters}
+      profiles={discoverProfiles}
+      viewerLocationLabel={viewerLocationLabel}
     />
   );
 
@@ -219,10 +242,10 @@ export default async function ArtistsIndexPage({
       badge="ARTISTS"
       currentHref="/artists"
       description="Artist discover is where artists read the shape of the scene, follow where attention is building, and line up their next route."
-      discoverPanel={discoverPanel}
+      discoverModuleContent={discoverModuleContent}
       modulePanel={modulePanel}
       moduleSubheader={<RoleModuleSubheader activeModule={activeModule} currentHref="/artists" role="artists" />}
-      profiles={artists}
+      profiles={discoverProfiles}
       title="Artist discover"
     />
   );

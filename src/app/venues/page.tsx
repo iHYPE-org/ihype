@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import {
   DiscoverCreatorPanel,
+  DiscoverExplorerPanel,
   DiscoverMyPagePanel,
   DiscoverStatsPanel
 } from '@/components/DiscoverModulePanels';
@@ -10,6 +11,7 @@ import { ProfileDirectoryPage } from '@/components/ProfileDirectoryPage';
 import { VenueEventScheduler, type BookedAct } from '@/components/VenueEventScheduler';
 import { RoleModuleSubheader } from '@/components/RoleModuleSubheader';
 import { resolveDiscoverModule } from '@/lib/discover-modules';
+import { getSharedDiscoverFeed } from '@/lib/discover-feed';
 import { getProfileDesignStyleVars } from '@/lib/profile-design';
 import { detectRequestLocation } from '@/lib/request-location';
 import { getDirectoryProfiles } from '@/lib/public-data';
@@ -35,7 +37,12 @@ export default async function VenuesIndexPage({
   const activeModule = resolveDiscoverModule('venues', resolvedSearchParams.module);
   const preferredArtistId =
     typeof resolvedSearchParams.artist === 'string' ? resolvedSearchParams.artist : undefined;
-  const venues = await getDirectoryProfiles('VENUE');
+  const [venues, artistsForDiscover, promotersForDiscover] = await Promise.all([
+    getDirectoryProfiles('VENUE'),
+    getDirectoryProfiles('ARTIST'),
+    getDirectoryProfiles('DJ')
+  ]);
+  const discoverProfiles = [...artistsForDiscover, ...promotersForDiscover, ...venues];
 
   const [viewerLocation, mappedVenues, venueShows, myVenueProfile] = await Promise.all([
     detectRequestLocation(),
@@ -290,6 +297,10 @@ export default async function VenuesIndexPage({
         fontPreset: myVenueProfile.themeFontPreset
       })
     : undefined;
+  const discoverFeed = await getSharedDiscoverFeed(viewerLocation);
+  const viewerLocationLabel =
+    [viewerLocation?.city, viewerLocation?.stateRegion ?? viewerLocation?.country].filter(Boolean).join(', ') ||
+    'your area';
 
   const globeRouteStops = venueShows
     .filter((show) => show.venueProfile?.latitude != null && show.venueProfile.longitude != null)
@@ -323,6 +334,18 @@ export default async function VenuesIndexPage({
       title="Earth globe for venue event routes"
       venues={mappedVenues}
       viewerLocation={viewerLocation}
+    />
+  );
+  const discoverModuleContent = (
+    <DiscoverExplorerPanel
+      currentHref="/venues"
+      globePanel={discoverPanel}
+      hypedNearMe={discoverFeed.hypedNearMe}
+      mediaEntries={discoverFeed.mediaEntries}
+      newArtists={discoverFeed.newArtists}
+      newPromoters={discoverFeed.newPromoters}
+      profiles={discoverProfiles}
+      viewerLocationLabel={viewerLocationLabel}
     />
   );
 
@@ -401,10 +424,10 @@ export default async function VenuesIndexPage({
       badge="VENUES"
       currentHref="/venues"
       description="Venue discover keeps the focus on room performance, booking demand, and the nights that deserve a bigger push."
-      discoverPanel={discoverPanel}
+      discoverModuleContent={discoverModuleContent}
       modulePanel={modulePanel}
       moduleSubheader={<RoleModuleSubheader activeModule={activeModule} currentHref="/venues" role="venues" />}
-      profiles={venues}
+      profiles={discoverProfiles}
       title="Venue discover"
     />
   );

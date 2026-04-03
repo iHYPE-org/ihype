@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode
 } from 'react';
+import { FanPlaylistManager } from '@/components/FanPlaylistManager';
 
 export type MediaTrack = {
   id: string;
@@ -341,6 +342,7 @@ export function HeaderMediaPlayer() {
     volume,
     canGoBack,
     canGoForward,
+    playTrack,
     togglePlayback,
     playNext,
     playPrevious,
@@ -408,6 +410,8 @@ export function HeaderMediaPlayer() {
           />
         </label>
       </div>
+
+      <FanPlaylistManager currentTrack={currentTrack} playTrack={playTrack} />
     </div>
   );
 }

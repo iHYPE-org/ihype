@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import type { CSSProperties, ReactNode } from 'react';
+import { ProfileDirectoryBrowser, type DirectoryBrowserProfile, type DirectoryMediaSearchEntry } from '@/components/ProfileDirectoryBrowser';
+import { ProfileCard } from '@/components/ProfileCard';
 import { ShowCard } from '@/components/ShowCard';
+import type { DiscoverSpotlightProfile } from '@/lib/discover-feed';
 import type { VenueBookingScopeGroup } from '@/lib/venue-booking';
 
 type DiscoverShow = Parameters<typeof ShowCard>[0]['show'];
@@ -155,6 +158,125 @@ export function DiscoverEventsPanel({
         <div className="empty">{emptyLabel}</div>
       )}
     </DiscoverModuleShell>
+  );
+}
+
+export function DiscoverExplorerPanel({
+  currentHref,
+  profiles,
+  mediaEntries,
+  viewerLocationLabel,
+  globePanel,
+  hypedNearMe,
+  newArtists,
+  newPromoters
+}: {
+  currentHref: string;
+  profiles: DirectoryBrowserProfile[];
+  mediaEntries: DirectoryMediaSearchEntry[];
+  viewerLocationLabel: string;
+  globePanel?: ReactNode;
+  hypedNearMe: DiscoverSpotlightProfile[];
+  newArtists: DiscoverSpotlightProfile[];
+  newPromoters: DiscoverSpotlightProfile[];
+}) {
+  return (
+    <section className="section discover-explorer-stack">
+      <div className="panel discover-module-panel">
+        <div className="discover-module-header">
+          <div>
+            <div className="badge">Discover</div>
+            <h2>Scene search and nearby momentum</h2>
+          </div>
+          <p className="meta">
+            Search by song, artist, promoter, venue, and location while tracking what is heating up closest to {viewerLocationLabel}.
+          </p>
+        </div>
+
+        <div className="discover-spotlight-grid">
+          <section className="discover-spotlight-column">
+            <div className="discover-spotlight-head">
+              <strong>What&apos;s hyped near me</strong>
+              <span className="meta">Trending artists with the strongest local and regional pull.</span>
+            </div>
+            <div className="discover-spotlight-list">
+              {hypedNearMe.length ? (
+                hypedNearMe.map((profile) => (
+                  <article className="discover-spotlight-card" key={`hyped-${profile.id}`}>
+                    <div className="discover-spotlight-topline">
+                      <span className="badge">{profile.scopeLabel}</span>
+                      <span className="meta">{profile.hypeCount} hype</span>
+                    </div>
+                    <ProfileCard profile={profile} />
+                  </article>
+                ))
+              ) : (
+                <div className="empty">No nearby hype signals are available yet.</div>
+              )}
+            </div>
+          </section>
+
+          <section className="discover-spotlight-column">
+            <div className="discover-spotlight-head">
+              <strong>New artists</strong>
+              <span className="meta">Fresh local artist profiles worth hearing early.</span>
+            </div>
+            <div className="discover-spotlight-list">
+              {newArtists.length ? (
+                newArtists.map((profile) => (
+                  <article className="discover-spotlight-card" key={`new-artist-${profile.id}`}>
+                    <div className="discover-spotlight-topline">
+                      <span className="badge">{profile.scopeLabel}</span>
+                      <span className="meta">New since {profile.createdAtLabel}</span>
+                    </div>
+                    <ProfileCard profile={profile} />
+                  </article>
+                ))
+              ) : (
+                <div className="empty">No new local artists are showing up yet.</div>
+              )}
+            </div>
+          </section>
+
+          <section className="discover-spotlight-column">
+            <div className="discover-spotlight-head">
+              <strong>New promoters</strong>
+              <span className="meta">Promoters opening new rooms and local/regional nights.</span>
+            </div>
+            <div className="discover-spotlight-list">
+              {newPromoters.length ? (
+                newPromoters.map((profile) => (
+                  <article className="discover-spotlight-card" key={`new-promoter-${profile.id}`}>
+                    <div className="discover-spotlight-topline">
+                      <span className="badge">{profile.scopeLabel}</span>
+                      <span className="meta">New since {profile.createdAtLabel}</span>
+                    </div>
+                    <ProfileCard profile={profile} />
+                  </article>
+                ))
+              ) : (
+                <div className="empty">No new promoters are in the nearby lane yet.</div>
+              )}
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <div className="panel discover-module-panel">
+        <div className="discover-module-header">
+          <div>
+            <div className="badge">Search</div>
+            <h2>Search by song, artist, promoter, venue, or location</h2>
+          </div>
+          <p className="meta">
+            Use the shared browser below to search music and pages, then jump straight into the profile or play songs in the dock.
+          </p>
+        </div>
+        <ProfileDirectoryBrowser currentHref={currentHref} mediaEntries={mediaEntries} profiles={profiles} />
+      </div>
+
+      {globePanel}
+    </section>
   );
 }
 
