@@ -11,7 +11,7 @@ import bcrypt from 'bcryptjs';
 import { buildArtistMediaCollection } from '../src/lib/media';
 import { isProductionSeedingAllowed } from '../src/lib/runtime-flags';
 import { createSerializedTicketId } from '../src/lib/tickets';
-import { calculateTicketOrderPayouts, PROMOTER_POOL_PERCENT } from '../src/lib/ticketing';
+import { calculateTicketOrderPayouts, DEFAULT_PROMOTER_AFFILIATE_PERCENT } from '../src/lib/ticketing';
 
 const prisma = new PrismaClient();
 const profileHexIds = {
@@ -971,7 +971,7 @@ async function main() {
       ticketCapacity: 260,
       venuePayoutPercent: 50,
       artistPayoutPercent: 45,
-      promoterPayoutPercent: PROMOTER_POOL_PERCENT,
+      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
       tags: ['live', 'techno', 'warehouse'],
       ticketsSoldCount: 184,
       hypeCount: 54
@@ -994,7 +994,7 @@ async function main() {
       ticketCapacity: 260,
       venuePayoutPercent: 50,
       artistPayoutPercent: 45,
-      promoterPayoutPercent: PROMOTER_POOL_PERCENT,
+      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
       tags: ['live', 'techno', 'warehouse'],
       ticketsSoldCount: 184,
       hypeCount: 54
@@ -1017,7 +1017,7 @@ async function main() {
       ticketCapacity: 180,
       venuePayoutPercent: 42,
       artistPayoutPercent: 53,
-      promoterPayoutPercent: PROMOTER_POOL_PERCENT,
+      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
       tags: ['scheduled', 'indie', 'rooftop'],
       ticketsSoldCount: 126,
       hypeCount: 37
@@ -1037,7 +1037,7 @@ async function main() {
       ticketCapacity: 180,
       venuePayoutPercent: 42,
       artistPayoutPercent: 53,
-      promoterPayoutPercent: PROMOTER_POOL_PERCENT,
+      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
       tags: ['scheduled', 'indie', 'rooftop'],
       ticketsSoldCount: 126,
       hypeCount: 37
@@ -1060,7 +1060,7 @@ async function main() {
       ticketCapacity: 400,
       venuePayoutPercent: 48,
       artistPayoutPercent: 47,
-      promoterPayoutPercent: PROMOTER_POOL_PERCENT,
+      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
       tags: ['live', 'chicago', 'house'],
       ticketsSoldCount: 342,
       hypeCount: 61
@@ -1080,7 +1080,7 @@ async function main() {
       ticketCapacity: 400,
       venuePayoutPercent: 48,
       artistPayoutPercent: 47,
-      promoterPayoutPercent: PROMOTER_POOL_PERCENT,
+      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
       tags: ['live', 'chicago', 'house'],
       ticketsSoldCount: 342,
       hypeCount: 61
@@ -1103,7 +1103,7 @@ async function main() {
       ticketCapacity: 150,
       venuePayoutPercent: 55,
       artistPayoutPercent: 40,
-      promoterPayoutPercent: PROMOTER_POOL_PERCENT,
+      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
       tags: ['scheduled', 'midwest', 'regional'],
       ticketsSoldCount: 98,
       hypeCount: 27
@@ -1123,7 +1123,7 @@ async function main() {
       ticketCapacity: 150,
       venuePayoutPercent: 55,
       artistPayoutPercent: 40,
-      promoterPayoutPercent: PROMOTER_POOL_PERCENT,
+      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
       tags: ['scheduled', 'midwest', 'regional'],
       ticketsSoldCount: 98,
       hypeCount: 27
@@ -1147,7 +1147,7 @@ async function main() {
       ticketCapacity: 240,
       venuePayoutPercent: 50,
       artistPayoutPercent: 45,
-      promoterPayoutPercent: PROMOTER_POOL_PERCENT,
+      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
       tags: ['archive', 'late-night'],
       ticketsSoldCount: 211,
       hypeCount: 19
@@ -1168,7 +1168,7 @@ async function main() {
       ticketCapacity: 240,
       venuePayoutPercent: 50,
       artistPayoutPercent: 45,
-      promoterPayoutPercent: PROMOTER_POOL_PERCENT,
+      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
       tags: ['archive', 'late-night'],
       ticketsSoldCount: 211,
       hypeCount: 19
@@ -1191,7 +1191,7 @@ async function main() {
       ticketCapacity: 190,
       venuePayoutPercent: 44,
       artistPayoutPercent: 51,
-      promoterPayoutPercent: PROMOTER_POOL_PERCENT,
+      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
       tags: ['scheduled', 'austin', 'indie-dance'],
       ticketsSoldCount: 132,
       hypeCount: 31
@@ -1211,7 +1211,7 @@ async function main() {
       ticketCapacity: 190,
       venuePayoutPercent: 44,
       artistPayoutPercent: 51,
-      promoterPayoutPercent: PROMOTER_POOL_PERCENT,
+      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
       tags: ['scheduled', 'austin', 'indie-dance'],
       ticketsSoldCount: 132,
       hypeCount: 31
@@ -1235,7 +1235,7 @@ async function main() {
       ticketCapacity: 220,
       venuePayoutPercent: 46,
       artistPayoutPercent: 49,
-      promoterPayoutPercent: PROMOTER_POOL_PERCENT,
+      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
       tags: ['archive', 'seattle', 'breakbeat'],
       ticketsSoldCount: 159,
       hypeCount: 29
@@ -1256,7 +1256,7 @@ async function main() {
       ticketCapacity: 220,
       venuePayoutPercent: 46,
       artistPayoutPercent: 49,
-      promoterPayoutPercent: PROMOTER_POOL_PERCENT,
+      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
       tags: ['archive', 'seattle', 'breakbeat'],
       ticketsSoldCount: 159,
       hypeCount: 29

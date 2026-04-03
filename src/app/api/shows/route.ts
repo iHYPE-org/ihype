@@ -5,7 +5,7 @@ import { db } from '@/lib/db';
 import { sortShowsForFeed } from '@/lib/integrity';
 import { canManageOwnedResource, isAdminSession } from '@/lib/permissions';
 import { showProductionPlanSchema } from '@/lib/show-composer';
-import { PROMOTER_POOL_PERCENT, validateTicketSplit } from '@/lib/ticketing';
+import { DEFAULT_PROMOTER_AFFILIATE_PERCENT, validateTicketSplit } from '@/lib/ticketing';
 import { slugify } from '@/lib/utils';
 
 const schema = z.object({
@@ -18,10 +18,13 @@ const schema = z.object({
   headlinerProfileId: z.string().cuid().optional(),
   promoterProfileId: z.string().cuid().optional(),
   isTicketed: z.boolean().default(false),
+  ticketingOpensAt: z.string().datetime().optional(),
+  bookingLegalNotes: z.string().optional(),
   ticketPriceCents: z.coerce.number().int().nonnegative().optional(),
   ticketCapacity: z.coerce.number().int().positive().optional(),
   venuePayoutPercent: z.coerce.number().int().min(0).max(95).optional(),
   artistPayoutPercent: z.coerce.number().int().min(0).max(95).optional(),
+  promoterPayoutPercent: z.coerce.number().int().min(0).max(10).optional(),
   tags: z.array(z.string()).default([]),
   productionPlan: showProductionPlanSchema.optional()
 });
@@ -104,11 +107,14 @@ export async function POST(request: Request) {
         );
       }
 
+      const promoterPayoutPercent =
+        body.promoterPayoutPercent ?? DEFAULT_PROMOTER_AFFILIATE_PERCENT;
+
       try {
         validateTicketSplit({
           venuePayoutPercent: body.venuePayoutPercent,
           artistPayoutPercent: body.artistPayoutPercent,
-          promoterPayoutPercent: PROMOTER_POOL_PERCENT
+          promoterPayoutPercent
         });
       } catch (error) {
         return NextResponse.json(
@@ -133,12 +139,14 @@ export async function POST(request: Request) {
         headlinerProfileId: body.headlinerProfileId,
         promoterProfileId: body.promoterProfileId,
         tags: body.tags,
+        ticketingOpensAt: body.isTicketed && body.ticketingOpensAt ? new Date(body.ticketingOpensAt) : null,
+        bookingLegalNotes: body.bookingLegalNotes,
         isTicketed: body.isTicketed,
         ticketPriceCents: body.isTicketed ? body.ticketPriceCents : 0,
         ticketCapacity: body.isTicketed ? body.ticketCapacity : null,
         venuePayoutPercent: body.isTicketed ? body.venuePayoutPercent : null,
         artistPayoutPercent: body.isTicketed ? body.artistPayoutPercent : null,
-        promoterPayoutPercent: PROMOTER_POOL_PERCENT,
+        promoterPayoutPercent: body.isTicketed ? body.promoterPayoutPercent ?? DEFAULT_PROMOTER_AFFILIATE_PERCENT : DEFAULT_PROMOTER_AFFILIATE_PERCENT,
         productionPlan: body.productionPlan,
         status: body.status
       }

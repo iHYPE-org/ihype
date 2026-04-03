@@ -1,8 +1,15 @@
 import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server';
+import { AccountsPayableCategory, Role, TicketOrderStatus } from '@prisma/client';
 import { z } from 'zod';
+import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { calculateTicketOrderPayouts } from '@/lib/ticketing';
+import { sendIssuedTicketEmail } from '@/lib/mailer';
+import { detectLocationFromHeaders } from '@/lib/request-location';
+import {
+  calculateTicketOrderFinancials,
+  formatCurrencyFromCents
+} from '@/lib/ticketing';
 import {
   buildTicketQrCodeDataUrl,
   buildTicketVerificationUrl,
@@ -11,33 +18,187 @@ import {
 } from '@/lib/tickets';
 
 const schema = z.object({
-  buyerName: z.string().min(2),
-  buyerEmail: z.string().email(),
-  quantity: z.coerce.number().int().min(1).max(8)
+  quantity: z.coerce.number().int().min(1).max(8),
+  affiliatePromoterProfileId: z.string().cuid().optional()
 });
+
+function shouldCaptureTicketsNow(show: { status: string; ticketingOpensAt: Date | null }) {
+  const now = Date.now();
+  return show.status === 'LIVE' || Boolean(show.ticketingOpensAt && show.ticketingOpensAt.getTime() <= now);
+}
+
+function buildAccountsPayableEntries({
+  ticketOrderId,
+  showId,
+  venueProfileId,
+  headlinerProfileId,
+  affiliatePromoterProfileId,
+  financials
+}: {
+  ticketOrderId: string;
+  showId: string;
+  venueProfileId: string | null;
+  headlinerProfileId: string | null;
+  affiliatePromoterProfileId: string | null;
+  financials: ReturnType<typeof calculateTicketOrderFinancials>;
+}) {
+  const entries: Array<{
+    ticketOrderId: string;
+    showId: string;
+    profileId: string | null;
+    category: AccountsPayableCategory;
+    amountCents: number;
+    payeeLabel: string;
+    note: string;
+  }> = [];
+
+  if (financials.localCents > 0) {
+    entries.push({
+      ticketOrderId,
+      showId,
+      profileId: null,
+      category: 'TAX_LOCAL',
+      amountCents: financials.localCents,
+      payeeLabel: 'Local tax payable',
+      note: 'Buyer location matched the local venue area.'
+    });
+  }
+
+  if (financials.stateCents > 0) {
+    entries.push({
+      ticketOrderId,
+      showId,
+      profileId: null,
+      category: 'TAX_STATE',
+      amountCents: financials.stateCents,
+      payeeLabel: 'State / province tax payable',
+      note: 'Buyer location matched the venue state / province.'
+    });
+  }
+
+  if (financials.countryCents > 0) {
+    entries.push({
+      ticketOrderId,
+      showId,
+      profileId: null,
+      category: 'TAX_COUNTRY',
+      amountCents: financials.countryCents,
+      payeeLabel: 'Country tax payable',
+      note: 'Buyer location matched the venue country.'
+    });
+  }
+
+  if (financials.internationalCents > 0) {
+    entries.push({
+      ticketOrderId,
+      showId,
+      profileId: null,
+      category: 'TAX_INTERNATIONAL',
+      amountCents: financials.internationalCents,
+      payeeLabel: 'International tax payable',
+      note: 'Buyer location is outside the venue country.'
+    });
+  }
+
+  if (financials.venuePayoutCents > 0 && venueProfileId) {
+    entries.push({
+      ticketOrderId,
+      showId,
+      profileId: venueProfileId,
+      category: 'VENUE_PAYOUT',
+      amountCents: financials.venuePayoutCents,
+      payeeLabel: 'Venue payout',
+      note: 'Venue ticket payout allocation.'
+    });
+  }
+
+  if (financials.artistPayoutCents > 0 && headlinerProfileId) {
+    entries.push({
+      ticketOrderId,
+      showId,
+      profileId: headlinerProfileId,
+      category: 'ARTIST_PAYOUT',
+      amountCents: financials.artistPayoutCents,
+      payeeLabel: 'Artist payout',
+      note: 'Artist ticket payout allocation.'
+    });
+  }
+
+  if (financials.promoterPayoutCents > 0) {
+    entries.push({
+      ticketOrderId,
+      showId,
+      profileId: affiliatePromoterProfileId,
+      category: 'PROMOTER_AFFILIATE',
+      amountCents: financials.promoterPayoutCents,
+      payeeLabel: affiliatePromoterProfileId ? 'Affiliate promoter payout' : 'Promoter affiliate pool',
+      note: affiliatePromoterProfileId
+        ? 'Affiliate promoter payout from linked sales.'
+        : 'Affiliate promoter payout pending assignment.'
+    });
+  }
+
+  return entries;
+}
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ showId: string }> }
 ) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Fan login required' }, { status: 401 });
+  }
+
   try {
     const { showId } = await params;
     const body = schema.parse(await request.json());
 
-    const show = await db.show.findUnique({
-      where: { id: showId },
-      include: {
-        venueProfile: true,
-        headlinerProfile: true,
-        promoterProfile: true
-      }
-    });
+    const [user, show] = await Promise.all([
+      db.user.findUnique({
+        where: { id: session.user.id },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          name: true,
+          role: true,
+          storedPaymentTokenRef: true,
+          storedPaymentTokenBrand: true,
+          storedPaymentTokenLast4: true
+        }
+      }),
+      db.show.findUnique({
+        where: { id: showId },
+        include: {
+          venueProfile: true,
+          headlinerProfile: true,
+          promoterProfile: true
+        }
+      })
+    ]);
+
+    if (!user || user.role !== Role.FAN) {
+      return NextResponse.json({ error: 'Only fan accounts can reserve or purchase tickets.' }, { status: 403 });
+    }
+
+    if (!user.storedPaymentTokenRef) {
+      return NextResponse.json(
+        { error: 'Add a stored payment token to your fan account before reserving tickets.' },
+        { status: 400 }
+      );
+    }
 
     if (!show) {
       return NextResponse.json({ error: 'Show not found' }, { status: 404 });
     }
 
-    if (!show.isTicketed || !show.ticketPriceCents || show.venuePayoutPercent === null || show.artistPayoutPercent === null) {
+    if (
+      !show.isTicketed ||
+      !show.ticketPriceCents ||
+      show.venuePayoutPercent === null ||
+      show.artistPayoutPercent === null
+    ) {
       return NextResponse.json({ error: 'This show is not configured for ticket sales' }, { status: 400 });
     }
 
@@ -49,43 +210,98 @@ export async function POST(
       return NextResponse.json({ error: 'Not enough tickets remain for this order' }, { status: 400 });
     }
 
-    const payouts = calculateTicketOrderPayouts({
+    let affiliatePromoterProfile = null;
+    if (body.affiliatePromoterProfileId) {
+      affiliatePromoterProfile = await db.profile.findUnique({
+        where: { id: body.affiliatePromoterProfileId },
+        select: { id: true, type: true, name: true }
+      });
+
+      if (!affiliatePromoterProfile || affiliatePromoterProfile.type !== 'DJ') {
+        return NextResponse.json({ error: 'Affiliate promoter profile not found' }, { status: 400 });
+      }
+    }
+
+    const buyerLocation = await detectLocationFromHeaders(request.headers);
+    const financials = calculateTicketOrderFinancials({
       ticketPriceCents: show.ticketPriceCents,
       quantity: body.quantity,
       venuePayoutPercent: show.venuePayoutPercent,
       artistPayoutPercent: show.artistPayoutPercent,
-      promoterPayoutPercent: show.promoterPayoutPercent
+      promoterPayoutPercent: show.promoterPayoutPercent,
+      buyerLocation,
+      venueLocation: {
+        postalCode: show.venueProfile?.postalCode,
+        stateRegion: show.venueProfile?.stateRegion,
+        country: show.venueProfile?.country
+      }
     });
 
-    const { createdOrder, createdTickets } = await db.$transaction(async (tx) => {
+    const captureNow = shouldCaptureTicketsNow(show);
+
+    const result = await db.$transaction(async (tx) => {
       const createdOrder = await tx.ticketOrder.create({
         data: {
           confirmationCode: randomUUID().split('-')[0].toUpperCase(),
           showId: show.id,
-          buyerName: body.buyerName.trim(),
-          buyerEmail: body.buyerEmail.trim().toLowerCase(),
+          buyerUserId: user.id,
+          buyerName: user.name?.trim() || user.username,
+          buyerEmail: user.email.trim().toLowerCase(),
           quantity: body.quantity,
-          subtotalCents: payouts.subtotalCents,
-          venuePayoutCents: payouts.venuePayoutCents,
-          artistPayoutCents: payouts.artistPayoutCents,
-          promoterPayoutCents: payouts.promoterPayoutCents
+          status: captureNow ? TicketOrderStatus.CAPTURED : TicketOrderStatus.RESERVED,
+          paymentTokenRef: user.storedPaymentTokenRef,
+          affiliatePromoterProfileId: affiliatePromoterProfile?.id,
+          subtotalCents: financials.subtotalCents,
+          taxLocalCents: financials.localCents,
+          taxStateCents: financials.stateCents,
+          taxCountryCents: financials.countryCents,
+          taxInternationalCents: financials.internationalCents,
+          totalTaxCents: financials.totalTaxCents,
+          totalChargeCents: financials.totalChargeCents,
+          venuePayoutCents: financials.venuePayoutCents,
+          artistPayoutCents: financials.artistPayoutCents,
+          promoterPayoutCents: financials.promoterPayoutCents,
+          locationCity: buyerLocation?.city,
+          locationStateRegion: buyerLocation?.stateRegion,
+          locationCountry: buyerLocation?.country,
+          locationPostalCode: buyerLocation?.postalCode,
+          chargedAt: captureNow ? new Date() : null
         }
       });
 
-      const createdTickets = await Promise.all(
-        Array.from({ length: body.quantity }, (_, index) =>
-          tx.ticket.create({
-            data: {
-              serializedId: createSerializedTicketId(),
-              ticketOrderId: createdOrder.id,
-              showId: show.id,
-              venueProfileId: show.venueProfileId,
-              holderName: body.buyerName.trim(),
-              holderEmail: body.buyerEmail.trim().toLowerCase()
-            }
-          })
-        )
-      );
+      const createdTickets = captureNow
+        ? await Promise.all(
+            Array.from({ length: body.quantity }, () =>
+              tx.ticket.create({
+                data: {
+                  serializedId: createSerializedTicketId(),
+                  ticketOrderId: createdOrder.id,
+                  showId: show.id,
+                  venueProfileId: show.venueProfileId,
+                  holderName: createdOrder.buyerName,
+                  holderEmail: createdOrder.buyerEmail
+                }
+              })
+            )
+          )
+        : [];
+
+      if (captureNow) {
+        const accountsPayableEntries = buildAccountsPayableEntries({
+          ticketOrderId: createdOrder.id,
+          showId: show.id,
+          venueProfileId: show.venueProfileId,
+          headlinerProfileId: show.headlinerProfileId,
+          affiliatePromoterProfileId: affiliatePromoterProfile?.id ?? null,
+          financials
+        });
+
+        if (accountsPayableEntries.length) {
+          await tx.accountsPayableEntry.createMany({
+            data: accountsPayableEntries
+          });
+        }
+      }
 
       await tx.show.update({
         where: { id: show.id },
@@ -96,11 +312,14 @@ export async function POST(
         }
       });
 
-      return { createdOrder, createdTickets };
+      return {
+        createdOrder,
+        createdTickets
+      };
     });
 
     const tickets = await Promise.all(
-      createdTickets.map(async (ticket, index) => ({
+      result.createdTickets.map(async (ticket, index) => ({
         id: ticket.id,
         serializedId: ticket.serializedId,
         status: formatTicketStatus(ticket.status),
@@ -110,13 +329,27 @@ export async function POST(
       }))
     );
 
+    if (captureNow && tickets.length) {
+      await sendIssuedTicketEmail({
+        email: result.createdOrder.buyerEmail,
+        name: result.createdOrder.buyerName,
+        showTitle: show.title,
+        venueName: show.venueProfile?.name,
+        eventOpensAtLabel: show.ticketingOpensAt?.toLocaleString('en-US') ?? null,
+        totalChargeLabel: formatCurrencyFromCents(financials.totalChargeCents),
+        tickets
+      });
+    }
+
     return NextResponse.json(
       {
-        order: createdOrder,
+        order: result.createdOrder,
         tickets,
-        payouts,
-        message:
-          `Tickets confirmed for ${show.title}. Each ticket now has a serialized token and verification QR code. No platform commission was taken from this order.`
+        financials,
+        captureMode: captureNow ? 'captured' : 'reserved',
+        message: captureNow
+          ? `Tickets charged to your stored token and issued for ${show.title}. Each ticket now has a serialized single-use QR code.`
+          : `Your ticket request is reserved for ${show.title}. Your stored token will only be charged when the venue officially opens the event.`
       },
       { status: 201 }
     );

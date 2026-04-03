@@ -2,12 +2,25 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { PROMOTER_POOL_PERCENT, REMAINING_PAYOUT_PERCENT, formatPercent } from '@/lib/ticketing';
+import {
+  DEFAULT_PROMOTER_AFFILIATE_PERCENT,
+  MAX_PROMOTER_AFFILIATE_PERCENT,
+  calculateTicketOrderFinancials,
+  formatCurrencyFromCents,
+  formatPercent,
+  getRemainingPayoutPercent
+} from '@/lib/ticketing';
 
-type BookedAct = {
+export type BookedAct = {
   id: string;
   name: string;
   type: 'ARTIST' | 'DJ';
+  contactInfo?: string | null;
+  hometown?: string | null;
+  city?: string | null;
+  stateRegion?: string | null;
+  country?: string | null;
+  verified?: boolean;
   requestCount?: number;
   availabilitySummary?: string;
   nextShowAtLabel?: string | null;
@@ -26,9 +39,15 @@ type PromoterOption = {
 type ScheduledEvent = {
   id: string;
   title: string;
+  slug: string;
   startsAtLabel: string;
   status: string;
   headlinerName: string | null;
+  isTicketed: boolean;
+  ticketingOpenedAtLabel?: string | null;
+  ticketPriceCents?: number | null;
+  ticketCapacity?: number | null;
+  ticketsSoldCount?: number;
 };
 
 type VenueEventSchedulerProps = {
@@ -38,7 +57,32 @@ type VenueEventSchedulerProps = {
   preferredActId?: string;
   recommendedActs?: BookedAct[];
   scheduledEvents?: ScheduledEvent[];
+  venueLocation?: {
+    postalCode?: string | null;
+    stateRegion?: string | null;
+    country?: string | null;
+  } | null;
 };
+
+function buildBookingLegalSummary(act: BookedAct | null) {
+  if (!act) {
+    return 'Select an artist to load the legal booking summary.';
+  }
+
+  const lines = [
+    `Act: ${act.name}`,
+    `Type: ${act.type === 'DJ' ? 'Promoter / DJ' : 'Artist'}`,
+    act.contactInfo ? `Contact: ${act.contactInfo}` : null,
+    act.hometown || act.city || act.stateRegion || act.country
+      ? `Home market: ${[act.hometown, act.city, act.stateRegion, act.country].filter(Boolean).join(', ')}`
+      : null,
+    act.verified ? 'Verification: Verified profile ownership' : 'Verification: Pending or not verified',
+    act.availabilitySummary ? `Availability: ${act.availabilitySummary}` : null,
+    act.rationale ? `Demand signal: ${act.rationale}` : null
+  ].filter(Boolean);
+
+  return lines.join('\n');
+}
 
 export function VenueEventScheduler({
   venueProfileId,
@@ -46,7 +90,8 @@ export function VenueEventScheduler({
   promoterOptions,
   preferredActId,
   recommendedActs = [],
-  scheduledEvents = []
+  scheduledEvents = [],
+  venueLocation
 }: VenueEventSchedulerProps) {
   const router = useRouter();
   const [title, setTitle] = useState('');
@@ -59,26 +104,41 @@ export function VenueEventScheduler({
   const [endsAt, setEndsAt] = useState('');
   const [ticketPrice, setTicketPrice] = useState('25');
   const [ticketCapacity, setTicketCapacity] = useState('200');
+  const [promoterPayoutPercent, setPromoterPayoutPercent] = useState(String(DEFAULT_PROMOTER_AFFILIATE_PERCENT));
   const [venuePayoutPercent, setVenuePayoutPercent] = useState('50');
+  const [ticketingOpensAt, setTicketingOpensAt] = useState('');
+  const [bookingLegalNotes, setBookingLegalNotes] = useState('');
   const [tags, setTags] = useState('ticketed, booked');
   const [pending, setPending] = useState(false);
+  const [openingEventId, setOpeningEventId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
-  const venueShare = Number(venuePayoutPercent || 0);
-  const artistShare = REMAINING_PAYOUT_PERCENT - venueShare;
-  const hasBookedActs = bookedActs.length > 0;
   const selectedAct = useMemo(
     () => bookedActs.find((act) => act.id === headlinerProfileId) ?? null,
     [bookedActs, headlinerProfileId]
   );
+  const promoterAffiliateShare = Number(promoterPayoutPercent || 0);
+  const remainingForVenueAndArtist = getRemainingPayoutPercent(promoterAffiliateShare);
+  const venueShare = Number(venuePayoutPercent || 0);
+  const artistShare = remainingForVenueAndArtist - venueShare;
+  const potentialGrossCents = Math.max(0, Math.round(Number(ticketPrice || 0) * 100) * Math.max(1, Number(ticketCapacity || 0)));
+  const preview = useMemo(
+    () =>
+      calculateTicketOrderFinancials({
+        ticketPriceCents: Math.max(100, Math.round(Number(ticketPrice || 0) * 100)),
+        quantity: 1,
+        venuePayoutPercent: Math.max(0, venueShare),
+        artistPayoutPercent: Math.max(0, artistShare),
+        promoterPayoutPercent: Math.max(0, promoterAffiliateShare),
+        buyerLocation: venueLocation,
+        venueLocation
+      }),
+    [artistShare, promoterAffiliateShare, ticketPrice, venueLocation, venueShare]
+  );
+  const legalBookingPreview = bookingLegalNotes.trim() || buildBookingLegalSummary(selectedAct);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
-    if (!hasBookedActs) {
-      setMessage('Mark an artist request as booked before scheduling a ticketed event.');
-      return;
-    }
 
     if (!startsAt) {
       setMessage('Choose a start time for the event.');
@@ -86,7 +146,7 @@ export function VenueEventScheduler({
     }
 
     if (artistShare < 0) {
-      setMessage(`Venue share must leave ${formatPercent(REMAINING_PAYOUT_PERCENT)} combined for the venue and artist.`);
+      setMessage(`Venue share must leave ${formatPercent(remainingForVenueAndArtist)} combined for the venue and artist.`);
       return;
     }
 
@@ -105,10 +165,13 @@ export function VenueEventScheduler({
         headlinerProfileId,
         promoterProfileId: promoterProfileId || undefined,
         isTicketed: true,
+        ticketingOpensAt: ticketingOpensAt ? new Date(ticketingOpensAt).toISOString() : undefined,
+        bookingLegalNotes: legalBookingPreview,
         ticketPriceCents: Math.round(Number(ticketPrice || 0) * 100),
         ticketCapacity: Number(ticketCapacity || 0),
         venuePayoutPercent: venueShare,
         artistPayoutPercent: artistShare,
+        promoterPayoutPercent: promoterAffiliateShare,
         tags: tags
           .split(',')
           .map((tag) => tag.trim())
@@ -125,9 +188,12 @@ export function VenueEventScheduler({
       setEndsAt('');
       setTicketPrice('25');
       setTicketCapacity('200');
+      setPromoterPayoutPercent(String(DEFAULT_PROMOTER_AFFILIATE_PERCENT));
       setVenuePayoutPercent('50');
+      setTicketingOpensAt('');
+      setBookingLegalNotes('');
       setTags('ticketed, booked');
-      setMessage(`Event scheduled. Tickets are live for ${data.title}.`);
+      setMessage(`Event scheduled. ${data.title} is now in the venue calendar.`);
       router.refresh();
     } else {
       setMessage(data.error ?? 'Could not schedule this event.');
@@ -136,21 +202,39 @@ export function VenueEventScheduler({
     setPending(false);
   }
 
+  async function handleOpenEvent(eventId: string) {
+    setOpeningEventId(eventId);
+    setMessage(null);
+
+    const response = await fetch(`/api/shows/${eventId}/ticketing/open`, {
+      method: 'POST'
+    });
+
+    const data = await response.json();
+    setOpeningEventId(null);
+
+    if (response.ok) {
+      setMessage(data.message ?? 'Event opened.');
+      router.refresh();
+      return;
+    }
+
+    setMessage(data.error ?? 'Could not open this event.');
+  }
+
   return (
     <div className="panel ticketing-panel">
       <div className="ticketing-panel-header">
         <div>
           <div className="badge">Event ticketing engine</div>
-          <h3>Schedule a ticketed event around artist availability</h3>
+          <h3>Create, price, and open new events</h3>
           <p className="kicker">
-            Ticket sales keep platform commission at 0%. Fan request signals and artist schedules help surface the best matches,
-            while the promoter pool stays fixed at {formatPercent(PROMOTER_POOL_PERCENT)} and the venue plus artist split the remaining{' '}
-            {formatPercent(REMAINING_PAYOUT_PERCENT)}.
+            Pick artists manually or from recommendation signals, lock the legal booking snapshot, set ticket splits, and only charge fan payment tokens when the venue officially opens the event.
           </p>
         </div>
       </div>
 
-      {hasBookedActs ? (
+      {bookedActs.length ? (
         <form className="form" onSubmit={handleSubmit}>
           <div className="grid grid-2">
             <label className="field">
@@ -223,6 +307,26 @@ export function VenueEventScheduler({
                         <span>{event.startsAtLabel}</span>
                         {event.headlinerName ? <span>{event.headlinerName}</span> : null}
                         <span>{event.status}</span>
+                        {event.isTicketed ? (
+                          <span>
+                            {event.ticketPriceCents ? formatCurrencyFromCents(event.ticketPriceCents) : 'Ticketed'}
+                            {event.ticketCapacity ? ` | ${event.ticketsSoldCount ?? 0}/${event.ticketCapacity}` : ''}
+                          </span>
+                        ) : null}
+                        <div className="ticketing-engine-slot-row">
+                          {event.ticketingOpenedAtLabel ? (
+                            <span className="ticketing-slot-pill">{event.ticketingOpenedAtLabel}</span>
+                          ) : (
+                            <button
+                              className="button small secondary"
+                              disabled={openingEventId === event.id || !event.isTicketed}
+                              onClick={() => handleOpenEvent(event.id)}
+                              type="button"
+                            >
+                              {openingEventId === event.id ? 'Opening...' : 'Open event'}
+                            </button>
+                          )}
+                        </div>
                       </article>
                     ))}
                   </div>
@@ -237,7 +341,7 @@ export function VenueEventScheduler({
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               rows={4}
-              placeholder="Describe the room, the lineup, and what the ticket includes."
+              placeholder="Describe the room, lineup, admission policy, and what the ticket includes."
             />
           </label>
 
@@ -286,7 +390,7 @@ export function VenueEventScheduler({
             </label>
 
             <label className="field">
-              <span>Capacity</span>
+              <span>Total potential tickets</span>
               <input
                 inputMode="numeric"
                 min="1"
@@ -299,9 +403,9 @@ export function VenueEventScheduler({
             </label>
 
             <label className="field">
-              <span>Promoter profile (optional)</span>
+              <span>Affiliate promoter (optional)</span>
               <select value={promoterProfileId} onChange={(event) => setPromoterProfileId(event.target.value)}>
-                <option value="">Unassigned promoter pool</option>
+                <option value="">Unassigned promoter affiliate</option>
                 {promoterOptions.map((promoter) => (
                   <option key={promoter.id} value={promoter.id}>
                     {promoter.name}
@@ -311,12 +415,12 @@ export function VenueEventScheduler({
             </label>
           </div>
 
-          <div className="grid grid-2">
+          <div className="grid grid-3">
             <label className="field">
               <span>Venue payout share (%)</span>
               <input
                 inputMode="numeric"
-                max={REMAINING_PAYOUT_PERCENT}
+                max={remainingForVenueAndArtist}
                 min="0"
                 step="1"
                 type="number"
@@ -326,23 +430,74 @@ export function VenueEventScheduler({
               />
             </label>
 
-            <div className="ticketing-split-preview">
-              <div className="meta">Split preview</div>
-              <div className="signal-grid compact">
-                <div className="signal-card">
-                  <strong>Venue</strong>
-                  <span>{formatPercent(Math.max(0, venueShare))}</span>
-                </div>
-                <div className="signal-card">
-                  <strong>Artist</strong>
-                  <span>{formatPercent(Math.max(0, artistShare))}</span>
-                </div>
-                <div className="signal-card">
-                  <strong>Promoter pool</strong>
-                  <span>{formatPercent(PROMOTER_POOL_PERCENT)}</span>
-                </div>
+            <label className="field">
+              <span>Affiliate promoter share (%)</span>
+              <input
+                inputMode="numeric"
+                max={MAX_PROMOTER_AFFILIATE_PERCENT}
+                min="0"
+                step="1"
+                type="number"
+                value={promoterPayoutPercent}
+                onChange={(event) => setPromoterPayoutPercent(event.target.value)}
+                required
+              />
+            </label>
+
+            <label className="field">
+              <span>Charge fan tokens when event opens</span>
+              <input
+                type="datetime-local"
+                value={ticketingOpensAt}
+                onChange={(event) => setTicketingOpensAt(event.target.value)}
+              />
+            </label>
+          </div>
+
+          <div className="ticketing-split-preview">
+            <div className="meta">Ticket breakdown</div>
+            <div className="signal-grid compact">
+              <div className="signal-card">
+                <strong>Potential gross</strong>
+                <span>{formatCurrencyFromCents(potentialGrossCents)}</span>
+              </div>
+              <div className="signal-card">
+                <strong>Venue / ticket</strong>
+                <span>{formatCurrencyFromCents(preview.venuePayoutCents)}</span>
+              </div>
+              <div className="signal-card">
+                <strong>Artist / ticket</strong>
+                <span>{formatCurrencyFromCents(preview.artistPayoutCents)}</span>
+              </div>
+              <div className="signal-card">
+                <strong>Affiliate / ticket</strong>
+                <span>{formatCurrencyFromCents(preview.promoterPayoutCents)}</span>
+              </div>
+              <div className="signal-card">
+                <strong>Tax / ticket</strong>
+                <span>{formatCurrencyFromCents(preview.totalTaxCents)}</span>
+              </div>
+              <div className="signal-card">
+                <strong>Total fan charge</strong>
+                <span>{formatCurrencyFromCents(preview.totalChargeCents)}</span>
               </div>
             </div>
+          </div>
+
+          <div className="grid grid-2">
+            <div className="empty">
+              <strong>Legal booking snapshot</strong>
+              <pre className="ticketing-legal-preview">{legalBookingPreview}</pre>
+            </div>
+            <label className="field">
+              <span>Booking notes override (optional)</span>
+              <textarea
+                rows={8}
+                value={bookingLegalNotes}
+                onChange={(event) => setBookingLegalNotes(event.target.value)}
+                placeholder="Add contract, rider, and legal booking notes for this event."
+              />
+            </label>
           </div>
 
           <label className="field">
@@ -350,21 +505,19 @@ export function VenueEventScheduler({
             <input value={tags} onChange={(event) => setTags(event.target.value)} placeholder="ticketed, chicago, house" />
           </label>
 
-          {selectedAct ? (
-            <div className="empty">
-              Scheduling with <strong>{selectedAct.name}</strong>. {selectedAct.availabilitySummary ?? 'Availability is open.'} Ticket revenue is split between the venue, the booked act, and the fixed promoter pool.
-            </div>
-          ) : null}
+          <div className="empty">
+            Fans reserve tickets with stored payment tokens. Charges are captured only when this event reaches the official open time, and each issued ticket is emailed as a single-use QR code. Resales must be venue-managed and reissued at face value.
+          </div>
 
           <div className="cta-row">
             <button className="button" disabled={pending} type="submit">
-              {pending ? 'Scheduling...' : 'Schedule event'}
+              {pending ? 'Scheduling...' : 'Create ticketed event'}
             </button>
             {message ? <span className="meta">{message}</span> : null}
           </div>
         </form>
       ) : (
-        <div className="empty">Fan request and booking signals will populate this event ticketing engine once artists start landing in the recommendation flow.</div>
+        <div className="empty">No artists are available to book yet. Once artists enter the recommendation lane or manual pool, this event creator will unlock.</div>
       )}
     </div>
   );

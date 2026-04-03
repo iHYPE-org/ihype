@@ -1,9 +1,10 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  calculateTicketOrderPayouts,
+  calculateTicketOrderFinancials,
   formatCurrencyFromCents,
   formatPercent
 } from '@/lib/ticketing';
@@ -20,6 +21,28 @@ type TicketSaleCardProps = {
   venueName: string;
   artistName: string;
   promoterName: string | null;
+  ticketingOpen: boolean;
+  ticketingOpensAtLabel?: string | null;
+  affiliatePromoterProfileId?: string | null;
+  affiliatePromoterName?: string | null;
+  currentFan?: {
+    name: string | null;
+    email: string;
+    hasStoredPaymentToken: boolean;
+    storedPaymentTokenBrand?: string | null;
+    storedPaymentTokenLast4?: string | null;
+  } | null;
+  viewerLocation?: {
+    city?: string | null;
+    stateRegion?: string | null;
+    country?: string | null;
+    postalCode?: string | null;
+  } | null;
+  venueLocation?: {
+    stateRegion?: string | null;
+    country?: string | null;
+    postalCode?: string | null;
+  } | null;
 };
 
 type IssuedTicket = {
@@ -42,11 +65,16 @@ export function TicketSaleCard({
   promoterPayoutPercent,
   venueName,
   artistName,
-  promoterName
+  promoterName,
+  ticketingOpen,
+  ticketingOpensAtLabel,
+  affiliatePromoterProfileId,
+  affiliatePromoterName,
+  currentFan,
+  viewerLocation,
+  venueLocation
 }: TicketSaleCardProps) {
   const router = useRouter();
-  const [buyerName, setBuyerName] = useState('');
-  const [buyerEmail, setBuyerEmail] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -54,39 +82,37 @@ export function TicketSaleCard({
 
   const remainingTickets = ticketCapacity === null ? null : Math.max(ticketCapacity - ticketsSoldCount, 0);
   const requestedQuantity = Math.max(1, Number(quantity || 1));
-  const quantityForPreview = remainingTickets === null ? requestedQuantity : Math.min(requestedQuantity, Math.max(remainingTickets, 1));
+  const quantityForPreview =
+    remainingTickets === null ? requestedQuantity : Math.min(requestedQuantity, Math.max(remainingTickets, 1));
 
   const preview = useMemo(
     () =>
-      calculateTicketOrderPayouts({
+      calculateTicketOrderFinancials({
         ticketPriceCents,
         quantity: quantityForPreview,
         venuePayoutPercent,
         artistPayoutPercent,
-        promoterPayoutPercent
+        promoterPayoutPercent,
+        buyerLocation: viewerLocation,
+        venueLocation
       }),
-    [artistPayoutPercent, promoterPayoutPercent, quantityForPreview, ticketPriceCents, venuePayoutPercent]
+    [
+      artistPayoutPercent,
+      promoterPayoutPercent,
+      quantityForPreview,
+      ticketPriceCents,
+      venueLocation,
+      venuePayoutPercent,
+      viewerLocation
+    ]
   );
 
-  const soldSummary = useMemo(
-    () =>
-      ticketsSoldCount > 0
-        ? calculateTicketOrderPayouts({
-            ticketPriceCents,
-            quantity: ticketsSoldCount,
-            venuePayoutPercent,
-            artistPayoutPercent,
-            promoterPayoutPercent
-          })
-        : {
-            subtotalCents: 0,
-            venuePayoutCents: 0,
-            artistPayoutCents: 0,
-            promoterPayoutCents: 0,
-            platformCommissionCents: 0
-          },
-    [artistPayoutPercent, promoterPayoutPercent, ticketPriceCents, ticketsSoldCount, venuePayoutPercent]
-  );
+  const fanPaymentLabel =
+    currentFan?.storedPaymentTokenBrand && currentFan?.storedPaymentTokenLast4
+      ? `${currentFan.storedPaymentTokenBrand} •••• ${currentFan.storedPaymentTokenLast4}`
+      : currentFan?.hasStoredPaymentToken
+        ? 'Stored payment token'
+        : null;
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -97,23 +123,20 @@ export function TicketSaleCard({
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        buyerName: buyerName.trim(),
-        buyerEmail: buyerEmail.trim(),
-        quantity: requestedQuantity
+        quantity: requestedQuantity,
+        affiliatePromoterProfileId: affiliatePromoterProfileId || undefined
       })
     });
 
     const data = await response.json();
 
     if (response.ok) {
-      setBuyerName('');
-      setBuyerEmail('');
       setQuantity('1');
       setIssuedTickets((data.tickets ?? []) as IssuedTicket[]);
-      setMessage(`Order ${data.order.confirmationCode} confirmed. ${data.message}`);
+      setMessage(data.message ?? (data.captureMode === 'captured' ? 'Tickets issued.' : 'Tickets reserved.'));
       router.refresh();
     } else {
-      setMessage(data.error ?? 'Could not complete the ticket order.');
+      setMessage(data.error ?? 'Could not complete the ticket request.');
     }
 
     setPending(false);
@@ -126,7 +149,8 @@ export function TicketSaleCard({
           <div className="badge">Ticket Sales</div>
           <h2>{title}</h2>
           <p className="kicker">
-            Secure ticket portal over SSL/TLS. Every ticket gets a serialized token and venue-verification QR code, with no platform commission taken from the split.
+            Reserved tickets are tied to fan payment tokens and route venue, artist, affiliate promoter, and tax amounts into a
+            clean accounts-payable trail.
           </p>
         </div>
         <div className="ticket-price-badge">
@@ -138,15 +162,15 @@ export function TicketSaleCard({
       <div className="grid grid-3">
         <div className="stat">
           <strong>{ticketsSoldCount}</strong>
-          Tickets sold
+          Reserved + sold
         </div>
         <div className="stat">
           <strong>{remainingTickets === null ? 'Open' : remainingTickets}</strong>
           Remaining
         </div>
         <div className="stat">
-          <strong>{formatCurrencyFromCents(ticketPriceCents * ticketsSoldCount)}</strong>
-          Gross ticket sales
+          <strong>{ticketingOpen ? 'Open now' : ticketingOpensAtLabel ?? 'Waiting for venue open'}</strong>
+          Charge state
         </div>
       </div>
 
@@ -154,34 +178,46 @@ export function TicketSaleCard({
         <div className="signal-card">
           <strong>{venueName}</strong>
           <span>{formatPercent(venuePayoutPercent)} share</span>
-          <span>{formatCurrencyFromCents(soldSummary.venuePayoutCents)} from sold tickets</span>
+          <span>{formatCurrencyFromCents(preview.venuePayoutCents)} for this order</span>
         </div>
         <div className="signal-card">
           <strong>{artistName}</strong>
           <span>{formatPercent(artistPayoutPercent)} share</span>
-          <span>{formatCurrencyFromCents(soldSummary.artistPayoutCents)} from sold tickets</span>
+          <span>{formatCurrencyFromCents(preview.artistPayoutCents)} for this order</span>
         </div>
         <div className="signal-card">
-          <strong>{promoterName ?? 'Promoter pool'}</strong>
-          <span>{formatPercent(promoterPayoutPercent)} fixed promoter share</span>
-          <span>{formatCurrencyFromCents(soldSummary.promoterPayoutCents)} from sold tickets</span>
+          <strong>{affiliatePromoterName ?? promoterName ?? 'Promoter affiliate pool'}</strong>
+          <span>{formatPercent(promoterPayoutPercent)} affiliate share</span>
+          <span>{formatCurrencyFromCents(preview.promoterPayoutCents)} for this order</span>
         </div>
       </div>
 
       {remainingTickets === 0 ? (
         <div className="empty">This ticket allocation is sold out.</div>
+      ) : !currentFan ? (
+        <div className="empty">
+          Sign in with a fan account to reserve tickets against your stored payment token.
+          <div className="cta-row">
+            <Link className="button small secondary" href="/login">
+              Sign in
+            </Link>
+          </div>
+        </div>
+      ) : !currentFan.hasStoredPaymentToken ? (
+        <div className="empty">
+          Your fan account needs a stored payment token before you can reserve this event.
+        </div>
       ) : (
         <form className="form" onSubmit={handleSubmit}>
           <div className="grid grid-2">
-            <label className="field">
-              <span>Your name</span>
-              <input value={buyerName} onChange={(event) => setBuyerName(event.target.value)} placeholder="Night Owl" required />
-            </label>
-
-            <label className="field">
-              <span>Email</span>
-              <input type="email" value={buyerEmail} onChange={(event) => setBuyerEmail(event.target.value)} placeholder="fan@ihype.org" required />
-            </label>
+            <div className="stat">
+              <strong>{currentFan.name || currentFan.email}</strong>
+              Fan account
+            </div>
+            <div className="stat">
+              <strong>{fanPaymentLabel ?? 'Stored token on file'}</strong>
+              Payment source
+            </div>
           </div>
 
           <div className="grid grid-2">
@@ -202,17 +238,32 @@ export function TicketSaleCard({
             <div className="ticketing-split-preview">
               <div className="meta">Order preview</div>
               <div className="ticketing-order-summary">
-                <div><span>Total</span><strong>{formatCurrencyFromCents(preview.subtotalCents)}</strong></div>
-                <div><span>{venueName}</span><strong>{formatCurrencyFromCents(preview.venuePayoutCents)}</strong></div>
-                <div><span>{artistName}</span><strong>{formatCurrencyFromCents(preview.artistPayoutCents)}</strong></div>
-                <div><span>{promoterName ?? 'Promoter pool'}</span><strong>{formatCurrencyFromCents(preview.promoterPayoutCents)}</strong></div>
+                <div><span>Subtotal</span><strong>{formatCurrencyFromCents(preview.subtotalCents)}</strong></div>
+                <div><span>Local tax</span><strong>{formatCurrencyFromCents(preview.localCents)}</strong></div>
+                <div><span>State / province tax</span><strong>{formatCurrencyFromCents(preview.stateCents)}</strong></div>
+                <div><span>Country tax</span><strong>{formatCurrencyFromCents(preview.countryCents)}</strong></div>
+                <div><span>International tax</span><strong>{formatCurrencyFromCents(preview.internationalCents)}</strong></div>
+                <div><span>Total tax</span><strong>{formatCurrencyFromCents(preview.totalTaxCents)}</strong></div>
+                <div><span>Total charge</span><strong>{formatCurrencyFromCents(preview.totalChargeCents)}</strong></div>
               </div>
             </div>
           </div>
 
+          <div className="empty">
+            {ticketingOpen
+              ? 'This event is officially open. Your stored payment token will be charged now and QR tickets will be emailed immediately.'
+              : `This event is not open yet. Your quantity will be reserved now, then charged to your stored token when the venue opens the event${ticketingOpensAtLabel ? ` (${ticketingOpensAtLabel})` : ''}.`}
+          </div>
+
           <div className="cta-row">
             <button className="button" disabled={pending} type="submit">
-              {pending ? 'Processing...' : 'Buy tickets'}
+              {pending
+                ? ticketingOpen
+                  ? 'Charging...'
+                  : 'Reserving...'
+                : ticketingOpen
+                  ? 'Charge stored token now'
+                  : 'Reserve tickets'}
             </button>
             {message ? <span className="meta">{message}</span> : null}
           </div>

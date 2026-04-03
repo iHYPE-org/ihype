@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { TicketVerificationCard } from '@/components/TicketVerificationCard';
+import { TicketReassignmentForm } from '@/components/TicketReassignmentForm';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
@@ -77,12 +78,24 @@ export default async function TicketPage({
                 Per-ticket value
               </div>
               <div className="stat">
+                <strong>{ticket.ticketOrder.status}</strong>
+                Order status
+              </div>
+              <div className="stat">
                 <strong>{ticket.scannedAt ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(ticket.scannedAt) : 'Not yet'}</strong>
                 Scan time
               </div>
               <div className="stat">
                 <strong>{ticket.show.venueProfile?.postalCode ?? 'Open'}</strong>
                 Venue ZIP
+              </div>
+              <div className="stat">
+                <strong>{formatCurrencyFromCents(ticket.ticketOrder.totalTaxCents)}</strong>
+                Total tax
+              </div>
+              <div className="stat">
+                <strong>{formatCurrencyFromCents(ticket.ticketOrder.totalChargeCents || ticket.ticketOrder.subtotalCents)}</strong>
+                Total charge
               </div>
             </div>
 
@@ -91,6 +104,16 @@ export default async function TicketPage({
             </p>
 
             <TicketVerificationCard canScan={canScan} serializedId={ticket.serializedId} status={status} />
+
+            {canScan ? (
+              <div className="request-history">
+                <h3>Venue reassignment</h3>
+                <TicketReassignmentForm
+                  faceValueCents={Math.round(ticket.ticketOrder.subtotalCents / ticket.ticketOrder.quantity)}
+                  serializedId={ticket.serializedId}
+                />
+              </div>
+            ) : null}
 
             <div className="cta-row">
               {ticket.show.venueProfile ? (

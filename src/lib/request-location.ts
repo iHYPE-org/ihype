@@ -132,10 +132,8 @@ async function lookupIpApiLocation(ipAddress: string) {
   }
 }
 
-export async function detectRequestLocation(): Promise<RequestLocation | null> {
-  const requestHeaders = await headers();
-
-  const edgeLocation: RequestLocation = {
+function buildEdgeLocation(requestHeaders: Headers): RequestLocation {
+  return {
     city: cleanValue(requestHeaders.get('x-vercel-ip-city') || requestHeaders.get('cf-ipcity')),
     stateRegion: cleanValue(requestHeaders.get('x-vercel-ip-country-region')),
     country: cleanValue(requestHeaders.get('x-vercel-ip-country') || requestHeaders.get('cf-ipcountry')),
@@ -144,6 +142,10 @@ export async function detectRequestLocation(): Promise<RequestLocation | null> {
     longitude: parseCoordinate(requestHeaders.get('x-vercel-ip-longitude')),
     source: 'edge-headers'
   };
+}
+
+export async function detectLocationFromHeaders(requestHeaders: Headers): Promise<RequestLocation | null> {
+  const edgeLocation = buildEdgeLocation(requestHeaders);
 
   const ipAddress = [
     requestHeaders.get('cf-connecting-ip'),
@@ -169,4 +171,9 @@ export async function detectRequestLocation(): Promise<RequestLocation | null> {
   }
 
   return hasLocationValue(edgeLocation) ? edgeLocation : null;
+}
+
+export async function detectRequestLocation(): Promise<RequestLocation | null> {
+  const requestHeaders = await headers();
+  return detectLocationFromHeaders(new Headers(requestHeaders));
 }

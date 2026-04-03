@@ -54,6 +54,28 @@ enum TicketStatus {
   VOID
 }
 
+enum TicketOrderStatus {
+  RESERVED
+  CAPTURED
+  VOID
+}
+
+enum AccountsPayableCategory {
+  TAX_LOCAL
+  TAX_STATE
+  TAX_COUNTRY
+  TAX_INTERNATIONAL
+  VENUE_PAYOUT
+  ARTIST_PAYOUT
+  PROMOTER_AFFILIATE
+}
+
+enum AccountsPayableStatus {
+  PENDING
+  RELEASED
+  VOID
+}
+
 model User {
   id                      String                   @id @default(cuid())
   name                    String?
@@ -64,6 +86,9 @@ model User {
   mfaSecret               String?
   mfaEnabledAt            DateTime?
   image                   String?
+  storedPaymentTokenRef   String?
+  storedPaymentTokenBrand String?
+  storedPaymentTokenLast4 String?
   role                    Role                     @default(FAN)
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
@@ -72,6 +97,7 @@ model User {
   sessions                Session[]
   profiles                Profile[]
   shows                   Show[]                   @relation("CreatedShows")
+  ticketOrders            TicketOrder[]            @relation("BuyerTicketOrders")
   hypeEvents              HypeEvent[]
   mediaListens            MediaListen[]
   showListens             ShowListen[]
@@ -79,6 +105,7 @@ model User {
   passwordResetCodes      PasswordResetCode[]
   venueConnectionRequests VenueConnectionRequest[]
   scannedTickets          Ticket[]                 @relation("TicketScans")
+  reassignedTickets       Ticket[]                 @relation("TicketReassignments")
 }
 
 model Profile {
@@ -142,6 +169,8 @@ model Profile {
   venueConnectionRequests       VenueConnectionRequest[]    @relation("VenueConnectionRequests")
   recommendedConnectionRequests VenueConnectionRequest[]    @relation("RecommendedProfileConnectionRequests")
   issuedTickets                 Ticket[]                    @relation("VenueIssuedTickets")
+  affiliateTicketOrders         TicketOrder[]               @relation("AffiliatePromoterTicketOrders")
+  accountsPayableEntries        AccountsPayableEntry[]
 }
 
 model ArtistMediaAsset {
@@ -162,80 +191,125 @@ model ArtistMediaAsset {
 }
 
 model Show {
-  id                    String        @id @default(cuid())
-  slug                  String        @unique
-  title                 String
-  description           String?
-  productionPlan        Json?
-  status                ShowStatus    @default(DRAFT)
-  startsAt              DateTime
-  endsAt                DateTime?
-  createdAt             DateTime      @default(now())
-  updatedAt             DateTime      @updatedAt
-  creatorId             String
-  creator               User          @relation("CreatedShows", fields: [creatorId], references: [id], onDelete: Cascade)
-  venueProfileId        String?
-  venueProfile          Profile?      @relation("VenueShows", fields: [venueProfileId], references: [id])
-  headlinerProfileId    String?
-  headlinerProfile      Profile?      @relation("HeadlinerShows", fields: [headlinerProfileId], references: [id])
-  promoterProfileId     String?
-  promoterProfile       Profile?      @relation("PromotedShows", fields: [promoterProfileId], references: [id])
-  streamProvider        String?
-  streamPlaybackId      String?
-  streamKeyMasked       String?
-  posterImage           String?
-  isTicketed            Boolean       @default(false)
-  ticketPriceCents      Int           @default(0)
-  ticketCapacity        Int?
-  venuePayoutPercent    Int?
-  artistPayoutPercent   Int?
-  promoterPayoutPercent Int           @default(5)
-  ticketsSoldCount      Int           @default(0)
-  hypeCount             Int           @default(0)
-  tags                  String[]
-  hypes                 HypeEvent[]
-  showListens           ShowListen[]
-  ticketOrders          TicketOrder[]
-  tickets               Ticket[]
+  id                     String                 @id @default(cuid())
+  slug                   String                 @unique
+  title                  String
+  description            String?
+  productionPlan         Json?
+  status                 ShowStatus             @default(DRAFT)
+  startsAt               DateTime
+  endsAt                 DateTime?
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+  creatorId              String
+  creator                User                   @relation("CreatedShows", fields: [creatorId], references: [id], onDelete: Cascade)
+  venueProfileId         String?
+  venueProfile           Profile?               @relation("VenueShows", fields: [venueProfileId], references: [id])
+  headlinerProfileId     String?
+  headlinerProfile       Profile?               @relation("HeadlinerShows", fields: [headlinerProfileId], references: [id])
+  promoterProfileId      String?
+  promoterProfile        Profile?               @relation("PromotedShows", fields: [promoterProfileId], references: [id])
+  streamProvider         String?
+  streamPlaybackId       String?
+  streamKeyMasked        String?
+  posterImage            String?
+  ticketingOpensAt       DateTime?
+  bookingLegalNotes      String?
+  isTicketed             Boolean                @default(false)
+  ticketPriceCents       Int                    @default(0)
+  ticketCapacity         Int?
+  venuePayoutPercent     Int?
+  artistPayoutPercent    Int?
+  promoterPayoutPercent  Int                    @default(5)
+  ticketsSoldCount       Int                    @default(0)
+  hypeCount              Int                    @default(0)
+  tags                   String[]
+  hypes                  HypeEvent[]
+  showListens            ShowListen[]
+  ticketOrders           TicketOrder[]
+  tickets                Ticket[]
+  accountsPayableEntries AccountsPayableEntry[]
 }
 
 model TicketOrder {
-  id                  String   @id @default(cuid())
-  confirmationCode    String   @unique
-  showId              String
-  buyerName           String
-  buyerEmail          String
-  quantity            Int
-  subtotalCents       Int
-  venuePayoutCents    Int
-  artistPayoutCents   Int
-  promoterPayoutCents Int
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  show                Show     @relation(fields: [showId], references: [id], onDelete: Cascade)
-  tickets             Ticket[]
+  id                         String                 @id @default(cuid())
+  confirmationCode           String                 @unique
+  showId                     String
+  buyerUserId                String?
+  buyerName                  String
+  buyerEmail                 String
+  quantity                   Int
+  status                     TicketOrderStatus      @default(RESERVED)
+  paymentTokenRef            String?
+  affiliatePromoterProfileId String?
+  subtotalCents              Int
+  taxLocalCents              Int                    @default(0)
+  taxStateCents              Int                    @default(0)
+  taxCountryCents            Int                    @default(0)
+  taxInternationalCents      Int                    @default(0)
+  totalTaxCents              Int                    @default(0)
+  totalChargeCents           Int                    @default(0)
+  venuePayoutCents           Int
+  artistPayoutCents          Int
+  promoterPayoutCents        Int
+  locationCity               String?
+  locationStateRegion        String?
+  locationCountry            String?
+  locationPostalCode         String?
+  chargedAt                  DateTime?
+  createdAt                  DateTime               @default(now())
+  updatedAt                  DateTime               @updatedAt
+  show                       Show                   @relation(fields: [showId], references: [id], onDelete: Cascade)
+  buyerUser                  User?                  @relation("BuyerTicketOrders", fields: [buyerUserId], references: [id], onDelete: SetNull)
+  affiliatePromoterProfile   Profile?               @relation("AffiliatePromoterTicketOrders", fields: [affiliatePromoterProfileId], references: [id], onDelete: SetNull)
+  tickets                    Ticket[]
+  accountsPayableEntries     AccountsPayableEntry[]
 }
 
 model Ticket {
-  id              String       @id @default(cuid())
-  serializedId    String       @unique
-  ticketOrderId   String
-  showId          String
-  venueProfileId  String?
-  holderName      String
-  holderEmail     String
-  status          TicketStatus @default(VALID)
-  scannedAt       DateTime?
-  scannedByUserId String?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  ticketOrder     TicketOrder  @relation(fields: [ticketOrderId], references: [id], onDelete: Cascade)
-  show            Show         @relation(fields: [showId], references: [id], onDelete: Cascade)
-  venueProfile    Profile?     @relation("VenueIssuedTickets", fields: [venueProfileId], references: [id], onDelete: SetNull)
-  scannedByUser   User?        @relation("TicketScans", fields: [scannedByUserId], references: [id], onDelete: SetNull)
+  id                 String       @id @default(cuid())
+  serializedId       String       @unique
+  ticketOrderId      String
+  showId             String
+  venueProfileId     String?
+  holderName         String
+  holderEmail        String
+  status             TicketStatus @default(VALID)
+  scannedAt          DateTime?
+  scannedByUserId    String?
+  reassignedAt       DateTime?
+  reassignedByUserId String?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  ticketOrder        TicketOrder  @relation(fields: [ticketOrderId], references: [id], onDelete: Cascade)
+  show               Show         @relation(fields: [showId], references: [id], onDelete: Cascade)
+  venueProfile       Profile?     @relation("VenueIssuedTickets", fields: [venueProfileId], references: [id], onDelete: SetNull)
+  scannedByUser      User?        @relation("TicketScans", fields: [scannedByUserId], references: [id], onDelete: SetNull)
+  reassignedByUser   User?        @relation("TicketReassignments", fields: [reassignedByUserId], references: [id], onDelete: SetNull)
 
   @@index([showId, status])
   @@index([venueProfileId, status])
+}
+
+model AccountsPayableEntry {
+  id            String                  @id @default(cuid())
+  ticketOrderId String
+  showId        String
+  profileId     String?
+  category      AccountsPayableCategory
+  status        AccountsPayableStatus   @default(PENDING)
+  amountCents   Int
+  payeeLabel    String
+  note          String?
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+  ticketOrder   TicketOrder             @relation(fields: [ticketOrderId], references: [id], onDelete: Cascade)
+  show          Show                    @relation(fields: [showId], references: [id], onDelete: Cascade)
+  profile       Profile?                @relation(fields: [profileId], references: [id], onDelete: SetNull)
+
+  @@index([ticketOrderId, category])
+  @@index([showId, category])
+  @@index([profileId, category])
 }
 
 model MediaListen {

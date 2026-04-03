@@ -6,14 +6,24 @@ import { TicketSaleCard } from '@/components/TicketSaleCard';
 import { db } from '@/lib/db';
 import { getShowVisibilitySignals } from '@/lib/integrity';
 import { isAdminSession } from '@/lib/permissions';
+import { detectRequestLocation } from '@/lib/request-location';
 import { parseShowProductionPlan } from '@/lib/show-composer';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { formatShowTime } from '@/lib/utils';
 import { ShowPlaybackTracker } from '@/components/ShowPlaybackTracker';
 
-export default async function ShowDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function ShowDetailPage({
+  params,
+  searchParams
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ affiliate?: string | string[] }>;
+}) {
   const session = await auth();
   const { slug } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const affiliateId =
+    typeof resolvedSearchParams.affiliate === 'string' ? resolvedSearchParams.affiliate : undefined;
   const show = await db.show.findUnique({
     where: { slug },
     include: {
@@ -34,6 +44,35 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ slu
   if (show.status === 'DRAFT' && !canPreviewDraft) {
     return notFound();
   }
+
+  const [viewerLocation, currentFan, affiliatePromoter] = await Promise.all([
+    detectRequestLocation(),
+    session?.user?.id
+      ? db.user.findUnique({
+          where: { id: session.user.id },
+          select: {
+            name: true,
+            email: true,
+            role: true,
+            storedPaymentTokenRef: true,
+            storedPaymentTokenBrand: true,
+            storedPaymentTokenLast4: true
+          }
+        })
+      : Promise.resolve(null),
+    affiliateId
+      ? db.profile.findFirst({
+          where: {
+            id: affiliateId,
+            type: 'DJ'
+          },
+          select: {
+            id: true,
+            name: true
+          }
+        })
+      : Promise.resolve(null)
+  ]);
 
   const visibility = getShowVisibilitySignals(show);
   const productionPlan = parseShowProductionPlan(show.productionPlan);
@@ -153,6 +192,10 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ slu
                     <th>Promoter pool</th>
                     <td>{show.promoterPayoutPercent}%</td>
                   </tr>
+                  <tr>
+                    <th>Event officially opens</th>
+                    <td>{show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt) : 'Venue-controlled'}</td>
+                  </tr>
                 </>
               ) : null}
               <tr>
@@ -174,6 +217,12 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ slu
               ))}
             </ul>
           </div>
+          {show.bookingLegalNotes ? (
+            <div className="explanation-block">
+              <h3>Legal booking snapshot</h3>
+              <p>{show.bookingLegalNotes}</p>
+            </div>
+          ) : null}
         </aside>
       </div>
 
@@ -301,17 +350,43 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ slu
       {show.isTicketed && show.venueProfile && show.headlinerProfile && show.venuePayoutPercent !== null && show.artistPayoutPercent !== null ? (
         <section className="section">
           <TicketSaleCard
+            affiliatePromoterName={affiliatePromoter?.name ?? null}
+            affiliatePromoterProfileId={affiliatePromoter?.id ?? null}
             artistName={show.headlinerProfile.name}
             artistPayoutPercent={show.artistPayoutPercent}
+            currentFan={
+              currentFan?.role === 'FAN'
+                ? {
+                    name: currentFan.name,
+                    email: currentFan.email,
+                    hasStoredPaymentToken: Boolean(currentFan.storedPaymentTokenRef),
+                    storedPaymentTokenBrand: currentFan.storedPaymentTokenBrand,
+                    storedPaymentTokenLast4: currentFan.storedPaymentTokenLast4
+                  }
+                : null
+            }
             promoterName={show.promoterProfile?.name ?? null}
             promoterPayoutPercent={show.promoterPayoutPercent}
             showId={show.id}
             ticketCapacity={show.ticketCapacity}
             ticketPriceCents={show.ticketPriceCents}
+            ticketingOpen={show.status === 'LIVE' || Boolean(show.ticketingOpensAt && show.ticketingOpensAt <= new Date())}
+            ticketingOpensAtLabel={show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt) : null}
             ticketsSoldCount={show.ticketsSoldCount}
             title={show.title}
             venueName={show.venueProfile.name}
+            venueLocation={{
+              postalCode: show.venueProfile.postalCode,
+              stateRegion: show.venueProfile.stateRegion,
+              country: show.venueProfile.country
+            }}
             venuePayoutPercent={show.venuePayoutPercent}
+            viewerLocation={{
+              city: viewerLocation?.city,
+              stateRegion: viewerLocation?.stateRegion,
+              country: viewerLocation?.country,
+              postalCode: viewerLocation?.postalCode
+            }}
           />
         </section>
       ) : null}
@@ -323,6 +398,8 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ slu
             <table className="table">
               <thead>
                 <tr>
+                  <th>Status</th>
+                  <th>Tax</th>
                   <th>Code</th>
                   <th>Buyer</th>
                   <th>Qty</th>
@@ -335,10 +412,12 @@ export default async function ShowDetailPage({ params }: { params: Promise<{ slu
               <tbody>
                 {show.ticketOrders.map((order) => (
                   <tr key={order.id}>
+                    <td>{order.status}</td>
+                    <td>{formatCurrencyFromCents(order.totalTaxCents)}</td>
                     <td>{order.confirmationCode}</td>
                     <td>{order.buyerName}</td>
                     <td>{order.quantity}</td>
-                    <td>{formatCurrencyFromCents(order.subtotalCents)}</td>
+                    <td>{formatCurrencyFromCents(order.totalChargeCents || order.subtotalCents)}</td>
                     <td>{formatCurrencyFromCents(order.venuePayoutCents)}</td>
                     <td>{formatCurrencyFromCents(order.artistPayoutCents)}</td>
                     <td>{formatCurrencyFromCents(order.promoterPayoutCents)}</td>
