@@ -46,6 +46,21 @@ type PasswordResetEmailInput = {
   expiresInMinutes: number;
 };
 
+type IssuedTicketEmailInput = {
+  email: string;
+  name?: string | null;
+  showTitle: string;
+  venueName?: string | null;
+  eventOpensAtLabel?: string | null;
+  totalChargeLabel: string;
+  tickets: Array<{
+    label: string;
+    serializedId: string;
+    verificationUrl: string;
+    qrCodeDataUrl?: string | null;
+  }>;
+};
+
 export async function sendPasswordResetPasscodeEmail({
   email,
   code,
@@ -92,23 +107,6 @@ export async function sendPasswordResetPasscodeEmail({
   return { mode: 'smtp' as const };
 }
 
-type TicketEmailTicket = {
-  label: string;
-  serializedId: string;
-  verificationUrl: string;
-  qrCodeDataUrl: string;
-};
-
-type TicketIssuedEmailInput = {
-  email: string;
-  name?: string | null;
-  showTitle: string;
-  venueName?: string | null;
-  eventOpensAtLabel?: string | null;
-  totalChargeLabel: string;
-  tickets: TicketEmailTicket[];
-};
-
 export async function sendIssuedTicketEmail({
   email,
   name,
@@ -117,10 +115,12 @@ export async function sendIssuedTicketEmail({
   eventOpensAtLabel,
   totalChargeLabel,
   tickets
-}: TicketIssuedEmailInput) {
+}: IssuedTicketEmailInput) {
   if (!isPasswordResetEmailConfigured()) {
     if (process.env.NODE_ENV !== 'production') {
-      console.info(`[ticket-email] ${email} -> ${showTitle} (${tickets.length} ticket${tickets.length === 1 ? '' : 's'})`);
+      console.info(
+        `[ticket-email] ${email} -> ${showTitle} (${tickets.length} ticket${tickets.length === 1 ? '' : 's'})`
+      );
       return { mode: 'log' as const };
     }
 
@@ -130,20 +130,8 @@ export async function sendIssuedTicketEmail({
   const resolvedName = name?.trim() || 'there';
   const transport = getTransporter();
   const ticketLines = tickets
-    .map((ticket) => `${ticket.label}: ${ticket.serializedId} -> ${ticket.verificationUrl}`)
+    .map((ticket) => `${ticket.label}: ${ticket.serializedId} | ${ticket.verificationUrl}`)
     .join('\n');
-  const ticketCards = tickets
-    .map(
-      (ticket) => `
-        <div style="padding:16px;border:1px solid rgba(16,24,42,0.1);border-radius:18px;margin:0 0 16px;">
-          <p style="margin:0 0 10px;font-weight:700;">${ticket.label}</p>
-          <img alt="${ticket.label} QR code" src="${ticket.qrCodeDataUrl}" style="width:180px;height:180px;border-radius:14px;display:block;margin:0 0 10px;" />
-          <p style="margin:0 0 6px;">Serialized ticket: <strong>${ticket.serializedId}</strong></p>
-          <p style="margin:0;"><a href="${ticket.verificationUrl}">${ticket.verificationUrl}</a></p>
-        </div>
-      `
-    )
-    .join('');
 
   await transport.sendMail({
     from: env.SMTP_FROM,
@@ -152,24 +140,42 @@ export async function sendIssuedTicketEmail({
     text: [
       `Hi ${resolvedName},`,
       '',
-      `Your ticket${tickets.length === 1 ? '' : 's'} for ${showTitle} ${venueName ? `at ${venueName}` : ''} ${eventOpensAtLabel ? `are now active for ${eventOpensAtLabel}.` : 'are now active.'}`,
-      `Total charge: ${totalChargeLabel}`,
+      `Your ticket${tickets.length === 1 ? ' is' : 's are'} ready for ${showTitle}.`,
+      venueName ? `Venue: ${venueName}` : null,
+      eventOpensAtLabel ? `Event time: ${eventOpensAtLabel}` : null,
+      `Charge: ${totalChargeLabel}`,
       '',
+      'Ticket details:',
       ticketLines,
       '',
-      'Keep each QR code ready at entry. Tickets are single-use tokens. If you need to resell at face value, contact the venue so it can reassign the ticket to the new owner.'
-    ].join('\n'),
+      'Present the QR-coded ticket at entry. Each ticket is single-use.'
+    ]
+      .filter(Boolean)
+      .join('\n'),
     html: `
-      <div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;padding:24px;color:#10182a;">
+      <div style="font-family:Arial,sans-serif;max-width:640px;margin:0 auto;padding:24px;color:#10182a;">
         <p style="margin:0 0 16px;">Hi ${resolvedName},</p>
-        <p style="margin:0 0 16px;">
-          Your ticket${tickets.length === 1 ? '' : 's'} for <strong>${showTitle}</strong>${venueName ? ` at <strong>${venueName}</strong>` : ''} ${eventOpensAtLabel ? `are now active for ${eventOpensAtLabel}.` : 'are now active.'}
-        </p>
-        <p style="margin:0 0 20px;">Total charge: <strong>${totalChargeLabel}</strong></p>
-        ${ticketCards}
-        <p style="margin:18px 0 0;color:#5b657a;">
-          Each QR code is a single-use ticket token. If you need to resell at face value, contact the venue so it can reassign the ticket to the new owner.
-        </p>
+        <p style="margin:0 0 16px;">Your ticket${tickets.length === 1 ? ' is' : 's are'} ready for <strong>${showTitle}</strong>.</p>
+        <div style="margin:0 0 18px;padding:16px 18px;border-radius:18px;background:#10182a;color:#ffffff;">
+          ${venueName ? `<p style="margin:0 0 8px;"><strong>Venue:</strong> ${venueName}</p>` : ''}
+          ${eventOpensAtLabel ? `<p style="margin:0 0 8px;"><strong>Event time:</strong> ${eventOpensAtLabel}</p>` : ''}
+          <p style="margin:0;"><strong>Charge:</strong> ${totalChargeLabel}</p>
+        </div>
+        <div style="display:grid;gap:14px;">
+          ${tickets
+            .map(
+              (ticket) => `
+                <div style="padding:16px 18px;border-radius:18px;border:1px solid #d6deea;background:#f8fbff;">
+                  <p style="margin:0 0 8px;font-weight:700;">${ticket.label}</p>
+                  <p style="margin:0 0 8px;"><strong>ID:</strong> ${ticket.serializedId}</p>
+                  <p style="margin:0 0 12px;"><a href="${ticket.verificationUrl}" style="color:#1f6feb;">Verify ticket</a></p>
+                  ${ticket.qrCodeDataUrl ? `<img src="${ticket.qrCodeDataUrl}" alt="QR code for ${ticket.label}" style="width:160px;height:160px;border-radius:14px;border:1px solid #d6deea;background:#ffffff;padding:8px;" />` : ''}
+                </div>
+              `
+            )
+            .join('')}
+        </div>
+        <p style="margin:18px 0 0;color:#5b657a;">Present the QR-coded ticket at entry. Each ticket is single-use.</p>
       </div>
     `
   });

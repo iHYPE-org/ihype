@@ -21,7 +21,7 @@ export function HeaderAuthLinks() {
     return (
       <div className="nav-auth-slot nav-auth-cluster">
         <div className="nav-links nav-links-auth nav-links-compact">
-          <Link href="/dashboard">{isAdmin ? 'Admin' : 'Dashboard'}</Link>
+          <Link href="/dashboard">{isAdmin ? 'Admin' : 'Workspace'}</Link>
           <span className="nav-divider">|</span>
           <form action={logoutAction} className="nav-inline-form">
             <button className="nav-text-button" type="submit">

@@ -109,10 +109,20 @@ export function TicketSaleCard({
 
   const fanPaymentLabel =
     currentFan?.storedPaymentTokenBrand && currentFan?.storedPaymentTokenLast4
-      ? `${currentFan.storedPaymentTokenBrand} •••• ${currentFan.storedPaymentTokenLast4}`
+      ? `${currentFan.storedPaymentTokenBrand} **** ${currentFan.storedPaymentTokenLast4}`
       : currentFan?.hasStoredPaymentToken
         ? 'Stored payment token'
         : null;
+  const viewerTaxRegion =
+    [
+      viewerLocation?.postalCode,
+      viewerLocation?.city,
+      viewerLocation?.stateRegion ?? viewerLocation?.country
+    ]
+      .filter(Boolean)
+      .join(' | ') || null;
+  const venueTaxRegion =
+    [venueLocation?.postalCode, venueLocation?.stateRegion ?? venueLocation?.country].filter(Boolean).join(' | ') || null;
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -149,8 +159,8 @@ export function TicketSaleCard({
           <div className="badge">Ticket Sales</div>
           <h2>{title}</h2>
           <p className="kicker">
-            Reserved tickets are tied to fan payment tokens and route venue, artist, affiliate promoter, and tax amounts into a
-            clean accounts-payable trail.
+            Reserved tickets are tied to fan payment tokens and route venue, artist, affiliate promoter, and tax amounts
+            into a clean accounts-payable trail.
           </p>
         </div>
         <div className="ticket-price-badge">
@@ -204,11 +214,35 @@ export function TicketSaleCard({
           </div>
         </div>
       ) : !currentFan.hasStoredPaymentToken ? (
-        <div className="empty">
-          Your fan account needs a stored payment token before you can reserve this event.
-        </div>
+        <div className="empty">Your fan account needs a stored payment token before you can reserve this event.</div>
       ) : (
         <form className="form" onSubmit={handleSubmit}>
+          {currentFan || viewerTaxRegion || venueTaxRegion ? (
+            <div className="ticketing-context-grid">
+              {currentFan ? (
+                <div className="signal-card">
+                  <strong>{currentFan.name ?? 'Signed-in fan'}</strong>
+                  <span>{currentFan.email}</span>
+                  <span>{fanPaymentLabel ?? 'Stored payment token on file.'}</span>
+                </div>
+              ) : null}
+              {viewerTaxRegion ? (
+                <div className="signal-card">
+                  <strong>Buyer tax region</strong>
+                  <span>{viewerTaxRegion}</span>
+                  <span>Tax is calculated from request location at purchase time.</span>
+                </div>
+              ) : null}
+              {venueTaxRegion ? (
+                <div className="signal-card">
+                  <strong>Venue tax region</strong>
+                  <span>{venueTaxRegion}</span>
+                  <span>Used for payout and payable reconciliation.</span>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
           <div className="grid grid-2">
             <div className="stat">
               <strong>{currentFan.name || currentFan.email}</strong>

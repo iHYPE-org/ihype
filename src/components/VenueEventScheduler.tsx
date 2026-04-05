@@ -121,7 +121,10 @@ export function VenueEventScheduler({
   const remainingForVenueAndArtist = getRemainingPayoutPercent(promoterAffiliateShare);
   const venueShare = Number(venuePayoutPercent || 0);
   const artistShare = remainingForVenueAndArtist - venueShare;
-  const potentialGrossCents = Math.max(0, Math.round(Number(ticketPrice || 0) * 100) * Math.max(1, Number(ticketCapacity || 0)));
+  const potentialGrossCents = Math.max(
+    0,
+    Math.round(Number(ticketPrice || 0) * 100) * Math.max(1, Number(ticketCapacity || 0))
+  );
   const preview = useMemo(
     () =>
       calculateTicketOrderFinancials({
@@ -146,7 +149,9 @@ export function VenueEventScheduler({
     }
 
     if (artistShare < 0) {
-      setMessage(`Venue share must leave ${formatPercent(remainingForVenueAndArtist)} combined for the venue and artist.`);
+      setMessage(
+        `Venue share must leave ${formatPercent(remainingForVenueAndArtist)} combined for the venue and artist.`
+      );
       return;
     }
 
@@ -229,7 +234,8 @@ export function VenueEventScheduler({
           <div className="badge">Event ticketing engine</div>
           <h3>Create, price, and open new events</h3>
           <p className="kicker">
-            Pick artists manually or from recommendation signals, lock the legal booking snapshot, set ticket splits, and only charge fan payment tokens when the venue officially opens the event.
+            Pick artists manually or from recommendation signals, lock the legal booking snapshot, set ticket splits,
+            and only charge fan payment tokens when the venue officially opens the event.
           </p>
         </div>
       </div>
@@ -239,7 +245,12 @@ export function VenueEventScheduler({
           <div className="grid grid-2">
             <label className="field">
               <span>Event title</span>
-              <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Lakefront Frequency x South Loop Signal" required />
+              <input
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder="Lakefront Frequency x South Loop Signal"
+                required
+              />
             </label>
 
             <label className="field">
@@ -264,17 +275,15 @@ export function VenueEventScheduler({
                       <article className="ticketing-engine-act-card" key={act.id}>
                         <div className="ticketing-engine-act-head">
                           <strong>{act.name}</strong>
-                          <span>{act.requestCount ?? 0} request{act.requestCount === 1 ? '' : 's'}</span>
+                          <span>
+                            {act.requestCount ?? 0} request{act.requestCount === 1 ? '' : 's'}
+                          </span>
                         </div>
                         {act.rationale ? <p>{act.rationale}</p> : null}
                         {act.availabilitySummary ? <p>{act.availabilitySummary}</p> : null}
                         {act.nextShowAtLabel ? <span>Next show: {act.nextShowAtLabel}</span> : null}
                         <div className="ticketing-engine-slot-row">
-                          <button
-                            className="button small secondary"
-                            onClick={() => setHeadlinerProfileId(act.id)}
-                            type="button"
-                          >
+                          <button className="button small secondary" onClick={() => setHeadlinerProfileId(act.id)} type="button">
                             Use act
                           </button>
                           {act.suggestedSlots?.slice(0, 2).map((slot) => (
@@ -362,12 +371,7 @@ export function VenueEventScheduler({
               <span>Suggested open dates for {selectedAct.name}</span>
               <div className="ticketing-engine-slot-row">
                 {selectedAct.suggestedSlots.map((slot) => (
-                  <button
-                    className="ticketing-slot-pill"
-                    key={slot.value}
-                    onClick={() => setStartsAt(slot.value)}
-                    type="button"
-                  >
+                  <button className="ticketing-slot-pill" key={slot.value} onClick={() => setStartsAt(slot.value)} type="button">
                     {slot.label}
                   </button>
                 ))}
@@ -506,7 +510,18 @@ export function VenueEventScheduler({
           </label>
 
           <div className="empty">
-            Fans reserve tickets with stored payment tokens. Charges are captured only when this event reaches the official open time, and each issued ticket is emailed as a single-use QR code. Resales must be venue-managed and reissued at face value.
+            {selectedAct ? (
+              <>
+                Scheduling with <strong>{selectedAct.name}</strong>. {selectedAct.availabilitySummary ?? 'Availability is open.'}
+              </>
+            ) : (
+              <>Fans reserve tickets with stored payment tokens.</>
+            )}{' '}
+            Charges are captured only when this event reaches the official open time, and each issued ticket is emailed as a
+            single-use QR code. Resales must be venue-managed and reissued at face value.
+            {venueLocation
+              ? ` Venue tax region: ${[venueLocation.postalCode, venueLocation.stateRegion ?? venueLocation.country].filter(Boolean).join(' | ')}.`
+              : ''}
           </div>
 
           <div className="cta-row">
@@ -517,7 +532,10 @@ export function VenueEventScheduler({
           </div>
         </form>
       ) : (
-        <div className="empty">No artists are available to book yet. Once artists enter the recommendation lane or manual pool, this event creator will unlock.</div>
+        <div className="empty">
+          No artists are available to book yet. Once artists enter the recommendation lane or manual pool, this event creator
+          will unlock.
+        </div>
       )}
     </div>
   );
