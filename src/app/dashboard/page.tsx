@@ -784,7 +784,7 @@ export default async function DashboardPage({
                           </article>
                         </div>
                         <p className="meta">
-                          Verification, tour notes, merch, and deeper page customization can happen right after the starter page is live.
+                          Choose one of the starter looks, generate a bio from one sentence, and get the page live before you worry about verification, tour notes, or merch.
                         </p>
                       </section>
                     ) : null}

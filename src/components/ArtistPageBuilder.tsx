@@ -90,6 +90,52 @@ function getPreviewSnippet(value: string, fallback: string) {
   return trimmed.length > 180 ? `${trimmed.slice(0, 177).trimEnd()}...` : trimmed;
 }
 
+const artistQuickStartPresets = [
+  {
+    id: 'clean-press-kit',
+    label: 'Clean Press Kit',
+    description: 'Sharp, clear, professional.',
+    themePreset: 'silver-signal' as const,
+    themeFontPreset: 'night-broadcast' as const,
+    themeAccentTone: 'electric-cyan' as const,
+    themeBackdropTone: 'glass-night' as const
+  },
+  {
+    id: 'indie-scrapbook',
+    label: 'Indie Scrapbook',
+    description: 'Personal, textured, handmade.',
+    themePreset: 'scrapbook-zine' as const,
+    themeFontPreset: 'poster-serif' as const,
+    themeAccentTone: 'sunset-gold' as const,
+    themeBackdropTone: 'sunset-haze' as const
+  },
+  {
+    id: 'club-live',
+    label: 'Club / Live',
+    description: 'Dark, bold, venue-ready.',
+    themePreset: 'arcade-afterglow' as const,
+    themeFontPreset: 'club-mono' as const,
+    themeAccentTone: 'electric-cyan' as const,
+    themeBackdropTone: 'warehouse-smoke' as const
+  }
+];
+
+function generateArtistBioFromPrompt(profileName: string, prompt: string, hometown: string) {
+  const cleaned = prompt.trim().replace(/\s+/g, ' ');
+  if (!cleaned) {
+    return null;
+  }
+
+  const sentence = cleaned.endsWith('.') ? cleaned : `${cleaned}.`;
+  const hometownLine = hometown.trim() ? `${profileName} is based in ${hometown.trim()}. ` : '';
+
+  return {
+    bio: `${hometownLine}${sentence}`,
+    aboutContent: `${hometownLine}${sentence} This page is the starting point for new listeners, bookers, and collaborators.`,
+    headline: `${profileName} is building momentum right now.`
+  };
+}
+
 export function ArtistPageBuilder({
   profileId,
   profileName,
@@ -106,6 +152,7 @@ export function ArtistPageBuilder({
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [submitIntent, setSubmitIntent] = useState<'save' | 'launch'>('save');
+  const [quickStartPrompt, setQuickStartPrompt] = useState('');
   const [formValues, setFormValues] = useState<ArtistBuilderValues>({
     ...initialValues,
     themePreset: normalizeProfileDesignPreset(initialValues.themePreset),
@@ -197,6 +244,38 @@ export function ArtistPageBuilder({
     } finally {
       event.target.value = '';
     }
+  }
+
+  function applyQuickStartPreset(presetId: string) {
+    const preset = artistQuickStartPresets.find((entry) => entry.id === presetId);
+    if (!preset) {
+      return;
+    }
+
+    setFormValues((current) => ({
+      ...current,
+      themePreset: preset.themePreset,
+      themeFontPreset: preset.themeFontPreset,
+      themeAccentTone: preset.themeAccentTone,
+      themeBackdropTone: preset.themeBackdropTone
+    }));
+    setMessage(`${preset.label} applied to the page preview.`);
+  }
+
+  function applyGeneratedBio() {
+    const generated = generateArtistBioFromPrompt(profileName, quickStartPrompt, formValues.hometown || formValues.city);
+    if (!generated) {
+      setMessage('Write one sentence about the artist first.');
+      return;
+    }
+
+    setFormValues((current) => ({
+      ...current,
+      headline: current.headline || generated.headline,
+      bio: generated.bio,
+      aboutContent: current.aboutContent || generated.aboutContent
+    }));
+    setMessage('Starter bio generated from your one-line description.');
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -296,6 +375,27 @@ export function ArtistPageBuilder({
                     <span className="artist-builder-quickstart-state">{step.done ? 'Ready' : 'Next'}</span>
                   </article>
                 ))}
+              </div>
+            ) : null}
+
+            {quickStart ? (
+              <div className="artist-page-builder-section">
+                <div className="artist-page-builder-section-head">
+                  <h3>Choose a starter look</h3>
+                </div>
+                <div className="artist-builder-preset-grid">
+                  {artistQuickStartPresets.map((preset) => (
+                    <button
+                      className="artist-builder-preset-card"
+                      key={preset.id}
+                      onClick={() => applyQuickStartPreset(preset.id)}
+                      type="button"
+                    >
+                      <strong>{preset.label}</strong>
+                      <span>{preset.description}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             ) : null}
 
@@ -487,6 +587,25 @@ export function ArtistPageBuilder({
                   value={formValues.aboutContent}
                 />
               </label>
+
+              {quickStart ? (
+                <div className="artist-builder-bio-lab">
+                  <label className="field">
+                    <span>One-line artist story</span>
+                    <textarea
+                      onChange={(event) => setQuickStartPrompt(event.target.value)}
+                      placeholder="Late-night synth pop with a live-drums pulse and big emotional hooks."
+                      rows={3}
+                      value={quickStartPrompt}
+                    />
+                  </label>
+                  <div className="cta-row">
+                    <button className="button small secondary" onClick={applyGeneratedBio} type="button">
+                      Generate bio from 1 line
+                    </button>
+                  </div>
+                </div>
+              ) : null}
 
               {quickStart ? (
                 <details className="artist-builder-advanced">

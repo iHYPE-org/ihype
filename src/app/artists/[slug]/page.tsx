@@ -118,6 +118,7 @@ export default async function ArtistPage({
   const now = new Date();
   const upcomingShows = shows.filter((show) => show.status === 'LIVE' || show.startsAt >= now);
   const previousShows = shows.filter((show) => show.status === 'ENDED' || (show.startsAt < now && show.status !== 'LIVE'));
+  const isBookMeReady = Boolean(profile.contactInfo && profile.genres.length > 0 && media.entries.length > 0);
   const isOwner = canManageOwnedResource(session, profile.ownerId);
   const canViewCustomPage = isOwner || profile.fanShareEnabled;
   const sharedThemePreset = canViewCustomPage ? profile.themePreset : DEFAULT_PROFILE_DESIGN_PRESET;
@@ -173,7 +174,10 @@ export default async function ArtistPage({
             {profile.contactInfo ? <p className="meta">Contact: {profile.contactInfo}</p> : null}
             <p className="meta">Share ID: <Link href={`/profiles/${profile.hexId}`}>{profile.hexId}</Link></p>
             <p className="meta">Fan hype: {fanHypeCount}</p>
-            <div className="tag-row">{profile.genres.map((genre) => <span key={genre} className="tag">{genre}</span>)}</div>
+            <div className="tag-row">
+              {isBookMeReady ? <span className="tag artist-ready-tag">Book me ready</span> : null}
+              {profile.genres.map((genre) => <span key={genre} className="tag">{genre}</span>)}
+            </div>
             <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} entityLabel="artist" />
           </div>
           {isOwner ? (

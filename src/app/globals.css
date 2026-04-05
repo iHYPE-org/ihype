@@ -3848,6 +3848,40 @@ button, input, select, textarea { font: inherit; }
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+.artist-builder-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.artist-builder-preset-card {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem;
+  text-align: left;
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  color: inherit;
+  cursor: pointer;
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+.artist-builder-preset-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(35,208,216,0.2);
+  background: rgba(35,208,216,0.08);
+}
+.artist-builder-preset-card strong,
+.artist-builder-preset-card span {
+  margin: 0;
+}
+.artist-builder-bio-lab {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.95rem 1rem;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.02);
+}
 .artist-builder-advanced {
   display: grid;
   gap: 0.9rem;
@@ -3940,6 +3974,11 @@ button, input, select, textarea { font: inherit; }
   border-radius: 22px;
   border: 1px solid rgba(255,255,255,0.1);
   background: rgba(5,10,20,0.9);
+}
+.artist-ready-tag {
+  border-color: rgba(35,208,216,0.26);
+  background: rgba(35,208,216,0.16);
+  color: #dffcff;
 }
 .artist-builder-cta-row {
   align-items: center;
@@ -7570,6 +7609,7 @@ body {
   }
   .artist-page-builder-layout,
   .artist-page-builder-preview-panels,
+  .artist-builder-preset-grid,
   .artist-builder-control-grid,
   .artist-builder-upload-grid,
   .artist-builder-quickstart-step {
