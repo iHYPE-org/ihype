@@ -26,6 +26,8 @@ type ArtistPageBuilderProps = {
   previewGenres: string[];
   startOpen?: boolean;
   hideToggle?: boolean;
+  quickStart?: boolean;
+  uploadedMediaCount?: number;
   initialValues: {
     headline: string;
     bio: string;
@@ -94,6 +96,8 @@ export function ArtistPageBuilder({
   previewGenres,
   startOpen = false,
   hideToggle = false,
+  quickStart = false,
+  uploadedMediaCount = 0,
   initialValues
 }: ArtistPageBuilderProps) {
   const router = useRouter();
@@ -125,6 +129,24 @@ export function ArtistPageBuilder({
   const previewLogo = getSafeImageUrl(formValues.logoImage);
   const previewGalleryImage = getSafeImageUrl(formValues.galleryImage);
   const previewVideo = getSafeVideoUrl(formValues.featureVideoUrl);
+  const hasVisualAsset = Boolean(formValues.heroImage || formValues.logoImage || formValues.galleryImage);
+  const quickStartSteps = [
+    {
+      label: 'Upload one song',
+      description: 'Start with a track or video fans can press play on immediately.',
+      done: uploadedMediaCount > 0
+    },
+    {
+      label: 'Add your visuals',
+      description: 'Give the page a banner, logo, or image so it already feels like you.',
+      done: hasVisualAsset
+    },
+    {
+      label: 'Launch your page',
+      description: 'Publish once the page has media and a visual identity.',
+      done: formValues.fanShareEnabled
+    }
+  ];
   const aboutPreview = getPreviewSnippet(
     formValues.aboutContent || formValues.bio,
     'Shape the introduction, visual assets, and overall mood before fans see the live page.'
@@ -232,10 +254,12 @@ export function ArtistPageBuilder({
     <section className="panel artist-page-builder">
       <div className="artist-page-builder-header">
         <div>
-          <div className="badge">Page Builder</div>
-          <h2>Build your artist page</h2>
+          <div className="badge">{quickStart ? 'Artist quick start' : 'Page Builder'}</div>
+          <h2>{quickStart ? 'Launch your artist page faster' : 'Build your artist page'}</h2>
           <p className="kicker">
-            Change the background, font, colors, uploads, and contact info, then preview the page before you launch it.
+            {quickStart
+              ? 'Start with one upload, one visual move, and one launch button. Everything else can come after your page is live.'
+              : 'Change the background, font, colors, uploads, and contact info, then preview the page before you launch it.'}
           </p>
         </div>
         <div className="artist-page-builder-actions">
@@ -257,6 +281,24 @@ export function ArtistPageBuilder({
       {isOpen ? (
         <form className="artist-page-builder-layout" onSubmit={handleSubmit}>
           <div className="artist-page-builder-fields">
+            {quickStart ? (
+              <div className="artist-builder-quickstart-panel">
+                {quickStartSteps.map((step, index) => (
+                  <article
+                    className={step.done ? 'artist-builder-quickstart-step done' : 'artist-builder-quickstart-step'}
+                    key={step.label}
+                  >
+                    <span className="artist-builder-quickstart-index">0{index + 1}</span>
+                    <div>
+                      <strong>{step.label}</strong>
+                      <p>{step.description}</p>
+                    </div>
+                    <span className="artist-builder-quickstart-state">{step.done ? 'Ready' : 'Next'}</span>
+                  </article>
+                ))}
+              </div>
+            ) : null}
+
             <div className="artist-page-builder-section">
               <div className="artist-page-builder-section-head">
                 <h3>Visuals</h3>
@@ -391,7 +433,7 @@ export function ArtistPageBuilder({
 
             <div className="artist-page-builder-section">
               <div className="artist-page-builder-section-head">
-                <h3>Info</h3>
+                <h3>{quickStart ? 'Starter info' : 'Info'}</h3>
               </div>
 
               <div className="artist-builder-control-grid">
@@ -446,34 +488,72 @@ export function ArtistPageBuilder({
                 />
               </label>
 
-              <label className="field">
-                <span>Media notes</span>
-                <textarea
-                  onChange={(event) => setFormValues((current) => ({ ...current, mediaContent: event.target.value }))}
-                  rows={4}
-                  value={formValues.mediaContent}
-                />
-              </label>
+              {quickStart ? (
+                <details className="artist-builder-advanced">
+                  <summary>Advanced page details</summary>
+                  <div className="artist-builder-advanced-fields">
+                    <label className="field">
+                      <span>Media notes</span>
+                      <textarea
+                        onChange={(event) => setFormValues((current) => ({ ...current, mediaContent: event.target.value }))}
+                        rows={4}
+                        value={formValues.mediaContent}
+                      />
+                    </label>
 
-              <div className="artist-builder-control-grid">
-                <label className="field">
-                  <span>Tour</span>
-                  <textarea
-                    onChange={(event) => setFormValues((current) => ({ ...current, tourContent: event.target.value }))}
-                    rows={4}
-                    value={formValues.tourContent}
-                  />
-                </label>
+                    <div className="artist-builder-control-grid">
+                      <label className="field">
+                        <span>Tour</span>
+                        <textarea
+                          onChange={(event) => setFormValues((current) => ({ ...current, tourContent: event.target.value }))}
+                          rows={4}
+                          value={formValues.tourContent}
+                        />
+                      </label>
 
-                <label className="field">
-                  <span>Merch</span>
-                  <textarea
-                    onChange={(event) => setFormValues((current) => ({ ...current, merchContent: event.target.value }))}
-                    rows={4}
-                    value={formValues.merchContent}
-                  />
-                </label>
-              </div>
+                      <label className="field">
+                        <span>Merch</span>
+                        <textarea
+                          onChange={(event) => setFormValues((current) => ({ ...current, merchContent: event.target.value }))}
+                          rows={4}
+                          value={formValues.merchContent}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </details>
+              ) : (
+                <>
+                  <label className="field">
+                    <span>Media notes</span>
+                    <textarea
+                      onChange={(event) => setFormValues((current) => ({ ...current, mediaContent: event.target.value }))}
+                      rows={4}
+                      value={formValues.mediaContent}
+                    />
+                  </label>
+
+                  <div className="artist-builder-control-grid">
+                    <label className="field">
+                      <span>Tour</span>
+                      <textarea
+                        onChange={(event) => setFormValues((current) => ({ ...current, tourContent: event.target.value }))}
+                        rows={4}
+                        value={formValues.tourContent}
+                      />
+                    </label>
+
+                    <label className="field">
+                      <span>Merch</span>
+                      <textarea
+                        onChange={(event) => setFormValues((current) => ({ ...current, merchContent: event.target.value }))}
+                        rows={4}
+                        value={formValues.merchContent}
+                      />
+                    </label>
+                  </div>
+                </>
+              )}
             </div>
 
             <ArtistMediaUploadManager profileId={profileId} />
@@ -497,7 +577,9 @@ export function ArtistPageBuilder({
                   ? 'Launching...'
                   : formValues.fanShareEnabled
                     ? 'Update live page'
-                    : 'Launch page'}
+                    : quickStart
+                      ? 'Launch starter page'
+                      : 'Launch page'}
               </button>
               {message ? <span className="meta">{message}</span> : null}
             </div>

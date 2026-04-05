@@ -320,6 +320,7 @@ function createEmptyVenueShowCollectionsMap(profiles: DashboardProfile[]) {
 }
 
 type FanDashboardEditState = 'menu' | 'character-lab' | 'my-scheme' | 'top-5' | 'event-history';
+type ArtistDashboardSetupState = 'artist-quickstart';
 
 function getFanDashboardEditState(value?: string | string[]): FanDashboardEditState | null {
   if (typeof value !== 'string') return null;
@@ -331,6 +332,14 @@ function getFanDashboardEditState(value?: string | string[]): FanDashboardEditSt
     value === 'top-5' ||
     value === 'event-history'
   ) {
+    return value;
+  }
+
+  return null;
+}
+
+function getArtistDashboardSetupState(value?: string | string[]): ArtistDashboardSetupState | null {
+  if (value === 'artist-quickstart') {
     return value;
   }
 
@@ -350,7 +359,7 @@ function formatShowDateTime(value: Date) {
 export default async function DashboardPage({
   searchParams
 }: {
-  searchParams?: Promise<{ profile?: string | string[]; edit?: string | string[] }>;
+  searchParams?: Promise<{ profile?: string | string[]; edit?: string | string[]; setup?: string | string[] }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect('/login');
@@ -412,6 +421,14 @@ export default async function DashboardPage({
   const activeProfile =
     sortedProfiles.find((profile) => profile.id === requestedProfileId) ?? sortedProfiles[0] ?? null;
   const fanDashboardEditState = getFanDashboardEditState(resolvedSearchParams.edit);
+  const artistDashboardSetupState = getArtistDashboardSetupState(resolvedSearchParams.setup);
+  const artistUploadedMediaCount =
+    activeProfile?.type === 'ARTIST'
+      ? await db.artistMediaAsset.count({
+          where: { profileId: activeProfile.id }
+        })
+      : 0;
+  const isArtistQuickStart = activeProfile?.type === 'ARTIST' && artistDashboardSetupState === 'artist-quickstart';
   const fanEventHistory =
     activeProfile?.type === 'LISTENER'
       ? await db.hypeEvent.findMany({
@@ -437,10 +454,18 @@ export default async function DashboardPage({
           {activeProfile ? (
             <>
               <div className="dashboard-editor-hero-copy">
-                <div className="badge">{isAdmin ? 'ADMIN EDIT MODE' : `${getProfileLabel(activeProfile.type)} EDIT STUDIO`}</div>
-                <h1>{activeProfile.name}</h1>
+                <div className="badge">
+                  {isAdmin
+                    ? 'ADMIN EDIT MODE'
+                    : isArtistQuickStart
+                      ? 'ARTIST QUICK START'
+                      : `${getProfileLabel(activeProfile.type)} EDIT STUDIO`}
+                </div>
+                <h1>{isArtistQuickStart ? `Launch ${activeProfile.name}` : activeProfile.name}</h1>
                 <p className="subtitle">
-                  {getProfileSummary(activeProfile)}
+                  {isArtistQuickStart
+                    ? 'Start with one song, one visual move, and one launch. You can come back for deeper page sections after your artist page is already live.'
+                    : getProfileSummary(activeProfile)}
                 </p>
                 <div className="dashboard-editor-link-row">
                   <Link className="dashboard-editor-link" href={getProfilePath(activeProfile.type, activeProfile.slug)}>
@@ -523,6 +548,8 @@ export default async function DashboardPage({
             const previewImage = getSafeImageUrl(profile.avatarImage || profile.heroImage);
             const locationLine = getProfileLocation(profile);
             const isFanProfile = profile.type === 'LISTENER';
+            const isArtistQuickStartProfile =
+              profile.type === 'ARTIST' && artistDashboardSetupState === 'artist-quickstart';
             const editorConfig = isFanProfile ? getProfileEditorConfig(profile) : null;
             const fanEventHistoryItems = fanEventHistory
               .map((entry) => entry.show)
@@ -717,8 +744,52 @@ export default async function DashboardPage({
                   </>
                 ) : (
                   <div className="dashboard-editor-toolstack">
+                    {isArtistQuickStartProfile ? (
+                      <section className="panel dashboard-editor-onboarding">
+                        <div className="dashboard-editor-module-head">
+                          <div>
+                            <div className="badge">Artist onboarding</div>
+                            <h2>Three moves to get live</h2>
+                          </div>
+                          <Link className="dashboard-editor-link" href={`/dashboard?profile=${profile.id}`}>
+                            Open full artist editor
+                          </Link>
+                        </div>
+                        <div className="dashboard-editor-onboarding-grid">
+                          <article className={artistUploadedMediaCount > 0 ? 'dashboard-editor-onboarding-step done' : 'dashboard-editor-onboarding-step'}>
+                            <strong>Upload one song</strong>
+                            <span>{artistUploadedMediaCount > 0 ? `${artistUploadedMediaCount} upload${artistUploadedMediaCount === 1 ? '' : 's'} ready` : 'Start with a track or video.'}</span>
+                          </article>
+                          <article
+                            className={
+                              profile.heroImage || profile.logoImage || profile.galleryImage
+                                ? 'dashboard-editor-onboarding-step done'
+                                : 'dashboard-editor-onboarding-step'
+                            }
+                          >
+                            <strong>Add your visuals</strong>
+                            <span>
+                              {profile.heroImage || profile.logoImage || profile.galleryImage
+                                ? 'Visual identity is in place.'
+                                : 'Set a banner, logo, or image so the page already feels like you.'}
+                            </span>
+                          </article>
+                          <article className={profile.fanShareEnabled ? 'dashboard-editor-onboarding-step done' : 'dashboard-editor-onboarding-step'}>
+                            <strong>Launch your page</strong>
+                            <span>
+                              {profile.fanShareEnabled
+                                ? 'Fans can already see the page.'
+                                : 'Publish once the first two steps feel right.'}
+                            </span>
+                          </article>
+                        </div>
+                        <p className="meta">
+                          Verification, tour notes, merch, and deeper page customization can happen right after the starter page is live.
+                        </p>
+                      </section>
+                    ) : null}
 
-                    {profile.type === 'ARTIST' || profile.type === 'VENUE' ? (
+                    {(profile.type === 'VENUE' || (profile.type === 'ARTIST' && !isArtistQuickStartProfile)) ? (
                       <OwnershipVerificationPanel
                         contactInfo={profile.contactInfo}
                         profileId={profile.id}
@@ -735,7 +806,9 @@ export default async function DashboardPage({
                         previewGenres={profile.genres}
                         profileId={profile.id}
                         profileName={profile.name}
+                        quickStart={isArtistQuickStartProfile}
                         startOpen
+                        uploadedMediaCount={artistUploadedMediaCount}
                       />
                     ) : null}
 
@@ -761,7 +834,7 @@ export default async function DashboardPage({
                       />
                     ) : null}
 
-                    {editorConfig ? (
+                    {editorConfig && !isArtistQuickStartProfile ? (
                       <ProfilePageEditor
                         allowFanShareToggle={profile.type === 'ARTIST'}
                         description={editorConfig.description}

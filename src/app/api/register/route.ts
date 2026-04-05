@@ -255,6 +255,7 @@ export async function POST(request: Request) {
       email: user.email,
       username: user.username,
       mfaRequired: false,
+      profileId: profile.id,
       profileHexId: profile.hexId,
       profileSlug: profile.slug,
       publicProfilePath: getProfilePathForType(profile.type, profile.slug),

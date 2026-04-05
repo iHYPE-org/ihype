@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
-import { RegisterForm } from '@/components/RegisterForm';
+import { ArtistQuickStartRegister } from '@/components/ArtistQuickStartRegister';
 
 export const metadata: Metadata = {
   title: 'Artist Sign Up | iHYPE.org',
-  description: 'Create an artist account and review the iHYPE artist upload and limited use license policy.',
+  description: 'Create an artist account with a faster quick-start flow, then upload music, choose visuals, and launch your page.',
   robots: {
     index: false,
     follow: false
@@ -11,5 +11,5 @@ export const metadata: Metadata = {
 };
 
 export default function ArtistRegisterPage() {
-  return <RegisterForm defaultRole="ARTIST" />;
+  return <ArtistQuickStartRegister />;
 }

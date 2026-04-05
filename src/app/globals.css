@@ -1411,6 +1411,37 @@ button, input, select, textarea { font: inherit; }
   display: grid;
   gap: 1rem;
 }
+.dashboard-editor-onboarding {
+  display: grid;
+  gap: 1rem;
+  padding: 1.1rem;
+  border-radius: 28px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background:
+    radial-gradient(circle at top right, rgba(35,208,216,0.08), transparent 28%),
+    rgba(255,255,255,0.03);
+}
+.dashboard-editor-onboarding-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+.dashboard-editor-onboarding-step {
+  display: grid;
+  gap: 0.4rem;
+  padding: 1rem;
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(10,16,28,0.82);
+}
+.dashboard-editor-onboarding-step.done {
+  border-color: rgba(35,208,216,0.22);
+  background: linear-gradient(180deg, rgba(35,208,216,0.12), rgba(10,16,28,0.92));
+}
+.dashboard-editor-onboarding-step strong,
+.dashboard-editor-onboarding-step span {
+  margin: 0;
+}
 .dashboard-editor-empty {
   display: grid;
   gap: 0.6rem;
@@ -2061,6 +2092,50 @@ button, input, select, textarea { font: inherit; }
   display: grid;
   gap: 0.85rem;
   width: min(100%, 460px);
+}
+.artist-quickstart-register {
+  display: grid;
+  gap: 1rem;
+}
+.artist-quickstart-register-copy {
+  display: grid;
+  gap: 0.55rem;
+}
+.artist-quickstart-register-copy h1,
+.artist-quickstart-register-note p {
+  margin: 0;
+}
+.artist-quickstart-step-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.artist-quickstart-step-card {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.95rem 1rem;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+}
+.artist-quickstart-step-card strong,
+.artist-quickstart-step-card span {
+  margin: 0;
+}
+.artist-quickstart-form {
+  width: min(100%, 520px);
+}
+.field-hint {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.artist-quickstart-register-note {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.95rem 1rem;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
 }
 .register-checkbox {
   padding: 0.85rem 1rem;
@@ -3735,6 +3810,60 @@ button, input, select, textarea { font: inherit; }
 .artist-page-builder-fields {
   display: grid;
   gap: 1rem;
+}
+.artist-builder-quickstart-panel {
+  display: grid;
+  gap: 0.75rem;
+}
+.artist-builder-quickstart-step {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.85rem;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+}
+.artist-builder-quickstart-step.done {
+  border-color: rgba(35,208,216,0.22);
+  background: linear-gradient(180deg, rgba(35,208,216,0.12), rgba(255,255,255,0.03));
+}
+.artist-builder-quickstart-step p {
+  margin: 0.3rem 0 0;
+  color: var(--muted);
+}
+.artist-builder-quickstart-index,
+.artist-builder-quickstart-state {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 46px;
+  min-height: 46px;
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(10,16,28,0.88);
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.artist-builder-advanced {
+  display: grid;
+  gap: 0.9rem;
+  padding: 0.95rem 1rem;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.02);
+}
+.artist-builder-advanced summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+.artist-builder-advanced-fields {
+  display: grid;
+  gap: 1rem;
+  margin-top: 0.5rem;
 }
 .artist-page-builder-section {
   display: grid;
@@ -7378,6 +7507,8 @@ body {
   }
   .market-recommendations-header,
   .market-recommendations-grid { grid-template-columns: 1fr; flex-direction: column; }
+  .dashboard-editor-onboarding-grid,
+  .artist-quickstart-step-strip,
   .ticketing-engine-grid,
   .venue-booking-artist-list {
     grid-template-columns: 1fr;
@@ -7440,7 +7571,8 @@ body {
   .artist-page-builder-layout,
   .artist-page-builder-preview-panels,
   .artist-builder-control-grid,
-  .artist-builder-upload-grid {
+  .artist-builder-upload-grid,
+  .artist-builder-quickstart-step {
     grid-template-columns: 1fr;
   }
   .artist-page-builder-preview-shell {
