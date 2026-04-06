@@ -6250,6 +6250,17 @@ button, input, select, textarea { font: inherit; }
 .discover-spotlight-card .profile-card::before {
   opacity: 0.22;
 }
+.fan-recommendations-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.fan-recommendation-section.wide {
+  grid-column: 1 / -1;
+}
+.fan-recommendation-context {
+  margin: 0.2rem 0 0;
+}
 .connection-map {
   display: grid;
   gap: 1rem;
@@ -7907,6 +7918,7 @@ body {
     padding: 0.8rem;
   }
   .fan-playlist-layout,
+  .fan-recommendations-grid,
   .discover-explorer-rail,
   .discover-explorer-main,
   .discover-explorer-browser .grid.grid-3,

@@ -9,6 +9,13 @@ export type DiscoverSpotlightProfile = DirectoryBrowserProfile & {
   createdAtLabel: string;
 };
 
+export type DiscoverLocationMatchCandidate = {
+  postalCode?: string | null;
+  city?: string | null;
+  stateRegion?: string | null;
+  country?: string | null;
+};
+
 const spotlightProfileArgs = Prisma.validator<Prisma.ProfileDefaultArgs>()({
   select: {
     id: true,
@@ -50,7 +57,7 @@ function normalize(value?: string | null) {
   return value?.trim().toLowerCase() ?? '';
 }
 
-function isLocalMatch(profile: Pick<SpotlightProfileRecord, 'postalCode' | 'city' | 'stateRegion' | 'country'>, location: RequestLocation | null) {
+export function isLocalMatch(profile: DiscoverLocationMatchCandidate, location: RequestLocation | null) {
   if (!location) {
     return false;
   }
@@ -68,7 +75,10 @@ function isLocalMatch(profile: Pick<SpotlightProfileRecord, 'postalCode' | 'city
   );
 }
 
-function isRegionalMatch(profile: Pick<SpotlightProfileRecord, 'stateRegion' | 'country'>, location: RequestLocation | null) {
+export function isRegionalMatch(
+  profile: Pick<DiscoverLocationMatchCandidate, 'stateRegion' | 'country'>,
+  location: RequestLocation | null
+) {
   if (!location) {
     return false;
   }

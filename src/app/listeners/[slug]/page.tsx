@@ -7,14 +7,21 @@ import { HypeButton } from '@/components/HypeButton';
 import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
 import { FanRecommendationsPanel } from '@/components/FanRecommendationsPanel';
 import { getSafeBackgroundImageStyle, getSafeImageUrl } from '@/lib/asset-safety';
+import { getSharedDiscoverFeed, isLocalMatch, isRegionalMatch } from '@/lib/discover-feed';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getProfileDesignStyleVars } from '@/lib/profile-design';
-import { detectRequestLocation } from '@/lib/request-location';
+import { detectRequestLocation, type RequestLocation } from '@/lib/request-location';
 import { calculateFanLevel } from '@/lib/fan-level';
 
 const listenerSections = ['about', 'recommend', 'upcoming', 'previous', 'top5', 'stats'] as const;
 
 type ListenerSection = (typeof listenerSections)[number];
+type LocationMatchShape = {
+  postalCode?: string | null;
+  city?: string | null;
+  stateRegion?: string | null;
+  country?: string | null;
+};
 
 function getActiveSection(section: string | string[] | undefined): ListenerSection {
   if (typeof section === 'string' && listenerSections.includes(section as ListenerSection)) {
@@ -46,6 +53,52 @@ function formatShowDate(value: Date) {
   }).format(value);
 }
 
+function getLocationSignalScore(
+  item: LocationMatchShape,
+  viewerLocation: RequestLocation | null
+) {
+  if (isLocalMatch(item, viewerLocation)) {
+    return 2;
+  }
+
+  if (isRegionalMatch(item, viewerLocation)) {
+    return 1;
+  }
+
+  return 0;
+}
+
+function getLocationScopeLabel(
+  item: LocationMatchShape,
+  viewerLocation: RequestLocation | null
+) {
+  const score = getLocationSignalScore(item, viewerLocation);
+  if (score === 2) return 'Local';
+  if (score === 1) return 'Regional';
+  return 'Network';
+}
+
+function sortByLocationSignal<
+  T extends LocationMatchShape & {
+    hypeCount: number;
+    name: string;
+  }
+>(items: T[], viewerLocation: RequestLocation | null) {
+  return [...items].sort((left, right) => {
+    const leftScore = getLocationSignalScore(left, viewerLocation);
+    const rightScore = getLocationSignalScore(right, viewerLocation);
+    if (leftScore !== rightScore) {
+      return rightScore - leftScore;
+    }
+
+    if (left.hypeCount !== right.hypeCount) {
+      return right.hypeCount - left.hypeCount;
+    }
+
+    return left.name.localeCompare(right.name);
+  });
+}
+
 export default async function ListenerPage({
   params,
   searchParams
@@ -60,6 +113,7 @@ export default async function ListenerPage({
 
   const profile = await db.profile.findUnique({ where: { slug } });
   if (!profile || profile.type !== 'LISTENER') return notFound();
+  const viewerLocationPromise = detectRequestLocation();
 
   const [
     hypedShows,
@@ -70,7 +124,9 @@ export default async function ListenerPage({
     profileHypes,
     promoterShows,
     fullSongListenCount,
-    fullShowListenCount
+    fullShowListenCount,
+    discoverFeed,
+    promoterProfiles
   ] = await Promise.all([
     db.hypeEvent.findMany({
       where: { userId: profile.ownerId },
@@ -89,7 +145,7 @@ export default async function ListenerPage({
       where: { requesterId: profile.ownerId },
       orderBy: { createdAt: 'desc' }
     }),
-    detectRequestLocation(),
+    viewerLocationPromise,
     db.profile.findMany({
       where: {
         type: 'VENUE',
@@ -99,16 +155,24 @@ export default async function ListenerPage({
       orderBy: [{ verified: 'desc' }, { name: 'asc' }],
       select: {
         id: true,
+        type: true,
         slug: true,
+        hexId: true,
         name: true,
         addressLine1: true,
+        contactInfo: true,
         hoursText: true,
+        hometown: true,
         city: true,
         stateRegion: true,
         country: true,
         postalCode: true,
         latitude: true,
-        longitude: true
+        longitude: true,
+        hypeCount: true,
+        bio: true,
+        genres: true,
+        avatarImage: true
       }
     }),
     db.show.findMany({
@@ -129,7 +193,8 @@ export default async function ListenerPage({
         profile: {
           select: {
             id: true,
-            type: true
+            type: true,
+            genres: true
           }
         }
       }
@@ -157,6 +222,33 @@ export default async function ListenerPage({
       where: {
         userId: profile.ownerId
       }
+    }),
+    viewerLocationPromise.then((location) => getSharedDiscoverFeed(location)),
+    db.profile.findMany({
+      where: {
+        type: 'DJ'
+      },
+      orderBy: [{ hypeCount: 'desc' }, { createdAt: 'desc' }],
+      take: 24,
+      select: {
+        id: true,
+        type: true,
+        slug: true,
+        hexId: true,
+        name: true,
+        contactInfo: true,
+        addressLine1: true,
+        hoursText: true,
+        hometown: true,
+        city: true,
+        stateRegion: true,
+        country: true,
+        postalCode: true,
+        hypeCount: true,
+        bio: true,
+        genres: true,
+        avatarImage: true
+      }
     })
   ]);
 
@@ -165,35 +257,48 @@ export default async function ListenerPage({
   const upcomingShows = shows.filter((show) => show.status === 'LIVE' || show.startsAt >= now);
   const previousShows = shows.filter((show) => show.status === 'ENDED' || (show.startsAt < now && show.status !== 'LIVE'));
   const isOwner = canManageOwnedResource(session, profile.ownerId);
-  const likedArtistIds = new Set<string>(
-    [
-      ...profileHypes
-        .filter((entry) => entry.profile.type === 'ARTIST')
-        .map((entry) => entry.profile.id),
-      ...shows
-        .map((show) => show.headlinerProfileId)
-        .filter((headlinerProfileId): headlinerProfileId is string => Boolean(headlinerProfileId))
-    ]
+  const likedGenreSet = new Set(
+    profileHypes
+      .filter((entry) => entry.profile.type === 'ARTIST')
+      .flatMap((entry) => entry.profile.genres)
+      .map((genre) => genre.trim().toLowerCase())
+      .filter(Boolean)
   );
-  const nearbyShows = activeShows
-    .filter((show) => {
-      const venueProfile = show.venueProfile;
-      if (!venueProfile) return false;
-
-      if (viewerLocation?.postalCode && venueProfile.postalCode === viewerLocation.postalCode) return true;
-      if (viewerLocation?.city && venueProfile.city === viewerLocation.city) return true;
-      if (viewerLocation?.stateRegion && venueProfile.stateRegion === viewerLocation.stateRegion) return true;
-
-      return false;
-    })
-    .slice(0, 4);
-  const trendingShows = [...activeShows]
-    .sort((left, right) => right.hypeCount * 3 + right.ticketsSoldCount - (left.hypeCount * 3 + left.ticketsSoldCount))
-    .slice(0, 4);
-  const promoterMatches = Array.from(
+  const trendingArtists = discoverFeed.hypedNearMe.slice(0, 4);
+  const newArtists = discoverFeed.newArtists.slice(0, 4);
+  const nearbyVenuePool = venues.filter(
+    (venue) => !viewerLocation || isLocalMatch(venue, viewerLocation) || isRegionalMatch(venue, viewerLocation)
+  );
+  const nearbyPromoterPool = promoterProfiles.filter(
+    (promoter) => !viewerLocation || isLocalMatch(promoter, viewerLocation) || isRegionalMatch(promoter, viewerLocation)
+  );
+  const nearbyVenues = sortByLocationSignal(
+    nearbyVenuePool.length ? nearbyVenuePool : venues,
+    viewerLocation
+  )
+    .slice(0, 4)
+    .map((venue) => ({
+      ...venue,
+      scopeLabel: getLocationScopeLabel(venue, viewerLocation)
+    }));
+  const nearbyPromoters = sortByLocationSignal(
+    nearbyPromoterPool.length ? nearbyPromoterPool : promoterProfiles,
+    viewerLocation
+  )
+    .slice(0, 4)
+    .map((promoter) => ({
+      ...promoter,
+      scopeLabel: getLocationScopeLabel(promoter, viewerLocation)
+    }));
+  const promoterGenreMatches = Array.from(
     promoterShows.reduce(
       (map, show) => {
-        if (!show.promoterProfile || !show.headlinerProfile || !likedArtistIds.has(show.headlinerProfile.id)) {
+        if (!show.promoterProfile || !show.headlinerProfile || !likedGenreSet.size) {
+          return map;
+        }
+
+        const matchedGenres = show.headlinerProfile.genres.filter((genre) => likedGenreSet.has(genre.trim().toLowerCase()));
+        if (!matchedGenres.length) {
           return map;
         }
 
@@ -203,12 +308,26 @@ export default async function ListenerPage({
           name: show.promoterProfile.name,
           city: show.promoterProfile.city,
           stateRegion: show.promoterProfile.stateRegion,
+          country: show.promoterProfile.country,
+          postalCode: show.promoterProfile.postalCode,
+          hexId: show.promoterProfile.hexId,
+          type: show.promoterProfile.type,
+          contactInfo: show.promoterProfile.contactInfo,
+          addressLine1: show.promoterProfile.addressLine1,
+          hoursText: show.promoterProfile.hoursText,
+          hometown: show.promoterProfile.hometown,
+          hypeCount: show.promoterProfile.hypeCount,
+          bio: show.promoterProfile.bio,
+          genres: show.promoterProfile.genres,
+          avatarImage: show.promoterProfile.avatarImage,
           matchedArtistNames: new Set<string>(),
-          sharedShowCount: 0
+          matchedGenres: new Set<string>(),
+          relatedShowCount: 0
         };
 
         current.matchedArtistNames.add(show.headlinerProfile.name);
-        current.sharedShowCount += 1;
+        matchedGenres.forEach((genre) => current.matchedGenres.add(genre));
+        current.relatedShowCount += 1;
         map.set(show.promoterProfile.id, current);
         return map;
       },
@@ -216,22 +335,43 @@ export default async function ListenerPage({
         string,
         {
           id: string;
+          type: 'ARTIST' | 'DJ' | 'VENUE' | 'LISTENER';
           slug: string;
+          hexId: string;
           name: string;
+          contactInfo: string | null;
+          addressLine1: string | null;
+          hoursText: string | null;
+          hometown: string | null;
           city: string | null;
           stateRegion: string | null;
+          country: string | null;
+          postalCode: string | null;
+          hypeCount: number;
+          bio: string | null;
+          genres: string[];
+          avatarImage: string | null;
           matchedArtistNames: Set<string>;
-          sharedShowCount: number;
+          matchedGenres: Set<string>;
+          relatedShowCount: number;
         }
       >()
     ).values()
   )
     .map((entry) => ({
       ...entry,
-      matchedArtistNames: [...entry.matchedArtistNames]
+      matchedArtistNames: [...entry.matchedArtistNames],
+      matchedGenres: [...entry.matchedGenres],
+      scopeLabel: getLocationScopeLabel(entry, viewerLocation)
     }))
-    .sort((left, right) => right.sharedShowCount - left.sharedShowCount)
-    .slice(0, 5);
+    .sort((left, right) => {
+      if (right.relatedShowCount !== left.relatedShowCount) {
+        return right.relatedShowCount - left.relatedShowCount;
+      }
+
+      return right.matchedGenres.length - left.matchedGenres.length;
+    })
+    .slice(0, 4);
   const bannerStyle = getSafeBackgroundImageStyle(profile.heroImage);
   const pageDesignStyle = getProfileDesignStyleVars(profile.themePreset, {
     accentTone: profile.themeAccentTone,
@@ -329,10 +469,12 @@ export default async function ListenerPage({
                 viewerLocation={viewerLocation}
               />
               <FanRecommendationsPanel
-                nearbyShows={nearbyShows}
-                promoterMatches={promoterMatches}
-                trendingShows={trendingShows}
-                zipLabel={viewerLocation?.postalCode ?? null}
+                nearbyPromoters={nearbyPromoters}
+                nearbyVenues={nearbyVenues}
+                newArtists={newArtists}
+                promoterGenreMatches={promoterGenreMatches}
+                trendingArtists={trendingArtists}
+                zipLabel={viewerLocation?.postalCode ?? viewerLocation?.city ?? viewerLocation?.stateRegion ?? null}
               />
             </>
           ) : null}
