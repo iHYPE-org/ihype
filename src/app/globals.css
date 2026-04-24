@@ -4728,6 +4728,92 @@ button, input, select, textarea { font: inherit; }
 .composer-summary-strip-dashboard .stat strong {
   font-size: 1.12rem;
 }
+.composer-panel-streamlined {
+  padding: 1.25rem;
+  margin-top: 1rem;
+  background:
+    linear-gradient(180deg, rgba(9, 12, 20, 0.94), rgba(12, 16, 28, 0.98)),
+    radial-gradient(circle at top left, rgba(35,208,216,0.08), transparent 34%);
+  box-shadow: 0 22px 48px rgba(0,0,0,0.18);
+}
+.composer-panel-streamlined .form {
+  display: grid;
+  gap: 1rem;
+}
+.composer-quick-setup {
+  display: grid;
+  gap: 0.8rem;
+  padding: 0.95rem 1rem;
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+}
+.composer-quick-setup-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+.composer-quick-setup-card {
+  display: grid;
+  gap: 0.28rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(7, 11, 22, 0.5);
+}
+.composer-quick-setup-card span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.composer-quick-setup-card strong {
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+.composer-quick-setup-card.ready {
+  border-color: rgba(95,255,179,0.22);
+  background: linear-gradient(180deg, rgba(21, 44, 36, 0.9), rgba(11, 24, 21, 0.94));
+}
+.composer-quick-setup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.composer-action-bar {
+  display: flex;
+  gap: 0.9rem;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.95rem 1rem;
+  border-radius: 22px;
+  border: 1px solid rgba(35,208,216,0.16);
+  background: linear-gradient(135deg, rgba(35,208,216,0.08), rgba(143,91,255,0.08));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.composer-action-bar-copy {
+  display: grid;
+  gap: 0.25rem;
+}
+.composer-action-bar-copy strong {
+  font-size: 1rem;
+}
+.composer-action-bar-buttons {
+  justify-content: flex-end;
+  margin: 0;
+  flex-shrink: 0;
+}
+.composer-setup-grid {
+  gap: 0.8rem;
+  align-items: end;
+}
+.composer-footer-bar {
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0;
+  padding-top: 0.2rem;
+}
 .composer-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -7855,12 +7941,17 @@ body {
   .composer-grid,
   .composer-summary-grid,
   .composer-utility-grid,
-  .composer-summary-strip { grid-template-columns: 1fr; }
+  .composer-summary-strip,
+  .composer-quick-setup-strip { grid-template-columns: 1fr; }
   .composer-panel .composer-grid { grid-template-columns: 1fr; }
   .composer-control-column,
   .composer-playlist-column,
   .composer-deck-a { order: initial; }
   .composer-header-compact { flex-direction: column; align-items: stretch; }
+  .composer-quick-setup-actions,
+  .composer-action-bar,
+  .composer-footer-bar { flex-direction: column; align-items: stretch; }
+  .composer-action-bar-buttons { justify-content: stretch; }
   .composer-pad-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .composer-pad-grid-mpc {
     grid-template-columns: repeat(4, minmax(52px, 1fr));

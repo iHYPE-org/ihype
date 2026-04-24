@@ -1120,9 +1120,9 @@ export function PromoterShowCreationTool({
   }> = [
     {
       id: 'library',
-      label: 'Library',
+      label: 'Add media',
       count: playableArtists.length,
-      hint: 'Add artist songs or videos, then drag or quick-load them into the playlist.'
+      hint: 'Grab artist songs or videos fast, then push them into the playlist.'
     },
     {
       id: 'voice',
@@ -1132,12 +1132,58 @@ export function PromoterShowCreationTool({
     },
     {
       id: 'queue',
-      label: 'Queue',
+      label: 'Flow',
       count: cueSequence.length,
-      hint: 'Check the non-song flow before you save the draft or broadcast the show.'
+      hint: 'Check the transitions, ads, pads, and non-song flow before you save or go live.'
     }
   ];
   const activeUtilityTab = utilityTabs.find((tab) => tab.id === activeUtilityPanel) ?? utilityTabs[0];
+  const headlinerEntryCount = selectedHeadliner?.entries.length ?? 0;
+  const setupStatusItems = [
+    {
+      label: 'Promoter',
+      value: selectedPromoter?.name ?? 'Pick one',
+      ready: Boolean(selectedPromoterProfileId)
+    },
+    {
+      label: 'Artist',
+      value: selectedHeadliner?.name ?? 'Pick one',
+      ready: Boolean(headlinerProfileId)
+    },
+    {
+      label: 'Playlist',
+      value: selectedMedia.length ? `${selectedMedia.length} loaded` : 'Add media',
+      ready: selectedMedia.length > 0
+    }
+  ];
+
+  function buildSuggestedShowTitle() {
+    const artistName = selectedHeadliner?.name ?? 'Featured Artist';
+    const promoterName = selectedPromoter?.name ?? 'Promoter';
+    return `${artistName} x ${promoterName} Session`;
+  }
+
+  function autofillShowTitle() {
+    setTitle(buildSuggestedShowTitle());
+    setMessage('Suggested title added.');
+  }
+
+  function loadStarterPlaylist() {
+    if (!selectedHeadliner) {
+      setMessage('Pick a headliner first, then load a starter set.');
+      return;
+    }
+
+    const starterEntries = selectedHeadliner.entries.slice(0, 3);
+    if (!starterEntries.length) {
+      setMessage('That artist does not have uploaded songs or videos yet.');
+      return;
+    }
+
+    starterEntries.forEach((entry) => addMedia(selectedHeadliner, entry));
+    setActiveUtilityPanel('library');
+    setMessage(`Loaded ${starterEntries.length} ${starterEntries.length === 1 ? 'item' : 'items'} from ${selectedHeadliner.name}.`);
+  }
 
   function renderDeckCard(deck: 'A' | 'B', track: ShowMediaItem | null, level: number) {
     return (
@@ -1185,12 +1231,12 @@ export function PromoterShowCreationTool({
   }
 
   return (
-    <section className="panel composer-panel">
+    <section className="panel composer-panel composer-panel-streamlined">
       <div className={headerClassName}>
         <div className={headerCopyClassName}>
           <div className={sectionBadgeClassName}>Show Creation</div>
-          <h2>Promoter builder</h2>
-          <p className="meta">Drag in artist media. Record overdubs. Drop sampler clips. Preview, then broadcast.</p>
+          <h2>Build a show fast</h2>
+          <p className="meta">Pick the promoter and artist, load a starter playlist, shape the flow, then preview or go live.</p>
         </div>
         <div className={summaryStripClassName}>
           <div className="stat">
@@ -1213,7 +1259,61 @@ export function PromoterShowCreationTool({
       </div>
 
       <form className="form" onSubmit={handleSubmit}>
-        <div className="grid grid-3">
+        <div className="composer-quick-setup">
+          <div className="composer-quick-setup-strip">
+            {setupStatusItems.map((item) => (
+              <div
+                className={item.ready ? 'composer-quick-setup-card ready' : 'composer-quick-setup-card'}
+                key={item.label}
+              >
+                <span>{item.label}</span>
+                <strong>{item.value}</strong>
+              </div>
+            ))}
+          </div>
+          <div className="composer-quick-setup-actions">
+            <button className="button small secondary" onClick={autofillShowTitle} type="button">
+              Auto title
+            </button>
+            <button className="button small secondary" onClick={loadStarterPlaylist} type="button">
+              Load first 3
+            </button>
+            <button className="button small secondary" onClick={() => setActiveUtilityPanel('library')} type="button">
+              Open media
+            </button>
+          </div>
+        </div>
+
+        <div className="composer-action-bar">
+          <div className="composer-action-bar-copy">
+            <strong>{title.trim() || buildSuggestedShowTitle()}</strong>
+            <span className="meta">
+              {selectedHeadliner
+                ? `${headlinerEntryCount} uploaded ${headlinerEntryCount === 1 ? 'item' : 'items'} ready from ${selectedHeadliner.name}.`
+                : 'Choose a headliner to unlock quick media loading.'}
+            </span>
+          </div>
+          <div className="cta-row composer-action-bar-buttons">
+            <button
+              className="button secondary"
+              disabled={pending}
+              onClick={() => setSaveIntent('preview')}
+              type="submit"
+            >
+              {pending && saveIntent === 'preview' ? 'Saving preview...' : 'Save preview draft'}
+            </button>
+            <button
+              className="button"
+              disabled={pending}
+              onClick={() => setSaveIntent('broadcast')}
+              type="submit"
+            >
+              {pending && saveIntent === 'broadcast' ? 'Broadcasting...' : 'Broadcast live'}
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-3 composer-setup-grid">
           <label className="field">
             <span>Show title</span>
             <input onChange={(event) => setTitle(event.target.value)} placeholder="Midnight Frequency Radio Hour" required value={title} />
@@ -1653,7 +1753,7 @@ export function PromoterShowCreationTool({
           {activeUtilityPanel === 'library' ? (
             <div className="composer-card composer-utility-card">
               <div className={workstationHeaderClassName}>
-                <div className={sectionBadgeClassName}>Library</div>
+                <div className={sectionBadgeClassName}>Add Media</div>
                 <span className="meta">{playableArtists.length} artists</span>
               </div>
               <div className="composer-utility-scroll composer-library-list">
@@ -1749,7 +1849,7 @@ export function PromoterShowCreationTool({
                                 }}
                                 type="button"
                               >
-                                {isVideoEntry ? 'Preview' : isCurrentTrack && isPlaying ? 'Pause' : 'Prev'}
+                                {isVideoEntry ? 'Preview' : isCurrentTrack && isPlaying ? 'Pause' : 'Preview'}
                               </button>
                               <button className="button small" onClick={() => addMedia(artist, entry)} type="button">
                                 Add
@@ -1842,7 +1942,7 @@ export function PromoterShowCreationTool({
           {activeUtilityPanel === 'queue' ? (
             <div className="composer-card composer-utility-card">
               <div className={workstationHeaderClassName}>
-                <div className={sectionBadgeClassName}>Queue</div>
+                <div className={sectionBadgeClassName}>Flow</div>
                 <span className="meta">{cueSequence.length} items</span>
               </div>
               <div className="composer-utility-scroll composer-cue-lane">
@@ -1891,23 +1991,7 @@ export function PromoterShowCreationTool({
           ) : null}
         </div>
 
-        <div className="cta-row">
-          <button
-            className="button secondary"
-            disabled={pending}
-            onClick={() => setSaveIntent('preview')}
-            type="submit"
-          >
-            {pending && saveIntent === 'preview' ? 'Saving preview...' : 'Save preview draft'}
-          </button>
-          <button
-            className="button"
-            disabled={pending}
-            onClick={() => setSaveIntent('broadcast')}
-            type="submit"
-          >
-            {pending && saveIntent === 'broadcast' ? 'Broadcasting...' : 'Broadcast live'}
-          </button>
+        <div className="cta-row composer-footer-bar">
           {lastSavedShowHref ? (
             <a className="button small secondary" href={lastSavedShowHref}>
               Open saved show
