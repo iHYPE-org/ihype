@@ -16,7 +16,11 @@ const schema = z.object({
   name: z.string().trim().min(2).optional(),
   email: z.string().email(),
   username: z.string().min(3).max(30),
-  password: z.string().min(8),
+  password: z
+    .string()
+    .min(8)
+    .regex(/[A-Za-z]/)
+    .regex(/[0-9]/),
   role: z.enum(['FAN', 'ARTIST', 'DJ', 'VENUE']).default('FAN'),
   isThirteenOrOlder: z.boolean().optional().default(false),
   acceptedArtistUploadPolicy: z.boolean().optional().default(false),
@@ -261,7 +265,18 @@ export async function POST(request: Request) {
       publicProfilePath: getProfilePathForType(profile.type, profile.slug),
       profilePath: getDiscoverPathForType(profile.type)
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const passwordIssue = error.issues.find((issue) => issue.path.includes('password'));
+
+      if (passwordIssue) {
+        return NextResponse.json(
+          { error: 'Password must be at least 8 characters and include a letter and a number.' },
+          { status: 400 }
+        );
+      }
+    }
+
     return NextResponse.json({ error: 'Invalid registration payload' }, { status: 400 });
   }
 }

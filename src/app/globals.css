@@ -8610,3 +8610,402 @@ body {
     grid-column: auto;
   }
 }
+
+/* 2026 acceleration + signup clarity pass */
+:root {
+  --shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
+}
+
+body {
+  background:
+    radial-gradient(circle at top, rgba(96, 142, 255, 0.14), transparent 24%),
+    radial-gradient(circle at 82% 18%, rgba(113, 217, 255, 0.1), transparent 20%),
+    linear-gradient(180deg, #09111a 0%, #06090f 42%, #04060b 100%);
+}
+
+.site-background {
+  opacity: 0.72;
+}
+
+.site-background-orb {
+  filter: blur(72px);
+  opacity: 0.2;
+}
+
+.nav {
+  backdrop-filter: blur(12px);
+  background: linear-gradient(180deg, rgba(7, 10, 16, 0.86), rgba(9, 12, 19, 0.78));
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+
+.nav-inner {
+  grid-template-columns: auto minmax(300px, 500px) auto;
+  gap: 1rem;
+  padding: 0.72rem 0;
+}
+
+.nav-logo-mark {
+  letter-spacing: 0.14em;
+}
+
+.header-player {
+  padding: 0.7rem 0.8rem;
+  border-radius: 20px;
+  box-shadow: none;
+}
+
+.nav-links-auth a,
+.nav-text-button {
+  font-size: 0.8rem;
+}
+
+.site-subnav-shell {
+  background: rgba(7, 11, 18, 0.68);
+}
+
+.site-subnav {
+  gap: 0.6rem;
+  padding: 0.58rem 0 0.66rem;
+}
+
+.site-subnav-label {
+  min-height: 2rem;
+  padding: 0.36rem 0.78rem;
+  color: #dce7f5;
+}
+
+.site-subnav-link {
+  min-height: 2.1rem;
+  padding: 0.5rem 0.86rem;
+  color: #a6b7ca;
+}
+
+.button,
+.site-subnav-link,
+.directory-switcher-link,
+.register-account-chip,
+.register-flow-highlight {
+  border-radius: 16px;
+}
+
+.button {
+  min-height: 2.8rem;
+  padding: 0.72rem 1rem;
+  box-shadow: none;
+}
+
+.panel,
+.card,
+.profile-card,
+.directory-hero,
+.home-mission-panel,
+.home-featured-panel,
+.discover-module-panel {
+  border-radius: 26px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
+}
+
+.profile-card,
+.home-featured-card,
+.discover-spotlight-card,
+.discover-stat-card,
+.discover-recommendation-card,
+.listener-discovery-results-panel,
+.composer-card,
+.venue-wizard-step-card,
+.artist-quickstart-step-card,
+.promoter-dashboard-stat-card,
+.fan-dashboard-stat-card {
+  content-visibility: auto;
+  contain-intrinsic-size: 320px;
+}
+
+.home-shell {
+  padding-top: 1rem;
+}
+
+.home-mission-grid {
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.home-mission-panel,
+.home-featured-panel {
+  padding: 1.45rem;
+}
+
+.home-mission-title {
+  max-width: 11ch;
+}
+
+.home-mission-copy {
+  max-width: 56ch;
+  font-size: 0.98rem;
+}
+
+.home-mission-points {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.2rem;
+}
+
+.home-mission-point {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.9rem 0.95rem;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.home-mission-point span {
+  color: var(--muted);
+  font-size: 0.71rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.home-mission-point strong {
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.home-featured-card {
+  padding: 0.9rem 0.95rem;
+}
+
+.register-grid {
+  width: min(100%, 980px);
+}
+
+.register-panel {
+  padding: 1.3rem;
+}
+
+.register-choice-panel {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.register-choice-hero {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.register-choice-title,
+.register-flow-copy h1 {
+  margin: 0.3rem 0 0;
+  font-size: clamp(1.9rem, 4vw, 3rem);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+}
+
+.register-choice-status-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.register-choice-status-card {
+  display: grid;
+  gap: 0.26rem;
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+}
+
+.register-choice-status-card span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.register-choice-status-card strong {
+  font-size: 0.96rem;
+  line-height: 1.35;
+}
+
+.register-account-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.register-account-card {
+  display: grid;
+  gap: 0.7rem;
+  padding: 1rem 1.05rem;
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background:
+    linear-gradient(180deg, rgba(15, 21, 33, 0.92), rgba(9, 13, 23, 0.94));
+  color: inherit;
+  text-decoration: none;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.register-account-card:hover,
+.register-account-card:focus-visible,
+.register-account-card.active {
+  transform: translateY(-2px);
+  border-color: rgba(113,217,255,0.24);
+  background:
+    radial-gradient(circle at top right, rgba(113,217,255,0.1), transparent 26%),
+    linear-gradient(180deg, rgba(15, 21, 33, 0.96), rgba(9, 13, 23, 0.98));
+}
+
+.register-account-card-topline {
+  display: flex;
+  gap: 0.65rem;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.register-account-card-kicker {
+  color: #dce7f5;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.register-account-card strong {
+  font-size: 1.05rem;
+}
+
+.register-account-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.58;
+}
+
+.register-flow-copy {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.register-flow-copy .subtitle {
+  max-width: 60ch;
+}
+
+.register-flow-highlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.register-flow-highlight {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  color: #dbe6f5;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.register-form-stack {
+  width: min(100%, 520px);
+}
+
+.register-form-stack .field input,
+.register-form-stack .field textarea,
+.venue-wizard .field input,
+.venue-wizard .field textarea,
+.venue-wizard .field select {
+  min-height: 2.85rem;
+  border-radius: 16px;
+}
+
+.register-submit-note {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.9rem 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+}
+
+.register-submit-note p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.58;
+}
+
+.artist-quickstart-register,
+.venue-wizard {
+  gap: 1.1rem;
+}
+
+.artist-quickstart-step-strip {
+  gap: 0.65rem;
+}
+
+.artist-quickstart-step-card,
+.venue-wizard-step-card {
+  border-radius: 20px;
+}
+
+.venue-wizard-step-row {
+  gap: 0.55rem;
+}
+
+.venue-wizard-step {
+  min-height: 2.2rem;
+  padding: 0.55rem 0.8rem;
+}
+
+.discover-module-panel,
+.directory-hero,
+.profile-design-customizer,
+.artist-page-builder-panel,
+.ticketing-panel,
+.composer-panel {
+  overflow: clip;
+}
+
+.discover-explorer-rail,
+.discover-explorer-main {
+  gap: 0.9rem;
+}
+
+.discover-spotlight-card .profile-card {
+  box-shadow: none;
+}
+
+@media (max-width: 980px) {
+  .home-mission-points,
+  .register-choice-status-strip,
+  .register-account-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .nav-inner {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .register-panel,
+  .home-mission-panel,
+  .home-featured-panel {
+    padding: 1rem;
+  }
+
+  .register-flow-highlights,
+  .home-mission-points {
+    gap: 0.6rem;
+  }
+
+  .register-choice-title,
+  .register-flow-copy h1 {
+    font-size: clamp(1.7rem, 9vw, 2.2rem);
+  }
+}

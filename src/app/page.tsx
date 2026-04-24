@@ -13,14 +13,11 @@ export default async function HomePage() {
         <div className="home-mission-panel">
           <div className="badge">ABOUT IHYPE</div>
           <h1 className="home-mission-title">
-            iHYPE helps fans discover, follow, and hype the artists, promoters, and venues shaping the
-            next scene.
+            iHYPE helps fans find the artists, promoters, and venues shaping the next scene.
           </h1>
           <p className="home-mission-copy">
-            The platform is built around live music discovery. Fans can browse pages, track what is moving in
-            nearby markets, and support the people and places building culture. Artists, promoters, and venues
-            each get their own discover lane once they sign in, but the homepage stays focused on what iHYPE
-            is and why it exists.
+            The platform is built around live music discovery. Fans can move through artists, promoters,
+            venues, and shows in one cleaner network, while each signed-in role gets its own focused workspace.
           </p>
           <div className="cta-row">
             <Link className="button" href="/register">
@@ -29,6 +26,20 @@ export default async function HomePage() {
             <Link className="button secondary" href="/login">
               Sign in
             </Link>
+          </div>
+          <div className="home-mission-points" aria-label="Core strengths">
+            <div className="home-mission-point">
+              <span>Near me</span>
+              <strong>Discovery by place and momentum</strong>
+            </div>
+            <div className="home-mission-point">
+              <span>Clean pages</span>
+              <strong>Role-based tools without the clutter</strong>
+            </div>
+            <div className="home-mission-point">
+              <span>Visible signal</span>
+              <strong>Hype, shows, and fan activity stay legible</strong>
+            </div>
           </div>
           <div className="home-signal-strip home-signal-strip-dark" aria-label="Network overview">
             <div className="home-signal-item home-signal-item-dark">
@@ -61,19 +72,19 @@ export default async function HomePage() {
             <div className="home-featured-card">
               <strong>Fans find the next room</strong>
               <p className="meta">
-                Browse artists, promoters, and venues in one network and move from discovery to attendance.
+                Move from nearby discovery to saved music, shows, and real attendance.
               </p>
             </div>
             <div className="home-featured-card">
               <strong>Hype turns attention into signal</strong>
               <p className="meta">
-                Pages and shows earn visible momentum through fan activity instead of hidden black-box ranking.
+                Pages and shows earn visible momentum through fan activity instead of hidden ranking.
               </p>
             </div>
             <div className="home-featured-card">
               <strong>Creators get the right lane</strong>
               <p className="meta">
-                Artists, promoters, and venues each land in a discover space with tools matched to their role.
+                Artists, promoters, and venues land in discover spaces with tools matched to their role.
               </p>
             </div>
           </div>

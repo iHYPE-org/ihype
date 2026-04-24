@@ -105,10 +105,10 @@ export function ArtistQuickStartRegister() {
             <RegisterAccountChoices activeRole="ARTIST" />
             <div className="artist-quickstart-register-copy">
               <div className="badge">Artist quick start</div>
-              <h1>Get your artist page live in minutes.</h1>
+              <h1>Get your artist page live without the heavy setup.</h1>
               <p className="subtitle">
-                Start with the essentials now. After account creation, we will take you straight into a guided
-                3-step builder: upload one song, add your visuals, then launch your page.
+                Start with the essentials now. After account creation, we take you straight into a guided 3-step
+                builder: upload one song, add your visuals, then launch your page.
               </p>
             </div>
           </div>
@@ -133,6 +133,7 @@ export function ArtistQuickStartRegister() {
               <span>Artist name</span>
               <input
                 onChange={(event) => updateField('name', event.target.value)}
+                autoComplete="organization"
                 placeholder="Nova Pulse"
                 required
                 value={values.name}
@@ -146,6 +147,8 @@ export function ArtistQuickStartRegister() {
                   setUsernameEdited(true);
                   updateField('username', event.target.value.toLowerCase());
                 }}
+                autoCapitalize="none"
+                autoComplete="username"
                 placeholder="novapulse"
                 required
                 value={values.username}
@@ -159,6 +162,8 @@ export function ArtistQuickStartRegister() {
               <span>Recovery email</span>
               <input
                 onChange={(event) => updateField('email', event.target.value)}
+                autoCapitalize="none"
+                autoComplete="email"
                 placeholder="artist@example.com"
                 required
                 type="email"
@@ -171,16 +176,19 @@ export function ArtistQuickStartRegister() {
               <input
                 minLength={8}
                 onChange={(event) => updateField('password', event.target.value)}
+                autoComplete="new-password"
                 required
                 type="password"
                 value={values.password}
               />
+              <span className="field-hint">Use at least 8 characters with a letter and a number.</span>
             </label>
 
             <label className="field">
               <span>Hometown (optional)</span>
               <input
                 onChange={(event) => updateField('hometown', event.target.value)}
+                autoComplete="address-level2"
                 placeholder="Chicago, IL"
                 value={values.hometown}
               />

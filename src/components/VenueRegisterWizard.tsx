@@ -204,9 +204,24 @@ export function VenueRegisterWizard() {
         <section className="panel register-panel venue-wizard">
           <div className="register-header">
             <RegisterAccountChoices activeRole="VENUE" />
+            <div className="register-flow-copy">
+              <div>
+                <div className="badge">Venue sign up</div>
+                <h1>Set up the room first, then refine the full experience.</h1>
+                <p className="subtitle">
+                  This guided flow keeps the essentials together so you can move into events, ticketing, and page
+                  customization without a messy first pass.
+                </p>
+              </div>
+              <div className="register-flow-highlights" aria-label="Venue setup highlights">
+                <span className="register-flow-highlight">Guided setup</span>
+                <span className="register-flow-highlight">Cleaner presets</span>
+                <span className="register-flow-highlight">Events + ticketing</span>
+              </div>
+            </div>
             <div className="register-role-links">
-              <Link className="button small secondary" href="/register">
-                Back to account options
+              <Link className="text-link" href="/register">
+                Change account type
               </Link>
             </div>
           </div>
@@ -241,6 +256,7 @@ export function VenueRegisterWizard() {
                       <label className="field">
                         <span>Venue name</span>
                         <input
+                          autoComplete="organization"
                           onChange={(event) => updateField('name', event.target.value)}
                           required
                           value={formValues.name}
@@ -250,8 +266,10 @@ export function VenueRegisterWizard() {
                       <label className="field">
                         <span>Username</span>
                         <input
+                          autoCapitalize="none"
+                          autoComplete="username"
                           name="username"
-                          onChange={(event) => updateField('username', event.target.value)}
+                          onChange={(event) => updateField('username', event.target.value.toLowerCase())}
                           required
                           value={formValues.username}
                         />
@@ -260,8 +278,10 @@ export function VenueRegisterWizard() {
                       <label className="field">
                         <span>Recovery email</span>
                         <input
+                          autoCapitalize="none"
+                          autoComplete="email"
                           name="email"
-                          onChange={(event) => updateField('email', event.target.value)}
+                          onChange={(event) => updateField('email', event.target.value.toLowerCase())}
                           required
                           type="email"
                           value={formValues.email}
@@ -271,17 +291,20 @@ export function VenueRegisterWizard() {
                       <label className="field venue-wizard-field-span">
                         <span>Password</span>
                         <input
+                          autoComplete="new-password"
                           minLength={8}
                           onChange={(event) => updateField('password', event.target.value)}
                           required
                           type="password"
                           value={formValues.password}
                         />
+                        <span className="field-hint">Use at least 8 characters with a letter and a number.</span>
                       </label>
 
                       <label className="field venue-wizard-field-span">
                         <span>Venue contact info</span>
                         <input
+                          autoComplete="email"
                           onChange={(event) => updateField('contactInfo', event.target.value)}
                           placeholder="bookings@venue.com | +1 555 101 3030"
                           value={formValues.contactInfo}
@@ -409,6 +432,7 @@ export function VenueRegisterWizard() {
                       <label className="field venue-wizard-field-span">
                         <span>Street address</span>
                         <input
+                          autoComplete="street-address"
                           onChange={(event) => updateField('addressLine1', event.target.value)}
                           placeholder="1234 W Example St"
                           value={formValues.addressLine1}
@@ -417,12 +441,13 @@ export function VenueRegisterWizard() {
 
                       <label className="field">
                         <span>City</span>
-                        <input onChange={(event) => updateField('city', event.target.value)} value={formValues.city} />
+                        <input autoComplete="address-level2" onChange={(event) => updateField('city', event.target.value)} value={formValues.city} />
                       </label>
 
                       <label className="field">
                         <span>State / region</span>
                         <input
+                          autoComplete="address-level1"
                           onChange={(event) => updateField('stateRegion', event.target.value)}
                           value={formValues.stateRegion}
                         />
@@ -431,6 +456,8 @@ export function VenueRegisterWizard() {
                       <label className="field">
                         <span>Postal code</span>
                         <input
+                          autoComplete="postal-code"
+                          inputMode="numeric"
                           onChange={(event) => updateField('postalCode', event.target.value)}
                           value={formValues.postalCode}
                         />
@@ -439,6 +466,7 @@ export function VenueRegisterWizard() {
                       <label className="field">
                         <span>Country</span>
                         <input
+                          autoComplete="country-name"
                           onChange={(event) => updateField('country', event.target.value)}
                           value={formValues.country}
                         />
