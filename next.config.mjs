@@ -84,7 +84,9 @@ const nextConfig = {
   async rewrites() {
     return {
       beforeFiles: [
-        { source: '/', destination: '/ihype-homepage.html' }
+        { source: '/',          destination: '/ihype-homepage.html' },
+        { source: '/login',     destination: '/ihype-auth.html' },
+        { source: '/register',  destination: '/ihype-auth.html' }
       ],
       afterFiles: [
         { source: '/hype',        destination: '/ihype-hype-engine.html' },
