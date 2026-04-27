@@ -17,4 +17,14 @@ const envSchema = z.object({
   MUX_WEBHOOK_SECRET: z.string().optional()
 });
 
-export const env = envSchema.parse(process.env);
+type Env = z.infer<typeof envSchema>;
+
+// Lazy singleton — validates only on first access, not at build time.
+let _env: Env | undefined;
+
+export const env = new Proxy({} as Env, {
+  get(_target, prop: string) {
+    if (!_env) _env = envSchema.parse(process.env);
+    return _env[prop as keyof Env];
+  },
+});
