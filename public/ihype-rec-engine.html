@@ -162,7 +162,7 @@
       <a href="/discover" class="nav-link" data-i18n="nav.discover">Discover</a>
       <a href="/hype" class="nav-link" data-i18n="nav.charts">Charts</a>
       <a href="/tickets" class="nav-link" data-i18n="nav.shows">Shows</a>
-      <a href="/discover" class="nav-link active">Recommendations</a>
+      <a href="/discover" class="nav-link active" data-i18n="disc.nav.recs">Recommendations</a>
       <a href="/promise" class="nav-link" data-i18n="nav.promise">The Promise</a>
     </div>
   </div>
@@ -176,17 +176,17 @@
 
   <!-- HERO -->
   <section class="hero">
-    <div class="hero-eyebrow"><span class="dot"></span> The recommendation engine · transparent by design</div>
-    <h1 class="t-h1">Discovery <em>by place and momentum.</em></h1>
-    <p class="hero-lede">The algorithm reads three signals: what's hyped near you, what your friends love, and what's heating up across genres you've earned in. Every recommendation shows its math. Nothing pays for placement.</p>
+    <div class="hero-eyebrow"><span class="dot"></span> <span data-i18n="disc.hero.eyebrow">The recommendation engine · transparent by design</span></div>
+    <h1 class="t-h1" data-i18n="disc.hero.h1">Discovery <em>by place and momentum.</em></h1>
+    <p class="hero-lede" data-i18n="disc.hero.lede">The algorithm reads three signals: what's hyped near you, what your friends love, and what's heating up across genres you've earned in. Every recommendation shows its math. Nothing pays for placement.</p>
   </section>
 
   <!-- ARCHITECTURE -->
   <section class="section">
     <div class="section-head">
-      <div class="section-eyebrow">01 · How it works</div>
-      <h2 class="t-h2">Three inputs. <em>One engine.</em> Every output explainable.</h2>
-      <p class="lede">A simple weighted blend you can audit. No black box. No paid boost. Geographic relevance, social proof, and HYPE momentum — that's the whole formula.</p>
+      <div class="section-eyebrow" data-i18n="disc.s1.eyebrow">01 · How it works</div>
+      <h2 class="t-h2" data-i18n="disc.s1.h2">Three inputs. <em>One engine.</em> Every output explainable.</h2>
+      <p class="lede" data-i18n="disc.s1.lede">A simple weighted blend you can audit. No black box. No paid boost. Geographic relevance, social proof, and HYPE momentum — that's the whole formula.</p>
     </div>
 
     <div class="arch-card">
@@ -230,15 +230,15 @@
 
       <div class="arch-principles">
         <div class="arch-principle">
-          <h5>Auditable</h5>
+          <h5 data-i18n="disc.prin.audit.h">Auditable</h5>
           <p>Every recommendation exposes its weight breakdown. Click the "why this?" panel to see the four signals at the score they hit.</p>
         </div>
         <div class="arch-principle">
-          <h5>Anti-monoculture</h5>
+          <h5 data-i18n="disc.prin.mono.h">Anti-monoculture</h5>
           <p>The cascade prevents global hits from drowning local scenes. Top three slots are reserved for sub-1,000-HYPE entities at fan request.</p>
         </div>
         <div class="arch-principle">
-          <h5>Unmonetized</h5>
+          <h5 data-i18n="disc.prin.unmoney.h">Unmonetized</h5>
           <p>No artist, label, or promoter can pay to rank higher. Sponsored slots appear at position 4+ and are labelled. Always.</p>
         </div>
       </div>
@@ -248,33 +248,33 @@
   <!-- GEOGRAPHIC CASCADE -->
   <section class="section">
     <div class="section-head">
-      <div class="section-eyebrow">02 · Geographic cascade</div>
-      <h2 class="t-h2">Local first. <em>Global last.</em></h2>
-      <p class="lede">Every entity in a recommendation is weighted by how close it is to you. The closer the source, the heavier the count. This is what keeps your feed from being national algorithm soup.</p>
+      <div class="section-eyebrow" data-i18n="disc.s2.eyebrow">02 · Geographic cascade</div>
+      <h2 class="t-h2" data-i18n="disc.s2.h2">Local first. <em>Global last.</em></h2>
+      <p class="lede" data-i18n="disc.s2.lede">Every entity in a recommendation is weighted by how close it is to you. The closer the source, the heavier the count. This is what keeps your feed from being national algorithm soup.</p>
     </div>
 
     <div class="cascade-grid">
       <div class="cascade-tier t1">
         <div class="cascade-weight">×1.0</div>
-        <div class="cascade-name">Local</div>
+        <div class="cascade-name" data-i18n="disc.geo.local">Local</div>
         <div class="cascade-radius">Your county · ~30 mi</div>
         <div class="cascade-desc">HYPE from your county counts at full weight. The smallest, most local artists get the strongest signal.</div>
       </div>
       <div class="cascade-tier t2">
         <div class="cascade-weight">×0.7</div>
-        <div class="cascade-name">Regional</div>
+        <div class="cascade-name" data-i18n="disc.geo.regional">Regional</div>
         <div class="cascade-radius">Your state · ~150 mi</div>
         <div class="cascade-desc">Drive-distance shows and regional acts. Where your scene tends to tour.</div>
       </div>
       <div class="cascade-tier t3">
         <div class="cascade-weight">×0.4</div>
-        <div class="cascade-name">National</div>
+        <div class="cascade-name" data-i18n="disc.geo.national">National</div>
         <div class="cascade-radius">Your country</div>
         <div class="cascade-desc">Broad-market acts. Discounted so they don't crowd out hometown shows.</div>
       </div>
       <div class="cascade-tier t4">
         <div class="cascade-weight">×0.2</div>
-        <div class="cascade-name">Global</div>
+        <div class="cascade-name" data-i18n="disc.geo.global">Global</div>
         <div class="cascade-radius">Anywhere on Earth</div>
         <div class="cascade-desc">International discoveries. Always available — never the dominant signal.</div>
       </div>
@@ -292,9 +292,9 @@
   <!-- ROLE LENSES -->
   <section class="section">
     <div class="section-head">
-      <div class="section-eyebrow">03 · Four role lenses</div>
-      <h2 class="t-h2">Same engine. <em>Different question.</em></h2>
-      <p class="lede">Fans ask "what should I listen to?" Artists ask "where should I tour?" Venues ask "who should I book?" Promoters ask "who should I program?" One model, four queries.</p>
+      <div class="section-eyebrow" data-i18n="disc.s3.eyebrow">03 · Four role lenses</div>
+      <h2 class="t-h2" data-i18n="disc.s3.h2">Same engine. <em>Different question.</em></h2>
+      <p class="lede" data-i18n="disc.s3.lede">Fans ask "what should I listen to?" Artists ask "where should I tour?" Venues ask "who should I book?" Promoters ask "who should I program?" One model, four queries.</p>
     </div>
 
     <div class="lens-tabs" id="lensTabs">
@@ -357,8 +357,8 @@
 
         <div class="why-panel">
           <div class="why-panel-head">
-            <h3>Why this?</h3>
-            <span class="small">Auditable score</span>
+            <h3 data-i18n="disc.why.h">Why this?</h3>
+            <span class="small" data-i18n="disc.why.sub">Auditable score</span>
           </div>
           <div class="why-target">
             <div class="why-target-thumb"></div>
@@ -501,8 +501,8 @@
 
         <div class="why-panel">
           <div class="why-panel-head">
-            <h3>Why these acts?</h3>
-            <span class="small">Booking radar score</span>
+            <h3 data-i18n="disc.why2.h">Why these acts?</h3>
+            <span class="small" data-i18n="disc.why2.sub">Booking radar score</span>
           </div>
           <div class="why-target">
             <div class="why-target-thumb"></div>
@@ -562,8 +562,8 @@
 
         <div class="why-panel">
           <div class="why-panel-head">
-            <h3>Audience signal</h3>
-            <span class="small">From your past shows</span>
+            <h3 data-i18n="disc.why3.h">Audience signal</h3>
+            <span class="small" data-i18n="disc.why3.sub">From your past shows</span>
           </div>
           <div class="why-target">
             <div class="why-target-thumb" style="background:linear-gradient(135deg,var(--r-fan),var(--r-promoter))"></div>
@@ -590,25 +590,25 @@
   <!-- WHY-THIS TRANSPARENCY -->
   <section class="section">
     <div class="section-head">
-      <div class="section-eyebrow">04 · Transparency by default</div>
-      <h2 class="t-h2">Every recommendation <em>shows its math.</em></h2>
-      <p class="lede">If you don't know why something was recommended, you can't tell if you've been manipulated. iHYPE shows the four signals that drove every ranking — and never hides paid placement.</p>
+      <div class="section-eyebrow" data-i18n="disc.s4.eyebrow">04 · Transparency by default</div>
+      <h2 class="t-h2" data-i18n="disc.s4.h2">Every recommendation <em>shows its math.</em></h2>
+      <p class="lede" data-i18n="disc.s4.lede">If you don't know why something was recommended, you can't tell if you've been manipulated. iHYPE shows the four signals that drove every ranking — and never hides paid placement.</p>
     </div>
 
     <div class="three-up">
       <div>
         <div class="tu-num">04</div>
-        <div class="tu-title">Signal weights are public.</div>
+        <div class="tu-title" data-i18n="disc.tu1.title">Signal weights are public.</div>
         <div class="tu-desc">Taste 40%, geo 25%, social 20%, momentum 15%. Posted in the docs, with a changelog every time the board votes a change.</div>
       </div>
       <div>
         <div class="tu-num">$0</div>
-        <div class="tu-title">Sponsored slots are labelled.</div>
+        <div class="tu-title" data-i18n="disc.tu2.title">Sponsored slots are labelled.</div>
         <div class="tu-desc">When a music ad reaches a recommendation surface, it's tagged "Sponsored," appears at position 4+, and never displaces top organic results.</div>
       </div>
       <div>
         <div class="tu-num">∞</div>
-        <div class="tu-title">You can audit anyone.</div>
+        <div class="tu-title" data-i18n="disc.tu3.title">You can audit anyone.</div>
         <div class="tu-desc">Tap "why this?" on any recommendation. See the breakdown. Disagree? Flag it — flags route to public moderation review.</div>
       </div>
     </div>

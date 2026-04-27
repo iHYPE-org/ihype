@@ -124,21 +124,21 @@
 <div class="page">
 
   <section class="hero">
-    <div class="hero-eyebrow"><span class="dot"></span> Tickets · 45/45/10 split · zero platform fee</div>
-    <h1 class="t-h1">Buy a ticket. <em>Pay the people who made the show.</em></h1>
-    <p class="hero-lede">One component, four roles. Fans buy. Venues scan at the door. Promoters track the affiliate share they earned. Artists watch their cut clear in real time.</p>
+    <div class="hero-eyebrow"><span class="dot"></span> <span data-i18n="tick.hero.eyebrow">Tickets · 45/45/10 split · zero platform fee</span></div>
+    <h1 class="t-h1" data-i18n="tick.hero.h1">Buy a ticket. <em>Pay the people who made the show.</em></h1>
+    <p class="hero-lede" data-i18n="tick.hero.lede">One component, four roles. Fans buy. Venues scan at the door. Promoters track the affiliate share they earned. Artists watch their cut clear in real time.</p>
   </section>
 
   <section class="section">
     <div class="section-head">
-      <div class="section-eyebrow">01 · Pick your ticket</div>
+      <div class="section-eyebrow" data-i18n="tick.s1.eyebrow">01 · Pick your ticket</div>
       <h2 class="t-h2">Wreckage Tour · <em>Phantom Ridge</em></h2>
       <p class="lede">State Theatre · Portland, ME · 22 Jun · doors 8pm</p>
     </div>
 
     <div class="tiers" id="tierPicker">
       <div class="tier" data-tier="ga">
-        <div class="tier-name">General admission</div>
+        <div class="tier-name" data-i18n="tick.tier.ga">General admission</div>
         <div class="tier-price"><span class="currency">$</span>35</div>
         <div class="tier-perks">
           <div><span class="check">✓</span><span>Floor / standing</span></div>
@@ -148,7 +148,7 @@
         <div class="tier-foot">820 / 1,200 sold</div>
       </div>
       <div class="tier selected" data-tier="reserved">
-        <div class="tier-name">Reserved seat</div>
+        <div class="tier-name" data-i18n="tick.tier.reserved">Reserved seat</div>
         <div class="tier-price"><span class="currency">$</span>45</div>
         <div class="tier-perks">
           <div><span class="check">✓</span><span>Mezzanine + balcony</span></div>
@@ -159,7 +159,7 @@
         <div class="tier-foot">340 / 600 sold</div>
       </div>
       <div class="tier" data-tier="vip">
-        <div class="tier-name">VIP · meet the band</div>
+        <div class="tier-name" data-i18n="tick.tier.vip">VIP · meet the band</div>
         <div class="tier-price"><span class="currency">$</span>95</div>
         <div class="tier-perks">
           <div><span class="check">✓</span><span>Soundcheck access · 6pm</span></div>
@@ -174,27 +174,27 @@
 
   <section class="section">
     <div class="section-head">
-      <div class="section-eyebrow">02 · Checkout</div>
-      <h2 class="t-h2">Books on the table.</h2>
-      <p class="lede">Every line item shown. iHYPE takes nothing. Card processing and tax are pass-throughs to Stripe and your state.</p>
+      <div class="section-eyebrow" data-i18n="tick.s2.eyebrow">02 · Checkout</div>
+      <h2 class="t-h2" data-i18n="tick.s2.h2">Books on the table.</h2>
+      <p class="lede" data-i18n="tick.s2.lede">Every line item shown. iHYPE takes nothing. Card processing and tax are pass-throughs to Stripe and your state.</p>
     </div>
 
     <div class="checkout-grid">
       <div class="checkout-form">
-        <h3 class="t-h3" style="margin-bottom:.4rem">Your details</h3>
-        <p class="t-small" style="margin-bottom:1.4rem">Email and phone only. We'll send the ticket QR to both.</p>
+        <h3 class="t-h3" style="margin-bottom:.4rem" data-i18n="tick.form.details.h">Your details</h3>
+        <p class="t-small" style="margin-bottom:1.4rem" data-i18n="tick.form.details.sub">Email and phone only. We'll send the ticket QR to both.</p>
         <div class="field">
-          <label class="field-label">Email</label>
+          <label class="field-label" data-i18n="tick.form.email">Email</label>
           <div class="field-input"><input type="email" value="maya@example.com"></div>
         </div>
         <div class="field">
-          <label class="field-label">Phone (for door scan)</label>
+          <label class="field-label" data-i18n="tick.form.phone">Phone (for door scan)</label>
           <div class="field-input"><input type="tel" value="+1 (207) 555-4302"></div>
         </div>
-        <h3 class="t-h3" style="margin:1.6rem 0 .4rem">Payment</h3>
-        <p class="t-small" style="margin-bottom:1.4rem">Processed by Stripe. We never see or store your card.</p>
+        <h3 class="t-h3" style="margin:1.6rem 0 .4rem" data-i18n="tick.form.payment.h">Payment</h3>
+        <p class="t-small" style="margin-bottom:1.4rem" data-i18n="tick.form.payment.sub">Processed by Stripe. We never see or store your card.</p>
         <div class="field">
-          <label class="field-label">Card number</label>
+          <label class="field-label" data-i18n="tick.form.card">Card number</label>
           <div class="field-input"><input type="text" value="•••• •••• •••• 4242"></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
@@ -213,15 +213,15 @@
           <div class="receipt-when">Reserved · State Theatre · 22 Jun</div>
         </div>
         <div class="receipt-row total"><span>Ticket price</span><span>$45.00</span></div>
-        <div class="receipt-section">Where this goes</div>
+        <div class="receipt-section" data-i18n="receipt.label.goes">Where this goes</div>
         <div class="receipt-row split"><span>Phantom Ridge · artist (45%)</span><span>+ $20.25</span></div>
         <div class="receipt-row split"><span>State Theatre · venue (45%)</span><span>+ $20.25</span></div>
         <div class="receipt-row split"><span>Disco Mortis · promoter (10%)</span><span>+ $4.50</span></div>
-        <div class="receipt-row zero"><span>iHYPE platform fee</span><span>$0.00</span></div>
-        <div class="receipt-section">Pass-through (not ours)</div>
+        <div class="receipt-row zero"><span data-i18n="receipt.label.fee">iHYPE platform fee</span><span>$0.00</span></div>
+        <div class="receipt-section" data-i18n="receipt.label.pass">Pass-through (not ours)</div>
         <div class="receipt-row passthrough"><span>Stripe · 2.9% + $0.30</span><span>+ $1.61</span></div>
         <div class="receipt-row passthrough"><span>Sales tax · ME 5.5%</span><span>+ $2.48</span></div>
-        <div class="receipt-final"><span>Total charged</span><span>$49.09</span></div>
+        <div class="receipt-final"><span data-i18n="receipt.label.total">Total charged</span><span>$49.09</span></div>
         <div class="receipt-foot">Of every dollar you pay, <strong>$45 goes to the people who made this show.</strong></div>
       </div>
     </div>
@@ -229,8 +229,8 @@
 
   <section class="section">
     <div class="section-head">
-      <div class="section-eyebrow">03 · Your ticket</div>
-      <h2 class="t-h2">Scan at the door. <em>+10 HYPE on entry.</em></h2>
+      <div class="section-eyebrow" data-i18n="tick.s3.eyebrow">03 · Your ticket</div>
+      <h2 class="t-h2" data-i18n="tick.s3.h2">Scan at the door. <em>+10 HYPE on entry.</em></h2>
     </div>
 
     <div class="qr-ticket" style="max-width:600px;margin:0 auto">
@@ -264,16 +264,16 @@
 
   <section class="section">
     <div class="section-head">
-      <div class="section-eyebrow">04 · Same component, four roles</div>
-      <h2 class="t-h2">What you see <em>depends on who you are.</em></h2>
-      <p class="lede">The ticket card adapts to your role context. Fans see the QR. Venues see the door scanner. Promoters see affiliate revenue. Artists see payout share.</p>
+      <div class="section-eyebrow" data-i18n="tick.s4.eyebrow">04 · Same component, four roles</div>
+      <h2 class="t-h2" data-i18n="tick.s4.h2">What you see <em>depends on who you are.</em></h2>
+      <p class="lede" data-i18n="tick.s4.lede">The ticket card adapts to your role context. Fans see the QR. Venues see the door scanner. Promoters see affiliate revenue. Artists see payout share.</p>
     </div>
 
     <div class="dash-tabs" id="dashTabs">
-      <button class="fan active" data-view="fan"><span class="dot"></span>As Fan</button>
-      <button class="venue" data-view="venue"><span class="dot"></span>As Venue</button>
-      <button class="promoter" data-view="promoter"><span class="dot"></span>As Promoter</button>
-      <button class="artist" data-view="artist"><span class="dot"></span>As Artist</button>
+      <button class="fan active" data-view="fan"><span class="dot"></span><span data-i18n="tick.role.fan">As Fan</span></button>
+      <button class="venue" data-view="venue"><span class="dot"></span><span data-i18n="tick.role.venue">As Venue</span></button>
+      <button class="promoter" data-view="promoter"><span class="dot"></span><span data-i18n="tick.role.promoter">As Promoter</span></button>
+      <button class="artist" data-view="artist"><span class="dot"></span><span data-i18n="tick.role.artist">As Artist</span></button>
     </div>
 
     <div class="dash-view active" data-view="fan">
