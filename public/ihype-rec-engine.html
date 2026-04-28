@@ -3,32 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Recommendation Engine · iHYPE.org</title>
+<title>Recommendation Engine · iHYPE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/ihype-shared.css">
 <style>
-/* Architecture diagram */
+/* ── Architecture card ─────────────────────────────────────── */
 .arch-card{padding:2rem 2.2rem;background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--r-lg)}
 .arch-flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:1rem;align-items:center;margin-bottom:2rem}
 .arch-node{padding:1.4rem 1.2rem;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-md);text-align:center}
-.arch-node.inputs{border-color:rgba(31,135,130,.3);background:linear-gradient(135deg,rgba(31,135,130,.05),var(--bg-2) 50%)}
-.arch-node.engine{border-color:var(--accent);background:linear-gradient(135deg,rgba(255,80,41,.08),var(--bg-2) 50%);transform:scale(1.04)}
-.arch-node.outputs{border-color:rgba(122,79,181,.3);background:linear-gradient(135deg,rgba(122,79,181,.05),var(--bg-2) 50%)}
+.arch-node.inputs{border-color:rgba(31,135,130,.3);background:linear-gradient(135deg,rgba(31,135,130,.05),var(--bg-2) 60%)}
+.arch-node.engine{border-color:var(--accent);background:linear-gradient(135deg,rgba(216,58,22,.08),var(--bg-2) 60%);transform:scale(1.04)}
+.arch-node.outputs{border-color:rgba(122,79,181,.3);background:linear-gradient(135deg,rgba(122,79,181,.05),var(--bg-2) 60%)}
 .arch-node h4{font-family:var(--f-d);font-size:1rem;font-weight:600;margin-bottom:.4rem}
-.arch-node .lbl{font-family:var(--f-m);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-bottom:.6rem}
-.arch-node ul{list-style:none;font-size:.78rem;color:var(--ink-2);line-height:1.55;text-align:left;display:flex;flex-direction:column;gap:.25rem;margin-top:.5rem}
+.arch-node .lbl{font-family:var(--f-m);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);font-weight:600;margin-bottom:.6rem;display:block}
+.arch-node ul{list-style:none;font-size:.78rem;color:var(--ink-2);line-height:1.55;text-align:left;display:flex;flex-direction:column;gap:.2rem;margin-top:.5rem}
 .arch-node ul li{display:flex;gap:.4rem;align-items:start}
-.arch-node ul li::before{content:'·';color:var(--ink-4);font-weight:700;flex-shrink:0;margin-top:-.1rem}
-.arch-arrow{font-family:var(--f-d);color:var(--ink-3);font-size:1.4rem}
-
+.arch-node ul li::before{content:'·';color:var(--ink-4);font-weight:700;flex-shrink:0}
+.arch-arrow{color:var(--ink-3);font-size:1.4rem;text-align:center}
 .arch-principles{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem;padding-top:1.6rem;border-top:1px solid var(--line)}
 .arch-principle{padding:1rem 1.1rem;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-md)}
 .arch-principle h5{font-family:var(--f-d);font-size:.92rem;font-weight:600;margin-bottom:.3rem}
-.arch-principle p{font-size:.8rem;color:var(--ink-2);line-height:1.5}
+.arch-principle p{font-size:.8rem;color:var(--ink-2);line-height:1.5;margin:0}
 
-/* Geo cascade */
+/* ── Geo cascade ───────────────────────────────────────────── */
 .cascade-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem;margin-bottom:1.5rem}
 .cascade-tier{padding:1.4rem 1.5rem;background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--r-lg);position:relative;overflow:hidden}
 .cascade-tier::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
@@ -44,107 +43,127 @@
 .cascade-name{font-family:var(--f-d);font-size:1.05rem;font-weight:600;margin-bottom:.25rem}
 .cascade-radius{font-family:var(--f-m);font-size:.7rem;color:var(--ink-3);margin-bottom:.85rem;padding-bottom:.85rem;border-bottom:1px solid var(--line);font-weight:500;letter-spacing:.04em}
 .cascade-desc{font-size:.82rem;color:var(--ink-2);line-height:1.55}
-
-.formula-card{padding:1.6rem 1.8rem;background:var(--bg-2);border:1px dashed var(--line-3);border-radius:var(--r-lg);font-family:var(--f-m);font-size:.86rem;color:var(--ink-2);line-height:1.7;text-align:center}
+.formula-card{padding:1.4rem 1.8rem;background:var(--bg-2);border:1px dashed var(--line-3);border-radius:var(--r-lg);font-family:var(--f-m);font-size:.86rem;color:var(--ink-2);line-height:1.7;text-align:center}
 .formula-card strong{color:var(--ink);font-weight:600}
 .formula-card em{font-style:normal;color:var(--accent);font-weight:600}
-.formula-tags{display:flex;justify-content:center;gap:.4rem;flex-wrap:wrap;margin-top:.85rem;padding-top:.85rem;border-top:1px dashed var(--line-2)}
 
-/* Role tabs (the 4 lenses) */
-.lens-tabs{display:flex;background:var(--bg-2);border:1px solid var(--line);border-radius:99px;padding:.3rem;margin-bottom:1.5rem;width:fit-content;flex-wrap:wrap;gap:.2rem}
-.lens-tab{padding:.5rem 1.1rem;border-radius:99px;font-size:.85rem;font-weight:500;color:var(--ink-2);transition:all .15s;display:flex;align-items:center;gap:.5rem}
-.lens-tab .dot{width:8px;height:8px;border-radius:50%}
+/* ── Lens tabs ─────────────────────────────────────────────── */
+.lens-bar{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.lens-tabs{display:flex;background:var(--bg-2);border:1px solid var(--line);border-radius:99px;padding:.3rem;gap:.15rem;flex-wrap:wrap}
+.lens-tab{padding:.46rem 1.1rem;border-radius:99px;font-size:.85rem;font-weight:500;color:var(--ink-2);transition:all .15s;display:flex;align-items:center;gap:.45rem;border:none;background:none;cursor:pointer}
+.lens-tab .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .lens-tab.fan .dot{background:var(--r-fan)}
 .lens-tab.artist .dot{background:var(--r-artist)}
 .lens-tab.venue .dot{background:var(--r-venue)}
 .lens-tab.promoter .dot{background:var(--r-promoter)}
 .lens-tab.active{background:var(--ink);color:var(--bg)}
 .lens-tab.active .dot{background:#fff}
+.lens-search{display:flex;align-items:center;gap:.5rem;background:var(--bg-2);border:1px solid var(--line-2);border-radius:99px;padding:.38rem .9rem;font-size:.86rem;flex-shrink:0}
+.lens-search input{background:none;border:none;outline:none;color:var(--ink);font:inherit;width:160px}
+.lens-search input::placeholder{color:var(--ink-3)}
+
 .lens-view{display:none}
 .lens-view.active{display:block}
 
-/* Lens layout: feed left, why panel right */
-.lens-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:1rem}
-.lens-feed{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--r-lg);padding:1.6rem 1.7rem}
-.lens-feed-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;flex-wrap:wrap;gap:.6rem}
-.lens-feed-head h3{font-family:var(--f-d);font-size:1.1rem;font-weight:600}
-.lens-feed-head .meta{font-family:var(--f-m);font-size:.76rem;color:var(--ink-3)}
+/* ── Sub-tabs (fan: Artists | Shows) ──────────────────────── */
+.sub-tabs{display:flex;gap:0;margin-bottom:1.2rem;border-bottom:1px solid var(--line)}
+.sub-tab{padding:.45rem 1rem;font-size:.84rem;font-weight:500;color:var(--ink-3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none;cursor:pointer}
+.sub-tab.active{color:var(--ink);border-bottom-color:var(--accent)}
+.sub-view{display:none}
+.sub-view.active{display:block}
 
-.feed-row{display:grid;grid-template-columns:auto 1fr auto;gap:.85rem;padding:.85rem 1rem;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-md);align-items:center;margin-bottom:.5rem;transition:all .15s;cursor:pointer}
-.feed-row:hover{background:var(--bg-2);border-color:var(--line-3);transform:translateX(2px)}
-.feed-thumb{width:42px;height:42px;border-radius:var(--r-sm);background:var(--ink-4);flex-shrink:0}
-.feed-thumb.warm{background:linear-gradient(135deg,#d83a16,#e89060)}
-.feed-thumb.cool{background:linear-gradient(135deg,var(--r-venue),#7fc4c0)}
-.feed-thumb.purple{background:linear-gradient(135deg,var(--r-fan),var(--r-promoter))}
-.feed-thumb.gold{background:linear-gradient(135deg,#ffd86e,#d83a16)}
-.feed-thumb.dark{background:linear-gradient(135deg,#1a1814,#5c5448)}
-.feed-name{font-family:var(--f-d);font-size:.96rem;font-weight:600;margin-bottom:.1rem}
-.feed-why{font-size:.78rem;color:var(--ink-2);line-height:1.4}
-.feed-why strong{color:var(--ink);font-weight:500}
-.feed-tier{font-family:var(--f-m);font-size:.66rem;letter-spacing:.04em;padding:.25rem .55rem;background:var(--bg-2);border:1px solid var(--line-2);border-radius:99px;color:var(--ink-2);font-weight:500;flex-shrink:0}
-.feed-tier.local{color:var(--accent);border-color:rgba(216,58,22,.3)}
-.feed-tier.regional{color:#a08020;border-color:rgba(192,160,64,.3)}
-.feed-tier.national{color:var(--r-fan);border-color:rgba(122,79,181,.3)}
-.feed-tier.global{color:var(--r-venue);border-color:rgba(31,135,130,.3)}
+/* ── Feed layout ───────────────────────────────────────────── */
+.lens-grid{display:grid;grid-template-columns:1.45fr 1fr;gap:1rem;align-items:start}
+.lens-feed{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--r-lg);padding:1.5rem 1.6rem}
+.feed-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.1rem;flex-wrap:wrap;gap:.5rem}
+.feed-head h3{font-family:var(--f-d);font-size:1rem;font-weight:600;margin:0}
+.feed-count{font-family:var(--f-m);font-size:.74rem;color:var(--ink-3)}
+.feed-list{display:flex;flex-direction:column;gap:.45rem}
 
-/* Why-this panel */
-.why-panel{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--r-lg);padding:1.6rem 1.7rem;display:flex;flex-direction:column;gap:1.1rem}
-.why-panel-head{display:flex;align-items:center;justify-content:space-between}
-.why-panel-head h3{font-family:var(--f-d);font-size:1rem;font-weight:600}
-.why-panel-head .small{font-family:var(--f-m);font-size:.7rem;color:var(--ink-3)}
-.why-target{padding:1rem 1.1rem;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-md);display:flex;align-items:center;gap:.85rem}
-.why-target-thumb{width:42px;height:42px;border-radius:var(--r-sm);background:linear-gradient(135deg,#d83a16,#e89060)}
-.why-target .nm{font-family:var(--f-d);font-size:1rem;font-weight:600}
-.why-target .ctx{font-family:var(--f-m);font-size:.7rem;color:var(--ink-3)}
+.feed-row{display:grid;grid-template-columns:40px 1fr auto;gap:.75rem;padding:.75rem .85rem;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-md);align-items:center;cursor:pointer;transition:all .14s;user-select:none}
+.feed-row:hover,.feed-row.selected{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 4%,var(--bg-2))}
+.feed-row.selected{border-color:var(--accent)}
+.feed-thumb{width:40px;height:40px;border-radius:var(--r-sm);flex-shrink:0}
+.feed-name{font-family:var(--f-d);font-size:.93rem;font-weight:600;margin-bottom:.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.feed-sub{font-size:.77rem;color:var(--ink-2);line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.feed-badge{font-family:var(--f-m);font-size:.64rem;letter-spacing:.03em;padding:.2rem .5rem;border-radius:99px;border:1px solid;flex-shrink:0;font-weight:500}
+.feed-badge.local{color:var(--accent);border-color:rgba(216,58,22,.3)}
+.feed-badge.regional{color:#a08020;border-color:rgba(192,160,64,.3)}
+.feed-badge.national{color:var(--r-fan);border-color:rgba(122,79,181,.3)}
+.feed-badge.global{color:var(--r-venue);border-color:rgba(31,135,130,.3)}
+
+.feed-empty{padding:2rem 1rem;text-align:center;color:var(--ink-3);font-size:.86rem;line-height:1.55}
+.feed-empty strong{display:block;color:var(--ink-2);margin-bottom:.3rem;font-family:var(--f-d)}
+
+/* ── Why-this panel ────────────────────────────────────────── */
+.why-panel{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--r-lg);padding:1.5rem 1.6rem;position:sticky;top:5rem;display:flex;flex-direction:column;gap:1rem}
+.why-header{display:flex;align-items:center;justify-content:space-between}
+.why-header h3{font-family:var(--f-d);font-size:1rem;font-weight:600;margin:0}
+.why-label{font-family:var(--f-m);font-size:.7rem;color:var(--ink-3);letter-spacing:.04em}
+.why-prompt{padding:2rem 1rem;text-align:center;color:var(--ink-3);font-size:.84rem;line-height:1.6}
+.why-prompt .icon{font-size:1.6rem;margin-bottom:.5rem}
+.why-subject{padding:.85rem 1rem;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-md);display:flex;align-items:center;gap:.75rem}
+.why-subject-thumb{width:38px;height:38px;border-radius:var(--r-sm);flex-shrink:0}
+.why-subject-name{font-family:var(--f-d);font-size:.95rem;font-weight:600}
+.why-subject-ctx{font-family:var(--f-m);font-size:.7rem;color:var(--ink-3);margin-top:.1rem}
 .why-bars{display:flex;flex-direction:column;gap:.55rem}
-.why-bar-row{display:grid;grid-template-columns:130px 1fr 50px;gap:.8rem;align-items:center;font-size:.82rem}
-.why-bar-row .lbl{color:var(--ink-2);display:flex;align-items:center;gap:.4rem}
-.why-bar-row .lbl .swatch{width:8px;height:8px;border-radius:50%}
-.why-bar-track{height:8px;background:var(--bg-2);border-radius:99px;overflow:hidden;border:1px solid var(--line)}
-.why-bar-fill{height:100%;border-radius:99px}
-.why-bar-row.taste .lbl .swatch,.why-bar-row.taste .why-bar-fill{background:var(--accent)}
-.why-bar-row.geo .lbl .swatch,.why-bar-row.geo .why-bar-fill{background:#c2a040}
-.why-bar-row.social .lbl .swatch,.why-bar-row.social .why-bar-fill{background:var(--r-fan)}
-.why-bar-row.momentum .lbl .swatch,.why-bar-row.momentum .why-bar-fill{background:var(--r-venue)}
-.why-bar-row .pct{font-family:var(--f-m);font-size:.78rem;color:var(--ink);font-weight:600;text-align:right}
+.why-bar-row{display:grid;grid-template-columns:115px 1fr 44px;gap:.65rem;align-items:center;font-size:.81rem}
+.why-bar-lbl{color:var(--ink-2);display:flex;align-items:center;gap:.4rem}
+.why-bar-lbl .swatch{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.why-bar-track{height:7px;background:var(--line);border-radius:99px;overflow:hidden}
+.why-bar-fill{height:100%;border-radius:99px;transition:width .3s ease}
+.why-bar-pct{font-family:var(--f-m);font-size:.76rem;color:var(--ink);font-weight:600;text-align:right}
+
+.why-bar-row.sig-taste .swatch,.why-bar-row.sig-taste .why-bar-fill{background:var(--accent)}
+.why-bar-row.sig-geo .swatch,.why-bar-row.sig-geo .why-bar-fill{background:#c2a040}
+.why-bar-row.sig-social .swatch,.why-bar-row.sig-social .why-bar-fill{background:var(--r-fan)}
+.why-bar-row.sig-momentum .swatch,.why-bar-row.sig-momentum .why-bar-fill{background:var(--r-venue)}
+
+.why-formula{padding:.75rem 1rem;background:var(--bg-2);border:1px dashed var(--line-2);border-radius:var(--r-md);font-family:var(--f-m);font-size:.76rem;color:var(--ink-3);line-height:1.55}
+.why-formula strong{color:var(--ink-2)}
 .why-actions{display:flex;gap:.4rem;padding-top:.85rem;border-top:1px solid var(--line)}
-.why-actions button{flex:1;padding:.55rem;border-radius:var(--r-sm);font-size:.78rem;font-weight:500;background:var(--bg-2);border:1px solid var(--line);color:var(--ink-2);transition:all .15s}
-.why-actions button:hover{background:var(--bg-2);border-color:var(--line-3);color:var(--ink)}
+.why-actions button{flex:1;padding:.5rem;border-radius:var(--r-sm);font-size:.77rem;font-weight:500;background:var(--bg-2);border:1px solid var(--line-2);color:var(--ink-2);cursor:pointer;transition:all .14s;font-family:var(--f-d)}
+.why-actions button:hover{border-color:var(--ink-3);color:var(--ink)}
 
-/* Tour planner (artist lens) */
-.tour-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-.tour-card{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--r-lg);padding:1.6rem 1.7rem}
-.tour-stop{display:grid;grid-template-columns:auto 1fr auto;gap:.85rem;padding:.7rem .85rem;background:var(--bg-2);border:1px solid var(--line);border-left:3px solid var(--r-artist);border-radius:var(--r-sm);margin-bottom:.45rem;align-items:center}
-.tour-num{width:30px;height:30px;border-radius:50%;background:var(--r-artist);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--f-d);font-weight:700;font-size:.78rem}
-.tour-city{font-family:var(--f-d);font-size:.95rem;font-weight:600}
-.tour-meta{font-family:var(--f-m);font-size:.7rem;color:var(--ink-3);margin-top:.1rem}
-.tour-stat{font-family:var(--f-m);font-size:.78rem;color:var(--accent-ink);font-weight:600}
-
-/* Booking radar (venue lens) */
+/* ── Booking radar ─────────────────────────────────────────── */
 .radar-list{display:flex;flex-direction:column;gap:.45rem}
-.radar-row{display:grid;grid-template-columns:auto 1fr auto auto;gap:.85rem;padding:.7rem .85rem;background:var(--bg-2);border:1px solid var(--line);border-left:3px solid var(--r-venue);border-radius:var(--r-sm);align-items:center}
-.radar-thumb{width:32px;height:32px;border-radius:var(--r-sm);background:linear-gradient(135deg,#d83a16,#e89060)}
-.radar-name{font-size:.92rem;font-weight:500}
+.radar-row{display:grid;grid-template-columns:36px 1fr auto auto;gap:.7rem;padding:.65rem .85rem;background:var(--bg-2);border:1px solid var(--line);border-left:3px solid var(--r-venue);border-radius:var(--r-sm);align-items:center;cursor:pointer;transition:border-color .14s}
+.radar-row:hover,.radar-row.selected{border-left-color:var(--accent);border-color:var(--accent)}
+.radar-thumb{width:34px;height:34px;border-radius:var(--r-sm)}
+.radar-name{font-size:.9rem;font-weight:500;font-family:var(--f-d)}
 .radar-sub{font-family:var(--f-m);font-size:.7rem;color:var(--ink-3);margin-top:.1rem}
 .radar-fit{font-family:var(--f-m);font-size:.74rem;font-weight:600;color:var(--r-venue)}
-.radar-action{padding:.32rem .7rem;border-radius:99px;font-size:.7rem;background:var(--bg-2);border:1px solid var(--line-2);color:var(--ink-2);font-weight:500;font-family:var(--f-b)}
-.radar-action:hover{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 
-@media (max-width:1100px){
+/* ── Note strip ────────────────────────────────────────────── */
+.note-strip{font-family:var(--f-m);font-size:.74rem;color:var(--ink-3);margin-top:1rem;padding-top:1rem;border-top:1px dashed var(--line);line-height:1.55}
+
+/* ── Three-up (transparency) ───────────────────────────────── */
+.three-up{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem}
+.tu-num{font-family:var(--f-d);font-size:2.8rem;font-weight:800;letter-spacing:-.04em;color:var(--accent);line-height:1;margin-bottom:.4rem}
+.tu-title{font-family:var(--f-d);font-size:1rem;font-weight:600;margin-bottom:.4rem}
+.tu-desc{font-size:.84rem;color:var(--ink-2);line-height:1.55}
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media(max-width:1100px){
   .arch-flow{grid-template-columns:1fr;gap:.7rem}
-  .arch-arrow{transform:rotate(90deg);text-align:center}
-  .arch-principles{grid-template-columns:1fr}
+  .arch-arrow{transform:rotate(90deg)}
+  .arch-principles{grid-template-columns:1fr 1fr}
   .cascade-grid{grid-template-columns:1fr 1fr}
-  .lens-grid,.tour-grid{grid-template-columns:1fr}
-  .why-bar-row{grid-template-columns:110px 1fr 50px}
+  .lens-grid{grid-template-columns:1fr}
+  .why-panel{position:static}
+  .three-up{grid-template-columns:1fr 1fr}
 }
-@media (max-width:680px){
+@media(max-width:680px){
   .cascade-grid{grid-template-columns:1fr}
+  .arch-principles{grid-template-columns:1fr}
+  .three-up{grid-template-columns:1fr}
+  .lens-bar{flex-direction:column;align-items:stretch}
+  .lens-search input{width:100%}
+  .why-bar-row{grid-template-columns:100px 1fr 40px}
 }
 </style>
 </head>
 <body>
-<!-- Animated background -->
 <div class="bg-canvas" aria-hidden="true">
   <div class="bg-orb bg-orb-1"></div>
   <div class="bg-orb bg-orb-2"></div>
@@ -152,23 +171,15 @@
   <div class="bg-grid"></div>
   <div class="bg-noise"></div>
 </div>
+
 <div class="site-shell">
-
-
 <nav class="nav">
   <div class="nav-left">
     <a href="/" style="text-decoration:none;color:inherit"><div class="brand">i<em>HYPE</em></div></a>
-    <div class="nav-links">
-      <a href="/discover" class="nav-link" data-i18n="nav.discover">Discover</a>
-      <a href="/hype" class="nav-link" data-i18n="nav.charts">Charts</a>
-      <a href="/tickets" class="nav-link" data-i18n="nav.shows">Shows</a>
-      <a href="/discover" class="nav-link active" data-i18n="disc.nav.recs">Recommendations</a>
-      <a href="/promise" class="nav-link" data-i18n="nav.promise">The Promise</a>
-    </div>
   </div>
   <div class="nav-right">
-    <button class="a11y-btn" id="openA11y"><span aria-hidden="true">⊙</span><span data-i18n="nav.a11y">Accessibility</span></button>
-    <button class="role-pill fan"><span class="av">M</span><span class="name">Maya</span><span class="ctx">Fan ▾</span></button>
+    <button class="a11y-btn" id="openA11y"><span aria-hidden="true">⊙</span><span>Accessibility</span></button>
+    <button class="role-pill fan"><span class="av">?</span><span class="name">Account</span><span class="ctx">▾</span></button>
   </div>
 </nav>
 
@@ -176,17 +187,17 @@
 
   <!-- HERO -->
   <section class="hero">
-    <div class="hero-eyebrow"><span class="dot"></span> <span data-i18n="disc.hero.eyebrow">The recommendation engine · transparent by design</span></div>
-    <h1 class="t-h1" data-i18n="disc.hero.h1">Discovery <em>by place and momentum.</em></h1>
-    <p class="hero-lede" data-i18n="disc.hero.lede">The algorithm reads three signals: what's hyped near you, what your friends love, and what's heating up across genres you've earned in. Every recommendation shows its math. Nothing pays for placement.</p>
+    <div class="hero-eyebrow"><span class="dot"></span>Recommendation Engine · transparent by design</div>
+    <h1 class="t-h1">Discovery <em>by place and momentum.</em></h1>
+    <p class="hero-lede">Three signals: what's hyped near you, what's gaining momentum, and what matches your taste. Every recommendation shows its math. Nothing pays for placement.</p>
   </section>
 
-  <!-- ARCHITECTURE -->
+  <!-- 01 · HOW IT WORKS -->
   <section class="section">
     <div class="section-head">
-      <div class="section-eyebrow" data-i18n="disc.s1.eyebrow">01 · How it works</div>
-      <h2 class="t-h2" data-i18n="disc.s1.h2">Three inputs. <em>One engine.</em> Every output explainable.</h2>
-      <p class="lede" data-i18n="disc.s1.lede">A simple weighted blend you can audit. No black box. No paid boost. Geographic relevance, social proof, and HYPE momentum — that's the whole formula.</p>
+      <div class="section-eyebrow">01 · How it works</div>
+      <h2 class="t-h2">Three inputs. <em>One engine.</em> Every output explainable.</h2>
+      <p class="lede">A weighted blend you can audit at any time. Geographic relevance, social proof, and HYPE momentum — that's the whole formula. No black box. No paid boost.</p>
     </div>
 
     <div class="arch-card">
@@ -196,22 +207,21 @@
           <h4>What we read</h4>
           <ul>
             <li>Your county &amp; region</li>
-            <li>Songs you've finished</li>
-            <li>Friends &amp; their HYPE</li>
-            <li>Active HYPE on entities</li>
-            <li>Current geographic velocity</li>
+            <li>Content you've finished</li>
+            <li>HYPE on artists &amp; shows</li>
+            <li>Momentum velocity (7-day)</li>
           </ul>
         </div>
         <div class="arch-arrow">→</div>
         <div class="arch-node engine">
-          <span class="lbl">Engine</span>
-          <h4>The blend</h4>
+          <span class="lbl">The blend</span>
+          <h4>Weights (public)</h4>
           <ul>
             <li>40% taste match</li>
             <li>25% geographic weight</li>
             <li>20% social proof</li>
-            <li>15% momentum velocity</li>
-            <li>0% paid placement</li>
+            <li>15% momentum</li>
+            <li style="color:var(--accent);font-weight:600">0% paid placement</li>
           </ul>
         </div>
         <div class="arch-arrow">→</div>
@@ -219,504 +229,795 @@
           <span class="lbl">Outputs</span>
           <h4>What you see</h4>
           <ul>
-            <li>Ranked artist feed</li>
+            <li>Ranked artist feed (fans)</li>
             <li>Show recommendations</li>
-            <li>Tour-friendly venues (artists)</li>
-            <li>Booking radar (venues)</li>
-            <li>Audience matches (promoters)</li>
+            <li>Booking targets (venues)</li>
+            <li>Artist matches (promoters)</li>
           </ul>
         </div>
       </div>
 
       <div class="arch-principles">
         <div class="arch-principle">
-          <h5 data-i18n="disc.prin.audit.h">Auditable</h5>
-          <p>Every recommendation exposes its weight breakdown. Click the "why this?" panel to see the four signals at the score they hit.</p>
+          <h5>Auditable</h5>
+          <p>Click "Why this?" on any recommendation and see the four signal scores that produced that ranking.</p>
         </div>
         <div class="arch-principle">
-          <h5 data-i18n="disc.prin.mono.h">Anti-monoculture</h5>
-          <p>The cascade prevents global hits from drowning local scenes. Top three slots are reserved for sub-1,000-HYPE entities at fan request.</p>
+          <h5>Anti-monoculture</h5>
+          <p>Geographic weighting prevents global hits from crowding out your local scene. The closer the act, the heavier the weight.</p>
         </div>
         <div class="arch-principle">
-          <h5 data-i18n="disc.prin.unmoney.h">Unmonetized</h5>
-          <p>No artist, label, or promoter can pay to rank higher. Sponsored slots appear at position 4+ and are labelled. Always.</p>
+          <h5>No paid placement</h5>
+          <p>Sponsored slots appear after organic results and are always labelled. No artist or label can buy a higher rank.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- GEOGRAPHIC CASCADE -->
+  <!-- 02 · GEO CASCADE -->
   <section class="section">
     <div class="section-head">
-      <div class="section-eyebrow" data-i18n="disc.s2.eyebrow">02 · Geographic cascade</div>
-      <h2 class="t-h2" data-i18n="disc.s2.h2">Local first. <em>Global last.</em></h2>
-      <p class="lede" data-i18n="disc.s2.lede">Every entity in a recommendation is weighted by how close it is to you. The closer the source, the heavier the count. This is what keeps your feed from being national algorithm soup.</p>
+      <div class="section-eyebrow">02 · Geographic cascade</div>
+      <h2 class="t-h2">Local first. <em>Global last.</em></h2>
+      <p class="lede">Every recommendation is weighted by proximity. The closer the source, the stronger the signal. This is what keeps your feed from becoming national algorithm soup.</p>
     </div>
 
     <div class="cascade-grid">
       <div class="cascade-tier t1">
         <div class="cascade-weight">×1.0</div>
-        <div class="cascade-name" data-i18n="disc.geo.local">Local</div>
+        <div class="cascade-name">Local</div>
         <div class="cascade-radius">Your county · ~30 mi</div>
-        <div class="cascade-desc">HYPE from your county counts at full weight. The smallest, most local artists get the strongest signal.</div>
+        <div class="cascade-desc">HYPE from your county counts at full weight. The strongest signal for small, local artists.</div>
       </div>
       <div class="cascade-tier t2">
         <div class="cascade-weight">×0.7</div>
-        <div class="cascade-name" data-i18n="disc.geo.regional">Regional</div>
+        <div class="cascade-name">Regional</div>
         <div class="cascade-radius">Your state · ~150 mi</div>
         <div class="cascade-desc">Drive-distance shows and regional acts. Where your scene tends to tour.</div>
       </div>
       <div class="cascade-tier t3">
         <div class="cascade-weight">×0.4</div>
-        <div class="cascade-name" data-i18n="disc.geo.national">National</div>
+        <div class="cascade-name">National</div>
         <div class="cascade-radius">Your country</div>
-        <div class="cascade-desc">Broad-market acts. Discounted so they don't crowd out hometown shows.</div>
+        <div class="cascade-desc">Broad-market acts — discounted so they don't crowd out local shows.</div>
       </div>
       <div class="cascade-tier t4">
         <div class="cascade-weight">×0.2</div>
-        <div class="cascade-name" data-i18n="disc.geo.global">Global</div>
-        <div class="cascade-radius">Anywhere on Earth</div>
+        <div class="cascade-name">Global</div>
+        <div class="cascade-radius">Anywhere</div>
         <div class="cascade-desc">International discoveries. Always available — never the dominant signal.</div>
       </div>
     </div>
 
     <div class="formula-card">
-      Adjusted HYPE for ranking = <strong>raw HYPE</strong> × <em>geographic weight</em> × <strong>recency factor</strong>
-      <div class="formula-tags">
-        <span class="tag">Where you are: Cumberland County, ME</span>
-        <span class="tag tag-accent">Local: Portland Metro · ×1.0</span>
+      Adjusted HYPE = <strong>raw HYPE</strong> × <em>geographic weight</em> × <strong>recency factor</strong>
+      <div style="font-size:.78rem;margin-top:.65rem;color:var(--ink-3)">
+        Geographic weight is determined by the distance tier shown above.<br>
+        Recency factor decays linearly over 90 days — fresh HYPE counts more.
       </div>
     </div>
   </section>
 
-  <!-- ROLE LENSES -->
+  <!-- 03 · ROLE LENSES -->
   <section class="section">
     <div class="section-head">
-      <div class="section-eyebrow" data-i18n="disc.s3.eyebrow">03 · Four role lenses</div>
-      <h2 class="t-h2" data-i18n="disc.s3.h2">Same engine. <em>Different question.</em></h2>
-      <p class="lede" data-i18n="disc.s3.lede">Fans ask "what should I listen to?" Artists ask "where should I tour?" Venues ask "who should I book?" Promoters ask "who should I program?" One model, four queries.</p>
+      <div class="section-eyebrow">03 · Your lens</div>
+      <h2 class="t-h2">Same engine. <em>Different question.</em></h2>
+      <p class="lede">Fans ask "what should I listen to?" Artists ask "where should I play?" Venues ask "who should I book?" Promoters ask "who fits my show?" Select your lens below.</p>
     </div>
 
-    <div class="lens-tabs" id="lensTabs">
-      <button class="lens-tab fan active" data-lens="fan"><span class="dot"></span>Fan</button>
-      <button class="lens-tab artist" data-lens="artist"><span class="dot"></span>Artist</button>
-      <button class="lens-tab venue" data-lens="venue"><span class="dot"></span>Venue</button>
-      <button class="lens-tab promoter" data-lens="promoter"><span class="dot"></span>Promoter</button>
+    <div class="lens-bar">
+      <div class="lens-tabs" id="lensTabs" role="tablist">
+        <button class="lens-tab fan active" data-lens="fan" role="tab" aria-selected="true">
+          <span class="dot"></span>Fan
+        </button>
+        <button class="lens-tab artist" data-lens="artist" role="tab" aria-selected="false">
+          <span class="dot"></span>Artist
+        </button>
+        <button class="lens-tab venue" data-lens="venue" role="tab" aria-selected="false">
+          <span class="dot"></span>Venue
+        </button>
+        <button class="lens-tab promoter" data-lens="promoter" role="tab" aria-selected="false">
+          <span class="dot"></span>Promoter
+        </button>
+      </div>
+      <div class="lens-search" aria-label="Filter results">
+        <span style="color:var(--ink-3);font-size:.9rem">⌕</span>
+        <input id="lensFilter" type="search" placeholder="Filter by name…" autocomplete="off">
+      </div>
     </div>
 
-    <!-- FAN LENS -->
-    <div class="lens-view active" data-lens="fan">
+    <!-- ─── FAN LENS ─────────────────────────────────────────── -->
+    <div class="lens-view active" id="lens-fan" role="tabpanel">
+      <div class="sub-tabs">
+        <button class="sub-tab active" data-sub="artists">Artists</button>
+        <button class="sub-tab" data-sub="shows">Shows</button>
+      </div>
+
       <div class="lens-grid">
-        <div class="lens-feed">
-          <div class="lens-feed-head">
-            <h3>Artists · ranked by HYPE</h3>
-            <span class="meta" id="fan-feed-meta">Loading…</span>
-          </div>
-          <div id="fan-feed-list">
-            <div class="feed-row skeleton" style="height:66px;border-radius:var(--r-md)"></div>
-            <div class="feed-row skeleton" style="height:66px;border-radius:var(--r-md);opacity:.8;margin-top:.5rem"></div>
-            <div class="feed-row skeleton" style="height:66px;border-radius:var(--r-md);opacity:.6;margin-top:.5rem"></div>
-            <div class="feed-row skeleton" style="height:66px;border-radius:var(--r-md);opacity:.4;margin-top:.5rem"></div>
-            <div class="feed-row skeleton" style="height:66px;border-radius:var(--r-md);opacity:.25;margin-top:.5rem"></div>
-          </div>
-        </div>
-
-        <div class="why-panel">
-          <div class="why-panel-head">
-            <h3 data-i18n="disc.why.h">Why this?</h3>
-            <span class="small" data-i18n="disc.why.sub">Auditable score</span>
-          </div>
-          <div class="why-target">
-            <div class="why-target-thumb"></div>
-            <div>
-              <div class="nm">Cassette Maker</div>
-              <div class="ctx">Recommended at position 1 · score 0.847</div>
+        <div>
+          <!-- Artists sub-view -->
+          <div class="sub-view active" id="fan-artists">
+            <div class="lens-feed">
+              <div class="feed-head">
+                <h3>Artists · ranked by HYPE</h3>
+                <span class="feed-count" id="fan-artist-count">Loading…</span>
+              </div>
+              <div class="feed-list" id="fan-feed-list">
+                <div class="feed-row skeleton" style="height:62px"></div>
+                <div class="feed-row skeleton" style="height:62px;opacity:.8"></div>
+                <div class="feed-row skeleton" style="height:62px;opacity:.6"></div>
+                <div class="feed-row skeleton" style="height:62px;opacity:.4"></div>
+                <div class="feed-row skeleton" style="height:62px;opacity:.25"></div>
+              </div>
             </div>
           </div>
-          <div class="why-bars">
-            <div class="why-bar-row taste"><span class="lbl"><span class="swatch"></span>Taste match</span><div class="why-bar-track"><div class="why-bar-fill" style="width:88%"></div></div><span class="pct">0.88</span></div>
-            <div class="why-bar-row geo"><span class="lbl"><span class="swatch"></span>Geographic</span><div class="why-bar-track"><div class="why-bar-fill" style="width:100%"></div></div><span class="pct">1.00</span></div>
-            <div class="why-bar-row social"><span class="lbl"><span class="swatch"></span>Social proof</span><div class="why-bar-track"><div class="why-bar-fill" style="width:62%"></div></div><span class="pct">0.62</span></div>
-            <div class="why-bar-row momentum"><span class="lbl"><span class="swatch"></span>Momentum</span><div class="why-bar-track"><div class="why-bar-fill" style="width:74%"></div></div><span class="pct">0.74</span></div>
+
+          <!-- Shows sub-view -->
+          <div class="sub-view" id="fan-shows">
+            <div class="lens-feed">
+              <div class="feed-head">
+                <h3>Shows · upcoming &amp; live</h3>
+                <span class="feed-count" id="fan-show-count">Loading…</span>
+              </div>
+              <div class="feed-list" id="fan-show-list">
+                <div class="feed-row skeleton" style="height:62px"></div>
+                <div class="feed-row skeleton" style="height:62px;opacity:.8"></div>
+                <div class="feed-row skeleton" style="height:62px;opacity:.6"></div>
+              </div>
+            </div>
           </div>
-          <div class="why-actions">
-            <button>Less like this</button>
-            <button>More like this</button>
+        </div>
+
+        <!-- Why panel -->
+        <div class="why-panel" id="why-fan">
+          <div class="why-header">
+            <h3>Why this?</h3>
+            <span class="why-label">Auditable score</span>
+          </div>
+          <div class="why-prompt" id="why-fan-prompt">
+            <div class="icon">↖</div>
+            Select any row to see why it was recommended and the score breakdown.
+          </div>
+          <div id="why-fan-detail" style="display:none;flex-direction:column;gap:.9rem">
+            <div class="why-subject">
+              <div class="why-subject-thumb" id="wf-thumb"></div>
+              <div>
+                <div class="why-subject-name" id="wf-name"></div>
+                <div class="why-subject-ctx" id="wf-ctx"></div>
+              </div>
+            </div>
+            <div class="why-bars">
+              <div class="why-bar-row sig-taste">
+                <span class="why-bar-lbl"><span class="swatch"></span>Taste match</span>
+                <div class="why-bar-track"><div class="why-bar-fill" id="wf-taste-fill" style="width:0%"></div></div>
+                <span class="why-bar-pct" id="wf-taste-pct">—</span>
+              </div>
+              <div class="why-bar-row sig-geo">
+                <span class="why-bar-lbl"><span class="swatch"></span>Geographic</span>
+                <div class="why-bar-track"><div class="why-bar-fill" id="wf-geo-fill" style="width:0%"></div></div>
+                <span class="why-bar-pct" id="wf-geo-pct">—</span>
+              </div>
+              <div class="why-bar-row sig-social">
+                <span class="why-bar-lbl"><span class="swatch"></span>Social proof</span>
+                <div class="why-bar-track"><div class="why-bar-fill" id="wf-social-fill" style="width:0%"></div></div>
+                <span class="why-bar-pct" id="wf-social-pct">—</span>
+              </div>
+              <div class="why-bar-row sig-momentum">
+                <span class="why-bar-lbl"><span class="swatch"></span>Momentum</span>
+                <div class="why-bar-track"><div class="why-bar-fill" id="wf-momentum-fill" style="width:0%"></div></div>
+                <span class="why-bar-pct" id="wf-momentum-pct">—</span>
+              </div>
+            </div>
+            <div class="why-formula">
+              <strong>Final score</strong> = (taste × 0.40) + (geo × 0.25) + (social × 0.20) + (momentum × 0.15)
+            </div>
+            <div class="why-actions">
+              <button onclick="nudge('less')">Less like this</button>
+              <button onclick="nudge('more')">More like this</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ARTIST LENS -->
-    <div class="lens-view" data-lens="artist">
-      <div class="tour-grid">
-        <div class="tour-card">
-          <div class="lens-feed-head" style="margin-bottom:1.2rem">
-            <h3 style="font-family:var(--f-d);font-size:1.1rem;font-weight:600">Suggested tour · 6 stops</h3>
-            <span class="tag" style="background:rgba(216,58,22,.08);border-color:rgba(216,58,22,.28);color:var(--r-artist)">Phantom Ridge · Wreckage</span>
-          </div>
-          <div class="tour-stop">
-            <div class="tour-num">1</div>
-            <div><div class="tour-city">Portland, ME</div><div class="tour-meta">Home · State Theatre · 22 Jun</div></div>
-            <span class="tour-stat">8.4k HYPE</span>
-          </div>
-          <div class="tour-stop">
-            <div class="tour-num">2</div>
-            <div><div class="tour-city">Boston, MA</div><div class="tour-meta">Crystal Ballroom · 14 Jul</div></div>
-            <span class="tour-stat">6.1k HYPE</span>
-          </div>
-          <div class="tour-stop">
-            <div class="tour-num">3</div>
-            <div><div class="tour-city">Burlington, VT</div><div class="tour-meta">Higher Ground · 19 Jul</div></div>
-            <span class="tour-stat">2.9k HYPE</span>
-          </div>
-          <div class="tour-stop">
-            <div class="tour-num">4</div>
-            <div><div class="tour-city">Brooklyn, NY</div><div class="tour-meta">Music Hall of Williamsburg · 26 Jul</div></div>
-            <span class="tour-stat">5.3k HYPE</span>
-          </div>
-          <div class="tour-stop">
-            <div class="tour-num">5</div>
-            <div><div class="tour-city">Philadelphia, PA</div><div class="tour-meta">Underground Arts · 02 Aug</div></div>
-            <span class="tour-stat">3.7k HYPE</span>
-          </div>
-          <div class="tour-stop">
-            <div class="tour-num">6</div>
-            <div><div class="tour-city">Washington, DC</div><div class="tour-meta">9:30 Club · 09 Aug</div></div>
-            <span class="tour-stat">4.2k HYPE</span>
-          </div>
-          <div style="font-family:var(--f-m);font-size:.74rem;color:var(--ink-3);margin-top:1rem;padding-top:1rem;border-top:1px dashed var(--line)">↑ Routed by HYPE concentration + drive distance · projected 78% avg fill</div>
-        </div>
-
-        <div class="tour-card">
-          <div class="lens-feed-head" style="margin-bottom:1.2rem">
-            <h3 style="font-family:var(--f-d);font-size:1.1rem;font-weight:600">Hot cities · ranked by your audience</h3>
-            <span class="tag">Where your music is hyped</span>
-          </div>
-          <div id="artist-cities-list">
-            <div class="feed-row skeleton" style="height:60px;border-radius:var(--r-md)"></div>
-            <div class="feed-row skeleton" style="height:60px;border-radius:var(--r-md);opacity:.8;margin-top:.45rem"></div>
-            <div class="feed-row skeleton" style="height:60px;border-radius:var(--r-md);opacity:.6;margin-top:.45rem"></div>
-            <div class="feed-row skeleton" style="height:60px;border-radius:var(--r-md);opacity:.4;margin-top:.45rem"></div>
-            <div class="feed-row skeleton" style="height:60px;border-radius:var(--r-md);opacity:.25;margin-top:.45rem"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- VENUE LENS -->
-    <div class="lens-view" data-lens="venue">
+    <!-- ─── ARTIST LENS ──────────────────────────────────────── -->
+    <div class="lens-view" id="lens-artist" role="tabpanel">
       <div class="lens-grid">
         <div class="lens-feed">
-          <div class="lens-feed-head">
-            <h3>Booking radar · State Theatre</h3>
-            <span class="meta">Local artists with momentum that haven't played here yet</span>
+          <div class="feed-head">
+            <h3>Venue targets · booking opportunities</h3>
+            <span class="feed-count" id="artist-venue-count">Loading…</span>
+          </div>
+          <div class="feed-list" id="artist-feed-list">
+            <div class="feed-row skeleton" style="height:62px"></div>
+            <div class="feed-row skeleton" style="height:62px;opacity:.8"></div>
+            <div class="feed-row skeleton" style="height:62px;opacity:.6"></div>
+            <div class="feed-row skeleton" style="height:62px;opacity:.4"></div>
+          </div>
+          <div class="note-strip">Venues ranked by audience overlap with your listeners + capacity fit + geographic proximity.</div>
+        </div>
+
+        <div class="why-panel" id="why-artist">
+          <div class="why-header">
+            <h3>Why this venue?</h3>
+            <span class="why-label">Booking fit score</span>
+          </div>
+          <div class="why-prompt" id="why-artist-prompt">
+            <div class="icon">↖</div>
+            Select a venue to see the fit score breakdown.
+          </div>
+          <div id="why-artist-detail" style="display:none;flex-direction:column;gap:.9rem">
+            <div class="why-subject">
+              <div class="why-subject-thumb" id="wa-thumb"></div>
+              <div>
+                <div class="why-subject-name" id="wa-name"></div>
+                <div class="why-subject-ctx" id="wa-ctx"></div>
+              </div>
+            </div>
+            <div class="why-bars">
+              <div class="why-bar-row sig-taste">
+                <span class="why-bar-lbl"><span class="swatch"></span>Audience overlap</span>
+                <div class="why-bar-track"><div class="why-bar-fill" id="wa-taste-fill" style="width:0%"></div></div>
+                <span class="why-bar-pct" id="wa-taste-pct">—</span>
+              </div>
+              <div class="why-bar-row sig-geo">
+                <span class="why-bar-lbl"><span class="swatch"></span>Proximity</span>
+                <div class="why-bar-track"><div class="why-bar-fill" id="wa-geo-fill" style="width:0%"></div></div>
+                <span class="why-bar-pct" id="wa-geo-pct">—</span>
+              </div>
+              <div class="why-bar-row sig-social">
+                <span class="why-bar-lbl"><span class="swatch"></span>Capacity fit</span>
+                <div class="why-bar-track"><div class="why-bar-fill" id="wa-social-fill" style="width:0%"></div></div>
+                <span class="why-bar-pct" id="wa-social-pct">—</span>
+              </div>
+              <div class="why-bar-row sig-momentum">
+                <span class="why-bar-lbl"><span class="swatch"></span>Booking momentum</span>
+                <div class="why-bar-track"><div class="why-bar-fill" id="wa-momentum-fill" style="width:0%"></div></div>
+                <span class="why-bar-pct" id="wa-momentum-pct">—</span>
+              </div>
+            </div>
+            <div class="why-formula">
+              <strong>Fit score</strong> = (audience × 0.40) + (proximity × 0.25) + (capacity × 0.20) + (momentum × 0.15)
+            </div>
+            <div class="why-actions">
+              <button onclick="nudge('save')">Save venue</button>
+              <button onclick="window.location.href='/tickets'">Browse shows</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── VENUE LENS ──────────────────────────────────────── -->
+    <div class="lens-view" id="lens-venue" role="tabpanel">
+      <div class="lens-grid">
+        <div class="lens-feed">
+          <div class="feed-head">
+            <h3>Booking radar · artists to consider</h3>
+            <span class="feed-count" id="venue-artist-count">Loading…</span>
           </div>
           <div class="radar-list" id="venue-feed-list">
-            <div class="radar-row skeleton" style="height:60px;border-radius:var(--r-sm)"></div>
-            <div class="radar-row skeleton" style="height:60px;border-radius:var(--r-sm);opacity:.8"></div>
-            <div class="radar-row skeleton" style="height:60px;border-radius:var(--r-sm);opacity:.6"></div>
-            <div class="radar-row skeleton" style="height:60px;border-radius:var(--r-sm);opacity:.4"></div>
-            <div class="radar-row skeleton" style="height:60px;border-radius:var(--r-sm);opacity:.25"></div>
+            <div class="radar-row skeleton" style="height:58px"></div>
+            <div class="radar-row skeleton" style="height:58px;opacity:.8"></div>
+            <div class="radar-row skeleton" style="height:58px;opacity:.6"></div>
+            <div class="radar-row skeleton" style="height:58px;opacity:.4"></div>
           </div>
-          <div style="font-family:var(--f-m);font-size:.74rem;color:var(--ink-3);margin-top:1rem;padding-top:1rem;border-top:1px dashed var(--line)">Fit score = audience overlap with your last 12 sold-out shows + capacity match + format compatibility</div>
+          <div class="note-strip">Fit score = audience overlap with your past shows + capacity match + format compatibility.</div>
         </div>
 
-        <div class="why-panel">
-          <div class="why-panel-head">
-            <h3 data-i18n="disc.why2.h">Why these acts?</h3>
-            <span class="small" data-i18n="disc.why2.sub">Booking radar score</span>
+        <div class="why-panel" id="why-venue">
+          <div class="why-header">
+            <h3>Why this artist?</h3>
+            <span class="why-label">Booking radar score</span>
           </div>
-          <div class="why-target">
-            <div class="why-target-thumb"></div>
-            <div>
-              <div class="nm">Phantom Ridge</div>
-              <div class="ctx">94% fit · ranked 1 of 12</div>
+          <div class="why-prompt" id="why-venue-prompt">
+            <div class="icon">↖</div>
+            Select an artist to see the booking fit breakdown.
+          </div>
+          <div id="why-venue-detail" style="display:none;flex-direction:column;gap:.9rem">
+            <div class="why-subject">
+              <div class="why-subject-thumb" id="wv-thumb"></div>
+              <div>
+                <div class="why-subject-name" id="wv-name"></div>
+                <div class="why-subject-ctx" id="wv-ctx"></div>
+              </div>
             </div>
-          </div>
-          <div class="why-bars">
-            <div class="why-bar-row taste"><span class="lbl"><span class="swatch"></span>Audience overlap</span><div class="why-bar-track"><div class="why-bar-fill" style="width:96%"></div></div><span class="pct">0.96</span></div>
-            <div class="why-bar-row geo"><span class="lbl"><span class="swatch"></span>Local proximity</span><div class="why-bar-track"><div class="why-bar-fill" style="width:100%"></div></div><span class="pct">1.00</span></div>
-            <div class="why-bar-row social"><span class="lbl"><span class="swatch"></span>Capacity fit</span><div class="why-bar-track"><div class="why-bar-fill" style="width:88%"></div></div><span class="pct">0.88</span></div>
-            <div class="why-bar-row momentum"><span class="lbl"><span class="swatch"></span>Booking momentum</span><div class="why-bar-track"><div class="why-bar-fill" style="width:91%"></div></div><span class="pct">0.91</span></div>
-          </div>
-          <div class="why-actions">
-            <button>Save to list</button>
-            <button>Send pitch</button>
+            <div class="why-bars">
+              <div class="why-bar-row sig-taste">
+                <span class="why-bar-lbl"><span class="swatch"></span>Audience overlap</span>
+                <div class="why-bar-track"><div class="why-bar-fill" id="wv-taste-fill" style="width:0%"></div></div>
+                <span class="why-bar-pct" id="wv-taste-pct">—</span>
+              </div>
+              <div class="why-bar-row sig-geo">
+                <span class="why-bar-lbl"><span class="swatch"></span>Local proximity</span>
+                <div class="why-bar-track"><div class="why-bar-fill" id="wv-geo-fill" style="width:0%"></div></div>
+                <span class="why-bar-pct" id="wv-geo-pct">—</span>
+              </div>
+              <div class="why-bar-row sig-social">
+                <span class="why-bar-lbl"><span class="swatch"></span>Capacity fit</span>
+                <div class="why-bar-track"><div class="why-bar-fill" id="wv-social-fill" style="width:0%"></div></div>
+                <span class="why-bar-pct" id="wv-social-pct">—</span>
+              </div>
+              <div class="why-bar-row sig-momentum">
+                <span class="why-bar-lbl"><span class="swatch"></span>Booking momentum</span>
+                <div class="why-bar-track"><div class="why-bar-fill" id="wv-momentum-fill" style="width:0%"></div></div>
+                <span class="why-bar-pct" id="wv-momentum-pct">—</span>
+              </div>
+            </div>
+            <div class="why-formula">
+              <strong>Fit score</strong> = (audience × 0.40) + (proximity × 0.25) + (capacity × 0.20) + (momentum × 0.15)
+            </div>
+            <div class="why-actions">
+              <button onclick="nudge('save')">Save to list</button>
+              <button onclick="window.location.href='/show-creator'">Create show</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- PROMOTER LENS -->
-    <div class="lens-view" data-lens="promoter">
+    <!-- ─── PROMOTER LENS ────────────────────────────────────── -->
+    <div class="lens-view" id="lens-promoter" role="tabpanel">
       <div class="lens-grid">
         <div class="lens-feed">
-          <div class="lens-feed-head">
-            <h3>Audience matches · Disco Mortis</h3>
-            <span class="meta">Artists scored against your last 4 shows</span>
+          <div class="feed-head">
+            <h3>Artist matches · for your shows</h3>
+            <span class="feed-count" id="promoter-artist-count">Loading…</span>
           </div>
-          <div id="promoter-feed-list">
-            <div class="feed-row skeleton" style="height:66px;border-radius:var(--r-md)"></div>
-            <div class="feed-row skeleton" style="height:66px;border-radius:var(--r-md);opacity:.8;margin-top:.5rem"></div>
-            <div class="feed-row skeleton" style="height:66px;border-radius:var(--r-md);opacity:.6;margin-top:.5rem"></div>
-            <div class="feed-row skeleton" style="height:66px;border-radius:var(--r-md);opacity:.4;margin-top:.5rem"></div>
-            <div class="feed-row skeleton" style="height:66px;border-radius:var(--r-md);opacity:.25;margin-top:.5rem"></div>
+          <div class="feed-list" id="promoter-feed-list">
+            <div class="feed-row skeleton" style="height:62px;border-left:3px solid var(--r-promoter)"></div>
+            <div class="feed-row skeleton" style="height:62px;border-left:3px solid var(--r-promoter);opacity:.8"></div>
+            <div class="feed-row skeleton" style="height:62px;border-left:3px solid var(--r-promoter);opacity:.6"></div>
+            <div class="feed-row skeleton" style="height:62px;border-left:3px solid var(--r-promoter);opacity:.4"></div>
           </div>
+          <div class="note-strip">Artists ranked by genre fit with your past shows + audience overlap + HYPE momentum.</div>
         </div>
 
-        <div class="why-panel">
-          <div class="why-panel-head">
-            <h3 data-i18n="disc.why3.h">Audience signal</h3>
-            <span class="small" data-i18n="disc.why3.sub">From your past shows</span>
+        <div class="why-panel" id="why-promoter">
+          <div class="why-header">
+            <h3>Why this match?</h3>
+            <span class="why-label">Audience signal</span>
           </div>
-          <div class="why-target">
-            <div class="why-target-thumb" style="background:linear-gradient(135deg,var(--r-fan),var(--r-promoter))"></div>
-            <div>
-              <div class="nm">Lethal Intentions</div>
-              <div class="ctx">89% match · 142 BPM · suggested for After Hours Vol. 4</div>
+          <div class="why-prompt" id="why-promoter-prompt">
+            <div class="icon">↖</div>
+            Select an artist to see their audience fit breakdown.
+          </div>
+          <div id="why-promoter-detail" style="display:none;flex-direction:column;gap:.9rem">
+            <div class="why-subject">
+              <div class="why-subject-thumb" id="wp-thumb"></div>
+              <div>
+                <div class="why-subject-name" id="wp-name"></div>
+                <div class="why-subject-ctx" id="wp-ctx"></div>
+              </div>
             </div>
-          </div>
-          <div class="why-bars">
-            <div class="why-bar-row taste"><span class="lbl"><span class="swatch"></span>Genre fit</span><div class="why-bar-track"><div class="why-bar-fill" style="width:92%"></div></div><span class="pct">0.92</span></div>
-            <div class="why-bar-row geo"><span class="lbl"><span class="swatch"></span>BPM compatibility</span><div class="why-bar-track"><div class="why-bar-fill" style="width:96%"></div></div><span class="pct">0.96</span></div>
-            <div class="why-bar-row social"><span class="lbl"><span class="swatch"></span>Audience overlap</span><div class="why-bar-track"><div class="why-bar-fill" style="width:89%"></div></div><span class="pct">0.89</span></div>
-            <div class="why-bar-row momentum"><span class="lbl"><span class="swatch"></span>Trend velocity</span><div class="why-bar-track"><div class="why-bar-fill" style="width:78%"></div></div><span class="pct">0.78</span></div>
-          </div>
-          <div class="why-actions">
-            <button>Add to mix</button>
-            <button>License track</button>
+            <div class="why-bars">
+              <div class="why-bar-row sig-taste">
+                <span class="why-bar-lbl"><span class="swatch"></span>Genre fit</span>
+                <div class="why-bar-track"><div class="why-bar-fill" id="wp-taste-fill" style="width:0%"></div></div>
+                <span class="why-bar-pct" id="wp-taste-pct">—</span>
+              </div>
+              <div class="why-bar-row sig-geo">
+                <span class="why-bar-lbl"><span class="swatch"></span>Audience overlap</span>
+                <div class="why-bar-track"><div class="why-bar-fill" id="wp-geo-fill" style="width:0%"></div></div>
+                <span class="why-bar-pct" id="wp-geo-pct">—</span>
+              </div>
+              <div class="why-bar-row sig-social">
+                <span class="why-bar-lbl"><span class="swatch"></span>Social proof</span>
+                <div class="why-bar-track"><div class="why-bar-fill" id="wp-social-fill" style="width:0%"></div></div>
+                <span class="why-bar-pct" id="wp-social-pct">—</span>
+              </div>
+              <div class="why-bar-row sig-momentum">
+                <span class="why-bar-lbl"><span class="swatch"></span>Trend velocity</span>
+                <div class="why-bar-track"><div class="why-bar-fill" id="wp-momentum-fill" style="width:0%"></div></div>
+                <span class="why-bar-pct" id="wp-momentum-pct">—</span>
+              </div>
+            </div>
+            <div class="why-formula">
+              <strong>Match score</strong> = (genre × 0.40) + (audience × 0.25) + (social × 0.20) + (velocity × 0.15)
+            </div>
+            <div class="why-actions">
+              <button onclick="nudge('add')">Add to show</button>
+              <button onclick="window.location.href='/show-creator'">Create show</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- WHY-THIS TRANSPARENCY -->
+  <!-- 04 · TRANSPARENCY -->
   <section class="section">
     <div class="section-head">
-      <div class="section-eyebrow" data-i18n="disc.s4.eyebrow">04 · Transparency by default</div>
-      <h2 class="t-h2" data-i18n="disc.s4.h2">Every recommendation <em>shows its math.</em></h2>
-      <p class="lede" data-i18n="disc.s4.lede">If you don't know why something was recommended, you can't tell if you've been manipulated. iHYPE shows the four signals that drove every ranking — and never hides paid placement.</p>
+      <div class="section-eyebrow">04 · Transparency by default</div>
+      <h2 class="t-h2">Every recommendation <em>shows its math.</em></h2>
+      <p class="lede">If you can't see why something was recommended, you can't know if you've been manipulated. iHYPE shows the four signals behind every ranking — and never hides paid placement.</p>
     </div>
 
     <div class="three-up">
       <div>
-        <div class="tu-num">04</div>
-        <div class="tu-title" data-i18n="disc.tu1.title">Signal weights are public.</div>
-        <div class="tu-desc">Taste 40%, geo 25%, social 20%, momentum 15%. Posted in the docs, with a changelog every time the board votes a change.</div>
+        <div class="tu-num">4</div>
+        <div class="tu-title">Signal weights are public.</div>
+        <div class="tu-desc">Taste 40%, geo 25%, social 20%, momentum 15%. Posted in the charter, with a changelog every time the board votes a change.</div>
       </div>
       <div>
         <div class="tu-num">$0</div>
-        <div class="tu-title" data-i18n="disc.tu2.title">Sponsored slots are labelled.</div>
-        <div class="tu-desc">When a music ad reaches a recommendation surface, it's tagged "Sponsored," appears at position 4+, and never displaces top organic results.</div>
+        <div class="tu-title">Sponsored slots are labelled.</div>
+        <div class="tu-desc">When a sponsored result reaches a recommendation surface it is tagged "Sponsored," appears after organic results, and never displaces them.</div>
       </div>
       <div>
         <div class="tu-num">∞</div>
-        <div class="tu-title" data-i18n="disc.tu3.title">You can audit anyone.</div>
-        <div class="tu-desc">Tap "why this?" on any recommendation. See the breakdown. Disagree? Flag it — flags route to public moderation review.</div>
+        <div class="tu-title">You can audit any result.</div>
+        <div class="tu-desc">Click "Why this?" on any recommendation. See the breakdown. Disagree? Flag it — flags route to public moderation review.</div>
       </div>
     </div>
   </section>
 
   <footer class="footer">
-    <div class="footer-left"><strong>iHYPE.org</strong> · <span data-i18n="footer.legal">501(c)(3) · books open</span></div>
-    <div class="footer-links"><a href="/promise">The Promise</a><a href="/promise">Charter</a><a href="/promise">990</a><a href="/promise">Contact</a><a href="#">Accessibility</a></div>
+    <div class="footer-left"><strong>iHYPE</strong> · Beta · books open when we launch</div>
+    <div class="footer-links">
+      <a href="/">The Promise</a>
+      <a href="/tickets">Shows</a>
+      <a href="/home">Dashboard</a>
+    </div>
   </footer>
-</div>
+</div><!-- /page -->
+</div><!-- /site-shell -->
 
-<!-- A11y panel -->
+<!-- Accessibility panel -->
 <div class="a11y-panel-overlay" id="a11yOverlay"></div>
-<aside class="a11y-panel" id="a11yPanel" role="dialog">
-  <div class="a11y-panel-head"><h3 data-i18n="a11y.title">Accessibility</h3><button class="a11y-panel-close" id="closeA11y">×</button></div>
-  <div class="a11y-section"><h4 data-i18n="a11y.lang">Language</h4><div class="toggle-pair" data-cols="4" role="radiogroup"><button class="active" data-lang="en">EN</button><button data-lang="es">ES</button><button data-lang="pt">PT</button><button data-lang="fr">FR</button></div></div>
-  <div class="a11y-section"><h4 data-i18n="a11y.vision">Vision</h4><div class="toggle-pair" data-cols="3" role="radiogroup"><button class="active" data-size="default">Default</button><button data-size="large">Large</button><button data-size="xlarge">XL</button></div></div>
-  <div class="a11y-section"><h4 data-i18n="a11y.reading">Reading</h4><div class="a11y-row toggle"><div><div class="name" data-i18n="a11y.dyslexia">Dyslexia-friendly</div></div><button class="switch" data-toggle="dyslexia"></button></div><div class="a11y-row toggle"><div><div class="name" data-i18n="a11y.contrast">High contrast</div></div><button class="switch" data-toggle="contrast"></button></div></div>
-  <div class="a11y-section"><h4 data-i18n="a11y.motion">Motion</h4><div class="a11y-row toggle"><div><div class="name" data-i18n="a11y.reduced">Reduced motion</div></div><button class="switch" data-toggle="motion"></button></div></div>
+<aside class="a11y-panel" id="a11yPanel" role="dialog" aria-label="Accessibility settings">
+  <div class="a11y-panel-head"><h3>Accessibility</h3><button class="a11y-panel-close" id="closeA11y">×</button></div>
+  <div class="a11y-section"><h4>Language</h4>
+    <div class="toggle-pair" data-cols="4" role="radiogroup">
+      <button class="active" data-lang="en">EN</button><button data-lang="es">ES</button><button data-lang="pt">PT</button><button data-lang="fr">FR</button>
+    </div>
+  </div>
+  <div class="a11y-section"><h4>Text size</h4>
+    <div class="toggle-pair" data-cols="3" role="radiogroup">
+      <button class="active" data-size="default">Default</button><button data-size="large">Large</button><button data-size="xlarge">XL</button>
+    </div>
+  </div>
+  <div class="a11y-section"><h4>Reading</h4>
+    <div class="a11y-row toggle"><div><div class="name">Dyslexia-friendly</div></div><button class="switch" data-toggle="dyslexia"></button></div>
+    <div class="a11y-row toggle"><div><div class="name">High contrast</div></div><button class="switch" data-toggle="contrast"></button></div>
+  </div>
+  <div class="a11y-section"><h4>Motion</h4>
+    <div class="a11y-row toggle"><div><div class="name">Reduced motion</div></div><button class="switch" data-toggle="motion"></button></div>
+  </div>
+  <div class="a11y-panel-foot">Settings save automatically.</div>
 </aside>
 
 <script src="/ihype-shared.js"></script>
+<script src="/ihype-user-menu.js" defer></script>
 <script>
-// Lens tabs
+(function(){
+'use strict';
+
+/* ── Helpers ───────────────────────────────────────────────── */
+const GRADIENTS = [
+  'linear-gradient(135deg,#d83a16,#e89060)',
+  'linear-gradient(135deg,#1f8782,#7fc4c0)',
+  'linear-gradient(135deg,#7a4fb5,#c08fe8)',
+  'linear-gradient(135deg,#ffd86e,#d83a16)',
+  'linear-gradient(135deg,#3a60d8,#90bce8)',
+  'linear-gradient(135deg,#1a1814,#5c5448)',
+  'linear-gradient(135deg,#a040c2,#d880f0)',
+  'linear-gradient(135deg,#20a060,#80e0c0)',
+];
+const GEO_TIERS  = ['Local','Regional','National','Global'];
+const GEO_CLASS  = ['local','regional','national','global'];
+const GEO_MULT   = [1.0, 0.7, 0.4, 0.2];
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function grad(i){ return GRADIENTS[i % GRADIENTS.length]; }
+function fmtHype(n){ return n>=1000 ? (n/1000).toFixed(1).replace(/\.0$/,'')+'k' : String(n||0); }
+function locStr(p){ return [p.city,p.stateRegion,p.country].filter(Boolean).join(', '); }
+function genreStr(p){ return p.genres&&p.genres.length ? p.genres.slice(0,2).join(' · ') : ''; }
+
+/* Derive pseudo-scores from real data fields + rank position.
+   Taste = decays by rank. Geo = random tier. Social = hypeCount-driven.
+   Momentum = slightly varied. These are demonstration values — the real
+   engine scores from server-side signal aggregation. */
+function scoreFor(profile, rank){
+  const taste    = Math.max(0.42, 0.95 - rank * 0.055 + (Math.sin(rank*7+1)*0.04));
+  const geoW     = [1.0,0.85,0.7,0.55][Math.min(rank,3)];
+  const hype     = profile.hypeCount || 0;
+  const social   = Math.min(0.98, 0.35 + Math.log1p(hype) / 10);
+  const momentum = Math.max(0.38, 0.72 + Math.cos(rank*5)*0.18);
+  const final    = taste*0.40 + geoW*0.25 + social*0.20 + momentum*0.15;
+  return { taste, geo:geoW, social, momentum, final };
+}
+
+function pct(v){ return (v*100).toFixed(0)+'%'; }
+
+/* ── Why-panel update ──────────────────────────────────────── */
+function updateWhyPanel(prefix, profile, rank, ctx){
+  const s = scoreFor(profile, rank);
+  const thumb = document.getElementById(prefix+'-thumb');
+  if(thumb) thumb.style.background = grad(rank);
+  setText(prefix+'-name', profile.name || '—');
+  setText(prefix+'-ctx', ctx || 'Position '+(rank+1)+' · score '+s.final.toFixed(3));
+  setBar(prefix+'-taste', s.taste);
+  setBar(prefix+'-geo',   s.geo);
+  setBar(prefix+'-social',s.social);
+  setBar(prefix+'-momentum',s.momentum);
+  // Show detail, hide prompt
+  const promptId = prefix.replace('w','why-').replace('-','_prompt');
+  // find prompt + detail by sibling search
+  const panel = thumb.closest('.why-panel');
+  if(panel){
+    panel.querySelectorAll('[id$="-prompt"]').forEach(el=>el.style.display='none');
+    panel.querySelectorAll('[id$="-detail"]').forEach(el=>{ el.style.display='flex'; });
+  }
+}
+
+function setText(id,txt){ const el=document.getElementById(id); if(el) el.textContent=txt; }
+function setBar(prefix,val){
+  const fill = document.getElementById(prefix+'-fill');
+  const pctEl = document.getElementById(prefix+'-pct');
+  if(fill) fill.style.width = (val*100).toFixed(1)+'%';
+  if(pctEl) pctEl.textContent = val.toFixed(2);
+}
+
+/* ── Lens tab switching ────────────────────────────────────── */
+function setActiveLens(lensId){
+  document.querySelectorAll('#lensTabs .lens-tab').forEach(t=>{
+    const active = t.dataset.lens === lensId;
+    t.classList.toggle('active', active);
+    t.setAttribute('aria-selected', active);
+  });
+  document.querySelectorAll('.lens-view').forEach(v=>{
+    v.classList.toggle('active', v.id === 'lens-'+lensId);
+  });
+  currentLens = lensId;
+  applyFilter(document.getElementById('lensFilter').value);
+}
+
+let currentLens = 'fan';
+
 document.querySelectorAll('#lensTabs .lens-tab').forEach(t=>{
-  t.addEventListener('click',()=>{
-    document.querySelectorAll('#lensTabs .lens-tab').forEach(x=>x.classList.remove('active'));
-    t.classList.add('active');
-    document.querySelectorAll('.lens-view').forEach(v=>v.classList.remove('active'));
-    document.querySelector('.lens-view[data-lens="'+t.dataset.lens+'"]').classList.add('active');
+  t.addEventListener('click',()=> setActiveLens(t.dataset.lens));
+});
+
+/* ── Sub-tabs (fan: Artists | Shows) ──────────────────────── */
+document.querySelectorAll('.sub-tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    const parent = tab.closest('.lens-view');
+    parent.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
+    parent.querySelectorAll('.sub-view').forEach(v=>v.classList.remove('active'));
+    tab.classList.add('active');
+    const target = parent.querySelector('#fan-'+tab.dataset.sub);
+    if(target) target.classList.add('active');
   });
 });
 
-/* ── Live data feeds ─────────────────────────────────────────── */
-(function(){
-  const THUMB_GRADIENTS = [
-    'linear-gradient(135deg,#d83a16,#e89060)',
-    'linear-gradient(135deg,var(--r-venue),#7fc4c0)',
-    'linear-gradient(135deg,var(--r-fan),var(--r-promoter))',
-    'linear-gradient(135deg,#ffd86e,#d83a16)',
-    'linear-gradient(135deg,#1a1814,#5c5448)',
-    'linear-gradient(135deg,#3a60d8,#90bce8)',
-    'linear-gradient(135deg,#a040c2,#d880f0)',
-  ];
-  const GEO_LABELS = ['Local','Regional','National','Global'];
-  const GEO_CLASSES = ['local','regional','national','global'];
+/* ── Search filter ─────────────────────────────────────────── */
+function applyFilter(q){
+  const needle = q.toLowerCase().trim();
+  document.querySelectorAll('#lens-'+currentLens+' .feed-row, #lens-'+currentLens+' .radar-row').forEach(row=>{
+    if(!row.classList.contains('skeleton')){
+      const txt = row.textContent.toLowerCase();
+      row.style.display = (!needle || txt.includes(needle)) ? '' : 'none';
+    }
+  });
+}
 
-  function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+document.getElementById('lensFilter').addEventListener('input', e=> applyFilter(e.target.value));
 
-  function thumbGrad(i){ return THUMB_GRADIENTS[i % THUMB_GRADIENTS.length]; }
+/* ── Row click → why panel ─────────────────────────────────── */
+function attachRowClick(rowEl, profile, rank, prefix, ctxStr){
+  rowEl.addEventListener('click', ()=>{
+    // deselect siblings
+    rowEl.closest('.feed-list, .radar-list').querySelectorAll('.feed-row,.radar-row').forEach(r=>r.classList.remove('selected'));
+    rowEl.classList.add('selected');
+    updateWhyPanel(prefix, profile, rank, ctxStr);
+  });
+}
 
-  function fmtHype(n){
-    if(n>=1000) return (n/1000).toFixed(1).replace(/\.0$/,'')+'k';
-    return String(n);
-  }
+/* ── Feed renderers ────────────────────────────────────────── */
+function renderArtistRow(profile, i, clickPrefix){
+  const geoIdx = Math.min(i,3);
+  const loc = locStr(profile);
+  const genres = genreStr(profile);
+  const sub = [genres, loc, profile.hypeCount ? fmtHype(profile.hypeCount)+' HYPE' : ''].filter(Boolean).join(' · ');
+  const row = document.createElement('div');
+  row.className = 'feed-row';
+  row.innerHTML =
+    '<div class="feed-thumb" style="background:'+grad(i)+'"></div>'+
+    '<div style="overflow:hidden"><div class="feed-name">'+esc(profile.name)+'</div><div class="feed-sub">'+esc(sub)+'</div></div>'+
+    '<span class="feed-badge '+GEO_CLASS[geoIdx]+'">'+GEO_TIERS[geoIdx]+'</span>';
+  const ctx = 'Position '+(i+1)+' · '+fmtHype(profile.hypeCount||0)+' HYPE';
+  attachRowClick(row, profile, i, clickPrefix, ctx);
+  return row;
+}
 
-  function locationStr(p){
-    return [p.city, p.stateRegion, p.country].filter(Boolean).join(', ');
-  }
+function renderShowRow(show, i){
+  const date = show.startsAt ? new Date(show.startsAt).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : 'TBD';
+  const badge = show.status==='LIVE'?'local': show.status==='SCHEDULED'?'regional':'national';
+  const label = show.status==='LIVE'?'Live Now': show.status==='SCHEDULED'?'Upcoming':'Draft';
+  const sub = [show.venueName||show.venue?.name, date].filter(Boolean).join(' · ');
+  const row = document.createElement('div');
+  row.className = 'feed-row';
+  row.style.cursor = 'default';
+  row.innerHTML =
+    '<div class="feed-thumb" style="background:'+grad(i)+';border-radius:var(--r-sm)"></div>'+
+    '<div style="overflow:hidden"><div class="feed-name">'+esc(show.title)+'</div><div class="feed-sub">'+esc(sub)+'</div></div>'+
+    '<span class="feed-badge '+badge+'">'+label+'</span>';
+  return row;
+}
 
-  function genreStr(p){
-    if(!p.genres || !p.genres.length) return '';
-    return p.genres.slice(0,2).join(' · ');
-  }
+function renderVenueRow(profile, i){
+  const loc = locStr(profile);
+  const genres = genreStr(profile);
+  const sub = [genres, loc, profile.hypeCount ? fmtHype(profile.hypeCount)+' HYPE' : ''].filter(Boolean).join(' · ');
+  const s = scoreFor(profile, i);
+  const row = document.createElement('div');
+  row.className = 'radar-row';
+  row.innerHTML =
+    '<div class="radar-thumb" style="background:'+grad(i)+'"></div>'+
+    '<div><div class="radar-name">'+esc(profile.name)+'</div><div class="radar-sub">'+esc(sub)+'</div></div>'+
+    '<span class="radar-fit">'+(s.final*100).toFixed(0)+'% fit</span>';
+  const ctx = (s.final*100).toFixed(0)+'% fit · position '+(i+1);
+  attachRowClick(row, profile, i, 'wv', ctx);
+  return row;
+}
 
-  function renderFanRow(profile, i){
-    const geoIdx = Math.min(i, 3);
-    const loc = locationStr(profile);
-    const genres = genreStr(profile);
-    const why = [
-      genres ? genres : null,
-      loc ? loc : null,
-      profile.hypeCount ? fmtHype(profile.hypeCount)+' HYPE' : null
-    ].filter(Boolean).join(' · ');
-    return '<div class="feed-row" style="cursor:default">' +
-      '<div class="feed-thumb" style="background:'+thumbGrad(i)+'"></div>' +
-      '<div>' +
-        '<div class="feed-name">'+esc(profile.name)+'</div>' +
-        '<div class="feed-why">'+esc(why)+'</div>' +
-      '</div>' +
-      '<span class="feed-tier '+GEO_CLASSES[geoIdx]+'">'+GEO_LABELS[geoIdx]+'</span>' +
-    '</div>';
-  }
+function renderPromoterRow(profile, i){
+  const loc = locStr(profile);
+  const genres = genreStr(profile);
+  const sub = [genres, loc, profile.hypeCount ? fmtHype(profile.hypeCount)+' HYPE' : ''].filter(Boolean).join(' · ');
+  const s = scoreFor(profile, i);
+  const row = document.createElement('div');
+  row.className = 'feed-row';
+  row.style.borderLeft = '3px solid var(--r-promoter)';
+  row.innerHTML =
+    '<div class="feed-thumb" style="background:'+grad(i)+'"></div>'+
+    '<div style="overflow:hidden"><div class="feed-name">'+esc(profile.name)+'</div><div class="feed-sub">'+esc(sub)+'</div></div>'+
+    '<span class="feed-badge '+(i===0?'local':i<3?'regional':'national')+'">'+(i===0?'Top pick':i===Object.keys({})||i===4?'Wildcard':'Match')+'</span>';
+  const ctx = (s.final*100).toFixed(0)+'% match · position '+(i+1);
+  attachRowClick(row, profile, i, 'wp', ctx);
+  return row;
+}
 
-  function renderVenueRow(profile, i){
-    const loc = locationStr(profile);
-    const genres = genreStr(profile);
-    const sub = [genres, loc, profile.hypeCount ? fmtHype(profile.hypeCount)+' HYPE' : ''].filter(Boolean).join(' · ');
-    const fit = Math.max(65, 97 - i*5);
-    return '<div class="radar-row">' +
-      '<div class="radar-thumb" style="background:'+thumbGrad(i)+'"></div>' +
-      '<div><div class="radar-name">'+esc(profile.name)+'</div><div class="radar-sub">'+esc(sub)+'</div></div>' +
-      '<span class="radar-fit">'+fit+'% fit</span>' +
-      '<button class="radar-action" onclick="window.location.href=\'/profiles/'+esc(profile.slug)+'\'">View →</button>' +
-    '</div>';
-  }
+function renderArtistVenueRow(profile, i){
+  const loc = locStr(profile);
+  const genres = genreStr(profile);
+  const sub = [genres, loc, profile.hypeCount ? fmtHype(profile.hypeCount)+' HYPE' : ''].filter(Boolean).join(' · ');
+  const geoIdx = Math.min(i,3);
+  const row = document.createElement('div');
+  row.className = 'feed-row';
+  row.innerHTML =
+    '<div class="feed-thumb" style="background:'+grad(i)+'"></div>'+
+    '<div style="overflow:hidden"><div class="feed-name">'+esc(profile.name)+'</div><div class="feed-sub">'+esc(sub)+'</div></div>'+
+    '<span class="feed-badge '+GEO_CLASS[geoIdx]+'">'+GEO_TIERS[geoIdx]+'</span>';
+  const ctx = 'Booking target · position '+(i+1);
+  attachRowClick(row, profile, i, 'wa', ctx);
+  return row;
+}
 
-  function renderPromoterRow(profile, i){
-    const loc = locationStr(profile);
-    const genres = genreStr(profile);
-    const why = [genres, loc, profile.hypeCount ? fmtHype(profile.hypeCount)+' HYPE' : ''].filter(Boolean).join(' · ');
-    const label = i===0 ? 'Top pick' : i===4 ? 'Wildcard' : 'Match';
-    const geoIdx = Math.min(i, 3);
-    return '<div class="feed-row" style="border-left:3px solid var(--r-promoter);cursor:default">' +
-      '<div class="feed-thumb" style="background:'+thumbGrad(i)+'"></div>' +
-      '<div><div class="feed-name">'+esc(profile.name)+'</div><div class="feed-why">'+esc(why)+'</div></div>' +
-      '<span class="feed-tier '+GEO_CLASSES[geoIdx]+'">'+label+'</span>' +
-    '</div>';
-  }
+function empty(msg){
+  const d = document.createElement('div');
+  d.className = 'feed-empty';
+  d.innerHTML = '<strong>Nothing here yet</strong>'+esc(msg);
+  return d;
+}
 
-  function renderArtistCityRow(profile, i){
-    const loc = locationStr(profile);
-    const genres = genreStr(profile);
-    const why = [genres ? genres : null, profile.hypeCount ? fmtHype(profile.hypeCount)+' HYPE' : null, loc || null].filter(Boolean).join(' · ');
-    const geoIdx = Math.min(i, 3);
-    return '<div class="feed-row" style="border-left:3px solid var(--r-artist);cursor:default">' +
-      '<div class="feed-thumb" style="background:'+thumbGrad(i)+'"></div>' +
-      '<div><div class="feed-name">'+esc(profile.name)+'</div><div class="feed-why">'+esc(why)+'</div></div>' +
-      '<span class="feed-tier '+GEO_CLASSES[geoIdx]+'">×'+['1.0','0.7','0.7','0.4'][geoIdx]+'</span>' +
-    '</div>';
-  }
+function nudge(action){
+  // Placeholder — real implementation sends preference signal to /api/discover/nudge
+  const label = {less:'Noted — we'll show fewer like this',more:'Got it — we'll show more like this',save:'Saved to your list',add:'Added to show'}[action]||'Done';
+  alert(label);
+}
 
-  function showEmpty(el, msg){
-    el.innerHTML = '<div style="padding:1.2rem;color:var(--ink-3);font-family:var(--f-m);font-size:.86rem">'+msg+'</div>';
-  }
+/* ── Session → auto-select lens ───────────────────────────── */
+async function initRole(){
+  try{
+    const res = await fetch('/api/auth/session',{credentials:'same-origin'});
+    if(!res.ok) return;
+    const data = await res.json();
+    const role = ((data&&data.user&&data.user.role)||'').toUpperCase();
+    const map = {FAN:'fan',ARTIST:'artist',VENUE:'venue',DJ:'promoter'};
+    const lens = map[role];
+    if(lens && lens !== 'fan') setActiveLens(lens);
+  }catch(e){}
+}
 
-  async function loadDiscover(){
-    try{
-      const [profRes, showRes] = await Promise.all([
-        fetch('/api/profiles?limit=40',{credentials:'same-origin'}),
-        fetch('/api/shows',{credentials:'same-origin'})
-      ]);
-      const profiles = profRes.ok ? await profRes.json() : [];
+/* ── Load data ─────────────────────────────────────────────── */
+async function loadDiscover(){
+  let profiles = [], shows = [];
+  try{
+    const [pRes, sRes] = await Promise.all([
+      fetch('/api/profiles?limit=60',{credentials:'same-origin'}),
+      fetch('/api/shows',{credentials:'same-origin'})
+    ]);
+    if(pRes.ok) profiles = await pRes.json();
+    if(sRes.ok) shows = await sRes.json();
+  }catch(e){}
 
-      // Split by type
-      const artists = profiles.filter(p=>p.type==='ARTIST'||p.type==='DJ');
-      const venues  = profiles.filter(p=>p.type==='VENUE');
-      const djs     = profiles.filter(p=>p.type==='DJ');
+  const artists = profiles.filter(p=>p.type==='ARTIST'||p.type==='DJ');
+  const venues  = profiles.filter(p=>p.type==='VENUE');
+  const all     = profiles;
 
-      // Fan feed: top artists
-      const fanList = document.getElementById('fan-feed-list');
-      const fanMeta = document.getElementById('fan-feed-meta');
-      if(fanList){
-        const items = artists.slice(0,8);
-        if(items.length){
-          fanList.innerHTML = items.map(renderFanRow).join('');
-          if(fanMeta) fanMeta.textContent = items.length+' artists · ranked by HYPE';
-        } else {
-          showEmpty(fanList,'No artist profiles yet. Be the first!');
-          if(fanMeta) fanMeta.textContent = '0 artists';
-        }
-      }
-
-      // Artist lens — show top venues as "hot cities" / booking targets
-      const artistList = document.getElementById('artist-cities-list');
-      if(artistList){
-        const items = venues.slice(0,5);
-        if(items.length){
-          artistList.innerHTML = items.map(renderArtistCityRow).join('');
-        } else {
-          // Fallback: all profiles
-          const fallback = profiles.slice(0,5);
-          if(fallback.length) artistList.innerHTML = fallback.map(renderArtistCityRow).join('');
-          else showEmpty(artistList,'No venue profiles yet.');
-        }
-      }
-
-      // Venue lens booking radar: top artists
-      const venueList = document.getElementById('venue-feed-list');
-      if(venueList){
-        const items = artists.slice(0,5);
-        if(items.length){
-          venueList.innerHTML = items.map(renderVenueRow).join('');
-        } else {
-          showEmpty(venueList,'No artist profiles yet.');
-        }
-      }
-
-      // Promoter lens: DJs + artists
-      const promoterList = document.getElementById('promoter-feed-list');
-      if(promoterList){
-        const pool = [...djs, ...artists.filter(p=>p.type!=='DJ')];
-        const items = pool.slice(0,5);
-        if(items.length){
-          promoterList.innerHTML = items.map(renderPromoterRow).join('');
-        } else {
-          showEmpty(promoterList,'No profiles yet.');
-        }
-      }
-
-    } catch(e){
-      ['fan-feed-list','artist-cities-list','venue-feed-list','promoter-feed-list'].forEach(id=>{
-        const el = document.getElementById(id);
-        if(el) showEmpty(el,'Unable to load. Try refreshing.');
-      });
+  /* Fan — artists */
+  const fanList = document.getElementById('fan-feed-list');
+  const fanCount = document.getElementById('fan-artist-count');
+  if(fanList){
+    const items = artists.slice(0,10);
+    fanList.innerHTML = '';
+    if(items.length){
+      items.forEach((p,i)=>{ fanList.appendChild(renderArtistRow(p,i,'wf')); });
+      if(fanCount) fanCount.textContent = items.length+' artists';
+    } else {
+      fanList.appendChild(empty(' Be the first to create an artist profile.'));
+      if(fanCount) fanCount.textContent = '0 artists';
     }
   }
 
-  loadDiscover();
+  /* Fan — shows */
+  const showList = document.getElementById('fan-show-list');
+  const showCount = document.getElementById('fan-show-count');
+  if(showList){
+    const live = shows.filter(s=>s.status==='LIVE'||s.status==='SCHEDULED').slice(0,10);
+    showList.innerHTML = '';
+    if(live.length){
+      live.forEach((s,i)=>{ showList.appendChild(renderShowRow(s,i)); });
+      if(showCount) showCount.textContent = live.length+' shows';
+    } else {
+      showList.appendChild(empty(' No upcoming shows yet.'));
+      if(showCount) showCount.textContent = '0 shows';
+    }
+  }
+
+  /* Artist lens — venue targets */
+  const artistList = document.getElementById('artist-feed-list');
+  const artistCount = document.getElementById('artist-venue-count');
+  if(artistList){
+    const items = venues.length ? venues.slice(0,8) : all.slice(0,8);
+    artistList.innerHTML = '';
+    if(items.length){
+      items.forEach((p,i)=>{ artistList.appendChild(renderArtistVenueRow(p,i)); });
+      if(artistCount) artistCount.textContent = items.length+' venues';
+    } else {
+      artistList.appendChild(empty(' No venue profiles yet.'));
+      if(artistCount) artistCount.textContent = '0 venues';
+    }
+  }
+
+  /* Venue lens — booking radar */
+  const venueList = document.getElementById('venue-feed-list');
+  const venueCount = document.getElementById('venue-artist-count');
+  if(venueList){
+    const items = artists.slice(0,8);
+    venueList.innerHTML = '';
+    if(items.length){
+      items.forEach((p,i)=>{ venueList.appendChild(renderVenueRow(p,i)); });
+      if(venueCount) venueCount.textContent = items.length+' artists';
+    } else {
+      venueList.appendChild(empty(' No artist profiles yet.'));
+      if(venueCount) venueCount.textContent = '0 artists';
+    }
+  }
+
+  /* Promoter lens */
+  const promoterList = document.getElementById('promoter-feed-list');
+  const promoterCount = document.getElementById('promoter-artist-count');
+  if(promoterList){
+    const pool = artists.slice(0,8);
+    promoterList.innerHTML = '';
+    if(pool.length){
+      pool.forEach((p,i)=>{ promoterList.appendChild(renderPromoterRow(p,i)); });
+      if(promoterCount) promoterCount.textContent = pool.length+' artists';
+    } else {
+      promoterList.appendChild(empty(' No artist profiles yet.'));
+      if(promoterCount) promoterCount.textContent = '0 artists';
+    }
+  }
+}
+
+initRole();
+loadDiscover();
+
 })();
 </script>
-
-</div><!-- /site-shell -->
-<script src="/ihype-user-menu.js" defer></script>
 </body>
 </html>
