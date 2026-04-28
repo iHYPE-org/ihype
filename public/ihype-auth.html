@@ -476,7 +476,7 @@
     <input type="hidden" name="csrfToken" id="auth-csrf">
     <input type="hidden" name="challengeId" id="auth-challenge">
     <input type="hidden" name="otp" id="auth-otp">
-    <input type="hidden" name="callbackUrl" value="/dashboard">
+    <input type="hidden" name="callbackUrl" value="/auth/landing">
   </form>
 
   <footer class="footer">
@@ -656,6 +656,17 @@ async function handleVerify(){
     setBtn('otp-btn','Verify and continue →',false);
   }
 }
+
+// Detect next-auth redirect errors on page load
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  const err = params.get('error');
+  if (err === 'CredentialsSignin') {
+    showError('si-error', 'Incorrect code or it expired. Enter your password again to get a new code.');
+  } else if (err) {
+    showError('si-error', 'Sign-in error: ' + err + '. Please try again.');
+  }
+})();
 
 // Allow Enter key to submit forms
 document.getElementById('su-password').addEventListener('keydown',e=>{if(e.key==='Enter')handleSignUp();});
