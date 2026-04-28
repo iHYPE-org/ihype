@@ -471,6 +471,14 @@
     </div>
   </section>
 
+  <!-- Hidden form for next-auth credentials submission -->
+  <form id="auth-form" method="POST" action="/api/auth/callback/credentials" style="display:none">
+    <input type="hidden" name="csrfToken" id="auth-csrf">
+    <input type="hidden" name="challengeId" id="auth-challenge">
+    <input type="hidden" name="otp" id="auth-otp">
+    <input type="hidden" name="callbackUrl" value="/dashboard">
+  </form>
+
   <footer class="footer">
     <div class="footer-left"><strong>iHYPE.org</strong> · <span data-i18n="footer.legal">501(c)(3) · books open</span></div>
     <div class="footer-links"><a href="/promise">The Promise</a><a href="/promise">Charter</a><a href="/promise">990</a><a href="/promise">Contact</a><a href="#">Accessibility</a></div>
@@ -632,23 +640,17 @@ async function handleVerify(){
   if(!_challengeId){showError('otp-error','Session expired. Please go back and try again.');return;}
   setBtn('otp-btn','Verifying…',true);
   try{
-    // Get CSRF token then POST to next-auth credentials callback
-    const {csrfToken}=await fetch('/api/auth/csrf').then(r=>r.json());
-    const params=new URLSearchParams({csrfToken,challengeId:_challengeId,otp,callbackUrl:'/dashboard',json:'true'});
-    const res=await fetch('/api/auth/callback/credentials',{
-      method:'POST',
-      headers:{'Content-Type':'application/x-www-form-urlencoded'},
-      body:params.toString()
-    });
-    const data=await res.json().catch(()=>({}));
-    if(data.url){
-      window.location.href=data.url;
-    }else if(res.ok){
-      window.location.href='/dashboard';
-    }else{
-      showError('otp-error','Incorrect code or it has expired. Try again.');
-      setBtn('otp-btn','Verify and continue →',false);
-    }
+    // Fetch CSRF token — next-auth requires it for credentials POST
+    const csrfRes=await fetch('/api/auth/csrf');
+    const csrfText=await csrfRes.text();
+    let csrfToken='';
+    try{csrfToken=JSON.parse(csrfText).csrfToken||'';}catch{}
+
+    // Submit hidden form — browser follows the redirect natively, no JSON parsing needed
+    document.getElementById('auth-csrf').value=csrfToken;
+    document.getElementById('auth-challenge').value=_challengeId;
+    document.getElementById('auth-otp').value=otp;
+    document.getElementById('auth-form').submit();
   }catch(err){
     showError('otp-error','Something went wrong. Please try again.');
     setBtn('otp-btn','Verify and continue →',false);
