@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
-import { getDefaultLandingPathForUser } from '@/lib/account-routing';
 
 export default async function AuthLandingPage() {
   const session = await auth();
@@ -9,10 +8,9 @@ export default async function AuthLandingPage() {
     redirect('/login');
   }
 
-  const path = await getDefaultLandingPathForUser({
-    userId: session.user.id,
-    role: session.user.role
-  });
+  if (session.user.role === 'ADMIN') {
+    redirect('/dashboard');
+  }
 
-  redirect(path);
+  redirect('/home');
 }

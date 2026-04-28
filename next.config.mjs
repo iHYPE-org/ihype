@@ -92,7 +92,8 @@ const nextConfig = {
         { source: '/tickets',    destination: '/ihype-ticketing.html' },
         { source: '/promise',    destination: '/ihype-promise.html' },
         { source: '/customizer',    destination: '/ihype-page-customizer.html' },
-        { source: '/show-creator', destination: '/ihype-show-creator.html' }
+        { source: '/show-creator', destination: '/ihype-show-creator.html' },
+        { source: '/home',         destination: '/ihype-home.html' }
       ],
       afterFiles: [],
       fallback: []
