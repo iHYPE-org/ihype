@@ -84,17 +84,16 @@ const nextConfig = {
   async rewrites() {
     return {
       beforeFiles: [
-        { source: '/',          destination: '/ihype-homepage.html' },
-        { source: '/login',     destination: '/ihype-auth.html' },
-        { source: '/register',  destination: '/ihype-auth.html' }
+        { source: '/',           destination: '/ihype-homepage.html' },
+        { source: '/login',      destination: '/ihype-auth.html' },
+        { source: '/register',   destination: '/ihype-auth.html' },
+        { source: '/hype',       destination: '/ihype-hype-engine.html' },
+        { source: '/discover',   destination: '/ihype-rec-engine.html' },
+        { source: '/tickets',    destination: '/ihype-ticketing.html' },
+        { source: '/promise',    destination: '/ihype-promise.html' },
+        { source: '/customizer', destination: '/ihype-page-customizer.html' }
       ],
-      afterFiles: [
-        { source: '/hype',        destination: '/ihype-hype-engine.html' },
-        { source: '/discover',    destination: '/ihype-rec-engine.html' },
-        { source: '/tickets',     destination: '/ihype-ticketing.html' },
-        { source: '/promise',     destination: '/ihype-promise.html' },
-        { source: '/customizer',  destination: '/ihype-page-customizer.html' }
-      ],
+      afterFiles: [],
       fallback: []
     };
   },
