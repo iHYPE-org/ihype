@@ -15,3 +15,4 @@ dev-server.log
 dev-server.err.log
 cloudflared.log
 .tools
+tsconfig.tsbuildinfo
