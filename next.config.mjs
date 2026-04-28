@@ -112,6 +112,14 @@ const nextConfig = {
       {
         source: '/:path*.html',
         headers: [{ key: 'Cache-Control', value: 'no-cache, must-revalidate' }]
+      },
+      {
+        source: '/',
+        headers: [{ key: 'Cache-Control', value: 'no-cache, must-revalidate' }]
+      },
+      {
+        source: '/home',
+        headers: [{ key: 'Cache-Control', value: 'no-cache, must-revalidate' }]
       }
     ];
   }
