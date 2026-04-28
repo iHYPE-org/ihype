@@ -24,9 +24,8 @@
 .auth-footer{text-align:center;color:var(--ink-3);font-size:.8rem;line-height:1.5;padding-top:.25rem;border-top:1px solid var(--line)}
 .auth-footer a{color:var(--ink-2);text-decoration:underline}
 
-/* OTP */
-.otp-section{display:none;flex-direction:column;gap:1rem}
-.otp-section.visible{display:flex}
+/* OTP — visibility controlled by inline style via ihype-auth.js */
+.otp-section{flex-direction:column;gap:1rem}
 .otp-label{font-size:.88rem;color:var(--ink-2);line-height:1.5;text-align:center}
 .otp-grid{display:flex;gap:.5rem;justify-content:center;margin:.25rem 0}
 .otp-input{width:48px;height:56px;background:var(--bg);border:1.5px solid var(--line-2);border-radius:var(--r-md);text-align:center;font-family:var(--f-d);font-size:1.5rem;font-weight:600;color:var(--ink);outline:none;transition:border-color .15s}
@@ -75,8 +74,8 @@
       </div>
     </div>
 
-    <!-- OTP step -->
-    <div class="auth-card otp-section" id="otp-section">
+    <!-- OTP step — hidden via inline style so ihype-auth.js can toggle with style.display -->
+    <div class="auth-card otp-section" id="otp-section" style="display:none">
       <div class="auth-brand">
         <a href="/" class="wordmark">i<em>HYPE</em></a>
       </div>
