@@ -219,6 +219,12 @@ img,svg{display:block;max-width:100%}
 .user-menu-item.danger{color:#f87171}
 .user-menu-item.danger:hover{background:rgba(248,113,113,.08)}
 .user-menu-divider{height:1px;background:var(--line);margin:.3rem .2rem}
+.user-menu-section-label{font-family:var(--f-m);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:600;padding:.5rem .85rem .25rem}
+.persp-grid{display:grid;grid-template-columns:1fr 1fr;gap:.25rem;padding:.1rem .4rem .4rem}
+.persp-btn{display:flex;align-items:center;gap:.4rem;padding:.42rem .65rem;border-radius:var(--r-sm);font-size:.8rem;font-weight:500;background:transparent;border:1px solid transparent;color:var(--ink-2);cursor:pointer;text-align:left;transition:all .12s;font-family:var(--f-d);white-space:nowrap}
+.persp-btn:hover{background:var(--surface-2);border-color:var(--line-2);color:var(--ink)}
+.persp-btn.active{background:color-mix(in srgb,var(--accent) 12%,transparent);border-color:rgba(216,58,22,.3);color:var(--ink)}
+.persp-check{margin-left:auto;color:var(--accent);font-size:.75rem}
 
 /* ─── HYPE button ─── */
 .hype-btn{display:inline-flex;align-items:center;gap:.5rem;padding:.48rem 1rem;border-radius:99px;font-size:.86rem;font-weight:500;background:var(--accent-g);color:#fff;border:none;transition:all .18s;box-shadow:0 0 16px rgba(255,80,41,.25)}
