@@ -83,6 +83,8 @@
 .feed-head h3{font-family:var(--f-d);font-size:1rem;font-weight:600;margin:0}
 .feed-count{font-family:var(--f-m);font-size:.73rem;color:var(--ink-3)}
 .feed-list{display:flex;flex-direction:column;gap:.4rem}
+.load-more-btn{display:block;width:100%;margin-top:.6rem;padding:.6rem 1rem;background:transparent;border:1px dashed var(--line-2);border-radius:var(--r-md);font-family:var(--f-m);font-size:.8rem;color:var(--ink-3);cursor:pointer;transition:all .15s;text-align:center}
+.load-more-btn:hover{border-color:var(--accent);color:var(--accent-ink);background:rgba(255,80,41,.04)}
 
 /* ── Feed rows ─────────────────────────────────────────────── */
 .feed-row{display:grid;grid-template-columns:38px 1fr auto;gap:.7rem;padding:.7rem .85rem;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-md);align-items:center;cursor:pointer;transition:all .13s;user-select:none}
@@ -1252,58 +1254,64 @@ async function load(){
   const djs     = profiles.filter(p=>p.type==='DJ');
 
   /* ── Fan: artists ── */
-  fillList('fan-artist-list','fan-artist-count', artists.slice(0,10),
-    (p,i,el)=>renderArtistRow(p,i,el,'wf','why-fan-detail','why-fan-prompt'));
+  fillListPaged('fan-artist-list','fan-artist-count', artists,
+    (p,i,el)=>renderArtistRow(p,i,el,'wf','why-fan-detail','why-fan-prompt'), 10);
 
   /* ── Fan: songs ── */
-  const songList = document.getElementById('fan-song-list');
-  const songCount = document.getElementById('fan-song-count');
-  if(songList){
-    songList.innerHTML='';
-    const items=tracks.slice(0,12);
-    if(items.length){
-      items.forEach((t,i)=>songList.appendChild(renderSongRow(t,i)));
-      if(songCount) songCount.textContent=items.length+' songs';
-    } else {
-      songList.appendChild(emptyEl(' No free-use tracks yet.'));
-      if(songCount) songCount.textContent='0 songs';
+  (function(){
+    const el = document.getElementById('fan-song-list');
+    const ct = document.getElementById('fan-song-count');
+    if(!el) return;
+    el.innerHTML='';
+    if(!tracks.length){ el.appendChild(emptyEl(' No free-use tracks yet.')); if(ct) ct.textContent='0 songs'; return; }
+    let shown=0; const PAGE=10;
+    function showPage(){
+      const old=el.querySelector('.load-more-btn'); if(old) old.remove();
+      tracks.slice(shown,shown+PAGE).forEach((t,i)=>el.appendChild(renderSongRow(t,shown+i)));
+      shown=Math.min(shown+PAGE,tracks.length);
+      if(ct) ct.textContent=(shown<tracks.length?shown+' of ':'')+tracks.length+' songs';
+      if(shown<tracks.length){ const btn=document.createElement('button'); btn.className='load-more-btn'; btn.textContent='Show '+Math.min(PAGE,tracks.length-shown)+' more →'; btn.addEventListener('click',showPage); el.appendChild(btn); }
     }
-  }
+    showPage();
+  })();
 
   /* ── Fan: shows ── */
-  const showList = document.getElementById('fan-show-list');
-  const showCount = document.getElementById('fan-show-count');
-  if(showList){
-    showList.innerHTML='';
-    const items=shows.filter(s=>s.status==='LIVE'||s.status==='SCHEDULED').slice(0,10);
-    if(items.length){
-      items.forEach((s,i)=>showList.appendChild(renderShowRow(s,i)));
-      if(showCount) showCount.textContent=items.length+' shows';
-    } else {
-      showList.appendChild(emptyEl(' No upcoming shows yet.'));
-      if(showCount) showCount.textContent='0 shows';
+  (function(){
+    const el = document.getElementById('fan-show-list');
+    const ct = document.getElementById('fan-show-count');
+    if(!el) return;
+    el.innerHTML='';
+    const pool=shows.filter(s=>s.status==='LIVE'||s.status==='SCHEDULED');
+    if(!pool.length){ el.appendChild(emptyEl(' No upcoming shows yet.')); if(ct) ct.textContent='0 shows'; return; }
+    let shown=0; const PAGE=8;
+    function showPage(){
+      const old=el.querySelector('.load-more-btn'); if(old) old.remove();
+      pool.slice(shown,shown+PAGE).forEach((s,i)=>el.appendChild(renderShowRow(s,shown+i)));
+      shown=Math.min(shown+PAGE,pool.length);
+      if(ct) ct.textContent=(shown<pool.length?shown+' of ':'')+pool.length+' shows';
+      if(shown<pool.length){ const btn=document.createElement('button'); btn.className='load-more-btn'; btn.textContent='Show '+Math.min(PAGE,pool.length-shown)+' more →'; btn.addEventListener('click',showPage); el.appendChild(btn); }
     }
-  }
+    showPage();
+  })();
 
   /* ── Artist: venues (booking targets) ── */
-  fillList('artist-venue-list','artist-venue-count', venues.slice(0,8),
-    (p,i,el)=>renderArtistRow(p,i,el,'wa','why-artist-detail','why-artist-prompt'));
+  fillListPaged('artist-venue-list','artist-venue-count', venues,
+    (p,i,el)=>renderArtistRow(p,i,el,'wa','why-artist-detail','why-artist-prompt'), 8);
 
   /* ── Artist: similar artists ── */
-  fillList('artist-similar-list','artist-similar-count', artists.slice(0,8),
-    (p,i,el)=>renderArtistRow(p,i,el,'wa','why-artist-detail','why-artist-prompt'));
+  fillListPaged('artist-similar-list','artist-similar-count', artists,
+    (p,i,el)=>renderArtistRow(p,i,el,'wa','why-artist-detail','why-artist-prompt'), 8);
 
   /* ── Venue: geo-tiered trending ── */
   const tierContainer = document.getElementById('venue-tier-sections');
   const vCount = document.getElementById('venue-artist-count');
   if(tierContainer && artists.length){
-    const perTier = Math.max(1, Math.min(4, Math.floor(artists.length / 4)));
-    // Distribute artists across tiers — first quarter local, etc.
+    const perTier = Math.max(3, Math.min(8, Math.floor(artists.length / 4)));
     const tiers = [
       artists.slice(0, perTier),
       artists.slice(perTier, perTier*2),
       artists.slice(perTier*2, perTier*3),
-      artists.slice(perTier*3, perTier*4)
+      artists.slice(perTier*3)
     ];
     tiers.forEach((tierArtists, idx)=>{ if(tierArtists.length) renderVenueTierSection(tierArtists, idx, tierContainer); });
     if(vCount) vCount.textContent = artists.length+' artists across '+tiers.filter(t=>t.length).length+' tiers';
@@ -1313,48 +1321,76 @@ async function load(){
   }
 
   /* ── Promoter: artist matches ── */
-  const promoList = document.getElementById('promoter-artist-list');
-  const promoCount = document.getElementById('promoter-artist-count');
-  if(promoList){
-    promoList.innerHTML='';
-    const pool = artists.slice(0,10);
-    if(pool.length){
-      pool.forEach((p,i)=>promoList.appendChild(renderPromoterRow(p,i,promoList)));
-      if(promoCount) promoCount.textContent=pool.length+' artists';
-    } else {
-      promoList.appendChild(emptyEl(' No artist profiles yet.'));
-      if(promoCount) promoCount.textContent='0 artists';
+  (function(){
+    const el = document.getElementById('promoter-artist-list');
+    const ct = document.getElementById('promoter-artist-count');
+    if(!el) return;
+    el.innerHTML='';
+    if(!artists.length){ el.appendChild(emptyEl(' No artist profiles yet.')); if(ct) ct.textContent='0 artists'; return; }
+    let shown=0; const PAGE=10;
+    function showPage(){
+      const old=el.querySelector('.load-more-btn'); if(old) old.remove();
+      artists.slice(shown,shown+PAGE).forEach((p,i)=>el.appendChild(renderPromoterRow(p,shown+i,el)));
+      shown=Math.min(shown+PAGE,artists.length);
+      if(ct) ct.textContent=(shown<artists.length?shown+' of ':'')+artists.length+' artists';
+      if(shown<artists.length){ const btn=document.createElement('button'); btn.className='load-more-btn'; btn.textContent='Show '+Math.min(PAGE,artists.length-shown)+' more →'; btn.addEventListener('click',showPage); el.appendChild(btn); }
     }
-  }
+    showPage();
+  })();
 
   /* ── Promoter: events ── */
-  const eventList = document.getElementById('promoter-event-list');
-  const eventCount = document.getElementById('promoter-event-count');
-  if(eventList){
-    eventList.innerHTML='';
-    if(shows.length){
-      shows.slice(0,10).forEach((s,i)=>eventList.appendChild(renderShowRow(s,i)));
-      if(eventCount) eventCount.textContent=shows.length+' events';
-    } else {
-      eventList.appendChild(emptyEl(' No published shows yet.'));
-      if(eventCount) eventCount.textContent='0 events';
+  (function(){
+    const el = document.getElementById('promoter-event-list');
+    const ct = document.getElementById('promoter-event-count');
+    if(!el) return;
+    el.innerHTML='';
+    if(!shows.length){ el.appendChild(emptyEl(' No published shows yet.')); if(ct) ct.textContent='0 events'; return; }
+    let shown=0; const PAGE=8;
+    function showPage(){
+      const old=el.querySelector('.load-more-btn'); if(old) old.remove();
+      shows.slice(shown,shown+PAGE).forEach((s,i)=>el.appendChild(renderShowRow(s,shown+i)));
+      shown=Math.min(shown+PAGE,shows.length);
+      if(ct) ct.textContent=(shown<shows.length?shown+' of ':'')+shows.length+' events';
+      if(shown<shows.length){ const btn=document.createElement('button'); btn.className='load-more-btn'; btn.textContent='Show '+Math.min(PAGE,shows.length-shown)+' more →'; btn.addEventListener('click',showPage); el.appendChild(btn); }
     }
-  }
+    showPage();
+  })();
 }
 
-function fillList(listId, countId, items, rowFn){
+function fillListPaged(listId, countId, allItems, rowFn, pageSize){
+  pageSize = pageSize || 8;
   const el = document.getElementById(listId);
   const ct = document.getElementById(countId);
   if(!el) return;
-  el.innerHTML='';
-  if(items.length){
-    items.forEach((p,i)=>el.appendChild(rowFn(p,i,el)));
-    if(ct) ct.textContent=items.length+(items[0].genres!==undefined?' artists':' items');
-  } else {
+  el.innerHTML = '';
+  if(!allItems.length){
     el.appendChild(emptyEl(' Nothing here yet.'));
-    if(ct) ct.textContent='0';
+    if(ct) ct.textContent = '0';
+    return;
   }
+  let shown = 0;
+  const unit = allItems[0]?.genres !== undefined ? ' artists' : ' items';
+  function showPage(){
+    const old = el.querySelector('.load-more-btn');
+    if(old) old.remove();
+    const chunk = allItems.slice(shown, shown + pageSize);
+    chunk.forEach((p,i) => el.appendChild(rowFn(p, shown+i, el)));
+    shown += chunk.length;
+    if(ct) ct.textContent = (shown < allItems.length ? shown + ' of ' : '') + allItems.length + unit;
+    if(shown < allItems.length){
+      const remaining = allItems.length - shown;
+      const btn = document.createElement('button');
+      btn.className = 'load-more-btn';
+      btn.textContent = 'Show ' + Math.min(pageSize, remaining) + ' more' + (remaining > pageSize ? ' of ' + remaining : '') + ' →';
+      btn.addEventListener('click', showPage);
+      el.appendChild(btn);
+    }
+  }
+  showPage();
 }
+
+// Legacy alias (kept for any remaining direct calls)
+function fillList(listId, countId, items, rowFn){ fillListPaged(listId, countId, items, rowFn, items.length); }
 
 /* ── Session → default lens ────────────────────────────────── */
 async function initRole(){
