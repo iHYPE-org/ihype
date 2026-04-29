@@ -284,6 +284,18 @@
     return header+'<div class="dash-layout">'+left+right+'</div>';
   }
 
+  // Show a success banner if redirected from show creator
+  (function(){
+    const p = new URLSearchParams(window.location.search);
+    if(p.get('show_created')==='1'){
+      const banner = document.createElement('div');
+      banner.style.cssText='background:rgba(34,229,212,.1);border:1px solid rgba(34,229,212,.3);border-radius:var(--r-md);padding:.85rem 1.2rem;font-family:var(--f-m);font-size:.86rem;color:var(--r-venue);margin-bottom:1.2rem;display:flex;align-items:center;gap:.75rem';
+      banner.innerHTML='<span style="font-size:1.1rem">✓</span> Show created! It\'s now in your shows list below. <a href="/show-creator" style="color:inherit;font-weight:600;margin-left:auto">Create another →</a>';
+      document.querySelector('.page').prepend(banner);
+      history.replaceState({}, '', '/home');
+    }
+  })();
+
   async function load(){
     try{
       const sessionRes = await fetch('/api/auth/session',{credentials:'same-origin'});
