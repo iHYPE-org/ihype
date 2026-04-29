@@ -105,6 +105,14 @@
 
 .shows-empty{grid-column:1/-1;text-align:center;padding:3rem 1rem;color:var(--ink-3);font-family:var(--f-m);font-size:.92rem}
 
+.show-card.selected{border-color:var(--accent);background:rgba(255,80,41,.06)}
+.show-card.selected::after{content:'Viewing receipt ↓';position:absolute;top:.85rem;right:.95rem;font-family:var(--f-m);font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-ink);font-weight:600}
+.show-card{position:relative}
+
+.receipt-placeholder{text-align:center;padding:2.5rem 1rem;color:var(--ink-3);font-family:var(--f-m);font-size:.9rem;line-height:1.6}
+.receipt-placeholder .ph-icon{font-size:2rem;margin-bottom:.5rem}
+.receipt-placeholder strong{display:block;color:var(--ink-2);font-size:1rem;margin-bottom:.35rem}
+
 @media (max-width:880px){
   .shows-browser{grid-template-columns:1fr}
 }
@@ -206,7 +214,7 @@
           <div class="field"><label class="field-label">Expiry</label><div class="field-input"><input type="text" value="08/27"></div></div>
           <div class="field"><label class="field-label">CVC</label><div class="field-input"><input type="text" value="•••"></div></div>
         </div>
-        <button class="btn btn-primary btn-block btn-lg" style="margin-top:1rem">Pay $49.09 →</button>
+        <button class="btn btn-primary btn-block btn-lg" id="pay-btn" style="margin-top:1rem" disabled>Select a show to pay →</button>
         <div class="field-help" style="text-align:center;margin-top:.85rem">By paying, you agree to the iHYPE charter. Refundable up to 24h before doors.</div>
       </div>
 
@@ -214,20 +222,29 @@
         <div class="receipt-head">
           <div class="receipt-brand">i<span style="color:var(--accent)">HYPE</span>.org</div>
           <div style="font-family:var(--f-m);font-size:.62rem;letter-spacing:.18em;color:var(--ink-3);text-transform:uppercase;font-weight:600">Receipt preview</div>
-          <div class="receipt-event">Wreckage Tour · Phantom Ridge</div>
-          <div class="receipt-when">Reserved · State Theatre · 22 Jun</div>
+          <div class="receipt-event" id="receipt-event-name">Select a show above</div>
+          <div class="receipt-when" id="receipt-event-when">Choose a ticketed show to see the real fee breakdown</div>
         </div>
-        <div class="receipt-row total"><span>Ticket price</span><span>$45.00</span></div>
-        <div class="receipt-section" data-i18n="receipt.label.goes">Where this goes</div>
-        <div class="receipt-row split"><span>Phantom Ridge · artist (45%)</span><span>+ $20.25</span></div>
-        <div class="receipt-row split"><span>State Theatre · venue (45%)</span><span>+ $20.25</span></div>
-        <div class="receipt-row split"><span>Disco Mortis · promoter (10%)</span><span>+ $4.50</span></div>
-        <div class="receipt-row zero"><span data-i18n="receipt.label.fee">iHYPE platform fee</span><span>$0.00</span></div>
-        <div class="receipt-section" data-i18n="receipt.label.pass">Pass-through (not ours)</div>
-        <div class="receipt-row passthrough"><span>Stripe · 2.9% + $0.30</span><span>+ $1.61</span></div>
-        <div class="receipt-row passthrough"><span>Sales tax · ME 5.5%</span><span>+ $2.48</span></div>
-        <div class="receipt-final"><span data-i18n="receipt.label.total">Total charged</span><span>$49.09</span></div>
-        <div class="receipt-foot">Of every dollar you pay, <strong>$45 goes to the people who made this show.</strong></div>
+
+        <!-- Placeholder: shown when no show selected -->
+        <div id="receipt-placeholder" class="receipt-placeholder">
+          <div class="ph-icon">🎟️</div>
+          <strong>No show selected</strong>
+          Click any ticketed show in the browser above to see exactly where every dollar goes — split by real payout percentages set by the artists and venue.
+        </div>
+
+        <!-- Real receipt content: hidden until a show is selected -->
+        <div id="receipt-content" style="display:none">
+          <div class="receipt-row total" id="receipt-ticket-price"><span>Ticket price</span><span>—</span></div>
+          <div class="receipt-section">Where this goes</div>
+          <div id="receipt-splits"><!-- filled dynamically --></div>
+          <div class="receipt-row zero"><span>iHYPE platform fee</span><span>$0.00</span></div>
+          <div class="receipt-section">Pass-through (not ours)</div>
+          <div class="receipt-row passthrough" id="receipt-stripe-row"><span>Stripe · 2.9% + $0.30</span><span>—</span></div>
+          <div class="receipt-row passthrough" style="color:var(--ink-4);font-size:.75rem"><span>Sales tax — varies by state</span><span>added at checkout</span></div>
+          <div class="receipt-final" id="receipt-final"><span>Subtotal (excl. tax)</span><span>—</span></div>
+          <div class="receipt-foot" id="receipt-foot">iHYPE takes $0. Every dollar goes to the people who made this show.</div>
+        </div>
       </div>
     </div>
   </section>
@@ -373,11 +390,12 @@
 
 <script src="/ihype-shared.js"></script>
 <script>
-/* ── Shows browser ───────────────────────────────────────────── */
+/* ── Shows browser + fee breakdown ──────────────────────────── */
 (function(){
   const grid = document.getElementById('shows-grid');
   const filterBtns = document.querySelectorAll('#shows-filters .filter-btn');
   let allShows = [];
+  let selectedShowId = null;
 
   function fmtDate(iso){
     const d = new Date(iso);
@@ -387,15 +405,100 @@
     if(!cents) return 'Free';
     return '$'+(cents/100).toFixed(2);
   }
+  function fmtDollars(n){ return '$'+n.toFixed(2); }
   function capBar(sold, cap){
     if(!cap) return '';
     const pct = Math.min(100, Math.round(sold/cap*100));
     return '<div style="margin-top:.35rem"><div style="height:3px;border-radius:2px;background:var(--line);overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--accent);border-radius:2px"></div></div></div>';
   }
+  function escHtml(str){
+    return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
 
+  /* ── Fee breakdown ──────────────────────────────────────────── */
+  function selectShow(show){
+    // Deselect previous card
+    if(selectedShowId){
+      const prev = document.querySelector('.show-card.selected');
+      if(prev) prev.classList.remove('selected');
+    }
+    selectedShowId = show.id;
+    const card = document.querySelector('[data-show-id="'+show.id+'"]');
+    if(card) card.classList.add('selected');
+
+    const priceCents = show.ticketPriceCents || 0;
+    const price = priceCents / 100;
+    const artistPct  = show.artistPayoutPercent  ?? 0;
+    const venuePct   = show.venuePayoutPercent   ?? 0;
+    const promoterPct= show.promoterPayoutPercent?? 0;
+    const artistAmt  = price * artistPct  / 100;
+    const venueAmt   = price * venuePct   / 100;
+    const promoterAmt= price * promoterPct/ 100;
+    // Stripe fee: simplified as 2.9% of ticket + $0.30
+    const stripeFee  = price * 0.029 + 0.30;
+    const subtotal   = price + stripeFee;
+
+    const headliner  = show.headlinerProfile?.name || null;
+    const venueName  = show.venueProfile?.name     || null;
+    const promoter   = show.promoterProfile?.name  || null;
+
+    // Header
+    document.getElementById('receipt-event-name').textContent = show.title;
+    const whenParts = [fmtDate(show.startsAt), venueName].filter(Boolean);
+    document.getElementById('receipt-event-when').textContent = whenParts.join(' · ');
+
+    // Ticket price row
+    const priceRow = document.getElementById('receipt-ticket-price');
+    priceRow.querySelector('span:last-child').textContent = fmtDollars(price);
+
+    // Splits
+    const splitsEl = document.getElementById('receipt-splits');
+    let splitsHtml = '';
+    if(headliner && artistPct > 0)
+      splitsHtml += '<div class="receipt-row split"><span>'+escHtml(headliner)+' · artist ('+artistPct+'%)</span><span>+ '+fmtDollars(artistAmt)+'</span></div>';
+    if(venueName && venuePct > 0)
+      splitsHtml += '<div class="receipt-row split"><span>'+escHtml(venueName)+' · venue ('+venuePct+'%)</span><span>+ '+fmtDollars(venueAmt)+'</span></div>';
+    if(promoter && promoterPct > 0)
+      splitsHtml += '<div class="receipt-row split"><span>'+escHtml(promoter)+' · promoter ('+promoterPct+'%)</span><span>+ '+fmtDollars(promoterAmt)+'</span></div>';
+    // Fallback: just show raw %s if no profile names
+    if(!splitsHtml && (artistPct+venuePct+promoterPct) > 0){
+      if(artistPct > 0) splitsHtml += '<div class="receipt-row split"><span>Artist ('+artistPct+'%)</span><span>+ '+fmtDollars(artistAmt)+'</span></div>';
+      if(venuePct > 0)  splitsHtml += '<div class="receipt-row split"><span>Venue ('+venuePct+'%)</span><span>+ '+fmtDollars(venueAmt)+'</span></div>';
+      if(promoterPct > 0) splitsHtml += '<div class="receipt-row split"><span>Promoter ('+promoterPct+'%)</span><span>+ '+fmtDollars(promoterAmt)+'</span></div>';
+    }
+    if(!splitsHtml)
+      splitsHtml = '<div class="receipt-row split" style="color:var(--ink-4)"><span>Payout split not configured</span><span>—</span></div>';
+    splitsEl.innerHTML = splitsHtml;
+
+    // Stripe
+    document.getElementById('receipt-stripe-row').querySelector('span:last-child').textContent = '+ '+fmtDollars(stripeFee);
+
+    // Final
+    const finalEl = document.getElementById('receipt-final');
+    finalEl.querySelector('span:last-child').textContent = fmtDollars(subtotal);
+
+    // Pay button
+    const payBtn = document.getElementById('pay-btn');
+    payBtn.textContent = 'Pay '+fmtDollars(subtotal)+' →';
+    payBtn.disabled = false;
+
+    // Footer
+    document.getElementById('receipt-foot').innerHTML =
+      'Of every dollar you pay, <strong>'+fmtDollars(price)+' goes to the people who made this show.</strong> iHYPE takes $0.00.';
+
+    // Show real content
+    document.getElementById('receipt-placeholder').style.display = 'none';
+    document.getElementById('receipt-content').style.display = '';
+
+    // Scroll to checkout
+    document.querySelector('.checkout-grid').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  /* ── Card renderer ──────────────────────────────────────────── */
   function renderCard(show){
     const card = document.createElement('div');
     card.className = 'show-card';
+    card.dataset.showId = show.id;
     card.dataset.status = show.status;
     card.dataset.ticketed = show.isTicketed ? 'true' : 'false';
 
@@ -403,9 +506,9 @@
     const venue = show.venueProfile?.name || '';
     const headliner = show.headlinerProfile?.name || '';
     const where = [headliner, venue].filter(Boolean).join(' · ');
-    const price = fmtPrice(show.ticketPriceCents);
+    const priceLabel = fmtPrice(show.ticketPriceCents);
     const sold = show.ticketsSoldCount ?? 0;
-    const cap = show.ticketCapacity ?? 0;
+    const cap  = show.ticketCapacity  ?? 0;
 
     card.innerHTML =
       '<div class="show-card-badges">' +
@@ -421,25 +524,26 @@
         (cap ? '<span class="show-card-cap">' + sold + ' / ' + cap + ' tickets sold</span>' + capBar(sold, cap) : '') +
       '</div>' +
       '<div class="show-card-foot">' +
-        '<span class="show-card-price' + (price==='Free'?' free':'') + '">' + price + '</span>' +
-        '<a class="show-card-link" href="/shows/' + escHtml(show.slug) + '">' +
-          (show.isTicketed ? 'Get tickets →' : 'View show →') +
-        '</a>' +
+        '<span class="show-card-price' + (priceLabel==='Free'?' free':'') + '">' + priceLabel + '</span>' +
+        (show.isTicketed
+          ? '<button class="show-card-link" style="background:none;border:none;cursor:pointer;padding:0">See fee breakdown →</button>'
+          : '<a class="show-card-link" href="/shows/' + escHtml(show.slug) + '">View show →</a>') +
       '</div>';
+
+    if(show.isTicketed){
+      card.addEventListener('click', ()=>selectShow(show));
+    }
 
     return card;
   }
 
-  function escHtml(str){
-    return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
+  /* ── Filter ─────────────────────────────────────────────────── */
   function applyFilter(filter){
     filterBtns.forEach(b=>b.classList.toggle('active', b.dataset.filter===filter));
     let filtered = allShows;
-    if(filter==='live') filtered = allShows.filter(s=>s.status==='LIVE');
+    if(filter==='live')     filtered = allShows.filter(s=>s.status==='LIVE');
     else if(filter==='ticketed') filtered = allShows.filter(s=>s.isTicketed);
-    else if(filter==='free') filtered = allShows.filter(s=>!s.isTicketed);
+    else if(filter==='free')     filtered = allShows.filter(s=>!s.isTicketed);
 
     grid.innerHTML = '';
     if(!filtered.length){
@@ -447,12 +551,18 @@
     } else {
       filtered.forEach(s=>grid.appendChild(renderCard(s)));
     }
+    // Re-mark selected card after re-render
+    if(selectedShowId){
+      const card = document.querySelector('[data-show-id="'+selectedShowId+'"]');
+      if(card) card.classList.add('selected');
+    }
   }
 
   filterBtns.forEach(b=>{
     b.addEventListener('click',()=>applyFilter(b.dataset.filter));
   });
 
+  /* ── Load ───────────────────────────────────────────────────── */
   async function loadShows(){
     try{
       const res = await fetch('/api/shows',{credentials:'same-origin'});

@@ -43,7 +43,7 @@ const schema = z.object({
 
 export async function GET() {
   const shows = await db.show.findMany({
-    include: { venueProfile: true, headlinerProfile: true },
+    include: { venueProfile: true, headlinerProfile: true, promoterProfile: true },
     where: { status: { in: ['SCHEDULED', 'LIVE', 'ENDED'] } }
   });
   return NextResponse.json(sortShowsForFeed(shows));
