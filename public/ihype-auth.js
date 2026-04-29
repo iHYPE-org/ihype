@@ -33,6 +33,9 @@ document.querySelectorAll('.otp-input').forEach((input, index, inputs) => {
 });
 
 let challengeId = null;
+let lastIdentifier = null;
+let lastPassword   = null;
+let resendTimer    = null;
 
 function setButtonState(id, text, disabled) {
   const button = document.getElementById(id);
@@ -48,16 +51,60 @@ function showError(id, message) {
   element.style.display = message ? 'block' : 'none';
 }
 
+function showSuccess(id, message) {
+  const element = document.getElementById(id);
+  if (!element) return;
+  element.textContent = message;
+  element.style.display = message ? 'block' : 'none';
+  element.style.color = 'var(--r-venue, #22e5d4)';
+}
+
+/* ── Resend countdown ─────────────────────────────────────────── */
+const RESEND_COOLDOWN = 60; // seconds
+
+function startResendCountdown() {
+  const btn = document.getElementById('otp-resend');
+  if (!btn) return;
+
+  btn.disabled = true;
+  if (resendTimer) clearInterval(resendTimer);
+
+  let remaining = RESEND_COOLDOWN;
+  btn.textContent = `Resend in 0:${String(remaining).padStart(2, '0')}`;
+
+  resendTimer = setInterval(() => {
+    remaining -= 1;
+    if (remaining <= 0) {
+      clearInterval(resendTimer);
+      resendTimer = null;
+      btn.textContent = "Didn't get it? Resend code →";
+      btn.disabled = false;
+    } else {
+      btn.textContent = `Resend in 0:${String(remaining).padStart(2, '0')}`;
+    }
+  }, 1000);
+}
+
+function stopResendCountdown() {
+  if (resendTimer) { clearInterval(resendTimer); resendTimer = null; }
+  const btn = document.getElementById('otp-resend');
+  if (btn) { btn.disabled = true; btn.textContent = 'Resend in 0:60'; }
+}
+
+/* ── OTP step visibility ──────────────────────────────────────── */
 function showOtpStep(email) {
   document.getElementById('otp-section').style.display = '';
   document.getElementById('otp-email-label').textContent = email;
   document.getElementById('auth-section').style.display = 'none';
   document.getElementById('otp-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
   document.getElementById('otp-0').focus();
+  showError('otp-error', '');
+  startResendCountdown();
 }
 
 function resetToForms() {
   challengeId = null;
+  stopResendCountdown();
   document.getElementById('otp-section').style.display = 'none';
   document.getElementById('auth-section').style.display = '';
   document.querySelectorAll('.otp-input').forEach((input) => {
@@ -67,10 +114,19 @@ function resetToForms() {
   showError('otp-error', '');
 }
 
+function clearOtpInputs() {
+  document.querySelectorAll('.otp-input').forEach((input) => {
+    input.value = '';
+    input.classList.remove('filled');
+  });
+  document.getElementById('otp-0')?.focus();
+}
+
 function isMediaRole(role) {
   return role === 'ARTIST' || role === 'DJ';
 }
 
+/* ── API calls ────────────────────────────────────────────────── */
 async function requestOtp(identifier, password) {
   const response = await fetch('/api/auth/otp/request', {
     method: 'POST',
@@ -86,6 +142,33 @@ async function requestOtp(identifier, password) {
   return data;
 }
 
+/* ── Resend ───────────────────────────────────────────────────── */
+async function handleResend() {
+  if (!lastIdentifier || !lastPassword) {
+    showError('otp-error', 'Session lost — go back and sign in again.');
+    return;
+  }
+
+  const btn = document.getElementById('otp-resend');
+  const prevText = btn?.textContent;
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+  showError('otp-error', '');
+
+  try {
+    const data = await requestOtp(lastIdentifier, lastPassword);
+    challengeId = data.challengeId;
+    clearOtpInputs();
+    showSuccess('otp-error', '✓ New code sent — check your inbox.');
+    startResendCountdown();
+  } catch (error) {
+    if (btn) { btn.disabled = false; btn.textContent = prevText || "Resend code →"; }
+    const msg = error instanceof Error ? error.message : 'Failed to resend.';
+    // Rate limit message is already user-friendly from the API
+    showError('otp-error', msg);
+  }
+}
+
+/* ── Sign up ──────────────────────────────────────────────────── */
 async function handleSignUp() {
   const email = document.getElementById('su-email').value.trim();
   const username = document.getElementById('su-username').value.trim();
@@ -128,6 +211,8 @@ async function handleSignUp() {
 
     const data = await requestOtp(email, password);
     challengeId = data.challengeId;
+    lastIdentifier = email;
+    lastPassword   = password;
     showOtpStep(data.email);
   } catch (error) {
     showError('su-error', error instanceof Error ? error.message : 'Registration failed.');
@@ -136,6 +221,7 @@ async function handleSignUp() {
   }
 }
 
+/* ── Sign in ──────────────────────────────────────────────────── */
 async function handleSignIn() {
   const identifier = document.getElementById('si-identifier').value.trim();
   const password = document.getElementById('si-password').value;
@@ -152,6 +238,8 @@ async function handleSignIn() {
   try {
     const data = await requestOtp(identifier, password);
     challengeId = data.challengeId;
+    lastIdentifier = identifier;
+    lastPassword   = password;
     showOtpStep(data.email);
   } catch (error) {
     showError('si-error', error instanceof Error ? error.message : 'Failed to send code.');
@@ -160,6 +248,7 @@ async function handleSignIn() {
   }
 }
 
+/* ── Verify ───────────────────────────────────────────────────── */
 async function handleVerify() {
   const otp = [0, 1, 2, 3, 4, 5].map((index) => document.getElementById(`otp-${index}`).value).join('');
 
@@ -171,7 +260,7 @@ async function handleVerify() {
   }
 
   if (!challengeId) {
-    showError('otp-error', 'Session expired. Please go back and try again.');
+    showError('otp-error', 'Session expired — use the Resend button to get a fresh code.');
     return;
   }
 
@@ -186,7 +275,14 @@ async function handleVerify() {
     const data = await response.json();
 
     if (!response.ok) {
-      showError('otp-error', data.error || 'Something went wrong. Please try again.');
+      // Surface a helpful message depending on what went wrong
+      let msg = data.error || 'Something went wrong. Please try again.';
+      if (msg.toLowerCase().includes('expir')) {
+        msg = 'Code expired — tap "Resend code" below to get a new one.';
+      } else if (msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('incorrect')) {
+        msg = 'Incorrect code — double-check and try again, or resend.';
+      }
+      showError('otp-error', msg);
       setButtonState('otp-btn', 'Verify and continue', false);
       return;
     }
@@ -198,6 +294,7 @@ async function handleVerify() {
   }
 }
 
+/* ── Initial error from URL ───────────────────────────────────── */
 function showInitialAuthErrors() {
   const params = new URLSearchParams(window.location.search);
   const error = params.get('error');
@@ -209,6 +306,7 @@ function showInitialAuthErrors() {
   }
 }
 
+/* ── Event wiring ─────────────────────────────────────────────── */
 document.getElementById('su-password')?.addEventListener('keydown', (event) => {
   if (event.key === 'Enter') handleSignUp();
 });
@@ -221,6 +319,7 @@ document.getElementById('otp-5')?.addEventListener('keydown', (event) => {
 document.getElementById('su-btn')?.addEventListener('click', handleSignUp);
 document.getElementById('si-btn')?.addEventListener('click', handleSignIn);
 document.getElementById('otp-btn')?.addEventListener('click', handleVerify);
+document.getElementById('otp-resend')?.addEventListener('click', handleResend);
 document.getElementById('otp-back')?.addEventListener('click', (event) => {
   event.preventDefault();
   resetToForms();

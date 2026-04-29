@@ -142,8 +142,15 @@
       <div id="otp-error" class="auth-error" style="text-align:center"></div>
       <button id="otp-btn" class="btn btn-primary btn-block btn-lg" type="button">Verify and continue</button>
 
+      <div style="text-align:center">
+        <button id="otp-resend" class="btn btn-ghost btn-sm" type="button" disabled style="min-width:200px">Resend in 0:60</button>
+      </div>
+      <p style="font-size:.76rem;color:var(--ink-4);text-align:center;margin-top:-.25rem">
+        Check your spam folder if you don't see it.
+      </p>
+
       <div class="auth-footer">
-        Wrong inbox? <a id="otp-back" href="#" style="color:var(--accent);text-decoration:none;font-weight:600">Go back</a>
+        Wrong email? <a id="otp-back" href="#" style="color:var(--accent);text-decoration:none;font-weight:600">Go back and change it</a>
       </div>
     </div>
   </main>
