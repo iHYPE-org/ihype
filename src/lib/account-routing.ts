@@ -15,6 +15,13 @@ export function getDiscoverPathForType(type: ProfileType) {
   return '/artists';
 }
 
+export function getLandingPathForType(type: ProfileType) {
+  if (type === 'DJ') return '/my/promoter';
+  if (type === 'VENUE') return '/my/venue';
+  if (type === 'LISTENER') return '/my/fan';
+  return '/my/artist';
+}
+
 function getPreferredProfileTypeForRole(role: string | null | undefined): ProfileType | null {
   if (role === 'ARTIST') return 'ARTIST';
   if (role === 'DJ') return 'DJ';
@@ -49,7 +56,7 @@ export async function getDefaultLandingPathForUser({
     });
 
     if (preferredProfile) {
-      return getDiscoverPathForType(preferredProfile.type);
+      return getLandingPathForType(preferredProfile.type);
     }
   }
 
@@ -62,7 +69,7 @@ export async function getDefaultLandingPathForUser({
   });
 
   if (fallbackProfile) {
-    return getDiscoverPathForType(fallbackProfile.type);
+    return getLandingPathForType(fallbackProfile.type);
   }
 
   return '/dashboard';
