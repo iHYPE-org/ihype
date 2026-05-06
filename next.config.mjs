@@ -64,91 +64,26 @@ const nextConfig = {
   poweredByHeader: false,
   async redirects() {
     return [
-      {
-        source: '/auth',
-        destination: '/login',
-        permanent: false
-      },
-      {
-        source: '/listeners',
-        destination: '/fans',
-        permanent: true
-      },
-      {
-        source: '/listeners/:slug',
-        destination: '/fans/:slug',
-        permanent: true
-      },
-      {
-        source: '/promise',
-        destination: '/',
-        permanent: false
-      }
+      { source: '/auth',              destination: '/login',      permanent: false },
+      { source: '/listeners',         destination: '/fans',       permanent: true },
+      { source: '/listeners/:slug',   destination: '/fans/:slug', permanent: true },
+      { source: '/promise',           destination: '/integrity',  permanent: false },
+      { source: '/hype',              destination: '/fans',       permanent: false },
+      { source: '/discover',          destination: '/fans',       permanent: false },
+      { source: '/tickets',           destination: '/shows',      permanent: false },
+      { source: '/home',              destination: '/dashboard',  permanent: false },
+      { source: '/search',            destination: '/fans',       permanent: false },
+      { source: '/media',             destination: '/artists',    permanent: false },
+      { source: '/governance',        destination: '/integrity',  permanent: false },
+      { source: '/customizer',        destination: '/dashboard',  permanent: false },
+      { source: '/show-creator',      destination: '/dashboard',  permanent: false }
     ];
-  },
-  async rewrites() {
-    return {
-      beforeFiles: [
-        { source: '/',           destination: '/ihype-homepage.html' },
-        { source: '/login',      destination: '/ihype-login.html' },
-        { source: '/register',   destination: '/ihype-register.html' },
-        { source: '/hype',       destination: '/ihype-hype-engine.html' },
-        { source: '/discover',   destination: '/ihype-rec-engine.html' },
-        { source: '/tickets',    destination: '/ihype-ticketing.html' },
-        { source: '/customizer',    destination: '/ihype-page-customizer.html' },
-        { source: '/show-creator', destination: '/ihype-show-creator.html' },
-        { source: '/forgot',       destination: '/ihype-forgot.html' },
-        { source: '/media',        destination: '/ihype-media.html' },
-        { source: '/home',         destination: '/ihype-home.html' },
-        { source: '/search',       destination: '/ihype-search.html' },
-        { source: '/governance',   destination: '/ihype-governance.html' },
-        // /profile/:slug is handled by src/app/profile/[slug]/route.ts (OG tag injection)
-      ],
-      afterFiles: [],
-      fallback: []
-    };
   },
   async headers() {
     return [
       {
         source: '/:path*',
         headers: securityHeaders
-      },
-      {
-        source: '/:path*.html',
-        headers: [{ key: 'Cache-Control', value: 'no-cache, must-revalidate' }]
-      },
-      {
-        source: '/',
-        headers: [{ key: 'Cache-Control', value: 'no-cache, must-revalidate' }]
-      },
-      {
-        source: '/home',
-        headers: [{ key: 'Cache-Control', value: 'no-cache, must-revalidate' }]
-      },
-      {
-        source: '/login',
-        headers: [{ key: 'Cache-Control', value: 'no-cache, must-revalidate' }]
-      },
-      {
-        source: '/forgot',
-        headers: [{ key: 'Cache-Control', value: 'no-cache, must-revalidate' }]
-      },
-      {
-        source: '/media',
-        headers: [{ key: 'Cache-Control', value: 'no-cache, must-revalidate' }]
-      },
-      {
-        source: '/register',
-        headers: [{ key: 'Cache-Control', value: 'no-cache, must-revalidate' }]
-      },
-      {
-        source: '/search',
-        headers: [{ key: 'Cache-Control', value: 'no-cache, must-revalidate' }]
-      },
-      {
-        source: '/governance',
-        headers: [{ key: 'Cache-Control', value: 'no-cache, must-revalidate' }]
       },
       // /profile/:slug — cache headers set directly in the route handler
       // /shows/:slug   — handled by src/app/shows/[slug]/page.tsx (no static rewrite)
