@@ -33,10 +33,11 @@
                          "stripe":  "^17.7.0",
                          "react":  "^19.1.0",
                          "react-dom":  "^19.1.0",
+                         "@sentry/nextjs":  "^8.0.0",
+                         "@vercel/kv":  "^3.0.0",
                          "zod":  "^3.24.1"
                      },
     "devDependencies":  {
-                            "@sentry/nextjs":  "^8.0.0",
                             "@types/bcryptjs":  "^2.4.6",
                             "@types/node":  "^22.15.30",
                             "@types/nodemailer":  "^7.0.11",
