@@ -1320,6 +1320,51 @@
     }
   };
 
+  // ─── Font map — one entry per supported language ─────────────────────
+  // gfonts: Google Fonts URL to lazy-load; null = already loaded (Latin stack)
+  // dir: text direction; defaults to 'ltr'
+
+  var LANG_FONTS = {
+    en: { d: "'Syne',sans-serif",                  b: "'DM Sans',sans-serif",                  m: "'JetBrains Mono',monospace",  gfonts: null },
+    es: { d: "'Syne',sans-serif",                  b: "'DM Sans',sans-serif",                  m: "'JetBrains Mono',monospace",  gfonts: null },
+    pt: { d: "'Syne',sans-serif",                  b: "'DM Sans',sans-serif",                  m: "'JetBrains Mono',monospace",  gfonts: null },
+    fr: { d: "'Syne',sans-serif",                  b: "'DM Sans',sans-serif",                  m: "'JetBrains Mono',monospace",  gfonts: null },
+    de: { d: "'Syne',sans-serif",                  b: "'DM Sans',sans-serif",                  m: "'JetBrains Mono',monospace",  gfonts: null },
+    ar: { d: "'Noto Sans Arabic',sans-serif",       b: "'Noto Sans Arabic',sans-serif",          m: "'Noto Sans Arabic',monospace", dir: 'rtl',
+          gfonts: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap' },
+    hi: { d: "'Noto Sans Devanagari',sans-serif",   b: "'Noto Sans Devanagari',sans-serif",      m: "'Noto Sans Devanagari',monospace",
+          gfonts: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap' },
+    ja: { d: "'Noto Sans JP',sans-serif",           b: "'Noto Sans JP',sans-serif",              m: "'Noto Sans JP',monospace",
+          gfonts: 'https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap' },
+    ko: { d: "'Noto Sans KR',sans-serif",           b: "'Noto Sans KR',sans-serif",              m: "'Noto Sans KR',monospace",
+          gfonts: 'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap' },
+    zh: { d: "'Noto Sans SC',sans-serif",           b: "'Noto Sans SC',sans-serif",              m: "'Noto Sans SC',monospace",
+          gfonts: 'https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap' },
+    ru: { d: "'Syne',sans-serif",                  b: "'DM Sans',sans-serif",                  m: "'JetBrains Mono',monospace",
+          gfonts: 'https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&subset=cyrillic&display=swap' }
+  };
+
+  var _loadedFontHrefs = {};
+
+  function applyLangFont(lang){
+    var cfg = LANG_FONTS[lang] || LANG_FONTS['en'];
+    // Lazy-load Google Font if this script doesn't bundle it
+    if(cfg.gfonts && !_loadedFontHrefs[cfg.gfonts]){
+      var link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = cfg.gfonts;
+      document.head.appendChild(link);
+      _loadedFontHrefs[cfg.gfonts] = true;
+    }
+    // Update CSS font-family variables so every element inherits instantly
+    var root = document.documentElement;
+    root.style.setProperty('--f-d', cfg.d);
+    root.style.setProperty('--f-b', cfg.b);
+    root.style.setProperty('--f-m', cfg.m);
+    // Flip text direction for RTL scripts
+    root.dir = cfg.dir || 'ltr';
+  }
+
   // ─── i18n engine ─────────────────────────────────────────────────────
 
   var currentLang = 'en';
@@ -1331,8 +1376,9 @@
 
   function applyTranslations(lang){
     currentLang = lang;
-    // Update html lang attribute
+    // Update html lang attribute + fonts
     document.documentElement.lang = lang;
+    applyLangFont(lang);
 
     // Swap all data-i18n text nodes
     document.querySelectorAll('[data-i18n]').forEach(function(el){
@@ -1358,9 +1404,9 @@
       // Also respect browser language as default if no preference saved
       if(!saved){
         var browserLang = (navigator.language || 'en').slice(0,2).toLowerCase();
-        if(STRINGS[browserLang]) saved = browserLang;
+        if(LANG_FONTS[browserLang]) saved = browserLang;
       }
-      if(saved && STRINGS[saved]) applyTranslations(saved);
+      if(saved && LANG_FONTS[saved]) applyTranslations(saved);
     } catch(e){}
   }
 
