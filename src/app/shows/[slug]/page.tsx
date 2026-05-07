@@ -79,13 +79,15 @@ export default async function ShowDetailPage({
   searchParams
 }: {
   params: Promise<{ slug: string }>;
-  searchParams?: Promise<{ affiliate?: string | string[] }>;
+  searchParams?: Promise<{ affiliate?: string | string[]; ref?: string | string[] }>;
 }) {
   const session = await auth();
   const { slug } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const affiliateId =
     typeof resolvedSearchParams.affiliate === 'string' ? resolvedSearchParams.affiliate : undefined;
+  const refHexId =
+    typeof resolvedSearchParams.ref === 'string' ? resolvedSearchParams.ref : undefined;
   const show = await db.show.findUnique({
     where: { slug },
     include: {
@@ -122,18 +124,17 @@ export default async function ShowDetailPage({
           }
         })
       : Promise.resolve(null),
-    affiliateId
+    refHexId
       ? db.profile.findFirst({
-          where: {
-            id: affiliateId,
-            type: 'DJ'
-          },
-          select: {
-            id: true,
-            name: true
-          }
+          where: { hexId: refHexId, type: 'DJ' },
+          select: { id: true, name: true }
         })
-      : Promise.resolve(null)
+      : affiliateId
+        ? db.profile.findFirst({
+            where: { id: affiliateId, type: 'DJ' },
+            select: { id: true, name: true }
+          })
+        : Promise.resolve(null)
   ]);
 
   const visibility = getShowVisibilitySignals(show);

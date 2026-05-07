@@ -10,14 +10,15 @@ import {
   DiscoverStatsPanel
 } from '@/components/DiscoverModulePanels';
 import { PromoterShowCreationTool } from '@/components/PromoterShowCreationTool';
+import { PromoterAffiliateLinks } from '@/components/PromoterAffiliateLinks';
 import { getProfileDesignStyleVars } from '@/lib/profile-design';
 
 export const dynamic = 'force-dynamic';
 
-type LandingModule = 'my-page' | 'stats' | 'events' | 'show-creator';
+type LandingModule = 'my-page' | 'stats' | 'events' | 'show-creator' | 'affiliate-links';
 
 function resolveModule(value: string | string[] | undefined): LandingModule {
-  if (value === 'stats' || value === 'events' || value === 'show-creator') return value;
+  if (value === 'stats' || value === 'events' || value === 'show-creator' || value === 'affiliate-links') return value;
   return 'my-page';
 }
 
@@ -127,6 +128,32 @@ export default async function PromoterLandingPage({
         title="My promoter events"
       />
     );
+  } else if (activeModule === 'affiliate-links') {
+    modulePanel = (
+      <section className="section">
+        <div className="panel discover-module-panel">
+          <div className="discover-module-header">
+            <div>
+              <div className="badge">Affiliate</div>
+              <h2>Affiliate links</h2>
+            </div>
+            <p className="meta">
+              Share these links so your ticket sales are attributed to your promoter page.
+              Every link includes your unique <code>?ref=</code> tag.
+            </p>
+          </div>
+          <PromoterAffiliateLinks
+            shows={myPromoterShows.map((show) => ({
+              slug: show.slug,
+              title: show.title,
+              startsAt: show.startsAt,
+              venueName: show.venueProfile?.name ?? null
+            }))}
+            promoterHexId={myPromoterProfile.hexId}
+          />
+        </div>
+      </section>
+    );
   } else {
     const artistProfiles = await db.profile.findMany({
       where: {
@@ -220,6 +247,12 @@ export default async function PromoterLandingPage({
             href="/my/promoter?module=events"
           >
             Events
+          </Link>
+          <Link
+            className={activeModule === 'affiliate-links' ? 'site-subnav-link active' : 'site-subnav-link'}
+            href="/my/promoter?module=affiliate-links"
+          >
+            Affiliate Links
           </Link>
           <div className="site-subnav-divider" aria-hidden="true" />
           <Link className="site-subnav-link site-subnav-link-utility" href="/promoters">
