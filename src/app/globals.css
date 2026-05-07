@@ -3051,6 +3051,79 @@ button, input, select, textarea { font: inherit; }
 .explanation-block {
   margin-top: 1.25rem;
 }
+
+/* "Why you're seeing this" chip disclosure */
+.reason-disclosure {
+  margin-top: 0.9rem;
+  border-top: 1px solid var(--line);
+  padding-top: 0.8rem;
+}
+.reason-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.reason-summary::-webkit-details-marker { display: none; }
+.reason-label {
+  font-family: var(--f-m);
+  font-size: 0.72rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.reason-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.reason-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.22rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  font-family: var(--f-m);
+  font-size: 0.72rem;
+  color: var(--ink-2);
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+.reason-chip-sm {
+  font-size: 0.68rem;
+  padding: 0.16rem 0.45rem;
+}
+.reason-disclosure[open] .reason-chip {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.16);
+}
+.reason-detail-grid {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.reason-detail-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+.reason-detail-text {
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.reason-version-row {
+  margin-top: 0.25rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--line);
+}
 .field { display: grid; gap: 0.4rem; }
 .field input, .field textarea, .field select {
   padding: 0.9rem 1rem; border-radius: 14px; border: 1px solid var(--line); background: #0b1120; color: var(--text);

@@ -1,18 +1,39 @@
 import { ShowCard } from '@/components/ShowCard';
 import { getShowsDirectoryData } from '@/lib/public-data';
 import { sortShowsForFeed } from '@/lib/integrity';
+import { detectRequestLocation } from '@/lib/request-location';
+import { isLocalMatch, isRegionalMatch } from '@/lib/discover-feed';
+import type { ReasonChip } from '@/lib/integrity';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ShowsIndexPage() {
-  const shows = sortShowsForFeed(await getShowsDirectoryData()).map((show) => ({
+  const [rawShows, viewerLocation] = await Promise.all([
+    getShowsDirectoryData(),
+    detectRequestLocation()
+  ]);
+
+  const shows = sortShowsForFeed(rawShows).map((show) => ({
     ...show,
     startsAt: show.startsAt instanceof Date ? show.startsAt : new Date(show.startsAt)
   }));
+
   const now = new Date();
   const liveShows = shows.filter((show) => show.status === 'LIVE');
   const upcomingShows = shows.filter((show) => show.status !== 'LIVE' && show.startsAt >= now);
   const recentShows = shows.filter((show) => show.status === 'ENDED' || (show.startsAt < now && show.status !== 'LIVE')).slice(0, 6);
+
+  function locationChips(show: typeof shows[0]): ReasonChip[] {
+    const chips: ReasonChip[] = [];
+    const venue = show.venueProfile;
+    if (!venue || !viewerLocation) return chips;
+    if (isLocalMatch(venue, viewerLocation)) {
+      chips.push({ icon: '📍', label: 'Near you', detail: `Venue is in ${venue.city ?? 'your city'}.` });
+    } else if (isRegionalMatch(venue, viewerLocation)) {
+      chips.push({ icon: '🗺️', label: 'Your region', detail: `Venue is in your region.` });
+    }
+    return chips;
+  }
 
   return (
     <main className="container section">
@@ -47,7 +68,7 @@ export default async function ShowsIndexPage() {
           <h2>Live now</h2>
         </div>
         <div className="grid grid-2">
-          {liveShows.length ? liveShows.map((show) => <ShowCard key={show.id} show={show} />) : <div className="empty">No live broadcasts right now.</div>}
+          {liveShows.length ? liveShows.map((show) => <ShowCard key={show.id} show={show} reasonChips={locationChips(show)} />) : <div className="empty">No live broadcasts right now.</div>}
         </div>
       </section>
 
@@ -56,7 +77,7 @@ export default async function ShowsIndexPage() {
           <h2>Upcoming</h2>
         </div>
         <div className="grid grid-2">
-          {upcomingShows.length ? upcomingShows.map((show) => <ShowCard key={show.id} show={show} />) : <div className="empty">No scheduled shows yet.</div>}
+          {upcomingShows.length ? upcomingShows.map((show) => <ShowCard key={show.id} show={show} reasonChips={locationChips(show)} />) : <div className="empty">No scheduled shows yet.</div>}
         </div>
       </section>
 

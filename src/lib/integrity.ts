@@ -52,6 +52,12 @@ type VisibilitySignal = {
   value: string;
 };
 
+export type ReasonChip = {
+  label: string;
+  icon: string;
+  detail: string;
+};
+
 export function getShowVisibilitySignals(show: ExplainableShow, now = new Date()) {
   const startsAt = show.startsAt instanceof Date ? show.startsAt : new Date(show.startsAt);
   const hoursUntil = (startsAt.getTime() - now.getTime()) / (60 * 60 * 1000);
@@ -113,11 +119,37 @@ export function getShowVisibilitySignals(show: ExplainableShow, now = new Date()
     { label: 'Momentum', value: momentumSignal }
   ];
 
+  // Compact chips for inline "why you're seeing this" display
+  const chips: ReasonChip[] = [];
+
+  if (show.status === 'LIVE') {
+    chips.push({ icon: '🔴', label: 'Live now', detail: 'This show is broadcasting right now.' });
+  } else if (show.status === 'SCHEDULED' && hoursUntil <= 12) {
+    chips.push({ icon: '⚡', label: 'Starting soon', detail: 'Starts within the next 12 hours.' });
+  } else if (show.status === 'SCHEDULED' && hoursUntil <= 72) {
+    chips.push({ icon: '📅', label: 'This week', detail: 'Starts within the next 72 hours.' });
+  } else if (show.status === 'ENDED') {
+    chips.push({ icon: '🗂️', label: 'Recent archive', detail: 'Recently ended — still visible for context.' });
+  }
+
+  if (show.hypeCount >= 50) {
+    chips.push({ icon: '🔥', label: 'Trending', detail: `${show.hypeCount} hype signals — strong momentum.` });
+  } else if (show.hypeCount >= 20) {
+    chips.push({ icon: '📈', label: 'Building', detail: `${show.hypeCount} hype signals and climbing.` });
+  } else if (show.hypeCount >= 5) {
+    chips.push({ icon: '✨', label: `${show.hypeCount} hype`, detail: 'Early momentum signal.' });
+  }
+
+  if (chips.length === 0) {
+    chips.push({ icon: '📋', label: statusSignal, detail: freshnessSignal });
+  }
+
   return {
     version: FEED_HEURISTICS_VERSION,
     totalScore,
     contextSignal,
     signals,
+    chips,
     reasons: [
       `Status rule: ${statusSignal}.`,
       freshnessSignal,

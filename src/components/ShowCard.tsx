@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getShowVisibilitySignals } from '@/lib/integrity';
+import { getShowVisibilitySignals, type ReasonChip } from '@/lib/integrity';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { formatShowTime } from '@/lib/utils';
 
@@ -25,8 +25,15 @@ type ShowCardShow = {
   } | null;
 };
 
-export function ShowCard({ show }: { show: ShowCardShow }) {
+export function ShowCard({
+  show,
+  reasonChips
+}: {
+  show: ShowCardShow;
+  reasonChips?: ReasonChip[];
+}) {
   const visibility = getShowVisibilitySignals(show);
+  const allChips = [...visibility.chips, ...(reasonChips ?? [])];
 
   return (
     <article className="card show-card">
@@ -53,17 +60,30 @@ export function ShowCard({ show }: { show: ShowCardShow }) {
             </span>
           ))}
         </div>
-        <div className="explanation-card">
-          <div className="meta">Why you&apos;re seeing this</div>
-          <div className="signal-grid compact">
-            {visibility.signals.map((signal) => (
-              <div className="signal-card" key={signal.label}>
-                <strong>{signal.label}</strong>
-                <span>{signal.value}</span>
+
+        <details className="reason-disclosure">
+          <summary className="reason-summary">
+            <span className="reason-label">Why you&apos;re seeing this</span>
+            <div className="reason-chips" aria-hidden="true">
+              {allChips.map((chip) => (
+                <span className="reason-chip" key={chip.label} title={chip.detail}>
+                  {chip.icon} {chip.label}
+                </span>
+              ))}
+            </div>
+          </summary>
+          <div className="reason-detail-grid">
+            {allChips.map((chip) => (
+              <div className="reason-detail-row" key={chip.label}>
+                <span className="reason-chip reason-chip-sm">{chip.icon} {chip.label}</span>
+                <span className="reason-detail-text">{chip.detail}</span>
               </div>
             ))}
+            <div className="reason-detail-row reason-version-row">
+              <span className="meta">Feed heuristics v{visibility.version}</span>
+            </div>
           </div>
-        </div>
+        </details>
       </div>
       <div className="cta-row">
         <Link className="button small" href={`/shows/${show.slug}`}>
