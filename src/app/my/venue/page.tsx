@@ -125,6 +125,40 @@ export default async function VenueLandingPage({
   const now = new Date();
   const liveOrUpcomingShows = myVenueShows.filter((s) => s.status === 'LIVE' || s.startsAt >= now);
   const ticketsSold = myVenueShows.reduce((sum, s) => sum + s.ticketsSoldCount, 0);
+
+  const showIds = myVenueShows.map((s) => s.id);
+  const [grossRevenueCents, recentVenueHypeCount] = await Promise.all([
+    showIds.length
+      ? db.ticketOrder.aggregate({
+          _sum: { subtotalCents: true },
+          where: { showId: { in: showIds }, status: { not: 'CANCELED' } }
+        }).then((r) => r._sum.subtotalCents ?? 0)
+      : Promise.resolve(0),
+    db.profileHypeEvent.count({
+      where: {
+        profileId: myVenueProfile.id,
+        createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
+      }
+    })
+  ]);
+
+  const uniqueArtistsHosted = new Set(
+    myVenueShows
+      .map((s) => s.headlinerProfileId)
+      .filter((id): id is string => Boolean(id))
+  ).size;
+  const topHeadliners = Array.from(
+    new Set(
+      myVenueShows
+        .map((s) => s.headlinerProfile?.name)
+        .filter((n): n is string => Boolean(n))
+    )
+  ).slice(0, 5);
+  const grossRevenueDisplay = (grossRevenueCents / 100).toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0
+  });
   const recommendationData = buildVenueBookingRecommendations({
     requests: venueRequests.map((r) => ({
       status: r.status,
@@ -214,11 +248,15 @@ export default async function VenueLandingPage({
       <DiscoverStatsPanel
         badge="Stats"
         description="A quick read on the live signals tied to your venue page."
+        highlights={topHeadliners.length ? topHeadliners : undefined}
         stats={[
-          { label: 'Fan hype', value: myVenueProfile.hypeCount },
+          { label: 'Fan hype (total)', value: myVenueProfile.hypeCount },
+          { label: 'New hypes (30 days)', value: recentVenueHypeCount },
+          { label: 'Gross ticket revenue', value: grossRevenueDisplay },
+          { label: 'Tickets sold', value: ticketsSold },
+          { label: 'Unique artists hosted', value: uniqueArtistsHosted },
           { label: 'Total events', value: myVenueShows.length },
           { label: 'Live + upcoming', value: liveOrUpcomingShows.length },
-          { label: 'Tickets sold', value: ticketsSold },
           { label: 'Requests received', value: myVenueRequestCount }
         ]}
         title="My venue stats"

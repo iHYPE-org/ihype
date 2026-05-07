@@ -74,6 +74,35 @@ export default async function PromoterLandingPage({
       .map((show) => show.venueProfileId)
       .filter((id): id is string => Boolean(id))
   ).size;
+
+  const promoterShowIds = myPromoterShows.map((s) => s.id);
+  const [promoterGrossRevenueCents, promoterRecentHypeCount] = await Promise.all([
+    promoterShowIds.length
+      ? db.ticketOrder.aggregate({
+          _sum: { subtotalCents: true },
+          where: { showId: { in: promoterShowIds }, status: { not: 'CANCELED' } }
+        }).then((r) => r._sum.subtotalCents ?? 0)
+      : Promise.resolve(0),
+    db.profileHypeEvent.count({
+      where: {
+        profileId: myPromoterProfile.id,
+        createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
+      }
+    })
+  ]);
+  const promoterGrossRevenueDisplay = (promoterGrossRevenueCents / 100).toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0
+  });
+  const topVenuesWorked = Array.from(
+    new Set(
+      myPromoterShows
+        .map((s) => s.venueProfile?.name)
+        .filter((n): n is string => Boolean(n))
+    )
+  ).slice(0, 5);
+
   const pageStyle = getProfileDesignStyleVars(myPromoterProfile.themePreset, {
     accentTone: myPromoterProfile.themeAccentTone,
     backdropTone: myPromoterProfile.themeBackdropTone,
@@ -108,11 +137,14 @@ export default async function PromoterLandingPage({
       <DiscoverStatsPanel
         badge="Stats"
         description="A quick read on the event momentum tied to your promoter profile."
+        highlights={topVenuesWorked.length ? topVenuesWorked : undefined}
         stats={[
-          { label: 'Fan hype', value: myPromoterProfile.hypeCount },
+          { label: 'Fan hype (total)', value: myPromoterProfile.hypeCount },
+          { label: 'New hypes (30 days)', value: promoterRecentHypeCount },
+          { label: 'Gross ticket revenue', value: promoterGrossRevenueDisplay },
+          { label: 'Tickets sold', value: ticketsSold },
           { label: 'Total shows', value: myPromoterShows.length },
           { label: 'Live + upcoming', value: liveOrUpcomingShows.length },
-          { label: 'Tickets sold', value: ticketsSold },
           { label: 'Venues worked', value: venueCount }
         ]}
         title="My promoter stats"

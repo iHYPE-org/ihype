@@ -73,6 +73,30 @@ export default async function ArtistLandingPage({
 
   const artistCount = await db.profile.count({ where: { type: 'ARTIST' } });
 
+  const ticketsSold = myArtistShows.reduce((sum, s) => sum + s.ticketsSoldCount, 0);
+
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const [mediaListenCount, showListenCount, recentHypeCount, topVenueNames] = await Promise.all([
+    db.mediaListen.count({
+      where: { artistProfileSlug: myArtistProfile.slug, completedAt: { not: null } }
+    }),
+    db.showListen.count({
+      where: { show: { headlinerProfileId: myArtistProfile.id } }
+    }),
+    db.profileHypeEvent.count({
+      where: { profileId: myArtistProfile.id, createdAt: { gte: thirtyDaysAgo } }
+    }),
+    Promise.resolve(
+      Array.from(
+        new Set(
+          myArtistShows
+            .map((s) => s.venueProfile?.name)
+            .filter((n): n is string => Boolean(n))
+        )
+      ).slice(0, 5)
+    )
+  ]);
+
   const modulePanel =
     activeModule === 'my-page' ? (
       <DiscoverMyPagePanel
@@ -96,12 +120,16 @@ export default async function ArtistLandingPage({
       <DiscoverStatsPanel
         badge="Stats"
         description="A quick read on the artist page signals attached to your profile."
+        highlights={topVenueNames.length ? topVenueNames : undefined}
         stats={[
-          { label: 'Fan hype', value: myArtistProfile.hypeCount },
+          { label: 'Fan hype (total)', value: myArtistProfile.hypeCount },
+          { label: 'New hypes (30 days)', value: recentHypeCount },
+          { label: 'Full song listens', value: mediaListenCount },
+          { label: 'Full show listens', value: showListenCount },
+          { label: 'Tickets sold', value: ticketsSold },
           { label: 'Total events', value: myArtistShows.length },
           { label: 'Live + upcoming', value: liveOrUpcomingShows.length },
-          { label: 'Verified', value: myArtistProfile.verified ? 'Yes' : 'No' },
-          { label: 'Artists in network', value: artistCount }
+          { label: 'Verified', value: myArtistProfile.verified ? 'Yes' : 'No' }
         ]}
         title="My artist stats"
       />

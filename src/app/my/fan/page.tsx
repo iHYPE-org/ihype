@@ -77,6 +77,15 @@ export default async function FanLandingPage({
   );
   const myEvents = [...myUpcomingShows, ...myPastShows];
   const hypePoints = myShows.length + profileHypes.length;
+
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const recentFanHypeCount = await db.hypeEvent.count({
+    where: { userId: session.user.id, createdAt: { gte: thirtyDaysAgo } }
+  });
+
+  const topGenres = Array.from(
+    new Set(myFanProfile.genres.slice(0, 5))
+  );
   const pageStyle = getProfileDesignStyleVars(myFanProfile.themePreset, {
     accentTone: myFanProfile.themeAccentTone,
     backdropTone: myFanProfile.themeBackdropTone,
@@ -103,8 +112,10 @@ export default async function FanLandingPage({
       <DiscoverStatsPanel
         badge="Stats"
         description="Track the listening and event signals that make up your fan footprint across iHYPE."
+        highlights={topGenres.length ? topGenres : undefined}
         stats={[
           { label: 'Hype points', value: hypePoints },
+          { label: 'New hypes (30 days)', value: recentFanHypeCount },
           { label: 'Full songs listened', value: fullSongListenCount },
           { label: 'Full shows listened', value: fullShowListenCount },
           { label: 'Events attended', value: myPastShows.length },
