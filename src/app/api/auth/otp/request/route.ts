@@ -13,7 +13,7 @@ const schema = z.object({
 export async function POST(request: Request) {
   try {
     const clientAddress = readClientAddress(request);
-    const rateLimit = consumeRateLimit(`otp-request:${clientAddress}`, {
+    const rateLimit = await consumeRateLimit(`otp-request:${clientAddress}`, {
       limit: 5,
       windowMs: 10 * 60 * 1000
     });

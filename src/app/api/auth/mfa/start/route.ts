@@ -14,7 +14,7 @@ const schema = z.object({
 
 export async function POST(request: Request) {
   const clientAddress = readClientAddress(request);
-  const rateLimit = consumeRateLimit(`mfa-start:${clientAddress}`, {
+  const rateLimit = await consumeRateLimit(`mfa-start:${clientAddress}`, {
     limit: 5,
     windowMs: 10 * 60 * 1000
   });

@@ -22,7 +22,7 @@ const GENERIC_SUCCESS_MESSAGE =
 export async function POST(request: Request) {
   try {
     const clientAddress = readClientAddress(request);
-    const ipRateLimit = consumeRateLimit(`password-reset-request:${clientAddress}`, {
+    const ipRateLimit = await consumeRateLimit(`password-reset-request:${clientAddress}`, {
       limit: 5,
       windowMs: 15 * 60 * 1000
     });
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
 
     const body = requestSchema.parse(await request.json());
     const email = normalizeEmailAddress(body.email);
-    const emailRateLimit = consumeRateLimit(`password-reset-request:${email}`, {
+    const emailRateLimit = await consumeRateLimit(`password-reset-request:${email}`, {
       limit: 3,
       windowMs: 15 * 60 * 1000
     });

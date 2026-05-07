@@ -183,3 +183,55 @@ export function buildOtpAuthUri(email: string, secret: string) {
 export function getMfaSetupCopy(secret: string) {
   return secret.match(/.{1,4}/g)?.join(' ') ?? secret;
 }
+
+const BACKUP_CODE_COUNT = 8;
+const BACKUP_CODE_LENGTH = 8; // chars, alphanumeric
+
+export function generateBackupCodes(): string[] {
+  const codes: string[] = [];
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no I, O, 0, 1 for readability
+  for (let i = 0; i < BACKUP_CODE_COUNT; i++) {
+    const bytes = new Uint8Array(BACKUP_CODE_LENGTH);
+    getWebCrypto().getRandomValues(bytes);
+    codes.push(Array.from(bytes).map((b) => chars[b % chars.length]).join(''));
+  }
+  return codes;
+}
+
+export async function encryptBackupCodes(codes: string[]): Promise<string> {
+  const webCrypto = getWebCrypto();
+  const iv = new Uint8Array(12);
+  webCrypto.getRandomValues(iv);
+  const encrypted = new Uint8Array(
+    await webCrypto.subtle.encrypt(
+      { name: 'AES-GCM', iv },
+      await getEncryptionKey(),
+      textEncoder.encode(JSON.stringify(codes))
+    )
+  );
+  return `${bytesToBase64Url(iv)}.${bytesToBase64Url(encrypted)}`;
+}
+
+export async function decryptBackupCodes(payload: string): Promise<string[]> {
+  const [iv, encrypted] = payload.split('.');
+  if (!iv || !encrypted) return [];
+  const decrypted = await getWebCrypto().subtle.decrypt(
+    { name: 'AES-GCM', iv: base64UrlToBytes(iv) },
+    await getEncryptionKey(),
+    base64UrlToBytes(encrypted)
+  );
+  return JSON.parse(textDecoder.decode(decrypted));
+}
+
+export async function verifyAndConsumeBackupCode(
+  inputCode: string,
+  encryptedCodes: string
+): Promise<{ valid: boolean; updatedEncryptedCodes: string | null }> {
+  const normalized = inputCode.trim().toUpperCase();
+  const codes = await decryptBackupCodes(encryptedCodes);
+  const index = codes.indexOf(normalized);
+  if (index === -1) return { valid: false, updatedEncryptedCodes: null };
+  const remaining = codes.filter((_, i) => i !== index);
+  const updatedEncryptedCodes = remaining.length > 0 ? await encryptBackupCodes(remaining) : null;
+  return { valid: true, updatedEncryptedCodes };
+}

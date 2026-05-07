@@ -36,6 +36,7 @@
                          "zod":  "^3.24.1"
                      },
     "devDependencies":  {
+                            "@sentry/nextjs":  "^8.0.0",
                             "@types/bcryptjs":  "^2.4.6",
                             "@types/node":  "^22.15.30",
                             "@types/nodemailer":  "^7.0.11",

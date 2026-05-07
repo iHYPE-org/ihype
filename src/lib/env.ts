@@ -17,7 +17,9 @@ const envSchema = z.object({
   MUX_WEBHOOK_SECRET: z.string().optional(),
   STRIPE_SECRET_KEY: z.string().startsWith('sk_').optional(),
   STRIPE_WEBHOOK_SECRET: z.string().startsWith('whsec_').optional(),
-  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().startsWith('pk_').optional()
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().startsWith('pk_').optional(),
+  AUTH_GOOGLE_ID: z.string().min(1).optional(),
+  AUTH_GOOGLE_SECRET: z.string().min(1).optional()
 });
 
 type Env = z.infer<typeof envSchema>;

@@ -85,6 +85,7 @@ model User {
   isThirteenOrOlder       Boolean                  @default(true)
   mfaSecret               String?
   mfaEnabledAt            DateTime?
+  mfaBackupCodes          String?
   image                   String?
   storedPaymentTokenRef   String?
   storedPaymentTokenBrand String?

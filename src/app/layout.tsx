@@ -49,6 +49,17 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               </div>
             </header>
             {children}
+            <footer className="site-footer">
+              <div className="container">
+                <nav className="site-footer-nav">
+                  <a href="/integrity">Integrity & Transparency</a>
+                  <a href="/shows">Shows</a>
+                  <a href="/artists">Artists</a>
+                  <a href="/venues">Venues</a>
+                </nav>
+                <p className="meta">© {new Date().getFullYear()} iHYPE.org · Streaming-first music discovery</p>
+              </div>
+            </footer>
           </div>
         </AppProviders>
       </body>

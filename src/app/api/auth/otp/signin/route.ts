@@ -16,7 +16,7 @@ const SESSION_MAX_AGE = 12 * 60 * 60; // 12 hours
 export async function POST(request: Request) {
   try {
     const clientAddress = readClientAddress(request);
-    const rateLimit = consumeRateLimit(`otp-verify:${clientAddress}`, {
+    const rateLimit = await consumeRateLimit(`otp-verify:${clientAddress}`, {
       limit: 10,
       windowMs: 15 * 60 * 1000
     });

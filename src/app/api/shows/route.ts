@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
   const isAdmin = isAdminSession(session);
 
   // 10 show creations per hour per user — prevents automated abuse
-  const rl = consumeRateLimit(
+  const rl = await consumeRateLimit(
     rateLimitKey('show-create', session.user.id, request.headers.get('x-forwarded-for')),
     { limit: 10, windowMs: 60 * 60_000 }
   );

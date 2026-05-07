@@ -213,6 +213,14 @@ export function NetworkEarthGlobe({
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
   const [zoomPhase, setZoomPhase] = useState<ZoomPhase>('space');
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   const mappedVenues = useMemo(
     () => venues.filter((venue) => venue.latitude != null && venue.longitude != null),
@@ -330,6 +338,22 @@ export function NetworkEarthGlobe({
           ))}
         </div>
       </div>
+
+      {isMobile && (
+        <div className="globe-mobile-fallback">
+          <p className="meta" style={{ marginBottom: '0.75rem' }}>Venue network</p>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '0.5rem' }}>
+            {venues.slice(0, 8).map((v) => (
+              <li key={v.id}>
+                <a href={`/venues/${v.slug}`} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0.75rem', borderRadius: '8px', background: 'rgba(255,255,255,0.04)' }}>
+                  <span>{v.name}</span>
+                  <span className="meta">{[v.city, v.stateRegion].filter(Boolean).join(', ')}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="map-layout">
         <div className={`activity-map-stage earth-globe-stage globe-phase-${zoomPhase}`} role="img" aria-label={title}>

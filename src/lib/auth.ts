@@ -3,6 +3,7 @@
 // and cookie config renames. @auth/prisma-adapter must be bumped together.
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
+import Google from 'next-auth/providers/google';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
@@ -23,7 +24,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!credentials?.challengeId || !credentials?.otp) return null;
 
         const clientAddress = readClientAddress(request);
-        const rateLimit = consumeRateLimit(`otp-verify:${clientAddress}`, {
+        const rateLimit = await consumeRateLimit(`otp-verify:${clientAddress}`, {
           limit: 10,
           windowMs: 15 * 60 * 1000
         });
@@ -53,6 +54,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           role: challenge.user.role
         };
       }
-    })
+    }),
+    Google({})
   ]
 });

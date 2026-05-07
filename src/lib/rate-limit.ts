@@ -8,7 +8,7 @@ type RateLimitOptions = {
   windowMs: number;
 };
 
-type RateLimitResult = {
+export type RateLimitResult = {
   allowed: boolean;
   remaining: number;
   retryAfterSeconds: number;
@@ -28,6 +28,29 @@ export function rateLimitKey(prefix: string, userId: string | undefined, ip: str
   return userId ? `${prefix}:user:${userId}` : `${prefix}:ip:${ip ?? 'unknown'}`;
 }
 
+// ---------------------------------------------------------------------------
+// KV-backed implementation (Vercel KV / Redis)
+// ---------------------------------------------------------------------------
+
+async function consumeKv(key: string, { limit, windowMs }: RateLimitOptions): Promise<RateLimitResult> {
+  const { kv } = await import('@vercel/kv');
+  const windowSecs = Math.ceil(windowMs / 1000);
+  const count = await kv.incr(key);
+  if (count === 1) {
+    await kv.expire(key, windowSecs);
+  }
+  const ttl = await kv.ttl(key);
+  const retryAfterSeconds = Math.max(1, ttl);
+  if (count > limit) {
+    return { allowed: false, remaining: 0, retryAfterSeconds };
+  }
+  return { allowed: true, remaining: Math.max(0, limit - count), retryAfterSeconds };
+}
+
+// ---------------------------------------------------------------------------
+// In-memory implementation (local dev fallback)
+// ---------------------------------------------------------------------------
+
 const globalForRateLimit = globalThis as typeof globalThis & {
   __ihypeRateLimitStore?: Map<string, RateLimitRecord>;
 };
@@ -46,7 +69,7 @@ function pruneExpired(now: number) {
   }
 }
 
-export function consumeRateLimit(key: string, { limit, windowMs }: RateLimitOptions): RateLimitResult {
+function consumeMemory(key: string, { limit, windowMs }: RateLimitOptions): RateLimitResult {
   const now = Date.now();
   pruneExpired(now);
 
@@ -81,4 +104,15 @@ export function consumeRateLimit(key: string, { limit, windowMs }: RateLimitOpti
     remaining: Math.max(0, limit - existing.count),
     retryAfterSeconds: Math.max(1, Math.ceil((existing.resetAt - now) / 1000))
   };
+}
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+export async function consumeRateLimit(key: string, options: RateLimitOptions): Promise<RateLimitResult> {
+  if (process.env.KV_REST_API_URL) {
+    return consumeKv(key, options);
+  }
+  return consumeMemory(key, options);
 }

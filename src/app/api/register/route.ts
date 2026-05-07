@@ -138,7 +138,7 @@ async function generateUniqueProfileHexId() {
 export async function POST(request: Request) {
   try {
     const clientAddress = readClientAddress(request);
-    const rateLimit = consumeRateLimit(`register:${clientAddress}`, {
+    const rateLimit = await consumeRateLimit(`register:${clientAddress}`, {
       limit: 8,
       windowMs: 15 * 60 * 1000
     });

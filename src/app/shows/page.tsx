@@ -63,7 +63,14 @@ export default async function ShowsIndexPage() {
         </div>
       </section>
 
-      <section className="section">
+      {liveShows.length > 0 && (
+        <div className="panel" style={{ background: 'rgba(255,60,60,0.08)', border: '1px solid rgba(255,60,60,0.3)', padding: '1rem 1.25rem', borderRadius: '12px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: '#ff3c3c', boxShadow: '0 0 8px #ff3c3c', flexShrink: 0 }} />
+          <span><strong>{liveShows.length} show{liveShows.length !== 1 ? 's' : ''} live right now</strong> — scroll down or <a href="#live-now">jump to live</a></span>
+        </div>
+      )}
+
+      <section className="section" id="live-now">
         <div className="directory-section-head">
           <h2>Live now</h2>
         </div>

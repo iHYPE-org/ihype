@@ -18,7 +18,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   // 60 searches per minute per IP — allows normal autocomplete usage
   const ip = request.headers.get('x-forwarded-for') ?? 'unknown';
-  const rl = consumeRateLimit(`search:ip:${ip}`, { limit: 60, windowMs: 60_000 });
+  const rl = await consumeRateLimit(`search:ip:${ip}`, { limit: 60, windowMs: 60_000 });
   if (!rl.allowed) {
     return NextResponse.json(
       { error: 'Too many search requests.' },

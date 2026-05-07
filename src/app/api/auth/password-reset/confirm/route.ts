@@ -26,7 +26,7 @@ const confirmSchema = z
 export async function POST(request: Request) {
   try {
     const clientAddress = readClientAddress(request);
-    const ipRateLimit = consumeRateLimit(`password-reset-confirm:${clientAddress}`, {
+    const ipRateLimit = await consumeRateLimit(`password-reset-confirm:${clientAddress}`, {
       limit: 10,
       windowMs: 15 * 60 * 1000
     });
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 
     const body = confirmSchema.parse(await request.json());
     const email = normalizeEmailAddress(body.email);
-    const emailRateLimit = consumeRateLimit(`password-reset-confirm:${email}`, {
+    const emailRateLimit = await consumeRateLimit(`password-reset-confirm:${email}`, {
       limit: 6,
       windowMs: 15 * 60 * 1000
     });
