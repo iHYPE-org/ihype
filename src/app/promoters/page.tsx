@@ -7,7 +7,6 @@ import {
   DiscoverEventsPanel,
   DiscoverMyPagePanel,
   DiscoverRecommendationPanel,
-  DiscoverStatsPanel,
   DiscoverTicketHubPanel
 } from '@/components/DiscoverModulePanels';
 import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
@@ -154,6 +153,15 @@ export default async function PromotersIndexPage({
   const viewerLocationLabel =
     [viewerLocation?.city, viewerLocation?.stateRegion ?? viewerLocation?.country].filter(Boolean).join(', ') ||
     'your area';
+  const promoterStats = myPromoterProfile
+    ? [
+        { label: 'Fan hype', value: myPromoterProfile.hypeCount },
+        { label: 'Total shows', value: myPromoterShows.length },
+        { label: 'Live + upcoming', value: liveOrUpcomingPromoterShows.length },
+        { label: 'Tickets sold', value: ticketsSold },
+        { label: 'Venues worked', value: venueCount }
+      ]
+    : [];
   const hypeQueueItems = buildHypeQueue({
     role: 'promoter',
     viewerLocationLabel,
@@ -262,28 +270,14 @@ export default async function PromotersIndexPage({
           title="My promoter page"
         />
       );
-    } else if (activeModule === 'stats') {
-      modulePanel = (
-        <DiscoverStatsPanel
-          badge="Stats"
-          description="A quick read on the event momentum tied to your promoter profile."
-          stats={[
-            { label: 'Fan hype', value: myPromoterProfile.hypeCount },
-            { label: 'Total shows', value: myPromoterShows.length },
-            { label: 'Live + upcoming', value: liveOrUpcomingPromoterShows.length },
-            { label: 'Tickets sold', value: ticketsSold },
-            { label: 'Venues worked', value: venueCount }
-          ]}
-          title="My promoter stats"
-        />
-      );
     } else if (activeModule === 'recommendation-engine') {
       modulePanel = (
         <DiscoverRecommendationPanel
           badge="Recommendation Engine"
-          description="Promoter recommendations combine artist momentum, venue routing, ticket opportunity, and show-building focus."
+          description="Promoter recommendations combine your stats, artist momentum, venue routing, ticket opportunity, and show-building focus."
           hypeQueueItems={hypeQueueItems}
           opportunities={promoterRecommendationOpportunities}
+          stats={promoterStats}
           title="Promoter recommendations"
         >
           {recommendationDiscoveryContent}

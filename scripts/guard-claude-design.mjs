@@ -96,13 +96,13 @@ assertIncludes(
 );
 assertIncludes(
   'src/lib/account-routing.ts',
-  "module: DiscoverModuleId = 'stats'",
-  'Post-login role lanes should open on the Stats engine by default.'
+  "module: DiscoverModuleId = 'recommendation-engine'",
+  'Post-login role lanes should open on the merged Recommendation Engine by default.'
 );
 assertIncludes(
   'src/components/AdminPerspective.tsx',
-  '/fans?module=stats',
-  'Admin QA mode should open role lanes on the Stats engine instead of an obsolete default page.'
+  '/fans?module=recommendation-engine',
+  'Admin QA mode should open role lanes on the merged Recommendation Engine instead of a redundant Stats page.'
 );
 assertIncludes(
   'src/components/AdminPerspective.tsx',
@@ -116,8 +116,8 @@ assertIncludes(
 );
 assertIncludes(
   'src/components/DiscoverModulePanels.tsx',
-  'stats-engine-panel',
-  'Stats Engine must use the signed-in visual schema instead of the obsolete discover-card styling.'
+  'recommendation-stat-strip',
+  'Stats should be merged into Recommendation Engine instead of staying as a separate role module.'
 );
 assertIncludes(
   'src/components/VisualDropStudio.tsx',
@@ -151,13 +151,13 @@ assertIncludes(
 );
 assertIncludes(
   'src/components/DiscoverModulePanels.tsx',
-  'stats-engine-grid',
-  'Stats Engine cards should use the protected stats grid schema.'
+  'recommendation-stat-card',
+  'Merged stats should render inside Recommendation Engine cards.'
 );
 assertIncludes(
   'src/app/globals.css',
-  '.signed-landing-schema .stats-engine-panel',
-  'Stats Engine needs schema-scoped CSS so old discover styles cannot bleed through.'
+  '.recommendation-stat-strip',
+  'Merged stats need schema-scoped styling inside Recommendation Engine.'
 );
 assertIncludes(
   'src/lib/account-routing.ts',
@@ -173,6 +173,11 @@ assertNotIncludes(
   'src/lib/discover-modules.ts',
   "id: 'discover'",
   'Discover should be merged into Recommendation Engine instead of remaining as a separate role module.'
+);
+assertNotIncludes(
+  'src/lib/discover-modules.ts',
+  "id: 'stats'",
+  'Stats should be merged into Recommendation Engine instead of remaining as a separate role module.'
 );
 assertIncludes(
   'src/lib/discover-modules.ts',

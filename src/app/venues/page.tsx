@@ -5,7 +5,6 @@ import {
   DiscoverExplorerPanel,
   DiscoverEventsPanel,
   DiscoverMyPagePanel,
-  DiscoverStatsPanel,
   DiscoverTicketHubPanel,
   VenueBookingRecommendationEngine
 } from '@/components/DiscoverModulePanels';
@@ -315,6 +314,15 @@ export default async function VenuesIndexPage({
   const viewerLocationLabel =
     [viewerLocation?.city, viewerLocation?.stateRegion ?? viewerLocation?.country].filter(Boolean).join(', ') ||
     'your area';
+  const venueStats = myVenueProfile
+    ? [
+        { label: 'Fan hype', value: myVenueProfile.hypeCount },
+        { label: 'Total events', value: myVenueShows.length },
+        { label: 'Live + upcoming', value: liveOrUpcomingVenueShows.length },
+        { label: 'Tickets sold', value: ticketsSold },
+        { label: 'Requests received', value: myVenueRequestCount }
+      ]
+    : [];
   const hypeQueueItems = buildHypeQueue({
     role: 'venue',
     viewerLocationLabel,
@@ -391,21 +399,13 @@ export default async function VenuesIndexPage({
       tags={myVenueProfile.genres}
       title="My venue page"
     />
-  ) : activeModule === 'stats' ? (
-    <DiscoverStatsPanel
-      badge="Stats"
-      description="A quick read on the live signals tied to your venue page."
-      stats={[
-        { label: 'Fan hype', value: myVenueProfile.hypeCount },
-        { label: 'Total events', value: myVenueShows.length },
-        { label: 'Live + upcoming', value: liveOrUpcomingVenueShows.length },
-        { label: 'Tickets sold', value: ticketsSold },
-        { label: 'Requests received', value: myVenueRequestCount }
-      ]}
-      title="My venue stats"
-    />
   ) : activeModule === 'recommendation-engine' ? (
-    <VenueBookingRecommendationEngine currentHref="/venues" hypeQueueItems={hypeQueueItems} scopes={recommendationData.scopeGroups}>
+    <VenueBookingRecommendationEngine
+      currentHref="/venues"
+      hypeQueueItems={hypeQueueItems}
+      scopes={recommendationData.scopeGroups}
+      stats={venueStats}
+    >
       {recommendationDiscoveryContent}
     </VenueBookingRecommendationEngine>
   ) : activeModule === 'ticket-hub' ? (

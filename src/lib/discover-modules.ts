@@ -5,7 +5,6 @@ export type DiscoverModuleId =
   | 'events'
   | 'recommendation-engine'
   | 'ticket-hub'
-  | 'stats'
   | 'tour-creator'
   | 'event-creator'
   | 'show-creator';
@@ -17,24 +16,20 @@ export type DiscoverModuleOption = {
 
 const discoverModuleOptions: Record<DiscoverRoleKey, DiscoverModuleOption[]> = {
   fans: [
-    { id: 'stats', label: 'Stats' },
     { id: 'recommendation-engine', label: 'Recommendation Engine' },
     { id: 'ticket-hub', label: 'Ticket Hub' }
   ],
   artists: [
-    { id: 'stats', label: 'Stats' },
     { id: 'recommendation-engine', label: 'Recommendation Engine' },
     { id: 'ticket-hub', label: 'Ticket Hub' },
     { id: 'tour-creator', label: 'Tour Creator' }
   ],
   promoters: [
-    { id: 'stats', label: 'Stats' },
     { id: 'recommendation-engine', label: 'Recommendation Engine' },
     { id: 'ticket-hub', label: 'Ticket Hub' },
     { id: 'show-creator', label: 'Show Creator' }
   ],
   venues: [
-    { id: 'stats', label: 'Stats' },
     { id: 'recommendation-engine', label: 'Recommendation Engine' },
     { id: 'ticket-hub', label: 'Ticket Hub' },
     { id: 'event-creator', label: 'Event Creator' }
@@ -46,7 +41,7 @@ export function getDiscoverModulesForRole(role: DiscoverRoleKey) {
 }
 
 export function getDefaultDiscoverModule(role: DiscoverRoleKey) {
-  return discoverModuleOptions[role][0]?.id ?? 'stats';
+  return discoverModuleOptions[role][0]?.id ?? 'recommendation-engine';
 }
 
 export function resolveDiscoverModule(
@@ -54,6 +49,10 @@ export function resolveDiscoverModule(
   value: string | string[] | undefined
 ) {
   if (typeof value === 'string') {
+    if (value === 'stats') {
+      return 'recommendation-engine';
+    }
+
     const matchedModule = discoverModuleOptions[role].find((option) => option.id === value);
     if (matchedModule) {
       return matchedModule.id;

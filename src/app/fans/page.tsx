@@ -6,7 +6,6 @@ import {
   DiscoverEventsPanel,
   DiscoverMyPagePanel,
   DiscoverRecommendationPanel,
-  DiscoverStatsPanel,
   DiscoverTicketHubPanel
 } from '@/components/DiscoverModulePanels';
 import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
@@ -190,6 +189,13 @@ export default async function ListenersIndexPage({
     [viewerLocation?.city, viewerLocation?.stateRegion ?? viewerLocation?.country].filter(Boolean).join(', ') ||
     'your area';
   const ticketedFanShows = activeShows.filter((show) => show.isTicketed);
+  const fanStats = [
+    { label: 'Hype points', value: hypePoints },
+    { label: 'Full songs listened', value: fullSongListenCount },
+    { label: 'Full shows listened', value: fullShowListenCount },
+    { label: 'Events attended', value: myPastShows.length },
+    { label: 'Upcoming events', value: myUpcomingShows.length }
+  ];
   const hypeQueueItems = buildHypeQueue({
     role: 'fan',
     viewerLocationLabel,
@@ -289,25 +295,13 @@ export default async function ListenersIndexPage({
       tags={myFanProfile.genres}
       title="My fan page"
     />
-  ) : activeModule === 'stats' ? (
-    <DiscoverStatsPanel
-      badge="Stats"
-      description="Track the listening and event signals that make up your fan footprint across iHYPE."
-      stats={[
-        { label: 'Hype points', value: hypePoints },
-        { label: 'Full songs listened', value: fullSongListenCount },
-        { label: 'Full shows listened', value: fullShowListenCount },
-        { label: 'Events attended', value: myPastShows.length },
-        { label: 'Upcoming events', value: myUpcomingShows.length }
-      ]}
-      title="My fan stats"
-    />
   ) : activeModule === 'recommendation-engine' ? (
     <DiscoverRecommendationPanel
       badge="Recommendation Engine"
-      description="Fan recommendations combine nearby HYPE, new artists, venue proximity, promoter activity, and ticket openings."
+      description="Fan recommendations combine your stats, nearby HYPE, new artists, venue proximity, promoter activity, and ticket openings."
       hypeQueueItems={hypeQueueItems}
       opportunities={fanRecommendationOpportunities}
+      stats={fanStats}
       title="Recommended next moves"
     >
       {recommendationDiscoveryContent}

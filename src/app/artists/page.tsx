@@ -6,7 +6,6 @@ import {
   DiscoverEventsPanel,
   DiscoverMyPagePanel,
   DiscoverRecommendationPanel,
-  DiscoverStatsPanel,
   DiscoverTicketHubPanel
 } from '@/components/DiscoverModulePanels';
 import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
@@ -146,6 +145,15 @@ export default async function ArtistsIndexPage({
     [viewerLocation?.city, viewerLocation?.stateRegion ?? viewerLocation?.country].filter(Boolean).join(', ') ||
     'your area';
   const ticketedArtistShows = myArtistShows.filter((show) => show.isTicketed);
+  const artistStats = myArtistProfile
+    ? [
+        { label: 'Fan hype', value: myArtistProfile.hypeCount },
+        { label: 'Total events', value: myArtistShows.length },
+        { label: 'Live + upcoming', value: liveOrUpcomingArtistShows.length },
+        { label: 'Verified', value: myArtistProfile.verified ? 'Yes' : 'No' },
+        { label: 'Artists in network', value: artists.length }
+      ]
+    : [];
   const hypeQueueItems = buildHypeQueue({
     role: 'artist',
     viewerLocationLabel,
@@ -252,25 +260,13 @@ export default async function ArtistsIndexPage({
       tags={myArtistProfile.genres}
       title="My artist page"
     />
-  ) : activeModule === 'stats' ? (
-    <DiscoverStatsPanel
-      badge="Stats"
-      description="A quick read on the artist page signals attached to your profile."
-      stats={[
-        { label: 'Fan hype', value: myArtistProfile.hypeCount },
-        { label: 'Total events', value: myArtistShows.length },
-        { label: 'Live + upcoming', value: liveOrUpcomingArtistShows.length },
-        { label: 'Verified', value: myArtistProfile.verified ? 'Yes' : 'No' },
-        { label: 'Artists in network', value: artists.length }
-      ]}
-      title="My artist stats"
-    />
   ) : activeModule === 'recommendation-engine' ? (
     <DiscoverRecommendationPanel
       badge="Recommendation Engine"
-      description="Artist recommendations combine tour routing, venue density, promoter discovery, and nearby HYPE."
+      description="Artist recommendations combine your stats, tour routing, venue density, promoter discovery, and nearby HYPE."
       hypeQueueItems={hypeQueueItems}
       opportunities={artistRecommendationOpportunities}
+      stats={artistStats}
       title="Artist growth recommendations"
     >
       {recommendationDiscoveryContent}

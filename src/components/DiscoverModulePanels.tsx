@@ -121,6 +121,7 @@ export function DiscoverRecommendationPanel({
   title,
   description,
   opportunities,
+  stats = [],
   hypeQueueItems = [],
   children
 }: {
@@ -128,6 +129,7 @@ export function DiscoverRecommendationPanel({
   title: string;
   description: string;
   opportunities: DiscoverOpportunity[];
+  stats?: DiscoverStatItem[];
   hypeQueueItems?: HypeQueueItem[];
   children?: ReactNode;
 }) {
@@ -138,6 +140,16 @@ export function DiscoverRecommendationPanel({
       description={description}
       title={title}
     >
+      {stats.length ? (
+        <div className="recommendation-stat-strip" aria-label="Merged stats">
+          {stats.map((stat) => (
+            <div className="recommendation-stat-card" key={stat.label}>
+              <span>{stat.label}</span>
+              <strong>{stat.value}</strong>
+            </div>
+          ))}
+        </div>
+      ) : null}
       <HypeQueue items={hypeQueueItems} />
       <div className="discover-recommendation-grid">
         {opportunities.map((opportunity) => (
@@ -491,11 +503,13 @@ export function DiscoverCreatorPanel({
 export function VenueBookingRecommendationEngine({
   currentHref,
   scopes,
+  stats = [],
   hypeQueueItems = [],
   children
 }: {
   currentHref: string;
   scopes: VenueBookingScopeGroup[];
+  stats?: DiscoverStatItem[];
   hypeQueueItems?: HypeQueueItem[];
   children?: ReactNode;
 }) {
@@ -506,6 +520,16 @@ export function VenueBookingRecommendationEngine({
       description="Fan request signals are grouped by local, regional, national, and global scope so venues can see who to book next."
       title="Venue booking recommendations"
     >
+      {stats.length ? (
+        <div className="recommendation-stat-strip" aria-label="Merged stats">
+          {stats.map((stat) => (
+            <div className="recommendation-stat-card" key={stat.label}>
+              <span>{stat.label}</span>
+              <strong>{stat.value}</strong>
+            </div>
+          ))}
+        </div>
+      ) : null}
       <HypeQueue items={hypeQueueItems} />
       <div className="venue-booking-scope-grid">
         {scopes.map((scope) => (

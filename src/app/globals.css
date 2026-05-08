@@ -11404,6 +11404,43 @@ html.high-contrast p {
   gap: 12px;
 }
 
+.recommendation-stat-strip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.recommendation-stat-card {
+  display: grid;
+  align-content: end;
+  min-height: 104px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  padding: 0.85rem;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(57, 216, 223, 0.1), transparent 34%),
+    rgba(255, 255, 255, 0.04);
+}
+
+.recommendation-stat-card span {
+  color: #8995b5;
+  font-family: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+  font-size: 0.64rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.recommendation-stat-card strong {
+  color: #f7f4ff;
+  font-size: clamp(1.4rem, 3vw, 2.4rem);
+  font-weight: 950;
+  letter-spacing: -0.06em;
+  line-height: 1;
+}
+
 .hype-queue {
   display: grid;
   gap: 1rem;
@@ -11635,6 +11672,7 @@ html.high-contrast p {
 
 @media (max-width: 1120px) {
   .signed-landing-schema .stats-engine-grid,
+  .recommendation-stat-strip,
   .hype-queue-grid,
   .signed-landing-schema .recommendation-engine-panel .discover-recommendation-grid,
   .signed-landing-schema .recommendation-engine-signal-map .discover-explorer-rail,
@@ -11657,6 +11695,7 @@ html.high-contrast p {
   }
 
   .signed-landing-schema .stats-engine-panel .discover-stat-card,
+  .recommendation-stat-card,
   .signed-landing-schema .recommendation-engine-panel .discover-recommendation-card,
   .signed-landing-schema .recommendation-engine-panel .venue-booking-scope-card,
   .signed-landing-schema .recommendation-engine-signal-map .discover-explorer-section,
