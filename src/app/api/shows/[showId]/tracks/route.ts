@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import type { Session } from 'next-auth';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
@@ -13,7 +14,7 @@ async function resolveShow(showId: string) {
   });
 }
 
-async function canManage(session: Awaited<ReturnType<typeof auth>>, show: { creatorId: string }) {
+function canManage(session: Session | null, show: { creatorId: string }) {
   if (!session?.user?.id) return false;
   return session.user.id === show.creatorId || isAdminSession(session);
 }
@@ -59,7 +60,7 @@ export async function POST(req: Request, { params }: RouteContext) {
   const show = await resolveShow(showId);
   if (!show) return NextResponse.json({ error: 'Show not found.' }, { status: 404 });
   if (!show.isRadioShow) return NextResponse.json({ error: 'Not a radio show.' }, { status: 409 });
-  if (!(await canManage(session, show))) {
+  if (!canManage(session, show)) {
     return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
   }
 
@@ -92,7 +93,7 @@ export async function DELETE(req: Request, { params }: RouteContext) {
 
   const show = await resolveShow(showId);
   if (!show) return NextResponse.json({ error: 'Show not found.' }, { status: 404 });
-  if (!(await canManage(session, show))) {
+  if (!canManage(session, show)) {
     return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
   }
 

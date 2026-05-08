@@ -147,6 +147,19 @@ export function calculateTicketTaxes({
   }
 
   const subtotalCents = ticketPriceCents * quantity;
+  const buyerCountry = normalizeLocationValue(buyerLocation?.country);
+  const venueCountry = normalizeLocationValue(venueLocation?.country);
+
+  if (!buyerCountry && !venueCountry) {
+    return {
+      localCents: 0,
+      stateCents: 0,
+      countryCents: 0,
+      internationalCents: 0,
+      totalTaxCents: 0
+    };
+  }
+
   const isSameCountry = hasSameCountry(buyerLocation, venueLocation);
   const isSameStateRegion = hasSameStateRegion(buyerLocation, venueLocation);
   const isSamePostalCode = hasSamePostalCode(buyerLocation, venueLocation);
@@ -154,7 +167,7 @@ export function calculateTicketTaxes({
   const localCents = isSamePostalCode ? Math.round(subtotalCents * 0.02) : 0;
   const stateCents = isSameStateRegion ? Math.round(subtotalCents * 0.03) : 0;
   const countryCents = isSameCountry ? Math.round(subtotalCents * 0.025) : 0;
-  const internationalCents = isSameCountry ? 0 : Math.round(subtotalCents * 0.07);
+  const internationalCents = buyerCountry && venueCountry && !isSameCountry ? Math.round(subtotalCents * 0.07) : 0;
   const totalTaxCents = localCents + stateCents + countryCents + internationalCents;
 
   return {

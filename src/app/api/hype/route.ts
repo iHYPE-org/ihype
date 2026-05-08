@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   }
 
   // 30 hype actions per minute per user — prevents scripted spam
-  const rl = consumeRateLimit(
+  const rl = await consumeRateLimit(
     rateLimitKey('hype', session.user.id, request.headers.get('x-forwarded-for')),
     { limit: 30, windowMs: 60_000 }
   );

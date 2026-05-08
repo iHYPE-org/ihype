@@ -80,7 +80,7 @@ export default async function PromoterLandingPage({
     promoterShowIds.length
       ? db.ticketOrder.aggregate({
           _sum: { subtotalCents: true },
-          where: { showId: { in: promoterShowIds }, status: { not: 'CANCELED' } }
+          where: { showId: { in: promoterShowIds }, status: { not: 'VOID' } }
         }).then((r) => r._sum.subtotalCents ?? 0)
       : Promise.resolve(0),
     db.profileHypeEvent.count({

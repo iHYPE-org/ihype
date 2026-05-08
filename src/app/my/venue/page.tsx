@@ -131,7 +131,7 @@ export default async function VenueLandingPage({
     showIds.length
       ? db.ticketOrder.aggregate({
           _sum: { subtotalCents: true },
-          where: { showId: { in: showIds }, status: { not: 'CANCELED' } }
+          where: { showId: { in: showIds }, status: { not: 'VOID' } }
         }).then((r) => r._sum.subtotalCents ?? 0)
       : Promise.resolve(0),
     db.profileHypeEvent.count({

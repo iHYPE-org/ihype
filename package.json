@@ -8,6 +8,9 @@
     "guard:design": "node scripts/guard-claude-design.mjs",
     "start": "next start",
     "lint": "tsc --noEmit --pretty false",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "smoke": "node scripts/smoke-test.mjs",
     "smoke:flows": "node scripts/flow-smoke-test.mjs",
     "postinstall": "prisma generate",
@@ -34,6 +37,7 @@
     "qrcode": "^1.5.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "stripe": "^17.7.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
@@ -42,10 +46,12 @@
     "@types/nodemailer": "^7.0.11",
     "@types/react": "^19.1.6",
     "@types/react-dom": "^19.1.5",
+    "@vitest/coverage-v8": "^2.1.9",
     "dotenv": "^16.4.5",
     "prisma": "^6.19.3",
     "tsx": "^4.19.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^2.1.9"
   },
   "overrides": {
     "postcss": "^8.5.10"

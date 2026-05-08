@@ -12,8 +12,6 @@ export const dynamic = 'force-dynamic';
 const MAX_AUDIO_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 const MAX_VIDEO_FILE_SIZE_BYTES = 16 * 1024 * 1024;
 
-export const dynamic = 'force-dynamic';
-
 export async function GET(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
