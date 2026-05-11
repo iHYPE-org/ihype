@@ -10679,7 +10679,8 @@ html.high-contrast p {
   position: relative;
   overflow: hidden;
   min-height: calc(100vh - 70px);
-  color: #f7f4ff;
+  color: #f2ede8;
+  background: #090806;
 }
 
 .ihype-home-hero {
@@ -10704,7 +10705,7 @@ html.high-contrast p {
   align-items: center;
   gap: 10px;
   margin: 0 0 24px;
-  color: #ff4a2f;
+  color: #ff5029;
   font-family: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
   font-size: 0.76rem;
   font-weight: 900;
@@ -10717,14 +10718,14 @@ html.high-contrast p {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #ff4a2f;
-  box-shadow: 0 0 24px rgba(255, 74, 47, 0.75);
+  background: #ff5029;
+  box-shadow: 0 0 20px rgba(255, 80, 41, 0.7);
 }
 
 .ihype-home-title {
   max-width: 860px;
   margin: 0;
-  color: #f7f4ff;
+  color: #f2ede8;
   font-size: clamp(3.2rem, 6vw, 5.7rem);
   font-weight: 850;
   letter-spacing: -0.07em;
@@ -10734,7 +10735,7 @@ html.high-contrast p {
 .ihype-gradient-text {
   display: block;
   font-style: italic;
-  background: linear-gradient(105deg, #ff4732 0%, #ff3b8f 35%, #b879d6 62%, #35ded9 100%);
+  background: linear-gradient(105deg, #ff5029 0%, #ff3e9a 40%, #b983ff 70%, #22e5d4 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -10743,7 +10744,7 @@ html.high-contrast p {
 .ihype-home-lede {
   max-width: 550px;
   margin: 28px 0 0;
-  color: #aeb8d3;
+  color: rgba(242, 237, 232, 0.6);
   font-size: 1.08rem;
   font-weight: 650;
   line-height: 1.58;
@@ -10762,16 +10763,13 @@ html.high-contrast p {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 999px;
+  border-radius: 8px;
   padding: 0 22px;
-  color: #fff;
+  color: #090806;
   font-size: 0.92rem;
   font-weight: 850;
   text-decoration: none;
-  transition:
-    transform 160ms ease,
-    box-shadow 160ms ease,
-    border-color 160ms ease;
+  transition: transform 160ms ease, box-shadow 160ms ease;
 }
 
 .ihype-home-button:hover {
@@ -10779,18 +10777,19 @@ html.high-contrast p {
 }
 
 .ihype-home-button-primary {
-  background: linear-gradient(135deg, #ff4635 0%, #ff3d87 44%, #39d8df 100%);
-  box-shadow: 0 20px 46px rgba(255, 61, 135, 0.25);
+  background: #f2ede8;
+  box-shadow: 0 8px 32px rgba(242, 237, 232, 0.15);
 }
 
 .ihype-home-button-ghost {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.035);
-  color: #aeb8d3;
+  border: 1px solid rgba(242, 237, 232, 0.14);
+  background: transparent;
+  color: rgba(242, 237, 232, 0.65);
+  border-radius: 8px;
 }
 
 .ihype-hero-note {
-  color: #67708f;
+  color: rgba(242, 237, 232, 0.35);
   font-family: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
   font-size: 0.86rem;
   letter-spacing: 0.11em;
@@ -10800,16 +10799,15 @@ html.high-contrast p {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-top: 40px;
-  border: 1px solid rgba(255, 255, 255, 0.11);
-  border-radius: 16px;
-  background: rgba(9, 10, 28, 0.78);
-  box-shadow: 0 24px 90px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: #0f0d0a;
   overflow: hidden;
 }
 
 .ihype-signal-card {
   padding: 24px 22px;
-  border-right: 1px solid rgba(255, 255, 255, 0.09);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .ihype-signal-card:last-child {
@@ -10819,7 +10817,7 @@ html.high-contrast p {
 .ihype-signal-card span {
   display: block;
   margin-bottom: 10px;
-  color: #697492;
+  color: rgba(242, 237, 232, 0.35);
   font-family: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
   font-size: 0.7rem;
   font-weight: 850;
@@ -10829,7 +10827,7 @@ html.high-contrast p {
 
 .ihype-signal-card strong {
   display: block;
-  color: #f7f4ff;
+  color: #f2ede8;
   font-size: 1.06rem;
   font-weight: 900;
 }
@@ -10837,7 +10835,7 @@ html.high-contrast p {
 .ihype-signal-card p {
   min-height: 43px;
   margin: 8px 0 13px;
-  color: #9da9c8;
+  color: rgba(242, 237, 232, 0.55);
   font-size: 0.92rem;
   line-height: 1.4;
 }
@@ -10846,7 +10844,7 @@ html.high-contrast p {
   display: block;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   padding-top: 10px;
-  color: #ff5738;
+  color: #ff5029;
   font-family: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
   font-size: 0.78rem;
   font-weight: 900;
@@ -10854,6 +10852,7 @@ html.high-contrast p {
 
 .ihype-roles-section {
   padding: 36px 24px 96px;
+  background: #090806;
 }
 
 .ihype-section-heading {
@@ -10863,7 +10862,7 @@ html.high-contrast p {
 
 .ihype-section-heading h2 {
   margin: 0 0 22px;
-  color: #f7f4ff;
+  color: #f2ede8;
   font-size: clamp(2.5rem, 4.6vw, 4.1rem);
   font-weight: 900;
   letter-spacing: -0.07em;
@@ -10872,7 +10871,7 @@ html.high-contrast p {
 
 .ihype-section-heading p {
   margin: 0;
-  color: #aeb8d3;
+  color: rgba(242, 237, 232, 0.6);
   font-size: 1.02rem;
   font-weight: 650;
   line-height: 1.55;
@@ -10881,74 +10880,50 @@ html.high-contrast p {
 .ihype-role-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
+  gap: 12px;
 }
 
 .ihype-role-card {
   min-height: 598px;
   display: flex;
   flex-direction: column;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 22px;
-  padding: 32px;
-  background:
-    radial-gradient(circle at 85% 95%, rgba(255, 61, 135, 0.08), transparent 42%),
-    rgba(9, 10, 25, 0.66);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 24px;
+  background: #0f0d0a;
 }
 
 .ihype-role-icon {
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
-  margin-bottom: 18px;
-  border-radius: 12px;
-  background: rgba(124, 92, 255, 0.26);
-  color: #fff;
-  font-weight: 950;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  background: rgba(185, 131, 255, 0.18);
+  color: #b983ff;
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 900;
+  font-size: 0.85rem;
 }
 
-.ihype-role-icon::before {
-  font-size: 1rem;
-}
-
-.ihype-role-icon-headphones::before {
-  content: "F";
-}
-
-.ihype-role-icon-microphone {
-  background: rgba(255, 70, 53, 0.22);
-}
-
-.ihype-role-icon-microphone::before {
-  content: "A";
-}
-
-.ihype-role-icon-venue {
-  background: rgba(35, 216, 208, 0.22);
-}
-
-.ihype-role-icon-venue::before {
-  content: "V";
-}
-
-.ihype-role-icon-megaphone {
-  background: rgba(255, 61, 135, 0.22);
-}
-
-.ihype-role-icon-megaphone::before {
-  content: "P";
-}
+.ihype-role-icon::before { font-size: 0.85rem; }
+.ihype-role-icon-headphones::before { content: "F"; }
+.ihype-role-icon-microphone { background: rgba(255, 80, 41, 0.18); color: #ff5029; }
+.ihype-role-icon-microphone::before { content: "A"; }
+.ihype-role-icon-venue { background: rgba(34, 229, 212, 0.18); color: #22e5d4; }
+.ihype-role-icon-venue::before { content: "V"; }
+.ihype-role-icon-megaphone { background: rgba(255, 62, 154, 0.18); color: #ff3e9a; }
+.ihype-role-icon-megaphone::before { content: "P"; }
 
 .ihype-role-badge {
   width: max-content;
   margin-bottom: 12px;
-  border: 1px solid rgba(124, 92, 255, 0.42);
-  border-radius: 999px;
-  padding: 5px 10px;
-  background: rgba(124, 92, 255, 0.16);
-  color: #d7c8ff;
+  border: 1px solid rgba(185, 131, 255, 0.35);
+  border-radius: 4px;
+  padding: 3px 8px;
+  background: rgba(185, 131, 255, 0.1);
+  color: #b983ff;
   font-family: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
   font-size: 0.67rem;
   font-weight: 900;
@@ -10956,36 +10931,22 @@ html.high-contrast p {
   text-transform: uppercase;
 }
 
-.ihype-role-badge-artist {
-  border-color: rgba(255, 70, 53, 0.42);
-  background: rgba(255, 70, 53, 0.14);
-  color: #ff704f;
-}
-
-.ihype-role-badge-venue {
-  border-color: rgba(35, 216, 208, 0.42);
-  background: rgba(35, 216, 208, 0.14);
-  color: #41ded9;
-}
-
-.ihype-role-badge-promoter {
-  border-color: rgba(255, 61, 135, 0.42);
-  background: rgba(255, 61, 135, 0.14);
-  color: #ff6ba8;
-}
+.ihype-role-badge-artist { border-color: rgba(255, 80, 41, 0.35); background: rgba(255, 80, 41, 0.1); color: #ff5029; }
+.ihype-role-badge-venue  { border-color: rgba(34, 229, 212, 0.35); background: rgba(34, 229, 212, 0.1); color: #22e5d4; }
+.ihype-role-badge-promoter { border-color: rgba(255, 62, 154, 0.35); background: rgba(255, 62, 154, 0.1); color: #ff3e9a; }
 
 .ihype-role-card h3 {
   margin: 0 0 10px;
-  color: #f7f4ff;
-  font-size: 1.2rem;
+  color: #f2ede8;
+  font-size: 1.15rem;
   font-weight: 900;
-  letter-spacing: -0.035em;
-  line-height: 1.35;
+  letter-spacing: -0.03em;
+  line-height: 1.3;
 }
 
 .ihype-role-card p {
   margin: 0 0 18px;
-  color: #aeb8d3;
+  color: rgba(242, 237, 232, 0.55);
   font-size: 0.96rem;
   font-weight: 650;
   line-height: 1.5;
@@ -12989,3 +12950,4 @@ html.high-contrast p {
 .wb-select { padding: 8px 12px; background: var(--wb-bg-3); border: 1px solid var(--wb-line); border-radius: 6px; font-family: var(--f-m, monospace); font-size: 12px; color: var(--wb-ink); }
 .wb-footnote { margin-top: 20px; padding: 14px 18px; border: 1px dashed var(--wb-line-2); border-radius: 8px; font-family: var(--f-m, monospace); font-size: 11px; color: var(--wb-ink-3); }
 .wb-empty { padding: 32px; border: 1px dashed var(--wb-line-2); border-radius: 10px; font-family: var(--f-m, monospace); font-size: 12px; color: var(--wb-ink-3); text-align: center; }
+
