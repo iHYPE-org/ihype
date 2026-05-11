@@ -1,5 +1,3 @@
-import { db } from '@/lib/db';
-
 type RateLimitRecord = {
   count: number;
   resetAt: number;
@@ -10,42 +8,75 @@ type RateLimitOptions = {
   windowMs: number;
 };
 
-type RateLimitResult = {
+export type RateLimitResult = {
   allowed: boolean;
   remaining: number;
   retryAfterSeconds: number;
 };
 
-const testBuckets = new Map<string, RateLimitRecord>();
-
-export function rateLimitKey(scope: string, userId?: string | null, clientAddress?: string | null) {
-  if (userId) {
-    return `${scope}:user:${userId}`;
-  }
-
-  const normalizedAddress = clientAddress?.split(',')[0]?.trim() || 'unknown';
-  return `${scope}:ip:${normalizedAddress}`;
-}
-
+// Standard rate-limit response headers (IETF draft-6585 + RateLimit header draft)
 export function rateLimitHeaders(result: RateLimitResult): Record<string, string> {
-  const headers: Record<string, string> = {
+  return {
     'X-RateLimit-Remaining': String(result.remaining),
-    'X-RateLimit-Reset': String(result.retryAfterSeconds)
+    'X-RateLimit-Reset': String(result.retryAfterSeconds),
+    ...(result.allowed ? {} : { 'Retry-After': String(result.retryAfterSeconds) })
   };
-
-  if (!result.allowed) {
-    headers['Retry-After'] = String(result.retryAfterSeconds);
-  }
-
-  return headers;
 }
 
-function consumeInMemoryRateLimit(key: string, { limit, windowMs }: RateLimitOptions): RateLimitResult {
+// Convenience: build the ip:userId composite key used by most API routes
+export function rateLimitKey(prefix: string, userId: string | undefined, ip: string | null): string {
+  return userId ? `${prefix}:user:${userId}` : `${prefix}:ip:${ip ?? 'unknown'}`;
+}
+
+// ---------------------------------------------------------------------------
+// KV-backed implementation (Vercel KV / Redis)
+// ---------------------------------------------------------------------------
+
+async function consumeKv(key: string, { limit, windowMs }: RateLimitOptions): Promise<RateLimitResult> {
+  const { kv } = await import('@vercel/kv');
+  const windowSecs = Math.ceil(windowMs / 1000);
+  const count = await kv.incr(key);
+  if (count === 1) {
+    await kv.expire(key, windowSecs);
+  }
+  const ttl = await kv.ttl(key);
+  const retryAfterSeconds = Math.max(1, ttl);
+  if (count > limit) {
+    return { allowed: false, remaining: 0, retryAfterSeconds };
+  }
+  return { allowed: true, remaining: Math.max(0, limit - count), retryAfterSeconds };
+}
+
+// ---------------------------------------------------------------------------
+// In-memory implementation (local dev fallback)
+// ---------------------------------------------------------------------------
+
+const globalForRateLimit = globalThis as typeof globalThis & {
+  __ihypeRateLimitStore?: Map<string, RateLimitRecord>;
+};
+
+const rateLimitStore = globalForRateLimit.__ihypeRateLimitStore ?? new Map<string, RateLimitRecord>();
+
+if (!globalForRateLimit.__ihypeRateLimitStore) {
+  globalForRateLimit.__ihypeRateLimitStore = rateLimitStore;
+}
+
+function pruneExpired(now: number) {
+  for (const [key, value] of rateLimitStore.entries()) {
+    if (value.resetAt <= now) {
+      rateLimitStore.delete(key);
+    }
+  }
+}
+
+function consumeMemory(key: string, { limit, windowMs }: RateLimitOptions): RateLimitResult {
   const now = Date.now();
-  const existing = testBuckets.get(key);
+  pruneExpired(now);
+
+  const existing = rateLimitStore.get(key);
 
   if (!existing || existing.resetAt <= now) {
-    testBuckets.set(key, {
+    rateLimitStore.set(key, {
       count: 1,
       resetAt: now + windowMs
     });
@@ -66,7 +97,7 @@ function consumeInMemoryRateLimit(key: string, { limit, windowMs }: RateLimitOpt
   }
 
   existing.count += 1;
-  testBuckets.set(key, existing);
+  rateLimitStore.set(key, existing);
 
   return {
     allowed: true,
@@ -75,60 +106,13 @@ function consumeInMemoryRateLimit(key: string, { limit, windowMs }: RateLimitOpt
   };
 }
 
-async function consumeDatabaseRateLimit(key: string, { limit, windowMs }: RateLimitOptions): Promise<RateLimitResult> {
-  const now = Date.now();
-  const resetAt = new Date(now + windowMs);
-  const existing = await db.rateLimitBucket.findUnique({ where: { key } });
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
 
-  if (!existing || existing.resetAt.getTime() <= now) {
-    await db.rateLimitBucket.upsert({
-      where: { key },
-      create: {
-        key,
-        count: 1,
-        resetAt
-      },
-      update: {
-        count: 1,
-        resetAt
-      }
-    });
-
-    return {
-      allowed: true,
-      remaining: Math.max(0, limit - 1),
-      retryAfterSeconds: Math.ceil(windowMs / 1000)
-    };
+export async function consumeRateLimit(key: string, options: RateLimitOptions): Promise<RateLimitResult> {
+  if (process.env.KV_REST_API_URL) {
+    return consumeKv(key, options);
   }
-
-  if (existing.count >= limit) {
-    return {
-      allowed: false,
-      remaining: 0,
-      retryAfterSeconds: Math.max(1, Math.ceil((existing.resetAt.getTime() - now) / 1000))
-    };
-  }
-
-  const updated = await db.rateLimitBucket.update({
-    where: { key },
-    data: {
-      count: {
-        increment: 1
-      }
-    }
-  });
-
-  return {
-    allowed: true,
-    remaining: Math.max(0, limit - updated.count),
-    retryAfterSeconds: Math.max(1, Math.ceil((existing.resetAt.getTime() - now) / 1000))
-  };
-}
-
-export function consumeRateLimit(key: string, options: RateLimitOptions): RateLimitResult | Promise<RateLimitResult> {
-  if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
-    return consumeInMemoryRateLimit(key, options);
-  }
-
-  return consumeDatabaseRateLimit(key, options);
+  return consumeMemory(key, options);
 }

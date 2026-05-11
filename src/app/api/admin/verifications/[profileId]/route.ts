@@ -1,77 +1,82 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { recordAuditEvent } from '@/lib/audit';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
-import { readClientAddress } from '@/lib/request-meta';
 
 const schema = z.object({
-  status: z.enum(['PENDING', 'VERIFIED', 'REJECTED', 'UNVERIFIED']),
-  notes: z.string().trim().max(1000).optional()
+  decision: z.enum(['VERIFIED', 'REJECTED']),
+  adminNote: z.string().trim().max(1000).optional()
 });
 
+/**
+ * PATCH /api/admin/verifications/[profileId]
+ *
+ * Admin approves or rejects an ownership verification claim.
+ * Sets verified=true only on VERIFIED decisions.
+ */
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ profileId: string }> }
 ) {
   const session = await auth();
-
   if (!isAdminSession(session)) {
-    return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    return NextResponse.json({ error: 'Admin only.' }, { status: 403 });
   }
 
+  let body: z.infer<typeof schema>;
   try {
-    const { profileId } = await params;
-    const body = schema.parse(await request.json());
+    body = schema.parse(await request.json());
+  } catch {
+    return NextResponse.json({ error: 'Invalid request.' }, { status: 400 });
+  }
 
-    const profile = await db.profile.findUnique({
-      where: { id: profileId },
-      select: { id: true, type: true, name: true }
-    });
+  const { profileId } = await params;
 
-    if (!profile) {
-      return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
-    }
+  const profile = await db.profile.findUnique({
+    where: { id: profileId },
+    select: { id: true, verificationStatus: true }
+  });
 
-    const updatedProfile = await db.profile.update({
+  if (!profile) {
+    return NextResponse.json({ error: 'Profile not found.' }, { status: 404 });
+  }
+
+  if (!['PENDING', 'REJECTED'].includes(profile.verificationStatus)) {
+    return NextResponse.json(
+      { error: 'Only PENDING or REJECTED profiles can be reviewed.' },
+      { status: 409 }
+    );
+  }
+
+  const [updated] = await db.$transaction([
+    db.profile.update({
       where: { id: profileId },
       data: {
-        verified: body.status === 'VERIFIED',
-        verificationStatus: body.status,
+        verificationStatus: body.decision,
+        verified: body.decision === 'VERIFIED',
         verificationReviewedAt: new Date(),
-        verificationNotes: body.notes ?? undefined
+        ...(body.adminNote ? { verificationNotes: body.adminNote } : {})
       },
       select: {
         id: true,
         name: true,
         type: true,
-        verified: true,
         verificationStatus: true,
-        verificationNotes: true
+        verified: true,
+        verificationReviewedAt: true
       }
-    });
-
-    await recordAuditEvent({
-      actorUserId: session?.user?.id,
-      action: 'profile_verification_reviewed',
-      entityType: 'profile',
-      entityId: profileId,
-      ipAddress: readClientAddress(request),
-      metadata: {
-        status: body.status,
-        profileType: profile.type,
-        profileName: profile.name
+    }),
+    db.adminAuditLog.create({
+      data: {
+        actorId: session!.user!.id!,
+        action: `verification.${body.decision.toLowerCase()}`,
+        targetType: 'Profile',
+        targetId: profileId,
+        meta: body.adminNote ? { adminNote: body.adminNote } : undefined
       }
-    });
+    })
+  ]);
 
-    return NextResponse.json(updatedProfile);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.issues[0]?.message ?? 'Invalid verification action' }, { status: 400 });
-    }
-
-    console.error('Verification review failed', error);
-    return NextResponse.json({ error: 'Could not update verification' }, { status: 500 });
-  }
+  return NextResponse.json(updated);
 }

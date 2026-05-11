@@ -1,7 +1,7 @@
 import { Profile, Show } from '@prisma/client';
 import { formatShowTime } from '@/lib/utils';
 
-export const FEED_HEURISTICS_VERSION = '1.1.0';
+export const FEED_HEURISTICS_VERSION = '1.2.0';
 
 export const feedHeuristicsLedger = [
   {
@@ -39,10 +39,16 @@ export const feedHeuristicsLedger = [
     title: 'Versioned Changes',
     summary: 'Heuristic changes should be versioned and disclosed instead of silently drifting in production.',
     userImpact: 'Teams can compare behavior across versions and explain when ranking rules change.'
+  },
+  {
+    id: 'RADIO-001',
+    title: 'Radio Show Boost',
+    summary: 'Curated radio shows receive a small visibility lift when live to distinguish them from standard streams.',
+    userImpact: 'A live radio set surfaces slightly ahead of a live stream with the same hype, reflecting the additional curation effort.'
   }
 ] as const;
 
-type ExplainableShow = Pick<Show, 'title' | 'status' | 'startsAt' | 'hypeCount' | 'tags'> & {
+type ExplainableShow = Pick<Show, 'title' | 'status' | 'startsAt' | 'hypeCount' | 'tags' | 'isRadioShow'> & {
   venueProfile?: Pick<Profile, 'name' | 'city'> | null;
   headlinerProfile?: Pick<Profile, 'name'> | null;
 };
@@ -94,6 +100,7 @@ export function getShowVisibilitySignals(show: ExplainableShow, now = new Date()
     freshnessScore = 0;
   }
 
+  const radioBoost = show.isRadioShow && show.status === 'LIVE' ? 8 : 0;
   const momentumScore = Math.min(28, Math.floor(show.hypeCount / 3));
   let momentumSignal = `${show.hypeCount} hype signal${show.hypeCount === 1 ? '' : 's'}`;
 
@@ -111,12 +118,13 @@ export function getShowVisibilitySignals(show: ExplainableShow, now = new Date()
       ? `Context includes ${contextParts.join(' / ')}.`
       : 'Basic show metadata is available, but there is no extra venue or headliner context yet.';
 
-  const totalScore = statusScore + freshnessScore + momentumScore;
+  const totalScore = statusScore + freshnessScore + momentumScore + radioBoost;
 
   const signals: VisibilitySignal[] = [
     { label: 'Status', value: statusSignal },
     { label: 'Freshness', value: freshnessSignal },
-    { label: 'Momentum', value: momentumSignal }
+    { label: 'Momentum', value: momentumSignal },
+    ...(radioBoost > 0 ? [{ label: 'Format', value: 'Curated radio set — live boost applied (RADIO-001).' }] : [])
   ];
 
   // Compact chips for inline "why you're seeing this" display
@@ -138,6 +146,10 @@ export function getShowVisibilitySignals(show: ExplainableShow, now = new Date()
     chips.push({ icon: '📈', label: 'Building', detail: `${show.hypeCount} hype signals and climbing.` });
   } else if (show.hypeCount >= 5) {
     chips.push({ icon: '✨', label: `${show.hypeCount} hype`, detail: 'Early momentum signal.' });
+  }
+
+  if (show.isRadioShow) {
+    chips.push({ icon: '📻', label: 'Radio set', detail: show.status === 'LIVE' ? 'Curated radio show — live boost active (RADIO-001).' : 'Curated radio show.' });
   }
 
   if (chips.length === 0) {

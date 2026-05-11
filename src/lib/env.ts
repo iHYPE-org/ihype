@@ -11,19 +11,17 @@ const envSchema = z.object({
   SMTP_SECURE: z.string().min(1).optional(),
   SMTP_USER: z.string().min(1).optional(),
   SMTP_PASSWORD: z.string().min(1).optional(),
-  SMTP_FROM: z.string().min(1).optional(),
+  SMTP_FROM: z.string().email().optional(),
+  EMAIL_FROM: z.string().email().optional(),
   RESEND_API_KEY: z.string().min(1).optional(),
-  EMAIL_FROM: z.string().min(1).optional(),
   MUX_TOKEN_ID: z.string().optional(),
   MUX_TOKEN_SECRET: z.string().optional(),
   MUX_WEBHOOK_SECRET: z.string().optional(),
-  BLOB_READ_WRITE_TOKEN: z.string().optional(),
-  STRIPE_SECRET_KEY: z.string().optional(),
-  STRIPE_WEBHOOK_SECRET: z.string().optional(),
-  BETA_INVITE_CODES: z.string().optional(),
-  FEATURE_ALLOW_DATABASE_MEDIA_STORAGE: z.string().optional(),
-  FEATURE_REQUIRE_INVITE_CODE: z.string().optional(),
-  FEATURE_ENABLE_LIVE_STREAMS: z.string().optional()
+  STRIPE_SECRET_KEY: z.string().startsWith('sk_').optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().startsWith('whsec_').optional(),
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().startsWith('pk_').optional(),
+  AUTH_GOOGLE_ID: z.string().min(1).optional(),
+  AUTH_GOOGLE_SECRET: z.string().min(1).optional()
 });
 
 type Env = z.infer<typeof envSchema>;

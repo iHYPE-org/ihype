@@ -11,6 +11,8 @@ import {
 import { getProfileDesignStyleVars } from '@/lib/profile-design';
 
 export const dynamic = 'force-dynamic';
+import type { Metadata } from 'next';
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 type LandingModule = 'my-page' | 'recommendation-engine' | 'events';
 

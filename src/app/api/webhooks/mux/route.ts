@@ -33,11 +33,14 @@ export async function POST(request: Request) {
   const playbackId = event.data.playback_ids?.[0]?.id;
 
   if (playbackId) {
-    const status = event.type.includes('active')
-      ? 'LIVE'
-      : event.type.includes('idle')
-        ? 'ENDED'
-        : undefined;
+    // video.live_stream.active  → stream is live
+    // video.live_stream.idle    → streamer stopped, mark ENDED
+    // video.live_stream.disabled → stream deleted/disabled, mark ENDED
+    // video.live_stream.connected → encoder connected but not yet active; leave SCHEDULED
+    const type = event.type as string;
+    let status: 'LIVE' | 'ENDED' | null = null;
+    if (type === 'video.live_stream.active') status = 'LIVE';
+    else if (type === 'video.live_stream.idle' || type === 'video.live_stream.disabled') status = 'ENDED';
 
     if (status) {
       await db.show.updateMany({

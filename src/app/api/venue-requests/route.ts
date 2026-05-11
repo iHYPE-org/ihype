@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 
 const schema = z.object({
   venueProfileId: z.string().cuid(),
@@ -19,6 +20,14 @@ export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Login required' }, { status: 401 });
+  }
+
+  const rl = await consumeRateLimit(
+    rateLimitKey('venue-request', session.user.id, request.headers.get('x-forwarded-for')),
+    { limit: 20, windowMs: 60 * 60 * 1000 }
+  );
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Too many requests. Try again later.' }, { status: 429 });
   }
 
   try {

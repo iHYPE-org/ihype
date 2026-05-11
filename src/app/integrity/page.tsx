@@ -21,6 +21,7 @@ export default async function IntegrityPage() {
       startsAt: true,
       hypeCount: true,
       tags: true,
+      isRadioShow: true,
       venueProfile: {
         select: {
           name: true,

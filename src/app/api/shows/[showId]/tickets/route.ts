@@ -4,6 +4,7 @@ import { AccountsPayableCategory, Role, TicketOrderStatus } from '@prisma/client
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 import { sendIssuedTicketEmail } from '@/lib/mailer';
 import { isPaymentProcessingConfigured } from '@/lib/payments';
 import { detectLocationFromHeaders } from '@/lib/request-location';
@@ -158,6 +159,15 @@ export async function POST(
     return NextResponse.json({ error: 'Fan login required' }, { status: 401 });
   }
 
+  // 10 ticket orders per hour per user — prevents scripted bulk-buy abuse
+  const rl = await consumeRateLimit(
+    rateLimitKey('ticket-purchase', session.user.id, request.headers.get('x-forwarded-for')),
+    { limit: 10, windowMs: 60 * 60 * 1000 }
+  );
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Too many ticket requests. Try again later.' }, { status: 429 });
+  }
+
   try {
     const { showId } = await params;
     const body = schema.parse(await request.json());
@@ -171,6 +181,7 @@ export async function POST(
           username: true,
           name: true,
           role: true,
+          emailVerified: true,
           storedPaymentTokenRef: true,
           storedPaymentTokenBrand: true,
           storedPaymentTokenLast4: true,
@@ -189,6 +200,10 @@ export async function POST(
 
     if (!user || user.role !== Role.FAN) {
       return NextResponse.json({ error: 'Only fan accounts can reserve or purchase tickets.' }, { status: 403 });
+    }
+
+    if (!user.emailVerified) {
+      return NextResponse.json({ error: 'Verify your email address before purchasing tickets.' }, { status: 403 });
     }
 
     const stripeActive = isStripeConfigured() && body.stripePaymentMethodId;

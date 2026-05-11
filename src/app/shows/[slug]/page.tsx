@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { auth } from '@/lib/auth';
 import { notFound } from 'next/navigation';
-import { ContentReportControl } from '@/components/ContentReportControl';
 import { HypeButton } from '@/components/HypeButton';
 import { ShowSequencePlayer } from '@/components/ShowSequencePlayer';
 import { TicketSaleCard } from '@/components/TicketSaleCard';
@@ -9,10 +8,10 @@ import { db } from '@/lib/db';
 import { getShowVisibilitySignals } from '@/lib/integrity';
 import { isAdminSession } from '@/lib/permissions';
 import { detectRequestLocation } from '@/lib/request-location';
-import { isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
 import { parseShowProductionPlan } from '@/lib/show-composer';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { formatShowTime } from '@/lib/utils';
+import { getMuxPlaybackToken } from '@/lib/mux';
 import { ShowPlaybackTracker } from '@/components/ShowPlaybackTracker';
 
 export async function generateMetadata(
@@ -29,55 +28,50 @@ export async function generateMetadata(
       startsAt: true,
       posterImage: true,
       hypeCount: true,
-      creator: { select: { email: true, username: true } },
-      venueProfile: { select: { name: true, city: true, stateRegion: true } },
-      headlinerProfile: { select: { name: true } }
+      venueProfile:     { select: { name: true, city: true, stateRegion: true } },
+      headlinerProfile: { select: { name: true } },
     }
   });
 
-  if (
-    !show ||
-    show.status === 'DRAFT' ||
-    (shouldHideDemoContent() && isDemoUser(show.creator))
-  ) {
-    return { title: 'Show | iHYPE' };
-  }
+  if (!show) return { title: 'Show · iHYPE' };
 
-  const dateLabel = show.startsAt
-    ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(show.startsAt)
+  const dateStr = show.startsAt
+    ? new Date(show.startsAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : null;
   const venueName = show.venueProfile?.name ?? null;
-  const venueLocation = [show.venueProfile?.city, show.venueProfile?.stateRegion].filter(Boolean).join(', ') || null;
-  const headlinerName = show.headlinerProfile?.name ?? null;
-  const title = `${show.title} | iHYPE`;
-  const description = [
-    show.isRadioShow ? 'Radio show' : dateLabel,
-    venueName,
-    venueLocation,
-    headlinerName ? `Featuring ${headlinerName}` : null,
+  const venueCity = [show.venueProfile?.city, show.venueProfile?.stateRegion].filter(Boolean).join(', ') || null;
+  const headliner = show.headlinerProfile?.name ?? null;
+
+  const descParts = [
+    show.isRadioShow ? 'Radio show' : (dateStr ?? null),
+    venueName ?? null,
+    venueCity ?? null,
+    headliner ? `Featuring ${headliner}` : null,
     show.hypeCount ? `${show.hypeCount} HYPE` : null,
-    show.description?.slice(0, 120) ?? null
-  ]
-    .filter(Boolean)
-    .join(' | ');
+    show.description?.slice(0, 120) ?? null,
+  ].filter(Boolean);
+
+  const title       = `${show.title} · iHYPE`;
+  const description = descParts.join(' · ') || 'Live show on iHYPE';
+  const image       = show.posterImage ?? undefined;
 
   return {
     title,
-    description: description || 'Show on iHYPE',
+    description,
     openGraph: {
       type: 'website',
       siteName: 'iHYPE',
       title,
-      description: description || 'Show on iHYPE',
-      url: `/shows/${slug}`,
-      ...(show.posterImage ? { images: [{ url: show.posterImage }] } : {})
+      description,
+      url:   `/shows/${slug}`,
+      ...(image ? { images: [{ url: image }] } : {}),
     },
     twitter: {
-      card: 'summary_large_image',
+      card:        'summary_large_image',
       title,
-      description: description || 'Show on iHYPE',
-      ...(show.posterImage ? { images: [show.posterImage] } : {})
-    }
+      description,
+      ...(image ? { images: [image] } : {}),
+    },
   };
 }
 
@@ -98,12 +92,6 @@ export default async function ShowDetailPage({
   const show = await db.show.findUnique({
     where: { slug },
     include: {
-      creator: {
-        select: {
-          email: true,
-          username: true
-        }
-      },
       venueProfile: true,
       headlinerProfile: true,
       promoterProfile: true,
@@ -124,14 +112,14 @@ export default async function ShowDetailPage({
           title: true,
           artistName: true,
           externalUrl: true,
-          durationSecs: true
+          durationSecs: true,
+          blockLabel: true
         }
       }
     }
   });
 
   if (!show) return notFound();
-  if (shouldHideDemoContent() && isDemoUser(show.creator)) return notFound();
   const canPreviewDraft =
     Boolean(session?.user?.id) &&
     (session?.user?.id === show.creatorId || (session ? isAdminSession(session) : false));
@@ -169,7 +157,25 @@ export default async function ShowDetailPage({
 
   const visibility = getShowVisibilitySignals(show);
   const productionPlan = parseShowProductionPlan(show.productionPlan);
-  const playbackUrl = show.streamPlaybackId ? `https://stream.mux.com/${show.streamPlaybackId}.m3u8` : null;
+
+  // Ticketed shows require a signed playback token; public shows use the raw HLS URL.
+  // Token signing only activates when MUX_SIGNING_KEY_ID + MUX_SIGNING_PRIVATE_KEY are set.
+  const hasTicket = session?.user?.id
+    ? await db.ticket.findFirst({
+        where: { showId: show.id, holderEmail: (await db.user.findUnique({ where: { id: session.user.id }, select: { email: true } }))?.email ?? '' },
+        select: { id: true }
+      }).then(Boolean)
+    : false;
+
+  const canWatch = !show.isTicketed || hasTicket || (session?.user?.id === show.creatorId) || isAdminSession(session);
+
+  let playbackUrl: string | null = null;
+  if (show.streamPlaybackId && canWatch) {
+    const token = show.isTicketed ? getMuxPlaybackToken(show.streamPlaybackId) : null;
+    playbackUrl = token
+      ? `https://stream.mux.com/${show.streamPlaybackId}.m3u8?token=${token}`
+      : `https://stream.mux.com/${show.streamPlaybackId}.m3u8`;
+  }
 
   return (
     <main className="container section">
@@ -529,7 +535,91 @@ export default async function ShowDetailPage({
         </section>
       ) : null}
 
-      <ContentReportControl targetId={show.id} targetType="show" />
+      {show.isTicketed && show.ticketOrders.length > 0 && (
+        <section className="section">
+          <div className="panel" style={{ padding: '1.25rem' }}>
+            <h2>Transfer your ticket</h2>
+            <p className="subtitle" style={{ marginBottom: '1rem' }}>Can't make it? You can transfer your ticket to a friend — no fees, just update the holder name.</p>
+            <p className="meta">Find your ticket confirmation email and visit the ticket link to reassign it, or go to <a href="/dashboard">your dashboard</a> to manage your orders.</p>
+          </div>
+        </section>
+      )}
+
+      {show.isRadioShow && show.radioTracks.length > 0 && (() => {
+        const totalSecs = show.radioTracks.reduce((sum, t) => sum + (t.durationSecs ?? 0), 0);
+        const totalDuration = totalSecs > 0
+          ? `${Math.floor(totalSecs / 3600) > 0 ? `${Math.floor(totalSecs / 3600)}h ` : ''}${Math.floor((totalSecs % 3600) / 60)}m`
+          : null;
+
+        // Group tracks by blockLabel (null label = ungrouped)
+        const blocks: { label: string | null; tracks: typeof show.radioTracks }[] = [];
+        for (const track of show.radioTracks) {
+          const last = blocks[blocks.length - 1];
+          if (last && last.label === (track.blockLabel ?? null)) {
+            last.tracks.push(track);
+          } else {
+            blocks.push({ label: track.blockLabel ?? null, tracks: [track] });
+          }
+        }
+
+        return (
+          <section className="section">
+            <div className="panel" style={{ padding: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h2 style={{ margin: 0 }}>Tracklist</h2>
+                {totalDuration && <span className="meta">{show.radioTracks.length} tracks · {totalDuration}</span>}
+              </div>
+              <div style={{ display: 'grid', gap: '1rem' }}>
+                {blocks.map((block, bi) => (
+                  <div key={bi}>
+                    {block.label && (
+                      <div style={{ fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '0.4rem', paddingLeft: '0.75rem' }}>
+                        {block.label}
+                      </div>
+                    )}
+                    <ol style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: '0.35rem' }}>
+                      {block.tracks.map((track) => (
+                        <li
+                          key={track.id}
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: '2rem 1fr auto',
+                            gap: '0.75rem',
+                            alignItems: 'center',
+                            padding: '0.6rem 0.75rem',
+                            borderRadius: '10px',
+                            background: 'rgba(255,255,255,0.03)'
+                          }}
+                        >
+                          <span className="meta" style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                            {String(track.position + 1).padStart(2, '0')}
+                          </span>
+                          <div>
+                            <strong style={{ display: 'block' }}>{track.title}</strong>
+                            {track.artistName && <span className="meta">{track.artistName}</span>}
+                          </div>
+                          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                            {track.durationSecs && (
+                              <span className="meta" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                                {Math.floor(track.durationSecs / 60)}:{String(track.durationSecs % 60).padStart(2, '0')}
+                              </span>
+                            )}
+                            {track.externalUrl && (
+                              <a href={track.externalUrl} target="_blank" rel="noreferrer" className="button small secondary" style={{ fontSize: '0.75rem' }}>
+                                Play ↗
+                              </a>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        );
+      })()}
     </main>
   );
 }

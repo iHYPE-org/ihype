@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { consumeRateLimit, rateLimitHeaders, rateLimitKey } from '../rate-limit';
 
+// Clear the in-process store between tests by consuming under a unique key prefix per test
 let testId = 0;
-
 function key(suffix = '') {
   return `test-${testId}-${suffix}`;
 }
@@ -28,9 +28,9 @@ describe('consumeRateLimit', () => {
   it('blocks the request exactly at the limit', async () => {
     const k = key();
     const opts = { limit: 2, windowMs: 60_000 };
-    await consumeRateLimit(k, opts);
-    await consumeRateLimit(k, opts);
-    const result = await consumeRateLimit(k, opts);
+    await consumeRateLimit(k, opts); // 1
+    await consumeRateLimit(k, opts); // 2 — limit reached
+    const result = await consumeRateLimit(k, opts); // 3 — should be blocked
     expect(result.allowed).toBe(false);
     expect(result.remaining).toBe(0);
   });
@@ -38,7 +38,7 @@ describe('consumeRateLimit', () => {
   it('returns retryAfterSeconds > 0 when blocked', async () => {
     const k = key();
     const opts = { limit: 1, windowMs: 30_000 };
-    await consumeRateLimit(k, opts);
+    await consumeRateLimit(k, opts); // allowed
     const blocked = await consumeRateLimit(k, opts);
     expect(blocked.allowed).toBe(false);
     expect(blocked.retryAfterSeconds).toBeGreaterThan(0);
@@ -46,12 +46,12 @@ describe('consumeRateLimit', () => {
 
   it('resets after the window expires', async () => {
     const k = key();
-    const opts = { limit: 1, windowMs: 50 };
-    await consumeRateLimit(k, opts);
+    const opts = { limit: 1, windowMs: 50 }; // 50ms window
+    await consumeRateLimit(k, opts); // consume the only slot
     const blocked = await consumeRateLimit(k, opts);
     expect(blocked.allowed).toBe(false);
 
-    await new Promise((resolve) => setTimeout(resolve, 60));
+    await new Promise((r) => setTimeout(r, 60)); // wait for window to expire
 
     const reset = await consumeRateLimit(k, opts);
     expect(reset.allowed).toBe(true);
@@ -59,8 +59,8 @@ describe('consumeRateLimit', () => {
 
   it('independent keys do not interfere', async () => {
     const opts = { limit: 1, windowMs: 60_000 };
-    await consumeRateLimit(key('a'), opts);
-    const result = await consumeRateLimit(key('b'), opts);
+    await consumeRateLimit(key('a'), opts); // exhaust key-a
+    const result = await consumeRateLimit(key('b'), opts); // key-b should be fresh
     expect(result.allowed).toBe(true);
   });
 

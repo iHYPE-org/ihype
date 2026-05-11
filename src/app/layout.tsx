@@ -1,10 +1,11 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { ReactNode } from 'react';
+import { HeaderMediaPlayer } from '@/components/GlobalMediaPlayer';
 import { AppProviders } from '@/components/AppProviders';
 import { HeaderAuthLinks } from '@/components/HeaderAuthLinks';
 import { HeaderLogo } from '@/components/HeaderLogo';
-import { HeaderPrimaryNav } from '@/components/HeaderPrimaryNav';
+import { NavPrimaryLinks } from '@/components/NavPrimaryLinks';
 
 export const metadata: Metadata = {
   title: {
@@ -33,9 +34,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" suppressHydrationWarning>
       <body>
         <AppProviders>
-          <a className="skip-link" href="#main-content">
-            Skip to main content
-          </a>
           <div aria-hidden="true" className="site-background">
             <span className="site-background-orb site-background-orb-a" />
             <span className="site-background-orb site-background-orb-b" />
@@ -44,16 +42,26 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <div className="site-shell">
             <header aria-label="Primary site header" className="nav">
               <div className="container nav-inner">
-                <div className="nav-left-cluster">
-                  <HeaderLogo />
-                  <HeaderPrimaryNav />
+                <HeaderLogo />
+                <NavPrimaryLinks />
+                <div className="nav-player-slot nav-player-slot-centered">
+                  <HeaderMediaPlayer />
                 </div>
                 <HeaderAuthLinks />
               </div>
             </header>
-            <div id="main-content" tabIndex={-1}>
-              {children}
-            </div>
+            {children}
+            <footer className="site-footer">
+              <div className="container">
+                <nav className="site-footer-nav">
+                  <a href="/integrity">Integrity & Transparency</a>
+                  <a href="/shows">Shows</a>
+                  <a href="/artists">Artists</a>
+                  <a href="/venues">Venues</a>
+                </nav>
+                <p className="meta">© {new Date().getFullYear()} iHYPE.org · Streaming-first music discovery</p>
+              </div>
+            </footer>
           </div>
         </AppProviders>
       </body>

@@ -53,6 +53,11 @@ export async function POST(request: Request) {
 
     await db.mfaChallenge.delete({ where: { id: challenge.id } });
 
+    // OTP success proves the user owns this email — mark verified if not already set.
+    if (!challenge.user.emailVerified) {
+      await db.user.update({ where: { id: challenge.user.id }, data: { emailVerified: new Date() } });
+    }
+
     const user = challenge.user;
     const isProduction = process.env.NODE_ENV === 'production';
 

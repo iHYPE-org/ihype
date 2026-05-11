@@ -63,30 +63,64 @@ export default async function ShowsIndexPage() {
         </div>
       </section>
 
-      <section className="section">
+      {liveShows.length > 0 && (
+        <div className="panel" style={{ background: 'rgba(255,60,60,0.08)', border: '1px solid rgba(255,60,60,0.3)', padding: '1rem 1.25rem', borderRadius: '12px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: '#ff3c3c', boxShadow: '0 0 8px #ff3c3c', flexShrink: 0 }} />
+          <span><strong>{liveShows.length} show{liveShows.length !== 1 ? 's' : ''} live right now</strong> — scroll down or <a href="#live-now">jump to live</a></span>
+        </div>
+      )}
+
+      <section className="section" id="live-now">
         <div className="directory-section-head">
-          <h2>Live now</h2>
+          <h2>
+            <span className="section-status-chip section-status-chip-live">● LIVE</span>
+            {liveShows.length > 0 && <span style={{ fontWeight: 400, fontSize: '1rem', color: 'var(--muted)' }}>{liveShows.length} broadcast{liveShows.length !== 1 ? 's' : ''}</span>}
+          </h2>
         </div>
         <div className="grid grid-2">
-          {liveShows.length ? liveShows.map((show) => <ShowCard key={show.id} show={show} reasonChips={locationChips(show)} />) : <div className="empty">No live broadcasts right now.</div>}
+          {liveShows.length ? liveShows.map((show) => <ShowCard key={show.id} show={show} reasonChips={locationChips(show)} />) : (
+            <div className="empty">
+              <span className="empty-icon">📡</span>
+              <span className="empty-title">Nothing live right now</span>
+              <p>Check back soon — Chicago artists stream every day.</p>
+            </div>
+          )}
         </div>
       </section>
 
       <section className="section">
         <div className="directory-section-head">
-          <h2>Upcoming</h2>
+          <h2>
+            <span className="section-status-chip section-status-chip-upcoming">UPCOMING</span>
+            {upcomingShows.length > 0 && <span style={{ fontWeight: 400, fontSize: '1rem', color: 'var(--muted)' }}>{upcomingShows.length} show{upcomingShows.length !== 1 ? 's' : ''}</span>}
+          </h2>
         </div>
         <div className="grid grid-2">
-          {upcomingShows.length ? upcomingShows.map((show) => <ShowCard key={show.id} show={show} reasonChips={locationChips(show)} />) : <div className="empty">No scheduled shows yet.</div>}
+          {upcomingShows.length ? upcomingShows.map((show) => <ShowCard key={show.id} show={show} reasonChips={locationChips(show)} />) : (
+            <div className="empty">
+              <span className="empty-icon">🗓️</span>
+              <span className="empty-title">No upcoming shows scheduled</span>
+              <p>Artists add new dates regularly — check back or <a href="/artists">browse artists</a>.</p>
+            </div>
+          )}
         </div>
       </section>
 
       <section className="section">
         <div className="directory-section-head">
-          <h2>Recent archives</h2>
+          <h2>
+            <span className="section-status-chip section-status-chip-past">RECENT ARCHIVES</span>
+            {recentShows.length > 0 && <span style={{ fontWeight: 400, fontSize: '1rem', color: 'var(--muted)' }}>{recentShows.length} show{recentShows.length !== 1 ? 's' : ''}</span>}
+          </h2>
         </div>
         <div className="grid grid-2">
-          {recentShows.length ? recentShows.map((show) => <ShowCard key={show.id} show={show} />) : <div className="empty">No recent archives yet.</div>}
+          {recentShows.length ? recentShows.map((show) => <ShowCard key={show.id} show={show} />) : (
+            <div className="empty">
+              <span className="empty-icon">📼</span>
+              <span className="empty-title">No recent archives yet</span>
+              <p>Past broadcasts will appear here once the platform launches.</p>
+            </div>
+          )}
         </div>
       </section>
     </main>

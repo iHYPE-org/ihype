@@ -12,6 +12,8 @@ import { getProfileDesignStyleVars } from '@/lib/profile-design';
 import { buildVenueBookingRecommendations } from '@/lib/venue-booking';
 
 export const dynamic = 'force-dynamic';
+import type { Metadata } from 'next';
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 type LandingModule = 'my-page' | 'recommendation-engine' | 'events';
 

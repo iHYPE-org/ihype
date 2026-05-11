@@ -1,0 +1,1 @@
+ALTER TABLE "RadioShowTrack" ADD COLUMN IF NOT EXISTS "blockLabel" TEXT;

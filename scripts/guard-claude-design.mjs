@@ -291,11 +291,11 @@ assertNotIncludes(
   '/discover',
   'The public Discover page has been deleted and should not remain in the primary nav.'
 );
-assertIncludes(
-  'src/app/layout.tsx',
-  'HeaderPrimaryNav',
-  'Root layout should render the current nav instead of the old centered player header.'
-);
+// NavPrimaryLinks is the updated component (adds aria-current active state); either is valid
+if (!readFileSync('src/app/layout.tsx', 'utf8').includes('HeaderPrimaryNav') &&
+    !readFileSync('src/app/layout.tsx', 'utf8').includes('NavPrimaryLinks')) {
+  throw new Error('src/app/layout.tsx is missing nav component. Root layout should render the current nav instead of the old centered player header.');
+}
 assertIncludes(
   'src/app/layout.tsx',
   'suppressHydrationWarning',

@@ -83,8 +83,10 @@ model User {
   username                String                   @unique
   passwordHash            String?
   isThirteenOrOlder       Boolean                  @default(true)
+  emailVerified           DateTime?
   mfaSecret               String?
   mfaEnabledAt            DateTime?
+  mfaBackupCodes          String?
   image                   String?
   storedPaymentTokenRef   String?
   storedPaymentTokenBrand String?
@@ -627,12 +629,28 @@ model RadioShowTrack {
   mediaAssetId String?
   externalUrl  String?
   durationSecs Int?
+  blockLabel   String?
   createdAt    DateTime          @default(now())
   show         Show              @relation(fields: [showId], references: [id], onDelete: Cascade)
   mediaAsset   ArtistMediaAsset? @relation(fields: [mediaAssetId], references: [id], onDelete: SetNull)
 
   @@unique([showId, position])
   @@index([showId])
+}
+
+// Immutable record of admin actions for accountability and debugging.
+model AdminAuditLog {
+  id           String   @id @default(cuid())
+  actorId      String
+  action       String
+  targetType   String
+  targetId     String
+  meta         Json?
+  createdAt    DateTime @default(now())
+
+  @@index([actorId])
+  @@index([targetId])
+  @@index([createdAt])
 }
 
 // Idempotency log for inbound webhooks. Inserting a duplicate eventId fails

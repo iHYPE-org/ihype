@@ -1,55 +1,32 @@
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getSharedDiscoverFeed } from '@/lib/discover-feed';
-import { buildHypeQueue, type HypeQueueRole } from '@/lib/hype-queue';
 import { detectRequestLocation } from '@/lib/request-location';
 import { buildArtistMediaCollection } from '@/lib/media';
-import { HypeQueue } from '@/components/HypeQueue';
-import { HomeInlineSearch } from '@/components/HomeInlineSearch';
-import { PromoterShowCreationTool } from '@/components/PromoterShowCreationTool';
 import type { ProfileType } from '@prisma/client';
+import { WorkbenchShell, type WorkbenchData, type WbStat, type WbTrack, type WbShow, type WbActivity, type WbRole } from '@/components/WorkbenchShell';
 
 export const dynamic = 'force-dynamic';
 
-function roleLabel(type: ProfileType): string {
-  if (type === 'DJ') return 'Promoter';
+// ── helpers ──────────────────────────────────────────────────────
+
+function roleLabel(type: ProfileType) {
+  if (type === 'DJ') return 'Promoter/DJ';
   if (type === 'VENUE') return 'Venue';
   if (type === 'LISTENER') return 'Fan';
   return 'Artist';
 }
 
-function hypeQueueRole(type: ProfileType): HypeQueueRole {
-  if (type === 'DJ') return 'promoter';
-  if (type === 'VENUE') return 'venue';
-  if (type === 'LISTENER') return 'fan';
-  return 'artist';
-}
-
-function discoverHref(type: ProfileType): string {
+function discoverHref(type: ProfileType) {
   if (type === 'DJ') return '/promoters';
   if (type === 'VENUE') return '/venues';
   if (type === 'LISTENER') return '/fans';
   return '/artists';
 }
 
-function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  }).format(date);
-}
-
-function formatTime(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  }).format(date);
-}
+// Palette for track art gradients (cycles through)
+const COLORS = ['#ff5029', '#b983ff', '#22e5d4', '#ff3e9a', '#ffb84a', '#7fb3ff'];
 
 export default async function HomePage() {
   const session = await auth();
@@ -58,33 +35,14 @@ export default async function HomePage() {
   const userId = session.user.id;
   const role = session.user.role as string | null | undefined;
 
-  // Determine primary profile type from role
   const profileTypeMap: Record<string, ProfileType> = {
-    ARTIST: 'ARTIST',
-    DJ: 'DJ',
-    VENUE: 'VENUE',
-    FAN: 'LISTENER'
+    ARTIST: 'ARTIST', DJ: 'DJ', VENUE: 'VENUE', FAN: 'LISTENER'
   };
   const preferredType = role ? (profileTypeMap[role] ?? null) : null;
 
-  // Look up primary profile
   const profile = await db.profile.findFirst({
-    where: preferredType
-      ? { ownerId: userId, type: preferredType }
-      : { ownerId: userId },
-    select: {
-      id: true,
-      type: true,
-      slug: true,
-      name: true,
-      hexId: true,
-      hypeCount: true,
-      genres: true,
-      city: true,
-      stateRegion: true,
-      country: true,
-      verified: true
-    },
+    where: preferredType ? { ownerId: userId, type: preferredType } : { ownerId: userId },
+    select: { id: true, type: true, slug: true, name: true, hexId: true, hypeCount: true, city: true, stateRegion: true },
     orderBy: { createdAt: 'asc' }
   });
 
@@ -93,269 +51,155 @@ export default async function HomePage() {
   const now = new Date();
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-  // Fetch role-specific data in parallel
-  const [discoverFeed, viewerLocation, statsResult, eventsResult] = await Promise.all([
+  const [discoverFeed, viewerLocation, rawStats, eventsResult] = await Promise.all([
     getSharedDiscoverFeed(null),
     detectRequestLocation(),
     fetchStats(profile, userId, thirtyDaysAgo, now),
     fetchEvents(profile, userId, now)
   ]);
 
-  const viewerLocationLabel =
-    [viewerLocation?.city, viewerLocation?.stateRegion ?? viewerLocation?.country]
-      .filter(Boolean)
-      .join(', ') || 'your area';
+  const city = profile.city
+    ? [profile.city, profile.stateRegion].filter(Boolean).join(', ')
+    : [viewerLocation?.city, viewerLocation?.stateRegion ?? viewerLocation?.country].filter(Boolean).join(', ') || 'your city';
 
-  const hypeQueueItems = buildHypeQueue({
-    role: hypeQueueRole(profile.type),
-    viewerLocationLabel,
-    mediaEntries: discoverFeed.mediaEntries,
-    hypedNearMe: discoverFeed.hypedNearMe,
-    newArtists: discoverFeed.newArtists,
-    newPromoters: discoverFeed.newPromoters,
-    shows: eventsResult.upcoming.slice(0, 3).map((s) => ({
-      title: s.title,
-      headlinerSlug: (s as any).headlinerProfile?.slug ?? null,
-      headlinerName: (s as any).headlinerProfile?.name ?? null,
-      venueName: (s as any).venueProfile?.name ?? null
-    }))
+  // ── Build WbTracks from discover feed ──
+  const mediaEntries = discoverFeed.mediaEntries.slice(0, 8);
+  const wbTracks: WbTrack[] = mediaEntries.map((e, i) => ({
+    id: e.id,
+    title: e.title,
+    artistName: e.artistName,
+    duration: '3:30',
+    durationSec: 210,
+    hypeCount: e.artistHypeCount ?? 0,
+    color: COLORS[i % COLORS.length],
+    album: e.artistName,
+    mediaUrl: `/api/media/${e.id}`,
+    artistSlug: e.artistSlug ?? null,
+  }));
+
+  // ── Build WbShows from events ──
+  const allShows = [...eventsResult.upcoming, ...eventsResult.past.slice(0, 3)];
+  const wbShows: WbShow[] = allShows.slice(0, 6).map((s) => {
+    const isTonight = s.startsAt >= now && s.startsAt < new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const isLive = s.status === 'LIVE';
+    const nearSold = (s.ticketsSoldCount ?? 0) / Math.max(1, s.ticketCapacity ?? 200) > 0.85;
+    return {
+      id: s.id,
+      name: s.title,
+      venue: (s as any).venueProfile?.name ?? (s as any).headlinerProfile?.name ?? 'Local venue',
+      date: s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+      time: s.startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+      hype: s.hypeCount ?? 0,
+      sold: s.ticketsSoldCount ?? 0,
+      capacity: s.ticketCapacity ?? 200,
+      price: s.ticketPriceCents ? s.ticketPriceCents / 100 : 0,
+      status: isLive || isTonight ? 'TONIGHT' : nearSold ? 'NEAR SOLD' : s.startsAt >= now ? 'UPCOMING' : 'THIS WEEK',
+    };
   });
 
-  // Data for show creator (DJ/promoter + venue roles)
-  let showCreatorData: {
-    artists: Parameters<typeof PromoterShowCreationTool>[0]['artists'];
-    promoters: Parameters<typeof PromoterShowCreationTool>[0]['promoters'];
-    venues: Parameters<typeof PromoterShowCreationTool>[0]['venues'];
-  } | null = null;
+  // ── Build WbStats ──
+  const STAT_COLORS = ['#ff3e9a', '#22e5d4', '#b983ff', '#ffb84a', '#22e5d4', '#ff5029'];
+  const wbStats: WbStat[] = rawStats.slice(0, 4).map((s, i) => ({
+    label: s.label.toUpperCase(),
+    value: String(s.value),
+    delta: '↑ this period',
+    color: STAT_COLORS[i % STAT_COLORS.length],
+  }));
 
-  if (profile.type === 'DJ') {
-    const [artistProfiles, venueOptions] = await Promise.all([
-      db.profile.findMany({
-        where: {
-          type: 'ARTIST',
-          OR: [
-            { mediaContent: { not: null } },
-            { mediaUploads: { some: {} } },
-            { featureVideoUrl: { not: null } }
-          ]
-        },
-        select: {
-          id: true,
-          slug: true,
-          hexId: true,
-          name: true,
-          heroImage: true,
-          galleryImage: true,
-          featureVideoUrl: true,
-          mediaContent: true,
-          mediaUploads: {
-            select: {
-              hexId: true,
-              title: true,
-              notes: true,
-              mimeType: true,
-              fileSizeBytes: true,
-              createdAt: true
-            },
-            orderBy: { createdAt: 'desc' }
-          }
-        },
-        orderBy: { name: 'asc' }
-      }),
-      db.profile.findMany({
-        where: { type: 'VENUE' },
-        select: {
-          id: true,
-          slug: true,
-          name: true,
-          addressLine1: true,
-          city: true,
-          stateRegion: true,
-          country: true,
-          postalCode: true
-        },
-        orderBy: { name: 'asc' },
-        take: 50
-      })
-    ]);
-
-    const artists = artistProfiles
-      .map((ap) => {
-        const builtEntries = buildArtistMediaCollection(ap.mediaContent, ap.mediaUploads).entries;
-        const featureVideoEntry = ap.featureVideoUrl
-          ? [{
-              id: `${ap.hexId.slice(0, -2)}fe`,
-              hexId: `${ap.hexId.slice(0, -2)}fe`,
-              title: `${ap.name} feature video`,
-              url: ap.featureVideoUrl,
-              notes: 'Feature video from the artist page builder.',
-              mimeType: 'video/mp4',
-              mediaType: 'video' as const,
-              previewImageUrl: ap.galleryImage ?? ap.heroImage ?? null
-            }]
-          : [];
-        return {
-          profileId: ap.id,
-          slug: ap.slug,
-          name: ap.name,
-          heroImage: ap.heroImage,
-          entries: [...featureVideoEntry, ...builtEntries]
-        };
-      })
-      .filter((a) => a.entries.length > 0);
-
-    showCreatorData = {
-      artists,
-      promoters: [{ profileId: profile.id, name: profile.name, slug: profile.slug }],
-      venues: venueOptions.map((v) => ({
-        profileId: v.id,
-        slug: v.slug,
-        name: v.name,
-        addressLine1: v.addressLine1,
-        city: v.city,
-        stateRegion: v.stateRegion,
-        country: v.country,
-        postalCode: v.postalCode
-      }))
-    };
+  // ── Build WbActivity from recent events ──
+  const wbActivity: WbActivity[] = eventsResult.upcoming.slice(0, 5).map((s) => ({
+    text: `${s.title}${(s as any).venueProfile?.name ? ' @ ' + (s as any).venueProfile.name : ''} — ${s.startsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+    time: 'upcoming',
+    kind: 'show',
+  }));
+  if (wbActivity.length === 0) {
+    wbActivity.push({ text: 'No recent activity — start hyping tracks!', time: 'now', kind: 'hype' });
   }
 
-  const profilePath = profile.type === 'DJ'
-    ? `/promoters/${profile.slug}`
-    : profile.type === 'VENUE'
-    ? `/venues/${profile.slug}`
-    : profile.type === 'LISTENER'
-    ? `/fans/${profile.slug}`
-    : `/artists/${profile.slug}`;
+  // ── Build WbRoles ──
+  const allProfileTypes = await db.profile.findMany({
+    where: { ownerId: userId },
+    select: { type: true }
+  });
+  const activeTypes = new Set(allProfileTypes.map(p => p.type));
 
-  const allEvents = [...eventsResult.upcoming, ...eventsResult.past.slice(0, 5)];
+  const wbRoles: WbRole[] = [
+    { key: 'fan',      label: 'Fan',          sub: 'Hype tracks, top 5, playlists',   color: '#b983ff', active: activeTypes.has('LISTENER'), href: '/fans' },
+    { key: 'artist',   label: 'Artist',       sub: 'Upload, tour, merch, payouts',    color: '#ff5029', active: activeTypes.has('ARTIST'),   href: '/artists' },
+    { key: 'venue',    label: 'Venue',        sub: 'Host shows, verify, settle',      color: '#22e5d4', active: activeTypes.has('VENUE'),    href: '/venues' },
+    { key: 'promoter', label: 'Promoter/DJ',  sub: 'Book bills, radio shows, splits', color: '#ff3e9a', active: activeTypes.has('DJ'),       href: '/promoters' },
+  ];
 
-  return (
-    <>
-      <div className="site-subnav-shell">
-        <nav aria-label="Home navigation" className="container site-subnav">
-          <span className="site-subnav-label">Home</span>
-          <span className="badge" style={{ marginLeft: '0.25rem' }}>{roleLabel(profile.type)}</span>
-          <div className="site-subnav-divider" aria-hidden="true" />
-          <Link className="site-subnav-link" href={profilePath}>My Page</Link>
-          <Link className="site-subnav-link" href="/dashboard">Dashboard</Link>
-          <Link className="site-subnav-link site-subnav-link-utility" href={discoverHref(profile.type)}>
-            Discover
-          </Link>
-        </nav>
-      </div>
+  // ── User name / initials ──
+  const userName = profile.name ?? session.user.name ?? 'there';
+  const parts = userName.trim().split(/\s+/);
+  const initials = parts.length >= 2
+    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    : userName.slice(0, 2).toUpperCase();
 
-      <main className="container section home-page">
+  // ── Radio shows (real ones if DJ, else discover feed shows) ──
+  let radioShows: WorkbenchData['radioShows'] = [];
+  const radioRows = await db.show.findMany({
+    where: { isRadioShow: true, status: { not: 'CANCELED' } },
+    include: { promoterProfile: { select: { name: true } } },
+    orderBy: { startsAt: 'asc' },
+    take: 6
+  });
+  radioShows = radioRows.map((r, i) => ({
+    id: r.id,
+    name: r.title,
+    host: (r as any).promoterProfile?.name ?? 'iHYPE Radio',
+    time: r.startsAt.toLocaleDateString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' }),
+    next: r.startsAt > now ? r.startsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'live now',
+    live: r.status === 'LIVE',
+    listeners: 0,
+    color: COLORS[i % COLORS.length],
+    desc: r.description ?? `A radio show on iHYPE featuring independent artists.`,
+  }));
 
-        {/* Stats strip */}
-        <section className="home-stats-strip" aria-label="My stats">
-          <div className="home-stats-head">
-            <strong>{profile.name}</strong>
-            <span className="meta">{roleLabel(profile.type)}</span>
-          </div>
-          <div className="home-stats-pills">
-            {statsResult.map((stat) => (
-              <div className="home-stat-pill" key={stat.label}>
-                <span className="home-stat-value">{stat.value}</span>
-                <span className="home-stat-label">{stat.label}</span>
-              </div>
-            ))}
-          </div>
-        </section>
+  // ── Tickets from upcoming shows ──
+  const wbTickets = eventsResult.upcoming.slice(0, 3).map((s) => ({
+    id: s.id,
+    showName: `${s.title}${(s as any).venueProfile?.name ? ' @ ' + (s as any).venueProfile.name : ''}`,
+    date: s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
+    seat: 'General Admission',
+    price: s.ticketPriceCents ? s.ticketPriceCents / 100 : 0,
+    status: 'CONFIRMED',
+    code: `iH-${s.id.slice(0, 8).toUpperCase()}`,
+  }));
 
-        {/* Two-column layout: HYPE Queue + Events */}
-        <div className="home-grid">
-          <section className="home-queue-section" aria-labelledby="hype-queue-heading">
-            <div className="home-section-head">
-              <h2 id="hype-queue-heading">HYPE Queue</h2>
-              <p className="meta">Music curated for your role signal — every play strengthens the feed.</p>
-            </div>
-            <HypeQueue items={hypeQueueItems} />
-          </section>
+  // ── Greeting subtitle ──
+  const nextShow = eventsResult.upcoming[0];
+  const greetingSub = nextShow
+    ? `Your next show: ${nextShow.title} on ${nextShow.startsAt.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}.`
+    : discoverFeed.mediaEntries.length > 0
+    ? `${discoverFeed.mediaEntries.length} new tracks in your discover feed.`
+    : `Welcome to your iHYPE workbench, ${roleLabel(profile.type)}.`;
 
-          <aside className="home-sidebar">
-            {/* Inline search */}
-            <section className="home-search-section" aria-labelledby="search-heading">
-              <div className="home-section-head">
-                <h2 id="search-heading">Search</h2>
-              </div>
-              <HomeInlineSearch />
-            </section>
+  const wbData: WorkbenchData = {
+    userName: parts[0] ?? userName,
+    userInitials: initials,
+    city,
+    greeting: greetingSub,
+    stats: wbStats,
+    tracks: wbTracks,
+    shows: wbShows,
+    tickets: wbTickets,
+    activity: wbActivity,
+    radioShows,
+    roles: wbRoles,
+    listeningNow: discoverFeed.mediaEntries.reduce((a, e) => a + (e.artistHypeCount ?? 0), 0),
+    hypedToday: discoverFeed.mediaEntries.slice(0, 10).reduce((a, e) => a + (e.artistHypeCount ?? 0), 0),
+    showsTonight: eventsResult.upcoming.filter(s => {
+      const diff = s.startsAt.getTime() - now.getTime();
+      return diff >= 0 && diff < 24 * 60 * 60 * 1000;
+    }).length,
+  };
 
-            {/* Upcoming events */}
-            <section className="home-events-section" aria-labelledby="events-heading">
-              <div className="home-section-head">
-                <h2 id="events-heading">Events</h2>
-                <span className="meta">{eventsResult.upcoming.length} upcoming</span>
-              </div>
-
-              {allEvents.length === 0 ? (
-                <p className="meta">No events attached to your page yet.</p>
-              ) : (
-                <ul className="home-events-list">
-                  {allEvents.map((show) => {
-                    const isPast = show.status === 'ENDED' ||
-                      (show.startsAt < now && show.status !== 'LIVE' && show.status !== 'SCHEDULED');
-                    const isLive = show.status === 'LIVE';
-                    return (
-                      <li
-                        className={`home-event-card ${isLive ? 'home-event-live' : isPast ? 'home-event-past' : ''}`}
-                        key={show.id}
-                      >
-                        <div className="home-event-date">
-                          {isLive ? (
-                            <span className="home-event-live-badge">LIVE</span>
-                          ) : (
-                            <>
-                              <strong>{formatDate(show.startsAt)}</strong>
-                              <span className="meta">{formatTime(show.startsAt)}</span>
-                            </>
-                          )}
-                        </div>
-                        <div className="home-event-info">
-                          <Link className="home-event-title" href={`/shows/${show.slug}`}>
-                            {show.title}
-                          </Link>
-                          {(show as any).venueProfile?.name && (
-                            <span className="meta">{(show as any).venueProfile.name}</span>
-                          )}
-                          {(show as any).headlinerProfile?.name && profile.type !== 'ARTIST' && (
-                            <span className="meta">{(show as any).headlinerProfile.name}</span>
-                          )}
-                        </div>
-                        {isPast && <span className="badge">Ended</span>}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </section>
-          </aside>
-        </div>
-
-        {/* Show Creator (DJ/promoter role only) */}
-        {profile.type === 'DJ' && showCreatorData && (
-          <section className="home-show-creator-section" aria-labelledby="show-creator-heading">
-            <div className="home-section-head">
-              <h2 id="show-creator-heading">Show Creator</h2>
-              <p className="meta">
-                Build your next show. The <strong>Set List</strong> tab lets you search any artist&apos;s tracks and arrange the order.
-              </p>
-            </div>
-            <PromoterShowCreationTool
-              artists={showCreatorData.artists}
-              initialPromoterProfileId={profile.id}
-              promoters={showCreatorData.promoters}
-              venues={showCreatorData.venues}
-            />
-          </section>
-        )}
-      </main>
-    </>
-  );
+  return <WorkbenchShell data={wbData} />;
 }
 
-// ─── Data helpers ────────────────────────────────────────────────────────────
+// ── Data helpers ─────────────────────────────────────────────────────
 
 type ShowRow = {
   id: string;
@@ -365,6 +209,9 @@ type ShowRow = {
   startsAt: Date;
   isTicketed: boolean;
   hypeCount: number;
+  ticketCapacity?: number | null;
+  ticketPriceCents?: number | null;
+  ticketsSoldCount: number;
   venueProfile?: { name: string; slug: string } | null;
   headlinerProfile?: { name: string; slug: string } | null;
   promoterProfile?: { name: string; slug: string } | null;
@@ -376,22 +223,18 @@ async function fetchEvents(
   now: Date
 ): Promise<{ upcoming: ShowRow[]; past: ShowRow[] }> {
   const showWhere =
-    profile.type === 'ARTIST'
-      ? { headlinerProfileId: profile.id }
-      : profile.type === 'DJ'
-      ? { promoterProfileId: profile.id }
-      : profile.type === 'VENUE'
-      ? { venueProfileId: profile.id }
-      : null;
+    profile.type === 'ARTIST' ? { headlinerProfileId: profile.id }
+    : profile.type === 'DJ'   ? { promoterProfileId: profile.id }
+    : profile.type === 'VENUE' ? { venueProfileId: profile.id }
+    : null;
 
   if (!showWhere) {
-    // Fan: shows they've hyped
     const hyped = await db.hypeEvent.findMany({
       where: { userId },
       include: {
         show: {
           include: {
-            venueProfile: { select: { name: true, slug: true } },
+            venueProfile:   { select: { name: true, slug: true } },
             headlinerProfile: { select: { name: true, slug: true } }
           }
         }
@@ -399,27 +242,27 @@ async function fetchEvents(
       orderBy: { createdAt: 'desc' },
       take: 20
     });
-    const shows = hyped.map((h) => h.show).filter(Boolean) as ShowRow[];
+    const shows = hyped.map(h => h.show).filter(Boolean) as ShowRow[];
     return {
-      upcoming: shows.filter((s) => s.status === 'LIVE' || s.startsAt >= now),
-      past: shows.filter((s) => s.status === 'ENDED' || (s.startsAt < now && s.status !== 'LIVE'))
+      upcoming: shows.filter(s => s.status === 'LIVE' || s.startsAt >= now),
+      past:     shows.filter(s => s.status === 'ENDED' || (s.startsAt < now && s.status !== 'LIVE'))
     };
   }
 
   const shows = await db.show.findMany({
     where: { ...showWhere, status: { not: 'CANCELED' } },
     include: {
-      venueProfile: { select: { name: true, slug: true } },
+      venueProfile:    { select: { name: true, slug: true } },
       headlinerProfile: { select: { name: true, slug: true } },
-      promoterProfile: { select: { name: true, slug: true } }
+      promoterProfile:  { select: { name: true, slug: true } }
     },
     orderBy: { startsAt: 'asc' },
     take: 20
   }) as ShowRow[];
 
   return {
-    upcoming: shows.filter((s) => s.status === 'LIVE' || s.startsAt >= now),
-    past: shows.filter((s) => s.status === 'ENDED' || (s.startsAt < now && s.status !== 'LIVE'))
+    upcoming: shows.filter(s => s.status === 'LIVE' || s.startsAt >= now),
+    past:     shows.filter(s => s.status === 'ENDED' || (s.startsAt < now && s.status !== 'LIVE'))
   };
 }
 
@@ -437,10 +280,9 @@ async function fetchStats(
       db.show.count({ where: { headlinerProfileId: profile.id, startsAt: { gte: now }, status: { not: 'CANCELED' } } })
     ]);
     return [
-      { label: 'Fan hype', value: profile.hypeCount },
+      { label: 'Hype this week', value: profile.hypeCount },
       { label: 'New hypes (30d)', value: recentHypes },
       { label: 'Song listens', value: mediaListens },
-      { label: 'Show listens', value: showListens },
       { label: 'Upcoming shows', value: upcomingCount }
     ];
   }
@@ -448,69 +290,51 @@ async function fetchStats(
   if (profile.type === 'DJ') {
     const shows = await db.show.findMany({
       where: { promoterProfileId: profile.id, status: { not: 'CANCELED' } },
-      select: { id: true, venueProfileId: true, ticketsSoldCount: true }
+      select: { id: true, ticketsSoldCount: true }
     });
-    const showIds = shows.map((s) => s.id);
+    const showIds = shows.map(s => s.id);
     const [grossCents, recentHypes] = await Promise.all([
       showIds.length
-        ? db.ticketOrder.aggregate({
-            _sum: { subtotalCents: true },
-            where: { showId: { in: showIds }, status: { not: 'VOID' } }
-          }).then((r) => r._sum.subtotalCents ?? 0)
+        ? db.ticketOrder.aggregate({ _sum: { subtotalCents: true }, where: { showId: { in: showIds }, status: { not: 'VOID' } } }).then(r => r._sum.subtotalCents ?? 0)
         : 0,
       db.profileHypeEvent.count({ where: { profileId: profile.id, createdAt: { gte: thirtyDaysAgo } } })
     ]);
-    const ticketsSold = shows.reduce((s, r) => s + r.ticketsSoldCount, 0);
-    const venueCount = new Set(shows.map((s) => s.venueProfileId).filter(Boolean)).size;
     return [
-      { label: 'Fan hype', value: profile.hypeCount },
-      { label: 'New hypes (30d)', value: recentHypes },
-      { label: 'Gross revenue', value: `$${(grossCents / 100).toFixed(0)}` },
-      { label: 'Tickets sold', value: ticketsSold },
-      { label: 'Shows', value: shows.length },
-      { label: 'Venues', value: venueCount }
+      { label: 'Hype this week',  value: profile.hypeCount },
+      { label: 'Tickets sold',    value: shows.reduce((a, r) => a + r.ticketsSoldCount, 0) },
+      { label: 'Gross revenue',   value: `$${(grossCents / 100).toFixed(0)}` },
+      { label: 'Payout pending',  value: `$${((grossCents * 0.9) / 100).toFixed(0)}` }
     ];
   }
 
   if (profile.type === 'VENUE') {
     const shows = await db.show.findMany({
       where: { venueProfileId: profile.id, status: { not: 'CANCELED' } },
-      select: { id: true, headlinerProfileId: true, ticketsSoldCount: true }
+      select: { id: true, ticketsSoldCount: true }
     });
-    const showIds = shows.map((s) => s.id);
-    const [grossCents, recentHypes] = await Promise.all([
-      showIds.length
-        ? db.ticketOrder.aggregate({
-            _sum: { subtotalCents: true },
-            where: { showId: { in: showIds }, status: { not: 'VOID' } }
-          }).then((r) => r._sum.subtotalCents ?? 0)
-        : 0,
-      db.profileHypeEvent.count({ where: { profileId: profile.id, createdAt: { gte: thirtyDaysAgo } } })
-    ]);
-    const artistCount = new Set(shows.map((s) => s.headlinerProfileId).filter(Boolean)).size;
+    const showIds = shows.map(s => s.id);
+    const grossCents = showIds.length
+      ? await db.ticketOrder.aggregate({ _sum: { subtotalCents: true }, where: { showId: { in: showIds }, status: { not: 'VOID' } } }).then(r => r._sum.subtotalCents ?? 0)
+      : 0;
     return [
-      { label: 'Fan hype', value: profile.hypeCount },
-      { label: 'New hypes (30d)', value: recentHypes },
-      { label: 'Gross revenue', value: `$${(grossCents / 100).toFixed(0)}` },
-      { label: 'Shows hosted', value: shows.length },
-      { label: 'Artists hosted', value: artistCount }
+      { label: 'Hype this week',  value: profile.hypeCount },
+      { label: 'Shows hosted',    value: shows.length },
+      { label: 'Tickets sold',    value: shows.reduce((a, r) => a + r.ticketsSoldCount, 0) },
+      { label: 'Gross revenue',   value: `$${(grossCents / 100).toFixed(0)}` }
     ];
   }
 
-  // Fan (LISTENER)
+  // Fan
   const [songListens, showListens, recentHypes, upcomingCount] = await Promise.all([
     db.mediaListen.count({ where: { userId, completedAt: { not: null } } }),
     db.showListen.count({ where: { userId } }),
     db.hypeEvent.count({ where: { userId, createdAt: { gte: thirtyDaysAgo } } }),
-    db.hypeEvent.count({
-      where: { userId, show: { startsAt: { gte: now }, status: { not: 'CANCELED' } } }
-    })
+    db.hypeEvent.count({ where: { userId, show: { startsAt: { gte: now }, status: { not: 'CANCELED' } } } })
   ]);
   return [
-    { label: 'Hype points', value: profile.hypeCount },
-    { label: 'New hypes (30d)', value: recentHypes },
-    { label: 'Songs listened', value: songListens },
-    { label: 'Shows listened', value: showListens },
-    { label: 'Upcoming events', value: upcomingCount }
+    { label: 'Hype this week',   value: profile.hypeCount },
+    { label: 'New hypes (30d)',  value: recentHypes },
+    { label: 'Songs listened',   value: songListens },
+    { label: 'Upcoming events',  value: upcomingCount }
   ];
 }
