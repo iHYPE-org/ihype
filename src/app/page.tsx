@@ -1,32 +1,51 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import { useMediaPlayer, type MediaTrack } from '@/components/GlobalMediaPlayer';
 
-const TRACKS = [
-  { t: 'Sundown', a: 'Maya Reyes', d: '3:24', h: 142, c: '#ff5029' },
-  { t: 'Westline', a: 'Cobalt Hour', d: '4:11', h: 89, c: '#b983ff' },
-  { t: 'Gold Teeth', a: 'Vela', d: '2:58', h: 67, c: '#22e5d4' },
-  { t: 'Slow Burn', a: 'The Lowriders', d: '3:42', h: 211, c: '#ff3e9a' },
-  { t: 'Cassette Heart', a: 'Juno North', d: '3:09', h: 54, c: '#ffb84a' },
-  { t: 'Underpass', a: 'Saint Hex', d: '4:36', h: 128, c: '#7fb3ff' },
-  { t: 'Halflight', a: 'Maya Reyes', d: '3:51', h: 76, c: '#ff5029' },
-  { t: 'Brass City', a: 'Cobalt Hour', d: '3:18', h: 33, c: '#b983ff' },
+// ── Demo data ────────────────────────────────────────────────────
+
+const DEMO_TRACKS: MediaTrack[] = [
+  { id: '1', title: 'Sundown', artistName: 'Maya Reyes', url: '', artworkUrl: null, mediaId: null },
+  { id: '2', title: 'Westline', artistName: 'Cobalt Hour', url: '', artworkUrl: null, mediaId: null },
+  { id: '3', title: 'Gold Teeth', artistName: 'Vela', url: '', artworkUrl: null, mediaId: null },
+  { id: '4', title: 'Slow Burn', artistName: 'The Lowriders', url: '', artworkUrl: null, mediaId: null },
+  { id: '5', title: 'Cassette Heart', artistName: 'Juno North', url: '', artworkUrl: null, mediaId: null },
+  { id: '6', title: 'Underpass', artistName: 'Saint Hex', url: '', artworkUrl: null, mediaId: null },
+];
+
+const TRACK_META: Record<string, { dur: string; hype: number; c: string }> = {
+  '1': { dur: '3:24', hype: 142, c: '#ff5029' },
+  '2': { dur: '4:11', hype: 89, c: '#b983ff' },
+  '3': { dur: '2:58', hype: 67, c: '#22e5d4' },
+  '4': { dur: '3:42', hype: 211, c: '#ff3e9a' },
+  '5': { dur: '3:09', hype: 54, c: '#ffb84a' },
+  '6': { dur: '4:36', hype: 128, c: '#7fb3ff' },
+};
+
+const SHOWS = [
+  { name: 'Maya Reyes', venue: 'Empty Bottle', date: 'Thu Jun 18', time: '9PM', hype: 412, status: 'LIVE' as const },
+  { name: 'Cobalt Hour', venue: 'Sleeping Village', date: 'Sat Jun 20', time: '8PM', hype: 287, status: 'SOON' as const },
+  { name: 'Vela', venue: 'Subterranean', date: 'Tue Jun 23', time: '8PM', hype: 156, status: 'OPEN' as const },
+  { name: 'Saint Hex', venue: 'Schubas', date: 'Fri Jun 26', time: '10PM', hype: 98, status: 'OPEN' as const },
+  { name: 'Juno North', venue: 'The Hideout', date: 'Sat Jun 27', time: '9PM', hype: 74, status: 'OPEN' as const },
+];
+
+const ACTIVITY = [
+  { text: '3 new hypes on Sundown', time: '2m ago', c: '#ff5029' },
+  { text: 'Cobalt Hour confirmed for Sat Jun 20', time: '14m ago', c: '#22e5d4' },
+  { text: 'DJ Vex spun Sundown on Chicago Underground', time: '1h ago', c: '#b983ff' },
+  { text: 'Payout $2,460 scheduled for Jun 24', time: '3h ago', c: '#ffb84a' },
+  { text: 'Sleeping Village wants a date in August', time: 'today', c: '#ff3e9a' },
 ];
 
 const ROLES = [
-  { k: 'fan', label: 'Fan', sub: 'Hype · Top 5 · Playlists', c: '#b983ff', icon: '♡' },
-  { k: 'artist', label: 'Artist', sub: 'Upload · Tour · Merch', c: '#ff5029', icon: '◐' },
-  { k: 'venue', label: 'Venue', sub: 'Host · Verify · Issue tickets', c: '#22e5d4', icon: '◇' },
-  { k: 'promoter', label: 'Promoter / DJ', sub: 'Book · Affiliate · Radio shows', c: '#ff3e9a', icon: '◉' },
-];
-
-const SHOWS = [
-  { name: 'Maya Reyes · Empty Bottle', date: 'Thu Jun 18 · 9PM', hype: 412, status: 'LIVE' },
-  { name: 'Cobalt Hour · Sleeping Village', date: 'Sat Jun 20 · 8PM', hype: 287, status: 'SOON' },
-  { name: 'Vela · Subterranean', date: 'Tue Jun 23 · 8PM', hype: 156, status: 'OPEN' },
-  { name: 'Saint Hex · Schubas', date: 'Fri Jun 26 · 10PM', hype: 98, status: 'OPEN' },
-  { name: 'Juno North · The Hideout', date: 'Sat Jun 27 · 9PM', hype: 74, status: 'OPEN' },
+  { k: 'fan', label: 'Fan', sub: 'Hype · Top 5 · Playlists', c: '#b983ff', active: true },
+  { k: 'artist', label: 'Artist', sub: 'Upload · Tour · Merch', c: '#ff5029', active: true },
+  { k: 'venue', label: 'Venue', sub: 'Host · Verify · Issue tickets', c: '#22e5d4', active: false },
+  { k: 'promoter', label: 'Promoter / DJ', sub: 'Book · Affiliate · Radio shows', c: '#ff3e9a', active: false },
 ];
 
 const RADIO = [
@@ -36,382 +55,430 @@ const RADIO = [
   { name: 'Underground Dispatch', host: 'Vela', listeners: 31, c: '#22e5d4' },
 ];
 
-const NAV = [
-  { label: 'Discover', icon: '⌕' },
-  { label: 'Library', icon: '☰' },
-  { label: 'Shows', icon: '◇' },
-  { label: 'Radio', icon: '◉' },
-  { label: 'Studio', icon: '◐' },
+const NAV_ITEMS = [
+  { id: 'discover', icon: '⌕', label: 'Discover' },
+  { id: 'library', icon: '☰', label: 'Library' },
+  { id: 'shows', icon: '◇', label: 'Shows' },
+  { id: 'radio', icon: '◉', label: 'Radio' },
+  { id: 'studio', icon: '◐', label: 'Studio' },
 ];
 
 type View = 'discover' | 'library' | 'shows' | 'radio' | 'studio';
 
-const S = {
-  wrap: { position: 'fixed' as const, top: 70, left: 0, right: 0, bottom: 0, display: 'grid', gridTemplateColumns: '56px 1fr 320px', gridTemplateRows: '40px 1fr 64px', background: 'var(--bg)', fontFamily: 'var(--f-m, monospace)', overflow: 'hidden' },
-  sidebar: { gridRow: '1 / span 3', borderRight: '1px solid var(--line)', display: 'flex', flexDirection: 'column' as const, alignItems: 'center', padding: '12px 0', gap: 6, background: 'var(--bg)' } as React.CSSProperties,
-  sbLogo: { width: 32, height: 32, borderRadius: 6, background: 'linear-gradient(135deg,#ff5029,#ff3e9a)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 14, color: 'var(--bg)', marginBottom: 14, textDecoration: 'none' } as React.CSSProperties,
-  sbIcon: { width: 36, height: 36, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-3)', cursor: 'pointer', fontSize: 14, position: 'relative' as const, transition: 'background .15s', border: 'none', background: 'transparent' },
-  sbIconActive: { background: 'rgba(255,80,41,.1)', color: '#ff5029' } as React.CSSProperties,
-  sbIndicator: { position: 'absolute' as const, left: -7, top: '25%', bottom: '25%', width: 2, background: '#ff5029', borderRadius: 2 },
-  sbTooltip: { position: 'absolute' as const, left: 46, top: '50%', transform: 'translateY(-50%)', background: '#161310', border: '1px solid rgba(255,255,255,.12)', borderRadius: 6, padding: '4px 10px', fontSize: 11, color: '#f2ede8', whiteSpace: 'nowrap' as const, pointerEvents: 'none' as const, letterSpacing: '.06em', zIndex: 300 },
-  topbar: { gridColumn: '2 / span 2', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', padding: '0 18px', gap: 14, fontSize: 11, color: 'var(--ink-3)', letterSpacing: '.06em' } as React.CSSProperties,
-  search: { marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8, padding: '5px 12px', background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 6, fontSize: 11, color: 'var(--ink-3)', minWidth: 280 } as React.CSSProperties,
-  searchKbd: { padding: '1px 5px', background: 'var(--bg-3)', borderRadius: 3, fontSize: 9 } as React.CSSProperties,
-  main: { padding: '24px 32px', overflowY: 'auto' as const, minHeight: 0, animation: 'lp-fadein .22s ease' },
-  hello: { fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 36, letterSpacing: '-.025em', lineHeight: 1 } as React.CSSProperties,
-  helloSub: { fontFamily: 'var(--f-b)', fontSize: 13, color: 'var(--ink-2)', marginTop: 6 } as React.CSSProperties,
-  statRow: { display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginTop: 20 } as React.CSSProperties,
-  stat: { padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 8, background: 'var(--bg-2)' } as React.CSSProperties,
-  statLabel: { fontSize: 9, letterSpacing: '.16em', color: 'var(--ink-3)', textTransform: 'uppercase' as const, marginBottom: 6 },
-  statNum: { fontFamily: 'var(--f-d)', fontSize: 24, fontWeight: 700, letterSpacing: '-.01em' } as React.CSSProperties,
-  statDelta: { fontSize: 10, color: '#22e5d4', letterSpacing: '.04em', marginTop: 4 } as React.CSSProperties,
-  panelRow: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 18 } as React.CSSProperties,
-  panel: { border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)', overflow: 'hidden' } as React.CSSProperties,
-  panelHead: { padding: '10px 14px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10, letterSpacing: '.14em', color: 'var(--ink-3)', textTransform: 'uppercase' as const, fontWeight: 600 },
-  panelBody: { padding: '12px 14px' } as React.CSSProperties,
-  listRow: { display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--line)', fontSize: 12 } as React.CSSProperties,
-  listDot: { width: 6, height: 6, borderRadius: '50%', flexShrink: 0 } as React.CSSProperties,
-  listMain: { flex: 1, color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: 13 } as React.CSSProperties,
-  listMeta: { fontSize: 10, color: 'var(--ink-3)' } as React.CSSProperties,
-  right: { gridRow: 2, gridColumn: 3, borderLeft: '1px solid var(--line)', display: 'flex', flexDirection: 'column' as const, padding: '20px 22px', overflowY: 'auto' as const },
-  rPanel: { marginBottom: 20 } as React.CSSProperties,
-  rPanelHead: { fontSize: 10, letterSpacing: '.16em', color: 'var(--ink-3)', textTransform: 'uppercase' as const, marginBottom: 10, fontWeight: 600 },
-  queueItem: { display: 'flex', alignItems: 'center', gap: 10, padding: '8px', borderRadius: 6, cursor: 'pointer' } as React.CSSProperties,
-  queueActive: { background: 'rgba(255,80,41,.08)' } as React.CSSProperties,
-  qiArt: { width: 30, height: 30, borderRadius: 4, flexShrink: 0 } as React.CSSProperties,
-  qiTitle: { fontSize: 12, fontFamily: 'var(--f-b)', fontWeight: 600 } as React.CSSProperties,
-  qiArtist: { fontSize: 10, color: 'var(--ink-3)' } as React.CSSProperties,
-  qiTime: { fontSize: 10, color: 'var(--ink-3)' } as React.CSSProperties,
-  player: { gridColumn: '2 / span 2', borderTop: '1px solid var(--line)', background: 'var(--bg-2)', display: 'flex', alignItems: 'center', padding: '0 24px', gap: 18 } as React.CSSProperties,
-  plArt: { width: 46, height: 46, borderRadius: 5, flexShrink: 0 } as React.CSSProperties,
-  plMeta: { minWidth: 160 } as React.CSSProperties,
-  plTitle: { fontSize: 13, fontWeight: 700, fontFamily: 'var(--f-d)', letterSpacing: 'normal' } as React.CSSProperties,
-  plArtist: { fontSize: 10, color: 'var(--ink-3)', marginTop: 2 } as React.CSSProperties,
-  plCtrl: { display: 'flex', alignItems: 'center', gap: 14, flex: 1, justifyContent: 'center' } as React.CSSProperties,
-  plBtn: { color: 'var(--ink-3)', cursor: 'pointer', fontSize: 14, background: 'none', border: 'none', padding: 0 } as React.CSSProperties,
-  plPlay: { width: 32, height: 32, borderRadius: '50%', background: 'var(--ink)', color: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' } as React.CSSProperties,
-  plScrub: { flex: 1, maxWidth: 340, height: 3, background: 'rgba(255,255,255,.06)', borderRadius: 2, position: 'relative' as const },
-  plScrubF: { position: 'absolute' as const, inset: 0, width: '34%', background: 'var(--ink)', borderRadius: 2 },
-  plTime: { fontSize: 10, color: 'var(--ink-3)' } as React.CSSProperties,
-  plRight: { display: 'flex', alignItems: 'center', gap: 10, fontSize: 10, color: 'var(--ink-3)' } as React.CSSProperties,
-  viewHead: { fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 24, letterSpacing: '-.02em', marginBottom: 4 } as React.CSSProperties,
-  viewSub: { fontSize: 12, color: 'var(--ink-3)', marginBottom: 20 } as React.CSSProperties,
-  cta: { display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', background: '#ff5029', color: '#fff', borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none', letterSpacing: '.04em' } as React.CSSProperties,
-  ctaGhost: { display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', border: '1px solid var(--line)', color: 'var(--ink-2)', borderRadius: 8, fontSize: 12, textDecoration: 'none', letterSpacing: '.04em' } as React.CSSProperties,
-};
+// ── Sub-components ───────────────────────────────────────────────
 
-function ViewDiscover({ idx, setIdx }: { idx: number; setIdx: (i: number) => void }) {
+function TrackCard({ track, onPlay, isActive }: { track: MediaTrack; onPlay: () => void; isActive: boolean }) {
+  const meta = TRACK_META[track.id];
+  if (!meta) return null;
   return (
-    <>
-      <div style={S.hello}>Independent music,<br />found by humans.</div>
-      <div style={S.helloSub}>
-        Not-for-profit · free forever · built for the scene.{' '}
-        <Link href="/register" style={{ color: '#ff5029', textDecoration: 'none' }}>Join free →</Link>
+    <div className="wb-track-card" data-active={isActive} onClick={onPlay} role="button" tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onPlay()}
+      style={{ '--card-c': meta.c } as React.CSSProperties}
+    >
+      <div className="wb-track-art" style={{ background: `linear-gradient(135deg, ${meta.c}, ${meta.c}66)` }}>
+        {isActive && <div className="wb-track-art-playing"><span /><span /><span /></div>}
+        <button className="wb-track-play-btn" aria-label={`Play ${track.title}`} type="button">
+          <svg width={16} height={16} viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20"/></svg>
+        </button>
       </div>
-      <div style={S.statRow}>
-        <div style={S.stat}>
-          <div style={S.statLabel}>TRACKS HYPED</div>
-          <div style={S.statNum}>1,247</div>
-          <div style={S.statDelta}>this week</div>
+      <div className="wb-track-meta">
+        <div className="wb-track-title">{track.title}</div>
+        <div className="wb-track-artist">{track.artistName}</div>
+        <div className="wb-track-info">
+          <span className="wb-hype-badge" style={{ color: meta.c }}>♡ {meta.hype}</span>
+          <span className="wb-track-dur">{meta.dur}</span>
         </div>
-        <div style={S.stat}>
-          <div style={S.statLabel}>SHOWS LISTED</div>
-          <div style={S.statNum}>184</div>
-          <div style={{ ...S.statDelta, color: '#ffb84a' }}>↑ 12 this week</div>
-        </div>
-        <div style={S.stat}>
-          <div style={S.statLabel}>RADIO SHOWS</div>
-          <div style={S.statNum}>23</div>
-          <div style={S.statDelta}>live right now</div>
-        </div>
-        <div style={S.stat}>
-          <div style={S.statLabel}>CITIES</div>
-          <div style={S.statNum}>41</div>
-          <div style={{ ...S.statDelta, color: '#b983ff' }}>and growing</div>
-      <div style={S.panelRow}>
-        <div style={S.panel}>
-          <div style={S.panelHead}><span>TONIGHT IN CHICAGO</span><span>3 SHOWS</span></div>
-          <div style={S.panelBody}>
+      </div>
+    </div>
+  );
+}
+
+function StatusDot({ status }: { status: 'LIVE' | 'SOON' | 'OPEN' }) {
+  const colors = { LIVE: '#22e5d4', SOON: '#ffb84a', OPEN: 'var(--muted)' };
+  return <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: colors[status], flexShrink: 0 }} />;
+}
+
+function ViewDiscover({ session }: { session: ReturnType<typeof useSession>['data'] }) {
+  const { playTrack, currentTrack } = useMediaPlayer();
+  const playAll = useCallback((track: MediaTrack) => {
+    playTrack(track, DEMO_TRACKS);
+  }, [playTrack]);
+
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const firstName = session?.user?.name?.split(' ')[0] ?? null;
+
+  return (
+    <div className="wb-discover">
+      {/* Greeting */}
+      <div className="wb-greeting">
+        <h1 className="wb-greeting-h">
+          {firstName ? `${greeting}, ${firstName}.` : 'Independent music, found by humans.'}
+        </h1>
+        <p className="wb-greeting-sub">
+          {firstName
+            ? '3 new hypes on Sundown. Cobalt Hour opens for you Saturday at Sleeping Village.\nTwo venues asked about August.'
+            : 'Not-for-profit · free forever · built for the scene. '}
+          {!firstName && <Link href="/register" className="wb-link-ember">Join free →</Link>}
+        </p>
+        {firstName && (
+          <div className="wb-greeting-actions">
+            <Link href="/artists/upload" className="wb-btn-primary">+ Upload a track</Link>
+            <Link href="/shows/plan" className="wb-btn-ghost">Plan a tour ›</Link>
+          </div>
+        )}
+      </div>
+
+      {/* Stats row */}
+      <div className="wb-stat-row">
+        {[
+          { label: 'ALL TIME PLAYS', val: '1,247', delta: '+12% vs last wk', dc: '#22e5d4' },
+          { label: 'SHOWS SOON', val: '184', delta: '↑ 12 today', dc: '#ffb84a' },
+          { label: 'MUSIC PLAYS', val: '3,891', delta: 'across 6 shows', dc: '#22e5d4' },
+          { label: 'PAYOUT PENDING', val: '$2,460', delta: 'releases Jun 24', dc: '#b983ff' },
+        ].map((s) => (
+          <div key={s.label} className="wb-stat">
+            <div className="wb-stat-label">{s.label}</div>
+            <div className="wb-stat-val">{s.val}</div>
+            <div className="wb-stat-delta" style={{ color: s.dc }}>{s.delta}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Shows + Activity row */}
+      <div className="wb-panel-row">
+        <div className="wb-panel">
+          <div className="wb-panel-head">
+            <span>Tonight in Chicago</span>
+            <Link href="/shows" className="wb-panel-link">ALL SHOWS →</Link>
+          </div>
+          <div className="wb-panel-body">
             {SHOWS.slice(0, 3).map((s, i) => (
-              <div key={i} style={S.listRow}>
-                <div style={{ ...S.listDot, background: s.status === 'LIVE' ? '#22e5d4' : s.status === 'SOON' ? '#ffb84a' : 'var(--ink-3)' }} />
-                <div style={S.listMain}>{s.name}</div>
-                <div style={S.listMeta}>{s.date.split(' · ')[1]} · ♡{s.hype}</div>
+              <div key={i} className="wb-show-row">
+                <StatusDot status={s.status} />
+                <div className="wb-show-info">
+                  <span className="wb-show-name">{s.name}</span>
+                  <span className="wb-show-venue">{s.venue}</span>
+                </div>
+                <div className="wb-show-right">
+                  <span className="wb-show-time">{s.date} · {s.time}</span>
+                  <span className="wb-show-hype">♡ {s.hype}</span>
+                </div>
               </div>
             ))}
           </div>
         </div>
-        <div style={S.panel}>
-          <div style={S.panelHead}><span>YOUR ROLES</span><span>PICK ONE</span></div>
-          <div style={S.panelBody}>
-            {ROLES.map(r => (
-              <Link key={r.k} href={`/register?role=${r.k}`} style={{ ...S.listRow, textDecoration: 'none', display: 'flex' }}>
-                <div style={{ ...S.listDot, background: r.c }} />
-                <div style={S.listMain}>{r.label} <span style={{ color: 'var(--ink-3)', fontSize: 10 }}>· {r.sub}</span></div>
-                <div style={{ ...S.listMeta, color: '#ff5029' }}>join →</div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div style={{ ...S.panelRow, gridTemplateColumns: '1fr' }}>
-        <div style={S.panel}>
-          <div style={S.panelHead}><span>HYPED TRACKS THIS WEEK</span><span>VIEW ALL →</span></div>
-          <div style={S.panelBody}>
-            {TRACKS.slice(0, 4).map((t, i) => (
-              <button key={i} onClick={() => setIdx(i)} style={{ ...S.listRow, width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-                <div style={{ width: 24, height: 24, borderRadius: 3, background: `linear-gradient(135deg, ${t.c}, ${t.c}80)`, flexShrink: 0 }} />
-                <div style={S.listMain}>{t.t} <span style={{ color: 'var(--ink-3)', fontSize: 10, marginLeft: 6 }}>{t.a}</span></div>
-                <div style={S.listMeta}>♡ {t.h}</div>
-                <div style={S.listMeta}>{t.d}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
 
-function ViewLibrary() {
-  return (
-    <>
-      <div style={S.viewHead}>Your Library</div>
-      <div style={S.viewSub}>Playlists, hyped tracks, and saved shows live here once you sign in.</div>
-      <div style={{ display: 'flex', gap: 10, marginBottom: 28 }}>
-        <Link href="/register" style={S.cta}>Create account</Link>
-        <Link href="/login" style={S.ctaGhost}>Sign in</Link>
+        <div className="wb-panel">
+          <div className="wb-panel-head">
+            <span>Activity</span>
+            <button className="wb-panel-link" type="button">MARK READ</button>
+          </div>
+          <div className="wb-panel-body">
+            {ACTIVITY.map((a, i) => (
+              <div key={i} className="wb-activity-row">
+                <span className="wb-activity-dot" style={{ background: a.c }} />
+                <span className="wb-activity-text">{a.text}</span>
+                <span className="wb-activity-time">{a.time}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
-      <div style={S.panel}>
-        <div style={S.panelHead}><span>POPULAR PLAYLISTS</span><span>PREVIEW</span></div>
-        <div style={S.panelBody}>
-          {[
-            { name: 'Chicago Locals 2026', tracks: 24, curator: 'iHYPE Staff', c: '#ff5029' },
-            { name: 'Late Night Hypno', tracks: 18, curator: 'DJ Ramona', c: '#b983ff' },
-            { name: 'Midwest Emerging', tracks: 31, curator: 'Saint Hex', c: '#22e5d4' },
-          ].map((pl, i) => (
-            <div key={i} style={S.listRow}>
-              <div style={{ width: 28, height: 28, borderRadius: 4, background: `linear-gradient(135deg, ${pl.c}, ${pl.c}80)`, flexShrink: 0 }} />
-              <div style={S.listMain}>{pl.name} <span style={{ color: 'var(--ink-3)', fontSize: 10 }}>by {pl.curator}</span></div>
-              <div style={S.listMeta}>{pl.tracks} tracks</div>
+
+      {/* Hyped this week — large card grid */}
+      <div className="wb-section">
+        <div className="wb-section-head">
+          <span>Hyped this week</span>
+          <Link href="/artists" className="wb-panel-link">DISCOVER ALL →</Link>
+        </div>
+        <div className="wb-card-grid">
+          {DEMO_TRACKS.map((t) => (
+            <TrackCard
+              key={t.id}
+              track={t}
+              isActive={currentTrack?.id === t.id}
+              onPlay={() => playAll(t)}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Your roles */}
+      <div className="wb-section">
+        <div className="wb-section-head">
+          <span>Your roles</span>
+          <span className="wb-panel-link">{ROLES.filter(r => r.active).length} ACTIVE · {ROLES.filter(r => !r.active).length} AVAILABLE</span>
+        </div>
+        <div className="wb-role-row">
+          {ROLES.map((r) => (
+            <div key={r.k} className="wb-role-card" style={{ '--role-c': r.c } as React.CSSProperties}>
+              <div className="wb-role-top">
+                <span className="wb-role-label">{r.label}</span>
+                {r.active
+                  ? <span className="wb-role-badge active">✓ active</span>
+                  : <Link href={`/register?role=${r.k}`} className="wb-role-badge add">add →</Link>
+                }
+              </div>
+              <div className="wb-role-sub">{r.sub}</div>
             </div>
           ))}
         </div>
       </div>
-    </>
+    </div>
+  );
+}
+
+function ViewLibrary() {
+  const { playTrack, currentTrack } = useMediaPlayer();
+  return (
+    <div className="wb-discover">
+      <div className="wb-greeting">
+        <h1 className="wb-greeting-h">Your Library</h1>
+        <p className="wb-greeting-sub">Playlists, hyped tracks, and saved shows live here once you sign in.</p>
+        <div className="wb-greeting-actions">
+          <Link href="/register" className="wb-btn-primary">Create account</Link>
+          <Link href="/login" className="wb-btn-ghost">Sign in</Link>
+        </div>
+      </div>
+      <div className="wb-section">
+        <div className="wb-section-head"><span>Popular playlists</span><span className="wb-panel-link">PREVIEW</span></div>
+        <div className="wb-panel">
+          <div className="wb-panel-body">
+            {[
+              { name: 'Chicago Locals 2026', tracks: 24, curator: 'iHYPE Staff', c: '#ff5029' },
+              { name: 'Late Night Hypno', tracks: 18, curator: 'DJ Ramona', c: '#b983ff' },
+              { name: 'Midwest Emerging', tracks: 31, curator: 'Saint Hex', c: '#22e5d4' },
+            ].map((pl, i) => (
+              <div key={i} className="wb-show-row">
+                <div style={{ width: 28, height: 28, borderRadius: 4, background: `linear-gradient(135deg,${pl.c},${pl.c}66)`, flexShrink: 0 }} />
+                <div className="wb-show-info">
+                  <span className="wb-show-name">{pl.name}</span>
+                  <span className="wb-show-venue">by {pl.curator}</span>
+                </div>
+                <span className="wb-show-hype">{pl.tracks} tracks</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="wb-section">
+        <div className="wb-section-head"><span>Recently played</span></div>
+        <div className="wb-card-grid">
+          {DEMO_TRACKS.slice(0, 4).map((t) => (
+            <TrackCard key={t.id} track={t} isActive={currentTrack?.id === t.id} onPlay={() => playTrack(t, DEMO_TRACKS)} />
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 
 function ViewShows() {
   return (
-    <>
-      <div style={S.viewHead}>Shows</div>
-      <div style={S.viewSub}>Upcoming and live events in your area.</div>
-      <div style={{ ...S.panel, marginBottom: 12 }}>
-        <div style={S.panelHead}><span>ALL UPCOMING</span><span>{SHOWS.length} SHOWS</span></div>
-        <div style={S.panelBody}>
+    <div className="wb-discover">
+      <div className="wb-greeting">
+        <h1 className="wb-greeting-h">Shows</h1>
+        <p className="wb-greeting-sub">Upcoming and live events near you.</p>
+        <div className="wb-greeting-actions">
+          <Link href="/register?role=venue" className="wb-btn-primary">List a show</Link>
+          <Link href="/shows" className="wb-btn-ghost">Browse all cities</Link>
+        </div>
+      </div>
+      <div className="wb-panel">
+        <div className="wb-panel-head"><span>ALL UPCOMING</span><span className="wb-panel-link">{SHOWS.length} SHOWS</span></div>
+        <div className="wb-panel-body">
           {SHOWS.map((s, i) => (
-            <div key={i} style={{ ...S.listRow, borderBottom: i < SHOWS.length - 1 ? '1px solid var(--line)' : 'none' }}>
-              <div style={{ ...S.listDot, width: 8, height: 8, background: s.status === 'LIVE' ? '#22e5d4' : s.status === 'SOON' ? '#ffb84a' : 'var(--ink-3)' }} />
-              <div style={{ flex: 1 }}>
-                <div style={{ ...S.listMain, marginBottom: 2 }}>{s.name}</div>
-                <div style={S.listMeta}>{s.date}</div>
+            <div key={i} className="wb-show-row">
+              <StatusDot status={s.status} />
+              <div className="wb-show-info">
+                <span className="wb-show-name">{s.name}</span>
+                <span className="wb-show-venue">{s.venue}</span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3 }}>
-                <span style={{ fontSize: 9, letterSpacing: '.12em', padding: '2px 6px', borderRadius: 3, background: s.status === 'LIVE' ? 'rgba(34,229,212,.15)' : 'var(--bg-3)', color: s.status === 'LIVE' ? '#22e5d4' : 'var(--ink-3)' }}>{s.status}</span>
-                <span style={S.listMeta}>♡ {s.hype}</span>
+              <div className="wb-show-right">
+                <span className={`wb-status-badge wb-status-${s.status.toLowerCase()}`}>{s.status}</span>
+                <span className="wb-show-time">{s.date} · {s.time}</span>
+                <span className="wb-show-hype">♡ {s.hype}</span>
               </div>
             </div>
           ))}
         </div>
       </div>
-      <div style={{ display: 'flex', gap: 10 }}>
-        <Link href="/register?role=venue" style={S.cta}>List a show</Link>
-        <Link href="/shows" style={S.ctaGhost}>Browse all cities</Link>
-      </div>
-    </>
+    </div>
   );
 }
 
 function ViewRadio() {
   return (
-    <>
-      <div style={S.viewHead}>Radio</div>
-      <div style={S.viewSub}>Live and recorded sets from local artists and DJs.</div>
-      <div style={S.statRow}>
+    <div className="wb-discover">
+      <div className="wb-greeting">
+        <h1 className="wb-greeting-h">Radio</h1>
+        <p className="wb-greeting-sub">Live and recorded sets from local artists and DJs.</p>
+      </div>
+      <div className="wb-stat-row">
         {RADIO.map((r, i) => (
-          <div key={i} style={{ ...S.stat, cursor: 'pointer', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: r.c }} />
-            <div style={{ fontSize: 9, letterSpacing: '.14em', color: 'var(--ink-3)', marginBottom: 6, textTransform: 'uppercase' as const }}>LIVE</div>
-            <div style={{ fontFamily: 'var(--f-d)', fontSize: 13, fontWeight: 700, marginBottom: 2 }}>{r.name}</div>
-            <div style={{ fontSize: 10, color: 'var(--ink-3)', marginBottom: 8 }}>with {r.host}</div>
-            <div style={{ fontSize: 10, color: r.c }}>● {r.listeners} listening</div>
+          <div key={i} className="wb-stat wb-radio-card" style={{ '--card-c': r.c, cursor: 'pointer' } as React.CSSProperties}>
+            <div className="wb-radio-bar" style={{ background: r.c }} />
+            <div className="wb-stat-label">LIVE</div>
+            <div className="wb-radio-name">{r.name}</div>
+            <div className="wb-radio-host">with {r.host}</div>
+            <div className="wb-radio-listeners" style={{ color: r.c }}>● {r.listeners} listening</div>
           </div>
         ))}
       </div>
-      <div style={{ marginTop: 20, ...S.panel }}>
-        <div style={S.panelHead}><span>RECENT SETS</span><span>ARCHIVE</span></div>
-        <div style={S.panelBody}>
-          {TRACKS.slice(0, 3).map((t, i) => (
-            <div key={i} style={S.listRow}>
-              <div style={{ ...S.listDot, background: t.c }} />
-              <div style={S.listMain}>{t.a} — Live Set <span style={{ color: 'var(--ink-3)', fontSize: 10 }}>· {t.d}</span></div>
-              <div style={S.listMeta}>May {10 + i}</div>
-            </div>
-          ))}
+      <div className="wb-section">
+        <div className="wb-section-head"><span>Recent sets</span><span className="wb-panel-link">ARCHIVE</span></div>
+        <div className="wb-panel">
+          <div className="wb-panel-body">
+            {DEMO_TRACKS.slice(0, 3).map((t, i) => (
+              <div key={i} className="wb-show-row">
+                <span className="wb-activity-dot" style={{ background: TRACK_META[t.id]?.c }} />
+                <div className="wb-show-info">
+                  <span className="wb-show-name">{t.artistName} — Live Set</span>
+                  <span className="wb-show-venue">{TRACK_META[t.id]?.dur}</span>
+                </div>
+                <span className="wb-show-time">May {10 + i}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
 function ViewStudio() {
   return (
-    <>
-      <div style={S.viewHead}>Studio</div>
-      <div style={S.viewSub}>Upload tracks, manage your shows, and track hype as an artist.</div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+    <div className="wb-discover">
+      <div className="wb-greeting">
+        <h1 className="wb-greeting-h">Studio</h1>
+        <p className="wb-greeting-sub">Upload tracks, manage your shows, and track hype as an artist.</p>
+      </div>
+      <div className="wb-role-row" style={{ marginBottom: 24 }}>
         {[
           { icon: '◐', label: 'Upload Track', sub: 'Stream-quality audio, no limits', c: '#ff5029', href: '/register?role=artist' },
           { icon: '◇', label: 'List a Show', sub: 'Tickets, RSVP, or free entry', c: '#22e5d4', href: '/register?role=venue' },
           { icon: '◉', label: 'Start Radio', sub: 'Live or recorded DJ sets', c: '#ff3e9a', href: '/register?role=promoter' },
           { icon: '☰', label: 'Artist Profile', sub: 'Bio, links, press kit', c: '#b983ff', href: '/register?role=artist' },
         ].map((item, i) => (
-          <Link key={i} href={item.href} style={{ ...S.panel, padding: '16px', textDecoration: 'none', display: 'block' }}>
-            <div style={{ fontSize: 22, marginBottom: 8, color: item.c }}>{item.icon}</div>
-            <div style={{ fontFamily: 'var(--f-d)', fontSize: 14, fontWeight: 700, marginBottom: 4 }}>{item.label}</div>
-            <div style={{ fontSize: 11, color: 'var(--ink-3)' }}>{item.sub}</div>
+          <Link key={i} href={item.href} className="wb-role-card" style={{ '--role-c': item.c, textDecoration: 'none' } as React.CSSProperties}>
+            <div className="wb-role-top">
+              <span style={{ fontSize: 20, color: item.c }}>{item.icon}</span>
+            </div>
+            <div className="wb-role-label">{item.label}</div>
+            <div className="wb-role-sub">{item.sub}</div>
           </Link>
         ))}
       </div>
-      <div style={{ padding: '16px 20px', background: 'rgba(255,80,41,.06)', border: '1px solid rgba(255,80,41,.2)', borderRadius: 10 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>iHYPE is free for artists.</div>
-        <div style={{ fontSize: 11, color: 'var(--ink-3)', marginBottom: 12 }}>No streaming cuts. No paywalls. Built by and for the independent music scene.</div>
-        <Link href="/register?role=artist" style={S.cta}>Get started free →</Link>
+      <div className="wb-cta-banner">
+        <div className="wb-cta-banner-text">
+          <strong>iHYPE is free for artists.</strong>
+          <span>No streaming cuts. No paywalls. Built by and for the independent music scene.</span>
+        </div>
+        <Link href="/register?role=artist" className="wb-btn-primary">Get started free →</Link>
       </div>
-    </>
+    </div>
   );
 }
 
-export default function LandingPage() {
-  const [idx, setIdx] = useState(0);
-  const [hovered, setHovered] = useState<string | null>(null);
-  const [view, setView] = useState<View>('discover');
-  const track = TRACKS[idx];
+// ── Right panel: queue ───────────────────────────────────────────
 
-  const viewLabel = view.charAt(0).toUpperCase() + view.slice(1);
+function RightPanel() {
+  const { currentTrack, playTrack, isPlaying } = useMediaPlayer();
+  return (
+    <div className="wb-right">
+      <div className="wb-right-head">Queue</div>
+      {currentTrack && (
+        <div className="wb-right-now">
+          <div className="wb-right-now-art" style={{ background: `linear-gradient(135deg,${TRACK_META[currentTrack.id]?.c ?? '#ff5029'},${TRACK_META[currentTrack.id]?.c ?? '#ff5029'}66)` }} />
+          <div>
+            <div className="wb-right-now-title">{currentTrack.title}</div>
+            <div className="wb-right-now-artist">{currentTrack.artistName}</div>
+          </div>
+        </div>
+      )}
+      <div className="wb-right-label">UP NEXT · {DEMO_TRACKS.length} TRACKS</div>
+      {DEMO_TRACKS.map((t) => {
+        const meta = TRACK_META[t.id];
+        const active = currentTrack?.id === t.id;
+        return (
+          <button
+            key={t.id}
+            className="wb-queue-item"
+            data-active={active}
+            onClick={() => playTrack(t, DEMO_TRACKS)}
+            type="button"
+          >
+            <div className="wb-queue-art" style={{ background: `linear-gradient(135deg,${meta?.c},${meta?.c}66)` }} />
+            <div className="wb-queue-info">
+              <div className="wb-queue-title">{t.title}</div>
+              <div className="wb-queue-artist">{t.artistName}</div>
+            </div>
+            <div className="wb-queue-dur">{meta?.dur}</div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Root component ───────────────────────────────────────────────
+
+export default function LandingPage() {
+  const [view, setView] = useState<View>('discover');
+  const [hovered, setHovered] = useState<string | null>(null);
+  const { data: session } = useSession();
 
   return (
     <>
-      <style>{`@keyframes lp-fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}`}</style>
-      <div style={S.wrap}>
-        {/* Sidebar */}
-        <div style={S.sidebar}>
-          <Link href="/" style={S.sbLogo}>iH</Link>
-          {NAV.map((n) => {
-            const isActive = view === n.label.toLowerCase();
+      <style>{`
+        @keyframes lp-fadein { from { opacity:0; transform:translateY(10px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes bars { 0%,100%{height:4px} 50%{height:12px} }
+        .wb-track-art-playing span { display:inline-block; width:3px; border-radius:2px; background:currentColor; animation:bars .8s ease-in-out infinite; }
+        .wb-track-art-playing span:nth-child(2) { animation-delay:.15s; }
+        .wb-track-art-playing span:nth-child(3) { animation-delay:.3s; }
+      `}</style>
+
+      <div className="wb-wrap">
+        {/* ── Sidebar ─────────────────────────────────────────── */}
+        <aside className="wb-sidebar">
+          {NAV_ITEMS.map((n) => {
+            const active = view === n.id;
             return (
               <button
-                key={n.label}
-                style={{ ...S.sbIcon, ...(isActive ? S.sbIconActive : {}) }}
-                onMouseEnter={() => setHovered(n.label)}
+                key={n.id}
+                className="wb-nav-btn"
+                data-active={active}
+                onMouseEnter={() => setHovered(n.id)}
                 onMouseLeave={() => setHovered(null)}
-                onClick={() => setView(n.label.toLowerCase() as View)}
-                title={n.label}
+                onClick={() => setView(n.id as View)}
                 type="button"
+                aria-label={n.label}
               >
-                {isActive && <div style={S.sbIndicator} />}
-                <span style={{ fontSize: 16 }}>{n.icon}</span>
-                {hovered === n.label && <span style={S.sbTooltip}>{n.label}</span>}
+                {active && <span className="wb-nav-indicator" />}
+                <span className="wb-nav-icon">{n.icon}</span>
+                {hovered === n.id && <span className="wb-nav-tooltip">{n.label}</span>}
               </button>
             );
           })}
-          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-            <Link href="/login" style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '.08em', textDecoration: 'none' }}>Sign in</Link>
+          <div className="wb-sidebar-foot">
+            {!session?.user && (
+              <Link href="/login" className="wb-sidebar-signin">↑<br />in</Link>
+            )}
           </div>
-        </div>
+        </aside>
 
-        {/* Topbar */}
-        <div style={S.topbar}>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <span style={{ color: 'var(--ink-3)' }}>iHYPE</span>
-            <span style={{ color: 'var(--ink-3)' }}>/</span>
-            <span style={{ color: 'var(--ink)' }}>{viewLabel}</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#22e5d4' }}>
-            ● 1,284 listening
-          </div>
-          <div style={S.search}>
-            <span>⌕</span>
-            <span>Search artists, shows, venues, tracks…</span>
-            <span style={{ marginLeft: 'auto', display: 'flex', gap: 3 }}>
-              <span style={S.searchKbd}>⌘</span><span style={S.searchKbd}>K</span>
-            </span>
-          </div>
-        </div>
-
-        {/* Main — key on view triggers remount → animation reruns */}
-        <div key={view} style={S.main}>
-          {view === 'discover' && <ViewDiscover idx={idx} setIdx={setIdx} />}
+        {/* ── Main ────────────────────────────────────────────── */}
+        <main key={view} className="wb-main">
+          {view === 'discover' && <ViewDiscover session={session} />}
           {view === 'library' && <ViewLibrary />}
           {view === 'shows' && <ViewShows />}
           {view === 'radio' && <ViewRadio />}
           {view === 'studio' && <ViewStudio />}
-        </div>
+        </main>
 
-        {/* Right column */}
-        <div style={S.right}>
-          <div style={S.rPanel}>
-            <div style={S.rPanelHead}>NOW HYPED</div>
-            <div style={{ padding: 14, background: 'var(--bg-2)', borderRadius: 8, border: '1px solid var(--line)' }}>
-              <div style={{ width: '100%', aspectRatio: '1', borderRadius: 6, background: `linear-gradient(135deg, ${track.c}, ${track.c}80)`, marginBottom: 10, position: 'relative', overflow: 'hidden' }}>
-                <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 25% 25%, rgba(255,255,255,.25), transparent 60%)' }} />
-              </div>
-              <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 16 }}>{track.t}</div>
-              <div style={{ fontSize: 11, color: 'var(--ink-3)', marginTop: 3 }}>{track.a.toUpperCase()}</div>
-              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                <Link href="/register" style={{ flex: 1, padding: 7, background: 'var(--ink)', color: 'var(--bg)', borderRadius: 6, fontSize: 11, fontWeight: 600, textAlign: 'center', textDecoration: 'none' }}>Join to hype</Link>
-                <div style={{ padding: '7px 10px', border: `1px solid ${track.c}`, color: track.c, borderRadius: 6, fontSize: 11 }}>♡ {track.h}</div>
-              </div>
-            </div>
-          </div>
-          <div style={S.rPanel}>
-            <div style={S.rPanelHead}>QUEUE · {TRACKS.length} TRACKS</div>
-            {TRACKS.map((t, i) => (
-              <button key={i} onClick={() => setIdx(i)} style={{ ...S.queueItem, width: '100%', background: i === idx ? 'rgba(255,80,41,.08)' : 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-                <div style={{ ...S.qiArt, background: `linear-gradient(135deg, ${t.c}, ${t.c}80)` }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={S.qiTitle}>{t.t}</div>
-                  <div style={S.qiArtist}>{t.a}</div>
-                </div>
-                <div style={S.qiTime}>{t.d}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Player dock */}
-        <div style={S.player}>
-          <div style={{ ...S.plArt, background: `linear-gradient(135deg, ${track.c}, ${track.c}80)` }} />
-          <div style={S.plMeta}>
-            <div style={S.plTitle}>{track.t}</div>
-            <div style={S.plArtist}>{track.a.toUpperCase()}</div>
-          </div>
-          <div style={S.plCtrl}>
-            <button style={S.plBtn}>⏮</button>
-            <button style={S.plPlay}>▶</button>
-            <button style={S.plBtn}>⏭</button>
-            <span style={S.plTime}>0:00</span>
-            <div style={S.plScrub}><div style={S.plScrubF} /></div>
-            <span style={S.plTime}>{track.d}</span>
-          </div>
-          <div style={S.plRight}>
-            <span style={{ color: '#ff3e9a', display: 'flex', alignItems: 'center', gap: 4 }}>♡ {track.h}</span>
-            <span>SHUFFLE</span>
-            <span>REPEAT</span>
-            <Link href="/login" style={{ color: 'var(--ink-2)', textDecoration: 'none', letterSpacing: '.06em' }}>SIGN IN →</Link>
-          </div>
-        </div>
+        {/* ── Right panel ─────────────────────────────────────── */}
+        <RightPanel />
       </div>
     </>
   );
