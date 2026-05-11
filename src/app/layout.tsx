@@ -1,11 +1,12 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { ReactNode } from 'react';
-import { HeaderMediaPlayer } from '@/components/GlobalMediaPlayer';
+import { SitePlayerDock } from '@/components/GlobalMediaPlayer';
 import { AppProviders } from '@/components/AppProviders';
 import { HeaderAuthLinks } from '@/components/HeaderAuthLinks';
 import { HeaderLogo } from '@/components/HeaderLogo';
 import { NavPrimaryLinks } from '@/components/NavPrimaryLinks';
+import { SiteTopbar } from '@/components/SiteTopbar';
 
 export const metadata: Metadata = {
   title: {
@@ -44,24 +45,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <div className="container nav-inner">
                 <HeaderLogo />
                 <NavPrimaryLinks />
-                <div className="nav-player-slot nav-player-slot-centered">
-                  <HeaderMediaPlayer />
-                </div>
                 <HeaderAuthLinks />
               </div>
+              <SiteTopbar />
             </header>
             {children}
-            <footer className="site-footer">
-              <div className="container">
-                <nav className="site-footer-nav">
-                  <a href="/integrity">Integrity & Transparency</a>
-                  <a href="/shows">Shows</a>
-                  <a href="/artists">Artists</a>
-                  <a href="/venues">Venues</a>
-                </nav>
-                <p className="meta">© {new Date().getFullYear()} iHYPE.org · Streaming-first music discovery</p>
-              </div>
-            </footer>
+            <SitePlayerDock />
           </div>
         </AppProviders>
       </body>

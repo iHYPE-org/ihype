@@ -12951,3 +12951,192 @@ html.high-contrast p {
 .wb-footnote { margin-top: 20px; padding: 14px 18px; border: 1px dashed var(--wb-line-2); border-radius: 8px; font-family: var(--f-m, monospace); font-size: 11px; color: var(--wb-ink-3); }
 .wb-empty { padding: 32px; border: 1px dashed var(--wb-line-2); border-radius: 10px; font-family: var(--f-m, monospace); font-size: 12px; color: var(--wb-ink-3); text-align: center; }
 
+
+/* ── Site Topbar (stat bar + search) ──────────────────────────── */
+.site-topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 24px;
+  height: 36px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  background: #090806;
+  font-family: var(--f-m, 'DM Mono', monospace);
+  font-size: 11px;
+  color: rgba(242,237,232,.45);
+  letter-spacing: .06em;
+}
+.site-topbar-crumbs { display: flex; align-items: center; gap: 6px; }
+.site-topbar-crumb-dim { color: rgba(242,237,232,.3); }
+.site-topbar-sep { color: rgba(242,237,232,.2); }
+.site-topbar-crumb-active { color: rgba(242,237,232,.75); font-weight: 600; }
+.site-topbar-stats { display: flex; align-items: center; gap: 8px; }
+.site-topbar-live { color: #22e5d4; display: flex; align-items: center; gap: 5px; }
+.site-topbar-dot { width: 3px; height: 3px; border-radius: 50%; background: rgba(242,237,232,.2); }
+.site-topbar-stat { color: rgba(242,237,232,.4); }
+.site-topbar-search {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 6px;
+  width: 280px;
+  color: rgba(242,237,232,.35);
+}
+.site-topbar-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 11px;
+  color: rgba(242,237,232,.7);
+  font-family: inherit;
+  letter-spacing: .04em;
+}
+.site-topbar-input::placeholder { color: rgba(242,237,232,.3); }
+.site-topbar-kbd {
+  padding: 1px 4px;
+  background: rgba(255,255,255,.06);
+  border-radius: 3px;
+  font-size: 9px;
+  color: rgba(242,237,232,.3);
+}
+@media (max-width: 768px) {
+  .site-topbar { display: none; }
+}
+
+/* ── Site Player Dock (fixed bottom) ─────────────────────────── */
+.site-dock {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 64px;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 24px;
+  background: #090806;
+  border-top: 1px solid rgba(255,255,255,.08);
+  backdrop-filter: blur(12px);
+  font-family: var(--f-m, 'DM Mono', monospace);
+}
+.site-dock-l {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 200px;
+  flex-shrink: 0;
+}
+.site-dock-art {
+  width: 42px;
+  height: 42px;
+  border-radius: 5px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.site-dock-meta { min-width: 0; }
+.site-dock-title {
+  font-family: var(--f-d, 'Syne', sans-serif);
+  font-weight: 700;
+  font-size: 13px;
+  color: #f2ede8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.site-dock-artist {
+  font-size: 10px;
+  color: rgba(242,237,232,.45);
+  margin-top: 2px;
+  letter-spacing: .04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.site-dock-c {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+.site-dock-ctrls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.site-dock-btn {
+  background: none;
+  border: none;
+  color: rgba(242,237,232,.45);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: color .15s;
+}
+.site-dock-btn:hover { color: #f2ede8; }
+.site-dock-play {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #f2ede8;
+  color: #090806;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s;
+}
+.site-dock-play:hover { background: #fff; }
+.site-dock-scrub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.site-dock-time {
+  font-size: 10px;
+  color: rgba(242,237,232,.35);
+  width: 32px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.site-dock-track {
+  flex: 1;
+  height: 3px;
+  background: rgba(255,255,255,.08);
+  border-radius: 2px;
+  position: relative;
+  cursor: pointer;
+}
+.site-dock-track:hover { background: rgba(255,255,255,.14); }
+.site-dock-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  background: #ff5029;
+  border-radius: 2px;
+  pointer-events: none;
+}
+.site-dock-r {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 140px;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+/* Nudge body content up so it's not hidden under the dock */
+.site-shell { padding-bottom: 64px; }
+@media (max-width: 768px) {
+  .site-dock-c { display: none; }
+  .site-dock-l { min-width: unset; }
+}
