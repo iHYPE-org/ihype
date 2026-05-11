@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMediaPlayer } from '@/components/GlobalMediaPlayer';
+import { SetListBuilder, type SetListTrack } from '@/components/SetListBuilder';
 import { getAdvertisingClipsForScope } from '@/lib/advertising';
 import {
   royaltyFreeSampleClips,
@@ -77,7 +78,7 @@ type PadAssignment = ShowSamplePad & {
 };
 
 type ShowSaveIntent = 'preview' | 'publish';
-type CreatorUtilityPanel = 'library' | 'voice' | 'queue';
+type CreatorUtilityPanel = 'library' | 'voice' | 'queue' | 'setlist';
 type CreatorMode = 'radio' | 'liveEvent';
 type TimelineLaneItem = {
   id: string;
@@ -243,6 +244,7 @@ export function PromoterShowCreationTool({
   const [previewMediaItem, setPreviewMediaItem] = useState<ShowMediaItem | null>(null);
   const [saveIntent, setSaveIntent] = useState<ShowSaveIntent>('preview');
   const [activeUtilityPanel, setActiveUtilityPanel] = useState<CreatorUtilityPanel>('library');
+  const [setListTracks, setSetListTracks] = useState<SetListTrack[]>([]);
   const [lastSavedShowHref, setLastSavedShowHref] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -1157,11 +1159,28 @@ export function PromoterShowCreationTool({
 
     if (response.ok) {
       const nextShowHref = `/shows/${data.slug}`;
+
+      if (setListTracks.length > 0 && data.id) {
+        await fetch(`/api/shows/${data.id}/tracks/batch`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tracks: setListTracks.map((t, i) => ({
+              position: i,
+              title: t.title,
+              artistName: t.artistName,
+              mediaHexId: t.mediaHexId
+            }))
+          })
+        }).catch(() => null);
+      }
+
       setTitle('');
       setDescription('');
       setLiveStartsAt('');
       setLiveEndsAt('');
       setLiveTags('live-event, venue-review');
+      setSetListTracks([]);
       setLastSavedShowHref(nextShowHref);
       setMessage(`Live event draft saved. ${data.title} is ready for venue review before ticketing opens.`);
       router.refresh();
@@ -1250,6 +1269,22 @@ export function PromoterShowCreationTool({
 
     if (response.ok) {
       const nextShowHref = `/shows/${data.slug}`;
+
+      if (setListTracks.length > 0 && data.id) {
+        await fetch(`/api/shows/${data.id}/tracks/batch`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tracks: setListTracks.map((t, i) => ({
+              position: i,
+              title: t.title,
+              artistName: t.artistName,
+              mediaHexId: t.mediaHexId
+            }))
+          })
+        }).catch(() => null);
+      }
+
       setTitle('');
       setDescription('');
       setHeadlinerProfileId(artists[0]?.profileId ?? '');
@@ -1266,6 +1301,7 @@ export function PromoterShowCreationTool({
       setRecordedVoiceTake(null);
       setPreviewMediaItem(null);
       setActiveUtilityPanel('library');
+      setSetListTracks([]);
       setLastSavedShowHref(nextShowHref);
       setPending(false);
       setMessage(
@@ -1309,6 +1345,12 @@ export function PromoterShowCreationTool({
       label: 'Flow',
       count: cueSequence.length,
       hint: 'Check the transitions, ads, pads, and non-song flow before you save or publish.'
+    },
+    {
+      id: 'setlist',
+      label: 'Set List',
+      count: setListTracks.length,
+      hint: 'Build the public track order for your show. Search any artist on iHYPE and arrange the set.'
     }
   ];
   const activeUtilityTab = utilityTabs.find((tab) => tab.id === activeUtilityPanel) ?? utilityTabs[0];
@@ -2338,6 +2380,21 @@ export function PromoterShowCreationTool({
                     <strong>{selectedHeadliner.name}</strong> on <strong>{selectedPromoter?.name ?? 'your promoter profile'}</strong>.
                   </div>
                 ) : null}
+              </div>
+            </div>
+          ) : null}
+
+          {activeUtilityPanel === 'setlist' ? (
+            <div className="composer-card composer-utility-card">
+              <div className={workstationHeaderClassName}>
+                <div className={sectionBadgeClassName}>Set List</div>
+                <span className="meta">{setListTracks.length} track{setListTracks.length !== 1 ? 's' : ''}</span>
+              </div>
+              <div className="composer-utility-scroll">
+                <p className="meta" style={{ marginBottom: '0.75rem' }}>
+                  Search any artist on iHYPE and add their tracks in order. This becomes the public tracklist displayed on your show page.
+                </p>
+                <SetListBuilder onChange={setSetListTracks} value={setListTracks} />
               </div>
             </div>
           ) : null}

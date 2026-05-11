@@ -43,33 +43,17 @@ export async function getDefaultLandingPathForUser({
 
   const preferredProfileType = getPreferredProfileTypeForRole(role);
 
-  if (preferredProfileType) {
-    const preferredProfile = await db.profile.findFirst({
-      where: {
-        ownerId: userId,
-        type: preferredProfileType
-      },
-      select: {
-        type: true
-      },
-      orderBy: { createdAt: 'asc' }
-    });
-
-    if (preferredProfile) {
-      return getRoleLandingPathForType(preferredProfile.type, module);
-    }
-  }
-
-  const fallbackProfile = await db.profile.findFirst({
-    where: { ownerId: userId },
-    select: {
-      type: true
-    },
+  // Check if user has a profile before sending to /home
+  const hasProfile = await db.profile.findFirst({
+    where: preferredProfileType
+      ? { ownerId: userId, type: preferredProfileType }
+      : { ownerId: userId },
+    select: { id: true },
     orderBy: { createdAt: 'asc' }
   });
 
-  if (fallbackProfile) {
-    return getRoleLandingPathForType(fallbackProfile.type, module);
+  if (hasProfile) {
+    return '/home';
   }
 
   if (preferredProfileType) {
