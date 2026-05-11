@@ -23,7 +23,6 @@ const schema = z.object({
     .regex(/[A-Za-z]/)
     .regex(/[0-9]/),
   role: z.enum(['FAN', 'ARTIST', 'DJ', 'VENUE']).default('FAN'),
-  inviteCode: z.string().optional(),
   isThirteenOrOlder: z.boolean().optional().default(false),
   acceptedArtistUploadPolicy: z.boolean().optional().default(false),
   contactInfo: z.string().trim().max(200).optional(),

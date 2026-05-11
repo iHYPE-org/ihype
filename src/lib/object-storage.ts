@@ -23,7 +23,7 @@ async function uploadToR2(key: string, data: Buffer, contentType: string): Promi
       Authorization: `AWS4-HMAC-SHA256 Credential=${accessKeyId}`, // placeholder — use @aws-sdk/client-s3 in production
       'x-amz-content-sha256': 'UNSIGNED-PAYLOAD'
     },
-    body: data
+    body: data as unknown as BodyInit
   });
 
   if (!response.ok) {
