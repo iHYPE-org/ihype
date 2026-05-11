@@ -1,0 +1,18 @@
+name: Vercel Deployment Ready
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  wait-for-vercel:
+    name: Wait for Vercel preview
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Vercel deployment
+        uses: patrickedqvist/wait-for-vercel-preview@v1.3.2
+        id: vercel
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          max_timeout: 300
+          check_interval: 10
