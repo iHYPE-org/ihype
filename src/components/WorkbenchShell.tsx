@@ -375,11 +375,6 @@ function WbSidebar({ view, setView, pinned, initials, accent, activeProfileTypes
             <Icon s={18} />
           </SidebarBtn>
         ))}
-        {isVenue && (
-          <SidebarBtn active={view === 'venue'} onClick={() => setView('venue')} label="Venue dashboard" accent="#22e5d4">
-            <IcShows s={18} />
-          </SidebarBtn>
-        )}
       </div>
       <div className="wb-sb-foot">
         <SidebarBtn active={view === 'settings'} onClick={() => setView('settings')} label="Settings" accent="rgba(255,255,255,.4)">
@@ -419,7 +414,7 @@ function SidebarBtn({ active, onClick, label, children, accent }: { active: bool
 // ── Topbar ─────────────────────────────────────────────────────
 const VIEW_TITLES: Record<View, string> = {
   home: 'Home', library: 'Library', radio: 'Radio', tickets: 'Events & Tickets',
-  studio: 'Radio studio', venue: 'Venue dashboard', settings: 'Settings · page customization',
+  studio: 'Radio studio', venue: 'Venue dashboard', settings: 'Settings',
 };
 
 type SearchHit = { type: string; id: string; name: string; subtitle: string; slug?: string };
@@ -915,7 +910,8 @@ const ViewRadio = memo(function ViewRadio({ data, setView }: { data: WorkbenchDa
 const ViewTicketing = memo(function ViewTicketing({ data, activeProfileTypes }: { data: WorkbenchData; activeProfileTypes: string[] }) {
   const canCreateEvents = activeProfileTypes.some(r => r === 'ARTIST' || r === 'VENUE');
   const isDJ = activeProfileTypes.includes('DJ');
-  const [tab, setTab] = useState<'browse' | 'mine' | 'selling' | 'scan' | 'create' | 'referral'>('browse');
+  const isVenue = activeProfileTypes.includes('VENUE');
+  const [tab, setTab] = useState<'browse' | 'mine' | 'selling' | 'scan' | 'create' | 'referral' | 'venue'>('browse');
   const upcoming = data.tickets[0];
   const [showTransfer, setShowTransfer] = useState(false);
   const [transferEmail, setTransferEmail] = useState('');
@@ -965,6 +961,9 @@ const ViewTicketing = memo(function ViewTicketing({ data, activeProfileTypes }: 
           <button onClick={() => setTab('scan')} className={`wb-tab${tab === 'scan' ? ' wb-tab-active' : ''}`}>Scan / verify</button>
           {canCreateEvents && (
             <button onClick={() => setTab('create')} className={`wb-tab${tab === 'create' ? ' wb-tab-active' : ''}`}>＋ Create event</button>
+          )}
+          {isVenue && (
+            <button onClick={() => setTab('venue')} className={`wb-tab${tab === 'venue' ? ' wb-tab-active' : ''}`}>Venue overview</button>
           )}
           {isDJ && (
             <button onClick={() => setTab('referral')} className={`wb-tab${tab === 'referral' ? ' wb-tab-active' : ''}`}>Referral link</button>
@@ -1136,6 +1135,51 @@ const ViewTicketing = memo(function ViewTicketing({ data, activeProfileTypes }: 
       )}
 
       {tab === 'create' && canCreateEvents && <ViewEventCreator />}
+
+      {tab === 'venue' && isVenue && (() => {
+        const totalSold = data.shows.reduce((a, s) => a + s.sold, 0);
+        const totalGross = data.shows.reduce((a, s) => a + s.sold * s.price, 0);
+        return (
+          <>
+            <div className="wb-stat-row" style={{ marginTop: 8 }}>
+              {[
+                { label: 'SHOWS HOSTED',   value: String(data.shows.length),              delta: 'this season',       color: '#22e5d4' },
+                { label: 'TICKETS SOLD',   value: String(totalSold),                       delta: 'across all shows',  color: '#22e5d4' },
+                { label: 'GROSS REVENUE',  value: `$${totalGross.toLocaleString()}`,       delta: 'at face value',     color: '#ffb84a' },
+                { label: 'PLATFORM FEE',   value: '0%',                                    delta: 'always',            color: '#b983ff' },
+              ].map(s => (
+                <div key={s.label} className="wb-stat-card">
+                  <div className="wb-stat-l">{s.label}</div>
+                  <div className="wb-stat-v">{s.value}</div>
+                  <div className="wb-stat-d" style={{ color: s.color }}>{s.delta}</div>
+                </div>
+              ))}
+            </div>
+            <div className="wb-panel" style={{ marginTop: 12 }}>
+              <div className="wb-panel-head">
+                <div className="wb-panel-title">All shows</div>
+                <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--wb-ink-3)' }}>{data.shows.length} total</div>
+              </div>
+              {data.shows.length === 0 && <div className="wb-empty">No shows yet — create your first event.</div>}
+              {data.shows.map(s => (
+                <div key={s.id} className="wb-ticket-row">
+                  <div className="wb-show-stripe" style={{ background: s.status === 'TONIGHT' ? '#22e5d4' : s.status === 'NEAR SOLD' ? '#ffb84a' : 'var(--wb-ink-3)' }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="wb-show-name">{s.name}</div>
+                    <div className="wb-show-meta">{s.date} · {s.time}</div>
+                  </div>
+                  <div className="wb-cap">
+                    <div className="wb-cap-bar"><div className="wb-cap-fill" style={{ width: `${(s.sold / s.capacity) * 100}%`, background: s.sold / s.capacity > 0.85 ? '#ffb84a' : '#22e5d4' }} /></div>
+                    <div className="wb-cap-txt">{s.sold}/{s.capacity}</div>
+                  </div>
+                  <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 15, color: 'var(--wb-ink)', minWidth: 60, textAlign: 'right' }}>${(s.sold * s.price).toLocaleString()}</div>
+                  <div className="wb-status-pill" style={{ color: s.status === 'TONIGHT' ? '#22e5d4' : '#ffb84a', borderColor: s.status === 'TONIGHT' ? 'rgba(34,229,212,.3)' : 'rgba(255,184,74,.3)' }}>{s.status}</div>
+                </div>
+              ))}
+            </div>
+          </>
+        );
+      })()}
 
       {tab === 'referral' && isDJ && (
         <div className="wb-panel" style={{ marginTop: 20, padding: '24px 28px' }}>
@@ -1661,10 +1705,24 @@ const DEFAULT_WIDGETS: PageWidget[] = [
   { id: 'links',    label: 'Links',            desc: 'Social, website, press kit',        wide: false },
 ];
 
+const LAYOUT_KEY = 'ihype_page_layout_v1';
+
 function PageBuilder() {
-  const [widgets, setWidgets] = useState<PageWidget[]>(DEFAULT_WIDGETS);
+  const [widgets, setWidgets] = useState<PageWidget[]>(() => {
+    try {
+      const saved = localStorage.getItem(LAYOUT_KEY);
+      if (saved) {
+        const ids: string[] = JSON.parse(saved);
+        const ordered = ids.map(id => DEFAULT_WIDGETS.find(w => w.id === id)).filter(Boolean) as PageWidget[];
+        const missing = DEFAULT_WIDGETS.filter(w => !ids.includes(w.id));
+        return [...ordered, ...missing];
+      }
+    } catch { /* ignore */ }
+    return DEFAULT_WIDGETS;
+  });
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
   const [profileImg, setProfileImg] = useState<string | null>(null);
   const [bannerImg, setBannerImg] = useState<string | null>(null);
   const profileRef = useRef<HTMLInputElement>(null);
@@ -1784,8 +1842,10 @@ function PageBuilder() {
           ))}
         </div>
         <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
-          <button className="wb-btn-prime" style={{ flex: 1 }}>Save page layout →</button>
-          <button className="wb-btn-ghost" onClick={() => setWidgets(DEFAULT_WIDGETS)}>Reset</button>
+          <button className="wb-btn-prime" style={{ flex: 1 }} onClick={() => { localStorage.setItem(LAYOUT_KEY, JSON.stringify(widgets.map(w => w.id))); setSaved(true); setTimeout(() => setSaved(false), 2000); }}>
+            {saved ? '✓ Saved' : 'Save page layout →'}
+          </button>
+          <button className="wb-btn-ghost" onClick={() => { setWidgets(DEFAULT_WIDGETS); localStorage.removeItem(LAYOUT_KEY); }}>Reset</button>
         </div>
       </div>
     </div>
@@ -1793,7 +1853,7 @@ function PageBuilder() {
 }
 
 function ViewSettings({ prefs, setPref }: { prefs: Prefs; setPref: (k: string, v: unknown) => void }) {
-  const [settTab, setSettTab] = useState<'workbench' | 'page'>('workbench');
+  const [settTab, setSettTab] = useState<'workbench' | 'page'>('page');
   const ACCENTS = [
     { v: '#ff5029', label: 'Ember' }, { v: '#ff3e9a', label: 'Hot pink' },
     { v: '#b983ff', label: 'Lilac' }, { v: '#22e5d4', label: 'Aqua' },
