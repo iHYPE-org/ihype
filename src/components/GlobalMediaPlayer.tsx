@@ -30,8 +30,11 @@ type MediaPlayerContextValue = {
   volume: number;
   canGoBack: boolean;
   canGoForward: boolean;
+  queue: MediaTrack[];
+  currentIndex: number;
   playTrack: (track: MediaTrack, queue?: MediaTrack[]) => void;
   addToQueue: (track: MediaTrack) => void;
+  removeFromQueue: (id: string) => void;
   togglePlayback: () => void;
   playNext: () => void;
   playPrevious: () => void;
@@ -304,6 +307,16 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
     });
   }
 
+  function removeFromQueue(id: string) {
+    setQueue(prev => {
+      const idx = prev.findIndex(t => t.id === id);
+      if (idx < 0) return prev;
+      const next = prev.filter(t => t.id !== id);
+      if (idx < currentIndex) setCurrentIndex(ci => ci - 1);
+      return next;
+    });
+  }
+
   const contextValue = useMemo<MediaPlayerContextValue>(
     () => ({
       currentTrack,
@@ -313,8 +326,11 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
       volume,
       canGoBack: currentIndex > 0 || currentTime > 4,
       canGoForward: currentIndex >= 0 && currentIndex < queue.length - 1,
+      queue,
+      currentIndex,
       playTrack,
       addToQueue,
+      removeFromQueue,
       togglePlayback,
       playNext,
       playPrevious,

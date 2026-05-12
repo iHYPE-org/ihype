@@ -505,39 +505,59 @@ function WbPlayerDock() {
 
 // ── Queue rail ─────────────────────────────────────────────────
 function WbQueueRail({ data }: { data: WorkbenchData }) {
-  const { currentTrack, playTrack } = useMediaPlayer();
+  const { currentTrack, currentIndex, queue, playTrack, removeFromQueue } = useMediaPlayer();
+  const upcoming = queue.slice(currentIndex + 1);
+  const played = queue.slice(0, currentIndex);
+
   return (
     <QueueDropZone className="wb-queue">
       <div className="wb-queue-head">
         <div>
           <div className="wb-queue-title">Queue</div>
-          <div className="wb-queue-sub">{data.tracks.length} tracks · drag tracks here</div>
+          <div className="wb-queue-sub">
+            {queue.length === 0 ? 'Drag tracks here to queue them' : `${upcoming.length} up next · ${played.length} played`}
+          </div>
         </div>
-        <button className="wb-link-btn">Edit</button>
+        {queue.length > 0 && (
+          <button className="wb-link-btn" onClick={() => queue.forEach(t => removeFromQueue(t.id))}>Clear</button>
+        )}
       </div>
       <div className="wb-queue-list">
-        {data.tracks.map(t => {
-          const active = currentTrack?.id === t.id;
-          const mt: MediaTrack = { id: t.id, title: t.title, artistName: t.artistName, url: t.mediaUrl, artistProfileSlug: t.artistSlug };
-          return (
-            <DraggableTrack key={t.id} track={mt} className={`wb-q-item${active ? ' wb-q-item-active' : ''}`} onClick={() => playTrack(mt)}>
-              <div className="wb-q-art" style={{ background: `linear-gradient(135deg, ${t.color}, ${t.color}80)` }}>
-                {active && <span className="wb-q-playing"><IcDot c={t.color} s={6} /></span>}
-              </div>
-              <div style={{ minWidth: 0, flex: 1, textAlign: 'left' }}>
-                <div className="wb-q-title">{t.title}</div>
-                <div className="wb-q-artist">{t.artistName}</div>
-              </div>
-              <div className="wb-q-hype"><IcHeart s={10} c="#ff3e9a" /> {t.hypeCount}</div>
-              <div className="wb-q-dur">{t.duration}</div>
-            </DraggableTrack>
-          );
-        })}
+        {queue.length === 0 ? (
+          <div style={{ padding: '32px 16px', textAlign: 'center', fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--wb-ink-3)', lineHeight: 1.6 }}>
+            Drag any track here from the radio set list, library, or search results.
+          </div>
+        ) : (
+          queue.map((t, i) => {
+            const active = currentTrack?.id === t.id && i === currentIndex;
+            const isPast = i < currentIndex;
+            return (
+              <DraggableTrack key={`${t.id}-${i}`} track={t} className={`wb-q-item${active ? ' wb-q-item-active' : ''}`} onClick={() => playTrack(t, queue)}
+                style={{ opacity: isPast ? 0.4 : 1 }}>
+                <div className="wb-q-art" style={{ background: 'linear-gradient(135deg, var(--wb-accent), #ff3e9a80)', flexShrink: 0 }}>
+                  {active && <span className="wb-q-playing"><IcDot c="var(--wb-accent)" s={6} /></span>}
+                </div>
+                <div style={{ minWidth: 0, flex: 1, textAlign: 'left' }}>
+                  <div className="wb-q-title">{t.title}</div>
+                  <div className="wb-q-artist">{t.artistName}</div>
+                </div>
+                {active && <span style={{ fontFamily: 'var(--f-m)', fontSize: 9, letterSpacing: '.1em', color: 'var(--wb-accent)' }}>NOW</span>}
+                <button
+                  style={{ background: 'none', border: 'none', color: 'var(--wb-ink-3)', cursor: 'pointer', padding: '2px 4px', fontSize: 14, lineHeight: 1 }}
+                  onClick={e => { e.stopPropagation(); removeFromQueue(t.id); }}
+                  title="Remove"
+                >×</button>
+              </DraggableTrack>
+            );
+          })
+        )}
       </div>
-      <div className="wb-queue-foot">
-        <span className="wb-eyebrow-xs">CURATED BY</span>
-        <div style={{ fontStyle: 'italic', fontSize: 16, marginTop: 4, color: 'var(--wb-ink)' }}>iHYPE · {data.city}</div>
-      </div>
+      {queue.length === 0 && (
+        <div className="wb-queue-foot">
+          <span className="wb-eyebrow-xs">CURATED BY</span>
+          <div style={{ fontStyle: 'italic', fontSize: 16, marginTop: 4, color: 'var(--wb-ink)' }}>iHYPE · {data.city}</div>
+        </div>
+      )}
     </QueueDropZone>
   );
 }
