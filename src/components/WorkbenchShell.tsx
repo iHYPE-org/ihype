@@ -334,7 +334,7 @@ export function WorkbenchShell({ data }: { data: WorkbenchData }) {
         {!onboarded && <OnboardingModal onDone={() => setOnboarded(true)} />}
         {sidebarOpen && <div className="wb-sidebar-overlay" onClick={() => setSidebarOpen(false)} aria-hidden="true" />}
         <WbSidebar view={view} setView={(v) => { setView(v); setSidebarOpen(false); }} pinned={['home', ...prefs.pinned]} initials={data.userInitials} accent={prefs.accent} activeProfileTypes={data.activeProfileTypes} mobileOpen={sidebarOpen} onMobileClose={() => setSidebarOpen(false)} isVerified={data.isVerified} />
-        <WbTopbar view={view} data={data} onHamburger={() => setSidebarOpen(s => !s)} />
+        <WbTopbar view={view} data={data} onHamburger={() => setSidebarOpen(s => !s)} setView={setView} />
         <main className="wb-main">
           {view === 'home'     && <ViewHome data={data} prefs={prefs} setView={setView} />}
           {view === 'radio'    && <ViewRadio data={data} setView={setView} />}
@@ -345,7 +345,7 @@ export function WorkbenchShell({ data }: { data: WorkbenchData }) {
           {view === 'venue'    && <ViewVenue data={data} />}
         </main>
         {showQueue && <WbQueueRail data={data} />}
-        <WbPlayerDock />
+        <WbPlayerDock queueRailOn={prefs.queueRail} onToggleQueue={() => setPref('queueRail', !prefs.queueRail)} />
       </div>
     </DragTrackProvider>
   );
@@ -418,47 +418,148 @@ const VIEW_TITLES: Record<View, string> = {
   studio: 'Radio studio', venue: 'Venue dashboard', settings: 'Settings · page customization',
 };
 
-function WbTopbar({ view, data, onHamburger }: { view: View; data: WorkbenchData; onHamburger: () => void }) {
+type SearchHit = { type: string; id: string; name: string; subtitle: string; slug?: string };
+const TYPE_LABELS: Record<string, string> = { artist: 'Artist', venue: 'Venue', promoter: 'DJ', song: 'Track', show: 'Show' };
+
+function WbTopbar({ view, data, onHamburger, setView }: { view: View; data: WorkbenchData; onHamburger: () => void; setView: (v: View) => void }) {
+  const [q, setQ] = useState('');
+  const [results, setResults] = useState<SearchHit[]>([]);
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const debRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const { playTrack } = useMediaPlayer();
+
+  useEffect(() => {
+    if (debRef.current) clearTimeout(debRef.current);
+    if (!q.trim()) { setResults([]); setOpen(false); return; }
+    debRef.current = setTimeout(async () => {
+      setBusy(true);
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q.trim())}&limit=10`);
+        const d = await res.json() as { results: SearchHit[] };
+        setResults((d.results ?? []).filter(r => r.type !== 'genre'));
+        setOpen(true);
+      } catch { setResults([]); } finally { setBusy(false); }
+    }, 220);
+  }, [q]);
+
+  useEffect(() => {
+    function handler(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); inputRef.current?.focus(); }
+      if (e.key === 'Escape') { setOpen(false); setQ(''); inputRef.current?.blur(); }
+    }
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  function getHref(r: SearchHit) {
+    if (!r.slug) return null;
+    if (r.type === 'artist') return `/artists/${r.slug}`;
+    if (r.type === 'venue') return `/venues/${r.slug}`;
+    if (r.type === 'promoter') return `/promoters/${r.slug}`;
+    if (r.type === 'show') return `/shows/${r.slug}`;
+    return null;
+  }
+
+  function handleSelect(r: SearchHit) {
+    if (r.type === 'song') {
+      playTrack({ id: r.id, title: r.name, artistName: r.subtitle.replace(/^by /, '').split(' / ')[0], url: `/api/media/${r.id}`, mediaId: r.id, artistProfileSlug: r.slug ?? null });
+    } else if (r.type === 'show') {
+      setView('tickets');
+    }
+    setOpen(false); setQ('');
+  }
+
   return (
     <header className="wb-topbar">
       <button className="wb-hamburger" onClick={onHamburger} aria-label="Toggle navigation">
         <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
-
       <div className="wb-top-logo">
-        <span className="wb-top-logo-mark">
-          <span style={{ color: 'var(--wb-ink)' }}>i</span>
-          <span style={{ color: 'var(--wb-accent)' }}>HYPE</span>
-        </span>
+        <span className="wb-top-logo-mark"><span style={{ color: 'var(--wb-ink)' }}>i</span><span style={{ color: 'var(--wb-accent)' }}>HYPE</span></span>
         <span className="wb-top-beta">BETA</span>
       </div>
       <div className="wb-top-mid">
         <span style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--wb-ink-3)', letterSpacing: '.04em' }}>{VIEW_TITLES[view]}</span>
         <span className="wb-top-dot" />
-        <span style={{ color: '#22e5d4', display: 'flex', alignItems: 'center', gap: 5, fontSize: 11 }}>
-          <IcDot c="#22e5d4" s={6} /> {data.listeningNow.toLocaleString()} listening
-        </span>
+        <span style={{ color: '#22e5d4', display: 'flex', alignItems: 'center', gap: 5, fontSize: 11 }}><IcDot c="#22e5d4" s={6} /> {data.listeningNow.toLocaleString()} listening</span>
         <span className="wb-top-dot" />
         <span style={{ fontSize: 11, color: 'var(--wb-ink-3)' }}>{data.hypedToday} hyped today</span>
       </div>
-      <div className="wb-search">
+      <div className="wb-search" ref={wrapRef} style={{ position: 'relative' }}>
         <IcSearch s={13} />
-        <input placeholder="Search artists, shows, venues, tracks…" className="wb-search-input" />
-        <span className="wb-kbd">⌘</span><span className="wb-kbd">K</span>
+        <input
+          ref={inputRef}
+          placeholder="Search artists, shows, venues, tracks…"
+          className="wb-search-input"
+          value={q}
+          onChange={e => setQ(e.target.value)}
+          onFocus={() => results.length > 0 && setOpen(true)}
+          autoComplete="off"
+        />
+        {busy
+          ? <span style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid var(--wb-line-2)', borderTopColor: 'var(--wb-accent)', animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />
+          : <><span className="wb-kbd">⌘</span><span className="wb-kbd">K</span></>
+        }
+        {open && results.length > 0 && (
+          <div style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, right: 0, background: 'var(--wb-bg-2)', border: '1px solid var(--wb-line-2)', borderRadius: 10, boxShadow: '0 16px 48px rgba(0,0,0,.5)', zIndex: 500, overflow: 'hidden', minWidth: 320 }}>
+            {results.map(r => {
+              const href = getHref(r);
+              const inner = (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', cursor: 'pointer' }}
+                  onClick={() => handleSelect(r)}>
+                  <span style={{ fontFamily: 'var(--f-m)', fontSize: 9, letterSpacing: '.1em', color: 'var(--wb-accent)', border: '1px solid var(--wb-line-2)', borderRadius: 3, padding: '1px 5px', flexShrink: 0 }}>
+                    {TYPE_LABELS[r.type] ?? r.type}
+                  </span>
+                  <span style={{ fontFamily: 'var(--f-d)', fontWeight: 600, fontSize: 13, color: 'var(--wb-ink)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</span>
+                  <span style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--wb-ink-3)', flexShrink: 0 }}>{r.subtitle}</span>
+                </div>
+              );
+              return href
+                ? <a key={`${r.type}-${r.id}`} href={href} style={{ display: 'block', textDecoration: 'none', borderBottom: '1px solid var(--wb-line)' }} onClick={() => setOpen(false)}>{inner}</a>
+                : <div key={`${r.type}-${r.id}`} style={{ borderBottom: '1px solid var(--wb-line)' }}>{inner}</div>;
+            })}
+          </div>
+        )}
+        {open && !busy && q.trim() && results.length === 0 && (
+          <div style={{ position: 'absolute', top: 'calc(100% + 8px)', left: 0, right: 0, background: 'var(--wb-bg-2)', border: '1px solid var(--wb-line-2)', borderRadius: 10, padding: '12px 14px', fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--wb-ink-3)', zIndex: 500 }}>
+            No results for &ldquo;{q}&rdquo;
+          </div>
+        )}
       </div>
     </header>
   );
 }
 
 // ── Player dock ────────────────────────────────────────────────
-function WbPlayerDock() {
-  const { currentTrack, isPlaying, currentTime, duration, togglePlayback, playNext, playPrevious, seekTo } = useMediaPlayer();
+function WbPlayerDock({ queueRailOn, onToggleQueue }: { queueRailOn: boolean; onToggleQueue: () => void }) {
+  const { currentTrack, isPlaying, currentTime, duration, volume, togglePlayback, playNext, playPrevious, seekTo, setVolume, queue } = useMediaPlayer();
 
   const progress = duration > 0 ? currentTime / duration : 0;
   const fmtTime = (s: number) => {
     const sec = Math.floor(s);
     return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
   };
+
+  function handleScrub(e: React.MouseEvent<HTMLDivElement>) {
+    const r = e.currentTarget.getBoundingClientRect();
+    seekTo(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * duration);
+  }
+
+  function handleVolume(e: React.MouseEvent<HTMLDivElement>) {
+    const r = e.currentTarget.getBoundingClientRect();
+    setVolume(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)));
+  }
 
   return (
     <footer className="wb-dock">
@@ -484,10 +585,7 @@ function WbPlayerDock() {
         </div>
         <div className="wb-scrub-row">
           <span className="wb-time">{fmtTime(currentTime)}</span>
-          <div className="wb-scrub-track" onClick={(e) => {
-            const r = e.currentTarget.getBoundingClientRect();
-            seekTo(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * duration);
-          }}>
+          <div className="wb-scrub-track" onClick={handleScrub}>
             <div className="wb-scrub-fill" style={{ width: `${progress * 100}%` }} />
             <div className="wb-scrub-knob" style={{ left: `${progress * 100}%` }} />
           </div>
@@ -495,9 +593,26 @@ function WbPlayerDock() {
         </div>
       </div>
       <div className="wb-dock-r">
-        <button className="wb-dock-btn"><IcQueue s={14} /></button>
-        <button className="wb-dock-btn"><IcVol s={14} /></button>
-        <div className="wb-vol-track"><div className="wb-vol-fill" /></div>
+        <button
+          className="wb-dock-btn"
+          onClick={onToggleQueue}
+          title="Toggle queue"
+          style={{ color: queueRailOn ? 'var(--wb-accent)' : undefined, position: 'relative' }}
+        >
+          <IcQueue s={14} />
+          {queue.length > 0 && (
+            <span style={{ position: 'absolute', top: 2, right: 2, width: 6, height: 6, borderRadius: '50%', background: 'var(--wb-accent)' }} />
+          )}
+        </button>
+        <button className="wb-dock-btn" title={`Volume ${Math.round(volume * 100)}%`}><IcVol s={14} /></button>
+        <div
+          className="wb-vol-track"
+          onClick={handleVolume}
+          style={{ cursor: 'pointer' }}
+          title={`Volume ${Math.round(volume * 100)}%`}
+        >
+          <div className="wb-vol-fill" style={{ width: `${volume * 100}%` }} />
+        </div>
       </div>
     </footer>
   );
