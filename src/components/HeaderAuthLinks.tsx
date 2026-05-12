@@ -36,7 +36,7 @@ export function HeaderAuthLinks() {
 
   if (session?.user) {
     const displayName = getDisplayName(session.user);
-    const accountHref = isAdmin ? '/admin' : '/dashboard';
+    const accountHref = isAdmin ? '/admin' : '/home';
     const roleLabel = isAdmin ? 'Admin' : getRoleLabel(session.user.role);
 
     return (

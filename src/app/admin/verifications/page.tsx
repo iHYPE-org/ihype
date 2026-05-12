@@ -13,7 +13,7 @@ export const metadata = {
 
 export default async function AdminVerificationsPage() {
   const session = await auth();
-  if (!isAdminSession(session)) redirect('/dashboard');
+  if (!isAdminSession(session)) redirect('/home');
 
   const pendingProfiles = await db.profile.findMany({
     where: { verificationStatus: { in: ['PENDING', 'REJECTED'] } },

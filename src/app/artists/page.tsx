@@ -291,7 +291,7 @@ export default async function ArtistsIndexPage({
   ) : activeModule === 'my-page' ? (
     <DiscoverMyPagePanel
       description="Preview the public artist page listeners and bookers see when they open your profile."
-      editHref={`/dashboard?profile=${myArtistProfile.id}&edit=menu`}
+      editHref={`/home?profile=${myArtistProfile.id}&edit=menu`}
       headline={myArtistProfile.headline || 'Shape the live look, media, and event presence for your artist page.'}
       metaLine={
         [myArtistProfile.city, myArtistProfile.stateRegion ?? myArtistProfile.country].filter(Boolean).join(', ') ||

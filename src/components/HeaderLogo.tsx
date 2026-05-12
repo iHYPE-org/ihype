@@ -8,7 +8,7 @@ export function HeaderLogo() {
   const pathname = usePathname();
   const { data: session } = useSession();
 
-  const href = session?.user ? '/dashboard' : '/';
+  const href = session?.user ? '/home' : '/';
 
   return (
     <Link href={href} className="nav-logo nav-logo-right" aria-label="iHYPE home">

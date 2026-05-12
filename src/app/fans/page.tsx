@@ -322,7 +322,7 @@ export default async function ListenersIndexPage({
   ) : activeModule === 'my-page' ? (
     <DiscoverMyPagePanel
       description="Preview the public fan page other people see when they open your profile."
-      editHref={`/dashboard?profile=${myFanProfile.id}&edit=menu`}
+      editHref={`/home?profile=${myFanProfile.id}&edit=menu`}
       headline={myFanProfile.headline || 'Capture the artists, venues, and moments you keep coming back to.'}
       metaLine={[myFanProfile.city, myFanProfile.country].filter(Boolean).join(', ') || `My ID ${myFanProfile.hexId}`}
       name={myFanProfile.name}

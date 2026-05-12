@@ -430,7 +430,7 @@ export default async function VenuesIndexPage({
   ) : activeModule === 'my-page' ? (
     <DiscoverMyPagePanel
       description="Preview the public venue page artists and fans see when they open your room."
-      editHref={`/dashboard?profile=${myVenueProfile.id}&edit=menu`}
+      editHref={`/home?profile=${myVenueProfile.id}&edit=menu`}
       headline={myVenueProfile.headline || 'Shape the room identity, event look, and venue story that carries your page.'}
       metaLine={
         [myVenueProfile.city, myVenueProfile.stateRegion ?? myVenueProfile.country].filter(Boolean).join(', ') ||

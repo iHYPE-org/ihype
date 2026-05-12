@@ -220,7 +220,7 @@ export default async function VenuePage({
           </div>
           {isOwner ? (
             <div className="profile-banner-actions">
-              <Link className="button small secondary" href={`/dashboard?profile=${profile.id}`}>
+              <Link className="button small secondary" href={`/home?profile=${profile.id}`}>
                 Edit Page
               </Link>
             </div>

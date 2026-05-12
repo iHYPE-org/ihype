@@ -44,7 +44,7 @@ const defaultNavItems: NavItem[] = [
 
 const perspectiveNavItems: Record<AdminPerspective, NavItem[]> = {
   ADMIN: [
-    { href: '/dashboard', label: 'Dashboard', match: '/dashboard' },
+    { href: '/home', label: 'Workbench', match: '/home' },
     { href: '/admin/verifications', label: 'Verifications', match: '/admin/verifications' },
     ...defaultNavItems
   ],
@@ -227,7 +227,7 @@ export function AdminPerspectiveBar() {
           <Link className="button small secondary" href={currentOption.href}>
             Open {currentOption.label}
           </Link>
-          <Link className="button small secondary" href="/dashboard">
+          <Link className="button small secondary" href="/home">
             Admin dashboard
           </Link>
         </div>

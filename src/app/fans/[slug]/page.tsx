@@ -557,7 +557,7 @@ export default async function ListenerPage({
           </div>
           {isOwner ? (
             <div className="profile-banner-actions">
-              <Link className="button small secondary" href={`/dashboard?profile=${profile.id}&edit=menu`}>
+              <Link className="button small secondary" href={`/home?profile=${profile.id}&edit=menu`}>
                 Edit Page
               </Link>
             </div>

@@ -46,7 +46,7 @@ export default async function HomePage() {
     orderBy: { createdAt: 'asc' }
   });
 
-  if (!profile) redirect('/dashboard');
+  if (!profile) redirect('/login');
 
   const now = new Date();
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);

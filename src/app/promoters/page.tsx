@@ -294,7 +294,7 @@ export default async function PromotersIndexPage({
       modulePanel = (
         <DiscoverMyPagePanel
           description="Preview the public promoter page artists, fans, and venues see when they open your profile."
-          editHref={`/dashboard?profile=${myPromoterProfile.id}&edit=menu`}
+          editHref={`/home?profile=${myPromoterProfile.id}&edit=menu`}
           headline={myPromoterProfile.headline || 'Shape the public identity, event look, and show language for your promoter page.'}
           metaLine={
             [myPromoterProfile.city, myPromoterProfile.stateRegion ?? myPromoterProfile.country]
