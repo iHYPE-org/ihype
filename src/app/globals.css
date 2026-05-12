@@ -14012,3 +14012,99 @@ html.high-contrast p {
   .site-dock-c { display: none; }
   .site-dock-l { min-width: unset; }
 }
+
+/* ── Mobile-first improvements ──────────────────────────────────── */
+
+/* Marketing header: collapse to logo + auth buttons on small screens */
+@media (max-width: 580px) {
+  .nav-inner-marketing {
+    grid-template-columns: auto auto;
+  }
+  /* Hide the Shows/Artists/Venues nav on small phones */
+  .nav-links-primary {
+    display: none;
+  }
+  /* Auth slot spans last column only */
+  .nav-auth-slot {
+    justify-self: end;
+  }
+  /* Compact auth buttons on mobile */
+  .nav-join-button,
+  .nav-links-auth a[href="/register"] {
+    padding: 8px 12px;
+    font-size: 0.76rem;
+  }
+  .nav-auth-button,
+  .nav-links-auth a[href="/login"] {
+    padding: 8px 12px;
+    font-size: 0.76rem;
+  }
+  /* Tighten auth cluster gap */
+  .nav-links-compact { gap: 6px; }
+  /* User pill compact on mobile */
+  .nav-user-pill {
+    padding: 5px 8px 5px 5px;
+    gap: 7px;
+  }
+  .nav-user-copy { display: none; }
+}
+
+/* Minimum 44px touch target for all interactive nav elements */
+@media (max-width: 768px) {
+  .nav-join-button,
+  .nav-auth-button,
+  .nav-links-auth a {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .nav-text-button {
+    min-height: 40px;
+    padding: 0 4px;
+  }
+  .lp-btn-primary,
+  .lp-btn-ghost {
+    min-height: 48px;
+    padding: 12px 20px;
+  }
+}
+
+/* Public page grids: stack on mobile */
+@media (max-width: 640px) {
+  .grid-2,
+  .grid-3 { grid-template-columns: 1fr; }
+  .hero-card {
+    grid-template-columns: 1fr;
+    padding: 1.25rem;
+  }
+  .home-discovery-hero {
+    grid-template-columns: 1fr;
+    padding: 1.25rem;
+    border-radius: 20px;
+  }
+  .home-simple-directory-grid { grid-template-columns: 1fr 1fr; }
+  /* Reduce section padding on phones */
+  .section { padding: 1rem 0 2rem; }
+  .section h2 { font-size: 1.35rem; }
+}
+
+/* Landing page tweaks on mobile */
+@media (max-width: 640px) {
+  .lp-wrap {
+    padding: 48px 1.25rem 80px;
+    gap: 56px;
+  }
+  .lp-hero--v2 { padding-top: 24px; }
+  .lp-zero-fee { padding: 24px 20px; }
+  .lp-zero-fee-num { font-size: 3.5rem; }
+  .lp-footer-cta--v2 { padding: 48px 0 32px; }
+}
+
+/* Workbench topbar: increase tap area on touch */
+@media (max-width: 768px) {
+  .wb-view-pad { padding: 12px 12px 24px; }
+  .wb-hamburger {
+    min-width: 44px; min-height: 44px;
+    display: flex; align-items: center; justify-content: center;
+  }
+}
