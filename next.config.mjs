@@ -116,17 +116,17 @@ const nextConfig = {
       },
       {
         source: '/ihype-hype-engine.html',
-        destination: '/hype',
+        destination: '/',
         permanent: false
       },
       {
         source: '/ihype-rec-engine.html',
-        destination: '/auth/landing?module=recommendation-engine',
+        destination: '/artists',
         permanent: false
       },
       {
         source: '/ihype-ticketing.html',
-        destination: '/tickets',
+        destination: '/home',
         permanent: false
       },
       {
@@ -136,12 +136,12 @@ const nextConfig = {
       },
       {
         source: '/ihype-page-customizer.html',
-        destination: '/dashboard',
+        destination: '/home',
         permanent: false
       },
       {
         source: '/ihype-profile.html',
-        destination: '/dashboard',
+        destination: '/home',
         permanent: false
       },
       {
@@ -156,37 +156,32 @@ const nextConfig = {
       },
       {
         source: '/ihype-search.html',
-        destination: '/auth/landing?module=recommendation-engine',
+        destination: '/artists',
         permanent: false
       },
       {
         source: '/ihype-governance.html',
-        destination: '/trust',
+        destination: '/about',
         permanent: false
       },
       {
         source: '/ihype-investor.html',
-        destination: '/promise',
+        destination: '/about',
         permanent: false
       },
       {
         source: '/ihype-beta.html',
-        destination: '/launch-readiness',
-        permanent: false
-      },
-      {
-        source: '/home',
         destination: '/',
         permanent: false
       },
       {
         source: '/discover',
-        destination: '/auth/landing?module=recommendation-engine',
+        destination: '/artists',
         permanent: false
       },
       {
         source: '/customizer',
-        destination: '/dashboard',
+        destination: '/home',
         permanent: false
       },
       {
@@ -201,23 +196,53 @@ const nextConfig = {
       },
       {
         source: '/search',
-        destination: '/auth/landing?module=recommendation-engine',
+        destination: '/artists',
         permanent: false
       },
       {
         source: '/governance',
-        destination: '/launch-readiness',
+        destination: '/about',
         permanent: false
       },
       {
         source: '/investor',
-        destination: '/launch-readiness',
+        destination: '/about',
         permanent: false
       },
       {
         source: '/beta',
-        destination: '/launch-readiness',
+        destination: '/',
         permanent: false
+      },
+      {
+        source: '/hype',
+        destination: '/',
+        permanent: false
+      },
+      {
+        source: '/trust',
+        destination: '/about',
+        permanent: false
+      },
+      {
+        source: '/promise',
+        destination: '/about',
+        permanent: false
+      },
+      {
+        source: '/integrity',
+        destination: '/about',
+        permanent: false
+      },
+      {
+        source: '/launch-readiness',
+        destination: '/',
+        permanent: false
+      },
+      {
+        source: '/dashboard',
+        destination: '/home',
+        permanent: true
       },
       {
         source: '/listeners',
