@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef, createContext, useContext } from 'react';
+import React, { useState, useEffect, useCallback, useRef, createContext, useContext, memo } from 'react';
 import { useMediaPlayer, type MediaTrack } from '@/components/GlobalMediaPlayer';
 
 // ── Drag context ───────────────────────────────────────────────
@@ -295,9 +295,13 @@ export function WorkbenchShell({ data }: { data: WorkbenchData }) {
     } catch { return DEFAULT_PREFS; }
   });
 
+  const prefsPersistRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    try { localStorage.setItem('ihype-wb-prefs', JSON.stringify(prefs)); } catch {}
     applyPrefs(prefs);
+    if (prefsPersistRef.current) clearTimeout(prefsPersistRef.current);
+    prefsPersistRef.current = setTimeout(() => {
+      try { localStorage.setItem('ihype-wb-prefs', JSON.stringify(prefs)); } catch {}
+    }, 400);
   }, [prefs]);
 
   // Apply on mount
@@ -806,7 +810,7 @@ function ViewHome({ data, prefs, setView }: { data: WorkbenchData; prefs: Prefs;
 }
 
 // ── View: Radio ────────────────────────────────────────────────
-function ViewRadio({ data, setView }: { data: WorkbenchData; setView: (v: View) => void }) {
+const ViewRadio = memo(function ViewRadio({ data, setView }: { data: WorkbenchData; setView: (v: View) => void }) {
   const [activeId, setActiveId] = useState(data.radioShows[0]?.id ?? '');
   const { playTrack } = useMediaPlayer();
   const show = data.radioShows.find(r => r.id === activeId) ?? data.radioShows[0];
@@ -905,10 +909,10 @@ function ViewRadio({ data, setView }: { data: WorkbenchData; setView: (v: View) 
       </div>
     </div>
   );
-}
+});
 
 // ── View: Ticketing ────────────────────────────────────────────
-function ViewTicketing({ data, activeProfileTypes }: { data: WorkbenchData; activeProfileTypes: string[] }) {
+const ViewTicketing = memo(function ViewTicketing({ data, activeProfileTypes }: { data: WorkbenchData; activeProfileTypes: string[] }) {
   const canCreateEvents = activeProfileTypes.some(r => r === 'ARTIST' || r === 'VENUE');
   const isDJ = activeProfileTypes.includes('DJ');
   const [tab, setTab] = useState<'browse' | 'mine' | 'selling' | 'scan' | 'create' | 'referral'>('browse');
@@ -1158,10 +1162,10 @@ function ViewTicketing({ data, activeProfileTypes }: { data: WorkbenchData; acti
       )}
     </div>
   );
-}
+});
 
 // ── View: Radio studio ─────────────────────────────────────────
-function ViewRadioStudio() {
+const ViewRadioStudio = memo(function ViewRadioStudio() {
   const [mode, setMode] = useState<'scheduled' | 'live'>('scheduled');
   const [showName, setShowName] = useState('');
   const [schedule, setSchedule] = useState('');
@@ -1273,7 +1277,7 @@ function ViewRadioStudio() {
       )}
     </div>
   );
-}
+});
 
 // ── View: Event creator ────────────────────────────────────────
 function ViewEventCreator() {
@@ -1389,7 +1393,7 @@ function ViewEventCreator() {
 }
 
 // ── View: Library ──────────────────────────────────────────────
-function ViewLibrary({ data }: { data: WorkbenchData }) {
+const ViewLibrary = memo(function ViewLibrary({ data }: { data: WorkbenchData }) {
   const [tab, setTab] = useState<'saved' | 'discover'>('saved');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -1514,10 +1518,10 @@ function ViewLibrary({ data }: { data: WorkbenchData }) {
       )}
     </div>
   );
-}
+});
 
 // ── View: Venue dashboard ──────────────────────────────────────
-function ViewVenue({ data }: { data: WorkbenchData }) {
+const ViewVenue = memo(function ViewVenue({ data }: { data: WorkbenchData }) {
   const [tab, setTab] = useState<'overview' | 'shows' | 'scan'>('overview');
   const totalSold = data.shows.reduce((a, s) => a + s.sold, 0);
   const totalGross = data.shows.reduce((a, s) => a + s.sold * s.price, 0);
@@ -1631,7 +1635,7 @@ function ViewVenue({ data }: { data: WorkbenchData }) {
       )}
     </div>
   );
-}
+});
 
 // ── View: Stub ─────────────────────────────────────────────────
 function ViewStub({ name, eyebrow, accent, sub }: { name: string; eyebrow: string; accent: string; sub: string }) {

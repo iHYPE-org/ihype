@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -22,12 +23,9 @@ export type MediaTrack = {
   artworkUrl?: string | null;
 };
 
-type MediaPlayerContextValue = {
+// Stable context: functions + queue state. Never changes on timeupdate ticks.
+type MediaPlayerStableValue = {
   currentTrack: MediaTrack | null;
-  isPlaying: boolean;
-  currentTime: number;
-  duration: number;
-  volume: number;
   canGoBack: boolean;
   canGoForward: boolean;
   queue: MediaTrack[];
@@ -42,6 +40,20 @@ type MediaPlayerContextValue = {
   setVolume: (volume: number) => void;
 };
 
+// Volatile context: ticks ~4× per second from timeupdate.
+type MediaPlayerVolatileValue = {
+  currentTime: number;
+  duration: number;
+  isPlaying: boolean;
+  volume: number;
+};
+
+// Legacy merged type — keeps existing useMediaPlayer() call-sites working.
+type MediaPlayerContextValue = MediaPlayerStableValue & MediaPlayerVolatileValue;
+
+const MediaPlayerStableCtx = createContext<MediaPlayerStableValue | null>(null);
+const MediaPlayerVolatileCtx = createContext<MediaPlayerVolatileValue>({ currentTime: 0, duration: 0, isPlaying: false, volume: 0.85 });
+
 type PersistedPlayerState = {
   queue: MediaTrack[];
   currentIndex: number;
@@ -51,7 +63,7 @@ type PersistedPlayerState = {
 
 const STORAGE_KEY = 'ihype-global-media-player';
 
-const MediaPlayerContext = createContext<MediaPlayerContextValue | null>(null);
+const MediaPlayerContext = createContext<MediaPlayerContextValue | null>(null); // kept for legacy
 
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds <= 0) {
@@ -97,19 +109,20 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const payload: PersistedPlayerState = {
-      queue,
-      currentIndex,
-      currentTrack,
-      volume
-    };
-
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    if (typeof window === 'undefined') return;
+    if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
+    persistTimerRef.current = setTimeout(() => {
+      const payload: PersistedPlayerState = {
+        // Store minimal fields only — skip artworkUrl, notes, mediaId to save space
+        queue: queue.map(({ id, title, artistName, url, artistProfileSlug }) => ({ id, title, artistName, url, artistProfileSlug })) as MediaTrack[],
+        currentIndex,
+        currentTrack: currentTrack ? { id: currentTrack.id, title: currentTrack.title, artistName: currentTrack.artistName, url: currentTrack.url, artistProfileSlug: currentTrack.artistProfileSlug } as MediaTrack : null,
+        volume,
+      };
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    }, 500);
   }, [queue, currentIndex, currentTrack, volume]);
 
   useEffect(() => {
@@ -230,101 +243,71 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
     });
   }
 
-  function playTrack(track: MediaTrack, nextQueue?: MediaTrack[]) {
-    const resolvedQueue = nextQueue ?? queue;
-    const nextIndex = resolvedQueue.findIndex((item) => item.id === track.id);
-    setQueue(resolvedQueue);
-    setCurrentIndex(nextIndex);
-    setCurrentTrack(track);
-    setIsPlaying(true);
-  }
+  const playTrack = useCallback((track: MediaTrack, nextQueue?: MediaTrack[]) => {
+    setQueue(prev => {
+      const resolved = nextQueue ?? prev;
+      const idx = resolved.findIndex(item => item.id === track.id);
+      setCurrentIndex(idx);
+      setCurrentTrack(track);
+      setIsPlaying(true);
+      return resolved;
+    });
+  }, []);
 
-  function togglePlayback() {
-    if (!currentTrack) {
-      return;
-    }
+  const togglePlayback = useCallback(() => {
+    setCurrentTrack(t => { if (t) setIsPlaying(v => !v); return t; });
+  }, []);
 
-    setIsPlaying((value) => !value);
-  }
+  const playNext = useCallback(() => {
+    setQueue(prev => {
+      setCurrentIndex(ci => {
+        const next = ci >= 0 && ci < prev.length - 1 ? ci + 1 : ci;
+        if (next !== ci) { setCurrentTrack(prev[next] ?? null); setIsPlaying(true); }
+        return next;
+      });
+      return prev;
+    });
+  }, []);
 
-  function playNext() {
-    if (!queue.length) {
-      return;
-    }
-
-    const nextIndex = currentIndex >= 0 && currentIndex < queue.length - 1 ? currentIndex + 1 : currentIndex;
-    if (nextIndex === currentIndex) {
-      return;
-    }
-
-    setCurrentIndex(nextIndex);
-    const nextTrack = queue[nextIndex] ?? null;
-    setCurrentTrack(nextTrack);
-    setIsPlaying(true);
-  }
-
-  function playPrevious() {
+  const playPrevious = useCallback(() => {
     const audio = audioRef.current;
-    if (audio && audio.currentTime > 4) {
-      audio.currentTime = 0;
-      setCurrentTime(0);
-      return;
-    }
+    if (audio && audio.currentTime > 4) { audio.currentTime = 0; setCurrentTime(0); return; }
+    setQueue(prev => {
+      setCurrentIndex(ci => {
+        const prev2 = ci > 0 ? ci - 1 : ci;
+        if (prev2 !== ci) { setCurrentTrack(prev[prev2] ?? null); setIsPlaying(true); }
+        return prev2;
+      });
+      return prev;
+    });
+  }, []);
 
-    if (!queue.length) {
-      return;
-    }
-
-    const previousIndex = currentIndex > 0 ? currentIndex - 1 : currentIndex;
-    if (previousIndex === currentIndex) {
-      return;
-    }
-
-    setCurrentIndex(previousIndex);
-    const previousTrack = queue[previousIndex] ?? null;
-    setCurrentTrack(previousTrack);
-    setIsPlaying(true);
-  }
-
-  function seekTo(time: number) {
+  const seekTo = useCallback((time: number) => {
     const audio = audioRef.current;
-    if (!audio || !Number.isFinite(time)) {
-      return;
-    }
-
+    if (!audio || !Number.isFinite(time)) return;
     audio.currentTime = time;
     setCurrentTime(time);
-  }
+  }, []);
 
-  function setVolume(volumeValue: number) {
-    setVolumeState(volumeValue);
-  }
+  const setVolume = useCallback((v: number) => { setVolumeState(v); }, []);
 
-  function addToQueue(track: MediaTrack) {
-    setQueue(prev => {
-      if (prev.some(t => t.id === track.id)) return prev;
-      return [...prev, track];
-    });
-  }
+  const addToQueue = useCallback((track: MediaTrack) => {
+    setQueue(prev => prev.some(t => t.id === track.id) ? prev : [...prev, track]);
+  }, []);
 
-  function removeFromQueue(id: string) {
+  const removeFromQueue = useCallback((id: string) => {
     setQueue(prev => {
       const idx = prev.findIndex(t => t.id === id);
       if (idx < 0) return prev;
-      const next = prev.filter(t => t.id !== id);
       if (idx < currentIndex) setCurrentIndex(ci => ci - 1);
-      return next;
+      return prev.filter(t => t.id !== id);
     });
-  }
+  }, [currentIndex]);
 
-  const contextValue = useMemo<MediaPlayerContextValue>(
+  const stableValue = useMemo<MediaPlayerStableValue>(
     () => ({
       currentTrack,
-      isPlaying,
-      currentTime,
-      duration,
-      volume,
-      canGoBack: currentIndex > 0 || currentTime > 4,
+      canGoBack: currentIndex > 0,
       canGoForward: currentIndex >= 0 && currentIndex < queue.length - 1,
       queue,
       currentIndex,
@@ -335,27 +318,31 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
       playNext,
       playPrevious,
       seekTo,
-      setVolume
+      setVolume,
     }),
-    [currentIndex, currentTrack, currentTime, duration, isPlaying, queue, volume]
+    [currentIndex, currentTrack, queue]
+  );
+
+  const volatileValue = useMemo<MediaPlayerVolatileValue>(
+    () => ({ currentTime, duration, isPlaying, volume }),
+    [currentTime, duration, isPlaying, volume]
   );
 
   return (
-    <MediaPlayerContext.Provider value={contextValue}>
-      {children}
-      <audio ref={audioRef} preload="metadata" />
-    </MediaPlayerContext.Provider>
+    <MediaPlayerStableCtx.Provider value={stableValue}>
+      <MediaPlayerVolatileCtx.Provider value={volatileValue}>
+        {children}
+        <audio ref={audioRef} preload="metadata" />
+      </MediaPlayerVolatileCtx.Provider>
+    </MediaPlayerStableCtx.Provider>
   );
 }
 
-export function useMediaPlayer() {
-  const context = useContext(MediaPlayerContext);
-
-  if (!context) {
-    throw new Error('useMediaPlayer must be used within MediaPlayerProvider');
-  }
-
-  return context;
+export function useMediaPlayer(): MediaPlayerContextValue {
+  const stable = useContext(MediaPlayerStableCtx);
+  if (!stable) throw new Error('useMediaPlayer must be used within MediaPlayerProvider');
+  const volatile = useContext(MediaPlayerVolatileCtx);
+  return useMemo(() => ({ ...stable, ...volatile }), [stable, volatile]);
 }
 
 export function HeaderMediaPlayer() {
