@@ -399,6 +399,25 @@ body:has(.wb-shell) .site-nav { display: none; }
   border-top: 1px solid rgba(255,255,255,.06);
   display: flex; flex-direction: column; align-items: center; gap: 24px;
 }
+
+/* About / Transparency shared */
+.lp-promise-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-top: 24px; }
+.lp-promise-card { padding: 20px 22px; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; background: rgba(255,255,255,.03); }
+.lp-promise-icon { font-size: 22px; margin-bottom: 10px; }
+.lp-promise-head { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+.lp-promise-body { font-size: 13px; line-height: 1.6; color: var(--muted); }
+.lp-transparency-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-top: 24px; }
+.lp-transparency-stat { padding: 22px 20px; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; text-align: center; background: rgba(255,255,255,.03); }
+.lp-transparency-val { font-size: 32px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 6px; }
+.lp-transparency-label { font-family: var(--f-m, monospace); font-size: 10px; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; }
+.lp-how-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-top: 24px; }
+.lp-how-card { padding: 18px 20px; border: 1px solid rgba(255,255,255,.06); border-radius: 8px; }
+.lp-how-head { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+.lp-how-body { font-size: 13px; line-height: 1.6; color: var(--muted); }
+@media (max-width: 640px) {
+  .lp-promise-grid, .lp-how-grid { grid-template-columns: 1fr; }
+  .lp-transparency-grid { grid-template-columns: 1fr 1fr; }
+}
 .lp-footer-cta .lp-hero-actions { justify-content: center; }
 .nav-stats {
   display: flex;
