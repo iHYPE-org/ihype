@@ -249,11 +249,11 @@ export function WorkbenchShell({ data }: { data: WorkbenchData }) {
       <main className="wb-main">
         {view === 'home'     && <ViewHome data={data} prefs={prefs} setView={setView} />}
         {view === 'radio'    && <ViewRadio data={data} setView={setView} />}
-        {view === 'tickets'  && <ViewTicketing data={data} />}
+        {view === 'tickets'  && <ViewTicketing data={data} activeProfileTypes={data.activeProfileTypes} />}
         {view === 'settings' && <ViewSettings prefs={prefs} setPref={setPref} />}
         {view === 'library'  && <ViewLibrary data={data} />}
         {view === 'events'   && <ViewEvents data={data} />}
-        {view === 'studio'   && <ViewEventCreator />}
+        {view === 'studio'   && <ViewRadioStudio />}
         {view === 'venue'    && <ViewVenue data={data} />}
       </main>
       {showQueue && <WbQueueRail data={data} />}
@@ -327,7 +327,7 @@ function SidebarBtn({ active, onClick, label, children, accent }: { active: bool
 // ── Topbar ─────────────────────────────────────────────────────
 const VIEW_TITLES: Record<View, string> = {
   home: 'Home', library: 'Library', radio: 'Radio', tickets: 'Ticketing',
-  events: 'Events', studio: 'Create an event', venue: 'Venue dashboard', settings: 'Settings · page customization',
+  events: 'Events', studio: 'Radio studio', venue: 'Venue dashboard', settings: 'Settings · page customization',
 };
 
 function WbTopbar({ view, data, onHamburger }: { view: View; data: WorkbenchData; onHamburger: () => void }) {
@@ -477,7 +477,7 @@ function ViewHome({ data, prefs, setView }: { data: WorkbenchData; prefs: Prefs;
           {data.greeting && <p className="wb-page-sub">{data.greeting}</p>}
         </div>
         <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
-          <button className="wb-btn-prime" onClick={() => setView('studio')}><IcBolt s={12} /> Create an event</button>
+          <button className="wb-btn-prime" onClick={() => setView('studio')}><IcBolt s={12} /> Start a radio show</button>
           <button className="wb-btn-ghost" onClick={() => setView('events')}>Browse events →</button>
           <button className="wb-btn-ghost" onClick={() => {
             navigator.clipboard.writeText(`${window.location.origin}/home`).catch(() => {});
@@ -685,8 +685,10 @@ function ViewRadio({ data, setView }: { data: WorkbenchData; setView: (v: View) 
 }
 
 // ── View: Ticketing ────────────────────────────────────────────
-function ViewTicketing({ data }: { data: WorkbenchData }) {
-  const [tab, setTab] = useState<'mine' | 'selling' | 'scan'>('mine');
+function ViewTicketing({ data, activeProfileTypes }: { data: WorkbenchData; activeProfileTypes: string[] }) {
+  const canCreateEvents = activeProfileTypes.some(r => r === 'ARTIST' || r === 'VENUE');
+  const isDJ = activeProfileTypes.includes('DJ');
+  const [tab, setTab] = useState<'mine' | 'selling' | 'scan' | 'create' | 'referral'>('mine');
   const upcoming = data.tickets[0];
   const [showTransfer, setShowTransfer] = useState(false);
   const [transferEmail, setTransferEmail] = useState('');
@@ -735,6 +737,12 @@ function ViewTicketing({ data }: { data: WorkbenchData }) {
               {k === 'mine' ? 'My tickets' : k === 'selling' ? 'Selling' : 'Scan / verify'}
             </button>
           ))}
+          {canCreateEvents && (
+            <button onClick={() => setTab('create')} className={`wb-tab${tab === 'create' ? ' wb-tab-active' : ''}`}>＋ Create event</button>
+          )}
+          {isDJ && (
+            <button onClick={() => setTab('referral')} className={`wb-tab${tab === 'referral' ? ' wb-tab-active' : ''}`}>Referral link</button>
+          )}
         </div>
       </div>
 
@@ -881,6 +889,32 @@ function ViewTicketing({ data }: { data: WorkbenchData }) {
           </div>
         </div>
       )}
+
+      {tab === 'create' && canCreateEvents && <ViewEventCreator />}
+
+      {tab === 'referral' && isDJ && (
+        <div className="wb-panel" style={{ marginTop: 20, padding: '24px 28px' }}>
+          <div className="wb-eyebrow" style={{ color: '#b983ff', marginBottom: 10 }}>● PROMOTER / DJ · REFERRAL PROGRAM</div>
+          <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 24, letterSpacing: '-.02em', color: 'var(--wb-ink)', margin: '0 0 8px' }}>Your referral link</h2>
+          <p className="wb-page-sub" style={{ marginBottom: 24 }}>Attach your referral link to any event. When fans buy tickets through your link, you earn a cut — set by the event organizer, paid automatically by iHYPE.</p>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 20 }}>
+            <input readOnly value={`https://ihype.org/ref/${data.userInitials?.toLowerCase() ?? 'you'}`} style={{ flex: 1, padding: '10px 14px', background: 'var(--wb-bg-3)', border: '1px solid var(--wb-line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--wb-accent)', outline: 'none' }} />
+            <button className="wb-btn-prime" onClick={() => navigator.clipboard?.writeText(`https://ihype.org/ref/${data.userInitials?.toLowerCase() ?? 'you'}`)}>Copy</button>
+          </div>
+          <div className="wb-panel" style={{ background: 'var(--wb-bg-3)' }}>
+            <div className="wb-panel-head"><div className="wb-panel-title">Events you're attached to</div></div>
+            {data.shows.length === 0 ? (
+              <div className="wb-empty">No events linked yet — share your referral link with organizers to get attached.</div>
+            ) : data.shows.map(s => (
+              <div key={s.id} className="wb-ticket-row">
+                <div className="wb-show-stripe" style={{ background: '#b983ff' }} />
+                <div style={{ flex: 1 }}><div className="wb-show-name">{s.name}</div><div className="wb-show-meta">{s.date} · {s.venue}</div></div>
+                <div className="wb-status-pill" style={{ color: '#b983ff', borderColor: 'rgba(185,131,255,.3)' }}>ATTACHED</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -907,6 +941,66 @@ function ViewEvents({ data }: { data: WorkbenchData }) {
         {data.shows.length === 0 && (
           <div className="wb-empty">No shows found for {data.city}. Check back soon or explore another city in Settings.</div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ── View: Radio studio ─────────────────────────────────────────
+function ViewRadioStudio() {
+  const [showName, setShowName] = useState('');
+  const [schedule, setSchedule] = useState('');
+  const [desc, setDesc] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [errMsg, setErrMsg] = useState('');
+
+  const field: React.CSSProperties = { width: '100%', padding: '9px 12px', background: 'var(--wb-bg-3)', border: '1px solid var(--wb-line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--wb-ink)', outline: 'none', boxSizing: 'border-box' as const };
+  const lbl: React.CSSProperties = { fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.12em', color: 'var(--wb-ink-3)', marginBottom: 6, display: 'block' };
+  const grp: React.CSSProperties = { display: 'flex', flexDirection: 'column' as const };
+
+  async function handleSubmit() {
+    if (!showName.trim()) { setErrMsg('Show name is required.'); return; }
+    setErrMsg('');
+    setStatus('loading');
+    await new Promise(r => setTimeout(r, 600));
+    setStatus('success');
+  }
+
+  if (status === 'success') return (
+    <div className="wb-view-pad" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 400, gap: 16, textAlign: 'center' }}>
+      <div style={{ fontSize: 40 }}>📻</div>
+      <h2 className="wb-page-title" style={{ fontSize: 28 }}>{showName}</h2>
+      <p className="wb-page-sub">Your radio show is live. Fans can tune in from the Radio tab.</p>
+      <button className="wb-btn-prime" onClick={() => { setStatus('idle'); setShowName(''); setSchedule(''); setDesc(''); }}>Start another show</button>
+    </div>
+  );
+
+  return (
+    <div className="wb-view-pad">
+      <div className="wb-eyebrow" style={{ color: '#ff3e9a' }}>● RADIO STUDIO · ALL ROLES CAN BROADCAST</div>
+      <h1 className="wb-page-title">Start a radio show</h1>
+      <p className="wb-page-sub">Launch a channel on iHYPE Radio. Artists, DJs, promoters, and venues can all host. No ads, no algorithm.</p>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 16, alignItems: 'start', marginTop: 20 }}>
+        <div className="wb-panel">
+          <div className="wb-panel-head"><div className="wb-panel-title">Show details</div></div>
+          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={grp}><label style={lbl}>SHOW NAME</label><input style={field} value={showName} onChange={e => setShowName(e.target.value)} placeholder="e.g. Late Night with Maya" /></div>
+            <div style={grp}><label style={lbl}>BROADCAST SCHEDULE</label><input style={field} value={schedule} onChange={e => setSchedule(e.target.value)} placeholder="e.g. Fridays 10pm CT" /></div>
+            <div style={grp}><label style={lbl}>DESCRIPTION</label><textarea rows={4} style={{ ...field, resize: 'vertical' as const }} value={desc} onChange={e => setDesc(e.target.value)} placeholder="What's the vibe? Genre, format, guests…" /></div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className="wb-panel" style={{ padding: '18px 16px' }}>
+            <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.14em', color: 'var(--wb-ink-3)', marginBottom: 12 }}>PREVIEW</div>
+            <div style={{ aspectRatio: '1', borderRadius: 8, background: 'linear-gradient(135deg, #ff3e9a, #b983ff80)', marginBottom: 14, maxHeight: 120 }} />
+            <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 18, color: 'var(--wb-ink)' }}>{showName || 'Your show name'}</div>
+            <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--wb-ink-3)', marginTop: 4 }}>{schedule || 'Schedule TBD'}</div>
+          </div>
+          {errMsg && <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: '#ff5029', padding: '8px 12px', border: '1px solid rgba(255,80,41,.3)', borderRadius: 6 }}>{errMsg}</div>}
+          <button type="button" onClick={handleSubmit} disabled={status === 'loading'} className="wb-btn-prime" style={{ width: '100%', padding: '12px', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: status === 'loading' ? 0.6 : 1 }}>
+            <IcBolt s={13} /> {status === 'loading' ? 'Creating…' : 'Launch show →'}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -1294,7 +1388,7 @@ function ViewSettings({ prefs, setPref }: { prefs: Prefs; setPref: (k: string, v
     { k: 'radio',    label: 'Radio',     sub: 'Channels + your own shows',   Icon: IcRadio },
     { k: 'tickets',  label: 'Ticketing', sub: 'Hold, sell, scan',            Icon: IcTicket },
     { k: 'events',   label: 'Events',    sub: 'Live events + your tour',     Icon: IcShows },
-    { k: 'studio',   label: 'Create',    sub: 'Publish an event',            Icon: IcStudio },
+    { k: 'studio',   label: 'Create',    sub: 'Start a radio show',           Icon: IcStudio },
   ];
 
   return (
