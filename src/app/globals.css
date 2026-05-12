@@ -419,8 +419,9 @@ body:has(.wb-shell) .site-nav { display: none; }
   .lp-transparency-grid { grid-template-columns: 1fr 1fr; }
 }
 
-/* Hide Shows/Artists/Venues nav on the marketing landing page */
-body:has(.lp-wrap) .nav-links-primary { display: none !important; }
+/* Hide Shows/Artists/Venues nav on marketing and auth pages */
+body:has(.lp-wrap) .nav-links-primary,
+body:has(.auth-signal-page) .nav-links-primary { display: none !important; }
 
 /* ── Mission section ─────────────────────────────────────── */
 .lp-mission { display: flex; flex-direction: column; gap: 0; }
