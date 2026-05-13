@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { isSmtpEmailConfigured } from '@/lib/mailer';
+import { isEmailDeliveryConfigured } from '@/lib/mailer';
 import { createLoginOtpChallenge } from '@/lib/login-otp';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!isSmtpEmailConfigured()) {
+    if (!isEmailDeliveryConfigured()) {
       return NextResponse.json(
         { error: 'Email delivery is not configured on this server. Contact support.' },
         { status: 503 }
