@@ -424,6 +424,12 @@ body:has(.wb-shell) .site-nav { display: none; }
 body:has(.lp-wrap) .nav-links-primary,
 body:has(.auth-signal-page) .nav-links-primary { display: none !important; }
 
+/* Logged-out marketing/auth surfaces should not show the global media dock */
+body:has(.lp-wrap) .site-dock,
+body:has(.auth-signal-page) .site-dock {
+  display: none !important;
+}
+
 /* ── Mission section ─────────────────────────────────────── */
 .lp-mission { display: flex; flex-direction: column; gap: 0; }
 .lp-mission-grid {
