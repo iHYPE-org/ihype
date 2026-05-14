@@ -5,7 +5,6 @@ import { Syne, DM_Sans, JetBrains_Mono, Instrument_Serif } from 'next/font/googl
 import { AppProviders } from '@/components/AppProviders';
 import { HeaderAuthLinks } from '@/components/HeaderAuthLinks';
 import { HeaderLogo } from '@/components/HeaderLogo';
-import { NavPrimaryLinks } from '@/components/NavPrimaryLinks';
 
 const syne = Syne({ subsets: ['latin'], weight: ['600','700','800'], variable: '--font-syne', display: 'swap' });
 const dmSans = DM_Sans({ subsets: ['latin'], weight: ['400','500','600','700'], variable: '--font-dm', display: 'swap' });
@@ -48,7 +47,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <header aria-label="Primary site header" className="nav site-nav">
             <div className="container nav-inner-marketing">
               <HeaderLogo />
-              <NavPrimaryLinks />
               <HeaderAuthLinks />
             </div>
           </header>

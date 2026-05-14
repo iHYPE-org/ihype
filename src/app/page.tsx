@@ -2,64 +2,6 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
 
-const ROLES = [
-  {
-    k: 'fan',
-    label: 'Fan',
-    sub: 'Discover artists before they blow up. Build your top-5 lists. Hype the tracks that deserve it.',
-    c: '#b983ff',
-    icon: '♡',
-    cta: 'Join as Fan',
-  },
-  {
-    k: 'artist',
-    label: 'Artist',
-    sub: 'Upload your music. List your shows. See real demand signal — not bot-inflated stream counts.',
-    c: '#ff5029',
-    icon: '◐',
-    cta: 'Join as Artist',
-  },
-  {
-    k: 'venue',
-    label: 'Venue',
-    sub: 'List shows for free. Issue tickets with zero platform fees. Every dollar stays in the scene.',
-    c: '#22e5d4',
-    icon: '◇',
-    cta: 'Join as Venue',
-  },
-  {
-    k: 'promoter',
-    label: 'DJ / Promoter',
-    sub: 'Book talent. Run live or recorded radio sets directly on the platform. Build your affiliate network.',
-    c: '#ff3e9a',
-    icon: '◉',
-    cta: 'Join as DJ / Promoter',
-  },
-];
-
-const HOW = [
-  {
-    n: '01',
-    head: 'Upload or discover',
-    body: 'Artists upload tracks. Fans browse by city, genre, or mood — no algorithm deciding what you hear first.',
-  },
-  {
-    n: '02',
-    head: 'Hype what hits',
-    body: 'A Hype is earned by finishing a track or deliberately backing an artist. It\'s a demand signal, not a like.',
-  },
-  {
-    n: '03',
-    head: 'Shows follow the signal',
-    body: 'Promoters and venues read the hype charts to book rising talent. Artists with real fan demand get booked.',
-  },
-  {
-    n: '04',
-    head: 'Tickets, zero fees',
-    body: 'Buy tickets on iHYPE. The artist and venue keep 100% of the revenue. No Ticketmaster. No cuts.',
-  },
-];
-
 export default async function MarketingPage() {
   const session = await auth();
   if (session?.user) {
@@ -76,14 +18,14 @@ export default async function MarketingPage() {
           Not-for-profit · Free forever · 0% ticket fees
         </div>
         <h1 className="lp-hero-h lp-hero-h--v2">
-          Independent music<br />
-          <span className="lp-hero-gradient">built for the scene.</span>
+          The music industry is broken.<br />
+          <span className="lp-hero-gradient">We&rsquo;re fixing it.</span>
         </h1>
         <p className="lp-hero-sub lp-hero-sub--v2">
-          The music industry is rigged. Streaming platforms bury independent artists under
-          algorithmic debt. Ticket fees line the pockets of middlemen. Likes and play counts
-          are gamed by bots. We built iHYPE because the scene deserves a platform that actually
-          works for artists, fans, venues, and promoters — not against them.
+          Streaming platforms bury independent artists under algorithmic debt.
+          Ticket fees line the pockets of middlemen. Play counts are gamed by bots.
+          iHYPE was built because the scene deserves radical transparency — a platform
+          that tells you exactly what&rsquo;s happening with your music, your money, and your fans.
         </p>
         <div className="lp-hero-actions">
           <Link href="/register" className="lp-btn-primary">Join free — it takes 60 seconds</Link>
@@ -91,20 +33,20 @@ export default async function MarketingPage() {
         </div>
       </section>
 
-      {/* Mission statement */}
+      {/* Mission */}
       <section className="lp-mission">
         <p className="lp-section-eyebrow">WHY WE BUILT THIS</p>
         <div className="lp-mission-grid">
           <div className="lp-mission-block">
             <h2 className="lp-mission-h">
-              We're not a startup chasing growth.<br />
-              We're a community-owned tool.
+              We&rsquo;re not a startup chasing growth.<br />
+              We&rsquo;re a community-owned tool.
             </h2>
             <p className="lp-mission-body">
-              iHYPE is structured as a not-for-profit. That means no investors to answer to,
-              no pressure to monetise your data, and no financial incentive to promote one
-              artist over another. The platform exists to serve the independent music community —
-              full stop. Every feature we build, every policy we set, traces back to that mission.
+              iHYPE is structured as a not-for-profit. No investors to answer to,
+              no pressure to monetise your data, no financial incentive to promote one
+              artist over another. Every feature we build traces back to one mission:
+              keep independent music alive by making the economics visible and fair.
             </p>
           </div>
           <div className="lp-mission-stats">
@@ -131,18 +73,39 @@ export default async function MarketingPage() {
           <div className="lp-zero-fee-text">
             <strong>iHYPE takes nothing from ticket sales. Ever.</strong>
             <span>Artists and venues keep 100% of every ticket sold on this platform.
-            That's not a promotional offer — it's written into how iHYPE works.
-            We believe ticket fees are a tax on live music, and we refuse to collect them.</span>
+            That&rsquo;s not a promotional offer — it&rsquo;s written into how iHYPE works.
+            Ticket fees are a tax on live music, and we refuse to collect them.</span>
           </div>
         </div>
       </section>
 
-      {/* How it works */}
+      {/* Transparency breakdown */}
       <section className="lp-how">
-        <p className="lp-section-eyebrow">HOW IT WORKS</p>
-        <h2 className="lp-section-head">Simple. Transparent. Yours.</h2>
+        <p className="lp-section-eyebrow">RADICAL TRANSPARENCY</p>
+        <h2 className="lp-section-head">You see everything. Always.</h2>
         <div className="lp-how-steps">
-          {HOW.map((h) => (
+          {[
+            {
+              n: '01',
+              head: 'Real demand signal',
+              body: 'A Hype only registers when a fan finishes a track or deliberately backs an artist. No bots. No bulk purchases. No pay-to-play shortcuts.',
+            },
+            {
+              n: '02',
+              head: 'Open hype charts',
+              body: 'Every artist can see exactly who HYPEd them, where their fans are, and what that demand looks like to promoters and venues.',
+            },
+            {
+              n: '03',
+              head: 'Clear money flow',
+              body: 'Ticket revenue, referral splits, and payout schedules are displayed in plain numbers. Nothing hidden in a percentage buried in terms of service.',
+            },
+            {
+              n: '04',
+              head: 'No algorithm for sale',
+              body: 'Discovery is driven by Hype — real attention from real fans. You cannot buy placement. You cannot game the charts. Rising means rising.',
+            },
+          ].map((h) => (
             <div key={h.n} className="lp-how-step">
               <span className="lp-how-n">{h.n}</span>
               <div>
@@ -154,57 +117,36 @@ export default async function MarketingPage() {
         </div>
       </section>
 
-      {/* Hype explainer */}
+      {/* Comparison */}
       <section className="lp-hype-explainer lp-hype-explainer--v2">
-        <p className="lp-section-eyebrow">THE CURRENCY OF THE SCENE</p>
-        <h2 className="lp-section-head">A Hype is worth something</h2>
+        <p className="lp-section-eyebrow">THE PROBLEM WITH EVERYWHERE ELSE</p>
+        <h2 className="lp-section-head">Opacity is the product</h2>
         <p className="lp-hype-intro">
-          On every other platform, engagement is cheap. A like is a reflex.
-          A stream can be bought in bulk. Play counts tell you nothing real.
-          On iHYPE, a Hype is different — it only registers when a fan
-          actually listens, or makes a deliberate choice to back an artist they believe in.
+          The major platforms profit from confusion. Artists don&rsquo;t know why a track surfaces or
+          disappears. Fans don&rsquo;t know what they&rsquo;re actually supporting. Venues pay fees
+          they can&rsquo;t audit. iHYPE exists to end that.
         </p>
         <div className="lp-hype-compare">
           <div className="lp-hype-col lp-hype-col--bad">
             <p className="lp-hype-col-label">Everywhere else</p>
             <ul>
-              <li>Stream counts gamed by bots and playlisting services</li>
-              <li>Likes cost nothing — one tap, no attention required</li>
-              <li>Algorithms reward what's already popular</li>
-              <li>Artists pay for promotion to reach their own fans</li>
+              <li>Stream counts gamed by bots and playlist services</li>
+              <li>Algorithms reward what&rsquo;s already popular or paid for</li>
+              <li>Ticket fees extracted at every layer — artist, venue, fan</li>
+              <li>Artists pay for promotion to reach their own audience</li>
+              <li>Revenue breakdowns hidden in opaque dashboards</li>
             </ul>
           </div>
           <div className="lp-hype-col lp-hype-col--good">
             <p className="lp-hype-col-label">iHYPE</p>
             <ul>
-              <li>A Hype is logged only when a fan finishes a track</li>
-              <li>Or explicitly backs an artist they believe in</li>
-              <li>Hype charts surface rising artists, not promoted ones</li>
-              <li>Zero pay-to-play. No algorithmic shortcuts for sale</li>
+              <li>A Hype is logged only when a fan genuinely listens</li>
+              <li>Charts surface rising artists — no promoted slots</li>
+              <li>0% ticket fees, every dollar visible to everyone</li>
+              <li>No pay-to-play, no algorithmic shortcuts for sale</li>
+              <li>Every split, payout, and referral shown in plain numbers</li>
             </ul>
           </div>
-        </div>
-      </section>
-
-      {/* Role picker */}
-      <section className="lp-roles">
-        <p className="lp-section-eyebrow">WHO IS THIS FOR</p>
-        <h2 className="lp-section-head">Built for every part of the scene</h2>
-        <p className="lp-section-sub">One account, multiple roles. Start with the one that fits today.</p>
-        <div className="lp-role-grid lp-role-grid--v2">
-          {ROLES.map((r) => (
-            <Link
-              key={r.k}
-              href={`/register?role=${r.k}`}
-              className="lp-role-card lp-role-card--v2"
-              style={{ '--role-c': r.c } as React.CSSProperties}
-            >
-              <span className="lp-role-icon" style={{ color: r.c }}>{r.icon}</span>
-              <strong className="lp-role-label">{r.label}</strong>
-              <span className="lp-role-sub lp-role-sub--v2">{r.sub}</span>
-              <span className="lp-role-cta" style={{ color: r.c }}>{r.cta} →</span>
-            </Link>
-          ))}
         </div>
       </section>
 
