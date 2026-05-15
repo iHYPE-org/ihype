@@ -164,6 +164,8 @@ export function RegisterScreen({ initialRole = 'FAN' }: { initialRole?: RoleOpti
   const router = useRouter();
   const [role, setRole] = useState<RoleOption>(initialRole);
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [acceptedAge, setAcceptedAge] = useState(false);
   const [acceptedPolicy, setAcceptedPolicy] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
@@ -184,6 +186,8 @@ export function RegisterScreen({ initialRole = 'FAN' }: { initialRole?: RoleOpti
       // Step 1: create account
       const result = await postJson<{ id: string }>('/api/register', {
         name,
+        email: email.trim() || undefined,
+        phone: phone.trim() || undefined,
         role,
         isThirteenOrOlder: acceptedAge,
         acceptedArtistUploadPolicy: needsUploadPolicy ? acceptedPolicy : true,
@@ -260,6 +264,30 @@ export function RegisterScreen({ initialRole = 'FAN' }: { initialRole?: RoleOpti
               required={needsPublicName}
               type="text"
               value={name}
+            />
+          </label>
+
+          <div className="field-group-label">Recovery options <span className="field-group-optional">— optional, add either to recover your account later</span></div>
+
+          <label className="field">
+            <span>Email</span>
+            <input
+              autoComplete="email"
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="Optional — for account recovery"
+              type="email"
+              value={email}
+            />
+          </label>
+
+          <label className="field">
+            <span>Phone</span>
+            <input
+              autoComplete="tel"
+              onChange={(event) => setPhone(event.target.value)}
+              placeholder="Optional — for account recovery"
+              type="tel"
+              value={phone}
             />
           </label>
 

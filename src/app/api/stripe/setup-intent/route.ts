@@ -35,7 +35,7 @@ export async function POST() {
 
   const customerId = await getOrCreateStripeCustomer({
     userId: user.id,
-    email: user.email,
+    email: user.email ?? '',
     name: user.name,
     existingCustomerId: user.stripeCustomerId
   });

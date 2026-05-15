@@ -12779,6 +12779,24 @@ html.high-contrast p {
   gap: 0.95rem;
 }
 
+.auth-signal-card .field-group-label {
+  color: #8995b5;
+  font-family: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-top: 0.3rem;
+}
+
+.auth-signal-card .field-group-optional {
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 0.7rem;
+  opacity: 0.7;
+}
+
 .auth-signal-card .field span,
 .auth-signal-card .role-choice-grid legend {
   color: #8995b5;

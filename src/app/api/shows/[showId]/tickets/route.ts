@@ -281,7 +281,7 @@ export async function POST(
           showId: show.id,
           buyerUserId: user.id,
           buyerName: user.name?.trim() || user.username,
-          buyerEmail: user.email.trim().toLowerCase(),
+          buyerEmail: user.email?.trim().toLowerCase() ?? '',
           quantity: body.quantity,
           status: captureNow ? TicketOrderStatus.CAPTURED : TicketOrderStatus.RESERVED,
           paymentTokenRef: user.storedPaymentTokenRef,
@@ -357,7 +357,7 @@ export async function POST(
     if (stripeActive && body.stripePaymentMethodId) {
       const customerId = await getOrCreateStripeCustomer({
         userId: user.id,
-        email: user.email,
+        email: user.email ?? '',
         name: user.name,
         existingCustomerId: user.stripeCustomerId
       });

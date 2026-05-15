@@ -16,6 +16,7 @@ import { slugify } from '@/lib/utils';
 const schema = z.object({
   name: z.string().trim().min(2).optional(),
   email: z.string().email().optional(),
+  phone: z.string().trim().max(30).optional(),
   username: z.string().min(3).max(30).optional(),
   password: z
     .string()
@@ -170,6 +171,7 @@ export async function POST(request: Request) {
     const body = schema.parse(rawBody);
     const trimmedName = body.name?.trim() ?? '';
     const normalizedEmail = body.email ? body.email.toLowerCase() : null;
+    const normalizedPhone = body.phone ? body.phone.replace(/\s+/g, '').toLowerCase() : null;
 
     // Auto-generate username from name or a random string if not provided
     let normalizedUsername: string;
@@ -234,8 +236,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Name is required for this account type.' }, { status: 400 });
     }
 
-    const orConditions: Array<{ email: string } | { username: string }> = [{ username: normalizedUsername }];
+    const orConditions: Array<{ email: string } | { phone: string } | { username: string }> = [{ username: normalizedUsername }];
     if (normalizedEmail) orConditions.push({ email: normalizedEmail });
+    if (normalizedPhone) orConditions.push({ phone: normalizedPhone });
 
     const existing = await db.user.findFirst({ where: { OR: orConditions } });
 
@@ -244,7 +247,9 @@ export async function POST(request: Request) {
         {
           error:
             normalizedEmail && existing.email === normalizedEmail
-              ? 'Email already exists'
+              ? 'An account with that email already exists'
+              : normalizedPhone && existing.phone === normalizedPhone
+              ? 'An account with that phone number already exists'
               : 'Username is already taken'
         },
         { status: 409 }
@@ -262,6 +267,7 @@ export async function POST(request: Request) {
         name: body.role === 'FAN' ? normalizedUsername : trimmedName,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         email: normalizedEmail as any,
+        phone: normalizedPhone,
         username: normalizedUsername || `user${Math.random().toString(36).slice(2, 8)}`,
         passwordHash,
         isThirteenOrOlder: body.isThirteenOrOlder,

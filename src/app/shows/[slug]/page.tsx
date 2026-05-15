@@ -490,7 +490,7 @@ export default async function ShowDetailPage({
               currentFan?.role === 'FAN'
                 ? {
                     name: currentFan.name,
-                    email: currentFan.email,
+                    email: currentFan.email ?? '',
                     hasStoredPaymentToken: Boolean(currentFan.storedPaymentTokenRef),
                     storedPaymentTokenBrand: currentFan.storedPaymentTokenBrand,
                     storedPaymentTokenLast4: currentFan.storedPaymentTokenLast4

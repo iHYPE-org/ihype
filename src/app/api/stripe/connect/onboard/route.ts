@@ -65,7 +65,7 @@ export async function POST(request: Request) {
 
   if (!connectAccountId) {
     connectAccountId = await createStripeConnectAccount({
-      email: profile.owner.email,
+      email: profile.owner.email ?? '',
       profileId: profile.id,
       profileType: profile.type
     });

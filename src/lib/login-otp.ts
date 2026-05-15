@@ -53,7 +53,7 @@ export async function createLoginOtpChallenge({
     }
   });
 
-  await sendLoginOtpEmail({ email: user.email, name: user.name, otp });
+  await sendLoginOtpEmail({ email: user.email ?? '', name: user.name, otp });
 
   return {
     challengeId: challengeToken,
