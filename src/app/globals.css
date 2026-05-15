@@ -14197,3 +14197,15 @@ html.high-contrast p {
   .wb-topbar { padding: 0 12px !important; gap: 10px !important; }
   .wb-search { min-width: 160px !important; }
 }
+
+/* ── Skeleton / shimmer loader ───────────────────────────────── */
+.wb-skeleton {
+  background: linear-gradient(90deg, var(--wb-bg-2) 25%, var(--wb-line) 50%, var(--wb-bg-2) 75%);
+  background-size: 200% 100%;
+  animation: wb-shimmer 1.5s infinite;
+  border-radius: 6px;
+}
+@keyframes wb-shimmer {
+  0%   { background-position: 200% 0 }
+  100% { background-position: -200% 0 }
+}

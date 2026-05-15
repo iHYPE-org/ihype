@@ -87,6 +87,7 @@ export const authConfig: NextAuthConfig = {
     async jwt({ token, user }) {
       if (user) {
         token.role = (user as { role?: string }).role;
+        token.emailVerified = (user as { emailVerified?: Date | null }).emailVerified ?? null;
       }
       return token;
     },
@@ -94,8 +95,16 @@ export const authConfig: NextAuthConfig = {
       if (session.user) {
         session.user.id = token.sub ?? '';
         session.user.role = typeof token.role === 'string' ? token.role : 'FAN';
+        (session.user as { emailVerified?: Date | null }).emailVerified =
+          token.emailVerified ? new Date(token.emailVerified as string) : null;
       }
       return session;
+    }
+  },
+  events: {
+    async signIn({ user }) {
+      // emailVerified enforcement is handled at the page level via /verify-email
+      void user;
     }
   },
   providers: []
