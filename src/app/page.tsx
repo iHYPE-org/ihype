@@ -172,7 +172,15 @@ export default async function MarketingPage() {
                 <p className="lp-how-body">{h.body}</p>
               </div>
             </div>
-          ))}
+            <div className="lp-mission-stat">
+              <span className="lp-mission-stat-n" style={{ color: '#22e5d4' }}>0</span>
+              <span className="lp-mission-stat-l">paid placements or promoted slots</span>
+            </div>
+            <div className="lp-mission-stat">
+              <span className="lp-mission-stat-n" style={{ color: '#b983ff' }}>∞</span>
+              <span className="lp-mission-stat-l">free storage for your music</span>
+            </div>
+          </div>
         </div>
       </section>
 
