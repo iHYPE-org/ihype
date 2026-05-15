@@ -21,7 +21,7 @@ type VerificationProfile = {
   hypeCount: number;
   owner: {
     id: string;
-    email: string;
+    email: string | null;
     name: string | null;
     username: string;
     createdAt: Date | string;
