@@ -114,6 +114,8 @@ model User {
   favoriteMedia           FanFavoriteMedia[]
   auditLogs               AuditLog[]
   contentReports          ContentReport[]
+  seeds                   Seed[]
+  pageLayout              String[]  @default([])
 }
 
 model Profile {
@@ -644,6 +646,17 @@ model AdminAuditLog {
   @@index([actorId])
   @@index([targetId])
   @@index([createdAt])
+}
+
+model Seed {
+  id          String   @id @default(cuid())
+  userId      String
+  mediaId     String
+  action      String   // "save" | "skip" | "hype"
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model ProcessedWebhookEvent {

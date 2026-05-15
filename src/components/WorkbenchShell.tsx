@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useCallback, useRef, createContext, useContext, memo } from 'react';
 import { useMediaPlayer, type MediaTrack } from '@/components/GlobalMediaPlayer';
 import { SeedsSwipeStack, type SeedsSwipeStackSeed, type SeedsSwipeStackTrack } from '@/components/SeedsSwipeStack';
+import { HypeHeatmap, type HypeHeatmapCity, type HypeHeatmapVenuePing } from '@/components/HypeHeatmap';
+import { RevenueSplitVisualizer, type RevenueSplitTrack, type RevenueSplitProjection } from '@/components/RevenueSplitVisualizer';
 
 // ── Drag context ───────────────────────────────────────────────
 const DragTrackCtx = createContext<{
@@ -172,6 +174,7 @@ export type WorkbenchData = {
   hypedToday: number;
   showsTonight: number;
   isVerified?: boolean;
+  lifeStats?: { totalHype: number; totalEarnings: number; songsPlayed: number; eventsAttended: number };
 };
 
 // ── Default prefs ──────────────────────────────────────────────
@@ -392,6 +395,11 @@ function WbSidebar({ view, setView, initials, accent, activeProfileTypes, mobile
           </SidebarBtn>
         )}
       </div>
+      {!isArtist && !isVenue && (
+        <SidebarBtn active={false} onClick={() => window.location.href = '/register'} label="Register as Artist/Venue" accent="#22e5d4">
+          <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        </SidebarBtn>
+      )}
       <div className="wb-sb-foot">
         <SidebarBtn active={view === 'settings'} onClick={() => setView('settings')} label="Settings" accent="rgba(255,255,255,.4)">
           <IcSettings s={18} />
@@ -447,6 +455,15 @@ function WbTopbar({ view, data, onHamburger, setView }: { view: View; data: Work
   const { playTrack } = useMediaPlayer();
 
   useEffect(() => {
+    const poll = () => fetch('/api/stats/live').then(r => r.ok ? r.json() : null).then(d => {
+      if (!d) return;
+      // update is handled by parent re-render in future; for now we just log
+    }).catch(() => {});
+    const id = setInterval(poll, 30000);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
     if (debRef.current) clearTimeout(debRef.current);
     if (!q.trim()) { setResults([]); setOpen(false); return; }
     debRef.current = setTimeout(async () => {
@@ -489,8 +506,9 @@ function WbTopbar({ view, data, onHamburger, setView }: { view: View; data: Work
   function handleSelect(r: SearchHit) {
     if (r.type === 'song') {
       playTrack({ id: r.id, title: r.name, artistName: r.subtitle.replace(/^by /, '').split(' / ')[0], url: `/api/media/${r.id}`, mediaId: r.id, artistProfileSlug: r.slug ?? null });
-    } else if (r.type === 'show') {
-      setView('tickets');
+    } else {
+      const href = getHref(r);
+      if (href) { window.location.href = href; return; }
     }
     setOpen(false); setQ('');
   }
@@ -818,10 +836,10 @@ function ViewHome({ data, prefs, setView }: { data: WorkbenchData; prefs: Prefs;
       {/* Lifetime heuristics */}
       <div className="wb-stat-row" style={{ marginTop: 14 }}>
         {[
-          { l: 'TOTAL HYPE GIVEN', v: '3,841',  d: 'all time',           c: '#ff3e9a' },
-          { l: 'TOTAL EARNINGS',   v: '$9,240',  d: 'lifetime payouts',   c: '#ffb84a' },
-          { l: 'SONGS PLAYED',     v: '12,447',  d: 'all time listens',   c: '#b983ff' },
-          { l: 'EVENTS ATTENDED',  v: '28',       d: 'past tickets',       c: '#22e5d4' },
+          { l: 'TOTAL HYPE GIVEN', v: (data.lifeStats?.totalHype ?? 3841).toLocaleString(),   d: 'all time',          c: '#ff3e9a' },
+          { l: 'TOTAL EARNINGS',   v: `$${(data.lifeStats?.totalEarnings ?? 9240).toLocaleString()}`, d: 'lifetime payouts', c: '#ffb84a' },
+          { l: 'SONGS PLAYED',     v: (data.lifeStats?.songsPlayed ?? 12447).toLocaleString(), d: 'all time listens',  c: '#b983ff' },
+          { l: 'EVENTS ATTENDED',  v: String(data.lifeStats?.eventsAttended ?? 28),            d: 'past tickets',      c: '#22e5d4' },
         ].map(s => (
           <div key={s.l} className="wb-stat-card">
             <div className="wb-stat-l">{s.l}</div>
@@ -982,7 +1000,7 @@ const ViewTicketing = memo(function ViewTicketing({ data, activeProfileTypes }: 
   const canCreateEvents = activeProfileTypes.some(r => r === 'ARTIST' || r === 'VENUE');
   const isDJ = activeProfileTypes.includes('DJ');
   const isVenue = activeProfileTypes.includes('VENUE');
-  const [tab, setTab] = useState<'browse' | 'mine' | 'selling' | 'scan' | 'create' | 'referral' | 'venue'>('browse');
+  const [tab, setTab] = useState<'browse' | 'recommended' | 'mine' | 'selling' | 'scan' | 'create' | 'referral' | 'venue'>('browse');
   const upcoming = data.tickets[0];
   const [showTransfer, setShowTransfer] = useState(false);
   const [transferEmail, setTransferEmail] = useState('');
@@ -1027,6 +1045,7 @@ const ViewTicketing = memo(function ViewTicketing({ data, activeProfileTypes }: 
         </div>
         <div className="wb-tabs">
           <button onClick={() => setTab('browse')} className={`wb-tab${tab === 'browse' ? ' wb-tab-active' : ''}`}>Browse</button>
+          <button onClick={() => setTab('recommended')} className={`wb-tab${tab === 'recommended' ? ' wb-tab-active' : ''}`}>Recommended</button>
           <button onClick={() => setTab('mine')} className={`wb-tab${tab === 'mine' ? ' wb-tab-active' : ''}`}>My tickets</button>
           <button onClick={() => setTab('selling')} className={`wb-tab${tab === 'selling' ? ' wb-tab-active' : ''}`}>Selling</button>
           <button onClick={() => setTab('scan')} className={`wb-tab${tab === 'scan' ? ' wb-tab-active' : ''}`}>Scan / verify</button>
@@ -1041,6 +1060,28 @@ const ViewTicketing = memo(function ViewTicketing({ data, activeProfileTypes }: 
           )}
         </div>
       </div>
+
+      {tab === 'recommended' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.14em', color: 'var(--wb-ink-3)', marginBottom: 4 }}>BASED ON YOUR HYPES + LOCATION</div>
+          {[
+            { id: 'r1', name: 'Maya Reyes', venue: 'Empty Bottle', date: 'Thu Jun 18', time: '9PM', price: 18, hype: 412, reason: 'You hyped this artist 3× this week' },
+            { id: 'r2', name: 'Cobalt Hour', venue: 'Sleeping Village', date: 'Sat Jun 20', time: '8PM', price: 15, hype: 287, reason: 'Fans like you are going' },
+            { id: 'r3', name: 'Vela', venue: 'Subterranean', date: 'Tue Jun 23', time: '8PM', price: 12, hype: 156, reason: 'Trending in Chicago' },
+          ].map(s => (
+            <div key={s.id} className="wb-shows-row">
+              <div style={{ width: 56, height: 56, borderRadius: 6, background: 'linear-gradient(135deg, var(--wb-accent), #ff3e9a80)', flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 16 }}>{s.name} <span style={{ color: 'var(--wb-ink-3)', fontWeight: 500 }}>· {s.venue}</span></div>
+                <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--wb-ink-2)', marginTop: 4 }}>{s.date} · {s.time} · ♡ {s.hype}</div>
+                <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: '#22e5d4', marginTop: 3 }}>{s.reason}</div>
+              </div>
+              <div style={{ fontFamily: 'var(--f-d)', fontSize: 20, fontWeight: 700 }}>${s.price}</div>
+              <button className="wb-btn-prime">Get ticket</button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {tab === 'browse' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
@@ -1289,6 +1330,8 @@ const ViewRadioStudio = memo(function ViewRadioStudio() {
   const [streamDesc, setStreamDesc] = useState('');
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'loading' | 'success'>('idle');
   const [errMsg, setErrMsg] = useState('');
+  const [splitMode, setSplitMode] = useState<'co-host' | 'referrer'>('referrer');
+  const [splitReferrer, setSplitReferrer] = useState('Anyone who shares your show');
 
   const field: React.CSSProperties = { width: '100%', padding: '9px 12px', background: 'var(--wb-bg-3)', border: '1px solid var(--wb-line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--wb-ink)', outline: 'none', boxSizing: 'border-box' as const };
   const lbl: React.CSSProperties = { fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.12em', color: 'var(--wb-ink-3)', marginBottom: 6, display: 'block' };
@@ -1346,10 +1389,17 @@ const ViewRadioStudio = memo(function ViewRadioStudio() {
               <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 18, color: 'var(--wb-ink)' }}>{showName || 'Your show name'}</div>
               <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--wb-ink-3)', marginTop: 4 }}>{schedule || 'Schedule TBD'}</div>
             </div>
+            <RevenueSplitVisualizer
+              tracks={[]}
+              hostName="You"
+              referrerLabel={splitReferrer}
+              onReferrerLabelChange={setSplitReferrer}
+              mode={splitMode}
+              onModeChange={setSplitMode}
+              projection={{ totalDollars: 480, windowLabel: 'next broadcast', listens: 412 }}
+              onSchedule={handleSubmit}
+            />
             {errMsg && <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: '#ff5029', padding: '8px 12px', border: '1px solid rgba(255,80,41,.3)', borderRadius: 6 }}>{errMsg}</div>}
-            <button type="button" onClick={handleSubmit} disabled={submitStatus === 'loading'} className="wb-btn-prime" style={{ width: '100%', padding: '12px', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: submitStatus === 'loading' ? 0.6 : 1 }}>
-              <IcBolt s={13} /> {submitStatus === 'loading' ? 'Scheduling…' : 'Schedule show →'}
-            </button>
           </div>
         </div>
       )}
@@ -1945,27 +1995,7 @@ function ViewArtist({ data }: { data: WorkbenchData }) {
       )}
 
       {tab === 'touring' && (
-        <div className="wb-panel" style={{ padding: '20px 24px' }}>
-          <div className="wb-eyebrow" style={{ color: '#ffb84a', marginBottom: 12 }}>● TOUR DEMAND · BASED ON HYPE MAP</div>
-          {[
-            { city: 'Chicago, IL',   hype: 1247, venues: 3, signal: 'urgent' as const },
-            { city: 'Brooklyn, NY',  hype: 892,  venues: 4, signal: 'urgent' as const },
-            { city: 'Austin, TX',    hype: 602,  venues: 2, signal: 'warm' as const },
-            { city: 'Los Angeles',   hype: 441,  venues: 1, signal: 'new' as const },
-          ].map(c => {
-            const sc = c.signal === 'urgent' ? '#ff5029' : c.signal === 'warm' ? '#ffb84a' : '#22e5d4';
-            return (
-              <div key={c.city} className="wb-show-row">
-                <div className="wb-show-stripe" style={{ background: sc }} />
-                <div style={{ flex: 1 }}>
-                  <div className="wb-show-name">{c.city}</div>
-                  <div className="wb-show-meta">{c.venues} venues asking · {c.hype.toLocaleString()} hype</div>
-                </div>
-                <div style={{ padding: '3px 10px', border: `1px solid ${sc}40`, borderRadius: 99, fontFamily: 'var(--f-m)', fontSize: 9, letterSpacing: '.1em', color: sc, textTransform: 'uppercase' }}>{c.signal}</div>
-              </div>
-            );
-          })}
-        </div>
+        <HypeHeatmap cities={[]} venuePings={[]} suggestedRoute="CHI → BKN → ATX" />
       )}
 
       {tab === 'merch' && (

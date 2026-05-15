@@ -14178,3 +14178,22 @@ html.high-contrast p {
     display: flex; align-items: center; justify-content: center;
   }
 }
+
+/* ── Workbench mobile responsive ─────────────────────────────── */
+@media (max-width: 900px) {
+  .wb-stat-row { grid-template-columns: 1fr 1fr !important; }
+  .wb-tracks-grid { grid-template-columns: repeat(3, 1fr) !important; }
+  .wb-col-row { flex-direction: column !important; }
+  .wb-settings-grid { grid-template-columns: 1fr !important; }
+  .wb-radio-body { grid-template-columns: 1fr !important; }
+  .wb-pin-grid { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 600px) {
+  .wb-stat-row { grid-template-columns: 1fr !important; }
+  .wb-tracks-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .wb-view-pad { padding: 16px 16px 24px !important; }
+  .wb-greet { flex-direction: column !important; gap: 12px !important; }
+  .wb-page-title { font-size: 28px !important; }
+  .wb-topbar { padding: 0 12px !important; gap: 10px !important; }
+  .wb-search { min-width: 160px !important; }
+}
