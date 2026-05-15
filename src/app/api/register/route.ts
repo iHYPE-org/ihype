@@ -14,7 +14,7 @@ import { getUsernameValidationMessage, isValidUsername, normalizeUsername } from
 import { slugify } from '@/lib/utils';
 
 const schema = z.object({
-  name: z.string().trim().min(2).optional(),
+  name: z.preprocess(v => (typeof v === 'string' && v.trim() === '' ? undefined : v), z.string().trim().min(2).optional()),
   email: z.string().email().optional(),
   username: z.string().min(3).max(30).optional(),
   password: z
