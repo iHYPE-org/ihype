@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { FormEvent, ReactNode } from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { startAuthentication, startRegistration } from '@simplewebauthn/browser';
 
 type RoleOption = 'FAN' | 'ARTIST' | 'DJ' | 'VENUE';
 
@@ -95,66 +96,29 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
 }
 
 export function LoginScreen({
-  initialIdentifier = '',
   justRegistered = false
 }: {
-  initialIdentifier?: string;
   justRegistered?: boolean;
 }) {
   const router = useRouter();
-  const [identifier, setIdentifier] = useState(initialIdentifier);
-  const [password, setPassword] = useState('');
-  const [challengeId, setChallengeId] = useState('');
-  const [otp, setOtp] = useState('');
-  const [maskedEmail, setMaskedEmail] = useState('');
-  const [message, setMessage] = useState(
-    justRegistered ? 'Account created. Sign in with your email/username and password to continue.' : ''
+  const [message] = useState(
+    justRegistered ? 'Account created. Add a passkey in Settings, then sign in here.' : ''
   );
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [website, setWebsite] = useState('');
-  const isCodeStep = Boolean(challengeId);
 
-  async function sendCode(statusMessage?: string) {
-    setError('');
-    setMessage(statusMessage ?? '');
-    setIsSubmitting(true);
-
-    try {
-      const payload = await postJson<{ challengeId: string; email: string }>('/api/auth/otp/request', {
-        identifier,
-        password,
-        website
-      });
-      setChallengeId(payload.challengeId);
-      setMaskedEmail(payload.email);
-      setMessage('We sent a 6-digit sign-in code to your email. It expires in 10 minutes.');
-    } catch (err) {
-      setError(getErrorMessage(err, 'Could not request a sign-in code.'));
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  async function requestCode(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    await sendCode();
-  }
-
-  async function verifyCode(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function signInWithPasskey() {
     setError('');
     setIsSubmitting(true);
-
     try {
-      const payload = await postJson<{ redirect?: string }>('/api/auth/otp/signin', {
-        challengeId,
-        otp
-      });
+      const optRes = await fetch('/api/auth/passkey/auth');
+      const options = await optRes.json();
+      const assertion = await startAuthentication(options);
+      const payload = await postJson<{ redirect?: string }>('/api/auth/passkey/auth', assertion);
       router.push(payload.redirect || '/auth/landing');
       router.refresh();
     } catch (err) {
-      setError(getErrorMessage(err, 'Could not verify that code.'));
+      setError(getErrorMessage(err, 'Passkey sign-in failed. Please try again.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -162,108 +126,32 @@ export function LoginScreen({
 
   return (
     <AuthSignalShell
-      badge="Secure sign in"
-      cardSubtitle={
-        isCodeStep
-          ? `Use the 6-digit code sent to ${maskedEmail || 'your email'}.`
-          : 'Use your email or username. iHYPE sends a short-lived email code before opening your workspace.'
-      }
-      cardTitle={isCodeStep ? 'Enter your code' : 'Sign in to iHYPE'}
-      description="Access your role lane without exposing account state. Codes are short-lived, email-first, and built for fast workspace entry."
-      eyebrow="Secure access"
-      highlight={isCodeStep ? 'Verify the signal.' : 'Open your lane.'}
+      badge="Passkey sign-in"
+      cardSubtitle="Use Face ID, Touch ID, or your device PIN — no password, no email code."
+      cardTitle="Sign in to iHYPE"
+      description="Fast, phishing-resistant sign-in with your device's built-in biometrics. No password to remember."
+      eyebrow="Passkey sign-in"
+      highlight="One tap."
       signals={[
-        { label: 'Step 1', value: 'Password', detail: 'Confirms your account' },
-        { label: 'Step 2', value: 'Code', detail: 'Short-lived inbox check' },
-        { label: 'Step 3', value: 'Workspace', detail: 'Role-aware redirect' }
+        { label: 'No password', value: 'Passkey', detail: 'Device biometrics' },
+        { label: 'No inbox', value: 'Instant', detail: 'No email code needed' },
+        { label: 'Phishing-safe', value: 'FIDO2', detail: 'Bound to this site' }
       ]}
-      title={isCodeStep ? 'Check your inbox.' : 'Sign in.'}
+      title="Sign in."
     >
-      {!isCodeStep ? (
-        <form className="form" onSubmit={requestCode}>
-          <label className="field">
-            <span>Email or username</span>
-            <input
-              autoComplete="username"
-              onChange={(event) => setIdentifier(event.target.value)}
-              required
-              type="text"
-              value={identifier}
-            />
-          </label>
-          <label className="field">
-            <span>Password</span>
-            <input
-              autoComplete="current-password"
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              type="password"
-              value={password}
-            />
-          </label>
-          <button className="button" disabled={isSubmitting} type="submit">
-            {isSubmitting ? 'Sending code...' : 'Send sign-in code'}
-          </button>
-          <label className="bot-field" aria-hidden="true">
-            <span>Website</span>
-            <input
-              autoComplete="off"
-              onChange={(event) => setWebsite(event.target.value)}
-              tabIndex={-1}
-              type="text"
-              value={website}
-            />
-          </label>
-        </form>
-      ) : (
-        <form className="form" onSubmit={verifyCode}>
-          <label className="field">
-            <span>6-digit code</span>
-            <input
-              autoComplete="one-time-code"
-              inputMode="numeric"
-              maxLength={6}
-              onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))}
-              pattern="[0-9]{6}"
-              required
-              type="text"
-              value={otp}
-            />
-          </label>
-          <button className="button" disabled={isSubmitting || otp.length !== 6} type="submit">
-            {isSubmitting ? 'Verifying...' : 'Open my workspace'}
-          </button>
-          <div className="auth-inline-actions">
-            <button
-              className="text-link"
-              disabled={isSubmitting}
-              onClick={() => sendCode('Sending a fresh code to your email...')}
-              type="button"
-            >
-              Resend code
-            </button>
-            <button
-              className="text-link"
-              onClick={() => {
-                setChallengeId('');
-                setOtp('');
-                setMessage('');
-              }}
-              type="button"
-            >
-              Use a different login
-            </button>
-          </div>
-        </form>
-      )}
+      <button
+        className="button"
+        disabled={isSubmitting}
+        onClick={signInWithPasskey}
+        type="button"
+      >
+        {isSubmitting ? 'Checking passkey...' : 'Sign in with passkey'}
+      </button>
 
       {message ? <p className="status-note">{message}</p> : null}
       {error ? <p className="status-note status-note-error">{error}</p> : null}
 
       <div className="auth-route-links">
-        <Link className="text-link" href="/forgot">
-          Reset password
-        </Link>
         <Link className="text-link" href="/register">
           Join free
         </Link>
@@ -278,7 +166,6 @@ export function RegisterScreen({ initialRole = 'FAN' }: { initialRole?: RoleOpti
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const [city, setCity] = useState('');
   const [stateRegion, setStateRegion] = useState('');
   const [country, setCountry] = useState('');
@@ -306,7 +193,6 @@ export function RegisterScreen({ initialRole = 'FAN' }: { initialRole?: RoleOpti
         name,
         email,
         username,
-        password,
         role,
         isThirteenOrOlder: acceptedAge,
         acceptedArtistUploadPolicy: needsUploadPolicy ? acceptedPolicy : true,
@@ -379,20 +265,6 @@ export function RegisterScreen({ initialRole = 'FAN' }: { initialRole?: RoleOpti
               <input autoComplete="username" onChange={(event) => setUsername(event.target.value)} required type="text" value={username} />
             </label>
           </div>
-
-          <label className="field">
-            <span>Password</span>
-            <input
-              aria-describedby="register-password-help"
-              autoComplete="new-password"
-              minLength={8}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              type="password"
-              value={password}
-            />
-            <small id="register-password-help">Use at least 8 characters with a letter and a number.</small>
-          </label>
 
           <label className="field">
             <span>Beta invite code</span>
@@ -626,5 +498,111 @@ export function ForgotPasswordScreen() {
         </Link>
       </div>
     </AuthSignalShell>
+  );
+}
+
+type PasskeyEntry = {
+  id: string;
+  deviceType: string;
+  createdAt: string;
+  backedUp: boolean;
+};
+
+export function PasskeyManager() {
+  const [status, setStatus] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [passkeys, setPasskeys] = useState<PasskeyEntry[] | null>(null);
+  const [loadingList, setLoadingList] = useState(true);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+
+  async function loadPasskeys() {
+    setLoadingList(true);
+    try {
+      const res = await fetch('/api/auth/passkey/list');
+      const data = await res.json();
+      setPasskeys(data.passkeys ?? []);
+    } catch {
+      // silently ignore list errors
+    } finally {
+      setLoadingList(false);
+    }
+  }
+
+  // Load on mount
+  useEffect(() => {
+    void loadPasskeys();
+  }, []);
+
+  async function registerPasskey() {
+    setBusy(true);
+    setStatus('');
+    setError('');
+    try {
+      const optRes = await fetch('/api/auth/passkey/register');
+      const options = await optRes.json();
+      const attestation = await startRegistration(options);
+      await postJson('/api/auth/passkey/register', attestation);
+      setStatus('Passkey added. You can now sign in without a password.');
+      void loadPasskeys();
+    } catch (err) {
+      setError(getErrorMessage(err, 'Could not register passkey.'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removePasskey(id: string) {
+    setRemovingId(id);
+    setError('');
+    try {
+      const res = await fetch(`/api/auth/passkey/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error(typeof payload.error === 'string' ? payload.error : 'Could not remove passkey.');
+      }
+      void loadPasskeys();
+    } catch (err) {
+      setError(getErrorMessage(err, 'Could not remove passkey.'));
+    } finally {
+      setRemovingId(null);
+    }
+  }
+
+  return (
+    <div>
+      <button className="button" disabled={busy} onClick={registerPasskey} type="button">
+        {busy ? 'Registering...' : 'Add a passkey'}
+      </button>
+      {status ? <p className="status-note" style={{ marginTop: 8 }}>{status}</p> : null}
+      {error ? <p className="status-note status-note-error" style={{ marginTop: 8 }}>{error}</p> : null}
+
+      {!loadingList && passkeys && passkeys.length > 0 ? (
+        <div style={{ marginTop: 16 }}>
+          <p style={{ fontWeight: 600, marginBottom: 8 }}>Registered passkeys</p>
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+            {passkeys.map((pk) => (
+              <li key={pk.id} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                <span style={{ flex: 1 }}>
+                  <span style={{ textTransform: 'capitalize' }}>{pk.deviceType.replace(/-/g, ' ')}</span>
+                  {pk.backedUp ? ' · synced' : ' · single device'}
+                  {' · '}
+                  {new Date(pk.createdAt).toLocaleDateString()}
+                </span>
+                <button
+                  className="button"
+                  disabled={removingId === pk.id}
+                  onClick={() => void removePasskey(pk.id)}
+                  style={{ padding: '4px 12px', fontSize: '0.85em' }}
+                  type="button"
+                >
+                  {removingId === pk.id ? 'Removing...' : 'Remove'}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </div>
   );
 }

@@ -23,6 +23,8 @@ export async function GET() {
     seeds: media.map(m => ({
       id: m.id,
       trackId: m.id,
+      title: m.title,
+      artistName: m.profile?.name ?? 'Unknown Artist',
       reason: 'Recommended based on your hypes',
     })),
   });

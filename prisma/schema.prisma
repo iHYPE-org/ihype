@@ -116,6 +116,7 @@ model User {
   contentReports          ContentReport[]
   seeds                   Seed[]
   pageLayout              String[]  @default([])
+  passkeys                Passkey[]
 }
 
 model Profile {
@@ -516,6 +517,20 @@ model PasswordResetCode {
 
   @@index([email, expiresAt])
   @@index([userId, expiresAt])
+}
+
+model Passkey {
+  id                   String   @id @default(cuid())
+  userId               String
+  credentialId         String   @unique
+  publicKey            Bytes
+  counter              BigInt   @default(0)
+  deviceType           String
+  backedUp             Boolean  @default(false)
+  transports           String?
+  createdAt            DateTime @default(now())
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
 }
 
 model MfaChallenge {

@@ -14,7 +14,6 @@ export default async function LoginPage({
 
   return (
     <LoginScreen
-      initialIdentifier={resolvedSearchParams.identifier ?? ''}
       justRegistered={resolvedSearchParams.registered === '1'}
     />
   );

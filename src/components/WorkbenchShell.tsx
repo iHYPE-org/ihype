@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef, createContext, useContext, memo } from 'react';
+import Image from 'next/image';
 import { useMediaPlayer, type MediaTrack } from '@/components/GlobalMediaPlayer';
 import { SeedsSwipeStack, type SeedsSwipeStackSeed, type SeedsSwipeStackTrack } from '@/components/SeedsSwipeStack';
 import { HypeHeatmap } from '@/components/HypeHeatmap';
+import { PasskeyManager } from '@/components/AuthScreens';
 import { RevenueSplitVisualizer } from '@/components/RevenueSplitVisualizer';
 
 // ── Drag context ───────────────────────────────────────────────
@@ -232,6 +234,11 @@ const IcBolt     = (p: {s?:number}) => <Ic {...p}><polygon points="13 2 3 14 12 
 const IcCheck    = (p: {s?:number}) => <Ic {...p}><polyline points="20 6 9 17 4 12"/></Ic>;
 const IcArrow    = ({ s = 14 }: {s?:number}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>;
 const IcDot      = ({ c = 'currentColor', s = 8 }: {c?:string; s?:number}) => <svg width={s} height={s} viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill={c}/></svg>;
+
+// ── Skeleton loader ────────────────────────────────────────────
+function WbSkeleton({ width, height, style }: { width?: number | string; height?: number | string; style?: React.CSSProperties }) {
+  return <div className="wb-skeleton" style={{ width: width ?? '100%', height: height ?? 16, ...style }} />;
+}
 
 type View = 'home' | 'discover' | 'seeds' | 'tickets' | 'studio' | 'artist' | 'venue' | 'settings';
 
@@ -597,7 +604,7 @@ function WbPlayerDock({ queueRailOn, onToggleQueue }: { queueRailOn: boolean; on
     <footer className="wb-dock">
       <div className="wb-dock-l">
         <div className="wb-dock-art" style={{ background: currentTrack ? 'linear-gradient(135deg, var(--wb-accent), #ff3e9a80)' : 'var(--wb-bg-3)' }}>
-          {currentTrack?.artworkUrl && <img src={currentTrack.artworkUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 6 }} />}
+          {currentTrack?.artworkUrl && <Image src={currentTrack.artworkUrl} alt="" fill sizes="44px" style={{ objectFit: 'cover', borderRadius: 6 }} />}
         </div>
         <div style={{ minWidth: 0 }}>
           <div className="wb-dock-title">{currentTrack?.title ?? 'Nothing playing'}</div>
@@ -808,6 +815,22 @@ function ViewHome({ data, prefs, setView }: { data: WorkbenchData; prefs: Prefs;
       )}
 
       {/* Hyped tracks */}
+      {prefs.panel_hyped && data.tracks.length === 0 && (
+        <section className="wb-panel" style={{ marginTop: 14 }}>
+          <div className="wb-panel-head">
+            <div className="wb-panel-title">Hyped this week</div>
+          </div>
+          <div className="wb-tracks-grid">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <WbSkeleton height={80} style={{ borderRadius: 8 }} />
+                <WbSkeleton height={12} width="80%" />
+                <WbSkeleton height={10} width="60%" />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
       {prefs.panel_hyped && data.tracks.length > 0 && (
         <section className="wb-panel" style={{ marginTop: 14 }}>
           <div className="wb-panel-head">
@@ -1815,26 +1838,48 @@ function ViewStub({ name, eyebrow, accent, sub }: { name: string; eyebrow: strin
 }
 
 // ── View: Discover ─────────────────────────────────────────────
-const DEMO_ARTISTS = [
-  { id: 'a1', name: 'Maya Reyes',    genre: 'Indie / Dream-pop', hype: 1247, location: 'Chicago, IL', c: '#ff5029', reason: 'Based on your hype history' },
-  { id: 'a2', name: 'Cobalt Hour',   genre: 'Post-rock',         hype: 892,  location: 'Chicago, IL', c: '#b983ff', reason: 'Trending in your city' },
-  { id: 'a3', name: 'Vela',          genre: 'Ambient / Folk',    hype: 602,  location: 'Detroit, MI',  c: '#22e5d4', reason: 'Fans of Cobalt Hour also hype' },
-  { id: 'a4', name: 'Saint Hex',     genre: 'Downtempo',         hype: 441,  location: 'Chicago, IL', c: '#7fb3ff', reason: 'High hype velocity this week' },
-  { id: 'a5', name: 'Juno North',    genre: 'Alt-country',       hype: 334,  location: 'Nashville, TN',c: '#ffb84a', reason: 'Artists you follow recommend' },
-  { id: 'a6', name: 'The Lowriders', genre: 'Americana',         hype: 218,  location: 'Austin, TX',   c: '#ff3e9a', reason: 'Booked at venues you frequent' },
-];
-const DEMO_VENUES = [
-  { id: 'v1', name: 'Empty Bottle',     city: 'Chicago, IL', cap: 200, genre: 'Indie / Punk', c: '#22e5d4', shows: 4 },
-  { id: 'v2', name: 'Sleeping Village', city: 'Chicago, IL', cap: 150, genre: 'Indie / Electronic', c: '#b983ff', shows: 2 },
-  { id: 'v3', name: 'Mohawk',           city: 'Austin, TX',  cap: 520, genre: 'All genres', c: '#ff5029', shows: 7 },
-];
-const DEMO_DJS = [
-  { id: 'd1', name: 'DJ Vex',    show: 'Chicago Underground', listeners: 412, c: '#ff3e9a', reason: 'Plays artists you hype' },
-  { id: 'd2', name: 'Saint Hex', show: 'After Hours',          listeners: 128, c: '#7fb3ff', reason: 'Similar taste profile' },
-];
+type DiscoverProfile = {
+  id: string;
+  slug: string;
+  name: string;
+  city?: string | null;
+  stateRegion?: string | null;
+  hypeCount: number;
+  genres: string[];
+  avatarImage?: string | null;
+};
 
-function ViewDiscover({ data }: { data: WorkbenchData }) {
+type DiscoverData = {
+  artists: DiscoverProfile[];
+  venues: DiscoverProfile[];
+  djs: DiscoverProfile[];
+};
+
+const PROFILE_COLORS = ['#ff3e9a', '#b983ff', '#22e5d4', '#ff5029', '#7fb3ff', '#ffb84a'];
+
+function profileColor(id: string): string {
+  let n = 0;
+  for (let i = 0; i < id.length; i++) n = (n + id.charCodeAt(i)) % PROFILE_COLORS.length;
+  return PROFILE_COLORS[n];
+}
+
+function ViewDiscover({ data: _data }: { data: WorkbenchData }) {
   const [tab, setTab] = useState<'artists'|'venues'|'djs'>('artists');
+  const [discoverData, setDiscoverData] = useState<DiscoverData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/discover')
+      .then(r => r.json())
+      .then((res: DiscoverData) => { setDiscoverData(res); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const artists = discoverData?.artists ?? [];
+  const venues = discoverData?.venues ?? [];
+  const djs = discoverData?.djs ?? [];
+
   return (
     <div className="wb-view-pad">
       <div className="wb-greet">
@@ -1850,61 +1895,80 @@ function ViewDiscover({ data }: { data: WorkbenchData }) {
         ))}
       </div>
 
-      {tab === 'artists' && (
+      {loading && (
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--wb-ink-3)', padding: '20px 0' }}>Loading recommendations…</div>
+      )}
+
+      {!loading && tab === 'artists' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
-          {DEMO_ARTISTS.map(a => (
-            <div key={a.id} className="wb-panel" style={{ padding: '16px 18px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                <div style={{ width: 44, height: 44, borderRadius: '50%', background: `linear-gradient(135deg, ${a.c}, ${a.c}80)`, flexShrink: 0 }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14, color: 'var(--wb-ink)' }}>{a.name}</div>
-                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--wb-ink-3)', marginTop: 2 }}>{a.genre} · {a.location}</div>
+          {artists.length === 0 && <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--wb-ink-3)' }}>No artist recommendations yet.</div>}
+          {artists.map(a => {
+            const c = profileColor(a.id);
+            const location = [a.city, a.stateRegion].filter(Boolean).join(', ');
+            return (
+              <div key={a.id} className="wb-panel" style={{ padding: '16px 18px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                  <div style={{ width: 44, height: 44, borderRadius: '50%', background: `linear-gradient(135deg, ${c}, ${c}80)`, flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14, color: 'var(--wb-ink)' }}>{a.name}</div>
+                    <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--wb-ink-3)', marginTop: 2 }}>
+                      {a.genres.slice(0, 2).join(' / ') || 'Music'}{location ? ` · ${location}` : ''}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 18, color: '#ff3e9a' }}>{a.hypeCount.toLocaleString()} <span style={{ fontFamily: 'var(--f-m)', fontSize: 10, fontWeight: 400, color: 'var(--wb-ink-3)' }}>hype</span></span>
+                  <button className="wb-btn-prime" style={{ padding: '6px 14px', fontSize: 11 }}>＋ Follow</button>
                 </div>
               </div>
-              <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--wb-ink-3)', letterSpacing: '.08em', marginBottom: 10 }}>{a.reason}</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 18, color: '#ff3e9a' }}>{a.hype.toLocaleString()} <span style={{ fontFamily: 'var(--f-m)', fontSize: 10, fontWeight: 400, color: 'var(--wb-ink-3)' }}>hype</span></span>
-                <button className="wb-btn-prime" style={{ padding: '6px 14px', fontSize: 11 }}>＋ Follow</button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {tab === 'venues' && (
+      {!loading && tab === 'venues' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {DEMO_VENUES.map(v => (
-            <div key={v.id} className="wb-show-row" style={{ background: 'var(--wb-bg-2)', border: '1px solid var(--wb-line)', borderRadius: 8, padding: '14px 16px' }}>
-              <div style={{ width: 8, height: 40, borderRadius: 3, flexShrink: 0, background: v.c }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="wb-show-name">{v.name} <span className="wb-show-venue">· {v.city}</span></div>
-                <div className="wb-show-meta">{v.genre} · cap {v.cap}</div>
+          {venues.length === 0 && <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--wb-ink-3)' }}>No venue recommendations yet.</div>}
+          {venues.map(v => {
+            const c = profileColor(v.id);
+            const location = [v.city, v.stateRegion].filter(Boolean).join(', ');
+            return (
+              <div key={v.id} className="wb-show-row" style={{ background: 'var(--wb-bg-2)', border: '1px solid var(--wb-line)', borderRadius: 8, padding: '14px 16px' }}>
+                <div style={{ width: 8, height: 40, borderRadius: 3, flexShrink: 0, background: c }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="wb-show-name">{v.name}{location ? <span className="wb-show-venue"> · {location}</span> : null}</div>
+                  <div className="wb-show-meta">{v.genres.slice(0, 2).join(' / ') || 'Venue'}</div>
+                </div>
+                <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--wb-ink-3)' }}>{v.hypeCount.toLocaleString()} hypes</div>
+                <button className="wb-btn-ghost" style={{ fontSize: 11 }}>View →</button>
               </div>
-              <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--wb-ink-3)' }}>{v.shows} upcoming shows</div>
-              <button className="wb-btn-ghost" style={{ fontSize: 11 }}>View →</button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {tab === 'djs' && (
+      {!loading && tab === 'djs' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
-          {DEMO_DJS.map(d => (
-            <div key={d.id} className="wb-panel" style={{ padding: '16px 18px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 8, background: `linear-gradient(135deg, ${d.c}, ${d.c}80)`, flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14, color: 'var(--wb-ink)' }}>{d.name}</div>
-                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--wb-ink-3)', marginTop: 2 }}>{d.show}</div>
+          {djs.length === 0 && <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--wb-ink-3)' }}>No DJ recommendations yet.</div>}
+          {djs.map(d => {
+            const c = profileColor(d.id);
+            const location = [d.city, d.stateRegion].filter(Boolean).join(', ');
+            return (
+              <div key={d.id} className="wb-panel" style={{ padding: '16px 18px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 8, background: `linear-gradient(135deg, ${c}, ${c}80)`, flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14, color: 'var(--wb-ink)' }}>{d.name}</div>
+                    <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--wb-ink-3)', marginTop: 2 }}>{location || d.genres.slice(0, 1).join('')}</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--wb-ink-2)' }}>{d.hypeCount.toLocaleString()} hypes</span>
+                  <button className="wb-btn-prime" style={{ padding: '6px 14px', fontSize: 11 }}>Tune in</button>
                 </div>
               </div>
-              <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--wb-ink-3)', marginBottom: 10 }}>{d.reason}</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--wb-ink-2)' }}>{d.listeners} listening now</span>
-                <button className="wb-btn-prime" style={{ padding: '6px 14px', fontSize: 11 }}>Tune in</button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
@@ -1913,11 +1977,38 @@ function ViewDiscover({ data }: { data: WorkbenchData }) {
 
 // ── View: Seeds ─────────────────────────────────────────────────
 function ViewSeeds({ data }: { data: WorkbenchData }) {
-  const tracks: SeedsSwipeStackTrack[] = data.tracks.map(t => ({
-    id: t.id, title: t.title, artistName: t.artistName, album: t.album,
-    color: t.color, durationLabel: t.duration, hypeCount: t.hypeCount,
-  }));
-  const seeds: SeedsSwipeStackSeed[] = [];
+  const [seeds, setSeeds] = useState<SeedsSwipeStackSeed[]>([]);
+  const [tracks, setTracks] = useState<SeedsSwipeStackTrack[]>([]);
+
+  useEffect(() => {
+    fetch('/api/discover/seeds')
+      .then(r => r.json())
+      .then((res: { seeds: Array<{ id: string; trackId: string; title?: string; artistName?: string; reason?: string }> }) => {
+        const fetchedSeeds: SeedsSwipeStackSeed[] = res.seeds.map(s => ({
+          id: s.id,
+          trackId: s.trackId,
+          reason: s.reason,
+        }));
+        const fetchedTracks: SeedsSwipeStackTrack[] = res.seeds.map(s => ({
+          id: s.trackId,
+          title: s.title ?? 'Untitled',
+          artistName: s.artistName ?? 'Unknown Artist',
+          color: '#b983ff',
+          durationLabel: '–:––',
+          hypeCount: 0,
+        }));
+        setSeeds(fetchedSeeds);
+        setTracks(fetchedTracks);
+      })
+      .catch(() => {
+        // Fall back to data.tracks if API fails
+        setTracks(data.tracks.map(t => ({
+          id: t.id, title: t.title, artistName: t.artistName, album: t.album,
+          color: t.color, durationLabel: t.duration, hypeCount: t.hypeCount,
+        })));
+      });
+  }, [data.tracks]);
+
   return (
     <SeedsSwipeStack
       seeds={seeds}
@@ -1932,6 +2023,40 @@ function ViewSeeds({ data }: { data: WorkbenchData }) {
 // ── View: Artist ────────────────────────────────────────────────
 function ViewArtist({ data }: { data: WorkbenchData }) {
   const [tab, setTab] = useState<'overview'|'touring'|'merch'|'page'>('overview');
+  const [touringCities, setTouringCities] = useState<import('@/components/HypeHeatmap').HypeHeatmapCity[]>([]);
+
+  useEffect(() => {
+    if (tab === 'touring') {
+      fetch('/api/artist/touring-demand')
+        .then(r => r.json())
+        .then((res: { cities: Array<{ city: string; stateRegion?: string | null; hype: number }> }) => {
+          const maxHype = Math.max(...res.cities.map(c => c.hype), 1);
+          // Map to HypeHeatmapCity with rough US coordinate approximation
+          const CITY_COORDS: Record<string, { x: number; y: number }> = {
+            chicago: { x: .55, y: .42 }, brooklyn: { x: .81, y: .42 }, 'new york': { x: .81, y: .40 },
+            austin: { x: .45, y: .74 }, 'los angeles': { x: .13, y: .56 }, la: { x: .13, y: .56 },
+            seattle: { x: .10, y: .28 }, nashville: { x: .62, y: .58 }, denver: { x: .32, y: .44 },
+            atlanta: { x: .65, y: .65 }, miami: { x: .70, y: .85 }, portland: { x: .10, y: .30 },
+            boston: { x: .85, y: .35 }, detroit: { x: .65, y: .38 }, houston: { x: .47, y: .78 },
+            phoenix: { x: .25, y: .65 }, minneapolis: { x: .50, y: .32 }, 'san francisco': { x: .09, y: .50 },
+          };
+          const mapped: import('@/components/HypeHeatmap').HypeHeatmapCity[] = res.cities.map((c, i) => {
+            const key = c.city.toLowerCase();
+            const coords = CITY_COORDS[key] ?? { x: 0.3 + (i * 0.07) % 0.5, y: 0.3 + (i * 0.05) % 0.4 };
+            return {
+              name: c.city,
+              x: coords.x,
+              y: coords.y,
+              hype: c.hype,
+              venuesAsking: 0,
+              hot: c.hype >= maxHype * 0.5,
+            };
+          });
+          setTouringCities(mapped);
+        })
+        .catch(() => {});
+    }
+  }, [tab]);
   return (
     <div className="wb-view-pad">
       <div className="wb-greet">
@@ -1995,7 +2120,7 @@ function ViewArtist({ data }: { data: WorkbenchData }) {
       )}
 
       {tab === 'touring' && (
-        <HypeHeatmap cities={[]} venuePings={[]} suggestedRoute="CHI → BKN → ATX" />
+        <HypeHeatmap cities={touringCities} venuePings={[]} suggestedRoute={touringCities.length >= 2 ? touringCities.slice(0, 3).map(c => c.name.slice(0, 3).toUpperCase()).join(' → ') : undefined} />
       )}
 
       {tab === 'merch' && (
@@ -2176,7 +2301,7 @@ function PageBuilder() {
 }
 
 function ViewSettings({ prefs, setPref }: { prefs: Prefs; setPref: (k: string, v: unknown) => void }) {
-  const [settTab, setSettTab] = useState<'appearance' | 'page'>('page');
+  const [settTab, setSettTab] = useState<'appearance' | 'page' | 'security'>('page');
   const ACCENTS = [
     { v: '#ff5029', label: 'Ember' }, { v: '#ff3e9a', label: 'Hot pink' },
     { v: '#b983ff', label: 'Lilac' }, { v: '#22e5d4', label: 'Aqua' },
@@ -2197,6 +2322,7 @@ function ViewSettings({ prefs, setPref }: { prefs: Prefs; setPref: (k: string, v
       <div className="wb-tabs" style={{ marginBottom: 24 }}>
         <button onClick={() => setSettTab('page')} className={`wb-tab${settTab === 'page' ? ' wb-tab-active' : ''}`}>Profile page</button>
         <button onClick={() => setSettTab('appearance')} className={`wb-tab${settTab === 'appearance' ? ' wb-tab-active' : ''}`}>Appearance</button>
+        <button onClick={() => setSettTab('security')} className={`wb-tab${settTab === 'security' ? ' wb-tab-active' : ''}`}>Security</button>
       </div>
 
       {settTab === 'page' && <PageBuilder />}
@@ -2267,6 +2393,14 @@ function ViewSettings({ prefs, setPref }: { prefs: Prefs; setPref: (k: string, v
           </div>
         </SettSection>
       </div>}
+
+      {settTab === 'security' && (
+        <div style={{ maxWidth: 480 }}>
+          <SettSection title="Passkeys" sub="Sign in with Face ID, Touch ID, or your device PIN — no password or email code needed.">
+            <PasskeyManager />
+          </SettSection>
+        </div>
+      )}
 
       <div className="wb-footnote">
         Preferences live in this browser's localStorage. Your data stays on your device — keys never leave your control.

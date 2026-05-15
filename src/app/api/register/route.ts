@@ -21,7 +21,8 @@ const schema = z.object({
     .string()
     .min(8)
     .regex(/[A-Za-z]/)
-    .regex(/[0-9]/),
+    .regex(/[0-9]/)
+    .optional(),
   role: z.enum(['FAN', 'ARTIST', 'DJ', 'VENUE']).default('FAN'),
   isThirteenOrOlder: z.boolean().optional().default(false),
   acceptedArtistUploadPolicy: z.boolean().optional().default(false),
@@ -241,7 +242,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const passwordHash = await bcrypt.hash(body.password, 10);
+    const passwordHash = body.password ? await bcrypt.hash(body.password, 10) : null;
     const user = await db.user.create({
       data: {
         name: body.role === 'FAN' ? normalizedUsername : trimmedName,
@@ -311,18 +312,7 @@ export async function POST(request: Request) {
       publicProfilePath: getProfilePathForType(profile.type, profile.slug),
       profilePath: getDiscoverPathForType(profile.type)
     });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      const passwordIssue = error.issues.find((issue) => issue.path.includes('password'));
-
-      if (passwordIssue) {
-        return NextResponse.json(
-          { error: 'Password must be at least 8 characters and include a letter and a number.' },
-          { status: 400 }
-        );
-      }
-    }
-
+  } catch {
     return NextResponse.json({ error: 'Invalid registration payload' }, { status: 400 });
   }
 }
