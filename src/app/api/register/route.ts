@@ -251,11 +251,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // If username taken, append random suffix and retry once
-    if (existing) {
-      normalizedUsername = `${normalizedUsername}${Math.random().toString(36).slice(2, 5)}`;
-    }
-
     const passwordHash = body.password ? await bcrypt.hash(body.password, 10) : null;
     const user = await db.user.create({
       data: {

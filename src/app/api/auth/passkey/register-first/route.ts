@@ -25,7 +25,9 @@ export async function GET(request: Request) {
   });
   if (!user) return NextResponse.json({ error: 'User not found.' }, { status: 404 });
 
-  // Only allow for very recently created accounts with no passkeys yet
+  if (user._count.passkeys > 0) {
+    return NextResponse.json({ error: 'Passkey already registered. Please sign in instead.' }, { status: 403 });
+  }
   if (Date.now() - user.createdAt.getTime() > MAX_AGE_MS) {
     return NextResponse.json({ error: 'Link expired. Please sign in instead.' }, { status: 403 });
   }
@@ -59,7 +61,7 @@ export async function POST(request: Request) {
 
   const user = await db.user.findUnique({
     where: { id: userId },
-    select: { id: true, name: true, email: true, image: true, role: true, createdAt: true },
+    select: { id: true, name: true, email: true, image: true, role: true, createdAt: true, emailVerified: true },
   });
   if (!user) return NextResponse.json({ error: 'User not found.' }, { status: 404 });
 
@@ -87,6 +89,7 @@ export async function POST(request: Request) {
       email: user.email,
       picture: user.image,
       role: user.role,
+      emailVerified: user.emailVerified?.toISOString() ?? null,
       iat: now,
       exp: now + SESSION_MAX_AGE,
       jti: crypto.randomUUID(),

@@ -43,7 +43,7 @@ export async function POST(request: Request) {
 
   if (!userId) return clearChallenge(NextResponse.json({ error: 'Passkey verification failed.' }, { status: 401 }));
 
-  const user = await db.user.findUnique({ where: { id: userId } });
+  const user = await db.user.findUnique({ where: { id: userId }, select: { id: true, name: true, email: true, image: true, role: true, emailVerified: true } });
   if (!user) return clearChallenge(NextResponse.json({ error: 'User not found.' }, { status: 404 }));
 
   const secret = process.env.AUTH_SECRET;
@@ -60,6 +60,7 @@ export async function POST(request: Request) {
       email: user.email,
       picture: user.image,
       role: user.role,
+      emailVerified: user.emailVerified?.toISOString() ?? null,
       iat: now,
       exp: now + SESSION_MAX_AGE,
       jti: crypto.randomUUID(),

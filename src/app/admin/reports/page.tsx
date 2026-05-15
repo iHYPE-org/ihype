@@ -104,6 +104,8 @@ const tdStyle: React.CSSProperties = {
 
 async function resolveReport(reportId: string) {
   'use server';
+  const session = await auth();
+  if (!isAdminSession(session)) throw new Error('Forbidden');
   await db.contentReport.update({ where: { id: reportId }, data: { status: 'RESOLVED' } });
   // revalidate happens on next navigation
 }
