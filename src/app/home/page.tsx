@@ -3,7 +3,6 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getSharedDiscoverFeed } from '@/lib/discover-feed';
 import { detectRequestLocation } from '@/lib/request-location';
-import { buildArtistMediaCollection } from '@/lib/media';
 import type { ProfileType } from '@prisma/client';
 import { WorkbenchShell, type WorkbenchData, type WbStat, type WbTrack, type WbShow, type WbActivity } from '@/components/WorkbenchShell';
 

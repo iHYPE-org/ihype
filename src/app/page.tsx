@@ -18,35 +18,91 @@ export default async function MarketingPage() {
           Not-for-profit · Free forever · 0% ticket fees
         </div>
         <h1 className="lp-hero-h lp-hero-h--v2">
-          The music industry is broken.<br />
-          <span className="lp-hero-gradient">We&rsquo;re fixing it.</span>
+          Music discovery that works<br />
+          <span className="lp-hero-gradient">for the scene, not the algorithm.</span>
         </h1>
         <p className="lp-hero-sub lp-hero-sub--v2">
-          Streaming platforms bury independent artists under algorithmic debt.
-          Ticket fees line the pockets of middlemen. Play counts are gamed by bots.
-          iHYPE was built because the scene deserves radical transparency — a platform
-          that tells you exactly what&rsquo;s happening with your music, your money, and your fans.
+          iHYPE is a community-owned platform where fans vote with real listens,
+          artists rise on genuine demand, and every dollar from every ticket stays
+          with the people who made the show happen.
         </p>
         <div className="lp-hero-actions">
-          <Link href="/register" className="lp-btn-primary">Join free — it takes 60 seconds</Link>
+          <Link href="/register" className="lp-btn-primary lp-btn-primary--lg">Join free — it takes 60 seconds</Link>
           <Link href="/login" className="lp-btn-ghost">Sign in</Link>
         </div>
       </section>
 
-      {/* Mission */}
+      {/* Seeds — product hook */}
+      <section className="lp-how">
+        <p className="lp-section-eyebrow">HOW DISCOVERY WORKS</p>
+        <h2 className="lp-section-head">Swipe to discover. Listen to vote.</h2>
+        <p className="lp-hype-intro">
+          Every track gets a <strong>Seed</strong> — a 15–30 second high-energy clip pulled from its best moment.
+          Swipe right and the full track drops into your queue. Swipe left and move on.
+          No algorithm decides what you hear next. Your swipes do.
+        </p>
+        <div className="lp-how-steps">
+          {[
+            {
+              n: '01',
+              head: 'Seeds, not infinite scroll',
+              body: 'Short clips cut through the paradox of choice. You hear the best 20 seconds of a track before committing — no more three-second skips that bury an artist.',
+            },
+            {
+              n: '02',
+              head: '70 / 20 / 10 mix',
+              body: 'Seeds are served 70% from your taste, 20% from adjacent genres, and 10% pure wildcards. You stay in your lane while the scene expands around you.',
+            },
+            {
+              n: '03',
+              head: 'A Hype that means something',
+              body: 'A Hype only registers when you finish a track. No background plays, no bots, no gaming. One genuine listen = one real vote for that artist.',
+            },
+            {
+              n: '04',
+              head: 'Show up, earn more',
+              body: 'Attending a show earns 10 Hype points — verified by QR or GPS at the venue. Presence matters. The scene rewards people who are actually there.',
+            },
+          ].map((h) => (
+            <div key={h.n} className="lp-how-step">
+              <span className="lp-how-n">{h.n}</span>
+              <div>
+                <h3 className="lp-how-head">{h.head}</h3>
+                <p className="lp-how-body">{h.body}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Zero-fee callout */}
+      <section className="lp-zero-fee">
+        <div className="lp-zero-fee-inner">
+          <div className="lp-zero-fee-num">0%</div>
+          <div className="lp-zero-fee-text">
+            <strong>iHYPE takes nothing from ticket sales. Ever.</strong>
+            <span>Artists and venues keep 100% of every ticket sold on this platform.
+            That&rsquo;s not a promotional rate — it&rsquo;s written into how iHYPE works.
+            Ticket fees are a tax on live music, and we refuse to collect them.</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Mission / not-for-profit */}
       <section className="lp-mission">
         <p className="lp-section-eyebrow">WHY WE BUILT THIS</p>
         <div className="lp-mission-grid">
           <div className="lp-mission-block">
             <h2 className="lp-mission-h">
               We&rsquo;re not a startup chasing growth.<br />
-              We&rsquo;re a community-owned tool.
+              We&rsquo;re a cooperative you own.
             </h2>
             <p className="lp-mission-body">
-              iHYPE is structured as a not-for-profit. No investors to answer to,
-              no pressure to monetise your data, no financial incentive to promote one
-              artist over another. Every feature we build traces back to one mission:
-              keep independent music alive by making the economics visible and fair.
+              iHYPE is structured as a not-for-profit platform cooperative. No investors,
+              no pressure to monetise your data, no incentive to promote one artist over another.
+              Every verified member can propose and vote on platform changes — from new discovery
+              heuristics to community rules — following Robert&rsquo;s Rules of Order.
+              The scene built this. The scene runs it.
             </p>
           </div>
           <div className="lp-mission-stats">
@@ -63,57 +119,6 @@ export default async function MarketingPage() {
               <span className="lp-mission-stat-l">free storage for your music</span>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Zero-fee callout */}
-      <section className="lp-zero-fee">
-        <div className="lp-zero-fee-inner">
-          <div className="lp-zero-fee-num">0%</div>
-          <div className="lp-zero-fee-text">
-            <strong>iHYPE takes nothing from ticket sales. Ever.</strong>
-            <span>Artists and venues keep 100% of every ticket sold on this platform.
-            That&rsquo;s not a promotional offer — it&rsquo;s written into how iHYPE works.
-            Ticket fees are a tax on live music, and we refuse to collect them.</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Transparency breakdown */}
-      <section className="lp-how">
-        <p className="lp-section-eyebrow">RADICAL TRANSPARENCY</p>
-        <h2 className="lp-section-head">You see everything. Always.</h2>
-        <div className="lp-how-steps">
-          {[
-            {
-              n: '01',
-              head: 'Real demand signal',
-              body: 'A Hype only registers when a fan finishes a track or deliberately backs an artist. No bots. No bulk purchases. No pay-to-play shortcuts.',
-            },
-            {
-              n: '02',
-              head: 'Open hype charts',
-              body: 'Every artist can see exactly who HYPEd them, where their fans are, and what that demand looks like to promoters and venues.',
-            },
-            {
-              n: '03',
-              head: 'Clear money flow',
-              body: 'Ticket revenue, referral splits, and payout schedules are displayed in plain numbers. Nothing hidden in a percentage buried in terms of service.',
-            },
-            {
-              n: '04',
-              head: 'No algorithm for sale',
-              body: 'Discovery is driven by Hype — real attention from real fans. You cannot buy placement. You cannot game the charts. Rising means rising.',
-            },
-          ].map((h) => (
-            <div key={h.n} className="lp-how-step">
-              <span className="lp-how-n">{h.n}</span>
-              <div>
-                <h3 className="lp-how-head">{h.head}</h3>
-                <p className="lp-how-body">{h.body}</p>
-              </div>
-            </div>
-          ))}
         </div>
       </section>
 
@@ -134,32 +139,71 @@ export default async function MarketingPage() {
               <li>Algorithms reward what&rsquo;s already popular or paid for</li>
               <li>Ticket fees extracted at every layer — artist, venue, fan</li>
               <li>Artists pay for promotion to reach their own audience</li>
-              <li>Revenue breakdowns hidden in opaque dashboards</li>
+              <li>Your data sold to the highest bidder</li>
             </ul>
           </div>
           <div className="lp-hype-col lp-hype-col--good">
             <p className="lp-hype-col-label">iHYPE</p>
             <ul>
-              <li>A Hype is logged only when a fan genuinely listens</li>
-              <li>Charts surface rising artists — no promoted slots</li>
+              <li>A Hype only counts when a fan genuinely finishes a track</li>
+              <li>Seeds surface rising artists — no promoted slots, ever</li>
               <li>0% ticket fees, every dollar visible to everyone</li>
-              <li>No pay-to-play, no algorithmic shortcuts for sale</li>
-              <li>Every split, payout, and referral shown in plain numbers</li>
+              <li>No pay-to-play, no shortcuts for sale</li>
+              <li>Your data is never sold — industry-only ads, aggregated only</li>
             </ul>
           </div>
         </div>
       </section>
 
+      {/* Data ethics */}
+      <section className="lp-how" style={{ borderTop: '1px solid rgba(255,255,255,.07)', paddingTop: '48px' }}>
+        <p className="lp-section-eyebrow">DATA ETHICS CHARTER</p>
+        <h2 className="lp-section-head">Your data belongs to you. Full stop.</h2>
+        <div className="lp-how-steps">
+          {[
+            {
+              n: '01',
+              head: 'Zero PII sale',
+              body: 'Your individual profile is never sold or shared with anyone, full stop. Not to labels, not to advertisers, not to anyone.',
+            },
+            {
+              n: '02',
+              head: 'Industry-only ads',
+              body: 'The only advertising on iHYPE comes from music-adjacent entities — venues, labels, record stores. No surveillance advertising. No retargeting.',
+            },
+            {
+              n: '03',
+              head: 'K-anonymity enforced',
+              body: 'No data query ever reports on fewer than 5 people. You cannot be singled out from any aggregate we publish or share.',
+            },
+            {
+              n: '04',
+              head: 'Identity detached in 24h',
+              body: 'Listening data is aggregated and your User ID replaced with a Cohort ID within 24 hours. We collect context, not surveillance.',
+            },
+          ].map((h) => (
+            <div key={h.n} className="lp-how-step">
+              <span className="lp-how-n">{h.n}</span>
+              <div>
+                <h3 className="lp-how-head">{h.head}</h3>
+                <p className="lp-how-body">{h.body}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Footer CTA */}
       <section className="lp-footer-cta lp-footer-cta--v2">
-        <p className="lp-section-eyebrow">FREE FOREVER · NOT-FOR-PROFIT</p>
+        <p className="lp-section-eyebrow">FREE FOREVER · COMMUNITY-OWNED · NOT-FOR-PROFIT</p>
         <h2 className="lp-footer-cta-h">
           The scene built this.<br />
           <span className="lp-hero-gradient">It belongs to the scene.</span>
         </h2>
         <p className="lp-footer-cta-sub">
-          No subscription. No hidden fees. No algorithm selling your attention to the highest bidder.
-          iHYPE is built and maintained for the independent music community — and that will never change.
+          No subscription. No hidden fees. No algorithm selling your attention.
+          Join as a fan, an artist, a venue, or a promoter — and vote on how the platform evolves.
+          iHYPE is yours.
         </p>
         <div className="lp-hero-actions" style={{ justifyContent: 'center' }}>
           <Link href="/register" className="lp-btn-primary lp-btn-primary--lg">Join iHYPE free</Link>

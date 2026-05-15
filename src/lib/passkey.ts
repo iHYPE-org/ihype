@@ -7,7 +7,7 @@ import {
 import type {
   RegistrationResponseJSON,
   AuthenticationResponseJSON,
-  PublicKeyCredentialDescriptorFuture,
+  AuthenticatorTransportFuture,
 } from '@simplewebauthn/types';
 import { db } from '@/lib/db';
 
@@ -77,13 +77,13 @@ export async function verifyPasskeyRegistration(
 export async function getPasskeyAuthenticationOptions(userId?: string) {
   const { rpID } = getRpInfo();
 
-  let allowCredentials: PublicKeyCredentialDescriptorFuture[] | undefined;
+  let allowCredentials: { id: Uint8Array; type: 'public-key'; transports?: AuthenticatorTransportFuture[] }[] | undefined;
   if (userId) {
     const passkeys = await db.passkey.findMany({ where: { userId }, select: { credentialId: true, transports: true } });
     allowCredentials = passkeys.map(p => ({
       id: Uint8Array.from(Buffer.from(p.credentialId, 'base64url')),
       type: 'public-key' as const,
-    } as PublicKeyCredentialDescriptorFuture));
+    }));
   }
 
   const options = await generateAuthenticationOptions({
@@ -113,7 +113,7 @@ export async function verifyPasskeyAuthentication(
       credentialID: Uint8Array.from(Buffer.from(passkey.credentialId, 'base64url')),
       credentialPublicKey: new Uint8Array(passkey.publicKey),
       counter: Number(passkey.counter),
-      transports: passkey.transports ? (passkey.transports.split(',') as import('@simplewebauthn/types').AuthenticatorTransportFuture[]) : undefined,
+      transports: passkey.transports ? (passkey.transports.split(',') as AuthenticatorTransportFuture[]) : undefined,
     },
   });
 
