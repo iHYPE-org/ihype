@@ -164,50 +164,48 @@ export function RegisterScreen({ initialRole = 'FAN' }: { initialRole?: RoleOpti
   const router = useRouter();
   const [role, setRole] = useState<RoleOption>(initialRole);
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
-  const [city, setCity] = useState('');
-  const [stateRegion, setStateRegion] = useState('');
-  const [country, setCountry] = useState('');
-  const [postalCode, setPostalCode] = useState('');
-  const [contactInfo, setContactInfo] = useState('');
-  const [addressLine1, setAddressLine1] = useState('');
-  const [hoursText, setHoursText] = useState('');
   const [acceptedAge, setAcceptedAge] = useState(false);
   const [acceptedPolicy, setAcceptedPolicy] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [company, setCompany] = useState('');
+  const [step, setStep] = useState<'form' | 'passkey'>('form');
   const needsPublicName = role !== 'FAN';
   const needsUploadPolicy = role === 'ARTIST' || role === 'DJ';
   const selectedRole = useMemo(() => roleOptions.find((option) => option.value === role), [role]);
 
-  async function createAccount(event: FormEvent<HTMLFormElement>) {
+  async function createAccountAndRegisterPasskey(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
     setIsSubmitting(true);
 
     try {
-      await postJson('/api/register', {
+      // Step 1: create account
+      const result = await postJson<{ id: string }>('/api/register', {
         name,
-        email,
-        username,
         role,
         isThirteenOrOlder: acceptedAge,
         acceptedArtistUploadPolicy: needsUploadPolicy ? acceptedPolicy : true,
         inviteCode,
         company,
-        city,
-        stateRegion,
-        country,
-        postalCode,
-        contactInfo,
-        addressLine1,
-        hoursText
       });
-      router.push(`/login?registered=1&identifier=${encodeURIComponent(email)}`);
+
+      // Step 2: get passkey registration options (no session needed — new account)
+      setStep('passkey');
+      const optRes = await fetch(`/api/auth/passkey/register-first?userId=${result.id}`);
+      if (!optRes.ok) throw new Error('Could not start passkey setup.');
+      const options = await optRes.json();
+
+      // Step 3: device prompts user for biometric / PIN
+      const credential = await startRegistration(options);
+
+      // Step 4: verify and receive session
+      const verifyRes = await postJson<{ redirect?: string }>('/api/auth/passkey/register-first', credential);
+      router.push(verifyRes.redirect || '/auth/landing');
+      router.refresh();
     } catch (err) {
+      setStep('form');
       setError(getErrorMessage(err, 'Could not create account.'));
     } finally {
       setIsSubmitting(false);
@@ -217,7 +215,7 @@ export function RegisterScreen({ initialRole = 'FAN' }: { initialRole?: RoleOpti
   return (
     <AuthSignalShell
       badge="Join iHYPE"
-      cardSubtitle="Choose the lane you are joining first. If anything needs correction, this form keeps what you already typed."
+      cardSubtitle={step === 'passkey' ? 'Follow your device prompt to save a passkey.' : 'Pick your lane, then your device saves a passkey — no password needed.'}
       cardTitle="Create your account"
       description="One free account opens the ecosystem. Pick your role first, then build the page, shows, tickets, and discovery tools that match your lane."
       eyebrow="Free forever"
@@ -230,7 +228,13 @@ export function RegisterScreen({ initialRole = 'FAN' }: { initialRole?: RoleOpti
       title="Join free."
       wide
     >
-      <form className="form" onSubmit={createAccount}>
+      {step === 'passkey' ? (
+        <div className="auth-passkey-pending">
+          <p>Waiting for your device passkey prompt…</p>
+          <p className="subtitle">Use Face ID, Touch ID, or your device PIN when prompted.</p>
+        </div>
+      ) : (
+        <form className="form" onSubmit={createAccountAndRegisterPasskey}>
           <fieldset className="role-choice-grid">
             <legend>Account type</legend>
             {roleOptions.map((option) => (
@@ -248,23 +252,16 @@ export function RegisterScreen({ initialRole = 'FAN' }: { initialRole?: RoleOpti
             ))}
           </fieldset>
 
-          {needsPublicName ? (
-            <label className="field">
-              <span>{selectedRole?.label ?? 'Profile'} name</span>
-              <input onChange={(event) => setName(event.target.value)} required type="text" value={name} />
-            </label>
-          ) : null}
-
-          <div className="auth-field-grid">
-            <label className="field">
-              <span>Email</span>
-              <input autoComplete="email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} />
-            </label>
-            <label className="field">
-              <span>Username</span>
-              <input autoComplete="username" onChange={(event) => setUsername(event.target.value)} required type="text" value={username} />
-            </label>
-          </div>
+          <label className="field">
+            <span>{needsPublicName ? (selectedRole?.label ?? 'Profile') + ' name' : 'Display name'}</span>
+            <input
+              onChange={(event) => setName(event.target.value)}
+              placeholder={needsPublicName ? 'Your public artist/venue name' : 'Optional — shown on your profile'}
+              required={needsPublicName}
+              type="text"
+              value={name}
+            />
+          </label>
 
           <label className="field">
             <span>Beta invite code</span>
@@ -276,52 +273,6 @@ export function RegisterScreen({ initialRole = 'FAN' }: { initialRole?: RoleOpti
               value={inviteCode}
             />
           </label>
-
-          <details className="auth-optional-details">
-            <summary>
-              <span>Optional profile details</span>
-              <small>Add location/contact now, or finish it later from your dashboard.</small>
-            </summary>
-
-            <div className="auth-field-grid">
-              <label className="field">
-                <span>City</span>
-                <input onChange={(event) => setCity(event.target.value)} type="text" value={city} />
-              </label>
-              <label className="field">
-                <span>State / province</span>
-                <input onChange={(event) => setStateRegion(event.target.value)} type="text" value={stateRegion} />
-              </label>
-              <label className="field">
-                <span>Country</span>
-                <input onChange={(event) => setCountry(event.target.value)} type="text" value={country} />
-              </label>
-              <label className="field">
-                <span>Home ZIP / postal code</span>
-                <input onChange={(event) => setPostalCode(event.target.value)} type="text" value={postalCode} />
-              </label>
-            </div>
-
-            {role === 'VENUE' ? (
-              <div className="auth-field-grid">
-                <label className="field">
-                  <span>Venue address</span>
-                  <input onChange={(event) => setAddressLine1(event.target.value)} type="text" value={addressLine1} />
-                </label>
-                <label className="field">
-                  <span>Hours</span>
-                  <input onChange={(event) => setHoursText(event.target.value)} type="text" value={hoursText} />
-                </label>
-              </div>
-            ) : null}
-
-            {role !== 'FAN' ? (
-              <label className="field">
-                <span>Contact info</span>
-                <input onChange={(event) => setContactInfo(event.target.value)} type="text" value={contactInfo} />
-              </label>
-            ) : null}
-          </details>
 
           <label className="check-row">
             <input checked={acceptedAge} onChange={(event) => setAcceptedAge(event.target.checked)} required type="checkbox" />
@@ -344,7 +295,7 @@ export function RegisterScreen({ initialRole = 'FAN' }: { initialRole?: RoleOpti
           ) : null}
 
           <button className="button" disabled={isSubmitting} type="submit">
-            {isSubmitting ? 'Creating account...' : 'Create account'}
+            {isSubmitting ? 'Setting up…' : 'Create account with passkey'}
           </button>
           <label className="bot-field" aria-hidden="true">
             <span>Company</span>
@@ -356,7 +307,8 @@ export function RegisterScreen({ initialRole = 'FAN' }: { initialRole?: RoleOpti
               value={company}
             />
           </label>
-      </form>
+        </form>
+      )}
 
       {error ? <p className="status-note status-note-error">{error}</p> : null}
     </AuthSignalShell>

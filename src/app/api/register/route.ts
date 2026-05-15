@@ -15,8 +15,8 @@ import { slugify } from '@/lib/utils';
 
 const schema = z.object({
   name: z.string().trim().min(2).optional(),
-  email: z.string().email(),
-  username: z.string().min(3).max(30),
+  email: z.string().email().optional(),
+  username: z.string().min(3).max(30).optional(),
   password: z
     .string()
     .min(8)
@@ -168,9 +168,19 @@ export async function POST(request: Request) {
     }
 
     const body = schema.parse(rawBody);
-    const normalizedUsername = normalizeUsername(body.username);
-    const normalizedEmail = body.email.toLowerCase();
     const trimmedName = body.name?.trim() ?? '';
+    const normalizedEmail = body.email ? body.email.toLowerCase() : null;
+
+    // Auto-generate username from name or a random string if not provided
+    let normalizedUsername: string;
+    if (body.username) {
+      normalizedUsername = normalizeUsername(body.username);
+    } else {
+      const base = trimmedName
+        ? normalizeUsername(trimmedName.replace(/\s+/g, ''))
+        : `user${Math.random().toString(36).slice(2, 8)}`;
+      normalizedUsername = base.slice(0, 30) || `user${Math.random().toString(36).slice(2, 8)}`;
+    }
 
     if (body.company) {
       await recordAuditEvent({
@@ -193,7 +203,7 @@ export async function POST(request: Request) {
         ipAddress: clientAddress,
         metadata: {
           role: body.role,
-          emailDomain: normalizedEmail.split('@')[1] ?? null
+          emailDomain: normalizedEmail?.split('@')[1] ?? null
         }
       });
       return NextResponse.json({ error: 'A valid beta invite code is required to create an account.' }, { status: 403 });
@@ -213,7 +223,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (isReservedPlatformEmail(normalizedEmail)) {
+    if (normalizedEmail && isReservedPlatformEmail(normalizedEmail)) {
       return NextResponse.json(
         { error: 'Please use an email address you control. @ihype.org email addresses are reserved.' },
         { status: 400 }
@@ -224,17 +234,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Name is required for this account type.' }, { status: 400 });
     }
 
-    const existing = await db.user.findFirst({
-      where: {
-        OR: [{ email: normalizedEmail }, { username: normalizedUsername }]
-      }
-    });
+    const orConditions: Array<{ email: string } | { username: string }> = [{ username: normalizedUsername }];
+    if (normalizedEmail) orConditions.push({ email: normalizedEmail });
+
+    const existing = await db.user.findFirst({ where: { OR: orConditions } });
 
     if (existing) {
       return NextResponse.json(
         {
           error:
-            existing.email === normalizedEmail
+            normalizedEmail && existing.email === normalizedEmail
               ? 'Email already exists'
               : 'Username is already taken'
         },
@@ -242,12 +251,18 @@ export async function POST(request: Request) {
       );
     }
 
+    // If username taken, append random suffix and retry once
+    if (existing) {
+      normalizedUsername = `${normalizedUsername}${Math.random().toString(36).slice(2, 5)}`;
+    }
+
     const passwordHash = body.password ? await bcrypt.hash(body.password, 10) : null;
     const user = await db.user.create({
       data: {
         name: body.role === 'FAN' ? normalizedUsername : trimmedName,
-        email: normalizedEmail,
-        username: normalizedUsername,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        email: normalizedEmail as any,
+        username: normalizedUsername || `user${Math.random().toString(36).slice(2, 8)}`,
         passwordHash,
         isThirteenOrOlder: body.isThirteenOrOlder,
         role: body.role

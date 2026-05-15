@@ -80,7 +80,7 @@ enum AccountsPayableStatus {
 model User {
   id                      String                   @id @default(cuid())
   name                    String?
-  email                   String                   @unique
+  email                   String?                  @unique
   username                String                   @unique
   passwordHash            String?
   isThirteenOrOlder       Boolean                  @default(true)
