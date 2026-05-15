@@ -164,9 +164,9 @@ export default async function HomePage() {
   // ── Life stats ──
   const [totalHype, totalEarnings, songsPlayed, eventsAttended] = await Promise.all([
     db.profileHypeEvent.count({ where: { profileId: profile.id } }).catch(() => 0),
-    db.ticketOrder.aggregate({ where: { userId }, _sum: { subtotalCents: true } }).then(r => Math.round((r._sum.subtotalCents ?? 0) / 100)).catch(() => 0),
+    db.ticketOrder.aggregate({ where: { buyerUserId: userId }, _sum: { subtotalCents: true } }).then(r => Math.round((r._sum.subtotalCents ?? 0) / 100)).catch(() => 0),
     db.mediaListen.count({ where: { userId } }).catch(() => 0),
-    db.ticketOrder.count({ where: { userId, status: 'COMPLETED' } }).catch(() => 0),
+    db.ticketOrder.count({ where: { buyerUserId: userId, status: 'CAPTURED' } }).catch(() => 0),
   ]);
   const lifeStats = { totalHype, totalEarnings, songsPlayed, eventsAttended };
 
