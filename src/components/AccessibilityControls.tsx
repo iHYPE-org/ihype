@@ -55,9 +55,9 @@ function applyClass(className: string, enabled: boolean) {
   document.documentElement.classList.toggle(className, enabled);
 }
 
-export function AccessibilityControls() {
+export function AccessibilityControls({ inline = false }: { inline?: boolean } = {}) {
   const panelId = useId();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(inline);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [settings, setSettings] = useState<AccessibilitySettings>(defaultSettings);
 
@@ -86,7 +86,7 @@ export function AccessibilityControls() {
   }, [hasLoaded, settings]);
 
   useEffect(() => {
-    if (!isOpen) {
+    if (!isOpen || inline) {
       return;
     }
 
@@ -98,7 +98,7 @@ export function AccessibilityControls() {
 
     window.addEventListener('keydown', closeOnEscape);
     return () => window.removeEventListener('keydown', closeOnEscape);
-  }, [isOpen]);
+  }, [inline, isOpen]);
 
   function updateSetting<Key extends keyof AccessibilitySettings>(
     key: Key,
@@ -121,6 +121,121 @@ export function AccessibilityControls() {
     settings.language !== 'en'
   ].filter(Boolean).length;
 
+  const panel = (
+    <section
+      aria-label="Accessibility settings"
+      className={inline ? 'a11y-panel a11y-panel-inline' : 'a11y-panel'}
+      id={panelId}
+    >
+      <div className="a11y-panel-head">
+        <div>
+          <strong>Accessibility</strong>
+          <p className="meta">Preferences apply across the full site on this device.</p>
+        </div>
+        {!inline ? (
+          <button className="a11y-close" onClick={() => setIsOpen(false)} type="button">
+            Close
+          </button>
+        ) : null}
+      </div>
+
+      <div className="a11y-option-grid">
+        <label className="a11y-option">
+          <input
+            checked={settings.highContrast}
+            onChange={(event) => updateSetting('highContrast', event.target.checked)}
+            type="checkbox"
+          />
+          <span>
+            <strong>High contrast</strong>
+            <small>Maximizes text and border contrast.</small>
+          </span>
+        </label>
+
+        <label className="a11y-option">
+          <input
+            checked={settings.largeText}
+            onChange={(event) => updateSetting('largeText', event.target.checked)}
+            type="checkbox"
+          />
+          <span>
+            <strong>Larger text</strong>
+            <small>Increases base text size site-wide.</small>
+          </span>
+        </label>
+
+        <label className="a11y-option">
+          <input
+            checked={settings.reduceMotion}
+            onChange={(event) => updateSetting('reduceMotion', event.target.checked)}
+            type="checkbox"
+          />
+          <span>
+            <strong>Reduce motion</strong>
+            <small>Minimizes animation and smooth scrolling.</small>
+          </span>
+        </label>
+
+        <label className="a11y-option">
+          <input
+            checked={settings.underlineLinks}
+            onChange={(event) => updateSetting('underlineLinks', event.target.checked)}
+            type="checkbox"
+          />
+          <span>
+            <strong>Underline links</strong>
+            <small>Makes text links easier to identify.</small>
+          </span>
+        </label>
+
+        <label className="a11y-option">
+          <input
+            checked={settings.readableFont}
+            onChange={(event) => updateSetting('readableFont', event.target.checked)}
+            type="checkbox"
+          />
+          <span>
+            <strong>Readable font</strong>
+            <small>Uses a simpler font stack for long reading.</small>
+          </span>
+        </label>
+      </div>
+
+      <label className="a11y-language">
+        <span>Page language for assistive tech</span>
+        <select
+          aria-describedby={`${panelId}-language-help`}
+          onChange={(event) => updateSetting('language', event.target.value)}
+          value={settings.language}
+        >
+          {languageOptions.map((language) => (
+            <option key={language.value} value={language.value}>
+              {language.label}
+            </option>
+          ))}
+        </select>
+        <small id={`${panelId}-language-help`}>
+          Updates the page language metadata for screen readers and browser translation tools.
+        </small>
+      </label>
+
+      <div className="a11y-actions">
+        <button className="button small secondary" onClick={resetSettings} type="button">
+          Reset
+        </button>
+        {!inline ? (
+          <button className="button small" onClick={() => setIsOpen(false)} type="button">
+            Apply
+          </button>
+        ) : null}
+      </div>
+    </section>
+  );
+
+  if (inline) {
+    return panel;
+  }
+
   return (
     <div className="a11y-menu">
       <button
@@ -134,108 +249,7 @@ export function AccessibilityControls() {
         Accessibility{activeCount ? ` (${activeCount})` : ''}
       </button>
 
-      {isOpen ? (
-        <section aria-label="Accessibility settings" className="a11y-panel" id={panelId}>
-          <div className="a11y-panel-head">
-            <div>
-              <strong>Accessibility</strong>
-              <p className="meta">Preferences apply across the full site on this device.</p>
-            </div>
-            <button className="a11y-close" onClick={() => setIsOpen(false)} type="button">
-              Close
-            </button>
-          </div>
-
-          <div className="a11y-option-grid">
-            <label className="a11y-option">
-              <input
-                checked={settings.highContrast}
-                onChange={(event) => updateSetting('highContrast', event.target.checked)}
-                type="checkbox"
-              />
-              <span>
-                <strong>High contrast</strong>
-                <small>Maximizes text and border contrast.</small>
-              </span>
-            </label>
-
-            <label className="a11y-option">
-              <input
-                checked={settings.largeText}
-                onChange={(event) => updateSetting('largeText', event.target.checked)}
-                type="checkbox"
-              />
-              <span>
-                <strong>Larger text</strong>
-                <small>Increases base text size site-wide.</small>
-              </span>
-            </label>
-
-            <label className="a11y-option">
-              <input
-                checked={settings.reduceMotion}
-                onChange={(event) => updateSetting('reduceMotion', event.target.checked)}
-                type="checkbox"
-              />
-              <span>
-                <strong>Reduce motion</strong>
-                <small>Minimizes animation and smooth scrolling.</small>
-              </span>
-            </label>
-
-            <label className="a11y-option">
-              <input
-                checked={settings.underlineLinks}
-                onChange={(event) => updateSetting('underlineLinks', event.target.checked)}
-                type="checkbox"
-              />
-              <span>
-                <strong>Underline links</strong>
-                <small>Makes text links easier to identify.</small>
-              </span>
-            </label>
-
-            <label className="a11y-option">
-              <input
-                checked={settings.readableFont}
-                onChange={(event) => updateSetting('readableFont', event.target.checked)}
-                type="checkbox"
-              />
-              <span>
-                <strong>Readable font</strong>
-                <small>Uses a simpler font stack for long reading.</small>
-              </span>
-            </label>
-          </div>
-
-          <label className="a11y-language">
-            <span>Page language for assistive tech</span>
-            <select
-              aria-describedby={`${panelId}-language-help`}
-              onChange={(event) => updateSetting('language', event.target.value)}
-              value={settings.language}
-            >
-              {languageOptions.map((language) => (
-                <option key={language.value} value={language.value}>
-                  {language.label}
-                </option>
-              ))}
-            </select>
-            <small id={`${panelId}-language-help`}>
-              Updates the page language metadata for screen readers and browser translation tools.
-            </small>
-          </label>
-
-          <div className="a11y-actions">
-            <button className="button small secondary" onClick={resetSettings} type="button">
-              Reset
-            </button>
-            <button className="button small" onClick={() => setIsOpen(false)} type="button">
-              Apply
-            </button>
-          </div>
-        </section>
-      ) : null}
+      {isOpen ? panel : null}
     </div>
   );
 }

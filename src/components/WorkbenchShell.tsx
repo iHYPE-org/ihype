@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, createContext, useContext, memo } from 'react';
 import Image from 'next/image';
+import { AccessibilityControls } from '@/components/AccessibilityControls';
 import { useMediaPlayer, type MediaTrack } from '@/components/GlobalMediaPlayer';
 import { SeedsSwipeStack, type SeedsSwipeStackSeed, type SeedsSwipeStackTrack } from '@/components/SeedsSwipeStack';
 import { HypeHeatmap } from '@/components/HypeHeatmap';
@@ -2405,7 +2406,7 @@ function PageBuilder() {
 }
 
 function ViewSettings({ prefs, setPref }: { prefs: Prefs; setPref: (k: string, v: unknown) => void }) {
-  const [settTab, setSettTab] = useState<'appearance' | 'page' | 'security'>('page');
+  const [settTab, setSettTab] = useState<'appearance' | 'page' | 'security' | 'accessibility'>('page');
   const ACCENTS = [
     { v: '#ff5029', label: 'Ember' }, { v: '#ff3e9a', label: 'Hot pink' },
     { v: '#b983ff', label: 'Lilac' }, { v: '#22e5d4', label: 'Aqua' },
@@ -2426,6 +2427,7 @@ function ViewSettings({ prefs, setPref }: { prefs: Prefs; setPref: (k: string, v
       <div className="wb-tabs" style={{ marginBottom: 24 }}>
         <button onClick={() => setSettTab('page')} className={`wb-tab${settTab === 'page' ? ' wb-tab-active' : ''}`}>Profile page</button>
         <button onClick={() => setSettTab('appearance')} className={`wb-tab${settTab === 'appearance' ? ' wb-tab-active' : ''}`}>Appearance</button>
+        <button onClick={() => setSettTab('accessibility')} className={`wb-tab${settTab === 'accessibility' ? ' wb-tab-active' : ''}`}>Accessibility</button>
         <button onClick={() => setSettTab('security')} className={`wb-tab${settTab === 'security' ? ' wb-tab-active' : ''}`}>Security</button>
       </div>
 
@@ -2503,6 +2505,12 @@ function ViewSettings({ prefs, setPref }: { prefs: Prefs; setPref: (k: string, v
           <SettSection title="Passkeys" sub="Sign in with Face ID, Touch ID, or your device PIN — no password or email code needed.">
             <PasskeyManager />
           </SettSection>
+        </div>
+      )}
+
+      {settTab === 'accessibility' && (
+        <div style={{ maxWidth: 720 }}>
+          <AccessibilityControls inline />
         </div>
       )}
 

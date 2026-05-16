@@ -184,8 +184,13 @@ button, input, select, textarea { font: inherit; }
   background: #090806;
   overflow: hidden;
 }
-/* Hide public marketing nav when workbench shell is active */
-body:has(.wb-shell) .site-nav { display: none; }
+/* Hide public marketing nav when authenticated workbench shells are active */
+body:has(.wb-shell) .site-nav,
+body:has(.wb-root) .site-nav { display: none !important; }
+body:has(.wb-root) .site-shell {
+  isolation: auto;
+  padding-top: 0;
+}
 /* Dark scrollbars inside the workbench — webkit + standard (Firefox/Chrome121+) */
 .wb-main, .wb-queue-list,
 .wb-radio-body, .wb-channels, .wb-view-pad,
@@ -11597,6 +11602,15 @@ body {
   box-shadow: 0 24px 72px rgba(0, 0, 0, 0.46);
   color: #f7f4ff;
   backdrop-filter: blur(18px);
+}
+
+.a11y-panel-inline {
+  position: static;
+  top: auto;
+  right: auto;
+  width: 100%;
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 .a11y-panel-head,

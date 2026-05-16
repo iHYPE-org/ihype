@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { logoutAction } from '@/app/logout/actions';
-import { AccessibilityControls } from '@/components/AccessibilityControls';
 import { AdminPerspectiveHeaderSelect, useAdminPerspective } from '@/components/AdminPerspective';
 
 function getDisplayName(user: { name?: string | null; email?: string | null }) {
@@ -42,7 +41,6 @@ export function HeaderAuthLinks() {
     return (
       <div className="nav-auth-slot nav-auth-cluster">
         <div className="nav-links nav-links-auth nav-links-compact">
-          <AccessibilityControls />
           <Link className="nav-user-pill" href={accountHref} aria-label={`Open account dashboard for ${displayName}`}>
             <span className="nav-user-avatar" aria-hidden="true">
               {displayName.charAt(0).toUpperCase()}
@@ -65,7 +63,6 @@ export function HeaderAuthLinks() {
 
   return (
     <div className="nav-links nav-links-auth nav-links-compact nav-auth-slot">
-      <AccessibilityControls />
       <Link className="nav-auth-button" href="/login">
         Sign in
       </Link>
