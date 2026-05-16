@@ -1,4 +1,5 @@
 import { RegisterScreen } from '@/components/AuthScreens';
+import { isInviteCodeRequired } from '@/lib/runtime-flags';
 
 export const metadata = {
   title: 'Join free | iHYPE.org',
@@ -23,5 +24,5 @@ export default async function RegisterPage({
   searchParams?: Promise<{ role?: string | string[] }>;
 }) {
   const params = searchParams ? await searchParams : undefined;
-  return <RegisterScreen initialRole={getInitialRole(params?.role)} />;
+  return <RegisterScreen initialRole={getInitialRole(params?.role)} inviteOnly={isInviteCodeRequired()} />;
 }

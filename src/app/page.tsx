@@ -1,12 +1,43 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import type { CSSProperties } from 'react';
 import { auth } from '@/lib/auth';
+import { getHealthSnapshot } from '@/lib/health';
+import { getHomePageData } from '@/lib/public-data';
+
+function formatCompact(value: number) {
+  return new Intl.NumberFormat('en-US', { notation: value > 999 ? 'compact' : 'standard' }).format(value);
+}
 
 export default async function MarketingPage() {
-  const session = await auth();
+  const [session, health, homeData] = await Promise.all([
+    auth(),
+    getHealthSnapshot(),
+    getHomePageData()
+  ]);
   if (session?.user) {
     redirect('/home');
   }
+
+  const liveUserCount = health.database.ok && 'users' in health.database
+    ? health.database.users ?? homeData.profiles.length
+    : homeData.profiles.length;
+  const artistSeeds = homeData.profiles
+    .filter((profile) => profile.type === 'ARTIST')
+    .slice(0, 3)
+    .map((profile) => ({
+      name: profile.name,
+      detail: [profile.city, profile.stateRegion ?? profile.country].filter(Boolean).join(', ') || 'Scene signal building',
+      genre: profile.genres[0] ?? 'Independent',
+      hype: profile.hypeCount
+    }));
+  const seedPreview = artistSeeds.length
+    ? artistSeeds
+    : [
+        { name: 'New artist seed', detail: 'Local signal building', genre: 'Independent', hype: 0 },
+        { name: 'Wildcard seed', detail: 'Adjacent scene', genre: 'Discovery', hype: 0 },
+        { name: 'Live room seed', detail: 'Venue signal', genre: 'Shows', hype: 0 }
+      ];
 
   return (
     <main className="lp-wrap">
@@ -30,6 +61,67 @@ export default async function MarketingPage() {
           <Link href="/register" className="lp-btn-primary lp-btn-primary--lg">Join free — it takes 60 seconds</Link>
           <Link href="/login" className="lp-btn-ghost">Sign in</Link>
         </div>
+        <div className="lp-live-proof" aria-label="Live iHYPE trust signals">
+          <div className="lp-live-proof-item">
+            <span>Members</span>
+            <strong>{formatCompact(liveUserCount)}</strong>
+          </div>
+          <div className="lp-live-proof-item">
+            <span>Public profiles</span>
+            <strong>{formatCompact(homeData.profiles.length)}</strong>
+          </div>
+          <div className="lp-live-proof-item">
+            <span>Ticket fees</span>
+            <strong>0%</strong>
+          </div>
+          <div className="lp-live-proof-item">
+            <span>Signup</span>
+            <strong>{health.status === 'ok' && health.safety.inviteOnlySignup ? 'Invite' : 'Open'}</strong>
+          </div>
+        </div>
+      </section>
+
+      <section className="lp-seed-preview" aria-label="Seeds preview">
+        <div className="lp-seed-preview-copy">
+          <p className="lp-section-eyebrow">SEEDS PREVIEW</p>
+          <h2 className="lp-section-head">The product shows up before the manifesto.</h2>
+          <p className="lp-hype-intro">
+            Seeds turn the first listen into a clean choice: save the track, hype it after a real listen,
+            or skip into the next scene without punishing the artist for a cold algorithmic start.
+          </p>
+          <div className="lp-seed-actions">
+            <span>Save</span>
+            <span>Hype</span>
+            <span>Skip</span>
+          </div>
+        </div>
+        <div className="lp-seed-deck">
+          {seedPreview.map((seed, index) => (
+            <article className="lp-seed-card" key={`${seed.name}-${index}`}>
+              <div>
+                <span className="lp-seed-badge">{seed.genre}</span>
+                <strong>{seed.name}</strong>
+                <p>{seed.detail}</p>
+              </div>
+              <span>{formatCompact(seed.hype)} hype</span>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="lp-role-grid lp-role-grid--v2" aria-label="Join by role">
+        {[
+          { label: 'Fans', href: '/register?role=FAN', body: 'Build your listening identity and turn real attendance into signal.', c: '#22e5d4' },
+          { label: 'Artists', href: '/register?role=ARTIST', body: 'Publish media, shows, tour context, and real growth stats.', c: '#ff5029' },
+          { label: 'Promoters', href: '/register?role=DJ', body: 'Create show lanes and connect scenes without fee extraction.', c: '#b983ff' },
+          { label: 'Venues', href: '/register?role=VENUE', body: 'List the room, manage ticket signal, and see what fans request.', c: '#ffc857' }
+        ].map((role) => (
+          <Link className="lp-role-card lp-role-card--v2" href={role.href} key={role.href} style={{ '--role-c': role.c } as CSSProperties}>
+            <span className="lp-role-label">{role.label}</span>
+            <span className="lp-role-sub lp-role-sub--v2">{role.body}</span>
+            <span className="lp-role-cta">Join free</span>
+          </Link>
+        ))}
       </section>
 
       {/* Seeds — product hook */}

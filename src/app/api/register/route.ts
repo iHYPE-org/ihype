@@ -9,7 +9,7 @@ import { createHexId } from '@/lib/hex-id';
 import { profileAccentToneIds, profileBackdropToneIds, profileDesignPresetIds } from '@/lib/profile-design';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
-import { isReservedPlatformEmail } from '@/lib/runtime-flags';
+import { isInviteCodeRequired, isReservedPlatformEmail, isValidInviteCode } from '@/lib/runtime-flags';
 import { getUsernameValidationMessage, isValidUsername, normalizeUsername } from '@/lib/usernames';
 import { slugify } from '@/lib/utils';
 
@@ -202,6 +202,13 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: 'You must attest that you are 13 or older before creating an account.' },
         { status: 400 }
+      );
+    }
+
+    if (isInviteCodeRequired() && !isValidInviteCode(body.inviteCode)) {
+      return NextResponse.json(
+        { error: 'A valid beta invite code is required while invite-only signup is enabled.' },
+        { status: 403 }
       );
     }
 

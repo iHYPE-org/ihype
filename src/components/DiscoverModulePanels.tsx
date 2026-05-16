@@ -228,6 +228,8 @@ export function DiscoverEventsPanel({
         </div>
       ) : (
         <DiscoverEmptyState
+          actionHref="/shows"
+          actionLabel="Browse public shows"
           detail={emptyLabel}
           title="This event lane is ready."
         />

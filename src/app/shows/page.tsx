@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Shows',
   description: 'Live, upcoming, and archived independent music shows. Browse by city, artist, or genre on iHYPE.',
@@ -52,6 +53,14 @@ export default async function ShowsIndexPage() {
             Shows are the front door to the product. Live broadcasts surface first, then scheduled rooms close behind,
             with recent archives still visible long enough to help discovery.
           </p>
+          <div className="cta-row">
+            <Link className="button small secondary" href="/register?role=ARTIST">
+              Add artist dates
+            </Link>
+            <Link className="button small secondary" href="/register?role=VENUE">
+              List venue shows
+            </Link>
+          </div>
         </div>
 
         <div className="directory-hero-stats">

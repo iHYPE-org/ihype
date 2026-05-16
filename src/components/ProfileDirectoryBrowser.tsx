@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useDeferredValue, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
 import { useMediaPlayer, type MediaTrack } from '@/components/GlobalMediaPlayer';
 import { ProfileCard } from '@/components/ProfileCard';
 
@@ -41,8 +41,20 @@ export type DirectoryMediaSearchEntry = {
 const browseTabs = [
   { href: '/artists', label: 'Artists' },
   { href: '/promoters', label: 'Promoters' },
-  { href: '/venues', label: 'Venues' }
+  { href: '/venues', label: 'Venues' },
+  { href: '/fans', label: 'Fans' }
 ] as const;
+
+const typeLabels: Record<DirectoryBrowserProfile['type'], string> = {
+  ARTIST: 'Artists',
+  DJ: 'Promoters',
+  VENUE: 'Venues',
+  LISTENER: 'Fans'
+};
+
+function getMarketLabel(profile: DirectoryBrowserProfile) {
+  return [profile.city, profile.stateRegion ?? profile.country].filter(Boolean).join(', ');
+}
 
 function profileMatchesQuery(profile: DirectoryBrowserProfile, query: string) {
   if (!query) {
@@ -92,8 +104,35 @@ export function ProfileDirectoryBrowser({
 }) {
   const { playTrack } = useMediaPlayer();
   const [query, setQuery] = useState('');
+  const [selectedType, setSelectedType] = useState<'all' | DirectoryBrowserProfile['type']>('all');
+  const [selectedMarket, setSelectedMarket] = useState('all');
+  const [selectedGenre, setSelectedGenre] = useState('all');
+  const [sortMode, setSortMode] = useState<'hype' | 'name' | 'market'>('hype');
   const deferredQuery = useDeferredValue(query.trim().toLowerCase());
-  const filteredProfiles = profiles.filter((profile) => profileMatchesQuery(profile, deferredQuery));
+  const marketOptions = useMemo(
+    () => Array.from(new Set(profiles.map(getMarketLabel).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+    [profiles]
+  );
+  const genreOptions = useMemo(
+    () => Array.from(new Set(profiles.flatMap((profile) => profile.genres))).sort((a, b) => a.localeCompare(b)),
+    [profiles]
+  );
+  const filteredProfiles = useMemo(() => {
+    return profiles
+      .filter((profile) => profileMatchesQuery(profile, deferredQuery))
+      .filter((profile) => selectedType === 'all' || profile.type === selectedType)
+      .filter((profile) => selectedMarket === 'all' || getMarketLabel(profile) === selectedMarket)
+      .filter((profile) => selectedGenre === 'all' || profile.genres.includes(selectedGenre))
+      .sort((a, b) => {
+        if (sortMode === 'name') {
+          return a.name.localeCompare(b.name);
+        }
+        if (sortMode === 'market') {
+          return getMarketLabel(a).localeCompare(getMarketLabel(b)) || b.hypeCount - a.hypeCount;
+        }
+        return b.hypeCount - a.hypeCount || a.name.localeCompare(b.name);
+      });
+  }, [deferredQuery, profiles, selectedGenre, selectedMarket, selectedType, sortMode]);
   const filteredMedia = mediaEntries.filter((entry) => mediaMatchesQuery(entry, deferredQuery));
   const mediaQueue: MediaTrack[] = filteredMedia.map((entry) => ({
     id: entry.id,
@@ -106,6 +145,15 @@ export function ProfileDirectoryBrowser({
     artworkUrl: entry.artworkUrl
   }));
   const hasQuery = Boolean(query.trim());
+  const hasFilters = hasQuery || selectedType !== 'all' || selectedMarket !== 'all' || selectedGenre !== 'all' || sortMode !== 'hype';
+
+  function clearFilters() {
+    setQuery('');
+    setSelectedType('all');
+    setSelectedMarket('all');
+    setSelectedGenre('all');
+    setSortMode('hype');
+  }
 
   return (
     <section className="directory-browser">
@@ -133,15 +181,62 @@ export function ProfileDirectoryBrowser({
         </label>
       </div>
 
+      <div className="directory-filter-grid" aria-label="Directory filters">
+        <label className="directory-filter-control">
+          <span>Role</span>
+          <select value={selectedType} onChange={(event) => setSelectedType(event.target.value as typeof selectedType)}>
+            <option value="all">All roles</option>
+            {Object.entries(typeLabels).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="directory-filter-control">
+          <span>Market</span>
+          <select value={selectedMarket} onChange={(event) => setSelectedMarket(event.target.value)}>
+            <option value="all">All markets</option>
+            {marketOptions.map((market) => (
+              <option key={market} value={market}>
+                {market}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="directory-filter-control">
+          <span>Genre</span>
+          <select value={selectedGenre} onChange={(event) => setSelectedGenre(event.target.value)}>
+            <option value="all">All genres</option>
+            {genreOptions.map((genre) => (
+              <option key={genre} value={genre}>
+                {genre}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="directory-filter-control">
+          <span>Sort</span>
+          <select value={sortMode} onChange={(event) => setSortMode(event.target.value as typeof sortMode)}>
+            <option value="hype">Most hype</option>
+            <option value="name">Name</option>
+            <option value="market">Market</option>
+          </select>
+        </label>
+      </div>
+
       <div className="directory-browser-meta">
         <p className="meta">
           {hasQuery
             ? `${filteredProfiles.length} profiles and ${filteredMedia.length} songs match "${query.trim()}"`
-            : `${profiles.length} profiles available`}
+            : `${filteredProfiles.length} of ${profiles.length} profiles visible`}
         </p>
-        {query ? (
-          <button className="text-link" onClick={() => setQuery('')} type="button">
-            Clear search
+        {hasFilters ? (
+          <button className="text-link" onClick={clearFilters} type="button">
+            Clear filters
           </button>
         ) : null}
       </div>
@@ -186,7 +281,18 @@ export function ProfileDirectoryBrowser({
         {filteredProfiles.length ? (
           filteredProfiles.map((profile) => <ProfileCard key={profile.id} profile={profile} />)
         ) : hasQuery && filteredMedia.length ? null : (
-          <div className="empty">No profiles match that search yet.</div>
+          <div className="empty directory-empty-state">
+            <span className="empty-title">No profiles match those filters yet.</span>
+            <p>Clear filters or join free to seed the public directory with a stronger local signal.</p>
+            <div className="cta-row">
+              <button className="text-link" onClick={clearFilters} type="button">
+                Clear filters
+              </button>
+              <Link className="button small secondary" href="/register">
+                Join free
+              </Link>
+            </div>
+          </div>
         )}
       </div>
     </section>

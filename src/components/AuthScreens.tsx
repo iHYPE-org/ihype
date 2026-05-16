@@ -7,6 +7,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { startAuthentication, startRegistration } from '@simplewebauthn/browser';
 
 type RoleOption = 'FAN' | 'ARTIST' | 'DJ' | 'VENUE';
+type AuthMethod = 'email' | 'passkey';
+type RegisterStep = 'form' | 'passkey' | 'email-code';
 
 const roleOptions: Array<{ value: RoleOption; label: string; help: string }> = [
   { value: 'FAN', label: 'Fan', help: 'Discover, hype, playlist, and track your music life.' },
@@ -95,14 +97,49 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
   return payload as T;
 }
 
+function getAuthLandingPath(redirect?: string) {
+  if (!redirect || redirect.startsWith('/auth/landing')) {
+    return '/auth/landing?module=tool-hub';
+  }
+
+  return redirect;
+}
+
+function trackSignupFunnel(
+  event: string,
+  metadata: { role?: RoleOption; method?: AuthMethod; step?: string; reason?: string } = {}
+) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  void fetch('/api/analytics/signup-funnel', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ event, ...metadata }),
+    keepalive: true
+  }).catch(() => {
+    // Analytics should never block auth.
+  });
+}
+
 export function LoginScreen({
+  initialIdentifier = '',
   justRegistered = false
 }: {
+  initialIdentifier?: string;
   justRegistered?: boolean;
 }) {
   const router = useRouter();
+  const [mode, setMode] = useState<AuthMethod>(justRegistered ? 'email' : 'passkey');
+  const [identifier, setIdentifier] = useState(initialIdentifier);
+  const [password, setPassword] = useState('');
+  const [otp, setOtp] = useState('');
+  const [challengeId, setChallengeId] = useState('');
+  const [deliveryEmail, setDeliveryEmail] = useState('');
+  const [emailStep, setEmailStep] = useState<'credentials' | 'code'>('credentials');
   const [message] = useState(
-    justRegistered ? 'Account created. Add a passkey in Settings, then sign in here.' : ''
+    justRegistered ? 'Account created. Sign in with your email code, then add a passkey from Settings when ready.' : ''
   );
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -115,10 +152,56 @@ export function LoginScreen({
       const options = await optRes.json();
       const assertion = await startAuthentication(options);
       const payload = await postJson<{ redirect?: string }>('/api/auth/passkey/auth', assertion);
-      router.push(payload.redirect || '/auth/landing');
+      trackSignupFunnel('login_passkey_success', { method: 'passkey', step: 'login' });
+      router.push(getAuthLandingPath(payload.redirect));
       router.refresh();
     } catch (err) {
-      setError(getErrorMessage(err, 'Passkey sign-in failed. Please try again.'));
+      const reason = getErrorMessage(err, 'Passkey sign-in failed. Please try again or use email code.');
+      trackSignupFunnel('login_passkey_failed', { method: 'passkey', step: 'login', reason });
+      setError(reason);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function requestEmailCode(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError('');
+    setIsSubmitting(true);
+    try {
+      const payload = await postJson<{ challengeId: string; email?: string | null }>('/api/auth/otp/request', {
+        identifier,
+        password
+      });
+      setChallengeId(payload.challengeId);
+      setDeliveryEmail(payload.email || identifier);
+      setEmailStep('code');
+      trackSignupFunnel('login_email_code_requested', { method: 'email', step: 'login' });
+    } catch (err) {
+      const reason = getErrorMessage(err, 'Could not send a sign-in code.');
+      trackSignupFunnel('login_email_code_failed', { method: 'email', step: 'login', reason });
+      setError(reason);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function verifyEmailCode(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError('');
+    setIsSubmitting(true);
+    try {
+      const payload = await postJson<{ redirect?: string }>('/api/auth/otp/signin', {
+        challengeId,
+        otp
+      });
+      trackSignupFunnel('login_email_code_success', { method: 'email', step: 'login' });
+      router.push(getAuthLandingPath(payload.redirect));
+      router.refresh();
+    } catch (err) {
+      const reason = getErrorMessage(err, 'Could not verify that code.');
+      trackSignupFunnel('login_email_code_verify_failed', { method: 'email', step: 'login', reason });
+      setError(reason);
     } finally {
       setIsSubmitting(false);
     }
@@ -126,27 +209,112 @@ export function LoginScreen({
 
   return (
     <AuthSignalShell
-      badge="Passkey sign-in"
-      cardSubtitle="Use Face ID, Touch ID, or your device PIN — no password, no email code."
+      badge={mode === 'passkey' ? 'Passkey sign-in' : 'Email code sign-in'}
+      cardSubtitle={
+        mode === 'passkey'
+          ? 'Use Face ID, Touch ID, or your device PIN. Email code stays available as a fallback.'
+          : 'Enter your email or username, confirm your password, then use the one-time email code.'
+      }
       cardTitle="Sign in to iHYPE"
-      description="Fast, phishing-resistant sign-in with your device's built-in biometrics. No password to remember."
-      eyebrow="Passkey sign-in"
-      highlight="One tap."
+      description="Fast sign-in when passkeys are available, with an email-code lane when the browser or device prompt gets in the way."
+      eyebrow="Secure sign-in"
+      highlight="Your lane."
       signals={[
-        { label: 'No password', value: 'Passkey', detail: 'Device biometrics' },
-        { label: 'No inbox', value: 'Instant', detail: 'No email code needed' },
-        { label: 'Phishing-safe', value: 'FIDO2', detail: 'Bound to this site' }
+        { label: 'Primary', value: 'Passkey', detail: 'Device biometrics' },
+        { label: 'Fallback', value: 'Email code', detail: 'No stranded account' },
+        { label: 'Session', value: '12 hours', detail: 'Short-lived auth' }
       ]}
       title="Sign in."
     >
-      <button
-        className="button"
-        disabled={isSubmitting}
-        onClick={signInWithPasskey}
-        type="button"
-      >
-        {isSubmitting ? 'Checking passkey...' : 'Sign in with passkey'}
-      </button>
+      <div className="auth-method-grid" role="tablist" aria-label="Sign-in method">
+        <button
+          aria-selected={mode === 'passkey'}
+          className={mode === 'passkey' ? 'auth-method-choice active' : 'auth-method-choice'}
+          onClick={() => {
+            setMode('passkey');
+            setError('');
+          }}
+          type="button"
+        >
+          <strong>Passkey</strong>
+          <span>Face ID, Touch ID, or device PIN.</span>
+        </button>
+        <button
+          aria-selected={mode === 'email'}
+          className={mode === 'email' ? 'auth-method-choice active' : 'auth-method-choice'}
+          onClick={() => {
+            setMode('email');
+            setError('');
+          }}
+          type="button"
+        >
+          <strong>Email code</strong>
+          <span>Password plus one-time inbox code.</span>
+        </button>
+      </div>
+
+      {mode === 'passkey' ? (
+        <button
+          className="button"
+          disabled={isSubmitting}
+          onClick={signInWithPasskey}
+          type="button"
+        >
+          {isSubmitting ? 'Checking passkey...' : 'Sign in with passkey'}
+        </button>
+      ) : emailStep === 'credentials' ? (
+        <form className="form" onSubmit={requestEmailCode}>
+          <label className="field">
+            <span>Email or username</span>
+            <input
+              autoComplete="username"
+              onChange={(event) => setIdentifier(event.target.value)}
+              required
+              type="text"
+              value={identifier}
+            />
+          </label>
+          <label className="field">
+            <span>Password</span>
+            <input
+              autoComplete="current-password"
+              minLength={8}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+              type="password"
+              value={password}
+            />
+          </label>
+          <button className="button" disabled={isSubmitting} type="submit">
+            {isSubmitting ? 'Sending code...' : 'Send email code'}
+          </button>
+        </form>
+      ) : (
+        <form className="form" onSubmit={verifyEmailCode}>
+          <p className="status-note">Enter the 6-digit code sent to {deliveryEmail}.</p>
+          <label className="field">
+            <span>6-digit code</span>
+            <input
+              autoComplete="one-time-code"
+              inputMode="numeric"
+              maxLength={6}
+              onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))}
+              pattern="[0-9]{6}"
+              required
+              type="text"
+              value={otp}
+            />
+          </label>
+          <div className="auth-code-actions">
+            <button className="button" disabled={isSubmitting} type="submit">
+              {isSubmitting ? 'Verifying...' : 'Verify code'}
+            </button>
+            <button className="text-link" onClick={() => setEmailStep('credentials')} type="button">
+              Change email
+            </button>
+          </div>
+        </form>
+      )}
 
       {message ? <p className="status-note">{message}</p> : null}
       {error ? <p className="status-note status-note-error">{error}</p> : null}
@@ -155,27 +323,209 @@ export function LoginScreen({
         <Link className="text-link" href="/register">
           Join free
         </Link>
+        <Link className="text-link" href="/forgot-password">
+          Reset password
+        </Link>
       </div>
     </AuthSignalShell>
   );
 }
 
-export function RegisterScreen({ initialRole = 'FAN' }: { initialRole?: RoleOption }) {
+export function RegisterScreen({
+  initialRole = 'FAN',
+  inviteOnly = false
+}: {
+  initialRole?: RoleOption;
+  inviteOnly?: boolean;
+}) {
   const router = useRouter();
   const [role, setRole] = useState<RoleOption>(initialRole);
+  const [authMethod, setAuthMethod] = useState<AuthMethod>('email');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [acceptedAge, setAcceptedAge] = useState(false);
   const [acceptedPolicy, setAcceptedPolicy] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState('');
+  const [status, setStatus] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [company, setCompany] = useState('');
-  const [step, setStep] = useState<'form' | 'passkey'>('form');
+  const [step, setStep] = useState<RegisterStep>('form');
+  const [createdAccountId, setCreatedAccountId] = useState('');
+  const [challengeId, setChallengeId] = useState('');
+  const [deliveryEmail, setDeliveryEmail] = useState('');
+  const [otp, setOtp] = useState('');
   const needsPublicName = role !== 'FAN';
   const needsUploadPolicy = role === 'ARTIST' || role === 'DJ';
   const selectedRole = useMemo(() => roleOptions.find((option) => option.value === role), [role]);
+
+  useEffect(() => {
+    trackSignupFunnel('view', { role: initialRole, method: 'email', step: 'form' });
+  }, [initialRole]);
+
+  function validateAccountForm() {
+    const normalizedEmail = email.trim();
+
+    if (!normalizedEmail) {
+      throw new Error('Email is required so you can sign in if the passkey prompt is blocked.');
+    }
+
+    if (password.length < 8 || !/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+      throw new Error('Password must be at least 8 characters and include a letter and a number.');
+    }
+
+    if (password !== confirmPassword) {
+      throw new Error('Passwords do not match.');
+    }
+  }
+
+  async function createAccountOnce() {
+    validateAccountForm();
+
+    if (createdAccountId) {
+      return { id: createdAccountId };
+    }
+
+    const result = await postJson<{ id: string }>('/api/register', {
+      name,
+      email: email.trim(),
+      phone: phone.trim() || undefined,
+      password,
+      role,
+      isThirteenOrOlder: acceptedAge,
+      acceptedArtistUploadPolicy: needsUploadPolicy ? acceptedPolicy : true,
+      inviteCode: inviteOnly ? inviteCode : undefined,
+      company
+    });
+
+    setCreatedAccountId(result.id);
+    trackSignupFunnel('account_created', { role, method: authMethod, step: 'register' });
+    return result;
+  }
+
+  async function requestEmailCodeForAccount() {
+    const payload = await postJson<{ challengeId: string; email?: string | null }>('/api/auth/otp/request', {
+      identifier: email.trim(),
+      password
+    });
+
+    setChallengeId(payload.challengeId);
+    setDeliveryEmail(payload.email || email.trim());
+    setOtp('');
+    setStep('email-code');
+    setStatus('Account created. Check your inbox for the 6-digit sign-in code.');
+    trackSignupFunnel('email_code_requested', { role, method: 'email', step: 'register' });
+  }
+
+  async function registerPasskeyForAccount(userId: string) {
+    setStep('passkey');
+    setStatus('Follow your device prompt. If it closes, retry here or finish with an email code.');
+    trackSignupFunnel('passkey_prompt', { role, method: 'passkey', step: 'register' });
+
+    const optRes = await fetch(`/api/auth/passkey/register-first?userId=${userId}`);
+    if (!optRes.ok) throw new Error('Could not start passkey setup.');
+    const options = await optRes.json();
+    const credential = await startRegistration(options);
+    const verifyRes = await postJson<{ redirect?: string }>('/api/auth/passkey/register-first', credential);
+    trackSignupFunnel('passkey_success', { role, method: 'passkey', step: 'register' });
+    router.push(getAuthLandingPath(verifyRes.redirect));
+    router.refresh();
+  }
+
+  async function createAccount(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError('');
+    setStatus('');
+    setIsSubmitting(true);
+    let accountCreated = Boolean(createdAccountId);
+
+    try {
+      trackSignupFunnel('submit', { role, method: authMethod, step: 'form' });
+      const result = await createAccountOnce();
+      accountCreated = true;
+
+      if (authMethod === 'passkey') {
+        await registerPasskeyForAccount(result.id);
+      } else {
+        await requestEmailCodeForAccount();
+      }
+    } catch (err) {
+      const reason = getErrorMessage(err, 'Could not create account.');
+      trackSignupFunnel(authMethod === 'passkey' ? 'passkey_failed' : 'email_code_failed', {
+        role,
+        method: authMethod,
+        step: accountCreated ? step : 'form',
+        reason
+      });
+      if (accountCreated) {
+        setStep('passkey');
+        setStatus('Your account was created. Retry the passkey prompt or use email code to finish signing in.');
+      } else {
+        setStep('form');
+      }
+      setError(reason);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function retryPasskey() {
+    if (!createdAccountId) {
+      setStep('form');
+      return;
+    }
+
+    setError('');
+    setIsSubmitting(true);
+    try {
+      await registerPasskeyForAccount(createdAccountId);
+    } catch (err) {
+      const reason = getErrorMessage(err, 'Passkey setup was interrupted.');
+      trackSignupFunnel('passkey_retry_failed', { role, method: 'passkey', step: 'register', reason });
+      setError(reason);
+      setStatus('Retry the passkey prompt, or use email code to finish signing in.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function useEmailCodeInstead() {
+    setError('');
+    setIsSubmitting(true);
+    try {
+      await requestEmailCodeForAccount();
+    } catch (err) {
+      const reason = getErrorMessage(err, 'Could not send an email sign-in code.');
+      trackSignupFunnel('email_code_failed', { role, method: 'email', step: 'register', reason });
+      setError(reason);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function verifySignupEmailCode(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError('');
+    setIsSubmitting(true);
+    try {
+      const payload = await postJson<{ redirect?: string }>('/api/auth/otp/signin', {
+        challengeId,
+        otp
+      });
+      trackSignupFunnel('email_code_success', { role, method: 'email', step: 'register' });
+      router.push(getAuthLandingPath(payload.redirect));
+      router.refresh();
+    } catch (err) {
+      const reason = getErrorMessage(err, 'Could not verify that code.');
+      trackSignupFunnel('email_code_verify_failed', { role, method: 'email', step: 'register', reason });
+      setError(reason);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   async function createAccountAndRegisterPasskey(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -219,7 +569,13 @@ export function RegisterScreen({ initialRole = 'FAN' }: { initialRole?: RoleOpti
   return (
     <AuthSignalShell
       badge="Join iHYPE"
-      cardSubtitle={step === 'passkey' ? 'Follow your device prompt to save a passkey.' : 'Pick your lane, then your device saves a passkey — no password needed.'}
+      cardSubtitle={
+        step === 'passkey'
+          ? 'Retry the device prompt or finish with an email code. Your account is not stranded.'
+          : step === 'email-code'
+          ? 'Enter the inbox code to finish signup. You can add a passkey later from Settings.'
+          : 'Pick your lane, then choose email-code signup or passkey setup with an email fallback.'
+      }
       cardTitle="Create your account"
       description="One free account opens the ecosystem. Pick your role first, then build the page, shows, tickets, and discovery tools that match your lane."
       eyebrow="Free forever"
@@ -234,11 +590,44 @@ export function RegisterScreen({ initialRole = 'FAN' }: { initialRole?: RoleOpti
     >
       {step === 'passkey' ? (
         <div className="auth-passkey-pending">
-          <p>Waiting for your device passkey prompt…</p>
+          <p>Waiting for your device passkey prompt.</p>
           <p className="subtitle">Use Face ID, Touch ID, or your device PIN when prompted.</p>
+          <div className="auth-passkey-actions">
+            <button className="button" disabled={isSubmitting} onClick={retryPasskey} type="button">
+              {isSubmitting ? 'Opening prompt...' : 'Try passkey again'}
+            </button>
+            <button className="button secondary" disabled={isSubmitting} onClick={useEmailCodeInstead} type="button">
+              Use email code instead
+            </button>
+          </div>
         </div>
+      ) : step === 'email-code' ? (
+        <form className="form" onSubmit={verifySignupEmailCode}>
+          <p className="status-note">Enter the 6-digit code sent to {deliveryEmail}.</p>
+          <label className="field">
+            <span>6-digit code</span>
+            <input
+              autoComplete="one-time-code"
+              inputMode="numeric"
+              maxLength={6}
+              onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))}
+              pattern="[0-9]{6}"
+              required
+              type="text"
+              value={otp}
+            />
+          </label>
+          <div className="auth-code-actions">
+            <button className="button" disabled={isSubmitting} type="submit">
+              {isSubmitting ? 'Verifying...' : 'Finish signup'}
+            </button>
+            <button className="text-link" disabled={isSubmitting} onClick={useEmailCodeInstead} type="button">
+              Send a new code
+            </button>
+          </div>
+        </form>
       ) : (
-        <form className="form" onSubmit={createAccountAndRegisterPasskey}>
+        <form className="form" onSubmit={createAccount}>
           <fieldset className="role-choice-grid">
             <legend>Account type</legend>
             {roleOptions.map((option) => (
@@ -246,7 +635,10 @@ export function RegisterScreen({ initialRole = 'FAN' }: { initialRole?: RoleOpti
                 <input
                   checked={option.value === role}
                   name="role"
-                  onChange={() => setRole(option.value)}
+                  onChange={() => {
+                    setRole(option.value);
+                    trackSignupFunnel('role_selected', { role: option.value, method: authMethod, step: 'form' });
+                  }}
                   type="radio"
                   value={option.value}
                 />
@@ -256,51 +648,106 @@ export function RegisterScreen({ initialRole = 'FAN' }: { initialRole?: RoleOpti
             ))}
           </fieldset>
 
+          <div className="auth-method-grid" role="tablist" aria-label="Signup method">
+            <button
+              aria-selected={authMethod === 'email'}
+              className={authMethod === 'email' ? 'auth-method-choice active' : 'auth-method-choice'}
+              onClick={() => {
+                setAuthMethod('email');
+                trackSignupFunnel('method_selected', { role, method: 'email', step: 'form' });
+              }}
+              type="button"
+            >
+              <strong>Email code</strong>
+              <span>Most reliable: verify by inbox code, add passkey later.</span>
+            </button>
+            <button
+              aria-selected={authMethod === 'passkey'}
+              className={authMethod === 'passkey' ? 'auth-method-choice active' : 'auth-method-choice'}
+              onClick={() => {
+                setAuthMethod('passkey');
+                trackSignupFunnel('method_selected', { role, method: 'passkey', step: 'form' });
+              }}
+              type="button"
+            >
+              <strong>Passkey</strong>
+              <span>Use your device prompt now, with email code as backup.</span>
+            </button>
+          </div>
+
           <label className="field">
             <span>{needsPublicName ? (selectedRole?.label ?? 'Profile') + ' name' : 'Display name'}</span>
             <input
               onChange={(event) => setName(event.target.value)}
-              placeholder={needsPublicName ? 'Your public artist/venue name' : 'Optional — shown on your profile'}
+              placeholder={needsPublicName ? 'Your public artist/venue name' : 'Optional - shown on your profile'}
               required={needsPublicName}
               type="text"
               value={name}
             />
           </label>
 
-          <div className="field-group-label">Recovery options <span className="field-group-optional">— optional, add either to recover your account later</span></div>
+          <div className="field-group-label">Sign-in backup <span className="field-group-optional">- required so passkey setup can fall back safely</span></div>
 
           <label className="field">
             <span>Email</span>
             <input
               autoComplete="email"
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="Optional — for account recovery"
+              placeholder="you@example.com"
+              required
               type="email"
               value={email}
             />
           </label>
+
+          <div className="auth-field-grid">
+            <label className="field">
+              <span>Password</span>
+              <input
+                autoComplete="new-password"
+                minLength={8}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                type="password"
+                value={password}
+              />
+            </label>
+            <label className="field">
+              <span>Confirm password</span>
+              <input
+                autoComplete="new-password"
+                minLength={8}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                required
+                type="password"
+                value={confirmPassword}
+              />
+            </label>
+          </div>
 
           <label className="field">
             <span>Phone</span>
             <input
               autoComplete="tel"
               onChange={(event) => setPhone(event.target.value)}
-              placeholder="Optional — for account recovery"
+              placeholder="Optional"
               type="tel"
               value={phone}
             />
           </label>
 
-          <label className="field">
-            <span>Beta invite code</span>
-            <input
-              autoComplete="off"
-              onChange={(event) => setInviteCode(event.target.value)}
-              placeholder="Required only when beta invite mode is enabled"
-              type="text"
-              value={inviteCode}
-            />
-          </label>
+          {inviteOnly ? (
+            <label className="field">
+              <span>Beta invite code</span>
+              <input
+                autoComplete="off"
+                onChange={(event) => setInviteCode(event.target.value)}
+                required
+                type="text"
+                value={inviteCode}
+              />
+            </label>
+          ) : null}
 
           <label className="check-row">
             <input checked={acceptedAge} onChange={(event) => setAcceptedAge(event.target.checked)} required type="checkbox" />
@@ -323,7 +770,11 @@ export function RegisterScreen({ initialRole = 'FAN' }: { initialRole?: RoleOpti
           ) : null}
 
           <button className="button" disabled={isSubmitting} type="submit">
-            {isSubmitting ? 'Setting up…' : 'Create account with passkey'}
+            {isSubmitting
+              ? 'Setting up...'
+              : authMethod === 'passkey'
+              ? 'Create account with passkey'
+              : 'Create account with email code'}
           </button>
           <label className="bot-field" aria-hidden="true">
             <span>Company</span>
@@ -338,6 +789,7 @@ export function RegisterScreen({ initialRole = 'FAN' }: { initialRole?: RoleOpti
         </form>
       )}
 
+      {status ? <p className="status-note">{status}</p> : null}
       {error ? <p className="status-note status-note-error">{error}</p> : null}
     </AuthSignalShell>
   );
