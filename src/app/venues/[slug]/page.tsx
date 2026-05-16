@@ -217,6 +217,11 @@ export default async function VenuePage({
             {profile.hoursText ? <p className="meta">{profile.hoursText}</p> : null}
             <div className="tag-row">{profile.genres.map((genre) => <span key={genre} className="tag">{genre}</span>)}</div>
             <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} entityLabel="venue" />
+            <div className="profile-public-actions">
+              <Link className="button small secondary" href={`/venues/${profile.slug}?section=upcoming`}>See shows</Link>
+              <Link className="button small secondary" href={`/venues/${profile.slug}?section=request`}>Request artist</Link>
+              <Link className="button small secondary" href="/register?role=VENUE">List a venue</Link>
+            </div>
           </div>
           {isOwner ? (
             <div className="profile-banner-actions">

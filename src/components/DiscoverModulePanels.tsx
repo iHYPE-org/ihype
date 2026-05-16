@@ -73,6 +73,7 @@ function DiscoverEmptyState({
     <div className="discover-empty-state">
       <strong>{title}</strong>
       <p>{detail}</p>
+      <div className="discover-empty-example">Example: a public page card, event row, or seed result will appear here once the first signal lands.</div>
       {actionHref && actionLabel ? (
         <Link className="button small secondary" href={actionHref}>
           {actionLabel}

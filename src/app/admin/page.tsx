@@ -29,6 +29,7 @@ export default async function AdminPage() {
     redirect('/auth/landing');
   }
 
+  const funnelSince = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const [
     userCount,
     profileCount,
@@ -43,6 +44,7 @@ export default async function AdminPage() {
     recentEmails,
     recentAudits,
     recentUsers,
+    signupFunnelAudits,
     health
   ] = await Promise.all([
     db.user.count(),
@@ -88,6 +90,12 @@ export default async function AdminPage() {
       take: 6,
       select: { email: true, username: true, role: true, createdAt: true }
     }),
+    db.auditLog.findMany({
+      where: { action: { startsWith: 'signup_funnel:' }, createdAt: { gte: funnelSince } },
+      orderBy: { createdAt: 'desc' },
+      take: 250,
+      select: { action: true, metadata: true }
+    }),
     getHealthSnapshot()
   ]);
 
@@ -101,6 +109,18 @@ export default async function AdminPage() {
   ] as const;
   const healthOperations = health.status === 'ok' ? health.operations : null;
   const healthIntegrations = health.status === 'ok' ? health.integrations : null;
+  const funnelCounts = signupFunnelAudits.reduce<Record<string, number>>((counts, event) => {
+    const key = event.action.replace('signup_funnel:', '');
+    counts[key] = (counts[key] ?? 0) + 1;
+    return counts;
+  }, {});
+  const funnelDropoff = [
+    ['Views', funnelCounts.view ?? 0],
+    ['Submits', funnelCounts.submit ?? 0],
+    ['Accounts', funnelCounts.account_created ?? 0],
+    ['Passkey success', funnelCounts.passkey_success ?? 0],
+    ['Email success', funnelCounts.email_code_success ?? 0]
+  ] as const;
 
   return (
     <main className="container section admin-console">
@@ -194,6 +214,26 @@ export default async function AdminPage() {
             <span>Payment capture</span>
             <strong>{healthIntegrations?.ticketPaymentCapture ? 'Ready' : 'Blocked'}</strong>
           </div>
+        </div>
+      </section>
+
+      <section className="panel admin-console-panel">
+        <div className="admin-console-panel-head">
+          <div>
+            <h2>Signup funnel</h2>
+            <p className="meta">Last 7 days from audit events. Use this to spot passkey/email dropoff.</p>
+          </div>
+          <Link className="button small secondary" href="/register?role=ARTIST">
+            Test signup UI
+          </Link>
+        </div>
+        <div className="admin-health-grid">
+          {funnelDropoff.map(([label, value]) => (
+            <div className="admin-health-card" key={label}>
+              <span>{label}</span>
+              <strong>{value}</strong>
+            </div>
+          ))}
         </div>
       </section>
 

@@ -600,6 +600,7 @@ export function RegisterScreen({
               Use email code instead
             </button>
           </div>
+          <p className="meta">You can add a passkey later from Settings after email sign-in.</p>
         </div>
       ) : step === 'email-code' ? (
         <form className="form" onSubmit={verifySignupEmailCode}>

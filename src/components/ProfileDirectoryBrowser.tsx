@@ -108,6 +108,7 @@ export function ProfileDirectoryBrowser({
   const [selectedMarket, setSelectedMarket] = useState('all');
   const [selectedGenre, setSelectedGenre] = useState('all');
   const [sortMode, setSortMode] = useState<'hype' | 'name' | 'market'>('hype');
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const deferredQuery = useDeferredValue(query.trim().toLowerCase());
   const marketOptions = useMemo(
     () => Array.from(new Set(profiles.map(getMarketLabel).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
@@ -181,7 +182,15 @@ export function ProfileDirectoryBrowser({
         </label>
       </div>
 
-      <div className="directory-filter-grid" aria-label="Directory filters">
+      <button
+        className="directory-filter-toggle"
+        onClick={() => setFiltersOpen((open) => !open)}
+        type="button"
+      >
+        {filtersOpen ? 'Hide filters' : 'Show filters'} ({filteredProfiles.length})
+      </button>
+
+      <div className={filtersOpen ? 'directory-filter-grid open' : 'directory-filter-grid'} aria-label="Directory filters">
         <label className="directory-filter-control">
           <span>Role</span>
           <select value={selectedType} onChange={(event) => setSelectedType(event.target.value as typeof selectedType)}>

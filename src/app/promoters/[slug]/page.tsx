@@ -226,6 +226,11 @@ export default async function PromoterPage({
             <p className="meta">Fan hype: {fanHypeCount}</p>
             <div className="tag-row">{profile.genres.map((genre) => <span key={genre} className="tag">{genre}</span>)}</div>
             <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} entityLabel="promoter" />
+            <div className="profile-public-actions">
+              <Link className="button small secondary" href="/register?role=ARTIST">Submit artist page</Link>
+              <Link className="button small secondary" href={`/promoters/${profile.slug}?section=shows`}>See shows</Link>
+              <Link className="button small secondary" href="/register?role=FAN">Follow as fan</Link>
+            </div>
           </div>
           {isOwner ? (
             <div className="profile-banner-actions">

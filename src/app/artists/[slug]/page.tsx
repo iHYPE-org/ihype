@@ -262,6 +262,11 @@ export default async function ArtistPage({
               {profile.genres.map((genre) => <span key={genre} className="tag">{genre}</span>)}
             </div>
             <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} entityLabel="artist" />
+            <div className="profile-public-actions">
+              <Link className="button small secondary" href="/register?role=FAN">Follow as fan</Link>
+              <Link className="button small secondary" href={`/artists/${profile.slug}?section=media`}>Hear media</Link>
+              <Link className="button small secondary" href="/register?role=VENUE">Book artists</Link>
+            </div>
           </div>
           {isOwner ? (
             <div className="profile-banner-actions">
@@ -327,9 +332,9 @@ export default async function ArtistPage({
                 />
               ) : (
                 <div className="empty">
-                  No playable uploads yet. Artists can upload audio below or keep using legacy external links in the editor:
-                  <br />
-                  <code>Track title | https://example.com/song.mp3 | Notes</code>
+                  <span className="empty-title">No playable uploads yet.</span>
+                  <p>Example upload: Track title | audio link | short note. Artists can add it from the editor.</p>
+                  <div className="empty-example-card">Seed preview, artwork, and play controls will appear here.</div>
                 </div>
               )}
             </>

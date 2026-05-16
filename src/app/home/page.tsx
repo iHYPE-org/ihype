@@ -31,6 +31,32 @@ function profileHref(type: ProfileType, slug: string) {
   return `/artists/${slug}`;
 }
 
+function getProfileCompletion(
+  profile: {
+    type: ProfileType;
+    headline: string | null;
+    bio: string | null;
+    avatarImage: string | null;
+    genres: string[];
+    city: string | null;
+    contactInfo: string | null;
+  },
+  showCount: number
+) {
+  const checks = [
+    { ok: Boolean(profile.headline || profile.bio), label: 'Story' },
+    { ok: Boolean(profile.avatarImage), label: 'Image' },
+    { ok: profile.genres.length > 0 || Boolean(profile.city), label: 'Tags/market' },
+    { ok: profile.type === 'LISTENER' ? true : Boolean(profile.contactInfo), label: 'Contact' },
+    { ok: profile.type === 'LISTENER' ? true : showCount > 0, label: 'First show' }
+  ];
+  const passed = checks.filter((check) => check.ok).length;
+  return {
+    percent: Math.round((passed / checks.length) * 100),
+    missing: checks.filter((check) => !check.ok).map((check) => check.label)
+  };
+}
+
 // Palette for track art gradients (cycles through)
 const COLORS = ['#ff5029', '#b983ff', '#22e5d4', '#ff3e9a', '#ffb84a', '#7fb3ff'];
 
@@ -48,7 +74,21 @@ export default async function HomePage() {
 
   const profile = await db.profile.findFirst({
     where: preferredType ? { ownerId: userId, type: preferredType } : { ownerId: userId },
-    select: { id: true, type: true, slug: true, name: true, hexId: true, hypeCount: true, city: true, stateRegion: true },
+    select: {
+      id: true,
+      type: true,
+      slug: true,
+      name: true,
+      hexId: true,
+      hypeCount: true,
+      city: true,
+      stateRegion: true,
+      headline: true,
+      bio: true,
+      avatarImage: true,
+      genres: true,
+      contactInfo: true
+    },
     orderBy: { createdAt: 'asc' }
   });
 
@@ -196,8 +236,10 @@ export default async function HomePage() {
     activity: wbActivity,
     radioShows,
     activeProfileTypes,
+    profileType: profile.type,
     profileId: profile.id,
     profilePath: profileHref(profile.type, profile.slug),
+    profileCompletion: getProfileCompletion(profile, eventsResult.upcoming.length + eventsResult.past.length),
     lifeStats,
     listeningNow: discoverFeed.mediaEntries.reduce((a, e) => a + (e.artistHypeCount ?? 0), 0),
     hypedToday: discoverFeed.mediaEntries.slice(0, 10).reduce((a, e) => a + (e.artistHypeCount ?? 0), 0),

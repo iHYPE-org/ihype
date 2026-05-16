@@ -171,8 +171,10 @@ export type WorkbenchData = {
   radioShows: WbRadioShow[];
   /** Profile types the logged-in user has: 'ARTIST' | 'VENUE' | 'LISTENER' | 'DJ' */
   activeProfileTypes: string[];
+  profileType?: string;
   profileId?: string;
   profilePath?: string;
+  profileCompletion?: { percent: number; missing: string[] };
   listeningNow: number;
   hypedToday: number;
   showsTonight: number;
@@ -748,6 +750,48 @@ function WbQueueRail({ data }: { data: WorkbenchData }) {
 }
 
 // ── View: Home ─────────────────────────────────────────────────
+function WbFirstSteps({ data, setView }: { data: WorkbenchData; setView: (v: View) => void }) {
+  const type = data.profileType ?? data.activeProfileTypes[0] ?? 'LISTENER';
+  const roleName = type === 'DJ' ? 'promoter' : type === 'VENUE' ? 'venue' : type === 'ARTIST' ? 'artist' : 'fan';
+  const completion = data.profileCompletion ?? { percent: 0, missing: ['Add profile details'] };
+  const nextMissing = completion.missing.slice(0, 2).join(' + ') || 'Keep momentum going';
+  const roleAction = type === 'ARTIST'
+    ? { label: 'Add media', view: 'artist' as View }
+    : type === 'VENUE'
+    ? { label: 'Open ticketing', view: 'venue' as View }
+    : type === 'DJ'
+    ? { label: 'Create a show', view: 'studio' as View }
+    : { label: 'Discover seeds', view: 'seeds' as View };
+
+  return (
+    <section className="wb-panel wb-first-steps">
+      <div className="wb-panel-head">
+        <div>
+          <div className="wb-panel-title">First 3 moves for your {roleName} lane</div>
+          <div className="wb-small-muted">{completion.percent}% page strength - {nextMissing}</div>
+        </div>
+        <div className="wb-completion-ring" aria-label={`Profile completion ${completion.percent}%`}>
+          <span>{completion.percent}%</span>
+        </div>
+      </div>
+      <div className="wb-first-step-grid">
+        <button className="wb-first-step" onClick={() => setView('settings')} type="button">
+          <strong>Complete profile</strong>
+          <span>Add the details people scan first.</span>
+        </button>
+        <button className="wb-first-step" onClick={() => setView(roleAction.view)} type="button">
+          <strong>{roleAction.label}</strong>
+          <span>Give the lane a real first action.</span>
+        </button>
+        <a className="wb-first-step" href={data.profilePath ?? '/home'}>
+          <strong>View public page</strong>
+          <span>Check the page others see.</span>
+        </a>
+      </div>
+    </section>
+  );
+}
+
 function ViewHome({ data, prefs, setView }: { data: WorkbenchData; prefs: Prefs; setView: (v: View) => void }) {
   const { playTrack, currentTrack } = useMediaPlayer();
   const [copied, setCopied] = useState(false);
@@ -781,6 +825,8 @@ function ViewHome({ data, prefs, setView }: { data: WorkbenchData; prefs: Prefs;
           <button className="wb-btn-ghost" onClick={shareProfile}>{copied ? 'Copied!' : 'Share your profile →'}</button>
         </div>
       </div>
+
+      <WbFirstSteps data={data} setView={setView} />
 
       {/* Stats */}
       {prefs.panel_stats && data.stats.length > 0 && (
