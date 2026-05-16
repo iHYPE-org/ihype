@@ -1478,7 +1478,7 @@ const ViewRadioStudio = memo(function ViewRadioStudio() {
     <div className="wb-view-pad">
       <div className="wb-eyebrow" style={{ color: '#ff3e9a' }}>● RADIO STUDIO · ALL ROLES CAN BROADCAST</div>
       <h1 className="wb-page-title">Create a show</h1>
-      <p className="wb-page-sub">Launch a scheduled or live radio show. Anyone can curate music, tell people what they love, and share it with the scene. Radio shows are free community programming, not a payout product.</p>
+      <p className="wb-page-sub">Launch a live or prerecorded radio show. Anyone can curate music, tell people what they love, and share it with the scene. Radio shows are free community programming, not a payout product.</p>
 
       <div className="wb-tabs" style={{ marginBottom: 20, marginTop: 16 }}>
         <button onClick={() => { setMode('scheduled'); setErrMsg(''); }} className={`wb-tab${mode === 'scheduled' ? ' wb-tab-active' : ''}`}>Scheduled show</button>
