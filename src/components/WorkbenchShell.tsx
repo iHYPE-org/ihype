@@ -375,7 +375,7 @@ const NAV_ITEMS: { k: View; label: string; Icon: React.FC<{s?:number}> }[] = [
   { k: 'home',     label: 'Home',      Icon: IcHome },
   { k: 'discover', label: 'Discover',  Icon: IcDiscover },
   { k: 'seeds',    label: 'Seeds',     Icon: IcSeeds },
-  { k: 'tickets',  label: 'Ticketing', Icon: IcTicket },
+  { k: 'tickets',  label: 'Live Events', Icon: IcTicket },
   { k: 'studio',   label: 'Studio',    Icon: IcStudio },
 ];
 
@@ -1318,9 +1318,9 @@ const ViewTicketing = memo(function ViewTicketing({ data, activeProfileTypes }: 
 
       {tab === 'referral' && isDJ && (
         <div className="wb-panel" style={{ marginTop: 20, padding: '24px 28px' }}>
-          <div className="wb-eyebrow" style={{ color: '#b983ff', marginBottom: 10 }}>● PROMOTER / DJ · REFERRAL PROGRAM</div>
+          <div className="wb-eyebrow" style={{ color: '#b983ff', marginBottom: 10 }}>● PROMOTER / DJ · REFERRAL LINKS · 10% ON TICKETS YOU DRIVE</div>
           <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 24, letterSpacing: '-.02em', color: 'var(--wb-ink)', margin: '0 0 8px' }}>Your referral link</h2>
-          <p className="wb-page-sub" style={{ marginBottom: 24 }}>Attach your referral link to any event. When fans buy tickets through your link, you earn a cut — set by the event organizer, paid automatically by iHYPE.</p>
+          <p className="wb-page-sub" style={{ marginBottom: 24 }}>Share your link for any event. When fans buy tickets through it, you earn 10% — paid automatically by iHYPE, no invoice required.</p>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 20 }}>
             <input readOnly value={`https://ihype.org/ref/${data.userInitials?.toLowerCase() ?? 'you'}`} style={{ flex: 1, padding: '10px 14px', background: 'var(--wb-bg-3)', border: '1px solid var(--wb-line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--wb-accent)', outline: 'none' }} />
             <button className="wb-btn-prime" onClick={() => navigator.clipboard?.writeText(`https://ihype.org/ref/${data.userInitials?.toLowerCase() ?? 'you'}`)}>Copy</button>

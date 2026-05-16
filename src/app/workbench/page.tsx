@@ -79,7 +79,7 @@ const MY_TICKETS = [
 ];
 
 const ACTIVITY = [
-  { txt:'3 new hypes on Sundown',                    t:'2m ago',  kind:'hype'   as const },
+  { txt:'3 new HYPEs on Sundown',                    t:'2m ago',  kind:'hype'   as const },
   { txt:'Cobalt Hour confirmed for Sat Jun 20',       t:'14m ago', kind:'show'   as const },
   { txt:'DJ Vex spun Sundown on Chicago Underground', t:'1h ago',  kind:'radio'  as const },
   { txt:'Payout $2,460 scheduled for Jun 24',         t:'3h ago',  kind:'payout' as const },
@@ -149,7 +149,7 @@ function ViewHome({ session, onPickTrack, currentId, setView }:
           <div style={eyebrow()}>● {eb}</div>
           <h1 style={{ fontFamily:'var(--f-d)', fontWeight:800, fontSize:38, letterSpacing:'-.025em', lineHeight:1, margin:0, color:'var(--ink)' }}>{greeting}, {firstName}.</h1>
           <p style={{ fontFamily:'var(--f-b)', fontSize:14, color:'var(--ink-2)', marginTop:10, maxWidth:560, lineHeight:1.5 }}>
-            3 new hypes on <strong style={{ color:'var(--ink)' }}>Sundown</strong>. Cobalt Hour opens for you Saturday at Sleeping Village. Two venues asked about August.
+            3 new HYPEs on <strong style={{ color:'var(--ink)' }}>Sundown</strong>. Cobalt Hour opens for you Saturday at Sleeping Village. Two venues asked about August.
           </p>
         </div>
         <div style={{ display:'flex', gap:10, flexShrink:0 }}>
@@ -223,7 +223,7 @@ function ViewHome({ session, onPickTrack, currentId, setView }:
       {/* Track grid */}
       <section style={{ ...panel, marginTop:14 }}>
         <div style={panelHead}>
-          <div style={panelTitle}>Hyped this week</div>
+          <div style={panelTitle}>HYPEd this week</div>
           <button onClick={()=>setView('library')} type="button" style={linkBtn}>Discover all →</button>
         </div>
         <div style={{ display:'grid', gridTemplateColumns:'repeat(6,1fr)', gap:10, padding:'14px 16px' }}>
@@ -254,7 +254,7 @@ function ViewLibrary({ onPickTrack, currentId }:{ onPickTrack:(id:string)=>void;
   const menuRef = useRef<HTMLDivElement|null>(null);
 
   const playlists = [
-    { n:'Hyped tracks',      c:'#ff3e9a', count:247 },
+    { n:'HYPEd tracks',      c:'#ff3e9a', count:247 },
     { n:'Top 5 — this week', c:'#ff5029', count:5 },
     { n:'Writing room',      c:'#b983ff', count:42 },
     { n:'Tour van',          c:'#22e5d4', count:88 },
@@ -294,7 +294,7 @@ function ViewLibrary({ onPickTrack, currentId }:{ onPickTrack:(id:string)=>void;
       <div style={{ marginBottom:18 }}>
         <div style={eyebrow('#b983ff')}>● YOUR SAVED TRACKS · 247 SONGS · 18 PLAYLISTS</div>
         <h1 style={pageTitle}>Library</h1>
-        <p style={pageSub}>Everything you've hyped, saved, or curated. Your library is yours.</p>
+        <p style={pageSub}>Everything you've HYPEd, saved, or curated. Your library is yours.</p>
       </div>
       <div style={{ display:'flex', gap:4, padding:4, background:'var(--bg-2)', border:'1px solid var(--line)', borderRadius:8, marginBottom:20, width:'fit-content' }}>
         {(['saved','discover'] as const).map(k=>(
@@ -440,7 +440,7 @@ function ViewRadio({ onPickTrack }:{ onPickTrack:(id:string)=>void }) {
                 <button type="button" style={{ ...btnPrime, display:'flex', alignItems:'center', gap:6 }}><IcPlay s={12}/> Pre-roll archive</button>
               )}
               <button type="button" style={btnGhost}>♡ Subscribe</button>
-              <button type="button" style={{ ...btnGhost, display:'flex', alignItems:'center', gap:6 }}><IcHeart s={12} c="#ff3e9a"/> Hype show</button>
+              <button type="button" style={{ ...btnGhost, display:'flex', alignItems:'center', gap:6 }}><IcHeart s={12} c="#ff3e9a"/> HYPE show</button>
             </div>
           </div>
 
