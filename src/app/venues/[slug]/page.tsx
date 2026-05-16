@@ -10,6 +10,7 @@ import { HypeButton } from '@/components/HypeButton';
 import { VenueEventScheduler } from '@/components/VenueEventScheduler';
 import { VenueConnectionRequestActions } from '@/components/VenueConnectionRequestActions';
 import { VenueConnectionRequestForm } from '@/components/VenueConnectionRequestForm';
+import { ShareButton } from '@/components/ShareButton';
 import { getSafeBackgroundImageStyle, getSafeImageUrl, getSafeVideoUrl } from '@/lib/asset-safety';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getDemoCreatorExclusion, getDemoOwnerExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
@@ -217,10 +218,22 @@ export default async function VenuePage({
             {profile.hoursText ? <p className="meta">{profile.hoursText}</p> : null}
             <div className="tag-row">{profile.genres.map((genre) => <span key={genre} className="tag">{genre}</span>)}</div>
             <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} entityLabel="venue" />
+            <div className="cta-row" style={{ marginTop: 12 }}>
+              {profile.contactInfo && profile.contactInfo.includes('@') ? (
+                <a className="button" href={`mailto:${profile.contactInfo}?subject=${encodeURIComponent(`Booking inquiry for ${profile.name}`)}`}>
+                  Send booking inquiry
+                </a>
+              ) : (
+                <Link className="button" href={`/venues/${profile.slug}?section=request`}>
+                  Send booking inquiry
+                </Link>
+              )}
+            </div>
             <div className="profile-public-actions">
               <Link className="button small secondary" href={`/venues/${profile.slug}?section=upcoming`}>See shows</Link>
               <Link className="button small secondary" href={`/venues/${profile.slug}?section=request`}>Request artist</Link>
               <Link className="button small secondary" href="/register?role=VENUE">List a venue</Link>
+              <ShareButton path={`/venues/${profile.slug}`} title={profile.name} label="Copy profile link" />
             </div>
           </div>
           {isOwner ? (

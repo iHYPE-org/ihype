@@ -5,6 +5,7 @@ import { getSharedDiscoverFeed } from '@/lib/discover-feed';
 import { detectRequestLocation } from '@/lib/request-location';
 import type { ProfileType } from '@prisma/client';
 import { WorkbenchShell, type WorkbenchData, type WbStat, type WbTrack, type WbShow, type WbActivity } from '@/components/WorkbenchShell';
+import { EmailVerificationBanner } from '@/components/EmailVerificationBanner';
 
 export const dynamic = 'force-dynamic';
 
@@ -273,7 +274,35 @@ export default async function HomePage() {
     }).length,
   };
 
-  return <WorkbenchShell data={wbData} />;
+  const emailVerified = (session.user as { emailVerified?: Date | string | null }).emailVerified ?? null;
+  const needsEmailVerification = !emailVerified && Boolean(session.user.email);
+
+  // Starter pack: only fetched if the user has no signal yet.
+  const userTotalHype = await db.hypeEvent.count({ where: { userId } }).catch(() => 0);
+  let starterPack: Array<{ id: string; name: string; slug: string; hypeCount: number; city: string | null; genre: string | null }> = [];
+  if (userTotalHype === 0 && profile.type === 'LISTENER') {
+    const top = await db.profile.findMany({
+      where: { type: 'ARTIST' },
+      orderBy: [{ verified: 'desc' }, { hypeCount: 'desc' }],
+      take: 6,
+      select: { id: true, name: true, slug: true, hypeCount: true, city: true, genres: true }
+    }).catch(() => []);
+    starterPack = top.map((p) => ({
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      hypeCount: p.hypeCount,
+      city: p.city,
+      genre: p.genres[0] ?? null,
+    }));
+  }
+
+  return (
+    <>
+      <EmailVerificationBanner needsVerification={needsEmailVerification} />
+      <WorkbenchShell data={wbData} starterPack={starterPack} />
+    </>
+  );
 }
 
 // ── Data helpers ─────────────────────────────────────────────────────

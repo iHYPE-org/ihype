@@ -266,16 +266,38 @@ export function TicketSaleCard({
           <div className="grid grid-2">
             <label className="field">
               <span>Quantity</span>
-              <input
-                inputMode="numeric"
-                max={remainingTickets === null ? 8 : Math.max(remainingTickets, 1)}
-                min="1"
-                step="1"
-                type="number"
-                value={quantity}
-                onChange={(event) => setQuantity(event.target.value)}
-                required
-              />
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <button
+                  type="button"
+                  aria-label="Decrease quantity"
+                  onClick={() => setQuantity((q) => String(Math.max(1, Number(q || 1) - 1)))}
+                  style={{ padding: '4px 12px', border: '1px solid var(--line, #333)', background: 'transparent', borderRadius: 6, cursor: 'pointer', fontSize: '1.2em', lineHeight: 1 }}
+                >
+                  −
+                </button>
+                <input
+                  inputMode="numeric"
+                  max={remainingTickets === null ? 8 : Math.max(remainingTickets, 1)}
+                  min="1"
+                  step="1"
+                  type="number"
+                  value={quantity}
+                  onChange={(event) => setQuantity(event.target.value)}
+                  required
+                  style={{ textAlign: 'center', flex: 1, maxWidth: 80 }}
+                />
+                <button
+                  type="button"
+                  aria-label="Increase quantity"
+                  onClick={() => {
+                    const cap = remainingTickets === null ? 8 : Math.max(remainingTickets, 1);
+                    setQuantity((q) => String(Math.min(cap, Number(q || 1) + 1)));
+                  }}
+                  style={{ padding: '4px 12px', border: '1px solid var(--line, #333)', background: 'transparent', borderRadius: 6, cursor: 'pointer', fontSize: '1.2em', lineHeight: 1 }}
+                >
+                  +
+                </button>
+              </div>
             </label>
 
             <div className="ticketing-split-preview">

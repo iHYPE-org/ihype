@@ -7,6 +7,7 @@ import { useMediaPlayer, type MediaTrack } from '@/components/GlobalMediaPlayer'
 import { SeedsSwipeStack, type SeedsSwipeStackSeed, type SeedsSwipeStackTrack } from '@/components/SeedsSwipeStack';
 import { HypeHeatmap } from '@/components/HypeHeatmap';
 import { PasskeyManager } from '@/components/AuthScreens';
+import { useToast } from '@/components/Toast';
 
 // ── Drag context ───────────────────────────────────────────────
 const DragTrackCtx = createContext<{
@@ -301,7 +302,16 @@ function OnboardingModal({ onDone }: { onDone: () => void }) {
 }
 
 // ── Main shell ─────────────────────────────────────────────────
-export function WorkbenchShell({ data }: { data: WorkbenchData }) {
+export type StarterPackItem = {
+  id: string;
+  name: string;
+  slug: string;
+  hypeCount: number;
+  city: string | null;
+  genre: string | null;
+};
+
+export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData; starterPack?: StarterPackItem[] }) {
   const [view, setView] = useState<View>('home');
   const [liveStats, setLiveStats] = useState({
     listeningNow: data.listeningNow,
@@ -396,7 +406,7 @@ export function WorkbenchShell({ data }: { data: WorkbenchData }) {
         <WbSidebar view={view} setView={(v) => { setView(v); setSidebarOpen(false); }} pinned={['home', ...prefs.pinned]} initials={liveData.userInitials} accent={prefs.accent} activeProfileTypes={liveData.activeProfileTypes} mobileOpen={sidebarOpen} onMobileClose={() => setSidebarOpen(false)} isVerified={liveData.isVerified} />
         <WbTopbar view={view} data={liveData} onHamburger={() => setSidebarOpen(s => !s)} setView={setView} />
         <main className="wb-main">
-          {view === 'home'     && <ViewHome data={liveData} prefs={prefs} setView={setView} />}
+          {view === 'home'     && <ViewHome data={liveData} prefs={prefs} setView={setView} starterPack={starterPack} />}
           {view === 'discover' && <ViewDiscover data={liveData} />}
           {view === 'seeds'    && <ViewSeeds data={liveData} />}
           {view === 'tickets'  && <ViewTicketing data={liveData} activeProfileTypes={liveData.activeProfileTypes} />}
@@ -751,6 +761,15 @@ function WbQueueRail({ data }: { data: WorkbenchData }) {
 
 // ── View: Home ─────────────────────────────────────────────────
 function WbFirstSteps({ data, setView }: { data: WorkbenchData; setView: (v: View) => void }) {
+  const [dismissed, setDismissed] = useState(false);
+  useEffect(() => {
+    try {
+      if (localStorage.getItem('ihype-firststeps-dismissed') === '1') setDismissed(true);
+    } catch {}
+  }, []);
+  const completionPercent = data.profileCompletion?.percent ?? 0;
+  // Auto-collapse if everything is done.
+  if (dismissed || completionPercent >= 100) return null;
   const type = data.profileType ?? data.activeProfileTypes[0] ?? 'LISTENER';
   const roleName = type === 'DJ' ? 'promoter' : type === 'VENUE' ? 'venue' : type === 'ARTIST' ? 'artist' : 'fan';
   const completion = data.profileCompletion ?? { percent: 0, missing: ['Add profile details'] };
@@ -777,8 +796,21 @@ function WbFirstSteps({ data, setView }: { data: WorkbenchData; setView: (v: Vie
           <div className="wb-panel-title">First 3 moves for your {roleName} lane</div>
           <div className="wb-small-muted">{completion.percent}% page strength - {nextMissing}</div>
         </div>
-        <div className="wb-completion-ring" aria-label={`Profile completion ${completion.percent}%`}>
-          <span>{completion.percent}%</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="wb-completion-ring" aria-label={`Profile completion ${completion.percent}%`}>
+            <span>{completion.percent}%</span>
+          </div>
+          <button
+            type="button"
+            aria-label="Dismiss getting-started checklist"
+            onClick={() => {
+              try { localStorage.setItem('ihype-firststeps-dismissed', '1'); } catch {}
+              setDismissed(true);
+            }}
+            style={{ background: 'transparent', border: 'none', color: 'var(--wb-ink-3)', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 4 }}
+          >
+            ×
+          </button>
         </div>
       </div>
       {completion.checks?.length ? (
@@ -806,7 +838,65 @@ function WbFirstSteps({ data, setView }: { data: WorkbenchData; setView: (v: Vie
   );
 }
 
-function ViewHome({ data, prefs, setView }: { data: WorkbenchData; prefs: Prefs; setView: (v: View) => void }) {
+function StarterPackPanel({ items }: { items: StarterPackItem[] }) {
+  const [hypedIds, setHypedIds] = useState<Set<string>>(new Set());
+  const [dismissed, setDismissed] = useState(false);
+  useEffect(() => {
+    try { if (localStorage.getItem('ihype-starter-dismissed') === '1') setDismissed(true); } catch {}
+  }, []);
+  if (dismissed || !items.length) return null;
+  async function hype(id: string) {
+    if (hypedIds.has(id)) return;
+    setHypedIds((s) => new Set(s).add(id));
+    try {
+      await fetch('/api/hype', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetType: 'profile', targetId: id }),
+      });
+    } catch {}
+  }
+  return (
+    <section className="wb-panel" style={{ marginBottom: 16 }}>
+      <div className="wb-panel-head">
+        <div>
+          <div className="wb-panel-title">Starter pack — seed your feed</div>
+          <div className="wb-small-muted">Tap HYPE on a few artists to personalize recommendations.</div>
+        </div>
+        <button
+          type="button"
+          onClick={() => { try { localStorage.setItem('ihype-starter-dismissed', '1'); } catch {} setDismissed(true); }}
+          aria-label="Dismiss starter pack"
+          style={{ background: 'transparent', border: 'none', color: 'var(--wb-ink-3)', cursor: 'pointer', fontSize: 18 }}
+        >×</button>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10, marginTop: 10 }}>
+        {items.map((a) => {
+          const hyped = hypedIds.has(a.id);
+          return (
+            <div key={a.id} style={{ padding: 12, border: '1px solid var(--wb-line, #2a2622)', borderRadius: 10, background: 'var(--wb-bg-2, #181513)' }}>
+              <div style={{ fontWeight: 600, fontSize: 13 }}>{a.name}</div>
+              <div style={{ fontSize: 11, color: 'var(--wb-ink-3)', marginTop: 2 }}>
+                {[a.genre, a.city].filter(Boolean).join(' · ') || 'Independent'}
+              </div>
+              <button
+                type="button"
+                onClick={() => hype(a.id)}
+                disabled={hyped}
+                className="wb-btn-prime"
+                style={{ marginTop: 10, padding: '6px 12px', fontSize: 11, width: '100%' }}
+              >
+                {hyped ? '✓ Hyped' : `HYPE · ${a.hypeCount}`}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function ViewHome({ data, prefs, setView, starterPack = [] }: { data: WorkbenchData; prefs: Prefs; setView: (v: View) => void; starterPack?: StarterPackItem[] }) {
   const { playTrack, currentTrack } = useMediaPlayer();
   const [copied, setCopied] = useState(false);
   const now = new Date();
@@ -841,6 +931,7 @@ function ViewHome({ data, prefs, setView }: { data: WorkbenchData; prefs: Prefs;
       </div>
 
       <WbFirstSteps data={data} setView={setView} />
+      <StarterPackPanel items={starterPack} />
 
       {/* Stats */}
       {prefs.panel_stats && data.stats.length > 0 && (
@@ -2082,6 +2173,7 @@ function ViewDiscover({ data: _data }: { data: WorkbenchData }) {
 function ViewSeeds({ data }: { data: WorkbenchData }) {
   const [seeds, setSeeds] = useState<SeedsSwipeStackSeed[]>([]);
   const [tracks, setTracks] = useState<SeedsSwipeStackTrack[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fallbackTracks = data.tracks.map(t => ({
@@ -2120,16 +2212,33 @@ function ViewSeeds({ data }: { data: WorkbenchData }) {
       .catch(() => {
         setSeeds(fallbackSeeds);
         setTracks(fallbackTracks);
-      });
+      })
+      .finally(() => setLoading(false));
   }, [data.tracks]);
 
+  const toast = useToast();
+  if (loading) {
+    return (
+      <div style={{ padding: '24px 32px 32px' }}>
+        <div className="animate-pulse" style={{ display: 'flex', gap: 32, alignItems: 'flex-start' }}>
+          <div style={{ width: 340, height: 440, borderRadius: 16, background: 'var(--bg-2, #1a1612)' }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
+            <div style={{ height: 44, borderRadius: 10, background: 'var(--bg-2, #1a1612)' }} />
+            <div style={{ height: 44, borderRadius: 10, background: 'var(--bg-2, #1a1612)' }} />
+            <div style={{ height: 44, borderRadius: 10, background: 'var(--bg-2, #1a1612)' }} />
+            <div style={{ height: 100, borderRadius: 10, background: 'var(--bg-2, #1a1612)', marginTop: 8 }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <SeedsSwipeStack
       seeds={seeds}
       tracks={tracks}
-      onSave={seed => void fetch(`/api/discover/seeds/${seed.id}/save`, { method: 'POST' })}
-      onSkip={seed => void fetch(`/api/discover/seeds/${seed.id}/skip`, { method: 'POST' })}
-      onHype={seed => void fetch(`/api/discover/seeds/${seed.id}/hype`, { method: 'POST' })}
+      onSave={seed => { toast.push('Saved to library', 'success'); void fetch(`/api/discover/seeds/${seed.id}/save`, { method: 'POST' }); }}
+      onSkip={seed => { toast.push('Skipped'); void fetch(`/api/discover/seeds/${seed.id}/skip`, { method: 'POST' }); }}
+      onHype={seed => { toast.push('Hyped!', 'success'); void fetch(`/api/discover/seeds/${seed.id}/hype`, { method: 'POST' }); }}
     />
   );
 }

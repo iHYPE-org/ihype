@@ -32,27 +32,43 @@ export function HypeButton({ targetType, targetId, initialCount, entityLabel }: 
     setPending(true);
     setMessage(null);
 
-    const response = await fetch('/api/hype', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ targetType, targetId })
-    });
+    // Optimistic update: increment count + trigger pop animation immediately.
+    const previousCount = count;
+    setCount((c) => c + 1);
+    setPopping(true);
+    setTimeout(() => setPopping(false), 400);
 
-    const data = await response.json();
+    let response: Response;
+    try {
+      response = await fetch('/api/hype', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetType, targetId })
+      });
+    } catch {
+      // Network failure — roll back.
+      setCount(previousCount);
+      setMessage(`Could not hype this ${noun} (network error)`);
+      setPending(false);
+      return;
+    }
+
+    const data = await response.json().catch(() => ({} as any));
     if (response.ok) {
-      setCount(data.hypeCount);
+      // Reconcile with authoritative server count.
+      if (typeof data.hypeCount === 'number') setCount(data.hypeCount);
       if (data.created) {
-        setPopping(true);
-        setTimeout(() => setPopping(false), 400);
         setAlreadyHyped(true);
         try { localStorage.setItem(storageKey, '1'); } catch {}
-        setMessage(`Hyped! You've hyped ${data.hypeCount.toLocaleString()} total on this ${noun}.`);
+        setMessage(`Hyped! You've hyped ${(data.hypeCount ?? previousCount + 1).toLocaleString()} total on this ${noun}.`);
       } else {
         setAlreadyHyped(true);
         try { localStorage.setItem(storageKey, '1'); } catch {}
         setMessage(`You already hyped this ${noun}`);
       }
     } else {
+      // Roll back the optimistic increment.
+      setCount(previousCount);
       setMessage(data.error ?? `Could not hype this ${noun}`);
     }
 

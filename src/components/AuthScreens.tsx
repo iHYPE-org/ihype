@@ -302,14 +302,26 @@ export function LoginScreen({
       </div>
 
       {mode === 'passkey' ? (
-        <button
-          className="button"
-          disabled={isSubmitting}
-          onClick={signInWithPasskey}
-          type="button"
-        >
-          {isSubmitting ? 'Checking passkey...' : 'Sign in with passkey'}
-        </button>
+        <>
+          <button
+            className="button"
+            disabled={isSubmitting}
+            onClick={signInWithPasskey}
+            type="button"
+          >
+            {isSubmitting ? 'Checking passkey...' : 'Sign in with passkey'}
+          </button>
+          {error ? (
+            <button
+              className="button secondary"
+              onClick={() => { setMode('email'); setError(''); }}
+              type="button"
+              style={{ marginTop: 8 }}
+            >
+              Use email instead
+            </button>
+          ) : null}
+        </>
       ) : emailStep === 'credentials' ? (
         <form className="form" onSubmit={requestEmailCode}>
           <label className="field">

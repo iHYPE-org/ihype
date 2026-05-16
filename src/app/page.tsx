@@ -62,6 +62,9 @@ export default async function MarketingPage() {
           <Link href="/register" className="lp-btn-primary lp-btn-primary--lg">Join free — it takes 60 seconds</Link>
           <Link href="/login" className="lp-btn-ghost">Sign in</Link>
         </div>
+        <p className="lp-hero-social-proof" style={{ marginTop: 12, fontSize: '0.95rem', opacity: 0.78 }}>
+          <strong>{formatCompact(liveUserCount)}</strong> fans already building their scene.
+        </p>
         <div className="lp-live-proof" aria-label="Live iHYPE trust signals">
           <div className="lp-live-proof-item">
             <span>Members</span>

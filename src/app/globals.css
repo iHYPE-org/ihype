@@ -45,6 +45,18 @@ button, input, select, textarea { font: inherit; }
   min-height: 100vh;
   padding-top: 70px;
 }
+/* Reserve bottom space when the fixed-position site player dock is rendered,
+   so content (especially on mobile) is not hidden behind it. */
+body:has(.site-dock) .site-shell {
+  padding-bottom: 80px;
+}
+
+/* Lightweight pulse animation used by skeleton loaders. */
+@keyframes ihype-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.animate-pulse { animation: ihype-pulse 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 .site-background {
   position: fixed;
   inset: 0;

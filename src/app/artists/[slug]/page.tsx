@@ -8,6 +8,7 @@ import { ShowCard } from '@/components/ShowCard';
 import { HypeButton } from '@/components/HypeButton';
 import { ArtistMediaPlaylist } from '@/components/ArtistMediaPlaylist';
 import { ContentReportControl } from '@/components/ContentReportControl';
+import { ShareButton } from '@/components/ShareButton';
 import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
 import { getSafeBackgroundImageStyle, getSafeImageUrl, getSafeVideoUrl } from '@/lib/asset-safety';
 import { canManageOwnedResource } from '@/lib/permissions';
@@ -262,10 +263,21 @@ export default async function ArtistPage({
               {profile.genres.map((genre) => <span key={genre} className="tag">{genre}</span>)}
             </div>
             <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} entityLabel="artist" />
+            {profile.contactInfo ? (
+              <div className="cta-row" style={{ marginTop: 12 }}>
+                <a
+                  className="button"
+                  href={profile.contactInfo.includes('@') ? `mailto:${profile.contactInfo}?subject=${encodeURIComponent(`Booking inquiry for ${profile.name}`)}` : '#'}
+                >
+                  Send booking inquiry
+                </a>
+              </div>
+            ) : null}
             <div className="profile-public-actions">
               <Link className="button small secondary" href="/register?role=FAN">Follow as fan</Link>
               <Link className="button small secondary" href={`/artists/${profile.slug}?section=media`}>Hear media</Link>
               <Link className="button small secondary" href="/register?role=VENUE">Book artists</Link>
+              <ShareButton path={`/artists/${profile.slug}`} title={profile.name} label="Copy profile link" />
             </div>
           </div>
           {isOwner ? (

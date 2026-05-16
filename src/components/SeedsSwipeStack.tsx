@@ -63,17 +63,31 @@ function IcX({ s = 16 }: { s?: number }) {
 }
 
 export function SeedsSwipeStack({ seeds, tracks, onSave, onSkip, onHype }: Props) {
-  const activeSeedList = seeds;
+  const [extraSeeds, setExtraSeeds] = useState<SeedsSwipeStackSeed[]>([]);
+  const activeSeedList = [...extraSeeds, ...seeds];
   const [index, setIndex] = useState(0);
   const [swipeDir, setSwipeDir] = useState<'left' | 'right' | 'up' | null>(null);
   const [dragDx, setDragDx] = useState(0);
   const [dragging, setDragging] = useState(false);
   const dragStartX = useRef(0);
   const cardRef = useRef<HTMLDivElement>(null);
+  const [lastSkipped, setLastSkipped] = useState<SeedsSwipeStackSeed | null>(null);
+  const [undoVisible, setUndoVisible] = useState(false);
 
   useEffect(() => {
     setIndex(0);
+    setExtraSeeds([]);
   }, [seeds]);
+
+  // Auto-fade undo after 5 seconds.
+  useEffect(() => {
+    if (!undoVisible) return;
+    const t = setTimeout(() => {
+      setUndoVisible(false);
+      setLastSkipped(null);
+    }, 5000);
+    return () => clearTimeout(t);
+  }, [undoVisible, lastSkipped]);
 
   const seed = activeSeedList[index];
   const track = seed ? tracks.find(t => t.id === seed.trackId) : null;
@@ -84,7 +98,11 @@ export function SeedsSwipeStack({ seeds, tracks, onSave, onSkip, onHype }: Props
     if (!seed) return;
     setSwipeDir(dir);
     if (dir === 'right') onSave(seed);
-    else if (dir === 'left') onSkip(seed);
+    else if (dir === 'left') {
+      onSkip(seed);
+      setLastSkipped(seed);
+      setUndoVisible(true);
+    }
     else if (dir === 'up') onHype(seed);
     setTimeout(() => {
       setIndex(i => i + 1);
@@ -92,6 +110,30 @@ export function SeedsSwipeStack({ seeds, tracks, onSave, onSkip, onHype }: Props
       setDragDx(0);
     }, 240);
   }, [seed, onSave, onSkip, onHype]);
+
+  const handleUndo = useCallback(() => {
+    if (!lastSkipped) return;
+    // Re-insert the skipped seed at the current position (front of remaining queue).
+    setExtraSeeds(prev => [lastSkipped, ...prev]);
+    // Walk index back so the inserted seed is shown next.
+    setIndex(i => Math.max(0, i - 1));
+    setLastSkipped(null);
+    setUndoVisible(false);
+  }, [lastSkipped]);
+
+  // Keyboard navigation: ArrowRight = hype, ArrowLeft = skip, ArrowDown = save.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
+      if (!seed) return;
+      if (e.key === 'ArrowRight') { e.preventDefault(); advance('up'); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); advance('left'); }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); advance('right'); }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [advance, seed]);
 
   function handleMouseDown(e: React.MouseEvent) {
     dragStartX.current = e.clientX;
@@ -254,10 +296,31 @@ export function SeedsSwipeStack({ seeds, tracks, onSave, onSkip, onHype }: Props
             <IcX s={14} /> Skip
           </button>
 
+          {undoVisible && lastSkipped ? (
+            <button
+              type="button"
+              onClick={handleUndo}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                padding: '10px 16px', background: 'rgba(255,255,255,.08)',
+                border: '1px solid var(--line)', borderRadius: 10,
+                fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink)',
+                cursor: 'pointer',
+                animation: 'fadeOut 5s forwards',
+              }}
+            >
+              ↶ Undo last skip
+            </button>
+          ) : null}
+
           <div style={{ marginTop: 8, padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)' }}>
             <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, letterSpacing: '.16em', color: 'var(--ink-3)', marginBottom: 8 }}>HOW IT WORKS</div>
             <div style={{ fontFamily: 'var(--f-b)', fontSize: 12, color: 'var(--ink-2)', lineHeight: 1.55 }}>
               Seeds are seeded from artists you already HYPE. Save → adds to library. HYPE → signals the artist. Skip → trains your feed.
+            </div>
+            <div style={{ marginTop: 10, fontFamily: 'var(--f-m)', fontSize: 9, letterSpacing: '.16em', color: 'var(--ink-3)', marginBottom: 6 }}>KEYBOARD</div>
+            <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', lineHeight: 1.6 }}>
+              ← Skip · → HYPE · ↓ Save
             </div>
           </div>
         </div>
