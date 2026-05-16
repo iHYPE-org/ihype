@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { HypeButton } from '@/components/HypeButton';
 import { getSafeImageUrl } from '@/lib/asset-safety';
 import { shortenHexId } from '@/lib/hex-id';
@@ -54,7 +55,16 @@ export function ProfileCard({ profile, compact = false }: { profile: ProfileCard
       <div className="profile-card-identity">
         {avatarImage ? (
           <div className="card-avatar profile-card-avatar-shell">
-            <img alt={`${profile.name} avatar`} className="profile-avatar profile-card-avatar" src={avatarImage} />
+            <Image
+              alt={`${profile.name} avatar`}
+              className="profile-avatar profile-card-avatar"
+              src={avatarImage}
+              width={300}
+              height={300}
+              sizes="(max-width: 768px) 100vw, 300px"
+              style={{ width: '100%', height: 'auto', objectFit: 'cover' }}
+              unoptimized
+            />
           </div>
         ) : (
           <div className="profile-avatar profile-avatar-fallback profile-card-avatar profile-card-avatar-shell">

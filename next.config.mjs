@@ -64,6 +64,11 @@ const securityHeaders = [
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: '**' }
+    ]
+  },
   experimental: {
     workerThreads: true
   },

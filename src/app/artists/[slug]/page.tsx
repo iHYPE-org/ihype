@@ -251,7 +251,30 @@ export default async function ArtistPage({
           <div className="artist-banner-copy">
             {logoUrl ? <img alt={`${profile.name} logo`} className="artist-logo-mark" src={logoUrl} /> : null}
             <div className="badge">ARTIST</div>
-            <h1 className="title" style={{ fontSize: '2.9rem' }}>{profile.name}</h1>
+            <h1 className="title" style={{ fontSize: '2.9rem' }}>
+              {profile.name}
+              {profile.verificationStatus === 'VERIFIED' ? (
+                <span
+                  title="Verified artist"
+                  aria-label="Verified"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '1.6rem',
+                    height: '1.6rem',
+                    borderRadius: '50%',
+                    marginLeft: '0.5rem',
+                    background: '#1d9bf0',
+                    color: '#fff',
+                    fontSize: '1rem',
+                    verticalAlign: 'middle'
+                  }}
+                >
+                  ✓
+                </span>
+              ) : null}
+            </h1>
             <p className="artist-headline">{profile.headline || 'Build your headline banner and tell people what this chapter sounds like.'}</p>
             <p className="subtitle">{profile.bio}</p>
             <p className="meta">{[profile.city, profile.country].filter(Boolean).join(', ')}</p>

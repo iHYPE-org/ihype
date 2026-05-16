@@ -59,6 +59,18 @@ type ConfiguredEmailInput = {
   html: string;
 };
 
+export async function sendGenericEmail(input: ConfiguredEmailInput) {
+  if (!isEmailDeliveryConfigured()) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.info(`[generic-email] ${input.to} :: ${input.subject}`);
+      return { mode: 'log' as const };
+    }
+    throw new Error('Email delivery is not configured.');
+  }
+  const provider = await sendConfiguredEmail(input);
+  return { mode: provider };
+}
+
 async function sendConfiguredEmail(input: ConfiguredEmailInput) {
   const from = getEmailFrom();
   if (!from) {

@@ -4,6 +4,55 @@ import { recordAuditEvent } from '@/lib/audit';
 import { db } from '@/lib/db';
 import { z } from 'zod';
 import { consumeRateLimit, rateLimitHeaders, rateLimitKey } from '@/lib/rate-limit';
+import { sendGenericEmail } from '@/lib/mailer';
+
+const HYPE_MILESTONES = [10, 50, 100, 500, 1000];
+
+async function checkAndRecordMilestone(profileId: string, newCount: number) {
+  const crossed = HYPE_MILESTONES.find((m) => newCount === m);
+  if (!crossed) return;
+  try {
+    const profile = await db.profile.findUnique({
+      where: { id: profileId },
+      select: { id: true, name: true, slug: true, type: true, owner: { select: { email: true, name: true } } }
+    });
+    if (!profile) return;
+    await recordAuditEvent({
+      action: `profile_milestone_hype_${crossed}`,
+      entityType: 'profile',
+      entityId: profileId,
+      metadata: { milestone: crossed, profileName: profile.name }
+    });
+    const ownerEmail = profile.owner?.email;
+    if (ownerEmail) {
+      const ownerName = profile.owner?.name?.trim() || profile.name;
+      const text = [
+        `Congrats ${ownerName}!`,
+        '',
+        `${profile.name} just crossed ${crossed} hypes on iHYPE.`,
+        'Keep the momentum — share your profile to invite more fans.',
+        '',
+        '— iHYPE'
+      ].join('\n');
+      const html = `
+        <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#10182a;">
+          <h2 style="margin:0 0 12px;">🎉 ${crossed} hypes!</h2>
+          <p>Congrats ${ownerName} — <strong>${profile.name}</strong> just crossed <strong>${crossed} hypes</strong> on iHYPE.</p>
+          <p>Keep the momentum — share your profile to invite more fans.</p>
+          <p style="color:#5b657a;font-size:12px;">— iHYPE</p>
+        </div>
+      `;
+      await sendGenericEmail({
+        to: ownerEmail,
+        subject: `🎉 ${profile.name} just hit ${crossed} hypes`,
+        text,
+        html
+      }).catch(() => {});
+    }
+  } catch {
+    // Milestones are best-effort; never fail the hype call.
+  }
+}
 
 const schema = z.discriminatedUnion('targetType', [
   z.object({ targetType: z.literal('show'), targetId: z.string().cuid() }),
@@ -76,6 +125,8 @@ export async function POST(request: NextRequest) {
       entityType: 'profile',
       entityId: payload.targetId
     });
+
+    await checkAndRecordMilestone(payload.targetId, updatedProfile.hypeCount);
 
     return NextResponse.json({ created: true, hypeCount: updatedProfile.hypeCount });
   } catch {

@@ -186,6 +186,7 @@ export default async function HomePage() {
   if (wbActivity.length === 0) {
     wbActivity.push({ text: 'No recent activity — start hyping tracks!', time: 'now', kind: 'hype' });
   }
+  // Lazily merge fan feed below — variable referenced after the block that builds it.
 
   // ── Determine active profile types for role-conditional sidebar items ──
   const allProfileRows = await db.profile.findMany({
@@ -241,6 +242,56 @@ export default async function HomePage() {
   ]);
   const lifeStats = { totalHype, totalEarnings, songsPlayed, eventsAttended };
 
+  const pendingVenueRequestCount = profile.type === 'VENUE'
+    ? await db.venueConnectionRequest.count({ where: { venueProfileId: profile.id, status: 'PENDING' } }).catch(() => 0)
+    : 0;
+
+  // ── Fan activity feed (recent uploads + upcoming shows from hyped profiles) ──
+  let fanActivityFeed: WbActivity[] = [];
+  if (profile.type === 'LISTENER') {
+    const hypedProfiles = await db.profileHypeEvent.findMany({
+      where: { userId },
+      select: { profileId: true },
+      take: 50
+    }).catch(() => [] as { profileId: string }[]);
+    const hypedIds = hypedProfiles.map(h => h.profileId);
+    if (hypedIds.length > 0) {
+      const [recentUploads, upcomingFromHyped] = await Promise.all([
+        db.artistMediaAsset.findMany({
+          where: { profileId: { in: hypedIds }, createdAt: { gte: thirtyDaysAgo } },
+          include: { profile: { select: { name: true, slug: true } } },
+          orderBy: { createdAt: 'desc' },
+          take: 12
+        }).catch(() => []),
+        db.show.findMany({
+          where: {
+            status: { not: 'CANCELED' },
+            startsAt: { gte: now },
+            OR: [
+              { headlinerProfileId: { in: hypedIds } },
+              { promoterProfileId: { in: hypedIds } },
+              { venueProfileId: { in: hypedIds } }
+            ]
+          },
+          include: { venueProfile: { select: { name: true } }, headlinerProfile: { select: { name: true } } },
+          orderBy: { startsAt: 'asc' },
+          take: 8
+        }).catch(() => [])
+      ]);
+      const uploadItems: WbActivity[] = recentUploads.map((m: any) => ({
+        text: `${m.profile?.name ?? 'An artist'} uploaded "${m.title}"`,
+        time: m.createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        kind: 'hype' as const,
+      }));
+      const showItems: WbActivity[] = upcomingFromHyped.map((s: any) => ({
+        text: `${s.headlinerProfile?.name ?? s.title}${s.venueProfile?.name ? ' @ ' + s.venueProfile.name : ''}`,
+        time: s.startsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        kind: 'show' as const,
+      }));
+      fanActivityFeed = [...uploadItems, ...showItems].slice(0, 20);
+    }
+  }
+
   // ── Greeting subtitle ──
   const nextShow = eventsResult.upcoming[0];
   const greetingSub = nextShow
@@ -258,12 +309,14 @@ export default async function HomePage() {
     tracks: wbTracks,
     shows: wbShows,
     tickets: wbTickets,
-    activity: wbActivity,
+    activity: fanActivityFeed.length > 0 ? fanActivityFeed : wbActivity,
     radioShows,
     activeProfileTypes,
     profileType: profile.type,
     profileId: profile.id,
+    profileHexId: profile.hexId,
     profilePath: profileHref(profile.type, profile.slug),
+    pendingVenueRequestCount,
     profileCompletion: getProfileCompletion(profile, eventsResult.upcoming.length + eventsResult.past.length),
     lifeStats,
     listeningNow: discoverFeed.mediaEntries.reduce((a, e) => a + (e.artistHypeCount ?? 0), 0),

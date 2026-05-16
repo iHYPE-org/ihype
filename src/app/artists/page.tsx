@@ -31,20 +31,32 @@ import { isAdminSession } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 
+const DIRECTORY_PAGE_SIZE = 20;
+
 export default async function ArtistsIndexPage({
   searchParams
 }: {
-  searchParams?: Promise<{ module?: string | string[] }>;
+  searchParams?: Promise<{ module?: string | string[]; cursor?: string | string[] }>;
 }) {
   const session = await auth();
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const activeModule = resolveDiscoverModule('artists', resolvedSearchParams.module);
   const isAdminQa = isAdminSession(session);
-  const [artists, promotersForDiscover, venuesForDiscover] = await Promise.all([
+  const [allArtists, promotersForDiscover, venuesForDiscover] = await Promise.all([
     getDirectoryProfiles('ARTIST'),
     getDirectoryProfiles('DJ'),
     getDirectoryProfiles('VENUE')
   ]);
+
+  // Cursor-based pagination: include every artist up to and including the cursor id, then page size more.
+  const cursorRaw = Array.isArray(resolvedSearchParams.cursor) ? resolvedSearchParams.cursor[0] : resolvedSearchParams.cursor;
+  const cursorIndex = cursorRaw ? allArtists.findIndex((profile) => profile.id === cursorRaw) : -1;
+  const visibleEnd = cursorIndex >= 0
+    ? Math.min(allArtists.length, cursorIndex + 1 + DIRECTORY_PAGE_SIZE)
+    : Math.min(allArtists.length, DIRECTORY_PAGE_SIZE);
+  const artists = allArtists.slice(0, visibleEnd);
+  const hasMoreArtists = visibleEnd < allArtists.length;
+  const nextArtistCursor = hasMoreArtists ? allArtists[visibleEnd - 1]?.id : null;
   const discoverProfiles = [...artists, ...promotersForDiscover, ...venuesForDiscover];
 
   const [viewerLocation, venues, artistShows, myArtistProfile] = await Promise.all([
@@ -347,15 +359,24 @@ export default async function ArtistsIndexPage({
   );
 
   return (
-    <ProfileDirectoryPage
-      activeModule={activeModule}
-      badge="ARTISTS"
-      currentHref="/artists"
-      description="Artist engines keep scene shape, attention signals, route planning, and recommendations in one streamlined lane."
-      modulePanel={modulePanel}
-      moduleSubheader={<RoleModuleSubheader activeModule={activeModule} currentHref="/artists" role="artists" />}
-      profiles={discoverProfiles}
-      title="Artist lane"
-    />
+    <>
+      <ProfileDirectoryPage
+        activeModule={activeModule}
+        badge="ARTISTS"
+        currentHref="/artists"
+        description="Artist engines keep scene shape, attention signals, route planning, and recommendations in one streamlined lane."
+        modulePanel={modulePanel}
+        moduleSubheader={<RoleModuleSubheader activeModule={activeModule} currentHref="/artists" role="artists" />}
+        profiles={discoverProfiles}
+        title="Artist lane"
+      />
+      {hasMoreArtists && nextArtistCursor ? (
+        <div className="container section" style={{ textAlign: 'center', padding: '1.5rem 0 3rem' }}>
+          <a className="button" href={`/artists?cursor=${nextArtistCursor}${activeModule ? `&module=${activeModule}` : ''}`}>
+            Load more artists ({allArtists.length - visibleEnd} more)
+          </a>
+        </div>
+      ) : null}
+    </>
   );
 }

@@ -11,20 +11,49 @@ import { getShowsDirectoryData } from '@/lib/public-data';
 import { sortShowsForFeed } from '@/lib/integrity';
 import { detectRequestLocation } from '@/lib/request-location';
 import { isLocalMatch, isRegionalMatch } from '@/lib/discover-feed';
+import { auth } from '@/lib/auth';
+import { db } from '@/lib/db';
 import type { ReasonChip } from '@/lib/integrity';
 
 export const dynamic = 'force-dynamic';
 
-export default async function ShowsIndexPage() {
-  const [rawShows, viewerLocation] = await Promise.all([
+export default async function ShowsIndexPage({
+  searchParams
+}: {
+  searchParams?: Promise<{ near?: string }>;
+}) {
+  const resolvedParams = searchParams ? await searchParams : {};
+  const [rawShows, viewerLocation, session] = await Promise.all([
     getShowsDirectoryData(),
-    detectRequestLocation()
+    detectRequestLocation(),
+    auth().catch(() => null)
   ]);
 
-  const shows = sortShowsForFeed(rawShows).map((show) => ({
+  // Determine user's home city (preferred over IP-derived viewer location)
+  let userCity: string | null = null;
+  if (session?.user?.id) {
+    const userProfile = await db.profile.findFirst({
+      where: { ownerId: session.user.id },
+      select: { city: true },
+      orderBy: { createdAt: 'asc' }
+    }).catch(() => null);
+    userCity = userProfile?.city ?? null;
+  }
+  const nearCity = userCity ?? viewerLocation?.city ?? null;
+  const nearModeRequested = resolvedParams.near;
+  // Default to near mode when we know the city; user can switch with ?near=0
+  const nearMode = nearCity ? nearModeRequested !== '0' : false;
+
+  const allShows = sortShowsForFeed(rawShows).map((show) => ({
     ...show,
     startsAt: show.startsAt instanceof Date ? show.startsAt : new Date(show.startsAt)
   }));
+  const shows = nearMode && nearCity
+    ? allShows.filter((s) => {
+        const showCity = s.venueProfile?.city;
+        return showCity ? showCity.toLowerCase() === nearCity.toLowerCase() : false;
+      })
+    : allShows;
 
   const now = new Date();
   const liveShows = shows.filter((show) => show.status === 'LIVE');
@@ -61,6 +90,24 @@ export default async function ShowsIndexPage() {
               List venue shows
             </Link>
           </div>
+          {nearCity ? (
+            <div className="cta-row" style={{ marginTop: '0.75rem' }} role="group" aria-label="Location filter">
+              <Link
+                className={nearMode ? 'button small' : 'button small secondary'}
+                href={`/shows?near=1`}
+                aria-pressed={nearMode}
+              >
+                📍 Near me ({nearCity})
+              </Link>
+              <Link
+                className={!nearMode ? 'button small' : 'button small secondary'}
+                href={`/shows?near=0`}
+                aria-pressed={!nearMode}
+              >
+                All shows
+              </Link>
+            </div>
+          ) : null}
         </div>
 
         <div className="directory-hero-stats">

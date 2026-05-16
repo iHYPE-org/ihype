@@ -33,10 +33,12 @@ import { isAdminSession } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 
+const DIRECTORY_PAGE_SIZE = 20;
+
 export default async function VenuesIndexPage({
   searchParams
 }: {
-  searchParams?: Promise<{ module?: string | string[]; artist?: string | string[] }>;
+  searchParams?: Promise<{ module?: string | string[]; artist?: string | string[]; cursor?: string | string[] }>;
 }) {
   const session = await auth();
   const resolvedSearchParams = searchParams ? await searchParams : {};
@@ -44,11 +46,19 @@ export default async function VenuesIndexPage({
   const isAdminQa = isAdminSession(session);
   const preferredArtistId =
     typeof resolvedSearchParams.artist === 'string' ? resolvedSearchParams.artist : undefined;
-  const [venues, artistsForDiscover, promotersForDiscover] = await Promise.all([
+  const [allVenues, artistsForDiscover, promotersForDiscover] = await Promise.all([
     getDirectoryProfiles('VENUE'),
     getDirectoryProfiles('ARTIST'),
     getDirectoryProfiles('DJ')
   ]);
+  const cursorRaw = Array.isArray(resolvedSearchParams.cursor) ? resolvedSearchParams.cursor[0] : resolvedSearchParams.cursor;
+  const cursorIndex = cursorRaw ? allVenues.findIndex((profile) => profile.id === cursorRaw) : -1;
+  const visibleEnd = cursorIndex >= 0
+    ? Math.min(allVenues.length, cursorIndex + 1 + DIRECTORY_PAGE_SIZE)
+    : Math.min(allVenues.length, DIRECTORY_PAGE_SIZE);
+  const venues = allVenues.slice(0, visibleEnd);
+  const hasMoreVenues = visibleEnd < allVenues.length;
+  const nextVenueCursor = hasMoreVenues ? allVenues[visibleEnd - 1]?.id : null;
   const discoverProfiles = [...artistsForDiscover, ...promotersForDiscover, ...venues];
 
   const [viewerLocation, mappedVenues, venueShows, myVenueProfile] = await Promise.all([
@@ -496,15 +506,24 @@ export default async function VenuesIndexPage({
   );
 
   return (
-    <ProfileDirectoryPage
-      activeModule={activeModule}
-      badge="VENUES"
-      currentHref="/venues"
-      description="Venue engines keep room performance, booking demand, recommendations, and event creation in one streamlined lane."
-      modulePanel={modulePanel}
-      moduleSubheader={<RoleModuleSubheader activeModule={activeModule} currentHref="/venues" role="venues" />}
-      profiles={discoverProfiles}
-      title="Venue lane"
-    />
+    <>
+      <ProfileDirectoryPage
+        activeModule={activeModule}
+        badge="VENUES"
+        currentHref="/venues"
+        description="Venue engines keep room performance, booking demand, recommendations, and event creation in one streamlined lane."
+        modulePanel={modulePanel}
+        moduleSubheader={<RoleModuleSubheader activeModule={activeModule} currentHref="/venues" role="venues" />}
+        profiles={discoverProfiles}
+        title="Venue lane"
+      />
+      {hasMoreVenues && nextVenueCursor ? (
+        <div className="container section" style={{ textAlign: 'center', padding: '1.5rem 0 3rem' }}>
+          <a className="button" href={`/venues?cursor=${nextVenueCursor}${activeModule ? `&module=${activeModule}` : ''}`}>
+            Load more venues ({allVenues.length - visibleEnd} more)
+          </a>
+        </div>
+      ) : null}
+    </>
   );
 }

@@ -174,7 +174,9 @@ export type WorkbenchData = {
   activeProfileTypes: string[];
   profileType?: string;
   profileId?: string;
+  profileHexId?: string;
   profilePath?: string;
+  pendingVenueRequestCount?: number;
   profileCompletion?: { percent: number; missing: string[]; checks?: Array<{ label: string; ok: boolean }> };
   listeningNow: number;
   hypedToday: number;
@@ -896,6 +898,57 @@ function StarterPackPanel({ items }: { items: StarterPackItem[] }) {
   );
 }
 
+function ShareAndGrowCard({ data }: { data: WorkbenchData }) {
+  const [copied, setCopied] = useState(false);
+  const types = data.activeProfileTypes || [];
+  const isArtistOrDJ = types.includes('ARTIST') || types.includes('DJ');
+  if (!isArtistOrDJ || !data.profileHexId) return null;
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://ihype.org';
+  const referralUrl = `${origin}/register?ref=${data.profileHexId}`;
+  const profileUrl = `${origin}${data.profilePath ?? ''}`;
+  async function copy(url: string) {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  }
+  return (
+    <section className="wb-panel" style={{ marginTop: 16, padding: '18px 22px', background: 'linear-gradient(135deg, rgba(185,131,255,0.08), rgba(34,229,212,0.05))', border: '1px solid rgba(185,131,255,0.25)' }}>
+      <div className="wb-eyebrow" style={{ color: '#b983ff', marginBottom: 6 }}>● SHARE &amp; GROW</div>
+      <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 18, color: 'var(--wb-ink)', marginBottom: 4 }}>Invite fans &amp; build your network</div>
+      <p className="wb-page-sub" style={{ marginBottom: 12, fontSize: 13 }}>Anyone who joins iHYPE through your referral link is attributed to you. Share it on socials, in your bio, or with friends.</p>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+        <input readOnly value={referralUrl} style={{ flex: 1, padding: '8px 12px', background: 'var(--wb-bg-3)', border: '1px solid var(--wb-line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--wb-accent)', outline: 'none' }} onClick={(e) => (e.target as HTMLInputElement).select()} />
+        <button className="wb-btn-prime" onClick={() => copy(referralUrl)} style={{ whiteSpace: 'nowrap' }}>{copied ? 'Copied ✓' : 'Copy referral'}</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <input readOnly value={profileUrl} style={{ flex: 1, padding: '8px 12px', background: 'var(--wb-bg-3)', border: '1px solid var(--wb-line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--wb-ink-2)', outline: 'none' }} onClick={(e) => (e.target as HTMLInputElement).select()} />
+        <button className="wb-btn-ghost" onClick={() => copy(profileUrl)} style={{ whiteSpace: 'nowrap' }}>Copy profile</button>
+      </div>
+    </section>
+  );
+}
+
+function VenueIncomingRequestsCard({ data }: { data: WorkbenchData }) {
+  const types = data.activeProfileTypes || [];
+  if (!types.includes('VENUE')) return null;
+  const count = data.pendingVenueRequestCount ?? 0;
+  if (count <= 0) return null;
+  return (
+    <section className="wb-panel" style={{ marginTop: 16, padding: '14px 22px', display: 'flex', alignItems: 'center', gap: 14, background: 'rgba(34,229,212,0.06)', border: '1px solid rgba(34,229,212,0.25)' }}>
+      <div style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(34,229,212,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--f-d)', fontWeight: 700, color: '#22e5d4', fontSize: 16 }}>{count}</div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14, color: 'var(--wb-ink)' }}>Incoming connection request{count === 1 ? '' : 's'}</div>
+        <div className="wb-page-sub" style={{ margin: 0, fontSize: 12 }}>Artists and fans want to recommend acts to your venue.</div>
+      </div>
+      {data.profilePath ? (
+        <a className="wb-btn-prime" href={`${data.profilePath}?section=request`} style={{ whiteSpace: 'nowrap', textDecoration: 'none' }}>Review →</a>
+      ) : null}
+    </section>
+  );
+}
+
 function ViewHome({ data, prefs, setView, starterPack = [] }: { data: WorkbenchData; prefs: Prefs; setView: (v: View) => void; starterPack?: StarterPackItem[] }) {
   const { playTrack, currentTrack } = useMediaPlayer();
   const [copied, setCopied] = useState(false);
@@ -931,6 +984,8 @@ function ViewHome({ data, prefs, setView, starterPack = [] }: { data: WorkbenchD
       </div>
 
       <WbFirstSteps data={data} setView={setView} />
+      <ShareAndGrowCard data={data} />
+      <VenueIncomingRequestsCard data={data} />
       <StarterPackPanel items={starterPack} />
 
       {/* Stats */}
@@ -1506,8 +1561,8 @@ const ViewTicketing = memo(function ViewTicketing({ data, activeProfileTypes }: 
           <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 24, letterSpacing: '-.02em', color: 'var(--wb-ink)', margin: '0 0 8px' }}>Your referral link</h2>
           <p className="wb-page-sub" style={{ marginBottom: 24 }}>Share your link for any event. When fans buy tickets through it, you earn 10% — paid automatically by iHYPE, no invoice required.</p>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 20 }}>
-            <input readOnly value={`https://ihype.org/ref/${data.userInitials?.toLowerCase() ?? 'you'}`} style={{ flex: 1, padding: '10px 14px', background: 'var(--wb-bg-3)', border: '1px solid var(--wb-line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--wb-accent)', outline: 'none' }} />
-            <button className="wb-btn-prime" onClick={() => navigator.clipboard?.writeText(`https://ihype.org/ref/${data.userInitials?.toLowerCase() ?? 'you'}`)}>Copy</button>
+            <input readOnly value={`https://ihype.org/register?ref=${data.profileHexId ?? data.userInitials?.toLowerCase() ?? 'you'}`} style={{ flex: 1, padding: '10px 14px', background: 'var(--wb-bg-3)', border: '1px solid var(--wb-line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--wb-accent)', outline: 'none' }} />
+            <button className="wb-btn-prime" onClick={() => navigator.clipboard?.writeText(`https://ihype.org/register?ref=${data.profileHexId ?? data.userInitials?.toLowerCase() ?? 'you'}`)}>Copy</button>
           </div>
           <div className="wb-panel" style={{ background: 'var(--wb-bg-3)' }}>
             <div className="wb-panel-head"><div className="wb-panel-title">Events you're attached to</div></div>
