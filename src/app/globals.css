@@ -2303,6 +2303,22 @@ body:has(.auth-signal-page) .nav-links-primary { display: none !important; }
   gap: 0.75rem;
   align-items: center;
 }
+.auth-trust-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.auth-trust-row a {
+  color: #d8f8ff;
+  text-decoration: none;
+}
+.auth-trust-row a:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.24em;
+}
 .auth-passkey-pending {
   display: grid;
   gap: 0.8rem;
@@ -2457,6 +2473,66 @@ body:has(.auth-signal-page) .nav-links-primary { display: none !important; }
   gap: 0.75rem;
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
+.admin-signup-actions,
+.admin-signup-test,
+.admin-alert-row,
+.admin-variant-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+}
+.admin-alert-row {
+  margin: 0.75rem 0;
+}
+.admin-alert-row span,
+.admin-inline-warn {
+  border: 1px solid rgba(255,184,74,0.22);
+  border-radius: 999px;
+  background: rgba(255,184,74,0.1);
+  color: #ffe2b0;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+.admin-alert-row-ok span,
+.admin-inline-ok {
+  border: 1px solid rgba(35,208,216,0.18);
+  border-radius: 999px;
+  background: rgba(35,208,216,0.08);
+  color: #d8f8ff;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+.admin-variant-grid {
+  margin-top: 0.75rem;
+}
+.admin-diagnostic-list {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.9rem;
+}
+.admin-diagnostic-row {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.03);
+}
+.admin-diagnostic-row span,
+.admin-diagnostic-row small,
+.admin-diagnostic-row em {
+  overflow-wrap: anywhere;
+}
+.admin-diagnostic-row small {
+  color: var(--muted);
+}
+.admin-diagnostic-row em {
+  color: #ffe2b0;
+  font-style: normal;
+}
 .admin-health-card {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -2538,7 +2614,17 @@ body:has(.auth-signal-page) .nav-links-primary { display: none !important; }
   margin: 0 0 0.6rem;
 }
 .public-promise-trust-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
   margin-top: 1.25rem;
+}
+.public-promise-trust-links a {
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 999px;
+  color: #d8f8ff;
+  padding: 0.55rem 0.85rem;
+  text-decoration: none;
 }
 .support-page {
   display: grid;
@@ -2560,6 +2646,11 @@ body:has(.auth-signal-page) .nav-links-primary { display: none !important; }
 
   .admin-console-hero {
     display: grid;
+  }
+  .admin-console-panel-head,
+  .admin-signup-actions {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 .field-row {
@@ -10089,6 +10180,15 @@ body:has(.auth-signal-page) .nav-links-primary { display: none !important; }
     border-radius: 18px;
     background: rgba(12,18,32,0.96);
   }
+  .directory-search input {
+    width: 100%;
+  }
+  .profile-public-actions .button,
+  .directory-empty-state .button,
+  .directory-empty-state .text-link {
+    width: 100%;
+    justify-content: center;
+  }
   .connection-map-middle,
   .connection-map-lanes {
     grid-template-columns: 1fr;
@@ -13300,6 +13400,7 @@ html.high-contrast p {
 
   .auth-signal-grid,
   .auth-signal-card .auth-field-grid,
+  .auth-signal-card .auth-method-grid,
   .auth-signal-card .role-choice-grid {
     grid-template-columns: 1fr;
   }
@@ -13307,6 +13408,16 @@ html.high-contrast p {
   .auth-signal-tile,
   .auth-signal-card .role-choice {
     min-height: auto;
+  }
+
+  .auth-signal-card .button,
+  .auth-passkey-actions .button,
+  .auth-code-actions .button {
+    width: 100%;
+  }
+
+  .auth-trust-row {
+    justify-content: center;
   }
 }
 
@@ -14130,6 +14241,25 @@ html.high-contrast p {
   font-family: var(--f-m, monospace);
   font-size: 12px;
   font-weight: 800;
+}
+.wb-quality-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 14px 0;
+}
+.wb-quality-list span {
+  border: 1px solid var(--wb-line-2);
+  border-radius: 999px;
+  color: var(--wb-ink-3);
+  font-family: var(--f-m, monospace);
+  font-size: 10px;
+  padding: 4px 8px;
+}
+.wb-quality-list span.complete {
+  border-color: rgba(35,208,216,0.24);
+  background: rgba(35,208,216,0.08);
+  color: #d8f8ff;
 }
 .wb-first-step-grid {
   display: grid;

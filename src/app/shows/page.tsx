@@ -98,6 +98,7 @@ export default async function ShowsIndexPage() {
             <div className="empty">
               <span className="empty-icon">📡</span>
               <span className="empty-title">Nothing live right now</span>
+              <div className="empty-example-card">Artists can add a live date, venues can open a room, and fans can save artists to shape what shows surface next.</div>
               <p>Check back soon — Chicago artists stream every day.</p>
             </div>
           )}
@@ -116,6 +117,10 @@ export default async function ShowsIndexPage() {
             <div className="empty">
               <span className="empty-icon">🗓️</span>
               <span className="empty-title">No upcoming shows scheduled</span>
+              <div className="cta-row">
+                <Link className="button small secondary" href="/register?role=ARTIST">Add artist date</Link>
+                <Link className="button small secondary" href="/register?role=VENUE">List venue night</Link>
+              </div>
               <p>Artists add new dates regularly — check back or <a href="/artists">browse artists</a>.</p>
             </div>
           )}
@@ -134,6 +139,7 @@ export default async function ShowsIndexPage() {
             <div className="empty">
               <span className="empty-icon">📼</span>
               <span className="empty-title">No recent archives yet</span>
+              <div className="empty-example-card">Promoters and artists can turn a show into an archive once the first broadcast lands.</div>
               <p>Past broadcasts will appear here once the platform launches.</p>
             </div>
           )}

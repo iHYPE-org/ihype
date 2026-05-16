@@ -40,20 +40,41 @@ function getProfileCompletion(
     genres: string[];
     city: string | null;
     contactInfo: string | null;
+    addressLine1?: string | null;
+    hoursText?: string | null;
+    songUploadCount?: number;
   },
   showCount: number
 ) {
-  const checks = [
+  const checks: Array<{ ok: boolean; label: string }> = [
     { ok: Boolean(profile.headline || profile.bio), label: 'Story' },
     { ok: Boolean(profile.avatarImage), label: 'Image' },
-    { ok: profile.genres.length > 0 || Boolean(profile.city), label: 'Tags/market' },
-    { ok: profile.type === 'LISTENER' ? true : Boolean(profile.contactInfo), label: 'Contact' },
-    { ok: profile.type === 'LISTENER' ? true : showCount > 0, label: 'First show' }
+    { ok: profile.genres.length > 0 || Boolean(profile.city), label: 'Tags/market' }
   ];
+
+  if (profile.type === 'VENUE') {
+    checks.push(
+      { ok: Boolean(profile.addressLine1 || profile.city), label: 'Room/location' },
+      { ok: Boolean(profile.hoursText || profile.contactInfo), label: 'Booking info' },
+      { ok: showCount > 0, label: 'First event' }
+    );
+  } else if (profile.type === 'ARTIST' || profile.type === 'DJ') {
+    checks.push(
+      { ok: Boolean(profile.contactInfo), label: 'Contact' },
+      { ok: Boolean((profile.songUploadCount ?? 0) > 0 || showCount > 0), label: profile.type === 'DJ' ? 'First show' : 'Media/show' }
+    );
+  } else {
+    checks.push(
+      { ok: Boolean(profile.bio || profile.city), label: 'Taste signal' },
+      { ok: true, label: 'Fan lane' }
+    );
+  }
+
   const passed = checks.filter((check) => check.ok).length;
   return {
     percent: Math.round((passed / checks.length) * 100),
-    missing: checks.filter((check) => !check.ok).map((check) => check.label)
+    missing: checks.filter((check) => !check.ok).map((check) => check.label),
+    checks
   };
 }
 
@@ -87,7 +108,10 @@ export default async function HomePage() {
       bio: true,
       avatarImage: true,
       genres: true,
-      contactInfo: true
+      contactInfo: true,
+      addressLine1: true,
+      hoursText: true,
+      songUploadCount: true
     },
     orderBy: { createdAt: 'asc' }
   });

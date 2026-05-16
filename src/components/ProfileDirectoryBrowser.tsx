@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useDeferredValue, useMemo, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { useMediaPlayer, type MediaTrack } from '@/components/GlobalMediaPlayer';
 import { ProfileCard } from '@/components/ProfileCard';
 
@@ -50,6 +50,13 @@ const typeLabels: Record<DirectoryBrowserProfile['type'], string> = {
   DJ: 'Promoters',
   VENUE: 'Venues',
   LISTENER: 'Fans'
+};
+
+type DirectoryPrefs = {
+  selectedType?: 'all' | DirectoryBrowserProfile['type'];
+  selectedMarket?: string;
+  selectedGenre?: string;
+  sortMode?: 'hype' | 'name' | 'market';
 };
 
 function getMarketLabel(profile: DirectoryBrowserProfile) {
@@ -109,6 +116,7 @@ export function ProfileDirectoryBrowser({
   const [selectedGenre, setSelectedGenre] = useState('all');
   const [sortMode, setSortMode] = useState<'hype' | 'name' | 'market'>('hype');
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [prefsLoaded, setPrefsLoaded] = useState(false);
   const deferredQuery = useDeferredValue(query.trim().toLowerCase());
   const marketOptions = useMemo(
     () => Array.from(new Set(profiles.map(getMarketLabel).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
@@ -147,6 +155,44 @@ export function ProfileDirectoryBrowser({
   }));
   const hasQuery = Boolean(query.trim());
   const hasFilters = hasQuery || selectedType !== 'all' || selectedMarket !== 'all' || selectedGenre !== 'all' || sortMode !== 'hype';
+  const emptyCopy = currentHref.includes('venues')
+    ? { label: 'List a venue', href: '/register?role=VENUE', text: 'Saved market filters will keep this room on your radar once new venues land.' }
+    : currentHref.includes('promoters')
+    ? { label: 'Start a show', href: '/register?role=DJ', text: 'Follow a city and genre now, then build the first promoter signal for that lane.' }
+    : currentHref.includes('fans')
+    ? { label: 'Join fan lane', href: '/register?role=FAN', text: 'Save a market or genre preference so your returning browse starts closer to your taste.' }
+    : { label: 'Create artist page', href: '/register?role=ARTIST', text: 'Save the genre/market filter and seed the directory with the first artist page.' };
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem('ihype-directory-prefs');
+      if (stored) {
+        const prefs = JSON.parse(stored) as DirectoryPrefs;
+        if (prefs.selectedType && (prefs.selectedType === 'all' || prefs.selectedType in typeLabels)) setSelectedType(prefs.selectedType);
+        if (prefs.selectedMarket) setSelectedMarket(prefs.selectedMarket);
+        if (prefs.selectedGenre) setSelectedGenre(prefs.selectedGenre);
+        if (prefs.sortMode === 'hype' || prefs.sortMode === 'name' || prefs.sortMode === 'market') setSortMode(prefs.sortMode);
+      }
+    } catch {
+      // Saved filters are local convenience only.
+    } finally {
+      setPrefsLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!prefsLoaded) return;
+    try {
+      window.localStorage.setItem('ihype-directory-prefs', JSON.stringify({ selectedType, selectedMarket, selectedGenre, sortMode }));
+    } catch {
+      // Ignore private browsing storage failures.
+    }
+  }, [prefsLoaded, selectedGenre, selectedMarket, selectedType, sortMode]);
+
+  useEffect(() => {
+    if (selectedMarket !== 'all' && !marketOptions.includes(selectedMarket)) setSelectedMarket('all');
+    if (selectedGenre !== 'all' && !genreOptions.includes(selectedGenre)) setSelectedGenre('all');
+  }, [genreOptions, marketOptions, selectedGenre, selectedMarket]);
 
   function clearFilters() {
     setQuery('');
@@ -241,7 +287,7 @@ export function ProfileDirectoryBrowser({
         <p className="meta">
           {hasQuery
             ? `${filteredProfiles.length} profiles and ${filteredMedia.length} songs match "${query.trim()}"`
-            : `${filteredProfiles.length} of ${profiles.length} profiles visible`}
+            : `${filteredProfiles.length} of ${profiles.length} profiles visible - filters save on this browser`}
         </p>
         {hasFilters ? (
           <button className="text-link" onClick={clearFilters} type="button">
@@ -297,10 +343,11 @@ export function ProfileDirectoryBrowser({
               <button className="text-link" onClick={clearFilters} type="button">
                 Clear filters
               </button>
-              <Link className="button small secondary" href="/register">
-                Join free
+              <Link className="button small secondary" href={emptyCopy.href}>
+                {emptyCopy.label}
               </Link>
             </div>
+            <div className="empty-example-card">{emptyCopy.text}</div>
           </div>
         )}
       </div>

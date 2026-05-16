@@ -9,6 +9,19 @@ import { startAuthentication, startRegistration } from '@simplewebauthn/browser'
 type RoleOption = 'FAN' | 'ARTIST' | 'DJ' | 'VENUE';
 type AuthMethod = 'email' | 'passkey';
 type RegisterStep = 'form' | 'passkey' | 'email-code';
+type SignupVariant = 'email_first' | 'passkey_first';
+type SignupFunnelMetadata = {
+  role?: RoleOption;
+  method?: AuthMethod;
+  step?: string;
+  reason?: string;
+  browser?: string;
+  platform?: string;
+  webauthn?: string;
+  errorName?: string;
+  variant?: string;
+  viewport?: string;
+};
 
 const roleOptions: Array<{ value: RoleOption; label: string; help: string }> = [
   { value: 'FAN', label: 'Fan', help: 'Discover, hype, playlist, and track your music life.' },
@@ -105,10 +118,7 @@ function getAuthLandingPath(redirect?: string) {
   return redirect;
 }
 
-function trackSignupFunnel(
-  event: string,
-  metadata: { role?: RoleOption; method?: AuthMethod; step?: string; reason?: string } = {}
-) {
+function trackSignupFunnel(event: string, metadata: SignupFunnelMetadata = {}) {
   if (typeof window === 'undefined') {
     return;
   }
@@ -121,6 +131,44 @@ function trackSignupFunnel(
   }).catch(() => {
     // Analytics should never block auth.
   });
+}
+
+function getBrowserLabel(userAgent: string) {
+  if (userAgent.includes('Edg/')) return 'Edge';
+  if (userAgent.includes('Chrome/')) return 'Chrome';
+  if (userAgent.includes('Firefox/')) return 'Firefox';
+  if (userAgent.includes('Safari/') && !userAgent.includes('Chrome/')) return 'Safari';
+  return 'Other';
+}
+
+function getPasskeyDiagnostics(error?: unknown): SignupFunnelMetadata {
+  if (typeof window === 'undefined') {
+    return {};
+  }
+
+  const nav = window.navigator;
+  return {
+    browser: getBrowserLabel(nav.userAgent),
+    platform: nav.platform || 'unknown',
+    webauthn: typeof window.PublicKeyCredential === 'function' ? 'available' : 'missing',
+    errorName: error instanceof Error ? error.name : undefined,
+    viewport: `${window.innerWidth}x${window.innerHeight}`
+  };
+}
+
+function getStoredSignupVariant(): SignupVariant {
+  if (typeof window === 'undefined') {
+    return 'email_first';
+  }
+
+  const stored = window.localStorage.getItem('ihype-signup-variant');
+  if (stored === 'email_first' || stored === 'passkey_first') {
+    return stored;
+  }
+
+  const next: SignupVariant = Math.random() < 0.5 ? 'email_first' : 'passkey_first';
+  window.localStorage.setItem('ihype-signup-variant', next);
+  return next;
 }
 
 export function LoginScreen({
@@ -152,12 +200,12 @@ export function LoginScreen({
       const options = await optRes.json();
       const assertion = await startAuthentication(options);
       const payload = await postJson<{ redirect?: string }>('/api/auth/passkey/auth', assertion);
-      trackSignupFunnel('login_passkey_success', { method: 'passkey', step: 'login' });
+      trackSignupFunnel('login_passkey_success', { method: 'passkey', step: 'login', ...getPasskeyDiagnostics() });
       router.push(getAuthLandingPath(payload.redirect));
       router.refresh();
     } catch (err) {
       const reason = getErrorMessage(err, 'Passkey sign-in failed. Please try again or use email code.');
-      trackSignupFunnel('login_passkey_failed', { method: 'passkey', step: 'login', reason });
+      trackSignupFunnel('login_passkey_failed', { method: 'passkey', step: 'login', reason, ...getPasskeyDiagnostics(err) });
       setError(reason);
     } finally {
       setIsSubmitting(false);
@@ -341,6 +389,7 @@ export function RegisterScreen({
   const router = useRouter();
   const [role, setRole] = useState<RoleOption>(initialRole);
   const [authMethod, setAuthMethod] = useState<AuthMethod>('email');
+  const [signupVariant, setSignupVariant] = useState<SignupVariant>('email_first');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -363,7 +412,10 @@ export function RegisterScreen({
   const selectedRole = useMemo(() => roleOptions.find((option) => option.value === role), [role]);
 
   useEffect(() => {
-    trackSignupFunnel('view', { role: initialRole, method: 'email', step: 'form' });
+    const variant = getStoredSignupVariant();
+    setSignupVariant(variant);
+    setAuthMethod(variant === 'passkey_first' ? 'passkey' : 'email');
+    trackSignupFunnel('view', { role: initialRole, method: variant === 'passkey_first' ? 'passkey' : 'email', step: 'form', variant });
   }, [initialRole]);
 
   function validateAccountForm() {
@@ -402,7 +454,7 @@ export function RegisterScreen({
     });
 
     setCreatedAccountId(result.id);
-    trackSignupFunnel('account_created', { role, method: authMethod, step: 'register' });
+    trackSignupFunnel('account_created', { role, method: authMethod, step: 'register', variant: signupVariant });
     return result;
   }
 
@@ -417,20 +469,21 @@ export function RegisterScreen({
     setOtp('');
     setStep('email-code');
     setStatus('Account created. Check your inbox for the 6-digit sign-in code.');
-    trackSignupFunnel('email_code_requested', { role, method: 'email', step: 'register' });
+    trackSignupFunnel('email_code_requested', { role, method: 'email', step: 'register', variant: signupVariant });
   }
 
   async function registerPasskeyForAccount(userId: string) {
     setStep('passkey');
     setStatus('Follow your device prompt. If it closes, retry here or finish with an email code.');
-    trackSignupFunnel('passkey_prompt', { role, method: 'passkey', step: 'register' });
+    trackSignupFunnel('passkey_prompt', { role, method: 'passkey', step: 'register', variant: signupVariant, ...getPasskeyDiagnostics() });
 
     const optRes = await fetch(`/api/auth/passkey/register-first?userId=${userId}`);
     if (!optRes.ok) throw new Error('Could not start passkey setup.');
     const options = await optRes.json();
+    trackSignupFunnel('passkey_prompt_ready', { role, method: 'passkey', step: 'register', variant: signupVariant, ...getPasskeyDiagnostics() });
     const credential = await startRegistration(options);
     const verifyRes = await postJson<{ redirect?: string }>('/api/auth/passkey/register-first', credential);
-    trackSignupFunnel('passkey_success', { role, method: 'passkey', step: 'register' });
+    trackSignupFunnel('passkey_success', { role, method: 'passkey', step: 'register', variant: signupVariant, ...getPasskeyDiagnostics() });
     router.push(getAuthLandingPath(verifyRes.redirect));
     router.refresh();
   }
@@ -443,7 +496,7 @@ export function RegisterScreen({
     let accountCreated = Boolean(createdAccountId);
 
     try {
-      trackSignupFunnel('submit', { role, method: authMethod, step: 'form' });
+      trackSignupFunnel('submit', { role, method: authMethod, step: 'form', variant: signupVariant });
       const result = await createAccountOnce();
       accountCreated = true;
 
@@ -458,7 +511,9 @@ export function RegisterScreen({
         role,
         method: authMethod,
         step: accountCreated ? step : 'form',
-        reason
+        reason,
+        variant: signupVariant,
+        ...(authMethod === 'passkey' ? getPasskeyDiagnostics(err) : {})
       });
       if (accountCreated) {
         setStep('passkey');
@@ -484,7 +539,7 @@ export function RegisterScreen({
       await registerPasskeyForAccount(createdAccountId);
     } catch (err) {
       const reason = getErrorMessage(err, 'Passkey setup was interrupted.');
-      trackSignupFunnel('passkey_retry_failed', { role, method: 'passkey', step: 'register', reason });
+      trackSignupFunnel('passkey_retry_failed', { role, method: 'passkey', step: 'register', reason, variant: signupVariant, ...getPasskeyDiagnostics(err) });
       setError(reason);
       setStatus('Retry the passkey prompt, or use email code to finish signing in.');
     } finally {
@@ -499,7 +554,7 @@ export function RegisterScreen({
       await requestEmailCodeForAccount();
     } catch (err) {
       const reason = getErrorMessage(err, 'Could not send an email sign-in code.');
-      trackSignupFunnel('email_code_failed', { role, method: 'email', step: 'register', reason });
+      trackSignupFunnel('email_code_failed', { role, method: 'email', step: 'register', reason, variant: signupVariant });
       setError(reason);
     } finally {
       setIsSubmitting(false);
@@ -515,12 +570,12 @@ export function RegisterScreen({
         challengeId,
         otp
       });
-      trackSignupFunnel('email_code_success', { role, method: 'email', step: 'register' });
+      trackSignupFunnel('email_code_success', { role, method: 'email', step: 'register', variant: signupVariant });
       router.push(getAuthLandingPath(payload.redirect));
       router.refresh();
     } catch (err) {
       const reason = getErrorMessage(err, 'Could not verify that code.');
-      trackSignupFunnel('email_code_verify_failed', { role, method: 'email', step: 'register', reason });
+      trackSignupFunnel('email_code_verify_failed', { role, method: 'email', step: 'register', reason, variant: signupVariant });
       setError(reason);
     } finally {
       setIsSubmitting(false);
@@ -638,7 +693,7 @@ export function RegisterScreen({
                   name="role"
                   onChange={() => {
                     setRole(option.value);
-                    trackSignupFunnel('role_selected', { role: option.value, method: authMethod, step: 'form' });
+                    trackSignupFunnel('role_selected', { role: option.value, method: authMethod, step: 'form', variant: signupVariant });
                   }}
                   type="radio"
                   value={option.value}
@@ -655,7 +710,7 @@ export function RegisterScreen({
               className={authMethod === 'email' ? 'auth-method-choice active' : 'auth-method-choice'}
               onClick={() => {
                 setAuthMethod('email');
-                trackSignupFunnel('method_selected', { role, method: 'email', step: 'form' });
+                trackSignupFunnel('method_selected', { role, method: 'email', step: 'form', variant: signupVariant });
               }}
               type="button"
             >
@@ -667,7 +722,7 @@ export function RegisterScreen({
               className={authMethod === 'passkey' ? 'auth-method-choice active' : 'auth-method-choice'}
               onClick={() => {
                 setAuthMethod('passkey');
-                trackSignupFunnel('method_selected', { role, method: 'passkey', step: 'form' });
+                trackSignupFunnel('method_selected', { role, method: 'passkey', step: 'form', variant: signupVariant });
               }}
               type="button"
             >
@@ -777,6 +832,11 @@ export function RegisterScreen({
               ? 'Create account with passkey'
               : 'Create account with email code'}
           </button>
+          <div className="auth-trust-row" aria-label="Signup trust links">
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/terms">Terms</Link>
+            <Link href="/community-rules">Community rules</Link>
+          </div>
           <label className="bot-field" aria-hidden="true">
             <span>Company</span>
             <input

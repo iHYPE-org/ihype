@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { AdminSignupTestPanel } from '@/components/AdminSignupTestPanel';
 import { redirect } from 'next/navigation';
 import { AdminReportActions, AdminVerificationActions } from '@/components/AdminModerationActions';
 import { auth } from '@/lib/auth';
@@ -16,6 +17,15 @@ export const metadata: Metadata = {
 
 function statusLabel(value: boolean) {
   return value ? 'Enabled' : 'Off';
+}
+
+function auditMeta(value: unknown) {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function metaText(meta: Record<string, unknown>, key: string) {
+  const value = meta[key];
+  return typeof value === 'string' && value.trim() ? value : 'n/a';
 }
 
 export default async function AdminPage() {
@@ -121,6 +131,27 @@ export default async function AdminPage() {
     ['Passkey success', funnelCounts.passkey_success ?? 0],
     ['Email success', funnelCounts.email_code_success ?? 0]
   ] as const;
+  const passkeyFailureCount = (funnelCounts.passkey_failed ?? 0) + (funnelCounts.passkey_retry_failed ?? 0) + (funnelCounts.login_passkey_failed ?? 0);
+  const emailFailureCount = (funnelCounts.email_code_failed ?? 0) + (funnelCounts.email_code_verify_failed ?? 0) + (funnelCounts.login_email_code_failed ?? 0);
+  const abandonedAfterView = Math.max(0, (funnelCounts.view ?? 0) - (funnelCounts.account_created ?? 0));
+  const funnelAlerts = [
+    passkeyFailureCount > 0 ? `${passkeyFailureCount} passkey failure${passkeyFailureCount === 1 ? '' : 's'} in 7d` : null,
+    emailFailureCount > 0 ? `${emailFailureCount} email-code issue${emailFailureCount === 1 ? '' : 's'} in 7d` : null,
+    abandonedAfterView > 5 ? `${abandonedAfterView} visitors viewed signup without creating an account` : null
+  ].filter((alert): alert is string => Boolean(alert));
+  const variantCounts = signupFunnelAudits.reduce<Record<string, { views: number; accounts: number }>>((counts, event) => {
+    const meta = auditMeta(event.metadata);
+    const variant = metaText(meta, 'variant');
+    if (variant === 'n/a') return counts;
+    counts[variant] ??= { views: 0, accounts: 0 };
+    if (event.action.endsWith(':view')) counts[variant].views += 1;
+    if (event.action.endsWith(':account_created')) counts[variant].accounts += 1;
+    return counts;
+  }, {});
+  const passkeyDiagnostics = signupFunnelAudits
+    .filter((event) => event.action.includes('passkey') && event.action.includes('failed'))
+    .slice(0, 5)
+    .map((event) => ({ action: event.action.replace('signup_funnel:', ''), meta: auditMeta(event.metadata) }));
 
   return (
     <main className="container section admin-console">
@@ -223,10 +254,20 @@ export default async function AdminPage() {
             <h2>Signup funnel</h2>
             <p className="meta">Last 7 days from audit events. Use this to spot passkey/email dropoff.</p>
           </div>
-          <Link className="button small secondary" href="/register?role=ARTIST">
-            Test signup UI
-          </Link>
+          <div className="admin-signup-actions">
+            <AdminSignupTestPanel />
+            <Link className="button small secondary" href="/register?role=ARTIST">
+              Test signup UI
+            </Link>
+          </div>
         </div>
+        {funnelAlerts.length ? (
+          <div className="admin-alert-row">
+            {funnelAlerts.map((alert) => <span key={alert}>{alert}</span>)}
+          </div>
+        ) : (
+          <div className="admin-alert-row admin-alert-row-ok"><span>No signup alerts in the 7d funnel window.</span></div>
+        )}
         <div className="admin-health-grid">
           {funnelDropoff.map(([label, value]) => (
             <div className="admin-health-card" key={label}>
@@ -234,6 +275,26 @@ export default async function AdminPage() {
               <strong>{value}</strong>
             </div>
           ))}
+        </div>
+        {Object.keys(variantCounts).length ? (
+          <div className="admin-variant-grid">
+            {Object.entries(variantCounts).map(([variant, counts]) => (
+              <div className="admin-health-card" key={variant}>
+                <span>{variant.replace('_', ' ')}</span>
+                <strong>{counts.accounts}/{counts.views}</strong>
+              </div>
+            ))}
+          </div>
+        ) : null}
+        <div className="admin-diagnostic-list">
+          <strong>Passkey diagnostics</strong>
+          {passkeyDiagnostics.length ? passkeyDiagnostics.map(({ action, meta }, index) => (
+            <div className="admin-diagnostic-row" key={`${action}-${index}`}>
+              <span>{action}</span>
+              <small>{metaText(meta, 'browser')} / {metaText(meta, 'platform')} / {metaText(meta, 'webauthn')} / {metaText(meta, 'errorName')}</small>
+              <em>{metaText(meta, 'reason')}</em>
+            </div>
+          )) : <p className="meta">No recent passkey failures captured.</p>}
         </div>
       </section>
 

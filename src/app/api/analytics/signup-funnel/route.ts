@@ -9,7 +9,13 @@ const schema = z.object({
   role: z.enum(['FAN', 'ARTIST', 'DJ', 'VENUE']).optional(),
   method: z.enum(['email', 'passkey']).optional(),
   step: z.string().trim().max(80).optional(),
-  reason: z.string().trim().max(240).optional()
+  reason: z.string().trim().max(240).optional(),
+  browser: z.string().trim().max(80).optional(),
+  platform: z.string().trim().max(80).optional(),
+  webauthn: z.string().trim().max(40).optional(),
+  errorName: z.string().trim().max(80).optional(),
+  variant: z.string().trim().max(40).optional(),
+  viewport: z.string().trim().max(40).optional()
 });
 
 export async function POST(request: Request) {
@@ -38,7 +44,13 @@ export async function POST(request: Request) {
       role: body.role ?? null,
       method: body.method ?? null,
       step: body.step ?? null,
-      reason: body.reason ?? null
+      reason: body.reason ?? null,
+      browser: body.browser ?? null,
+      platform: body.platform ?? null,
+      webauthn: body.webauthn ?? null,
+      errorName: body.errorName ?? null,
+      variant: body.variant ?? null,
+      viewport: body.viewport ?? null
     }
   });
 

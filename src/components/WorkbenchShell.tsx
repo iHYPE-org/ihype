@@ -174,7 +174,7 @@ export type WorkbenchData = {
   profileType?: string;
   profileId?: string;
   profilePath?: string;
-  profileCompletion?: { percent: number; missing: string[] };
+  profileCompletion?: { percent: number; missing: string[]; checks?: Array<{ label: string; ok: boolean }> };
   listeningNow: number;
   hypedToday: number;
   showsTonight: number;
@@ -756,12 +756,19 @@ function WbFirstSteps({ data, setView }: { data: WorkbenchData; setView: (v: Vie
   const completion = data.profileCompletion ?? { percent: 0, missing: ['Add profile details'] };
   const nextMissing = completion.missing.slice(0, 2).join(' + ') || 'Keep momentum going';
   const roleAction = type === 'ARTIST'
-    ? { label: 'Add media', view: 'artist' as View }
+    ? { label: 'Add media', text: 'Upload or feature the track fans should hear first.', view: 'artist' as View }
     : type === 'VENUE'
-    ? { label: 'Open ticketing', view: 'venue' as View }
+    ? { label: 'Open ticketing', text: 'Put the first bookable night in motion.', view: 'venue' as View }
     : type === 'DJ'
-    ? { label: 'Create a show', view: 'studio' as View }
-    : { label: 'Discover seeds', view: 'seeds' as View };
+    ? { label: 'Create a show', text: 'Start a show lane artists and fans can follow.', view: 'studio' as View }
+    : { label: 'Discover seeds', text: 'Save three artists to tune the feed.', view: 'seeds' as View };
+  const roleProfileText = type === 'VENUE'
+    ? 'Add room details, contact, hours, and booking context.'
+    : type === 'ARTIST'
+    ? 'Add story, image, genres, contact, and a first media/show signal.'
+    : type === 'DJ'
+    ? 'Add the nights, scenes, artists, and contact details you champion.'
+    : 'Add taste signals so recommendations become personal.';
 
   return (
     <section className="wb-panel wb-first-steps">
@@ -774,14 +781,21 @@ function WbFirstSteps({ data, setView }: { data: WorkbenchData; setView: (v: Vie
           <span>{completion.percent}%</span>
         </div>
       </div>
+      {completion.checks?.length ? (
+        <div className="wb-quality-list" aria-label="Public page readiness">
+          {completion.checks.map((check) => (
+            <span className={check.ok ? 'complete' : ''} key={check.label}>{check.label}</span>
+          ))}
+        </div>
+      ) : null}
       <div className="wb-first-step-grid">
         <button className="wb-first-step" onClick={() => setView('settings')} type="button">
           <strong>Complete profile</strong>
-          <span>Add the details people scan first.</span>
+          <span>{roleProfileText}</span>
         </button>
         <button className="wb-first-step" onClick={() => setView(roleAction.view)} type="button">
           <strong>{roleAction.label}</strong>
-          <span>Give the lane a real first action.</span>
+          <span>{roleAction.text}</span>
         </button>
         <a className="wb-first-step" href={data.profilePath ?? '/home'}>
           <strong>View public page</strong>

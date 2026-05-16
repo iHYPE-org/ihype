@@ -60,6 +60,12 @@ export default function TicketsPage() {
         }
       ]}
       title="Tickets become"
-    />
+    >
+      <div className="public-promise-trust-links">
+        <a href="/ticket-policy">Ticket policy</a>
+        <a href="/transparency">Transparency ledger</a>
+        <a href="/support">Support</a>
+      </div>
+    </PublicFeaturePage>
   );
 }
