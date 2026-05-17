@@ -13,6 +13,8 @@ import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { formatShowTime } from '@/lib/utils';
 import { getMuxPlaybackToken } from '@/lib/mux';
 import { ShowPlaybackTracker } from '@/components/ShowPlaybackTracker';
+import { ShowComments } from '@/components/ShowComments';
+import { ShowRsvpButton } from '@/components/ShowRsvpButton';
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
@@ -208,6 +210,27 @@ export default async function ShowDetailPage({
     ...(show.headlinerProfile ? { performer: { '@type': 'MusicGroup', name: show.headlinerProfile.name } } : {}),
   };
 
+  // RSVP state (audit-log driven, no schema change).
+  const rsvpRows = await db.auditLog.findMany({
+    where: { action: 'show_rsvp', entityType: 'show', entityId: show.id },
+    orderBy: { createdAt: 'desc' },
+    select: { actorUserId: true, metadata: true, createdAt: true }
+  });
+  const rsvpLatestByUser = new Map<string, 'going' | 'cancelled'>();
+  for (const row of rsvpRows) {
+    if (!row.actorUserId) continue;
+    if (rsvpLatestByUser.has(row.actorUserId)) continue;
+    const meta = (row.metadata ?? {}) as { state?: string };
+    rsvpLatestByUser.set(row.actorUserId, meta.state === 'cancelled' ? 'cancelled' : 'going');
+  }
+  let rsvpCount = 0;
+  for (const state of rsvpLatestByUser.values()) {
+    if (state === 'going') rsvpCount += 1;
+  }
+  const viewerGoing = session?.user?.id
+    ? rsvpLatestByUser.get(session.user.id) === 'going'
+    : false;
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
@@ -223,6 +246,14 @@ export default async function ShowDetailPage({
           {show.venueProfile ? ` | ${show.venueProfile.name}` : ''}
           {show.headlinerProfile ? ` | ${show.headlinerProfile.name}` : ''}
         </p>
+        <div style={{ marginTop: 10 }}>
+          <ShowRsvpButton
+            showId={show.id}
+            canRsvp={Boolean(session?.user?.id)}
+            initialCount={rsvpCount}
+            initialGoing={viewerGoing}
+          />
+        </div>
       </div>
 
       <div className="grid grid-2">
@@ -653,6 +684,8 @@ export default async function ShowDetailPage({
           </section>
         );
       })()}
+
+      <ShowComments showId={show.id} canPost={Boolean(session?.user?.id)} />
     </main>
     </>
   );

@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { AccessibilityControls } from '@/components/AccessibilityControls';
 import { useMediaPlayer, type MediaTrack } from '@/components/GlobalMediaPlayer';
 import { SeedsSwipeStack, type SeedsSwipeStackSeed, type SeedsSwipeStackTrack } from '@/components/SeedsSwipeStack';
+import { WorkbenchExtras } from '@/components/WorkbenchExtras';
 import { HypeHeatmap } from '@/components/HypeHeatmap';
 import { PasskeyManager } from '@/components/AuthScreens';
 import { useToast } from '@/components/Toast';
@@ -1116,6 +1117,12 @@ function ViewHome({ data, prefs, setView, starterPack = [] }: { data: WorkbenchD
       <RoleNextActionHub data={data} setView={setView} />
       <ShareAndGrowCard data={data} />
       <VenueIncomingRequestsCard data={data} />
+      <WorkbenchExtras
+        activeProfileTypes={data.activeProfileTypes ?? []}
+        profileId={data.profileId ?? null}
+        profilePath={data.profilePath ?? null}
+        userEmail={null}
+      />
       <StarterPackPanel items={starterPack} />
 
       {/* Stats */}
@@ -2390,6 +2397,26 @@ function ViewSeeds({ data }: { data: WorkbenchData }) {
   const [seeds, setSeeds] = useState<SeedsSwipeStackSeed[]>([]);
   const [tracks, setTracks] = useState<SeedsSwipeStackTrack[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const raw = window.localStorage.getItem('ihype:seed-genres');
+      if (!raw) return [];
+      const parsed = JSON.parse(raw) as unknown;
+      return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string') : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem('ihype:seed-genres', JSON.stringify(selectedGenres));
+    } catch {
+      // ignore
+    }
+  }, [selectedGenres]);
 
   useEffect(() => {
     const fallbackTracks = data.tracks.map(t => ({
@@ -2402,7 +2429,9 @@ function ViewSeeds({ data }: { data: WorkbenchData }) {
       reason: 'From your discover feed',
     }));
 
-    fetch('/api/discover/seeds')
+    const qs = selectedGenres.length ? `?genres=${encodeURIComponent(selectedGenres.join(','))}` : '';
+    setLoading(true);
+    fetch(`/api/discover/seeds${qs}`)
       .then(r => {
         if (!r.ok) throw new Error('Could not load seeds');
         return r.json();
@@ -2430,7 +2459,7 @@ function ViewSeeds({ data }: { data: WorkbenchData }) {
         setTracks(fallbackTracks);
       })
       .finally(() => setLoading(false));
-  }, [data.tracks]);
+  }, [data.tracks, selectedGenres]);
 
   const toast = useToast();
   if (loading) {
@@ -2452,6 +2481,8 @@ function ViewSeeds({ data }: { data: WorkbenchData }) {
     <SeedsSwipeStack
       seeds={seeds}
       tracks={tracks}
+      selectedGenres={selectedGenres}
+      onGenresChange={setSelectedGenres}
       onSave={seed => { toast.push('Saved to library', 'success'); void fetch(`/api/discover/seeds/${seed.id}/save`, { method: 'POST' }); }}
       onSkip={seed => { toast.push('Skipped'); void fetch(`/api/discover/seeds/${seed.id}/skip`, { method: 'POST' }); }}
       onHype={seed => { toast.push('Hyped!', 'success'); void fetch(`/api/discover/seeds/${seed.id}/hype`, { method: 'POST' }); }}

@@ -514,6 +514,40 @@ export default async function AdminPage() {
           </div>
         </article>
       </section>
+
+      <section className="section">
+        <h2>Backups</h2>
+        <article className="panel" style={{ padding: '1rem 1.25rem' }}>
+          <p className="meta" style={{ marginTop: 0 }}>
+            iHYPE does not currently run an automated database backup job. Postgres backups should be
+            taken from the managed provider dashboard on a regular cadence (daily for production).
+          </p>
+          <ul style={{ paddingLeft: '1.2rem', margin: '0.5rem 0', lineHeight: 1.6 }}>
+            <li>
+              <strong>Neon:</strong>{' '}
+              <a href="https://console.neon.tech/" rel="noopener noreferrer" target="_blank">
+                console.neon.tech
+              </a>{' '}
+              — branch the production database for point-in-time snapshots.
+            </li>
+            <li>
+              <strong>Vercel:</strong>{' '}
+              <a href="https://vercel.com/dashboard" rel="noopener noreferrer" target="_blank">
+                vercel.com/dashboard
+              </a>{' '}
+              — review storage integration logs and exports.
+            </li>
+            <li>
+              For ad-hoc exports run <code>pg_dump &quot;$DATABASE_URL&quot; &gt; ihype-backup.sql</code>{' '}
+              from a trusted workstation.
+            </li>
+          </ul>
+          <p className="meta" style={{ marginBottom: 0 }}>
+            Note: an R2/S3-backed automated rotation job is planned but intentionally not wired up yet —
+            this section is informational so admins know where to look.
+          </p>
+        </article>
+      </section>
     </main>
   );
 }

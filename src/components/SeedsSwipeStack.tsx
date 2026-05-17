@@ -24,7 +24,13 @@ type Props = {
   onSave: (seed: SeedsSwipeStackSeed) => void;
   onSkip: (seed: SeedsSwipeStackSeed) => void;
   onHype: (seed: SeedsSwipeStackSeed) => void;
+  selectedGenres?: string[];
+  onGenresChange?: (genres: string[]) => void;
 };
+
+const GENRE_OPTIONS = [
+  'Electronic', 'Hip-Hop', 'Rock', 'Jazz', 'Indie', 'Folk', 'R&B', 'Pop', 'Other'
+];
 
 function IcPlay({ s = 16 }: { s?: number }) {
   return (
@@ -62,8 +68,15 @@ function IcX({ s = 16 }: { s?: number }) {
   );
 }
 
-export function SeedsSwipeStack({ seeds, tracks, onSave, onSkip, onHype }: Props) {
+export function SeedsSwipeStack({ seeds, tracks, onSave, onSkip, onHype, selectedGenres, onGenresChange }: Props) {
   const [extraSeeds, setExtraSeeds] = useState<SeedsSwipeStackSeed[]>([]);
+  const [radioMode, setRadioMode] = useState(false);
+  function toggleGenre(g: string) {
+    if (!onGenresChange) return;
+    const current = selectedGenres ?? [];
+    if (current.includes(g)) onGenresChange(current.filter((x) => x !== g));
+    else onGenresChange([...current, g]);
+  }
   const activeSeedList = [...extraSeeds, ...seeds];
   const [index, setIndex] = useState(0);
   const [swipeDir, setSwipeDir] = useState<'left' | 'right' | 'up' | null>(null);
@@ -135,6 +148,16 @@ export function SeedsSwipeStack({ seeds, tracks, onSave, onSkip, onHype }: Props
     return () => window.removeEventListener('keydown', onKey);
   }, [advance, seed]);
 
+  // Radio mode: auto-advance after 30 seconds if user hasn't interacted.
+  useEffect(() => {
+    if (!radioMode) return;
+    if (!seed) return;
+    const t = setTimeout(() => {
+      advance('left');
+    }, 30_000);
+    return () => clearTimeout(t);
+  }, [radioMode, seed, index, advance]);
+
   function handleMouseDown(e: React.MouseEvent) {
     dragStartX.current = e.clientX;
     setDragging(true);
@@ -183,6 +206,55 @@ export function SeedsSwipeStack({ seeds, tracks, onSave, onSkip, onHype }: Props
         <p style={{ fontFamily: 'var(--f-b)', fontSize: 14, color: 'var(--ink-2)', marginTop: 10, maxWidth: 480, lineHeight: 1.5 }}>
           New tracks seeded from artists you already HYPE. Save to library, skip, or HYPE to signal.
         </p>
+
+        {onGenresChange ? (
+          <div style={{ marginTop: 14, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+            <span style={{ fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.14em', color: 'var(--ink-3)', marginRight: 4 }}>
+              GENRES
+            </span>
+            {GENRE_OPTIONS.map((g) => {
+              const active = (selectedGenres ?? []).includes(g);
+              return (
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => toggleGenre(g)}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: 999,
+                    fontFamily: 'var(--f-m)',
+                    fontSize: 11,
+                    cursor: 'pointer',
+                    border: active ? '1px solid var(--accent)' : '1px solid var(--line-2)',
+                    background: active ? 'rgba(255,80,41,.14)' : 'transparent',
+                    color: active ? 'var(--accent)' : 'var(--ink-2)'
+                  }}
+                >
+                  {g}
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              onClick={() => setRadioMode((v) => !v)}
+              style={{
+                marginLeft: 'auto',
+                padding: '4px 10px',
+                borderRadius: 999,
+                fontFamily: 'var(--f-m)',
+                fontSize: 11,
+                cursor: 'pointer',
+                border: radioMode ? '1px solid #22e5d4' : '1px solid var(--line-2)',
+                background: radioMode ? 'rgba(34,229,212,.12)' : 'transparent',
+                color: radioMode ? '#22e5d4' : 'var(--ink-2)'
+              }}
+              aria-pressed={radioMode}
+              title="Auto-advance every 30 seconds"
+            >
+              {radioMode ? '● RADIO ON' : '○ RADIO'}
+            </button>
+          </div>
+        ) : null}
       </div>
 
       <div style={{ display: 'flex', gap: 32, alignItems: 'flex-start' }}>

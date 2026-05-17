@@ -9,6 +9,8 @@ import { HypeButton } from '@/components/HypeButton';
 import { ArtistMediaPlaylist } from '@/components/ArtistMediaPlaylist';
 import { ContentReportControl } from '@/components/ContentReportControl';
 import { ShareButton } from '@/components/ShareButton';
+import { ArtistTipJar } from '@/components/ArtistTipJar';
+import { isPaymentProcessingConfigured } from '@/lib/payments';
 import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
 import { getSafeBackgroundImageStyle, getSafeImageUrl, getSafeVideoUrl } from '@/lib/asset-safety';
 import { canManageOwnedResource } from '@/lib/permissions';
@@ -143,7 +145,7 @@ export default async function ArtistPage({
   const profileSlug = profile.slug;
   const media = buildArtistMediaCollection(profile.mediaContent, profile.mediaUploads);
 
-  const [shows, viewerLocation, venues, fanHypeCount] = await Promise.all([
+  const [shows, viewerLocation, venues, fanHypeCount, journalEntries] = await Promise.all([
     db.show.findMany({
       where: {
         headlinerProfileId: profile.id,
@@ -182,6 +184,16 @@ export default async function ArtistPage({
           role: 'FAN'
         }
       }
+    }),
+    db.auditLog.findMany({
+      where: {
+        action: 'artist_journal_post',
+        entityType: 'profile',
+        entityId: profile.id
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+      select: { id: true, createdAt: true, metadata: true }
     })
   ]);
 
@@ -286,6 +298,9 @@ export default async function ArtistPage({
               {profile.genres.map((genre) => <span key={genre} className="tag">{genre}</span>)}
             </div>
             <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} entityLabel="artist" />
+            {session?.user?.id && session.user.id !== profile.ownerId && isPaymentProcessingConfigured() ? (
+              <ArtistTipJar profileId={profile.id} artistName={profile.name} />
+            ) : null}
             {profile.contactInfo ? (
               <div className="cta-row" style={{ marginTop: 12 }}>
                 <a
@@ -338,6 +353,25 @@ export default async function ArtistPage({
                   <strong>Journal</strong>
                   <br />
                   {profile.journalContent}
+                </div>
+              ) : null}
+              {journalEntries.length > 0 ? (
+                <div className="artist-copy">
+                  <strong>Recent updates</strong>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: '8px 0 0', display: 'grid', gap: 10 }}>
+                    {journalEntries.map((entry) => {
+                      const meta = (entry.metadata ?? {}) as { title?: string; content?: string };
+                      return (
+                        <li key={entry.id} style={{ borderTop: '1px solid var(--line)', paddingTop: 8 }}>
+                          <div style={{ fontWeight: 700 }}>{meta.title ?? 'Untitled'}</div>
+                          <div className="meta" style={{ fontSize: 11 }}>
+                            {new Date(entry.createdAt).toLocaleString()}
+                          </div>
+                          <p style={{ margin: '4px 0 0', whiteSpace: 'pre-wrap' }}>{meta.content ?? ''}</p>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </div>
               ) : null}
             </>

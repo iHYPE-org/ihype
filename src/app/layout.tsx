@@ -5,6 +5,7 @@ import { Syne, DM_Sans, JetBrains_Mono, Instrument_Serif } from 'next/font/googl
 import { AppProviders } from '@/components/AppProviders';
 import { HeaderAuthLinks } from '@/components/HeaderAuthLinks';
 import { HeaderLogo } from '@/components/HeaderLogo';
+import { PwaInstallPrompt } from '@/components/PwaInstallPrompt';
 
 const syne = Syne({ subsets: ['latin'], weight: ['600','700','800'], variable: '--font-syne', display: 'swap' });
 const dmSans = DM_Sans({ subsets: ['latin'], weight: ['400','500','600','700'], variable: '--font-dm', display: 'swap' });
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <div className="site-shell">
             {children}
           </div>
+          <PwaInstallPrompt />
         </AppProviders>
       </body>
     </html>

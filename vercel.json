@@ -18,6 +18,14 @@
                   {
                       "path":  "/api/cron/expire-reservations",
                       "schedule":  "*/5 * * * *"
+                  },
+                  {
+                      "path":  "/api/digest",
+                      "schedule":  "0 10 * * 1"
+                  },
+                  {
+                      "path":  "/api/health-check-cron",
+                      "schedule":  "*/15 * * * *"
                   }
               ]
 }
