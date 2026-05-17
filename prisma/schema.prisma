@@ -118,6 +118,11 @@ model User {
   seeds                   Seed[]
   pageLayout              String[]  @default([])
   passkeys                Passkey[]
+  showComments            ShowComment[]
+  showRsvps               ShowRsvp[]
+  artistTips              ArtistTip[]              @relation("ArtistTipFromUser")
+  premiumInterests        PremiumInterest[]
+  notificationPreference  NotificationPreference?
 }
 
 model Profile {
@@ -186,6 +191,8 @@ model Profile {
   affiliateTicketOrders         TicketOrder[]               @relation("AffiliatePromoterTicketOrders")
   accountsPayableEntries        AccountsPayableEntry[]
   contentBlocks                 ProfileBlock[]
+  journalPosts                  ArtistJournalPost[]
+  receivedTips                  ArtistTip[]              @relation("ArtistTipToProfile")
 }
 
 model FanPlaylist {
@@ -250,6 +257,7 @@ model ArtistMediaAsset {
   storageKey       String?
   storageUrl       String?
   freeUseEnabled   Boolean  @default(false)
+  sortOrder        Int      @default(0)
   profileId        String
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -378,6 +386,8 @@ model Show {
   accountsPayableEntries AccountsPayableEntry[]
   radioTracks            RadioShowTrack[]
   advertisingConfig      ShowAdvertisingConfig?
+  comments               ShowComment[]
+  rsvps                  ShowRsvp[]
 }
 
 model ShowAdvertisingConfig {
@@ -673,6 +683,81 @@ model Seed {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model ShowComment {
+  id        String    @id @default(cuid())
+  showId    String
+  userId    String
+  content   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  show      Show      @relation(fields: [showId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([showId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model ShowRsvp {
+  id        String   @id @default(cuid())
+  showId    String
+  userId    String
+  createdAt DateTime @default(now())
+  show      Show     @relation(fields: [showId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([showId, userId])
+}
+
+model ArtistJournalPost {
+  id        String    @id @default(cuid())
+  profileId String
+  title     String
+  content   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  profile   Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, createdAt])
+}
+
+model ArtistTip {
+  id                    String   @id @default(cuid())
+  fromUserId            String
+  profileId             String
+  amountCents           Int
+  stripePaymentIntentId String?  @unique
+  status                String   @default("PENDING")
+  createdAt             DateTime @default(now())
+  fromUser              User     @relation("ArtistTipFromUser", fields: [fromUserId], references: [id], onDelete: Cascade)
+  profile               Profile  @relation("ArtistTipToProfile", fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, createdAt])
+  @@index([fromUserId, createdAt])
+}
+
+model PremiumInterest {
+  id        String   @id @default(cuid())
+  userId    String?
+  email     String
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+}
+
+model NotificationPreference {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  newShows      Boolean  @default(true)
+  journalPosts  Boolean  @default(true)
+  milestones    Boolean  @default(true)
+  weeklyDigest  Boolean  @default(true)
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ProcessedWebhookEvent {

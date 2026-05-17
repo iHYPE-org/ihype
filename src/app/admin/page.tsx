@@ -8,6 +8,7 @@ import { AdminFeatureFlags } from '@/components/AdminFeatureFlags';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getHealthSnapshot } from '@/lib/health';
+import { getRateLimitMetrics } from '@/lib/rate-limit';
 import { isBlobMediaStorageConfigured } from '@/lib/media-storage';
 import { isPaymentProcessingConfigured } from '@/lib/payments';
 import { isAdminSession } from '@/lib/permissions';
@@ -162,6 +163,7 @@ export default async function AdminPage() {
     { key: 'blob_media_storage', label: 'Blob media storage', enabled: blobMediaStorageEnabled },
     { key: 'ticket_payment_capture', label: 'Ticket payment capture', enabled: ticketPaymentCaptureEnabled }
   ];
+  const rateLimitMetrics = await getRateLimitMetrics(10);
   const revenueCents = revenueAgg._sum.totalChargeCents ?? 0;
   const revenueLabel = `$${(revenueCents / 100).toFixed(2)}`;
   const healthOperations = health.status === 'ok' ? health.operations : null;
@@ -356,6 +358,27 @@ export default async function AdminPage() {
               <em>{metaText(meta, 'reason')}</em>
             </div>
           )) : <p className="meta">No recent passkey failures captured.</p>}
+        </div>
+      </section>
+
+      <section className="panel admin-console-panel">
+        <div className="admin-console-panel-head">
+          <div>
+            <h2>Rate limit hits (1h)</h2>
+            <p className="meta">Top buckets that returned 429 in the last hour. Requires Vercel KV.</p>
+          </div>
+        </div>
+        <div className="admin-list">
+          {rateLimitMetrics.length ? (
+            rateLimitMetrics.map((row) => (
+              <div className="admin-list-row" key={row.bucket}>
+                <span style={{ fontFamily: 'var(--f-mono, monospace)', fontSize: 12 }}>{row.bucket}</span>
+                <strong>{row.hits}</strong>
+              </div>
+            ))
+          ) : (
+            <div className="empty">No rate limit hits in the last hour.</div>
+          )}
         </div>
       </section>
 

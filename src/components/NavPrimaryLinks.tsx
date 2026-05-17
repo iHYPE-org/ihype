@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { href: '/artists', label: 'Artists' },
   { href: '/venues', label: 'Venues' },
   { href: '/trending', label: 'Trending' },
+  { href: '/journal', label: 'Journal' },
 ];
 
 export function NavPrimaryLinks() {

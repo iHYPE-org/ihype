@@ -44,12 +44,53 @@ async function consumeKv(key: string, options: RateLimitOptions): Promise<RateLi
     const ttl = await kv.ttl(key);
     const retryAfterSeconds = Math.max(1, ttl);
     if (count > limit) {
+      // Track hits-per-bucket over a rolling 1h window for the admin dashboard.
+      try {
+        const hitsKey = `rate-limit-hits:${key}`;
+        const hits = await kv.incr(hitsKey);
+        if (hits === 1) await kv.expire(hitsKey, 3600);
+      } catch {
+        // best-effort
+      }
       return { allowed: false, remaining: 0, retryAfterSeconds };
     }
     return { allowed: true, remaining: Math.max(0, limit - count), retryAfterSeconds };
   } catch (err) {
     console.error('[rate-limit] KV error, falling back to in-memory:', err);
     return consumeMemory(key, options);
+  }
+}
+
+export type RateLimitMetric = { bucket: string; hits: number };
+
+// Returns top N rate-limited buckets by hit count over the last hour.
+// Requires Vercel KV; returns [] in local dev.
+export async function getRateLimitMetrics(limit = 10): Promise<RateLimitMetric[]> {
+  if (!process.env.KV_REST_API_URL) return [];
+  try {
+    const { kv } = await import('@vercel/kv');
+    const keys: string[] = [];
+    let cursor: string | number = 0;
+    // SCAN until exhausted or until we collect a reasonable number of keys.
+    do {
+      const result = (await kv.scan(cursor as number, { match: 'rate-limit-hits:*', count: 200 })) as unknown as [string | number, string[]];
+      cursor = result[0];
+      for (const k of result[1]) keys.push(k);
+      if (keys.length > 2000) break;
+    } while (Number(cursor) !== 0);
+    if (keys.length === 0) return [];
+    const values = await Promise.all(keys.map((k) => kv.get<number>(k).catch(() => 0)));
+    const rows: RateLimitMetric[] = keys.map((k, i) => ({
+      bucket: k.replace(/^rate-limit-hits:/, ''),
+      hits: Number(values[i] ?? 0)
+    }));
+    return rows
+      .filter((r) => r.hits > 0)
+      .sort((a, b) => b.hits - a.hits)
+      .slice(0, limit);
+  } catch (err) {
+    console.error('[rate-limit] getRateLimitMetrics failed:', err);
+    return [];
   }
 }
 

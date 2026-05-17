@@ -14,6 +14,13 @@ export async function sendWeeklyDigest(userId: string): Promise<DigestResult> {
   });
   if (!user || !user.email) return { sent: false, reason: 'No email on file' };
 
+  const prefs = await db.notificationPreference.findUnique({
+    where: { userId: user.id }
+  }).catch(() => null);
+  if (prefs && prefs.weeklyDigest === false) {
+    return { sent: false, reason: 'User opted out of weekly digest' };
+  }
+
   const hypeEvents = await db.profileHypeEvent.findMany({
     where: { userId },
     select: { profileId: true },

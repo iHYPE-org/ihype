@@ -6,6 +6,7 @@ import { detectRequestLocation } from '@/lib/request-location';
 import type { ProfileType } from '@prisma/client';
 import { WorkbenchShell, type WorkbenchData, type WbStat, type WbTrack, type WbShow, type WbActivity, type WbNotification } from '@/components/WorkbenchShell';
 import { EmailVerificationBanner } from '@/components/EmailVerificationBanner';
+import { getDiscoveryStreak } from '@/lib/streaks';
 
 export const dynamic = 'force-dynamic';
 
@@ -429,9 +430,19 @@ export default async function HomePage() {
     }));
   }
 
+  const discoveryStreak = await getDiscoveryStreak(session.user.id).catch(() => 0);
+
   return (
     <>
       <EmailVerificationBanner needsVerification={needsEmailVerification} />
+      {discoveryStreak >= 2 ? (
+        <div className="container" style={{ paddingTop: 12 }}>
+          <div className="badge" style={{ display: 'inline-flex', gap: 6 }}>
+            <span aria-hidden>{'\u{1F525}'}</span>
+            <strong>{discoveryStreak} day streak</strong>
+          </div>
+        </div>
+      ) : null}
       <WorkbenchShell data={wbData} starterPack={starterPack} />
     </>
   );

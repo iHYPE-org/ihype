@@ -200,7 +200,32 @@ export default async function VenuePage({
   const featureImageUrl = canViewCustomPage ? getSafeImageUrl(profile.galleryImage || profile.heroImage) : null;
   const featureVideoUrl = canViewCustomPage ? getSafeVideoUrl(profile.featureVideoUrl) : null;
 
+  const base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org';
+  const venueJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': ['Place', 'MusicVenue'],
+    name: profile.name,
+    url: `${base}/venues/${profile.slug}`,
+    ...(profile.heroImage || profile.avatarImage
+      ? { image: profile.heroImage ?? profile.avatarImage }
+      : {}),
+    ...(profile.bio ? { description: profile.bio } : {}),
+    address: {
+      '@type': 'PostalAddress',
+      ...(profile.addressLine1 ? { streetAddress: profile.addressLine1 } : {}),
+      ...(profile.city ? { addressLocality: profile.city } : {}),
+      ...(profile.stateRegion ? { addressRegion: profile.stateRegion } : {}),
+      ...(profile.country ? { addressCountry: profile.country } : {}),
+      ...(profile.postalCode ? { postalCode: profile.postalCode } : {})
+    },
+    ...(profile.latitude !== null && profile.longitude !== null
+      ? { geo: { '@type': 'GeoCoordinates', latitude: profile.latitude, longitude: profile.longitude } }
+      : {})
+  };
+
   return (
+    <>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(venueJsonLd) }} />
     <main className="container section profile-design-shell" style={pageDesignStyle}>
       <header className="artist-banner panel" style={bannerStyle}>
         <div className="profile-banner-row">
@@ -428,5 +453,6 @@ export default async function VenuePage({
 
       <ContentReportControl targetId={profile.id} targetType="profile" />
     </main>
+    </>
   );
 }

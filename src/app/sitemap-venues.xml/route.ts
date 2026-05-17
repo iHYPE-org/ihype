@@ -1,0 +1,30 @@
+import { NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
+
+const base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org';
+
+export async function GET() {
+  const venues = await db.profile.findMany({
+    where: { type: 'VENUE' },
+    select: { slug: true, updatedAt: true },
+    take: 50000,
+    orderBy: { updatedAt: 'desc' }
+  });
+
+  const body =
+    '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+    venues
+      .map(
+        (v) =>
+          `  <url><loc>${base}/venues/${v.slug}</loc><lastmod>${v.updatedAt.toISOString()}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>`
+      )
+      .join('\n') +
+    '\n</urlset>';
+
+  return new NextResponse(body, {
+    headers: { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=600' }
+  });
+}

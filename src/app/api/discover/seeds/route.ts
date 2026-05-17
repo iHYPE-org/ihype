@@ -20,21 +20,77 @@ export async function GET(request: NextRequest) {
     });
     const skipIds = new Set(skipped.map(s => s.mediaId));
 
-    const media = await db.artistMediaAsset.findMany({
-      where: {
-        id: { notIn: [...skipIds] },
-        ...(genres.length > 0
-          ? { profile: { genres: { hasSome: genres } } }
-          : {})
-      },
-      take: 20,
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        title: true,
-        profile: { select: { name: true, genres: true } }
-      },
-    });
+    // --- Collaborative filtering (v2) -----------------------------------
+    // Find profiles current user has hyped (A), then users who also hyped
+    // any of A (B), then profiles those users hyped that A has not (C).
+    let cfMedia: Array<{ id: string; title: string; profile: { name: string; genres: string[] } | null }> = [];
+    if (genres.length === 0) {
+      const hypedByMe = await db.profileHypeEvent.findMany({
+        where: { userId: session.user.id },
+        select: { profileId: true },
+        take: 100
+      });
+      const myProfileIds = hypedByMe.map((r) => r.profileId);
+      if (myProfileIds.length > 0) {
+        const fellowFans = await db.profileHypeEvent.findMany({
+          where: { profileId: { in: myProfileIds }, userId: { not: session.user.id } },
+          select: { userId: true },
+          distinct: ['userId'],
+          take: 500
+        });
+        const fanIds = fellowFans.map((r) => r.userId);
+        if (fanIds.length > 0) {
+          const mySet = new Set(myProfileIds);
+          const overlap = await db.profileHypeEvent.findMany({
+            where: { userId: { in: fanIds }, profileId: { notIn: myProfileIds } },
+            select: { profileId: true },
+            take: 1000
+          });
+          const counts = new Map<string, number>();
+          for (const row of overlap) {
+            if (mySet.has(row.profileId)) continue;
+            counts.set(row.profileId, (counts.get(row.profileId) ?? 0) + 1);
+          }
+          const rankedProfileIds = [...counts.entries()]
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 50)
+            .map(([pid]) => pid);
+          if (rankedProfileIds.length > 0) {
+            cfMedia = await db.artistMediaAsset.findMany({
+              where: {
+                profileId: { in: rankedProfileIds },
+                id: { notIn: [...skipIds] }
+              },
+              take: 20,
+              orderBy: { createdAt: 'desc' },
+              select: {
+                id: true,
+                title: true,
+                profile: { select: { name: true, genres: true } }
+              }
+            });
+          }
+        }
+      }
+    }
+
+    const media = cfMedia.length
+      ? cfMedia
+      : await db.artistMediaAsset.findMany({
+          where: {
+            id: { notIn: [...skipIds] },
+            ...(genres.length > 0
+              ? { profile: { genres: { hasSome: genres } } }
+              : {})
+          },
+          take: 20,
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            title: true,
+            profile: { select: { name: true, genres: true } }
+          },
+        });
 
     return NextResponse.json({
       seeds: media.map(m => ({
@@ -45,7 +101,9 @@ export async function GET(request: NextRequest) {
         genres: m.profile?.genres ?? [],
         reason: genres.length
           ? `Matches ${genres.join(', ')}`
-          : 'Recommended based on your hypes',
+          : cfMedia.length
+            ? 'Fans like you also hype this'
+            : 'Recommended based on your hypes',
       })),
     });
   } catch (error) {

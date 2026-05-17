@@ -15,6 +15,7 @@ import { getMuxPlaybackToken } from '@/lib/mux';
 import { ShowPlaybackTracker } from '@/components/ShowPlaybackTracker';
 import { ShowComments } from '@/components/ShowComments';
 import { ShowRsvpButton } from '@/components/ShowRsvpButton';
+import { ShowSetlistEditor } from '@/components/ShowSetlistEditor';
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
@@ -231,6 +232,18 @@ export default async function ShowDetailPage({
     ? rsvpLatestByUser.get(session.user.id) === 'going'
     : false;
 
+  // Setlist (audit-log driven, no schema change)
+  const setlistLast = await db.auditLog.findFirst({
+    where: { action: 'show_setlist', entityType: 'show', entityId: show.id },
+    orderBy: { createdAt: 'desc' },
+    select: { metadata: true }
+  });
+  const setlistMeta = (setlistLast?.metadata ?? {}) as { tracks?: unknown };
+  const setlistTracks = Array.isArray(setlistMeta.tracks)
+    ? (setlistMeta.tracks.filter((t) => typeof t === 'string') as string[])
+    : [];
+  const isShowOwner = Boolean(session?.user?.id) && session?.user?.id === show.creatorId;
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
@@ -246,7 +259,10 @@ export default async function ShowDetailPage({
           {show.venueProfile ? ` | ${show.venueProfile.name}` : ''}
           {show.headlinerProfile ? ` | ${show.headlinerProfile.name}` : ''}
         </p>
-        <div style={{ marginTop: 10 }}>
+        <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <a className="button small secondary" href={`/shows/${slug}/poster?download=1`} download>
+            Download poster
+          </a>
           <ShowRsvpButton
             showId={show.id}
             canRsvp={Boolean(session?.user?.id)}
@@ -684,6 +700,18 @@ export default async function ShowDetailPage({
           </section>
         );
       })()}
+
+      {setlistTracks.length ? (
+        <section className="section">
+          <div className="panel" style={{ padding: '1rem 1.25rem' }}>
+            <h2 style={{ marginTop: 0 }}>Setlist</h2>
+            <ol style={{ paddingLeft: '1.2rem', lineHeight: 1.7, margin: 0 }}>
+              {setlistTracks.map((t, i) => <li key={i}>{t}</li>)}
+            </ol>
+          </div>
+        </section>
+      ) : null}
+      {isShowOwner ? <ShowSetlistEditor showId={show.id} initialTracks={setlistTracks} /> : null}
 
       <ShowComments showId={show.id} canPost={Boolean(session?.user?.id)} />
     </main>

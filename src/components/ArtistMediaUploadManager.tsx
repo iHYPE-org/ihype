@@ -19,42 +19,44 @@ export function ArtistMediaUploadManager({ profileId }: ArtistMediaUploadManager
     event.preventDefault();
     setMessage(null);
 
-    const file = fileInputRef.current?.files?.[0];
-    if (!file) {
+    const files = Array.from(fileInputRef.current?.files ?? []);
+    if (files.length === 0) {
       setMessage('Choose an audio or video file first.');
       return;
     }
 
-    const formData = new FormData();
-    formData.set('profileId', profileId);
-    formData.set('title', title);
-    formData.set('notes', notes);
-    formData.set('file', file);
-
     setPending(true);
 
     try {
-      const response = await fetch('/api/artist-media', {
-        method: 'POST',
-        body: formData
-      });
+      // Parallel uploads — each file gets its own request so partial failures
+      // don't block the rest.
+      const results = await Promise.allSettled(
+        files.map(async (file, index) => {
+          const formData = new FormData();
+          formData.set('profileId', profileId);
+          formData.set('title', files.length === 1 ? title : title ? `${title} ${index + 1}` : '');
+          formData.set('notes', notes);
+          formData.set('file', file);
+          const response = await fetch('/api/artist-media', { method: 'POST', body: formData });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data.error ?? `Failed: ${file.name}`);
+          return data;
+        })
+      );
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setMessage(data.error ?? 'Could not upload this media item.');
-        return;
-      }
-
+      const successes = results.filter((r) => r.status === 'fulfilled').length;
+      const failures = results.length - successes;
       setTitle('');
       setNotes('');
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      setMessage(`Uploaded ${data.asset.title}. Share ID: ${data.asset.hexId}`);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      setMessage(
+        failures > 0
+          ? `Uploaded ${successes} of ${results.length}. ${failures} failed.`
+          : `Uploaded ${successes} file${successes === 1 ? '' : 's'}.`
+      );
       router.refresh();
     } catch {
-      setMessage('Could not upload this media item.');
+      setMessage('Could not upload media.');
     } finally {
       setPending(false);
     }
@@ -95,7 +97,7 @@ export function ArtistMediaUploadManager({ profileId }: ArtistMediaUploadManager
 
         <label className="field">
           <span>Media file</span>
-          <input accept="audio/*,video/*" ref={fileInputRef} required type="file" />
+          <input accept="audio/*,video/*" multiple ref={fileInputRef} required type="file" />
         </label>
 
         <div className="cta-row">

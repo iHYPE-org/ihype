@@ -26,6 +26,12 @@ type Props = {
   onHype: (seed: SeedsSwipeStackSeed) => void;
   selectedGenres?: string[];
   onGenresChange?: (genres: string[]) => void;
+  /**
+   * Optional server-rendered initial batch of seeds. When provided, the
+   * client will render this batch immediately without waiting for the
+   * first fetch (item #17 SSR seeds).
+   */
+  initialSeeds?: SeedsSwipeStackSeed[];
 };
 
 const GENRE_OPTIONS = [
@@ -68,8 +74,8 @@ function IcX({ s = 16 }: { s?: number }) {
   );
 }
 
-export function SeedsSwipeStack({ seeds, tracks, onSave, onSkip, onHype, selectedGenres, onGenresChange }: Props) {
-  const [extraSeeds, setExtraSeeds] = useState<SeedsSwipeStackSeed[]>([]);
+export function SeedsSwipeStack({ seeds, tracks, onSave, onSkip, onHype, selectedGenres, onGenresChange, initialSeeds }: Props) {
+  const [extraSeeds, setExtraSeeds] = useState<SeedsSwipeStackSeed[]>(initialSeeds ?? []);
   const [radioMode, setRadioMode] = useState(false);
   function toggleGenre(g: string) {
     if (!onGenresChange) return;
