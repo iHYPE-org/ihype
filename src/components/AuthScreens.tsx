@@ -510,7 +510,8 @@ export function RegisterScreen({
       isThirteenOrOlder: acceptedAge,
       acceptedArtistUploadPolicy: needsUploadPolicy ? acceptedPolicy : true,
       inviteCode: inviteOnly ? inviteCode : undefined,
-      company
+      company,
+      passkeyFlow: authMethod === 'passkey',
     });
 
     setCreatedAccountId(result.id);
@@ -658,6 +659,7 @@ export function RegisterScreen({
         acceptedArtistUploadPolicy: needsUploadPolicy ? acceptedPolicy : true,
         inviteCode,
         company,
+        passkeyFlow: true,
       });
 
       // Step 2: get passkey registration options (no session needed — new account)
