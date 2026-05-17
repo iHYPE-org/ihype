@@ -6,6 +6,7 @@ import { AccessibilityControls } from '@/components/AccessibilityControls';
 import { useMediaPlayer, type MediaTrack } from '@/components/GlobalMediaPlayer';
 import { SeedsSwipeStack, type SeedsSwipeStackSeed, type SeedsSwipeStackTrack } from '@/components/SeedsSwipeStack';
 import { WorkbenchExtras } from '@/components/WorkbenchExtras';
+import { CoHeadlinerSuggestions } from '@/components/CoHeadlinerSuggestions';
 import { HypeHeatmap } from '@/components/HypeHeatmap';
 import { PasskeyManager } from '@/components/AuthScreens';
 import { useToast } from '@/components/Toast';
@@ -2631,7 +2632,10 @@ function ViewArtist({ data }: { data: WorkbenchData }) {
       )}
 
       {tab === 'touring' && (
-        <HypeHeatmap cities={touringCities} venuePings={[]} suggestedRoute={touringCities.length >= 2 ? touringCities.slice(0, 3).map(c => c.name.slice(0, 3).toUpperCase()).join(' → ') : undefined} />
+        <>
+          <HypeHeatmap cities={touringCities} venuePings={[]} suggestedRoute={touringCities.length >= 2 ? touringCities.slice(0, 3).map(c => c.name.slice(0, 3).toUpperCase()).join(' → ') : undefined} />
+          {data.profileId && <CoHeadlinerSuggestions profileId={data.profileId} />}
+        </>
       )}
 
       {tab === 'merch' && (

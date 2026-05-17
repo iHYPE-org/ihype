@@ -20,6 +20,8 @@ import { getSafeBackgroundImageStyle, getSafeImageUrl, getSafeVideoUrl } from '@
 import { canManageOwnedResource } from '@/lib/permissions';
 import { DEFAULT_PROFILE_DESIGN_PRESET, getProfileDesignStyleVars } from '@/lib/profile-design';
 import { detectRequestLocation } from '@/lib/request-location';
+import { AdBanner } from '@/components/AdBanner';
+import { AvailabilityCalendar } from '@/components/AvailabilityCalendar';
 import { getDemoCreatorExclusion, getDemoOwnerExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
 
 const artistSections = ['about', 'media', 'tour', 'merch'] as const;
@@ -449,11 +451,21 @@ export default async function ArtistPage({
         </div>
       </section>
 
+      <div style={{ marginTop: 8 }}>
+        <Link className="button small secondary" href={`/artists/${profile.slug}/epk`}>Press Kit</Link>
+      </div>
+      <div style={{ marginTop: 24 }}>
+        <h3 style={{ marginBottom: 8 }}>Availability</h3>
+        <AvailabilityCalendar profileId={profile.id} />
+      </div>
       <PeopleAlsoHype profileId={profile.id} />
       <div style={{ marginTop: 16 }}>
         <ReportButton entityType="profile" entityId={profile.id} />
       </div>
       <ContentReportControl targetId={profile.id} targetType="profile" />
+      <div style={{ marginTop: 24 }}>
+        <AdBanner />
+      </div>
     </main>
     </>
   );

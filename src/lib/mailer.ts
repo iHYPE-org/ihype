@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import { recordEmailDelivery } from '@/lib/audit';
 import { env } from '@/lib/env';
+import { db } from '@/lib/db';
 
 let transporter: nodemailer.Transporter | null = null;
 
@@ -58,6 +59,21 @@ type ConfiguredEmailInput = {
   text: string;
   html: string;
 };
+
+/**
+ * Wrapper that checks emailBounced before sending.
+ * Looks up the user by userId, skips delivery if bounced.
+ */
+export async function sendEmailToUser(
+  userId: string,
+  input: ConfiguredEmailInput
+): Promise<{ mode: string; skipped?: boolean }> {
+  const user = await db.user.findUnique({ where: { id: userId }, select: { emailBounced: true } });
+  if (user?.emailBounced) {
+    return { mode: 'skipped', skipped: true };
+  }
+  return sendGenericEmail(input);
+}
 
 export async function sendGenericEmail(input: ConfiguredEmailInput) {
   if (!isEmailDeliveryConfigured()) {

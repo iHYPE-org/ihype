@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { z } from 'zod';
 import { consumeRateLimit, rateLimitHeaders, rateLimitKey } from '@/lib/rate-limit';
 import { sendGenericEmail } from '@/lib/mailer';
+import { checkAndAwardBadges } from '@/lib/badges';
 
 const HYPE_MILESTONES = [10, 50, 100, 500, 1000];
 
@@ -127,6 +128,7 @@ export async function POST(request: NextRequest) {
     });
 
     await checkAndRecordMilestone(payload.targetId, updatedProfile.hypeCount);
+    checkAndAwardBadges(session.user.id).catch(() => {});
 
     return NextResponse.json({ created: true, hypeCount: updatedProfile.hypeCount });
   } catch {

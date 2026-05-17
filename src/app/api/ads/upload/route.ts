@@ -19,6 +19,8 @@ export async function POST(request: Request) {
   const campaignWebsite = formData.get('campaignWebsite') as string | null;
   const adTextCopy = formData.get('adTextCopy') as string | null;
   const file = formData.get('creativeAsset') as File | null;
+  const tierRaw = formData.get('tier') as string | null;
+  const tier = ['standard', 'featured', 'premium'].includes(tierRaw ?? '') ? (tierRaw as string) : 'standard';
 
   if (!advertiserName || !adTextCopy || !campaignWebsite) {
     return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
@@ -63,6 +65,7 @@ export async function POST(request: Request) {
       creativeAssetUrl,
       status,
       aiReasoning: vettingResult.reasoning,
+      tier,
     },
   });
 

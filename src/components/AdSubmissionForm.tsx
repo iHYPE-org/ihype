@@ -2,6 +2,12 @@
 
 import { useRef, useState } from 'react';
 
+const TIERS = [
+  { value: 'standard', label: 'Standard', price: 'Free' },
+  { value: 'featured', label: 'Featured', price: '$50/mo' },
+  { value: 'premium', label: 'Premium', price: '$150/mo' },
+];
+
 const ADVERTISER_TYPES = [
   { value: 'artist', label: 'Artist / Band / DJ' },
   { value: 'venue', label: 'Concert Venue' },
@@ -74,6 +80,21 @@ export function AdSubmissionForm() {
       <div>
         <label className="label" htmlFor="creativeAsset">Creative Asset <small>(image, optional, max 5 MB)</small></label>
         <input accept="image/*" className="input" id="creativeAsset" name="creativeAsset" type="file" />
+      </div>
+      <div>
+        <div className="label" style={{ marginBottom: 8 }}>Supporter Tier</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {TIERS.map((tier) => (
+            <label key={tier.value} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+              <input defaultChecked={tier.value === 'standard'} name="tier" type="radio" value={tier.value} />
+              <span style={{ fontWeight: 600 }}>{tier.label}</span>
+              <span className="meta">{tier.price}</span>
+            </label>
+          ))}
+        </div>
+        <p className="meta" style={{ marginTop: 8 }}>
+          Featured and Premium tiers are shown preferentially. Payment details will be provided after submission.
+        </p>
       </div>
 
       {status === 'approved' && (

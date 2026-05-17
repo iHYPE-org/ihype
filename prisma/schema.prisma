@@ -128,6 +128,9 @@ model User {
   magicLinkTokens         MagicLinkToken[]
   pushSubscriptions       PushSubscription[]
   mediaQueue              UserMediaQueue[]
+  emailBounced            Boolean                  @default(false)
+  badges                  Badge[]
+  showAttendees           ShowAttendee[]
 }
 
 model Profile {
@@ -204,6 +207,8 @@ model Profile {
   receivedTips                  ArtistTip[]              @relation("ArtistTipToProfile")
   followers                     Follow[]                 @relation("FollowedProfile")
   setlistTemplates              SetlistTemplate[]
+  nowPlaying                    String?
+  availabilityDates             AvailabilityDate[]
 }
 
 model FanPlaylist {
@@ -399,6 +404,7 @@ model Show {
   advertisingConfig      ShowAdvertisingConfig?
   comments               ShowComment[]
   rsvps                  ShowRsvp[]
+  attendees              ShowAttendee[]
 }
 
 model ShowAdvertisingConfig {
@@ -891,6 +897,43 @@ model AdSubmission {
   aiReasoning      String?
   reviewedAt       DateTime?
   reviewedBy       String?
+  impressions      Int       @default(0)
+  tier             String    @default("standard")
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
+}
+
+model Badge {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  awardedAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+  @@index([userId])
+}
+
+model AvailabilityDate {
+  id        String   @id @default(cuid())
+  profileId String
+  date      DateTime
+  note      String?
+  createdAt DateTime @default(now())
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+model ShowAttendee {
+  id        String   @id @default(cuid())
+  userId    String
+  showId    String
+  optedIn   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  show      Show     @relation(fields: [showId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, showId])
+  @@index([showId])
 }

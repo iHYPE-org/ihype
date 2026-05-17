@@ -13,6 +13,7 @@ import { canManageOwnedResource } from '@/lib/permissions';
 import { getProfileDesignStyleVars } from '@/lib/profile-design';
 import { detectRequestLocation, type RequestLocation } from '@/lib/request-location';
 import { calculateFanLevel } from '@/lib/fan-level';
+import { BadgeShelf } from '@/components/BadgeShelf';
 import {
   getDemoCreatorExclusion,
   getDemoOwnerExclusion,
@@ -335,6 +336,12 @@ export default async function ListenerPage({
     })
   ]);
 
+  const badges = await db.badge.findMany({
+    where: { userId: profile.ownerId },
+    select: { type: true, awardedAt: true },
+    orderBy: { awardedAt: 'asc' },
+  });
+
   // Cross-fan discovery: find fans with overlapping genres or Top 5 terms
   const fanGenres = profile.genres ?? [];
   const fanTopFiveTerms = getTopFiveItems(profile.topFiveContent)
@@ -552,6 +559,10 @@ export default async function ListenerPage({
             <p className="meta">{[profile.city, profile.country].filter(Boolean).join(', ')}</p>
             <p className="meta">Share ID: <Link href={`/profiles/${profile.hexId}`}>{profile.hexId}</Link></p>
             <p className="meta">FAN Level {fanLevel} | {fullSongListenCount} full songs | {fullShowListenCount} full shows</p>
+            {profile.nowPlaying && (
+              <p className="meta" style={{ fontStyle: 'italic' }}>🎵 Now playing: {profile.nowPlaying}</p>
+            )}
+            <BadgeShelf badges={badges} />
             <div className="tag-row">{profile.genres.map((genre) => <span key={genre} className="tag">{genre}</span>)}</div>
             <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} entityLabel="fan page" />
             <div className="profile-public-actions">

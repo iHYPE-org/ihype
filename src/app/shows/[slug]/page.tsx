@@ -16,6 +16,8 @@ import { ShowPlaybackTracker } from '@/components/ShowPlaybackTracker';
 import { ShowComments } from '@/components/ShowComments';
 import { ShowRsvpButton } from '@/components/ShowRsvpButton';
 import { ShowSetlistEditor } from '@/components/ShowSetlistEditor';
+import { AdBanner } from '@/components/AdBanner';
+import { ShowWhoIsGoing } from '@/components/ShowWhoIsGoing';
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
@@ -713,7 +715,13 @@ export default async function ShowDetailPage({
       ) : null}
       {isShowOwner ? <ShowSetlistEditor showId={show.id} initialTracks={setlistTracks} /> : null}
 
+      <div style={{ marginTop: 16, marginBottom: 16 }}>
+        <ShowWhoIsGoing showId={show.id} />
+      </div>
       <ShowComments showId={show.id} canPost={Boolean(session?.user?.id)} />
+      <div style={{ marginTop: 24 }}>
+        <AdBanner />
+      </div>
     </main>
     </>
   );
