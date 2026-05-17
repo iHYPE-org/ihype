@@ -123,6 +123,8 @@ model User {
   artistTips              ArtistTip[]              @relation("ArtistTipFromUser")
   premiumInterests        PremiumInterest[]
   notificationPreference  NotificationPreference?
+  follows                 Follow[]                 @relation("FollowerUser")
+  notifications           Notification[]
 }
 
 model Profile {
@@ -163,6 +165,8 @@ model Profile {
   themeBackdropTone             String?
   fanShareEnabled               Boolean                     @default(false)
   genres                        String[]
+  genre                         String?
+  links                         String?
   songUploadCount               Int                         @default(0)
   parkingDetails                String?
   stayRecommendations           String?
@@ -171,10 +175,12 @@ model Profile {
   stripeConnectAccountId        String?                     @unique
   stripeConnectOnboarded        Boolean                     @default(false)
   verified                      Boolean                     @default(false)
+  isVerified                    Boolean                     @default(false)
   verificationStatus            OwnershipVerificationStatus @default(UNVERIFIED)
   verificationSubmittedAt       DateTime?
   verificationReviewedAt        DateTime?
   verificationNotes             String?
+  verificationRequested         Boolean                     @default(false)
   hypeCount                     Int                         @default(0)
   ownerId                       String
   owner                         User                        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
@@ -193,6 +199,7 @@ model Profile {
   contentBlocks                 ProfileBlock[]
   journalPosts                  ArtistJournalPost[]
   receivedTips                  ArtistTip[]              @relation("ArtistTipToProfile")
+  followers                     Follow[]                 @relation("FollowedProfile")
 }
 
 model FanPlaylist {
@@ -686,15 +693,16 @@ model Seed {
 }
 
 model ShowComment {
-  id        String    @id @default(cuid())
+  id        String              @id @default(cuid())
   showId    String
   userId    String
   content   String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
   deletedAt DateTime?
-  show      Show      @relation(fields: [showId], references: [id], onDelete: Cascade)
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  show      Show                @relation(fields: [showId], references: [id], onDelete: Cascade)
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reactions CommentReaction[]
 
   @@index([showId, createdAt])
   @@index([userId, createdAt])
@@ -768,4 +776,55 @@ model ProcessedWebhookEvent {
 
   @@unique([source, eventId])
   @@index([processedAt])
+}
+
+model Follow {
+  id                String   @id @default(cuid())
+  followerId        String
+  followeeProfileId String
+  createdAt         DateTime @default(now())
+  follower          User     @relation("FollowerUser", fields: [followerId], references: [id], onDelete: Cascade)
+  followeeProfile   Profile  @relation("FollowedProfile", fields: [followeeProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followeeProfileId])
+  @@index([followeeProfileId, createdAt])
+  @@index([followerId, createdAt])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  body      String
+  read      Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read, createdAt])
+}
+
+model CommentReaction {
+  id        String      @id @default(cuid())
+  commentId String
+  userId    String
+  emoji     String
+  createdAt DateTime    @default(now())
+  comment   ShowComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId, emoji])
+  @@index([commentId])
+}
+
+model Report {
+  id         String   @id @default(cuid())
+  reporterId String?
+  entityType String
+  entityId   String
+  reason     String
+  status     String   @default("open")
+  createdAt  DateTime @default(now())
+
+  @@index([status, createdAt])
+  @@index([entityType, entityId])
 }
