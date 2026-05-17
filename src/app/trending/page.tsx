@@ -20,6 +20,7 @@ type RankedRow = {
     type: string;
     city: string | null;
     stateRegion: string | null;
+    genre: string | null;
   };
 };
 
@@ -36,7 +37,14 @@ function pathForProfile(type: string, slug: string): string {
   }
 }
 
-export default async function TrendingPage() {
+export default async function TrendingPage({
+  searchParams
+}: {
+  searchParams?: Promise<{ genre?: string }>;
+}) {
+  const resolved = searchParams ? await searchParams : {};
+  const genreFilter = typeof resolved.genre === 'string' ? resolved.genre : null;
+
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
   const grouped = await db.profileHypeEvent.groupBy({
@@ -44,7 +52,7 @@ export default async function TrendingPage() {
     where: { createdAt: { gte: sevenDaysAgo } },
     _count: { profileId: true },
     orderBy: { _count: { profileId: 'desc' } },
-    take: 20
+    take: 50
   });
 
   const profileIds = grouped.map((g) => g.profileId);
@@ -52,6 +60,7 @@ export default async function TrendingPage() {
     ? await db.profile.findMany({
         where: {
           id: { in: profileIds },
+          ...(genreFilter ? { genre: { contains: genreFilter, mode: 'insensitive' } } : {}),
           ...getDemoOwnerExclusion()
         },
         select: {
@@ -60,7 +69,8 @@ export default async function TrendingPage() {
           name: true,
           type: true,
           city: true,
-          stateRegion: true
+          stateRegion: true,
+          genre: true
         }
       })
     : [];
@@ -77,6 +87,18 @@ export default async function TrendingPage() {
     });
   });
 
+  // Collect unique genres for filter pills
+  const allGenres = await db.profile.findMany({
+    where: { genre: { not: null }, ...getDemoOwnerExclusion() },
+    select: { genre: true },
+    distinct: ['genre'],
+    take: 30
+  });
+  const genrePills = allGenres
+    .map((p) => p.genre)
+    .filter((g): g is string => Boolean(g))
+    .sort();
+
   return (
     <main className="container section">
       <header style={{ marginBottom: '1.5rem' }}>
@@ -84,6 +106,28 @@ export default async function TrendingPage() {
         <h1 className="title">Trending this week</h1>
         <p className="subtitle">Profiles ranked by hype velocity over the last 7 days.</p>
       </header>
+
+      {genrePills.length > 0 && (
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+          <Link
+            href="/trending"
+            className={`button small${!genreFilter ? '' : ' secondary'}`}
+            style={{ fontSize: 12 }}
+          >
+            All
+          </Link>
+          {genrePills.map((g) => (
+            <Link
+              key={g}
+              href={`/trending?genre=${encodeURIComponent(g)}`}
+              className={`button small${genreFilter === g ? '' : ' secondary'}`}
+              style={{ fontSize: 12 }}
+            >
+              {g}
+            </Link>
+          ))}
+        </div>
+      )}
 
       {rows.length === 0 ? (
         <div className="empty">
@@ -132,6 +176,7 @@ export default async function TrendingPage() {
                   <div className="meta">
                     {row.profile.type}
                     {location ? ` · ${location}` : ''}
+                    {row.profile.genre ? ` · ${row.profile.genre}` : ''}
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>

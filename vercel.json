@@ -26,6 +26,18 @@
                   {
                       "path":  "/api/health-check-cron",
                       "schedule":  "*/15 * * * *"
+                  },
+                  {
+                      "path":  "/api/digest/artist",
+                      "schedule":  "0 10 * * 2"
+                  },
+                  {
+                      "path":  "/api/onboarding-cron",
+                      "schedule":  "0 9 * * *"
+                  },
+                  {
+                      "path":  "/api/show-reminders-cron",
+                      "schedule":  "0 */6 * * *"
                   }
               ]
 }

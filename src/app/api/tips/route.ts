@@ -105,19 +105,30 @@ export async function POST(request: NextRequest) {
     ...(transferData ? { transfer_data: transferData } : {})
   });
 
-  await recordAuditEvent({
-    actorUserId: user.id,
-    action: 'artist_tip_created',
-    entityType: 'profile',
-    entityId: profile.id,
-    ipAddress: clientAddress,
-    metadata: {
-      amountCents,
-      paymentIntentId: paymentIntent.id,
-      profileName: profile.name,
-      hasConnect: Boolean(transferData)
-    }
-  });
+  await Promise.all([
+    recordAuditEvent({
+      actorUserId: user.id,
+      action: 'artist_tip_created',
+      entityType: 'profile',
+      entityId: profile.id,
+      ipAddress: clientAddress,
+      metadata: {
+        amountCents,
+        paymentIntentId: paymentIntent.id,
+        profileName: profile.name,
+        hasConnect: Boolean(transferData)
+      }
+    }),
+    db.artistTip.create({
+      data: {
+        fromUserId: user.id,
+        profileId: profile.id,
+        amountCents,
+        stripePaymentIntentId: paymentIntent.id,
+        status: 'pending'
+      }
+    })
+  ]);
 
   return NextResponse.json({
     clientSecret: paymentIntent.client_secret,

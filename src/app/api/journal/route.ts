@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { recordAuditEvent } from '@/lib/audit';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 
@@ -47,16 +46,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
   }
 
-  await recordAuditEvent({
-    actorUserId: session.user.id,
-    action: 'artist_journal_post',
-    entityType: 'profile',
-    entityId: profile.id,
-    ipAddress: clientAddress,
-    metadata: { title, content, profileId: profile.id }
+  const post = await db.artistJournalPost.create({
+    data: { profileId: profile.id, title, content },
+    select: { id: true, createdAt: true, title: true, content: true }
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, post });
 }
 
 export async function GET(request: NextRequest) {
@@ -64,20 +59,17 @@ export async function GET(request: NextRequest) {
   if (!profileId) {
     return NextResponse.json({ error: 'profileId required' }, { status: 400 });
   }
-  const rows = await db.auditLog.findMany({
-    where: { action: 'artist_journal_post', entityType: 'profile', entityId: profileId },
+  const rows = await db.artistJournalPost.findMany({
+    where: { profileId, deletedAt: null },
     orderBy: { createdAt: 'desc' },
     take: 5,
-    select: { id: true, createdAt: true, metadata: true }
+    select: { id: true, createdAt: true, title: true, content: true }
   });
-  const entries = rows.map((r) => {
-    const meta = (r.metadata ?? {}) as { title?: string; content?: string };
-    return {
-      id: r.id,
-      createdAt: r.createdAt.toISOString(),
-      title: typeof meta.title === 'string' ? meta.title : '',
-      content: typeof meta.content === 'string' ? meta.content : ''
-    };
-  });
+  const entries = rows.map((r) => ({
+    id: r.id,
+    createdAt: r.createdAt.toISOString(),
+    title: r.title,
+    content: r.content
+  }));
   return NextResponse.json({ entries });
 }
