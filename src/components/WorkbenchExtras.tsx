@@ -29,28 +29,6 @@ function dollars(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
 }
 
-function TipsReceivedCard({ profileId }: { profileId: string }) {
-  const [count, setCount] = useState<number | null>(null);
-  useEffect(() => {
-    fetch(`/api/tips?profileId=${encodeURIComponent(profileId)}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((j) => {
-        if (j && typeof j.count === 'number') setCount(j.count);
-      })
-      .catch(() => {});
-  }, [profileId]);
-  return (
-    <section className="wb-panel" style={{ marginTop: 16, padding: '14px 22px' }}>
-      <div style={eyebrow}>● TIPS RECEIVED</div>
-      <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 24 }}>
-        {count ?? '—'}
-      </div>
-      <p className="wb-page-sub" style={{ margin: '4px 0 0', fontSize: 12 }}>
-        Fans can send a $1–$5 tip from your artist profile when Stripe is configured.
-      </p>
-    </section>
-  );
-}
 
 function ReferralEarningsCard() {
   const [stats, setStats] = useState<ReferralStats | null>(null);
@@ -254,7 +232,6 @@ export function WorkbenchExtras({ activeProfileTypes, profileId, profilePath: _p
   const isFan = activeProfileTypes.length === 0 || activeProfileTypes.includes('LISTENER');
   return (
     <>
-      {isArtist && profileId ? <TipsReceivedCard profileId={profileId} /> : null}
       {isArtist && profileId ? <JournalPostCard profileId={profileId} /> : null}
       {isPromoter ? <ReferralEarningsCard /> : null}
       {(isFan || activeProfileTypes.includes('LISTENER')) ? (

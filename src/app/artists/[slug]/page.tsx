@@ -13,8 +13,6 @@ import { FollowButton } from '@/components/FollowButton';
 import { PeopleAlsoHype } from '@/components/PeopleAlsoHype';
 import { ProfileLinkShelf } from '@/components/ProfileLinkShelf';
 import { ReportButton } from '@/components/ReportButton';
-import { ArtistTipJar } from '@/components/ArtistTipJar';
-import { isPaymentProcessingConfigured } from '@/lib/payments';
 import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
 import { getSafeBackgroundImageStyle, getSafeImageUrl, getSafeVideoUrl } from '@/lib/asset-safety';
 import { canManageOwnedResource } from '@/lib/permissions';
@@ -303,9 +301,6 @@ export default async function ArtistPage({
             <ProfileLinkShelf linksJson={profile.links ?? null} />
             <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} entityLabel="artist" />
             <FollowButton profileId={profile.id} />
-            {session?.user?.id && session.user.id !== profile.ownerId && isPaymentProcessingConfigured() ? (
-              <ArtistTipJar profileId={profile.id} artistName={profile.name} />
-            ) : null}
             {profile.contactInfo ? (
               <div className="cta-row" style={{ marginTop: 12 }}>
                 <a
