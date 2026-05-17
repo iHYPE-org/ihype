@@ -15010,3 +15010,23 @@ html.high-contrast p {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
+
+/* ── Bottom sheet animation ───────────────────────────────────────── */
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* ── Skeleton shimmer (spec-compliant variant) ────────────────────── */
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Safe area inset overrides ────────────────────────────────────── */
+.bug-report-btn {
+  bottom: calc(80px + env(safe-area-inset-bottom));
+}
+.form-sticky-submit {
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}

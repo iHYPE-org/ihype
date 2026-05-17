@@ -13,6 +13,9 @@ import { BottomTabBar } from '@/components/BottomTabBar';
 import { NavDrawer } from '@/components/NavDrawer';
 import { SearchBar } from '@/components/SearchBar';
 import { BugReportButton } from '@/components/BugReportButton';
+import { OfflineBanner } from '@/components/OfflineBanner';
+import { MiniPlayer } from '@/components/MiniPlayer';
+import { PushPrompt } from '@/components/PushPrompt';
 
 const syne = Syne({ subsets: ['latin'], weight: ['600','700','800'], variable: '--font-syne', display: 'swap' });
 const dmSans = DM_Sans({ subsets: ['latin'], weight: ['400','500','600','700'], variable: '--font-dm', display: 'swap' });
@@ -45,6 +48,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" suppressHydrationWarning className={`${syne.variable} ${dmSans.variable} ${jbMono.variable}`}>
       <body>
         <AppProviders>
+          <OfflineBanner />
           <div aria-hidden="true" className="site-background">
             <span className="site-background-orb site-background-orb-a" />
             <span className="site-background-orb site-background-orb-b" />
@@ -63,6 +67,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <div className="site-shell">
             {children}
           </div>
+          <MiniPlayer />
+          <PushPrompt />
           <BottomTabBar />
           <BugReportButton />
           <PwaInstallPrompt />

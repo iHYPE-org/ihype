@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { BottomSheet } from '@/components/BottomSheet';
 
 export function BugReportButton() {
   const [open, setOpen] = useState(false);
@@ -24,23 +25,37 @@ export function BugReportButton() {
 
   return (
     <>
-      <button onClick={() => setOpen(true)} aria-label="Report a bug" style={{ position: 'fixed', bottom: 80, left: 16, zIndex: 150, width: 36, height: 36, borderRadius: '50%', background: 'var(--bg-3)', border: '1px solid var(--line)', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>?</button>
-      {open && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }} onClick={() => setOpen(false)}>
-          <div className="panel" style={{ maxWidth: 420, width: '100%' }} onClick={e => e.stopPropagation()}>
-            <h2 className="title" style={{ fontSize: 18, marginBottom: 12 }}>Report a bug</h2>
-            {sent ? <p>Thanks! We'll look into it.</p> : (
-              <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <textarea className="input" placeholder="What went wrong?" required rows={4} value={desc} onChange={e => setDesc(e.target.value)} />
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button className="button" type="submit">Send report</button>
-                  <button className="button secondary" type="button" onClick={() => setOpen(false)}>Cancel</button>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
+      <button
+        onClick={() => setOpen(true)}
+        aria-label="Report a bug"
+        className="bug-report-btn"
+        style={{
+          position: 'fixed',
+          zIndex: 150,
+          width: 36,
+          height: 36,
+          left: 16,
+          borderRadius: '50%',
+          background: 'var(--bg-3)',
+          border: '1px solid var(--line)',
+          cursor: 'pointer',
+          fontSize: 16,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >?</button>
+      <BottomSheet open={open} onClose={() => setOpen(false)} title="Report a bug">
+        {sent ? <p>Thanks! We&apos;ll look into it.</p> : (
+          <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <textarea className="input" placeholder="What went wrong?" required rows={4} value={desc} onChange={e => setDesc(e.target.value)} />
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="button" type="submit">Send report</button>
+              <button className="button secondary" type="button" onClick={() => setOpen(false)}>Cancel</button>
+            </div>
+          </form>
+        )}
+      </BottomSheet>
     </>
   );
 }

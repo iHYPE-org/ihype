@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { haptic } from '@/lib/haptics';
 
 type HypeButtonProps = {
   targetType: 'show' | 'profile';
@@ -25,6 +26,7 @@ export function HypeButton({ targetType, targetId, initialCount, entityLabel }: 
   }, [storageKey]);
 
   async function handleHype() {
+    haptic('light');
     if (alreadyHyped) {
       setMessage(`You already hyped this ${noun}`);
       return;
