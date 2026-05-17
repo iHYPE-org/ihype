@@ -2,7 +2,6 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { ReactNode } from 'react';
 import { Syne, DM_Sans, JetBrains_Mono } from 'next/font/google';
-// Note: Instrument_Serif removed — --f-s falls back to Georgia/serif (not used in any component)
 import { AppProviders } from '@/components/AppProviders';
 import { HeaderAuthLinks } from '@/components/HeaderAuthLinks';
 import { HeaderLogo } from '@/components/HeaderLogo';

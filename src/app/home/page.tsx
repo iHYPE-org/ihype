@@ -10,6 +10,7 @@ import { NewToScene } from '@/components/NewToScene';
 import { getDiscoveryStreak } from '@/lib/streaks';
 import { TrendingNearMe } from '@/components/TrendingNearMe';
 import { AdBanner } from '@/components/AdBanner';
+import { PullToRefresh } from '@/components/PullToRefresh';
 
 export const dynamic = 'force-dynamic';
 
@@ -473,7 +474,7 @@ export default async function HomePage() {
   const discoveryStreak = await getDiscoveryStreak(session.user.id).catch(() => 0);
 
   return (
-    <>
+    <PullToRefresh>
       <EmailVerificationBanner needsVerification={needsEmailVerification} />
       {discoveryStreak >= 2 ? (
         <div className="container" style={{ paddingTop: 12 }}>
@@ -507,7 +508,7 @@ export default async function HomePage() {
         <NewToScene />
         <AdBanner />
       </div>
-    </>
+    </PullToRefresh>
   );
 }
 
