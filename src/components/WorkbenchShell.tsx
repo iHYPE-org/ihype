@@ -197,6 +197,7 @@ export type WorkbenchData = {
   hypedToday: number;
   showsTonight: number;
   isVerified?: boolean;
+  verificationRequested?: boolean;
   lifeStats?: { totalHype: number; totalEarnings: number; songsPlayed: number; eventsAttended: number };
 };
 
@@ -922,6 +923,43 @@ function StarterPackPanel({ items }: { items: StarterPackItem[] }) {
   );
 }
 
+function VerificationRequestBanner({ profileId }: { profileId: string }) {
+  const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  async function request() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const res = await fetch('/api/profile/verify-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileId })
+      });
+      if (res.ok) setSent(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (sent) {
+    return (
+      <div className="wb-card" style={{ marginBottom: 16, padding: '12px 16px', borderLeft: '3px solid #22e5d4' }}>
+        <span style={{ fontSize: 13 }}>Verification request submitted. Our team will review it shortly.</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="wb-card" style={{ marginBottom: 16, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+      <span style={{ fontSize: 13 }}>Get verified to unlock booker-visible signals and the verified badge.</span>
+      <button className="wb-btn-prime" disabled={busy} onClick={() => void request()} style={{ flexShrink: 0, fontSize: 12 }}>
+        {busy ? 'Sending…' : 'Request Verification'}
+      </button>
+    </div>
+  );
+}
+
 function ShareAndGrowCard({ data }: { data: WorkbenchData }) {
   const [copied, setCopied] = useState(false);
   const types = data.activeProfileTypes || [];
@@ -1114,6 +1152,9 @@ function ViewHome({ data, prefs, setView, starterPack = [] }: { data: WorkbenchD
       </div>
 
       <WbFirstSteps data={data} setView={setView} />
+      {data.profileId && !data.isVerified && !data.verificationRequested && (data.activeProfileTypes ?? []).some(t => t === 'ARTIST' || t === 'DJ') && (
+        <VerificationRequestBanner profileId={data.profileId} />
+      )}
       <RoleNextActionHub data={data} setView={setView} />
       <ShareAndGrowCard data={data} />
       <VenueIncomingRequestsCard data={data} />

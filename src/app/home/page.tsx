@@ -6,6 +6,7 @@ import { detectRequestLocation } from '@/lib/request-location';
 import type { ProfileType } from '@prisma/client';
 import { WorkbenchShell, type WorkbenchData, type WbStat, type WbTrack, type WbShow, type WbActivity, type WbNotification } from '@/components/WorkbenchShell';
 import { EmailVerificationBanner } from '@/components/EmailVerificationBanner';
+import { NewToScene } from '@/components/NewToScene';
 import { getDiscoveryStreak } from '@/lib/streaks';
 
 export const dynamic = 'force-dynamic';
@@ -113,7 +114,9 @@ export default async function HomePage() {
       contactInfo: true,
       addressLine1: true,
       hoursText: true,
-      songUploadCount: true
+      songUploadCount: true,
+      isVerified: true,
+      verificationRequested: true
     },
     orderBy: { createdAt: 'asc' }
   });
@@ -396,6 +399,8 @@ export default async function HomePage() {
     profileType: profile.type,
     profileId: profile.id,
     profileHexId: profile.hexId,
+    isVerified: profile.isVerified,
+    verificationRequested: profile.verificationRequested,
     profilePath: profileHref(profile.type, profile.slug),
     pendingVenueRequestCount,
     profileCompletion,
@@ -444,6 +449,9 @@ export default async function HomePage() {
         </div>
       ) : null}
       <WorkbenchShell data={wbData} starterPack={starterPack} />
+      <div className="container">
+        <NewToScene />
+      </div>
     </>
   );
 }

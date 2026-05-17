@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { recordAuditEvent } from '@/lib/audit';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 
@@ -37,39 +36,57 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const show = await db.show.findUnique({ where: { id: showId }, select: { id: true } });
   if (!show) return NextResponse.json({ error: 'Show not found.' }, { status: 404 });
 
-  await recordAuditEvent({
-    actorUserId: session.user.id,
-    action: 'show_comment',
-    entityType: 'show',
-    entityId: show.id,
-    ipAddress: clientAddress,
-    metadata: { showId: show.id, content, userId: session.user.id }
+  const comment = await db.showComment.create({
+    data: { showId: show.id, userId: session.user.id, content },
+    select: {
+      id: true,
+      createdAt: true,
+      content: true,
+      user: { select: { name: true, username: true } }
+    }
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({
+    ok: true,
+    comment: {
+      id: comment.id,
+      createdAt: comment.createdAt.toISOString(),
+      content: comment.content,
+      author: comment.user.name ?? comment.user.username ?? 'iHYPE fan'
+    }
+  });
 }
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id: showId } = await params;
-  const rows = await db.auditLog.findMany({
-    where: { action: 'show_comment', entityType: 'show', entityId: showId },
+  const rows = await db.showComment.findMany({
+    where: { showId, deletedAt: null },
     orderBy: { createdAt: 'desc' },
-    take: 10,
+    take: 50,
     select: {
       id: true,
       createdAt: true,
-      metadata: true,
-      actor: { select: { name: true, username: true } }
+      content: true,
+      user: { select: { name: true, username: true } },
+      reactions: {
+        select: { emoji: true }
+      }
     }
   });
+
   const comments = rows.map((r) => {
-    const meta = (r.metadata ?? {}) as { content?: string };
+    const reactionCounts: Record<string, number> = {};
+    for (const rx of r.reactions) {
+      reactionCounts[rx.emoji] = (reactionCounts[rx.emoji] ?? 0) + 1;
+    }
     return {
       id: r.id,
       createdAt: r.createdAt.toISOString(),
-      content: typeof meta.content === 'string' ? meta.content : '',
-      author: r.actor?.name ?? r.actor?.username ?? 'iHYPE fan'
+      content: r.content,
+      author: r.user.name ?? r.user.username ?? 'iHYPE fan',
+      reactions: Object.entries(reactionCounts).map(([emoji, count]) => ({ emoji, count }))
     };
   });
+
   return NextResponse.json({ comments });
 }

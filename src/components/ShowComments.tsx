@@ -2,12 +2,17 @@
 
 import { useEffect, useState } from 'react';
 
+type Reaction = { emoji: string; count: number };
+
 type Comment = {
   id: string;
   createdAt: string;
   content: string;
   author: string;
+  reactions: Reaction[];
 };
+
+const EMOJIS = ['👍', '❤️', '🔥'];
 
 export function ShowComments({ showId, canPost }: { showId: string; canPost: boolean }) {
   const [comments, setComments] = useState<Comment[]>([]);
@@ -53,6 +58,26 @@ export function ShowComments({ showId, canPost }: { showId: string; canPost: boo
       setErr(e instanceof Error ? e.message : 'Could not post comment.');
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function toggleReaction(commentId: string, emoji: string) {
+    if (!canPost) return;
+    try {
+      const res = await fetch(`/api/shows/${showId}/comments/${commentId}/reactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emoji })
+      });
+      if (!res.ok) return;
+      const json = (await res.json()) as { reactions: Reaction[] };
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === commentId ? { ...c, reactions: json.reactions ?? [] } : c
+        )
+      );
+    } catch {
+      // ignore
     }
   }
 
@@ -104,7 +129,35 @@ export function ShowComments({ showId, canPost }: { showId: string; canPost: boo
                   {new Date(c.createdAt).toLocaleString()}
                 </span>
               </div>
-              <p style={{ margin: '4px 0 0', whiteSpace: 'pre-wrap' }}>{c.content}</p>
+              <p style={{ margin: '4px 0 6px', whiteSpace: 'pre-wrap' }}>{c.content}</p>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {EMOJIS.map((emoji) => {
+                  const rx = c.reactions.find((r) => r.emoji === emoji);
+                  return (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => void toggleReaction(c.id, emoji)}
+                      style={{
+                        background: 'var(--bg-3)',
+                        border: '1px solid var(--line)',
+                        borderRadius: 20,
+                        padding: '2px 8px',
+                        fontSize: 13,
+                        cursor: canPost ? 'pointer' : 'default',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4
+                      }}
+                    >
+                      {emoji}
+                      {rx && rx.count > 0 ? (
+                        <span style={{ fontSize: 11 }}>{rx.count}</span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
             </li>
           ))}
         </ul>

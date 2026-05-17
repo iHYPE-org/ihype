@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { recordAuditEvent } from '@/lib/audit';
+import { db } from '@/lib/db';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 
@@ -32,15 +32,12 @@ export async function POST(request: NextRequest) {
   if (!email || !email.includes('@')) {
     return NextResponse.json({ error: 'Valid email required.' }, { status: 400 });
   }
-  const note = typeof body.note === 'string' ? body.note.slice(0, 500) : null;
 
-  await recordAuditEvent({
-    actorUserId: session?.user?.id ?? null,
-    action: 'premium_interest',
-    entityType: 'user',
-    entityId: session?.user?.id ?? null,
-    ipAddress: clientAddress,
-    metadata: { email, note }
+  await db.premiumInterest.create({
+    data: {
+      userId: session?.user?.id ?? null,
+      email
+    }
   });
 
   return NextResponse.json({ ok: true });

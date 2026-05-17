@@ -9,6 +9,10 @@ import { HypeButton } from '@/components/HypeButton';
 import { ArtistMediaPlaylist } from '@/components/ArtistMediaPlaylist';
 import { ContentReportControl } from '@/components/ContentReportControl';
 import { ShareButton } from '@/components/ShareButton';
+import { FollowButton } from '@/components/FollowButton';
+import { PeopleAlsoHype } from '@/components/PeopleAlsoHype';
+import { ProfileLinkShelf } from '@/components/ProfileLinkShelf';
+import { ReportButton } from '@/components/ReportButton';
 import { ArtistTipJar } from '@/components/ArtistTipJar';
 import { isPaymentProcessingConfigured } from '@/lib/payments';
 import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
@@ -185,15 +189,11 @@ export default async function ArtistPage({
         }
       }
     }),
-    db.auditLog.findMany({
-      where: {
-        action: 'artist_journal_post',
-        entityType: 'profile',
-        entityId: profile.id
-      },
+    db.artistJournalPost.findMany({
+      where: { profileId: profile.id, deletedAt: null },
       orderBy: { createdAt: 'desc' },
       take: 5,
-      select: { id: true, createdAt: true, metadata: true }
+      select: { id: true, createdAt: true, title: true, content: true }
     })
   ]);
 
@@ -296,8 +296,11 @@ export default async function ArtistPage({
             <div className="tag-row">
               {isBookMeReady ? <span className="tag artist-ready-tag">Book me ready</span> : null}
               {profile.genres.map((genre) => <span key={genre} className="tag">{genre}</span>)}
+              {profile.genre ? <span className="tag">{profile.genre}</span> : null}
             </div>
+            <ProfileLinkShelf linksJson={profile.links ?? null} />
             <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} entityLabel="artist" />
+            <FollowButton profileId={profile.id} />
             {session?.user?.id && session.user.id !== profile.ownerId && isPaymentProcessingConfigured() ? (
               <ArtistTipJar profileId={profile.id} artistName={profile.name} />
             ) : null}
@@ -359,18 +362,15 @@ export default async function ArtistPage({
                 <div className="artist-copy">
                   <strong>Recent updates</strong>
                   <ul style={{ listStyle: 'none', padding: 0, margin: '8px 0 0', display: 'grid', gap: 10 }}>
-                    {journalEntries.map((entry) => {
-                      const meta = (entry.metadata ?? {}) as { title?: string; content?: string };
-                      return (
-                        <li key={entry.id} style={{ borderTop: '1px solid var(--line)', paddingTop: 8 }}>
-                          <div style={{ fontWeight: 700 }}>{meta.title ?? 'Untitled'}</div>
-                          <div className="meta" style={{ fontSize: 11 }}>
-                            {new Date(entry.createdAt).toLocaleString()}
-                          </div>
-                          <p style={{ margin: '4px 0 0', whiteSpace: 'pre-wrap' }}>{meta.content ?? ''}</p>
-                        </li>
-                      );
-                    })}
+                    {journalEntries.map((entry) => (
+                      <li key={entry.id} style={{ borderTop: '1px solid var(--line)', paddingTop: 8 }}>
+                        <div style={{ fontWeight: 700 }}>{entry.title ?? 'Untitled'}</div>
+                        <div className="meta" style={{ fontSize: 11 }}>
+                          {new Date(entry.createdAt).toLocaleString()}
+                        </div>
+                        <p style={{ margin: '4px 0 0', whiteSpace: 'pre-wrap' }}>{entry.content ?? ''}</p>
+                      </li>
+                    ))}
                   </ul>
                 </div>
               ) : null}
@@ -449,6 +449,10 @@ export default async function ArtistPage({
         </div>
       </section>
 
+      <PeopleAlsoHype profileId={profile.id} />
+      <div style={{ marginTop: 16 }}>
+        <ReportButton entityType="profile" entityId={profile.id} />
+      </div>
       <ContentReportControl targetId={profile.id} targetType="profile" />
     </main>
     </>

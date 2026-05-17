@@ -12,6 +12,7 @@ import { readClientAddress } from '@/lib/request-meta';
 import { isInviteCodeRequiredRuntime, isReservedPlatformEmail, isValidInviteCode } from '@/lib/runtime-flags';
 import { getUsernameValidationMessage, isValidUsername, normalizeUsername } from '@/lib/usernames';
 import { slugify } from '@/lib/utils';
+import { sendDay1Email } from '@/lib/onboarding-emails';
 
 const schema = z.object({
   name: z.preprocess(v => (typeof v === 'string' && v.trim() === '' ? undefined : v), z.string().trim().min(2).optional()),
@@ -313,6 +314,9 @@ export async function POST(request: Request) {
         profileId: profile.id
       }
     });
+
+    // Fire-and-forget onboarding email
+    void sendDay1Email(user.id);
 
     const resp = NextResponse.json({
       id: user.id,
