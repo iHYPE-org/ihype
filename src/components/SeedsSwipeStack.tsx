@@ -302,7 +302,7 @@ export function SeedsSwipeStack({ seeds, tracks, onSave, onSkip, onHype, selecte
               {/* Save tint */}
               {tintRight > 0 && (
                 <div style={{ position: 'absolute', inset: 0, background: `rgba(34,229,212,${tintRight * 0.35})`, zIndex: 2, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 32, color: '#22e5d4', border: '3px solid #22e5d4', borderRadius: 8, padding: '6px 18px', transform: 'rotate(12deg)', opacity: tintRight }}>SAVE</div>
+                  <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 32, color: '#22e5d4', border: '3px solid #22e5d4', borderRadius: 8, padding: '6px 18px', transform: 'rotate(12deg)', opacity: tintRight }}>HYPE</div>
                 </div>
               )}
 

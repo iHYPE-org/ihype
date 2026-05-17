@@ -71,7 +71,7 @@ export function AdSubmissionForm() {
       </div>
       <div>
         <label className="label" htmlFor="campaignWebsite">Website / Link</label>
-        <input className="input" id="campaignWebsite" name="campaignWebsite" required type="url" placeholder="https://" />
+        <input className="input" id="campaignWebsite" inputMode="url" name="campaignWebsite" required type="url" placeholder="https://" />
       </div>
       <div>
         <label className="label" htmlFor="adTextCopy">Ad Copy <small>(max 280 chars)</small></label>
@@ -114,9 +114,11 @@ export function AdSubmissionForm() {
         <div className="callout error">{message}</div>
       )}
 
-      <button className="button" disabled={status === 'submitting'} type="submit">
-        {status === 'submitting' ? 'Submitting…' : 'Submit for review'}
-      </button>
+      <div className="form-sticky-submit">
+        <button className="button" disabled={status === 'submitting'} type="submit">
+          {status === 'submitting' ? 'Submitting…' : 'Submit for review'}
+        </button>
+      </div>
     </form>
   );
 }

@@ -13,6 +13,7 @@ import { FollowButton } from '@/components/FollowButton';
 import { PeopleAlsoHype } from '@/components/PeopleAlsoHype';
 import { ProfileLinkShelf } from '@/components/ProfileLinkShelf';
 import { ReportButton } from '@/components/ReportButton';
+import { CollapsibleText } from '@/components/CollapsibleText';
 import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
 import { getSafeBackgroundImageStyle, getSafeImageUrl, getSafeVideoUrl } from '@/lib/asset-safety';
 import { canManageOwnedResource } from '@/lib/permissions';
@@ -344,7 +345,7 @@ export default async function ArtistPage({
             <>
               <h2>About</h2>
               <div className="artist-copy">
-                {profile.aboutContent || profile.bio || 'This artist has not filled out the About section yet.'}
+                <CollapsibleText text={profile.aboutContent || profile.bio || 'This artist has not filled out the About section yet.'} lines={3} />
               </div>
               {profile.journalContent ? (
                 <div className="artist-copy">

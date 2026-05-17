@@ -1,7 +1,8 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { ReactNode } from 'react';
-import { Syne, DM_Sans, JetBrains_Mono, Instrument_Serif } from 'next/font/google';
+import { Syne, DM_Sans, JetBrains_Mono } from 'next/font/google';
+// Note: Instrument_Serif removed — --f-s falls back to Georgia/serif (not used in any component)
 import { AppProviders } from '@/components/AppProviders';
 import { HeaderAuthLinks } from '@/components/HeaderAuthLinks';
 import { HeaderLogo } from '@/components/HeaderLogo';
@@ -9,11 +10,13 @@ import { PwaInstallPrompt } from '@/components/PwaInstallPrompt';
 import { CookieConsent } from '@/components/CookieConsent';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { BottomTabBar } from '@/components/BottomTabBar';
+import { NavDrawer } from '@/components/NavDrawer';
+import { SearchBar } from '@/components/SearchBar';
 
 const syne = Syne({ subsets: ['latin'], weight: ['600','700','800'], variable: '--font-syne', display: 'swap' });
 const dmSans = DM_Sans({ subsets: ['latin'], weight: ['400','500','600','700'], variable: '--font-dm', display: 'swap' });
 const jbMono = JetBrains_Mono({ subsets: ['latin'], weight: ['400','500','600'], variable: '--font-jb', display: 'swap' });
-const instrumentSerif = Instrument_Serif({ subsets: ['latin'], weight: ['400'], style: ['normal','italic'], variable: '--font-serif', display: 'swap' });
 
 export const metadata: Metadata = {
   title: {
@@ -39,7 +42,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${syne.variable} ${dmSans.variable} ${jbMono.variable} ${instrumentSerif.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${syne.variable} ${dmSans.variable} ${jbMono.variable}`}>
       <body>
         <AppProviders>
           <div aria-hidden="true" className="site-background">
@@ -51,29 +54,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <header aria-label="Primary site header" className="nav site-nav">
             <div className="container nav-inner-marketing">
               <HeaderLogo />
-              <form action="/search" method="get" style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, maxWidth: 280, margin: '0 16px' }}>
-                <input
-                  name="q"
-                  placeholder="Search artists, shows…"
-                  type="search"
-                  style={{
-                    background: 'var(--bg-3)',
-                    border: '1px solid var(--line-2)',
-                    borderRadius: 6,
-                    color: 'var(--ink)',
-                    fontSize: 13,
-                    padding: '5px 10px',
-                    width: '100%'
-                  }}
-                />
-              </form>
+              <SearchBar />
               <ThemeToggle />
               <HeaderAuthLinks />
+              <NavDrawer />
             </div>
           </header>
           <div className="site-shell">
             {children}
           </div>
+          <BottomTabBar />
           <PwaInstallPrompt />
           <CookieConsent />
           <ServiceWorkerRegister />

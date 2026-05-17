@@ -429,7 +429,7 @@ function MagicLinkButton() {
     <form className="form" onSubmit={send} style={{ marginTop: 4 }}>
       <label className="field">
         <span>Email</span>
-        <input autoComplete="email" onChange={(e) => setEmail(e.target.value)} required type="email" value={email} />
+        <input autoComplete="email" inputMode="email" onChange={(e) => setEmail(e.target.value)} required type="email" value={email} />
       </label>
       <button className="button secondary" disabled={busy} type="submit" style={{ fontSize: 13 }}>
         {busy ? 'Sending...' : 'Send sign-in link'}
@@ -808,6 +808,7 @@ export function RegisterScreen({
             <span>Email</span>
             <input
               autoComplete="email"
+              inputMode="email"
               onChange={(event) => setEmail(event.target.value)}
               placeholder="you@example.com"
               required
@@ -987,7 +988,7 @@ export function ForgotPasswordScreen() {
         <form className="form" onSubmit={requestReset}>
           <label className="field">
             <span>Email</span>
-            <input autoComplete="email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} />
+            <input autoComplete="email" inputMode="email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} />
           </label>
           <button className="button" disabled={isSubmitting} type="submit">
             {isSubmitting ? 'Sending...' : 'Send reset code'}
@@ -1007,7 +1008,7 @@ export function ForgotPasswordScreen() {
         <form className="form" onSubmit={confirmReset}>
           <label className="field">
             <span>Email</span>
-            <input autoComplete="email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} />
+            <input autoComplete="email" inputMode="email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} />
           </label>
           <label className="field">
             <span>6-digit reset code</span>
