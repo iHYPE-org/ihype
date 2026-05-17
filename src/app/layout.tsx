@@ -67,6 +67,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <div className="site-shell">
             {children}
           </div>
+          <MiniPlayer />
+          <PushPrompt />
           <BottomTabBar />
           <BugReportButton />
           <PwaInstallPrompt />
