@@ -2,7 +2,8 @@ import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
 import Anthropic from '@anthropic-ai/sdk';
 
-const client = new Anthropic();
+let _client: Anthropic | null = null;
+function client() { return (_client ??= new Anthropic()); }
 
 export async function sendWeeklyPicksEmails(): Promise<{ sent: number; skipped: number }> {
   // Get top hyped profiles this week
@@ -19,7 +20,7 @@ export async function sendWeeklyPicksEmails(): Promise<{ sent: number; skipped: 
   // Generate AI commentary
   let aiBlurb = '';
   try {
-    const msg = await client.messages.create({
+    const msg = await client().messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 200,
       messages: [{

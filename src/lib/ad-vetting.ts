@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-const client = new Anthropic();
+let _client: Anthropic | null = null;
+function client() { return (_client ??= new Anthropic()); }
 
 export interface AdData {
   advertiserName: string;
@@ -45,7 +46,7 @@ Respond ONLY in valid JSON with exactly these keys:
 - Copy: "${adData.adTextCopy}"`;
 
   try {
-    const message = await client.messages.create({
+    const message = await client().messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 256,
       system: systemPrompt,

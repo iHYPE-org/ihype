@@ -3,7 +3,8 @@ import { db } from '@/lib/db';
 import Anthropic from '@anthropic-ai/sdk';
 
 export const dynamic = 'force-dynamic';
-const client = new Anthropic();
+let _client: Anthropic | null = null;
+function client() { return (_client ??= new Anthropic()); }
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -23,7 +24,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ slu
   if (candidates.length === 0) return NextResponse.json({ similar: [] });
 
   try {
-    const msg = await client.messages.create({
+    const msg = await client().messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 300,
       messages: [{

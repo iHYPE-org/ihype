@@ -1,7 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { db } from '@/lib/db';
 
-const client = new Anthropic();
+let _client: Anthropic | null = null;
+function client() { return (_client ??= new Anthropic()); }
 
 type ProfileSummary = {
   id: string;
@@ -34,7 +35,7 @@ Respond with ONLY a JSON array of strings, e.g. ["Artist One", "Artist Two", "Ar
 No explanation, no markdown, just the JSON array.`;
 
   try {
-    const message = await client.messages.create({
+    const message = await client().messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 200,
       messages: [{ role: 'user', content: prompt }]

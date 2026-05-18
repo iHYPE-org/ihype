@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-const client = new Anthropic();
+let _client: Anthropic | null = null;
+function client() { return (_client ??= new Anthropic()); }
 
 export type SpamResult = { isSpam: boolean; confidence: number };
 
@@ -29,7 +30,7 @@ Respond with ONLY valid JSON: {"isSpam": true/false, "confidence": 0.0-1.0}
 No explanation, just the JSON object.`;
 
   try {
-    const message = await client.messages.create({
+    const message = await client().messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 100,
       messages: [{ role: 'user', content: prompt }]
