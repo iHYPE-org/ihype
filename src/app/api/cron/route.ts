@@ -207,8 +207,56 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ ok: true, ...result });
     }
 
+    case 'close-stale-bookings': {
+      const { db } = await import('@/lib/db');
+      const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const result = await db.bookingRequest.updateMany({
+        where: { status: 'pending', createdAt: { lt: cutoff } },
+        data: { status: 'expired' }
+      });
+      return NextResponse.json({ ok: true, closed: result.count });
+    }
+
+    case 'follow-digest': {
+      const { sendFollowDigest } = await import('@/lib/follow-digest');
+      const result = await sendFollowDigest();
+      return NextResponse.json({ ok: true, ...result });
+    }
+
+    case 'session-cleanup': {
+      const { db } = await import('@/lib/db');
+      const result = await db.session.deleteMany({ where: { expires: { lt: new Date() } } });
+      return NextResponse.json({ ok: true, deleted: result.count });
+    }
+
+    case 'audit-log-rotate': {
+      const { db } = await import('@/lib/db');
+      const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+      const result = await db.auditLog.deleteMany({ where: { createdAt: { lt: cutoff }, action: { notIn: ['PAYOUT_TRIGGERED', 'DMCA_TAKEDOWN', 'DMCA_PENDING_REVIEW'] } } });
+      return NextResponse.json({ ok: true, deleted: result.count });
+    }
+
+    case 'stripe-connect-health': {
+      const { db } = await import('@/lib/db');
+      const { sendGenericEmail } = await import('@/lib/mailer');
+      const ADMIN_EMAIL = process.env.ADMIN_ALERT_EMAIL ?? 'admin@ihype.org';
+      const issues = await db.profile.findMany({
+        where: {
+          OR: [
+            { stripeConnectOnboarded: true, stripeConnectAccountId: null },
+            { stripeConnectOnboarded: false, stripeConnectAccountId: { not: null } }
+          ]
+        },
+        select: { name: true, slug: true, stripeConnectOnboarded: true, stripeConnectAccountId: true }
+      });
+      if (issues.length > 0) {
+        await sendGenericEmail({ to: ADMIN_EMAIL, subject: `[iHYPE] Stripe Connect issues (${issues.length})`, text: issues.map(i => `${i.name}: onboarded=${i.stripeConnectOnboarded}, accountId=${i.stripeConnectAccountId ?? 'null'}`).join('\n'), html: `<p>${issues.map(i => `<strong>${i.name}</strong>: onboarded=${i.stripeConnectOnboarded}, accountId=${i.stripeConnectAccountId ?? 'null'}`).join('<br/>')}</p>` }).catch(() => {});
+      }
+      return NextResponse.json({ ok: true, issues: issues.length });
+    }
+
     default:
-      return NextResponse.json({ error: 'Unknown job. Use ?job=digest|artist-digest|health-check|onboarding|show-reminders|db-health|weekly-picks|admin-report|new-to-scene|expire-ads|feature-shows|flag-spam|show-payouts|artist-onboarding' }, { status: 400 });
+      return NextResponse.json({ error: 'Unknown job. Use ?job=digest|artist-digest|health-check|onboarding|show-reminders|db-health|weekly-picks|admin-report|new-to-scene|expire-ads|feature-shows|flag-spam|show-payouts|artist-onboarding|close-stale-bookings|follow-digest|session-cleanup|audit-log-rotate|stripe-connect-health' }, { status: 400 });
   }
 }
 

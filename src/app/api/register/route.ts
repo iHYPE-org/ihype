@@ -50,6 +50,7 @@ const schema = z.object({
   themeAccentTone: z.enum(profileAccentToneIds).optional(),
   themeBackdropTone: z.enum(profileBackdropToneIds).optional(),
   inviteCode: z.string().trim().max(80).optional(),
+  ref: z.string().trim().max(80).optional(),
   company: z.string().trim().max(120).optional(),
   passkeyFlow: z.boolean().optional().default(false)
 });
@@ -336,6 +337,17 @@ export async function POST(request: Request) {
           }
         })
         .catch(() => {});
+    }
+
+    // Track referral if present
+    if (body.ref) {
+      recordAuditEvent({
+        actorUserId: null,
+        action: 'REFERRAL_SIGNUP',
+        entityType: 'User',
+        entityId: user.id,
+        metadata: { referrer: body.ref }
+      }).catch(() => {});
     }
 
     // Fire-and-forget onboarding email

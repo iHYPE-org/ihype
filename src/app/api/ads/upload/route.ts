@@ -69,6 +69,11 @@ export async function POST(request: Request) {
     },
   });
 
+  // Fire-and-forget admin alert
+  import('@/lib/mailer').then(({ sendGenericEmail }) =>
+    sendGenericEmail({ to: process.env.ADMIN_ALERT_EMAIL ?? 'admin@ihype.org', subject: `[iHYPE] New ad submission: ${advertiserName}`, text: `Tier: ${tier}\nType: ${advertiserType}\nWebsite: ${campaignWebsite}`, html: `<p><strong>${advertiserName}</strong> submitted a <strong>${tier}</strong> ad.</p><p>Website: ${campaignWebsite}</p><p><a href="${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org'}/admin/ads">Review in admin</a></p>` }).catch(() => {})
+  );
+
   if (status === 'rejected') {
     return NextResponse.json({
       status: 'REJECTED',

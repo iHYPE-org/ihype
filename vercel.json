@@ -74,6 +74,26 @@
                   {
                       "path":  "/api/cron?job=artist-onboarding",
                       "schedule":  "0 11 * * *"
+                  },
+                  {
+                      "path":  "/api/cron?job=close-stale-bookings",
+                      "schedule":  "0 3 * * *"
+                  },
+                  {
+                      "path":  "/api/cron?job=follow-digest",
+                      "schedule":  "0 9 * * *"
+                  },
+                  {
+                      "path":  "/api/cron?job=session-cleanup",
+                      "schedule":  "0 2 * * 0"
+                  },
+                  {
+                      "path":  "/api/cron?job=audit-log-rotate",
+                      "schedule":  "0 1 * * 0"
+                  },
+                  {
+                      "path":  "/api/cron?job=stripe-connect-health",
+                      "schedule":  "0 8 * * 1"
                   }
               ]
 }
