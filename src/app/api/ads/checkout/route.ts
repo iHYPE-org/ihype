@@ -3,14 +3,16 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '', { apiVersion: '2025-02-24.acacia' });
-
 const TIER_PRICES: Record<string, number> = {
   featured: 5000,  // $50
   premium: 15000,  // $150
 };
 
 export async function POST(request: NextRequest) {
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  if (!stripeKey) return NextResponse.json({ error: 'Payment not configured.' }, { status: 503 });
+  const stripe = new Stripe(stripeKey, { apiVersion: '2025-02-24.acacia' });
+
   await auth();
   const { adId } = await request.json() as { adId: string };
 

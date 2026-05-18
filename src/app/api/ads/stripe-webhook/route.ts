@@ -4,14 +4,17 @@ import { db } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '', { apiVersion: '2025-02-24.acacia' });
-
 export async function POST(request: NextRequest) {
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  const webhookSecret = process.env.STRIPE_AD_WEBHOOK_SECRET;
+  if (!stripeKey || !webhookSecret) return NextResponse.json({ error: 'Payment not configured.' }, { status: 503 });
+  const stripe = new Stripe(stripeKey, { apiVersion: '2025-02-24.acacia' });
+
   const sig = request.headers.get('stripe-signature') ?? '';
   const body = await request.text();
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_AD_WEBHOOK_SECRET ?? '');
+    event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
   } catch {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
