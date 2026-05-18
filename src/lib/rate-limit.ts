@@ -32,29 +32,58 @@ export function rateLimitKey(prefix: string, userId: string | undefined, ip: str
 // KV-backed implementation (Vercel KV / Redis)
 // ---------------------------------------------------------------------------
 
+const DEFAULT_KV_TIMEOUT_MS = 1500;
+
+function getKvTimeoutMs() {
+  const parsed = Number.parseInt(process.env.RATE_LIMIT_KV_TIMEOUT_MS ?? '', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_KV_TIMEOUT_MS;
+}
+
+async function withKvTimeout<T>(operation: Promise<T>, label: string): Promise<T> {
+  const timeoutMs = getKvTimeoutMs();
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+
+  try {
+    return await Promise.race([
+      operation,
+      new Promise<never>((_, reject) => {
+        timeout = setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs);
+      })
+    ]);
+  } finally {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+  }
+}
+
+async function consumeKvUnsafe(key: string, options: RateLimitOptions): Promise<RateLimitResult> {
+  const { kv } = await import('@vercel/kv');
+  const { limit, windowMs } = options;
+  const windowSecs = Math.ceil(windowMs / 1000);
+  const count = await kv.incr(key);
+  if (count === 1) {
+    await kv.expire(key, windowSecs);
+  }
+  const ttl = await kv.ttl(key);
+  const retryAfterSeconds = Math.max(1, ttl);
+  if (count > limit) {
+    // Track hits-per-bucket over a rolling 1h window for the admin dashboard.
+    try {
+      const hitsKey = `rate-limit-hits:${key}`;
+      const hits = await kv.incr(hitsKey);
+      if (hits === 1) await kv.expire(hitsKey, 3600);
+    } catch {
+      // best-effort
+    }
+    return { allowed: false, remaining: 0, retryAfterSeconds };
+  }
+  return { allowed: true, remaining: Math.max(0, limit - count), retryAfterSeconds };
+}
+
 async function consumeKv(key: string, options: RateLimitOptions): Promise<RateLimitResult> {
   try {
-    const { kv } = await import('@vercel/kv');
-    const { limit, windowMs } = options;
-    const windowSecs = Math.ceil(windowMs / 1000);
-    const count = await kv.incr(key);
-    if (count === 1) {
-      await kv.expire(key, windowSecs);
-    }
-    const ttl = await kv.ttl(key);
-    const retryAfterSeconds = Math.max(1, ttl);
-    if (count > limit) {
-      // Track hits-per-bucket over a rolling 1h window for the admin dashboard.
-      try {
-        const hitsKey = `rate-limit-hits:${key}`;
-        const hits = await kv.incr(hitsKey);
-        if (hits === 1) await kv.expire(hitsKey, 3600);
-      } catch {
-        // best-effort
-      }
-      return { allowed: false, remaining: 0, retryAfterSeconds };
-    }
-    return { allowed: true, remaining: Math.max(0, limit - count), retryAfterSeconds };
+    return await withKvTimeout(consumeKvUnsafe(key, options), 'KV rate limit');
   } catch (err) {
     console.error('[rate-limit] KV error, falling back to in-memory:', err);
     return consumeMemory(key, options);

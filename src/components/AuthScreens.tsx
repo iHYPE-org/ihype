@@ -198,6 +198,9 @@ export function LoginScreen({
     try {
       const optRes = await fetch('/api/auth/passkey/auth');
       const options = await optRes.json();
+      if (!optRes.ok) {
+        throw new Error(typeof options.error === 'string' ? options.error : 'Unable to start passkey sign-in.');
+      }
       const assertion = await startAuthentication(options);
       const payload = await postJson<{ redirect?: string }>('/api/auth/passkey/auth', assertion);
       trackSignupFunnel('login_passkey_success', { method: 'passkey', step: 'login', ...getPasskeyDiagnostics() });
