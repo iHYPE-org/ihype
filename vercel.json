@@ -20,79 +20,79 @@
                       "schedule":  "*/5 * * * *"
                   },
                   {
-                      "path":  "/api/cron?job=digest",
+                      "path":  "/api/cron/digest",
                       "schedule":  "0 10 * * 1"
                   },
                   {
-                      "path":  "/api/cron?job=health-check",
+                      "path":  "/api/cron/health-check",
                       "schedule":  "*/15 * * * *"
                   },
                   {
-                      "path":  "/api/cron?job=artist-digest",
+                      "path":  "/api/cron/artist-digest",
                       "schedule":  "0 10 * * 2"
                   },
                   {
-                      "path":  "/api/cron?job=onboarding",
+                      "path":  "/api/cron/onboarding",
                       "schedule":  "0 9 * * *"
                   },
                   {
-                      "path":  "/api/cron?job=show-reminders",
+                      "path":  "/api/cron/show-reminders",
                       "schedule":  "0 */6 * * *"
                   },
                   {
-                      "path":  "/api/cron?job=db-health",
+                      "path":  "/api/cron/db-health",
                       "schedule":  "0 8 * * 1"
                   },
                   {
-                      "path":  "/api/cron?job=weekly-picks",
+                      "path":  "/api/cron/weekly-picks",
                       "schedule":  "0 9 * * 5"
                   },
                   {
-                      "path":  "/api/cron?job=admin-report",
+                      "path":  "/api/cron/admin-report",
                       "schedule":  "0 8 * * 1"
                   },
                   {
-                      "path":  "/api/cron?job=new-to-scene",
+                      "path":  "/api/cron/new-to-scene",
                       "schedule":  "0 10 * * 3"
                   },
                   {
-                      "path":  "/api/cron?job=expire-ads",
+                      "path":  "/api/cron/expire-ads",
                       "schedule":  "0 3 * * *"
                   },
                   {
-                      "path":  "/api/cron?job=feature-shows",
+                      "path":  "/api/cron/feature-shows",
                       "schedule":  "0 6 * * *"
                   },
                   {
-                      "path":  "/api/cron?job=flag-spam",
+                      "path":  "/api/cron/flag-spam",
                       "schedule":  "0 4 * * *"
                   },
                   {
-                      "path":  "/api/cron?job=show-payouts",
+                      "path":  "/api/cron/show-payouts",
                       "schedule":  "0 5 * * *"
                   },
                   {
-                      "path":  "/api/cron?job=artist-onboarding",
+                      "path":  "/api/cron/artist-onboarding",
                       "schedule":  "0 11 * * *"
                   },
                   {
-                      "path":  "/api/cron?job=close-stale-bookings",
+                      "path":  "/api/cron/close-stale-bookings",
                       "schedule":  "0 3 * * *"
                   },
                   {
-                      "path":  "/api/cron?job=follow-digest",
+                      "path":  "/api/cron/follow-digest",
                       "schedule":  "0 9 * * *"
                   },
                   {
-                      "path":  "/api/cron?job=session-cleanup",
+                      "path":  "/api/cron/session-cleanup",
                       "schedule":  "0 2 * * 0"
                   },
                   {
-                      "path":  "/api/cron?job=audit-log-rotate",
+                      "path":  "/api/cron/audit-log-rotate",
                       "schedule":  "0 1 * * 0"
                   },
                   {
-                      "path":  "/api/cron?job=stripe-connect-health",
+                      "path":  "/api/cron/stripe-connect-health",
                       "schedule":  "0 8 * * 1"
                   }
               ]
