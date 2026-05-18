@@ -1,20 +1,47 @@
 import 'dotenv/config'
 import { defineConfig } from 'prisma/config'
 
+const PLACEHOLDER_DATABASE_URL = 'postgresql://placeholder:placeholder@localhost:5432/placeholder'
+const DATABASE_URL_CANDIDATES = [
+  'DATABASE_URL',
+  'DIRECT_DATABASE_URL',
+  'DATABASE_DIRECT_URL',
+  'DATABASE_URL_UNPOOLED',
+  'POSTGRES_URL',
+  'POSTGRES_PRISMA_URL',
+  'POSTGRES_URL_NON_POOLING',
+  'POSTGRES_URL_NO_SSL',
+  'DATABASE_URL_POSTGRES_URL',
+  'DATABASE_URL_POSTGRES_PRISMA_URL',
+  'DATABASE_URL_POSTGRES_URL_NON_POOLING',
+  'DATABASE_URL_POSTGRES_URL_NO_SSL',
+] as const
+
 function isPostgresUrl(url: string) {
   return url.startsWith('postgresql://') || url.startsWith('postgres://')
 }
 
+function resolvePostgresUrl() {
+  for (const key of DATABASE_URL_CANDIDATES) {
+    const value = process.env[key]?.trim()
+    if (value && isPostgresUrl(value)) {
+      return value
+    }
+  }
+
+  return null
+}
+
 // Normalise DATABASE_URL to a postgresql:// URL so Prisma schema validation passes.
-// Vercel's Neon integration may set DATABASE_URL or DATABASE_URL_POSTGRES_PRISMA_URL
+// Vercel's Neon integration may set DATABASE_URL or related database env vars
 // to a prisma:// Accelerate URL, which the postgresql provider rejects at validate time.
-const rawUrl = process.env.DATABASE_URL ?? process.env.DATABASE_URL_POSTGRES_PRISMA_URL ?? ''
-if (isPostgresUrl(rawUrl)) {
-  process.env.DATABASE_URL = rawUrl
-} else {
+const postgresUrl = resolvePostgresUrl()
+if (postgresUrl) {
+  process.env.DATABASE_URL = postgresUrl
+} else if (!isPostgresUrl(process.env.DATABASE_URL ?? '')) {
   // No usable postgres URL found — set a placeholder so prisma generate can run.
   // The app will fail at runtime until DATABASE_URL is configured with a real database.
-  process.env.DATABASE_URL = 'postgresql://placeholder:placeholder@localhost:5432/placeholder'
+  process.env.DATABASE_URL = PLACEHOLDER_DATABASE_URL
 }
 
 export default defineConfig({

@@ -1,10 +1,44 @@
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 
-if (!process.env.DATABASE_URL) {
-  console.warn('DATABASE_URL is not set — skipping prisma migrate deploy. Connect a database before promoting to production.');
+const DATABASE_URL_CANDIDATES = [
+  'DATABASE_URL',
+  'DIRECT_DATABASE_URL',
+  'DATABASE_DIRECT_URL',
+  'DATABASE_URL_UNPOOLED',
+  'POSTGRES_URL',
+  'POSTGRES_PRISMA_URL',
+  'POSTGRES_URL_NON_POOLING',
+  'POSTGRES_URL_NO_SSL',
+  'DATABASE_URL_POSTGRES_URL',
+  'DATABASE_URL_POSTGRES_PRISMA_URL',
+  'DATABASE_URL_POSTGRES_URL_NON_POOLING',
+  'DATABASE_URL_POSTGRES_URL_NO_SSL'
+];
+
+function isPostgresUrl(value) {
+  return value.startsWith('postgresql://') || value.startsWith('postgres://');
+}
+
+function resolveMigrationDatabaseUrl() {
+  for (const key of DATABASE_URL_CANDIDATES) {
+    const value = process.env[key]?.trim();
+    if (value && isPostgresUrl(value)) {
+      return { key, value };
+    }
+  }
+
+  return null;
+}
+
+const migrationDatabaseUrl = resolveMigrationDatabaseUrl();
+
+if (!migrationDatabaseUrl) {
+  console.warn('No direct Postgres DATABASE_URL is configured; skipping prisma migrate deploy. Prisma generate/next build may still use a validation placeholder.');
   process.exit(0);
 }
+
+process.env.DATABASE_URL = migrationDatabaseUrl.value;
 
 const maxAttempts = Number.parseInt(process.env.PRISMA_MIGRATE_ATTEMPTS ?? '5', 10);
 const retryDelayMs = Number.parseInt(process.env.PRISMA_MIGRATE_RETRY_DELAY_MS ?? '15000', 10);
@@ -50,7 +84,7 @@ function isRetryableMigrationLock(output) {
 }
 
 for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-  console.log(`Running prisma migrate deploy (attempt ${attempt}/${maxAttempts})...`);
+  console.log(`Running prisma migrate deploy with ${migrationDatabaseUrl.key} (attempt ${attempt}/${maxAttempts})...`);
   const result = await runMigrateDeploy();
 
   if (result.code === 0) {
