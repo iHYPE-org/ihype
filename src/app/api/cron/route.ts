@@ -42,6 +42,8 @@ export async function GET(request: NextRequest) {
     case 'health-check': {
       const { getHealthSnapshot } = await import('@/lib/health');
       const { isEmailDeliveryConfigured, sendGenericEmail } = await import('@/lib/mailer');
+      const { checkCronHealth } = await import('@/lib/cron-health');
+      const ADMIN_EMAIL = process.env.ADMIN_ALERT_EMAIL ?? 'admin@ihype.org';
       const snapshot = await getHealthSnapshot();
       if (snapshot.status !== 'ok' && isEmailDeliveryConfigured()) {
         try {
@@ -56,7 +58,11 @@ export async function GET(request: NextRequest) {
           console.error('[cron/health-check] alert email failed', err);
         }
       }
-      return NextResponse.json(snapshot, {
+      const cronHealth = await checkCronHealth();
+      if (cronHealth.stale.length > 0) {
+        await sendGenericEmail({ to: ADMIN_EMAIL, subject: '[iHYPE] Stale cron jobs detected', text: `These cron jobs haven't run in 48h: ${cronHealth.stale.join(', ')}`, html: `<p>Stale crons: <strong>${cronHealth.stale.join(', ')}</strong></p>` }).catch(() => {});
+      }
+      return NextResponse.json({ ...snapshot, cronHealth }, {
         status: snapshot.status === 'ok' ? 200 : 503,
         headers: { 'Cache-Control': 'no-store' }
       });
@@ -136,8 +142,73 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ ok: true, ...result });
     }
 
+    case 'expire-ads': {
+      const { db } = await import('@/lib/db');
+      const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const result = await db.adSubmission.updateMany({
+        where: { status: 'pending', createdAt: { lt: cutoff } },
+        data: { status: 'expired' }
+      });
+      return NextResponse.json({ ok: true, expired: result.count });
+    }
+
+    case 'feature-shows': {
+      const { db } = await import('@/lib/db');
+      // Find shows with high hype in last 24h
+      const hotShows = await db.show.findMany({
+        where: { status: 'SCHEDULED', startsAt: { gte: new Date() } },
+        select: { id: true, hypeCount: true, tags: true },
+        orderBy: { hypeCount: 'desc' },
+        take: 5
+      });
+      let updated = 0;
+      for (const show of hotShows) {
+        if (!show.tags.includes('featured')) {
+          await db.show.update({ where: { id: show.id }, data: { tags: { push: 'featured' } } });
+          updated++;
+        }
+      }
+      return NextResponse.json({ ok: true, updated });
+    }
+
+    case 'flag-spam': {
+      const { db } = await import('@/lib/db');
+      const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const stale = await db.user.findMany({
+        where: {
+          createdAt: { lt: cutoff },
+          role: 'FAN',
+          profileHypeEvents: { none: {} },
+          profiles: { none: {} },
+        },
+        select: { id: true },
+        take: 100
+      });
+      let flagged = 0;
+      for (const user of stale) {
+        const existing = await db.auditLog.findFirst({ where: { actorUserId: null, action: 'SPAM_FLAGGED', entityId: user.id } });
+        if (!existing) {
+          await db.auditLog.create({ data: { actorUserId: null, action: 'SPAM_FLAGGED', entityType: 'User', entityId: user.id, metadata: {} } });
+          flagged++;
+        }
+      }
+      return NextResponse.json({ ok: true, flagged });
+    }
+
+    case 'show-payouts': {
+      const { triggerShowPayouts } = await import('@/lib/show-payouts');
+      const result = await triggerShowPayouts();
+      return NextResponse.json({ ok: true, ...result });
+    }
+
+    case 'artist-onboarding': {
+      const { sendArtistOnboardingNudges } = await import('@/lib/artist-onboarding');
+      const result = await sendArtistOnboardingNudges();
+      return NextResponse.json({ ok: true, ...result });
+    }
+
     default:
-      return NextResponse.json({ error: 'Unknown job. Use ?job=digest|artist-digest|health-check|onboarding|show-reminders|db-health|weekly-picks|admin-report|new-to-scene' }, { status: 400 });
+      return NextResponse.json({ error: 'Unknown job. Use ?job=digest|artist-digest|health-check|onboarding|show-reminders|db-health|weekly-picks|admin-report|new-to-scene|expire-ads|feature-shows|flag-spam|show-payouts|artist-onboarding' }, { status: 400 });
   }
 }
 

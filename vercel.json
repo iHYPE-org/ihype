@@ -54,6 +54,26 @@
                   {
                       "path":  "/api/cron?job=new-to-scene",
                       "schedule":  "0 10 * * 3"
+                  },
+                  {
+                      "path":  "/api/cron?job=expire-ads",
+                      "schedule":  "0 3 * * *"
+                  },
+                  {
+                      "path":  "/api/cron?job=feature-shows",
+                      "schedule":  "0 6 * * *"
+                  },
+                  {
+                      "path":  "/api/cron?job=flag-spam",
+                      "schedule":  "0 4 * * *"
+                  },
+                  {
+                      "path":  "/api/cron?job=show-payouts",
+                      "schedule":  "0 5 * * *"
+                  },
+                  {
+                      "path":  "/api/cron?job=artist-onboarding",
+                      "schedule":  "0 11 * * *"
                   }
               ]
 }
