@@ -16,6 +16,8 @@ function parseBooleanFlag(value: string | undefined, defaultValue: boolean) {
   return defaultValue;
 }
 
+import { kvGet } from '@/lib/kv';
+
 type RuntimeFlagKey =
   | 'demo_logins'
   | 'invite_only_signup'
@@ -24,14 +26,9 @@ type RuntimeFlagKey =
   | 'blob_media_storage'
   | 'ticket_payment_capture';
 
-async function readRuntimeOverride(key: RuntimeFlagKey) {
-  if (!process.env.KV_REST_API_URL && !process.env.KV_URL) {
-    return null;
-  }
-
+async function readRuntimeOverride(key: RuntimeFlagKey): Promise<boolean | null> {
   try {
-    const { kv } = await import('@vercel/kv');
-    const value = await kv.get<string>(`flags:${key}`);
+    const value = await kvGet<string>(`flags:${key}`);
     if (value == null) return null;
     return parseBooleanFlag(value, false);
   } catch (error) {

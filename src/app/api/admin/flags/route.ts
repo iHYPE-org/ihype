@@ -34,11 +34,9 @@ export async function POST(request: Request) {
 
   let storedInKv = false;
   try {
-    if (process.env.KV_REST_API_URL || process.env.KV_URL) {
-      const { kv } = await import('@vercel/kv');
-      await kv.set(`flags:${flag}`, enabled ? '1' : '0');
-      storedInKv = true;
-    }
+    const { kvPut } = await import('@/lib/kv');
+    await kvPut(`flags:${flag}`, enabled ? '1' : '0');
+    storedInKv = true;
   } catch (error) {
     console.error('KV flag write failed', error);
   }

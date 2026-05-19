@@ -11,6 +11,8 @@
 //      assertion, which calls `markAdminReauth(userId)` on success.
 //   4. Client retries the original destructive action.
 
+import { kvGet, kvPut } from '@/lib/kv';
+
 const REAUTH_TTL_SECONDS = 5 * 60;
 
 function key(userId: string) {
@@ -18,23 +20,16 @@ function key(userId: string) {
 }
 
 export async function markAdminReauth(userId: string): Promise<void> {
-  if (!process.env.KV_REST_API_URL) return;
   try {
-    const { kv } = await import('@vercel/kv');
-    await kv.set(key(userId), Date.now(), { ex: REAUTH_TTL_SECONDS });
+    await kvPut(key(userId), Date.now(), { ex: REAUTH_TTL_SECONDS });
   } catch (err) {
     console.error('[admin-confirmation] markAdminReauth failed', err);
   }
 }
 
 export async function hasRecentAdminReauth(userId: string): Promise<boolean> {
-  if (!process.env.KV_REST_API_URL) {
-    // In local dev without KV, do not enforce.
-    return true;
-  }
   try {
-    const { kv } = await import('@vercel/kv');
-    const value = await kv.get<number>(key(userId));
+    const value = await kvGet<number>(key(userId));
     return Boolean(value);
   } catch (err) {
     console.error('[admin-confirmation] hasRecentAdminReauth failed', err);

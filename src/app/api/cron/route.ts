@@ -112,13 +112,13 @@ export async function GET(request: NextRequest) {
       if (userCount === 0) alerts.push('User count is 0 — possible data loss or connection issue.');
       if (profileCount === 0) alerts.push('Profile count is 0 — possible data loss or connection issue.');
       try {
-        const { kv } = await import('@vercel/kv');
-        const lastUserCount = await kv.get<number>('db-health:user-count');
-        const lastProfileCount = await kv.get<number>('db-health:profile-count');
+        const { kvGet, kvPut } = await import('@/lib/kv');
+        const lastUserCount = await kvGet<number>('db-health:user-count');
+        const lastProfileCount = await kvGet<number>('db-health:profile-count');
         if (lastUserCount !== null && userCount < lastUserCount * 0.8) alerts.push(`User count dropped from ${lastUserCount} to ${userCount} (>20% decrease).`);
         if (lastProfileCount !== null && profileCount < lastProfileCount * 0.8) alerts.push(`Profile count dropped from ${lastProfileCount} to ${profileCount} (>20% decrease).`);
-        await kv.set('db-health:user-count', userCount);
-        await kv.set('db-health:profile-count', profileCount);
+        await kvPut('db-health:user-count', userCount);
+        await kvPut('db-health:profile-count', profileCount);
       } catch { /* KV not available */ }
       if (alerts.length > 0) {
         await sendGenericEmail({ to: ADMIN_EMAIL, subject: '[iHYPE] DB health alert', text: alerts.join('\n\n') + `\n\nCurrent counts: users=${userCount}, profiles=${profileCount}`, html: `<p>${alerts.map(a => `<strong>${a}</strong>`).join('<br/><br/>')}</p>` }).catch(() => {});
