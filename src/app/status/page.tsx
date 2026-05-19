@@ -33,11 +33,11 @@ async function checkResend(): Promise<{ ok: boolean; label: string }> {
 }
 
 async function checkKv(): Promise<{ ok: boolean; label: string }> {
-  if (!process.env.KV_REST_API_URL) return { ok: false, label: 'Not configured' };
   try {
-    const { kv } = await import('@vercel/kv');
-    await kv.ping();
-    return { ok: true, label: 'Connected' };
+    const { kvPut, kvGet } = await import('@/lib/kv');
+    await kvPut('status:ping', '1', { ex: 60 });
+    const val = await kvGet('status:ping');
+    return { ok: val !== null, label: val !== null ? 'Connected' : 'Read failed' };
   } catch {
     return { ok: false, label: 'Error' };
   }

@@ -1,42 +1,25 @@
-import { put } from '@vercel/blob';
-
-function getBlobToken() {
-  return process.env.BLOB_READ_WRITE_TOKEN?.trim() || null;
-}
-
-function sanitizePathSegment(value: string) {
-  return value
-    .trim()
-    .replace(/[^a-z0-9._-]+/gi, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 120);
-}
+import { uploadArtistMediaToR2 } from '@/lib/r2';
 
 export function isBlobMediaStorageConfigured() {
-  return Boolean(getBlobToken());
+  // R2 is always available in CF Workers; in local dev check for env vars
+  return Boolean(
+    process.env.CF_ACCOUNT_ID || process.env.R2_ACCESS_KEY_ID
+  );
 }
 
 export async function uploadArtistMediaToBlob({
   file,
   hexId,
-  profileId
+  profileId,
 }: {
   file: File;
   hexId: string;
   profileId: string;
 }) {
-  const safeName = sanitizePathSegment(file.name || `${hexId}.media`) || `${hexId}.media`;
-  const path = `artist-media/${sanitizePathSegment(profileId)}/${hexId}/${safeName}`;
-  const blob = await put(path, file, {
-    access: 'public',
-    addRandomSuffix: false,
-    contentType: file.type
-  });
-
+  const result = await uploadArtistMediaToR2({ file, hexId, profileId });
   return {
-    provider: 'vercel-blob',
-    key: blob.pathname,
-    url: blob.url
+    provider: result.provider,
+    key: result.key,
+    url: result.url,
   };
 }

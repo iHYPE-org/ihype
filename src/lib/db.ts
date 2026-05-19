@@ -1,8 +1,26 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { withAccelerate } from '@prisma/extension-accelerate';
 
+function getConnectionString(): string | undefined {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { getCloudflareContext } = require('@opennextjs/cloudflare');
+    const ctx = getCloudflareContext();
+    const hyperdrive = (ctx.env as Record<string, unknown>).HYPERDRIVE as
+      | { connectionString: string }
+      | undefined;
+    if (hyperdrive?.connectionString) return hyperdrive.connectionString;
+  } catch {
+    // Not in a CF Workers context (local dev / Next.js build) — fall through
+  }
+  return process.env.DATABASE_URL;
+}
+
 function makePrisma() {
-  return new PrismaClient().$extends(withAccelerate());
+  const url = getConnectionString();
+  return new PrismaClient({ datasources: url ? { db: { url } } : undefined }).$extends(
+    withAccelerate()
+  );
 }
 
 const globalForPrisma = globalThis as unknown as { prisma?: ReturnType<typeof makePrisma> };
