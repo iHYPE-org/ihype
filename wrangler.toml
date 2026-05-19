@@ -26,14 +26,6 @@ binding = "D1"
 database_name = "ihype-cron"
 database_id = "72feb348-a07a-4bd5-a6ee-5b27b751999d"
 
-[[durable_objects.bindings]]
-name = "RATE_LIMITER"
-class_name = "RateLimiterDO"
-
-[[migrations]]
-tag = "v1"
-new_classes = ["RateLimiterDO"]
-
 [[analytics_engine_datasets]]
 binding = "AE"
 dataset = "ihype_analytics"
@@ -41,8 +33,3 @@ dataset = "ihype_analytics"
 [[queues.producers]]
 binding = "EMAIL_QUEUE"
 queue = "ihype-email-queue"
-
-[[queues.consumers]]
-queue = "ihype-email-queue"
-max_batch_size = 10
-max_batch_timeout = 30

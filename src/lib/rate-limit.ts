@@ -1,3 +1,5 @@
+import { kvGet, kvPut } from '@/lib/kv';
+
 // Structural type for a Durable Object namespace — avoids importing
 // @cloudflare/workers-types which is not available in the Next.js build.
 type DONamespace = {
@@ -109,11 +111,34 @@ async function getRateLimiterNamespace(): Promise<DONamespace | null> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// KV-backed implementation (CF Pages / Workers without DO binding)
+// ---------------------------------------------------------------------------
+
+async function consumeKv(key: string, { limit, windowMs }: RateLimitOptions): Promise<RateLimitResult> {
+  const record = await kvGet<{ count: number; resetAt: number }>(key);
+  const now = Date.now();
+
+  if (record === null || record.resetAt <= now) {
+    const count = 1;
+    await kvPut(key, JSON.stringify({ count, resetAt: now + windowMs }), { ex: Math.ceil(windowMs / 1000) });
+    const retryAfterSeconds = Math.ceil(windowMs / 1000);
+    return { allowed: count <= limit, remaining: Math.max(0, limit - count), retryAfterSeconds };
+  }
+
+  const count = record.count + 1;
+  const retryAfterSeconds = Math.max(1, Math.ceil((record.resetAt - now) / 1000));
+  await kvPut(key, JSON.stringify({ count, resetAt: record.resetAt }), { ex: retryAfterSeconds });
+  return { allowed: count <= limit, remaining: Math.max(0, limit - count), retryAfterSeconds };
+}
+
+// ---------------------------------------------------------------------------
+// Durable Object-backed implementation (atomic — requires DO binding)
+// ---------------------------------------------------------------------------
+
 async function consumeDO(key: string, options: RateLimitOptions): Promise<RateLimitResult> {
   const ns = await getRateLimiterNamespace();
-  if (!ns) {
-    return consumeMemory(key, options);
-  }
+  if (!ns) return consumeKv(key, options);
 
   const id = ns.idFromName(key);
   const stub = ns.get(id);
@@ -124,8 +149,7 @@ async function consumeDO(key: string, options: RateLimitOptions): Promise<RateLi
     body: JSON.stringify({ limit: options.limit, windowMs: options.windowMs }),
   });
 
-  const result = await response.json() as RateLimitResult;
-  return result;
+  return response.json() as Promise<RateLimitResult>;
 }
 
 // ---------------------------------------------------------------------------
