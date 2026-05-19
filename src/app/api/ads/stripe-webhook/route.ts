@@ -4,9 +4,8 @@ import { db } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '', { apiVersion: '2025-02-24.acacia' });
-
 export async function POST(request: NextRequest) {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '', { apiVersion: '2025-02-24.acacia' });
   const sig = request.headers.get('stripe-signature') ?? '';
   const body = await request.text();
   let event: Stripe.Event;

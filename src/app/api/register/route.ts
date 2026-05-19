@@ -339,15 +339,20 @@ export async function POST(request: Request) {
         .catch(() => {});
     }
 
-    // Track referral if present
+    // Track referral if present — verify the ref is a real username first
     if (body.ref) {
-      recordAuditEvent({
-        actorUserId: null,
-        action: 'REFERRAL_SIGNUP',
-        entityType: 'User',
-        entityId: user.id,
-        metadata: { referrer: body.ref }
-      }).catch(() => {});
+      db.user.findUnique({ where: { username: body.ref }, select: { id: true } })
+        .then(refUser => {
+          if (!refUser) return;
+          return recordAuditEvent({
+            actorUserId: null,
+            action: 'REFERRAL_SIGNUP',
+            entityType: 'User',
+            entityId: user.id,
+            metadata: { referrer: body.ref }
+          });
+        })
+        .catch(() => {});
     }
 
     // Fire-and-forget onboarding email

@@ -1,12 +1,17 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { vetAdvertisement } from '@/lib/ad-vetting';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
 export async function POST(request: Request) {
+  const session = await auth();
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   const ip = readClientAddress(request);
   const rl = await consumeRateLimit(`ad-upload:${ip}`, { limit: 3, windowMs: 60 * 60 * 1000 });
   if (!rl.allowed) {
@@ -30,10 +35,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Ad copy must be 280 characters or fewer.' }, { status: 400 });
   }
 
+  // Validate campaignWebsite is a proper http/https URL
+  try {
+    const parsed = new URL(campaignWebsite);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return NextResponse.json({ error: 'Campaign website must be an http or https URL.' }, { status: 400 });
+    }
+  } catch {
+    return NextResponse.json({ error: 'Campaign website must be a valid URL.' }, { status: 400 });
+  }
+
   let creativeAssetUrl: string | undefined;
   if (file) {
     if (file.size > MAX_FILE_BYTES) {
       return NextResponse.json({ error: 'Creative asset must be under 5 MB.' }, { status: 400 });
+    }
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      return NextResponse.json({ error: 'Creative asset must be a JPEG, PNG, GIF, or WebP image.' }, { status: 400 });
     }
     const buffer = await file.arrayBuffer();
     const base64 = Buffer.from(buffer).toString('base64');

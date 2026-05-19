@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
+import { isAdminSession } from '@/lib/permissions';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -8,6 +9,9 @@ export const dynamic = 'force-dynamic';
 export default async function AdvertiserDashboard() {
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
+  // Ad submissions lack a submitterUserId field, so non-admin users would see
+  // all advertisers' data. Gate to admins until that migration lands.
+  if (!isAdminSession(session)) redirect('/workbench');
 
   const ads = await db.adSubmission.findMany({
     orderBy: { createdAt: 'desc' },

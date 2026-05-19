@@ -3,6 +3,10 @@ import { sendGenericEmail } from '@/lib/mailer';
 
 const BASE = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org';
 
+function escHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 export async function sendFollowDigest(): Promise<{ sent: number }> {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
@@ -25,12 +29,12 @@ export async function sendFollowDigest(): Promise<{ sent: number }> {
   for (const s of newShows) {
     if (!s.headlinerProfile) continue;
     const p = profileUpdates.get(s.headlinerProfile.id) ?? { name: s.headlinerProfile.name, slug: s.headlinerProfile.slug, shows: [], posts: [] };
-    p.shows.push(`<a href="${BASE}/shows/${s.slug}">${s.title}</a>`);
+    p.shows.push(`<a href="${BASE}/shows/${escHtml(s.slug)}">${escHtml(s.title)}</a>`);
     profileUpdates.set(s.headlinerProfile.id, p);
   }
   for (const j of newJournalPosts) {
     const p = profileUpdates.get(j.profile.id) ?? { name: j.profile.name, slug: j.profile.slug, shows: [], posts: [] };
-    p.posts.push(`<a href="${BASE}/artists/${j.profile.slug}/journal/${j.id}">${j.title}</a>`);
+    p.posts.push(`<a href="${BASE}/artists/${escHtml(j.profile.slug)}/journal/${j.id}">${escHtml(j.title)}</a>`);
     profileUpdates.set(j.profile.id, p);
   }
 
@@ -46,7 +50,7 @@ export async function sendFollowDigest(): Promise<{ sent: number }> {
     for (const f of followers) {
       if (!f.follower.email) continue;
       try {
-        await sendGenericEmail({ to: f.follower.email, subject: `${update.name} has new activity on iHYPE`, html: `<p><strong><a href="${BASE}/artists/${update.slug}">${update.name}</a></strong> posted:</p><p>${lines}</p>`, text: lines.replace(/<[^>]+>/g, '') });
+        await sendGenericEmail({ to: f.follower.email, subject: `${update.name} has new activity on iHYPE`, html: `<p><strong><a href="${BASE}/artists/${escHtml(update.slug)}">${escHtml(update.name)}</a></strong> posted:</p><p>${lines}</p>`, text: lines.replace(/<[^>]+>/g, '') });
         sent++;
       } catch { /* continue */ }
     }

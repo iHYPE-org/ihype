@@ -3,15 +3,14 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '', { apiVersion: '2025-02-24.acacia' });
-
 const TIER_PRICES: Record<string, number> = {
   featured: 5000,  // $50
   premium: 15000,  // $150
 };
 
 export async function POST(request: NextRequest) {
-  await auth();
+  const session = await auth();
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { adId } = await request.json() as { adId: string };
 
   const ad = await db.adSubmission.findUnique({ where: { id: adId }, select: { id: true, tier: true, status: true, advertiserName: true } });
@@ -21,6 +20,7 @@ export async function POST(request: NextRequest) {
   const priceAmount = TIER_PRICES[ad.tier ?? ''];
   if (!priceAmount) return NextResponse.json({ url: null, message: 'Standard tier is free — no payment needed.' });
 
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '', { apiVersion: '2025-02-24.acacia' });
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org';
   const checkout = await stripe.checkout.sessions.create({
     mode: 'subscription',
