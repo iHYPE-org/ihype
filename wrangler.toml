@@ -19,7 +19,7 @@ preview_bucket_name = "ihype-media-preview"
 
 [[hyperdrive]]
 binding = "HYPERDRIVE"
-id = "REPLACE_WITH_HYPERDRIVE_ID"
+id = "210eb8b6bf134d559b0ae4f00418b489"
 
 [[d1_databases]]
 binding = "D1"
