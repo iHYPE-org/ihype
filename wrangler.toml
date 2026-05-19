@@ -1,0 +1,40 @@
+name = "ihype"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".open-next/assets"
+
+[vars]
+NEXT_PUBLIC_BASE_URL = "https://ihype.org"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+preview_id = "REPLACE_WITH_KV_PREVIEW_NAMESPACE_ID"
+
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "ihype-media"
+preview_bucket_name = "ihype-media-preview"
+
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "REPLACE_WITH_HYPERDRIVE_ID"
+
+[triggers]
+crons = [
+  "0 10 * * 1",
+  "0 10 * * 2",
+  "0 9 * * *",
+  "0 */6 * * *",
+  "0 8 * * 1",
+  "0 9 * * 5",
+  "0 10 * * 3",
+  "0 3 * * *",
+  "0 6 * * *",
+  "0 4 * * *",
+  "0 5 * * *",
+  "0 11 * * *",
+  "0 2 * * 0",
+  "0 1 * * 0",
+  "*/15 * * * *"
+]
