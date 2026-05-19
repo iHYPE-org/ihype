@@ -138,8 +138,8 @@ export function calculateTicketTaxes({
   buyerLocation,
   venueLocation
 }: TicketTaxInput): TicketTaxBreakdown {
-  if (!Number.isInteger(ticketPriceCents) || ticketPriceCents <= 0) {
-    throw new Error('Ticket price must be a positive whole number of cents.');
+  if (!Number.isInteger(ticketPriceCents) || ticketPriceCents < 0) {
+    throw new Error('Ticket price must be a non-negative whole number of cents.');
   }
 
   if (!Number.isInteger(quantity) || quantity <= 0) {
@@ -180,6 +180,20 @@ export function calculateTicketTaxes({
 }
 
 export function calculateTicketOrderFinancials(input: OrderInput & TicketTaxInput) {
+  if (input.ticketPriceCents === 0) {
+    return {
+      subtotalCents: 0,
+      venuePayoutCents: 0,
+      artistPayoutCents: 0,
+      promoterPayoutCents: 0,
+      localCents: 0,
+      stateCents: 0,
+      countryCents: 0,
+      internationalCents: 0,
+      totalTaxCents: 0,
+      totalChargeCents: 0
+    };
+  }
   const payouts = calculateTicketOrderPayouts(input);
   const taxes = calculateTicketTaxes(input);
 
