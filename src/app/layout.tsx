@@ -40,59 +40,6 @@ export const metadata: Metadata = {
     description: 'Not-for-profit music discovery for artists, promoters, venues, and fans. 0% ticket fees. Free forever.',
   },
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org'
+    process.env.NEXT_PUBLIC_BASE_URL || 'https://ihype.org'
   )
 };
-
-export default function RootLayout({ children }: { children: ReactNode }) {
-  return (
-    <html lang="en" suppressHydrationWarning className={`${syne.variable} ${dmSans.variable} ${jbMono.variable}`}>
-      <body>
-        <AppProviders>
-          <OfflineBanner />
-          <div aria-hidden="true" className="site-background">
-            <span className="site-background-orb site-background-orb-a" />
-            <span className="site-background-orb site-background-orb-b" />
-            <span className="site-background-grid" />
-          </div>
-          {/* Marketing nav — hidden when .wb-shell is present via CSS */}
-          <header aria-label="Primary site header" className="nav site-nav">
-            <div className="container nav-inner-marketing">
-              <HeaderLogo />
-              <SearchBar />
-              <ThemeToggle />
-              <HeaderAuthLinks />
-              <NavDrawer />
-            </div>
-          </header>
-          <div className="site-shell">
-            {children}
-          </div>
-          <MiniPlayer />
-          <PushPrompt />
-          <A2HSPrompt />
-          <BottomTabBar />
-          <BugReportButton />
-          <PwaInstallPrompt />
-          <CookieConsent />
-          <ServiceWorkerRegister />
-          <footer className="site-footer" style={{ borderTop: '1px solid rgba(255,255,255,.08)', padding: '24px 0', marginTop: 40 }}>
-            <div className="container" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 24px', alignItems: 'center', justifyContent: 'center', fontSize: 13, opacity: 0.65 }}>
-              <a href="/about">About</a>
-              <a href="/transparency">Transparency</a>
-              <a href="/discover?tab=fans">Leaderboard</a>
-              <a href="/advertise">Advertise</a>
-              <a href="/status">Status</a>
-              <a href="/privacy">Privacy</a>
-              <a href="/dmca">DMCA</a>
-              <a href="/playlists">Playlists</a>
-              <a href="/collab">Collab</a>
-              <a href="/feedback">Feedback</a>
-              <span>© {new Date().getFullYear()} iHYPE — not-for-profit</span>
-            </div>
-          </footer>
-        </AppProviders>
-      </body>
-    </html>
-  );
-}
