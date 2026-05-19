@@ -29,6 +29,11 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
+      - name: Wake up Neon database
+        run: node -e "const { Client } = require('pg'); const c = new Client({ connectionString: process.env.DIRECT_URL, connectionTimeoutMillis: 30000 }); c.connect().then(() => c.query('SELECT 1')).then(() => { console.log('DB ready'); return c.end(); }).catch(e => { console.error('Wake-up failed:', e.message); process.exit(0); });"
+        env:
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+
       - name: Resolve any failed migrations
         run: npx prisma migrate resolve --rolled-back 20260507000001_radio_track_block_label || true
         env:
@@ -36,7 +41,13 @@ jobs:
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
 
       - name: Run migrations
-        run: npx prisma migrate deploy
+        run: |
+          for i in 1 2 3; do
+            npx prisma migrate deploy && exit 0
+            echo "Migration attempt $i failed, retrying in 15s..."
+            sleep 15
+          done
+          exit 1
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
