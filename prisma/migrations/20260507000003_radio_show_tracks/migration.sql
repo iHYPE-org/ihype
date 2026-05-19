@@ -8,6 +8,7 @@ CREATE TABLE "RadioShowTrack" (
     "mediaAssetId" TEXT,
     "externalUrl"  TEXT,
     "durationSecs" INTEGER,
+    "blockLabel"   TEXT,
     "createdAt"    TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "RadioShowTrack_pkey" PRIMARY KEY ("id")
