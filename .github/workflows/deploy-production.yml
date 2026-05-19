@@ -29,17 +29,17 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
-      - name: Verify migration file content
-        run: |
-          echo "=== migration file ==="
-          cat prisma/migrations/20260507000001_radio_track_block_label/migration.sql
-          echo "=== end ==="
-
-      - name: Fix broken migration record
+      - name: Delete broken migration record
         run: |
           printf "DELETE FROM _prisma_migrations WHERE migration_name = '20260507000001_radio_track_block_label';" \
             | npx prisma db execute --stdin --url "$DIRECT_URL"
         env:
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+
+      - name: Mark broken migration as applied
+        run: npx prisma migrate resolve --applied 20260507000001_radio_track_block_label
+        env:
+          DATABASE_URL: ${{ secrets.DIRECT_URL }}
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
 
       - name: Run migrations
