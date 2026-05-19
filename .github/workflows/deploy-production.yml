@@ -33,11 +33,13 @@ jobs:
         run: npx prisma migrate resolve --rolled-back 20260507000001_radio_track_block_label || true
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
 
       - name: Run migrations
         run: npx prisma migrate deploy
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
 
       - name: Build for Cloudflare
         run: npm run cf:build
