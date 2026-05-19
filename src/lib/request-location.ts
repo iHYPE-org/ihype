@@ -134,12 +134,12 @@ async function lookupIpApiLocation(ipAddress: string) {
 
 function buildEdgeLocation(requestHeaders: Headers): RequestLocation {
   return {
-    city: cleanValue(requestHeaders.get('x-vercel-ip-city') || requestHeaders.get('cf-ipcity')),
-    stateRegion: cleanValue(requestHeaders.get('x-vercel-ip-country-region')),
-    country: cleanValue(requestHeaders.get('x-vercel-ip-country') || requestHeaders.get('cf-ipcountry')),
-    postalCode: cleanValue(requestHeaders.get('x-vercel-ip-postal-code')),
-    latitude: parseCoordinate(requestHeaders.get('x-vercel-ip-latitude')),
-    longitude: parseCoordinate(requestHeaders.get('x-vercel-ip-longitude')),
+    city: cleanValue(requestHeaders.get('cf-ipcity')),
+    stateRegion: cleanValue(requestHeaders.get('cf-ipcountry-region')),
+    country: cleanValue(requestHeaders.get('cf-ipcountry')),
+    postalCode: cleanValue(requestHeaders.get('cf-postal-code')),
+    latitude: parseCoordinate(requestHeaders.get('cf-iplatitude')),
+    longitude: parseCoordinate(requestHeaders.get('cf-iplongitude')),
     source: 'edge-headers'
   };
 }
