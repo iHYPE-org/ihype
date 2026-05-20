@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { notFound } from 'next/navigation';
 import { HypeButton } from '@/components/HypeButton';
@@ -625,7 +626,7 @@ export default async function ShowDetailPage({
           <div className="panel" style={{ padding: '1.25rem' }}>
             <h2>Transfer your ticket</h2>
             <p className="subtitle" style={{ marginBottom: '1rem' }}>Can't make it? You can transfer your ticket to a friend — no fees, just update the holder name.</p>
-            <p className="meta">Find your ticket confirmation email and visit the ticket link to reassign it, or go to <a href="/home">your dashboard</a> to manage your orders.</p>
+            <p className="meta">Find your ticket confirmation email and visit the ticket link to reassign it, or go to <Link href="/home">your dashboard</Link> to manage your orders.</p>
           </div>
         </section>
       )}

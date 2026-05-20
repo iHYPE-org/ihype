@@ -383,7 +383,7 @@ export function LoginScreen({
         <Link className="text-link" href="/register">
           Join free
         </Link>
-        <Link className="text-link" href="/forgot-password">
+        <Link className="text-link" href="/forgot">
           Reset password
         </Link>
         <MagicLinkButton />

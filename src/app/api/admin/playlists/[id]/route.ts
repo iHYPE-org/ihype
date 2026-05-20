@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
@@ -15,7 +16,7 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  let body: { title?: string; description?: string; tracks?: unknown[]; published?: boolean } = {};
+  let body: { title?: string; description?: string; tracks?: Prisma.InputJsonValue[]; published?: boolean } = {};
   try {
     body = (await request.json()) as typeof body;
   } catch {

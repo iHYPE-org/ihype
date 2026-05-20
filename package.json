@@ -18,8 +18,8 @@
         "prisma:migrate:deploy": "prisma migrate deploy",
         "analyze": "ANALYZE=true npm run build",
         "cf:build": "opennextjs-cloudflare build",
-        "cf:dev": "wrangler pages dev",
-        "cf:deploy": "wrangler pages deploy"
+        "cf:dev": "wrangler dev",
+        "cf:deploy": "wrangler deploy"
     },
     "dependencies": {
         "@anthropic-ai/sdk": "^0.96.0",
@@ -30,8 +30,7 @@
         "@opennextjs/cloudflare": "^1.7.0",
         "@prisma/adapter-neon": "^7.8.0",
         "@prisma/client": "^6.19.3",
-        "@prisma/extension-accelerate": "^1.0.0",
-        "@sentry/nextjs": "^8.0.0",
+"@sentry/nextjs": "^8.0.0",
         "@simplewebauthn/browser": "^9.0.1",
         "@simplewebauthn/server": "^9.0.3",
         "@types/qrcode": "^1.5.6",

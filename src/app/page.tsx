@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
@@ -5,6 +6,23 @@ import { MarketingSeedsPreview, type MarketingSeedPreviewItem } from '@/componen
 import { auth } from '@/lib/auth';
 import { getHealthSnapshot } from '@/lib/health';
 import { getHomePageData } from '@/lib/public-data';
+
+export const metadata: Metadata = {
+  title: 'iHYPE — Independent Music Discovery',
+  description: 'Discover independent artists, live shows, and music communities. iHYPE is a not-for-profit platform built for fans and artists.',
+  openGraph: {
+    title: 'iHYPE — Independent Music Discovery',
+    description: 'Discover independent artists, live shows, and music communities.',
+    url: 'https://ihype.org',
+    siteName: 'iHYPE',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'iHYPE — Independent Music Discovery',
+    description: 'Discover independent artists, live shows, and music communities.',
+  },
+};
 
 function formatCompact(value: number) {
   return new Intl.NumberFormat('en-US', { notation: value > 999 ? 'compact' : 'standard' }).format(value);

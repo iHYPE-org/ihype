@@ -171,7 +171,7 @@ export default async function ShowsIndexPage({
                 <Link className="button small secondary" href="/register?role=ARTIST">Add artist date</Link>
                 <Link className="button small secondary" href="/register?role=VENUE">List venue night</Link>
               </div>
-              <p>Artists add new dates regularly — check back or <a href="/artists">browse artists</a>.</p>
+              <p>Artists add new dates regularly — check back or <Link href="/artists">browse artists</Link>.</p>
             </div>
           )}
         </div>

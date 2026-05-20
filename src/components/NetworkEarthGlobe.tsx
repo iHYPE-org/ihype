@@ -345,10 +345,10 @@ export function NetworkEarthGlobe({
           <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '0.5rem' }}>
             {venues.slice(0, 8).map((v) => (
               <li key={v.id}>
-                <a href={`/venues/${v.slug}`} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0.75rem', borderRadius: '8px', background: 'rgba(255,255,255,0.04)' }}>
+                <Link href={`/venues/${v.slug}`} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0.75rem', borderRadius: '8px', background: 'rgba(255,255,255,0.04)' }}>
                   <span>{v.name}</span>
                   <span className="meta">{[v.city, v.stateRegion].filter(Boolean).join(', ')}</span>
-                </a>
+                </Link>
               </li>
             ))}
           </ul>
