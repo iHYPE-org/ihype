@@ -197,6 +197,10 @@ export function LoginScreen({
     setIsSubmitting(true);
     try {
       const optRes = await fetch('/api/auth/passkey/auth');
+      if (!optRes.ok) {
+        const errBody = await optRes.json().catch(() => ({}));
+        throw new Error(typeof errBody.error === 'string' ? errBody.error : 'Could not start passkey sign-in.');
+      }
       const options = await optRes.json();
       const assertion = await startAuthentication(options);
       const payload = await postJson<{ redirect?: string }>('/api/auth/passkey/auth', assertion);
