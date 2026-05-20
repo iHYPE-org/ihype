@@ -37,9 +37,12 @@ function DraggableTrack({ track, children, className, style, onClick }: {
   return (
     <div
       draggable
+      role="button"
+      tabIndex={0}
       className={className}
       style={{ ...style, cursor: 'grab' }}
       onClick={onClick}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); } }}
       onDragStart={e => {
         setDragging(track);
         e.dataTransfer.setData('application/ihype-track', JSON.stringify(track));

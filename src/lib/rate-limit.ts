@@ -101,9 +101,21 @@ function pruneExpired(now: number) {
   }
 }
 
+const MEMORY_STORE_MAX = 5_000;
+
 function consumeMemory(key: string, { limit, windowMs }: RateLimitOptions): RateLimitResult {
   const now = Date.now();
   pruneExpired(now);
+  // Safety cap: if the store is still too large after pruning, evict the oldest entries
+  if (rateLimitStore.size >= MEMORY_STORE_MAX) {
+    const evict = Math.ceil(MEMORY_STORE_MAX * 0.1);
+    let evicted = 0;
+    for (const k of rateLimitStore.keys()) {
+      if (evicted >= evict) break;
+      rateLimitStore.delete(k);
+      evicted++;
+    }
+  }
 
   const existing = rateLimitStore.get(key);
 

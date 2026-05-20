@@ -29,7 +29,7 @@ export async function PATCH(request: NextRequest) {
   try {
     body = (await request.json()) as typeof body;
   } catch {
-    // ignore
+    return NextResponse.json({ error: 'Invalid JSON.' }, { status: 400 });
   }
 
   const profileId = typeof body.profileId === 'string' ? body.profileId : '';

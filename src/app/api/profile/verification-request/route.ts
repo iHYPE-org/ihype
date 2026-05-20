@@ -13,7 +13,9 @@ export async function POST(request: NextRequest) {
   const rl = await consumeRateLimit(`verify-req:${session.user.id}`, { limit: 2, windowMs: 24 * 60 * 60 * 1000 });
   if (!rl.allowed) return NextResponse.json({ error: 'Please wait 24h between verification requests.' }, { status: 429 });
 
-  const { profileId, socialLinks, notes } = await request.json() as { profileId: string; socialLinks: string; notes?: string };
+  let parsed: { profileId?: string; socialLinks?: string; notes?: string };
+  try { parsed = await request.json() as typeof parsed; } catch { return NextResponse.json({ error: 'Invalid JSON.' }, { status: 400 }); }
+  const { profileId, socialLinks, notes } = parsed;
 
   const profile = await db.profile.findFirst({
     where: { id: profileId, ownerId: session.user.id },
