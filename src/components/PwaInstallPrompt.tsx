@@ -8,6 +8,20 @@ type BeforeInstallPromptEvent = Event & {
 };
 
 const DISMISS_KEY = 'ihype:pwa-install-dismissed';
+const VISIT_KEY = 'ihype:visit-count';
+const MIN_VISITS = 2;
+
+function getVisitCount(): number {
+  try { return Number(window.localStorage.getItem(VISIT_KEY) ?? '0'); } catch { return 0; }
+}
+
+function incrementVisitCount(): number {
+  try {
+    const next = getVisitCount() + 1;
+    window.localStorage.setItem(VISIT_KEY, String(next));
+    return next;
+  } catch { return 0; }
+}
 
 export function PwaInstallPrompt() {
   const [evt, setEvt] = useState<BeforeInstallPromptEvent | null>(null);
@@ -20,6 +34,9 @@ export function PwaInstallPrompt() {
     } catch {
       // ignore
     }
+    const visits = incrementVisitCount();
+    if (visits < MIN_VISITS) return;
+
     function onPrompt(e: Event) {
       e.preventDefault();
       setEvt(e as BeforeInstallPromptEvent);

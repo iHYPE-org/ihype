@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { db } from '@/lib/db';
 
 export const metadata: Metadata = { title: 'Collaboration Board · iHYPE' };
@@ -29,7 +30,7 @@ export default async function CollabPage({ searchParams }: { searchParams?: Prom
         {posts.map(post => (
           <div className="panel" key={post.id}>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 8 }}>
-              {post.profile.avatarImage && <img alt={post.profile.name} src={post.profile.avatarImage} style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }} />}
+              {post.profile.avatarImage && <Image alt={post.profile.name} src={post.profile.avatarImage} width={36} height={36} style={{ borderRadius: '50%', objectFit: 'cover' }} />}
               <div>
                 <Link href={`/artists/${post.profile.slug}`}><strong>{post.profile.name}</strong></Link>
                 <span className="badge" style={{ marginLeft: 8 }}>{post.type.replace(/_/g, ' ')}</span>

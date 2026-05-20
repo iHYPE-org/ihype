@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { saveNotificationPreferences } from './actions';
 import { PushNotificationToggle } from '@/components/PushNotificationToggle';
+import { PasskeyManager } from '@/components/PasskeyManager';
 
 export const metadata: Metadata = { title: 'Settings · iHYPE' };
 export const dynamic = 'force-dynamic';
@@ -51,6 +52,12 @@ export default async function SettingsPage() {
           </div>
         </form>
         <PushNotificationToggle />
+      </section>
+
+      <section className="section">
+        <h2>Passkeys</h2>
+        <p className="meta">Sign in instantly with Face ID, Touch ID, or your device PIN — no password needed.</p>
+        <PasskeyManager />
       </section>
 
       <section className="section">

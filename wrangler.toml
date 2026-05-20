@@ -40,10 +40,6 @@ binding = "R2"
 bucket_name = "ihype-media"
 preview_bucket_name = "ihype-media-preview"
 
-[[hyperdrive]]
-binding = "HYPERDRIVE"
-id = "210eb8b6bf134d559b0ae4f00418b489"
-
 [[d1_databases]]
 binding = "D1"
 database_name = "ihype-cron"
