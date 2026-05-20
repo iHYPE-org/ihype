@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  let body: { title?: string; description?: string; tracks?: unknown[] } = {};
+  let body: { title?: string; description?: string; tracks?: Prisma.InputJsonValue[] } = {};
   try {
     body = (await request.json()) as typeof body;
   } catch {
