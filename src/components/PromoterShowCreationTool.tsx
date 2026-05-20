@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useRouter } from 'next/navigation';
 import { useMediaPlayer } from '@/components/GlobalMediaPlayer';
 import { SetListBuilder, type SetListTrack } from '@/components/SetListBuilder';
-import { RevenueSplitVisualizer } from '@/components/RevenueSplitVisualizer';
 import { getAdvertisingClipsForScope } from '@/lib/advertising';
 import {
   royaltyFreeSampleClips,
@@ -80,7 +79,6 @@ type PadAssignment = ShowSamplePad & {
 
 type ShowSaveIntent = 'preview' | 'publish';
 type CreatorUtilityPanel = 'library' | 'voice' | 'queue' | 'setlist';
-type CreatorMode = 'radio' | 'liveEvent';
 type TimelineLaneItem = {
   id: string;
   label: string;
@@ -132,14 +130,6 @@ function getDefaultPadColor(slotNumber: number) {
   return PAD_COLORS[(slotNumber - 1) % PAD_COLORS.length] ?? '#23d0d8';
 }
 
-function isVideoMedia(mediaItem: { mediaType?: 'audio' | 'video'; mimeType?: string | null; url: string }) {
-  return (
-    mediaItem.mediaType === 'video' ||
-    mediaItem.mimeType?.startsWith('video/') ||
-    /\.(mp4|mov|webm|m4v)$/i.test(mediaItem.url)
-  );
-}
-
 function buildTimelineClipStyle(index: number, total: number) {
   const safeTotal = Math.max(total, 1);
   const laneSegment = 100 / safeTotal;
@@ -164,11 +154,6 @@ function formatDurationLabel(seconds?: number) {
   const minutes = Math.floor(seconds / 60);
   const remainder = Math.round(seconds % 60);
   return `${minutes}:${String(remainder).padStart(2, '0')}`;
-}
-
-function formatVenueLabel(venue: VenueOption) {
-  const location = [venue.city, venue.stateRegion ?? venue.country, venue.postalCode].filter(Boolean).join(', ');
-  return location ? `${venue.name} - ${location}` : venue.name;
 }
 
 function getSupportedRecordingMimeType() {
@@ -211,17 +196,10 @@ export function PromoterShowCreationTool({
   const takePreviewAudioRef = useRef<HTMLAudioElement | null>(null);
   const recorderChunksRef = useRef<Blob[]>([]);
   const recordingStartedAtRef = useRef<number | null>(null);
-  const [creatorMode, setCreatorMode] = useState<CreatorMode>('radio');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [selectedPromoterProfileId, setSelectedPromoterProfileId] = useState(initialPromoterProfileId ?? promoters[0]?.profileId ?? '');
   const [headlinerProfileId, setHeadlinerProfileId] = useState(artists[0]?.profileId ?? '');
-  const [selectedVenueProfileId, setSelectedVenueProfileId] = useState(venues[0]?.profileId ?? '');
-  const [liveStartsAt, setLiveStartsAt] = useState('');
-  const [liveEndsAt, setLiveEndsAt] = useState('');
-  const [liveTags, setLiveTags] = useState('live-event, venue-review');
-  const [splitMode, setSplitMode] = useState<'co-host' | 'referrer'>('referrer');
-  const [referrerLabel, setReferrerLabel] = useState('Anyone who shares your show');
   const [selectedMedia, setSelectedMedia] = useState<ShowMediaItem[]>([]);
   const [voiceOvers, setVoiceOvers] = useState<VoiceOverCue[]>([]);
   const [padAssignments, setPadAssignments] = useState<PadAssignment[]>([]);
@@ -260,7 +238,6 @@ export function PromoterShowCreationTool({
   );
   const selectedHeadliner = artists.find((artist) => artist.profileId === headlinerProfileId) ?? null;
   const selectedPromoter = promoters.find((promoter) => promoter.profileId === selectedPromoterProfileId) ?? promoters[0] ?? null;
-  const selectedLiveVenue = venues.find((venue) => venue.profileId === selectedVenueProfileId) ?? null;
   const recordedVoiceCount = voiceOvers.filter((voiceCue) => Boolean(voiceCue.recordingDataUrl)).length;
   const cueSequence = sequence.filter((sequenceItem) => sequenceItem.kind !== 'MEDIA');
   const advertisingClips = useMemo(() => getAdvertisingClipsForScope(advertisingScope), [advertisingScope]);
@@ -295,12 +272,6 @@ export function PromoterShowCreationTool({
       setSelectedPromoterProfileId(promoters[0].profileId);
     }
   }, [promoters, selectedPromoterProfileId]);
-
-  useEffect(() => {
-    if (!selectedVenueProfileId && venues[0]) {
-      setSelectedVenueProfileId(venues[0].profileId);
-    }
-  }, [selectedVenueProfileId, venues]);
 
   useEffect(() => {
     if (deckATrackId && !selectedMedia.some((mediaItem) => mediaItem.mediaId === deckATrackId)) {
@@ -588,19 +559,13 @@ export function PromoterShowCreationTool({
       artistName: artist.name,
       notes: entry.notes,
       mimeType: entry.mimeType,
-      mediaType: entry.mediaType ?? (isVideoMedia({ url: entry.url, mimeType: entry.mimeType }) ? 'video' : 'audio'),
+      mediaType: 'audio',
       previewImageUrl: entry.previewImageUrl ?? artist.heroImage
     };
     addOrMoveMediaInPlaylist(mediaItem);
   }
 
   function playPlaylistMedia(mediaItem: ShowMediaItem, artworkUrl?: string | null) {
-    if (isVideoMedia(mediaItem)) {
-      setPreviewMediaItem(mediaItem);
-      setMessage(`${mediaItem.title} loaded into the preview monitor.`);
-      return;
-    }
-
     playTrack(
       {
         id: mediaItem.mediaId,
@@ -612,7 +577,6 @@ export function PromoterShowCreationTool({
         artworkUrl: artworkUrl ?? null
       },
       selectedMedia
-        .filter((entry) => !isVideoMedia(entry))
         .map((entry) => ({
           id: entry.mediaId,
           title: entry.title,
@@ -632,7 +596,6 @@ export function PromoterShowCreationTool({
 
   function buildDeckQueue(mediaItem: ShowMediaItem) {
     return selectedMedia
-      .filter((entry) => !isVideoMedia(entry))
       .map((entry) => ({
       id: entry.mediaId,
       title: entry.title,
@@ -657,12 +620,6 @@ export function PromoterShowCreationTool({
   function playDeckTrack(deck: 'A' | 'B', mediaItem: ShowMediaItem | null) {
     if (!mediaItem) {
       setMessage(`Load a playlist song onto Deck ${deck} first.`);
-      return;
-    }
-
-    if (isVideoMedia(mediaItem)) {
-      setPreviewMediaItem(mediaItem);
-      setMessage(`${mediaItem.title} loaded onto Deck ${deck} and opened in the preview monitor.`);
       return;
     }
 
@@ -1077,134 +1034,8 @@ export function PromoterShowCreationTool({
     }
   }
 
-  function buildLiveEventLegalNotes() {
-    return [
-      'Promoter-created live event draft.',
-      selectedPromoter ? `Promoter: ${selectedPromoter.name}` : null,
-      selectedHeadliner ? `Headliner: ${selectedHeadliner.name}` : null,
-      selectedLiveVenue ? `Requested venue: ${formatVenueLabel(selectedLiveVenue)}` : null,
-      'Venue owner approval is required before ticketing opens or fan payment tokens are charged.'
-    ]
-      .filter(Boolean)
-      .join('\n');
-  }
-
-  async function handleLiveEventSubmit() {
-    setMessage(null);
-    setLastSavedShowHref(null);
-
-    if (!title.trim()) {
-      setMessage('Give the live event a title.');
-      return;
-    }
-
-    if (!selectedPromoterProfileId) {
-      setMessage('Choose which promoter profile is creating the live event draft.');
-      return;
-    }
-
-    if (!headlinerProfileId) {
-      setMessage('Choose an artist or act for the live event.');
-      return;
-    }
-
-    if (!selectedVenueProfileId) {
-      setMessage('Choose a venue for this live event draft.');
-      return;
-    }
-
-    if (!liveStartsAt) {
-      setMessage('Choose a start time for the live event.');
-      return;
-    }
-
-    const startsAt = new Date(liveStartsAt);
-    const endsAt = liveEndsAt ? new Date(liveEndsAt) : null;
-
-    if (Number.isNaN(startsAt.getTime()) || (endsAt && Number.isNaN(endsAt.getTime()))) {
-      setMessage('Choose valid date and time values.');
-      return;
-    }
-
-    if (endsAt && endsAt <= startsAt) {
-      setMessage('End time must be after the start time.');
-      return;
-    }
-
-    setPending(true);
-
-    try {
-      const response = await fetch('/api/shows', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: title.trim(),
-          description: description.trim() || undefined,
-          status: 'DRAFT',
-          startsAt: startsAt.toISOString(),
-          endsAt: endsAt ? endsAt.toISOString() : undefined,
-          venueProfileId: selectedVenueProfileId,
-          headlinerProfileId,
-          promoterProfileId: selectedPromoterProfileId,
-          isTicketed: false,
-          bookingLegalNotes: buildLiveEventLegalNotes(),
-          tags: [
-            'live-event',
-            'venue-approval-required',
-            ...liveTags
-              .split(',')
-              .map((tag) => tag.trim())
-              .filter(Boolean)
-          ]
-        })
-      });
-
-      const data = await response.json().catch(() => ({}));
-
-      if (response.ok) {
-        const nextShowHref = `/shows/${data.slug}`;
-
-        if (setListTracks.length > 0 && data.id) {
-          await fetch(`/api/shows/${data.id}/tracks/batch`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              tracks: setListTracks.map((t, i) => ({
-                position: i,
-                title: t.title,
-                artistName: t.artistName,
-                mediaHexId: t.mediaHexId
-              }))
-            })
-          }).catch(() => null);
-        }
-
-        setTitle('');
-        setDescription('');
-        setLiveStartsAt('');
-        setLiveEndsAt('');
-        setLiveTags('live-event, venue-review');
-        setSetListTracks([]);
-        setLastSavedShowHref(nextShowHref);
-        setMessage(`Live event draft saved. ${data.title} is ready for venue review before ticketing opens.`);
-        router.refresh();
-      } else {
-        setMessage(data.error ?? 'Could not save the live event draft.');
-      }
-    } catch {
-      setMessage('Could not save the live event draft. Please try again.');
-    } finally {
-      setPending(false);
-    }
-  }
-
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
-    if (creatorMode === 'liveEvent') {
-      await handleLiveEventSubmit();
-      return;
-    }
 
     setMessage(null);
     setLastSavedShowHref(null);
@@ -1520,7 +1351,7 @@ export function PromoterShowCreationTool({
             <strong>{track?.title ?? 'Standby'}</strong>
             <span>
               {track
-                ? `${track.artistName}${isVideoMedia(track) ? ' | video' : ' | song'}`
+                ? `${track.artistName} | song`
                 : 'Playlist drop zone'}
             </span>
             {track ? <div className="composer-media-code">{track.mediaId}</div> : null}
@@ -1547,83 +1378,29 @@ export function PromoterShowCreationTool({
         <div className={headerCopyClassName}>
           <div className={sectionBadgeClassName}>Show Creation</div>
           <h2>Build a show fast</h2>
-          <p className="meta">Choose Radio Show for prerecorded playback or Live Event for venue/date drafts.</p>
+          <p className="meta">Create a prerecorded radio show using artist media, voice takes, sampler pads, and playback publishing.</p>
         </div>
         <div className={summaryStripClassName}>
-          {creatorMode === 'radio' ? (
-            <>
-              <div className="stat">
-                <strong>{selectedMedia.length}</strong>
-                Media
-              </div>
-              <div className="stat">
-                <strong>{cueSequence.length}</strong>
-                Cues
-              </div>
-              <div className="stat">
-                <strong>{recordedVoiceCount}</strong>
-                Takes
-              </div>
-              <div className="stat">
-                <strong>{advertisingClips.length}</strong>
-                Ad clips
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="stat">
-                <strong>{venues.length}</strong>
-                Venues
-              </div>
-              <div className="stat">
-                <strong>{artists.length}</strong>
-                Acts
-              </div>
-              <div className="stat">
-                <strong>DRAFT</strong>
-                Event
-              </div>
-              <div className="stat">
-                <strong>0</strong>
-                Tickets
-              </div>
-            </>
-          )}
+          <div className="stat">
+            <strong>{selectedMedia.length}</strong>
+            Media
+          </div>
+          <div className="stat">
+            <strong>{cueSequence.length}</strong>
+            Cues
+          </div>
+          <div className="stat">
+            <strong>{recordedVoiceCount}</strong>
+            Takes
+          </div>
+          <div className="stat">
+            <strong>{advertisingClips.length}</strong>
+            Ad clips
+          </div>
         </div>
       </div>
 
       <form className="form" onSubmit={handleSubmit}>
-        <div className="composer-mode-grid" role="radiogroup" aria-label="Promoter show format">
-          <button
-            aria-pressed={creatorMode === 'radio'}
-            className={creatorMode === 'radio' ? 'composer-mode-card active' : 'composer-mode-card'}
-            onClick={() => {
-              setCreatorMode('radio');
-              setMessage(null);
-            }}
-            type="button"
-          >
-            <span className="composer-mode-icon">Radio</span>
-            <strong>Radio Show</strong>
-            <small>Prerecorded DJ/radio-style episode using artist media, voice takes, sampler pads, and playback publishing.</small>
-          </button>
-          <button
-            aria-pressed={creatorMode === 'liveEvent'}
-            className={creatorMode === 'liveEvent' ? 'composer-mode-card active' : 'composer-mode-card'}
-            onClick={() => {
-              setCreatorMode('liveEvent');
-              setMessage(null);
-            }}
-            type="button"
-          >
-            <span className="composer-mode-icon live">Event</span>
-            <strong>Live Event</strong>
-            <small>Venue/date draft for a ticketed or free in-person show. Venue approval is required before ticketing opens.</small>
-          </button>
-        </div>
-
-        {creatorMode === 'radio' ? (
-          <>
         <div className="composer-stepper" aria-label="Show creator progress">
           {workflowSteps.map((step, index) => (
             <div className={`composer-stepper-item ${step.state}`} key={step.label}>
@@ -1834,20 +1611,9 @@ export function PromoterShowCreationTool({
                 <div className="composer-preview-monitor">
                   <div className="composer-preview-monitor-head">
                     <div className={sectionBadgeClassName}>Preview</div>
-                    <span className="meta">
-                      {previewMediaItem.mediaType === 'video' ? 'Video monitor' : 'Media monitor'}
-                    </span>
+                    <span className="meta">Media monitor</span>
                   </div>
-                  {isVideoMedia(previewMediaItem) ? (
-                    <video
-                      className="composer-preview-video"
-                      controls
-                      poster={previewMediaItem.previewImageUrl ?? undefined}
-                      src={previewMediaItem.url}
-                    />
-                  ) : (
-                    <audio className="composer-audio-preview" controls src={previewMediaItem.url} />
-                  )}
+                  <audio className="composer-audio-preview" controls src={previewMediaItem.url} />
                 </div>
               ) : null}
 
@@ -2052,8 +1818,6 @@ export function PromoterShowCreationTool({
                     {selectedMedia.map((mediaItem, index) => {
                       const heroImage = artists.find((artist) => artist.profileId === mediaItem.artistProfileId)?.heroImage ?? null;
                       const isCurrentTrack = currentTrack?.url === mediaItem.url;
-                      const isVideoItem = isVideoMedia(mediaItem);
-
                       return (
                         <div className="composer-playlist-stack" key={mediaItem.mediaId}>
                           <article
@@ -2067,8 +1831,7 @@ export function PromoterShowCreationTool({
                               <div>
                                 <strong>{mediaItem.title}</strong>
                                 <p className="meta">
-                                  {mediaItem.artistName}
-                                  {isVideoItem ? ' | video' : ' | song'}
+                                  {mediaItem.artistName} | song
                                 </p>
                                 <div className="composer-media-code">{mediaItem.mediaId}</div>
                               </div>
@@ -2091,7 +1854,7 @@ export function PromoterShowCreationTool({
                               <button
                                 className="button small secondary"
                                 onClick={() => {
-                                  if (!isVideoItem && isCurrentTrack) {
+                                  if (isCurrentTrack) {
                                     togglePlayback();
                                   } else {
                                     playPlaylistMedia(mediaItem, heroImage);
@@ -2099,7 +1862,7 @@ export function PromoterShowCreationTool({
                                 }}
                                 type="button"
                               >
-                                {isVideoItem ? 'Preview' : isCurrentTrack && isPlaying ? 'Pause' : 'Play'}
+                                {isCurrentTrack && isPlaying ? 'Pause' : 'Play'}
                               </button>
                               <button
                                 className="button small secondary"
@@ -2167,7 +1930,6 @@ export function PromoterShowCreationTool({
                       </div>
                       {artist.entries.map((entry) => {
                         const isCurrentTrack = currentTrack?.url === entry.url;
-                        const isVideoEntry = entry.mediaType === 'video';
                         return (
                           <article
                             className="composer-media-card composer-media-card-draggable"
@@ -2183,7 +1945,7 @@ export function PromoterShowCreationTool({
                                 artistName: artist.name,
                                 notes: entry.notes,
                                 mimeType: entry.mimeType,
-                                mediaType: entry.mediaType ?? (isVideoEntry ? 'video' : 'audio'),
+                                mediaType: 'audio',
                                 previewImageUrl: entry.previewImageUrl ?? artist.heroImage
                               })
                             }
@@ -2191,7 +1953,7 @@ export function PromoterShowCreationTool({
                             <div>
                               <div className="composer-media-code">{entry.hexId}</div>
                               <strong>{entry.title}</strong>
-                              <p className="meta">{isVideoEntry ? 'Video' : 'Song'}</p>
+                              <p className="meta">Song</p>
                               {entry.notes ? <p className="meta">{entry.notes}</p> : null}
                             </div>
                             <div className="composer-media-actions">
@@ -2205,52 +1967,37 @@ export function PromoterShowCreationTool({
                               <button
                                 className="button small secondary"
                                 onClick={() => {
-                                  if (!isVideoEntry && isCurrentTrack) {
+                                  if (isCurrentTrack) {
                                     togglePlayback();
                                   } else {
-                                    if (isVideoEntry) {
-                                      setPreviewMediaItem({
-                                        mediaId: entry.hexId,
+                                    playTrack(
+                                      {
+                                        id: `${artist.slug}-${entry.hexId}`,
                                         title: entry.title,
-                                        url: entry.url,
-                                        artistProfileId: artist.profileId,
                                         artistName: artist.name,
+                                        url: entry.url,
+                                        mediaId: entry.hexId,
+                                        artistProfileSlug: artist.slug,
                                         notes: entry.notes,
-                                        mimeType: entry.mimeType,
-                                        mediaType: 'video',
-                                        previewImageUrl: entry.previewImageUrl ?? artist.heroImage
-                                      });
-                                    } else {
-                                      playTrack(
-                                        {
-                                          id: `${artist.slug}-${entry.hexId}`,
-                                          title: entry.title,
+                                        artworkUrl: artist.heroImage
+                                      },
+                                      artist.entries
+                                        .map((item) => ({
+                                          id: `${artist.slug}-${item.hexId}`,
+                                          title: item.title,
                                           artistName: artist.name,
-                                          url: entry.url,
-                                          mediaId: entry.hexId,
+                                          url: item.url,
+                                          mediaId: item.hexId,
                                           artistProfileSlug: artist.slug,
-                                          notes: entry.notes,
+                                          notes: item.notes,
                                           artworkUrl: artist.heroImage
-                                        },
-                                        artist.entries
-                                          .filter((item) => item.mediaType !== 'video')
-                                          .map((item) => ({
-                                            id: `${artist.slug}-${item.hexId}`,
-                                            title: item.title,
-                                            artistName: artist.name,
-                                            url: item.url,
-                                            mediaId: item.hexId,
-                                            artistProfileSlug: artist.slug,
-                                            notes: item.notes,
-                                            artworkUrl: artist.heroImage
-                                          }))
-                                      );
-                                    }
+                                        }))
+                                    );
                                   }
                                 }}
                                 type="button"
                               >
-                                {isVideoEntry ? 'Preview' : isCurrentTrack && isPlaying ? 'Pause' : 'Preview'}
+                                {isCurrentTrack && isPlaying ? 'Pause' : 'Preview'}
                               </button>
                               <button className="button small" onClick={() => addMedia(artist, entry)} type="button">
                                 Add
@@ -2406,145 +2153,6 @@ export function PromoterShowCreationTool({
             </div>
           ) : null}
         </div>
-          </>
-        ) : (
-          <div className="composer-live-event-panel">
-            <div className="composer-live-event-head">
-              <div>
-                <div className={sectionBadgeClassName}>Live Event</div>
-                <h3>Draft a venue show</h3>
-              </div>
-              <p className="meta">
-                This saves a promoter-created live event draft. The venue still has to approve the event and open ticketing before fans can be charged.
-              </p>
-            </div>
-
-            <div className="composer-live-event-notice">
-              <strong>Radio shows and live events are separate.</strong>
-              <span>
-                Use Radio Show for prerecorded playback. Use Live Event when the idea needs a room, date, artist, and venue review.
-              </span>
-            </div>
-
-            <div className="grid grid-3 composer-setup-grid">
-              <label className="field">
-                <span>Event title</span>
-                <input
-                  onChange={(event) => setTitle(event.target.value)}
-                  placeholder="Friday Signal Room"
-                  required
-                  value={title}
-                />
-              </label>
-              <label className="field">
-                <span>Promoter profile</span>
-                <select onChange={(event) => setSelectedPromoterProfileId(event.target.value)} required value={selectedPromoterProfileId}>
-                  <option value="">Select a promoter profile</option>
-                  {promoters.map((promoter) => (
-                    <option key={promoter.profileId} value={promoter.profileId}>
-                      {promoter.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="field">
-                <span>Artist or act</span>
-                <select onChange={(event) => setHeadlinerProfileId(event.target.value)} required value={headlinerProfileId}>
-                  <option value="">Select an artist</option>
-                  {artists.map((artist) => (
-                    <option key={artist.profileId} value={artist.profileId}>
-                      {artist.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            <div className="grid grid-3 composer-setup-grid">
-              <label className="field">
-                <span>Venue</span>
-                <select
-                  disabled={!venues.length}
-                  onChange={(event) => setSelectedVenueProfileId(event.target.value)}
-                  required
-                  value={selectedVenueProfileId}
-                >
-                  <option value="">{venues.length ? 'Select a venue' : 'No venues available'}</option>
-                  {venues.map((venue) => (
-                    <option key={venue.profileId} value={venue.profileId}>
-                      {formatVenueLabel(venue)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="field">
-                <span>Start time</span>
-                <input onChange={(event) => setLiveStartsAt(event.target.value)} required type="datetime-local" value={liveStartsAt} />
-              </label>
-              <label className="field">
-                <span>End time</span>
-                <input onChange={(event) => setLiveEndsAt(event.target.value)} type="datetime-local" value={liveEndsAt} />
-              </label>
-            </div>
-
-            <label className="field">
-              <span>Description</span>
-              <textarea
-                onChange={(event) => setDescription(event.target.value)}
-                placeholder="Describe the room, lineup idea, audience fit, and what the venue needs to know."
-                rows={4}
-                value={description}
-              />
-            </label>
-
-            <label className="field">
-              <span>Tags</span>
-              <input onChange={(event) => setLiveTags(event.target.value)} placeholder="live-event, venue-review" value={liveTags} />
-            </label>
-
-            <div className="composer-live-event-summary">
-              <div>
-                <span>Format</span>
-                <strong>Live Event</strong>
-              </div>
-              <div>
-                <span>Venue</span>
-                <strong>{selectedLiveVenue ? selectedLiveVenue.name : 'Choose venue'}</strong>
-              </div>
-              <div>
-                <span>Ticketing</span>
-                <strong>Venue approval first</strong>
-              </div>
-            </div>
-
-            <RevenueSplitVisualizer
-              tracks={selectedMedia.map(m => ({ id: m.mediaId, artistName: m.artistName, trackTitle: m.title, color: '#ff5029' }))}
-              hostName={promoters.find(p => p.profileId === selectedPromoterProfileId)?.name ?? 'You'}
-              referrerLabel={referrerLabel}
-              onReferrerLabelChange={setReferrerLabel}
-              mode={splitMode}
-              onModeChange={setSplitMode}
-              projection={selectedMedia.length > 0 ? { totalDollars: 2840, windowLabel: 'based on your last 4 shows', listens: 9400 } : null}
-              onSchedule={() => setSaveIntent('publish')}
-            />
-
-            <div className="composer-action-bar">
-              <div className="composer-action-bar-copy">
-                <strong>{title.trim() || 'Untitled live event draft'}</strong>
-                <span className="meta">
-                  {selectedLiveVenue
-                    ? `${selectedLiveVenue.name} will be attached as a requested venue.`
-                    : 'Choose a venue to attach this live event draft.'}
-                </span>
-              </div>
-              <div className="cta-row composer-action-bar-buttons">
-                <button className="button" disabled={pending || !venues.length} type="submit">
-                  {pending ? 'Saving event draft...' : 'Save live event draft'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         <div className="cta-row composer-footer-bar">
           {lastSavedShowHref ? (

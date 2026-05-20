@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { VisualDropStudio, type VisualDropStudioSlot } from '@/components/VisualDropStudio';
-import { getSafeBackgroundImageStyle, getSafeImageUrl, getSafeVideoUrl } from '@/lib/asset-safety';
+import { getSafeBackgroundImageStyle, getSafeImageUrl } from '@/lib/asset-safety';
 import {
   getProfileSetupPresets,
   getProfileDesignStyleVars,
@@ -33,7 +33,6 @@ type VenuePageBuilderProps = {
     heroImage: string;
     logoImage: string;
     galleryImage: string;
-    featureVideoUrl: string;
     addressLine1: string;
     contactInfo: string;
     hoursText: string;
@@ -62,7 +61,6 @@ type VenueBuilderValues = {
   heroImage: string;
   logoImage: string;
   galleryImage: string;
-  featureVideoUrl: string;
   addressLine1: string;
   contactInfo: string;
   hoursText: string;
@@ -84,7 +82,7 @@ type VenueBuilderValues = {
   fanShareEnabled: boolean;
 };
 
-type VenueVisualSlot = 'heroImage' | 'logoImage' | 'galleryImage' | 'featureVideoUrl' | 'upcomingContent';
+type VenueVisualSlot = 'heroImage' | 'logoImage' | 'galleryImage' | 'upcomingContent';
 
 function getPreviewSnippet(value: string, fallback: string) {
   const trimmed = value.trim();
@@ -129,7 +127,6 @@ export function VenuePageBuilder({
   const previewBannerStyle = getSafeBackgroundImageStyle(formValues.heroImage);
   const previewLogo = getSafeImageUrl(formValues.logoImage);
   const previewGalleryImage = getSafeImageUrl(formValues.galleryImage);
-  const previewVideo = getSafeVideoUrl(formValues.featureVideoUrl);
   const locationLine = [formValues.addressLine1, formValues.city, formValues.stateRegion, formValues.postalCode]
     .filter(Boolean)
     .join(', ');
@@ -172,14 +169,6 @@ export function VenuePageBuilder({
         placeholder: 'Drop room image'
       },
       {
-        id: 'featureVideoUrl',
-        label: 'Video',
-        description: 'Venue walkthrough, recap, or show teaser.',
-        kind: 'video',
-        value: formValues.featureVideoUrl,
-        placeholder: 'Drop video'
-      },
-      {
         id: 'upcomingContent',
         label: 'Event links',
         description: 'Drop ticket, calendar, or upcoming-show links.',
@@ -189,7 +178,6 @@ export function VenuePageBuilder({
       }
     ],
     [
-      formValues.featureVideoUrl,
       formValues.galleryImage,
       formValues.heroImage,
       formValues.logoImage,
@@ -230,7 +218,6 @@ export function VenuePageBuilder({
         heroImage: formValues.heroImage,
         logoImage: formValues.logoImage,
         galleryImage: formValues.galleryImage,
-        featureVideoUrl: formValues.featureVideoUrl,
         addressLine1: formValues.addressLine1,
         contactInfo: formValues.contactInfo,
         hoursText: formValues.hoursText,
@@ -646,9 +633,6 @@ export function VenuePageBuilder({
                     <p>{upcomingPreview}</p>
                     {previewGalleryImage ? (
                       <img alt={`${profileName} gallery preview`} className="artist-page-builder-preview-image" src={previewGalleryImage} />
-                    ) : null}
-                    {previewVideo ? (
-                      <video className="artist-page-builder-preview-video" controls preload="metadata" src={previewVideo} />
                     ) : null}
                   </article>
                 </div>

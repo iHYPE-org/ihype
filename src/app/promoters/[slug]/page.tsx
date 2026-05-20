@@ -9,7 +9,7 @@ import { ShowCard } from '@/components/ShowCard';
 import { HypeButton } from '@/components/HypeButton';
 import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
 import { DEFAULT_PROFILE_DESIGN_PRESET, getProfileDesignStyleVars } from '@/lib/profile-design';
-import { getSafeBackgroundImageStyle, getSafeImageUrl, getSafeVideoUrl } from '@/lib/asset-safety';
+import { getSafeBackgroundImageStyle, getSafeImageUrl } from '@/lib/asset-safety';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { detectRequestLocation } from '@/lib/request-location';
 import { getDemoCreatorExclusion, getDemoOwnerExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
@@ -186,7 +186,6 @@ export default async function PromoterPage({
   });
   const logoUrl = canViewCustomPage ? getSafeImageUrl(profile.logoImage || profile.avatarImage) : null;
   const featureImageUrl = canViewCustomPage ? getSafeImageUrl(profile.galleryImage || profile.heroImage) : null;
-  const featureVideoUrl = canViewCustomPage ? getSafeVideoUrl(profile.featureVideoUrl) : null;
   const globeRouteStops = previousShows
     .filter(
       (show) =>
@@ -291,12 +290,6 @@ export default async function PromoterPage({
                   <img alt={`${profile.name} featured visual`} className="artist-media-visual-image" src={featureImageUrl} />
                 </div>
               ) : null}
-              {featureVideoUrl ? (
-                <div className="artist-media-visuals">
-                  <video className="artist-media-visual-video" controls preload="metadata" src={featureVideoUrl} />
-                </div>
-              ) : null}
-
               <NetworkEarthGlobe
                 description="Start from the visitor ZIP, highlight nearby venues, then zoom out to browse outside the current location and trace previous promoted shows."
                 emptyRouteLabel="No previous promoted shows are mapped yet."

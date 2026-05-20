@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { VisualDropStudio, type VisualDropStudioSlot } from '@/components/VisualDropStudio';
-import { getSafeBackgroundImageStyle, getSafeImageUrl, getSafeVideoUrl } from '@/lib/asset-safety';
+import { getSafeBackgroundImageStyle, getSafeImageUrl } from '@/lib/asset-safety';
 import {
   getProfileSetupPresets,
   getProfileDesignStyleVars,
@@ -33,7 +33,6 @@ type PromoterPageBuilderProps = {
     heroImage: string;
     logoImage: string;
     galleryImage: string;
-    featureVideoUrl: string;
     contactInfo: string;
     city: string;
     stateRegion: string;
@@ -54,7 +53,6 @@ type PromoterBuilderValues = {
   heroImage: string;
   logoImage: string;
   galleryImage: string;
-  featureVideoUrl: string;
   contactInfo: string;
   city: string;
   stateRegion: string;
@@ -68,7 +66,7 @@ type PromoterBuilderValues = {
   fanShareEnabled: boolean;
 };
 
-type PromoterVisualSlot = 'heroImage' | 'logoImage' | 'galleryImage' | 'featureVideoUrl' | 'recommendContent';
+type PromoterVisualSlot = 'heroImage' | 'logoImage' | 'galleryImage' | 'recommendContent';
 
 function getPreviewSnippet(value: string, fallback: string) {
   const trimmed = value.trim();
@@ -113,7 +111,6 @@ export function PromoterPageBuilder({
   const previewBannerStyle = getSafeBackgroundImageStyle(formValues.heroImage);
   const previewLogo = getSafeImageUrl(formValues.logoImage);
   const previewGalleryImage = getSafeImageUrl(formValues.galleryImage);
-  const previewVideo = getSafeVideoUrl(formValues.featureVideoUrl);
   const aboutPreview = getPreviewSnippet(
     formValues.aboutContent || formValues.bio,
     'Set the scene for the rooms, artists, and kind of nights you bring together.'
@@ -149,14 +146,6 @@ export function PromoterPageBuilder({
         placeholder: 'Drop image'
       },
       {
-        id: 'featureVideoUrl',
-        label: 'Video',
-        description: 'Promo clip, recap, or show preview video.',
-        kind: 'video',
-        value: formValues.featureVideoUrl,
-        placeholder: 'Drop video'
-      },
-      {
         id: 'recommendContent',
         label: 'Event links',
         description: 'Drop ticket, playlist, show, or partner links.',
@@ -166,7 +155,6 @@ export function PromoterPageBuilder({
       }
     ],
     [
-      formValues.featureVideoUrl,
       formValues.galleryImage,
       formValues.heroImage,
       formValues.logoImage,
@@ -207,7 +195,6 @@ export function PromoterPageBuilder({
         heroImage: formValues.heroImage,
         logoImage: formValues.logoImage,
         galleryImage: formValues.galleryImage,
-        featureVideoUrl: formValues.featureVideoUrl,
         contactInfo: formValues.contactInfo,
         city: formValues.city,
         stateRegion: formValues.stateRegion,
@@ -540,9 +527,6 @@ export function PromoterPageBuilder({
                     <p>{eventsPreview}</p>
                     {previewGalleryImage ? (
                       <img alt={`${profileName} gallery preview`} className="artist-page-builder-preview-image" src={previewGalleryImage} />
-                    ) : null}
-                    {previewVideo ? (
-                      <video className="artist-page-builder-preview-video" controls preload="metadata" src={previewVideo} />
                     ) : null}
                   </article>
                 </div>

@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Shows',
-  description: 'Live, upcoming, and archived independent music shows. Browse by city, artist, or genre on iHYPE.',
-  openGraph: { title: 'Shows · iHYPE', description: 'Live, upcoming, and archived independent music shows.' },
-  twitter: { card: 'summary_large_image', title: 'Shows · iHYPE', description: 'Live, upcoming, and archived independent music shows.' },
+  description: 'Upcoming and archived independent music shows. Browse by city, artist, or genre on iHYPE.',
+  openGraph: { title: 'Shows · iHYPE', description: 'Upcoming and archived independent music shows.' },
+  twitter: { card: 'summary_large_image', title: 'Shows · iHYPE', description: 'Upcoming and archived independent music shows.' },
 };
 import { ShowCard } from '@/components/ShowCard';
 import { getShowsDirectoryData } from '@/lib/public-data';
@@ -56,7 +56,6 @@ export default async function ShowsIndexPage({
     : allShows;
 
   const now = new Date();
-  const liveShows = shows.filter((show) => show.status === 'LIVE');
   const upcomingShows = shows.filter((show) => show.status !== 'LIVE' && show.startsAt >= now);
   const recentShows = shows.filter((show) => show.status === 'ENDED' || (show.startsAt < now && show.status !== 'LIVE')).slice(0, 6);
 
@@ -77,10 +76,9 @@ export default async function ShowsIndexPage({
       <section className="directory-hero panel">
         <div className="directory-hero-copy">
           <div className="badge">SHOWS</div>
-          <h1 className="directory-title">Live, upcoming, and recently archived broadcasts in one place.</h1>
+          <h1 className="directory-title">Upcoming and recently archived independent music shows.</h1>
           <p className="subtitle">
-            Shows are the front door to the product. Live broadcasts surface first, then scheduled rooms close behind,
-            with recent archives still visible long enough to help discovery.
+            Browse scheduled shows and past archives by city, artist, or genre.
           </p>
           <div className="cta-row">
             <Link className="button small secondary" href="/register?role=ARTIST">
@@ -115,10 +113,6 @@ export default async function ShowsIndexPage({
 
         <div className="directory-hero-stats">
           <div className="directory-stat">
-            <span>Live</span>
-            <strong>{liveShows.length}</strong>
-          </div>
-          <div className="directory-stat">
             <span>Upcoming</span>
             <strong>{upcomingShows.length}</strong>
           </div>
@@ -126,32 +120,6 @@ export default async function ShowsIndexPage({
             <span>Recent archives</span>
             <strong>{recentShows.length}</strong>
           </div>
-        </div>
-      </section>
-
-      {liveShows.length > 0 && (
-        <div className="panel" style={{ background: 'rgba(255,60,60,0.08)', border: '1px solid rgba(255,60,60,0.3)', padding: '1rem 1.25rem', borderRadius: '12px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: '#ff3c3c', boxShadow: '0 0 8px #ff3c3c', flexShrink: 0 }} />
-          <span><strong>{liveShows.length} show{liveShows.length !== 1 ? 's' : ''} live right now</strong> — scroll down or <a href="#live-now">jump to live</a></span>
-        </div>
-      )}
-
-      <section className="section" id="live-now">
-        <div className="directory-section-head">
-          <h2>
-            <span className="section-status-chip section-status-chip-live">● LIVE</span>
-            {liveShows.length > 0 && <span style={{ fontWeight: 400, fontSize: '1rem', color: 'var(--muted)' }}>{liveShows.length} broadcast{liveShows.length !== 1 ? 's' : ''}</span>}
-          </h2>
-        </div>
-        <div className="grid grid-2">
-          {liveShows.length ? liveShows.map((show) => <ShowCard key={show.id} show={show} reasonChips={locationChips(show)} />) : (
-            <div className="empty">
-              <span className="empty-icon">📡</span>
-              <span className="empty-title">Nothing live right now</span>
-              <div className="empty-example-card">Artists can add a live date, venues can open a room, and fans can save artists to shape what shows surface next.</div>
-              <p>Check back soon — Chicago artists stream every day.</p>
-            </div>
-          )}
         </div>
       </section>
 

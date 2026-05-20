@@ -15,7 +15,7 @@ import { ProfileLinkShelf } from '@/components/ProfileLinkShelf';
 import { ReportButton } from '@/components/ReportButton';
 import { CollapsibleText } from '@/components/CollapsibleText';
 import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
-import { getSafeBackgroundImageStyle, getSafeImageUrl, getSafeVideoUrl } from '@/lib/asset-safety';
+import { getSafeBackgroundImageStyle, getSafeImageUrl } from '@/lib/asset-safety';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { DEFAULT_PROFILE_DESIGN_PRESET, getProfileDesignStyleVars } from '@/lib/profile-design';
 import { detectRequestLocation } from '@/lib/request-location';
@@ -213,7 +213,6 @@ export default async function ArtistPage({
     ? getSafeImageUrl(profile.galleryImage || profile.heroImage)
     : null;
   const logoUrl = canViewCustomPage ? getSafeImageUrl(profile.logoImage || profile.avatarImage) : null;
-  const featureVideoUrl = canViewCustomPage ? getSafeVideoUrl(profile.featureVideoUrl) : null;
   const globeRouteStops = shows
     .filter(
       (show) =>
@@ -409,11 +408,6 @@ export default async function ArtistPage({
               {artworkUrl ? (
                 <div className="artist-media-visuals">
                   <img alt={`${profile.name} featured artwork`} className="artist-media-visual-image" src={artworkUrl} />
-                </div>
-              ) : null}
-              {featureVideoUrl ? (
-                <div className="artist-media-visuals">
-                  <video className="artist-media-visual-video" controls preload="metadata" src={featureVideoUrl} />
                 </div>
               ) : null}
               {media.entries.length ? (

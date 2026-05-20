@@ -8,7 +8,6 @@ const ALLOWED_FLAGS = new Set([
   'demo_logins',
   'invite_only_signup',
   'hide_demo_content',
-  'live_streams',
   'blob_media_storage',
   'ticket_payment_capture'
 ]);

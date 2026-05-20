@@ -2,7 +2,7 @@ import { db } from '@/lib/db';
 import { isEmailDeliveryConfigured, isSmtpEmailConfigured } from '@/lib/mailer';
 import { isBlobMediaStorageConfigured } from '@/lib/media-storage';
 import { isPaymentProcessingConfigured } from '@/lib/payments';
-import { areDemoLoginsEnabledRuntime, areLiveStreamsEnabledRuntime, isInviteCodeRequiredRuntime, shouldHideDemoContentRuntime } from '@/lib/runtime-flags';
+import { areDemoLoginsEnabledRuntime, isInviteCodeRequiredRuntime, shouldHideDemoContentRuntime } from '@/lib/runtime-flags';
 
 export async function getHealthSnapshot() {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -19,11 +19,10 @@ export async function getHealthSnapshot() {
         db.ticketOrder.count({ where: { status: 'RESERVED' } })
       ]);
 
-    const [demoLogins, inviteOnlySignup, demoContentHidden, liveStreams] = await Promise.all([
+    const [demoLogins, inviteOnlySignup, demoContentHidden] = await Promise.all([
       areDemoLoginsEnabledRuntime(),
       isInviteCodeRequiredRuntime(),
-      shouldHideDemoContentRuntime(),
-      areLiveStreamsEnabledRuntime()
+      shouldHideDemoContentRuntime()
     ]);
 
     return {
@@ -45,8 +44,7 @@ export async function getHealthSnapshot() {
         emailDelivery: isEmailDeliveryConfigured(),
         smtpEmail: isSmtpEmailConfigured(),
         blobMediaStorage: isBlobMediaStorageConfigured(),
-        ticketPaymentCapture: isPaymentProcessingConfigured(),
-        liveStreams
+        ticketPaymentCapture: isPaymentProcessingConfigured()
       },
       safety: {
         demoLogins,
