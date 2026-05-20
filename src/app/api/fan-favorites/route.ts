@@ -86,7 +86,8 @@ export async function DELETE(request: Request) {
     });
 
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (err) {
+    console.error('[fan-favorites]', err);
     return NextResponse.json({ error: 'Invalid loved-media payload' }, { status: 400 });
   }
 }

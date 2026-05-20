@@ -43,7 +43,8 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ recorded: true });
-  } catch {
+  } catch (err) {
+    console.error('[show-listens]', err);
     return NextResponse.json({ error: 'Invalid show listen payload' }, { status: 400 });
   }
 }

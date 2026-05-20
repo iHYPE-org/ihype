@@ -46,7 +46,8 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ recorded: true });
-  } catch {
+  } catch (err) {
+    console.error('[media-listens]', err);
     return NextResponse.json({ error: 'Invalid media listen payload' }, { status: 400 });
   }
 }

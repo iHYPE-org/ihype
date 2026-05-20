@@ -41,7 +41,8 @@ export async function POST(request: Request) {
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
       return NextResponse.json({ error: 'Campaign website must be an http or https URL.' }, { status: 400 });
     }
-  } catch {
+  } catch (err) {
+    console.error('[ads/upload]', err);
     return NextResponse.json({ error: 'Campaign website must be a valid URL.' }, { status: 400 });
   }
 

@@ -133,7 +133,8 @@ export async function POST(request: NextRequest) {
     checkAndAwardBadges(session.user.id).catch(() => {});
 
     return NextResponse.json({ created: true, hypeCount: updatedProfile.hypeCount });
-  } catch {
+  } catch (err) {
+    console.error('[hype]', err);
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 }

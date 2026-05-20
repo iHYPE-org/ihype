@@ -297,7 +297,8 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(show, { status: 201 });
-  } catch {
+  } catch (err) {
+    console.error('[shows]', err);
     return NextResponse.json({ error: 'Invalid show payload' }, { status: 400 });
   }
 }
