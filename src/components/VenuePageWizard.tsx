@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { getPreviewSnippet } from '@/lib/text';
 import {
   getProfileDesignStyleVars,
   normalizeProfileAccentTone,
@@ -125,11 +126,6 @@ const steps = [
   }
 ] as const;
 
-function getPreviewSnippet(value: string, fallback: string) {
-  const trimmed = value.trim();
-  if (!trimmed) return fallback;
-  return trimmed.length > 180 ? `${trimmed.slice(0, 177).trimEnd()}...` : trimmed;
-}
 
 function formatShowDate(value: string) {
   try {

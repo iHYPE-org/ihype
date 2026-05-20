@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArtistMediaUploadManager } from '@/components/ArtistMediaUploadManager';
 import { VisualDropStudio, type VisualDropStudioSlot } from '@/components/VisualDropStudio';
 import { getSafeBackgroundImageStyle, getSafeImageUrl } from '@/lib/asset-safety';
+import { getPreviewSnippet } from '@/lib/text';
 import {
   getProfileDesignStyleVars,
   normalizeProfileAccentTone,
@@ -76,11 +77,6 @@ type ArtistBuilderValues = {
 
 type ArtistVisualSlot = 'heroImage' | 'logoImage' | 'galleryImage' | 'mediaContent';
 
-function getPreviewSnippet(value: string, fallback: string) {
-  const trimmed = value.trim();
-  if (!trimmed) return fallback;
-  return trimmed.length > 180 ? `${trimmed.slice(0, 177).trimEnd()}...` : trimmed;
-}
 
 const artistQuickStartPresets = [
   {

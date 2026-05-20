@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { VisualDropStudio, type VisualDropStudioSlot } from '@/components/VisualDropStudio';
 import { getSafeBackgroundImageStyle } from '@/lib/asset-safety';
+import { getPreviewSnippet } from '@/lib/text';
 import {
   getProfileAccentTone,
   getProfileBackdropTone,
@@ -124,11 +125,6 @@ const defaultFormValues: Record<EditableFieldKey, string> = {
   previousShowHighlights: ''
 };
 
-function getPreviewSnippet(value: string, fallback: string) {
-  const trimmed = value.trim();
-  if (!trimmed) return fallback;
-  return trimmed.length > 180 ? `${trimmed.slice(0, 177).trimEnd()}...` : trimmed;
-}
 
 export function ProfilePageEditor({
   profileId,

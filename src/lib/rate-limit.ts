@@ -145,3 +145,12 @@ function consumeMemory(key: string, { limit, windowMs }: RateLimitOptions): Rate
 export async function consumeRateLimit(key: string, options: RateLimitOptions): Promise<RateLimitResult> {
   return consumeKv(key, options);
 }
+
+export const RATE_LIMIT_PRESETS = {
+  auth:           { limit: 10, windowMs: 60_000 },
+  follow:         { limit: 60, windowMs: 60_000 },
+  bookingRequest: { limit: 10, windowMs: 60 * 60_000 },
+  hype:           { limit: 30, windowMs: 60_000 },
+  upload:         { limit: 5,  windowMs: 5 * 60_000 },
+  default:        { limit: 20, windowMs: 60_000 },
+} as const;

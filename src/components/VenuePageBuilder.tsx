@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { VisualDropStudio, type VisualDropStudioSlot } from '@/components/VisualDropStudio';
 import { getSafeBackgroundImageStyle, getSafeImageUrl } from '@/lib/asset-safety';
+import { getPreviewSnippet } from '@/lib/text';
 import {
   getProfileSetupPresets,
   getProfileDesignStyleVars,
@@ -84,11 +85,6 @@ type VenueBuilderValues = {
 
 type VenueVisualSlot = 'heroImage' | 'logoImage' | 'galleryImage' | 'upcomingContent';
 
-function getPreviewSnippet(value: string, fallback: string) {
-  const trimmed = value.trim();
-  if (!trimmed) return fallback;
-  return trimmed.length > 180 ? `${trimmed.slice(0, 177).trimEnd()}...` : trimmed;
-}
 
 export function VenuePageBuilder({
   profileId,
