@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth';
 import { db, withDbRetry } from '@/lib/db';
 import { createHexId } from '@/lib/hex-id';
 import { validateArtistMediaUpload } from '@/lib/media-validation';
-import { isBlobMediaStorageConfigured, uploadArtistMediaToBlob } from '@/lib/media-storage';
+import { isBlobMediaStorageAvailable, uploadArtistMediaToBlob } from '@/lib/media-storage';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { areDatabaseMediaUploadsEnabledRuntime } from '@/lib/runtime-flags';
 
@@ -135,13 +135,13 @@ export async function POST(request: Request) {
 
     const title = (requestedTitle || deriveTitleFromFileName(file.name)).slice(0, 160);
     const hexId = createHexId();
-    const hasBlobStorage = isBlobMediaStorageConfigured();
+    const hasBlobStorage = await isBlobMediaStorageAvailable();
 
     if (!hasBlobStorage && !(await areDatabaseMediaUploadsEnabledRuntime())) {
       return NextResponse.json(
         {
           error:
-            'Media uploads require object storage before production use. Configure Vercel Blob or enable the temporary database storage flag.'
+            'Media uploads require object storage before production use. Configure Cloudflare R2 or enable the temporary database storage flag.'
         },
         { status: 501 }
       );

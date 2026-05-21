@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { db } from '@/lib/db';
+import { kvPut } from '@/lib/kv';
 import { getRateLimitMetrics } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
@@ -35,10 +36,8 @@ async function checkResend(): Promise<{ ok: boolean; label: string }> {
 }
 
 async function checkKv(): Promise<{ ok: boolean; label: string }> {
-  if (!process.env.KV_REST_API_URL) return { ok: false, label: 'Not configured' };
   try {
-    const { kv } = await import('@vercel/kv');
-    await kv.ping();
+    await kvPut('status:ping', Date.now(), { ex: 60 });
     return { ok: true, label: 'Connected' };
   } catch {
     return { ok: false, label: 'Error' };
@@ -106,7 +105,7 @@ export default async function StatusPage() {
 
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <StatusDot ok={kvResult.ok} />
-          <span>KV (Vercel KV)</span>
+          <span>KV (Cloudflare KV)</span>
           <span className="meta" style={{ marginLeft: 'auto' }}>{kvResult.label}</span>
         </div>
 

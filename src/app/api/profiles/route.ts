@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import type { Prisma, ProfileType } from '@prisma/client';
+import type { Prisma, ProfileType } from '@prisma/client/wasm';
 import { db } from '@/lib/db';
 import { getDemoOwnerExclusion } from '@/lib/runtime-flags';
 

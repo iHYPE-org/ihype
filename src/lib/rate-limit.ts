@@ -1,3 +1,5 @@
+import { kvGet, kvIncr, kvList, kvPut } from '@/lib/kv';
+
 type RateLimitRecord = {
   count: number;
   resetAt: number;
@@ -29,7 +31,7 @@ export function rateLimitKey(prefix: string, userId: string | undefined, ip: str
 }
 
 // ---------------------------------------------------------------------------
-// KV-backed implementation (Vercel KV / Redis)
+// KV-backed implementation (Cloudflare KV)
 // ---------------------------------------------------------------------------
 
 const DEFAULT_KV_TIMEOUT_MS = 1500;
@@ -58,21 +60,14 @@ async function withKvTimeout<T>(operation: Promise<T>, label: string): Promise<T
 }
 
 async function consumeKvUnsafe(key: string, options: RateLimitOptions): Promise<RateLimitResult> {
-  const { kv } = await import('@vercel/kv');
   const { limit, windowMs } = options;
   const windowSecs = Math.ceil(windowMs / 1000);
-  const count = await kv.incr(key);
-  if (count === 1) {
-    await kv.expire(key, windowSecs);
-  }
-  const ttl = await kv.ttl(key);
-  const retryAfterSeconds = Math.max(1, ttl);
+  const count = await kvIncr(key, windowSecs);
+  const retryAfterSeconds = windowSecs;
   if (count > limit) {
     // Track hits-per-bucket over a rolling 1h window for the admin dashboard.
     try {
-      const hitsKey = `rate-limit-hits:${key}`;
-      const hits = await kv.incr(hitsKey);
-      if (hits === 1) await kv.expire(hitsKey, 3600);
+      await kvIncr(`rate-limit-hits:${key}`, 3600);
     } catch {
       // best-effort
     }
@@ -93,22 +88,11 @@ async function consumeKv(key: string, options: RateLimitOptions): Promise<RateLi
 export type RateLimitMetric = { bucket: string; hits: number };
 
 // Returns top N rate-limited buckets by hit count over the last hour.
-// Requires Vercel KV; returns [] in local dev.
 export async function getRateLimitMetrics(limit = 10): Promise<RateLimitMetric[]> {
-  if (!process.env.KV_REST_API_URL) return [];
   try {
-    const { kv } = await import('@vercel/kv');
-    const keys: string[] = [];
-    let cursor: string | number = 0;
-    // SCAN until exhausted or until we collect a reasonable number of keys.
-    do {
-      const result = (await kv.scan(cursor as number, { match: 'rate-limit-hits:*', count: 200 })) as unknown as [string | number, string[]];
-      cursor = result[0];
-      for (const k of result[1]) keys.push(k);
-      if (keys.length > 2000) break;
-    } while (Number(cursor) !== 0);
+    const keys = await kvList('rate-limit-hits:');
     if (keys.length === 0) return [];
-    const values = await Promise.all(keys.map((k) => kv.get<number>(k).catch(() => 0)));
+    const values = await Promise.all(keys.map((k) => kvGet<number>(k).catch(() => 0)));
     const rows: RateLimitMetric[] = keys.map((k, i) => ({
       bucket: k.replace(/^rate-limit-hits:/, ''),
       hits: Number(values[i] ?? 0)
@@ -187,8 +171,5 @@ function consumeMemory(key: string, { limit, windowMs }: RateLimitOptions): Rate
 // ---------------------------------------------------------------------------
 
 export async function consumeRateLimit(key: string, options: RateLimitOptions): Promise<RateLimitResult> {
-  if (process.env.KV_REST_API_URL) {
-    return consumeKv(key, options);
-  }
-  return consumeMemory(key, options);
+  return consumeKv(key, options);
 }

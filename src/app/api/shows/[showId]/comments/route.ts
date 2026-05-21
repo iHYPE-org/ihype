@@ -7,7 +7,7 @@ import { readClientAddress } from '@/lib/request-meta';
 export const dynamic = 'force-dynamic';
 const MAX_CONTENT = 1500;
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ showId: string }> }) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Sign in to comment.' }, { status: 401 });
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: 'Too many comments. Try later.' }, { status: 429 });
   }
 
-  const { id: showId } = await params;
+  const { showId } = await params;
   let body: { content?: string } = {};
   try {
     body = (await request.json()) as typeof body;
@@ -57,8 +57,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   });
 }
 
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id: showId } = await params;
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ showId: string }> }) {
+  const { showId } = await params;
   const rows = await db.showComment.findMany({
     where: { showId, deletedAt: null },
     orderBy: { createdAt: 'desc' },

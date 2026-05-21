@@ -1,3 +1,5 @@
+import { kvGet, kvPut } from '@/lib/kv';
+
 // Tracks recent admin re-authentication (via passkey or other strong
 // challenge) in KV so we can require fresh credentials before destructive
 // actions like suspend, promote, or broadcast.
@@ -18,23 +20,16 @@ function key(userId: string) {
 }
 
 export async function markAdminReauth(userId: string): Promise<void> {
-  if (!process.env.KV_REST_API_URL) return;
   try {
-    const { kv } = await import('@vercel/kv');
-    await kv.set(key(userId), Date.now(), { ex: REAUTH_TTL_SECONDS });
+    await kvPut(key(userId), Date.now(), { ex: REAUTH_TTL_SECONDS });
   } catch (err) {
     console.error('[admin-confirmation] markAdminReauth failed', err);
   }
 }
 
 export async function hasRecentAdminReauth(userId: string): Promise<boolean> {
-  if (!process.env.KV_REST_API_URL) {
-    // In local dev without KV, do not enforce.
-    return true;
-  }
   try {
-    const { kv } = await import('@vercel/kv');
-    const value = await kv.get<number>(key(userId));
+    const value = await kvGet<number>(key(userId));
     return Boolean(value);
   } catch (err) {
     console.error('[admin-confirmation] hasRecentAdminReauth failed', err);

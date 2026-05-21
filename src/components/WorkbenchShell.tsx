@@ -161,6 +161,16 @@ export type WbNotification = {
   unread?: boolean;
 };
 
+type WbProfileLocation = {
+  addressLine1: string | null;
+  city: string | null;
+  stateRegion: string | null;
+  postalCode: string | null;
+  country: string | null;
+  latitude: number | null;
+  longitude: number | null;
+};
+
 export type WbRadioShow = {
   id: string;
   name: string;
@@ -190,6 +200,7 @@ export type WorkbenchData = {
   profileId?: string;
   profileHexId?: string;
   profilePath?: string;
+  profileLocation?: WbProfileLocation;
   pendingVenueRequestCount?: number;
   profileCompletion?: { percent: number; missing: string[]; checks?: Array<{ label: string; ok: boolean }> };
   notifications?: WbNotification[];
@@ -432,7 +443,7 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
           {view === 'studio'   && <ViewRadioStudio />}
           {view === 'artist'   && <ViewArtist data={liveData} />}
           {view === 'venue'    && <ViewVenue data={liveData} />}
-          {view === 'settings' && <ViewSettings prefs={prefs} setPref={setPref} />}
+          {view === 'settings' && <ViewSettings prefs={prefs} setPref={setPref} data={liveData} />}
           {view === 'inbox'    && <ViewInbox data={liveData} setView={setView} />}
         </main>
         {showQueue && <WbQueueRail data={liveData} />}
@@ -2649,7 +2660,7 @@ function ViewArtist({ data }: { data: WorkbenchData }) {
       {tab === 'page' && (
         <div>
           <p className="wb-page-sub" style={{ marginBottom: 20 }}>Customize your public artist page — drag to reorder, upload media, choose colors.</p>
-          <PageBuilder />
+          <PageBuilder data={data} />
         </div>
       )}
     </div>
@@ -2663,6 +2674,7 @@ const DEFAULT_WIDGETS: PageWidget[] = [
   { id: 'bio',      label: 'Bio',              desc: 'Your story in your words',          wide: true,  locked: true },
   { id: 'featured', label: 'Featured track',   desc: 'One track pinned at the top',       wide: false },
   { id: 'shows',    label: 'Upcoming shows',   desc: 'Next 3 events with ticket links',   wide: false },
+  { id: 'directions', label: 'Get directions', desc: 'Maps button for venue visitors',    wide: false },
   { id: 'radio',    label: 'Radio shows',      desc: 'Your channels + archive',           wide: false },
   { id: 'photos',   label: 'Photo grid',       desc: '3×2 grid of uploaded images',       wide: true  },
   { id: 'links',    label: 'Links',            desc: 'Social, website, press kit',        wide: false },
@@ -2670,7 +2682,11 @@ const DEFAULT_WIDGETS: PageWidget[] = [
 
 const LAYOUT_KEY = 'ihype_page_layout_v1';
 
-function PageBuilder() {
+function formatCoordinateForInput(value: number | null | undefined) {
+  return typeof value === 'number' && Number.isFinite(value) ? String(value) : '';
+}
+
+function PageBuilder({ data }: { data: WorkbenchData }) {
   const [widgets, setWidgets] = useState<PageWidget[]>(() => {
     try {
       const saved = localStorage.getItem(LAYOUT_KEY);
@@ -2688,8 +2704,20 @@ function PageBuilder() {
   const [saved, setSaved] = useState(false);
   const [profileImg, setProfileImg] = useState<string | null>(null);
   const [bannerImg, setBannerImg] = useState<string | null>(null);
+  const [directionsPending, setDirectionsPending] = useState(false);
+  const [directionsMessage, setDirectionsMessage] = useState<string | null>(null);
+  const [directionsValues, setDirectionsValues] = useState({
+    addressLine1: data.profileLocation?.addressLine1 ?? '',
+    city: data.profileLocation?.city ?? '',
+    stateRegion: data.profileLocation?.stateRegion ?? '',
+    postalCode: data.profileLocation?.postalCode ?? '',
+    country: data.profileLocation?.country ?? '',
+    latitude: formatCoordinateForInput(data.profileLocation?.latitude),
+    longitude: formatCoordinateForInput(data.profileLocation?.longitude)
+  });
   const profileRef = useRef<HTMLInputElement>(null);
   const bannerRef = useRef<HTMLInputElement>(null);
+  const isVenueProfile = data.profileType === 'VENUE' && Boolean(data.profileId);
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>, setter: (v: string) => void) {
     const file = e.target.files?.[0];
@@ -2715,11 +2743,132 @@ function PageBuilder() {
     setOverId(null);
   }
 
+  function updateDirectionsField(key: keyof typeof directionsValues, value: string) {
+    setDirectionsValues((current) => ({ ...current, [key]: value }));
+  }
+
+  async function handleDirectionsSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!data.profileId) return;
+
+    setDirectionsPending(true);
+    setDirectionsMessage(null);
+
+    try {
+      const response = await fetch('/api/profile/location', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          profileId: data.profileId,
+          ...directionsValues
+        })
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setDirectionsMessage(typeof payload.error === 'string' ? payload.error : 'Could not save venue directions.');
+        return;
+      }
+
+      setDirectionsMessage('Venue directions saved.');
+    } catch {
+      setDirectionsMessage('Could not save venue directions.');
+    } finally {
+      setDirectionsPending(false);
+    }
+  }
+
   const fieldStyle: React.CSSProperties = { display: 'none' };
   const uploadZone: React.CSSProperties = { border: '1.5px dashed var(--wb-line-2)', borderRadius: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer', background: 'var(--wb-bg-3)', transition: 'border-color 0.15s' };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {isVenueProfile ? (
+        <form className="wb-sett-section" onSubmit={handleDirectionsSubmit} style={{ gridColumn: 'span 2' }}>
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 15 }}>Venue directions</div>
+            <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--wb-ink-3)', marginTop: 4 }}>
+              Save the address and GPS point used by the public Get directions button.
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+            <label className="field" style={{ margin: 0 }}>
+              <span>Street address</span>
+              <input
+                onChange={(event) => updateDirectionsField('addressLine1', event.target.value)}
+                placeholder="1234 W Example St"
+                value={directionsValues.addressLine1}
+              />
+            </label>
+            <label className="field" style={{ margin: 0 }}>
+              <span>City</span>
+              <input
+                onChange={(event) => updateDirectionsField('city', event.target.value)}
+                value={directionsValues.city}
+              />
+            </label>
+            <label className="field" style={{ margin: 0 }}>
+              <span>State / region</span>
+              <input
+                onChange={(event) => updateDirectionsField('stateRegion', event.target.value)}
+                value={directionsValues.stateRegion}
+              />
+            </label>
+            <label className="field" style={{ margin: 0 }}>
+              <span>Postal code</span>
+              <input
+                onChange={(event) => updateDirectionsField('postalCode', event.target.value)}
+                value={directionsValues.postalCode}
+              />
+            </label>
+            <label className="field" style={{ margin: 0 }}>
+              <span>Country</span>
+              <input
+                onChange={(event) => updateDirectionsField('country', event.target.value)}
+                value={directionsValues.country}
+              />
+            </label>
+            <label className="field" style={{ margin: 0 }}>
+              <span>Latitude</span>
+              <input
+                max="90"
+                min="-90"
+                onChange={(event) => updateDirectionsField('latitude', event.target.value)}
+                placeholder="41.8781"
+                step="any"
+                type="number"
+                value={directionsValues.latitude}
+              />
+            </label>
+            <label className="field" style={{ margin: 0 }}>
+              <span>Longitude</span>
+              <input
+                max="180"
+                min="-180"
+                onChange={(event) => updateDirectionsField('longitude', event.target.value)}
+                placeholder="-87.6298"
+                step="any"
+                type="number"
+                value={directionsValues.longitude}
+              />
+            </label>
+          </div>
+
+          <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <button className="wb-btn-prime" disabled={directionsPending} type="submit">
+              {directionsPending ? 'Saving...' : 'Save venue directions'}
+            </button>
+            {data.profilePath ? (
+              <a className="wb-btn-ghost" href={data.profilePath} style={{ textDecoration: 'none' }}>
+                View venue page
+              </a>
+            ) : null}
+            {directionsMessage ? <span style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--wb-ink-3)' }}>{directionsMessage}</span> : null}
+          </div>
+        </form>
+      ) : null}
+
       {/* Media uploads */}
       <div className="wb-sett-section" style={{ gridColumn: 'span 2' }}>
         <div style={{ marginBottom: 14 }}>
@@ -2815,7 +2964,7 @@ function PageBuilder() {
   );
 }
 
-function ViewSettings({ prefs, setPref }: { prefs: Prefs; setPref: (k: string, v: unknown) => void }) {
+function ViewSettings({ prefs, setPref, data }: { prefs: Prefs; setPref: (k: string, v: unknown) => void; data: WorkbenchData }) {
   const [settTab, setSettTab] = useState<'appearance' | 'page' | 'security' | 'accessibility'>('page');
   const ACCENTS = [
     { v: '#ff5029', label: 'Ember' }, { v: '#ff3e9a', label: 'Hot pink' },
@@ -2841,7 +2990,7 @@ function ViewSettings({ prefs, setPref }: { prefs: Prefs; setPref: (k: string, v
         <button onClick={() => setSettTab('security')} className={`wb-tab${settTab === 'security' ? ' wb-tab-active' : ''}`}>Security</button>
       </div>
 
-      {settTab === 'page' && <PageBuilder />}
+      {settTab === 'page' && <PageBuilder data={data} />}
 
       {settTab === 'appearance' && <div className="wb-settings-grid">
         <SettSection title="Accent color" sub="Used for highlights, the player, and active nav.">

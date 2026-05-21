@@ -1,0 +1,57 @@
+name = "ihype"
+main = "worker.js"
+compatibility_date = "2026-05-20"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+find_additional_modules = true
+base_dir = ".open-next/server-functions/default"
+
+rules = [
+  { type = "CompiledWasm", globs = ["**/*.wasm"], fallthrough = true }
+]
+
+routes = [
+  { pattern = "ihype.org", zone_name = "ihype.org" },
+  { pattern = "www.ihype.org", zone_name = "ihype.org" }
+]
+
+[triggers]
+crons = ["* * * * *"]
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+[vars]
+AUTH_TRUST_HOST = "true"
+AUTH_URL = "https://ihype.org"
+NEXT_PUBLIC_APP_URL = "https://ihype.org"
+NEXT_PUBLIC_BASE_URL = "https://ihype.org"
+R2_PUBLIC_BASE_URL = "https://ihype.org"
+NEXT_PUBLIC_TURNSTILE_SITE_KEY = "0x4AAAAAADSF8WNxaeBIRmR7"
+
+[[services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "ihype"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "b6330641874a4420b240d3a82760a9aa"
+preview_id = "eb2e8a134c184a13a71710ec0287b958"
+
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "ihype-media"
+preview_bucket_name = "ihype-media-preview"
+
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "210eb8b6bf134d559b0ae4f00418b489"
+
+[[d1_databases]]
+binding = "D1"
+database_name = "ihype-cron"
+database_id = "72feb348-a07a-4bd5-a6ee-5b27b751999d"
+
+[[queues.producers]]
+binding = "EMAIL_QUEUE"
+queue = "ihype-email-queue"

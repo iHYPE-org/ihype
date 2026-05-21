@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { Prisma } from '@prisma/client/wasm';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  let body: { title?: string; description?: string; tracks?: unknown[] } = {};
+  let body: { title?: string; description?: string; tracks?: unknown } = {};
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
       title: String(body.title).slice(0, 200),
       description: body.description ? String(body.description).slice(0, 1000) : null,
       createdBy: session!.user!.id!,
-      tracks: Array.isArray(body.tracks) ? body.tracks : [],
+      tracks: Array.isArray(body.tracks) ? (body.tracks as Prisma.InputJsonArray) : [],
       published: false
     }
   });

@@ -1,8 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { db } from '@/lib/db';
 
-const client = new Anthropic();
-
 type ProfileSummary = {
   id: string;
   slug: string;
@@ -33,6 +31,7 @@ List exactly 3 artist names (first and last name or stage name only) from the iH
 Respond with ONLY a JSON array of strings, e.g. ["Artist One", "Artist Two", "Artist Three"].
 No explanation, no markdown, just the JSON array.`;
 
+  const client = new Anthropic();
   try {
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',

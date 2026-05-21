@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { db } from '@/lib/db';
 
+export const runtime = 'nodejs';
 export const alt = 'Artist on iHYPE';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';

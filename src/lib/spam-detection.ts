@@ -1,7 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-const client = new Anthropic();
-
 export type SpamResult = { isSpam: boolean; confidence: number };
 
 export async function checkForSpam(
@@ -28,6 +26,7 @@ Is this spam, bot-generated content, or automated abuse? Consider:
 Respond with ONLY valid JSON: {"isSpam": true/false, "confidence": 0.0-1.0}
 No explanation, just the JSON object.`;
 
+  const client = new Anthropic();
   try {
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',

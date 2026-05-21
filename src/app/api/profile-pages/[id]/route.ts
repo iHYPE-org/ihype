@@ -27,6 +27,24 @@ const videoField = z
   .optional()
   .or(z.literal(''));
 
+const latitudeField = z.preprocess(
+  (value) => {
+    if (value === '' || value === null) return null;
+    if (typeof value === 'string') return Number(value.trim());
+    return value;
+  },
+  z.number().finite().min(-90).max(90).nullable()
+).optional();
+
+const longitudeField = z.preprocess(
+  (value) => {
+    if (value === '' || value === null) return null;
+    if (typeof value === 'string') return Number(value.trim());
+    return value;
+  },
+  z.number().finite().min(-180).max(180).nullable()
+).optional();
+
 const schema = z.object({
   headline: z.string().trim().max(140).optional(),
   bio: z.string().trim().max(280).optional(),
@@ -51,6 +69,8 @@ const schema = z.object({
   stateRegion: z.string().trim().max(120).optional(),
   postalCode: z.string().trim().max(32).optional(),
   country: z.string().trim().max(120).optional(),
+  latitude: latitudeField,
+  longitude: longitudeField,
   parkingDetails: z.string().trim().max(5000).optional(),
   stayRecommendations: z.string().trim().max(5000).optional(),
   upcomingContent: z.string().trim().max(5000).optional(),
@@ -61,6 +81,8 @@ const schema = z.object({
   themeAccentTone: z.enum(profileAccentToneIds).optional(),
   themeBackdropTone: z.enum(profileBackdropToneIds).optional(),
   fanShareEnabled: z.boolean().optional()
+}).refine((value) => (value.latitude == null) === (value.longitude == null), {
+  message: 'Latitude and longitude must be saved together.'
 });
 
 // Map from API field name → BlockType used in ProfileBlock table.
@@ -145,6 +167,8 @@ export async function PATCH(
           stateRegion: body.stateRegion || null,
           postalCode: body.postalCode || null,
           country: body.country || null,
+          latitude: 'latitude' in body ? body.latitude : undefined,
+          longitude: 'longitude' in body ? body.longitude : undefined,
           parkingDetails: body.parkingDetails || null,
           stayRecommendations: body.stayRecommendations || null,
           upcomingContent: body.upcomingContent || null,

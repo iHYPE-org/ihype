@@ -42,6 +42,8 @@ type VenuePageBuilderProps = {
     stateRegion: string;
     postalCode: string;
     country: string;
+    latitude?: string | number | null;
+    longitude?: string | number | null;
     parkingDetails: string;
     stayRecommendations: string;
     aboutContent: string;
@@ -71,6 +73,8 @@ type VenueBuilderValues = {
   stateRegion: string;
   postalCode: string;
   country: string;
+  latitude: string;
+  longitude: string;
   parkingDetails: string;
   stayRecommendations: string;
   aboutContent: string;
@@ -92,6 +96,14 @@ function getPreviewSnippet(value: string, fallback: string) {
   return trimmed.length > 180 ? `${trimmed.slice(0, 177).trimEnd()}...` : trimmed;
 }
 
+function formatCoordinateInput(value: string | number | null | undefined) {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? String(value) : '';
+  }
+
+  return value ?? '';
+}
+
 export function VenuePageBuilder({
   profileId,
   profileName,
@@ -109,6 +121,8 @@ export function VenuePageBuilder({
   const quickSetupPresets = getProfileSetupPresets('venue');
   const [formValues, setFormValues] = useState<VenueBuilderValues>({
     ...initialValues,
+    latitude: formatCoordinateInput(initialValues.latitude),
+    longitude: formatCoordinateInput(initialValues.longitude),
     themePreset: normalizeProfileDesignPreset(initialValues.themePreset),
     themeFontPreset: normalizeProfileFontPreset(initialValues.themeFontPreset),
     themeAccentTone: normalizeProfileAccentTone(initialValues.themeAccentTone),
@@ -239,6 +253,8 @@ export function VenuePageBuilder({
         stateRegion: formValues.stateRegion,
         postalCode: formValues.postalCode,
         country: formValues.country,
+        latitude: formValues.latitude,
+        longitude: formValues.longitude,
         parkingDetails: formValues.parkingDetails,
         stayRecommendations: formValues.stayRecommendations,
         aboutContent: formValues.aboutContent,
@@ -510,6 +526,32 @@ export function VenuePageBuilder({
                   <input
                     onChange={(event) => setFormValues((current) => ({ ...current, country: event.target.value }))}
                     value={formValues.country}
+                  />
+                </label>
+
+                <label className="field">
+                  <span>Latitude</span>
+                  <input
+                    max="90"
+                    min="-90"
+                    onChange={(event) => setFormValues((current) => ({ ...current, latitude: event.target.value }))}
+                    placeholder="41.8781"
+                    step="any"
+                    type="number"
+                    value={formValues.latitude}
+                  />
+                </label>
+
+                <label className="field">
+                  <span>Longitude</span>
+                  <input
+                    max="180"
+                    min="-180"
+                    onChange={(event) => setFormValues((current) => ({ ...current, longitude: event.target.value }))}
+                    placeholder="-87.6298"
+                    step="any"
+                    type="number"
+                    value={formValues.longitude}
                   />
                 </label>
               </div>

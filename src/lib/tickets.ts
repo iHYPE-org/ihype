@@ -1,5 +1,5 @@
 import QRCode from 'qrcode';
-import { TicketStatus } from '@prisma/client';
+import { TicketStatus } from '@prisma/client/wasm';
 import { createHexId } from '@/lib/hex-id';
 
 export function createSerializedTicketId() {

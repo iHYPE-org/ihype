@@ -1,5 +1,21 @@
-function parseBooleanFlag(value: string | undefined, defaultValue: boolean) {
+import { kvGet } from '@/lib/kv';
+
+function parseBooleanFlag(value: unknown, defaultValue: boolean) {
   if (value == null) {
+    return defaultValue;
+  }
+
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'number') {
+    if (value === 1) return true;
+    if (value === 0) return false;
+    return defaultValue;
+  }
+
+  if (typeof value !== 'string') {
     return defaultValue;
   }
 
@@ -25,13 +41,8 @@ type RuntimeFlagKey =
   | 'ticket_payment_capture';
 
 async function readRuntimeOverride(key: RuntimeFlagKey) {
-  if (!process.env.KV_REST_API_URL && !process.env.KV_URL) {
-    return null;
-  }
-
   try {
-    const { kv } = await import('@vercel/kv');
-    const value = await kv.get<string>(`flags:${key}`);
+    const value = await kvGet<unknown>(`flags:${key}`);
     if (value == null) return null;
     return parseBooleanFlag(value, false);
   } catch (error) {

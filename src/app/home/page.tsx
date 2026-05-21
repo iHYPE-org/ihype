@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getSharedDiscoverFeed } from '@/lib/discover-feed';
 import { detectRequestLocation } from '@/lib/request-location';
-import type { ProfileType } from '@prisma/client';
+import type { ProfileType } from '@prisma/client/wasm';
 import { WorkbenchShell, type WorkbenchData, type WbStat, type WbTrack, type WbShow, type WbActivity, type WbNotification } from '@/components/WorkbenchShell';
 import { EmailVerificationBanner } from '@/components/EmailVerificationBanner';
 import { NewToScene } from '@/components/NewToScene';
@@ -116,6 +116,10 @@ export default async function HomePage() {
       genres: true,
       contactInfo: true,
       addressLine1: true,
+      postalCode: true,
+      country: true,
+      latitude: true,
+      longitude: true,
       hoursText: true,
       songUploadCount: true,
       isVerified: true,
@@ -435,6 +439,15 @@ export default async function HomePage() {
     profileType: profile.type,
     profileId: profile.id,
     profileHexId: profile.hexId,
+    profileLocation: {
+      addressLine1: profile.addressLine1,
+      city: profile.city,
+      stateRegion: profile.stateRegion,
+      postalCode: profile.postalCode,
+      country: profile.country,
+      latitude: profile.latitude,
+      longitude: profile.longitude
+    },
     isVerified: profile.isVerified,
     verificationRequested: profile.verificationRequested,
     profilePath: profileHref(profile.type, profile.slug),

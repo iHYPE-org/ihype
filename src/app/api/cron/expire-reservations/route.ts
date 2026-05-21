@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isCronRequestAuthorized } from '@/lib/cron-auth';
 import { db } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
@@ -14,8 +15,7 @@ const RESERVATION_TTL_MINUTES = 15;
  * and releases the seats back by decrementing ticketsSoldCount on the show.
  */
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!isCronRequestAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

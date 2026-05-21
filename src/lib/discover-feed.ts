@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client/wasm';
 import { withDbRetry, db } from '@/lib/db';
 import type { DirectoryBrowserProfile, DirectoryMediaSearchEntry } from '@/components/ProfileDirectoryBrowser';
 import type { RequestLocation } from '@/lib/request-location';

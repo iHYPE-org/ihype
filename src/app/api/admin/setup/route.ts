@@ -35,10 +35,15 @@ export async function POST(request: Request) {
 
   const existing = await db.user.findUnique({
     where: { email: 'admin@ihype.org' },
-    select: { id: true }
+    select: { id: true, _count: { select: { passkeys: true } } }
   });
 
   if (existing) {
+    // Don't re-issue the passkey bootstrap cookie once passkeys are already registered —
+    // that window should only be open once.
+    if (existing._count.passkeys > 0) {
+      return NextResponse.json({ exists: true, userId: existing.id });
+    }
     const resp = NextResponse.json({ exists: true, userId: existing.id });
     return setCookie(resp, existing.id);
   }

@@ -7,14 +7,14 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ showId: string }> }
 ) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
   }
 
-  const { id: showId } = await params;
+  const { showId } = await params;
   const show = await db.show.findUnique({ where: { id: showId }, select: { id: true, creatorId: true } });
   if (!show) {
     return NextResponse.json({ error: 'Show not found.' }, { status: 404 });

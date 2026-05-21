@@ -6,7 +6,7 @@ import { readClientAddress } from '@/lib/request-meta';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ showId: string }> }) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Sign in to RSVP.' }, { status: 401 });
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: 'Too many RSVP toggles.' }, { status: 429 });
   }
 
-  const { id: showId } = await params;
+  const { showId } = await params;
   const show = await db.show.findUnique({ where: { id: showId }, select: { id: true } });
   if (!show) return NextResponse.json({ error: 'Show not found.' }, { status: 404 });
 
@@ -38,9 +38,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   return NextResponse.json({ going: !existing, count });
 }
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ showId: string }> }) {
   const session = await auth();
-  const { id: showId } = await params;
+  const { showId } = await params;
 
   const [count, rsvp] = await Promise.all([
     db.showRsvp.count({ where: { showId } }),

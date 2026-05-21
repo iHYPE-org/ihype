@@ -1,27 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendArtistWeeklyDigest } from '@/lib/artist-digest';
+import { isCronRequestAuthorized } from '@/lib/cron-auth';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-function isAuthorized(request: NextRequest): boolean {
-  if (request.headers.get('x-vercel-cron')) return true;
-  const authHeader = request.headers.get('authorization');
-  if (process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`) {
-    return true;
-  }
-  return false;
-}
-
 export async function GET(request: NextRequest) {
-  if (!isAuthorized(request)) {
+  if (!isCronRequestAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
   }
   return runDigest(request);
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAuthorized(request)) {
+  if (!isCronRequestAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
   }
   return runDigest(request);

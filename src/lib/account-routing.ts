@@ -1,4 +1,4 @@
-import { ProfileType } from '@prisma/client';
+import { ProfileType } from '@prisma/client/wasm';
 import { db } from '@/lib/db';
 import type { DiscoverModuleId } from '@/lib/discover-modules';
 

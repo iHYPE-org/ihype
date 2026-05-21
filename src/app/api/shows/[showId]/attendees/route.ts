@@ -5,9 +5,9 @@ import { db } from '@/lib/db';
 // GET — public, returns opted-in attendees (name + avatar only)
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ showId: string }> }
 ) {
-  const { id } = await params;
+  const { showId: id } = await params;
 
   const attendees = await db.showAttendee.findMany({
     where: { showId: id, optedIn: true },
@@ -29,14 +29,14 @@ export async function GET(
 // POST — auth: toggle opt-in
 export async function POST(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ showId: string }> }
 ) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Login required' }, { status: 401 });
   }
 
-  const { id: showId } = await params;
+  const { showId } = await params;
 
   const existing = await db.showAttendee.findUnique({
     where: { userId_showId: { userId: session.user.id, showId } },

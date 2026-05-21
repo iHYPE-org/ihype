@@ -50,6 +50,8 @@ export type EditableFieldKey =
   | 'stateRegion'
   | 'postalCode'
   | 'country'
+  | 'latitude'
+  | 'longitude'
   | 'parkingDetails'
   | 'stayRecommendations'
   | 'upcomingContent'
@@ -120,6 +122,8 @@ const defaultFormValues: Record<EditableFieldKey, string> = {
   stateRegion: '',
   postalCode: '',
   country: '',
+  latitude: '',
+  longitude: '',
   parkingDetails: '',
   stayRecommendations: '',
   upcomingContent: '',
@@ -289,6 +293,8 @@ export function ProfilePageEditor({
       stateRegion: formValues.stateRegion,
       postalCode: formValues.postalCode,
       country: formValues.country,
+      latitude: formValues.latitude,
+      longitude: formValues.longitude,
       parkingDetails: formValues.parkingDetails,
       stayRecommendations: formValues.stayRecommendations,
       upcomingContent: formValues.upcomingContent,

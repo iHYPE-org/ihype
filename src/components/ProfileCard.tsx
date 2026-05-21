@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { HypeButton } from '@/components/HypeButton';
 import { getSafeImageUrl } from '@/lib/asset-safety';
-import { shortenHexId } from '@/lib/hex-id';
+import { shortenHexId } from '@/lib/hex-id-display';
 
 type ProfileCardProfile = {
   id: string;

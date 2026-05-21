@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isCronRequestAuthorized } from '@/lib/cron-auth';
 import { db } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
@@ -11,8 +12,7 @@ export const maxDuration = 60;
  * Guarded by CRON_SECRET so only Vercel's scheduler can invoke it.
  */
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!isCronRequestAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

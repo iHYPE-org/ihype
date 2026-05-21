@@ -20,8 +20,8 @@ export async function POST(request: NextRequest) {
       ...(venueProfileId ? { venueProfileId } : {}),
       status: { not: 'CANCELED' }
     },
-    select: { id: true, title: true, slug: true, startsAt: true }
+    select: { id: true }
   });
 
-  return NextResponse.json({ duplicate: !!existing, existing });
+  return NextResponse.json({ duplicate: !!existing });
 }

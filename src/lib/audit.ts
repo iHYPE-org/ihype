@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client/wasm';
 import { db } from '@/lib/db';
 
 type AuditInput = {
@@ -7,7 +7,7 @@ type AuditInput = {
   entityType: string;
   entityId?: string | null;
   ipAddress?: string | null;
-  metadata?: Record<string, unknown> | null;
+  metadata?: Prisma.InputJsonValue | null;
 };
 
 type EmailDeliveryInput = {
@@ -34,7 +34,7 @@ export async function recordAuditEvent({
         entityType,
         entityId: entityId || null,
         ipAddress: ipAddress || null,
-        metadata: (metadata ?? Prisma.JsonNull) as Prisma.InputJsonValue
+        metadata: metadata === null ? Prisma.JsonNull : metadata ?? undefined
       }
     });
   } catch (error) {

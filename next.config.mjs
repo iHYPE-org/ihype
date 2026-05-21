@@ -69,6 +69,9 @@ const nextConfig = {
       { protocol: 'https', hostname: '**' }
     ]
   },
+  outputFileTracingIncludes: {
+    '/*': ['./node_modules/.prisma/client/*.wasm']
+  },
   experimental: {
     workerThreads: true
   },

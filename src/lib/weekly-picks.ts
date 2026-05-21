@@ -2,9 +2,8 @@ import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
 import Anthropic from '@anthropic-ai/sdk';
 
-const client = new Anthropic();
-
 export async function sendWeeklyPicksEmails(): Promise<{ sent: number; skipped: number }> {
+  const client = new Anthropic();
   // Get top hyped profiles this week
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const topProfiles = await db.profile.findMany({

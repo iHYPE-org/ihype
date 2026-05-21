@@ -1,5 +1,5 @@
-import { Prisma, PrismaClient } from '@prisma/client';
-import { withAccelerate } from '@prisma/extension-accelerate';
+import { Prisma, PrismaClient } from '@prisma/client/wasm';
+import { PrismaPg } from '@prisma/adapter-pg';
 
 const RUNTIME_POSTGRES_URL_CANDIDATES = [
   'POSTGRES_PRISMA_URL',
@@ -33,18 +33,64 @@ function normalizeRuntimeDatabaseUrl() {
   }
 }
 
-function makePrisma() {
+function getHyperdriveConnectionString(): string | undefined {
+  try {
+    // Dynamic require keeps Cloudflare runtime lookup out of the Next.js build path.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { getCloudflareContext } = require('@opennextjs/cloudflare');
+    const ctx = getCloudflareContext();
+    const hyperdrive = (ctx.env as Record<string, unknown>).HYPERDRIVE as
+      | { connectionString: string }
+      | undefined;
+    return hyperdrive?.connectionString;
+  } catch {
+    return undefined;
+  }
+}
+
+function getConnectionString() {
+  const hyperdriveUrl = getHyperdriveConnectionString();
+  if (hyperdriveUrl) {
+    return hyperdriveUrl;
+  }
+
   normalizeRuntimeDatabaseUrl();
-  return new PrismaClient().$extends(withAccelerate());
+  return process.env.DATABASE_URL;
 }
 
-const globalForPrisma = globalThis as unknown as { prisma?: ReturnType<typeof makePrisma> };
-
-export const db = globalForPrisma.prisma ?? makePrisma();
-
-if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = db;
+function makePrisma(url: string) {
+  const adapter = new PrismaPg({ connectionString: url });
+  return new PrismaClient({ adapter });
 }
+
+type DbClient = ReturnType<typeof makePrisma>;
+
+const globalForPrisma = globalThis as unknown as {
+  prisma?: DbClient;
+  prismaConnectionString?: string;
+};
+
+function getDb() {
+  const url = getConnectionString();
+  if (!url) {
+    throw new Error('DATABASE_URL or Cloudflare Hyperdrive connection string is required for Prisma');
+  }
+
+  if (!globalForPrisma.prisma || globalForPrisma.prismaConnectionString !== url) {
+    globalForPrisma.prisma = makePrisma(url);
+    globalForPrisma.prismaConnectionString = url;
+  }
+
+  return globalForPrisma.prisma;
+}
+
+export const db = new Proxy({} as DbClient, {
+  get(_target, prop, receiver) {
+    const client = getDb();
+    const value = Reflect.get(client, prop, receiver);
+    return typeof value === 'function' ? value.bind(client) : value;
+  }
+});
 
 function isRetryablePrismaError(error: unknown) {
   return (

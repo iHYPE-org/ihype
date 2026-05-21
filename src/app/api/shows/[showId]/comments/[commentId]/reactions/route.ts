@@ -9,7 +9,7 @@ const ALLOWED_EMOJIS = new Set(['👍', '❤️', '🔥']);
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; commentId: string }> }
+  { params }: { params: Promise<{ showId: string; commentId: string }> }
 ) {
   const session = await auth();
   if (!session?.user?.id) {

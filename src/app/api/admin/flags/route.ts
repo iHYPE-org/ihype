@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { isAdminSession } from '@/lib/permissions';
 import { recordAuditEvent } from '@/lib/audit';
 import { readClientAddress } from '@/lib/request-meta';
+import { kvPut } from '@/lib/kv';
 
 const ALLOWED_FLAGS = new Set([
   'demo_logins',
@@ -34,11 +35,8 @@ export async function POST(request: Request) {
 
   let storedInKv = false;
   try {
-    if (process.env.KV_REST_API_URL || process.env.KV_URL) {
-      const { kv } = await import('@vercel/kv');
-      await kv.set(`flags:${flag}`, enabled ? '1' : '0');
-      storedInKv = true;
-    }
+    await kvPut(`flags:${flag}`, enabled ? '1' : '0');
+    storedInKv = true;
   } catch (error) {
     console.error('KV flag write failed', error);
   }

@@ -12,6 +12,9 @@ prisma/dev.db
 dev-server.log
 
 .vercel
+.open-next
+.wrangler
+ihype/
 .env*.local
 dev-server.err.log
 cloudflared.log

@@ -1,17 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { isCronRequestAuthorized } from '@/lib/cron-auth';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-function isAuthorized(request: NextRequest): boolean {
-  if (request.headers.get('x-vercel-cron')) return true;
-  const authHeader = request.headers.get('authorization');
-  if (process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`) return true;
-  return false;
-}
-
 export async function GET(request: NextRequest) {
-  if (!isAuthorized(request)) {
+  if (!isCronRequestAuthorized(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -110,13 +104,13 @@ export async function GET(request: NextRequest) {
       if (userCount === 0) alerts.push('User count is 0 — possible data loss or connection issue.');
       if (profileCount === 0) alerts.push('Profile count is 0 — possible data loss or connection issue.');
       try {
-        const { kv } = await import('@vercel/kv');
-        const lastUserCount = await kv.get<number>('db-health:user-count');
-        const lastProfileCount = await kv.get<number>('db-health:profile-count');
+        const { kvGet, kvPut } = await import('@/lib/kv');
+        const lastUserCount = await kvGet<number>('db-health:user-count');
+        const lastProfileCount = await kvGet<number>('db-health:profile-count');
         if (lastUserCount !== null && userCount < lastUserCount * 0.8) alerts.push(`User count dropped from ${lastUserCount} to ${userCount} (>20% decrease).`);
         if (lastProfileCount !== null && profileCount < lastProfileCount * 0.8) alerts.push(`Profile count dropped from ${lastProfileCount} to ${profileCount} (>20% decrease).`);
-        await kv.set('db-health:user-count', userCount);
-        await kv.set('db-health:profile-count', profileCount);
+        await kvPut('db-health:user-count', userCount);
+        await kvPut('db-health:profile-count', profileCount);
       } catch { /* KV not available */ }
       if (alerts.length > 0) {
         await sendGenericEmail({ to: ADMIN_EMAIL, subject: '[iHYPE] DB health alert', text: alerts.join('\n\n') + `\n\nCurrent counts: users=${userCount}, profiles=${profileCount}`, html: `<p>${alerts.map(a => `<strong>${a}</strong>`).join('<br/><br/>')}</p>` }).catch(() => {});
@@ -256,7 +250,7 @@ export async function GET(request: NextRequest) {
     }
 
     default:
-      return NextResponse.json({ error: 'Unknown job. Use ?job=digest|artist-digest|health-check|onboarding|show-reminders|db-health|weekly-picks|admin-report|new-to-scene|expire-ads|feature-shows|flag-spam|show-payouts|artist-onboarding|close-stale-bookings|follow-digest|session-cleanup|audit-log-rotate|stripe-connect-health' }, { status: 400 });
+      return NextResponse.json({ error: 'Unknown job.' }, { status: 400 });
   }
 }
 

@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ showId: string }> }) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
-  const { id } = await params;
+  const { showId: id } = await params;
   const show = await db.show.findUnique({ where: { id }, select: { id: true, creatorId: true, setlistProgress: true } });
   if (!show) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
   if (show.creatorId !== session.user.id) return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });

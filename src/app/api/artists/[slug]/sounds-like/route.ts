@@ -3,9 +3,9 @@ import { db } from '@/lib/db';
 import Anthropic from '@anthropic-ai/sdk';
 
 export const dynamic = 'force-dynamic';
-const client = new Anthropic();
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
+  const client = new Anthropic();
   const { slug } = await params;
   const profile = await db.profile.findUnique({
     where: { slug },

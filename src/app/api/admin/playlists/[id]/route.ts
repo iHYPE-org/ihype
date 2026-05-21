@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { Prisma } from '@prisma/client/wasm';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
@@ -15,7 +16,7 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  let body: { title?: string; description?: string; tracks?: unknown[]; published?: boolean } = {};
+  let body: { title?: string; description?: string; tracks?: unknown; published?: boolean } = {};
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -27,7 +28,9 @@ export async function PATCH(
     data: {
       ...(body.title !== undefined ? { title: String(body.title).slice(0, 200) } : {}),
       ...(body.description !== undefined ? { description: String(body.description).slice(0, 1000) } : {}),
-      ...(body.tracks !== undefined ? { tracks: Array.isArray(body.tracks) ? body.tracks : [] } : {}),
+      ...(body.tracks !== undefined
+        ? { tracks: Array.isArray(body.tracks) ? (body.tracks as Prisma.InputJsonArray) : [] }
+        : {}),
       ...(body.published !== undefined ? { published: Boolean(body.published) } : {})
     }
   });

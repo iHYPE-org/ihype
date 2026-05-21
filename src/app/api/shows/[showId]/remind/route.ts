@@ -7,14 +7,14 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ showId: string }> }
 ) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Login required' }, { status: 401 });
   }
 
-  const { id } = await params;
+  const { showId: id } = await params;
   const show = await db.show.findUnique({ where: { id }, select: { id: true, title: true } });
   if (!show) return NextResponse.json({ error: 'Show not found' }, { status: 404 });
 
@@ -51,14 +51,14 @@ export async function POST(
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ showId: string }> }
 ) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ reminded: false });
   }
 
-  const { id } = await params;
+  const { showId: id } = await params;
   const existing = await db.notification.findFirst({
     where: { userId: session.user.id, type: 'show_reminder_pending', link: `/shows/${id}` }
   });

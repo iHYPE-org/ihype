@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import type { ShowStatus } from '@prisma/client';
+import type { ShowStatus } from '@prisma/client/wasm';
 import { db } from '@/lib/db';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
 
@@ -27,6 +27,8 @@ export async function GET(
       stateRegion: true,
       country: true,
       addressLine1: true,
+      latitude: true,
+      longitude: true,
       contactInfo: true,
       hoursText: true,
       genres: true,

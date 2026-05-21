@@ -10,6 +10,7 @@ import { HypeButton } from '@/components/HypeButton';
 import { VenueEventScheduler } from '@/components/VenueEventScheduler';
 import { VenueConnectionRequestActions } from '@/components/VenueConnectionRequestActions';
 import { VenueConnectionRequestForm } from '@/components/VenueConnectionRequestForm';
+import { VenueDirectionsButton } from '@/components/VenueDirectionsButton';
 import { ShareButton } from '@/components/ShareButton';
 import { getSafeBackgroundImageStyle, getSafeImageUrl, getSafeVideoUrl } from '@/lib/asset-safety';
 import { canManageOwnedResource } from '@/lib/permissions';
@@ -199,6 +200,13 @@ export default async function VenuePage({
   const logoUrl = canViewCustomPage ? getSafeImageUrl(profile.logoImage || profile.avatarImage) : null;
   const featureImageUrl = canViewCustomPage ? getSafeImageUrl(profile.galleryImage || profile.heroImage) : null;
   const featureVideoUrl = canViewCustomPage ? getSafeVideoUrl(profile.featureVideoUrl) : null;
+  const venueAddress = [
+    profile.addressLine1,
+    profile.city,
+    profile.stateRegion,
+    profile.postalCode,
+    profile.country
+  ].filter(Boolean).join(', ');
 
   const base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org';
   const venueJsonLd = {
@@ -280,6 +288,11 @@ export default async function VenuePage({
             <div className="profile-public-actions">
               <Link className="button small secondary" href={`/venues/${profile.slug}?section=upcoming`}>See shows</Link>
               <Link className="button small secondary" href={`/venues/${profile.slug}?section=request`}>Request artist</Link>
+              <VenueDirectionsButton
+                destinationAddress={venueAddress}
+                destinationLatitude={profile.latitude}
+                destinationLongitude={profile.longitude}
+              />
               <Link className="button small secondary" href="/register?role=VENUE">List a venue</Link>
               <ShareButton path={`/venues/${profile.slug}`} title={profile.name} label="Copy profile link" />
             </div>
@@ -326,14 +339,14 @@ export default async function VenuePage({
                   {profile.addressLine1 ? (
                     <div className="stat">
                       <strong>Address</strong>
-                      {[
-                        profile.addressLine1,
-                        profile.city,
-                        profile.stateRegion,
-                        profile.postalCode
-                      ]
-                        .filter(Boolean)
-                        .join(', ')}
+                      {venueAddress}
+                      <div style={{ marginTop: 10 }}>
+                        <VenueDirectionsButton
+                          destinationAddress={venueAddress}
+                          destinationLatitude={profile.latitude}
+                          destinationLongitude={profile.longitude}
+                        />
+                      </div>
                     </div>
                   ) : null}
                   {profile.hoursText ? (

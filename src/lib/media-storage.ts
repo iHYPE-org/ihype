@@ -1,20 +1,11 @@
-import { put } from '@vercel/blob';
-
-function getBlobToken() {
-  return process.env.BLOB_READ_WRITE_TOKEN?.trim() || null;
-}
-
-function sanitizePathSegment(value: string) {
-  return value
-    .trim()
-    .replace(/[^a-z0-9._-]+/gi, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 120);
-}
+import { isR2StorageAvailable, uploadArtistMediaToR2 } from '@/lib/r2';
 
 export function isBlobMediaStorageConfigured() {
-  return Boolean(getBlobToken());
+  return Boolean(process.env.R2_PUBLIC_BASE_URL);
+}
+
+export async function isBlobMediaStorageAvailable() {
+  return isR2StorageAvailable();
 }
 
 export async function uploadArtistMediaToBlob({
@@ -26,17 +17,11 @@ export async function uploadArtistMediaToBlob({
   hexId: string;
   profileId: string;
 }) {
-  const safeName = sanitizePathSegment(file.name || `${hexId}.media`) || `${hexId}.media`;
-  const path = `artist-media/${sanitizePathSegment(profileId)}/${hexId}/${safeName}`;
-  const blob = await put(path, file, {
-    access: 'public',
-    addRandomSuffix: false,
-    contentType: file.type
-  });
+  const result = await uploadArtistMediaToR2({ file, hexId, profileId });
 
   return {
-    provider: 'vercel-blob',
-    key: blob.pathname,
-    url: blob.url
+    provider: result.provider,
+    key: result.key,
+    url: result.url
   };
 }

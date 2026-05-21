@@ -8,11 +8,11 @@ import { isAdminSession } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ showId: string }> }) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Sign in required.' }, { status: 401 });
 
-  const { id: showId } = await params;
+  const { showId } = await params;
   const show = await db.show.findUnique({ where: { id: showId }, select: { id: true, creatorId: true } });
   if (!show) return NextResponse.json({ error: 'Show not found.' }, { status: 404 });
   if (show.creatorId !== session.user.id && !isAdminSession(session)) {
@@ -47,8 +47,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   return NextResponse.json({ ok: true, tracks });
 }
 
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id: showId } = await params;
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ showId: string }> }) {
+  const { showId } = await params;
   const last = await db.auditLog.findFirst({
     where: { action: 'show_setlist', entityType: 'show', entityId: showId },
     orderBy: { createdAt: 'desc' },
