@@ -1,6 +1,6 @@
 # ihype.org production app starter
 
-A production-oriented Next.js application for hosting artist, promoter, venue, and fan pages with beta-safe public pages, account support, hype/upvotes, Prisma/Postgres storage, and Vercel deployment config.
+A production-oriented Next.js application for hosting artist, promoter, venue, and fan pages with beta-safe public pages, account support, hype/upvotes, Prisma/Postgres storage, and Cloudflare Workers deployment.
 
 ## Stack
 
@@ -21,13 +21,14 @@ A production-oriented Next.js application for hosting artist, promoter, venue, a
 - Password reset by emailed six-digit passcode with a 5-minute reset window.
 - Essential auth cookies only, with session cookies shortened and non-session auth cookies scoped to `/api/auth`.
 - Hype button that works like an upvote, one hype per account per show.
-- Public health endpoint at `/api/health` for uptime monitors and beta launch checks.
+- Public health endpoint at `/api/health` for uptime monitors, launch blockers, and beta launch checks.
 - Admin beta console for verification review, content reports, support requests, CSV exports, email/MFA delivery, integration readiness, and audit activity.
 - Support intake at `/support` for login, verification, takedown, safety, and ticketing issues.
 - Authenticated API route for creating shows.
 - Authenticated API route for provisioning a Mux live stream and storing playback info.
 - Mux webhook endpoint to flip show status between `LIVE` and `ENDED`.
 - Prisma schema and seed data for quick local startup.
+- Manual launch seed workflow for safe production starter content.
 - Dockerfile and `docker-compose.yml` for local production-style runs.
 
 ## Local setup
@@ -87,6 +88,8 @@ These demo accounts are for local development and controlled staging only. Produ
 - Optional invite-only signup is controlled by `FEATURE_REQUIRE_INVITE_CODE=true` and comma-separated `BETA_INVITE_CODES`.
 - Auth, signup, and dashboard pages are intentionally marked `noindex`.
 - The Prisma seed is for local/demo data only and refuses production runs unless `ALLOW_PRODUCTION_SEEDING=true` is explicitly set.
+- Production starter content uses `.github/workflows/seed-launch-content.yml` and requires the manual confirmation phrase `seed ihype launch`.
+- Post-deploy smoke tests run against `/api/health`, `/`, `/login`, `/shows`, and `/status`.
 
 ## Cookie posture
 
@@ -112,12 +115,11 @@ These demo accounts are for local development and controlled staging only. Produ
   - aggregate transparency counters for shows, profiles, hype, and venue requests
   - product commitments around explainability and non-targeted trust posture
 
-## Vercel deployment quick start
+## Cloudflare deployment quick start
 
-1. Import the repo into Vercel as a Next.js project.
-2. Add the environment variables from `.env.example` to Production and Preview.
-3. Use a separate PostgreSQL database for Preview deployments so preview migrations do not touch Production.
-4. Connect a managed PostgreSQL database such as Neon and set `DATABASE_URL` per environment.
+1. Add `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `DATABASE_URL`, and `DIRECT_URL` to the GitHub `Production - ihype` environment.
+2. Push to `main`.
+3. GitHub Actions runs migrations, builds the OpenNext Cloudflare bundle, deploys the Worker and cron Worker, then runs production smoke checks.
 5. Add your Mux credentials and webhook secret.
 6. Add `OPENAI_API_KEY` if you want fan avatar generation enabled.
 7. Add SMTP delivery settings (`SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`) for live sign-in MFA, sign-up verification, ticket emails, and password reset emails.

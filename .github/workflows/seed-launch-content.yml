@@ -1,0 +1,30 @@
+name: Seed launch content
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type: seed ihype launch'
+        required: true
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    environment: Production – ihype
+    if: github.event.inputs.confirm == 'seed ihype launch'
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.DIRECT_URL }}
+      CONFIRM_LAUNCH_SEED: ${{ github.event.inputs.confirm }}
+      NODE_ENV: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - run: npm ci
+      - run: npx prisma migrate deploy
+      - run: npm run prisma:seed:launch

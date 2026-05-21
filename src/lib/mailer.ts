@@ -19,6 +19,23 @@ export function isEmailDeliveryConfigured() {
   return isResendEmailConfigured();
 }
 
+export function getEmailDeliveryReadiness() {
+  const blockers: string[] = [];
+
+  if (!env.RESEND_API_KEY) {
+    blockers.push('Set RESEND_API_KEY for transactional email.');
+  }
+
+  if (!getEmailFrom()) {
+    blockers.push('Set EMAIL_FROM to a verified sender address.');
+  }
+
+  return {
+    ready: blockers.length === 0,
+    blockers
+  };
+}
+
 type ConfiguredEmailInput = {
   to: string;
   subject: string;

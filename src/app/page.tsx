@@ -41,6 +41,7 @@ export default async function MarketingPage() {
   const liveUserCount = health.database.ok && 'users' in health.database
     ? health.database.users ?? homeData.profiles.length
     : homeData.profiles.length;
+  const hasLiveUsers = liveUserCount > 0;
   const artistSeeds = homeData.profiles
     .filter((profile) => profile.type === 'ARTIST')
     .slice(0, 3)
@@ -81,7 +82,13 @@ export default async function MarketingPage() {
           <Link href="/login" className="lp-btn-ghost">Sign in</Link>
         </div>
         <p className="lp-hero-social-proof" style={{ marginTop: 12, fontSize: '0.95rem', opacity: 0.78 }}>
-          <strong>{formatCompact(liveUserCount)}</strong> fans already building their scene.
+          {hasLiveUsers ? (
+            <>
+              <strong>{formatCompact(liveUserCount)}</strong> fans already building their scene.
+            </>
+          ) : (
+            <>Launch crew is open. Be one of the first scene builders.</>
+          )}
         </p>
         <div className="lp-live-proof" aria-label="Live iHYPE trust signals">
           <div className="lp-live-proof-item">

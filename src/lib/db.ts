@@ -31,6 +31,17 @@ function readCloudflareEnv(name: string): string | undefined {
   }
 }
 
+function hasCloudflareContext() {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { getCloudflareContext } = require('@opennextjs/cloudflare');
+    getCloudflareContext();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function readRuntimeEnv(name: string): string | undefined {
   return process.env[name]?.trim() || readCloudflareEnv(name);
 }
@@ -72,6 +83,10 @@ function getDb() {
   const url = getConnectionString();
   if (!url) {
     throw new Error('A direct Postgres DATABASE_URL is required for Prisma');
+  }
+
+  if (hasCloudflareContext()) {
+    return makePrisma(url);
   }
 
   if (!globalForPrisma.prisma || globalForPrisma.prismaConnectionString !== url) {

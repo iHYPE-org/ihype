@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { db } from '@/lib/db';
+import { getHealthSnapshot } from '@/lib/health';
 import { kvPut } from '@/lib/kv';
 import { getRateLimitMetrics } from '@/lib/rate-limit';
 
@@ -61,11 +62,12 @@ function StatusDot({ ok }: { ok: boolean }) {
 }
 
 export default async function StatusPage() {
-  const [dbOk, resendResult, kvResult, rateLimitMetrics] = await Promise.all([
+  const [dbOk, resendResult, kvResult, rateLimitMetrics, health] = await Promise.all([
     checkDb(),
     checkResend(),
     checkKv(),
-    getRateLimitMetrics(50).catch(() => [] as Array<{ bucket: string; hits: number }>)
+    getRateLimitMetrics(50).catch(() => [] as Array<{ bucket: string; hits: number }>),
+    getHealthSnapshot()
   ]);
 
   const envChecks = REQUIRED_ENV_VARS.map((key) => ({
@@ -82,6 +84,7 @@ export default async function StatusPage() {
     anthropicPresent &&
     stripePresent &&
     envChecks.every((c) => c.ok);
+  const launchBlockers = health.status === 'ok' ? health.launchReadiness.blockers : ['Health snapshot is degraded.'];
 
   return (
     <main className="container section" style={{ maxWidth: 560 }}>
@@ -89,6 +92,23 @@ export default async function StatusPage() {
       <p className="meta" style={{ marginBottom: 24 }}>
         {allOk ? '✅ All systems operational' : '⚠️ Some checks failed'}
       </p>
+
+      <div className="panel" style={{ padding: '16px 20px', marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: launchBlockers.length ? 10 : 0 }}>
+          <StatusDot ok={launchBlockers.length === 0} />
+          <span>Launch readiness</span>
+          <span className="meta" style={{ marginLeft: 'auto' }}>
+            {launchBlockers.length === 0 ? 'Ready' : `${launchBlockers.length} blockers`}
+          </span>
+        </div>
+        {launchBlockers.length > 0 ? (
+          <ul className="meta" style={{ margin: 0, paddingLeft: 18 }}>
+            {launchBlockers.map((blocker) => (
+              <li key={blocker}>{blocker}</li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
 
       <div className="panel" style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>

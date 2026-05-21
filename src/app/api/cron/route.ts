@@ -49,6 +49,24 @@ export async function GET(request: NextRequest) {
           console.error('[cron/health-check] alert email failed', err);
         }
       }
+      if (snapshot.status === 'ok' && !snapshot.launchReadiness.ready && isEmailDeliveryConfigured()) {
+        try {
+          const { kvGet, kvPut } = await import('@/lib/kv');
+          const lastAlert = await kvGet<number>('health-alert:launch-readiness');
+          const shouldAlert = !lastAlert || Date.now() - lastAlert > 24 * 60 * 60 * 1000;
+          if (shouldAlert) {
+            await sendGenericEmail({
+              to: ADMIN_EMAIL,
+              subject: '[iHYPE] Launch readiness blockers',
+              text: snapshot.launchReadiness.blockers.join('\n'),
+              html: `<ul>${snapshot.launchReadiness.blockers.map((item) => `<li>${item}</li>`).join('')}</ul>`
+            });
+            await kvPut('health-alert:launch-readiness', Date.now(), { ex: 24 * 60 * 60 });
+          }
+        } catch (err) {
+          console.error('[cron/health-check] launch readiness alert failed', err);
+        }
+      }
       const cronHealth = await checkCronHealth();
       if (cronHealth.stale.length > 0) {
         await sendGenericEmail({ to: ADMIN_EMAIL, subject: '[iHYPE] Stale cron jobs detected', text: `These cron jobs haven't run in 48h: ${cronHealth.stale.join(', ')}`, html: `<p>Stale crons: <strong>${cronHealth.stale.join(', ')}</strong></p>` }).catch(() => {});

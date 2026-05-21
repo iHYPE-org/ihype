@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
-import { isEmailDeliveryConfigured, isSmtpEmailConfigured } from '@/lib/mailer';
+import { getEmailDeliveryReadiness, isEmailDeliveryConfigured, isSmtpEmailConfigured } from '@/lib/mailer';
 import { isBlobMediaStorageConfigured } from '@/lib/media-storage';
-import { isPaymentProcessingConfigured } from '@/lib/payments';
+import { getPaymentProcessingReadiness, isPaymentProcessingConfigured } from '@/lib/payments';
 import { areDemoLoginsEnabledRuntime, isInviteCodeRequiredRuntime, shouldHideDemoContentRuntime } from '@/lib/runtime-flags';
 
 export async function getHealthSnapshot() {
@@ -24,6 +24,14 @@ export async function getHealthSnapshot() {
       isInviteCodeRequiredRuntime(),
       shouldHideDemoContentRuntime()
     ]);
+
+    const emailReadiness = getEmailDeliveryReadiness();
+    const paymentReadiness = getPaymentProcessingReadiness();
+    const launchBlockers = [
+      ...(userCount === 0 ? ['Seed launch content so public discovery is not empty.'] : []),
+      ...emailReadiness.blockers,
+      ...paymentReadiness.blockers
+    ];
 
     return {
       status: 'ok' as const,
@@ -50,6 +58,10 @@ export async function getHealthSnapshot() {
         demoLogins,
         inviteOnlySignup,
         demoContentHidden
+      },
+      launchReadiness: {
+        ready: launchBlockers.length === 0,
+        blockers: launchBlockers
       }
     };
   } catch (error) {

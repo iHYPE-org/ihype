@@ -1,7 +1,7 @@
 name = "ihype"
 main = "worker.js"
 compatibility_date = "2026-05-20"
-compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public", "no_handle_cross_request_promise_resolution"]
 find_additional_modules = true
 base_dir = ".open-next/server-functions/default"
 
