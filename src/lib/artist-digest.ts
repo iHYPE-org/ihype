@@ -1,31 +1,21 @@
 import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
 
-export async function sendArtistWeeklyDigest(profileId: string): Promise<void> {
+type ProfileStub = { id: string; name: string; owner: { email: string | null; name: string | null } | null };
+
+async function sendDigestForProfile(profile: ProfileStub): Promise<void> {
+  if (!profile.owner?.email) return;
+
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-
-  const profile = await db.profile.findUnique({
-    where: { id: profileId },
-    select: {
-      id: true,
-      name: true,
-      owner: { select: { email: true, name: true } }
-    }
-  });
-
-  if (!profile?.owner?.email) return;
 
   const [playCount, hypeCount, followerCount] = await Promise.all([
     db.mediaListen.count({
-      where: {
-        artistProfileSlug: { not: null },
-        createdAt: { gte: sevenDaysAgo }
-      }
+      where: { artistProfileSlug: { not: null }, createdAt: { gte: sevenDaysAgo } }
     }),
     db.profileHypeEvent.count({
-      where: { profileId, createdAt: { gte: sevenDaysAgo } }
+      where: { profileId: profile.id, createdAt: { gte: sevenDaysAgo } }
     }),
-    db.follow.count({ where: { followeeProfileId: profileId } })
+    db.follow.count({ where: { followeeProfileId: profile.id } })
   ]);
 
   const subject = `Your iHYPE weekly digest — ${profile.name}`;
@@ -44,4 +34,28 @@ export async function sendArtistWeeklyDigest(profileId: string): Promise<void> {
   ].join('\n');
 
   await sendGenericEmail({ to: profile.owner.email, subject, text, html: `<pre style="font-family:sans-serif;white-space:pre-wrap">${text}</pre>` });
+}
+
+// Legacy single-profile entry point (used by direct API calls)
+export async function sendArtistWeeklyDigest(profileId: string): Promise<void> {
+  const profile = await db.profile.findUnique({
+    where: { id: profileId },
+    select: { id: true, name: true, owner: { select: { email: true, name: true } } }
+  });
+  if (!profile) return;
+  await sendDigestForProfile(profile);
+}
+
+// Batch entry point used by the cron job — avoids N+1 profile lookups
+export async function sendArtistWeeklyDigestBatch(profiles: ProfileStub[]): Promise<{ sent: number }> {
+  let sent = 0;
+  for (const profile of profiles) {
+    try {
+      await sendDigestForProfile(profile);
+      sent++;
+    } catch {
+      // continue to next profile
+    }
+  }
+  return { sent };
 }

@@ -10,9 +10,10 @@ import type {
   AuthenticatorTransportFuture,
 } from '@simplewebauthn/types';
 import { db } from '@/lib/db';
+import { getBaseUrl } from '@/lib/utils';
 
 function getRpInfo() {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ihype.org';
+  const appUrl = getBaseUrl();
   const url = new URL(appUrl);
   return { rpID: url.hostname, rpName: 'iHYPE', origin: appUrl };
 }
@@ -45,6 +46,7 @@ export async function verifyPasskeyRegistration(
   userId: string,
   response: RegistrationResponseJSON,
   expectedChallenge: string,
+  name?: string,
 ) {
   const { rpID, origin } = getRpInfo();
   const verification = await verifyRegistrationResponse({
@@ -68,6 +70,7 @@ export async function verifyPasskeyRegistration(
       deviceType: credentialDeviceType,
       backedUp: credentialBackedUp,
       transports: (response.response.transports ?? []).join(','),
+      name: name?.trim().slice(0, 80) || null,
     },
   });
 
@@ -101,7 +104,10 @@ export async function verifyPasskeyAuthentication(
 ) {
   const { rpID, origin } = getRpInfo();
 
-  const passkey = await db.passkey.findUnique({ where: { credentialId: response.id } });
+  const passkey = await db.passkey.findUnique({
+    where: { credentialId: response.id },
+    select: { credentialId: true, publicKey: true, counter: true, transports: true, userId: true },
+  });
   if (!passkey) return null;
 
   const verification = await verifyAuthenticationResponse({
@@ -111,7 +117,7 @@ export async function verifyPasskeyAuthentication(
     expectedRPID: rpID,
     authenticator: {
       credentialID: Uint8Array.from(Buffer.from(passkey.credentialId, 'base64url')),
-      credentialPublicKey: new Uint8Array(passkey.publicKey),
+      credentialPublicKey: new Uint8Array(Buffer.isBuffer(passkey.publicKey) ? passkey.publicKey : Buffer.from(passkey.publicKey as unknown as ArrayBuffer)),
       counter: Number(passkey.counter),
       transports: passkey.transports ? (passkey.transports.split(',') as AuthenticatorTransportFuture[]) : undefined,
     },

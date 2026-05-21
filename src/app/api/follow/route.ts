@@ -34,19 +34,21 @@ export async function POST(request: NextRequest) {
   const profile = await db.profile.findUnique({ where: { id: profileId }, select: { id: true } });
   if (!profile) return NextResponse.json({ error: 'Profile not found.' }, { status: 404 });
 
-  const existing = await db.follow.findUnique({
-    where: { followerId_followeeProfileId: { followerId: session.user.id, followeeProfileId: profileId } }
+  const result = await db.$transaction(async (tx) => {
+    const existing = await tx.follow.findUnique({
+      where: { followerId_followeeProfileId: { followerId: session.user.id, followeeProfileId: profileId } }
+    });
+    if (existing) {
+      await tx.follow.delete({ where: { id: existing.id } });
+      const count = await tx.follow.count({ where: { followeeProfileId: profileId } });
+      return { following: false, count };
+    } else {
+      await tx.follow.create({ data: { followerId: session.user.id, followeeProfileId: profileId } });
+      const count = await tx.follow.count({ where: { followeeProfileId: profileId } });
+      return { following: true, count };
+    }
   });
-
-  if (existing) {
-    await db.follow.delete({ where: { id: existing.id } });
-    const count = await db.follow.count({ where: { followeeProfileId: profileId } });
-    return NextResponse.json({ following: false, count });
-  } else {
-    await db.follow.create({ data: { followerId: session.user.id, followeeProfileId: profileId } });
-    const count = await db.follow.count({ where: { followeeProfileId: profileId } });
-    return NextResponse.json({ following: true, count });
-  }
+  return NextResponse.json(result);
 }
 
 export async function GET(request: NextRequest) {

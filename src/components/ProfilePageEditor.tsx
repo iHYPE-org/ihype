@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { VisualDropStudio, type VisualDropStudioSlot } from '@/components/VisualDropStudio';
 import { getSafeBackgroundImageStyle } from '@/lib/asset-safety';
+import { getPreviewSnippet } from '@/lib/text';
 import {
   getProfileAccentTone,
   getProfileBackdropTone,
@@ -33,7 +34,6 @@ export type EditableFieldKey =
   | 'avatarImage'
   | 'logoImage'
   | 'galleryImage'
-  | 'featureVideoUrl'
   | 'aboutContent'
   | 'journalContent'
   | 'mediaContent'
@@ -105,7 +105,6 @@ const defaultFormValues: Record<EditableFieldKey, string> = {
   avatarImage: '',
   logoImage: '',
   galleryImage: '',
-  featureVideoUrl: '',
   aboutContent: '',
   journalContent: '',
   mediaContent: '',
@@ -130,11 +129,6 @@ const defaultFormValues: Record<EditableFieldKey, string> = {
   previousShowHighlights: ''
 };
 
-function getPreviewSnippet(value: string, fallback: string) {
-  const trimmed = value.trim();
-  if (!trimmed) return fallback;
-  return trimmed.length > 180 ? `${trimmed.slice(0, 177).trimEnd()}...` : trimmed;
-}
 
 export function ProfilePageEditor({
   profileId,
@@ -171,7 +165,7 @@ export function ProfilePageEditor({
   );
   const editableFields = fields.filter(
     (field) =>
-      !['heroImage', 'avatarImage', 'logoImage', 'galleryImage', 'featureVideoUrl'].includes(field.key)
+      !['heroImage', 'avatarImage', 'logoImage', 'galleryImage'].includes(field.key)
   );
   const selectedPreset = getProfileDesignPreset(formValues.themePreset);
   const selectedFontPreset = getProfileFontPreset(formValues.themeFontPreset);
@@ -221,14 +215,6 @@ export function ProfilePageEditor({
         placeholder: 'Drop image'
       },
       {
-        id: 'featureVideoUrl',
-        label: 'Feature video',
-        description: 'Short video clip or safe video URL for the page.',
-        kind: 'video',
-        value: formValues.featureVideoUrl,
-        placeholder: 'Drop video'
-      },
-      {
         id: 'mediaContent',
         label: 'Links / media notes',
         description: 'Drop a link or paste text that should live in the media area.',
@@ -239,7 +225,6 @@ export function ProfilePageEditor({
     ],
     [
       formValues.avatarImage,
-      formValues.featureVideoUrl,
       formValues.galleryImage,
       formValues.heroImage,
       formValues.logoImage,
@@ -276,7 +261,6 @@ export function ProfilePageEditor({
       avatarImage: formValues.avatarImage,
       logoImage: formValues.logoImage,
       galleryImage: formValues.galleryImage,
-      featureVideoUrl: formValues.featureVideoUrl,
       aboutContent: formValues.aboutContent,
       journalContent: formValues.journalContent,
       mediaContent: formValues.mediaContent,

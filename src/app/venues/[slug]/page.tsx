@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { cache } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
@@ -15,6 +16,7 @@ import { ShareButton } from '@/components/ShareButton';
 import { getSafeBackgroundImageStyle, getSafeImageUrl, getSafeVideoUrl } from '@/lib/asset-safety';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getDemoCreatorExclusion, getDemoOwnerExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
+import { getBaseUrl } from '@/lib/utils';
 
 const venueSections = ['about', 'upcoming', 'request'] as const;
 
@@ -52,14 +54,18 @@ function formatRequestStatus(value: 'PENDING' | 'BOOKED' | 'DISMISSED') {
   return 'Pending';
 }
 
+const getVenueMeta = cache((slug: string) =>
+  db.profile.findUnique({
+    where: { slug },
+    select: { name: true, headline: true, bio: true, city: true, stateRegion: true, country: true, hypeCount: true, avatarImage: true }
+  })
+);
+
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {
   const { slug } = await params;
-  const profile = await db.profile.findUnique({
-    where: { slug },
-    select: { name: true, headline: true, bio: true, city: true, stateRegion: true, country: true, hypeCount: true, avatarImage: true }
-  });
+  const profile = await getVenueMeta(slug);
 
   if (!profile) return { title: 'Venue · iHYPE' };
 
@@ -105,17 +111,13 @@ export default async function VenuePage({
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const activeSection = getActiveSection(resolvedSearchParams.section);
 
-  const profile = await db.profile.findUnique({
-    where: { slug },
-    include: {
-      owner: {
-        select: {
-          email: true,
-          username: true
-        }
-      }
-    }
-  });
+  const getVenuePage = cache((s: string) =>
+    db.profile.findUnique({
+      where: { slug: s },
+      include: { owner: { select: { email: true, username: true } } }
+    })
+  );
+  const profile = await getVenuePage(slug);
   if (!profile || profile.type !== 'VENUE') return notFound();
   if (shouldHideDemoContent() && isDemoUser(profile.owner)) return notFound();
   const profileSlug = profile.slug;
@@ -208,7 +210,7 @@ export default async function VenuePage({
     profile.country
   ].filter(Boolean).join(', ');
 
-  const base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org';
+  const base = getBaseUrl();
   const venueJsonLd = {
     '@context': 'https://schema.org',
     '@type': ['Place', 'MusicVenue'],
@@ -327,11 +329,6 @@ export default async function VenuePage({
               {featureImageUrl ? (
                 <div className="artist-media-visuals">
                   <img alt={`${profile.name} featured visual`} className="artist-media-visual-image" src={featureImageUrl} />
-                </div>
-              ) : null}
-              {featureVideoUrl ? (
-                <div className="artist-media-visuals">
-                  <video className="artist-media-visual-video" controls preload="metadata" src={featureVideoUrl} />
                 </div>
               ) : null}
               {(profile.addressLine1 || profile.hoursText || profile.parkingDetails || profile.stayRecommendations) ? (

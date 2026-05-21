@@ -27,7 +27,8 @@ export async function PATCH(
   let body: z.infer<typeof schema>;
   try {
     body = schema.parse(await request.json());
-  } catch {
+  } catch (err) {
+    console.error('[admin/verifications/[profileId]]', err);
     return NextResponse.json({ error: 'Invalid request.' }, { status: 400 });
   }
 

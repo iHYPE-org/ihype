@@ -26,7 +26,8 @@ export async function POST(request: NextRequest) {
   let event;
   try {
     event = constructWebhookEvent(payload, signature);
-  } catch {
+  } catch (err) {
+    console.error('[stripe/webhook]', err);
     return NextResponse.json({ error: 'Invalid signature.' }, { status: 400 });
   }
 
@@ -35,7 +36,8 @@ export async function POST(request: NextRequest) {
     await db.processedWebhookEvent.create({
       data: { source: 'stripe', eventId: event.id }
     });
-  } catch {
+  } catch (err) {
+    console.error('[stripe/webhook]', err);
     return NextResponse.json({ received: true, duplicate: true });
   }
 

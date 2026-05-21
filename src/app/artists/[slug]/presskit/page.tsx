@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { getBaseUrl } from '@/lib/utils';
 
 export default async function PressKitPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -12,7 +13,7 @@ export default async function PressKitPage({ params }: { params: Promise<{ slug:
   });
   if (!profile) notFound();
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org';
+  const baseUrl = getBaseUrl();
   const profileUrl = `${baseUrl}/artists/${slug}`;
 
   return (

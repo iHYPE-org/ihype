@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import { useAsyncForm } from '@/hooks/useAsyncForm';
 
 type ContentReportControlProps = {
   targetType: 'profile' | 'show' | 'media' | 'ticket';
@@ -32,14 +33,11 @@ export function ContentReportControl({
   const [reason, setReason] = useState('Content concern');
   const [details, setDetails] = useState('');
   const [company, setCompany] = useState('');
-  const [status, setStatus] = useState('');
-  const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { message: status, setMessage: setStatus, error, setError, pending: isSubmitting, setPending: setIsSubmitting, reset } = useAsyncForm();
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setStatus('');
-    setError('');
+    reset();
     setIsSubmitting(true);
 
     try {

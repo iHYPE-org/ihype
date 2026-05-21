@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { recordAuditEvent } from '@/lib/audit';
+import { getBaseUrl } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,7 @@ export async function GET(
 ) {
   const { slug } = await params;
   return NextResponse.redirect(
-    new URL(`/shows/${slug}?checkin=1`, process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org')
+    new URL(`/shows/${slug}?checkin=1`, getBaseUrl())
   );
 }
 

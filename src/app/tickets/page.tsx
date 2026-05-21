@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { PublicFeaturePage } from '@/components/PublicFeaturePage';
 
 export const metadata = {
@@ -62,9 +63,9 @@ export default function TicketsPage() {
       title="Tickets become"
     >
       <div className="public-promise-trust-links">
-        <a href="/ticket-policy">Ticket policy</a>
-        <a href="/transparency">Transparency ledger</a>
-        <a href="/support">Support</a>
+        <Link href="/ticket-policy">Ticket policy</Link>
+        <Link href="/transparency">Transparency ledger</Link>
+        <Link href="/support">Support</Link>
       </div>
     </PublicFeaturePage>
   );

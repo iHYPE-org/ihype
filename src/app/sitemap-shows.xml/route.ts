@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { getBaseUrl } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
-const base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org';
+const base = getBaseUrl();
 
 export async function GET() {
   const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);

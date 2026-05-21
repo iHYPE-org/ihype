@@ -1,13 +1,14 @@
 import QRCode from 'qrcode';
 import { TicketStatus } from '@prisma/client/wasm';
 import { createHexId } from '@/lib/hex-id';
+import { getBaseUrl } from '@/lib/utils';
 
 export function createSerializedTicketId() {
   return createHexId(12);
 }
 
 function getAppUrl() {
-  return process.env.NEXT_PUBLIC_APP_URL || process.env.AUTH_URL || 'https://ihype.org';
+  return getBaseUrl();
 }
 
 export function buildTicketVerificationUrl(serializedId: string) {

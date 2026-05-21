@@ -34,7 +34,11 @@ export async function POST(request: Request) {
 
     const challenge = await db.mfaChallenge.findUnique({
       where: { token: body.challengeId },
-      include: { user: true }
+      include: {
+        user: {
+          select: { id: true, name: true, email: true, image: true, role: true, emailVerified: true }
+        }
+      }
     });
 
     if (!challenge || !challenge.secretCiphertext) {

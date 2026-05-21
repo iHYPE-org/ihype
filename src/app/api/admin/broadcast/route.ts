@@ -49,7 +49,8 @@ export async function POST(request: Request) {
       target === 'ALL'
         ? { email: { not: null } }
         : { email: { not: null }, role: target },
-    select: { email: true, name: true }
+    select: { email: true, name: true },
+    take: 5000
   });
 
   if (body.preview) {

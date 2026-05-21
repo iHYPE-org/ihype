@@ -1,6 +1,18 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { db } from '@/lib/db';
+import type { Show } from '@prisma/client';
+
+type ShowWithVenue = Show & {
+  venueProfile: {
+    name: string;
+    slug: string;
+    city: string | null;
+    stateRegion: string | null;
+    latitude: number | null;
+    longitude: number | null;
+  } | null;
+};
 
 export const metadata: Metadata = {
   title: 'Shows Near Me · Map View · iHYPE',
@@ -20,12 +32,12 @@ export default async function ShowsMapPage() {
     },
     orderBy: { startsAt: 'asc' },
     take: 200
-  });
+  }) as ShowWithVenue[];
 
   // Group by city
-  const cityMap = new Map<string, typeof shows>();
+  const cityMap = new Map<string, ShowWithVenue[]>();
   for (const show of shows) {
-    const city = (show.venueProfile as any)?.city ?? 'Unknown city';
+    const city = show.venueProfile?.city ?? 'Unknown city';
     if (!cityMap.has(city)) cityMap.set(city, []);
     cityMap.get(city)!.push(show);
   }
@@ -50,9 +62,9 @@ export default async function ShowsMapPage() {
       ) : (
         <div style={{ display: 'grid', gap: 40 }}>
           {cities.map(([city, cityShows]) => {
-            const venueWithCoords = cityShows.find((s) => (s.venueProfile as any)?.latitude && (s.venueProfile as any)?.longitude)?.venueProfile;
+            const venueWithCoords = cityShows.find((s) => s.venueProfile?.latitude && s.venueProfile?.longitude)?.venueProfile;
             const mapsUrl = venueWithCoords
-              ? `https://www.google.com/maps/search/?api=1&query=${(venueWithCoords as any).latitude},${(venueWithCoords as any).longitude}`
+              ? `https://www.google.com/maps/search/?api=1&query=${venueWithCoords.latitude},${venueWithCoords.longitude}`
               : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(city + ' music venue')}`;
 
             return (
@@ -80,9 +92,9 @@ export default async function ShowsMapPage() {
                         <Link href={`/shows/${s.slug}`} style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14, color: 'var(--ink)', textDecoration: 'none' }}>
                           {s.title}
                         </Link>
-                        {(s.venueProfile as any)?.name ? (
+                        {s.venueProfile?.name ? (
                           <p style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-2)', margin: '2px 0 0' }}>
-                            @ <Link href={`/venues/${(s.venueProfile as any).slug}`} style={{ color: 'var(--ink-2)', textDecoration: 'none' }}>{(s.venueProfile as any).name}</Link>
+                            @ <Link href={`/venues/${s.venueProfile.slug}`} style={{ color: 'var(--ink-2)', textDecoration: 'none' }}>{s.venueProfile.name}</Link>
                           </p>
                         ) : null}
                       </div>

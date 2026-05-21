@@ -70,7 +70,7 @@ export async function PATCH(
 
     const updatedReport = await db.contentReport.update({
       where: { id },
-      data: { status: body.status }
+      data: { status: body.status, ...(body.note !== undefined && { note: body.note }) }
     });
 
     await recordAuditEvent({

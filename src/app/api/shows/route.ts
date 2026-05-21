@@ -51,20 +51,23 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Login required' }, { status: 401 });
     }
 
+    const profileSelect = { select: { id: true, name: true, slug: true, type: true, avatarImage: true, city: true, stateRegion: true } };
     const shows = await db.show.findMany({
-      include: { venueProfile: true, headlinerProfile: true, promoterProfile: true },
+      include: { venueProfile: profileSelect, headlinerProfile: profileSelect, promoterProfile: profileSelect },
       where: { creatorId: session.user.id },
       orderBy: [{ createdAt: 'desc' }]
     });
     return NextResponse.json(shows);
   }
 
+  const profileSelect = { select: { id: true, name: true, slug: true, type: true, avatarImage: true, city: true, stateRegion: true } };
   const shows = await db.show.findMany({
-    include: { venueProfile: true, headlinerProfile: true, promoterProfile: true },
+    include: { venueProfile: profileSelect, headlinerProfile: profileSelect, promoterProfile: profileSelect },
     where: {
       status: { in: ['SCHEDULED', 'LIVE', 'ENDED'] },
       ...getDemoCreatorExclusion()
-    }
+    },
+    take: 200
   });
   return NextResponse.json(sortShowsForFeed(shows));
 }
@@ -133,7 +136,10 @@ export async function POST(request: NextRequest) {
       }
 
       const baseSlug = slugify(body.title);
-      const slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
+      let slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
+      while (await db.show.findUnique({ where: { slug }, select: { id: true } })) {
+        slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
+      }
       const status = body.status === 'DRAFT' ? 'DRAFT' : 'SCHEDULED';
       const sortedTracks = [...tracks].sort((left, right) => left.position - right.position);
 
@@ -251,14 +257,17 @@ export async function POST(request: NextRequest) {
         });
       } catch (error) {
         return NextResponse.json(
-          { error: error instanceof Error ? error.message : 'Invalid payout split' },
+          { error: 'Invalid payout split configuration.' },
           { status: 400 }
         );
       }
     }
 
     const baseSlug = slugify(body.title);
-    const slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
+    let slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
+    while (await db.show.findUnique({ where: { slug }, select: { id: true } })) {
+      slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
+    }
 
     const show = await db.show.create({
       data: {
@@ -295,7 +304,8 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(show, { status: 201 });
-  } catch {
+  } catch (err) {
+    console.error('[shows]', err);
     return NextResponse.json({ error: 'Invalid show payload' }, { status: 400 });
   }
 }

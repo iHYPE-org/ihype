@@ -37,9 +37,12 @@ function DraggableTrack({ track, children, className, style, onClick }: {
   return (
     <div
       draggable
+      role="button"
+      tabIndex={0}
       className={className}
       style={{ ...style, cursor: 'grab' }}
       onClick={onClick}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(); } }}
       onDragStart={e => {
         setDragging(track);
         e.dataTransfer.setData('application/ihype-track', JSON.stringify(track));
@@ -227,7 +230,7 @@ const DEFAULT_PREFS = {
   city: 'Chicago, IL',
   greeting: 'warm' as 'warm' | 'minimal' | 'data',
 };
-type Prefs = typeof DEFAULT_PREFS;
+export type Prefs = typeof DEFAULT_PREFS;
 
 // ── CSS variable helper ────────────────────────────────────────
 function applyPrefs(prefs: Prefs) {
@@ -254,27 +257,27 @@ const IcSeeds    = (p: {s?:number}) => <Ic s={p.s}><path d="M12 22V12M12 12C12 7
 const IcArtist   = (p: {s?:number}) => <Ic s={p.s}><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><path d="M20 8l2 2-2 2M20 10h2"/></Ic>;
 const IcStudio   = (p: {s?:number}) => <Ic s={p.s}><path d="M6 3v18M18 3v18M3 6h18M3 12h18M3 18h18"/></Ic>;
 const IcSettings = (p: {s?:number}) => <Ic s={p.s}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></Ic>;
-const IcPlay     = ({ s = 14 }: {s?:number}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20"/></svg>;
-const IcPause    = ({ s = 14 }: {s?:number}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>;
+export const IcPlay     = ({ s = 14 }: {s?:number}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20"/></svg>;
+export const IcPause    = ({ s = 14 }: {s?:number}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>;
 const IcSkipP    = (p: {s?:number}) => <Ic {...p} sw={2}><polygon points="19 4 9 12 19 20" fill="currentColor"/><rect x="5" y="4" width="2" height="16" fill="currentColor"/></Ic>;
 const IcSkipN    = (p: {s?:number}) => <Ic {...p} sw={2}><polygon points="5 4 15 12 5 20" fill="currentColor"/><rect x="17" y="4" width="2" height="16" fill="currentColor"/></Ic>;
 const IcShuffle  = (p: {s?:number}) => <Ic {...p}><path d="M16 3h5v5M4 20l17-17M21 16v5h-5M15 15l6 6M4 4l5 5"/></Ic>;
 const IcRepeat   = (p: {s?:number}) => <Ic {...p}><path d="M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/></Ic>;
-const IcHeart    = ({ s = 14, c = 'currentColor' }: {s?:number; c?:string}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>;
+export const IcHeart    = ({ s = 14, c = 'currentColor' }: {s?:number; c?:string}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>;
 const IcQueue    = (p: {s?:number}) => <Ic {...p}><path d="M3 6h13M3 12h13M3 18h9M17 14v7l5-3.5z" fill="currentColor"/></Ic>;
 const IcVol      = (p: {s?:number}) => <Ic {...p}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19" fill="currentColor"/><path d="M15 9a3 3 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></Ic>;
 const IcSearch   = (p: {s?:number}) => <Ic {...p}><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></Ic>;
-const IcBolt     = (p: {s?:number}) => <Ic {...p}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10" fill="currentColor"/></Ic>;
-const IcCheck    = (p: {s?:number}) => <Ic {...p}><polyline points="20 6 9 17 4 12"/></Ic>;
-const IcArrow    = ({ s = 14 }: {s?:number}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>;
-const IcDot      = ({ c = 'currentColor', s = 8 }: {c?:string; s?:number}) => <svg width={s} height={s} viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill={c}/></svg>;
+export const IcBolt     = (p: {s?:number}) => <Ic {...p}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10" fill="currentColor"/></Ic>;
+export const IcCheck    = (p: {s?:number}) => <Ic {...p}><polyline points="20 6 9 17 4 12"/></Ic>;
+export const IcArrow    = ({ s = 14 }: {s?:number}) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>;
+export const IcDot      = ({ c = 'currentColor', s = 8 }: {c?:string; s?:number}) => <svg width={s} height={s} viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill={c}/></svg>;
 
 // ── Skeleton loader ────────────────────────────────────────────
-function WbSkeleton({ width, height, style }: { width?: number | string; height?: number | string; style?: React.CSSProperties }) {
+export function WbSkeleton({ width, height, style }: { width?: number | string; height?: number | string; style?: React.CSSProperties }) {
   return <div className="wb-skeleton" style={{ width: width ?? '100%', height: height ?? 16, ...style }} />;
 }
 
-type View = 'home' | 'discover' | 'seeds' | 'tickets' | 'studio' | 'artist' | 'venue' | 'settings' | 'inbox';
+export type View = 'home' | 'discover' | 'seeds' | 'tickets' | 'studio' | 'artist' | 'venue' | 'settings' | 'inbox';
 
 // ── Onboarding modal ───────────────────────────────────────────
 function OnboardingModal({ onDone }: { onDone: () => void }) {
@@ -1805,12 +1808,9 @@ const ViewTicketing = memo(function ViewTicketing({ data, activeProfileTypes }: 
 
 // ── View: Radio studio ─────────────────────────────────────────
 const ViewRadioStudio = memo(function ViewRadioStudio() {
-  const [mode, setMode] = useState<'scheduled' | 'live'>('scheduled');
   const [showName, setShowName] = useState('');
   const [schedule, setSchedule] = useState('');
   const [desc, setDesc] = useState('');
-  const [streamTitle, setStreamTitle] = useState('');
-  const [streamDesc, setStreamDesc] = useState('');
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'loading' | 'success'>('idle');
   const [errMsg, setErrMsg] = useState('');
   const field: React.CSSProperties = { width: '100%', padding: '9px 12px', background: 'var(--wb-bg-3)', border: '1px solid var(--wb-line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--wb-ink)', outline: 'none', boxSizing: 'border-box' as const };
@@ -1818,8 +1818,7 @@ const ViewRadioStudio = memo(function ViewRadioStudio() {
   const grp: React.CSSProperties = { display: 'flex', flexDirection: 'column' as const };
 
   async function handleSubmit() {
-    const requiredName = mode === 'scheduled' ? showName : streamTitle;
-    if (!requiredName.trim()) { setErrMsg('Show name is required.'); return; }
+    if (!showName.trim()) { setErrMsg('Show name is required.'); return; }
     setErrMsg('');
     setSubmitStatus('loading');
     await new Promise(r => setTimeout(r, 600));
@@ -1829,14 +1828,13 @@ const ViewRadioStudio = memo(function ViewRadioStudio() {
   function handleReset() {
     setSubmitStatus('idle');
     setShowName(''); setSchedule(''); setDesc('');
-    setStreamTitle(''); setStreamDesc('');
   }
 
   if (submitStatus === 'success') return (
     <div className="wb-view-pad" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 400, gap: 16, textAlign: 'center' }}>
-      <div style={{ fontSize: 40 }}>{mode === 'live' ? '🔴' : '📻'}</div>
-      <h2 className="wb-page-title" style={{ fontSize: 28 }}>{mode === 'live' ? (streamTitle || 'Live stream') : (showName || 'Your show')}</h2>
-      <p className="wb-page-sub">{mode === 'live' ? 'You\'re live. Fans can tune in now from the Radio tab.' : 'Your show is scheduled. Fans can find it in the Radio tab.'}</p>
+      <div style={{ fontSize: 40 }}>📻</div>
+      <h2 className="wb-page-title" style={{ fontSize: 28 }}>{showName || 'Your show'}</h2>
+      <p className="wb-page-sub">Your show is scheduled. Fans can find it in the Radio tab.</p>
       <button className="wb-btn-prime" onClick={handleReset}>Create another</button>
     </div>
   );
@@ -1847,12 +1845,7 @@ const ViewRadioStudio = memo(function ViewRadioStudio() {
       <h1 className="wb-page-title">Create a show</h1>
       <p className="wb-page-sub">Launch a live or prerecorded radio show. Anyone can curate music, tell people what they love, and share it with the scene. Radio shows are free community programming, not a payout product.</p>
 
-      <div className="wb-tabs" style={{ marginBottom: 20, marginTop: 16 }}>
-        <button onClick={() => { setMode('scheduled'); setErrMsg(''); }} className={`wb-tab${mode === 'scheduled' ? ' wb-tab-active' : ''}`}>Scheduled show</button>
-        <button onClick={() => { setMode('live'); setErrMsg(''); }} className={`wb-tab${mode === 'live' ? ' wb-tab-active' : ''}`}><IcDot c="#ff3e9a" s={7} /> Go live</button>
-      </div>
-
-      {mode === 'scheduled' && (
+      {(
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 16, alignItems: 'start' }}>
           <div className="wb-panel">
             <div className="wb-panel-head"><div className="wb-panel-title">Show details</div></div>
@@ -1897,42 +1890,6 @@ const ViewRadioStudio = memo(function ViewRadioStudio() {
         </div>
       )}
 
-      {mode === 'live' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 16, alignItems: 'start' }}>
-          <div className="wb-panel">
-            <div className="wb-panel-head"><div className="wb-panel-title">Stream details</div></div>
-            <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div style={grp}><label style={lbl}>STREAM TITLE</label><input style={field} value={streamTitle} onChange={e => setStreamTitle(e.target.value)} placeholder="e.g. Deep house — Friday night session" /></div>
-              <div style={grp}><label style={lbl}>DESCRIPTION</label><textarea rows={3} style={{ ...field, resize: 'vertical' as const }} value={streamDesc} onChange={e => setStreamDesc(e.target.value)} placeholder="Let listeners know what to expect…" /></div>
-              <div style={{ padding: '14px 16px', background: 'var(--wb-bg-3)', borderRadius: 8, border: '1px solid var(--wb-line-2)' }}>
-                <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.12em', color: 'var(--wb-ink-3)', marginBottom: 8 }}>STREAM KEY</div>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <input readOnly value="sk_live_••••••••••••••••" style={{ ...field, flex: 1, color: 'var(--wb-ink-3)', letterSpacing: '.1em' }} />
-                  <button className="wb-btn-ghost" style={{ flexShrink: 0 }}>Reveal</button>
-                </div>
-                <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--wb-ink-3)', marginTop: 8, lineHeight: 1.6 }}>Use with OBS, Twitch Studio, or any RTMP-compatible software. Point your encoder to <span style={{ color: 'var(--wb-ink-2)' }}>rtmp://live.ihype.org/stream</span></div>
-              </div>
-            </div>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div className="wb-panel" style={{ padding: '18px 16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <IcDot c="#ff3e9a" s={8} />
-                <span style={{ fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.14em', color: '#ff3e9a' }}>LIVE PREVIEW</span>
-              </div>
-              <div style={{ aspectRatio: '16/9', borderRadius: 8, background: '#0a0a0a', border: '1px solid var(--wb-line-2)', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--wb-ink-3)', letterSpacing: '.1em' }}>Waiting for stream…</span>
-              </div>
-              <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 16, color: 'var(--wb-ink)' }}>{streamTitle || 'Your stream title'}</div>
-            </div>
-            {errMsg && <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: '#ff5029', padding: '8px 12px', border: '1px solid rgba(255,80,41,.3)', borderRadius: 6 }}>{errMsg}</div>}
-            <button type="button" onClick={handleSubmit} disabled={submitStatus === 'loading'} className="wb-btn-prime" style={{ width: '100%', padding: '12px', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#ff3e9a', opacity: submitStatus === 'loading' ? 0.6 : 1 }}>
-              <IcDot c="#fff" s={8} /> {submitStatus === 'loading' ? 'Starting…' : 'Go live →'}
-            </button>
-            <p style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--wb-ink-3)', textAlign: 'center', lineHeight: 1.6 }}>Your stream will appear instantly in the Radio tab once your encoder connects.</p>
-          </div>
-        </div>
-      )}
     </div>
   );
 });

@@ -24,7 +24,7 @@ type ResolvedSequenceItem = {
   kind: ShowSequenceItem['kind'];
   label: string;
   url?: string;
-  mediaType?: 'audio' | 'video';
+  mediaType?: 'audio';
   notes?: string | null;
   durationSeconds?: number;
   previewImageUrl?: string | null;
@@ -278,31 +278,16 @@ export function ShowSequencePlayer({
         </div>
 
         {activeItem?.url ? (
-          activeItem.mediaType === 'video' ? (
-            <video
-              className="show-sequence-media"
-              controls
-              key={activeItem.id}
-              onEnded={handleMediaEnded}
-              poster={activeItem.previewImageUrl ?? undefined}
-              ref={(node) => {
-                mediaRef.current = node;
-              }}
-            >
-              <source src={activeItem.url} />
-            </video>
-          ) : (
-            <audio
-              className="show-sequence-audio"
-              controls
-              key={activeItem.id}
-              onEnded={handleMediaEnded}
-              ref={(node) => {
-                mediaRef.current = node;
-              }}
-              src={activeItem.url}
-            />
-          )
+          <audio
+            className="show-sequence-audio"
+            controls
+            key={activeItem.id}
+            onEnded={handleMediaEnded}
+            ref={(node) => {
+              mediaRef.current = node;
+            }}
+            src={activeItem.url}
+          />
         ) : (
           <div className="show-sequence-text-card">
             <strong>{activeItem?.label}</strong>

@@ -6,6 +6,9 @@ import { readClientAddress } from '@/lib/request-meta';
 const REG_COOKIE_TTL_SECONDS = 10 * 60;
 
 export async function POST(request: Request) {
+  // Uses bearer token auth (ADMIN_SETUP_SECRET) instead of session auth because
+  // this endpoint is called during bootstrapping, before any admin session exists.
+  // Session-based auth is not available at this stage of setup.
   const secret = process.env.ADMIN_SETUP_SECRET;
   if (!secret) {
     return NextResponse.json({ error: 'Admin setup is not configured.' }, { status: 500 });

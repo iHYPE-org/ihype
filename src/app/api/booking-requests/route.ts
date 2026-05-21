@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { sendGenericEmail } from '@/lib/mailer';
+import { getBaseUrl } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,10 +20,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Rate limit exceeded.' }, { status: 429 });
   }
 
-  const body = await request.json();
-  const { toProfileId, message } = body as { toProfileId?: string; message?: string };
-  if (!toProfileId || !message?.trim()) {
+  let body: { toProfileId?: string; message?: string };
+  try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON.' }, { status: 400 }); }
+  const { toProfileId, message } = body;
+  const trimmedMessage = message?.trim() ?? '';
+  if (!toProfileId || !trimmedMessage) {
     return NextResponse.json({ error: 'toProfileId and message are required.' }, { status: 400 });
+  }
+  if (trimmedMessage.length < 10) {
+    return NextResponse.json({ error: 'Message must be at least 10 characters.' }, { status: 400 });
+  }
+  if (trimmedMessage.length > 2000) {
+    return NextResponse.json({ error: 'Message must be 2000 characters or fewer.' }, { status: 400 });
   }
 
   const profile = await db.profile.findUnique({
@@ -34,7 +43,7 @@ export async function POST(request: NextRequest) {
   }
 
   const bookingRequest = await db.bookingRequest.create({
-    data: { fromUserId: session.user.id, toProfileId, message: message.trim() }
+    data: { fromUserId: session.user.id, toProfileId, message: trimmedMessage }
   });
 
   // Create notification for artist
@@ -52,8 +61,8 @@ export async function POST(request: NextRequest) {
     await sendGenericEmail({
       to: profile.owner.email,
       subject: `New booking request on iHYPE`,
-      text: `You have a new booking request for ${profile.name}.\n\nMessage: ${message.trim()}\n\nLog in to review it: https://ihype.org/home?tab=bookings`,
-      html: `<p>You have a new booking request for <strong>${profile.name}</strong>.</p><p><em>${message.trim()}</em></p><p><a href="https://ihype.org/home?tab=bookings">Review it on iHYPE</a></p>`
+      text: `You have a new booking request for ${profile.name}.\n\nMessage: ${trimmedMessage}\n\nLog in to review it: ${getBaseUrl()}/home?tab=bookings`,
+      html: `<p>You have a new booking request for <strong>${profile.name}</strong>.</p><p><em>${trimmedMessage}</em></p><p><a href="${getBaseUrl()}/home?tab=bookings">Review it on iHYPE</a></p>`
     }).catch(() => {});
   }
 

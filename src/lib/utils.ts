@@ -12,3 +12,7 @@ export function formatShowTime(date: Date) {
     timeStyle: 'short'
   }).format(date);
 }
+
+export function getBaseUrl(): string {
+  return process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org';
+}

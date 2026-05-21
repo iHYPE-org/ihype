@@ -76,7 +76,13 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const ok = await verifyPasskeyRegistration(userId, body, challenge);
+  let ok: boolean;
+  try {
+    ok = await verifyPasskeyRegistration(userId, body, challenge);
+  } catch (err) {
+    console.error('[passkey/register-first] verification threw:', err);
+    ok = false;
+  }
 
   const clearCookie = (resp: NextResponse) => { resp.cookies.delete('pk_reg_first_challenge'); return resp; };
   if (!ok) return clearCookie(NextResponse.json({ error: 'Passkey registration failed.' }, { status: 400 }));

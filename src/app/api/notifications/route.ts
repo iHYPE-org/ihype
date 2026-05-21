@@ -29,3 +29,18 @@ export async function POST(_request: NextRequest) {
   });
   return NextResponse.json({ ok: true });
 }
+
+export async function DELETE(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+  }
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get('id');
+  if (id) {
+    await db.notification.deleteMany({ where: { id, userId: session.user.id } });
+  } else {
+    await db.notification.deleteMany({ where: { userId: session.user.id, read: true } });
+  }
+  return NextResponse.json({ ok: true });
+}

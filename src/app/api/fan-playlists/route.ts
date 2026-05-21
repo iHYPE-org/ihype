@@ -67,7 +67,8 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(playlist, { status: 201 });
-  } catch {
+  } catch (err) {
+    console.error('[fan-playlists]', err);
     return NextResponse.json({ error: 'Invalid playlist payload' }, { status: 400 });
   }
 }

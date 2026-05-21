@@ -1,27 +1,37 @@
 import { z } from 'zod';
 
+// Treat empty strings the same as undefined for optional env vars.
+const blank = (v: string | undefined) => (v && v.length > 0 ? v : undefined);
+const optStr = z.string().optional().transform(blank);
+const optEmail = z.string().optional().transform(v => {
+  const s = blank(v); return s && z.string().email().safeParse(s).success ? s : undefined;
+});
+const optUrl = z.string().optional().transform(v => {
+  const s = blank(v); return s && z.string().url().safeParse(s).success ? s : undefined;
+});
+
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   AUTH_SECRET: z.string().min(16),
-  AUTH_URL: z.string().url().optional(),
-  NEXT_PUBLIC_APP_URL: z.string().url(),
-  OPENAI_API_KEY: z.string().min(1).optional(),
-  SMTP_HOST: z.string().min(1).optional(),
+  AUTH_URL: optUrl,
+  NEXT_PUBLIC_APP_URL: optUrl,
+  OPENAI_API_KEY: optStr,
+  SMTP_HOST: optStr,
   SMTP_PORT: z.coerce.number().int().positive().optional(),
-  SMTP_SECURE: z.string().min(1).optional(),
-  SMTP_USER: z.string().min(1).optional(),
-  SMTP_PASSWORD: z.string().min(1).optional(),
-  SMTP_FROM: z.string().email().optional(),
-  EMAIL_FROM: z.string().email().optional(),
-  RESEND_API_KEY: z.string().min(1).optional(),
-  MUX_TOKEN_ID: z.string().optional(),
-  MUX_TOKEN_SECRET: z.string().optional(),
-  MUX_WEBHOOK_SECRET: z.string().optional(),
-  STRIPE_SECRET_KEY: z.string().optional(),
-  STRIPE_WEBHOOK_SECRET: z.string().optional(),
-  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional(),
-  AUTH_GOOGLE_ID: z.string().min(1).optional(),
-  AUTH_GOOGLE_SECRET: z.string().min(1).optional()
+  SMTP_SECURE: optStr,
+  SMTP_USER: optStr,
+  SMTP_PASSWORD: optStr,
+  SMTP_FROM: optEmail,
+  EMAIL_FROM: optEmail,
+  RESEND_API_KEY: optStr,
+  MUX_TOKEN_ID: optStr,
+  MUX_TOKEN_SECRET: optStr,
+  MUX_WEBHOOK_SECRET: optStr,
+  STRIPE_SECRET_KEY: z.string().optional().transform(v => { const s = blank(v); return s?.startsWith('sk_') ? s : undefined; }),
+  STRIPE_WEBHOOK_SECRET: z.string().optional().transform(v => { const s = blank(v); return s?.startsWith('whsec_') ? s : undefined; }),
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional().transform(v => { const s = blank(v); return s?.startsWith('pk_') ? s : undefined; }),
+  AUTH_GOOGLE_ID: optStr,
+  AUTH_GOOGLE_SECRET: optStr
 });
 
 type Env = z.infer<typeof envSchema>;
@@ -31,7 +41,14 @@ let _env: Env | undefined;
 
 export const env = new Proxy({} as Env, {
   get(_target, prop: string) {
-    if (!_env) _env = envSchema.parse(process.env);
+    if (!_env) {
+      try {
+        _env = envSchema.parse(process.env);
+      } catch (e) {
+        console.error('[env] Invalid server configuration:', e);
+        throw new Error('Server misconfiguration.');
+      }
+    }
     return _env[prop as keyof Env];
   },
 });

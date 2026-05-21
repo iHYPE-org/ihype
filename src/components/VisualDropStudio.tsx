@@ -1,9 +1,9 @@
 'use client';
 
 import { type ChangeEvent, type DragEvent } from 'react';
-import { getSafeImageUrl, getSafeVideoUrl } from '@/lib/asset-safety';
+import { getSafeImageUrl } from '@/lib/asset-safety';
 
-export type VisualDropKind = 'image' | 'video' | 'link' | 'text';
+export type VisualDropKind = 'image' | 'link' | 'text';
 
 export type VisualDropStudioSlot<TSlotId extends string> = {
   id: TSlotId;
@@ -36,13 +36,12 @@ function readFileAsDataUrl(file: File) {
 }
 
 function getExpectedPrefix(kind: VisualDropKind) {
-  if (kind === 'video') return 'video/';
   if (kind === 'image') return 'image/';
   return '';
 }
 
-function getDefaultMaxSizeMb(kind: VisualDropKind) {
-  return kind === 'video' ? 12 : 4;
+function getDefaultMaxSizeMb() {
+  return 4;
 }
 
 function canUseTextDrop(kind: VisualDropKind, value: string) {
@@ -50,7 +49,6 @@ function canUseTextDrop(kind: VisualDropKind, value: string) {
   if (!trimmed) return false;
   if (kind === 'link' || kind === 'text') return true;
   if (kind === 'image') return Boolean(getSafeImageUrl(trimmed));
-  if (kind === 'video') return Boolean(getSafeVideoUrl(trimmed));
   return false;
 }
 
@@ -63,7 +61,7 @@ function getSlotPreview(slot: VisualDropStudioSlot<string>) {
   if (!slot.value) {
     return (
       <span className="visual-drop-empty">
-        {slot.placeholder ?? (slot.kind === 'video' ? 'Drop video' : slot.kind === 'image' ? 'Drop image' : 'Drop link')}
+        {slot.placeholder ?? (slot.kind === 'image' ? 'Drop image' : 'Drop link')}
       </span>
     );
   }
@@ -71,11 +69,6 @@ function getSlotPreview(slot: VisualDropStudioSlot<string>) {
   if (slot.kind === 'image') {
     const safeImage = getSafeImageUrl(slot.value);
     return safeImage ? <img alt="" src={safeImage} /> : <span className="visual-drop-empty">Image pending</span>;
-  }
-
-  if (slot.kind === 'video') {
-    const safeVideo = getSafeVideoUrl(slot.value);
-    return safeVideo ? <video muted playsInline preload="metadata" src={safeVideo} /> : <span className="visual-drop-empty">Video pending</span>;
   }
 
   return <span className="visual-drop-link-preview">{slot.value}</span>;
@@ -90,7 +83,7 @@ export function VisualDropStudio<TSlotId extends string>({
 }: VisualDropStudioProps<TSlotId>) {
   async function applyFileToSlot(slot: VisualDropStudioSlot<TSlotId>, file: File) {
     const expectedPrefix = getExpectedPrefix(slot.kind);
-    const maxSizeMb = slot.maxSizeMb ?? getDefaultMaxSizeMb(slot.kind);
+    const maxSizeMb = slot.maxSizeMb ?? getDefaultMaxSizeMb();
 
     if (!expectedPrefix) {
       onStatus?.('Drop an image, video, or URL onto a matching visual slot.');
@@ -208,11 +201,11 @@ export function VisualDropStudio<TSlotId extends string>({
               <small>{slot.description}</small>
             </span>
             <span className="visual-drop-slot-footer">
-              {slot.kind === 'image' || slot.kind === 'video' ? (
+              {slot.kind === 'image' ? (
                 <label className="visual-drop-slot-action visual-drop-browse">
                   {slot.value ? 'Replace' : 'Upload'}
                   <input
-                    accept={slot.accept ?? (slot.kind === 'video' ? 'video/*' : 'image/*')}
+                    accept={slot.accept ?? 'image/*'}
                     onChange={(event) => void handleFileInput(event, slot)}
                     type="file"
                   />
@@ -233,7 +226,7 @@ export function VisualDropStudio<TSlotId extends string>({
                 </button>
               ) : null}
             </span>
-            {slot.kind === 'image' || slot.kind === 'video' ? (
+            {slot.kind === 'image' ? (
               <span className="visual-drop-slot-action visual-drop-move-hint">
                 {slot.value ? 'Drag card to move' : 'Drop file here'}
               </span>

@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
+import { getBaseUrl } from '@/lib/utils';
 
 export async function sendNewToSceneEmail(): Promise<{ sent: number }> {
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -12,7 +13,7 @@ export async function sendNewToSceneEmail(): Promise<{ sent: number }> {
 
   if (newProfiles.length === 0) return { sent: 0 };
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org';
+  const baseUrl = getBaseUrl();
   const items = newProfiles.map(p =>
     `<p><strong><a href="${baseUrl}/artists/${p.slug}">${p.name}</a></strong> — ${(p.genres as string[]).slice(0, 2).join(', ')} · ${p.hypeCount} hypes<br/><small>${p.bio?.slice(0, 120) ?? ''}…</small></p>`
   ).join('');

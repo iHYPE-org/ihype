@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { getBaseUrl } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600;
@@ -12,7 +13,7 @@ export async function GET() {
     select: { id: true, name: true, slug: true, bio: true, createdAt: true, genres: true }
   });
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org';
+  const baseUrl = getBaseUrl();
   const items = profiles.map((p) => `
   <item>
     <title><![CDATA[${p.name}]]></title>

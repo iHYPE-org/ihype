@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
 type Notif = {
@@ -114,9 +115,9 @@ export function NotificationBell() {
               {notifications.map((n) => (
                 <li key={n.id} style={{ padding: '8px 14px', borderBottom: '1px solid var(--line)' }}>
                   {n.link ? (
-                    <a href={n.link} style={{ color: 'var(--ink)', textDecoration: 'none' }}>
+                    <Link href={n.link} style={{ color: 'var(--ink)', textDecoration: 'none' }}>
                       <span style={{ fontSize: 13 }}>{n.body}</span>
-                    </a>
+                    </Link>
                   ) : (
                     <span style={{ fontSize: 13 }}>{n.body}</span>
                   )}

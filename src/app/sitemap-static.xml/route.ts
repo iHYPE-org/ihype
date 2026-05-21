@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
+import { getBaseUrl } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
-const base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org';
+const base = getBaseUrl();
 
 const STATIC: Array<{ path: string; freq: string; priority: number }> = [
   { path: '/', freq: 'weekly', priority: 1 },

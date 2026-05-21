@@ -31,7 +31,8 @@ export async function POST(request: Request) {
   let body: z.infer<typeof schema>;
   try {
     body = schema.parse(await request.json());
-  } catch {
+  } catch (err) {
+    console.error('[auth/verify-email]', err);
     return NextResponse.json({ error: 'Invalid request.' }, { status: 400 });
   }
 

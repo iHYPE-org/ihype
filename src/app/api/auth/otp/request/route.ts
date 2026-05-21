@@ -62,8 +62,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(challenge);
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[otp/request]', msg);
-    return NextResponse.json({ error: `Server error: ${msg}` }, { status: 500 });
+    console.error('[otp/request]', err instanceof Error ? err.message : String(err));
+    return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
   }
 }

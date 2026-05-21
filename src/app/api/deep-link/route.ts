@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBaseUrl } from '@/lib/utils';
 
 export function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const path = searchParams.get('path') ?? '/';
   const appUrl = `ihype://${path.replace(/^\//, '')}`;
-  const webUrl = `${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org'}${path}`;
+  const webUrl = `${getBaseUrl()}${path}`;
   const ua = request.headers.get('user-agent') ?? '';
   const isMobile = /iPhone|iPad|Android/i.test(ua);
   if (isMobile) {

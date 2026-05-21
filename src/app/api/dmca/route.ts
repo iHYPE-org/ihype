@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 import { recordAuditEvent } from '@/lib/audit';
+import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
+  const ip = readClientAddress(request);
+  const rl = await consumeRateLimit(`dmca:${ip}`, { limit: 3, windowMs: 24 * 60 * 60 * 1000 });
+  if (!rl.allowed) return NextResponse.json({ error: 'Rate limit exceeded.' }, { status: 429 });
+
   let body: { name?: string; email?: string; url?: string; description?: string } = {};
   try {
     body = (await request.json()) as typeof body;
@@ -17,11 +23,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'name, email, url, and description are required.' }, { status: 400 });
   }
 
-  const ip = readClientAddress(request);
+  const session = await auth();
 
   await recordAuditEvent({
     action: 'dmca_request',
     entityType: 'dmca',
+    actorUserId: session?.user?.id ?? undefined,
     ipAddress: ip,
     metadata: {
       name: String(name).slice(0, 200),

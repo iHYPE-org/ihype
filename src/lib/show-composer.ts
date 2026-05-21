@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const advertisingScopeSchema = z.enum(['local', 'regional', 'national', 'global']);
-export const showMediaTypeSchema = z.enum(['audio', 'video']);
+export const showMediaTypeSchema = z.enum(['audio']);
 
 export const voiceOverCueSchema = z.object({
   id: z.string().min(1),

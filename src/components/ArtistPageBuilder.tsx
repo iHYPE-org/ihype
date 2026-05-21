@@ -4,7 +4,8 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArtistMediaUploadManager } from '@/components/ArtistMediaUploadManager';
 import { VisualDropStudio, type VisualDropStudioSlot } from '@/components/VisualDropStudio';
-import { getSafeBackgroundImageStyle, getSafeImageUrl, getSafeVideoUrl } from '@/lib/asset-safety';
+import { getSafeBackgroundImageStyle, getSafeImageUrl } from '@/lib/asset-safety';
+import { getPreviewSnippet } from '@/lib/text';
 import {
   getProfileDesignStyleVars,
   normalizeProfileAccentTone,
@@ -35,7 +36,6 @@ type ArtistPageBuilderProps = {
     heroImage: string;
     logoImage: string;
     galleryImage: string;
-    featureVideoUrl: string;
     contactInfo: string;
     hometown: string;
     city: string;
@@ -59,7 +59,6 @@ type ArtistBuilderValues = {
   heroImage: string;
   logoImage: string;
   galleryImage: string;
-  featureVideoUrl: string;
   contactInfo: string;
   hometown: string;
   city: string;
@@ -76,13 +75,8 @@ type ArtistBuilderValues = {
   fanShareEnabled: boolean;
 };
 
-type ArtistVisualSlot = 'heroImage' | 'logoImage' | 'galleryImage' | 'featureVideoUrl' | 'mediaContent';
+type ArtistVisualSlot = 'heroImage' | 'logoImage' | 'galleryImage' | 'mediaContent';
 
-function getPreviewSnippet(value: string, fallback: string) {
-  const trimmed = value.trim();
-  if (!trimmed) return fallback;
-  return trimmed.length > 180 ? `${trimmed.slice(0, 177).trimEnd()}...` : trimmed;
-}
 
 const artistQuickStartPresets = [
   {
@@ -169,7 +163,6 @@ export function ArtistPageBuilder({
   const previewBannerStyle = getSafeBackgroundImageStyle(formValues.heroImage);
   const previewLogo = getSafeImageUrl(formValues.logoImage);
   const previewGalleryImage = getSafeImageUrl(formValues.galleryImage);
-  const previewVideo = getSafeVideoUrl(formValues.featureVideoUrl);
   const hasVisualAsset = Boolean(formValues.heroImage || formValues.logoImage || formValues.galleryImage);
   const quickStartSteps = [
     {
@@ -223,14 +216,6 @@ export function ArtistPageBuilder({
         placeholder: 'Drop picture'
       },
       {
-        id: 'featureVideoUrl',
-        label: 'Video',
-        description: 'Music video, live clip, or short page teaser.',
-        kind: 'video',
-        value: formValues.featureVideoUrl,
-        placeholder: 'Drop video'
-      },
-      {
         id: 'mediaContent',
         label: 'Links',
         description: 'Drop a song, playlist, press, or merch link.',
@@ -240,7 +225,6 @@ export function ArtistPageBuilder({
       }
     ],
     [
-      formValues.featureVideoUrl,
       formValues.galleryImage,
       formValues.heroImage,
       formValues.logoImage,
@@ -296,7 +280,6 @@ export function ArtistPageBuilder({
         heroImage: formValues.heroImage,
         logoImage: formValues.logoImage,
         galleryImage: formValues.galleryImage,
-        featureVideoUrl: formValues.featureVideoUrl,
         contactInfo: formValues.contactInfo,
         hometown: formValues.hometown,
         city: formValues.city,
@@ -745,9 +728,6 @@ export function ArtistPageBuilder({
                     <p>{mediaPreview}</p>
                     {previewGalleryImage ? (
                       <img alt={`${profileName} gallery preview`} className="artist-page-builder-preview-image" src={previewGalleryImage} />
-                    ) : null}
-                    {previewVideo ? (
-                      <video className="artist-page-builder-preview-video" controls preload="metadata" src={previewVideo} />
                     ) : null}
                   </article>
                 </div>

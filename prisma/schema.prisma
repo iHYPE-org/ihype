@@ -212,6 +212,9 @@ model Profile {
   availabilityDates             AvailabilityDate[]
   receivedBookingRequests       BookingRequest[]   @relation("BookingRequestToProfile")
   collabPosts                   CollabPost[]
+
+  @@index([name])
+  @@index([city, type])
 }
 
 model FanPlaylist {
@@ -561,6 +564,7 @@ model Passkey {
   deviceType           String
   backedUp             Boolean  @default(false)
   transports           String?
+  name                 String?
   createdAt            DateTime @default(now())
   user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@index([userId])

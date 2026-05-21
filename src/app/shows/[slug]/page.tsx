@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { cache } from 'react';
+import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { notFound } from 'next/navigation';
 import { HypeButton } from '@/components/HypeButton';
@@ -10,20 +12,15 @@ import { isAdminSession } from '@/lib/permissions';
 import { detectRequestLocation } from '@/lib/request-location';
 import { parseShowProductionPlan } from '@/lib/show-composer';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
-import { formatShowTime } from '@/lib/utils';
-import { getMuxPlaybackToken } from '@/lib/mux';
-import { ShowPlaybackTracker } from '@/components/ShowPlaybackTracker';
+import { formatShowTime, getBaseUrl } from '@/lib/utils';
 import { ShowComments } from '@/components/ShowComments';
 import { ShowEngagement } from '@/components/ShowEngagement';
 import { ShowSetlistEditor } from '@/components/ShowSetlistEditor';
 import { AdBanner } from '@/components/AdBanner';
 import { ShowRecapForm } from '@/components/ShowRecapForm';
 
-export async function generateMetadata(
-  { params }: { params: Promise<{ slug: string }> }
-): Promise<Metadata> {
-  const { slug } = await params;
-  const show = await db.show.findUnique({
+const getShowMeta = cache((slug: string) =>
+  db.show.findUnique({
     where: { slug },
     select: {
       title: true,
@@ -36,7 +33,14 @@ export async function generateMetadata(
       venueProfile:     { select: { name: true, city: true, stateRegion: true } },
       headlinerProfile: { select: { name: true } },
     }
-  });
+  })
+);
+
+export async function generateMetadata(
+  { params }: { params: Promise<{ slug: string }> }
+): Promise<Metadata> {
+  const { slug } = await params;
+  const show = await getShowMeta(slug);
 
   if (!show) return { title: 'Show · iHYPE' };
 
@@ -94,35 +98,26 @@ export default async function ShowDetailPage({
     typeof resolvedSearchParams.affiliate === 'string' ? resolvedSearchParams.affiliate : undefined;
   const refHexId =
     typeof resolvedSearchParams.ref === 'string' ? resolvedSearchParams.ref : undefined;
-  const show = await db.show.findUnique({
-    where: { slug },
-    include: {
-      venueProfile: true,
-      headlinerProfile: true,
-      promoterProfile: true,
-      ticketOrders: {
-        orderBy: { createdAt: 'desc' },
-        take: 6,
-        include: {
-          tickets: {
-            select: { reassignCount: true }
-          }
-        }
-      },
-      radioTracks: {
-        orderBy: { position: 'asc' },
-        select: {
-          id: true,
-          position: true,
-          title: true,
-          artistName: true,
-          externalUrl: true,
-          durationSecs: true,
-          blockLabel: true
+  const getShowPage = cache((s: string) =>
+    db.show.findUnique({
+      where: { slug: s },
+      include: {
+        venueProfile: true,
+        headlinerProfile: true,
+        promoterProfile: true,
+        ticketOrders: {
+          orderBy: { createdAt: 'desc' },
+          take: 6,
+          include: { tickets: { select: { reassignCount: true } } }
+        },
+        radioTracks: {
+          orderBy: { position: 'asc' },
+          select: { id: true, position: true, title: true, artistName: true, externalUrl: true, durationSecs: true, blockLabel: true }
         }
       }
-    }
-  });
+    })
+  );
+  const show = await getShowPage(slug);
 
   if (!show) return notFound();
   const canPreviewDraft =
@@ -174,15 +169,7 @@ export default async function ShowDetailPage({
 
   const canWatch = !show.isTicketed || hasTicket || (session?.user?.id === show.creatorId) || isAdminSession(session);
 
-  let playbackUrl: string | null = null;
-  if (show.streamPlaybackId && canWatch) {
-    const token = show.isTicketed ? getMuxPlaybackToken(show.streamPlaybackId) : null;
-    playbackUrl = token
-      ? `https://stream.mux.com/${show.streamPlaybackId}.m3u8?token=${token}`
-      : `https://stream.mux.com/${show.streamPlaybackId}.m3u8`;
-  }
-
-  const base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org';
+  const base = getBaseUrl();
   const jsonLd = show.isRadioShow ? {
     '@context': 'https://schema.org',
     '@type': 'RadioEpisode',
@@ -280,16 +267,7 @@ export default async function ShowDetailPage({
       <div className="grid grid-2">
         <section className="panel" style={{ padding: '1rem' }}>
           <div className="video-shell">
-            {playbackUrl ? (
-              <ShowPlaybackTracker
-                autoPlay={show.status === 'LIVE'}
-                isLive={show.status === 'LIVE'}
-                playbackUrl={playbackUrl}
-                showId={show.id}
-                showSlug={show.slug}
-                title={show.title}
-              />
-            ) : productionPlan ? (
+            {productionPlan ? (
               <ShowSequencePlayer
                 autoPlay={show.status === 'LIVE'}
                 isPreview={show.status === 'DRAFT'}
@@ -300,7 +278,9 @@ export default async function ShowDetailPage({
               />
             ) : (
               <div className="show-art" style={{ minHeight: 320 }}>
-                Connect your stream provider to go live
+                {show.posterImage
+                  ? <img alt={show.title} src={show.posterImage} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <span className="meta">No audio uploaded yet</span>}
               </div>
             )}
           </div>
@@ -325,10 +305,6 @@ export default async function ShowDetailPage({
               <tr>
                 <th>Status</th>
                 <td>{show.status}</td>
-              </tr>
-              <tr>
-                <th>Stream provider</th>
-                <td>{show.streamProvider ?? 'Not configured'}</td>
               </tr>
               <tr>
                 <th>Venue</th>
@@ -625,7 +601,7 @@ export default async function ShowDetailPage({
           <div className="panel" style={{ padding: '1.25rem' }}>
             <h2>Transfer your ticket</h2>
             <p className="subtitle" style={{ marginBottom: '1rem' }}>Can't make it? You can transfer your ticket to a friend — no fees, just update the holder name.</p>
-            <p className="meta">Find your ticket confirmation email and visit the ticket link to reassign it, or go to <a href="/home">your dashboard</a> to manage your orders.</p>
+            <p className="meta">Find your ticket confirmation email and visit the ticket link to reassign it, or go to <Link href="/home">your dashboard</Link> to manage your orders.</p>
           </div>
         </section>
       )}

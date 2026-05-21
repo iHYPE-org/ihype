@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { consumeRateLimit, rateLimitHeaders, rateLimitKey } from '@/lib/rate-limit';
 import { sendGenericEmail } from '@/lib/mailer';
 import { checkAndAwardBadges } from '@/lib/badges';
+import { getBaseUrl } from '@/lib/utils';
 
 const HYPE_MILESTONES = [10, 50, 100, 500, 1000];
 
@@ -18,7 +19,7 @@ async function checkAndRecordMilestone(profileId: string, newCount: number) {
       select: { id: true, name: true, slug: true, type: true, owner: { select: { email: true, name: true } } }
     });
     if (!profile) return;
-    const base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org';
+    const base = getBaseUrl();
     const cardUrl = `${base}/api/milestones/${profileId}/card?milestone=${encodeURIComponent(`${crossed} HYPES`)}`;
     await recordAuditEvent({
       action: `profile_milestone_hype_${crossed}`,
@@ -133,7 +134,8 @@ export async function POST(request: NextRequest) {
     checkAndAwardBadges(session.user.id).catch(() => {});
 
     return NextResponse.json({ created: true, hypeCount: updatedProfile.hypeCount });
-  } catch {
+  } catch (err) {
+    console.error('[hype]', err);
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 }

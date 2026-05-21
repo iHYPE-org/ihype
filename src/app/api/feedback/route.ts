@@ -15,10 +15,14 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const ip = readClientAddress(request);
-  const body = await request.json() as { action?: string; id?: string; title?: string; description?: string };
+  let body: { action?: string; id?: string; title?: string; description?: string };
+  try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON.' }, { status: 400 }); }
 
   if (body.action === 'vote' && body.id) {
-    const rl = await consumeRateLimit(`feedback-vote:${ip}`, { limit: 20, windowMs: 60 * 60 * 1000 });
+    // Require login for votes so they reflect real user preferences
+    const session = await auth();
+    if (!session?.user?.id) return NextResponse.json({ error: 'Login required to vote.' }, { status: 401 });
+    const rl = await consumeRateLimit(`feedback-vote:${session.user.id}`, { limit: 20, windowMs: 60 * 60 * 1000 });
     if (!rl.allowed) return NextResponse.json({ error: 'Rate limit.' }, { status: 429 });
     const updated = await db.featureRequest.update({ where: { id: body.id }, data: { votes: { increment: 1 } } });
     return NextResponse.json({ ok: true, votes: updated.votes });

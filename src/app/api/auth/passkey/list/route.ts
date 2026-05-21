@@ -8,7 +8,7 @@ export async function GET() {
 
   const passkeys = await db.passkey.findMany({
     where: { userId: session.user.id },
-    select: { id: true, deviceType: true, createdAt: true, backedUp: true },
+    select: { id: true, deviceType: true, createdAt: true, backedUp: true, name: true },
     orderBy: { createdAt: 'asc' }
   });
 

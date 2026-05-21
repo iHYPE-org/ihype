@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
+import { getBaseUrl } from '@/lib/utils';
 
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -13,7 +14,9 @@ export async function POST(request: NextRequest) {
   const rl = await consumeRateLimit(`verify-req:${session.user.id}`, { limit: 2, windowMs: 24 * 60 * 60 * 1000 });
   if (!rl.allowed) return NextResponse.json({ error: 'Please wait 24h between verification requests.' }, { status: 429 });
 
-  const { profileId, socialLinks, notes } = await request.json() as { profileId: string; socialLinks: string; notes?: string };
+  let parsed: { profileId?: string; socialLinks?: string; notes?: string };
+  try { parsed = await request.json() as typeof parsed; } catch { return NextResponse.json({ error: 'Invalid JSON.' }, { status: 400 }); }
+  const { profileId, socialLinks, notes } = parsed;
 
   const profile = await db.profile.findFirst({
     where: { id: profileId, ownerId: session.user.id },
@@ -28,7 +31,7 @@ export async function POST(request: NextRequest) {
   });
 
   const ADMIN_EMAIL = process.env.ADMIN_ALERT_EMAIL ?? 'admin@ihype.org';
-  await sendGenericEmail({ to: ADMIN_EMAIL, subject: `[iHYPE] Verification request: ${profile.name}`, html: `<p><strong>${profile.name}</strong> requested verification.</p><p>Social links: ${socialLinks}</p><p>Notes: ${notes ?? 'none'}</p><p><a href="${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org'}/admin/review">Review in admin</a></p>`, text: `${profile.name} requested verification.\nSocial: ${socialLinks}` });
+  await sendGenericEmail({ to: ADMIN_EMAIL, subject: `[iHYPE] Verification request: ${profile.name}`, html: `<p><strong>${profile.name}</strong> requested verification.</p><p>Social links: ${socialLinks}</p><p>Notes: ${notes ?? 'none'}</p><p><a href="${getBaseUrl()}/admin/review">Review in admin</a></p>`, text: `${profile.name} requested verification.\nSocial: ${socialLinks}` });
 
   return NextResponse.json({ ok: true, message: 'Verification request submitted. We review within 3 business days.' });
 }

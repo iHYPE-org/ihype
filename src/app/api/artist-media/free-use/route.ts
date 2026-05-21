@@ -9,8 +9,7 @@ export async function GET(request: Request) {
   const q = searchParams.get('q')?.trim() ?? '';
   const limitParam = Number.parseInt(searchParams.get('limit') ?? '100', 10);
   const limit = Math.min(Math.max(1, Number.isNaN(limitParam) ? 100 : limitParam), 200);
-  const offsetParam = Number.parseInt(searchParams.get('offset') ?? '0', 10);
-  const offset = Math.max(0, Number.isNaN(offsetParam) ? 0 : offsetParam);
+  const cursor = searchParams.get('cursor') ?? undefined;
 
   const where = q
     ? {
@@ -23,36 +22,37 @@ export async function GET(request: Request) {
       }
     : { freeUseEnabled: true, ...getDemoProfileRelationExclusion() };
 
-  const [tracks, total] = await Promise.all([
-    db.artistMediaAsset.findMany({
-      where,
-      orderBy: [{ createdAt: 'desc' }],
-      take: limit,
-      skip: offset,
-      select: {
-        hexId: true,
-        title: true,
-        notes: true,
-        mimeType: true,
-        fileSizeBytes: true,
-        createdAt: true,
-        profile: {
-          select: {
-            slug: true,
-            name: true,
-            avatarImage: true,
-            genres: true,
-            city: true,
-            stateRegion: true
-          }
+  const tracks = await db.artistMediaAsset.findMany({
+    where,
+    orderBy: [{ createdAt: 'desc' }, { hexId: 'asc' }],
+    take: limit + 1,
+    ...(cursor ? { cursor: { hexId: cursor }, skip: 1 } : {}),
+    select: {
+      hexId: true,
+      title: true,
+      notes: true,
+      mimeType: true,
+      fileSizeBytes: true,
+      createdAt: true,
+      profile: {
+        select: {
+          slug: true,
+          name: true,
+          avatarImage: true,
+          genres: true,
+          city: true,
+          stateRegion: true
         }
       }
-    }),
-    db.artistMediaAsset.count({ where })
-  ]);
+    }
+  });
+
+  const hasMore = tracks.length > limit;
+  const page = hasMore ? tracks.slice(0, limit) : tracks;
+  const nextCursor = hasMore ? page[page.length - 1]?.hexId ?? null : null;
 
   return NextResponse.json({
-    tracks: tracks.map((track) => ({
+    tracks: page.map((track) => ({
       hexId: track.hexId,
       title: track.title,
       notes: track.notes,
@@ -68,8 +68,8 @@ export async function GET(request: Request) {
         location: [track.profile.city, track.profile.stateRegion].filter(Boolean).join(', ')
       }
     })),
-    total,
-    limit,
-    offset
+    nextCursor,
+    hasMore,
+    limit
   });
 }

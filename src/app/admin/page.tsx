@@ -14,7 +14,6 @@ import { isPaymentProcessingConfigured } from '@/lib/payments';
 import { isAdminSession } from '@/lib/permissions';
 import {
   areDemoLoginsEnabledRuntime,
-  areLiveStreamsEnabledRuntime,
   getRuntimeFlag,
   isInviteCodeRequiredRuntime,
   shouldHideDemoContentRuntime
@@ -144,14 +143,12 @@ export default async function AdminPage() {
     demoLoginsEnabled,
     inviteOnlySignupEnabled,
     demoContentHidden,
-    liveStreamsEnabled,
     blobMediaStorageEnabled,
     ticketPaymentCaptureEnabled
   ] = await Promise.all([
     areDemoLoginsEnabledRuntime(),
     isInviteCodeRequiredRuntime(),
     shouldHideDemoContentRuntime(),
-    areLiveStreamsEnabledRuntime(),
     getRuntimeFlag('blob_media_storage', isBlobMediaStorageConfigured()),
     getRuntimeFlag('ticket_payment_capture', isPaymentProcessingConfigured())
   ]);
@@ -159,7 +156,6 @@ export default async function AdminPage() {
     { key: 'demo_logins', label: 'Demo logins', enabled: demoLoginsEnabled },
     { key: 'invite_only_signup', label: 'Invite-only signup', enabled: inviteOnlySignupEnabled },
     { key: 'hide_demo_content', label: 'Hide demo content', enabled: demoContentHidden },
-    { key: 'live_streams', label: 'Live streams', enabled: liveStreamsEnabled },
     { key: 'blob_media_storage', label: 'Blob media storage', enabled: blobMediaStorageEnabled },
     { key: 'ticket_payment_capture', label: 'Ticket payment capture', enabled: ticketPaymentCaptureEnabled }
   ];

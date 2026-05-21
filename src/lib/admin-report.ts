@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
+import { getBaseUrl } from '@/lib/utils';
 
 export async function sendAdminWeeklyReport(): Promise<{ ok: boolean }> {
   const ADMIN_EMAIL = process.env.ADMIN_ALERT_EMAIL ?? 'admin@ihype.org';
@@ -25,7 +26,7 @@ export async function sendAdminWeeklyReport(): Promise<{ ok: boolean }> {
   <li>Open feature requests: <strong>${openFeatureRequests}</strong></li>
   <li>Bug reports this week: <strong>${bugReports}</strong></li>
 </ul>
-<p><a href="${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org'}/admin">Open admin dashboard</a></p>`;
+<p><a href="${getBaseUrl()}/admin">Open admin dashboard</a></p>`;
 
   const text = `iHYPE Weekly Report\n\nNew users: ${newUsers}\nNew profiles: ${newProfiles}\nNew shows: ${newShows}\nPending ads: ${pendingAds}\nOpen feature requests: ${openFeatureRequests}\nBug reports: ${bugReports}`;
 

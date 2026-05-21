@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
 import { recordAuditEvent } from '@/lib/audit';
+import { getBaseUrl } from '@/lib/utils';
 
 export async function sendShowReminders(): Promise<{ sent: number }> {
   const now = new Date();
@@ -60,7 +61,7 @@ export async function sendShowReminders(): Promise<{ sent: number }> {
           `${show.headlinerProfile.name} is performing in "${show.title}" tomorrow.`,
           `Show starts: ${show.startsAt.toUTCString()}`,
           '',
-          `View the show: ${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org'}/shows/${show.slug}`,
+          `View the show: ${getBaseUrl()}/shows/${show.slug}`,
           '',
           'The iHYPE team'
         ].join('\n');

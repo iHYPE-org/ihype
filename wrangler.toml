@@ -29,10 +29,6 @@ NEXT_PUBLIC_BASE_URL = "https://ihype.org"
 R2_PUBLIC_BASE_URL = "https://ihype.org"
 NEXT_PUBLIC_TURNSTILE_SITE_KEY = "0x4AAAAAADSF8WNxaeBIRmR7"
 
-[[services]]
-binding = "WORKER_SELF_REFERENCE"
-service = "ihype"
-
 [[kv_namespaces]]
 binding = "KV"
 id = "b6330641874a4420b240d3a82760a9aa"
@@ -48,6 +44,14 @@ binding = "D1"
 database_name = "ihype-cron"
 database_id = "72feb348-a07a-4bd5-a6ee-5b27b751999d"
 
+[[analytics_engine_datasets]]
+binding = "AE"
+dataset = "ihype_analytics"
+
 [[queues.producers]]
 binding = "EMAIL_QUEUE"
 queue = "ihype-email-queue"
+
+[[services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "ihype"

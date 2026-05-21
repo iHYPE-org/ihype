@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useAsyncForm } from '@/hooks/useAsyncForm';
 
 const ROLES = ['ALL', 'FAN', 'ARTIST', 'DJ', 'VENUE'] as const;
 
@@ -9,12 +10,10 @@ export function AdminBroadcastForm() {
   const [body, setBody] = useState('');
   const [targetRole, setTargetRole] = useState<(typeof ROLES)[number]>('ALL');
   const [previewCount, setPreviewCount] = useState<number | null>(null);
-  const [status, setStatus] = useState('');
-  const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
+  const { message: status, setMessage: setStatus, error, setError, pending: busy, setPending: setBusy, reset } = useAsyncForm();
 
   async function fetchPreview() {
-    setError('');
+    reset();
     try {
       const res = await fetch('/api/admin/broadcast', {
         method: 'POST',
@@ -32,8 +31,7 @@ export function AdminBroadcastForm() {
   async function send(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    setError('');
-    setStatus('');
+    reset();
     try {
       const res = await fetch('/api/admin/broadcast', {
         method: 'POST',

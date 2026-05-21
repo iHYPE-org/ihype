@@ -1,7 +1,8 @@
 import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
+import { getBaseUrl } from '@/lib/utils';
 
-const BASE = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org';
+const BASE = getBaseUrl();
 
 function escHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');

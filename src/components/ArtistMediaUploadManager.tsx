@@ -21,7 +21,7 @@ export function ArtistMediaUploadManager({ profileId }: ArtistMediaUploadManager
 
     const files = Array.from(fileInputRef.current?.files ?? []);
     if (files.length === 0) {
-      setMessage('Choose an audio or video file first.');
+      setMessage('Choose an audio file first.');
       return;
     }
 
@@ -72,7 +72,7 @@ export function ArtistMediaUploadManager({ profileId }: ArtistMediaUploadManager
             Uploads get a unique hex ID, show up in your public media section, and can be copied into promoter playlists.
           </p>
         </div>
-        <span className="meta">Audio 10MB max / Video 16MB max</span>
+        <span className="meta">Audio files only · 10MB max</span>
       </div>
 
       <form className="artist-media-upload-form" onSubmit={handleSubmit}>
@@ -89,7 +89,7 @@ export function ArtistMediaUploadManager({ profileId }: ArtistMediaUploadManager
           <span>Notes</span>
           <textarea
             onChange={(event) => setNotes(event.target.value)}
-            placeholder="Version notes, video notes, live room details, or release context."
+            placeholder="Version notes, live room details, or release context."
             rows={3}
             value={notes}
           />
@@ -97,7 +97,7 @@ export function ArtistMediaUploadManager({ profileId }: ArtistMediaUploadManager
 
         <label className="field">
           <span>Media file</span>
-          <input accept="audio/*,video/*" multiple ref={fileInputRef} required type="file" />
+          <input accept="audio/*" multiple ref={fileInputRef} required type="file" />
         </label>
 
         <div className="cta-row">

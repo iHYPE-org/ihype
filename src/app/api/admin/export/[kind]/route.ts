@@ -160,8 +160,12 @@ export async function GET(
     return NextResponse.json({ error: 'Unknown export type' }, { status: 404 });
   }
 
+  const rowCount = csv.split('\n').length - 1; // exclude header
+  const truncated = rowCount >= 1000;
+
   return new NextResponse(csv, {
     headers: {
+      ...(truncated ? { 'X-Export-Truncated': 'true', 'X-Export-Row-Limit': '1000' } : {}),
       'Content-Disposition': `attachment; filename="ihype-${kind}.csv"`,
       'Content-Type': 'text/csv; charset=utf-8'
     }

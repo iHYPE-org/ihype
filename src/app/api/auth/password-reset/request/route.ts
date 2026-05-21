@@ -132,7 +132,8 @@ export async function POST(request: Request) {
         { status: 503 }
       );
     }
-  } catch {
+  } catch (err) {
+    console.error('[auth/password-reset/request]', err);
     return NextResponse.json({ error: 'Invalid password reset request.' }, { status: 400 });
   }
 }

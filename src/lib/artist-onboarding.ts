@@ -1,7 +1,8 @@
 import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
+import { getBaseUrl } from '@/lib/utils';
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org';
+const BASE_URL = getBaseUrl();
 
 export async function sendArtistOnboardingNudges(): Promise<{ sent: number }> {
   const since7 = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000);

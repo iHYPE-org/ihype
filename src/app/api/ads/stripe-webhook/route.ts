@@ -5,9 +5,11 @@ import { db } from '@/lib/db';
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
-  const stripeKey = process.env.STRIPE_SECRET_KEY;
+  const stripeKey = process.env.STRIPE_SECRET_KEY?.trim();
   const webhookSecret = process.env.STRIPE_AD_WEBHOOK_SECRET;
-  if (!stripeKey || !webhookSecret) return NextResponse.json({ error: 'Payment not configured.' }, { status: 503 });
+  if (!stripeKey?.startsWith('sk_') || !webhookSecret) {
+    return NextResponse.json({ error: 'Payment not configured.' }, { status: 503 });
+  }
   const stripe = new Stripe(stripeKey, { apiVersion: '2025-02-24.acacia' });
 
   const sig = request.headers.get('stripe-signature') ?? '';
@@ -15,8 +17,18 @@ export async function POST(request: NextRequest) {
   let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
-  } catch {
+  } catch (err) {
+    console.error('[ads/stripe-webhook]', err);
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+  }
+
+  // Drop duplicate deliveries using the shared idempotency log.
+  try {
+    await db.processedWebhookEvent.create({
+      data: { source: 'stripe-ads', eventId: event.id }
+    });
+  } catch {
+    return NextResponse.json({ received: true, duplicate: true });
   }
 
   if (event.type === 'checkout.session.completed') {
@@ -24,7 +36,6 @@ export async function POST(request: NextRequest) {
     const adId = session.metadata?.adId;
     if (adId) {
       await db.adSubmission.update({ where: { id: adId }, data: { status: 'active' } });
-      // Record the subscription ID in audit log since AdSubmission has no stripeSubscriptionId field
       if (session.subscription) {
         await db.auditLog.create({
           data: {
@@ -41,7 +52,6 @@ export async function POST(request: NextRequest) {
 
   if (event.type === 'customer.subscription.deleted') {
     const sub = event.data.object as Stripe.Subscription;
-    // Find adId from audit log
     const log = await db.auditLog.findFirst({
       where: { action: 'AD_SUBSCRIPTION_CREATED', metadata: { path: ['stripeSubscriptionId'], equals: sub.id } }
     });

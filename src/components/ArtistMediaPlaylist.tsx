@@ -83,7 +83,6 @@ export function ArtistMediaPlaylist({
         const isCurrentTrack = currentTrack?.id === track.id;
         const isCurrentAndPlaying = isCurrentTrack && isPlaying;
         const entry = entries[index];
-        const isVideo = entry.mediaType === 'video';
 
         return (
           <article className={isCurrentTrack ? 'artist-media-card active' : 'artist-media-card'} key={track.id}>
@@ -100,22 +99,20 @@ export function ArtistMediaPlaylist({
             </div>
 
             <div className="artist-media-actions">
-              {!isVideo ? (
-                <button
-                  className="button small"
-                  onClick={() => {
-                    if (isCurrentTrack) {
-                      togglePlayback();
-                      return;
-                    }
+              <button
+                className="button small"
+                onClick={() => {
+                  if (isCurrentTrack) {
+                    togglePlayback();
+                    return;
+                  }
 
-                    playTrack(track, queue);
-                  }}
-                  type="button"
-                >
-                  {isCurrentAndPlaying ? 'Pause' : isCurrentTrack ? 'Resume' : 'Play in dock'}
-                </button>
-              ) : null}
+                  playTrack(track, queue);
+                }}
+                type="button"
+              >
+                {isCurrentAndPlaying ? 'Pause' : isCurrentTrack ? 'Resume' : 'Play in dock'}
+              </button>
               <button
                 className="button small secondary"
                 onClick={() => copyToClipboard(entry.hexId, 'Media ID')}
@@ -131,7 +128,7 @@ export function ArtistMediaPlaylist({
                 Copy link
               </button>
               <a className="button small secondary" href={track.url} rel="noreferrer" target="_blank">
-                {isVideo ? 'Open video' : 'Open audio'}
+                Open audio
               </a>
               {isOwner && entry.source === 'UPLOADED' ? (
                 <button className="button small secondary" onClick={() => removeUpload(entry)} type="button">

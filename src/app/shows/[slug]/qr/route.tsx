@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
+import { getBaseUrl } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -12,7 +13,7 @@ export async function GET(
   const { slug } = await params;
   const show = await db.show.findUnique({ where: { slug }, select: { title: true } });
   const title = show?.title ?? 'iHYPE Show';
-  const base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org';
+  const base = getBaseUrl();
   const checkinUrl = `${base}/shows/${slug}/checkin`;
 
   return new ImageResponse(

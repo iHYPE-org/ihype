@@ -1,0 +1,3 @@
+ALTER TABLE "Show" DROP COLUMN IF EXISTS "streamProvider";
+ALTER TABLE "Show" DROP COLUMN IF EXISTS "streamPlaybackId";
+ALTER TABLE "Show" DROP COLUMN IF EXISTS "streamKeyMasked";

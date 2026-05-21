@@ -168,7 +168,7 @@ export default async function HomePage() {
     return {
       id: s.id,
       name: s.title,
-      venue: (s as any).venueProfile?.name ?? (s as any).headlinerProfile?.name ?? 'Local venue',
+      venue: s.venueProfile?.name ?? s.headlinerProfile?.name ?? 'Local venue',
       date: s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
       time: s.startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
       hype: s.hypeCount ?? 0,
@@ -190,7 +190,7 @@ export default async function HomePage() {
 
   // ── Build WbActivity from recent events ──
   const wbActivity: WbActivity[] = eventsResult.upcoming.slice(0, 5).map((s) => ({
-    text: `${s.title}${(s as any).venueProfile?.name ? ' @ ' + (s as any).venueProfile.name : ''} — ${s.startsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+    text: `${s.title}${s.venueProfile?.name ? ' @ ' + s.venueProfile.name : ''} — ${s.startsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
     time: 'upcoming',
     kind: 'show',
   }));
@@ -224,7 +224,7 @@ export default async function HomePage() {
   radioShows = radioRows.map((r, i) => ({
     id: r.id,
     name: r.title,
-    host: (r as any).promoterProfile?.name ?? 'iHYPE Radio',
+    host: (r.promoterProfile as { name: string } | null)?.name ?? 'iHYPE Radio',
     time: r.startsAt.toLocaleDateString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' }),
     next: r.startsAt > now ? r.startsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'live now',
     live: r.status === 'LIVE',
@@ -236,7 +236,7 @@ export default async function HomePage() {
   // ── Tickets from upcoming shows ──
   const wbTickets = eventsResult.upcoming.slice(0, 3).map((s) => ({
     id: s.id,
-    showName: `${s.title}${(s as any).venueProfile?.name ? ' @ ' + (s as any).venueProfile.name : ''}`,
+    showName: `${s.title}${s.venueProfile?.name ? ' @ ' + s.venueProfile.name : ''}`,
     date: s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
     seat: 'General Admission',
     price: s.ticketPriceCents ? s.ticketPriceCents / 100 : 0,
@@ -299,8 +299,8 @@ export default async function HomePage() {
       title: r.title,
       slug: r.slug,
       startsAt: r.startsAt,
-      venueName: (r as any).venueProfile?.name ?? null,
-      headlinerName: (r as any).headlinerProfile?.name ?? null,
+      venueName: (r.venueProfile as { name: string } | null)?.name ?? null,
+      headlinerName: (r.headlinerProfile as { name: string } | null)?.name ?? null,
     }))).catch(() => [] as typeof followingShows);
   }
 
@@ -336,12 +336,14 @@ export default async function HomePage() {
           take: 8
         }).catch(() => [])
       ]);
-      const uploadItems: WbActivity[] = recentUploads.map((m: any) => ({
+      type UploadRow = { title: string; createdAt: Date; profile: { name: string; slug: string } | null };
+      type FanShowRow = { title: string; startsAt: Date; venueProfile: { name: string } | null; headlinerProfile: { name: string } | null };
+      const uploadItems: WbActivity[] = (recentUploads as UploadRow[]).map((m) => ({
         text: `${m.profile?.name ?? 'An artist'} uploaded "${m.title}"`,
         time: m.createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         kind: 'hype' as const,
       }));
-      const showItems: WbActivity[] = upcomingFromHyped.map((s: any) => ({
+      const showItems: WbActivity[] = (upcomingFromHyped as FanShowRow[]).map((s) => ({
         text: `${s.headlinerProfile?.name ?? s.title}${s.venueProfile?.name ? ' @ ' + s.venueProfile.name : ''}`,
         time: s.startsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         kind: 'show' as const,
@@ -497,11 +499,11 @@ export default async function HomePage() {
           </div>
         </div>
       ) : null}
-      {followingShows.length > 0 ? (
-        <div className="container section" style={{ paddingTop: 16, paddingBottom: 0 }}>
-          <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 16, letterSpacing: '-.01em', marginBottom: 10, color: 'var(--ink)' }}>
-            Following
-          </h2>
+      <div className="container section" style={{ paddingTop: 16, paddingBottom: 0 }}>
+        <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 16, letterSpacing: '-.01em', marginBottom: 10, color: 'var(--ink)' }}>
+          Following
+        </h2>
+        {followingShows.length > 0 ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 10 }}>
             {followingShows.map(s => (
               <a key={s.id} href={`/shows/${s.slug}`} style={{ display: 'block', padding: '12px 14px', background: 'var(--bg-3)', border: '1px solid var(--line)', borderRadius: 10, textDecoration: 'none' }}>
@@ -513,8 +515,13 @@ export default async function HomePage() {
               </a>
             ))}
           </div>
-        </div>
-      ) : null}
+        ) : (
+          <p className="meta" style={{ marginBottom: 0 }}>
+            No upcoming shows from artists you follow.{' '}
+            <a href="/artists" style={{ color: 'var(--accent)' }}>Discover artists</a> to see their shows here.
+          </p>
+        )}
+      </div>
       <WorkbenchShell data={wbData} starterPack={starterPack} />
       <div className="container">
         <TrendingNearMe viewerCity={profile.city ?? viewerLocation?.city ?? null} />

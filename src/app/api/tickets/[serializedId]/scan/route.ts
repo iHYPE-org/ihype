@@ -45,5 +45,5 @@ export async function POST(
     }
   });
 
-  return NextResponse.json({ message: 'Ticket verified and marked as scanned.' });
+  return NextResponse.json({ ok: true, message: 'Ticket verified and marked as scanned.' });
 }

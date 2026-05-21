@@ -7,10 +7,10 @@ const addItemSchema = z.object({
   mediaId: z.string().trim().min(1),
   title: z.string().trim().min(1).max(160),
   artistName: z.string().trim().min(1).max(160),
-  url: z.string().trim().url(),
+  url: z.string().trim().url().max(2000).refine((u) => !u.startsWith('javascript:'), 'Invalid URL'),
   artistProfileSlug: z.string().trim().optional().nullable(),
   notes: z.string().trim().max(240).optional().nullable(),
-  artworkUrl: z.string().trim().url().optional().nullable()
+  artworkUrl: z.string().trim().url().max(2000).refine((u) => !u.startsWith('javascript:'), 'Invalid URL').optional().nullable()
 });
 
 const reorderSchema = z.object({

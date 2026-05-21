@@ -31,26 +31,26 @@ describe('webhook idempotency store', () => {
   beforeEach(() => store.clear());
 
   it('processes a new event successfully', async () => {
-    const result = await store.process('mux', 'evt_001');
+    const result = await store.process('stripe', 'evt_001');
     expect(result.ok).toBe(true);
     expect(result.duplicate).toBe(false);
   });
 
   it('marks a repeated event as a duplicate', async () => {
-    await store.process('mux', 'evt_001');
-    const result = await store.process('mux', 'evt_001');
+    await store.process('stripe', 'evt_001');
+    const result = await store.process('stripe', 'evt_001');
     expect(result.duplicate).toBe(true);
   });
 
   it('does not confuse events with the same ID from different sources', async () => {
-    await store.process('mux', 'evt_001');
+    await store.process('stripe', 'evt_001');
     const result = await store.process('stripe', 'evt_001');
     expect(result.duplicate).toBe(false);
   });
 
   it('allows the same source with different event IDs', async () => {
-    await store.process('mux', 'evt_001');
-    const result = await store.process('mux', 'evt_002');
+    await store.process('stripe', 'evt_001');
+    const result = await store.process('stripe', 'evt_002');
     expect(result.duplicate).toBe(false);
   });
 
@@ -64,7 +64,7 @@ describe('webhook idempotency store', () => {
 
   it('handles high volume of distinct events without collision', async () => {
     const results = await Promise.all(
-      Array.from({ length: 100 }, (_, i) => store.process('mux', `evt_${i}`))
+      Array.from({ length: 100 }, (_, i) => store.process('stripe', `evt_${i}`))
     );
     expect(results.every((r) => !r.duplicate)).toBe(true);
   });
@@ -72,9 +72,9 @@ describe('webhook idempotency store', () => {
   it('detects all duplicates when same event is sent in parallel', async () => {
     // First arrival wins; rest are duplicates
     const results = await Promise.all([
-      store.process('mux', 'evt_dup'),
-      store.process('mux', 'evt_dup'),
-      store.process('mux', 'evt_dup')
+      store.process('stripe', 'evt_dup'),
+      store.process('stripe', 'evt_dup'),
+      store.process('stripe', 'evt_dup')
     ]);
     const successes = results.filter((r) => !r.duplicate).length;
     const duplicates = results.filter((r) => r.duplicate).length;

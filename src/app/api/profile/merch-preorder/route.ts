@@ -9,7 +9,9 @@ export async function POST(request: NextRequest) {
   const ip = readClientAddress(request);
   const rl = await consumeRateLimit(`merch-preorder:${ip}`, { limit: 3, windowMs: 60 * 60 * 1000 });
   if (!rl.allowed) return NextResponse.json({ error: 'Rate limit.' }, { status: 429 });
-  const { profileId, name, email, item, size } = await request.json() as { profileId?: string; name?: string; email?: string; item?: string; size?: string };
+  let parsed: { profileId?: string; name?: string; email?: string; item?: string; size?: string };
+  try { parsed = await request.json() as typeof parsed; } catch { return NextResponse.json({ error: 'Invalid JSON.' }, { status: 400 }); }
+  const { profileId, name, email, item, size } = parsed;
   if (!profileId || !name?.trim() || !email?.trim() || !item?.trim()) return NextResponse.json({ error: 'Missing fields.' }, { status: 400 });
   const profile = await db.profile.findUnique({ where: { id: profileId }, select: { name: true, owner: { select: { email: true } } } });
   if (!profile) return NextResponse.json({ error: 'Profile not found.' }, { status: 404 });

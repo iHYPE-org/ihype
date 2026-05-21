@@ -1,5 +1,7 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import type { Metadata } from 'next';
+import { unstable_cache } from 'next/cache';
 import { db } from '@/lib/db';
 import { getDemoOwnerExclusion } from '@/lib/runtime-flags';
 
@@ -52,46 +54,51 @@ export default async function DiscoverPage({
 
   if (tab === 'trending') {
     genreFilter = typeof resolved.genre === 'string' ? resolved.genre : null;
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-    const grouped = await db.profileHypeEvent.groupBy({
-      by: ['profileId'],
-      where: { createdAt: { gte: sevenDaysAgo } },
-      _count: { profileId: true },
-      orderBy: { _count: { profileId: 'desc' } },
-      take: 50
-    });
+    const getTrending = unstable_cache(
+      async (genre: string | null) => {
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        const grouped = await db.profileHypeEvent.groupBy({
+          by: ['profileId'],
+          where: { createdAt: { gte: sevenDaysAgo } },
+          _count: { profileId: true },
+          orderBy: { _count: { profileId: 'desc' } },
+          take: 50
+        });
+        const profileIds = grouped.map((g) => g.profileId);
+        const profiles = profileIds.length
+          ? await db.profile.findMany({
+              where: {
+                id: { in: profileIds },
+                ...(genre ? { genre: { contains: genre, mode: 'insensitive' } } : {}),
+                ...getDemoOwnerExclusion()
+              },
+              select: { id: true, slug: true, name: true, type: true, city: true, stateRegion: true, genre: true }
+            })
+          : [];
+        const profileMap = new Map(profiles.map((p) => [p.id, p]));
+        const rows: RankedRow[] = [];
+        grouped.forEach((g, i) => {
+          const profile = profileMap.get(g.profileId);
+          if (!profile) return;
+          rows.push({ rank: i + 1, count: g._count.profileId, profile: { ...profile, type: profile.type as unknown as string } });
+        });
+        const allGenres = await db.profile.findMany({
+          where: { genre: { not: null }, ...getDemoOwnerExclusion() },
+          select: { genre: true },
+          distinct: ['genre'],
+          take: 30
+        });
+        const pills = allGenres.map((p) => p.genre).filter((g): g is string => Boolean(g)).sort();
+        return { rows, pills };
+      },
+      ['discover-trending', genreFilter ?? ''],
+      { revalidate: 300 }
+    );
 
-    const profileIds = grouped.map((g) => g.profileId);
-    const profiles = profileIds.length
-      ? await db.profile.findMany({
-          where: {
-            id: { in: profileIds },
-            ...(genreFilter ? { genre: { contains: genreFilter, mode: 'insensitive' } } : {}),
-            ...getDemoOwnerExclusion()
-          },
-          select: { id: true, slug: true, name: true, type: true, city: true, stateRegion: true, genre: true }
-        })
-      : [];
-    const profileMap = new Map(profiles.map((p) => [p.id, p]));
-
-    grouped.forEach((g, i) => {
-      const profile = profileMap.get(g.profileId);
-      if (!profile) return;
-      trendingRows.push({
-        rank: i + 1,
-        count: g._count.profileId,
-        profile: { ...profile, type: profile.type as unknown as string }
-      });
-    });
-
-    const allGenres = await db.profile.findMany({
-      where: { genre: { not: null }, ...getDemoOwnerExclusion() },
-      select: { genre: true },
-      distinct: ['genre'],
-      take: 30
-    });
-    genrePills = allGenres.map((p) => p.genre).filter((g): g is string => Boolean(g)).sort();
+    const { rows, pills } = await getTrending(genreFilter);
+    trendingRows = rows;
+    genrePills = pills;
   }
 
   // ── TOP FANS TAB ──────────────────────────────────────────────────────────
@@ -108,15 +115,17 @@ export default async function DiscoverPage({
 
   if (tab === 'fans') {
     cityFilter = resolved.city?.trim() || undefined;
-    fanProfiles = await db.profile.findMany({
-      where: {
-        type: 'LISTENER',
-        ...(cityFilter ? { city: { contains: cityFilter, mode: 'insensitive' } } : {})
-      },
-      select: { id: true, slug: true, name: true, city: true, stateRegion: true, hypeCount: true, avatarImage: true },
-      orderBy: { hypeCount: 'desc' },
-      take: 20
-    });
+    const getTopFans = unstable_cache(
+      async (city: string | undefined) => db.profile.findMany({
+        where: { type: 'LISTENER', ...(city ? { city: { contains: city, mode: 'insensitive' } } : {}) },
+        select: { id: true, slug: true, name: true, city: true, stateRegion: true, hypeCount: true, avatarImage: true },
+        orderBy: { hypeCount: 'desc' },
+        take: 20
+      }),
+      ['discover-fans', cityFilter ?? ''],
+      { revalidate: 300 }
+    );
+    fanProfiles = await getTopFans(cityFilter);
   }
 
   // ── NEW ARTISTS TAB ───────────────────────────────────────────────────────
@@ -132,12 +141,17 @@ export default async function DiscoverPage({
   }> = [];
 
   if (tab === 'new') {
-    newArtists = await db.profile.findMany({
-      where: { type: { in: ['ARTIST', 'DJ'] }, ...getDemoOwnerExclusion() },
-      select: { id: true, slug: true, name: true, type: true, city: true, stateRegion: true, genre: true, createdAt: true },
-      orderBy: { createdAt: 'desc' },
-      take: 50
-    });
+    const getNewArtists = unstable_cache(
+      async () => db.profile.findMany({
+        where: { type: { in: ['ARTIST', 'DJ'] }, ...getDemoOwnerExclusion() },
+        select: { id: true, slug: true, name: true, type: true, city: true, stateRegion: true, genre: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+        take: 50
+      }),
+      ['discover-new'],
+      { revalidate: 300 }
+    );
+    newArtists = await getNewArtists();
   }
 
   return (
@@ -208,7 +222,7 @@ export default async function DiscoverPage({
               {fanProfiles.map((profile, index) => (
                 <li key={profile.id} className="panel" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 16px' }}>
                   <span style={{ fontWeight: 700, fontSize: 18, minWidth: 32, textAlign: 'right', opacity: 0.5 }}>{index + 1}</span>
-                  {profile.avatarImage && <img alt={profile.name} src={profile.avatarImage} style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }} />}
+                  {profile.avatarImage && <Image alt={profile.name} src={profile.avatarImage} width={36} height={36} style={{ borderRadius: '50%', objectFit: 'cover' }} />}
                   <div style={{ flex: 1 }}>
                     <Link href={`/fans/${profile.slug}`} style={{ fontWeight: 600 }}>{profile.name}</Link>
                     {(profile.city || profile.stateRegion) && <p className="meta" style={{ margin: 0 }}>{[profile.city, profile.stateRegion].filter(Boolean).join(', ')}</p>}

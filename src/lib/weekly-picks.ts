@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
 import Anthropic from '@anthropic-ai/sdk';
+import { getBaseUrl } from '@/lib/utils';
 
 export async function sendWeeklyPicksEmails(): Promise<{ sent: number; skipped: number }> {
   const client = new Anthropic();
@@ -29,7 +30,7 @@ export async function sendWeeklyPicksEmails(): Promise<{ sent: number; skipped: 
     aiBlurb = (msg.content[0] as { text: string }).text ?? '';
   } catch { /* proceed without AI blurb */ }
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org';
+  const baseUrl = getBaseUrl();
   const picksHtml = topProfiles.map((p, i) =>
     `<p><strong>${i + 1}. <a href="${baseUrl}/artists/${p.slug}">${p.name}</a></strong> — ${(p.genres as string[] | null ?? []).join(', ')}</p>`
   ).join('');

@@ -26,10 +26,10 @@ export function InfiniteScroll({
   }, [hasMore, loading, onLoadMore]);
 
   return (
-    <div ref={ref} style={{ height: 1 }}>
+    <div ref={ref} style={{ height: 1 }} aria-live="polite" aria-atomic="true">
       {loading && (
-        <div className="meta" style={{ textAlign: 'center', padding: 16 }}>
-          Loading…
+        <div className="meta" style={{ textAlign: 'center', padding: 16 }} role="status">
+          Loading more…
         </div>
       )}
     </div>

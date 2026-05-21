@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { vetAdvertisement } from '@/lib/ad-vetting';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
+import { getBaseUrl } from '@/lib/utils';
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -41,7 +42,8 @@ export async function POST(request: Request) {
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
       return NextResponse.json({ error: 'Campaign website must be an http or https URL.' }, { status: 400 });
     }
-  } catch {
+  } catch (err) {
+    console.error('[ads/upload]', err);
     return NextResponse.json({ error: 'Campaign website must be a valid URL.' }, { status: 400 });
   }
 
@@ -89,7 +91,7 @@ export async function POST(request: Request) {
 
   // Fire-and-forget admin alert
   import('@/lib/mailer').then(({ sendGenericEmail }) =>
-    sendGenericEmail({ to: process.env.ADMIN_ALERT_EMAIL ?? 'admin@ihype.org', subject: `[iHYPE] New ad submission: ${advertiserName}`, text: `Tier: ${tier}\nType: ${advertiserType}\nWebsite: ${campaignWebsite}`, html: `<p><strong>${advertiserName}</strong> submitted a <strong>${tier}</strong> ad.</p><p>Website: ${campaignWebsite}</p><p><a href="${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org'}/admin/ads">Review in admin</a></p>` }).catch(() => {})
+    sendGenericEmail({ to: process.env.ADMIN_ALERT_EMAIL ?? 'admin@ihype.org', subject: `[iHYPE] New ad submission: ${advertiserName}`, text: `Tier: ${tier}\nType: ${advertiserType}\nWebsite: ${campaignWebsite}`, html: `<p><strong>${advertiserName}</strong> submitted a <strong>${tier}</strong> ad.</p><p>Website: ${campaignWebsite}</p><p><a href="${getBaseUrl()}/admin/ads">Review in admin</a></p>` }).catch(() => {})
   );
 
   if (status === 'rejected') {

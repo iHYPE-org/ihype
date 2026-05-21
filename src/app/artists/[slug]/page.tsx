@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { cache } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
@@ -15,7 +16,7 @@ import { ProfileLinkShelf } from '@/components/ProfileLinkShelf';
 import { ReportButton } from '@/components/ReportButton';
 import { CollapsibleText } from '@/components/CollapsibleText';
 import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
-import { getSafeBackgroundImageStyle, getSafeImageUrl, getSafeVideoUrl } from '@/lib/asset-safety';
+import { getSafeBackgroundImageStyle, getSafeImageUrl } from '@/lib/asset-safety';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { DEFAULT_PROFILE_DESIGN_PRESET, getProfileDesignStyleVars } from '@/lib/profile-design';
 import { detectRequestLocation } from '@/lib/request-location';
@@ -24,6 +25,7 @@ import { AvailabilityCalendar } from '@/components/AvailabilityCalendar';
 import { getDemoCreatorExclusion, getDemoOwnerExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
 import { SoundsLike } from '@/components/SoundsLike';
 import { StreamingLinks } from '@/components/StreamingLinks';
+import { getBaseUrl } from '@/lib/utils';
 
 const artistSections = ['about', 'media', 'merch'] as const;
 
@@ -54,11 +56,8 @@ function formatShowDate(value: Date) {
   }).format(value);
 }
 
-export async function generateMetadata(
-  { params }: { params: Promise<{ slug: string }> }
-): Promise<Metadata> {
-  const { slug } = await params;
-  const profile = await db.profile.findUnique({
+const getArtistMeta = cache((slug: string) =>
+  db.profile.findUnique({
     where: { slug },
     select: {
       name: true,
@@ -70,7 +69,14 @@ export async function generateMetadata(
       avatarImage: true,
       owner: { select: { email: true, username: true } }
     }
-  });
+  })
+);
+
+export async function generateMetadata(
+  { params }: { params: Promise<{ slug: string }> }
+): Promise<Metadata> {
+  const { slug } = await params;
+  const profile = await getArtistMeta(slug);
 
   if (!profile || (shouldHideDemoContent() && isDemoUser(profile.owner))) {
     return { title: 'Artist | iHYPE' };
@@ -121,28 +127,19 @@ export default async function ArtistPage({
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const activeSection = getActiveSection(resolvedSearchParams.section);
 
-  const profile = await db.profile.findUnique({
-    where: { slug },
-    include: {
-      owner: {
-        select: {
-          email: true,
-          username: true
+  const getArtistPage = cache((s: string) =>
+    db.profile.findUnique({
+      where: { slug: s },
+      include: {
+        owner: { select: { email: true, username: true } },
+        mediaUploads: {
+          select: { hexId: true, title: true, notes: true, mimeType: true, fileSizeBytes: true, createdAt: true },
+          orderBy: { createdAt: 'desc' }
         }
-      },
-      mediaUploads: {
-        select: {
-          hexId: true,
-          title: true,
-          notes: true,
-          mimeType: true,
-          fileSizeBytes: true,
-          createdAt: true
-        },
-        orderBy: { createdAt: 'desc' }
       }
-    }
-  });
+    })
+  );
+  const profile = await getArtistPage(slug);
   if (!profile || profile.type !== 'ARTIST') return notFound();
   if (shouldHideDemoContent() && isDemoUser(profile.owner)) return notFound();
   const profileSlug = profile.slug;
@@ -213,7 +210,6 @@ export default async function ArtistPage({
     ? getSafeImageUrl(profile.galleryImage || profile.heroImage)
     : null;
   const logoUrl = canViewCustomPage ? getSafeImageUrl(profile.logoImage || profile.avatarImage) : null;
-  const featureVideoUrl = canViewCustomPage ? getSafeVideoUrl(profile.featureVideoUrl) : null;
   const globeRouteStops = shows
     .filter(
       (show) =>
@@ -241,7 +237,7 @@ export default async function ArtistPage({
             : ('past' as const)
     }));
 
-  const base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org';
+  const base = getBaseUrl();
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'MusicGroup',
@@ -409,11 +405,6 @@ export default async function ArtistPage({
               {artworkUrl ? (
                 <div className="artist-media-visuals">
                   <img alt={`${profile.name} featured artwork`} className="artist-media-visual-image" src={artworkUrl} />
-                </div>
-              ) : null}
-              {featureVideoUrl ? (
-                <div className="artist-media-visuals">
-                  <video className="artist-media-visual-video" controls preload="metadata" src={featureVideoUrl} />
                 </div>
               ) : null}
               {media.entries.length ? (

@@ -1,7 +1,8 @@
 import type { MetadataRoute } from 'next';
+import { getBaseUrl } from '@/lib/utils';
 
 export default function robots(): MetadataRoute.Robots {
-  const base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org';
+  const base = getBaseUrl();
   return {
     rules: [
       {

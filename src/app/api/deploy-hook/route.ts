@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getBaseUrl } from '@/lib/utils';
 
-const SITEMAP_URL = 'https://ihype.org/sitemap.xml';
+const SITEMAP_URL = `${getBaseUrl()}/sitemap.xml`;
 
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get('authorization') ?? '';

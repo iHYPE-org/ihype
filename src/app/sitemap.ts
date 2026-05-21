@@ -1,8 +1,9 @@
 import type { MetadataRoute } from 'next';
+import { getBaseUrl } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
-const base = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ihype.org';
+const base = getBaseUrl();
 
 // Sitemap index — Next 16 renders this as an index referencing the named
 // sub-sitemaps when entries have only `url` pointing to other sitemap XMLs.

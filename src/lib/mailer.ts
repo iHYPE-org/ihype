@@ -1,25 +1,14 @@
-import nodemailer from 'nodemailer';
 import { recordEmailDelivery } from '@/lib/audit';
 import { env } from '@/lib/env';
 import { db } from '@/lib/db';
+import { enqueueEmail } from '@/lib/email-queue';
 
-let transporter: nodemailer.Transporter | null = null;
-
-function parseSmtpSecureFlag(value: string | undefined) {
-  if (!value) {
-    return false;
-  }
-
-  const normalized = value.trim().toLowerCase();
-  return normalized === 'true' || normalized === '1' || normalized === 'yes';
+function getEmailFrom() {
+  return env.EMAIL_FROM;
 }
 
 export function isSmtpEmailConfigured() {
-  return Boolean(env.SMTP_HOST && env.SMTP_PORT && env.SMTP_FROM);
-}
-
-function getEmailFrom() {
-  return env.EMAIL_FROM || env.SMTP_FROM;
+  return false; // SMTP removed — Resend is the sole provider
 }
 
 export function isResendEmailConfigured() {
@@ -27,30 +16,7 @@ export function isResendEmailConfigured() {
 }
 
 export function isEmailDeliveryConfigured() {
-  return isResendEmailConfigured() || isSmtpEmailConfigured();
-}
-
-function getTransporter() {
-  if (!isSmtpEmailConfigured()) {
-    throw new Error('SMTP is not configured for email delivery.');
-  }
-
-  if (!transporter) {
-    transporter = nodemailer.createTransport({
-      host: env.SMTP_HOST,
-      port: env.SMTP_PORT,
-      secure: parseSmtpSecureFlag(env.SMTP_SECURE),
-      auth:
-        env.SMTP_USER && env.SMTP_PASSWORD
-          ? {
-              user: env.SMTP_USER,
-              pass: env.SMTP_PASSWORD
-            }
-          : undefined
-    });
-  }
-
-  return transporter;
+  return isResendEmailConfigured();
 }
 
 type ConfiguredEmailInput = {
@@ -93,48 +59,40 @@ async function sendConfiguredEmail(input: ConfiguredEmailInput) {
     throw new Error('Email sender is not configured.');
   }
 
-  // Prefer Resend's HTTPS API when available. It avoids SMTP credential drift
-  // and works well in Vercel serverless functions.
-  if (isResendEmailConfigured()) {
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${env.RESEND_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        from,
-        to: input.to,
-        subject: input.subject,
-        text: input.text,
-        html: input.html
-      })
-    });
-
-    if (!response.ok) {
-      const payload = await response.json().catch(() => ({}));
-      const nestedError = payload.error;
-      const message =
-        typeof payload.message === 'string'
-          ? payload.message
-          : nestedError && typeof nestedError === 'object' && 'message' in nestedError && typeof nestedError.message === 'string'
-            ? nestedError.message
-          : typeof payload.error === 'string'
-            ? payload.error
-            : `HTTP ${response.status}`;
-      throw new Error(`Resend email delivery failed: ${message}`);
-    }
-
-    return 'resend' as const;
+  if (!isResendEmailConfigured()) {
+    throw new Error('Email delivery (Resend) is not configured.');
   }
 
-  const transport = getTransporter();
-  await transport.sendMail({
-    from,
-    ...input
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from,
+      to: input.to,
+      subject: input.subject,
+      text: input.text,
+      html: input.html
+    })
   });
 
-  return 'smtp' as const;
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    const nestedError = payload.error;
+    const message =
+      typeof payload.message === 'string'
+        ? payload.message
+        : nestedError && typeof nestedError === 'object' && 'message' in nestedError && typeof nestedError.message === 'string'
+          ? nestedError.message
+        : typeof payload.error === 'string'
+          ? payload.error
+          : `HTTP ${response.status}`;
+    throw new Error(`Resend email delivery failed: ${message}`);
+  }
+
+  return 'resend' as const;
 }
 
 type LoginOtpEmailInput = {
@@ -152,7 +110,12 @@ export async function sendLoginOtpEmail({ email, name, otp }: LoginOtpEmailInput
       await recordEmailDelivery({ type: 'login-otp', recipient: email, status: 'LOGGED', provider: 'console' });
       return { mode: 'log' as const };
     }
-    throw new Error('SMTP is not configured for OTP email delivery.');
+    throw new Error('Email delivery is not configured for OTP delivery.');
+  }
+
+  const enqueued = await enqueueEmail('login-otp', { email, name, otp });
+  if (enqueued) {
+    return { mode: 'queued' as const };
   }
 
   try {
@@ -185,13 +148,13 @@ export async function sendLoginOtpEmail({ email, name, otp }: LoginOtpEmailInput
       type: 'login-otp',
       recipient: email,
       status: 'FAILED',
-      provider: isResendEmailConfigured() ? 'resend' : 'smtp',
+      provider: 'resend',
       error: error instanceof Error ? error.message : String(error)
     });
     throw error;
   }
 
-  return { mode: isResendEmailConfigured() ? ('resend' as const) : ('smtp' as const) };
+  return { mode: 'resend' as const };
 }
 
 type PasswordResetEmailInput = {
@@ -264,13 +227,13 @@ export async function sendPasswordResetPasscodeEmail({
       type: 'password-reset',
       recipient: email,
       status: 'FAILED',
-      provider: isResendEmailConfigured() ? 'resend' : 'smtp',
+      provider: 'resend',
       error: error instanceof Error ? error.message : String(error)
     });
     throw error;
   }
 
-  return { mode: isResendEmailConfigured() ? ('resend' as const) : ('smtp' as const) };
+  return { mode: 'resend' as const };
 }
 
 export async function sendIssuedTicketEmail({
@@ -351,11 +314,11 @@ export async function sendIssuedTicketEmail({
       type: 'ticket',
       recipient: email,
       status: 'FAILED',
-      provider: isResendEmailConfigured() ? 'resend' : 'smtp',
+      provider: 'resend',
       error: error instanceof Error ? error.message : String(error)
     });
     throw error;
   }
 
-  return { mode: isResendEmailConfigured() ? ('resend' as const) : ('smtp' as const) };
+  return { mode: 'resend' as const };
 }

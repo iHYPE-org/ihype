@@ -9,6 +9,7 @@ function isAllowedImageProtocol(value: string) {
 
 function isAllowedVideoProtocol(value: string) {
   return (
+    value.startsWith('/') ||
     value.startsWith('https://') ||
     /^data:video\/(?:mp4|webm|ogg);base64,/i.test(value) ||
     value.startsWith('blob:')

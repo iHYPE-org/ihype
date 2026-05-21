@@ -3,7 +3,7 @@ import type { ShowStatus } from '@prisma/client/wasm';
 import { db } from '@/lib/db';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300; // 5-minute cache for public profile data
 
 export async function GET(
   _request: Request,

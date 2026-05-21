@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
+import { getBaseUrl } from '@/lib/utils';
 
 type DigestResult = { sent: boolean; reason?: string; showCount?: number };
 
@@ -73,7 +74,7 @@ export async function sendWeeklyDigest(userId: string): Promise<DigestResult> {
     '',
     ...lines,
     '',
-    'See more at https://ihype.org/shows',
+    `See more at ${getBaseUrl()}/shows`,
     '',
     '— iHYPE'
   ].join('\n');
@@ -98,7 +99,7 @@ export async function sendWeeklyDigest(userId: string): Promise<DigestResult> {
           })
           .join('')}
       </ul>
-      <p><a href="https://ihype.org/shows">See more shows →</a></p>
+      <p><a href="${getBaseUrl()}/shows">See more shows →</a></p>
       <p style="color:#5b657a;font-size:12px;">— iHYPE</p>
     </div>
   `;
