@@ -66,7 +66,8 @@ export async function GET(request: Request) {
     where: {
       status: { in: ['SCHEDULED', 'LIVE', 'ENDED'] },
       ...getDemoCreatorExclusion()
-    }
+    },
+    take: 200
   });
   return NextResponse.json(sortShowsForFeed(shows));
 }
@@ -135,7 +136,10 @@ export async function POST(request: NextRequest) {
       }
 
       const baseSlug = slugify(body.title);
-      const slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
+      let slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
+      while (await db.show.findUnique({ where: { slug }, select: { id: true } })) {
+        slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
+      }
       const status = body.status === 'DRAFT' ? 'DRAFT' : 'SCHEDULED';
       const sortedTracks = [...tracks].sort((left, right) => left.position - right.position);
 
@@ -260,7 +264,10 @@ export async function POST(request: NextRequest) {
     }
 
     const baseSlug = slugify(body.title);
-    const slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
+    let slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
+    while (await db.show.findUnique({ where: { slug }, select: { id: true } })) {
+      slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
+    }
 
     const show = await db.show.create({
       data: {
