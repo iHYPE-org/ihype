@@ -19,13 +19,31 @@ function isPostgresUrl(url: string | undefined) {
   return Boolean(url?.startsWith('postgresql://') || url?.startsWith('postgres://'));
 }
 
+function readCloudflareEnv(name: string): string | undefined {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { getCloudflareContext } = require('@opennextjs/cloudflare');
+    const ctx = getCloudflareContext();
+    const value = (ctx.env as Record<string, unknown>)[name];
+    return typeof value === 'string' ? value.trim() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function readRuntimeEnv(name: string): string | undefined {
+  return process.env[name]?.trim() || readCloudflareEnv(name);
+}
+
 function normalizeRuntimeDatabaseUrl() {
-  if (isPostgresUrl(process.env.DATABASE_URL)) {
+  const databaseUrl = readRuntimeEnv('DATABASE_URL');
+  if (isPostgresUrl(databaseUrl)) {
+    process.env.DATABASE_URL = databaseUrl;
     return;
   }
 
   for (const key of RUNTIME_POSTGRES_URL_CANDIDATES) {
-    const value = process.env[key]?.trim();
+    const value = readRuntimeEnv(key);
     if (isPostgresUrl(value)) {
       process.env.DATABASE_URL = value;
       return;
@@ -33,29 +51,9 @@ function normalizeRuntimeDatabaseUrl() {
   }
 }
 
-function getHyperdriveConnectionString(): string | undefined {
-  try {
-    // Dynamic require keeps Cloudflare runtime lookup out of the Next.js build path.
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { getCloudflareContext } = require('@opennextjs/cloudflare');
-    const ctx = getCloudflareContext();
-    const hyperdrive = (ctx.env as Record<string, unknown>).HYPERDRIVE as
-      | { connectionString: string }
-      | undefined;
-    return hyperdrive?.connectionString;
-  } catch {
-    return undefined;
-  }
-}
-
 function getConnectionString() {
-  const hyperdriveUrl = getHyperdriveConnectionString();
-  if (hyperdriveUrl) {
-    return hyperdriveUrl;
-  }
-
   normalizeRuntimeDatabaseUrl();
-  return process.env.DATABASE_URL;
+  return readRuntimeEnv('DATABASE_URL');
 }
 
 function makePrisma(url: string) {
@@ -73,7 +71,7 @@ const globalForPrisma = globalThis as unknown as {
 function getDb() {
   const url = getConnectionString();
   if (!url) {
-    throw new Error('DATABASE_URL or Cloudflare Hyperdrive connection string is required for Prisma');
+    throw new Error('A direct Postgres DATABASE_URL is required for Prisma');
   }
 
   if (!globalForPrisma.prisma || globalForPrisma.prismaConnectionString !== url) {
