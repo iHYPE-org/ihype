@@ -13,7 +13,7 @@ import { db } from '@/lib/db';
 import { getBaseUrl } from '@/lib/utils';
 
 function getRpInfo() {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://ihype.org';
+  const appUrl = getBaseUrl();
   const url = new URL(appUrl);
   return { rpID: url.hostname, rpName: 'iHYPE', origin: appUrl };
 }
