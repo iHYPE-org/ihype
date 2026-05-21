@@ -9,6 +9,7 @@ jobs:
   deploy:
     name: Build and deploy
     runs-on: ubuntu-latest
+    environment: Production – ihype
     permissions:
       contents: read
       deployments: write
