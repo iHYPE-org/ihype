@@ -12,7 +12,8 @@ APP_BASE_URL = "https://ihype.org"
 crons = [
   "* * * * *",    # show-lifecycle
   "*/5 * * * *",  # expire-reservations
-  "0 */6 * * *",  # health-check, db-health
+  "0 */6 * * *",  # health-check, db-health, stripe-connect-health
+  "0 1 * * *",    # close-stale-bookings
   "0 2 * * *",    # expire-ads
   "0 3 * * *",    # session-cleanup
   "0 4 * * 1",    # audit-log-rotate (Monday)
@@ -20,6 +21,8 @@ crons = [
   "0 8 * * *",    # digest
   "0 9 * * 1",    # weekly-picks, artist-digest, admin-report, follow-digest (Monday)
   "0 10 * * *",   # new-to-scene
+  "0 11 * * *",   # artist-onboarding
   "0 12 * * *",   # show-reminders
+  "0 13 * * *",   # show-payouts
   "0 14 * * *",   # onboarding
 ]

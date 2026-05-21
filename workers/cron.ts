@@ -40,11 +40,17 @@ const JOBS: CronJob[] = [
   { path: '/api/cron?job=feature-shows',    schedule: '0 6 * * *'    },
 
   // Weekly jobs — Monday morning
-  { path: '/api/cron?job=weekly-picks',       schedule: '0 9 * * 1'  },
-  { path: '/api/cron?job=artist-digest',      schedule: '0 9 * * 1'  },
-  { path: '/api/cron?job=admin-report',       schedule: '0 9 * * 1'  },
-  { path: '/api/cron?job=follow-digest',      schedule: '0 9 * * 1'  },
-  { path: '/api/cron?job=audit-log-rotate',   schedule: '0 4 * * 1'  },
+  { path: '/api/cron?job=weekly-picks',       schedule: '0 9 * * 1'   },
+  { path: '/api/cron?job=artist-digest',      schedule: '0 9 * * 1'   },
+  { path: '/api/cron?job=admin-report',       schedule: '0 9 * * 1'   },
+  { path: '/api/cron?job=follow-digest',      schedule: '0 9 * * 1'   },
+  { path: '/api/cron?job=audit-log-rotate',   schedule: '0 4 * * 1'   },
+
+  // Additional daily jobs
+  { path: '/api/cron?job=close-stale-bookings',  schedule: '0 1 * * *'   },
+  { path: '/api/cron?job=artist-onboarding',     schedule: '0 11 * * *'  },
+  { path: '/api/cron?job=show-payouts',          schedule: '0 13 * * *'  },
+  { path: '/api/cron?job=stripe-connect-health', schedule: '0 */6 * * *' },
 ];
 
 export default {
