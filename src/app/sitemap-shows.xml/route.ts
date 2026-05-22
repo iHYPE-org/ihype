@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getBaseUrl } from '@/lib/utils';
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 const base = getBaseUrl();
 
