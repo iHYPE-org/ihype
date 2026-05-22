@@ -25,3 +25,10 @@ jobs:
 
       - name: Test
         run: npm test
+
+      - name: Cloudflare build
+        run: npm run cf:build
+        env:
+          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+          NEXT_PUBLIC_BASE_URL: https://ihype.org
+          NEXT_PUBLIC_APP_URL: https://ihype.org

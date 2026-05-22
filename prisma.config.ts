@@ -17,12 +17,26 @@ const DATABASE_URL_CANDIDATES = [
   'DATABASE_URL_POSTGRES_URL_NO_SSL',
 ] as const
 
+const MIGRATION_DATABASE_URL_CANDIDATES = [
+  'DIRECT_URL',
+  'DIRECT_DATABASE_URL',
+  'DATABASE_DIRECT_URL',
+  'DATABASE_URL_UNPOOLED',
+  'POSTGRES_URL_NON_POOLING',
+  'DATABASE_URL_POSTGRES_URL_NON_POOLING',
+  ...DATABASE_URL_CANDIDATES,
+] as const
+
 function isPostgresUrl(url: string) {
   return url.startsWith('postgresql://') || url.startsWith('postgres://')
 }
 
-function resolvePostgresUrl() {
-  for (const key of DATABASE_URL_CANDIDATES) {
+function isPrismaMigrationCommand() {
+  return process.argv.includes('migrate')
+}
+
+function resolvePostgresUrl(candidates: readonly string[]) {
+  for (const key of candidates) {
     const value = process.env[key]?.trim()
     if (value && isPostgresUrl(value)) {
       return value
@@ -35,7 +49,9 @@ function resolvePostgresUrl() {
 // Normalise DATABASE_URL to a postgresql:// URL so Prisma schema validation passes.
 // Vercel's Neon integration may set DATABASE_URL or related database env vars
 // to a prisma:// Accelerate URL, which the postgresql provider rejects at validate time.
-const postgresUrl = resolvePostgresUrl()
+const postgresUrl = resolvePostgresUrl(
+  isPrismaMigrationCommand() ? MIGRATION_DATABASE_URL_CANDIDATES : DATABASE_URL_CANDIDATES
+)
 if (postgresUrl) {
   process.env.DATABASE_URL = postgresUrl
 } else if (!isPostgresUrl(process.env.DATABASE_URL ?? '')) {
