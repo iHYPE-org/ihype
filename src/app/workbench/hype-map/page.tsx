@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { auth } from '@/lib/auth';
 import { HypeHeatmap, type HypeHeatmapCity, type HypeHeatmapVenuePing } from '@/components/HypeHeatmap';
 
 export const dynamic = 'force-dynamic';
@@ -52,62 +53,215 @@ const CITY_COORDS: Record<string, { x: number; y: number }> = {
   'tucson':        { x: .26, y: .70 },
 };
 
+function nearestNeighborRoute(cities: Array<{ name: string; x: number; y: number }>): string[] {
+  if (cities.length <= 1) return cities.map(c => c.name);
+  const unvisited = [...cities];
+  const route = [unvisited.splice(0, 1)[0]];
+  while (unvisited.length > 0) {
+    const last = route[route.length - 1];
+    let nearest = 0;
+    let minDist = Infinity;
+    for (let i = 0; i < unvisited.length; i++) {
+      const dx = unvisited[i].x - last.x;
+      const dy = unvisited[i].y - last.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < minDist) { minDist = dist; nearest = i; }
+    }
+    route.push(unvisited.splice(nearest, 1)[0]);
+  }
+  return route.map(c => c.name);
+}
+
+function jaccardSimilarity(a: string[], b: string[]): number {
+  if (a.length === 0 || b.length === 0) return 0;
+  const setA = new Set(a.map(s => s.toLowerCase()));
+  const setB = new Set(b.map(s => s.toLowerCase()));
+  let intersection = 0;
+  for (const g of setA) { if (setB.has(g)) intersection++; }
+  const union = new Set([...setA, ...setB]).size;
+  return union === 0 ? 0 : intersection / union;
+}
+
 export default async function HypeMapPage() {
-  const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const since60d = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
 
-  // Aggregate hype events by profile city (artists/DJs only)
-  const hypeByCity = await db.profileHypeEvent.groupBy({
-    by: ['profileId'],
-    _count: { _all: true },
-    where: {
-      createdAt: { gte: since7d },
-      profile: { type: { in: ['ARTIST', 'DJ'] } }
-    },
-    orderBy: { _count: { profileId: 'desc' } },
-    take: 200
-  });
+  // --- Auth + artist profile ---
+  const session = await auth();
+  let artistGenres: string[] = [];
+  let viewerOwnerId: string | undefined;
 
-  // Fetch city data for the top hyped profiles
-  const profileIds = hypeByCity.map((h) => h.profileId);
-  const profiles = profileIds.length
+  if (session?.user?.id) {
+    viewerOwnerId = session.user.id;
+    const artistProfile = await db.profile.findFirst({
+      where: { ownerId: session.user.id, type: { in: ['ARTIST', 'DJ'] } },
+      select: { genres: true }
+    });
+    if (artistProfile) artistGenres = artistProfile.genres ?? [];
+  }
+
+  // --- Two-window hype aggregation ---
+  const [recentHypes, prevHypes] = await Promise.all([
+    db.profileHypeEvent.groupBy({
+      by: ['profileId'],
+      _count: { _all: true },
+      where: { createdAt: { gte: since30d }, profile: { type: { in: ['ARTIST', 'DJ'] } } },
+      orderBy: { _count: { profileId: 'desc' } },
+      take: 300
+    }),
+    db.profileHypeEvent.groupBy({
+      by: ['profileId'],
+      _count: { _all: true },
+      where: { createdAt: { gte: since60d, lt: since30d }, profile: { type: { in: ['ARTIST', 'DJ'] } } },
+      orderBy: { _count: { profileId: 'desc' } },
+      take: 300
+    })
+  ]);
+
+  // Fetch city data for all hyped profiles
+  const allProfileIds = [
+    ...new Set([
+      ...recentHypes.map(h => h.profileId),
+      ...prevHypes.map(h => h.profileId)
+    ])
+  ];
+
+  const profiles = allProfileIds.length
     ? await db.profile.findMany({
-        where: { id: { in: profileIds } },
+        where: { id: { in: allProfileIds } },
         select: { id: true, city: true }
       })
     : [];
 
-  const profileCityMap = new Map(profiles.map((p) => [p.id, p.city?.trim().toLowerCase() ?? '']));
+  const profileCityMap = new Map(profiles.map(p => [p.id, p.city?.trim().toLowerCase() ?? '']));
 
-  // Aggregate by city
-  const cityHypeTotals = new Map<string, number>();
-  for (const row of hypeByCity) {
+  // Build per-city velocity maps (30d and prev30d)
+  const cityVelocity30d = new Map<string, number>();
+  const cityVelocityPrev = new Map<string, number>();
+
+  // Track which profileIds belong to each city (for genre fetching)
+  const cityProfileIds = new Map<string, string[]>();
+
+  for (const row of recentHypes) {
     const cityRaw = profileCityMap.get(row.profileId) ?? '';
     if (!cityRaw || !CITY_COORDS[cityRaw]) continue;
-    cityHypeTotals.set(cityRaw, (cityHypeTotals.get(cityRaw) ?? 0) + row._count._all);
+    cityVelocity30d.set(cityRaw, (cityVelocity30d.get(cityRaw) ?? 0) + row._count._all);
+    if (!cityProfileIds.has(cityRaw)) cityProfileIds.set(cityRaw, []);
+    cityProfileIds.get(cityRaw)!.push(row.profileId);
   }
 
-  // Build city list, sorted by hype desc
-  const topCities = [...cityHypeTotals.entries()]
+  for (const row of prevHypes) {
+    const cityRaw = profileCityMap.get(row.profileId) ?? '';
+    if (!cityRaw || !CITY_COORDS[cityRaw]) continue;
+    cityVelocityPrev.set(cityRaw, (cityVelocityPrev.get(cityRaw) ?? 0) + row._count._all);
+  }
+
+  // Sort cities by 30d velocity
+  const sortedCities = [...cityVelocity30d.entries()]
     .sort((a, b) => b[1] - a[1])
     .slice(0, 12);
 
-  const maxHype = topCities[0]?.[1] ?? 1;
+  const maxVelocity = sortedCities[0]?.[1] ?? 1;
 
-  const cities: HypeHeatmapCity[] = topCities.map(([cityKey, hype], i) => {
+  // --- Genre affinity: fetch genres for top artists per city ---
+  const topProfileIds = [...cityProfileIds.values()]
+    .map(ids => ids.slice(0, 20))
+    .flat()
+    .slice(0, 100);
+
+  const profileGenreData = topProfileIds.length
+    ? await db.profile.findMany({
+        where: { id: { in: topProfileIds } },
+        select: { id: true, city: true, genres: true }
+      })
+    : [];
+
+  // Build per-city genre union
+  const cityGenreUnion = new Map<string, string[]>();
+  for (const p of profileGenreData) {
+    const cityRaw = p.city?.trim().toLowerCase() ?? '';
+    if (!cityRaw) continue;
+    const existing = cityGenreUnion.get(cityRaw) ?? [];
+    cityGenreUnion.set(cityRaw, [...existing, ...(p.genres ?? [])]);
+  }
+
+  // --- Comparable artists: find cities where similar-genre artists have played ---
+  const comparableCities = new Set<string>();
+  if (artistGenres.length > 0 && viewerOwnerId) {
+    const comparableArtists = await db.profile.findMany({
+      where: {
+        type: { in: ['ARTIST', 'DJ'] },
+        genres: { hasSome: artistGenres.slice(0, 3) },
+        ownerId: { not: viewerOwnerId },
+        headlinerShows: { some: {} }
+      },
+      select: {
+        headlinerShows: {
+          select: { venueProfile: { select: { city: true } } },
+          take: 5,
+          orderBy: { startsAt: 'desc' }
+        }
+      },
+      take: 20
+    });
+
+    for (const artist of comparableArtists) {
+      for (const show of artist.headlinerShows) {
+        const city = show.venueProfile?.city?.toLowerCase().trim();
+        if (city) comparableCities.add(city);
+      }
+    }
+  }
+
+  // --- Build cities list ---
+  const cities: HypeHeatmapCity[] = sortedCities.map(([cityKey, velocity], i) => {
     const coords = CITY_COORDS[cityKey]!;
-    // Capitalise display name
-    const name = cityKey.replace(/\b\w/g, (c) => c.toUpperCase());
+    const name = cityKey.replace(/\b\w/g, c => c.toUpperCase());
+    const prevVelocity = cityVelocityPrev.get(cityKey) ?? 0;
+
+    let velocityTrend: 'up' | 'down' | 'stable' = 'stable';
+    if (velocity > prevVelocity * 1.2) velocityTrend = 'up';
+    else if (velocity < prevVelocity * 0.8) velocityTrend = 'down';
+
+    const cityGenres = cityGenreUnion.get(cityKey) ?? [];
+    const genreAffinityScore = artistGenres.length > 0
+      ? jaccardSimilarity(artistGenres, cityGenres)
+      : 0.5;
+
+    const hot = i < 3 || velocity > maxVelocity * 0.5 || comparableCities.has(cityKey);
+    const collabSignal = comparableCities.has(cityKey) ? 0.7 : null;
+
     return {
       name,
       x: coords.x,
       y: coords.y,
-      hype,
-      venuesAsking: 0, // venue booking interest not yet tracked
-      hot: i < 3 || hype > maxHype * 0.5
+      hype: velocity,
+      venuesAsking: 0,
+      hot,
+      velocity,
+      velocityTrend,
+      genreAffinityScore,
+      signalBreakdown: {
+        taste: artistGenres.length > 0 ? genreAffinityScore : null,
+        geo: null,
+        momentum: velocity / maxVelocity,
+        collab: collabSignal
+      }
     };
   });
 
-  // Venues with upcoming shows — surface ones with highest upcoming hype
+  // Boost hot status for comparable artist cities
+  for (const city of cities) {
+    if (comparableCities.has(city.name.toLowerCase()) && (city.velocity ?? 0) > 0) {
+      city.hot = true;
+    }
+  }
+
+  // --- Route optimizer: top 8 cities by velocity ---
+  const routeCitiesInput = cities.slice(0, 8).map(c => ({ name: c.name, x: c.x, y: c.y }));
+  const routeOrder = routeCitiesInput.length >= 2 ? nearestNeighborRoute(routeCitiesInput) : undefined;
+
+  // --- Venue pings ---
   const upcomingShows = await db.show.findMany({
     where: {
       status: 'SCHEDULED',
@@ -126,9 +280,9 @@ export default async function HypeMapPage() {
   });
 
   const venuePings: HypeHeatmapVenuePing[] = upcomingShows
-    .filter((s) => s.venueProfile)
+    .filter(s => s.venueProfile)
     .slice(0, 6)
-    .map((show, i) => {
+    .map(show => {
       const daysUntil = Math.ceil((show.startsAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
       const signal: 'urgent' | 'warm' | 'new' =
         daysUntil <= 7 ? 'urgent' : daysUntil <= 30 ? 'warm' : 'new';
@@ -137,16 +291,14 @@ export default async function HypeMapPage() {
         name: show.venueProfile!.name,
         city: show.venueProfile!.city ?? '',
         capacity: show.ticketCapacity ?? 0,
-        statusLabel: daysUntil <= 1 ? 'tomorrow' : daysUntil <= 7 ? `${daysUntil}d away` : show.startsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        statusLabel: daysUntil <= 1
+          ? 'tomorrow'
+          : daysUntil <= 7
+            ? `${daysUntil}d away`
+            : show.startsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         signal
       };
     });
-
-  // Suggested tour route: top 3 cities by 7-day hype
-  const routeCities = topCities.slice(0, 3).map(([cityKey]) =>
-    cityKey.slice(0, 3).toUpperCase()
-  );
-  const suggestedRoute = routeCities.length >= 2 ? routeCities.join(' → ') : undefined;
 
   // Fall back to placeholder if no real data yet
   if (cities.length === 0) {
@@ -161,7 +313,9 @@ export default async function HypeMapPage() {
     <HypeHeatmap
       cities={cities}
       venuePings={venuePings}
-      suggestedRoute={suggestedRoute}
+      suggestedRoute={undefined}
+      routeOrder={routeOrder}
+      artistGenres={artistGenres}
     />
   );
 }

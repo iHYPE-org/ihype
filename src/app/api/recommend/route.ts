@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 // Signal weights. Collaborative filtering is the strongest individual signal
 // when the viewer has enough hype history; taste (genre overlap from hyped
 // artists) covers users with <3 hypes; geo covers cold-start users with neither.
-const WEIGHTS = { taste: 0.30, geo: 0.20, social: 0.15, momentum: 0.10, collab: 0.25 };
+const WEIGHTS = { taste: 0.28, geo: 0.18, social: 0.12, momentum: 0.10, collab: 0.22, comparable: 0.10 };
 
 const VALID_TYPES: ProfileType[] = ['ARTIST', 'DJ', 'VENUE'];
 
@@ -47,7 +47,7 @@ function tasteScore(viewerGenres: string[], profileGenres: string[]) {
   return Math.min(1, overlap / Math.max(1, Math.min(viewerGenres.length, profileGenres.length)));
 }
 
-function finalScore(signals: { taste: number | null; geo: number | null; social: number; momentum: number; collab: number | null }) {
+function finalScore(signals: { taste: number | null; geo: number | null; social: number; momentum: number; collab: number | null; comparable: number | null }) {
   let weightedSum = 0;
   let totalWeight = 0;
   const entries: [keyof typeof WEIGHTS, number | null][] = [
@@ -55,7 +55,8 @@ function finalScore(signals: { taste: number | null; geo: number | null; social:
     ['geo', signals.geo],
     ['social', signals.social],
     ['momentum', signals.momentum],
-    ['collab', signals.collab]
+    ['collab', signals.collab],
+    ['comparable', signals.comparable]
   ];
   for (const [key, value] of entries) {
     if (value !== null) {
@@ -187,6 +188,51 @@ export async function GET(request: Request) {
     }
   }
 
+  // ── Comparable artist routing signal ────────────────────────────────────────
+  // Find artists with similar genres who are already well-hyped. Profiles that
+  // share fans with those comparable artists get a boost — they travel in similar
+  // circles and are likely to appeal to the same audience.
+  let comparableScores = new Map<string, number>(); // profileId → 0–1
+  if (viewerGenres.length > 0) {
+    const comparableArtists = await db.profile.findMany({
+      where: {
+        type: { in: ['ARTIST', 'DJ'] },
+        genres: { hasSome: viewerGenres.slice(0, 4) },
+        hypeCount: { gte: 5 },
+        id: { notIn: viewerId ? [...alreadyHypedIds] : [] }
+      },
+      select: { id: true },
+      take: 40
+    });
+    if (comparableArtists.length > 0) {
+      const compIds = comparableArtists.map(a => a.id);
+      // Who else do fans of comparable artists hype?
+      const compFans = await db.profileHypeEvent.findMany({
+        where: { profileId: { in: compIds } },
+        select: { userId: true },
+        distinct: ['userId'],
+        take: 200
+      });
+      if (compFans.length > 0) {
+        const compFanIds = compFans.map(f => f.userId);
+        const compCandidates = await db.profileHypeEvent.groupBy({
+          by: ['profileId'],
+          where: {
+            userId: { in: compFanIds },
+            profileId: { notIn: viewerId ? [...alreadyHypedIds] : [] }
+          },
+          _count: { _all: true },
+          orderBy: { _count: { profileId: 'desc' } },
+          take: 80
+        });
+        const maxComp = compCandidates[0]?._count._all ?? 1;
+        for (const { profileId, _count } of compCandidates) {
+          comparableScores.set(profileId, _count._all / maxComp);
+        }
+      }
+    }
+  }
+
   // ── Candidate pool ───────────────────────────────────────────────────────────
   // Fetch a wide pool ordered by 7-day hype velocity (recent ProfileHypeEvents)
   // rather than all-time hypeCount, then re-score in memory.
@@ -243,13 +289,14 @@ export async function GET(request: Request) {
       const momentum = momentumRaw[index] / maxMomentum;
       const geo      = geoTier(viewerState, viewerCountry, viewerCity, profile.stateRegion, profile.country, profile.city);
       const taste    = tasteScore(viewerGenres, profile.genres);
-      const collab   = collabScores.get(profile.id) ?? null;
+      const collab     = collabScores.get(profile.id) ?? null;
+      const comparable = comparableScores.get(profile.id) ?? null;
 
       // Incorporate seed signals: boost saved/hyped, suppress skipped
       const seedBoost  = seedSignals.get(profile.id) ?? 0;
       const seedFactor = 1 + seedBoost * 0.4; // ±40% modifier on final score
 
-      const signals = { taste, geo, social, momentum, collab };
+      const signals = { taste, geo, social, momentum, collab, comparable };
       const base = finalScore(signals);
 
       return {
@@ -266,7 +313,7 @@ export async function GET(request: Request) {
         hypeCount: profile.hypeCount,
         verified: profile.verified,
         avatarImage: profile.avatarImage,
-        _scores: { ...signals, seed: seedBoost, final: Math.max(0, base * seedFactor) },
+        _scores: { ...signals, seed: seedBoost, comparable, final: Math.max(0, base * seedFactor) },
         _rank: 0
       };
     });
@@ -281,6 +328,7 @@ export async function GET(request: Request) {
       viewerHasGenres: viewerGenres.length > 0,
       viewerHasHypeHistory: alreadyHypedIds.size > 0,
       collabCandidates: collabScores.size,
+      comparableCandidates: comparableScores.size,
       weights: WEIGHTS
     }
   });

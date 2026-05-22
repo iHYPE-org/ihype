@@ -2603,7 +2603,24 @@ function ViewArtist({ data }: { data: WorkbenchData }) {
 
       {tab === 'touring' && (
         <>
-          <HypeHeatmap cities={touringCities} venuePings={[]} suggestedRoute={touringCities.length >= 2 ? touringCities.slice(0, 3).map(c => c.name.slice(0, 3).toUpperCase()).join(' → ') : undefined} />
+          <HypeHeatmap
+            cities={touringCities}
+            venuePings={[]}
+            routeOrder={touringCities.length >= 2 ? (() => {
+              const unvisited = [...touringCities];
+              const route = [unvisited.splice(0, 1)[0]];
+              while (unvisited.length > 0) {
+                const last = route[route.length - 1];
+                let ni = 0, minD = Infinity;
+                for (let i = 0; i < unvisited.length; i++) {
+                  const d = Math.hypot(unvisited[i].x - last.x, unvisited[i].y - last.y);
+                  if (d < minD) { minD = d; ni = i; }
+                }
+                route.push(unvisited.splice(ni, 1)[0]);
+              }
+              return route.map(c => c.name);
+            })() : undefined}
+          />
           {data.profileId && <CoHeadlinerSuggestions profileId={data.profileId} />}
         </>
       )}
