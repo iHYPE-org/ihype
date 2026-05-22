@@ -52,5 +52,5 @@ export async function getDefaultLandingPathForUser({
     orderBy: { createdAt: 'asc' }
   });
 
-  return '/workbench';
+  return hasProfile ? '/home' : '/auth/landing?module=tool-hub';
 }
