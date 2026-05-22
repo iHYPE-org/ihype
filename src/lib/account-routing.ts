@@ -1,5 +1,5 @@
-import { ProfileType } from '@prisma/client/wasm';
 import { db } from '@/lib/db';
+import type { ProfileType } from '@prisma/client/wasm';
 import type { DiscoverModuleId } from '@/lib/discover-modules';
 
 export function getProfilePathForType(type: ProfileType, slug: string) {
@@ -20,14 +20,6 @@ export function getRoleLandingPathForType(type: ProfileType, module: DiscoverMod
   return `${getDiscoverPathForType(type)}?module=${module}`;
 }
 
-function getPreferredProfileTypeForRole(role: string | null | undefined): ProfileType | null {
-  if (role === 'ARTIST') return 'ARTIST';
-  if (role === 'DJ') return 'DJ';
-  if (role === 'VENUE') return 'VENUE';
-  if (role === 'FAN') return 'LISTENER';
-  return null;
-}
-
 export async function getDefaultLandingPathForUser({
   userId,
   role,
@@ -37,20 +29,16 @@ export async function getDefaultLandingPathForUser({
   role: string | null | undefined;
   module?: DiscoverModuleId;
 }) {
+  void module;
   if (role === 'ADMIN') {
     return '/admin';
   }
 
-  const preferredProfileType = getPreferredProfileTypeForRole(role);
-
-  // Check if user has a profile before sending to /home
   const hasProfile = await db.profile.findFirst({
-    where: preferredProfileType
-      ? { ownerId: userId, type: preferredProfileType }
-      : { ownerId: userId },
+    where: { ownerId: userId },
     select: { id: true },
     orderBy: { createdAt: 'asc' }
   });
 
-  return hasProfile ? '/home' : '/auth/landing?module=tool-hub';
+  return hasProfile ? '/home' : '/register';
 }

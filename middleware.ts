@@ -59,10 +59,7 @@ export default auth((request) => {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (
-    request.auth &&
-    (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register' || request.nextUrl.pathname.startsWith('/register/'))
-  ) {
+  if (request.auth && request.nextUrl.pathname === '/login') {
     return NextResponse.redirect(new URL('/auth/landing', request.url));
   }
 
