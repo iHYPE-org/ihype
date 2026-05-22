@@ -55,3 +55,6 @@ queue = "ihype-email-queue"
 [[services]]
 binding = "WORKER_SELF_REFERENCE"
 service = "ihype"
+
+[build]
+command = "npm run cf:build"
