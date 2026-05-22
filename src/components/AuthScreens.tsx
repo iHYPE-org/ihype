@@ -5,7 +5,6 @@ import Link from 'next/link';
 import type { FormEvent, ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { startAuthentication, startRegistration } from '@simplewebauthn/browser';
-import { signIn } from 'next-auth/react';
 import { postJson } from '@/lib/api-client';
 
 type RoleOption = 'FAN' | 'ARTIST' | 'DJ' | 'VENUE';
@@ -232,10 +231,9 @@ export function LoginScreen({
     setError('');
     setIsSubmitting(true);
     try {
-      const result = await signIn('credentials', { challengeId, otp, redirect: false });
-      if (!result?.ok) throw new Error(result?.error ?? 'Could not verify that code.');
+      const payload = await postJson<{ redirect?: string }>('/api/auth/otp/signin', { challengeId, otp });
       trackSignupFunnel('login_email_code_success', { method: 'email', step: 'login' });
-      window.location.href = '/home';
+      window.location.href = getAuthLandingPath(payload.redirect);
     } catch (err) {
       const reason = getErrorMessage(err, 'Could not verify that code.');
       trackSignupFunnel('login_email_code_verify_failed', { method: 'email', step: 'login', reason });
@@ -615,10 +613,9 @@ export function RegisterScreen({
     setError('');
     setIsSubmitting(true);
     try {
-      const result = await signIn('credentials', { challengeId, otp, redirect: false });
-      if (!result?.ok) throw new Error(result?.error ?? 'Could not verify that code.');
+      const payload = await postJson<{ redirect?: string }>('/api/auth/otp/signin', { challengeId, otp });
       trackSignupFunnel('email_code_success', { role, method: 'email', step: 'register', variant: signupVariant });
-      window.location.href = '/home';
+      window.location.href = getAuthLandingPath(payload.redirect);
     } catch (err) {
       const reason = getErrorMessage(err, 'Could not verify that code.');
       trackSignupFunnel('email_code_verify_failed', { role, method: 'email', step: 'register', reason, variant: signupVariant });
