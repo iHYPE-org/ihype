@@ -375,19 +375,25 @@ export default async function ArtistPage({
                 </div>
               ) : null}
               {journalEntries.length > 0 ? (
-                <div className="artist-copy">
-                  <strong>Recent updates</strong>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: '8px 0 0', display: 'grid', gap: 10 }}>
-                    {journalEntries.map((entry) => (
-                      <li key={entry.id} style={{ borderTop: '1px solid var(--line)', paddingTop: 8 }}>
-                        <div style={{ fontWeight: 700 }}>{entry.title ?? 'Untitled'}</div>
-                        <div className="meta" style={{ fontSize: 11 }}>
-                          {new Date(entry.createdAt).toLocaleString()}
+                <div className="artist-copy" style={{ padding: '1rem 1.25rem', background: 'rgba(255,255,255,0.02)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                    <div>
+                      <div style={{ fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.4, fontFamily: 'var(--f-m, monospace)' }}>Road Journal</div>
+                      <div style={{ fontSize: '0.72rem', opacity: 0.4, marginTop: 2 }}>Thoughts from {profile.name}</div>
+                    </div>
+                    <span style={{ fontSize: '0.62rem', opacity: 0.3 }}>{journalEntries.length} {journalEntries.length === 1 ? 'entry' : 'entries'}</span>
+                  </div>
+                  <div style={{ display: 'grid', gap: 0 }}>
+                    {journalEntries.map((entry, i) => (
+                      <div key={entry.id} style={{ paddingTop: i > 0 ? 14 : 0, marginTop: i > 0 ? 14 : 0, borderTop: i > 0 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+                        <div style={{ fontWeight: 700, fontSize: '0.88rem', marginBottom: 3 }}>{entry.title ?? 'Untitled'}</div>
+                        <div style={{ fontSize: '0.6rem', opacity: 0.35, marginBottom: 6, fontFamily: 'var(--f-m, monospace)' }}>
+                          {new Date(entry.createdAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
                         </div>
-                        <p style={{ margin: '4px 0 0', whiteSpace: 'pre-wrap' }}>{entry.content ?? ''}</p>
-                      </li>
+                        <p style={{ margin: 0, fontSize: '0.82rem', opacity: 0.75, whiteSpace: 'pre-wrap', lineHeight: 1.65 }}>{entry.content ?? ''}</p>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </div>
               ) : null}
 

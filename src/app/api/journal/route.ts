@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
   const rows = await db.artistJournalPost.findMany({
     where: { profileId, deletedAt: null },
     orderBy: { createdAt: 'desc' },
-    take: 5,
+    take: 20,
     select: { id: true, createdAt: true, title: true, content: true }
   });
   const entries = rows.map((r) => ({
@@ -79,4 +79,56 @@ export async function GET(request: NextRequest) {
     content: r.content
   }));
   return NextResponse.json({ entries });
+}
+
+export async function DELETE(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Sign in to delete.' }, { status: 401 });
+  }
+  const id = new URL(request.url).searchParams.get('id');
+  if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
+
+  const post = await db.artistJournalPost.findUnique({
+    where: { id },
+    select: { id: true, profile: { select: { ownerId: true } } }
+  });
+  if (!post) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
+  if (post.profile.ownerId !== session.user.id) {
+    return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
+  }
+
+  await db.artistJournalPost.update({ where: { id }, data: { deletedAt: new Date() } });
+  return NextResponse.json({ ok: true });
+}
+
+export async function PATCH(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Sign in to edit.' }, { status: 401 });
+  }
+
+  let body: { id?: string; title?: string; content?: string } = {};
+  try { body = (await request.json()) as typeof body; } catch { /* ignore */ }
+
+  const { id, title, content } = body;
+  if (!id || !title?.trim() || !content?.trim()) {
+    return NextResponse.json({ error: 'id, title, and content are required.' }, { status: 400 });
+  }
+
+  const post = await db.artistJournalPost.findUnique({
+    where: { id },
+    select: { id: true, profile: { select: { ownerId: true } } }
+  });
+  if (!post) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
+  if (post.profile.ownerId !== session.user.id) {
+    return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
+  }
+
+  const updated = await db.artistJournalPost.update({
+    where: { id },
+    data: { title: title.trim().slice(0, 140), content: content.trim().slice(0, 5000) },
+    select: { id: true, createdAt: true, updatedAt: true, title: true, content: true }
+  });
+  return NextResponse.json({ ok: true, post: updated });
 }

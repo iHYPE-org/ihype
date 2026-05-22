@@ -1177,6 +1177,7 @@ function ViewHome({ data, prefs, setView, starterPack = [] }: { data: WorkbenchD
         activeProfileTypes={data.activeProfileTypes ?? []}
         profileId={data.profileId ?? null}
         profilePath={data.profilePath ?? null}
+        profileSlug={data.profilePath ? data.profilePath.split('/').pop() ?? null : null}
         userEmail={null}
       />
       <StarterPackPanel items={starterPack} />

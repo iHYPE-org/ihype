@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { RoadJournalWidget } from './RoadJournalWidget';
 
 type Props = {
   activeProfileTypes: string[];
   profileId: string | null;
   profilePath: string | null;
+  profileSlug: string | null;
   userEmail: string | null;
 };
 
@@ -226,13 +228,13 @@ function PremiumInterestCard({ userEmail }: { userEmail: string | null }) {
   );
 }
 
-export function WorkbenchExtras({ activeProfileTypes, profileId, profilePath: _profilePath, userEmail }: Props) {
+export function WorkbenchExtras({ activeProfileTypes, profileId, profilePath: _profilePath, profileSlug, userEmail }: Props) {
   const isArtist = activeProfileTypes.includes('ARTIST');
   const isPromoter = activeProfileTypes.includes('DJ') || activeProfileTypes.includes('VENUE') || isArtist;
   const isFan = activeProfileTypes.length === 0 || activeProfileTypes.includes('LISTENER');
   return (
     <>
-      {isArtist && profileId ? <JournalPostCard profileId={profileId} /> : null}
+      {isArtist && profileId && profileSlug ? <RoadJournalWidget profileId={profileId} profileSlug={profileSlug} /> : null}
       {isPromoter ? <ReferralEarningsCard /> : null}
       {(isFan || activeProfileTypes.includes('LISTENER')) ? (
         <PremiumInterestCard userEmail={userEmail} />
