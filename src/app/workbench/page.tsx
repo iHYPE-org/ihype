@@ -130,6 +130,7 @@ export default async function WorkbenchPage({
         <Link href="/workbench?tab=analytics" className={`button small${tab === 'analytics' ? '' : ' secondary'}`}>Analytics</Link>
         <Link href="/workbench?tab=tickets" className={`button small${tab === 'tickets' ? '' : ' secondary'}`}>Tickets</Link>
         <Link href="/workbench/saved" className="button small secondary">Saved tracks</Link>
+        <Link href="/workbench/history" className="button small secondary">History</Link>
       </nav>
 
       {tab === 'analytics' && (
