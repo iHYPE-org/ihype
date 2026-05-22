@@ -249,6 +249,10 @@ export default async function ArtistPage({
     ...(profile.genres?.length ? { genre: profile.genres } : {}),
   };
 
+  const userHype = session?.user?.id
+    ? await db.profileHypeEvent.findUnique({ where: { userId_profileId: { userId: session.user.id, profileId: profile.id } }, select: { userId: true } })
+    : null;
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
@@ -294,7 +298,7 @@ export default async function ArtistPage({
               {profile.genre ? <span className="tag">{profile.genre}</span> : null}
             </div>
             <ProfileLinkShelf linksJson={profile.links ?? null} />
-            <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} entityLabel="artist" />
+            <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} initiallyHyped={!!userHype} entityLabel="artist" />
             <FollowButton profileId={profile.id} />
             {profile.contactInfo ? (
               <div className="cta-row" style={{ marginTop: 12 }}>

@@ -233,6 +233,10 @@ export default async function VenuePage({
       : {})
   };
 
+  const userHype = session?.user?.id
+    ? await db.profileHypeEvent.findUnique({ where: { userId_profileId: { userId: session.user.id, profileId: profile.id } }, select: { userId: true } })
+    : null;
+
   return (
     <>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(venueJsonLd) }} />
@@ -275,7 +279,7 @@ export default async function VenuePage({
             {profile.contactInfo ? <p className="meta">{profile.contactInfo}</p> : null}
             {profile.hoursText ? <p className="meta">{profile.hoursText}</p> : null}
             <div className="tag-row">{profile.genres.map((genre) => <span key={genre} className="tag">{genre}</span>)}</div>
-            <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} entityLabel="venue" />
+            <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} initiallyHyped={!!userHype} entityLabel="venue" />
             <div className="cta-row" style={{ marginTop: 12 }}>
               {profile.contactInfo && profile.contactInfo.includes('@') ? (
                 <a className="button" href={`mailto:${profile.contactInfo}?subject=${encodeURIComponent(`Booking inquiry for ${profile.name}`)}`}>

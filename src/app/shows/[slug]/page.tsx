@@ -233,6 +233,10 @@ export default async function ShowDetailPage({
     : [];
   const isShowOwner = Boolean(session?.user?.id) && session?.user?.id === show.creatorId;
 
+  const userShowHype = session?.user?.id
+    ? await db.hypeEvent.findUnique({ where: { userId_showId: { userId: session.user.id, showId: show.id } }, select: { userId: true } })
+    : null;
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
@@ -285,7 +289,7 @@ export default async function ShowDetailPage({
             )}
           </div>
           {show.status !== 'DRAFT' ? (
-            <HypeButton entityLabel="show" initialCount={show.hypeCount} targetId={show.id} targetType="show" />
+            <HypeButton entityLabel="show" initialCount={show.hypeCount} initiallyHyped={!!userShowHype} targetId={show.id} targetType="show" />
           ) : (
             <p className="meta">Draft previews stay private until the promoter broadcasts the show live.</p>
           )}

@@ -135,6 +135,11 @@ function withScopeLabel(profile: SpotlightProfileRecord, location: RequestLocati
   };
 }
 
+function hypeVelocity(profile: SpotlightProfileRecord): number {
+  const ageDays = Math.max(1, (Date.now() - new Date(profile.createdAt).getTime()) / 86_400_000);
+  return (profile.hypeCount + 1) / (ageDays + 1);
+}
+
 function sortByLocalRegional<T extends SpotlightProfileRecord>(profiles: T[], location: RequestLocation | null) {
   return [...profiles].sort((left, right) => {
     const leftScore = isLocalMatch(left, location) ? 2 : isRegionalMatch(left, location) ? 1 : 0;
@@ -142,7 +147,9 @@ function sortByLocalRegional<T extends SpotlightProfileRecord>(profiles: T[], lo
     if (leftScore !== rightScore) {
       return rightScore - leftScore;
     }
-    return right.hypeCount - left.hypeCount;
+    // Within the same geographic bucket, rank by hype velocity (hypes/day) rather than raw count.
+    // This surfaces breakout profiles that are gaining fast over well-established ones that peaked long ago.
+    return hypeVelocity(right) - hypeVelocity(left);
   });
 }
 

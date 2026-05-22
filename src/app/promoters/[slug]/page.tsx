@@ -209,6 +209,10 @@ export default async function PromoterPage({
       timing: 'past' as const
     }));
 
+  const userHype = session?.user?.id
+    ? await db.profileHypeEvent.findUnique({ where: { userId_profileId: { userId: session.user.id, profileId: profile.id } }, select: { userId: true } })
+    : null;
+
   return (
     <main className="container section profile-design-shell" style={pageDesignStyle}>
       <header className="artist-banner panel" style={bannerStyle}>
@@ -224,7 +228,7 @@ export default async function PromoterPage({
             <p className="meta">Share ID: <Link href={`/profiles/${profile.hexId}`}>{profile.hexId}</Link></p>
             <p className="meta">Fan hype: {fanHypeCount}</p>
             <div className="tag-row">{profile.genres.map((genre) => <span key={genre} className="tag">{genre}</span>)}</div>
-            <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} entityLabel="promoter" />
+            <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} initiallyHyped={!!userHype} entityLabel="promoter" />
             <div className="profile-public-actions">
               <Link className="button small secondary" href="/register?role=ARTIST">Submit artist page</Link>
               <Link className="button small secondary" href={`/promoters/${profile.slug}?section=shows`}>See shows</Link>
