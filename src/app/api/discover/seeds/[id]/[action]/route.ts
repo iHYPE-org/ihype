@@ -34,11 +34,18 @@ export async function POST(
     });
 
     if (action === 'hype') {
-      await db.profileHypeEvent.upsert({
-        where: { userId_profileId: { userId: session.user.id, profileId: media.profileId } },
-        create: { userId: session.user.id, profileId: media.profileId },
-        update: {},
+      // createMany with skipDuplicates returns how many rows were actually inserted.
+      // Only increment hypeCount when a new record is created, not on duplicate hypes.
+      const { count } = await db.profileHypeEvent.createMany({
+        data: [{ userId: session.user.id, profileId: media.profileId }],
+        skipDuplicates: true,
       });
+      if (count > 0) {
+        await db.profile.update({
+          where: { id: media.profileId },
+          data: { hypeCount: { increment: 1 } },
+        });
+      }
     }
   } catch (error) {
     console.error('[discover/seeds] failed to record action', error);

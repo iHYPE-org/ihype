@@ -14,6 +14,13 @@ async function checkAndRecordMilestone(profileId: string, newCount: number) {
   const crossed = HYPE_MILESTONES.find((m) => newCount === m);
   if (!crossed) return;
   try {
+    // Guard: don't re-fire if this milestone was already recorded (e.g. after unhype + rehype).
+    const alreadyRecorded = await db.auditLog.findFirst({
+      where: { action: `profile_milestone_hype_${crossed}`, entityId: profileId },
+      select: { id: true }
+    });
+    if (alreadyRecorded) return;
+
     const profile = await db.profile.findUnique({
       where: { id: profileId },
       select: { id: true, name: true, slug: true, type: true, owner: { select: { email: true, name: true } } }
@@ -90,8 +97,12 @@ export async function POST(request: NextRequest) {
       });
 
       if (existing) {
-        const show = await db.show.findUniqueOrThrow({ where: { id: payload.targetId } });
-        return NextResponse.json({ created: false, hypeCount: show.hypeCount });
+        // Toggle off: unhype the show.
+        const [, updatedShow] = await db.$transaction([
+          db.hypeEvent.delete({ where: { userId_showId: { userId: session.user.id, showId: payload.targetId } } }),
+          db.show.update({ where: { id: payload.targetId }, data: { hypeCount: { decrement: 1 } } })
+        ]);
+        return NextResponse.json({ action: 'unhyped', hypeCount: Math.max(0, updatedShow.hypeCount) });
       }
 
       const [, updatedShow] = await db.$transaction([
@@ -106,16 +117,27 @@ export async function POST(request: NextRequest) {
         entityId: payload.targetId
       });
 
-      return NextResponse.json({ created: true, hypeCount: updatedShow.hypeCount });
+      return NextResponse.json({ action: 'hyped', hypeCount: updatedShow.hypeCount });
     }
 
+    // Profile hype — toggle on/off
     const existing = await db.profileHypeEvent.findUnique({
       where: { userId_profileId: { userId: session.user.id, profileId: payload.targetId } }
     });
 
     if (existing) {
-      const profile = await db.profile.findUniqueOrThrow({ where: { id: payload.targetId } });
-      return NextResponse.json({ created: false, hypeCount: profile.hypeCount });
+      // Toggle off: unhype the profile.
+      const [, updatedProfile] = await db.$transaction([
+        db.profileHypeEvent.delete({ where: { userId_profileId: { userId: session.user.id, profileId: payload.targetId } } }),
+        db.profile.update({ where: { id: payload.targetId }, data: { hypeCount: { decrement: 1 } } })
+      ]);
+      await recordAuditEvent({
+        actorUserId: session.user.id,
+        action: 'profile_unhyped',
+        entityType: 'profile',
+        entityId: payload.targetId
+      });
+      return NextResponse.json({ action: 'unhyped', hypeCount: Math.max(0, updatedProfile.hypeCount) });
     }
 
     const [, updatedProfile] = await db.$transaction([
@@ -133,7 +155,7 @@ export async function POST(request: NextRequest) {
     await checkAndRecordMilestone(payload.targetId, updatedProfile.hypeCount);
     checkAndAwardBadges(session.user.id).catch(() => {});
 
-    return NextResponse.json({ created: true, hypeCount: updatedProfile.hypeCount });
+    return NextResponse.json({ action: 'hyped', hypeCount: updatedProfile.hypeCount });
   } catch (err) {
     console.error('[hype]', err);
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });

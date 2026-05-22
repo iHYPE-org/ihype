@@ -7,38 +7,39 @@ type HypeButtonProps = {
   targetType: 'show' | 'profile';
   targetId: string;
   initialCount: number;
+  initiallyHyped?: boolean;
   entityLabel?: string;
 };
 
-export function HypeButton({ targetType, targetId, initialCount, entityLabel }: HypeButtonProps) {
+export function HypeButton({ targetType, targetId, initialCount, initiallyHyped, entityLabel }: HypeButtonProps) {
   const storageKey = `hyped:${targetType}:${targetId}`;
   const [count, setCount] = useState(initialCount);
+  const [hyped, setHyped] = useState(initiallyHyped ?? false);
   const [pending, setPending] = useState(false);
-  const [alreadyHyped, setAlreadyHyped] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [popping, setPopping] = useState(false);
   const noun = entityLabel ?? (targetType === 'show' ? 'show' : 'profile');
 
   useEffect(() => {
+    if (initiallyHyped !== undefined) return; // server-provided state is authoritative
     try {
-      setAlreadyHyped(localStorage.getItem(storageKey) === '1');
+      setHyped(localStorage.getItem(storageKey) === '1');
     } catch {}
-  }, [storageKey]);
+  }, [storageKey, initiallyHyped]);
 
-  async function handleHype() {
+  async function handleClick() {
     haptic('light');
-    if (alreadyHyped) {
-      setMessage(`You already hyped this ${noun}`);
-      return;
-    }
     setPending(true);
     setMessage(null);
 
-    // Optimistic update: increment count + trigger pop animation immediately.
-    const previousCount = count;
-    setCount((c) => c + 1);
-    setPopping(true);
-    setTimeout(() => setPopping(false), 400);
+    const wasHyped = hyped;
+    // Optimistic update
+    setHyped(!wasHyped);
+    setCount((c) => wasHyped ? Math.max(0, c - 1) : c + 1);
+    if (!wasHyped) {
+      setPopping(true);
+      setTimeout(() => setPopping(false), 400);
+    }
 
     let response: Response;
     try {
@@ -49,29 +50,28 @@ export function HypeButton({ targetType, targetId, initialCount, entityLabel }: 
       });
     } catch {
       // Network failure — roll back.
-      setCount(previousCount);
-      setMessage(`Could not hype this ${noun} (network error)`);
+      setHyped(wasHyped);
+      setCount((c) => wasHyped ? c + 1 : Math.max(0, c - 1));
+      setMessage(`Could not ${wasHyped ? 'unhype' : 'hype'} this ${noun} (network error)`);
       setPending(false);
       return;
     }
 
-    const data = await response.json().catch(() => ({} as any));
+    const data = await response.json().catch(() => ({} as Record<string, unknown>));
     if (response.ok) {
-      // Reconcile with authoritative server count.
+      const isHyped = data.action === 'hyped';
       if (typeof data.hypeCount === 'number') setCount(data.hypeCount);
-      if (data.created) {
-        setAlreadyHyped(true);
-        try { localStorage.setItem(storageKey, '1'); } catch {}
-        setMessage(`Hyped! You've hyped ${(data.hypeCount ?? previousCount + 1).toLocaleString()} total on this ${noun}.`);
-      } else {
-        setAlreadyHyped(true);
-        try { localStorage.setItem(storageKey, '1'); } catch {}
-        setMessage(`You already hyped this ${noun}`);
-      }
+      setHyped(isHyped);
+      try {
+        if (isHyped) localStorage.setItem(storageKey, '1');
+        else localStorage.removeItem(storageKey);
+      } catch {}
+      setMessage(isHyped ? `Hyped! You've hyped ${(data.hypeCount ?? count).toLocaleString()} total on this ${noun}.` : null);
     } else {
-      // Roll back the optimistic increment.
-      setCount(previousCount);
-      setMessage(data.error ?? `Could not hype this ${noun}`);
+      // Roll back the optimistic update.
+      setHyped(wasHyped);
+      setCount((c) => wasHyped ? c + 1 : Math.max(0, c - 1));
+      setMessage((data.error as string | undefined) ?? `Could not ${wasHyped ? 'unhype' : 'hype'} this ${noun}`);
     }
 
     setPending(false);
@@ -80,12 +80,16 @@ export function HypeButton({ targetType, targetId, initialCount, entityLabel }: 
   return (
     <div className="cta-row">
       <button
-        className={`button${alreadyHyped ? ' secondary' : ''}${popping ? ' hype-pop' : ''}`}
-        onClick={handleHype}
+        className={`button${hyped ? ' secondary' : ''}${popping ? ' hype-pop' : ''}`}
+        onClick={handleClick}
         disabled={pending}
-        title={alreadyHyped ? `You hyped this ${noun}` : `Hype this ${noun}`}
+        title={hyped ? `Remove hype from this ${noun}` : `Hype this ${noun}`}
       >
-        {pending ? 'Hyping…' : alreadyHyped ? `✓ Hyped ${count.toLocaleString()}` : `Hype ${count.toLocaleString()}`}
+        {pending
+          ? 'Updating…'
+          : hyped
+            ? `✓ Hyped ${count.toLocaleString()}`
+            : `Hype ${count.toLocaleString()}`}
       </button>
       {message ? <span className="meta">{message}</span> : null}
     </div>
