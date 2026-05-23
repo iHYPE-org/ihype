@@ -53,10 +53,10 @@ function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function runMigrateDeploy() {
+function runPrismaCommand(args) {
   return new Promise((resolve) => {
     let output = '';
-    const child = spawn(prismaBin, ['migrate', 'deploy'], {
+    const child = spawn(prismaBin, args, {
       env: process.env,
       stdio: ['ignore', 'pipe', 'pipe']
     });
@@ -83,9 +83,26 @@ function isRetryableMigrationLock(output) {
   return output.includes('P1002') || output.includes('pg_advisory_lock');
 }
 
+function hasPendingMigrations(output) {
+  // "migrate status" prints this when migrations are unapplied
+  return output.includes('following migration') && output.includes('not yet been applied')
+    || output.includes('unapplied migration');
+}
+
+// Check migration status first — skip deploy entirely if everything is applied.
+// This avoids acquiring the Postgres advisory lock when there's nothing to do,
+// preventing lock contention when multiple deploys run concurrently.
+console.log(`Checking migration status with ${migrationDatabaseUrl.key}...`);
+const statusResult = await runPrismaCommand(['migrate', 'status']);
+
+if (statusResult.code === 0 && !hasPendingMigrations(statusResult.output)) {
+  console.log('All migrations already applied; skipping prisma migrate deploy.');
+  process.exit(0);
+}
+
 for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
   console.log(`Running prisma migrate deploy with ${migrationDatabaseUrl.key} (attempt ${attempt}/${maxAttempts})...`);
-  const result = await runMigrateDeploy();
+  const result = await runPrismaCommand(['migrate', 'deploy']);
 
   if (result.code === 0) {
     process.exit(0);

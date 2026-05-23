@@ -39,12 +39,18 @@ jobs:
 
       - name: Run migrations
         run: |
-          for i in 1 2 3; do
-            npx prisma migrate deploy && exit 0
-            echo "Migration attempt $i failed, retrying in 15s..."
-            sleep 15
-          done
-          exit 1
+          STATUS=$(npx prisma migrate status 2>&1)
+          echo "$STATUS"
+          if echo "$STATUS" | grep -qE "unapplied migration|not yet been applied"; then
+            for i in 1 2 3; do
+              npx prisma migrate deploy && exit 0
+              echo "Migration attempt $i failed, retrying in 15s..."
+              sleep 15
+            done
+            exit 1
+          else
+            echo "All migrations already applied; skipping migrate deploy."
+          fi
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
