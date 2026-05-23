@@ -10,8 +10,7 @@ APP_BASE_URL = "https://ihype.org"
 
 [triggers]
 crons = [
-  "* * * * *",    # show-lifecycle
-  "*/5 * * * *",  # expire-reservations
+  "*/5 * * * *",  # show-lifecycle, expire-reservations
   "0 */6 * * *",  # health-check, db-health, stripe-connect-health
   "0 1 * * *",    # close-stale-bookings
   "0 2 * * *",    # expire-ads

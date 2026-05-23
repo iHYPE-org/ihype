@@ -414,6 +414,8 @@ model Show {
   rsvps                  ShowRsvp[]
   attendees              ShowAttendee[]
   setlistProgress        Json?
+
+  @@index([startsAt, status])
 }
 
 model ShowAdvertisingConfig {
@@ -523,6 +525,7 @@ model MediaListen {
   user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, mediaId])
+  @@index([userId])
 }
 
 model ShowListen {
@@ -538,6 +541,7 @@ model ShowListen {
   show        Show     @relation(fields: [showId], references: [id], onDelete: Cascade)
 
   @@unique([userId, showId])
+  @@index([userId])
 }
 
 model PasswordResetCode {
@@ -590,6 +594,7 @@ model HypeEvent {
   show      Show     @relation(fields: [showId], references: [id], onDelete: Cascade)
 
   @@unique([userId, showId])
+  @@index([userId])
 }
 
 model ProfileHypeEvent {

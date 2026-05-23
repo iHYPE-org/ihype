@@ -22,8 +22,8 @@ type CronJob = {
 };
 
 const JOBS: CronJob[] = [
-  // Infrastructure — every minute / every 5 min
-  { path: '/api/cron/show-lifecycle',       schedule: '* * * * *'    },
+  // Infrastructure — every 5 min
+  { path: '/api/cron/show-lifecycle',       schedule: '*/5 * * * *'  },
   { path: '/api/cron/expire-reservations',  schedule: '*/5 * * * *'  },
 
   // Health & monitoring — every 6 hours
