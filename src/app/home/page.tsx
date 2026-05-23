@@ -5,12 +5,7 @@ import { getSharedDiscoverFeed } from '@/lib/discover-feed';
 import { detectRequestLocation } from '@/lib/request-location';
 import type { ProfileType } from '@prisma/client/wasm';
 import { WorkbenchShell, type WorkbenchData, type WbStat, type WbTrack, type WbShow, type WbActivity, type WbNotification } from '@/components/WorkbenchShell';
-import { EmailVerificationBanner } from '@/components/EmailVerificationBanner';
-import { NewToScene } from '@/components/NewToScene';
 import { getDiscoveryStreak } from '@/lib/streaks';
-import { TrendingNearMe } from '@/components/TrendingNearMe';
-import { AdBanner } from '@/components/AdBanner';
-import { PullToRefresh } from '@/components/PullToRefresh';
 
 export const dynamic = 'force-dynamic';
 
@@ -266,39 +261,6 @@ export default async function HomePage() {
       })).catch(() => ({ clicks: 0, buyers: 0, grossCents: 0, payoutCents: 0 }))
     : undefined;
 
-  // ── Following feed: upcoming shows from followed artists ──
-  let followingShows: Array<{ id: string; title: string; slug: string; startsAt: Date; venueName: string | null; headlinerName: string | null }> = [];
-  const followedProfileIds = await db.follow.findMany({
-    where: { followerId: userId },
-    select: { followeeProfileId: true },
-    take: 100
-  }).then(rows => rows.map(r => r.followeeProfileId)).catch(() => [] as string[]);
-  if (followedProfileIds.length > 0) {
-    followingShows = await db.show.findMany({
-      where: {
-        status: { not: 'CANCELED' },
-        startsAt: { gte: now },
-        OR: [
-          { headlinerProfileId: { in: followedProfileIds } },
-          { venueProfileId: { in: followedProfileIds } }
-        ]
-      },
-      include: {
-        venueProfile: { select: { name: true } },
-        headlinerProfile: { select: { name: true } }
-      },
-      orderBy: { startsAt: 'asc' },
-      take: 4
-    }).then(rows => rows.map(r => ({
-      id: r.id,
-      title: r.title,
-      slug: r.slug,
-      startsAt: r.startsAt,
-      venueName: (r.venueProfile as { name: string } | null)?.name ?? null,
-      headlinerName: (r.headlinerProfile as { name: string } | null)?.name ?? null,
-    }))).catch(() => [] as typeof followingShows);
-  }
-
   // ── Fan activity feed (recent uploads + upcoming shows from hyped profiles) ──
   let fanActivityFeed: WbActivity[] = [];
   if (profile.type === 'LISTENER') {
@@ -484,48 +446,7 @@ export default async function HomePage() {
 
   const discoveryStreak = await getDiscoveryStreak(session.user.id).catch(() => 0);
 
-  return (
-    <PullToRefresh>
-      <EmailVerificationBanner needsVerification={needsEmailVerification} />
-      {discoveryStreak >= 2 ? (
-        <div className="container" style={{ paddingTop: 12 }}>
-          <div className="badge" style={{ display: 'inline-flex', gap: 6 }}>
-            <span aria-hidden>{'\u{1F525}'}</span>
-            <strong>{discoveryStreak} day streak</strong>
-          </div>
-        </div>
-      ) : null}
-      <div className="container section" style={{ paddingTop: 16, paddingBottom: 0 }}>
-        <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 16, letterSpacing: '-.01em', marginBottom: 10, color: 'var(--ink)' }}>
-          Following
-        </h2>
-        {followingShows.length > 0 ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 10 }}>
-            {followingShows.map(s => (
-              <a key={s.id} href={`/shows/${s.slug}`} style={{ display: 'block', padding: '12px 14px', background: 'var(--bg-3)', border: '1px solid var(--line)', borderRadius: 10, textDecoration: 'none' }}>
-                <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14, color: 'var(--ink)', marginBottom: 3 }}>{s.title}</div>
-                {s.headlinerName ? <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-2)' }}>{s.headlinerName}</div> : null}
-                <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', marginTop: 4 }}>
-                  {s.venueName ? `${s.venueName} · ` : ''}{s.startsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                </div>
-              </a>
-            ))}
-          </div>
-        ) : (
-          <p className="meta" style={{ marginBottom: 0 }}>
-            No upcoming shows from artists you follow.{' '}
-            <a href="/artists" style={{ color: 'var(--accent)' }}>Discover artists</a> to see their shows here.
-          </p>
-        )}
-      </div>
-      <WorkbenchShell data={wbData} starterPack={starterPack} />
-      <div className="container">
-        <TrendingNearMe viewerCity={profile.city ?? viewerLocation?.city ?? null} />
-        <NewToScene />
-        <AdBanner />
-      </div>
-    </PullToRefresh>
-  );
+  return <WorkbenchShell data={wbData} starterPack={starterPack} />;
 }
 
 // ── Data helpers ─────────────────────────────────────────────────────
