@@ -39,7 +39,7 @@ jobs:
 
       - name: Run migrations
         run: |
-          STATUS=$(npx prisma migrate status 2>&1)
+          STATUS=$(npx prisma migrate status 2>&1) || true
           echo "$STATUS"
           if echo "$STATUS" | grep -qE "unapplied migration|not yet been applied"; then
             for i in 1 2 3; do
