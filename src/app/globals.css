@@ -14429,6 +14429,33 @@ html.high-contrast p {
   .wb-pin-grid { grid-template-columns: 1fr; }
 }
 
+/* ── Mobile bottom navigation bar ──────────────────────────────── */
+.wb-mobile-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 60px;
+  background: var(--wb-bg-2);
+  border-top: 1px solid var(--wb-line);
+  z-index: 300;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 4px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.wb-mobile-nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  flex: 1; padding: 6px 0; cursor: pointer; border: none; background: transparent;
+  color: var(--wb-ink-3); font-size: 10px; font-family: var(--f-b, sans-serif);
+  transition: color .15s;
+}
+.wb-mobile-nav-item.active { color: var(--wb-accent); }
+@media (max-width: 640px) {
+  .wb-mobile-nav { display: flex; }
+  .wb-root { padding-bottom: 60px; }
+  .wb-sidebar { display: none; }
+}
+
 
 /* ── Site Topbar (stat bar + search) ──────────────────────────── */
 .site-topbar {

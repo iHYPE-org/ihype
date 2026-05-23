@@ -354,7 +354,9 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
   const [view, setView] = useState<View>(() => {
     if (typeof window === 'undefined') return 'home';
     const p = new URLSearchParams(window.location.search).get('view') as View | null;
-    return p && VALID_VIEWS.has(p) ? p : 'home';
+    if (p && VALID_VIEWS.has(p)) return p;
+    try { const saved = localStorage.getItem('ihype-wb-view') as View | null; if (saved && VALID_VIEWS.has(saved)) return saved; } catch {}
+    return 'home';
   });
   const [liveStats, setLiveStats] = useState({
     listeningNow: data.listeningNow,
@@ -380,6 +382,9 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
 
   // Apply on mount
   useEffect(() => { applyPrefs(prefs); }, []); // eslint-disable-line
+
+  // Persist last active view
+  useEffect(() => { try { localStorage.setItem('ihype-wb-view', view); } catch {} }, [view]);
 
   useEffect(() => {
     setLiveStats({
@@ -441,6 +446,23 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const liveData: WorkbenchData = { ...data, ...liveStats };
 
+  const SWIPE_VIEWS: View[] = ['home', 'discover', 'seeds', 'tickets', 'studio', 'settings'];
+  const touchStartRef = useRef<{ x: number; t: number } | null>(null);
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartRef.current = { x: e.touches[0].clientX, t: Date.now() };
+  }
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (!touchStartRef.current) return;
+    const dx = e.changedTouches[0].clientX - touchStartRef.current.x;
+    const dt = Date.now() - touchStartRef.current.t;
+    touchStartRef.current = null;
+    if (Math.abs(dx) < 50 || dt > 300) return;
+    const idx = SWIPE_VIEWS.indexOf(view as View);
+    if (idx === -1) return;
+    if (dx < 0 && idx < SWIPE_VIEWS.length - 1) setView(SWIPE_VIEWS[idx + 1]);
+    if (dx > 0 && idx > 0) setView(SWIPE_VIEWS[idx - 1]);
+  }
+
   return (
     <DragTrackProvider>
       <div className="wb-root">
@@ -448,7 +470,7 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
         {sidebarOpen && <div className="wb-sidebar-overlay" onClick={() => setSidebarOpen(false)} aria-hidden="true" />}
         <WbSidebar view={view} setView={(v) => { setView(v); setSidebarOpen(false); }} pinned={['home', ...prefs.pinned]} initials={liveData.userInitials} accent={prefs.accent} activeProfileTypes={liveData.activeProfileTypes} mobileOpen={sidebarOpen} onMobileClose={() => setSidebarOpen(false)} isVerified={liveData.isVerified} isAdmin={liveData.isAdmin} />
         <WbTopbar view={view} data={liveData} onHamburger={() => setSidebarOpen(s => !s)} setView={setView} />
-        <main className="wb-main">
+        <main className="wb-main" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
           {view === 'home'     && <ViewHome data={liveData} prefs={prefs} setView={setView} starterPack={starterPack} />}
           {view === 'discover' && <ViewDiscover data={liveData} />}
           {view === 'seeds'    && <ViewSeeds data={liveData} />}
@@ -462,6 +484,7 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
         </main>
         {showQueue && <WbQueueRail data={liveData} />}
         <WbPlayerDock queueRailOn={prefs.queueRail} onToggleQueue={() => setPref('queueRail', !prefs.queueRail)} />
+        <WbMobileNav view={view} setView={setView} />
       </div>
     </DragTrackProvider>
   );
@@ -564,7 +587,13 @@ function WbTopbar({ view, data, onHamburger, setView }: { view: View; data: Work
   const wrapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { playTrack } = useMediaPlayer();
-  const unreadCount = data.notifications?.filter(n => n.unread).length ?? 0;
+  const [unreadCount, setUnreadCount] = useState(data.notifications?.filter(n => n.unread).length ?? 0);
+  useEffect(() => {
+    fetch('/api/notifications?unread=true&limit=1')
+      .then(r => r.ok ? r.json() : null)
+      .then((d: { total?: number } | null) => { if (d?.total) setUnreadCount(d.total); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (debRef.current) clearTimeout(debRef.current);
@@ -624,13 +653,18 @@ function WbTopbar({ view, data, onHamburger, setView }: { view: View; data: Work
         <span style={{ color: '#22e5d4', display: 'flex', alignItems: 'center', gap: 5, fontSize: 11 }}><IcDot c="#22e5d4" s={6} /> {data.listeningNow.toLocaleString()} listening</span>
         <span className="wb-top-dot" />
         <span style={{ fontSize: 11, color: 'var(--wb-ink-3)' }}>{data.hypedToday} hyped today</span>
-        <button
-          type="button"
-          onClick={() => setView('inbox')}
-          style={{ marginLeft: 8, border: '1px solid var(--wb-line-2)', borderRadius: 999, background: view === 'inbox' ? 'var(--wb-bg-3)' : 'transparent', color: 'var(--wb-ink-2)', fontFamily: 'var(--f-m)', fontSize: 10, padding: '5px 9px', cursor: 'pointer' }}
-        >
-          Inbox{unreadCount ? ` ${unreadCount}` : ''}
-        </button>
+        <span style={{ position: 'relative', display: 'inline-flex' }}>
+          <button
+            type="button"
+            onClick={() => setView('inbox')}
+            style={{ marginLeft: 8, border: '1px solid var(--wb-line-2)', borderRadius: 999, background: view === 'inbox' ? 'var(--wb-bg-3)' : 'transparent', color: 'var(--wb-ink-2)', fontFamily: 'var(--f-m)', fontSize: 10, padding: '5px 9px', cursor: 'pointer' }}
+          >
+            Inbox{unreadCount ? ` ${unreadCount}` : ''}
+          </button>
+          {unreadCount > 0 && (
+            <span style={{ position: 'absolute', top: 2, right: 2, width: 6, height: 6, borderRadius: '50%', background: '#ff3e9a', pointerEvents: 'none' }} />
+          )}
+        </span>
       </div>
       <div className="wb-search" ref={wrapRef} style={{ position: 'relative' }}>
         <IcSearch s={13} />
@@ -677,6 +711,13 @@ function WbTopbar({ view, data, onHamburger, setView }: { view: View; data: Work
 // ── Player dock ────────────────────────────────────────────────
 function WbPlayerDock({ queueRailOn, onToggleQueue }: { queueRailOn: boolean; onToggleQueue: () => void }) {
   const { currentTrack, isPlaying, currentTime, duration, volume, togglePlayback, playNext, playPrevious, seekTo, setVolume, queue } = useMediaPlayer();
+  const [hypedTrackIds, setHypedTrackIds] = useState<Set<string>>(new Set());
+  function handleHype() {
+    if (!currentTrack) return;
+    if (hypedTrackIds.has(currentTrack.id)) return;
+    setHypedTrackIds(s => new Set(s).add(currentTrack.id));
+    fetch('/api/hype', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ targetType: 'media', targetId: currentTrack.id }) }).catch(() => {});
+  }
 
   const progress = duration > 0 ? currentTime / duration : 0;
   const fmtTime = (s: number) => {
@@ -705,7 +746,7 @@ function WbPlayerDock({ queueRailOn, onToggleQueue }: { queueRailOn: boolean; on
           <div className="wb-dock-artist">{currentTrack?.artistName ?? 'Pick a track to start'}</div>
         </div>
         {currentTrack && (
-          <button className="wb-heart-btn" title="Hype this track"><IcHeart s={14} c="#ff3e9a" /></button>
+          <button className="wb-heart-btn" title="Hype this track" onClick={handleHype} style={{ color: hypedTrackIds.has(currentTrack.id) ? '#ff3e9a' : undefined }}><IcHeart s={14} c={hypedTrackIds.has(currentTrack.id) ? '#ff3e9a' : 'currentColor'} /></button>
         )}
       </div>
       <div className="wb-dock-c">
@@ -807,6 +848,27 @@ function WbQueueRail({ data }: { data: WorkbenchData }) {
         </div>
       )}
     </QueueDropZone>
+  );
+}
+
+// ── Mobile nav ─────────────────────────────────────────────────
+function WbMobileNav({ view, setView }: { view: View; setView: (v: View) => void }) {
+  const tabs: Array<{ v: View; label: string; icon: React.ReactNode }> = [
+    { v: 'home',     label: 'Home',     icon: <IcBolt s={18} /> },
+    { v: 'discover', label: 'Discover', icon: <IcDiscover s={18} /> },
+    { v: 'tickets',  label: 'Shows',    icon: <IcTicket s={18} /> },
+    { v: 'studio',   label: 'Studio',   icon: <IcRadio s={18} /> },
+    { v: 'settings', label: 'Settings', icon: <IcSettings s={18} /> },
+  ];
+  return (
+    <nav className="wb-mobile-nav" aria-label="Main navigation">
+      {tabs.map(t => (
+        <button key={t.v} className={`wb-mobile-nav-item${view === t.v ? ' active' : ''}`} onClick={() => setView(t.v)} aria-current={view === t.v ? 'page' : undefined}>
+          {t.icon}
+          <span>{t.label}</span>
+        </button>
+      ))}
+    </nav>
   );
 }
 
@@ -1202,6 +1264,28 @@ function ViewHome({ data, prefs, setView, starterPack = [] }: { data: WorkbenchD
         userEmail={null}
       />
       <StarterPackPanel items={starterPack} />
+
+      {/* Onboarding empty-state */}
+      {data.shows.length === 0 && (!data.stats[0] || data.stats[0]?.value === '0') && (data.activity.length === 0 || data.activity[0]?.text?.startsWith('No recent')) && (() => {
+        const type = data.profileType ?? data.activeProfileTypes[0] ?? 'LISTENER';
+        const steps: Array<{ label: string; v: View }> =
+          type === 'ARTIST'   ? [{ label: 'Upload your first track', v: 'studio' }, { label: 'Add your bio and photo', v: 'settings' }, { label: 'Create a show', v: 'tickets' }]
+          : type === 'DJ'     ? [{ label: 'Create your first radio show', v: 'studio' }, { label: 'Add artists to your scene', v: 'discover' }, { label: 'Set up a show', v: 'tickets' }]
+          : type === 'VENUE'  ? [{ label: 'Add your venue details', v: 'settings' }, { label: 'Create your first event', v: 'tickets' }, { label: 'Connect with artists', v: 'discover' }]
+          : [{ label: 'Hype 5 artists you love', v: 'discover' }, { label: 'Follow a venue', v: 'discover' }, { label: 'Check what\'s on tonight', v: 'tickets' }];
+        return (
+          <section className="wb-panel" style={{ marginBottom: 16, padding: '18px 20px' }}>
+            <div className="wb-panel-title" style={{ marginBottom: 12 }}>Get started with iHYPE</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {steps.map(s => (
+                <button key={s.label} className="wb-first-step" onClick={() => setView(s.v)} type="button" style={{ textAlign: 'left' }}>
+                  <strong>{s.label}</strong>
+                </button>
+              ))}
+            </div>
+          </section>
+        );
+      })()}
 
       {/* Stats */}
       {prefs.panel_stats && data.stats.length > 0 && (
