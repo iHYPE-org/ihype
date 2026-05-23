@@ -11,9 +11,6 @@ rules = [
   { type = "CompiledWasm", globs = ["**/*.wasm"], fallthrough = true }
 ]
 
-[triggers]
-crons = ["* * * * *"]
-
 [assets]
 directory = ".open-next/assets"
 binding = "ASSETS"

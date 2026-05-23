@@ -49,16 +49,13 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
 
-      - name: Build for Cloudflare
-        run: npm run cf:build
+      - name: Deploy to Cloudflare Workers
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        run: npx wrangler deploy worker.js --experimental-autoconfig=false
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           NEXT_PUBLIC_BASE_URL: https://ihype.org
           NEXT_PUBLIC_APP_URL: https://ihype.org
-
-      - name: Deploy to Cloudflare Workers
-        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
-        run: npx wrangler deploy worker.js --experimental-autoconfig=false
 
       - name: Deploy cron Worker
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
@@ -69,6 +66,7 @@ jobs:
         run: npm run smoke:production
         env:
           SMOKE_BASE_URL: https://ihype.org
+          SMOKE_BYPASS_TOKEN: ${{ secrets.SMOKE_BYPASS_TOKEN }}
           SMOKE_ALLOW_EDGE_BLOCK: '1'
 
       - name: Skip Cloudflare deploy notice

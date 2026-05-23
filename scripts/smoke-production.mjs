@@ -3,6 +3,7 @@ import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
 const baseUrl = (process.env.SMOKE_BASE_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://ihype.org').replace(/\/$/, '');
+const smokeBypassToken = process.env.SMOKE_BYPASS_TOKEN?.trim();
 
 const checks = [
   { path: '/', expect: [200] },
@@ -30,6 +31,9 @@ async function curl(url, json = false) {
     '-w',
     '\n%{http_code}'
   ];
+  if (smokeBypassToken) {
+    args.push('-H', `x-ihype-smoke-test: ${smokeBypassToken}`);
+  }
   args.push(url);
   const { stdout } = await execFileAsync('curl', args, {
     maxBuffer: 5 * 1024 * 1024
@@ -76,7 +80,12 @@ for (const check of checks) {
 if (failed) {
   const allEdgeBlocked = statuses.length === checks.length && statuses.every((status) => status === 403);
   if (process.env.SMOKE_ALLOW_EDGE_BLOCK === '1' && allEdgeBlocked) {
-    console.warn('[smoke] GitHub Actions appears blocked by Cloudflare edge security; app smoke was not reachable.');
+    const message = '[smoke] GitHub Actions appears blocked by Cloudflare edge security; app smoke was not reachable.';
+    if (process.env.GITHUB_ACTIONS === 'true') {
+      console.warn(`::warning::${message}`);
+    } else {
+      console.warn(message);
+    }
     process.exit(0);
   }
 
