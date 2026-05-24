@@ -1,10 +1,10 @@
-# iHYPE — Engineering reference for Claude Code
+# iHYPE Engineering reference for Claude Code
 
 ## NextAuth v5 beta pinning
 
 `next-auth` is pinned to **`5.0.0-beta.31`** (exact, no caret) and mirrored in
 `overrides` so transitive installs can't pull a different beta.
-`@auth/prisma-adapter` is pinned to **`2.11.2`** for the same reason — the
+`@auth/prisma-adapter` is pinned to **`2.11.2`** for the same reason: the
 adapter interface and the auth package must be bumped together.
 
 ### Why exact pinning matters for beta packages
@@ -12,37 +12,49 @@ adapter interface and the auth package must be bumped together.
 npm's semver resolution of `^5.0.0-beta.31` matches `>=5.0.0-beta.31 <6.0.0`,
 which includes future betas and the eventual stable release. NextAuth v5 betas
 have shipped breaking changes to:
+
 - `callbacks.jwt` / `callbacks.session` argument shapes
 - `NextAuthConfig` cookie option names
 - `PrismaAdapter` model expectations
 - The `auth()` server-component helper return type
 
-An unexpected bump during `npm install` on a fresh Vercel deploy can break the
-login flow silently if the types still compile.
+An unexpected bump during `npm install` on a fresh GitHub Actions deploy can
+break the login flow silently if the types still compile.
 
 ### Upgrade procedure
 
 1. Read the [NextAuth releases](https://github.com/nextauthjs/next-auth/releases)
    for every beta between the current pin and the target version.
 2. Check the `@auth/prisma-adapter` changelog for the matching release.
-3. Update both version strings in `package.json` — the `dependencies` entry
+3. Update both version strings in `package.json`: the `dependencies` entry
    **and** the `overrides` entry.
 4. Run `npm install` locally and verify `node_modules/next-auth/package.json`
    shows the expected version.
-5. Test the OTP login flow end-to-end (challenge creation → OTP verify →
-   session cookie → `auth()` in a server component → `useSession` in a client
-   component).
+5. Test the OTP login flow end-to-end (challenge creation, OTP verify, session
+   cookie, `auth()` in a server component, `useSession` in a client component).
 6. Verify `session.user.role` is still populated via the `jwt` / `session`
    callbacks in `src/lib/auth.config.ts`.
-7. Deploy to a preview environment and confirm Prisma adapter migrations are
-   not needed for the `Account`, `Session`, or `VerificationToken` models.
+7. Deploy from GitHub and confirm Prisma adapter migrations are not needed for
+   the `Account`, `Session`, or `VerificationToken` models.
 
 ## Deployment guardrails
 
+### GitHub source of truth
+
+GitHub is the production source of truth for code. Production deploys must run
+from the committed GitHub `main` branch through `.github/workflows/deploy-production.yml`.
+Local checkouts are for editing, testing, and committing only.
+
+`scripts/guard-github-deploy-source.mjs` blocks `npm run cf:deploy` and
+`npm run cf:deploy:cron` unless they are running inside the GitHub Actions
+production deploy workflow for `colinatwood/ihype` on `refs/heads/main`.
+
+Do not bypass that guard with raw local `wrangler deploy` commands.
+
 ### Before every commit that touches pages or routes
 
-1. **Run `npx next build` locally** — catches TypeScript errors, missing imports,
-   and invalid `next.config.mjs` options before Vercel sees them.
+1. **Run `npx next build` locally** - catches TypeScript errors, missing imports,
+   and invalid `next.config.mjs` options before GitHub Actions sees them.
 2. **When deleting a page**, do all of the following in the same commit:
    - Search `next.config.mjs` for the path in `source:` or `destination:` and
      update/remove those entries.
@@ -67,14 +79,3 @@ commits that would be lost from each side and ask before proceeding.
   when the page is created.
 - Keep redirects pointing to deleted pages updated in the same PR that deletes
   the page.
-
-### Vercel build script
-
-`vercel-build` uses a semicolon before `prisma generate` so a DB-connectivity
-failure during `prisma migrate deploy` does not block `next build`:
-
-```
-"vercel-build": "prisma migrate deploy; prisma generate && next build"
-```
-
-Do not change this back to `&&`.
