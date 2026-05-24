@@ -1,11 +1,11 @@
 # iHYPE Codex project instructions
 
 ## Project goal
-This repository contains a production-oriented Next.js app for hosting artist, DJ, and venue pages with live streaming shows, account support, hype voting, Prisma/Postgres data storage, and Vercel deployment config.
+This repository contains a production-oriented Next.js app for hosting artist, DJ, and venue pages with live streaming shows, account support, hype voting, Prisma/Postgres data storage, and Cloudflare deployment config.
 
 ## Working agreements
 - Prefer small, reviewable changes over broad refactors.
-- Keep the app compatible with Vercel deployment and Prisma migrations.
+- Keep the app compatible with the GitHub Actions to Cloudflare deployment path and Prisma migrations.
 - Preserve the current stack unless a task explicitly requires a replacement.
 - Treat environment variables and secrets as external configuration. Never hardcode secrets.
 - Preserve the newer Claude-derived signed-in visual schema. Do not replace the role landing pages with older listener/dashboard/directory layouts.
@@ -18,16 +18,21 @@ This repository contains a production-oriented Next.js app for hosting artist, D
 - Database: PostgreSQL
 - Auth: Auth.js
 - Streaming: Mux
-- Hosting target: Vercel
+- Hosting target: Cloudflare through GitHub Actions
+
+## GitHub source of truth
+- GitHub is the production source of truth for code.
+- Local checkouts are for editing, testing, and committing only; they are not a production deployment source.
+- Production deploys must run from `.github/workflows/deploy-production.yml` after code is pushed or merged to GitHub `main`.
+- Do not bypass `scripts/guard-github-deploy-source.mjs` or run raw `wrangler deploy` commands from a local checkout.
 
 ## Before changing code
-- Read `README.md`, `package.json`, `vercel.json`, and `prisma/schema.prisma` first.
+- Read `README.md`, `DEPLOY.md`, `package.json`, `.github/workflows/deploy-production.yml`, `wrangler.toml`, and `prisma/schema.prisma` first.
 - Check `src/lib/env.ts` and any API route touched by the task for runtime assumptions.
 - Prefer reusing existing utilities/components before adding new ones.
 
 ## After changing code
 - Run the narrowest useful validation first.
-- Run `npm run guard:design` after Claude/Codex UI syncs. It is intentionally wired into build/deploy to catch old-design regressions before they ship.
 - For dependency or build changes, run:
   - `npm install`
   - `npx prisma generate`
@@ -48,7 +53,7 @@ This repository contains a production-oriented Next.js app for hosting artist, D
 - Shared utilities: `src/lib/`
 - UI components: `src/components/`
 - Data model and migrations: `prisma/`
-- Deployment config: `vercel.json`, `.env.example`, `next.config.mjs`
+- Deployment config: `.github/workflows/deploy-production.yml`, `wrangler.toml`, `wrangler.cron.toml`, `.env.example`, `next.config.mjs`
 
 ## Priority when making tradeoffs
 1. Correctness
