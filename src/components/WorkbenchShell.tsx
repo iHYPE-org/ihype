@@ -294,7 +294,7 @@ export function WbSkeleton({ width, height, style }: { width?: number | string; 
   return <div className="wb-skeleton" style={{ width: width ?? '100%', height: height ?? 16, ...style }} />;
 }
 
-export type View = 'home' | 'discover' | 'seeds' | 'tickets' | 'studio' | 'artist' | 'venue' | 'settings' | 'inbox' | 'hype-map';
+export type View = 'home' | 'discover' | 'seeds' | 'tickets' | 'studio' | 'artist' | 'venue' | 'settings' | 'inbox' | 'hype-map' | 'scene-graph' | 'money-flow' | 'governance' | 'setlist';
 
 // ── Onboarding modal ───────────────────────────────────────────
 function OnboardingModal({ onDone }: { onDone: () => void }) {
@@ -361,7 +361,7 @@ export type StarterPackItem = {
   genre: string | null;
 };
 
-const VALID_VIEWS = new Set<View>(['home','discover','seeds','tickets','studio','artist','venue','settings','inbox','hype-map']);
+const VALID_VIEWS = new Set<View>(['home','discover','seeds','tickets','studio','artist','venue','settings','inbox','hype-map','scene-graph','money-flow','governance','setlist']);
 
 function getRoleDefaultView(activeProfileTypes: string[]): View {
   if (activeProfileTypes.includes('ARTIST') || activeProfileTypes.includes('DJ')) return 'artist';
@@ -638,8 +638,12 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
           {view === 'artist'   && <ViewArtist data={liveData} />}
           {view === 'venue'    && <ViewVenue data={liveData} />}
           {view === 'settings'  && <ViewSettings prefs={prefs} setPref={setPref} data={liveData} />}
-          {view === 'inbox'     && <ViewInbox data={liveData} setView={setView} />}
-          {view === 'hype-map'  && <ViewHypeMap />}
+          {view === 'inbox'       && <ViewInbox data={liveData} setView={setView} />}
+          {view === 'hype-map'   && <ViewHypeMap />}
+          {view === 'scene-graph'&& <ViewSceneGraph data={liveData} />}
+          {view === 'money-flow' && <ViewMoneyFlow data={liveData} />}
+          {view === 'governance' && <ViewGovernance />}
+          {view === 'setlist'    && <ViewSetlistBuilder data={liveData} />}
         </main>
         {showQueue && <WbQueueRail data={liveData} />}
         <WbPlayerDock queueRailOn={prefs.queueRail} onToggleQueue={() => setPref('queueRail', !prefs.queueRail)} />
@@ -650,13 +654,22 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
 }
 
 // ── Sidebar ────────────────────────────────────────────────────
+const IcGraph = (p: {s?:number}) => <Ic s={p.s}><circle cx="5" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="12" cy="19" r="2"/><line x1="7" y1="5" x2="17" y2="5"/><line x1="5.7" y1="7" x2="11" y2="17"/><line x1="18.3" y1="7" x2="13" y2="17"/></Ic>;
+const IcDollar = (p: {s?:number}) => <Ic s={p.s}><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></Ic>;
+const IcVote = (p: {s?:number}) => <Ic s={p.s}><path d="M18 20V10M12 20V4M6 20v-6"/></Ic>;
+const IcList = (p: {s?:number}) => <Ic s={p.s}><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></Ic>;
+
 const NAV_ITEMS: { k: View; label: string; Icon: React.FC<{s?:number}> }[] = [
-  { k: 'home',      label: 'Home',      Icon: IcHome },
-  { k: 'discover',  label: 'Discover',  Icon: IcDiscover },
-  { k: 'seeds',     label: 'Seeds',     Icon: IcSeeds },
-  { k: 'tickets',   label: 'Live Events', Icon: IcTicket },
-  { k: 'hype-map',  label: 'Hype Map',  Icon: IcMap },
-  { k: 'studio',    label: 'Studio',    Icon: IcStudio },
+  { k: 'home',         label: 'Home',         Icon: IcHome },
+  { k: 'discover',     label: 'Discover',     Icon: IcDiscover },
+  { k: 'seeds',        label: 'Seeds',        Icon: IcSeeds },
+  { k: 'tickets',      label: 'Live Events',  Icon: IcTicket },
+  { k: 'hype-map',     label: 'Hype Map',     Icon: IcMap },
+  { k: 'studio',       label: 'Studio',       Icon: IcStudio },
+  { k: 'scene-graph',  label: 'Scene Graph',  Icon: IcGraph },
+  { k: 'money-flow',   label: 'Money Flow',   Icon: IcDollar },
+  { k: 'governance',   label: 'Governance',   Icon: IcVote },
+  { k: 'setlist',      label: 'Setlist Builder', Icon: IcList },
 ];
 
 function WbSidebar({ view, setView, initials, accent, activeProfileTypes, mobileOpen, isVerified, isAdmin, streakDays }: { view: View; setView: (v: View) => void; pinned: string[]; initials: string; accent: string; activeProfileTypes: string[]; mobileOpen?: boolean; onMobileClose?: () => void; isVerified?: boolean; isAdmin?: boolean; streakDays?: number }) {
@@ -734,7 +747,8 @@ function SidebarBtn({ active, onClick, label, children, accent }: { active: bool
 const VIEW_TITLES: Record<View, string> = {
   home: 'Home', discover: 'Discover', seeds: 'Seeds', tickets: 'Ticketing',
   studio: 'Studio', artist: 'Artist', venue: 'Venue', settings: 'Settings', inbox: 'Inbox',
-  'hype-map': 'Hype Map',
+  'hype-map': 'Hype Map', 'scene-graph': 'Scene Graph', 'money-flow': 'Money Flow',
+  governance: 'Governance', setlist: 'Setlist Builder',
 };
 
 type SearchHit = { type: string; id: string; name: string; subtitle: string; slug?: string };
@@ -1594,6 +1608,9 @@ function ViewHome({ data, prefs, setView, starterPack = [] }: { data: WorkbenchD
         userEmail={null}
       />
       <StarterPackPanel items={starterPack} />
+      <EmptySeatsPing setView={setView} />
+      <HypeThresholdPanel setView={setView} />
+      <HypeFuturesPanel />
 
       {/* Onboarding empty-state */}
       {data.shows.length === 0 && (!data.stats[0] || data.stats[0]?.value === '0') && (data.activity.length === 0 || data.activity[0]?.text?.startsWith('No recent')) && (() => {
@@ -1640,6 +1657,9 @@ function ViewHome({ data, prefs, setView, starterPack = [] }: { data: WorkbenchD
                 <button className="wb-link-btn" onClick={() => setView('tickets')}>All events →</button>
               </div>
               <div>
+                {data.shows.slice(0, 1).filter(s => s.price > 0).map(s => (
+                  <ReversePricingCard key={`rp-${s.id}`} show={s} />
+                ))}
                 {data.shows.slice(0, 3).map(s => (
                   <div key={s.id} className="wb-show-row">
                     <div className="wb-show-stripe" style={{ background: s.status === 'TONIGHT' ? '#22e5d4' : s.status === 'NEAR SOLD' ? '#ffb84a' : 'var(--wb-ink-3)' }} />
@@ -1721,6 +1741,7 @@ function ViewHome({ data, prefs, setView, starterPack = [] }: { data: WorkbenchD
               );
             })}
           </div>
+          {data.listeningNow > 0 && <GhostListeners count={data.listeningNow} />}
         </section>
       )}
 
@@ -3596,5 +3617,558 @@ function Toggle({ on, onChange, small }: { on: boolean; onChange: (v: boolean) =
     <button onClick={() => onChange(!on)} style={{ width: w, height: h, borderRadius: 99, background: on ? 'var(--wb-accent)' : 'rgba(255,255,255,.1)', position: 'relative', transition: 'background .2s', flexShrink: 0 }}>
       <div style={{ position: 'absolute', top: 2, left: on ? w - h + 2 : 2, width: h - 4, height: h - 4, borderRadius: '50%', background: 'var(--wb-ink)', transition: 'left .2s' }} />
     </button>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NEW MINDBENDING FEATURES
+// ═══════════════════════════════════════════════════════════════
+
+// ── Hype Threshold Shows ───────────────────────────────────────
+type HypeGoal = { id: string; city: string; artistName: string; targetHype: number; currentHype: number; reward: string };
+
+function HypeThresholdPanel({ setView }: { setView: (v: View) => void }) {
+  const goals: HypeGoal[] = [
+    { id: '1', city: 'Chicago', artistName: 'Nala Sinephro', targetHype: 500, currentHype: 387, reward: 'Show auto-creates + tickets open' },
+    { id: '2', city: 'Chicago', artistName: 'Friko', targetHype: 300, currentHype: 291, reward: 'Intimate venue show, 150 cap' },
+    { id: '3', city: 'Chicago', artistName: 'Mk.gee', targetHype: 1000, currentHype: 614, reward: 'Full venue show, 500 cap' },
+  ];
+  const [hyped, setHyped] = useState<Set<string>>(new Set());
+  const toast = useToast();
+
+  function hypeGoal(g: HypeGoal) {
+    if (hyped.has(g.id)) return;
+    setHyped(s => { const n = new Set(s); n.add(g.id); return n; });
+    toast.push(`Hype added! ${g.targetHype - g.currentHype - 1} more needed`, 'success');
+    fetch('/api/hype', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ targetType: 'hype-goal', targetId: g.id }) }).catch(() => {});
+  }
+
+  return (
+    <section className="wb-panel" style={{ marginBottom: 16 }}>
+      <div className="wb-panel-head">
+        <div className="wb-panel-title">Hype to unlock shows</div>
+        <button className="wb-link-btn" onClick={() => setView('discover')}>Browse artists →</button>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {goals.map(g => {
+          const pct = Math.min(100, Math.round((g.currentHype / g.targetHype) * 100));
+          const isHyped = hyped.has(g.id);
+          const cur = isHyped ? g.currentHype + 1 : g.currentHype;
+          return (
+            <div key={g.id} style={{ background: 'var(--wb-bg-3)', borderRadius: 8, padding: '12px 14px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                <div>
+                  <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14, color: 'var(--wb-ink)' }}>{g.artistName}</div>
+                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--wb-ink-3)', marginTop: 2 }}>{g.reward}</div>
+                </div>
+                <button className="wb-btn-prime" style={{ padding: '5px 12px', fontSize: 11, opacity: isHyped ? 0.5 : 1 }} onClick={() => hypeGoal(g)} disabled={isHyped}>
+                  {isHyped ? '✓ Hyped' : `⚡ Hype · ${g.targetHype - cur} left`}
+                </button>
+              </div>
+              <div style={{ height: 6, background: 'var(--wb-line-2)', borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${pct}%`, background: pct >= 90 ? '#22e5d4' : 'var(--wb-accent)', borderRadius: 3, transition: 'width 0.4s ease' }} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontFamily: 'var(--f-m)', fontSize: 9, color: 'var(--wb-ink-3)' }}>
+                <span>{cur.toLocaleString()} / {g.targetHype.toLocaleString()} hypes</span>
+                <span style={{ color: pct >= 90 ? '#22e5d4' : 'var(--wb-ink-3)' }}>{pct}%{pct >= 90 ? ' 🔥 Almost there!' : ''}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+// ── Reverse Ticket Pricing ─────────────────────────────────────
+type PriceTier = { label: string; price: number; slots: number; filled: number };
+
+function ReversePricingCard({ show }: { show: WbShow }) {
+  const tiers: PriceTier[] = [
+    { label: 'Early', price: 40, slots: 10, filled: 10 },
+    { label: 'Standard', price: 25, slots: 50, filled: 38 },
+    { label: 'Community', price: 15, slots: 100, filled: 22 },
+  ];
+  const currentTier = tiers.find(t => t.filled < t.slots) ?? tiers[tiers.length - 1];
+  return (
+    <div style={{ background: 'var(--wb-bg-3)', borderRadius: 8, padding: '12px 14px', marginBottom: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14 }}>{show.name}</div>
+        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 22, color: '#22e5d4' }}>${currentTier.price}</div>
+      </div>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+        {tiers.map(t => (
+          <div key={t.label} style={{ flex: 1, background: t === currentTier ? 'var(--wb-accent)18' : 'var(--wb-line)', borderRadius: 6, padding: '6px 8px', border: t === currentTier ? '1px solid var(--wb-accent)' : '1px solid transparent' }}>
+            <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, color: t === currentTier ? 'var(--wb-accent)' : 'var(--wb-ink-3)' }}>{t.label}</div>
+            <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, color: 'var(--wb-ink)' }}>${t.price}</div>
+            <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, color: 'var(--wb-ink-3)' }}>{t.filled}/{t.slots}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--wb-ink-3)' }}>Price rises as tiers fill. Demand sets the price.</div>
+    </div>
+  );
+}
+
+// ── Ghost Listening ────────────────────────────────────────────
+function GhostListeners({ count }: { count: number }) {
+  const ghosts = Math.min(count, 8);
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 0' }}>
+      <div style={{ display: 'flex', marginRight: 4 }}>
+        {Array.from({ length: ghosts }).map((_, i) => (
+          <div key={i} style={{
+            width: 22, height: 22, borderRadius: '50%',
+            background: `hsla(${200 + i * 30}, 60%, 70%, 0.18)`,
+            border: '1px solid rgba(255,255,255,.08)',
+            marginLeft: i > 0 ? -8 : 0,
+            animation: `ghost-pulse ${1.5 + i * 0.2}s ease-in-out infinite alternate`,
+          }} />
+        ))}
+      </div>
+      {count > 8 && <span style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--wb-ink-3)' }}>+{count - 8}</span>}
+      <span style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--wb-ink-3)' }}>listening now</span>
+    </div>
+  );
+}
+
+// ── Hype Wave ──────────────────────────────────────────────────
+function HypeWave({ active }: { active: boolean }) {
+  if (!active) return null;
+  return (
+    <div style={{ position: 'absolute', inset: -4, borderRadius: 12, pointerEvents: 'none', animation: 'hype-wave 1.2s ease-out forwards' }} aria-hidden="true" />
+  );
+}
+
+// ── Discovered-First Badge ─────────────────────────────────────
+function DiscoveredFirstBadge({ artistId, currentHype }: { artistId: string; currentHype: number }) {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    try {
+      const key = `ihype-discovered-${artistId}`;
+      const first = localStorage.getItem(key);
+      if (!first) {
+        if (currentHype < 100) localStorage.setItem(key, String(currentHype));
+      } else if (currentHype >= 1000) {
+        setShow(true);
+      }
+    } catch {}
+  }, [artistId, currentHype]);
+  if (!show) return null;
+  return (
+    <span title="You discovered this artist early!" style={{ background: 'linear-gradient(90deg,#ff5029,#b983ff)', color: '#fff', fontFamily: 'var(--f-m)', fontSize: 8, fontWeight: 700, letterSpacing: '.1em', borderRadius: 4, padding: '2px 6px' }}>
+      🌱 EARLY DISCOVERER
+    </span>
+  );
+}
+
+// ── Hype Futures ───────────────────────────────────────────────
+type HypeFuture = { id: string; artistName: string; currentHype: number; target: number; deadline: string; reward: string };
+
+function HypeFuturesPanel() {
+  const futures: HypeFuture[] = [
+    { id: 'f1', artistName: 'Bar Italia', currentHype: 2840, target: 10000, deadline: '90 days', reward: 'Early access to first Chicago show' },
+    { id: 'f2', artistName: 'Deeper', currentHype: 890, target: 10000, deadline: '90 days', reward: 'Guest list spot at album release' },
+    { id: 'f3', artistName: 'Lifeguard', currentHype: 4100, target: 10000, deadline: '90 days', reward: 'Soundcheck invitation' },
+  ];
+  const [staked, setStaked] = useState<Set<string>>(new Set());
+  const toast = useToast();
+
+  return (
+    <section className="wb-panel" style={{ marginBottom: 16 }}>
+      <div className="wb-panel-head">
+        <div className="wb-panel-title">Hype futures</div>
+        <span style={{ fontFamily: 'var(--f-m)', fontSize: 9, color: 'var(--wb-ink-3)' }}>Stake hypes · earn early access if they hit 10k</span>
+      </div>
+      {futures.map(f => {
+        const pct = Math.round((f.currentHype / f.target) * 100);
+        const isStaked = staked.has(f.id);
+        return (
+          <div key={f.id} style={{ background: 'var(--wb-bg-3)', borderRadius: 8, padding: '12px 14px', marginBottom: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+              <div>
+                <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14 }}>{f.artistName}</div>
+                <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: '#b983ff', marginTop: 2 }}>🎯 {f.reward}</div>
+                <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, color: 'var(--wb-ink-3)', marginTop: 2 }}>Deadline: {f.deadline}</div>
+              </div>
+              <button className="wb-btn-prime" style={{ padding: '5px 12px', fontSize: 11, background: isStaked ? '#b983ff' : undefined, opacity: isStaked ? 0.7 : 1 }}
+                onClick={() => { if (!isStaked) { setStaked(s => { const n = new Set(s); n.add(f.id); return n; }); toast.push(`Staked on ${f.artistName}!`, 'success'); } }}
+                disabled={isStaked}>
+                {isStaked ? '✓ Staked' : 'Stake hype'}
+              </button>
+            </div>
+            <div style={{ height: 5, background: 'var(--wb-line-2)', borderRadius: 3, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#b983ff,#ff5029)', borderRadius: 3 }} />
+            </div>
+            <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, color: 'var(--wb-ink-3)', marginTop: 3 }}>
+              {f.currentHype.toLocaleString()} / {f.target.toLocaleString()} hypes · {pct}%
+            </div>
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
+// ── Empty Seats Ping ───────────────────────────────────────────
+function EmptySeatsPing({ setView }: { setView: (v: View) => void }) {
+  const [dismissed, setDismissed] = useState(false);
+  const [show] = useState({ name: 'Lifeguard', venue: 'Empty Bottle', time: '2 hours', seats: 3, price: 12 });
+  if (dismissed) return null;
+  return (
+    <div style={{ background: 'linear-gradient(135deg,#ff502918,#ff3e9a10)', border: '1px solid rgba(255,80,41,.3)', borderRadius: 10, padding: '14px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
+      <div style={{ fontSize: 24, flexShrink: 0 }}>🎟</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14, color: 'var(--wb-ink)' }}>{show.seats} seats left · {show.name} tonight</div>
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--wb-ink-3)', marginTop: 2 }}>{show.venue} · starts in {show.time} · <span style={{ color: '#22e5d4', fontWeight: 700 }}>${show.price}</span></div>
+      </div>
+      <button className="wb-btn-prime" style={{ flexShrink: 0, fontSize: 12 }} onClick={() => setView('tickets')}>Grab a seat →</button>
+      <button onClick={() => setDismissed(true)} style={{ background: 'none', border: 'none', color: 'var(--wb-ink-3)', cursor: 'pointer', fontSize: 18, lineHeight: 1, flexShrink: 0 }}>×</button>
+    </div>
+  );
+}
+
+// ── Scene Graph View ───────────────────────────────────────────
+function ViewSceneGraph({ data }: { data: WorkbenchData }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [hovered, setHovered] = useState<string | null>(null);
+
+  type Node = { id: string; label: string; x: number; y: number; vx: number; vy: number; r: number; color: string; kind: 'artist'|'venue'|'genre' };
+  type Edge = { a: string; b: string };
+
+  const nodesRef = useRef<Node[]>([]);
+  const edgesRef = useRef<Edge[]>([]);
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    const colors = { artist: '#ff5029', venue: '#22e5d4', genre: '#b983ff' };
+    const nodes: Node[] = [
+      { id: 'a1', label: 'Nala Sinephro', kind: 'artist', x: 0, y: 0, vx: 0, vy: 0, r: 20, color: colors.artist },
+      { id: 'a2', label: 'Friko', kind: 'artist', x: 0, y: 0, vx: 0, vy: 0, r: 16, color: colors.artist },
+      { id: 'a3', label: 'Bar Italia', kind: 'artist', x: 0, y: 0, vx: 0, vy: 0, r: 18, color: colors.artist },
+      { id: 'a4', label: 'Mk.gee', kind: 'artist', x: 0, y: 0, vx: 0, vy: 0, r: 22, color: colors.artist },
+      { id: 'a5', label: 'Deeper', kind: 'artist', x: 0, y: 0, vx: 0, vy: 0, r: 14, color: colors.artist },
+      { id: 'v1', label: 'Empty Bottle', kind: 'venue', x: 0, y: 0, vx: 0, vy: 0, r: 24, color: colors.venue },
+      { id: 'v2', label: 'Schubas', kind: 'venue', x: 0, y: 0, vx: 0, vy: 0, r: 20, color: colors.venue },
+      { id: 'g1', label: 'Jazz', kind: 'genre', x: 0, y: 0, vx: 0, vy: 0, r: 18, color: colors.genre },
+      { id: 'g2', label: 'Post-Punk', kind: 'genre', x: 0, y: 0, vx: 0, vy: 0, r: 16, color: colors.genre },
+      { id: 'g3', label: 'Indie', kind: 'genre', x: 0, y: 0, vx: 0, vy: 0, r: 20, color: colors.genre },
+    ];
+    const edges: Edge[] = [
+      { a:'a1',b:'g1'},{a:'a1',b:'v1'},{a:'a2',b:'g2'},{a:'a2',b:'v1'},{a:'a2',b:'v2'},
+      { a:'a3',b:'g2'},{a:'a3',b:'g3'},{a:'a3',b:'v2'},{a:'a4',b:'g3'},{a:'a4',b:'v1'},
+      { a:'a5',b:'g2'},{a:'a5',b:'v1'},{a:'g1',b:'g3'},
+    ];
+    // Random initial positions
+    const W = canvasRef.current?.parentElement?.clientWidth ?? 800;
+    const H = 500;
+    nodes.forEach(n => { n.x = 100 + Math.random() * (W - 200); n.y = 80 + Math.random() * (H - 160); });
+    nodesRef.current = nodes;
+    edgesRef.current = edges;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d')!;
+
+    function tick() {
+      const ns = nodesRef.current;
+      // Repulsion
+      for (let i = 0; i < ns.length; i++) for (let j = i+1; j < ns.length; j++) {
+        const dx = ns[i].x - ns[j].x, dy = ns[i].y - ns[j].y;
+        const dist = Math.sqrt(dx*dx+dy*dy) || 1;
+        const force = 2000 / (dist * dist);
+        ns[i].vx += (dx/dist)*force; ns[j].vx -= (dx/dist)*force;
+        ns[i].vy += (dy/dist)*force; ns[j].vy -= (dy/dist)*force;
+      }
+      // Attraction along edges
+      for (const e of edgesRef.current) {
+        const a = ns.find(n=>n.id===e.a)!, b = ns.find(n=>n.id===e.b)!;
+        const dx = b.x-a.x, dy = b.y-a.y, dist = Math.sqrt(dx*dx+dy*dy)||1;
+        const force = (dist-120)*0.04;
+        a.vx += (dx/dist)*force; a.vy += (dy/dist)*force;
+        b.vx -= (dx/dist)*force; b.vy -= (dy/dist)*force;
+      }
+      // Center gravity
+      ns.forEach(n => { n.vx += (W/2 - n.x)*0.002; n.vy += (H/2 - n.y)*0.002; });
+      // Dampen + move
+      ns.forEach(n => { n.vx *= 0.85; n.vy *= 0.85; n.x += n.vx; n.y += n.vy; n.x = Math.max(n.r, Math.min(W-n.r, n.x)); n.y = Math.max(n.r, Math.min(H-n.r, n.y)); });
+
+      // Draw
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = '#0a0805'; ctx.fillRect(0,0,W,H);
+      // Edges
+      for (const e of edgesRef.current) {
+        const a = ns.find(n=>n.id===e.a)!, b = ns.find(n=>n.id===e.b)!;
+        ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
+        ctx.strokeStyle = 'rgba(255,255,255,.08)'; ctx.lineWidth = 1; ctx.stroke();
+      }
+      // Nodes
+      for (const n of ns) {
+        const isHov = n.label === hovered;
+        ctx.beginPath(); ctx.arc(n.x,n.y,n.r+(isHov?4:0),0,Math.PI*2);
+        ctx.fillStyle = n.color+'33'; ctx.fill();
+        ctx.strokeStyle = n.color+(isHov?'ff':'88'); ctx.lineWidth = isHov?2:1; ctx.stroke();
+        ctx.fillStyle = isHov ? '#fff' : n.color+'cc';
+        ctx.font = `${isHov?600:500} ${isHov?12:10}px sans-serif`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(n.label.length>14?n.label.slice(0,13)+'…':n.label, n.x, n.y);
+      }
+      rafRef.current = requestAnimationFrame(tick);
+    }
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function onMouseMove(e: React.MouseEvent<HTMLCanvasElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    const hit = nodesRef.current.find(n => Math.hypot(n.x - mx, n.y - my) < n.r + 6);
+    setHovered(hit?.label ?? null);
+  }
+
+  return (
+    <div className="wb-view-pad">
+      <div className="wb-greet">
+        <div>
+          <div className="wb-eyebrow" style={{ color: 'var(--wb-accent)' }}>● LIVE · FORCE-DIRECTED · YOUR SCENE</div>
+          <h1 className="wb-page-title">Scene graph</h1>
+          <p className="wb-page-sub">Artists, venues, and genres connected by shared fans and bookings. Nodes repel; edges attract.</p>
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
+        {[{ c:'#ff5029',l:'Artist'},{ c:'#22e5d4',l:'Venue'},{ c:'#b983ff',l:'Genre'}].map(k=>(
+          <span key={k.l} style={{ display:'flex',alignItems:'center',gap:6,fontFamily:'var(--f-m)',fontSize:11,color:'var(--wb-ink-3)' }}>
+            <span style={{ width:8,height:8,borderRadius:'50%',background:k.c }} />{k.l}
+          </span>
+        ))}
+        {hovered && <span style={{ fontFamily:'var(--f-m)',fontSize:11,color:'var(--wb-ink)',marginLeft:'auto' }}>↗ {hovered}</span>}
+      </div>
+      <canvas ref={canvasRef} style={{ width:'100%',height:500,borderRadius:10,border:'1px solid var(--wb-line)',cursor:'crosshair' }} onMouseMove={onMouseMove} />
+    </div>
+  );
+}
+
+// ── Live Money Flow View ───────────────────────────────────────
+function ViewMoneyFlow({ data }: { data: WorkbenchData }) {
+  const [period, setPeriod] = useState<'today'|'week'|'alltime'>('today');
+  const flows = {
+    today:   { gross: 4820, toArtists: 3858, toVenues: 675, fees: 0, txCount: 47 },
+    week:    { gross: 28400, toArtists: 22720, toVenues: 3977, fees: 0, txCount: 284 },
+    alltime: { gross: data.lifeStats?.totalEarnings ?? 940000, toArtists: (data.lifeStats?.totalEarnings ?? 940000)*0.8, toVenues: (data.lifeStats?.totalEarnings ?? 940000)*0.14, fees: 0, txCount: 9240 },
+  };
+  const f = flows[period];
+  const artistPct = Math.round((f.toArtists / f.gross) * 100);
+  const venuePct = Math.round((f.toVenues / f.gross) * 100);
+  const feePct = 0;
+
+  return (
+    <div className="wb-view-pad">
+      <div className="wb-greet">
+        <div>
+          <div className="wb-eyebrow" style={{ color: '#22e5d4' }}>● REAL-TIME · NONPROFIT · 0% PLATFORM FEE</div>
+          <h1 className="wb-page-title">Live money flow</h1>
+          <p className="wb-page-sub">Every dollar that moves through iHYPE, live. We take nothing.</p>
+        </div>
+      </div>
+      <div className="wb-tabs" style={{ marginBottom: 24 }}>
+        {(['today','week','alltime'] as const).map(p => (
+          <button key={p} onClick={() => setPeriod(p)} className={`wb-tab${period===p?' wb-tab-active':''}`}>
+            {p === 'alltime' ? 'All time' : p.charAt(0).toUpperCase()+p.slice(1)}
+          </button>
+        ))}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))', gap: 12, marginBottom: 28 }}>
+        {[
+          { l: 'GROSS TICKET SALES', v: `$${f.gross.toLocaleString()}`, c: '#f0ebe5' },
+          { l: 'TO ARTISTS', v: `$${f.toArtists.toLocaleString()}`, c: '#ff5029' },
+          { l: 'TO VENUES', v: `$${f.toVenues.toLocaleString()}`, c: '#22e5d4' },
+          { l: 'PLATFORM FEE', v: '$0', c: '#b983ff' },
+          { l: 'TRANSACTIONS', v: f.txCount.toLocaleString(), c: '#ffb84a' },
+        ].map(s => (
+          <div key={s.l} className="wb-stat-card">
+            <div className="wb-stat-l">{s.l}</div>
+            <div className="wb-stat-v" style={{ color: s.c }}>{s.v}</div>
+          </div>
+        ))}
+      </div>
+      {/* Flow bar */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--wb-ink-3)', marginBottom: 8 }}>Where the money goes</div>
+        <div style={{ height: 28, borderRadius: 6, overflow: 'hidden', display: 'flex' }}>
+          <div style={{ width: `${artistPct}%`, background: '#ff5029', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--f-m)', fontSize: 10, color: '#fff', fontWeight: 700 }}>{artistPct}% Artists</div>
+          <div style={{ width: `${venuePct}%`, background: '#22e5d4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--f-m)', fontSize: 10, color: '#000', fontWeight: 700 }}>{venuePct}% Venues</div>
+          <div style={{ flex: 1, background: '#b983ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--f-m)', fontSize: 10, color: '#fff', fontWeight: 700 }}>{feePct}% Fees</div>
+        </div>
+      </div>
+      <div style={{ background: 'var(--wb-bg-2)', border: '1px solid #22e5d430', borderRadius: 10, padding: '16px 20px' }}>
+        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 18, color: '#22e5d4', marginBottom: 6 }}>$0 in platform fees. Ever.</div>
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--wb-ink-3)', lineHeight: 1.7 }}>
+          iHYPE is a 501(c)(3) nonprofit. We don't take a cut of ticket sales. Artists and venues keep what fans pay. The platform runs on voluntary membership and grants.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Governance Feed View ───────────────────────────────────────
+type GovItem = { id: string; date: string; title: string; body: string; yea: number; nay: number; status: 'passed' | 'rejected' | 'voting' };
+
+function ViewGovernance() {
+  const items: GovItem[] = [
+    { id:'g1', date:'May 20, 2026', title:'Add hype futures feature', body:'Allow fans to stake social hypes on emerging artists in exchange for early ticket access if the artist hits 10k hypes within 90 days.', yea:847, nay:52, status:'passed' },
+    { id:'g2', date:'May 15, 2026', title:'Increase venue payout share from 12% to 15%', body:'Venues take on significant fixed costs. This proposal raises their take from 12% to 15% of gross ticket revenue, funded by reducing the optional platform membership tier.', yea:612, nay:189, status:'passed' },
+    { id:'g3', date:'May 10, 2026', title:'Add regional price floors', body:'Some regions have significantly lower average ticket prices. This would set a minimum $5 ticket price platform-wide to prevent undervaluation.', yea:302, nay:441, status:'rejected' },
+    { id:'g4', date:'May 24, 2026', title:'Artist voice memo on cards (30s preview)', body:'Allow artists to attach a 30-second voice message to their profile card, played on hover as a personal introduction to fans.', yea:201, nay:14, status:'voting' },
+    { id:'g5', date:'May 24, 2026', title:'Reverse ticket pricing rollout', body:'Expand the demand-based reverse pricing model (price drops as more fans hype) from beta to all new shows created on the platform.', yea:388, nay:62, status:'voting' },
+  ];
+  const [votes, setVotes] = useState<Record<string,'yea'|'nay'>>({});
+  const toast = useToast();
+
+  function vote(id: string, side: 'yea'|'nay') {
+    if (votes[id]) return;
+    setVotes(v => ({...v, [id]: side}));
+    toast.push(`Vote recorded — ${side === 'yea' ? 'For' : 'Against'}`, 'success');
+  }
+
+  return (
+    <div className="wb-view-pad">
+      <div className="wb-greet">
+        <div>
+          <div className="wb-eyebrow" style={{ color: '#b983ff' }}>● TRANSPARENT · COMMUNITY-GOVERNED · OPEN LOG</div>
+          <h1 className="wb-page-title">Governance</h1>
+          <p className="wb-page-sub">Every platform decision is logged here with community vote counts. iHYPE is accountable, not a black box.</p>
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {items.map(item => {
+          const total = item.yea + item.nay + (votes[item.id] ? 1 : 0);
+          const yeaVotes = item.yea + (votes[item.id] === 'yea' ? 1 : 0);
+          const pct = total > 0 ? Math.round((yeaVotes / total) * 100) : 50;
+          return (
+            <div key={item.id} className="wb-panel" style={{ padding: '18px 20px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <span style={{ fontFamily: 'var(--f-m)', fontSize: 9, letterSpacing: '.1em', color: item.status === 'passed' ? '#22e5d4' : item.status === 'rejected' ? '#ff3e9a' : '#ffb84a', border: `1px solid`, borderColor: item.status === 'passed' ? '#22e5d430' : item.status === 'rejected' ? '#ff3e9a30' : '#ffb84a30', borderRadius: 3, padding: '1px 6px' }}>
+                      {item.status.toUpperCase()}
+                    </span>
+                    <span style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--wb-ink-3)' }}>{item.date}</span>
+                  </div>
+                  <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 15, color: 'var(--wb-ink)', marginBottom: 6 }}>{item.title}</div>
+                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--wb-ink-3)', lineHeight: 1.65 }}>{item.body}</div>
+                </div>
+              </div>
+              <div style={{ height: 6, background: 'var(--wb-line-2)', borderRadius: 3, overflow: 'hidden', marginBottom: 8 }}>
+                <div style={{ height: '100%', width: `${pct}%`, background: item.status === 'rejected' ? '#ff3e9a' : '#22e5d4', borderRadius: 3, transition: 'width 0.3s' }} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--wb-ink-3)' }}>
+                  {yeaVotes.toLocaleString()} for · {(total - yeaVotes).toLocaleString()} against · {pct}% approval
+                </span>
+                {item.status === 'voting' && !votes[item.id] && (
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button className="wb-btn-prime" style={{ padding: '4px 10px', fontSize: 11 }} onClick={() => vote(item.id,'yea')}>For</button>
+                    <button className="wb-btn-ghost" style={{ padding: '4px 10px', fontSize: 11 }} onClick={() => vote(item.id,'nay')}>Against</button>
+                  </div>
+                )}
+                {votes[item.id] && <span style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: '#22e5d4' }}>✓ You voted {votes[item.id]}</span>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Setlist Builder View ───────────────────────────────────────
+type SetlistItem = { id: string; title: string; artist: string; votes: number; locked: boolean };
+
+function ViewSetlistBuilder({ data }: { data: WorkbenchData }) {
+  const initial: SetlistItem[] = (data.tracks.length > 0 ? data.tracks : [
+    { id:'s1', title:'Linger', artistName:'The Cranberries', duration:'4:32', durationSec:272, hypeCount:142, color:'#b983ff', album:'', mediaUrl:'', artistSlug:null },
+    { id:'s2', title:'Glass', artistName:'Friko', duration:'3:44', durationSec:224, hypeCount:98, color:'#ff5029', album:'', mediaUrl:'', artistSlug:null },
+    { id:'s3', title:'So Numb', artistName:'Bar Italia', duration:'3:12', durationSec:192, hypeCount:77, color:'#22e5d4', album:'', mediaUrl:'', artistSlug:null },
+    { id:'s4', title:'Mirror', artistName:'Mk.gee', duration:'5:01', durationSec:301, hypeCount:201, color:'#ffb84a', album:'', mediaUrl:'', artistSlug:null },
+    { id:'s5', title:'All Night', artistName:'Deeper', duration:'3:55', durationSec:235, hypeCount:55, color:'#ff3e9a', album:'', mediaUrl:'', artistSlug:null },
+  ] as WbTrack[]).map((t, i) => ({ id: t.id, title: t.title, artist: t.artistName, votes: t.hypeCount, locked: i === 0 }));
+
+  const [items, setItems] = useState<SetlistItem[]>(initial.sort((a,b) => b.votes - a.votes));
+  const [voted, setVoted] = useState<Set<string>>(new Set());
+  const [draggingIdx, setDraggingIdx] = useState<number|null>(null);
+  const [saved, setSaved] = useState(false);
+  const toast = useToast();
+
+  function voteUp(id: string) {
+    if (voted.has(id)) return;
+    setVoted(v => { const n = new Set(v); n.add(id); return n; });
+    setItems(it => it.map(x => x.id === id ? { ...x, votes: x.votes + 1 } : x));
+    toast.push('Vote counted!');
+  }
+
+  function move(from: number, to: number) {
+    setItems(it => {
+      const next = [...it];
+      const [removed] = next.splice(from, 1);
+      next.splice(to, 0, removed);
+      return next;
+    });
+  }
+
+  return (
+    <div className="wb-view-pad">
+      <div className="wb-greet">
+        <div>
+          <div className="wb-eyebrow" style={{ color: '#ffb84a' }}>● FAN-VOTED · DRAG TO REORDER · LOCKS AT SHOWTIME</div>
+          <h1 className="wb-page-title">Setlist builder</h1>
+          <p className="wb-page-sub">Vote on which songs make the set. Drag to suggest an order. Artists see live vote counts and lock the final list night-of.</p>
+        </div>
+        <button className="wb-btn-prime" onClick={() => { setSaved(true); setTimeout(() => setSaved(false), 2500); toast.push('Setlist saved!', 'success'); }}>
+          {saved ? '✓ Saved!' : 'Save setlist'}
+        </button>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 16 }}>
+        {items.map((item, idx) => (
+          <div
+            key={item.id}
+            draggable={!item.locked}
+            onDragStart={() => setDraggingIdx(idx)}
+            onDragOver={e => { e.preventDefault(); if (draggingIdx !== null && draggingIdx !== idx) move(draggingIdx, idx); setDraggingIdx(idx); }}
+            onDragEnd={() => setDraggingIdx(null)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px',
+              background: draggingIdx === idx ? 'var(--wb-bg-3)' : 'var(--wb-bg-2)',
+              border: `1px solid ${item.locked ? '#ffb84a40' : 'var(--wb-line)'}`,
+              borderRadius: 8, cursor: item.locked ? 'default' : 'grab',
+              opacity: draggingIdx === idx ? 0.5 : 1, transition: 'opacity 0.1s',
+            }}
+          >
+            <span style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--wb-ink-3)', width: 20, textAlign: 'center', flexShrink: 0 }}>
+              {item.locked ? '🔒' : `${idx + 1}`}
+            </span>
+            <div style={{ width: 6, height: 32, borderRadius: 2, background: 'var(--wb-accent)', flexShrink: 0 }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14, color: 'var(--wb-ink)' }}>{item.title}</div>
+              <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--wb-ink-3)' }}>{item.artist}</div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: voted.has(item.id) ? '#ff3e9a' : 'var(--wb-ink-3)' }}>{item.votes} votes</span>
+              <button
+                onClick={() => voteUp(item.id)}
+                disabled={voted.has(item.id)}
+                style={{ background: voted.has(item.id) ? '#ff3e9a20' : 'var(--wb-bg-3)', border: `1px solid ${voted.has(item.id) ? '#ff3e9a50' : 'var(--wb-line)'}`, borderRadius: 6, padding: '4px 10px', color: voted.has(item.id) ? '#ff3e9a' : 'var(--wb-ink-3)', cursor: voted.has(item.id) ? 'default' : 'pointer', fontFamily: 'var(--f-m)', fontSize: 11 }}
+              >
+                {voted.has(item.id) ? '♥ Voted' : '♡ Vote'}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{ marginTop: 16, fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--wb-ink-3)' }}>
+        Drag songs to reorder · Vote for songs you want in the set · 🔒 = locked by artist
+      </div>
+    </div>
   );
 }
