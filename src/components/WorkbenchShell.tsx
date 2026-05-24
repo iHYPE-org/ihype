@@ -433,18 +433,28 @@ function ConfettiBurst({ onDone }: { onDone: () => void }) {
   return <canvas ref={canvasRef} style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 999 }} />;
 }
 
+// ── Discover API cache ─────────────────────────────────────────
+type _DiscoverCacheEntry = { data: { artists?: Array<{ name: string; hypeCount: number; id: string; location?: string }>; venues?: Array<{ id: string; name: string; location?: string; hypeCount: number; capacity?: number }>; djs?: Array<{ id: string; name: string; location?: string; hypeCount: number }> } | null; ts: number };
+const _discoverCache: _DiscoverCacheEntry = { data: null, ts: 0 };
+async function fetchDiscover(): Promise<_DiscoverCacheEntry['data']> {
+  if (_discoverCache.data && Date.now() - _discoverCache.ts < 30000) return _discoverCache.data;
+  try {
+    const r = await fetch('/api/discover');
+    const d = await r.json() as _DiscoverCacheEntry['data'];
+    _discoverCache.data = d; _discoverCache.ts = Date.now();
+    return d;
+  } catch { return _discoverCache.data; }
+}
+
 // ── Scene leaderboard ticker ───────────────────────────────────
 type LeaderEntry = { name: string; hype: number; color: string };
 function SceneTicker({ city }: { city: string }) {
   const [leaders, setLeaders] = useState<LeaderEntry[]>([]);
   useEffect(() => {
-    fetch('/api/discover?limit=3')
-      .then(r => r.json())
-      .then((d: { artists?: Array<{ name: string; hypeCount: number; id: string }> }) => {
-        if (!d.artists) return;
-        setLeaders(d.artists.slice(0, 3).map(a => ({ name: a.name, hype: a.hypeCount, color: profileColor(a.id) })));
-      })
-      .catch(() => {});
+    fetchDiscover().then(d => {
+      if (!d?.artists) return;
+      setLeaders(d.artists.slice(0, 3).map(a => ({ name: a.name, hype: a.hypeCount, color: profileColor(a.id) })));
+    }).catch(() => {});
   }, [city]);
   if (leaders.length === 0) return null;
   return (
@@ -1821,10 +1831,10 @@ function ViewHome({ data, prefs, setView, starterPack = [] }: { data: WorkbenchD
       {/* Lifetime heuristics */}
       <div className="wb-stat-row" style={{ marginTop: 14 }}>
         {[
-          { l: 'TOTAL HYPE GIVEN', v: (data.lifeStats?.totalHype ?? 3841).toLocaleString(),   d: 'all time',          c: '#ff3e9a' },
-          { l: 'TOTAL EARNINGS',   v: `$${(data.lifeStats?.totalEarnings ?? 9240).toLocaleString()}`, d: 'lifetime payouts', c: '#ffb84a' },
-          { l: 'SONGS PLAYED',     v: (data.lifeStats?.songsPlayed ?? 12447).toLocaleString(), d: 'all time listens',  c: '#b983ff' },
-          { l: 'EVENTS ATTENDED',  v: String(data.lifeStats?.eventsAttended ?? 28),            d: 'past tickets',      c: '#22e5d4' },
+          { l: 'TOTAL HYPE GIVEN', v: (data.lifeStats?.totalHype ?? 0).toLocaleString(),   d: 'all time',          c: '#ff3e9a' },
+          { l: 'TOTAL EARNINGS',   v: `$${(data.lifeStats?.totalEarnings ?? 0).toLocaleString()}`, d: 'lifetime payouts', c: '#ffb84a' },
+          { l: 'SONGS PLAYED',     v: (data.lifeStats?.songsPlayed ?? 0).toLocaleString(), d: 'all time listens',  c: '#b983ff' },
+          { l: 'EVENTS ATTENDED',  v: String(data.lifeStats?.eventsAttended ?? 0),            d: 'past tickets',      c: '#22e5d4' },
         ].map(s => (
           <div key={s.l} className="wb-stat-card">
             <div className="wb-stat-l">{s.l}</div>
@@ -2844,11 +2854,7 @@ function ViewDiscover({ data: _data }: { data: WorkbenchData }) {
   }
 
   useEffect(() => {
-    fetch('/api/discover')
-      .then(r => r.json())
-      .then((res: DiscoverData) => { setDiscoverData(res); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    fetchDiscover().then(res => { if (res) setDiscoverData(res as DiscoverData); }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   const allArtists = discoverData?.artists ?? [];
