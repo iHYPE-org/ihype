@@ -1,5 +1,4 @@
-// Cloudflare Workers KV adapter.
-// Replaces @vercel/kv throughout the codebase.
+// Cloudflare Workers KV adapter used throughout the codebase.
 // In production (CF Workers): uses the KV binding from getCloudflareContext().
 // In local dev (no CF context): falls back to an in-memory Map.
 

@@ -11,7 +11,6 @@ coverage
 prisma/dev.db
 dev-server.log
 
-.vercel
 .env*.local
 dev-server.err.log
 cloudflared.log
@@ -20,4 +19,3 @@ tsconfig.tsbuildinfo
 .git-deploy
 .npm-cache
 .sync-bundles
-.vercel-sandbox-data

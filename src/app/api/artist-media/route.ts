@@ -141,7 +141,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            'Media uploads require object storage before production use. Configure Vercel Blob or enable the temporary database storage flag.'
+            'Media uploads require object storage before production use. Configure Cloudflare R2 or enable the temporary database storage flag.'
         },
         { status: 501 }
       );

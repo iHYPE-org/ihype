@@ -1,5 +1,4 @@
-// Cloudflare R2 storage adapter.
-// Replaces @vercel/blob for media uploads.
+// Cloudflare R2 storage adapter for media uploads.
 // In CF Workers: uses the R2 binding from getCloudflareContext().
 // Fallback: throws — R2 must be configured in production.
 
