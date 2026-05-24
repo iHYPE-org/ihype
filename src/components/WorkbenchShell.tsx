@@ -2852,7 +2852,11 @@ function ViewDiscover({ data: _data }: { data: WorkbenchData }) {
   }
 
   useEffect(() => {
-    fetchDiscover().then(res => { if (res) setDiscoverData(res as DiscoverData); }).catch(() => {}).finally(() => setLoading(false));
+    fetch('/api/discover')
+      .then(r => r.json())
+      .then((res: DiscoverData) => { setDiscoverData(res); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const allArtists = discoverData?.artists ?? [];
