@@ -24,7 +24,6 @@ Write-Host "Keeping Prisma packages on the same major/minor line..."
 $packageJson = Get-Content -LiteralPath $packagePath -Raw | ConvertFrom-Json
 $packageJson.dependencies."@prisma/client" = "^6.19.3"
 $packageJson.devDependencies.prisma = "^6.19.3"
-$packageJson.scripts."vercel-build" = "prisma generate && next build"
 
 $packageJson |
   ConvertTo-Json -Depth 20 |
