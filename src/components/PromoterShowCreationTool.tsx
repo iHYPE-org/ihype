@@ -23,7 +23,7 @@ type ArtistLibraryEntry = {
   url: string;
   notes: string | null;
   mimeType?: string | null;
-  mediaType?: 'audio' | 'video';
+  mediaType?: 'audio';
   previewImageUrl?: string | null;
 };
 
@@ -131,14 +131,6 @@ function getDefaultPadColor(slotNumber: number) {
   return PAD_COLORS[(slotNumber - 1) % PAD_COLORS.length] ?? '#23d0d8';
 }
 
-function isVideoMedia(mediaItem: { mediaType?: 'audio' | 'video'; mimeType?: string | null; url: string }) {
-  return (
-    mediaItem.mediaType === 'video' ||
-    mediaItem.mimeType?.startsWith('video/') ||
-    /\.(mp4|mov|webm|m4v)$/i.test(mediaItem.url)
-  );
-}
-
 function buildTimelineClipStyle(index: number, total: number) {
   const safeTotal = Math.max(total, 1);
   const laneSegment = 100 / safeTotal;
@@ -241,7 +233,6 @@ export function PromoterShowCreationTool({
   const [padColorMap, setPadColorMap] = useState<Record<number, string>>({});
   const [activePadSlot, setActivePadSlot] = useState<number | null>(null);
   const [isTakePreviewPlaying, setIsTakePreviewPlaying] = useState(false);
-  const [previewMediaItem, setPreviewMediaItem] = useState<ShowMediaItem | null>(null);
   const [saveIntent, setSaveIntent] = useState<ShowSaveIntent>('preview');
   const [activeUtilityPanel, setActiveUtilityPanel] = useState<CreatorUtilityPanel>('library');
   const [setListTracks, setSetListTracks] = useState<SetListTrack[]>([]);
@@ -308,10 +299,7 @@ export function PromoterShowCreationTool({
       setDeckBTrackId(null);
     }
 
-    if (previewMediaItem && !selectedMedia.some((mediaItem) => mediaItem.mediaId === previewMediaItem.mediaId)) {
-      setPreviewMediaItem(null);
-    }
-  }, [deckATrackId, deckBTrackId, previewMediaItem, selectedMedia]);
+  }, [deckATrackId, deckBTrackId, selectedMedia]);
 
   useEffect(() => {
     return () => {
@@ -585,19 +573,13 @@ export function PromoterShowCreationTool({
       artistName: artist.name,
       notes: entry.notes,
       mimeType: entry.mimeType,
-      mediaType: entry.mediaType ?? (isVideoMedia({ url: entry.url, mimeType: entry.mimeType }) ? 'video' : 'audio'),
+      mediaType: 'audio',
       previewImageUrl: entry.previewImageUrl ?? artist.heroImage
     };
     addOrMoveMediaInPlaylist(mediaItem);
   }
 
   function playPlaylistMedia(mediaItem: ShowMediaItem, artworkUrl?: string | null) {
-    if (isVideoMedia(mediaItem)) {
-      setPreviewMediaItem(mediaItem);
-      setMessage(`${mediaItem.title} loaded into the preview monitor.`);
-      return;
-    }
-
     playTrack(
       {
         id: mediaItem.mediaId,
@@ -608,9 +590,7 @@ export function PromoterShowCreationTool({
         notes: mediaItem.notes,
         artworkUrl: artworkUrl ?? null
       },
-      selectedMedia
-        .filter((entry) => !isVideoMedia(entry))
-        .map((entry) => ({
+      selectedMedia.map((entry) => ({
           id: entry.mediaId,
           title: entry.title,
           artistName: entry.artistName,
@@ -628,9 +608,7 @@ export function PromoterShowCreationTool({
   }
 
   function buildDeckQueue(mediaItem: ShowMediaItem) {
-    return selectedMedia
-      .filter((entry) => !isVideoMedia(entry))
-      .map((entry) => ({
+    return selectedMedia.map((entry) => ({
       id: entry.mediaId,
       title: entry.title,
       artistName: entry.artistName,
@@ -654,12 +632,6 @@ export function PromoterShowCreationTool({
   function playDeckTrack(deck: 'A' | 'B', mediaItem: ShowMediaItem | null) {
     if (!mediaItem) {
       setMessage(`Load a playlist song onto Deck ${deck} first.`);
-      return;
-    }
-
-    if (isVideoMedia(mediaItem)) {
-      setPreviewMediaItem(mediaItem);
-      setMessage(`${mediaItem.title} loaded onto Deck ${deck} and opened in the preview monitor.`);
       return;
     }
 
@@ -1299,7 +1271,6 @@ export function PromoterShowCreationTool({
       setVoiceDuration('20');
       setVoiceCueAfterMediaId('');
       setRecordedVoiceTake(null);
-      setPreviewMediaItem(null);
       setActiveUtilityPanel('library');
       setSetListTracks([]);
       setLastSavedShowHref(nextShowHref);
@@ -1332,7 +1303,7 @@ export function PromoterShowCreationTool({
       id: 'library',
       label: 'Add media',
       count: playableArtists.length,
-      hint: 'Grab artist songs or videos fast, then push them into the playlist.'
+      hint: 'Grab artist songs fast, then push them into the playlist.'
     },
     {
       id: 'voice',
@@ -1455,7 +1426,7 @@ export function PromoterShowCreationTool({
 
     const starterEntries = selectedHeadliner.entries.slice(0, 3);
     if (!starterEntries.length) {
-      setMessage('That artist does not have uploaded songs or videos yet.');
+      setMessage('That artist does not have uploaded songs yet.');
       return;
     }
 
@@ -1512,9 +1483,7 @@ export function PromoterShowCreationTool({
             <span className="composer-song-screen-label">Track</span>
             <strong>{track?.title ?? 'Standby'}</strong>
             <span>
-              {track
-                ? `${track.artistName}${isVideoMedia(track) ? ' | video' : ' | song'}`
-                : 'Playlist drop zone'}
+              {track ? `${track.artistName} | song` : 'Playlist drop zone'}
             </span>
             {track ? <div className="composer-media-code">{track.mediaId}</div> : null}
           </div>
@@ -1739,7 +1708,7 @@ export function PromoterShowCreationTool({
             </p>
           </div>
           <div className="composer-timeline-lanes">
-            {renderTimelineLane('Songs / video', 'Add artist media to start the show map.', mediaTimelineItems)}
+            {renderTimelineLane('Songs', 'Add artist media to start the show map.', mediaTimelineItems)}
             {renderTimelineLane('Voice', 'Record or script a voice cue from the Voice tab.', voiceTimelineItems)}
             {renderTimelineLane('Sampler', 'Assign a pad, then add it to the show flow.', sampleTimelineItems)}
             {renderTimelineLane('Ads', 'Approved ad clips appear here when real inventory is configured.', adTimelineItems)}
@@ -1822,27 +1791,6 @@ export function PromoterShowCreationTool({
                 </div>
                 {recordedVoiceTake ? <span className="meta">{recordedVoiceTake.durationSeconds}s take ready.</span> : null}
               </div>
-
-              {previewMediaItem ? (
-                <div className="composer-preview-monitor">
-                  <div className="composer-preview-monitor-head">
-                    <div className={sectionBadgeClassName}>Preview</div>
-                    <span className="meta">
-                      {previewMediaItem.mediaType === 'video' ? 'Video monitor' : 'Media monitor'}
-                    </span>
-                  </div>
-                  {isVideoMedia(previewMediaItem) ? (
-                    <video
-                      className="composer-preview-video"
-                      controls
-                      poster={previewMediaItem.previewImageUrl ?? undefined}
-                      src={previewMediaItem.url}
-                    />
-                  ) : (
-                    <audio className="composer-audio-preview" controls src={previewMediaItem.url} />
-                  )}
-                </div>
-              ) : null}
 
               <div className="composer-sampler-toolbar composer-sampler-toolbar-inline">
                 <div className={sectionBadgeClassName}>Sampler</div>
@@ -2045,7 +1993,6 @@ export function PromoterShowCreationTool({
                     {selectedMedia.map((mediaItem, index) => {
                       const heroImage = artists.find((artist) => artist.profileId === mediaItem.artistProfileId)?.heroImage ?? null;
                       const isCurrentTrack = currentTrack?.url === mediaItem.url;
-                      const isVideoItem = isVideoMedia(mediaItem);
 
                       return (
                         <div className="composer-playlist-stack" key={mediaItem.mediaId}>
@@ -2061,7 +2008,7 @@ export function PromoterShowCreationTool({
                                 <strong>{mediaItem.title}</strong>
                                 <p className="meta">
                                   {mediaItem.artistName}
-                                  {isVideoItem ? ' | video' : ' | song'}
+                                  {' | song'}
                                 </p>
                                 <div className="composer-media-code">{mediaItem.mediaId}</div>
                               </div>
@@ -2084,7 +2031,7 @@ export function PromoterShowCreationTool({
                               <button
                                 className="button small secondary"
                                 onClick={() => {
-                                  if (!isVideoItem && isCurrentTrack) {
+                                  if (isCurrentTrack) {
                                     togglePlayback();
                                   } else {
                                     playPlaylistMedia(mediaItem, heroImage);
@@ -2092,7 +2039,7 @@ export function PromoterShowCreationTool({
                                 }}
                                 type="button"
                               >
-                                {isVideoItem ? 'Preview' : isCurrentTrack && isPlaying ? 'Pause' : 'Play'}
+                                {isCurrentTrack && isPlaying ? 'Pause' : 'Play'}
                               </button>
                               <button
                                 className="button small secondary"
@@ -2160,7 +2107,6 @@ export function PromoterShowCreationTool({
                       </div>
                       {artist.entries.map((entry) => {
                         const isCurrentTrack = currentTrack?.url === entry.url;
-                        const isVideoEntry = entry.mediaType === 'video';
                         return (
                           <article
                             className="composer-media-card composer-media-card-draggable"
@@ -2176,7 +2122,7 @@ export function PromoterShowCreationTool({
                                 artistName: artist.name,
                                 notes: entry.notes,
                                 mimeType: entry.mimeType,
-                                mediaType: entry.mediaType ?? (isVideoEntry ? 'video' : 'audio'),
+                                mediaType: 'audio',
                                 previewImageUrl: entry.previewImageUrl ?? artist.heroImage
                               })
                             }
@@ -2184,7 +2130,7 @@ export function PromoterShowCreationTool({
                             <div>
                               <div className="composer-media-code">{entry.hexId}</div>
                               <strong>{entry.title}</strong>
-                              <p className="meta">{isVideoEntry ? 'Video' : 'Song'}</p>
+                              <p className="meta">Song</p>
                               {entry.notes ? <p className="meta">{entry.notes}</p> : null}
                             </div>
                             <div className="composer-media-actions">
@@ -2198,52 +2144,36 @@ export function PromoterShowCreationTool({
                               <button
                                 className="button small secondary"
                                 onClick={() => {
-                                  if (!isVideoEntry && isCurrentTrack) {
+                                  if (isCurrentTrack) {
                                     togglePlayback();
                                   } else {
-                                    if (isVideoEntry) {
-                                      setPreviewMediaItem({
-                                        mediaId: entry.hexId,
+                                    playTrack(
+                                      {
+                                        id: `${artist.slug}-${entry.hexId}`,
                                         title: entry.title,
-                                        url: entry.url,
-                                        artistProfileId: artist.profileId,
                                         artistName: artist.name,
+                                        url: entry.url,
+                                        mediaId: entry.hexId,
+                                        artistProfileSlug: artist.slug,
                                         notes: entry.notes,
-                                        mimeType: entry.mimeType,
-                                        mediaType: 'video',
-                                        previewImageUrl: entry.previewImageUrl ?? artist.heroImage
-                                      });
-                                    } else {
-                                      playTrack(
-                                        {
-                                          id: `${artist.slug}-${entry.hexId}`,
-                                          title: entry.title,
-                                          artistName: artist.name,
-                                          url: entry.url,
-                                          mediaId: entry.hexId,
-                                          artistProfileSlug: artist.slug,
-                                          notes: entry.notes,
-                                          artworkUrl: artist.heroImage
-                                        },
-                                        artist.entries
-                                          .filter((item) => item.mediaType !== 'video')
-                                          .map((item) => ({
-                                            id: `${artist.slug}-${item.hexId}`,
-                                            title: item.title,
-                                            artistName: artist.name,
-                                            url: item.url,
-                                            mediaId: item.hexId,
-                                            artistProfileSlug: artist.slug,
-                                            notes: item.notes,
-                                            artworkUrl: artist.heroImage
-                                          }))
-                                      );
-                                    }
+                                        artworkUrl: artist.heroImage
+                                      },
+                                      artist.entries.map((item) => ({
+                                        id: `${artist.slug}-${item.hexId}`,
+                                        title: item.title,
+                                        artistName: artist.name,
+                                        url: item.url,
+                                        mediaId: item.hexId,
+                                        artistProfileSlug: artist.slug,
+                                        notes: item.notes,
+                                        artworkUrl: artist.heroImage
+                                      }))
+                                    );
                                   }
                                 }}
                                 type="button"
                               >
-                                {isVideoEntry ? 'Preview' : isCurrentTrack && isPlaying ? 'Pause' : 'Preview'}
+                                {isCurrentTrack && isPlaying ? 'Pause' : 'Preview'}
                               </button>
                               <button className="button small" onClick={() => addMedia(artist, entry)} type="button">
                                 Add

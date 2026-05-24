@@ -5,9 +5,10 @@ import { AdminReportActions, AdminVerificationActions } from '@/components/Admin
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getHealthSnapshot } from '@/lib/health';
+import { isR2MediaStorageConfigured } from '@/lib/media-storage';
 import { isPaymentProcessingConfigured } from '@/lib/payments';
 import { isAdminSession } from '@/lib/permissions';
-import { areDemoLoginsEnabled, areLiveStreamsEnabled, isInviteCodeRequired, shouldHideDemoContent } from '@/lib/runtime-flags';
+import { areDemoLoginsEnabled, isInviteCodeRequired, shouldHideDemoContent } from '@/lib/runtime-flags';
 
 export const metadata: Metadata = {
   title: 'Admin Beta Console | iHYPE.org',
@@ -95,8 +96,7 @@ export default async function AdminPage() {
     ['Demo logins', areDemoLoginsEnabled()],
     ['Invite-only signup', isInviteCodeRequired()],
     ['Hide demo content', shouldHideDemoContent()],
-    ['Live streams', areLiveStreamsEnabled()],
-    ['Blob media storage', Boolean(process.env.BLOB_READ_WRITE_TOKEN)],
+    ['R2 media storage', isR2MediaStorageConfigured()],
     ['Ticket payment capture', isPaymentProcessingConfigured()]
   ] as const;
   const healthOperations = health.status === 'ok' ? health.operations : null;

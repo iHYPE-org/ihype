@@ -130,10 +130,10 @@ describe('calculateTicketOrderPayouts', () => {
     expect(result.venuePayoutCents + result.artistPayoutCents + result.promoterPayoutCents).toBe(1000);
   });
 
-  it('rejects non-positive ticket price', () => {
+  it('rejects negative ticket price', () => {
     expect(() =>
-      calculateTicketOrderPayouts({ ...base, ticketPriceCents: 0 })
-    ).toThrow('positive');
+      calculateTicketOrderPayouts({ ...base, ticketPriceCents: -1 })
+    ).toThrow('non-negative');
   });
 
   it('rejects zero quantity', () => {

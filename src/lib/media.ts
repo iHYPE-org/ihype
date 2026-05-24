@@ -6,7 +6,7 @@ export type ArtistMediaEntry = {
   shareUrl: string;
   notes: string | null;
   source: 'LINKED' | 'UPLOADED';
-  mediaType?: 'audio' | 'video';
+  mediaType?: 'audio';
   mimeType?: string | null;
   fileSizeBytes?: number | null;
   createdAt?: Date | null;
@@ -41,17 +41,8 @@ function isValidUrl(value: string) {
 }
 
 function inferMediaType(value: { mimeType?: string | null; url?: string }) {
-  if (value.mimeType?.startsWith('video/')) {
-    return 'video' as const;
-  }
-
   if (value.mimeType?.startsWith('audio/')) {
     return 'audio' as const;
-  }
-
-  const url = value.url ?? '';
-  if (/\.(mp4|mov|webm|m4v)$/i.test(url)) {
-    return 'video' as const;
   }
 
   return 'audio' as const;

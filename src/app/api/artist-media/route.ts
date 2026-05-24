@@ -3,14 +3,13 @@ import { auth } from '@/lib/auth';
 import { db, withDbRetry } from '@/lib/db';
 import { createHexId } from '@/lib/hex-id';
 import { validateArtistMediaUpload } from '@/lib/media-validation';
-import { isBlobMediaStorageConfigured, uploadArtistMediaToBlob } from '@/lib/media-storage';
+import { isR2MediaStorageConfigured, uploadArtistMediaToR2Storage } from '@/lib/media-storage';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { areDatabaseMediaUploadsEnabled } from '@/lib/runtime-flags';
 
 export const dynamic = 'force-dynamic';
 
 const MAX_AUDIO_FILE_SIZE_BYTES = 10 * 1024 * 1024;
-const MAX_VIDEO_FILE_SIZE_BYTES = 16 * 1024 * 1024;
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -91,7 +90,7 @@ export async function POST(request: Request) {
     }
 
     if (!(file instanceof File)) {
-      return NextResponse.json({ error: 'Choose an audio or video file to upload.' }, { status: 400 });
+      return NextResponse.json({ error: 'Choose an audio file to upload.' }, { status: 400 });
     }
 
     const mediaValidationError = validateArtistMediaUpload(file);
@@ -99,19 +98,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: mediaValidationError }, { status: 400 });
     }
 
-    const maxFileSizeBytes = file.type.startsWith('video/')
-      ? MAX_VIDEO_FILE_SIZE_BYTES
-      : MAX_AUDIO_FILE_SIZE_BYTES;
+    const maxFileSizeBytes = MAX_AUDIO_FILE_SIZE_BYTES;
 
     if (file.size > maxFileSizeBytes) {
-      return NextResponse.json(
-        {
-          error: file.type.startsWith('video/')
-            ? 'Video uploads are limited to 16MB.'
-            : 'Audio uploads are limited to 10MB.'
-        },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Audio uploads are limited to 10MB.' }, { status: 400 });
     }
 
     const profile = await withDbRetry(() =>
@@ -135,9 +125,9 @@ export async function POST(request: Request) {
 
     const title = (requestedTitle || deriveTitleFromFileName(file.name)).slice(0, 160);
     const hexId = createHexId();
-    const hasBlobStorage = isBlobMediaStorageConfigured();
+    const hasR2Storage = isR2MediaStorageConfigured();
 
-    if (!hasBlobStorage && !areDatabaseMediaUploadsEnabled()) {
+    if (!hasR2Storage && !areDatabaseMediaUploadsEnabled()) {
       return NextResponse.json(
         {
           error:
@@ -147,8 +137,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const storedMedia = hasBlobStorage
-      ? await uploadArtistMediaToBlob({ file, hexId, profileId: profile.id })
+    const storedMedia = hasR2Storage
+      ? await uploadArtistMediaToR2Storage({ file, hexId, profileId: profile.id })
       : null;
     const fileDataBase64 = storedMedia ? null : Buffer.from(await file.arrayBuffer()).toString('base64');
 

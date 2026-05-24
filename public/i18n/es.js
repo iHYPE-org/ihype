@@ -168,7 +168,7 @@
       'a11y.contrast.d': 'Bordes más fuertes, texto negro puro',
       'a11y.hearing':    'Audición',
       'a11y.captions':   'Subtítulos activados por defecto',
-      'a11y.captions.d': 'Cada show, mezcla, video',
+      'a11y.captions.d': 'Cada show y mezcla',
       'a11y.visualad':   'Indicador visual de anuncio',
       'a11y.visualad.d': 'Aparece un banner cuando se reproducen anuncios de audio',
       'a11y.motion':     'Movimiento y entrada',

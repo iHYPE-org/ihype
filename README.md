@@ -7,7 +7,7 @@ A production-oriented Next.js application for hosting artist, promoter, venue, a
 - Next.js App Router and Route Handlers for the web app and API endpoints.
 - Prisma ORM with PostgreSQL.
 - Auth.js credentials auth with Prisma adapter for user accounts.
-- Mux live streaming integration.
+- Audio media playback and uploads.
 - Cloudflare hosting through GitHub Actions.
 
 ## GitHub Source Of Truth
@@ -93,11 +93,11 @@ Do not deploy production from a local checkout. Use GitHub `main` as the only pr
 
 - Use real OAuth/email verification/password reset settings and bot protection before launch.
 - Put the app behind Cloudflare CDN/WAF controls.
-- Use configured object storage for poster images and media uploads.
+- Use configured R2 storage for poster images and audio uploads.
 - Keep webhook verification enabled in production code.
 - Public signup reserves `@ihype.org` email addresses for internal use only.
 - Optional invite-only signup is controlled by `FEATURE_REQUIRE_INVITE_CODE=true` and comma-separated `BETA_INVITE_CODES`.
-- Auth, signup, and dashboard pages are intentionally marked `noindex`.
+- Auth, signup, and account pages are intentionally marked `noindex`.
 - The Prisma seed is for local/demo data only and refuses production runs unless `ALLOW_PRODUCTION_SEEDING=true` is explicitly set.
 
 ## Cookie Posture

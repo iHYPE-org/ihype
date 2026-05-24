@@ -1,14 +1,14 @@
 # iHYPE Codex project instructions
 
 ## Project goal
-This repository contains a production-oriented Next.js app for hosting artist, DJ, and venue pages with live streaming shows, account support, hype voting, Prisma/Postgres data storage, and Cloudflare deployment config.
+This repository contains a production-oriented Next.js app for hosting artist, DJ, and venue pages with audio shows, account support, hype voting, Prisma/Postgres data storage, and Cloudflare deployment config.
 
 ## Working agreements
 - Prefer small, reviewable changes over broad refactors.
 - Keep the app compatible with the GitHub Actions to Cloudflare deployment path and Prisma migrations.
 - Preserve the current stack unless a task explicitly requires a replacement.
 - Treat environment variables and secrets as external configuration. Never hardcode secrets.
-- Preserve the newer Claude-derived signed-in visual schema. Do not replace the role landing pages with older listener/dashboard/directory layouts.
+- Preserve the newer signed-in visual schema. Do not replace the role landing pages with older inactive directory layouts.
 - Keep auth redirects and role module links working while updating visuals. The safe path is to keep role pages wrapped by `ProfileDirectoryPage`, keep `RoleModuleSubheader`, and keep role-aware routing in `src/lib/account-routing.ts`.
 
 ## Stack expectations
@@ -17,7 +17,7 @@ This repository contains a production-oriented Next.js app for hosting artist, D
 - ORM: Prisma
 - Database: PostgreSQL
 - Auth: Auth.js
-- Streaming: Mux
+- Media: audio playback and uploads
 - Hosting target: Cloudflare through GitHub Actions
 
 ## GitHub source of truth
@@ -43,7 +43,7 @@ This repository contains a production-oriented Next.js app for hosting artist, D
 
 ## Safety / deployment rules
 - Do not commit `.env` files or real credentials.
-- Keep `DATABASE_URL`, Mux credentials, and auth secrets in environment variables only.
+- Keep `DATABASE_URL` and auth secrets in environment variables only.
 - Do not disable webhook verification in production code.
 - Keep preview and production environment assumptions separate.
 

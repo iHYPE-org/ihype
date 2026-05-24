@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { recordAuditEvent } from '@/lib/audit';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { isSafeImageInput, isSafeVideoInput } from '@/lib/asset-safety';
+import { isSafeImageInput } from '@/lib/asset-safety';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { buildBlockDeletes, buildBlockUpserts, type BlockType } from '@/lib/profile-blocks';
 import {
@@ -20,13 +20,6 @@ const imageField = z
   .optional()
   .or(z.literal(''));
 
-const videoField = z
-  .string()
-  .trim()
-  .refine((value) => isSafeVideoInput(value), 'Use a safe video URL or uploaded video asset.')
-  .optional()
-  .or(z.literal(''));
-
 const schema = z.object({
   headline: z.string().trim().max(140).optional(),
   bio: z.string().trim().max(280).optional(),
@@ -34,7 +27,6 @@ const schema = z.object({
   avatarImage: imageField,
   logoImage: imageField,
   galleryImage: imageField,
-  featureVideoUrl: videoField,
   aboutContent: z.string().trim().max(5000).optional(),
   journalContent: z.string().trim().max(5000).optional(),
   mediaContent: z.string().trim().max(5000).optional(),
@@ -128,7 +120,6 @@ export async function PATCH(
           avatarImage: body.avatarImage || null,
           logoImage: body.logoImage || null,
           galleryImage: body.galleryImage || null,
-          featureVideoUrl: body.featureVideoUrl || null,
           aboutContent: body.aboutContent || null,
           journalContent: body.journalContent || null,
           mediaContent: body.mediaContent || null,

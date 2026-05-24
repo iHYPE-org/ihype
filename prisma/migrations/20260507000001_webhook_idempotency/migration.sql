@@ -1,4 +1,4 @@
--- Idempotency log for inbound webhooks (Mux, Stripe, etc.)
+-- Idempotency log for inbound webhooks (Stripe and other providers)
 CREATE TABLE "ProcessedWebhookEvent" (
   "id"          TEXT NOT NULL,
   "source"      TEXT NOT NULL,

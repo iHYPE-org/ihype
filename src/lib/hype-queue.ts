@@ -50,11 +50,11 @@ function profileLocation(profile: DiscoverSpotlightProfile) {
 
 function mediaForArtist(mediaEntries: DirectoryMediaSearchEntry[], artistSlug?: string | null) {
   if (!artistSlug) return null;
-  return mediaEntries.find((entry) => entry.artistSlug === artistSlug && entry.mediaType !== 'video') ?? null;
+  return mediaEntries.find((entry) => entry.artistSlug === artistSlug) ?? null;
 }
 
 function firstUnusedMedia(mediaEntries: DirectoryMediaSearchEntry[], usedIds: Set<string>) {
-  return mediaEntries.find((entry) => entry.mediaType !== 'video' && !usedIds.has(entry.mediaId)) ?? null;
+  return mediaEntries.find((entry) => !usedIds.has(entry.mediaId)) ?? null;
 }
 
 function makeItem({
@@ -138,7 +138,7 @@ export function buildHypeQueue({
     );
   }
 
-  for (const media of mediaEntries.filter((entry) => entry.mediaType !== 'video').slice(0, 16)) {
+  for (const media of mediaEntries.slice(0, 16)) {
     if (queue.filter((item) => item.category === 'similar').length >= 2) break;
     add(
       makeItem({

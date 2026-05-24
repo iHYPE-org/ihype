@@ -39,10 +39,11 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
-      - name: Run migrations
-        run: npx prisma migrate deploy
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Run tests
+        run: npm test
 
       - name: Build for Cloudflare
         run: npm run cf:build
@@ -53,6 +54,11 @@ jobs:
           NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+
+      - name: Run migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Deploy to Cloudflare Pages
         run: npm run cf:deploy

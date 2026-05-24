@@ -5365,13 +5365,6 @@ body:has(.wb-shell) .site-nav { display: none; }
   object-fit: cover;
   background: rgba(255,255,255,0.05);
 }
-.artist-page-builder-preview-video,
-.artist-media-visual-video {
-  width: 100%;
-  border-radius: 22px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(5,10,20,0.9);
-}
 .artist-ready-tag {
   border-color: rgba(35,208,216,0.26);
   background: rgba(35,208,216,0.16);
@@ -6883,7 +6876,6 @@ body:has(.wb-shell) .site-nav { display: none; }
   flex-wrap: wrap;
   gap: 0.55rem;
 }
-.show-sequence-media,
 .show-sequence-audio {
   width: 100%;
   border-radius: 16px;
@@ -6924,26 +6916,6 @@ body:has(.wb-shell) .site-nav { display: none; }
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-}
-.composer-preview-monitor {
-  display: grid;
-  gap: 0.75rem;
-  padding: 0.9rem 1rem;
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(7, 12, 22, 0.72);
-}
-.composer-preview-monitor-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
-  align-items: center;
-}
-.composer-preview-video {
-  width: 100%;
-  border-radius: 16px;
-  background: rgba(0,0,0,0.5);
-  border: 1px solid rgba(255,255,255,0.08);
 }
 .composer-sample-bank {
   display: flex;
@@ -8988,8 +8960,7 @@ body:has(.wb-shell) .site-nav { display: none; }
   width: 100%;
   accent-color: #23d0d8;
 }
-.video-shell { border-radius: 20px; overflow: hidden; border: 1px solid var(--line); background: #000; min-height: 300px; }
-.video-frame { width: 100%; aspect-ratio: 16 / 9; border: 0; }
+.show-player-shell { border-radius: 20px; overflow: hidden; border: 1px solid var(--line); background: #000; min-height: 300px; }
 .table { width: 100%; border-collapse: collapse; }
 .table th, .table td { text-align: left; padding: 0.9rem; border-bottom: 1px solid var(--line); }
 .hype-badge { padding: 0.5rem 0.8rem; border-radius: 999px; background: rgba(255,80,120,0.14); border: 1px solid rgba(255,80,120,0.25); }
@@ -9864,7 +9835,7 @@ body:has(.wb-shell) .site-nav { display: none; }
 .discover-module,
 .discover-topfive-shell,
 .discover-ticket-shell,
-.video-shell {
+.show-player-shell {
   border-radius: var(--clean-surface-radius-lg);
 }
 
@@ -10054,8 +10025,7 @@ body:has(.wb-shell) .site-nav { display: none; }
     rgba(255,255,255,0.03);
 }
 
-.visual-drop-preview img,
-.visual-drop-preview video {
+.visual-drop-preview img {
   width: 100%;
   height: 96px;
   object-fit: cover;

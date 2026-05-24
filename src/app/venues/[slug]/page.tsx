@@ -10,7 +10,7 @@ import { HypeButton } from '@/components/HypeButton';
 import { VenueEventScheduler } from '@/components/VenueEventScheduler';
 import { VenueConnectionRequestActions } from '@/components/VenueConnectionRequestActions';
 import { VenueConnectionRequestForm } from '@/components/VenueConnectionRequestForm';
-import { getSafeBackgroundImageStyle, getSafeImageUrl, getSafeVideoUrl } from '@/lib/asset-safety';
+import { getSafeBackgroundImageStyle, getSafeImageUrl } from '@/lib/asset-safety';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getDemoCreatorExclusion, getDemoOwnerExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
 
@@ -197,7 +197,6 @@ export default async function VenuePage({
   const bannerStyle = canViewCustomPage ? getSafeBackgroundImageStyle(profile.heroImage) : undefined;
   const logoUrl = canViewCustomPage ? getSafeImageUrl(profile.logoImage || profile.avatarImage) : null;
   const featureImageUrl = canViewCustomPage ? getSafeImageUrl(profile.galleryImage || profile.heroImage) : null;
-  const featureVideoUrl = canViewCustomPage ? getSafeVideoUrl(profile.featureVideoUrl) : null;
 
   return (
     <main className="container section profile-design-shell" style={pageDesignStyle}>
@@ -248,11 +247,6 @@ export default async function VenuePage({
               {featureImageUrl ? (
                 <div className="artist-media-visuals">
                   <img alt={`${profile.name} featured visual`} className="artist-media-visual-image" src={featureImageUrl} />
-                </div>
-              ) : null}
-              {featureVideoUrl ? (
-                <div className="artist-media-visuals">
-                  <video className="artist-media-visual-video" controls preload="metadata" src={featureVideoUrl} />
                 </div>
               ) : null}
               {(profile.addressLine1 || profile.hoursText || profile.parkingDetails || profile.stayRecommendations) ? (

@@ -11,8 +11,6 @@ import { detectRequestLocation } from '@/lib/request-location';
 import { parseShowProductionPlan } from '@/lib/show-composer';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { formatShowTime } from '@/lib/utils';
-import { getMuxPlaybackToken } from '@/lib/mux';
-import { ShowPlaybackTracker } from '@/components/ShowPlaybackTracker';
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
@@ -158,25 +156,6 @@ export default async function ShowDetailPage({
   const visibility = getShowVisibilitySignals(show);
   const productionPlan = parseShowProductionPlan(show.productionPlan);
 
-  // Ticketed shows require a signed playback token; public shows use the raw HLS URL.
-  // Token signing only activates when MUX_SIGNING_KEY_ID + MUX_SIGNING_PRIVATE_KEY are set.
-  const hasTicket = session?.user?.id
-    ? await db.ticket.findFirst({
-        where: { showId: show.id, holderEmail: (await db.user.findUnique({ where: { id: session.user.id }, select: { email: true } }))?.email ?? '' },
-        select: { id: true }
-      }).then(Boolean)
-    : false;
-
-  const canWatch = !show.isTicketed || hasTicket || (session?.user?.id === show.creatorId) || isAdminSession(session);
-
-  let playbackUrl: string | null = null;
-  if (show.streamPlaybackId && canWatch) {
-    const token = show.isTicketed ? getMuxPlaybackToken(show.streamPlaybackId) : null;
-    playbackUrl = token
-      ? `https://stream.mux.com/${show.streamPlaybackId}.m3u8?token=${token}`
-      : `https://stream.mux.com/${show.streamPlaybackId}.m3u8`;
-  }
-
   return (
     <main className="container section">
       <div className="profile-header">
@@ -194,17 +173,8 @@ export default async function ShowDetailPage({
 
       <div className="grid grid-2">
         <section className="panel" style={{ padding: '1rem' }}>
-          <div className="video-shell">
-            {playbackUrl ? (
-              <ShowPlaybackTracker
-                autoPlay={show.status === 'LIVE'}
-                isLive={show.status === 'LIVE'}
-                playbackUrl={playbackUrl}
-                showId={show.id}
-                showSlug={show.slug}
-                title={show.title}
-              />
-            ) : productionPlan ? (
+          <div className="show-player-shell">
+            {productionPlan ? (
               <ShowSequencePlayer
                 autoPlay={show.status === 'LIVE'}
                 isPreview={show.status === 'DRAFT'}
@@ -215,7 +185,7 @@ export default async function ShowDetailPage({
               />
             ) : (
               <div className="show-art" style={{ minHeight: 320 }}>
-                Connect your stream provider to go live
+                No audio production plan has been configured yet.
               </div>
             )}
           </div>
@@ -240,10 +210,6 @@ export default async function ShowDetailPage({
               <tr>
                 <th>Status</th>
                 <td>{show.status}</td>
-              </tr>
-              <tr>
-                <th>Stream provider</th>
-                <td>{show.streamProvider ?? 'Not configured'}</td>
               </tr>
               <tr>
                 <th>Venue</th>
@@ -333,7 +299,7 @@ export default async function ShowDetailPage({
                   <div className="badge">Production plan</div>
                   <h2>Promoter run of show</h2>
                   <p className="kicker">
-                  This show was assembled from artist songs and videos, recorded voice-over overdubs, sampler pads, and ad breaks inserted after every three media slots.
+                  This show was assembled from artist songs, recorded voice-over overdubs, sampler pads, and ad breaks inserted after every three media slots.
                   </p>
                 </div>
               </div>

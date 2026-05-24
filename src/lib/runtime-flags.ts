@@ -106,10 +106,6 @@ export function areDatabaseMediaUploadsEnabled() {
   );
 }
 
-export function areLiveStreamsEnabled() {
-  return parseBooleanFlag(process.env.FEATURE_ENABLE_LIVE_STREAMS, false);
-}
-
 export function isInviteCodeRequired() {
   return parseBooleanFlag(process.env.FEATURE_REQUIRE_INVITE_CODE, false);
 }

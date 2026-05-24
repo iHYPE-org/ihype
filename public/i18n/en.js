@@ -197,7 +197,7 @@
       'a11y.contrast.d': 'Stronger borders, pure black text',
       'a11y.hearing':    'Hearing',
       'a11y.captions':   'Captions on by default',
-      'a11y.captions.d': 'Every show, mix, video',
+      'a11y.captions.d': 'Every show and mix',
       'a11y.visualad':   'Visual ad indicator',
       'a11y.visualad.d': 'Banner shows when audio ads play',
       'a11y.motion':     'Motion & input',

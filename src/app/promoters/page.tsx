@@ -341,7 +341,7 @@ export default async function PromotersIndexPage({
         where: {
           type: 'ARTIST',
           ...getDemoOwnerExclusion(),
-          OR: [{ mediaContent: { not: null } }, { mediaUploads: { some: {} } }, { featureVideoUrl: { not: null } }]
+          OR: [{ mediaContent: { not: null } }, { mediaUploads: { some: {} } }]
         },
         select: {
           id: true,
@@ -350,7 +350,6 @@ export default async function PromotersIndexPage({
           name: true,
           heroImage: true,
           galleryImage: true,
-          featureVideoUrl: true,
           mediaContent: true,
           mediaUploads: {
             select: {
@@ -370,27 +369,13 @@ export default async function PromotersIndexPage({
       const artists = artistProfiles
         .map((artistProfile) => {
           const builtEntries = buildArtistMediaCollection(artistProfile.mediaContent, artistProfile.mediaUploads).entries;
-          const featureVideoEntry = artistProfile.featureVideoUrl
-            ? [
-                {
-                  id: `${artistProfile.hexId.slice(0, -2)}fe`,
-                  hexId: `${artistProfile.hexId.slice(0, -2)}fe`,
-                  title: `${artistProfile.name} feature video`,
-                  url: artistProfile.featureVideoUrl,
-                  notes: 'Feature video from the artist page builder.',
-                  mimeType: 'video/mp4',
-                  mediaType: 'video' as const,
-                  previewImageUrl: artistProfile.galleryImage ?? artistProfile.heroImage ?? null
-                }
-              ]
-            : [];
 
           return {
             profileId: artistProfile.id,
             slug: artistProfile.slug,
             name: artistProfile.name,
             heroImage: artistProfile.heroImage,
-            entries: [...featureVideoEntry, ...builtEntries]
+            entries: builtEntries
           };
         })
         .filter((artistProfile) => artistProfile.entries.length > 0);

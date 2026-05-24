@@ -9,14 +9,14 @@ function sanitizePathSegment(value: string) {
     .slice(0, 120);
 }
 
-export function isBlobMediaStorageConfigured() {
+export function isR2MediaStorageConfigured() {
   // R2 is always available in CF Workers; in local dev check for env vars
   return Boolean(
     process.env.CF_ACCOUNT_ID || process.env.R2_ACCESS_KEY_ID
   );
 }
 
-export async function uploadArtistMediaToBlob({
+export async function uploadArtistMediaToR2Storage({
   file,
   hexId,
   profileId,

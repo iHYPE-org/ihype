@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   const profileId = request.nextUrl.searchParams.get('profileId');
 
   if (!profileId || !isStripeConfigured()) {
-    redirect('/dashboard');
+    redirect('/workbench?tool=tickets');
   }
 
   const profile = await db.profile.findUnique({
@@ -34,5 +34,5 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  redirect('/dashboard');
+  redirect('/workbench?tool=tickets');
 }

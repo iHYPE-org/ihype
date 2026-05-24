@@ -35,7 +35,7 @@ export type DirectoryMediaSearchEntry = {
   url: string;
   notes: string | null;
   artworkUrl: string | null;
-  mediaType: 'audio' | 'video';
+  mediaType: 'audio';
 };
 
 const browseTabs = [
@@ -163,15 +163,13 @@ export function ProfileDirectoryBrowser({
                   </p>
                 </div>
                 <div className="cta-row">
-                  {entry.mediaType !== 'video' ? (
-                    <button
-                      className="button small secondary"
-                      onClick={() => playTrack(mediaQueue[index], mediaQueue)}
-                      type="button"
-                    >
-                      Play
-                    </button>
-                  ) : null}
+                  <button
+                    className="button small secondary"
+                    onClick={() => playTrack(mediaQueue[index], mediaQueue)}
+                    type="button"
+                  >
+                    Play
+                  </button>
                   <Link className="button small secondary" href={`/artists/${entry.artistSlug}`}>
                     Artist page
                   </Link>

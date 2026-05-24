@@ -1,8 +1,8 @@
 import { db } from '@/lib/db';
 import { isEmailDeliveryConfigured } from '@/lib/mailer';
-import { isBlobMediaStorageConfigured } from '@/lib/media-storage';
+import { isR2MediaStorageConfigured } from '@/lib/media-storage';
 import { isPaymentProcessingConfigured } from '@/lib/payments';
-import { areDemoLoginsEnabled, areLiveStreamsEnabled, isInviteCodeRequired, shouldHideDemoContent } from '@/lib/runtime-flags';
+import { areDemoLoginsEnabled, isInviteCodeRequired, shouldHideDemoContent } from '@/lib/runtime-flags';
 
 export async function getHealthSnapshot() {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -36,9 +36,8 @@ export async function getHealthSnapshot() {
       },
       integrations: {
         emailDelivery: isEmailDeliveryConfigured(),
-        blobMediaStorage: isBlobMediaStorageConfigured(),
-        ticketPaymentCapture: isPaymentProcessingConfigured(),
-        liveStreams: areLiveStreamsEnabled()
+        r2MediaStorage: isR2MediaStorageConfigured(),
+        ticketPaymentCapture: isPaymentProcessingConfigured()
       },
       safety: {
         demoLogins: areDemoLoginsEnabled(),

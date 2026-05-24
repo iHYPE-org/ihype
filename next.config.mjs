@@ -13,8 +13,8 @@ const contentSecurityPolicy = [
   "font-src 'self' data: https:",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   `script-src 'self' 'unsafe-inline'${isProduction ? '' : " 'unsafe-eval'"}`,
-  "connect-src 'self' https://api.mux.com https://stream.mux.com https://*.mux.com",
-  "frame-src 'self' https://*.mux.com",
+  "connect-src 'self'",
+  "frame-src 'self'",
   'upgrade-insecure-requests'
 ].join('; ');
 
@@ -238,11 +238,6 @@ const nextConfig = {
         source: '/launch-readiness',
         destination: '/',
         permanent: false
-      },
-      {
-        source: '/dashboard',
-        destination: '/home',
-        permanent: true
       },
       {
         source: '/listeners',

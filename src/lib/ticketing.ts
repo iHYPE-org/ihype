@@ -83,8 +83,8 @@ export function calculateTicketOrderPayouts({
     promoterPayoutPercent
   });
 
-  if (!Number.isInteger(ticketPriceCents) || ticketPriceCents <= 0) {
-    throw new Error('Ticket price must be a positive whole number of cents.');
+  if (!Number.isInteger(ticketPriceCents) || ticketPriceCents < 0) {
+    throw new Error('Ticket price must be a non-negative whole number of cents.');
   }
 
   if (!Number.isInteger(quantity) || quantity <= 0) {
@@ -138,8 +138,8 @@ export function calculateTicketTaxes({
   buyerLocation,
   venueLocation
 }: TicketTaxInput): TicketTaxBreakdown {
-  if (!Number.isInteger(ticketPriceCents) || ticketPriceCents <= 0) {
-    throw new Error('Ticket price must be a positive whole number of cents.');
+  if (!Number.isInteger(ticketPriceCents) || ticketPriceCents < 0) {
+    throw new Error('Ticket price must be a non-negative whole number of cents.');
   }
 
   if (!Number.isInteger(quantity) || quantity <= 0) {

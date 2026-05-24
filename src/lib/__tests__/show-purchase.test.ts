@@ -13,12 +13,8 @@ describe('show purchase: full order financials', () => {
       venuePayoutPercent: 50,
       artistPayoutPercent: 45,
       promoterPayoutPercent: 5,
-      stateRegion: null,
-      country: 'US',
-      postalCode: null,
-      viewerStateRegion: null,
-      viewerCountry: 'US',
-      viewerPostalCode: null
+      buyerLocation: { stateRegion: null, country: 'US', postalCode: null },
+      venueLocation: { stateRegion: null, country: 'US', postalCode: null }
     });
     expect(result.subtotalCents).toBe(2000);
     expect(result.venuePayoutCents + result.artistPayoutCents + result.promoterPayoutCents).toBeLessThanOrEqual(result.subtotalCents);
@@ -31,12 +27,8 @@ describe('show purchase: full order financials', () => {
       venuePayoutPercent: 50,
       artistPayoutPercent: 45,
       promoterPayoutPercent: 5,
-      stateRegion: null,
-      country: 'US',
-      postalCode: null,
-      viewerStateRegion: null,
-      viewerCountry: 'US',
-      viewerPostalCode: null
+      buyerLocation: { stateRegion: null, country: 'US', postalCode: null },
+      venueLocation: { stateRegion: null, country: 'US', postalCode: null }
     });
     expect(result.subtotalCents).toBe(3000);
   });
@@ -54,12 +46,8 @@ describe('show purchase: full order financials', () => {
       venuePayoutPercent: 50,
       artistPayoutPercent: 45,
       promoterPayoutPercent: 5,
-      stateRegion: null,
-      country: 'US',
-      postalCode: null,
-      viewerStateRegion: null,
-      viewerCountry: 'US',
-      viewerPostalCode: null
+      buyerLocation: { stateRegion: null, country: 'US', postalCode: null },
+      venueLocation: { stateRegion: null, country: 'US', postalCode: null }
     });
     expect(result.subtotalCents).toBe(0);
     expect(result.totalTaxCents).toBe(0);
