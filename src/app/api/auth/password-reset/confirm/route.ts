@@ -106,7 +106,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const passwordHash = await bcrypt.hash(body.password, 10);
+    const passwordHash = await bcrypt.hash(body.password, 8);
 
     await withDbRetry(() =>
       db.user.update({

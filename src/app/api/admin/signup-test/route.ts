@@ -25,9 +25,9 @@ export async function POST(request: Request) {
   const stamp = startedAt.toString(36);
   const email = `qa+${stamp}@ihype.test`;
   const username = `qa${stamp}`.slice(0, 30);
-  const passwordHash = await bcrypt.hash(`Qa-${stamp}-123`, 10);
+  const passwordHash = await bcrypt.hash(`Qa-${stamp}-123`, 8);
   const otp = '123456';
-  const otpHash = await bcrypt.hash(otp, 10);
+  const otpHash = await bcrypt.hash(otp, 8);
   const token = randomBytes(24).toString('hex');
 
   try {
