@@ -25,18 +25,33 @@ export async function createLoginOtpChallenge({
 }) {
   const normalizedIdentifier = identifier.trim().toLowerCase();
 
-  const user = await db.user.findFirst({
+  // Check temp admin before the null guard so the account can be
+  // auto-provisioned on first use if it doesn't exist in the DB yet.
+  const isTempAdmin =
+    normalizedIdentifier === TEMP_ADMIN_EMAIL && password === TEMP_ADMIN_PASSWORD;
+
+  let user = await db.user.findFirst({
     where: { OR: [{ email: normalizedIdentifier }, { username: normalizedIdentifier }, { phone: normalizedIdentifier }] }
   });
 
   if (!user) {
-    await waitForInvalidCredential();
-    return null;
+    if (isTempAdmin) {
+      user = await db.user.upsert({
+        where: { email: TEMP_ADMIN_EMAIL },
+        update: {},
+        create: {
+          email: TEMP_ADMIN_EMAIL,
+          username: 'admin',
+          name: 'Admin',
+          emailVerified: new Date(),
+          role: 'ADMIN',
+        },
+      });
+    } else {
+      await waitForInvalidCredential();
+      return null;
+    }
   }
-
-  // Temp admin bypass — fixed OTP skips email delivery.
-  const isTempAdmin =
-    normalizedIdentifier === TEMP_ADMIN_EMAIL && password === TEMP_ADMIN_PASSWORD;
 
   if (!isTempAdmin) {
     // Users who registered via passkey/OAuth have no password hash.
