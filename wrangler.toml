@@ -5,9 +5,7 @@ compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public", "no_hand
 find_additional_modules = true
 base_dir = ".open-next/server-functions/default"
 # Production routes for ihype.org and www.ihype.org are managed in the Cloudflare dashboard.
-# workers_dev must be true so the Cloudflare Workers Builds GitHub integration
-# can deploy preview builds to ihype.workers.dev on PRs.
-workers_dev = true
+workers_dev = false
 
 rules = [
   { type = "CompiledWasm", globs = ["**/*.wasm"], fallthrough = true }
