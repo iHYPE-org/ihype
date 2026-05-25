@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback, useRef, createContext, useCont
 import Image from 'next/image';
 import { AccessibilityControls } from '@/components/AccessibilityControls';
 import { useMediaPlayer, type MediaTrack } from '@/components/GlobalMediaPlayer';
-import { SeedsSwipeStack, type SeedsSwipeStackSeed, type SeedsSwipeStackTrack } from '@/components/SeedsSwipeStack';
 import { WorkbenchExtras } from '@/components/WorkbenchExtras';
 import { WidgetManager } from '@/components/WidgetManager';
 import { CoHeadlinerSuggestions } from '@/components/CoHeadlinerSuggestions';
@@ -13,6 +12,7 @@ import { CITY_COORDS } from '@/lib/city-coords';
 import { PasskeyManager } from '@/components/AuthScreens';
 import { useToast } from '@/components/Toast';
 import { RadioShowCreator } from '@/components/RadioShowCreator';
+import { SeedsGamifiedView, type SeedsGamifiedSeed } from '@/components/SeedsGamifiedView';
 
 // ── Keyboard shortcut hook ─────────────────────────────────────
 function useKey(key: string, handler: (e: KeyboardEvent) => void, deps: React.DependencyList = []) {
@@ -2969,98 +2969,57 @@ function ViewDiscover({ data: _data }: { data: WorkbenchData }) {
 
 // ── View: Seeds ─────────────────────────────────────────────────
 function ViewSeeds({ data }: { data: WorkbenchData }) {
-  const [seeds, setSeeds] = useState<SeedsSwipeStackSeed[]>([]);
-  const [tracks, setTracks] = useState<SeedsSwipeStackTrack[]>([]);
+  const [gamifiedSeeds, setGamifiedSeeds] = useState<SeedsGamifiedSeed[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedGenres, setSelectedGenres] = useState<string[]>(() => {
-    if (typeof window === 'undefined') return [];
-    try {
-      const raw = window.localStorage.getItem('ihype:seed-genres');
-      if (!raw) return [];
-      const parsed = JSON.parse(raw) as unknown;
-      return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string') : [];
-    } catch {
-      return [];
-    }
-  });
+  const toast = useToast();
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      window.localStorage.setItem('ihype:seed-genres', JSON.stringify(selectedGenres));
-    } catch {
-      // ignore
-    }
-  }, [selectedGenres]);
-
-  useEffect(() => {
-    const fallbackTracks = data.tracks.map(t => ({
-      id: t.id, title: t.title, artistName: t.artistName, album: t.album,
-      color: t.color, durationLabel: t.duration, hypeCount: t.hypeCount,
-    }));
-    const fallbackSeeds = fallbackTracks.map(t => ({
+    const fallback: SeedsGamifiedSeed[] = data.tracks.map(t => ({
       id: t.id,
-      trackId: t.id,
-      reason: 'From your discover feed',
+      title: t.title,
+      artistName: t.artistName,
+      color: t.color,
+      hypedCount: t.hypeCount,
     }));
 
-    const qs = selectedGenres.length ? `?genres=${encodeURIComponent(selectedGenres.join(','))}` : '';
-    setLoading(true);
-    fetch(`/api/discover/seeds${qs}`)
+    fetch('/api/discover/seeds')
       .then(r => {
         if (!r.ok) throw new Error('Could not load seeds');
         return r.json();
       })
-      .then((res: { seeds: Array<{ id: string; trackId: string; title?: string; artistName?: string; reason?: string }> }) => {
+      .then((res: { seeds: Array<{ id: string; trackId: string; title?: string; artistName?: string; city?: string; vibe?: string }> }) => {
         const seedRows = Array.isArray(res.seeds) ? res.seeds : [];
-        const fetchedSeeds: SeedsSwipeStackSeed[] = seedRows.map(s => ({
+        const fetched: SeedsGamifiedSeed[] = seedRows.map(s => ({
           id: s.id,
-          trackId: s.trackId,
-          reason: s.reason,
-        }));
-        const fetchedTracks: SeedsSwipeStackTrack[] = seedRows.map(s => ({
-          id: s.trackId,
           title: s.title ?? 'Untitled',
           artistName: s.artistName ?? 'Unknown Artist',
+          city: s.city,
+          vibe: s.vibe,
           color: '#b983ff',
-          durationLabel: '–:––',
-          hypeCount: 0,
         }));
-        setSeeds(fetchedSeeds);
-        setTracks(fetchedTracks);
+        setGamifiedSeeds(fetched.length > 0 ? fetched : fallback);
       })
       .catch(() => {
-        setSeeds(fallbackSeeds);
-        setTracks(fallbackTracks);
+        setGamifiedSeeds(fallback);
       })
       .finally(() => setLoading(false));
-  }, [data.tracks, selectedGenres]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const toast = useToast();
   if (loading) {
     return (
-      <div style={{ padding: '24px 32px 32px' }}>
-        <div className="animate-pulse" style={{ display: 'flex', gap: 32, alignItems: 'flex-start' }}>
-          <div style={{ width: 340, height: 440, borderRadius: 16, background: 'var(--bg-2, #1a1612)' }} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
-            <div style={{ height: 44, borderRadius: 10, background: 'var(--bg-2, #1a1612)' }} />
-            <div style={{ height: 44, borderRadius: 10, background: 'var(--bg-2, #1a1612)' }} />
-            <div style={{ height: 44, borderRadius: 10, background: 'var(--bg-2, #1a1612)' }} />
-            <div style={{ height: 100, borderRadius: 10, background: 'var(--bg-2, #1a1612)', marginTop: 8 }} />
-          </div>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+        <div className="animate-pulse" style={{ width: 380, height: 500, borderRadius: 20, background: 'var(--wb-bg-2, #1a1612)' }} />
       </div>
     );
   }
+
   return (
-    <SeedsSwipeStack
-      seeds={seeds}
-      tracks={tracks}
-      selectedGenres={selectedGenres}
-      onGenresChange={setSelectedGenres}
-      onSave={seed => { toast.push('Saved to library', 'success'); void fetch(`/api/discover/seeds/${seed.id}/save`, { method: 'POST' }); }}
-      onSkip={seed => { toast.push('Skipped'); void fetch(`/api/discover/seeds/${seed.id}/skip`, { method: 'POST' }); }}
-      onHype={seed => { toast.push('Hyped!', 'success'); void fetch(`/api/discover/seeds/${seed.id}/hype`, { method: 'POST' }); }}
+    <SeedsGamifiedView
+      seeds={gamifiedSeeds}
+      onHype={id => { toast.push('Hyped!', 'success'); void fetch(`/api/discover/seeds/${id}/hype`, { method: 'POST' }); }}
+      onSave={id => { toast.push('Saved to library', 'success'); void fetch(`/api/discover/seeds/${id}/save`, { method: 'POST' }); }}
+      onSkip={id => { void fetch(`/api/discover/seeds/${id}/skip`, { method: 'POST' }); }}
     />
   );
 }
