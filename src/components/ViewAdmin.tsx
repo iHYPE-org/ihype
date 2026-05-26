@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 
 type Metric = { label: string; value: string | number };
@@ -67,7 +67,7 @@ function MetricCard({ label, value }: Metric) {
   );
 }
 
-function Section({ title, children, link }: { title: string; children: React.ReactNode; link?: string }) {
+function Section({ title, children, link }: { title: string; children: ReactNode; link?: string }) {
   return (
     <div className="wb-admin-section">
       <div className="wb-admin-section-head">
