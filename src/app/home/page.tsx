@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import { getSharedDiscoverFeed } from '@/lib/discover-feed';
 import { detectRequestLocation } from '@/lib/request-location';
 import type { ProfileType } from '@prisma/client/wasm';
-import { WorkbenchShell, type WorkbenchData, type WbStat, type WbTrack, type WbShow, type WbActivity, type WbNotification } from '@/components/WorkbenchShell';
+import { WorkbenchShell, type WorkbenchData, type WbStat, type WbTrack, type WbShow, type WbActivity, type WbNotification } from '@/components/WorkbenchShellV2';
 import { getDiscoveryStreak } from '@/lib/streaks';
 import { kvGet, kvPut } from '@/lib/kv';
 
