@@ -1,67 +1,524 @@
-'use client';
+import { redirect } from 'next/navigation';
+import { auth } from '@/lib/auth';
+import { db } from '@/lib/db';
+import { getSharedDiscoverFeed } from '@/lib/discover-feed';
+import { detectRequestLocation } from '@/lib/request-location';
+import type { ProfileType } from '@prisma/client/wasm';
+import { WorkbenchShell, type WorkbenchData, type WbStat, type WbTrack, type WbShow, type WbActivity, type WbNotification } from '@/components/WorkbenchShellV2';
+import { getDiscoveryStreak } from '@/lib/streaks';
+import { kvGet, kvPut } from '@/lib/kv';
 
-import { WorkbenchShell } from '@/components/WorkbenchShellV2';
-import type { WorkbenchData } from '@/components/WorkbenchShellV2';
+export const dynamic = 'force-dynamic';
 
-const MOCK_DATA: WorkbenchData = {
-  userName: 'Maya',
-  userInitials: 'MR',
-  city: 'Chicago, IL',
-  greeting: '3 new HYPEs on Sundown. Halflight FM Ep 04 hit 2,284 listens overnight. Cobalt Hour opens for you Saturday.',
-  listeningNow: 1284,
-  hypedToday: 432,
-  showsTonight: 7,
-  activeProfileTypes: ['LISTENER', 'ARTIST'],
-  profileType: 'ARTIST',
-  isAdmin: false,
-  profilePath: '/artists/maya-reyes',
-  isVerified: true,
-  verificationRequested: false,
-  pendingVenueRequestCount: 0,
-  profileCompletion: { percent: 100, missing: [] },
-  stats: [
-    { label: 'HYPE THIS WEEK', value: '1,247', delta: '↑ 23% vs last wk', color: '#ff3e9a' },
-    { label: 'SEEDS → SAVES',  value: '34%',   delta: '+4 pts vs last wk', color: '#ff5029' },
-    { label: 'TICKETS SOLD',   value: '184',   delta: '↑ 12 today · 45% to you', color: '#22e5d4' },
-    { label: 'PAYOUT PENDING', value: '$2,460', delta: '45/45/10 · releases Jun 24', color: '#ffb84a' },
-  ],
-  tracks: [
-    { id:'t1', title:'Sundown',        artistName:'Maya Reyes',    duration:'3:24', durationSec:204, hypeCount:142, color:'#ff5029', album:'Halflight EP', mediaUrl:'' },
-    { id:'t2', title:'Westline',       artistName:'Cobalt Hour',   duration:'4:11', durationSec:251, hypeCount:89,  color:'#b983ff', album:'Single',       mediaUrl:'' },
-    { id:'t3', title:'Gold Teeth',     artistName:'Vela',          duration:'2:58', durationSec:178, hypeCount:67,  color:'#22e5d4', album:'Static Bloom', mediaUrl:'' },
-    { id:'t4', title:'Slow Burn',      artistName:'The Lowriders', duration:'3:42', durationSec:222, hypeCount:211, color:'#ff3e9a', album:'Side Roads',   mediaUrl:'' },
-    { id:'t5', title:'Cassette Heart', artistName:'Juno North',    duration:'3:09', durationSec:189, hypeCount:54,  color:'#ffb84a', album:'Single',       mediaUrl:'' },
-    { id:'t6', title:'Underpass',      artistName:'Saint Hex',     duration:'4:36', durationSec:276, hypeCount:128, color:'#7fb3ff', album:'Night Architect', mediaUrl:'' },
-    { id:'t7', title:'Halflight',      artistName:'Maya Reyes',    duration:'3:51', durationSec:231, hypeCount:76,  color:'#ff5029', album:'Halflight EP', mediaUrl:'' },
-    { id:'t8', title:'Brass City',     artistName:'Cobalt Hour',   duration:'3:18', durationSec:198, hypeCount:33,  color:'#b983ff', album:'Single',       mediaUrl:'' },
-  ],
-  shows: [
-    { id:'s1', name:'Maya Reyes',    venue:'Empty Bottle',     date:'Thu Jun 18', time:'9:00 PM', hype:412, sold:148, capacity:200, price:18, status:'TONIGHT' },
-    { id:'s2', name:'Cobalt Hour',   venue:'Sleeping Village', date:'Sat Jun 20', time:'8:00 PM', hype:287, sold:91,  capacity:150, price:15, status:'THIS WEEK' },
-    { id:'s3', name:'Vela',          venue:'Subterranean',     date:'Tue Jun 23', time:'8:00 PM', hype:156, sold:42,  capacity:180, price:12, status:'UPCOMING' },
-    { id:'s4', name:'The Lowriders', venue:'Hideout',          date:'Fri Jun 26', time:'10:00 PM',hype:331, sold:201, capacity:225, price:20, status:'NEAR SOLD' },
-  ],
-  tickets: [
-    { id:'tk1', showName:'Cobalt Hour @ Sleeping Village', date:'Sat Jun 20 · 8PM', seat:'GA',        price:15, status:'CONFIRMED', code:'iH-AX91-CB20' },
-    { id:'tk2', showName:'Vela @ Subterranean',            date:'Tue Jun 23 · 8PM', seat:'GA',        price:12, status:'CONFIRMED', code:'iH-VE23-7K4M' },
-    { id:'tk3', showName:'Saint Hex @ Lincoln Hall',       date:'Sat Jul 11 · 9PM', seat:'BALCONY 4', price:24, status:'WAITLIST',  code:'—' },
-  ],
-  activity: [
-    { text:'3 new HYPEs on Sundown',                         time:'2m ago',  kind:'hype'   },
-    { text:'Cobalt Hour confirmed for Sat Jun 20',           time:'14m ago', kind:'show'   },
-    { text:'DJ Vex spun Sundown on Chicago Underground',     time:'1h ago',  kind:'radio'  },
-    { text:'Sundown seed: 88 saves · 26% save-rate today',  time:'2h ago',  kind:'hype'   },
-    { text:'Payout $2,460 · 45/45/10 · releases Jun 24',    time:'3h ago',  kind:'payout' },
-  ],
-  radioShows: [
-    { id:'r1', name:'Chicago Underground', host:'DJ Vex',      time:'Thu 9PM',  next:'in 2h',   live:true,  listeners:412, color:'#ff3e9a', desc:'Chicago indie + post-punk. Live tonight from the Empty Bottle basement.' },
-    { id:'r2', name:'After Hours',         host:'Saint Hex',   time:'Daily 11PM',next:'tonight', live:false, listeners:128, color:'#7fb3ff', desc:'Slow-burn ambient and downtempo. One hour, no talking.' },
-    { id:'r3', name:'New Tape Tuesday',    host:'Juno North',  time:'Tue 7PM',  next:'next Tue',live:false, listeners:67,  color:'#ffb84a', desc:'Cassette-only releases from the Midwest underground.' },
-    { id:'r4', name:'Halflight FM',        host:'Maya Reyes',  time:'Sun 10AM', next:'Sunday',  live:false, listeners:289, color:'#ff5029', desc:'Maya plays her writing-room playlist, plus one new track from the EP each week.' },
-    { id:'r5', name:'Side Roads',          host:'The Lowriders',time:'Fri 8PM', next:'Friday',  live:false, listeners:184, color:'#22e5d4', desc:'Country-fried Americana with a left turn. Listener requests welcome.' },
-  ],
-  notifications: [],
-  lifeStats: { totalHype: 1247, totalEarnings: 2460, songsPlayed: 4821, eventsAttended: 12 },
+// ── KV cache keys and TTLs ────────────────────────────────────────
+const RADIO_CACHE_KEY = 'wb:radio-shows:v1';
+const RADIO_TTL = 300; // 5 minutes
+
+const STARTER_PACK_CACHE_KEY = 'wb:starter-pack:v1';
+const STARTER_PACK_TTL = 600; // 10 minutes
+
+// ── Timeout wrapper ───────────────────────────────────────────────
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms))
+  ]);
+}
+
+// ── helpers ──────────────────────────────────────────────────────
+
+function roleLabel(type: ProfileType) {
+  if (type === 'DJ') return 'Promoter/DJ';
+  if (type === 'VENUE') return 'Venue';
+  if (type === 'LISTENER') return 'Fan';
+  return 'Artist';
+}
+
+function discoverHref(type: ProfileType) {
+  if (type === 'DJ') return '/promoters';
+  if (type === 'VENUE') return '/venues';
+  if (type === 'LISTENER') return '/fans';
+  return '/artists';
+}
+
+function profileHref(type: ProfileType, slug: string) {
+  if (type === 'DJ') return `/promoters/${slug}`;
+  if (type === 'VENUE') return `/venues/${slug}`;
+  if (type === 'LISTENER') return `/fans/${slug}`;
+  return `/artists/${slug}`;
+}
+
+function getProfileCompletion(
+  profile: {
+    type: ProfileType;
+    headline: string | null;
+    bio: string | null;
+    avatarImage: string | null;
+    genres: string[];
+    city: string | null;
+    contactInfo: string | null;
+    addressLine1?: string | null;
+    hoursText?: string | null;
+    songUploadCount?: number;
+  },
+  showCount: number
+) {
+  const checks: Array<{ ok: boolean; label: string }> = [
+    { ok: Boolean(profile.headline || profile.bio), label: 'Story' },
+    { ok: Boolean(profile.avatarImage), label: 'Image' },
+    { ok: profile.genres.length > 0 || Boolean(profile.city), label: 'Tags/market' }
+  ];
+
+  if (profile.type === 'VENUE') {
+    checks.push(
+      { ok: Boolean(profile.addressLine1 || profile.city), label: 'Room/location' },
+      { ok: Boolean(profile.hoursText || profile.contactInfo), label: 'Booking info' },
+      { ok: showCount > 0, label: 'First event' }
+    );
+  } else if (profile.type === 'ARTIST' || profile.type === 'DJ') {
+    checks.push(
+      { ok: Boolean(profile.contactInfo), label: 'Contact' },
+      { ok: Boolean((profile.songUploadCount ?? 0) > 0 || showCount > 0), label: profile.type === 'DJ' ? 'First show' : 'Media/show' }
+    );
+  } else {
+    checks.push(
+      { ok: Boolean(profile.bio || profile.city), label: 'Taste signal' },
+      { ok: true, label: 'Fan lane' }
+    );
+  }
+
+  const passed = checks.filter((check) => check.ok).length;
+  return {
+    percent: Math.round((passed / checks.length) * 100),
+    missing: checks.filter((check) => !check.ok).map((check) => check.label),
+    checks
+  };
+}
+
+// Palette for track art gradients (cycles through)
+const COLORS = ['#ff5029', '#b983ff', '#22e5d4', '#ff3e9a', '#ffb84a', '#7fb3ff'];
+
+export default async function HomePage() {
+  const session = await auth();
+  if (!session?.user?.id) redirect('/login');
+
+  const userId = session.user.id;
+  const role = session.user.role as string | null | undefined;
+
+  const profile = await withTimeout(
+    db.profile.findFirst({
+      where: { ownerId: userId },
+      select: {
+        id: true,
+        type: true,
+        slug: true,
+        name: true,
+        hexId: true,
+        hypeCount: true,
+        city: true,
+        stateRegion: true,
+        headline: true,
+        bio: true,
+        avatarImage: true,
+        genres: true,
+        contactInfo: true,
+        addressLine1: true,
+        postalCode: true,
+        country: true,
+        latitude: true,
+        longitude: true,
+        hoursText: true,
+        songUploadCount: true,
+        isVerified: true,
+        verificationRequested: true
+      },
+      orderBy: { createdAt: 'asc' }
+    }),
+    5000,
+    null
+  );
+
+  if (!profile) redirect('/register');
+
+  const now = new Date();
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  const [discoverFeed, viewerLocation, rawStats, eventsResult] = await Promise.all([
+    getSharedDiscoverFeed(null),
+    detectRequestLocation(),
+    withTimeout(fetchStats(profile, userId, thirtyDaysAgo, now), 8000, []),
+    withTimeout(fetchEvents(profile, userId, now), 8000, { upcoming: [] as Awaited<ReturnType<typeof fetchEvents>>['upcoming'], past: [] as Awaited<ReturnType<typeof fetchEvents>>['past'] }),
+  ]);
+
+  const city = profile.city
+    ? [profile.city, profile.stateRegion].filter(Boolean).join(', ')
+    : [viewerLocation?.city, viewerLocation?.stateRegion ?? viewerLocation?.country].filter(Boolean).join(', ') || 'your city';
+
+  // ── Build WbTracks from discover feed ──
+  const mediaEntries = discoverFeed.mediaEntries.slice(0, 8);
+  const wbTracks: WbTrack[] = mediaEntries.map((e, i) => ({
+    id: e.id,
+    title: e.title,
+    artistName: e.artistName,
+    duration: '3:30',
+    durationSec: 210,
+    hypeCount: e.artistHypeCount ?? 0,
+    color: COLORS[i % COLORS.length],
+    album: e.artistName,
+    mediaUrl: `/api/media/${e.id}`,
+    artistSlug: e.artistSlug ?? null,
+  }));
+
+  // ── Build WbShows from events ──
+  const allShows = [...eventsResult.upcoming, ...eventsResult.past.slice(0, 3)];
+  const wbShows: WbShow[] = allShows.slice(0, 6).map((s) => {
+    const isTonight = s.startsAt >= now && s.startsAt < new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const isLive = s.status === 'LIVE';
+    const nearSold = (s.ticketsSoldCount ?? 0) / Math.max(1, s.ticketCapacity ?? 200) > 0.85;
+    return {
+      id: s.id,
+      name: s.title,
+      venue: s.venueProfile?.name ?? s.headlinerProfile?.name ?? 'Local venue',
+      date: s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+      time: s.startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+      hype: s.hypeCount ?? 0,
+      sold: s.ticketsSoldCount ?? 0,
+      capacity: s.ticketCapacity ?? 200,
+      price: s.ticketPriceCents ? s.ticketPriceCents / 100 : 0,
+      status: isLive || isTonight ? 'TONIGHT' : nearSold ? 'NEAR SOLD' : s.startsAt >= now ? 'UPCOMING' : 'THIS WEEK',
+    };
+  });
+
+  // ── Build WbStats ──
+  const STAT_COLORS = ['#ff3e9a', '#22e5d4', '#b983ff', '#ffb84a', '#22e5d4', '#ff5029'];
+  const wbStats: WbStat[] = rawStats.slice(0, 4).map((s, i) => ({
+    label: s.label.toUpperCase(),
+    value: String(s.value),
+    delta: '↑ this period',
+    color: STAT_COLORS[i % STAT_COLORS.length],
+  }));
+
+  // ── Build WbActivity from recent events ──
+  const wbActivity: WbActivity[] = eventsResult.upcoming.slice(0, 5).map((s) => ({
+    text: `${s.title}${s.venueProfile?.name ? ' @ ' + s.venueProfile.name : ''} — ${s.startsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+    time: 'upcoming',
+    kind: 'show',
+  }));
+  if (wbActivity.length === 0) {
+    wbActivity.push({ text: 'No recent activity — start hyping tracks!', time: 'now', kind: 'hype' });
+  }
+  // Lazily merge fan feed below — variable referenced after the block that builds it.
+
+  // ── Determine active profile types for role-conditional sidebar items ──
+  const allProfileRows = await withTimeout(db.profile.findMany({
+    where: { ownerId: userId },
+    select: { type: true }
+  }), 3000, []);
+  const activeProfileTypes = allProfileRows.map(p => p.type);
+
+  // ── User name / initials ──
+  const userName = profile.name ?? session.user.name ?? 'there';
+  const parts = userName.trim().split(/\s+/);
+  const initials = parts.length >= 2
+    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    : userName.slice(0, 2).toUpperCase();
+
+  // ── Radio shows (KV-cached for 5 min; they rarely change) ──
+  let radioShows: WorkbenchData['radioShows'] = [];
+  type CachedRadioShow = {
+    id: string; name: string; host: string; time: string; next: string;
+    live: boolean; listeners: number; color: string; desc: string;
+  };
+  const cachedRadio = await kvGet<CachedRadioShow[]>(RADIO_CACHE_KEY).catch(() => null);
+  if (cachedRadio) {
+    radioShows = cachedRadio;
+  } else {
+    const radioRows = await withTimeout(
+      db.show.findMany({
+        where: { isRadioShow: true, status: { not: 'CANCELED' } },
+        include: { promoterProfile: { select: { name: true } } },
+        orderBy: { startsAt: 'asc' },
+        take: 6
+      }),
+      3000,
+      []
+    );
+    radioShows = radioRows.map((r, i) => ({
+      id: r.id,
+      name: r.title,
+      host: (r.promoterProfile as { name: string } | null)?.name ?? 'iHYPE Radio',
+      time: r.startsAt.toLocaleDateString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' }),
+      next: r.startsAt > now ? r.startsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'live now',
+      live: r.status === 'LIVE',
+      listeners: 0,
+      color: COLORS[i % COLORS.length],
+      desc: r.description ?? `A radio show on iHYPE featuring independent artists.`,
+    }));
+    await kvPut(RADIO_CACHE_KEY, JSON.stringify(radioShows), { ex: RADIO_TTL }).catch(() => {});
+  }
+
+  // ── Tickets from upcoming shows ──
+  const wbTickets = eventsResult.upcoming.slice(0, 3).map((s) => ({
+    id: s.id,
+    showName: `${s.title}${s.venueProfile?.name ? ' @ ' + s.venueProfile.name : ''}`,
+    date: s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
+    seat: 'General Admission',
+    price: s.ticketPriceCents ? s.ticketPriceCents / 100 : 0,
+    status: 'CONFIRMED',
+    code: `iH-${s.id.slice(0, 8).toUpperCase()}`,
+  }));
+
+  // ── Life stats (3-second timeout; non-critical) ──
+  const [totalHype, totalEarnings, songsPlayed, eventsAttended] = await Promise.all([
+    withTimeout(db.profileHypeEvent.count({ where: { profileId: profile.id } }).catch(() => 0), 3000, 0),
+    withTimeout(db.ticketOrder.aggregate({ where: { buyerUserId: userId }, _sum: { subtotalCents: true } }).then(r => Math.round((r._sum.subtotalCents ?? 0) / 100)).catch(() => 0), 3000, 0),
+    withTimeout(db.mediaListen.count({ where: { userId } }).catch(() => 0), 3000, 0),
+    withTimeout(db.ticketOrder.count({ where: { buyerUserId: userId, status: 'CAPTURED' } }).catch(() => 0), 3000, 0),
+  ]);
+  const lifeStats = { totalHype, totalEarnings, songsPlayed, eventsAttended };
+
+  const pendingVenueRequestCount = profile.type === 'VENUE'
+    ? await withTimeout(db.venueConnectionRequest.count({ where: { venueProfileId: profile.id, status: 'PENDING' } }).catch(() => 0), 3000, 0)
+    : 0;
+  const referralStats = profile.type === 'DJ'
+    ? await withTimeout(
+        Promise.all([
+          db.ticketOrder.count({ where: { affiliatePromoterProfileId: profile.id, status: { not: 'VOID' } } }),
+          db.ticketOrder.aggregate({
+            where: { affiliatePromoterProfileId: profile.id, status: { not: 'VOID' } },
+            _sum: { totalChargeCents: true, promoterPayoutCents: true }
+          })
+        ]).then(([buyers, sums]) => ({
+          clicks: buyers,
+          buyers,
+          grossCents: sums._sum.totalChargeCents ?? 0,
+          payoutCents: sums._sum.promoterPayoutCents ?? 0
+        })).catch(() => ({ clicks: 0, buyers: 0, grossCents: 0, payoutCents: 0 })),
+        3000,
+        { clicks: 0, buyers: 0, grossCents: 0, payoutCents: 0 }
+      )
+    : undefined;
+
+  // ── Fan activity feed (recent uploads + upcoming shows from hyped profiles) ──
+  // Wrapped in a 3-second timeout so a slow query doesn't block the page.
+  let fanActivityFeed: WbActivity[] = [];
+  if (profile.type === 'LISTENER') {
+    const hypedProfiles = await withTimeout(
+      db.profileHypeEvent.findMany({
+        where: { userId },
+        select: { profileId: true },
+        take: 50
+      }).catch(() => [] as { profileId: string }[]),
+      3000,
+      [] as { profileId: string }[]
+    );
+    const hypedIds = hypedProfiles.map(h => h.profileId);
+    if (hypedIds.length > 0) {
+      const [recentUploads, upcomingFromHyped] = await Promise.all([
+        withTimeout(db.artistMediaAsset.findMany({
+          where: { profileId: { in: hypedIds }, createdAt: { gte: thirtyDaysAgo } },
+          include: { profile: { select: { name: true, slug: true } } },
+          orderBy: { createdAt: 'desc' },
+          take: 12
+        }).catch(() => []), 3000, []),
+        withTimeout(db.show.findMany({
+          where: {
+            status: { not: 'CANCELED' },
+            startsAt: { gte: now },
+            OR: [
+              { headlinerProfileId: { in: hypedIds } },
+              { promoterProfileId: { in: hypedIds } },
+              { venueProfileId: { in: hypedIds } }
+            ]
+          },
+          include: { venueProfile: { select: { name: true } }, headlinerProfile: { select: { name: true } } },
+          orderBy: { startsAt: 'asc' },
+          take: 8
+        }).catch(() => []), 3000, [])
+      ]);
+      type UploadRow = { title: string; createdAt: Date; profile: { name: string; slug: string } | null };
+      type FanShowRow = { title: string; startsAt: Date; venueProfile: { name: string } | null; headlinerProfile: { name: string } | null };
+      const uploadItems: WbActivity[] = (recentUploads as UploadRow[]).map((m) => ({
+        text: `${m.profile?.name ?? 'An artist'} uploaded "${m.title}"`,
+        time: m.createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        kind: 'hype' as const,
+      }));
+      const showItems: WbActivity[] = (upcomingFromHyped as FanShowRow[]).map((s) => ({
+        text: `${s.headlinerProfile?.name ?? s.title}${s.venueProfile?.name ? ' @ ' + s.venueProfile.name : ''}`,
+        time: s.startsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        kind: 'show' as const,
+      }));
+      fanActivityFeed = [...uploadItems, ...showItems].slice(0, 20);
+    }
+  }
+
+  // ── Greeting subtitle ──
+  const nextShow = eventsResult.upcoming[0];
+  const greetingSub = nextShow
+    ? `Your next show: ${nextShow.title} on ${nextShow.startsAt.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}.`
+    : discoverFeed.mediaEntries.length > 0
+    ? `${discoverFeed.mediaEntries.length} new tracks in your discover feed.`
+    : `Welcome to your iHYPE workbench, ${roleLabel(profile.type)}.`;
+  const emailVerified = (session.user as { emailVerified?: Date | string | null }).emailVerified ?? null;
+  const needsEmailVerification = !emailVerified && Boolean(session.user.email);
+  const profileCompletion = getProfileCompletion(profile, eventsResult.upcoming.length + eventsResult.past.length);
+  const notificationCandidates: Array<WbNotification | null> = [
+    needsEmailVerification ? {
+      id: 'verify-email',
+      title: 'Verify your email',
+      body: 'Keep ticket updates, booking requests, and security alerts deliverable.',
+      time: 'now',
+      kind: 'security',
+      href: '/verify-email',
+      actionLabel: 'Verify',
+      unread: true
+    } : null,
+    profileCompletion.percent < 100 ? {
+      id: 'profile-completion',
+      title: 'Finish your public page',
+      body: `${profileCompletion.missing.slice(0, 2).join(' + ') || 'A few details'} will make discovery and booking easier.`,
+      time: 'today',
+      kind: 'hype',
+      view: 'settings',
+      actionLabel: 'Edit page',
+      unread: true
+    } : null,
+    pendingVenueRequestCount > 0 ? {
+      id: 'venue-requests',
+      title: 'Booking requests waiting',
+      body: `${pendingVenueRequestCount} artist or fan recommendation${pendingVenueRequestCount === 1 ? '' : 's'} need a venue response.`,
+      time: 'new',
+      kind: 'request',
+      view: 'venue',
+      actionLabel: 'Review',
+      unread: true
+    } : null,
+    nextShow ? {
+      id: 'next-show',
+      title: 'Upcoming show reminder',
+      body: `${nextShow.title} is ${nextShow.startsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}. Share it or prep your ticket.`,
+      time: 'soon',
+      kind: 'show',
+      view: 'tickets',
+      actionLabel: 'Open',
+      unread: false
+    } : null,
+    profile.type === 'DJ' ? {
+      id: 'referral-stats',
+      title: 'Referral analytics updated',
+      body: `${referralStats?.buyers ?? 0} ticket buyer${(referralStats?.buyers ?? 0) === 1 ? '' : 's'} attributed to your promoter link.`,
+      time: 'live',
+      kind: 'payout',
+      view: 'tickets',
+      actionLabel: 'View',
+      unread: false
+    } : null,
+    radioShows[0] ? {
+      id: 'radio-pick',
+      title: 'Radio curation is active',
+      body: `${radioShows[0].name} is available for listeners in the Radio tab.`,
+      time: radioShows[0].live ? 'live' : 'next',
+      kind: 'radio',
+      view: 'studio',
+      actionLabel: 'Create yours',
+      unread: false
+    } : null
+  ];
+  const notifications = notificationCandidates.filter((item): item is WbNotification => Boolean(item));
+
+  const wbData: WorkbenchData = {
+    userName: parts[0] ?? userName,
+    userInitials: initials,
+    city,
+    greeting: greetingSub,
+    stats: wbStats,
+    tracks: wbTracks,
+    shows: wbShows,
+    tickets: wbTickets,
+    activity: fanActivityFeed.length > 0 ? fanActivityFeed : wbActivity,
+    radioShows,
+    activeProfileTypes,
+    profileType: profile.type,
+    profileId: profile.id,
+    profileHexId: profile.hexId,
+    profileLocation: {
+      addressLine1: profile.addressLine1,
+      city: profile.city,
+      stateRegion: profile.stateRegion,
+      postalCode: profile.postalCode,
+      country: profile.country,
+      latitude: profile.latitude,
+      longitude: profile.longitude
+    },
+    isVerified: profile.isVerified,
+    verificationRequested: profile.verificationRequested,
+    isAdmin: role === 'ADMIN',
+    profilePath: profileHref(profile.type, profile.slug),
+    pendingVenueRequestCount,
+    profileCompletion,
+    notifications,
+    referralStats,
+    lifeStats,
+    listeningNow: discoverFeed.mediaEntries.reduce((a, e) => a + (e.artistHypeCount ?? 0), 0),
+    hypedToday: discoverFeed.mediaEntries.slice(0, 10).reduce((a, e) => a + (e.artistHypeCount ?? 0), 0),
+    showsTonight: eventsResult.upcoming.filter(s => {
+      const diff = s.startsAt.getTime() - now.getTime();
+      return diff >= 0 && diff < 24 * 60 * 60 * 1000;
+    }).length,
+  };
+
+  // Starter pack: only fetched if the user has no signal yet (KV-cached for 10 min).
+  const userTotalHype = await withTimeout(db.hypeEvent.count({ where: { userId } }).catch(() => 0), 3000, 0);
+  type StarterPackEntry = { id: string; name: string; slug: string; hypeCount: number; city: string | null; genre: string | null };
+  let starterPack: StarterPackEntry[] = [];
+  if (userTotalHype === 0 && profile.type === 'LISTENER') {
+    const cachedStarter = await kvGet<StarterPackEntry[]>(STARTER_PACK_CACHE_KEY).catch(() => null);
+    if (cachedStarter) {
+      starterPack = cachedStarter;
+    } else {
+      const top = await withTimeout(
+        db.profile.findMany({
+          where: { type: 'ARTIST' },
+          orderBy: [{ verified: 'desc' }, { hypeCount: 'desc' }],
+          take: 6,
+          select: { id: true, name: true, slug: true, hypeCount: true, city: true, genres: true }
+        }).catch(() => []),
+        3000,
+        []
+      );
+      starterPack = top.map((p) => ({
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        hypeCount: p.hypeCount,
+        city: p.city,
+        genre: p.genres[0] ?? null,
+      }));
+      await kvPut(STARTER_PACK_CACHE_KEY, JSON.stringify(starterPack), { ex: STARTER_PACK_TTL }).catch(() => {});
+    }
+  }
+
+  const discoveryStreak = await withTimeout(getDiscoveryStreak(session.user.id).catch(() => 0), 3000, 0);
+
+  return <WorkbenchShell data={wbData} starterPack={starterPack} />;
+}
+
+// ── Data helpers ─────────────────────────────────────────────────────
+
+type ShowRow = {
+  id: string;
+  slug: string;
+  title: string;
+  status: string;
+  startsAt: Date;
+  isTicketed: boolean;
+  hypeCount: number;
+  ticketCapacity?: number | null;
+  ticketPriceCents?: number | null;
+  ticketsSoldCount: number;
+  venueProfile?: { name: string; slug: string } | null;
+  headlinerProfile?: { name: string; slug: string } | null;
+  promoterProfile?: { name: string; slug: string } | null;
 };
 
 export default function HomePage() {

@@ -13,6 +13,7 @@ import { PasskeyManager } from '@/components/AuthScreens';
 import { useToast } from '@/components/Toast';
 import { RadioShowCreator } from '@/components/RadioShowCreator';
 import { SeedsGamifiedView, type SeedsGamifiedSeed } from '@/components/SeedsGamifiedView';
+import { ViewAdmin } from '@/components/ViewAdmin';
 
 // ── Keyboard shortcut hook ─────────────────────────────────────
 function useKey(key: string, handler: (e: KeyboardEvent) => void, deps: React.DependencyList = []) {
@@ -319,7 +320,7 @@ export function WbSkeleton({ width, height, style }: { width?: number | string; 
   return <div className="wb-skeleton" style={{ width: width ?? '100%', height: height ?? 16, ...style }} />;
 }
 
-export type View = 'home' | 'discover' | 'seeds' | 'tickets' | 'studio' | 'artist' | 'venue' | 'settings' | 'inbox' | 'hype-map' | 'scene-graph' | 'money-flow' | 'governance' | 'setlist' | 'news';
+export type View = 'home' | 'discover' | 'seeds' | 'tickets' | 'studio' | 'artist' | 'venue' | 'settings' | 'inbox' | 'hype-map' | 'scene-graph' | 'money-flow' | 'governance' | 'setlist' | 'news' | 'admin';
 
 // ── Onboarding modal ───────────────────────────────────────────
 function OnboardingModal({ onDone }: { onDone: () => void }) {
@@ -666,6 +667,7 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
           {view === 'governance' && <ViewGovernance />}
           {view === 'setlist'    && <ViewSetlistBuilder data={liveData} />}
           {view === 'news'       && <ViewNews />}
+          {view === 'admin'      && <ViewAdmin />}
         </main>
         {showQueue && <WbQueueRail data={liveData} />}
         <WbPlayerDock queueRailOn={prefs.queueRail} onToggleQueue={() => setPref('queueRail', !prefs.queueRail)} />
@@ -724,9 +726,9 @@ function WbSidebar({ view, setView, initials, accent, activeProfileTypes, mobile
       )}
       <div className="wb-sb-foot">
         {isAdmin && (
-          <a href="/admin" className="wb-sb-btn" style={{ color: 'var(--wb-ink-3)', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }} title="Admin panel">
+          <SidebarBtn active={view === 'admin'} onClick={() => setView('admin')} label="Admin console" accent="var(--wb-ink-3)">
             <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          </a>
+          </SidebarBtn>
         )}
         <SidebarBtn active={view === 'settings'} onClick={() => setView('settings')} label="Settings" accent="rgba(255,255,255,.4)">
           <IcSettings s={18} />
@@ -813,7 +815,7 @@ const VIEW_TITLES: Record<View, string> = {
   home: 'Home', discover: 'Discover', seeds: 'Seeds', tickets: 'Ticketing',
   studio: 'Studio', artist: 'Artist', venue: 'Venue', settings: 'Settings', inbox: 'Inbox',
   'hype-map': 'Hype Map', 'scene-graph': 'Scene Graph', 'money-flow': 'Money Flow',
-  governance: 'Governance', setlist: 'Setlist Builder', news: 'Music News',
+  governance: 'Governance', setlist: 'Setlist Builder', news: 'Music News', admin: 'Admin',
 };
 
 type SearchHit = { type: string; id: string; name: string; subtitle: string; slug?: string };
