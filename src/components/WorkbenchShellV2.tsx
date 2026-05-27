@@ -229,6 +229,7 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
               tickets: data.tickets.length > 0 ? String(data.tickets.length) : undefined,
             }}
             notifCount={notifCount}
+            notifications={notifications}
           />
         </div>
 
