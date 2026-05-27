@@ -31,6 +31,8 @@ export function AppTopbar({ view, setView, listeningNow, initials, userName, act
 }) {
   const router = useRouter();
   const [notifOpen, setNotifOpen] = useState(false);
+  const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
+  const kbShortcut = isMac ? '⌘K' : 'Ctrl+K';
 
   useEffect(() => {
     if (!notifOpen) return;
@@ -111,9 +113,9 @@ export function AppTopbar({ view, setView, listeningNow, initials, userName, act
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         {onSearch && (
           <button
-            aria-label="Search (⌘K)"
+            aria-label={`Search (${kbShortcut})`}
             onClick={onSearch}
-            title="Search (⌘K)"
+            title={`Search (${kbShortcut})`}
             style={{
               display: 'flex', alignItems: 'center', gap: 8, padding: '5px 12px',
               borderRadius: 8, border: '1px solid var(--line-2)', background: 'var(--bg-3)',
@@ -122,7 +124,7 @@ export function AppTopbar({ view, setView, listeningNow, initials, userName, act
           >
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
             Search
-            <kbd style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-4)', border: '1px solid var(--line-2)', borderRadius: 4, padding: '1px 5px' }}>⌘K</kbd>
+            <kbd style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-4)', border: '1px solid var(--line-2)', borderRadius: 4, padding: '1px 5px' }}>{kbShortcut}</kbd>
           </button>
         )}
         <span style={{ display: 'flex', alignItems: 'center', gap: 7, fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-2)', paddingRight: 14, borderRight: '1px solid var(--line)', marginRight: 6 }}>

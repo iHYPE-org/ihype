@@ -6,7 +6,7 @@ interface SearchResult {
   id: string;
   label: string;
   sub: string;
-  type: 'track' | 'show' | 'artist';
+  type: 'track' | 'show' | 'artist' | 'genre';
   href?: string;
 }
 
@@ -31,13 +31,24 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
       fetch(`/api/search?q=${encodeURIComponent(query)}`)
         .then(r => r.ok ? r.json() : null)
         .then(d => {
-          if (!d) return;
-          // Normalize whatever the search API returns
-          const items: SearchResult[] = [
-            ...(d.tracks ?? []).map((t: Record<string,unknown>) => ({ id: String(t.id), label: String(t.title), sub: String(t.artistName ?? ''), type: 'track' as const })),
-            ...(d.shows ?? []).map((s: Record<string,unknown>) => ({ id: String(s.id), label: String(s.title ?? s.name), sub: String(s.venue ?? ''), type: 'show' as const, href: `/shows/${s.id}` })),
-            ...(d.artists ?? d.profiles ?? []).map((a: Record<string,unknown>) => ({ id: String(a.id), label: String(a.name), sub: String(a.city ?? ''), type: 'artist' as const, href: `/artists/${a.slug ?? a.id}` })),
-          ];
+          if (!d?.results) return;
+          const items: SearchResult[] = d.results.map((r: Record<string, unknown>) => {
+            const type = r.type === 'song' ? 'track' : r.type === 'show' ? 'show' : r.type === 'genre' ? 'genre' : 'artist';
+            const href = r.type === 'song'
+              ? undefined  // tracks play inline
+              : r.type === 'show'
+                ? `/shows/${r.id}`
+                : r.type === 'genre'
+                  ? undefined
+                  : `/artists/${r.slug ?? r.id}`;
+            return {
+              id: String(r.id),
+              label: String(r.name),
+              sub: String(r.subtitle ?? ''),
+              type: type as SearchResult['type'],
+              href,
+            };
+          });
           setResults(items.slice(0, 12));
         })
         .catch(() => {})
@@ -90,7 +101,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                 onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,.03)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
-                <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: r.type === 'track' ? 'var(--accent)' : r.type === 'show' ? '#22e5d4' : '#b983ff' }} />
+                <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: r.type === 'track' ? 'var(--accent)' : r.type === 'show' ? '#22e5d4' : r.type === 'genre' ? '#ffb84a' : '#b983ff' }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontFamily: 'var(--f-b)', fontSize: 14, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.label}</div>
                   <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', marginTop: 2 }}>{r.sub} · {r.type}</div>
