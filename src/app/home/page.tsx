@@ -1,6 +1,8 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { WorkbenchShell } from '@/components/WorkbenchShellV2';
+import { WorkbenchMobile } from '@/components/WorkbenchMobile';
 import type { WorkbenchData } from '@/components/WorkbenchShellV2';
 
 const MOCK_DATA: WorkbenchData = {
@@ -65,5 +67,44 @@ const MOCK_DATA: WorkbenchData = {
 };
 
 export default function HomePage() {
-  return <WorkbenchShell data={MOCK_DATA} />;
+  const [wbData, setWbData] = useState<WorkbenchData>(MOCK_DATA);
+
+  useEffect(() => {
+    fetch('/api/workbench-data')
+      .then(r => r.ok ? r.json() : null)
+      .then((d: WorkbenchData | null) => {
+        if (d && d.userName) {
+          // Merge: keep MOCK_DATA tracks/shows/radio if API returns empty arrays
+          setWbData({
+            ...d,
+            tracks: d.tracks.length > 0 ? d.tracks : MOCK_DATA.tracks,
+            shows: d.shows.length > 0 ? d.shows : MOCK_DATA.shows,
+            radioShows: d.radioShows.length > 0 ? d.radioShows : MOCK_DATA.radioShows,
+            activity: d.activity.length > 0 ? d.activity : MOCK_DATA.activity,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  return (
+    <>
+      {/* Desktop/tablet: ≥640px */}
+      <div className="wb-desktop">
+        <WorkbenchShell data={wbData} />
+      </div>
+      {/* Mobile: <640px */}
+      <div className="wb-mobile">
+        <WorkbenchMobile data={wbData} />
+      </div>
+      <style>{`
+        .wb-desktop { display: block; }
+        .wb-mobile  { display: none;  }
+        @media (max-width: 639px) {
+          .wb-desktop { display: none;  }
+          .wb-mobile  { display: block; }
+        }
+      `}</style>
+    </>
+  );
 }

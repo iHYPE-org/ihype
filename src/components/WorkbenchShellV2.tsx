@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef, memo } from 'react';
+import { SeedsGamifiedView } from '@/components/SeedsGamifiedView';
 
 // ── Re-export types that home/page.tsx imports ────────────────
 export type { WbStat, WbTrack, WbShow, WbActivity, WbNotification, WbRadioShow, WorkbenchData } from './WorkbenchShell';
@@ -9,7 +10,7 @@ export type { Prefs } from './WorkbenchShell';
 import type { WorkbenchData, WbTrack, WbRadioShow } from './WorkbenchShell';
 
 // ── View type (v2 simplified) ─────────────────────────────────
-type View = 'home' | 'radio' | 'library' | 'tickets' | 'discover' | 'studio' | 'settings';
+type View = 'me' | 'seeds' | 'radio' | 'studio' | 'tickets' | 'settings';
 
 // ── Prefs ─────────────────────────────────────────────────────
 const DEFAULT_PREFS = {
@@ -97,154 +98,488 @@ const IcQR = ({ s = 60 }: { s?: number }) => (
 );
 
 // ─────────────────────────────────────────────────────────────
-// Sidebar
+// App Topbar (logo + tabs + stats + user chip)
 // ─────────────────────────────────────────────────────────────
-const NAV_ITEMS: { k: View; label: string; icon: React.ReactNode }[] = [
-  { k: 'home',     label: 'Home',                  icon: <IcHome /> },
-  { k: 'library',  label: 'Library',               icon: <IcLibrary /> },
-  { k: 'radio',    label: 'Radio',                 icon: <IcRadio /> },
-  { k: 'tickets',  label: 'Live Events',           icon: <IcTicket /> },
-  { k: 'discover', label: 'Discover · Seeds',      icon: <IcDisco /> },
-  { k: 'studio',   label: 'Studio · Show Creator', icon: <IcStudio /> },
-];
-
-function SidebarBtn({ active, onClick, label, children, accentColor }: {
-  active: boolean; onClick: () => void; label: string; children: React.ReactNode; accentColor?: string;
-}) {
-  const [hover, setHover] = useState(false);
-  const ac = accentColor || 'var(--accent)';
-  return (
-    <button
-      onClick={onClick}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      title={label}
-      style={{
-        width: 38, height: 38, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        position: 'relative', transition: 'color .15s, background .15s', border: 'none', cursor: 'pointer',
-        color: active ? ac : hover ? 'var(--ink)' : 'var(--ink-3)',
-        background: active ? (ac === 'var(--accent)' ? 'rgba(255,80,41,.10)' : 'rgba(255,255,255,.05)') : 'transparent',
-      }}
-    >
-      {active && <span style={{ position: 'absolute', left: -9, top: 8, bottom: 8, width: 2, borderRadius: 2, background: ac }} />}
-      {children}
-      {hover && (
-        <span style={{
-          position: 'absolute', left: 50, top: '50%', transform: 'translateY(-50%)',
-          padding: '4px 10px', background: 'var(--bg-3)', border: '1px solid var(--line-2)',
-          borderRadius: 5, fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink)',
-          letterSpacing: '.06em', whiteSpace: 'nowrap', zIndex: 100, pointerEvents: 'none',
-        }}>
-          {label}
-        </span>
-      )}
-    </button>
-  );
-}
-
-function Sidebar({ view, setView, pinned, initials, accentColor }: {
-  view: View; setView: (v: View) => void; pinned: string[]; initials: string; accentColor: string;
-}) {
-  const allPinned = ['home', ...pinned];
-  const visible = NAV_ITEMS.filter(i => allPinned.includes(i.k));
-  return (
-    <aside style={{
-      width: 'var(--rail-w)', borderRight: '1px solid var(--line)', display: 'flex',
-      flexDirection: 'column', alignItems: 'center', padding: '12px 0', gap: 8,
-      background: 'var(--bg)', gridRow: '1 / -1', gridColumn: 1,
-    }}>
-      {/* Logo */}
-      <div style={{
-        width: 34, height: 34, borderRadius: 8,
-        background: 'linear-gradient(135deg,#ff5029,#ff3e9a)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 13, color: '#0a0805', marginBottom: 6,
-        userSelect: 'none',
-      }}>iH</div>
-
-      {/* Nav buttons */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center', flex: 1 }}>
-        {visible.map(it => (
-          <SidebarBtn key={it.k} active={view === it.k} onClick={() => setView(it.k)} label={it.label}>
-            {it.icon}
-          </SidebarBtn>
-        ))}
-      </div>
-
-      {/* Footer */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
-        <SidebarBtn active={view === 'settings'} onClick={() => setView('settings')} label="Settings" accentColor="var(--ink-2)">
-          <IcSettings />
-        </SidebarBtn>
-        <div style={{
-          width: 32, height: 32, borderRadius: '50%', background: accentColor,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 11, color: '#0a0805',
-          cursor: 'default',
-        }} title="Your profile">
-          {initials}
-        </div>
-      </div>
-    </aside>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// Topbar
-// ─────────────────────────────────────────────────────────────
-const VIEW_TITLES: Record<View, string> = {
-  home:     'Home',
-  library:  'Library',
-  radio:    'Radio',
-  tickets:  'Live Events',
-  discover: 'Discover · Seeds',
-  studio:   'Studio · Show Creator',
-  settings: 'Settings · Page customization',
+const TAB_ICONS: Record<string, React.ReactNode> = {
+  me: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="6" r="2.5"/><path d="M3 14c0-2.8 2.2-5 5-5s5 2.2 5 5"/></svg>,
+  seeds: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2c2 3 4 4 4 7a4 4 0 1 1-8 0c0-3 2-4 4-7Z"/></svg>,
+  radio: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2.5"/><circle cx="8" cy="8" r=".6" fill="currentColor"/></svg>,
+  studio: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="12" height="8" rx="1.5"/><path d="M5 8h1M8 6v4M11 7v2"/></svg>,
+  tickets: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6a1.5 1.5 0 0 0 0 3v3h12V9a1.5 1.5 0 0 0 0-3V3H2v3Z"/><path d="M9 3v10" strokeDasharray="1.4 1.4"/></svg>,
 };
 
-function Topbar({ view, listeningNow, hypedToday, showsTonight }: {
-  view: View; listeningNow: number; hypedToday: number; showsTonight: number;
+const TABS: { k: View; label: string; badge?: string }[] = [
+  { k: 'me',       label: 'My Page' },
+  { k: 'seeds',    label: 'Seeds',     badge: '12' },
+  { k: 'radio',    label: 'Radio',     badge: 'LIVE' },
+  { k: 'studio',   label: 'Studio' },
+  { k: 'tickets',  label: 'Ticketing', badge: '3' },
+];
+
+function AppTopbar({ view, setView, listeningNow, initials, userName, activeProfileTypes, onSettings }: {
+  view: View; setView: (v: View) => void;
+  listeningNow: number; initials: string; userName: string;
+  activeProfileTypes: string[]; onSettings: () => void;
 }) {
   return (
     <header style={{
       height: 'var(--top-h)', borderBottom: '1px solid var(--line)',
-      display: 'flex', alignItems: 'center', padding: '0 18px', gap: 18,
-      background: 'var(--bg)', flexShrink: 0,
+      display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'center',
+      gap: 24, padding: '0 22px',
+      background: 'var(--bg-2)', position: 'relative', zIndex: 10,
     }}>
-      {/* Breadcrumb */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--f-m)', fontSize: 11, letterSpacing: '.04em' }}>
-        <span style={{ color: 'var(--ink-3)' }}>iHYPE</span>
-        <span style={{ color: 'var(--ink-4)' }}>/</span>
-        <span style={{ color: 'var(--ink)', fontWeight: 600 }}>{VIEW_TITLES[view]}</span>
+      {/* Logo */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', userSelect: 'none' }}>
+        <div style={{
+          width: 34, height: 34, borderRadius: 9, flexShrink: 0,
+          background: 'linear-gradient(135deg, var(--accent), #ff3e9a)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 14, color: '#0a0805',
+          position: 'relative',
+        }}>
+          iH
+          <span style={{ position: 'absolute', top: 5, right: 7, width: 5, height: 5, borderRadius: '50%', background: '#fff' }} />
+        </div>
+        <div>
+          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 18, letterSpacing: '-.03em', lineHeight: 1, color: 'var(--ink)', display: 'flex', alignItems: 'baseline', gap: 1 }}>
+            iHYPE<span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', transform: 'translateY(-9px)', marginLeft: 1 }} />
+          </div>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '.18em', textTransform: 'uppercase', marginTop: 3 }}>workbench</div>
+        </div>
       </div>
 
-      {/* Live stats */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'var(--f-m)', fontSize: 11, marginLeft: 'auto', marginRight: 'auto' }}>
-        <span style={{ color: '#22e5d4', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <IcDot c="#22e5d4" s={7} /> {listeningNow.toLocaleString()} listening
+      {/* Tabs */}
+      <nav style={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: 'center' }}>
+        {TABS.map(tab => {
+          const active = view === tab.k;
+          return (
+            <button key={tab.k} onClick={() => setView(tab.k)} style={{
+              display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px',
+              borderRadius: 8, cursor: 'pointer', border: 'none',
+              color: active ? 'var(--ink)' : 'var(--ink-2)',
+              background: 'transparent',
+              fontFamily: 'var(--f-b)', fontWeight: 600, fontSize: 13, letterSpacing: '-.005em',
+              position: 'relative', transition: 'color .15s, background .15s',
+            }}
+              onMouseEnter={e => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,.03)'; (e.currentTarget as HTMLButtonElement).style.color = active ? 'var(--ink)' : '#f0ebe5'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = active ? 'var(--ink)' : 'var(--ink-2)'; }}
+            >
+              {TAB_ICONS[tab.k]}
+              {tab.label}
+              {tab.badge && (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  minWidth: 18, height: 18, padding: '0 5px', borderRadius: 99,
+                  background: active ? 'rgba(255,80,41,.16)' : 'var(--bg-3)',
+                  fontFamily: 'var(--f-m)', fontSize: 9,
+                  color: active ? 'var(--accent)' : 'var(--ink-2)', fontWeight: 700, letterSpacing: '.04em',
+                }}>{tab.badge}</span>
+              )}
+              {active && (
+                <span style={{
+                  position: 'absolute', left: 14, right: 14, bottom: 0, height: 2,
+                  background: 'var(--accent)', borderRadius: '2px 2px 0 0',
+                  boxShadow: '0 0 12px rgba(255,80,41,.6)',
+                }} />
+              )}
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* Right: listening + user */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 7, fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-2)', paddingRight: 14, borderRight: '1px solid var(--line)', marginRight: 6 }}>
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22e5d4', boxShadow: '0 0 8px #22e5d4', animation: 'pulse 1.8s infinite', display: 'inline-block' }} />
+          {listeningNow.toLocaleString()} listening
         </span>
-        <span style={{ width: 3, height: 3, borderRadius: '50%', background: 'var(--ink-4)', display: 'inline-block' }} />
-        <span style={{ color: 'var(--ink-3)' }}>{hypedToday.toLocaleString()} hyped today · {showsTonight} shows tonight</span>
-      </div>
-
-      {/* Search */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px',
-        background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 6,
-        minWidth: 260, color: 'var(--ink-3)',
-      }}>
-        <IcSearch s={13} />
-        <input
-          placeholder="Search artists, shows, venues, tracks…"
-          style={{
-            background: 'transparent', border: 0, outline: 0, flex: 1,
-            color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: 12,
-          }}
-        />
-        <span style={{ padding: '1px 5px', background: 'var(--bg-3)', borderRadius: 3, fontSize: 9, fontFamily: 'var(--f-m)', color: 'var(--ink-3)' }}>⌘</span>
-        <span style={{ padding: '1px 5px', background: 'var(--bg-3)', borderRadius: 3, fontSize: 9, fontFamily: 'var(--f-m)', color: 'var(--ink-3)' }}>K</span>
+        <button onClick={onSettings} style={{
+          display: 'flex', alignItems: 'center', gap: 10, padding: '5px 10px 5px 5px',
+          borderRadius: 99, background: 'var(--bg-3)', border: '1px solid var(--line-2)',
+          cursor: 'pointer', transition: 'border-color .15s',
+        }}>
+          <span style={{
+            width: 28, height: 28, borderRadius: '50%',
+            background: 'linear-gradient(135deg, #ff3e9a, var(--accent))',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 11, color: '#0a0805',
+          }}>{initials}</span>
+          <div>
+            <div style={{ fontFamily: 'var(--f-b)', fontWeight: 600, fontSize: 12, color: 'var(--ink)', lineHeight: 1 }}>{userName}</div>
+            <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '.08em', marginTop: 2 }}>{activeProfileTypes.slice(0, 2).join(' + ')}</div>
+          </div>
+          <span style={{ padding: '3px 7px', borderRadius: 99, background: 'rgba(255,184,74,.12)', color: '#ffb84a', fontFamily: 'var(--f-m)', fontSize: 9, fontWeight: 700, letterSpacing: '.08em', border: '1px solid rgba(255,184,74,.28)' }}>LVL 14</span>
+        </button>
       </div>
     </header>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// ViewMyPage (profile)
+// ─────────────────────────────────────────────────────────────
+function ViewMyPage({ data, onPickTrack, currentIdx }: {
+  data: WorkbenchData; onPickTrack: (i: number) => void; currentIdx: number;
+}) {
+  const heroStats = [
+    { v: (data.lifeStats?.totalHype ?? 1284).toLocaleString(), k: 'HYPE Given', accent: true },
+    { v: '842', k: 'Received', accent: false },
+    { v: String(data.lifeStats?.eventsAttended ?? 23), k: 'Shows Attended', accent: false },
+    { v: '7', k: 'Top-5 Slots', accent: false },
+  ];
+
+  return (
+    <div style={{ padding: '32px 48px 48px', maxWidth: 1600, margin: '0 auto' }}>
+      {/* Hero — 3-col grid */}
+      <div className="me-hero-grid" style={{
+        display: 'grid', gridTemplateColumns: '200px 1fr auto', gap: 28, alignItems: 'center',
+        padding: 26, borderRadius: 14,
+        background: 'linear-gradient(135deg, var(--bg-2), var(--bg-3))',
+        border: '1px solid var(--line-2)', position: 'relative', overflow: 'hidden', marginBottom: 28,
+      }}>
+        {/* Radial glow */}
+        <div style={{ position: 'absolute', top: '-40%', right: '-10%', width: '50%', height: '200%', background: 'radial-gradient(ellipse, rgba(255,80,41,.18), transparent 60%)', pointerEvents: 'none', zIndex: 0 }} />
+        {/* Portrait */}
+        <div style={{
+          width: 200, height: 200, borderRadius: 14, flexShrink: 0,
+          background: 'linear-gradient(135deg, var(--accent) 0%, #ff3e9a 50%, #b983ff 100%)',
+          position: 'relative', overflow: 'hidden',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1,
+        }}>
+          <span style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 90, color: '#0a0805', letterSpacing: '-.04em', mixBlendMode: 'overlay', opacity: .85, lineHeight: 1 }}>{data.userInitials}</span>
+        </div>
+
+        {/* Identity col */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, zIndex: 1 }}>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
+            {data.activeProfileTypes.slice(0, 2).map(r => {
+              const roleColors: Record<string, string> = { LISTENER: '#b983ff', ARTIST: '#ff5029', VENUE: '#22e5d4', DJ: '#ff3e9a' };
+              const c = roleColors[r] ?? '#9e9080';
+              return (
+                <span key={r} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 9px', borderRadius: 99, background: 'var(--bg-3)', border: '1px solid var(--line-2)', fontFamily: 'var(--f-m)', fontSize: 10, fontWeight: 700, letterSpacing: '.1em', color: 'var(--ink)' }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: c, display: 'inline-block' }} />{r}
+                </span>
+              );
+            })}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 9px', borderRadius: 99, background: 'rgba(255,184,74,.12)', border: '1px solid rgba(255,184,74,.28)', fontFamily: 'var(--f-m)', fontSize: 10, fontWeight: 700, letterSpacing: '.06em', color: '#ffb84a' }}>⚡ LEVEL 14</span>
+          </div>
+          <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 46, letterSpacing: '-.03em', lineHeight: .95, margin: 0, color: 'var(--ink)' }}>{data.userName}</h1>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-2)', letterSpacing: '.08em' }}>@{data.userName.toLowerCase().replace(/\s/g, '.')} · {data.city} · Joined Mar &apos;25</div>
+          <p style={{ fontFamily: "'Instrument Serif', serif", fontStyle: 'italic', fontSize: 17, color: 'var(--ink-2)', marginTop: 6, lineHeight: 1.4, maxWidth: '50ch' }}>Halflight EP out now. Writing the next thing in a basement on Western Ave. Recommendations open.</p>
+        </div>
+
+        {/* Stats 2×2 grid */}
+        <div className="me-hero-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, auto)', gap: '18px 28px', zIndex: 1 }}>
+          {heroStats.map(s => (
+            <div key={s.k} style={{ textAlign: 'right' }}>
+              <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 30, letterSpacing: '-.02em', lineHeight: 1, color: s.accent ? 'var(--accent)' : 'var(--ink)' }}>{s.v}</div>
+              <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '.16em', textTransform: 'uppercase', marginTop: 6 }}>{s.k}</div>
+            </div>
+          ))}
+        </div>
+        {/* Inline stats for narrow screens */}
+        <div className="me-hero-stats-inline" style={{ display: 'none', gap: 20, flexWrap: 'wrap', gridColumn: '1 / -1', zIndex: 1, paddingTop: 8 }}>
+          {heroStats.map(s => (
+            <div key={s.k} style={{ textAlign: 'left' }}>
+              <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', lineHeight: 1, color: s.accent ? 'var(--accent)' : 'var(--ink)' }}>{s.v}</div>
+              <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '.16em', textTransform: 'uppercase', marginTop: 4 }}>{s.k}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Stat tiles — 4-col */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 20 }}>
+        {[
+          { k: 'Weekly Listens', v: '2,284', d: <><span style={{ color: '#22e5d4' }}>↑ 18%</span> vs last week</> },
+          { k: 'Seed Save Rate', v: '26%', d: '88 saves on Sundown' },
+          { k: 'Next Payout', v: '$2,460', d: 'releases Jun 24' },
+          { k: 'Next Show', v: 'Jun 18', d: 'Empty Bottle · 9PM' },
+        ].map(s => (
+          <div key={s.k} style={{ padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)' }}>
+            <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, letterSpacing: '.14em', color: 'var(--ink-3)', textTransform: 'uppercase' }}>{s.k}</div>
+            <div style={{ fontFamily: 'var(--f-d)', fontSize: 24, fontWeight: 800, letterSpacing: '-.02em', color: 'var(--ink)', lineHeight: 1, marginTop: 6 }}>{s.v}</div>
+            <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-2)', marginTop: 4 }}>{s.d}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Two-col: Top 5 + Activity */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 20, marginBottom: 14 }}>
+        <Panel title="Top 5 — this week" link="Curated · updates Sundays">
+          <div style={{ padding: '4px 0' }}>
+            {data.tracks.slice(0, 5).map((t, i) => (
+              <button key={t.id} onClick={() => onPickTrack(i)} style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px',
+                borderBottom: '1px solid var(--line)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+              }}>
+                <span style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 13, color: 'var(--ink-3)', width: 20, flexShrink: 0 }}>{String(i + 1).padStart(2, '0')}</span>
+                <div style={{ width: 32, height: 32, borderRadius: 5, background: `linear-gradient(135deg, ${t.color}, ${t.color}80)`, flexShrink: 0, borderBottom: 'none' }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</div>
+                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', marginTop: 2, letterSpacing: '.04em' }}>{t.artistName} · {t.album}</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'var(--f-m)', fontSize: 11, color: '#ff3e9a', flexShrink: 0 }}>
+                  <IcHeart s={10} c="#ff3e9a" /> {t.hypeCount}
+                </div>
+                <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', flexShrink: 0, minWidth: 32, textAlign: 'right' }}>{t.duration}</div>
+              </button>
+            ))}
+          </div>
+        </Panel>
+
+        <Panel title="Recent activity" link="Mark read">
+          <div style={{ padding: '4px 0' }}>
+            {data.activity.slice(0, 5).map((a, i) => {
+              const dotColor: Record<string, string> = { hype: '#ff3e9a', show: '#22e5d4', radio: '#b983ff', payout: '#ffb84a' };
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', borderBottom: '1px solid var(--line)' }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: dotColor[a.kind] || 'var(--ink-3)', flexShrink: 0 }} />
+                  <div style={{ flex: 1, fontFamily: 'var(--f-b)', fontSize: 13, color: 'var(--ink)' }}>{a.text}</div>
+                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', flexShrink: 0 }}>{a.time}</div>
+                </div>
+              );
+            })}
+          </div>
+        </Panel>
+      </div>
+
+      {/* HYPEd tracks */}
+      <Panel title="HYPEd this week" link="Open seeds →" style={{ marginBottom: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 10, padding: '14px 16px' }}>
+          {data.tracks.slice(0, 6).map((t, i) => (
+            <TrackCard key={t.id} track={t} active={i === currentIdx} onClick={() => onPickTrack(i)} />
+          ))}
+        </div>
+      </Panel>
+
+      {/* Your roles */}
+      <Panel title="Your roles">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, padding: '14px 16px' }}>
+          {(['LISTENER','ARTIST','VENUE','DJ'] as const).map(rk => {
+            const active = data.activeProfileTypes.includes(rk);
+            const roleColors: Record<string, string> = { LISTENER: '#b983ff', ARTIST: '#ff5029', VENUE: '#22e5d4', DJ: '#ff3e9a' };
+            const roleLabels: Record<string, { label: string; sub: string }> = {
+              LISTENER: { label: 'Fan', sub: 'HYPE tracks, swipe seeds, attend' },
+              ARTIST:   { label: 'Artist', sub: 'Upload, seed, tour · 45% of every ticket' },
+              VENUE:    { label: 'Venue', sub: 'List shows · 45% · demand radar' },
+              DJ:       { label: 'Promoter/DJ', sub: 'Referral links · 10% on tickets you drive' },
+            };
+            const col = roleColors[rk];
+            const info = roleLabels[rk];
+            return (
+              <div key={rk} style={{
+                display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px',
+                border: `1px solid ${active ? col : 'var(--line)'}`, borderRadius: 8,
+                background: active ? `${col}08` : 'var(--bg-2)',
+              }}>
+                <div style={{ width: 8, height: 8, borderRadius: 2, background: col, flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, color: 'var(--ink)' }}>{info.label}</div>
+                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '.04em', marginTop: 2 }}>{info.sub}</div>
+                </div>
+                <button style={{
+                  display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px',
+                  border: `1px solid ${active ? col + '40' : 'var(--line-2)'}`, borderRadius: 99,
+                  fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.04em',
+                  color: active ? col : 'var(--ink-2)', background: 'none', cursor: 'pointer',
+                }}>
+                  {active ? <><IcCheck s={11} /> active</> : 'add →'}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </Panel>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// ViewSeeds — 3-col layout matching design
+// ─────────────────────────────────────────────────────────────
+function ViewSeeds({
+  data,
+  seedPlaying,
+  setSeedPlaying,
+  seedCardIdx,
+  onSave,
+}: {
+  data: WorkbenchData;
+  seedPlaying: boolean;
+  setSeedPlaying: (v: boolean) => void;
+  seedCardIdx: number;
+  onSave?: (idx: number) => void;
+}) {
+  const waveHeights = [30,55,80,42,90,70,48,88,62,35,78,55,92,40,68,82,48,30,62,88];
+  // SeedsGamifiedView is kept for future embedded use
+  void SeedsGamifiedView;
+
+  // Determine which track to show on the front card
+  const frontTrack = data.tracks.length > 0 ? data.tracks[seedCardIdx % data.tracks.length] : null;
+
+  // Web Audio API tone generator (220Hz sine, 0.08 gain, 15s)
+  useEffect(() => {
+    if (!seedPlaying) return;
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 220;
+    gain.gain.value = 0.08;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 15);
+    const timer = setTimeout(() => setSeedPlaying(false), 15000);
+    return () => {
+      clearTimeout(timer);
+      try { osc.stop(); } catch {}
+      ctx.close();
+    };
+  }, [seedPlaying, setSeedPlaying]);
+
+  return (
+    <div style={{ padding: '32px 48px 48px', maxWidth: 1600, margin: '0 auto' }}>
+      {/* View head */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, marginBottom: 28, paddingBottom: 18, borderBottom: '1px solid var(--line)' }}>
+        <div>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '.18em', fontWeight: 700, marginBottom: 8, textTransform: 'uppercase' }}>DISCOVER · 15–30s clips · Chicago</div>
+          <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 38, letterSpacing: '-.025em', lineHeight: 1, margin: 0, color: 'var(--ink)' }}>Seeds <em style={{ fontFamily: "'Instrument Serif',serif", fontStyle: 'italic', fontWeight: 400, color: 'var(--ink-2)' }}>— decide in 15 seconds.</em></h1>
+          <p style={{ fontFamily: "'Instrument Serif',serif", fontStyle: 'italic', fontSize: 17, color: 'var(--ink-2)', marginTop: 8, maxWidth: '60ch' }}>Hand-cut hooks from new uploads. Save it, hype it, skip it. Save-rate becomes the algorithm.</p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          <button style={{ padding: '8px 14px', borderRadius: 7, fontFamily: 'var(--f-m)', fontSize: 11, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 7, color: 'var(--ink-2)', border: '1px solid transparent', background: 'none' }}>⚙ Filters</button>
+          <button style={{ padding: '8px 14px', borderRadius: 7, fontFamily: 'var(--f-m)', fontSize: 11, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 7, color: 'var(--ink-2)', border: '1px solid transparent', background: 'none' }}>Local · Chicago ▾</button>
+        </div>
+      </div>
+
+      {/* 3-col seeds stage */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px 1fr', gap: 30, alignItems: 'flex-start', paddingTop: 8 }}>
+
+        {/* Left col */}
+        <aside style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '.18em', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>TODAY&apos;S DECK</div>
+          <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 10, padding: 14 }}>
+            {[
+              { k: 'Reviewed', v: '4 / 12', c: 'var(--ink)' },
+              { k: 'Saved', v: '+3', c: '#22e5d4' },
+              { k: 'Skipped', v: '1', c: '#ff6b5a' },
+              { k: 'Hyped', v: '2', c: 'var(--pink)' },
+            ].map(r => (
+              <div key={r.k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', fontFamily: 'var(--f-m)', fontSize: 11 }}>
+                <span style={{ color: 'var(--ink-3)', letterSpacing: '.08em' }}>{r.k}</span>
+                <span style={{ color: r.c, fontWeight: 600 }}>{r.v}</span>
+              </div>
+            ))}
+            <div style={{ borderTop: '1px dashed var(--line)', paddingTop: 10, marginTop: 6, display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--f-m)', fontSize: 11 }}>
+              <span style={{ color: 'var(--ink-3)', letterSpacing: '.08em' }}>XP earned</span>
+              <span style={{ color: '#ffb84a', fontWeight: 600 }}>+42 XP</span>
+            </div>
+          </div>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '.18em', textTransform: 'uppercase', fontWeight: 700, marginTop: 18, marginBottom: 4 }}>DAILY QUEST</div>
+          <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14 }}>Save 5 seeds today</div>
+            <div style={{ display: 'flex', gap: 4 }}>
+              {[true,true,true,false,false].map((filled, i) => (
+                <span key={i} style={{ flex: 1, height: 6, borderRadius: 99, background: filled ? 'var(--accent)' : 'var(--bg-3)' }} />
+              ))}
+            </div>
+            <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '.06em' }}>3 / 5 · 60 XP + Seed Curator badge</div>
+          </div>
+        </aside>
+
+        {/* Center col — card stack + controls */}
+        <div>
+          <div style={{ position: 'relative', width: '100%', aspectRatio: '380/520', margin: '0 auto' }}>
+            {/* behind-2 */}
+            <div style={{ position: 'absolute', inset: 0, borderRadius: 22, overflow: 'hidden', boxShadow: '0 30px 60px -10px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.06)', transformOrigin: 'center bottom', transform: 'translateY(26px) scale(.88)', opacity: .28, zIndex: 0, background: 'linear-gradient(135deg, #22e5d4, #7fb3ff)' }} />
+            {/* behind-1 */}
+            <div style={{ position: 'absolute', inset: 0, borderRadius: 22, overflow: 'hidden', boxShadow: '0 30px 60px -10px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.06)', transformOrigin: 'center bottom', transform: 'translateY(14px) scale(.94)', opacity: .55, zIndex: 1, background: 'linear-gradient(135deg, #b983ff, #ff3e9a)' }} />
+            {/* front card */}
+            <div style={{ position: 'absolute', inset: 0, borderRadius: 22, overflow: 'hidden', boxShadow: '0 30px 60px -10px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.06)', zIndex: 5 }}>
+              {/* Art bg */}
+              <div style={{ position: 'absolute', inset: 0, background: frontTrack ? `linear-gradient(135deg, ${frontTrack.color} 0%, #ff3e9a 60%, #221c16 100%)` : 'linear-gradient(135deg, #ff5029 0%, #ff3e9a 60%, #221c16 100%)' }} />
+              {/* Overlay gradient */}
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,.75) 100%)' }} />
+              {/* Playing indicator */}
+              {seedPlaying && (
+                <div style={{ position: 'absolute', top: 54, left: '50%', transform: 'translateX(-50%)', zIndex: 10, padding: '5px 12px', borderRadius: 99, background: 'rgba(0,0,0,.65)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--f-m)', fontSize: 10, fontWeight: 700, letterSpacing: '.14em', color: '#22e5d4', animation: 'pulse 1.4s infinite', whiteSpace: 'nowrap' }}>
+                  ● PLAYING
+                </div>
+              )}
+              {/* Tags */}
+              <div style={{ position: 'absolute', top: 18, left: 18, right: 18, display: 'flex', justifyContent: 'space-between', gap: 8, zIndex: 3 }}>
+                <span style={{ padding: '5px 10px', borderRadius: 99, background: 'rgba(0,0,0,.55)', backdropFilter: 'blur(8px)', fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.14em', fontWeight: 700, color: '#fff', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', display: 'inline-block' }} />SEED · 22s
+                </span>
+                <span style={{ padding: '5px 10px', borderRadius: 99, background: 'rgba(255,255,255,.18)', fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.14em', fontWeight: 700, color: '#fff' }}>CHICAGO</span>
+              </div>
+              {/* Waveform */}
+              <div style={{ position: 'absolute', bottom: 170, left: 24, right: 24, height: 36, display: 'flex', alignItems: 'flex-end', gap: 3, zIndex: 3 }}>
+                {waveHeights.map((h, i) => (
+                  <i key={i} style={{ flex: 1, background: seedPlaying ? 'rgba(34,229,212,.8)' : 'rgba(255,255,255,.55)', borderRadius: 99, display: 'block', height: `${h}%`, transition: 'background .3s' }} />
+                ))}
+              </div>
+              {/* Body */}
+              <div style={{ position: 'absolute', bottom: 60, left: 22, right: 22, zIndex: 3, color: '#fff' }}>
+                <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 32, letterSpacing: '-.03em', lineHeight: .95, textShadow: '0 2px 12px rgba(0,0,0,.4)' }}>{frontTrack ? frontTrack.title : 'Slow Burn'}</div>
+                <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'rgba(255,255,255,.8)', letterSpacing: '.1em', marginTop: 6, textTransform: 'uppercase' }}>{frontTrack ? `${frontTrack.artistName} · ${frontTrack.album}` : 'The Lowriders · Side Roads'}</div>
+                <div style={{ fontFamily: "'Instrument Serif',serif", fontStyle: 'italic', fontSize: 16, color: 'rgba(255,255,255,.9)', marginTop: 14, lineHeight: 1.35, borderLeft: '2px solid var(--accent)', paddingLeft: 10 }}>&ldquo;It only really lands at 1:48 — that&apos;s the seed.&rdquo;</div>
+              </div>
+              {/* Footer */}
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '14px 22px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,.4)', backdropFilter: 'blur(10px)', borderTop: '1px solid rgba(255,255,255,.08)', fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.08em', color: 'rgba(255,255,255,.7)' }}>
+                <span>♥ {frontTrack ? frontTrack.hypeCount : 211} hype</span>
+                <span>48 saves · 21 skips</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Controls */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 14, marginTop: 24 }}>
+            <button title="Skip (ArrowLeft)" style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--bg-2)', border: '1px solid rgba(255,107,90,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#ff6b5a' }}>
+              <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+            <button title="Play/Pause (Space)" onClick={() => setSeedPlaying(!seedPlaying)} style={{ width: 56, height: 56, borderRadius: '50%', background: seedPlaying ? 'rgba(34,229,212,.1)' : 'var(--bg-2)', border: `1px solid ${seedPlaying ? 'rgba(34,229,212,.6)' : 'var(--line-2)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: seedPlaying ? '#22e5d4' : 'var(--ink-2)' }}>
+              {seedPlaying ? <IcPause s={20} /> : <IcPlay s={20} />}
+            </button>
+            <button title="Save — loads into dock (ArrowUp)" onClick={() => onSave?.(seedCardIdx % Math.max(data.tracks.length, 1))} style={{ width: 72, height: 72, borderRadius: '50%', background: 'var(--bg-2)', border: '1px solid rgba(34,229,212,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#22e5d4' }}>
+              <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 5l14 7-14 7V5z" fill="currentColor" opacity=".2"/><path d="M5 5l14 7-14 7V5z"/></svg>
+            </button>
+            <button title="HYPE it (ArrowRight)" style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--bg-2)', border: '1px solid rgba(255,62,154,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--pink)' }}>
+              <svg width={22} height={22} viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg>
+            </button>
+          </div>
+          <div style={{ textAlign: 'center', fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '.14em', marginTop: 14, textTransform: 'uppercase' }}>← Skip · ↑ Save · → Hype · Space Play/Pause</div>
+        </div>
+
+        {/* Right col */}
+        <aside style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '.18em', textTransform: 'uppercase', fontWeight: 700, marginBottom: 4 }}>UP NEXT</div>
+          <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {[
+              { title: 'Cassette Heart', artist: 'Juno North', dur: '24s', grad: 'linear-gradient(135deg,#b983ff,#7fb3ff)', op: 1 },
+              { title: 'Halflight', artist: 'Maya Reyes', dur: '20s', grad: 'linear-gradient(135deg,#22e5d4,#b983ff)', op: 1 },
+              { title: 'Underpass', artist: 'Saint Hex', dur: '27s', grad: 'linear-gradient(135deg,#7fb3ff,#ff5029)', op: 0.6 },
+            ].map(t => (
+              <div key={t.title} style={{ display: 'grid', gridTemplateColumns: '42px 1fr', gap: 10, alignItems: 'center', opacity: t.op }}>
+                <div style={{ width: 42, height: 42, borderRadius: 6, background: t.grad }} />
+                <div>
+                  <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13 }}>{t.title}</div>
+                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '.06em' }}>{t.artist} · {t.dur}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '.18em', textTransform: 'uppercase', fontWeight: 700, marginTop: 18, marginBottom: 4 }}>WHY THIS SEED?</div>
+          <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 10, padding: 14, fontFamily: 'var(--f-b)', fontSize: 12, color: 'var(--ink-2)', lineHeight: 1.5 }}>
+            You hyped <span style={{ color: 'var(--accent)', fontWeight: 600 }}>3 tracks</span> from The Lowriders this month. This is from their unreleased EP <em style={{ fontFamily: "'Instrument Serif',serif" }}>&ldquo;Side Roads&rdquo;</em> — promoter test pressing.
+          </div>
+        </aside>
+
+      </div>
+    </div>
   );
 }
 
@@ -325,77 +660,68 @@ function PlayerDock({ track, playing, onToggle, onNext, onPrev, progress, setPro
 }) {
   return (
     <footer style={{
-      gridColumn: '2 / -1', height: 'var(--player-h)',
-      borderTop: '1px solid var(--line)',
+      display: 'grid', gridTemplateColumns: '340px 1fr 340px', alignItems: 'center', gap: 24, padding: '0 22px',
       background: 'linear-gradient(180deg, var(--bg-2), var(--bg))',
-      display: 'flex', alignItems: 'center', padding: '0 18px', gap: 18, flexShrink: 0,
+      borderTop: '1px solid var(--line-2)', position: 'relative',
+      gridColumn: '1 / -1',
     }}>
-      {/* Left: art + info + hype */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: 320, flexShrink: 0 }}>
-        <div style={{
-          width: 46, height: 46, borderRadius: 6, flexShrink: 0, position: 'relative', overflow: 'hidden',
-          background: `linear-gradient(135deg, ${track.color}, ${track.color}80)`,
-        }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 25% 25%, rgba(255,255,255,.3), transparent 60%)' }} />
+      {/* Top gradient accent line */}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, var(--accent), #ff3e9a, transparent)', opacity: .5, pointerEvents: 'none' }} />
+
+      {/* Left: 340px — art + info + hype */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
+        <div style={{ width: 52, height: 52, borderRadius: 7, flexShrink: 0, position: 'relative', overflow: 'hidden', background: `linear-gradient(135deg, ${track.color}, ${track.color}80)` }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 30% 30%, rgba(255,255,255,.3), transparent 60%)' }} />
+          {playing && (
+            <div style={{ position: 'absolute', bottom: 6, left: 6, display: 'flex', gap: 2, alignItems: 'flex-end', height: 10, zIndex: 2 }}>
+              {[{ dur: '1.1s' }, { dur: '.9s' }, { dur: '1.3s' }].map((b, i) => (
+                <i key={i} style={{ width: 2, background: '#fff', borderRadius: 99, display: 'block', height: 3, animation: `eq ${b.dur} infinite` }} />
+              ))}
+            </div>
+          )}
         </div>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, letterSpacing: '-.005em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--ink)' }}>{track.title}</div>
-          <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-2)', letterSpacing: '.04em', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.artistName} · <span style={{ color: 'var(--ink-4)' }}>{track.album}</span></div>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14, letterSpacing: '-.005em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--ink)' }}>{track.title}</div>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-2)', letterSpacing: '.04em', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.artistName} · <span style={{ color: 'var(--ink-4)' }}>{track.album}</span></div>
         </div>
-        <button style={{
-          display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px',
-          border: '1px solid rgba(255,62,154,.3)', borderRadius: 99,
-          background: 'rgba(255,62,154,.05)', color: '#ff3e9a',
-          cursor: 'pointer', flexShrink: 0,
-        }}>
-          <IcHeart s={14} c="#ff3e9a" /> <span style={{ fontFamily: 'var(--f-m)', fontSize: 11 }}>{track.hypeCount}</span>
+        <button style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', border: '1px solid rgba(255,62,154,.3)', borderRadius: 99, color: '#ff3e9a', fontFamily: 'var(--f-m)', fontSize: 11, fontWeight: 600, background: 'rgba(255,62,154,.05)', cursor: 'pointer', flexShrink: 0 }}>
+          <IcHeart s={14} c="#ff3e9a" /> {track.hypeCount}
         </button>
       </div>
 
-      {/* Center: controls + scrubber */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          {[
-            { title: 'Shuffle', el: <IcShuffle s={14} /> },
-            { title: 'Previous', el: <IcSkipP s={14} />, action: onPrev },
-          ].map(b => (
-            <button key={b.title} onClick={b.action} title={b.title} style={{ width: 28, height: 28, borderRadius: 6, color: 'var(--ink-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}>{b.el}</button>
-          ))}
-          <button onClick={onToggle} style={{
-            width: 32, height: 32, borderRadius: '50%', background: 'var(--ink)', color: 'var(--bg)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer',
-          }}>
+      {/* Center: controls + scrub */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <button title="Shuffle" style={{ width: 32, height: 32, borderRadius: 7, color: 'var(--ink-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}><IcShuffle s={14} /></button>
+          <button title="Previous" onClick={onPrev} style={{ width: 32, height: 32, borderRadius: 7, color: 'var(--ink-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}><IcSkipP s={14} /></button>
+          <button onClick={onToggle} style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--ink)', color: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}>
             {playing ? <IcPause s={14} /> : <IcPlay s={14} />}
           </button>
-          {[
-            { title: 'Next', el: <IcSkipN s={14} />, action: onNext },
-            { title: 'Repeat', el: <IcRepeat s={14} /> },
-          ].map(b => (
-            <button key={b.title} onClick={b.action} title={b.title} style={{ width: 28, height: 28, borderRadius: 6, color: 'var(--ink-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}>{b.el}</button>
-          ))}
+          <button title="Next" onClick={onNext} style={{ width: 32, height: 32, borderRadius: 7, color: 'var(--ink-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}><IcSkipN s={14} /></button>
+          <button title="Repeat" style={{ width: 32, height: 32, borderRadius: 7, color: 'var(--ink-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}><IcRepeat s={14} /></button>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', maxWidth: 540 }}>
-          <span style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', minWidth: 32, textAlign: 'center' }}>{fmtTime(progress * track.durationSec)}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', maxWidth: 540 }}>
+          <span style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '.04em', minWidth: 34, textAlign: 'center' }}>{fmtTime(progress * track.durationSec)}</span>
           <div
-            style={{ flex: 1, height: 3, background: 'rgba(255,255,255,.06)', borderRadius: 2, position: 'relative', cursor: 'pointer' }}
+            style={{ flex: 1, height: 4, background: 'rgba(255,255,255,.06)', borderRadius: 99, position: 'relative', cursor: 'pointer', overflow: 'visible' }}
             onClick={e => {
               const r = e.currentTarget.getBoundingClientRect();
               setProgress(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)));
             }}
           >
-            <div style={{ position: 'absolute', inset: 0, width: `${progress * 100}%`, background: 'var(--ink)', borderRadius: 2 }} />
-            <div style={{ position: 'absolute', top: '50%', left: `${progress * 100}%`, transform: 'translate(-50%, -50%)', width: 9, height: 9, borderRadius: '50%', background: 'var(--ink)' }} />
+            <div style={{ position: 'absolute', inset: 0, width: `${progress * 100}%`, background: 'linear-gradient(90deg, var(--accent), #ff3e9a)', borderRadius: 99 }} />
+            <div style={{ position: 'absolute', top: '50%', left: `${progress * 100}%`, transform: 'translate(-50%, -50%)', width: 11, height: 11, borderRadius: '50%', background: '#fff', boxShadow: '0 0 0 3px rgba(255,255,255,.15)' }} />
           </div>
-          <span style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', minWidth: 32, textAlign: 'center' }}>{track.duration}</span>
+          <span style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '.04em', minWidth: 34, textAlign: 'center' }}>{track.duration}</span>
         </div>
       </div>
 
-      {/* Right: queue + volume */}
-      <div style={{ width: 180, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10, flexShrink: 0 }}>
-        <button title="Queue" style={{ width: 28, height: 28, borderRadius: 6, color: 'var(--ink-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}><IcQueue s={14} /></button>
-        <button title="Volume" style={{ width: 28, height: 28, borderRadius: 6, color: 'var(--ink-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}><IcVol s={14} /></button>
-        <div style={{ width: 70, height: 3, background: 'rgba(255,255,255,.06)', borderRadius: 2, position: 'relative' }}>
-          <div style={{ position: 'absolute', inset: 0, width: '60%', background: 'var(--ink-2)', borderRadius: 2 }} />
+      {/* Right: 340px — queue + vol */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 14 }}>
+        <button title="Queue" style={{ width: 32, height: 32, borderRadius: 7, color: 'var(--ink-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}><IcQueue s={14} /></button>
+        <button title="Volume" style={{ width: 32, height: 32, borderRadius: 7, color: 'var(--ink-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}><IcVol s={14} /></button>
+        <div style={{ width: 80, height: 4, background: 'rgba(255,255,255,.06)', borderRadius: 99, position: 'relative' }}>
+          <div style={{ position: 'absolute', inset: 0, width: '65%', background: 'var(--ink-2)', borderRadius: 99 }} />
         </div>
       </div>
     </footer>
@@ -469,172 +795,6 @@ function TrackCard({ track, active, onClick }: { track: WbTrack; active: boolean
       <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, letterSpacing: '-.005em', color: 'var(--ink)' }}>{track.title}</div>
       <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '.04em', marginTop: 3 }}>{track.artistName} · {track.duration}</div>
     </button>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// ViewHome
-// ─────────────────────────────────────────────────────────────
-function ViewHome({ data, prefs, setView, currentIdx, onPickTrack }: {
-  data: WorkbenchData;
-  prefs: typeof DEFAULT_PREFS;
-  setView: (v: View) => void;
-  currentIdx: number;
-  onPickTrack: (i: number) => void;
-}) {
-  const now = new Date();
-  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const day = days[now.getDay()].toUpperCase();
-  const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-  const city = (prefs.city || data.city || 'your city').toUpperCase();
-
-  const greeting = (() => {
-    if (prefs.greeting === 'minimal') return 'Home.';
-    if (prefs.greeting === 'data') return `${data.listeningNow.toLocaleString()} listening · ${data.hypedToday} hyped today · ${data.showsTonight} shows tonight`;
-    const h = now.getHours();
-    const tod = h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
-    return `Good ${tod}, ${data.userName}.`;
-  })();
-
-  const ROLE_COLORS: Record<string, string> = { LISTENER: '#b983ff', ARTIST: '#ff5029', VENUE: '#22e5d4', DJ: '#ff3e9a' };
-  const ROLE_LABELS: Record<string, { label: string; sub: string }> = {
-    LISTENER: { label: 'Fan', sub: 'HYPE tracks, swipe seeds, attend' },
-    ARTIST:   { label: 'Artist', sub: 'Upload, seed, tour · 45% of every ticket' },
-    VENUE:    { label: 'Venue', sub: 'List shows · 45% · demand radar' },
-    DJ:       { label: 'Promoter/DJ', sub: 'Referral links · 10% on tickets you drive' },
-  };
-
-  return (
-    <div style={{ padding: '24px 32px 8px', minHeight: '100%' }}>
-      {/* Greeting row */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24, gap: 24 }}>
-        <div>
-          <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.18em', color: 'var(--ink-3)', marginBottom: 10 }}>
-            ● {day} · {city} · {timeStr}
-          </div>
-          <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 38, letterSpacing: '-.025em', lineHeight: 1, margin: 0, color: 'var(--ink)' }}>{greeting}</h1>
-          <p style={{ fontFamily: 'var(--f-b)', fontSize: 14, color: 'var(--ink-2)', marginTop: 10, maxWidth: 560, lineHeight: 1.5 }}>{data.greeting}</p>
-        </div>
-        <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
-          <button onClick={() => setView('studio')} style={{ padding: '9px 16px', background: 'var(--accent)', color: 'var(--bg)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 600, letterSpacing: '.04em', display: 'flex', alignItems: 'center', gap: 6, border: 'none', cursor: 'pointer' }}>
-            <IcBolt s={12} /> Build a show
-          </button>
-          <button onClick={() => setView('discover')} style={{ padding: '9px 14px', border: '1px solid var(--line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.04em', color: 'var(--ink)', background: 'none', cursor: 'pointer' }}>
-            Today's seeds →
-          </button>
-        </div>
-      </div>
-
-      {/* Stats row */}
-      {prefs.panel_stats && data.stats.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 18 }}>
-          {data.stats.slice(0, 4).map(s => (
-            <StatCard key={s.label} label={s.label} value={s.value} delta={s.delta} color={s.color} />
-          ))}
-        </div>
-      )}
-
-      {/* Two-col row */}
-      {(prefs.panel_tonight || prefs.panel_activity) && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 12, marginBottom: 14 }}>
-          {prefs.panel_tonight && (
-            <Panel title="Tonight in Chicago" link="All events →" onLink={() => setView('tickets')}>
-              <div style={{ padding: '4px 0' }}>
-                {(data.shows.length > 0 ? data.shows : []).slice(0, 3).map(s => {
-                  const fillColor = s.status === 'TONIGHT' ? '#22e5d4' : s.status === 'NEAR SOLD' ? '#ffb84a' : 'var(--ink-3)';
-                  const pct = s.capacity > 0 ? (s.sold / s.capacity) * 100 : 0;
-                  return (
-                    <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--line)' }}>
-                      <div style={{ width: 3, height: 36, borderRadius: 2, background: fillColor, flexShrink: 0 }} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>
-                          {s.name} <span style={{ color: 'var(--ink-3)', fontWeight: 500 }}>· {s.venue}</span>
-                        </div>
-                        <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '.04em', marginTop: 3 }}>
-                          {s.date} · {s.time} · ♡ {s.hype}
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, minWidth: 80 }}>
-                        <div style={{ width: 70, height: 3, background: 'rgba(255,255,255,.06)', borderRadius: 2, position: 'relative', overflow: 'hidden' }}>
-                          <div style={{ position: 'absolute', inset: 0, width: `${pct}%`, background: pct > 85 ? '#ffb84a' : '#22e5d4', borderRadius: 2 }} />
-                        </div>
-                        <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, color: 'var(--ink-3)' }}>{s.sold}/{s.capacity}</div>
-                      </div>
-                      <button style={{ color: 'var(--ink-3)', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}><IcArrow s={12} /></button>
-                    </div>
-                  );
-                })}
-                {data.shows.length === 0 && (
-                  <div style={{ padding: '16px', fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', textAlign: 'center' }}>No shows tonight in your city.</div>
-                )}
-              </div>
-            </Panel>
-          )}
-
-          {prefs.panel_activity && (
-            <Panel title="Activity" link="Mark read">
-              <div style={{ padding: '4px 0' }}>
-                {data.activity.slice(0, 5).map((a, i) => {
-                  const dotColor: Record<string, string> = { hype: '#ff3e9a', show: '#22e5d4', radio: '#b983ff', payout: '#ffb84a', request: '#7fb3ff', security: '#ff5029' };
-                  return (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', borderBottom: '1px solid var(--line)' }}>
-                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: dotColor[a.kind] || 'var(--ink-3)', flexShrink: 0 }} />
-                      <div style={{ flex: 1, fontFamily: 'var(--f-b)', fontSize: 13, color: 'var(--ink)' }}>{a.text}</div>
-                      <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '.04em', flexShrink: 0 }}>{a.time}</div>
-                    </div>
-                  );
-                })}
-              </div>
-            </Panel>
-          )}
-        </div>
-      )}
-
-      {/* HYPEd tracks */}
-      {prefs.panel_hyped && data.tracks.length > 0 && (
-        <Panel title="HYPEd this week" link="Open seeds →" onLink={() => setView('discover')} style={{ marginBottom: 14 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 10, padding: '14px 16px' }}>
-            {data.tracks.slice(0, 6).map((t, i) => (
-              <TrackCard key={t.id} track={t} active={i === currentIdx} onClick={() => onPickTrack(i)} />
-            ))}
-          </div>
-        </Panel>
-      )}
-
-      {/* Roles */}
-      {prefs.panel_roles && (
-        <Panel title="Your roles" style={{ marginBottom: 24 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, padding: '14px 16px' }}>
-            {(['LISTENER','ARTIST','VENUE','DJ'] as const).map(rk => {
-              const active = data.activeProfileTypes.includes(rk);
-              const col = ROLE_COLORS[rk];
-              const info = ROLE_LABELS[rk];
-              return (
-                <div key={rk} style={{
-                  display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px',
-                  border: `1px solid ${active ? col : 'var(--line)'}`, borderRadius: 8,
-                  background: active ? `${col}08` : 'var(--bg-2)',
-                }}>
-                  <div style={{ width: 8, height: 8, borderRadius: 2, background: col, flexShrink: 0 }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, color: 'var(--ink)' }}>{info.label}</div>
-                    <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '.04em', marginTop: 2 }}>{info.sub}</div>
-                  </div>
-                  <button style={{
-                    display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px',
-                    border: `1px solid ${active ? col + '40' : 'var(--line-2)'}`, borderRadius: 99,
-                    fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.04em',
-                    color: active ? col : 'var(--ink-2)', background: 'none', cursor: 'pointer',
-                  }}>
-                    {active ? <><IcCheck s={11} /> active</> : 'add →'}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </Panel>
-      )}
-    </div>
   );
 }
 
@@ -1102,10 +1262,11 @@ function ViewStudio({ data }: { data: WorkbenchData }) {
 // ─────────────────────────────────────────────────────────────
 // ViewSettings
 // ─────────────────────────────────────────────────────────────
-function ViewSettings({ prefs, setPref, data }: {
+function ViewSettings({ prefs, setPref, data, onBack }: {
   prefs: typeof DEFAULT_PREFS;
   setPref: (k: string, v: unknown) => void;
   data: WorkbenchData;
+  onBack?: () => void;
 }) {
   const ACCENTS = [
     { v: '#ff5029', label: 'Ember' }, { v: '#ff3e9a', label: 'Hot pink' },
@@ -1128,7 +1289,12 @@ function ViewSettings({ prefs, setPref, data }: {
           <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 42, letterSpacing: '-.03em', lineHeight: 1, margin: 0, color: 'var(--ink)' }}>Settings <span style={{ color: 'var(--ink-2)', fontWeight: 500 }}>· page customization</span></h1>
           <p style={{ fontFamily: 'var(--f-b)', fontSize: 14, color: 'var(--ink-2)', marginTop: 10, maxWidth: 580, lineHeight: 1.5 }}>Make iHYPE feel like yours. Changes apply live.</p>
         </div>
-        <button onClick={() => setPref('__reset__', null)} style={{ padding: '9px 14px', border: '1px solid var(--line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-2)', letterSpacing: '.04em', background: 'none', cursor: 'pointer' }}>Reset to defaults</button>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {onBack && (
+            <button onClick={onBack} style={{ padding: '9px 14px', border: '1px solid var(--line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-2)', letterSpacing: '.04em', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>← Back</button>
+          )}
+          <button onClick={() => setPref('__reset__', null)} style={{ padding: '9px 14px', border: '1px solid var(--line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-2)', letterSpacing: '.04em', background: 'none', cursor: 'pointer' }}>Reset to defaults</button>
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -1282,7 +1448,9 @@ export type StarterPackItem = {
 // Main WorkbenchShell export
 // ─────────────────────────────────────────────────────────────
 export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData; starterPack?: StarterPackItem[] }) {
-  const [view, setView] = useState<View>('home');
+  const [view, setView] = useState<View>('me');
+  const [prevView, setPrevView] = useState<View>('me');
+  const navigateTo = (v: View) => { if (v !== view) setPrevView(view); setView(v); };
   const [prefs, setPrefs] = useState<typeof DEFAULT_PREFS>(DEFAULT_PREFS);
   const [mounted, setMounted] = useState(false);
 
@@ -1307,9 +1475,10 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
     root.style.setProperty('--accent-2', shiftAccent(prefs.accent));
     const densMap: Record<string, number> = { compact: 0.85, cozy: 1, comfy: 1.15 };
     root.style.setProperty('--density', String(densMap[prefs.density] ?? 1));
-    root.style.setProperty('--rail-w', prefs.density === 'compact' ? '52px' : '56px');
-    root.style.setProperty('--queue-w', prefs.queueRail ? (prefs.density === 'compact' ? '270px' : '300px') : '0px');
+    root.style.setProperty('--rail-w', '0px');
+    root.style.setProperty('--queue-w', prefs.queueRail ? '300px' : '0px');
     root.style.setProperty('--player-h', prefs.density === 'compact' ? '58px' : '64px');
+    root.style.setProperty('--top-h', '60px');
   }, [prefs, mounted]);
 
   // Player tick
@@ -1346,88 +1515,127 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
   const onNext = useCallback(() => { setCurrentIdx(ci => (ci + 1) % tracks.length); setProgress(0); }, [tracks.length]);
   const onPrev = useCallback(() => { setCurrentIdx(ci => (ci - 1 + tracks.length) % tracks.length); setProgress(0); }, [tracks.length]);
 
+  // Seeds state
+  const [seedPlaying, setSeedPlaying] = useState(false);
+  const [seedCardIdx, setSeedCardIdx] = useState(0);
+  const onSeedSave = useCallback((idx: number) => {
+    setCurrentIdx(idx);
+    setPlaying(true);
+    setSeedCardIdx(ci => ci + 1);
+    setSeedPlaying(false);
+  }, []);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+      if (view === 'seeds') {
+        if (e.key === 'ArrowLeft')  { setSeedCardIdx(ci => ci + 1); setSeedPlaying(false); }
+        if (e.key === 'ArrowUp')    { onSeedSave(seedCardIdx % Math.max(tracks.length, 1)); }
+        if (e.key === ' ')          { e.preventDefault(); setSeedPlaying(p => !p); }
+        if (e.key === 'ArrowRight') { setSeedCardIdx(ci => Math.max(0, ci - 1)); }
+      } else {
+        if (e.key === ' ')         { e.preventDefault(); setPlaying(p => !p); }
+        if (e.key === 'ArrowRight') { onNext(); }
+        if (e.key === 'ArrowLeft')  { onPrev(); }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [view, seedCardIdx, tracks.length, onSeedSave, onNext, onPrev]);
+
   const track = tracks[currentIdx] ?? tracks[0];
-  const showQueue = prefs.queueRail && tracks.length > 0;
   const showDock = prefs.stickyDock && track;
 
-  // Grid columns: sidebar | main | [queue]
-  const colTemplate = showQueue ? 'var(--rail-w) 1fr var(--queue-w)' : 'var(--rail-w) 1fr';
-  // Grid rows: topbar | main | [dock]
+  // Seeds view renders its own full-height column layout (no queue rail, dock below)
+  const isSeeds = view === 'seeds';
+
+  // Grid: just topbar | main | dock (no sidebar, optional queue rail on non-seeds views)
+  const showQueue = prefs.queueRail && tracks.length > 0 && !isSeeds;
+  const colTemplate = showQueue ? '1fr var(--queue-w)' : '1fr';
   const rowTemplate = showDock ? 'var(--top-h) 1fr var(--player-h)' : 'var(--top-h) 1fr';
 
   const viewEl = (() => {
     switch (view) {
-      case 'home':     return <ViewHome data={data} prefs={prefs} setView={setView} currentIdx={currentIdx} onPickTrack={onPickTrack} />;
+      case 'me':       return <ViewMyPage data={data} onPickTrack={onPickTrack} currentIdx={currentIdx} />;
+      case 'seeds':    return <ViewSeeds data={data} seedPlaying={seedPlaying} setSeedPlaying={setSeedPlaying} seedCardIdx={seedCardIdx} onSave={onSeedSave} />;
       case 'radio':    return <ViewRadio data={data} onPickTrack={onPickTrack} />;
-      case 'tickets':  return <ViewTickets data={data} />;
-      case 'library':  return <ViewLibrary data={data} onPickTrack={onPickTrack} currentIdx={currentIdx} />;
-      case 'discover': return <ViewDiscover data={data} onPickTrack={onPickTrack} currentIdx={currentIdx} />;
       case 'studio':   return <ViewStudio data={data} />;
-      case 'settings': return <ViewSettings prefs={prefs} setPref={setPref} data={data} />;
-      default:         return <ViewHome data={data} prefs={prefs} setView={setView} currentIdx={currentIdx} onPickTrack={onPickTrack} />;
+      case 'tickets':  return <ViewTickets data={data} />;
+      case 'settings': return <ViewSettings prefs={prefs} setPref={setPref} data={data} onBack={() => navigateTo(prevView)} />;
+      default:         return <ViewMyPage data={data} onPickTrack={onPickTrack} currentIdx={currentIdx} />;
     }
   })();
 
-  // Suppress hydration mismatch for prefs-dependent layout
   if (!mounted) return null;
 
   return (
-    <div
-      className="wb-shell"
-      style={{
-        position: 'fixed', inset: 0, display: 'grid',
-        gridTemplateColumns: colTemplate,
-        gridTemplateRows: rowTemplate,
-        background: 'var(--bg)',
-        fontFamily: 'var(--f-b)',
-        color: 'var(--ink)',
-      }}
-    >
-      {/* Sidebar — spans all rows */}
-      <Sidebar
-        view={view}
-        setView={setView}
-        pinned={prefs.pinned}
-        initials={data.userInitials}
-        accentColor="#b983ff"
-      />
+    <>
+      <style>{`
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        @keyframes eq { 0%,100% { height: 3px; } 50% { height: 10px; } }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+        .wb-view-anim { animation: fadeIn .35s ease-out both; }
+      `}</style>
+      <div
+        className="wb-shell"
+        style={{
+          position: 'fixed', inset: 0, display: 'grid',
+          gridTemplateColumns: colTemplate,
+          gridTemplateRows: rowTemplate,
+          background: 'var(--bg)',
+          fontFamily: 'var(--f-b)',
+          color: 'var(--ink)',
+        }}
+      >
+        {/* Topbar with integrated tabs — spans all columns */}
+        <div style={{ gridColumn: '1 / -1', gridRow: 1 }}>
+          <AppTopbar
+            view={view}
+            setView={navigateTo}
+            listeningNow={data.listeningNow}
+            initials={data.userInitials}
+            userName={data.userName}
+            activeProfileTypes={data.activeProfileTypes}
+            onSettings={() => navigateTo('settings')}
+          />
+        </div>
 
-      {/* Topbar — spans cols 2+ */}
-      <div style={{ gridColumn: showQueue ? '2 / span 2' : '2', gridRow: 1 }}>
-        <Topbar
-          view={view}
-          listeningNow={data.listeningNow}
-          hypedToday={data.hypedToday}
-          showsTonight={data.showsTonight}
-        />
+        {/* Main content */}
+        <main style={{
+          gridColumn: 1, gridRow: 2,
+          overflowY: isSeeds ? 'hidden' : 'auto',
+          overflowX: 'hidden',
+          background: 'var(--bg)', minHeight: 0,
+          fontSize: `calc(14px * var(--density, 1))`,
+          position: 'relative',
+        }}>
+          {/* Radial glow at top */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 200, background: 'radial-gradient(ellipse at 50% -50%, rgba(255,80,41,.07), transparent 60%)', pointerEvents: 'none', zIndex: 0 }} />
+          <div key={view} className="wb-view-anim" style={{ position: 'relative', zIndex: 1 }}>
+            {viewEl}
+          </div>
+        </main>
+
+        {/* Queue rail (non-seeds views only) */}
+        {showQueue && (
+          <QueueRail tracks={tracks} currentIdx={currentIdx} onPick={onPickTrack} />
+        )}
+
+        {/* Player dock */}
+        {showDock && track && (
+          <PlayerDock
+            track={track}
+            playing={playing}
+            onToggle={() => setPlaying(p => !p)}
+            onNext={onNext}
+            onPrev={onPrev}
+            progress={progress}
+            setProgress={setProgress}
+          />
+        )}
       </div>
-
-      {/* Main content */}
-      <main style={{
-        gridColumn: 2, gridRow: 2,
-        overflowY: 'auto', background: 'var(--bg)', minHeight: 0,
-        fontSize: `calc(14px * var(--density, 1))`,
-      }}>
-        {viewEl}
-      </main>
-
-      {/* Queue rail */}
-      {showQueue && (
-        <QueueRail tracks={tracks} currentIdx={currentIdx} onPick={onPickTrack} />
-      )}
-
-      {/* Player dock */}
-      {showDock && track && (
-        <PlayerDock
-          track={track}
-          playing={playing}
-          onToggle={() => setPlaying(p => !p)}
-          onNext={onNext}
-          onPrev={onPrev}
-          progress={progress}
-          setProgress={setProgress}
-        />
-      )}
-    </div>
+    </>
   );
 }
