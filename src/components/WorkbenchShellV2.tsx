@@ -108,18 +108,20 @@ const TAB_ICONS: Record<string, React.ReactNode> = {
   tickets: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6a1.5 1.5 0 0 0 0 3v3h12V9a1.5 1.5 0 0 0 0-3V3H2v3Z"/><path d="M9 3v10" strokeDasharray="1.4 1.4"/></svg>,
 };
 
-const TABS: { k: View; label: string; badge?: string }[] = [
+const TABS: { k: View; label: string }[] = [
   { k: 'me',       label: 'My Page' },
-  { k: 'seeds',    label: 'Seeds',     badge: '12' },
-  { k: 'radio',    label: 'Radio',     badge: 'LIVE' },
+  { k: 'seeds',    label: 'Seeds' },
+  { k: 'radio',    label: 'Radio' },
   { k: 'studio',   label: 'Studio' },
-  { k: 'tickets',  label: 'Ticketing', badge: '3' },
+  { k: 'tickets',  label: 'Ticketing' },
 ];
 
-function AppTopbar({ view, setView, listeningNow, initials, userName, activeProfileTypes, onSettings }: {
+function AppTopbar({ view, setView, listeningNow, initials, userName, activeProfileTypes, onSettings, badges, notifCount }: {
   view: View; setView: (v: View) => void;
   listeningNow: number; initials: string; userName: string;
   activeProfileTypes: string[]; onSettings: () => void;
+  badges: Record<string, string | undefined>;
+  notifCount: number;
 }) {
   return (
     <header style={{
@@ -166,14 +168,14 @@ function AppTopbar({ view, setView, listeningNow, initials, userName, activeProf
             >
               {TAB_ICONS[tab.k]}
               {tab.label}
-              {tab.badge && (
+              {badges[tab.k] && (
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                   minWidth: 18, height: 18, padding: '0 5px', borderRadius: 99,
                   background: active ? 'rgba(255,80,41,.16)' : 'var(--bg-3)',
                   fontFamily: 'var(--f-m)', fontSize: 9,
                   color: active ? 'var(--accent)' : 'var(--ink-2)', fontWeight: 700, letterSpacing: '.04em',
-                }}>{tab.badge}</span>
+                }}>{badges[tab.k]}</span>
               )}
               {active && (
                 <span style={{
@@ -193,6 +195,25 @@ function AppTopbar({ view, setView, listeningNow, initials, userName, activeProf
           <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22e5d4', boxShadow: '0 0 8px #22e5d4', animation: 'pulse 1.8s infinite', display: 'inline-block' }} />
           {listeningNow.toLocaleString()} listening
         </span>
+        <button style={{
+          position: 'relative', width: 32, height: 32, borderRadius: 7,
+          background: 'none', border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: 'var(--ink-2)',
+        }}>
+          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          {notifCount > 0 && (
+            <span style={{
+              position: 'absolute', top: 4, right: 4,
+              minWidth: 14, height: 14, borderRadius: 99, padding: '0 3px',
+              background: '#ff3e9a', color: '#fff',
+              fontFamily: 'var(--f-m)', fontSize: 8, fontWeight: 700,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>{notifCount > 9 ? '9+' : String(notifCount)}</span>
+          )}
+        </button>
         <button onClick={onSettings} style={{
           display: 'flex', alignItems: 'center', gap: 10, padding: '5px 10px 5px 5px',
           borderRadius: 99, background: 'var(--bg-3)', border: '1px solid var(--line-2)',
@@ -492,6 +513,24 @@ function ViewSeeds({
 
         {/* Center col — card stack + controls */}
         <div>
+          {data.tracks.length === 0 ? (
+            <div style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              height: 380, gap: 16, textAlign: 'center'
+            }}>
+              <div style={{ fontSize: 48 }}>🌱</div>
+              <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 22, color: 'var(--ink)' }}>No seeds yet</div>
+              <div style={{ fontFamily: 'var(--f-b)', fontSize: 14, color: 'var(--ink-2)', maxWidth: '28ch', lineHeight: 1.5 }}>
+                No new uploads in your area. Check back soon or widen your city filter.
+              </div>
+              <button style={{
+                marginTop: 8, padding: '10px 20px', borderRadius: 8,
+                fontFamily: 'var(--f-m)', fontSize: 11, fontWeight: 700, letterSpacing: '.08em',
+                textTransform: 'uppercase', cursor: 'pointer', border: 'none', color: '#fff',
+                background: 'linear-gradient(135deg, var(--accent), var(--pink))'
+              }}>Widen Filter</button>
+            </div>
+          ) : (<>
           <div style={{ position: 'relative', width: '100%', aspectRatio: '380/520', margin: '0 auto' }}>
             {/* behind-2 */}
             <div style={{ position: 'absolute', inset: 0, borderRadius: 22, overflow: 'hidden', boxShadow: '0 30px 60px -10px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.06)', transformOrigin: 'center bottom', transform: 'translateY(26px) scale(.88)', opacity: .28, zIndex: 0, background: 'linear-gradient(135deg, #22e5d4, #7fb3ff)' }} />
@@ -552,6 +591,7 @@ function ViewSeeds({
             </button>
           </div>
           <div style={{ textAlign: 'center', fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '.14em', marginTop: 14, textTransform: 'uppercase' }}>← Skip · ↑ Save · → Hype · Space Play/Pause</div>
+          </>)}
         </div>
 
         {/* Right col */}
@@ -1316,6 +1356,29 @@ function ViewSettings({ prefs, setPref, data, onBack }: {
               </button>
             ))}
           </div>
+          {/* Accent preview */}
+          <div style={{
+            marginTop: 14, background: 'var(--bg-3)', border: '1px solid var(--line)',
+            borderRadius: 10, padding: 14, display: 'flex', alignItems: 'center', gap: 14
+          }}>
+            <div style={{
+              width: 44, height: 44, borderRadius: 8,
+              background: `linear-gradient(135deg, ${prefs.accent}, var(--pink))`,
+              flexShrink: 0
+            }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: 'var(--f-b)', fontWeight: 600, fontSize: 13, color: 'var(--ink)' }}>Preview</div>
+              <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: prefs.accent, letterSpacing: '.08em', marginTop: 3 }}>
+                ♥ 1,247 HYPEs this week
+              </div>
+            </div>
+            <button style={{
+              padding: '7px 14px', borderRadius: 7, fontFamily: 'var(--f-m)', fontSize: 11,
+              fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase',
+              border: 'none', cursor: 'pointer', color: '#fff',
+              background: `linear-gradient(135deg, ${prefs.accent}, var(--pink))`
+            }}>HYPE</button>
+          </div>
         </section>
 
         {/* Density */}
@@ -1518,11 +1581,32 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
   // Seeds state
   const [seedPlaying, setSeedPlaying] = useState(false);
   const [seedCardIdx, setSeedCardIdx] = useState(0);
+
+  // Toast
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showToast = useCallback((msg: string) => {
+    setToast(msg);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setToast(null), 3000);
+  }, []);
+
   const onSeedSave = useCallback((idx: number) => {
+    const saved = tracks[idx];
     setCurrentIdx(idx);
     setPlaying(true);
     setSeedCardIdx(ci => ci + 1);
     setSeedPlaying(false);
+    if (saved) showToast(`"${saved.title}" saved to queue`);
+  }, [tracks, showToast]);
+
+  // Notification count
+  const [notifCount, setNotifCount] = useState(0);
+  useEffect(() => {
+    fetch('/api/notifications')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.notifications) setNotifCount(d.notifications.length); })
+      .catch(() => {});
   }, []);
 
   // Keyboard navigation
@@ -1599,6 +1683,12 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
             userName={data.userName}
             activeProfileTypes={data.activeProfileTypes}
             onSettings={() => navigateTo('settings')}
+            badges={{
+              seeds: data.tracks.length > 0 ? String(data.tracks.length) : undefined,
+              radio: data.radioShows.some(r => r.live) ? 'LIVE' : undefined,
+              tickets: data.tickets.length > 0 ? String(data.tickets.length) : undefined,
+            }}
+            notifCount={notifCount}
           />
         </div>
 
@@ -1636,6 +1726,24 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
           />
         )}
       </div>
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)',
+          background: 'rgba(20,20,20,.95)', backdropFilter: 'blur(12px)',
+          border: '1px solid var(--line-2)', borderRadius: 10,
+          padding: '10px 18px', fontFamily: 'var(--f-m)', fontSize: 12,
+          color: 'var(--ink)', letterSpacing: '.04em', zIndex: 9999,
+          boxShadow: '0 4px 24px rgba(0,0,0,.4)',
+          animation: 'fadeIn .2s ease-out both',
+          display: 'flex', alignItems: 'center', gap: 10,
+        }}>
+          <span style={{ color: '#22e5d4' }}>✓</span> {toast}
+          <button onClick={() => { setPlaying(false); setCurrentIdx(0); setToast(null); }}
+            style={{ marginLeft: 8, fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '.06em' }}>
+            Undo
+          </button>
+        </div>
+      )}
     </>
   );
 }
