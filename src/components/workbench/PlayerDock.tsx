@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import type { WbTrack } from '@/components/WorkbenchShell';
 import { IcHeart, IcShuffle, IcSkipP, IcPause, IcPlay, IcSkipN, IcRepeat, IcQueue, IcVol } from './icons';
 import { fmtTime } from './types';
@@ -10,6 +10,9 @@ export function PlayerDock({ track, playing, onToggle, onNext, onPrev, progress,
   onNext: () => void; onPrev: () => void;
   progress: number; setProgress: (p: number) => void;
 }) {
+  const [volume, setVolume] = useState(1);
+  const [muted, setMuted] = useState(false);
+
   return (
     <footer style={{
       display: 'grid', gridTemplateColumns: '340px 1fr 340px', alignItems: 'center', gap: 24, padding: '0 22px',
@@ -71,9 +74,25 @@ export function PlayerDock({ track, playing, onToggle, onNext, onPrev, progress,
       {/* Right: 340px — queue + vol */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 14 }}>
         <button title="Queue" aria-label="Queue" style={{ width: 32, height: 32, borderRadius: 7, color: 'var(--ink-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}><IcQueue s={14} /></button>
-        <button title="Volume" aria-label="Volume" style={{ width: 32, height: 32, borderRadius: 7, color: 'var(--ink-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}><IcVol s={14} /></button>
-        <div style={{ width: 80, height: 4, background: 'rgba(255,255,255,.06)', borderRadius: 99, position: 'relative' }}>
-          <div style={{ position: 'absolute', inset: 0, width: '65%', background: 'var(--ink-2)', borderRadius: 99 }} />
+        {/* Volume */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button
+            aria-label={muted ? 'Unmute' : 'Mute'}
+            onClick={() => setMuted(m => !m)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: muted ? 'var(--ink-3)' : 'var(--ink-2)', display: 'flex', alignItems: 'center', padding: 4 }}
+          >
+            <IcVol s={16} />
+          </button>
+          <div style={{ position: 'relative', width: 72, height: 3, background: 'var(--bg-4)', borderRadius: 99, cursor: 'pointer' }}
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              const v = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+              setVolume(v);
+              setMuted(false);
+            }}
+          >
+            <div style={{ height: '100%', width: `${(muted ? 0 : volume) * 100}%`, background: 'var(--accent)', borderRadius: 99 }} />
+          </div>
         </div>
       </div>
     </footer>
