@@ -1020,3 +1020,25 @@ model FeatureRequest {
   @@index([status, votes])
   @@index([createdAt])
 }
+
+model AuxQueue {
+  id        String     @id @default(cuid())
+  userId    String
+  name      String
+  slug      String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  items     AuxItem[]
+
+  @@index([userId])
+}
+
+model AuxItem {
+  id       String   @id @default(cuid())
+  queueId  String
+  mediaId  String
+  position Int
+  queue    AuxQueue @relation(fields: [queueId], references: [id], onDelete: Cascade)
+
+  @@index([queueId])
+}
