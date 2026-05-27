@@ -102,6 +102,11 @@ export const SeedsGamifiedView = memo(function SeedsGamifiedView({ seeds: apiSee
   const [comboMsg, setComboMsg] = useState<{ text: string; sub: string } | null>(null);
   const [sessionStart] = useState(Date.now);
   const [sessionTime, setSessionTime] = useState('0:00');
+  const [dockPlaying, setDockPlaying] = useState(true);
+  const [dockProgress, setDockProgress] = useState(0.6); // 0–1
+  const [vuHeights, setVuHeights] = useState(() => Array.from({ length: 8 }, () => 6));
+  const vuFrameRef = useRef<number>(0);
+  const vuTRef = useRef(0);
   const popIdRef = useRef(0);
 
   // Session timer
@@ -112,6 +117,24 @@ export const SeedsGamifiedView = memo(function SeedsGamifiedView({ seeds: apiSee
     }, 1000);
     return () => clearInterval(t);
   }, [sessionStart]);
+
+  // VU meter animation
+  useEffect(() => {
+    function tick(t: number) {
+      vuTRef.current = t;
+      setVuHeights(
+        Array.from({ length: 8 }, (_, i) => {
+          const h = 6 + Math.abs(
+            Math.sin(t / 180 + i * 1.2) + Math.sin(t / 110 + i * 0.6) + (Math.random() * 0.5)
+          ) * 8;
+          return Math.min(22, h);
+        })
+      );
+      vuFrameRef.current = requestAnimationFrame(tick);
+    }
+    vuFrameRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(vuFrameRef.current);
+  }, []);
 
   const seed = deck[idx % deck.length];
   const behind1 = deck[(idx + 1) % deck.length];
@@ -497,6 +520,73 @@ export const SeedsGamifiedView = memo(function SeedsGamifiedView({ seeds: apiSee
           <span style={{ fontSize: 16, lineHeight: 1 }}>🔥</span>
           <span style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 16, color: C.accent, letterSpacing: '-.01em' }}>12</span>
           <span style={{ fontFamily: 'var(--f-m)', fontSize: 8, color: 'var(--wb-ink-2)', letterSpacing: '.14em', fontWeight: 700 }}>DAY STREAK</span>
+        </div>
+      </div>
+
+      {/* Music player dock */}
+      <div style={{ flexShrink: 0, display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', padding: '0 18px', height: 72, borderTop: '1px solid var(--wb-line)', background: 'var(--wb-bg-2)', gap: 14 }}>
+        {/* Left: art + title */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 11, minWidth: 0 }}>
+          <div style={{ width: 42, height: 42, borderRadius: 8, background: seed.gradient, flexShrink: 0, boxShadow: '0 2px 10px rgba(0,0,0,.4)' }} />
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, letterSpacing: '-.005em', color: 'var(--wb-ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{seed.title}</div>
+            <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--wb-ink-2)', letterSpacing: '.04em', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{seed.artist} · seed · 0:18</div>
+          </div>
+        </div>
+
+        {/* Center: controls + progress */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 260 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {/* Shuffle */}
+            <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--wb-ink-3)', padding: 4, display: 'flex', alignItems: 'center' }} title="Shuffle">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M16 3l5 5-5 5M21 8H10a5 5 0 100 10h2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </button>
+            {/* Prev */}
+            <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--wb-ink-2)', padding: 4, display: 'flex', alignItems: 'center' }} title="Previous">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 4v16l-12-8z"/><rect x="5" y="4" width="2" height="16"/></svg>
+            </button>
+            {/* Play/Pause */}
+            <button
+              onClick={() => setDockPlaying(p => !p)}
+              style={{ width: 34, height: 34, borderRadius: 99, background: 'var(--wb-ink)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--wb-bg)', flexShrink: 0 }}
+              title={dockPlaying ? 'Pause' : 'Play'}
+            >
+              {dockPlaying
+                ? <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>
+                : <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M5 4l14 8-14 8z"/></svg>
+              }
+            </button>
+            {/* Next */}
+            <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--wb-ink-2)', padding: 4, display: 'flex', alignItems: 'center' }} title="Next">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M5 4l12 8L5 20z"/><rect x="17" y="4" width="2" height="16"/></svg>
+            </button>
+            {/* Repeat */}
+            <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--wb-ink-3)', padding: 4, display: 'flex', alignItems: 'center' }} title="Repeat">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 0114-7M21 12a9 9 0 01-14 7M21 5v6h-6M3 19v-6h6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </button>
+          </div>
+          {/* Progress bar */}
+          <div
+            style={{ width: '100%', height: 4, background: 'var(--wb-bg-3)', borderRadius: 99, overflow: 'visible', cursor: 'pointer', position: 'relative' }}
+            onClick={e => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setDockProgress((e.clientX - rect.left) / rect.width);
+            }}
+          >
+            <div style={{ height: '100%', background: `linear-gradient(90deg, ${C.amber}, ${C.accent})`, width: `${dockProgress * 100}%`, borderRadius: 99, transition: 'width .2s' }} />
+          </div>
+        </div>
+
+        {/* Right: time + VU */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'flex-end' }}>
+          <span style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--wb-ink-3)', letterSpacing: '.06em', whiteSpace: 'nowrap' }}>
+            SEED PREVIEW · <span style={{ color: 'var(--wb-ink)', fontWeight: 600 }}>0:18 / 0:30</span>
+          </span>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 22 }}>
+            {vuHeights.map((h, i) => (
+              <div key={i} style={{ width: 3, height: h, borderRadius: 99, background: C.accent, transition: 'height .05s', opacity: dockPlaying ? 1 : 0.3 }} />
+            ))}
+          </div>
         </div>
       </div>
 
