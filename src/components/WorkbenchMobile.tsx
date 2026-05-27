@@ -54,7 +54,7 @@ function WMPill({ children, tone = 'soft', style }: { children: React.ReactNode;
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
       padding: '3px 7px', borderRadius: 99,
-      fontFamily: T.fm, fontSize: 9, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase',
+      fontFamily: T.fm, fontSize: 12, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase',
       background: t.bg, color: t.fg, border: `1px solid ${t.bd}`, ...style,
     }}>{children}</span>
   );
@@ -64,7 +64,7 @@ function WMPill({ children, tone = 'soft', style }: { children: React.ReactNode;
 function WMChip({ children, accent = false, style }: { children: React.ReactNode; accent?: boolean; style?: React.CSSProperties }) {
   return (
     <button style={{
-      padding: '7px 11px', borderRadius: 7, fontFamily: T.fm, fontSize: 10, fontWeight: 600,
+      padding: '7px 11px', borderRadius: 7, fontFamily: T.fm, fontSize: 12, fontWeight: 600,
       letterSpacing: '.08em', textTransform: 'uppercase', cursor: 'pointer',
       background: accent ? T.ink : 'transparent', color: accent ? T.bg : T.ink2,
       border: accent ? `1px solid ${T.ink}` : `1px solid ${T.line2}`,
@@ -79,7 +79,7 @@ function WMViewHead({ eyebrow, title, italic, sub, actions }: {
 }) {
   return (
     <div style={{ padding: '18px 18px 14px', borderBottom: `1px solid ${T.line}`, marginBottom: 16 }}>
-      <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, letterSpacing: '.2em', fontWeight: 700, textTransform: 'uppercase', marginBottom: 6 }}>{eyebrow}</div>
+      <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.2em', fontWeight: 700, textTransform: 'uppercase', marginBottom: 6 }}>{eyebrow}</div>
       <h1 style={{ fontFamily: T.fd, fontWeight: 800, letterSpacing: '-.025em', lineHeight: 1, fontSize: 28, margin: 0 }}>
         {title}{italic && <em style={{ fontFamily: T.fs, fontStyle: 'italic', fontWeight: 400, color: T.ink2 }}> {italic}</em>}
       </h1>
@@ -109,6 +109,7 @@ const eqCss = `
 .wm-eq-bar:nth-child(3){animation:wm-eq3 1.3s infinite}
 .wm-pulse{animation:wm-pulse 1.6s infinite}
 .wm-scroll::-webkit-scrollbar{display:none}
+*:focus-visible { outline: 2px solid var(--accent, #ff5029); outline-offset: 3px; border-radius: 4px; }
 `;
 
 // ─── Top bar ─────────────────────────────────────────────────
@@ -138,29 +139,29 @@ function WMTopBar({ tab, listeningNow, userName, initials }: {
           <span style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 15, letterSpacing: '-.03em', lineHeight: 1, display: 'flex', alignItems: 'baseline', gap: 1, color: T.ink }}>
             iHYPE<span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', background: T.accent, transform: 'translateY(-7px)' }} />
           </span>
-          <span style={{ display: 'block', fontFamily: T.fm, fontSize: 8, color: T.ink3, letterSpacing: '.18em', marginTop: 2, textTransform: 'uppercase' }}>
+          <span style={{ display: 'block', fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.18em', marginTop: 2, textTransform: 'uppercase' }}>
             {titles[tab]}
           </span>
         </span>
       </div>
 
-      <div style={{ justifySelf: 'center', display: 'flex', alignItems: 'center', gap: 6, fontFamily: T.fm, fontSize: 10, color: T.ink2 }}>
+      <div style={{ justifySelf: 'center', display: 'flex', alignItems: 'center', gap: 6, fontFamily: T.fm, fontSize: 12, color: T.ink2 }}>
         <span className="wm-pulse" style={{ width: 6, height: 6, borderRadius: '50%', background: T.teal, boxShadow: `0 0 8px ${T.teal}`, display: 'inline-block' }} />
         {listeningNow.toLocaleString()}
       </div>
 
       <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-        <button style={{ width: 32, height: 32, borderRadius: 8, background: 'transparent', border: `1px solid ${T.line}`, color: T.ink2, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
+        <button aria-label="Search" style={{ width: 44, height: 44, minWidth: 44, minHeight: 44, borderRadius: 8, background: 'transparent', border: `1px solid ${T.line}`, color: T.ink2, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
           <span style={{ width: 14, height: 14 }}>{WMIcon.search}</span>
         </button>
-        <button style={{ width: 32, height: 32, borderRadius: 8, background: 'transparent', border: `1px solid ${T.line}`, color: T.ink2, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, position: 'relative' }}>
+        <button aria-label="Notifications" style={{ width: 44, height: 44, minWidth: 44, minHeight: 44, borderRadius: 8, background: 'transparent', border: `1px solid ${T.line}`, color: T.ink2, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, position: 'relative' }}>
           <span style={{ width: 14, height: 14 }}>{WMIcon.bell}</span>
           <span style={{ position: 'absolute', top: 5, right: 5, width: 6, height: 6, borderRadius: '50%', background: T.accent }} />
         </button>
         <span style={{
           width: 30, height: 30, borderRadius: '50%',
           background: `linear-gradient(135deg,${T.pink},${T.accent})`,
-          color: T.bg, fontFamily: T.fd, fontWeight: 800, fontSize: 11,
+          color: T.bg, fontFamily: T.fd, fontWeight: 800, fontSize: 13,
           display: 'flex', alignItems: 'center', justifyContent: 'center', letterSpacing: '-.02em',
         }}>{initials}</span>
       </div>
@@ -193,18 +194,19 @@ function WMMiniPlayer({ track, playing, onToggle, progress }: {
       </div>
       <div style={{ minWidth: 0 }}>
         <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 13, letterSpacing: '-.005em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: T.ink }}>{track.title}</div>
-        <div style={{ fontFamily: T.fm, fontSize: 10, color: T.ink2, marginTop: 2, letterSpacing: '.04em' }}>{track.artistName} <span style={{ color: T.ink4 }}>·</span> {track.album}</div>
+        <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink2, marginTop: 2, letterSpacing: '.04em' }}>{track.artistName} <span style={{ color: T.ink4 }}>·</span> {track.album}</div>
         <div style={{ marginTop: 5, height: 2, borderRadius: 99, background: 'rgba(255,255,255,.06)', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', inset: 0, width: `${progress * 100}%`, background: `linear-gradient(90deg,${T.accent},${T.pink})`, borderRadius: 99 }} />
         </div>
       </div>
-      <button style={{
+      <button aria-label="Hype this track" style={{
         display: 'flex', alignItems: 'center', gap: 4, padding: '5px 9px',
         border: `1px solid rgba(255,62,154,.3)`, borderRadius: 99, color: T.pink,
-        fontFamily: T.fm, fontSize: 10, fontWeight: 600, background: 'rgba(255,62,154,.05)', cursor: 'pointer',
+        fontFamily: T.fm, fontSize: 12, fontWeight: 600, background: 'rgba(255,62,154,.05)', cursor: 'pointer',
+        minHeight: 44, minWidth: 44,
       }}>♥ {track.hypeCount}</button>
-      <button onClick={onToggle} style={{
-        width: 36, height: 36, borderRadius: '50%', background: T.ink, color: T.bg,
+      <button onClick={onToggle} aria-label={playing ? "Pause" : "Play"} style={{
+        width: 44, height: 44, minWidth: 44, minHeight: 44, borderRadius: '50%', background: T.ink, color: T.bg,
         border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
       }}>
         {playing
@@ -225,22 +227,23 @@ function WMBottomTabs({ tab, onTab }: { tab: MobileTab; onTab: (t: MobileTab) =>
     { id: 'tick',   label: 'Tickets', icon: WMIcon.tick,   badge: '3' },
   ];
   return (
-    <nav style={{ display: 'flex', background: T.bg2, borderTop: `1px solid ${T.line}`, padding: '4px 6px 8px', gap: 2, flexShrink: 0 }}>
+    <nav role="navigation" aria-label="Main navigation" style={{ display: 'flex', background: T.bg2, borderTop: `1px solid ${T.line}`, padding: '4px 6px 8px', gap: 2, flexShrink: 0 }}>
       {items.map(it => {
         const on = tab === it.id;
         return (
-          <button key={it.id} onClick={() => onTab(it.id)} style={{
+          <button key={it.id} aria-label={it.label} onClick={() => onTab(it.id)} style={{
             flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
             background: 'none', border: 'none', color: on ? T.ink : T.ink3,
-            fontFamily: T.fb, fontSize: 10, fontWeight: 600, letterSpacing: '-.005em',
+            fontFamily: T.fb, fontSize: 12, fontWeight: 600, letterSpacing: '-.005em',
             padding: '6px 0 4px', cursor: 'pointer', position: 'relative',
+            minHeight: 44, minWidth: 44,
           }}>
             {on && <span style={{ position: 'absolute', top: 0, width: 24, height: 2, borderRadius: '0 0 2px 2px', background: T.accent, boxShadow: `0 0 8px ${T.accent}` }} />}
             <span style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
               {it.icon}
               {it.badge && (
                 <span style={{
-                  position: 'absolute', top: -4, right: -9, fontSize: 7, fontWeight: 800,
+                  position: 'absolute', top: -4, right: -9, fontSize: 12, fontWeight: 800,
                   padding: '1px 4px', borderRadius: 99, letterSpacing: '.06em',
                   background: it.badge === 'LIVE' ? 'rgba(255,80,41,.18)' : T.bg3,
                   color: it.badge === 'LIVE' ? T.accent : T.ink2,
@@ -283,7 +286,7 @@ function ScreenMe({ data }: { data: WorkbenchData }) {
                 <WMPill tone="amber">⚡ LV 14</WMPill>
               </div>
               <h1 style={{ fontFamily: T.fd, fontWeight: 800, letterSpacing: '-.025em', lineHeight: .95, fontSize: 30, margin: 0, color: T.ink }}>{data.userName}</h1>
-              <p style={{ fontFamily: T.fm, fontSize: 10, color: T.ink2, letterSpacing: '.08em', marginTop: 6 }}>@{data.userName.toLowerCase().replace(/\s/g, '.')} · {data.city}</p>
+              <p style={{ fontFamily: T.fm, fontSize: 12, color: T.ink2, letterSpacing: '.08em', marginTop: 6 }}>@{data.userName.toLowerCase().replace(/\s/g, '.')} · {data.city}</p>
             </div>
           </div>
           <p style={{ fontFamily: T.fs, fontStyle: 'italic', fontSize: 14, color: T.ink2, marginTop: 14, lineHeight: 1.4, position: 'relative', zIndex: 2 }}>
@@ -298,7 +301,7 @@ function ScreenMe({ data }: { data: WorkbenchData }) {
             ].map((s, i) => (
               <div key={i}>
                 <div style={{ fontFamily: T.fd, fontWeight: 800, letterSpacing: '-.025em', fontSize: 18, color: s.accent ? T.accent : T.ink }}>{s.v}</div>
-                <div style={{ fontFamily: T.fm, fontSize: 8, color: T.ink3, letterSpacing: '.14em', textTransform: 'uppercase', marginTop: 3 }}>{s.k}</div>
+                <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.14em', textTransform: 'uppercase', marginTop: 3 }}>{s.k}</div>
               </div>
             ))}
           </div>
@@ -309,7 +312,7 @@ function ScreenMe({ data }: { data: WorkbenchData }) {
       <div style={{ padding: '16px 0 6px' }}>
         <div style={{ padding: '0 18px', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <div style={{ fontFamily: T.fd, fontWeight: 700, letterSpacing: '-.01em', fontSize: 13, color: T.ink }}>Pulse</div>
-          <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, letterSpacing: '.12em', textTransform: 'uppercase' }}>this week</div>
+          <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.12em', textTransform: 'uppercase' }}>this week</div>
         </div>
         <div style={{ display: 'flex', gap: 10, padding: '0 18px', overflowX: 'auto', scrollbarWidth: 'none' }}>
           {[
@@ -319,9 +322,9 @@ function ScreenMe({ data }: { data: WorkbenchData }) {
             { k: 'Next show',     v: 'Jun 18', d: 'Empty Bottle', c: T.pink },
           ].map((t, i) => (
             <div key={i} style={{ flex: '0 0 142px', background: T.bg2, border: `1px solid ${T.line}`, borderRadius: 10, padding: '12px 13px' }}>
-              <div style={{ fontFamily: T.fm, fontSize: 8, color: T.ink3, letterSpacing: '.14em', textTransform: 'uppercase' }}>{t.k}</div>
+              <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.14em', textTransform: 'uppercase' }}>{t.k}</div>
               <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 22, letterSpacing: '-.025em', marginTop: 5, color: t.c }}>{t.v}</div>
-              <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink2, marginTop: 3, letterSpacing: '.04em' }}>{t.d}</div>
+              <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink2, marginTop: 3, letterSpacing: '.04em' }}>{t.d}</div>
             </div>
           ))}
         </div>
@@ -332,7 +335,7 @@ function ScreenMe({ data }: { data: WorkbenchData }) {
         <WMCard>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <div style={{ fontFamily: T.fd, fontWeight: 700, letterSpacing: '-.01em', fontSize: 14, color: T.ink }}>Top 5 — this week</div>
-            <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, letterSpacing: '.1em', textTransform: 'uppercase' }}>Sundays</div>
+            <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.1em', textTransform: 'uppercase' }}>Sundays</div>
           </div>
           {data.tracks.slice(0, 5).map((t, i) => (
             <div key={t.id} style={{ display: 'grid', gridTemplateColumns: '18px 34px 1fr auto', gap: 10, alignItems: 'center' }}>
@@ -340,9 +343,9 @@ function ScreenMe({ data }: { data: WorkbenchData }) {
               <span style={{ width: 34, height: 34, borderRadius: 5, background: `linear-gradient(135deg,${t.color},${t.color}80)`, display: 'block' }} />
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontFamily: T.fb, fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: T.ink }}>{t.title}</div>
-                <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, letterSpacing: '.04em', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.artistName} · {t.album}</div>
+                <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.04em', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.artistName} · {t.album}</div>
               </div>
-              <span style={{ fontFamily: T.fm, fontSize: 10, color: T.pink, fontWeight: 600, whiteSpace: 'nowrap' }}>♥ {t.hypeCount}</span>
+              <span style={{ fontFamily: T.fm, fontSize: 12, color: T.pink, fontWeight: 600, whiteSpace: 'nowrap' }}>♥ {t.hypeCount}</span>
             </div>
           ))}
         </WMCard>
@@ -353,7 +356,7 @@ function ScreenMe({ data }: { data: WorkbenchData }) {
         <WMCard>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <div style={{ fontFamily: T.fd, fontWeight: 700, letterSpacing: '-.01em', fontSize: 14, color: T.ink }}>Recent activity</div>
-            <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, letterSpacing: '.1em', textTransform: 'uppercase' }}>24h</div>
+            <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.1em', textTransform: 'uppercase' }}>24h</div>
           </div>
           {data.activity.slice(0, 5).map((a, i, arr) => {
             const dotColors: Record<string, string> = { hype: T.pink, show: T.teal, radio: T.pink, payout: T.amber };
@@ -365,11 +368,11 @@ function ScreenMe({ data }: { data: WorkbenchData }) {
                   width: 26, height: 26, borderRadius: 6, flexShrink: 0,
                   background: `${c}22`, color: c,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontFamily: T.fm, fontSize: 11, fontWeight: 700,
+                  fontFamily: T.fm, fontSize: 13, fontWeight: 700,
                 }}>{ic[a.kind] ?? '↗'}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontFamily: T.fb, fontSize: 12, color: T.ink, lineHeight: 1.35 }}>{a.text}</div>
-                  <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, letterSpacing: '.06em', marginTop: 2 }}>{a.time}</div>
+                  <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.06em', marginTop: 2 }}>{a.time}</div>
                 </div>
               </div>
             );
@@ -460,7 +463,7 @@ function ScreenSeeds({ data }: { data: WorkbenchData }) {
               { k: 'XP',       v: '+42',  c: T.amber },
             ].map((s, i) => (
               <div key={i}>
-                <div style={{ fontFamily: T.fm, fontSize: 8, color: T.ink3, letterSpacing: '.12em', textTransform: 'uppercase' }}>{s.k}</div>
+                <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.12em', textTransform: 'uppercase' }}>{s.k}</div>
                 <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 14, color: s.c, marginTop: 2 }}>{s.v}</div>
               </div>
             ))}
@@ -533,10 +536,10 @@ function ScreenSeeds({ data }: { data: WorkbenchData }) {
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(0,0,0,.8) 100%)', zIndex: 2 }} />
               {/* tags */}
               <div style={{ position: 'absolute', top: 14, left: 14, right: 14, display: 'flex', justifyContent: 'space-between', zIndex: 3 }}>
-                <span style={{ padding: '4px 8px', borderRadius: 99, background: 'rgba(0,0,0,.55)', fontFamily: T.fm, fontSize: 9, letterSpacing: '.14em', fontWeight: 700, color: '#fff', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ padding: '4px 8px', borderRadius: 99, background: 'rgba(0,0,0,.55)', fontFamily: T.fm, fontSize: 12, letterSpacing: '.14em', fontWeight: 700, color: '#fff', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                   <span style={{ width: 5, height: 5, borderRadius: '50%', background: T.accent, display: 'inline-block' }} />SEED · 22s
                 </span>
-                <span style={{ padding: '4px 8px', borderRadius: 99, background: 'rgba(255,255,255,.18)', fontFamily: T.fm, fontSize: 9, letterSpacing: '.14em', fontWeight: 700, color: '#fff' }}>CHICAGO</span>
+                <span style={{ padding: '4px 8px', borderRadius: 99, background: 'rgba(255,255,255,.18)', fontFamily: T.fm, fontSize: 12, letterSpacing: '.14em', fontWeight: 700, color: '#fff' }}>CHICAGO</span>
               </div>
               {/* waveform */}
               <div style={{ position: 'absolute', bottom: 144, left: 18, right: 18, height: 30, display: 'flex', alignItems: 'flex-end', gap: 2, zIndex: 3 }}>
@@ -547,11 +550,11 @@ function ScreenSeeds({ data }: { data: WorkbenchData }) {
               {/* body */}
               <div style={{ position: 'absolute', bottom: 18, left: 16, right: 16, zIndex: 3, color: '#fff' }}>
                 <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 26, letterSpacing: '-.025em', textShadow: '0 2px 12px rgba(0,0,0,.4)' }}>{front.title}</div>
-                <div style={{ fontFamily: T.fm, fontSize: 10, color: 'rgba(255,255,255,.8)', letterSpacing: '.1em', marginTop: 4, textTransform: 'uppercase' }}>{front.artistName} · {front.album}</div>
+                <div style={{ fontFamily: T.fm, fontSize: 12, color: 'rgba(255,255,255,.8)', letterSpacing: '.1em', marginTop: 4, textTransform: 'uppercase' }}>{front.artistName} · {front.album}</div>
                 <div style={{ fontFamily: T.fs, fontStyle: 'italic', fontSize: 13, color: 'rgba(255,255,255,.9)', marginTop: 10, lineHeight: 1.3, borderLeft: `2px solid ${T.accent}`, paddingLeft: 8 }}>
                   "It only really lands at 1:48 — that&apos;s the seed."
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, fontFamily: T.fm, fontSize: 9, letterSpacing: '.08em', color: 'rgba(255,255,255,.7)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, fontFamily: T.fm, fontSize: 12, letterSpacing: '.08em', color: 'rgba(255,255,255,.7)' }}>
                   <span>♥ {front.hypeCount} hype</span>
                   <span>48 saves · 21 skips</span>
                 </div>
@@ -576,7 +579,7 @@ function ScreenSeeds({ data }: { data: WorkbenchData }) {
             }}>{b.label}</button>
           ))}
         </div>
-        <div style={{ textAlign: 'center', fontFamily: T.fm, fontSize: 9, color: T.ink3, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: 18 }}>
+        <div style={{ textAlign: 'center', fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: 18 }}>
           swipe · ↑ save · → hype
         </div>
 
@@ -591,19 +594,19 @@ function ScreenSeeds({ data }: { data: WorkbenchData }) {
               <span key={i} style={{ flex: 1, height: 6, borderRadius: 99, background: on ? T.accent : T.bg3, display: 'block' }} />
             ))}
           </div>
-          <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, letterSpacing: '.06em' }}>3 / 5 · earn Seed Curator badge</div>
+          <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.06em' }}>3 / 5 · earn Seed Curator badge</div>
         </WMCard>
 
         {/* Up next */}
         <div style={{ marginBottom: 14 }}>
-          <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, letterSpacing: '.2em', fontWeight: 700, textTransform: 'uppercase', marginBottom: 8, padding: '0 4px' }}>Up next</div>
+          <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.2em', fontWeight: 700, textTransform: 'uppercase', marginBottom: 8, padding: '0 4px' }}>Up next</div>
           <WMCard style={{ gap: 8 }}>
             {data.tracks.slice(1, 4).map((t, i) => (
               <div key={t.id} style={{ display: 'grid', gridTemplateColumns: '38px 1fr', gap: 10, alignItems: 'center', opacity: i === 2 ? .5 : 1 }}>
                 <div style={{ width: 38, height: 38, borderRadius: 6, background: `linear-gradient(135deg,${t.color},${t.color}80)` }} />
                 <div>
                   <div style={{ fontFamily: T.fd, fontWeight: 700, letterSpacing: '-.01em', fontSize: 12, color: T.ink }}>{t.title}</div>
-                  <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, letterSpacing: '.06em', marginTop: 2 }}>{t.artistName} · {t.duration}s</div>
+                  <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.06em', marginTop: 2 }}>{t.artistName} · {t.duration}s</div>
                 </div>
               </div>
             ))}
@@ -612,7 +615,7 @@ function ScreenSeeds({ data }: { data: WorkbenchData }) {
 
         {/* Why this seed */}
         <WMCard style={{ marginBottom: 24, fontSize: 12, color: T.ink2, lineHeight: 1.5 }}>
-          <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, letterSpacing: '.2em', fontWeight: 700, textTransform: 'uppercase' }}>Why this seed?</div>
+          <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.2em', fontWeight: 700, textTransform: 'uppercase' }}>Why this seed?</div>
           <div style={{ fontFamily: T.fb, fontSize: 12, color: T.ink2, lineHeight: 1.5 }}>
             You hyped <span style={{ color: T.accent, fontWeight: 600 }}>3 tracks</span> from this artist this month — promoter test pressing from their unreleased EP.
           </div>
@@ -654,7 +657,7 @@ function ScreenRadio({ data }: { data: WorkbenchData }) {
                 <span style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 36, color: T.bg, letterSpacing: '-.04em', zIndex: 2, mixBlendMode: 'overlay', opacity: .9 }}>01</span>
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: T.fm, fontSize: 9, color: T.accent, fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: T.fm, fontSize: 12, color: T.accent, fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase' }}>
                   <span className="wm-pulse" style={{ width: 7, height: 7, borderRadius: '50%', background: T.accent, boxShadow: `0 0 12px ${T.accent}`, display: 'inline-block' }} />
                   ON AIR · {live.listeners.toLocaleString()}
                 </div>
@@ -664,16 +667,16 @@ function ScreenRadio({ data }: { data: WorkbenchData }) {
             </div>
             <div style={{
               marginTop: 14, display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
-              background: T.bg3, border: `1px solid ${T.line2}`, borderRadius: 7, fontFamily: T.fm, fontSize: 11, color: T.ink,
+              background: T.bg3, border: `1px solid ${T.line2}`, borderRadius: 7, fontFamily: T.fm, fontSize: 13, color: T.ink,
             }}>
-              <span style={{ fontStyle: 'normal', color: T.ink3, fontSize: 8, letterSpacing: '.14em', textTransform: 'uppercase' }}>NOW</span>
+              <span style={{ fontStyle: 'normal', color: T.ink3, fontSize: 12, letterSpacing: '.14em', textTransform: 'uppercase' }}>NOW</span>
               <span style={{ flex: 1 }}>{data.tracks[0]?.title} — {data.tracks[0]?.artistName}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
-              <span style={{ fontFamily: T.fm, fontSize: 10, color: T.ink2 }}>Next: <b style={{ color: T.ink }}>{data.tracks[1]?.title}</b></span>
+              <span style={{ fontFamily: T.fm, fontSize: 12, color: T.ink2 }}>Next: <b style={{ color: T.ink }}>{data.tracks[1]?.title}</b></span>
               <button style={{
                 padding: '10px 18px', borderRadius: 99, background: T.ink, color: T.bg,
-                fontFamily: T.fm, fontWeight: 700, fontSize: 11, letterSpacing: '.12em', textTransform: 'uppercase',
+                fontFamily: T.fm, fontWeight: 700, fontSize: 13, letterSpacing: '.12em', textTransform: 'uppercase',
                 border: 'none', cursor: 'pointer',
               }}>▶ Tune In</button>
             </div>
@@ -683,7 +686,7 @@ function ScreenRadio({ data }: { data: WorkbenchData }) {
         {/* Shows list */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
           <h2 style={{ fontFamily: T.fd, fontWeight: 700, letterSpacing: '-.01em', fontSize: 16, color: T.ink, margin: 0 }}>All shows</h2>
-          <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, letterSpacing: '.08em' }}>by <span style={{ color: T.ink }}>next on air</span></div>
+          <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.08em' }}>by <span style={{ color: T.ink }}>next on air</span></div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
           {rest.slice(0, 4).map((r, i) => (
@@ -696,14 +699,14 @@ function ScreenRadio({ data }: { data: WorkbenchData }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
                   <div>
                     <h3 style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 16, letterSpacing: '-.025em', margin: 0, color: T.ink }}>{r.name}</h3>
-                    <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, letterSpacing: '.06em', marginTop: 3 }}>with {r.host}</div>
+                    <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.06em', marginTop: 3 }}>with {r.host}</div>
                   </div>
                   <WMPill>{i === 0 ? 'PRERECORDED' : i === 2 ? 'YOURS' : 'WEEKLY'}</WMPill>
                 </div>
-                <p style={{ fontFamily: T.fb, fontSize: 11, color: T.ink2, marginTop: 8, lineHeight: 1.4 }}>{r.desc}</p>
+                <p style={{ fontFamily: T.fb, fontSize: 13, color: T.ink2, marginTop: 8, lineHeight: 1.4 }}>{r.desc}</p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, paddingTop: 8, borderTop: `1px dashed ${T.line}` }}>
-                  <span style={{ fontFamily: T.fm, fontSize: 10, color: T.ink, fontWeight: 600 }}>{r.time}</span>
-                  <span style={{ fontFamily: T.fm, fontSize: 8, color: T.ink3, letterSpacing: '.12em', textTransform: 'uppercase' }}>{r.next}</span>
+                  <span style={{ fontFamily: T.fm, fontSize: 12, color: T.ink, fontWeight: 600 }}>{r.time}</span>
+                  <span style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.12em', textTransform: 'uppercase' }}>{r.next}</span>
                 </div>
               </div>
             </div>
@@ -748,7 +751,7 @@ function ScreenStudio({ data }: { data: WorkbenchData }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, paddingBottom: 12, borderBottom: `1px solid ${T.line}` }}>
             <div>
               <div style={{ fontFamily: T.fd, fontWeight: 700, letterSpacing: '-.01em', fontSize: 17, color: T.ink }}>Halflight FM · Ep 05</div>
-              <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, letterSpacing: '.08em', marginTop: 3 }}>47:00 · 6 tracks · Sun Jun 22 · 10AM</div>
+              <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.08em', marginTop: 3 }}>47:00 · 6 tracks · Sun Jun 22 · 10AM</div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'flex-end', flexShrink: 0 }}>
               <WMPill tone="amber">SCHEDULED</WMPill>
@@ -758,7 +761,7 @@ function ScreenStudio({ data }: { data: WorkbenchData }) {
 
           {/* Timeline */}
           <div style={{ background: T.bg3, borderRadius: 9, padding: 12, marginTop: 12, border: `1px solid ${T.line}` }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: T.fm, fontSize: 8, color: T.ink3, letterSpacing: '.08em', marginBottom: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.08em', marginBottom: 8 }}>
               <span>00:00</span><span>15:00</span><span>30:00</span><span>47:00</span>
             </div>
             <div style={{ position: 'relative', height: 46, background: T.bg4, borderRadius: 5, display: 'flex', gap: 2, padding: 3, overflow: 'hidden' }}>
@@ -766,7 +769,7 @@ function ScreenStudio({ data }: { data: WorkbenchData }) {
                 <div key={i} style={{
                   flex: `0 0 ${c.f}%`, height: '100%', background: c.c, borderRadius: 3,
                   display: 'flex', alignItems: 'center', padding: '0 6px',
-                  fontFamily: T.fm, fontSize: 8, fontWeight: 700, color: T.bg, letterSpacing: '.04em',
+                  fontFamily: T.fm, fontSize: 12, fontWeight: 700, color: T.bg, letterSpacing: '.04em',
                   whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', position: 'relative',
                 }}>
                   {c.t}
@@ -787,14 +790,14 @@ function ScreenStudio({ data }: { data: WorkbenchData }) {
                 display: 'grid', gridTemplateColumns: '20px 1fr auto', gap: 10, alignItems: 'center',
                 padding: '7px 10px', borderRadius: 6, background: T.bg3, border: `1px solid ${T.line}`,
               }}>
-                <span style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, fontWeight: 700 }}>{c.n}</span>
+                <span style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, fontWeight: 700 }}>{c.n}</span>
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontFamily: T.fb, fontWeight: 600, fontSize: 11.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: T.ink }}>{c.t}</div>
-                  <div style={{ fontFamily: T.fm, fontSize: 8, color: T.ink3, letterSpacing: '.06em', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.m}</div>
+                  <div style={{ fontFamily: T.fb, fontWeight: 600, fontSize: 13.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: T.ink }}>{c.t}</div>
+                  <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.06em', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.m}</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                   <span style={{ fontFamily: T.fm, fontSize: 7, color: T.ink2, letterSpacing: '.12em', padding: '2px 6px', borderRadius: 99, background: T.bg2, border: `1px solid ${T.line2}`, textTransform: 'uppercase', fontWeight: 700 }}>{c.type}</span>
-                  <span style={{ fontFamily: T.fm, fontSize: 9, color: T.ink2 }}>{c.d}</span>
+                  <span style={{ fontFamily: T.fm, fontSize: 12, color: T.ink2 }}>{c.d}</span>
                 </div>
               </div>
             ))}
@@ -811,7 +814,7 @@ function ScreenStudio({ data }: { data: WorkbenchData }) {
         <WMCard style={{ marginBottom: 14 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <div style={{ fontFamily: T.fd, fontWeight: 700, letterSpacing: '-.01em', fontSize: 13, color: T.ink }}>Revenue split · Ep 05</div>
-            <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, letterSpacing: '.1em', textTransform: 'uppercase' }}>per spin</div>
+            <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.1em', textTransform: 'uppercase' }}>per spin</div>
           </div>
           <div style={{ height: 14, borderRadius: 99, overflow: 'hidden', background: T.bg3, display: 'flex' }}>
             <div style={{ width: '45%', background: T.accent }} />
@@ -819,7 +822,7 @@ function ScreenStudio({ data }: { data: WorkbenchData }) {
             <div style={{ width: '15%', background: T.purple }} />
             <div style={{ width: '10%', background: T.ink3 }} />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, fontFamily: T.fm, fontSize: 9, color: T.ink2, letterSpacing: '.04em' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, fontFamily: T.fm, fontSize: 12, color: T.ink2, letterSpacing: '.04em' }}>
             {([['Artist 45%', T.accent], ['Host 30%', T.pink], ['Co-host 15%', T.purple], ['Platform 10%', T.ink3]] as [string, string][]).map(([l, c], i) => (
               <div key={i}><span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: c, marginRight: 5, verticalAlign: 'middle' }} />{l}</div>
             ))}
@@ -829,7 +832,7 @@ function ScreenStudio({ data }: { data: WorkbenchData }) {
         {/* Drafts */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
           <h2 style={{ fontFamily: T.fd, fontWeight: 700, letterSpacing: '-.01em', fontSize: 14, color: T.ink, margin: 0 }}>My drafts</h2>
-          <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, letterSpacing: '.08em' }}>4 total</div>
+          <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.08em' }}>4 total</div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
           {[
@@ -846,11 +849,11 @@ function ScreenStudio({ data }: { data: WorkbenchData }) {
               <div style={{ width: 42, height: 42, borderRadius: 6, background: d.g }} />
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontFamily: T.fd, fontWeight: 700, letterSpacing: '-.01em', fontSize: 12.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: T.ink }}>{d.t}</div>
-                <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, letterSpacing: '.06em', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.m}</div>
+                <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.06em', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.m}</div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'flex-end' }}>
                 <WMPill tone={d.pill[0]}>{d.pill[1]}</WMPill>
-                <span style={{ fontFamily: T.fm, fontSize: 9, color: T.ink2 }}>{d.r}</span>
+                <span style={{ fontFamily: T.fm, fontSize: 12, color: T.ink2 }}>{d.r}</span>
               </div>
             </div>
           ))}
@@ -879,7 +882,7 @@ function ScreenTicketing({ data }: { data: WorkbenchData }) {
         <div style={{ display: 'flex', gap: 2, background: T.bg2, border: `1px solid ${T.line}`, borderRadius: 9, padding: 3, marginBottom: 14, overflowX: 'auto', scrollbarWidth: 'none' }}>
           {subTabs.map((t, i) => (
             <button key={t} onClick={() => setSubTab(i)} style={{
-              padding: '7px 12px', borderRadius: 6, fontFamily: T.fm, fontSize: 10, fontWeight: 600,
+              padding: '7px 12px', borderRadius: 6, fontFamily: T.fm, fontSize: 12, fontWeight: 600,
               letterSpacing: '.06em', textTransform: 'uppercase', cursor: 'pointer', whiteSpace: 'nowrap',
               background: i === subTab ? T.bg3 : 'transparent', color: i === subTab ? T.ink : T.ink3, border: 'none',
             }}>{t}</button>
@@ -901,23 +904,23 @@ function ScreenTicketing({ data }: { data: WorkbenchData }) {
                       {e.status}
                     </WMPill>
                   </div>
-                  <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 2, fontFamily: T.fm, fontSize: 10, fontWeight: 700, color: '#fff', background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(8px)', padding: '4px 9px', borderRadius: 99 }}>
+                  <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 2, fontFamily: T.fm, fontSize: 12, fontWeight: 700, color: '#fff', background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(8px)', padding: '4px 9px', borderRadius: 99 }}>
                     ♥ {e.hype}
                   </div>
                   <div style={{ position: 'absolute', bottom: 12, left: 12, right: 12, zIndex: 2, color: '#fff' }}>
                     <h3 style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 20, letterSpacing: '-.025em', margin: 0 }}>{e.name}</h3>
-                    <p style={{ fontFamily: T.fm, fontSize: 9, color: 'rgba(255,255,255,.78)', letterSpacing: '.1em', margin: '3px 0 0', textTransform: 'uppercase' }}>{e.venue} · CHICAGO</p>
+                    <p style={{ fontFamily: T.fm, fontSize: 12, color: 'rgba(255,255,255,.78)', letterSpacing: '.1em', margin: '3px 0 0', textTransform: 'uppercase' }}>{e.venue} · CHICAGO</p>
                   </div>
                 </div>
                 <div style={{ padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
                   <div>
-                    <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink, fontWeight: 600, letterSpacing: '.06em' }}>{e.date} · {e.time}</div>
-                    <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, letterSpacing: '.06em', marginTop: 3 }}>{e.sold}/{e.capacity} sold</div>
+                    <div style={{ fontFamily: T.fm, fontSize: 13, color: T.ink, fontWeight: 600, letterSpacing: '.06em' }}>{e.date} · {e.time}</div>
+                    <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.06em', marginTop: 3 }}>{e.sold}/{e.capacity} sold</div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 18, letterSpacing: '-.025em', color: T.ink }}>${e.price}</div>
                     <button style={{
-                      padding: '7px 14px', borderRadius: 7, fontFamily: T.fm, fontSize: 10, fontWeight: 700,
+                      padding: '7px 14px', borderRadius: 7, fontFamily: T.fm, fontSize: 12, fontWeight: 700,
                       letterSpacing: '.08em', textTransform: 'uppercase', cursor: 'pointer', border: 'none', color: T.bg,
                       background: isHot ? `linear-gradient(135deg,${T.accent},${T.pink})` : T.ink,
                     }}>Buy</button>
@@ -935,7 +938,7 @@ function ScreenTicketing({ data }: { data: WorkbenchData }) {
         <div style={{ background: T.bg2, border: `1px solid ${T.line}`, borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}>
           <div style={{ padding: '14px 16px', borderBottom: `1px solid ${T.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <h2 style={{ fontFamily: T.fd, fontWeight: 700, letterSpacing: '-.01em', fontSize: 15, color: T.ink, margin: 0 }}>My Tickets</h2>
-            <span style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, letterSpacing: '.08em' }}>{data.tickets.length} active</span>
+            <span style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.08em' }}>{data.tickets.length} active</span>
           </div>
           {data.tickets.map((tk, i, arr) => {
             const isWait = tk.status === 'WAITLIST';
@@ -952,11 +955,11 @@ function ScreenTicketing({ data }: { data: WorkbenchData }) {
                 </div>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontFamily: T.fd, fontWeight: 700, letterSpacing: '-.01em', fontSize: 12.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: T.ink }}>{tk.showName}</div>
-                  <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, letterSpacing: '.06em', marginTop: 3 }}>{tk.date}</div>
-                  <div style={{ fontFamily: T.fm, fontSize: 8, color: T.ink3, letterSpacing: '.1em', marginTop: 3 }}>{tk.code}</div>
+                  <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.06em', marginTop: 3 }}>{tk.date}</div>
+                  <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.1em', marginTop: 3 }}>{tk.code}</div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
-                  <span style={{ fontFamily: T.fm, fontSize: 10, color: T.ink2, fontWeight: 600, letterSpacing: '.08em' }}>{tk.seat}</span>
+                  <span style={{ fontFamily: T.fm, fontSize: 12, color: T.ink2, fontWeight: 600, letterSpacing: '.08em' }}>{tk.seat}</span>
                   <WMPill tone={isWait ? 'amber' : 'teal'}>{tk.status}</WMPill>
                 </div>
               </div>
@@ -973,11 +976,50 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
   const [tab, setTab] = useState<MobileTab>('me');
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0.42);
-  const track = data.tracks[0];
+  const [currentTrackIdx, setCurrentTrackIdx] = useState(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Tick progress when playing
+  const currentTrack = data.tracks[currentTrackIdx % Math.max(data.tracks.length, 1)];
+  // keep track as alias for first-track compat used below
+  const track = currentTrack ?? data.tracks[0];
+
+  // Real audio playback effect
   useEffect(() => {
-    if (!playing || !track) return;
+    const audio = audioRef.current;
+    if (!audio || !currentTrack?.mediaUrl) return;
+    if (audio.src !== currentTrack.mediaUrl) {
+      audio.src = currentTrack.mediaUrl;
+      audio.load();
+    }
+    if (playing) {
+      audio.play().catch(() => {});
+    } else {
+      audio.pause();
+    }
+  }, [playing, currentTrackIdx, currentTrack]);
+
+  // Sync progress from audio element
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const onTimeUpdate = () => {
+      if (audio.duration) setProgress(audio.currentTime / audio.duration);
+    };
+    const onEnded = () => {
+      setCurrentTrackIdx(ci => (ci + 1) % Math.max(data.tracks.length, 1));
+      setProgress(0);
+    };
+    audio.addEventListener('timeupdate', onTimeUpdate);
+    audio.addEventListener('ended', onEnded);
+    return () => {
+      audio.removeEventListener('timeupdate', onTimeUpdate);
+      audio.removeEventListener('ended', onEnded);
+    };
+  }, [data.tracks.length]);
+
+  // Fallback tick progress when no mediaUrl
+  useEffect(() => {
+    if (!playing || !track || track.mediaUrl) return;
     const iv = setInterval(() => {
       setProgress(p => {
         const next = p + 1 / track.durationSec;
@@ -1005,8 +1047,9 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
       overflow: 'hidden',
     }}>
       <style>{eqCss}</style>
+      <audio ref={audioRef} preload="metadata" style={{ display: 'none' }} />
       <WMTopBar tab={tab} listeningNow={data.listeningNow} userName={data.userName} initials={data.userInitials} />
-      <div className="wm-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', position: 'relative', scrollbarWidth: 'none' }}>
+      <div role="main" className="wm-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', position: 'relative', scrollbarWidth: 'none' }}>
         {screenEl}
       </div>
       {track && <WMMiniPlayer track={track} playing={playing} onToggle={() => setPlaying(p => !p)} progress={progress} />}
