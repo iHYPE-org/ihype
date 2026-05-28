@@ -121,6 +121,9 @@ function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, noti
   notifCount?: number;
 }) {
   const [menuOpen, setMenuOpen] = React.useState(false);
+  const [searchOpen, setSearchOpen] = React.useState(false);
+  const [searchVal, setSearchVal] = React.useState('');
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
   const titles: Record<MobileTab, string> = {
     me: 'my page', seeds: 'seeds', radio: 'radio', studio: 'studio', tick: 'tickets',
   };
@@ -132,17 +135,35 @@ function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, noti
     { id: 'tick',   icon: '🎟️', label: 'Tickets', badge: '3' },
   ];
   const close = () => setMenuOpen(false);
+
+  const openSearch = () => {
+    setMenuOpen(false);
+    setSearchOpen(true);
+    setTimeout(() => searchInputRef.current?.focus(), 80);
+  };
+
+  const closeSearch = () => {
+    setSearchOpen(false);
+    setSearchVal('');
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    closeSearch();
+    onSearch?.();
+  };
+
   return (
     <>
     <header style={{
-      display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center', gap: 10,
+      display: 'grid', gridTemplateColumns: '1fr auto auto', alignItems: 'center', gap: 8,
       padding: '10px 18px 12px', background: T.bg2, borderBottom: `1px solid ${T.line}`,
       flexShrink: 0, position: 'relative', zIndex: 20,
     }}>
       {/* Left: logo + current section */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
         <span style={{
-          width: 30, height: 30, borderRadius: 8,
+          width: 30, height: 30, borderRadius: 8, flexShrink: 0,
           background: `linear-gradient(135deg,${T.accent},${T.pink})`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontFamily: T.fd, fontWeight: 800, fontSize: 12, color: T.bg, letterSpacing: '-.02em', position: 'relative',
@@ -150,25 +171,42 @@ function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, noti
           iH
           <span style={{ position: 'absolute', top: 4, right: 6, width: 4, height: 4, borderRadius: '50%', background: '#fff' }} />
         </span>
-        <span>
+        <span style={{ minWidth: 0 }}>
           <span style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 15, letterSpacing: '-.03em', lineHeight: 1, display: 'flex', alignItems: 'baseline', gap: 1, color: T.ink }}>
             iHYPE<span style={{ display: 'inline-block', width: 5, height: 5, borderRadius: '50%', background: T.accent, transform: 'translateY(-7px)' }} />
           </span>
-          <span style={{ display: 'block', fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.18em', marginTop: 2, textTransform: 'uppercase' }}>
+          <span style={{ display: 'block', fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.18em', marginTop: 2, textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {titles[tab]}
           </span>
         </span>
       </div>
 
+      {/* Search icon button */}
+      <button
+        aria-label="Search"
+        onClick={openSearch}
+        style={{
+          width: 44, height: 44, borderRadius: 8,
+          background: searchOpen ? T.bg3 : 'transparent',
+          border: `1px solid ${searchOpen ? T.line2 : T.line}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', padding: 0, flexShrink: 0, transition: 'background .15s',
+          color: T.ink2,
+        }}>
+        <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </button>
+
       {/* Hamburger button */}
       <button
         aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-        onClick={() => setMenuOpen(o => !o)}
+        onClick={() => { setSearchOpen(false); setMenuOpen(o => !o); }}
         style={{
           width: 44, height: 44, borderRadius: 8, background: menuOpen ? T.bg3 : 'transparent',
           border: `1px solid ${menuOpen ? T.line2 : T.line}`,
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          gap: 5, cursor: 'pointer', padding: 0, position: 'relative', transition: 'background .15s',
+          gap: 5, cursor: 'pointer', padding: 0, position: 'relative', transition: 'background .15s', flexShrink: 0,
         }}>
         <span style={{ display: 'block', width: 16, height: 1.5, background: T.ink, borderRadius: 2, transition: 'transform .2s', transform: menuOpen ? 'translateY(6.5px) rotate(45deg)' : 'none' }} />
         <span style={{ display: 'block', width: 16, height: 1.5, background: T.ink, borderRadius: 2, opacity: menuOpen ? 0 : 1, transition: 'opacity .15s' }} />
@@ -179,7 +217,40 @@ function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, noti
       </button>
     </header>
 
-    {/* Slide-down drawer */}
+    {/* Slide-down search bar */}
+    <div style={{
+      position: 'absolute', top: 0, left: 0, right: 0, zIndex: 21,
+      transform: searchOpen ? 'translateY(66px)' : 'translateY(calc(-100% - 66px))',
+      transition: 'transform .22s cubic-bezier(.4,0,.2,1)',
+      background: T.bg2, borderBottom: `1px solid ${T.line2}`,
+      padding: '10px 14px',
+    }}>
+      <form onSubmit={handleSearchSubmit} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, background: T.bg3, border: `1px solid ${T.line2}`, borderRadius: 10, padding: '0 12px' }}>
+          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={T.ink3} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            ref={searchInputRef}
+            value={searchVal}
+            onChange={e => setSearchVal(e.target.value)}
+            placeholder="Search artists, shows, tracks…"
+            style={{
+              flex: 1, background: 'none', border: 'none', outline: 'none', padding: '11px 0',
+              fontFamily: T.fb, fontSize: 15, color: T.ink,
+            }}
+          />
+          {searchVal && (
+            <button type="button" onClick={() => setSearchVal('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, padding: 0, fontSize: 16, lineHeight: 1 }}>✕</button>
+          )}
+        </div>
+        <button type="button" onClick={closeSearch} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink2, fontFamily: T.fb, fontSize: 14, padding: '0 4px', whiteSpace: 'nowrap' }}>
+          Cancel
+        </button>
+      </form>
+    </div>
+
+    {/* Slide-down nav drawer */}
     <div style={{
       position: 'absolute', top: 0, left: 0, right: 0, zIndex: 19,
       transform: menuOpen ? 'translateY(66px)' : 'translateY(calc(-100% - 66px))',
@@ -219,9 +290,7 @@ function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, noti
 
       {/* Actions */}
       <div style={{ padding: '8px 0' }}>
-        <div style={{ padding: '8px 20px 6px', fontFamily: T.fm, fontSize: 11, letterSpacing: '.18em', color: T.ink3, textTransform: 'uppercase' }}>Actions</div>
         {[
-          { icon: '🔍', label: 'Search', action: () => { close(); onSearch?.(); } },
           { icon: '🔔', label: `Notifications${(notifCount ?? 0) > 0 ? ` · ${notifCount}` : ''}`, action: close, accent: (notifCount ?? 0) > 0 },
           { icon: '🔗', label: 'Share my page', action: () => { close(); navigator.share?.({ title: 'iHYPE', url: window.location.href }).catch(() => {}); } },
         ].map(item => (
@@ -254,9 +323,9 @@ function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, noti
       </div>
     </div>
 
-    {/* Backdrop */}
-    {menuOpen && (
-      <div onClick={close} style={{ position: 'absolute', inset: 0, zIndex: 18, background: 'rgba(0,0,0,.55)' }} />
+    {/* Backdrop (search or menu) */}
+    {(menuOpen || searchOpen) && (
+      <div onClick={() => { close(); closeSearch(); }} style={{ position: 'absolute', inset: 0, zIndex: 18, background: 'rgba(0,0,0,.55)' }} />
     )}
     </>
   );
@@ -1125,6 +1194,66 @@ function ScreenTicketing({ data }: { data: WorkbenchData }) {
 }
 
 // ─── Main mobile export ───────────────────────────────────────
+// ─── Help FAB ─────────────────────────────────────────────────
+function WMHelpFAB() {
+  const [open, setOpen] = React.useState(false);
+  const items = [
+    { icon: 'ℹ️', label: 'About iHYPE', href: '/about' },
+    { icon: '🔍', label: 'Transparency', href: '/transparency' },
+    { icon: '⌨️', label: 'Keyboard shortcuts', action: () => { setOpen(false); } },
+    { icon: '🐛', label: 'Report a bug', href: 'mailto:bugs@ihype.org' },
+  ];
+  return (
+    <>
+      {open && <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 39 }} />}
+      <div style={{ position: 'fixed', bottom: 80, left: 16, zIndex: 40, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+        {open && (
+          <div style={{
+            background: T.bg3, border: `1px solid ${T.line2}`, borderRadius: 12,
+            boxShadow: '0 8px 32px rgba(0,0,0,.6)', overflow: 'hidden', minWidth: 200,
+          }}>
+            {items.map(it => (
+              it.href ? (
+                <a key={it.label} href={it.href} onClick={() => setOpen(false)} style={{
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px',
+                  textDecoration: 'none', borderBottom: `1px solid ${T.line}`,
+                  color: T.ink, fontFamily: T.fb, fontSize: 14,
+                }}>
+                  <span style={{ fontSize: 16 }}>{it.icon}</span>
+                  {it.label}
+                </a>
+              ) : (
+                <button key={it.label} onClick={it.action} style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px',
+                  textDecoration: 'none', borderBottom: `1px solid ${T.line}`, border: 'none',
+                  background: 'transparent', color: T.ink, fontFamily: T.fb, fontSize: 14, cursor: 'pointer', textAlign: 'left',
+                }}>
+                  <span style={{ fontSize: 16 }}>{it.icon}</span>
+                  {it.label}
+                </button>
+              )
+            ))}
+          </div>
+        )}
+        <button
+          aria-label="Help"
+          onClick={() => setOpen(o => !o)}
+          style={{
+            width: 40, height: 40, borderRadius: '50%',
+            background: open ? T.bg3 : T.bg4,
+            border: `1px solid ${open ? T.line2 : T.line}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', fontFamily: T.fd, fontWeight: 800, fontSize: 15,
+            color: open ? T.ink : T.ink3,
+            boxShadow: open ? `0 4px 20px rgba(0,0,0,.5)` : 'none',
+            transition: 'background .15s, color .15s',
+          }}
+        >?</button>
+      </div>
+    </>
+  );
+}
+
 export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
   const [tab, setTab] = useState<MobileTab>('me');
   const [playing, setPlaying] = useState(false);
@@ -1215,6 +1344,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
         {screenEl}
       </div>
       {track && <WMMiniPlayer track={track} playing={playing} onToggle={() => setPlaying(p => !p)} progress={progress} />}
+      <WMHelpFAB />
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
   );
