@@ -1,11 +1,11 @@
 # iHYPE Codex project instructions
 
 ## Project goal
-This repository contains a production-oriented Next.js app for hosting artist, DJ, and venue pages with live streaming shows, account support, hype voting, Prisma/Postgres data storage, and Vercel deployment config.
+This repository contains a production-oriented Next.js app for hosting artist, DJ, and venue pages with live streaming shows, account support, hype voting, and Prisma/Postgres data storage.
 
 ## Working agreements
 - Prefer small, reviewable changes over broad refactors.
-- Keep the app compatible with Vercel deployment and Prisma migrations.
+- Keep the app compatible with Prisma migrations.
 - Preserve the current stack unless a task explicitly requires a replacement.
 - Treat environment variables and secrets as external configuration. Never hardcode secrets.
 - Preserve the newer Claude-derived signed-in visual schema. `/home` is the canonical authenticated workbench and should continue to render `WorkbenchShell`.
@@ -18,10 +18,10 @@ This repository contains a production-oriented Next.js app for hosting artist, D
 - Database: PostgreSQL
 - Auth: Auth.js
 - Streaming: Mux
-- Hosting target: Vercel
+- Hosting target: Cloudflare
 
 ## Before changing code
-- Read `README.md`, `package.json`, `vercel.json`, and `prisma/schema.prisma` first.
+- Read `README.md`, `package.json`, and `prisma/schema.prisma` first.
 - Check `src/lib/env.ts` and any API route touched by the task for runtime assumptions.
 - Prefer reusing existing utilities/components before adding new ones.
 
@@ -48,7 +48,7 @@ This repository contains a production-oriented Next.js app for hosting artist, D
 - Shared utilities: `src/lib/`
 - UI components: `src/components/`
 - Data model and migrations: `prisma/`
-- Deployment config: `vercel.json`, `.env.example`, `next.config.mjs`
+- Deployment config: `.env.example`, `next.config.mjs`
 
 ## Priority when making tradeoffs
 1. Correctness

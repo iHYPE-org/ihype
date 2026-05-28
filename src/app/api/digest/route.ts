@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
 
 /**
  * GET /api/digest
- * Used by Vercel Cron (which issues GET requests). Same auth as POST.
+ * Used by cron scheduler (GET requests). Same auth as POST.
  */
 export async function GET(request: NextRequest) {
   if (!isCronRequestAuthorized(request)) {
