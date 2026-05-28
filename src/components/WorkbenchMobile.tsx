@@ -401,6 +401,7 @@ function ScreenSeeds({ data }: { data: WorkbenchData }) {
   const [dragX, setDragX] = useState(0);
   const [dragY, setDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [flyOff, setFlyOff] = useState<{ x: number; y: number; rot: number } | null>(null);
   const dragStart = useRef<{ x: number; y: number } | null>(null);
 
   // Fetch deck on mount
@@ -413,29 +414,37 @@ function ScreenSeeds({ data }: { data: WorkbenchData }) {
       .finally(() => setLoadingDeck(false));
   }, []);
 
-  const handleAction = useCallback(async (action: 'save' | 'skip' | 'hype') => {
+  const handleAction = useCallback((action: 'save' | 'skip' | 'hype', fromDrag = false, dragDx = 0, dragDy = 0) => {
     const front = deck[deckIdx % Math.max(deck.length, 1)];
     if (!front || actionedIds.has(front.id)) return;
-    setActionedIds(prev => new Set([...prev, front.id]));
-    setDeckIdx(i => i + 1);
-    setSessionStats(prev => ({
-      ...prev,
-      saved:   action === 'save'  ? prev.saved + 1  : prev.saved,
-      skipped: action === 'skip'  ? prev.skipped + 1 : prev.skipped,
-      hyped:   action === 'hype'  ? prev.hyped + 1  : prev.hyped,
-    }));
-    // Load more when near end
-    const remaining = deck.length - (deckIdx + 1);
-    if (remaining <= 3) {
-      fetch('/api/discover/seeds').then(r => r.ok ? r.json() : null).then(d => {
-        if (d?.seeds?.length) {
-          setDeck(prev => [...prev, ...d.seeds.filter((s: {id:string}) => !actionedIds.has(s.id))]);
-        }
-      }).catch(() => {});
-    }
-    try {
-      await fetch(`/api/discover/seeds/${encodeURIComponent(front.id)}/${action}`, { method: 'POST' });
-    } catch { /* non-blocking */ }
+
+    // Compute fly-off direction
+    const flyX = action === 'hype' ? 500 : action === 'skip' ? -500 : fromDrag ? dragDx * 3 : 0;
+    const flyY = action === 'save' ? -600 : fromDrag ? dragDy * 2 : 0;
+    const rot  = action === 'hype' ? 25 : action === 'skip' ? -25 : dragDx * 0.15;
+    setFlyOff({ x: flyX, y: flyY, rot });
+
+    setTimeout(() => {
+      setFlyOff(null);
+      setActionedIds(prev => new Set([...prev, front.id]));
+      setDeckIdx(i => i + 1);
+      setSessionStats(prev => ({
+        ...prev,
+        saved:   action === 'save'  ? prev.saved + 1  : prev.saved,
+        skipped: action === 'skip'  ? prev.skipped + 1 : prev.skipped,
+        hyped:   action === 'hype'  ? prev.hyped + 1  : prev.hyped,
+      }));
+      // Load more when near end
+      const remaining = deck.length - (deckIdx + 1);
+      if (remaining <= 3) {
+        fetch('/api/discover/seeds').then(r => r.ok ? r.json() : null).then(d => {
+          if (d?.seeds?.length) {
+            setDeck(prev => [...prev, ...d.seeds.filter((s: {id:string}) => !actionedIds.has(s.id))]);
+          }
+        }).catch(() => {});
+      }
+      fetch(`/api/discover/seeds/${encodeURIComponent(front.id)}/${action}`, { method: 'POST' }).catch(() => {});
+    }, 320);
   }, [deck, deckIdx, actionedIds]);
 
   const front = deck[deckIdx % Math.max(deck.length, 1)];
@@ -464,11 +473,11 @@ function ScreenSeeds({ data }: { data: WorkbenchData }) {
   function handlePointerUp() {
     if (isDragging) {
       if (dragX > 80) {
-        void handleAction('hype');
+        handleAction('hype', true, dragX, dragY);
       } else if (dragX < -80) {
-        void handleAction('skip');
+        handleAction('skip', true, dragX, dragY);
       } else if (dragY < -80) {
-        void handleAction('save');
+        handleAction('save', true, dragX, dragY);
       }
     }
     setIsDragging(false);
@@ -531,10 +540,12 @@ function ScreenSeeds({ data }: { data: WorkbenchData }) {
                 position: 'absolute', inset: 0, borderRadius: 20, overflow: 'hidden', zIndex: 5,
                 background: `linear-gradient(135deg,${front.color},${front.color}cc)`,
                 boxShadow: '0 30px 60px -10px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.06)',
-                transform: isDragging
-                  ? `translateX(${dragX}px) translateY(${Math.min(0, dragY)}px) rotate(${dragX * 0.08}deg)`
-                  : 'none',
-                transition: isDragging ? 'none' : 'transform .3s ease',
+                transform: flyOff
+                  ? `translateX(${flyOff.x}px) translateY(${flyOff.y}px) rotate(${flyOff.rot}deg)`
+                  : isDragging
+                    ? `translateX(${dragX}px) translateY(${Math.min(0, dragY)}px) rotate(${dragX * 0.08}deg)`
+                    : 'none',
+                transition: flyOff ? 'transform .32s cubic-bezier(.4,0,.2,1)' : isDragging ? 'none' : 'transform .3s ease',
                 touchAction: 'none',
                 userSelect: 'none',
                 cursor: isDragging ? 'grabbing' : 'grab',
@@ -1101,7 +1112,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
       <style>{eqCss}</style>
       <audio ref={audioRef} preload="metadata" style={{ display: 'none' }} />
       <WMTopBar tab={tab} listeningNow={data.listeningNow} userName={data.userName} initials={data.userInitials} onSearch={() => setSearchOpen(true)} notifCount={notifCount} />
-      <div role="main" className="wm-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', position: 'relative', scrollbarWidth: 'none' }}>
+      <div role="main" className="wm-scroll" style={{ flex: 1, overflowY: tab === 'seeds' ? 'hidden' : 'auto', overflowX: 'hidden', position: 'relative', scrollbarWidth: 'none' }}>
         {screenEl}
       </div>
       {track && <WMMiniPlayer track={track} playing={playing} onToggle={() => setPlaying(p => !p)} progress={progress} />}
