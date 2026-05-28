@@ -112,35 +112,6 @@ export function AppTopbar({ view, setView, listeningNow, initials, userName, act
 
       {/* Right: listening + user */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        {/* Transparency & keyboard shortcut links */}
-        <a
-          href="/transparency"
-          title="Transparency center — no algorithms, no black boxes"
-          style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            padding: '4px 9px', borderRadius: 6, border: '1px solid var(--line)',
-            fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)',
-            background: 'none', textDecoration: 'none', letterSpacing: '.06em',
-            transition: 'color .15s, border-color .15s',
-          }}
-          onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--ink)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'var(--line-2)'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--ink-3)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'var(--line)'; }}
-        >
-          <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          Integrity
-        </a>
-        {onShortcuts && (
-          <button
-            aria-label="Keyboard shortcuts (?)"
-            title="Keyboard shortcuts (?)"
-            onClick={onShortcuts}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 28, height: 28, borderRadius: 6, border: '1px solid var(--line)',
-              background: 'none', color: 'var(--ink-3)', cursor: 'pointer', fontFamily: 'var(--f-m)', fontSize: 13, fontWeight: 700,
-            }}
-          >?</button>
-        )}
         {onSearch && (
           <button
             aria-label={`Search (${kbShortcut})`}
