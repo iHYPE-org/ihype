@@ -5,7 +5,6 @@ import { AppProviders } from '@/components/AppProviders';
 import { HeaderAuthLinks } from '@/components/HeaderAuthLinks';
 import { HeaderLogo } from '@/components/HeaderLogo';
 import { PwaInstallPrompt } from '@/components/PwaInstallPrompt';
-import { CookieConsent } from '@/components/CookieConsent';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { BottomTabBar } from '@/components/BottomTabBar';
@@ -71,7 +70,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <BottomTabBar />
           <BugReportButton />
           <PwaInstallPrompt />
-          <CookieConsent />
           <ServiceWorkerRegister />
           <footer className="site-footer" style={{ borderTop: '1px solid rgba(255,255,255,.08)', padding: '24px 0', marginTop: 40 }}>
             <div className="container" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 24px', alignItems: 'center', justifyContent: 'center', fontSize: 13, opacity: 0.65 }}>
