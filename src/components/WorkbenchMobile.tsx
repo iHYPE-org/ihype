@@ -114,20 +114,32 @@ const eqCss = `
 `;
 
 // ─── Top bar ─────────────────────────────────────────────────
-function WMTopBar({ tab, listeningNow, userName, initials, onSearch, notifCount }: {
-  tab: MobileTab; listeningNow: number; userName: string; initials: string;
+function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, notifCount }: {
+  tab: MobileTab; onTab: (t: MobileTab) => void;
+  listeningNow: number; userName: string; initials: string;
   onSearch?: () => void;
   notifCount?: number;
 }) {
+  const [menuOpen, setMenuOpen] = React.useState(false);
   const titles: Record<MobileTab, string> = {
     me: 'my page', seeds: 'seeds', radio: 'radio', studio: 'studio', tick: 'tickets',
   };
+  const navItems: { id: MobileTab; icon: string; label: string; badge?: string }[] = [
+    { id: 'me',     icon: '👤', label: 'My Page' },
+    { id: 'seeds',  icon: '🌱', label: 'Seeds',   badge: '12' },
+    { id: 'radio',  icon: '📻', label: 'Radio',   badge: 'LIVE' },
+    { id: 'studio', icon: '🎙️', label: 'Studio' },
+    { id: 'tick',   icon: '🎟️', label: 'Tickets', badge: '3' },
+  ];
+  const close = () => setMenuOpen(false);
   return (
+    <>
     <header style={{
-      display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'center', gap: 10,
+      display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center', gap: 10,
       padding: '10px 18px 12px', background: T.bg2, borderBottom: `1px solid ${T.line}`,
-      flexShrink: 0, position: 'relative', zIndex: 10,
+      flexShrink: 0, position: 'relative', zIndex: 20,
     }}>
+      {/* Left: logo + current section */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
         <span style={{
           width: 30, height: 30, borderRadius: 8,
@@ -148,27 +160,105 @@ function WMTopBar({ tab, listeningNow, userName, initials, onSearch, notifCount 
         </span>
       </div>
 
-      <div style={{ justifySelf: 'center', display: 'flex', alignItems: 'center', gap: 6, fontFamily: T.fm, fontSize: 12, color: T.ink2 }}>
-        <span className="wm-pulse" style={{ width: 6, height: 6, borderRadius: '50%', background: T.teal, boxShadow: `0 0 8px ${T.teal}`, display: 'inline-block' }} />
-        {listeningNow.toLocaleString()}
+      {/* Hamburger button */}
+      <button
+        aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+        onClick={() => setMenuOpen(o => !o)}
+        style={{
+          width: 44, height: 44, borderRadius: 8, background: menuOpen ? T.bg3 : 'transparent',
+          border: `1px solid ${menuOpen ? T.line2 : T.line}`,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          gap: 5, cursor: 'pointer', padding: 0, position: 'relative', transition: 'background .15s',
+        }}>
+        <span style={{ display: 'block', width: 16, height: 1.5, background: T.ink, borderRadius: 2, transition: 'transform .2s', transform: menuOpen ? 'translateY(6.5px) rotate(45deg)' : 'none' }} />
+        <span style={{ display: 'block', width: 16, height: 1.5, background: T.ink, borderRadius: 2, opacity: menuOpen ? 0 : 1, transition: 'opacity .15s' }} />
+        <span style={{ display: 'block', width: 16, height: 1.5, background: T.ink, borderRadius: 2, transition: 'transform .2s', transform: menuOpen ? 'translateY(-6.5px) rotate(-45deg)' : 'none' }} />
+        {(notifCount ?? 0) > 0 && !menuOpen && (
+          <span style={{ position: 'absolute', top: 8, right: 8, width: 7, height: 7, borderRadius: '50%', background: T.accent, border: `1.5px solid ${T.bg2}` }} />
+        )}
+      </button>
+    </header>
+
+    {/* Slide-down drawer */}
+    <div style={{
+      position: 'absolute', top: 0, left: 0, right: 0, zIndex: 19,
+      transform: menuOpen ? 'translateY(66px)' : 'translateY(calc(-100% - 66px))',
+      transition: 'transform .24s cubic-bezier(.4,0,.2,1)',
+      background: T.bg3, borderBottom: `1px solid ${T.line2}`,
+      boxShadow: '0 16px 48px rgba(0,0,0,.7)',
+    }}>
+      {/* Nav section */}
+      <div style={{ padding: '8px 0' }}>
+        <div style={{ padding: '8px 20px 6px', fontFamily: T.fm, fontSize: 11, letterSpacing: '.18em', color: T.ink3, textTransform: 'uppercase' }}>Navigate</div>
+        {navItems.map(it => {
+          const active = tab === it.id;
+          return (
+            <button key={it.id} onClick={() => { onTab(it.id); close(); }} style={{
+              width: '100%', padding: '13px 20px', background: active ? `rgba(255,80,41,.07)` : 'transparent',
+              border: 'none', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', textAlign: 'left',
+            }}>
+              <span style={{ fontSize: 18, width: 24, textAlign: 'center' }}>{it.icon}</span>
+              <span style={{ fontFamily: T.fb, fontSize: 15, color: active ? T.accent : T.ink, flex: 1 }}>{it.label}</span>
+              {it.badge && (
+                <span style={{
+                  fontSize: 11, fontWeight: 800, padding: '2px 6px', borderRadius: 99, fontFamily: T.fm,
+                  background: it.badge === 'LIVE' ? 'rgba(255,80,41,.18)' : T.bg4,
+                  color: it.badge === 'LIVE' ? T.accent : T.ink2,
+                  border: `1px solid ${it.badge === 'LIVE' ? 'rgba(255,80,41,.4)' : T.line2}`,
+                  letterSpacing: '.08em',
+                }}>{it.badge}</span>
+              )}
+              {active && <span style={{ width: 6, height: 6, borderRadius: '50%', background: T.accent, flexShrink: 0 }} />}
+            </button>
+          );
+        })}
       </div>
 
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-        <button aria-label="Search" onClick={onSearch} style={{ width: 44, height: 44, minWidth: 44, minHeight: 44, borderRadius: 8, background: 'transparent', border: `1px solid ${T.line}`, color: T.ink2, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
-          <span style={{ width: 14, height: 14 }}>{WMIcon.search}</span>
-        </button>
-        <button aria-label="Notifications" style={{ width: 44, height: 44, minWidth: 44, minHeight: 44, borderRadius: 8, background: 'transparent', border: `1px solid ${T.line}`, color: T.ink2, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, position: 'relative' }}>
-          <span style={{ width: 14, height: 14 }}>{WMIcon.bell}</span>
-          {notifCount != null && notifCount > 0 && <span style={{ position: 'absolute', top: 5, right: 5, width: 6, height: 6, borderRadius: '50%', background: T.accent }} />}
-        </button>
-        <span style={{
-          width: 30, height: 30, borderRadius: '50%',
-          background: `linear-gradient(135deg,${T.pink},${T.accent})`,
-          color: T.bg, fontFamily: T.fd, fontWeight: 800, fontSize: 13,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', letterSpacing: '-.02em',
-        }}>{initials}</span>
+      {/* Divider */}
+      <div style={{ height: 1, background: T.line, margin: '0 20px' }} />
+
+      {/* Actions */}
+      <div style={{ padding: '8px 0' }}>
+        <div style={{ padding: '8px 20px 6px', fontFamily: T.fm, fontSize: 11, letterSpacing: '.18em', color: T.ink3, textTransform: 'uppercase' }}>Actions</div>
+        {[
+          { icon: '🔍', label: 'Search', action: () => { close(); onSearch?.(); } },
+          { icon: '🔔', label: `Notifications${(notifCount ?? 0) > 0 ? ` · ${notifCount}` : ''}`, action: close, accent: (notifCount ?? 0) > 0 },
+          { icon: '🔗', label: 'Share my page', action: () => { close(); navigator.share?.({ title: 'iHYPE', url: window.location.href }).catch(() => {}); } },
+        ].map(item => (
+          <button key={item.label} onClick={item.action} style={{
+            width: '100%', padding: '13px 20px', background: 'transparent', border: 'none',
+            display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', textAlign: 'left',
+          }}>
+            <span style={{ fontSize: 18, width: 24, textAlign: 'center' }}>{item.icon}</span>
+            <span style={{ fontFamily: T.fb, fontSize: 15, color: item.accent ? T.accent : T.ink }}>{item.label}</span>
+          </button>
+        ))}
       </div>
-    </header>
+
+      {/* Divider */}
+      <div style={{ height: 1, background: T.line, margin: '0 20px' }} />
+
+      {/* Live stat + user */}
+      <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ width: 36, height: 36, borderRadius: '50%', background: `linear-gradient(135deg,${T.pink},${T.accent})`, color: T.bg, fontFamily: T.fd, fontWeight: 800, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{initials}</span>
+          <div>
+            <div style={{ fontFamily: T.fb, fontSize: 14, color: T.ink }}>{userName}</div>
+            <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3, letterSpacing: '.1em', textTransform: 'uppercase' }}>iHYPE member</div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: T.fm, fontSize: 12, color: T.ink2 }}>
+          <span className="wm-pulse" style={{ width: 6, height: 6, borderRadius: '50%', background: T.teal, boxShadow: `0 0 8px ${T.teal}` }} />
+          {listeningNow.toLocaleString()} live
+        </div>
+      </div>
+    </div>
+
+    {/* Backdrop */}
+    {menuOpen && (
+      <div onClick={close} style={{ position: 'absolute', inset: 0, zIndex: 18, background: 'rgba(0,0,0,.55)' }} />
+    )}
+    </>
   );
 }
 
@@ -1111,12 +1201,11 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
     }}>
       <style>{eqCss}</style>
       <audio ref={audioRef} preload="metadata" style={{ display: 'none' }} />
-      <WMTopBar tab={tab} listeningNow={data.listeningNow} userName={data.userName} initials={data.userInitials} onSearch={() => setSearchOpen(true)} notifCount={notifCount} />
+      <WMTopBar tab={tab} onTab={setTab} listeningNow={data.listeningNow} userName={data.userName} initials={data.userInitials} onSearch={() => setSearchOpen(true)} notifCount={notifCount} />
       <div role="main" className="wm-scroll" style={{ flex: 1, overflowY: tab === 'seeds' ? 'hidden' : 'auto', overflowX: 'hidden', position: 'relative', scrollbarWidth: 'none' }}>
         {screenEl}
       </div>
       {track && <WMMiniPlayer track={track} playing={playing} onToggle={() => setPlaying(p => !p)} progress={progress} />}
-      <WMBottomTabs tab={tab} onTab={setTab} />
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
   );
