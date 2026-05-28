@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import type { WorkbenchData } from '@/components/WorkbenchShell';
+import { ArtistMediaUploadManager } from '@/components/ArtistMediaUploadManager';
 import { IcHeart } from './icons';
 import { Panel } from './primitives';
 
@@ -449,6 +450,12 @@ export function ViewStudio({ data }: { data: WorkbenchData }) {
           </button>
         </div>
       </div>
+      {data.profileId && (
+        <div style={{ marginTop: 32 }}>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.18em', color: 'var(--accent)', marginBottom: 14 }}>UPLOAD TRACKS</div>
+          <ArtistMediaUploadManager profileId={data.profileId} />
+        </div>
+      )}
       <CollabBoard />
       <PassedTheAux data={data} />
     </div>
