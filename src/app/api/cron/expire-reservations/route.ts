@@ -10,7 +10,7 @@ const RESERVATION_TTL_MINUTES = 15;
 
 /**
  * GET /api/cron/expire-reservations
- * Vercel Cron — runs every 5 minutes.
+ * Cloudflare Cron (wrangler.cron.toml) — runs every 5 minutes.
  * Voids RESERVED ticket orders that were never captured within the TTL window
  * and releases the seats back by decrementing ticketsSoldCount on the show.
  */

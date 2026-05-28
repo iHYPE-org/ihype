@@ -1,5 +1,17 @@
 # iHYPE — Engineering reference for Claude Code
 
+## ⚠️ INFRASTRUCTURE: Cloudflare Workers, NOT Vercel
+
+**This app is deployed to Cloudflare Workers via OpenNext (`npm run cf:build` + `wrangler deploy`).**
+
+- **Never reference Vercel** in code, comments, docs, or instructions. It is not used.
+- Hosting: Cloudflare Workers
+- Cron jobs: `wrangler.cron.toml` (not `vercel.json`)
+- Edge headers: `cf-ipcity`, `cf-ipcountry`, `cf-iplongitude`, `cf-iplatitude` (not `x-vercel-ip-*`)
+- Cache purge: Cloudflare Cache API with `CLOUDFLARE_ZONE_ID` secret
+- KV storage: Cloudflare Workers KV (not Vercel KV)
+- Deployment CI: `.github/workflows/deploy-production.yml` → `wrangler deploy`
+
 ## NextAuth v5 beta pinning
 
 `next-auth` is pinned to **`5.0.0-beta.31`** (exact, no caret) and mirrored in
@@ -17,7 +29,7 @@ have shipped breaking changes to:
 - `PrismaAdapter` model expectations
 - The `auth()` server-component helper return type
 
-An unexpected bump during `npm install` on a fresh Vercel deploy can break the
+An unexpected bump during `npm install` on a fresh deploy can break the
 login flow silently if the types still compile.
 
 ### Upgrade procedure
@@ -42,7 +54,7 @@ login flow silently if the types still compile.
 ### Before every commit that touches pages or routes
 
 1. **Run `npx next build` locally** — catches TypeScript errors, missing imports,
-   and invalid `next.config.mjs` options before Vercel sees them.
+   and invalid `next.config.mjs` options before the Cloudflare build sees them.
 2. **When deleting a page**, do all of the following in the same commit:
    - Search `next.config.mjs` for the path in `source:` or `destination:` and
      update/remove those entries.
@@ -80,13 +92,12 @@ commits that would be lost from each side and ask before proceeding.
 - Do NOT recreate `/artists`, `/promoters`, `/venues`, `/fans`, `/discover`, `/playlists`, `/collab`, `/settings`, or `/radio` as full pages for authenticated users. The middleware already redirects logged-in users from these paths to `/home`.
 - The old role-based layout with separate user-type pages and module choices is permanently retired. Never restore it.
 
-### Vercel build script
+### Build script
 
-`vercel-build` runs migrations through `scripts/prisma-migrate-retry.mjs` before
-`prisma generate` and `next build`. The retry wrapper handles transient
-Postgres migration-lock contention, but a real migration failure must block the
-deployment so the app is not published against an incompatible schema:
+The `vercel-build` npm script name is a legacy artifact — it actually builds for Cloudflare:
 
 ```
 "vercel-build": "node scripts/prisma-migrate-retry.mjs && prisma generate && next build"
 ```
+
+The real Cloudflare build is `npm run cf:build` which runs OpenNext + wrangler.

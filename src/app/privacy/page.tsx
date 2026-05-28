@@ -19,7 +19,7 @@ export default function PrivacyPage() {
         },
         {
           title: 'Third-party services',
-          body: 'Resend (email delivery), Stripe (payment processing — only if you purchase tickets), Vercel (hosting and edge infrastructure), Prisma Accelerate (database connection pooling). Each vendor processes minimal data needed for their service.'
+          body: 'Resend (email delivery), Stripe (payment processing — only if you purchase tickets), Cloudflare (hosting and edge infrastructure), Prisma Accelerate (database connection pooling). Each vendor processes minimal data needed for their service.'
         },
         {
           title: 'Your rights',
