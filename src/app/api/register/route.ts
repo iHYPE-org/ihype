@@ -14,6 +14,7 @@ import { getUsernameValidationMessage, isValidUsername, normalizeUsername } from
 import { slugify } from '@/lib/utils';
 import { sendDay1Email } from '@/lib/onboarding-emails';
 import { checkForSpam } from '@/lib/spam-detection';
+import { log } from '@/lib/logger';
 
 const schema = z.object({
   name: z.preprocess(v => (typeof v === 'string' && v.trim() === '' ? undefined : v), z.string().trim().min(2).optional()),
@@ -390,7 +391,7 @@ export async function POST(request: Request) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       return NextResponse.json({ error: 'Username or email already taken.' }, { status: 409 });
     }
-    console.error('[register]', error);
+    log.error('[register]', error instanceof Error ? error : null, 'Registration failed');
     return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
   }
 }

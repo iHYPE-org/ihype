@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { WorkbenchData, WbTrack } from './WorkbenchShell';
+import { SearchOverlay } from '@/components/workbench/SearchOverlay';
 
 // ─── Design tokens (match Workbench Mobile design) ───────────
 const T = {
@@ -113,8 +114,10 @@ const eqCss = `
 `;
 
 // ─── Top bar ─────────────────────────────────────────────────
-function WMTopBar({ tab, listeningNow, userName, initials }: {
+function WMTopBar({ tab, listeningNow, userName, initials, onSearch, notifCount }: {
   tab: MobileTab; listeningNow: number; userName: string; initials: string;
+  onSearch?: () => void;
+  notifCount?: number;
 }) {
   const titles: Record<MobileTab, string> = {
     me: 'my page', seeds: 'seeds', radio: 'radio', studio: 'studio', tick: 'tickets',
@@ -151,12 +154,12 @@ function WMTopBar({ tab, listeningNow, userName, initials }: {
       </div>
 
       <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-        <button aria-label="Search" style={{ width: 44, height: 44, minWidth: 44, minHeight: 44, borderRadius: 8, background: 'transparent', border: `1px solid ${T.line}`, color: T.ink2, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
+        <button aria-label="Search" onClick={onSearch} style={{ width: 44, height: 44, minWidth: 44, minHeight: 44, borderRadius: 8, background: 'transparent', border: `1px solid ${T.line}`, color: T.ink2, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
           <span style={{ width: 14, height: 14 }}>{WMIcon.search}</span>
         </button>
         <button aria-label="Notifications" style={{ width: 44, height: 44, minWidth: 44, minHeight: 44, borderRadius: 8, background: 'transparent', border: `1px solid ${T.line}`, color: T.ink2, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, position: 'relative' }}>
           <span style={{ width: 14, height: 14 }}>{WMIcon.bell}</span>
-          <span style={{ position: 'absolute', top: 5, right: 5, width: 6, height: 6, borderRadius: '50%', background: T.accent }} />
+          {notifCount != null && notifCount > 0 && <span style={{ position: 'absolute', top: 5, right: 5, width: 6, height: 6, borderRadius: '50%', background: T.accent }} />}
         </button>
         <span style={{
           width: 30, height: 30, borderRadius: '50%',
@@ -385,26 +388,64 @@ function ScreenMe({ data }: { data: WorkbenchData }) {
 
 // ─── Screen: Seeds ───────────────────────────────────────────
 function ScreenSeeds({ data }: { data: WorkbenchData }) {
-  const tracks = data.tracks;
   const waveform = [30, 55, 80, 42, 90, 70, 48, 88, 62, 35, 78, 55, 92, 40, 68, 82, 48, 30, 62, 88];
 
+  // Deck state
+  const [deck, setDeck] = useState(data.tracks);
+  const [deckIdx, setDeckIdx] = useState(0);
+  const [actionedIds, setActionedIds] = useState<Set<string>>(new Set());
+  const [sessionStats, setSessionStats] = useState({ saved: 0, skipped: 0, hyped: 0 });
+  const [_loadingDeck, setLoadingDeck] = useState(false);
+
   // Swipe / drag state
-  const [cardIdx, setCardIdx] = useState(0);
   const [dragX, setDragX] = useState(0);
   const [dragY, setDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef<{ x: number; y: number } | null>(null);
 
-  const totalTracks = tracks.length;
-  const front = tracks[cardIdx % totalTracks];
-  const behind = [
-    tracks[(cardIdx + 2) % totalTracks],
-    tracks[(cardIdx + 1) % totalTracks],
-  ];
+  // Fetch deck on mount
+  useEffect(() => {
+    setLoadingDeck(true);
+    fetch('/api/discover/seeds')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.seeds?.length) setDeck(d.seeds); })
+      .catch(() => {})
+      .finally(() => setLoadingDeck(false));
+  }, []);
 
-  function advanceCard() {
-    setCardIdx(i => i + 1);
-  }
+  const handleAction = useCallback(async (action: 'save' | 'skip' | 'hype') => {
+    const front = deck[deckIdx % Math.max(deck.length, 1)];
+    if (!front || actionedIds.has(front.id)) return;
+    setActionedIds(prev => new Set([...prev, front.id]));
+    setDeckIdx(i => i + 1);
+    setSessionStats(prev => ({
+      ...prev,
+      saved:   action === 'save'  ? prev.saved + 1  : prev.saved,
+      skipped: action === 'skip'  ? prev.skipped + 1 : prev.skipped,
+      hyped:   action === 'hype'  ? prev.hyped + 1  : prev.hyped,
+    }));
+    // Load more when near end
+    const remaining = deck.length - (deckIdx + 1);
+    if (remaining <= 3) {
+      fetch('/api/discover/seeds').then(r => r.ok ? r.json() : null).then(d => {
+        if (d?.seeds?.length) {
+          setDeck(prev => [...prev, ...d.seeds.filter((s: {id:string}) => !actionedIds.has(s.id))]);
+        }
+      }).catch(() => {});
+    }
+    try {
+      await fetch(`/api/discover/seeds/${encodeURIComponent(front.id)}/${action}`, { method: 'POST' });
+    } catch { /* non-blocking */ }
+  }, [deck, deckIdx, actionedIds]);
+
+  const front = deck[deckIdx % Math.max(deck.length, 1)];
+  const behind = deck.length > 1 ? [
+    deck[(deckIdx + 2) % deck.length],
+    deck[(deckIdx + 1) % deck.length],
+  ] : [];
+
+  const xp = sessionStats.saved * 10 + sessionStats.hyped * 5 + sessionStats.skipped * 1;
+  const totalReviewed = sessionStats.saved + sessionStats.skipped + sessionStats.hyped;
 
   function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -423,14 +464,11 @@ function ScreenSeeds({ data }: { data: WorkbenchData }) {
   function handlePointerUp() {
     if (isDragging) {
       if (dragX > 80) {
-        // hype
-        advanceCard();
+        void handleAction('hype');
       } else if (dragX < -80) {
-        // skip
-        advanceCard();
+        void handleAction('skip');
       } else if (dragY < -80) {
-        // save
-        advanceCard();
+        void handleAction('save');
       }
     }
     setIsDragging(false);
@@ -457,10 +495,10 @@ function ScreenSeeds({ data }: { data: WorkbenchData }) {
         }}>
           <div style={{ display: 'flex', gap: 14 }}>
             {[
-              { k: 'Reviewed', v: '4/12', c: T.ink },
-              { k: 'Saved',    v: '+3',   c: T.teal },
-              { k: 'Hyped',    v: '2',    c: T.pink },
-              { k: 'XP',       v: '+42',  c: T.amber },
+              { k: 'Reviewed', v: totalReviewed > 0 ? String(totalReviewed) : '—', c: T.ink },
+              { k: 'Saved',    v: sessionStats.saved   > 0 ? `+${sessionStats.saved}`   : '—', c: T.teal },
+              { k: 'Hyped',    v: sessionStats.hyped   > 0 ? String(sessionStats.hyped) : '—', c: T.pink },
+              { k: 'XP',       v: xp > 0 ? `+${xp}` : '—', c: T.amber },
             ].map((s, i) => (
               <div key={i}>
                 <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.12em', textTransform: 'uppercase' }}>{s.k}</div>
@@ -552,11 +590,11 @@ function ScreenSeeds({ data }: { data: WorkbenchData }) {
                 <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 26, letterSpacing: '-.025em', textShadow: '0 2px 12px rgba(0,0,0,.4)' }}>{front.title}</div>
                 <div style={{ fontFamily: T.fm, fontSize: 12, color: 'rgba(255,255,255,.8)', letterSpacing: '.1em', marginTop: 4, textTransform: 'uppercase' }}>{front.artistName} · {front.album}</div>
                 <div style={{ fontFamily: T.fs, fontStyle: 'italic', fontSize: 13, color: 'rgba(255,255,255,.9)', marginTop: 10, lineHeight: 1.3, borderLeft: `2px solid ${T.accent}`, paddingLeft: 8 }}>
-                  "It only really lands at 1:48 — that&apos;s the seed."
+                  &quot;It only really lands at 1:48 — that&apos;s the seed.&quot;
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, fontFamily: T.fm, fontSize: 12, letterSpacing: '.08em', color: 'rgba(255,255,255,.7)' }}>
                   <span>♥ {front.hypeCount} hype</span>
-                  <span>48 saves · 21 skips</span>
+                  <span>{deck.length - deckIdx} left</span>
                 </div>
               </div>
             </div>
@@ -571,7 +609,12 @@ function ScreenSeeds({ data }: { data: WorkbenchData }) {
             { c: T.teal,    bd: 'rgba(34,229,212,.4)', sz: 60, label: '▶', action: 'save' },
             { c: T.pink,    bd: 'rgba(255,62,154,.4)', sz: 46, label: '♥', action: 'hype' },
           ].map((b, i) => (
-            <button key={i} onClick={() => b.action !== 'replay' && advanceCard()} style={{
+            <button key={i} onClick={() => {
+              if (b.action === 'skip')   void handleAction('skip');
+              else if (b.action === 'save')  void handleAction('save');
+              else if (b.action === 'hype')  void handleAction('hype');
+              // replay: no-op
+            }} style={{
               width: b.sz, height: b.sz, borderRadius: '50%',
               background: T.bg2, border: `1px solid ${b.bd}`, color: b.c,
               display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
@@ -590,23 +633,23 @@ function ScreenSeeds({ data }: { data: WorkbenchData }) {
             <WMPill tone="amber">+60 XP</WMPill>
           </div>
           <div style={{ display: 'flex', gap: 4 }}>
-            {[1, 1, 1, 0, 0].map((on, i) => (
-              <span key={i} style={{ flex: 1, height: 6, borderRadius: 99, background: on ? T.accent : T.bg3, display: 'block' }} />
+            {[0, 1, 2, 3, 4].map((i) => (
+              <span key={i} style={{ flex: 1, height: 6, borderRadius: 99, background: i < sessionStats.saved ? T.accent : T.bg3, display: 'block' }} />
             ))}
           </div>
-          <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.06em' }}>3 / 5 · earn Seed Curator badge</div>
+          <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.06em' }}>{sessionStats.saved} / 5 · earn Seed Curator badge</div>
         </WMCard>
 
         {/* Up next */}
         <div style={{ marginBottom: 14 }}>
           <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.2em', fontWeight: 700, textTransform: 'uppercase', marginBottom: 8, padding: '0 4px' }}>Up next</div>
           <WMCard style={{ gap: 8 }}>
-            {data.tracks.slice(1, 4).map((t, i) => (
+            {deck.slice(deckIdx + 1, deckIdx + 4).map((t, i) => (
               <div key={t.id} style={{ display: 'grid', gridTemplateColumns: '38px 1fr', gap: 10, alignItems: 'center', opacity: i === 2 ? .5 : 1 }}>
                 <div style={{ width: 38, height: 38, borderRadius: 6, background: `linear-gradient(135deg,${t.color},${t.color}80)` }} />
                 <div>
                   <div style={{ fontFamily: T.fd, fontWeight: 700, letterSpacing: '-.01em', fontSize: 12, color: T.ink }}>{t.title}</div>
-                  <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.06em', marginTop: 2 }}>{t.artistName} · {t.duration}s</div>
+                  <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.06em', marginTop: 2 }}>{t.artistName}</div>
                 </div>
               </div>
             ))}
@@ -978,6 +1021,15 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
   const [progress, setProgress] = useState(0.42);
   const [currentTrackIdx, setCurrentTrackIdx] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [notifCount, setNotifCount] = useState(0);
+
+  useEffect(() => {
+    fetch('/api/notifications')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.notifications) setNotifCount(d.notifications.length); })
+      .catch(() => {});
+  }, []);
 
   const currentTrack = data.tracks[currentTrackIdx % Math.max(data.tracks.length, 1)];
   // keep track as alias for first-track compat used below
@@ -1048,12 +1100,13 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
     }}>
       <style>{eqCss}</style>
       <audio ref={audioRef} preload="metadata" style={{ display: 'none' }} />
-      <WMTopBar tab={tab} listeningNow={data.listeningNow} userName={data.userName} initials={data.userInitials} />
+      <WMTopBar tab={tab} listeningNow={data.listeningNow} userName={data.userName} initials={data.userInitials} onSearch={() => setSearchOpen(true)} notifCount={notifCount} />
       <div role="main" className="wm-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', position: 'relative', scrollbarWidth: 'none' }}>
         {screenEl}
       </div>
       {track && <WMMiniPlayer track={track} playing={playing} onToggle={() => setPlaying(p => !p)} progress={progress} />}
       <WMBottomTabs tab={tab} onTab={setTab} />
+      <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
   );
 }

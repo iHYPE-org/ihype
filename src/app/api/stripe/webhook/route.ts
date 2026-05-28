@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { TicketOrderStatus } from '@prisma/client/wasm';
 import { db } from '@/lib/db';
 import { constructWebhookEvent, isStripeConfigured } from '@/lib/stripe';
+import { log } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
   try {
     event = constructWebhookEvent(payload, signature);
   } catch (err) {
-    console.error('[stripe/webhook]', err);
+    log.error('[stripe/webhook]', err instanceof Error ? err : null, 'Webhook error');
     return NextResponse.json({ error: 'Invalid signature.' }, { status: 400 });
   }
 
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
       data: { source: 'stripe', eventId: event.id }
     });
   } catch (err) {
-    console.error('[stripe/webhook]', err);
+    log.error('[stripe/webhook]', err instanceof Error ? err : null, 'Webhook error');
     return NextResponse.json({ received: true, duplicate: true });
   }
 

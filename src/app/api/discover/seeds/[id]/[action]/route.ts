@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
+import { log } from '@/lib/logger';
 
 export async function POST(
   req: Request,
@@ -29,8 +30,10 @@ export async function POST(
       return NextResponse.json({ ok: false, error: 'Seed media was not found.' }, { status: 404 });
     }
 
-    await db.seed.create({
-      data: { userId: session.user.id, mediaId: id, action },
+    await db.seed.upsert({
+      where: { userId_mediaId: { userId: session.user.id, mediaId: id } },
+      create: { userId: session.user.id, mediaId: id, action },
+      update: { action, createdAt: new Date() },
     });
 
     if (action === 'hype') {
@@ -48,7 +51,7 @@ export async function POST(
       }
     }
   } catch (error) {
-    console.error('[discover/seeds] failed to record action', error);
+    log.error('[discover/seeds/action]', error instanceof Error ? error : null, 'Failed to record seed action');
     return NextResponse.json({ ok: false, error: 'Could not record seed action.' }, { status: 500 });
   }
 

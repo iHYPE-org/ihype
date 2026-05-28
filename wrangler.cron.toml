@@ -1,6 +1,9 @@
 name = "ihype-cron"
-compatibility_date = "2024-09-23"
+compatibility_date = "2025-01-01"
 main = "workers/cron.ts"
+
+[build]
+command = ""
 
 [vars]
 APP_BASE_URL = "https://ihype.org"

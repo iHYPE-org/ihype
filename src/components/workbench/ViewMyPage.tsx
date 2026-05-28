@@ -1,14 +1,68 @@
 'use client';
 
-import React, { useState } from 'react';
-import type { WorkbenchData } from '@/components/WorkbenchShell';
+import React, { useState, useEffect, useCallback } from 'react';
+import type { WorkbenchData, WbTicket } from '@/components/WorkbenchShell';
 import { IcHeart, IcCheck } from './icons';
 import { Panel, TrackCard } from './primitives';
+
+const STUB_ACCENT_PALETTE = ['#ff5029', '#b983ff', '#22e5d4', '#ff3e9a', '#ffb84a', '#4af0b0'];
+
+function TicketStubQR({ code }: { code: string }) {
+  const cells = Array.from({ length: 16 }, (_, i) => {
+    const ch = code.charCodeAt(i % code.length);
+    return (ch + i) % 2 === 0;
+  });
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 2, width: 40, height: 40, flexShrink: 0 }}>
+      {cells.map((on, i) => (
+        <div key={i} style={{ borderRadius: 1, background: on ? 'var(--accent)' : 'var(--bg-3)' }} />
+      ))}
+    </div>
+  );
+}
+
+function TicketStub({ ticket, accentColor }: { ticket: WbTicket; accentColor: string }) {
+  const dateStr = new Date(ticket.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return (
+    <div style={{
+      position: 'relative',
+      display: 'flex',
+      borderRadius: '8px 8px 0 0',
+      border: '1px solid var(--line-2)',
+      borderBottom: '2px dashed var(--line-2)',
+      background: `repeating-linear-gradient(135deg, var(--bg-2) 0px, var(--bg-2) 8px, var(--bg-3) 8px, var(--bg-3) 9px)`,
+      overflow: 'hidden',
+      minHeight: 90,
+    }}>
+      {/* Left accent strip */}
+      <div style={{ width: 4, background: accentColor, flexShrink: 0 }} />
+      {/* Main content */}
+      <div style={{ flex: 1, padding: '10px 12px', minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 14, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-.01em' }}>{ticket.showName}</div>
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-2)', marginTop: 4 }}>{dateStr}</div>
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', marginTop: 2 }}>Chicago, IL · {ticket.seat}</div>
+        <div style={{ fontFamily: 'monospace', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '.18em', textTransform: 'uppercase', marginTop: 8 }}>
+          iHYPE • NO PLATFORM FEE • 45/45/10
+        </div>
+      </div>
+      {/* Dashed divider */}
+      <div style={{ width: 1, borderLeft: '2px dashed var(--line-2)', margin: '8px 0', flexShrink: 0 }} />
+      {/* QR side */}
+      <div style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <TicketStubQR code={ticket.code} />
+      </div>
+    </div>
+  );
+}
 
 export function ViewMyPage({ data, onPickTrack, currentIdx }: {
   data: WorkbenchData; onPickTrack: (i: number) => void; currentIdx: number;
 }) {
   const [hypedIds, setHypedIds] = useState<Set<string>>(new Set());
+  const [referral, setReferral] = useState<{ link: string; count: number } | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [anniversaryDismissed, setAnniversaryDismissed] = useState(false);
+  const [streakData, setStreakData] = useState<{ streak: number; daysActive: number } | null>(null);
 
   const handleHype = async (showId: string) => {
     if (hypedIds.has(showId)) return; // already hyped
@@ -24,6 +78,20 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
       setHypedIds(prev => { const n = new Set(prev); n.delete(showId); return n; });
     }
   };
+  useEffect(() => {
+    fetch('/api/referral')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.referralLink) setReferral({ link: d.referralLink, count: d.referralCount ?? 0 }); })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/hype-streak')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setStreakData({ streak: d.streak ?? 0, daysActive: d.daysActive ?? 0 }); })
+      .catch(() => {});
+  }, []);
+
   const heroStats = [
     { v: (data.lifeStats?.totalHype ?? 1284).toLocaleString(), k: 'HYPE Given', accent: true },
     { v: '842', k: 'Received', accent: false },
@@ -91,8 +159,8 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
         </div>
       </div>
 
-      {/* Stat tiles — 4-col */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 20 }}>
+      {/* Stat tiles — 4-col + streak card */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr) auto', gap: 14, marginBottom: 20, alignItems: 'stretch' }}>
         {[
           { k: 'Weekly Listens', v: '2,284', d: <><span style={{ color: '#22e5d4' }}>↑ 18%</span> vs last week</> },
           { k: 'Seed Save Rate', v: '26%', d: '88 saves on Sundown' },
@@ -105,7 +173,102 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
             <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-2)', marginTop: 4 }}>{s.d}</div>
           </div>
         ))}
+        {/* Hype Streak card */}
+        {streakData !== null && (() => {
+          const s = streakData.streak;
+          const emoji = s >= 30 ? '⚡' : '🔥';
+          const glowBox = s >= 30
+            ? '0 0 0 2px #b983ff'
+            : s >= 7 ? '0 0 0 2px #f5d060' : undefined;
+          return (
+            <div style={{
+              padding: '14px 18px',
+              border: '1px solid rgba(255,80,41,.25)',
+              borderRadius: 12,
+              background: 'linear-gradient(135deg, rgba(255,80,41,.15), rgba(255,184,74,.08))',
+              boxShadow: glowBox,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              minWidth: 110, textAlign: 'center',
+            }}>
+              {s === 0 ? (
+                <>
+                  <div style={{ fontSize: 28, lineHeight: 1 }}>🔥</div>
+                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', marginTop: 8, maxWidth: 120, lineHeight: 1.4 }}>Start your streak — hype something today</div>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontSize: 32, lineHeight: 1 }}>{emoji}</div>
+                  <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 32, letterSpacing: '-.02em', lineHeight: 1, color: 'var(--ink)', marginTop: 4 }}>{s}</div>
+                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', letterSpacing: '.1em', textTransform: 'uppercase', marginTop: 4 }}>day streak</div>
+                  {streakData.daysActive > s && (
+                    <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', marginTop: 2 }}>{streakData.daysActive} days active</div>
+                  )}
+                </>
+              )}
+            </div>
+          );
+        })()}
       </div>
+
+      {/* Referral link */}
+      {referral && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px',
+          border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)',
+          marginBottom: 14,
+        }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, letterSpacing: '.18em', color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 4 }}>
+              Your referral link · {referral.count} signup{referral.count !== 1 ? 's' : ''}
+            </div>
+            <div style={{ fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {referral.link}
+            </div>
+          </div>
+          <button
+            onClick={async () => {
+              await navigator.clipboard.writeText(referral.link).catch(() => {});
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            }}
+            style={{
+              padding: '8px 14px', borderRadius: 7, border: copied ? '1px solid rgba(34,229,212,.4)' : '1px solid var(--line-2)',
+              fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 700, letterSpacing: '.06em', cursor: 'pointer',
+              background: copied ? 'rgba(34,229,212,.08)' : 'var(--bg-3)',
+              color: copied ? '#22e5d4' : 'var(--ink-2)', transition: 'all .2s', flexShrink: 0,
+            }}
+          >
+            {copied ? '✓ Copied' : 'Copy link'}
+          </button>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', flexShrink: 0, textAlign: 'right', maxWidth: 100, lineHeight: 1.4 }}>
+            Earn 10% of each ticket sale
+          </div>
+        </div>
+      )}
+
+      {/* Artist Anniversary Card */}
+      {!anniversaryDismissed && data.lifeStats && data.lifeStats.totalHype > 0 && (
+        <div style={{
+          position: 'relative',
+          padding: '16px 20px',
+          marginBottom: 14,
+          borderRadius: 14,
+          border: '1px solid rgba(255,80,41,.2)',
+          background: 'linear-gradient(135deg, rgba(255,80,41,.12), rgba(185,131,255,.08))',
+        }}>
+          <button
+            onClick={() => setAnniversaryDismissed(true)}
+            style={{ position: 'absolute', top: 10, right: 12, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', fontSize: 16, lineHeight: 1, padding: 4 }}
+            aria-label="Dismiss"
+          >✕</button>
+          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 18, color: 'var(--ink)', marginBottom: 6, letterSpacing: '-.01em' }}>
+            🎂 1 year on iHYPE
+          </div>
+          <div style={{ fontFamily: 'var(--f-b)', fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.5 }}>
+            {data.lifeStats.totalHype.toLocaleString()} hypes, {data.lifeStats.eventsAttended} events attended, {data.lifeStats.songsPlayed.toLocaleString()} songs played. Thanks for being part of the scene.
+          </div>
+        </div>
+      )}
 
       {/* Two-col: Top 5 + Activity */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 20, marginBottom: 14 }}>
@@ -193,6 +356,22 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
             <TrackCard key={t.id} track={t} active={i === currentIdx} onClick={() => onPickTrack(i)} />
           ))}
         </div>
+      </Panel>
+
+      {/* Ticket Stubs */}
+      <Panel title="🎟️ Your Ticket Stubs" style={{ marginBottom: 14 }}>
+        {data.tickets.length === 0 ? (
+          <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: 14 }}>
+            <div style={{ fontSize: 32, marginBottom: 10 }}>🎟️</div>
+            Your stubs will appear here after your first show
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14, padding: '14px 16px' }}>
+            {data.tickets.map((tk, i) => (
+              <TicketStub key={tk.id} ticket={tk} accentColor={STUB_ACCENT_PALETTE[i % STUB_ACCENT_PALETTE.length]} />
+            ))}
+          </div>
+        )}
       </Panel>
 
       {/* Your roles */}

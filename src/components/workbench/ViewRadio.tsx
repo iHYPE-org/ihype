@@ -10,6 +10,8 @@ export const ViewRadio = memo(function ViewRadio({ data, onPickTrack }: {
 }) {
   const shows = data.radioShows;
   const [activeId, setActiveId] = useState(shows[0]?.id ?? '');
+  const [hyped, setHyped] = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
   const show = shows.find(r => r.id === activeId) ?? shows[0];
   const FREQS = ['88.3','94.1','101.7','107.9','104.5','99.5'];
   const showIdx = shows.findIndex(r => r.id === activeId);
@@ -105,9 +107,30 @@ export const ViewRadio = memo(function ViewRadio({ data, onPickTrack }: {
               >
                 ▶ Tune in
               </button>
-              {['＋ Subscribe', '♥ Hype show'].map(l => (
-                <button key={l} style={{ padding: '9px 14px', border: '1px solid var(--line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.04em', display: 'flex', alignItems: 'center', gap: 6, color: 'var(--ink)', background: 'none', cursor: 'pointer' }}>{l}</button>
-              ))}
+              <button
+                onClick={() => setSubscribed(true)}
+                style={{ padding: '9px 14px', border: '1px solid var(--line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.04em', display: 'flex', alignItems: 'center', gap: 6, color: 'var(--ink)', background: 'none', cursor: 'pointer' }}
+              >
+                {subscribed ? '✓ Subscribed' : '＋ Subscribe'}
+              </button>
+              <button
+                onClick={async () => {
+                  setHyped(true);
+                  try {
+                    const res = await fetch('/api/hype', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ targetType: 'show', targetId: show.id }),
+                    });
+                    if (!res.ok) setHyped(false);
+                  } catch {
+                    setHyped(false);
+                  }
+                }}
+                style={{ padding: '9px 14px', border: '1px solid var(--line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.04em', display: 'flex', alignItems: 'center', gap: 6, color: hyped ? '#ff3e9a' : 'var(--ink)', background: 'none', cursor: 'pointer' }}
+              >
+                {hyped ? '♥ Hyped!' : '♥ Hype show'}
+              </button>
             </div>
           </div>
 

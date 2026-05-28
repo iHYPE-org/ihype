@@ -714,7 +714,9 @@ model Seed {
   createdAt   DateTime @default(now())
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, mediaId])
   @@index([userId])
+  @@index([mediaId])
 }
 
 model ShowComment {
@@ -994,6 +996,18 @@ model CollabPost {
   @@index([profileId])
 }
 
+model CollabBoardPost {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // "looking-for" | "available"
+  role      String   // "drummer" | "venue" | "vocalist" | "producer" | "guitarist" | "bassist" | "DJ" | "other"
+  body      String   @db.Text
+  contact   String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 model FeatureRequest {
   id          String   @id @default(cuid())
   userId      String?
@@ -1005,4 +1019,26 @@ model FeatureRequest {
 
   @@index([status, votes])
   @@index([createdAt])
+}
+
+model AuxQueue {
+  id        String     @id @default(cuid())
+  userId    String
+  name      String
+  slug      String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  items     AuxItem[]
+
+  @@index([userId])
+}
+
+model AuxItem {
+  id       String   @id @default(cuid())
+  queueId  String
+  mediaId  String
+  position Int
+  queue    AuxQueue @relation(fields: [queueId], references: [id], onDelete: Cascade)
+
+  @@index([queueId])
 }

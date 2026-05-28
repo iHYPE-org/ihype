@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { log } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -14,11 +15,11 @@ export async function GET(request: NextRequest) {
     .filter((g) => g.length > 0);
 
   try {
-    const skipped = await db.seed.findMany({
-      where: { userId: session.user.id, action: 'skip' },
+    const actioned = await db.seed.findMany({
+      where: { userId: session.user.id, action: { in: ['skip', 'save', 'hype'] } },
       select: { mediaId: true },
     });
-    const skipIds = new Set(skipped.map(s => s.mediaId));
+    const actionedIds = new Set(actioned.map(s => s.mediaId));
 
     // --- Collaborative filtering (v2) -----------------------------------
     // Find profiles current user has hyped (A), then users who also hyped
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest) {
             cfMedia = await db.artistMediaAsset.findMany({
               where: {
                 profileId: { in: rankedProfileIds },
-                id: { notIn: [...skipIds] }
+                id: { notIn: [...actionedIds] }
               },
               take: 20,
               orderBy: { createdAt: 'desc' },
@@ -78,7 +79,7 @@ export async function GET(request: NextRequest) {
       ? cfMedia
       : await db.artistMediaAsset.findMany({
           where: {
-            id: { notIn: [...skipIds] },
+            id: { notIn: [...actionedIds] },
             ...(genres.length > 0
               ? { profile: { genres: { hasSome: genres } } }
               : {})
@@ -107,7 +108,7 @@ export async function GET(request: NextRequest) {
       })),
     });
   } catch (error) {
-    console.error('[discover/seeds] failed to load seeds', error);
+    log.error('[discover/seeds]', error instanceof Error ? error : null, 'Failed to load seeds');
     return NextResponse.json({ error: 'Could not load seeds.' }, { status: 500 });
   }
 }
