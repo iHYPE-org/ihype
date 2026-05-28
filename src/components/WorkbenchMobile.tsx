@@ -307,6 +307,27 @@ function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, noti
       {/* Divider */}
       <div style={{ height: 1, background: T.line, margin: '0 20px' }} />
 
+      {/* Help / info */}
+      <div style={{ padding: '8px 0' }}>
+        <div style={{ padding: '8px 20px 6px', fontFamily: T.fm, fontSize: 11, letterSpacing: '.18em', color: T.ink3, textTransform: 'uppercase' }}>Help</div>
+        {([
+          { icon: 'ℹ️', label: 'About iHYPE', href: '/about' },
+          { icon: '🔍', label: 'Transparency', href: '/transparency' },
+          { icon: '🐛', label: 'Report a bug', href: 'mailto:bugs@ihype.org' },
+        ] as { icon: string; label: string; href: string }[]).map(item => (
+          <a key={item.label} href={item.href} onClick={close} style={{
+            display: 'flex', alignItems: 'center', gap: 14, padding: '13px 20px',
+            textDecoration: 'none', width: '100%', boxSizing: 'border-box',
+          }}>
+            <span style={{ fontSize: 18, width: 24, textAlign: 'center' }}>{item.icon}</span>
+            <span style={{ fontFamily: T.fb, fontSize: 15, color: T.ink }}>{item.label}</span>
+          </a>
+        ))}
+      </div>
+
+      {/* Divider */}
+      <div style={{ height: 1, background: T.line, margin: '0 20px' }} />
+
       {/* Live stat + user */}
       <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1194,66 +1215,6 @@ function ScreenTicketing({ data }: { data: WorkbenchData }) {
 }
 
 // ─── Main mobile export ───────────────────────────────────────
-// ─── Help FAB ─────────────────────────────────────────────────
-function WMHelpFAB() {
-  const [open, setOpen] = React.useState(false);
-  const items = [
-    { icon: 'ℹ️', label: 'About iHYPE', href: '/about' },
-    { icon: '🔍', label: 'Transparency', href: '/transparency' },
-    { icon: '⌨️', label: 'Keyboard shortcuts', action: () => { setOpen(false); } },
-    { icon: '🐛', label: 'Report a bug', href: 'mailto:bugs@ihype.org' },
-  ];
-  return (
-    <>
-      {open && <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 39 }} />}
-      <div style={{ position: 'fixed', bottom: 80, left: 16, zIndex: 40, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
-        {open && (
-          <div style={{
-            background: T.bg3, border: `1px solid ${T.line2}`, borderRadius: 12,
-            boxShadow: '0 8px 32px rgba(0,0,0,.6)', overflow: 'hidden', minWidth: 200,
-          }}>
-            {items.map(it => (
-              it.href ? (
-                <a key={it.label} href={it.href} onClick={() => setOpen(false)} style={{
-                  display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px',
-                  textDecoration: 'none', borderBottom: `1px solid ${T.line}`,
-                  color: T.ink, fontFamily: T.fb, fontSize: 14,
-                }}>
-                  <span style={{ fontSize: 16 }}>{it.icon}</span>
-                  {it.label}
-                </a>
-              ) : (
-                <button key={it.label} onClick={it.action} style={{
-                  width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px',
-                  textDecoration: 'none', borderBottom: `1px solid ${T.line}`, border: 'none',
-                  background: 'transparent', color: T.ink, fontFamily: T.fb, fontSize: 14, cursor: 'pointer', textAlign: 'left',
-                }}>
-                  <span style={{ fontSize: 16 }}>{it.icon}</span>
-                  {it.label}
-                </button>
-              )
-            ))}
-          </div>
-        )}
-        <button
-          aria-label="Help"
-          onClick={() => setOpen(o => !o)}
-          style={{
-            width: 40, height: 40, borderRadius: '50%',
-            background: open ? T.bg3 : T.bg4,
-            border: `1px solid ${open ? T.line2 : T.line}`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', fontFamily: T.fd, fontWeight: 800, fontSize: 15,
-            color: open ? T.ink : T.ink3,
-            boxShadow: open ? `0 4px 20px rgba(0,0,0,.5)` : 'none',
-            transition: 'background .15s, color .15s',
-          }}
-        >?</button>
-      </div>
-    </>
-  );
-}
-
 export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
   const [tab, setTab] = useState<MobileTab>('me');
   const [playing, setPlaying] = useState(false);
@@ -1344,7 +1305,6 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
         {screenEl}
       </div>
       {track && <WMMiniPlayer track={track} playing={playing} onToggle={() => setPlaying(p => !p)} progress={progress} />}
-      <WMHelpFAB />
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
   );
