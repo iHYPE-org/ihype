@@ -99,17 +99,86 @@ function WMCard({ children, style }: { children: React.ReactNode; style?: React.
   );
 }
 
+// ─── Skeleton block ───────────────────────────────────────────
+function WMSkeleton({ w = '100%', h = 14, r = 6, style }: { w?: string | number; h?: number; r?: number; style?: React.CSSProperties }) {
+  return <div className="wm-skeleton" style={{ width: w, height: h, borderRadius: r, ...style }} />;
+}
+
+// ─── Track bottom sheet ───────────────────────────────────────
+function WMTrackSheet({ track, open, onClose }: { track: { title: string; artistName: string; album: string; color: string; hypeCount: number } | null; open: boolean; onClose: () => void }) {
+  return (
+    <>
+      {open && <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 49, background: 'rgba(0,0,0,.6)' }} />}
+      <div style={{
+        position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 50,
+        background: T.bg3, borderTop: `1px solid ${T.line2}`,
+        borderRadius: '18px 18px 0 0',
+        boxShadow: '0 -12px 48px rgba(0,0,0,.7)',
+        transform: open ? 'translateY(0)' : 'translateY(110%)',
+        transition: 'transform .3s cubic-bezier(.4,0,.2,1)',
+        padding: '0 0 40px',
+      }}>
+        {/* drag handle */}
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 0' }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: T.line2 }} />
+        </div>
+        {track && (
+          <div style={{ padding: '20px 22px 0' }}>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 20 }}>
+              <div style={{
+                width: 72, height: 72, borderRadius: 12, flexShrink: 0,
+                background: `linear-gradient(135deg,${track.color},${track.color}80)`,
+                boxShadow: `0 8px 24px ${track.color}55`,
+              }} />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 20, letterSpacing: '-.02em', color: T.ink, lineHeight: 1.1 }}>{track.title}</div>
+                <div style={{ fontFamily: T.fb, fontSize: 14, color: T.ink2, marginTop: 5 }}>{track.artistName}</div>
+                <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.06em', marginTop: 3 }}>{track.album}</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+              <button style={{ flex: 1, padding: '12px 0', borderRadius: 10, background: 'rgba(255,62,154,.12)', border: '1px solid rgba(255,62,154,.3)', color: T.pink, fontFamily: T.fd, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+                ♥ Hype · {track.hypeCount.toLocaleString()}
+              </button>
+              <button style={{ flex: 1, padding: '12px 0', borderRadius: 10, background: T.bg4, border: `1px solid ${T.line2}`, color: T.ink, fontFamily: T.fd, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+                + Save
+              </button>
+            </div>
+            {[
+              { label: 'View artist profile', href: '#' },
+              { label: 'Buy tickets', href: '#' },
+              { label: 'Add to playlist', href: '#' },
+              { label: 'Share', href: '#' },
+            ].map(item => (
+              <a key={item.label} href={item.href} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '14px 0', borderBottom: `1px solid ${T.line}`,
+                textDecoration: 'none', color: T.ink, fontFamily: T.fb, fontSize: 15,
+              }}>
+                {item.label}
+                <span style={{ color: T.ink3, fontSize: 14 }}>›</span>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
 // ─── EQ animated bars ─────────────────────────────────────────
 const eqCss = `
 @keyframes wm-eq1{0%,100%{height:3px}50%{height:10px}}
 @keyframes wm-eq2{0%,100%{height:5px}50%{height:8px}}
 @keyframes wm-eq3{0%,100%{height:4px}50%{height:11px}}
 @keyframes wm-pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes wm-shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
 .wm-eq-bar:nth-child(1){animation:wm-eq1 1.1s infinite}
 .wm-eq-bar:nth-child(2){animation:wm-eq2 .9s infinite}
 .wm-eq-bar:nth-child(3){animation:wm-eq3 1.3s infinite}
 .wm-pulse{animation:wm-pulse 1.6s infinite}
 .wm-scroll::-webkit-scrollbar{display:none}
+.wm-skeleton{background:linear-gradient(90deg,#1a1612 25%,#221c16 50%,#1a1612 75%);background-size:200% 100%;animation:wm-shimmer 1.4s infinite}
 *:focus-visible { outline: 2px solid var(--accent, #ff5029); outline-offset: 3px; border-radius: 4px; }
 `;
 
@@ -353,8 +422,8 @@ function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, noti
 }
 
 // ─── Mini Player ─────────────────────────────────────────────
-function WMMiniPlayer({ track, playing, onToggle, progress }: {
-  track: WbTrack; playing: boolean; onToggle: () => void; progress: number;
+function WMMiniPlayer({ track, playing, onToggle, progress, onAlbumTap }: {
+  track: WbTrack; playing: boolean; onToggle: () => void; progress: number; onAlbumTap?: () => void;
 }) {
   return (
     <div style={{
@@ -362,9 +431,9 @@ function WMMiniPlayer({ track, playing, onToggle, progress }: {
       display: 'grid', gridTemplateColumns: '40px 1fr auto auto', gap: 10, alignItems: 'center', flexShrink: 0,
     }}>
       <span style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg,transparent,${T.accent},${T.pink},transparent)`, opacity: .6 }} />
-      <div style={{
+      <div onClick={onAlbumTap} style={{
         width: 40, height: 40, borderRadius: 7, background: `linear-gradient(135deg,${track.color},${track.color}80)`,
-        position: 'relative', overflow: 'hidden', flexShrink: 0,
+        position: 'relative', overflow: 'hidden', flexShrink: 0, cursor: onAlbumTap ? 'pointer' : 'default',
       }}>
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 30% 30%,rgba(255,255,255,.3),transparent 60%)' }} />
         {playing && (
@@ -575,7 +644,7 @@ function ScreenSeeds({ data }: { data: WorkbenchData }) {
   const [deckIdx, setDeckIdx] = useState(0);
   const [actionedIds, setActionedIds] = useState<Set<string>>(new Set());
   const [sessionStats, setSessionStats] = useState({ saved: 0, skipped: 0, hyped: 0 });
-  const [_loadingDeck, setLoadingDeck] = useState(false);
+  const [loadingDeck, setLoadingDeck] = useState(true);
 
   // Swipe / drag state — use refs for hot-path, state only for render triggers
   const [dragX, setDragX] = useState(0);
@@ -601,6 +670,11 @@ function ScreenSeeds({ data }: { data: WorkbenchData }) {
   const handleAction = useCallback((action: 'save' | 'skip' | 'hype', fromDrag = false, dragDx = 0, dragDy = 0) => {
     const front = deck[deckIdx % Math.max(deck.length, 1)];
     if (!front || actionedIds.has(front.id)) return;
+
+    // Haptic feedback
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(action === 'hype' ? [10, 30, 10] : 8);
+    }
 
     // Compute fly-off direction
     const flyX = action === 'hype' ? 500 : action === 'skip' ? -500 : fromDrag ? dragDx * 3 : 0;
@@ -719,8 +793,12 @@ function ScreenSeeds({ data }: { data: WorkbenchData }) {
 
         {/* Card stack */}
         <div style={{ position: 'relative', width: '100%', aspectRatio: '3 / 3.6', marginBottom: 14 }}>
+          {/* Skeleton loading state */}
+          {loadingDeck && (
+            <div className="wm-skeleton" style={{ position: 'absolute', inset: 0, borderRadius: 18 }} />
+          )}
           {/* behind cards */}
-          {behind.map((t, i) => (
+          {!loadingDeck && behind.map((t, i) => (
             <div key={t.id} style={{
               position: 'absolute', inset: 0, borderRadius: 18, overflow: 'hidden',
               transform: `translateY(${(behind.length - i) * 8}px) scale(${.9 + i * .05})`,
@@ -730,7 +808,7 @@ function ScreenSeeds({ data }: { data: WorkbenchData }) {
             }} />
           ))}
           {/* front card */}
-          {front && (() => {
+          {!loadingDeck && front && (() => {
             // Proportional tint: 0 at 0px drag, full at 100px
             const hypeAlpha = Math.min(Math.max(dragX / 100, 0), 1) * 0.55;
             const skipAlpha = Math.min(Math.max(-dragX / 100, 0), 1) * 0.55;
@@ -1281,6 +1359,75 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
     return () => clearInterval(iv);
   }, [playing, track]);
 
+  const [trackSheetOpen, setTrackSheetOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const pullStartY = useRef(0);
+  const pullDeltaRef = useRef(0);
+  const [pullDelta, setPullDelta] = useState(0);
+
+  const TABS_ORDER: MobileTab[] = ['me', 'seeds', 'radio', 'studio', 'tick'];
+  const tabSwipeStart = useRef<{ x: number; y: number } | null>(null);
+  const tabSwipeLocked = useRef<'h' | 'v' | null>(null);
+
+  const handleRefresh = useCallback(async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
+    await new Promise(r => setTimeout(r, 900));
+    setRefreshing(false);
+  }, [refreshing]);
+
+  function handleMainTouchStart(e: React.TouchEvent) {
+    const t = e.touches[0];
+    pullStartY.current = t.clientY;
+    tabSwipeStart.current = { x: t.clientX, y: t.clientY };
+    tabSwipeLocked.current = null;
+  }
+
+  function handleMainTouchMove(e: React.TouchEvent) {
+    const t = e.touches[0];
+    // Pull-to-refresh (seeds excluded — has its own drag)
+    if (tab !== 'seeds') {
+      const el = e.currentTarget as HTMLElement;
+      if (el.scrollTop === 0) {
+        const dy = t.clientY - pullStartY.current;
+        if (dy > 0) {
+          pullDeltaRef.current = Math.min(dy * 0.4, 70);
+          setPullDelta(pullDeltaRef.current);
+        }
+      }
+    }
+    // Tab swipe detection
+    if (tabSwipeStart.current && !tabSwipeLocked.current) {
+      const dx = t.clientX - tabSwipeStart.current.x;
+      const dy = t.clientY - tabSwipeStart.current.y;
+      if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+        tabSwipeLocked.current = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v';
+      }
+    }
+  }
+
+  function handleMainTouchEnd(e: React.TouchEvent) {
+    // Pull-to-refresh commit
+    if (pullDeltaRef.current > 50) {
+      handleRefresh();
+    }
+    pullDeltaRef.current = 0;
+    setPullDelta(0);
+
+    // Tab swipe commit
+    if (tabSwipeLocked.current === 'h' && tabSwipeStart.current) {
+      const dx = e.changedTouches[0].clientX - tabSwipeStart.current.x;
+      if (Math.abs(dx) > 60 && tab !== 'seeds') {
+        const idx = TABS_ORDER.indexOf(tab);
+        if (dx < 0 && idx < TABS_ORDER.length - 1) setTab(TABS_ORDER[idx + 1]);
+        if (dx > 0 && idx > 0) setTab(TABS_ORDER[idx - 1]);
+      }
+    }
+    tabSwipeStart.current = null;
+    tabSwipeLocked.current = null;
+  }
+
   const screenEl = (() => {
     switch (tab) {
       case 'me':     return <ScreenMe data={data} />;
@@ -1301,10 +1448,39 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
       <style>{eqCss}</style>
       <audio ref={audioRef} preload="metadata" style={{ display: 'none' }} />
       <WMTopBar tab={tab} onTab={setTab} listeningNow={data.listeningNow} userName={data.userName} initials={data.userInitials} onSearch={() => setSearchOpen(true)} notifCount={notifCount} />
-      <div role="main" className="wm-scroll" style={{ flex: 1, overflowY: tab === 'seeds' ? 'hidden' : 'auto', overflowX: 'hidden', position: 'relative', scrollbarWidth: 'none' }}>
+      <div
+        role="main"
+        className="wm-scroll"
+        style={{ flex: 1, overflowY: tab === 'seeds' ? 'hidden' : 'auto', overflowX: 'hidden', position: 'relative', scrollbarWidth: 'none' }}
+        onTouchStart={handleMainTouchStart}
+        onTouchMove={handleMainTouchMove}
+        onTouchEnd={handleMainTouchEnd}
+      >
+        {/* Pull-to-refresh indicator */}
+        {tab !== 'seeds' && (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            height: pullDelta > 0 ? pullDelta : refreshing ? 44 : 0,
+            overflow: 'hidden', transition: refreshing ? 'none' : 'height .2s',
+            fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.12em',
+          }}>
+            {refreshing ? (
+              <><span className="wm-pulse" style={{ width: 6, height: 6, borderRadius: '50%', background: T.accent, display: 'inline-block' }} />REFRESHING</>
+            ) : pullDelta > 40 ? '↓ RELEASE' : pullDelta > 10 ? '↓ PULL TO REFRESH' : null}
+          </div>
+        )}
         {screenEl}
       </div>
-      {track && <WMMiniPlayer track={track} playing={playing} onToggle={() => setPlaying(p => !p)} progress={progress} />}
+      {track && (
+        <WMMiniPlayer
+          track={track}
+          playing={playing}
+          onToggle={() => setPlaying(p => !p)}
+          progress={progress}
+          onAlbumTap={() => setTrackSheetOpen(true)}
+        />
+      )}
+      <WMTrackSheet track={track ?? null} open={trackSheetOpen} onClose={() => setTrackSheetOpen(false)} />
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
   );
