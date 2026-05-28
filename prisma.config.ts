@@ -47,8 +47,7 @@ function resolvePostgresUrl(candidates: readonly string[]) {
 }
 
 // Normalise DATABASE_URL to a postgresql:// URL so Prisma schema validation passes.
-// Vercel's Neon integration may set DATABASE_URL or related database env vars
-// to a prisma:// Accelerate URL, which the postgresql provider rejects at validate time.
+// A prisma:// Accelerate URL is rejected by the postgresql provider at validate time.
 const postgresUrl = resolvePostgresUrl(
   isPrismaMigrationCommand() ? MIGRATION_DATABASE_URL_CANDIDATES : DATABASE_URL_CANDIDATES
 )

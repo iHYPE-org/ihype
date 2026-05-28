@@ -362,7 +362,7 @@ export default async function AdminPage() {
         <div className="admin-console-panel-head">
           <div>
             <h2>Rate limit hits (1h)</h2>
-            <p className="meta">Top buckets that returned 429 in the last hour. Requires Vercel KV.</p>
+            <p className="meta">Top buckets that returned 429 in the last hour.</p>
           </div>
         </div>
         <div className="admin-list">
@@ -551,12 +551,6 @@ export default async function AdminPage() {
               — branch the production database for point-in-time snapshots.
             </li>
             <li>
-              <strong>Vercel:</strong>{' '}
-              <a href="https://vercel.com/dashboard" rel="noopener noreferrer" target="_blank">
-                vercel.com/dashboard
-              </a>{' '}
-              — review storage integration logs and exports.
-            </li>
             <li>
               For ad-hoc exports run <code>pg_dump &quot;$DATABASE_URL&quot; &gt; ihype-backup.sql</code>{' '}
               from a trusted workstation.

@@ -9,7 +9,7 @@ import type { NextAuthConfig } from 'next-auth';
 const useSecureCookies = process.env.NODE_ENV === 'production';
 const sessionMaxAgeSeconds = 12 * 60 * 60;
 const transientAuthCookieMaxAgeSeconds = 10 * 60;
-const trustHost = process.env.AUTH_TRUST_HOST === 'true' || process.env.VERCEL === '1' || Boolean(process.env.AUTH_URL);
+const trustHost = process.env.AUTH_TRUST_HOST === 'true' || Boolean(process.env.AUTH_URL);
 
 export const authConfig: NextAuthConfig = {
   pages: {
