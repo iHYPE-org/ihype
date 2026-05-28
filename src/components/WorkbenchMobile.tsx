@@ -114,20 +114,32 @@ const eqCss = `
 `;
 
 // ─── Top bar ─────────────────────────────────────────────────
-function WMTopBar({ tab, listeningNow, userName, initials, onSearch, notifCount }: {
-  tab: MobileTab; listeningNow: number; userName: string; initials: string;
+function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, notifCount }: {
+  tab: MobileTab; onTab: (t: MobileTab) => void;
+  listeningNow: number; userName: string; initials: string;
   onSearch?: () => void;
   notifCount?: number;
 }) {
+  const [menuOpen, setMenuOpen] = React.useState(false);
   const titles: Record<MobileTab, string> = {
     me: 'my page', seeds: 'seeds', radio: 'radio', studio: 'studio', tick: 'tickets',
   };
+  const navItems: { id: MobileTab; icon: string; label: string; badge?: string }[] = [
+    { id: 'me',     icon: '👤', label: 'My Page' },
+    { id: 'seeds',  icon: '🌱', label: 'Seeds',   badge: '12' },
+    { id: 'radio',  icon: '📻', label: 'Radio',   badge: 'LIVE' },
+    { id: 'studio', icon: '🎙️', label: 'Studio' },
+    { id: 'tick',   icon: '🎟️', label: 'Tickets', badge: '3' },
+  ];
+  const close = () => setMenuOpen(false);
   return (
+    <>
     <header style={{
-      display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'center', gap: 10,
+      display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center', gap: 10,
       padding: '10px 18px 12px', background: T.bg2, borderBottom: `1px solid ${T.line}`,
-      flexShrink: 0, position: 'relative', zIndex: 10,
+      flexShrink: 0, position: 'relative', zIndex: 20,
     }}>
+      {/* Left: logo + current section */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
         <span style={{
           width: 30, height: 30, borderRadius: 8,
@@ -148,27 +160,105 @@ function WMTopBar({ tab, listeningNow, userName, initials, onSearch, notifCount 
         </span>
       </div>
 
-      <div style={{ justifySelf: 'center', display: 'flex', alignItems: 'center', gap: 6, fontFamily: T.fm, fontSize: 12, color: T.ink2 }}>
-        <span className="wm-pulse" style={{ width: 6, height: 6, borderRadius: '50%', background: T.teal, boxShadow: `0 0 8px ${T.teal}`, display: 'inline-block' }} />
-        {listeningNow.toLocaleString()}
+      {/* Hamburger button */}
+      <button
+        aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+        onClick={() => setMenuOpen(o => !o)}
+        style={{
+          width: 44, height: 44, borderRadius: 8, background: menuOpen ? T.bg3 : 'transparent',
+          border: `1px solid ${menuOpen ? T.line2 : T.line}`,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          gap: 5, cursor: 'pointer', padding: 0, position: 'relative', transition: 'background .15s',
+        }}>
+        <span style={{ display: 'block', width: 16, height: 1.5, background: T.ink, borderRadius: 2, transition: 'transform .2s', transform: menuOpen ? 'translateY(6.5px) rotate(45deg)' : 'none' }} />
+        <span style={{ display: 'block', width: 16, height: 1.5, background: T.ink, borderRadius: 2, opacity: menuOpen ? 0 : 1, transition: 'opacity .15s' }} />
+        <span style={{ display: 'block', width: 16, height: 1.5, background: T.ink, borderRadius: 2, transition: 'transform .2s', transform: menuOpen ? 'translateY(-6.5px) rotate(-45deg)' : 'none' }} />
+        {(notifCount ?? 0) > 0 && !menuOpen && (
+          <span style={{ position: 'absolute', top: 8, right: 8, width: 7, height: 7, borderRadius: '50%', background: T.accent, border: `1.5px solid ${T.bg2}` }} />
+        )}
+      </button>
+    </header>
+
+    {/* Slide-down drawer */}
+    <div style={{
+      position: 'absolute', top: 0, left: 0, right: 0, zIndex: 19,
+      transform: menuOpen ? 'translateY(66px)' : 'translateY(calc(-100% - 66px))',
+      transition: 'transform .24s cubic-bezier(.4,0,.2,1)',
+      background: T.bg3, borderBottom: `1px solid ${T.line2}`,
+      boxShadow: '0 16px 48px rgba(0,0,0,.7)',
+    }}>
+      {/* Nav section */}
+      <div style={{ padding: '8px 0' }}>
+        <div style={{ padding: '8px 20px 6px', fontFamily: T.fm, fontSize: 11, letterSpacing: '.18em', color: T.ink3, textTransform: 'uppercase' }}>Navigate</div>
+        {navItems.map(it => {
+          const active = tab === it.id;
+          return (
+            <button key={it.id} onClick={() => { onTab(it.id); close(); }} style={{
+              width: '100%', padding: '13px 20px', background: active ? `rgba(255,80,41,.07)` : 'transparent',
+              border: 'none', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', textAlign: 'left',
+            }}>
+              <span style={{ fontSize: 18, width: 24, textAlign: 'center' }}>{it.icon}</span>
+              <span style={{ fontFamily: T.fb, fontSize: 15, color: active ? T.accent : T.ink, flex: 1 }}>{it.label}</span>
+              {it.badge && (
+                <span style={{
+                  fontSize: 11, fontWeight: 800, padding: '2px 6px', borderRadius: 99, fontFamily: T.fm,
+                  background: it.badge === 'LIVE' ? 'rgba(255,80,41,.18)' : T.bg4,
+                  color: it.badge === 'LIVE' ? T.accent : T.ink2,
+                  border: `1px solid ${it.badge === 'LIVE' ? 'rgba(255,80,41,.4)' : T.line2}`,
+                  letterSpacing: '.08em',
+                }}>{it.badge}</span>
+              )}
+              {active && <span style={{ width: 6, height: 6, borderRadius: '50%', background: T.accent, flexShrink: 0 }} />}
+            </button>
+          );
+        })}
       </div>
 
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-        <button aria-label="Search" onClick={onSearch} style={{ width: 44, height: 44, minWidth: 44, minHeight: 44, borderRadius: 8, background: 'transparent', border: `1px solid ${T.line}`, color: T.ink2, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
-          <span style={{ width: 14, height: 14 }}>{WMIcon.search}</span>
-        </button>
-        <button aria-label="Notifications" style={{ width: 44, height: 44, minWidth: 44, minHeight: 44, borderRadius: 8, background: 'transparent', border: `1px solid ${T.line}`, color: T.ink2, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, position: 'relative' }}>
-          <span style={{ width: 14, height: 14 }}>{WMIcon.bell}</span>
-          {notifCount != null && notifCount > 0 && <span style={{ position: 'absolute', top: 5, right: 5, width: 6, height: 6, borderRadius: '50%', background: T.accent }} />}
-        </button>
-        <span style={{
-          width: 30, height: 30, borderRadius: '50%',
-          background: `linear-gradient(135deg,${T.pink},${T.accent})`,
-          color: T.bg, fontFamily: T.fd, fontWeight: 800, fontSize: 13,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', letterSpacing: '-.02em',
-        }}>{initials}</span>
+      {/* Divider */}
+      <div style={{ height: 1, background: T.line, margin: '0 20px' }} />
+
+      {/* Actions */}
+      <div style={{ padding: '8px 0' }}>
+        <div style={{ padding: '8px 20px 6px', fontFamily: T.fm, fontSize: 11, letterSpacing: '.18em', color: T.ink3, textTransform: 'uppercase' }}>Actions</div>
+        {[
+          { icon: '🔍', label: 'Search', action: () => { close(); onSearch?.(); } },
+          { icon: '🔔', label: `Notifications${(notifCount ?? 0) > 0 ? ` · ${notifCount}` : ''}`, action: close, accent: (notifCount ?? 0) > 0 },
+          { icon: '🔗', label: 'Share my page', action: () => { close(); navigator.share?.({ title: 'iHYPE', url: window.location.href }).catch(() => {}); } },
+        ].map(item => (
+          <button key={item.label} onClick={item.action} style={{
+            width: '100%', padding: '13px 20px', background: 'transparent', border: 'none',
+            display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', textAlign: 'left',
+          }}>
+            <span style={{ fontSize: 18, width: 24, textAlign: 'center' }}>{item.icon}</span>
+            <span style={{ fontFamily: T.fb, fontSize: 15, color: item.accent ? T.accent : T.ink }}>{item.label}</span>
+          </button>
+        ))}
       </div>
-    </header>
+
+      {/* Divider */}
+      <div style={{ height: 1, background: T.line, margin: '0 20px' }} />
+
+      {/* Live stat + user */}
+      <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ width: 36, height: 36, borderRadius: '50%', background: `linear-gradient(135deg,${T.pink},${T.accent})`, color: T.bg, fontFamily: T.fd, fontWeight: 800, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{initials}</span>
+          <div>
+            <div style={{ fontFamily: T.fb, fontSize: 14, color: T.ink }}>{userName}</div>
+            <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3, letterSpacing: '.1em', textTransform: 'uppercase' }}>iHYPE member</div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: T.fm, fontSize: 12, color: T.ink2 }}>
+          <span className="wm-pulse" style={{ width: 6, height: 6, borderRadius: '50%', background: T.teal, boxShadow: `0 0 8px ${T.teal}` }} />
+          {listeningNow.toLocaleString()} live
+        </div>
+      </div>
+    </div>
+
+    {/* Backdrop */}
+    {menuOpen && (
+      <div onClick={close} style={{ position: 'absolute', inset: 0, zIndex: 18, background: 'rgba(0,0,0,.55)' }} />
+    )}
+    </>
   );
 }
 
@@ -397,11 +487,16 @@ function ScreenSeeds({ data }: { data: WorkbenchData }) {
   const [sessionStats, setSessionStats] = useState({ saved: 0, skipped: 0, hyped: 0 });
   const [_loadingDeck, setLoadingDeck] = useState(false);
 
-  // Swipe / drag state
+  // Swipe / drag state — use refs for hot-path, state only for render triggers
   const [dragX, setDragX] = useState(0);
   const [dragY, setDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
+  const [flyOff, setFlyOff] = useState<{ x: number; y: number; rot: number } | null>(null);
   const dragStart = useRef<{ x: number; y: number } | null>(null);
+  const dragXRef = useRef(0);
+  const dragYRef = useRef(0);
+  const rafRef = useRef<number | null>(null);
 
   // Fetch deck on mount
   useEffect(() => {
@@ -413,29 +508,37 @@ function ScreenSeeds({ data }: { data: WorkbenchData }) {
       .finally(() => setLoadingDeck(false));
   }, []);
 
-  const handleAction = useCallback(async (action: 'save' | 'skip' | 'hype') => {
+  const handleAction = useCallback((action: 'save' | 'skip' | 'hype', fromDrag = false, dragDx = 0, dragDy = 0) => {
     const front = deck[deckIdx % Math.max(deck.length, 1)];
     if (!front || actionedIds.has(front.id)) return;
-    setActionedIds(prev => new Set([...prev, front.id]));
-    setDeckIdx(i => i + 1);
-    setSessionStats(prev => ({
-      ...prev,
-      saved:   action === 'save'  ? prev.saved + 1  : prev.saved,
-      skipped: action === 'skip'  ? prev.skipped + 1 : prev.skipped,
-      hyped:   action === 'hype'  ? prev.hyped + 1  : prev.hyped,
-    }));
-    // Load more when near end
-    const remaining = deck.length - (deckIdx + 1);
-    if (remaining <= 3) {
-      fetch('/api/discover/seeds').then(r => r.ok ? r.json() : null).then(d => {
-        if (d?.seeds?.length) {
-          setDeck(prev => [...prev, ...d.seeds.filter((s: {id:string}) => !actionedIds.has(s.id))]);
-        }
-      }).catch(() => {});
-    }
-    try {
-      await fetch(`/api/discover/seeds/${encodeURIComponent(front.id)}/${action}`, { method: 'POST' });
-    } catch { /* non-blocking */ }
+
+    // Compute fly-off direction
+    const flyX = action === 'hype' ? 500 : action === 'skip' ? -500 : fromDrag ? dragDx * 3 : 0;
+    const flyY = action === 'save' ? -600 : fromDrag ? dragDy * 2 : 0;
+    const rot  = action === 'hype' ? 25 : action === 'skip' ? -25 : dragDx * 0.15;
+    setFlyOff({ x: flyX, y: flyY, rot });
+
+    setTimeout(() => {
+      setFlyOff(null);
+      setActionedIds(prev => new Set([...prev, front.id]));
+      setDeckIdx(i => i + 1);
+      setSessionStats(prev => ({
+        ...prev,
+        saved:   action === 'save'  ? prev.saved + 1  : prev.saved,
+        skipped: action === 'skip'  ? prev.skipped + 1 : prev.skipped,
+        hyped:   action === 'hype'  ? prev.hyped + 1  : prev.hyped,
+      }));
+      // Load more when near end
+      const remaining = deck.length - (deckIdx + 1);
+      if (remaining <= 3) {
+        fetch('/api/discover/seeds').then(r => r.ok ? r.json() : null).then(d => {
+          if (d?.seeds?.length) {
+            setDeck(prev => [...prev, ...d.seeds.filter((s: {id:string}) => !actionedIds.has(s.id))]);
+          }
+        }).catch(() => {});
+      }
+      fetch(`/api/discover/seeds/${encodeURIComponent(front.id)}/${action}`, { method: 'POST' }).catch(() => {});
+    }, 320);
   }, [deck, deckIdx, actionedIds]);
 
   const front = deck[deckIdx % Math.max(deck.length, 1)];
@@ -450,31 +553,47 @@ function ScreenSeeds({ data }: { data: WorkbenchData }) {
   function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
     e.currentTarget.setPointerCapture(e.pointerId);
     dragStart.current = { x: e.clientX, y: e.clientY };
-    setIsDragging(true);
+    dragXRef.current = 0;
+    dragYRef.current = 0;
+    setIsPressed(true);
+    setIsDragging(false);
     setDragX(0);
     setDragY(0);
   }
 
   function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
-    if (!isDragging || !dragStart.current) return;
-    setDragX(e.clientX - dragStart.current.x);
-    setDragY(e.clientY - dragStart.current.y);
+    if (!dragStart.current) return;
+    const dx = e.clientX - dragStart.current.x;
+    const dy = e.clientY - dragStart.current.y;
+    dragXRef.current = dx;
+    dragYRef.current = dy;
+    if (!isDragging && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
+      setIsDragging(true);
+      setIsPressed(false);
+    }
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      setDragX(dragXRef.current);
+      setDragY(dragYRef.current);
+    });
   }
 
   function handlePointerUp() {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    const dx = dragXRef.current;
+    const dy = dragYRef.current;
     if (isDragging) {
-      if (dragX > 80) {
-        void handleAction('hype');
-      } else if (dragX < -80) {
-        void handleAction('skip');
-      } else if (dragY < -80) {
-        void handleAction('save');
-      }
+      if (dx > 100)       handleAction('hype', true, dx, dy);
+      else if (dx < -100) handleAction('skip', true, dx, dy);
+      else if (dy < -100) handleAction('save', true, dx, dy);
     }
+    setIsPressed(false);
     setIsDragging(false);
     setDragX(0);
     setDragY(0);
     dragStart.current = null;
+    dragXRef.current = 0;
+    dragYRef.current = 0;
   }
 
   return (
@@ -509,96 +628,87 @@ function ScreenSeeds({ data }: { data: WorkbenchData }) {
         </div>
 
         {/* Card stack */}
-        <div style={{ position: 'relative', width: '100%', aspectRatio: '320 / 440', marginBottom: 18 }}>
+        <div style={{ position: 'relative', width: '100%', aspectRatio: '3 / 3.6', marginBottom: 14 }}>
           {/* behind cards */}
           {behind.map((t, i) => (
             <div key={t.id} style={{
-              position: 'absolute', inset: 0, borderRadius: 20, overflow: 'hidden',
-              transform: `translateY(${(behind.length - i) * 10}px) scale(${.88 + i * .06})`,
-              opacity: .3 + i * .25, zIndex: i,
+              position: 'absolute', inset: 0, borderRadius: 18, overflow: 'hidden',
+              transform: `translateY(${(behind.length - i) * 8}px) scale(${.9 + i * .05})`,
+              opacity: .35 + i * .25, zIndex: i,
               background: `linear-gradient(135deg,${t.color},${t.color}80)`,
-              boxShadow: '0 20px 40px rgba(0,0,0,.5)',
+              boxShadow: '0 12px 32px rgba(0,0,0,.5)',
             }} />
           ))}
           {/* front card */}
-          {front && (
-            <div
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
-              onPointerLeave={handlePointerUp}
-              style={{
-                position: 'absolute', inset: 0, borderRadius: 20, overflow: 'hidden', zIndex: 5,
-                background: `linear-gradient(135deg,${front.color},${front.color}cc)`,
-                boxShadow: '0 30px 60px -10px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.06)',
-                transform: isDragging
-                  ? `translateX(${dragX}px) translateY(${Math.min(0, dragY)}px) rotate(${dragX * 0.08}deg)`
-                  : 'none',
-                transition: isDragging ? 'none' : 'transform .3s ease',
-                touchAction: 'none',
-                userSelect: 'none',
-                cursor: isDragging ? 'grabbing' : 'grab',
-              }}>
-              {/* Gesture hint overlays */}
-              {isDragging && dragX > 40 && (
-                <div style={{
-                  position: 'absolute', top: 18, right: 18, zIndex: 10,
-                  background: 'rgba(34,229,90,.82)', color: '#fff', borderRadius: 10,
-                  padding: '7px 14px', fontFamily: T.fd, fontWeight: 800, fontSize: 18,
-                  letterSpacing: '-.01em', pointerEvents: 'none',
-                  boxShadow: '0 4px 16px rgba(0,200,80,.4)',
-                }}>HYPE ♥</div>
-              )}
-              {isDragging && dragX < -40 && (
-                <div style={{
-                  position: 'absolute', top: 18, left: 18, zIndex: 10,
-                  background: 'rgba(255,60,60,.82)', color: '#fff', borderRadius: 10,
-                  padding: '7px 14px', fontFamily: T.fd, fontWeight: 800, fontSize: 18,
-                  letterSpacing: '-.01em', pointerEvents: 'none',
-                  boxShadow: '0 4px 16px rgba(255,60,60,.4)',
-                }}>SKIP ✕</div>
-              )}
-              {isDragging && dragY < -40 && (
-                <div style={{
-                  position: 'absolute', top: 18, left: '50%', transform: 'translateX(-50%)', zIndex: 10,
-                  background: 'rgba(34,229,212,.82)', color: '#fff', borderRadius: 10,
-                  padding: '7px 14px', fontFamily: T.fd, fontWeight: 800, fontSize: 18,
-                  letterSpacing: '-.01em', pointerEvents: 'none',
-                  boxShadow: `0 4px 16px rgba(34,229,212,.4)`,
-                }}>SAVE ↑</div>
-              )}
-              {/* stripe texture */}
-              <div style={{ position: 'absolute', inset: 0, background: 'repeating-linear-gradient(135deg,rgba(255,255,255,.05) 0 8px,transparent 8px 16px)' }} />
-              <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 70% 30%,rgba(255,255,255,.16),transparent 60%)' }} />
-              {/* gradient overlay bottom */}
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(0,0,0,.8) 100%)', zIndex: 2 }} />
-              {/* tags */}
-              <div style={{ position: 'absolute', top: 14, left: 14, right: 14, display: 'flex', justifyContent: 'space-between', zIndex: 3 }}>
-                <span style={{ padding: '4px 8px', borderRadius: 99, background: 'rgba(0,0,0,.55)', fontFamily: T.fm, fontSize: 12, letterSpacing: '.14em', fontWeight: 700, color: '#fff', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: T.accent, display: 'inline-block' }} />SEED · 22s
-                </span>
-                <span style={{ padding: '4px 8px', borderRadius: 99, background: 'rgba(255,255,255,.18)', fontFamily: T.fm, fontSize: 12, letterSpacing: '.14em', fontWeight: 700, color: '#fff' }}>CHICAGO</span>
-              </div>
-              {/* waveform */}
-              <div style={{ position: 'absolute', bottom: 144, left: 18, right: 18, height: 30, display: 'flex', alignItems: 'flex-end', gap: 2, zIndex: 3 }}>
-                {waveform.map((h, i) => (
-                  <span key={i} style={{ flex: 1, height: `${h}%`, background: 'rgba(255,255,255,.55)', borderRadius: 99, display: 'block' }} />
-                ))}
-              </div>
-              {/* body */}
-              <div style={{ position: 'absolute', bottom: 18, left: 16, right: 16, zIndex: 3, color: '#fff' }}>
-                <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 26, letterSpacing: '-.025em', textShadow: '0 2px 12px rgba(0,0,0,.4)' }}>{front.title}</div>
-                <div style={{ fontFamily: T.fm, fontSize: 12, color: 'rgba(255,255,255,.8)', letterSpacing: '.1em', marginTop: 4, textTransform: 'uppercase' }}>{front.artistName} · {front.album}</div>
-                <div style={{ fontFamily: T.fs, fontStyle: 'italic', fontSize: 13, color: 'rgba(255,255,255,.9)', marginTop: 10, lineHeight: 1.3, borderLeft: `2px solid ${T.accent}`, paddingLeft: 8 }}>
-                  &quot;It only really lands at 1:48 — that&apos;s the seed.&quot;
+          {front && (() => {
+            // Proportional tint: 0 at 0px drag, full at 100px
+            const hypeAlpha = Math.min(Math.max(dragX / 100, 0), 1) * 0.55;
+            const skipAlpha = Math.min(Math.max(-dragX / 100, 0), 1) * 0.55;
+            const saveAlpha = Math.min(Math.max(-dragY / 100, 0), 1) * 0.55;
+            return (
+              <div
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerLeave={handlePointerUp}
+                style={{
+                  position: 'absolute', inset: 0, borderRadius: 18, overflow: 'hidden', zIndex: 5,
+                  background: `linear-gradient(150deg,${front.color}ee,${front.color}99)`,
+                  boxShadow: isPressed
+                    ? `0 8px 24px rgba(0,0,0,.5), 0 0 0 2px ${front.color}88`
+                    : '0 20px 48px -8px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.06)',
+                  transform: flyOff
+                    ? `translateX(${flyOff.x}px) translateY(${flyOff.y}px) rotate(${flyOff.rot}deg)`
+                    : isDragging
+                      ? `translateX(${dragX}px) translateY(${dragY * 0.3}px) rotate(${dragX * 0.06}deg)`
+                      : isPressed ? 'scale(0.97)' : 'scale(1)',
+                  transition: flyOff
+                    ? 'transform .3s cubic-bezier(.4,0,.2,1)'
+                    : isDragging ? 'none'
+                    : 'transform .15s ease, box-shadow .15s ease',
+                  touchAction: 'none',
+                  userSelect: 'none',
+                  cursor: isDragging ? 'grabbing' : 'grab',
+                  willChange: 'transform',
+                }}>
+                {/* Full-card tint overlays — proportional to drag */}
+                {hypeAlpha > 0 && <div style={{ position: 'absolute', inset: 0, zIndex: 8, background: `rgba(34,200,80,${hypeAlpha})`, pointerEvents: 'none', borderRadius: 18 }} />}
+                {skipAlpha > 0 && <div style={{ position: 'absolute', inset: 0, zIndex: 8, background: `rgba(255,60,60,${skipAlpha})`, pointerEvents: 'none', borderRadius: 18 }} />}
+                {saveAlpha > 0 && <div style={{ position: 'absolute', inset: 0, zIndex: 8, background: `rgba(34,229,212,${saveAlpha})`, pointerEvents: 'none', borderRadius: 18 }} />}
+                {/* Action labels — appear past halfway */}
+                {dragX > 50 && <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 9, color: '#fff', fontFamily: T.fd, fontWeight: 900, fontSize: 32, letterSpacing: '-.02em', opacity: Math.min((dragX - 50) / 50, 1), pointerEvents: 'none', textShadow: '0 2px 16px rgba(0,0,0,.4)' }}>HYPE ♥</div>}
+                {dragX < -50 && <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 9, color: '#fff', fontFamily: T.fd, fontWeight: 900, fontSize: 32, letterSpacing: '-.02em', opacity: Math.min((-dragX - 50) / 50, 1), pointerEvents: 'none', textShadow: '0 2px 16px rgba(0,0,0,.4)' }}>SKIP ✕</div>}
+                {dragY < -50 && <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', zIndex: 9, color: '#fff', fontFamily: T.fd, fontWeight: 900, fontSize: 32, letterSpacing: '-.02em', opacity: Math.min((-dragY - 50) / 50, 1), pointerEvents: 'none', textShadow: '0 2px 16px rgba(0,0,0,.4)' }}>SAVE ↑</div>}
+                {/* texture */}
+                <div style={{ position: 'absolute', inset: 0, background: 'repeating-linear-gradient(135deg,rgba(255,255,255,.04) 0 8px,transparent 8px 16px)' }} />
+                <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 60% 20%,rgba(255,255,255,.18),transparent 55%)' }} />
+                {/* strong bottom gradient so text is always readable */}
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,transparent 35%,rgba(0,0,0,.92) 100%)', zIndex: 2 }} />
+                {/* tags */}
+                <div style={{ position: 'absolute', top: 12, left: 12, right: 12, display: 'flex', justifyContent: 'space-between', zIndex: 3 }}>
+                  <span style={{ padding: '3px 8px', borderRadius: 99, background: 'rgba(0,0,0,.6)', fontFamily: T.fm, fontSize: 11, letterSpacing: '.12em', fontWeight: 700, color: '#fff', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: T.accent, display: 'inline-block' }} />SEED · 22s
+                  </span>
+                  <span style={{ padding: '3px 8px', borderRadius: 99, background: 'rgba(255,255,255,.15)', fontFamily: T.fm, fontSize: 11, letterSpacing: '.12em', fontWeight: 700, color: '#fff' }}>CHICAGO</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, fontFamily: T.fm, fontSize: 12, letterSpacing: '.08em', color: 'rgba(255,255,255,.7)' }}>
-                  <span>♥ {front.hypeCount} hype</span>
-                  <span>{deck.length - deckIdx} left</span>
+                {/* waveform */}
+                <div style={{ position: 'absolute', bottom: 100, left: 16, right: 16, height: 28, display: 'flex', alignItems: 'flex-end', gap: 2, zIndex: 3 }}>
+                  {waveform.map((h, i) => (
+                    <span key={i} style={{ flex: 1, height: `${h}%`, background: 'rgba(255,255,255,.5)', borderRadius: 99, display: 'block' }} />
+                  ))}
+                </div>
+                {/* track info */}
+                <div style={{ position: 'absolute', bottom: 14, left: 14, right: 14, zIndex: 3, color: '#fff' }}>
+                  <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', lineHeight: 1.1, textShadow: '0 2px 10px rgba(0,0,0,.5)' }}>{front.title}</div>
+                  <div style={{ fontFamily: T.fm, fontSize: 11, color: 'rgba(255,255,255,.75)', letterSpacing: '.1em', marginTop: 3, textTransform: 'uppercase' }}>{front.artistName} · {front.album}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontFamily: T.fm, fontSize: 11, letterSpacing: '.06em', color: 'rgba(255,255,255,.6)' }}>
+                    <span>♥ {front.hypeCount} hype</span>
+                    <span>{deck.length - deckIdx} left</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
 
         {/* Swipe controls */}
@@ -1100,12 +1210,11 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
     }}>
       <style>{eqCss}</style>
       <audio ref={audioRef} preload="metadata" style={{ display: 'none' }} />
-      <WMTopBar tab={tab} listeningNow={data.listeningNow} userName={data.userName} initials={data.userInitials} onSearch={() => setSearchOpen(true)} notifCount={notifCount} />
-      <div role="main" className="wm-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', position: 'relative', scrollbarWidth: 'none' }}>
+      <WMTopBar tab={tab} onTab={setTab} listeningNow={data.listeningNow} userName={data.userName} initials={data.userInitials} onSearch={() => setSearchOpen(true)} notifCount={notifCount} />
+      <div role="main" className="wm-scroll" style={{ flex: 1, overflowY: tab === 'seeds' ? 'hidden' : 'auto', overflowX: 'hidden', position: 'relative', scrollbarWidth: 'none' }}>
         {screenEl}
       </div>
       {track && <WMMiniPlayer track={track} playing={playing} onToggle={() => setPlaying(p => !p)} progress={progress} />}
-      <WMBottomTabs tab={tab} onTab={setTab} />
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
   );
