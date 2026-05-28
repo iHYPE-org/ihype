@@ -90,6 +90,21 @@ jobs:
           SMOKE_BYPASS_TOKEN: ${{ secrets.SMOKE_BYPASS_TOKEN }}
           SMOKE_ALLOW_EDGE_BLOCK: '1'
 
+      - name: Purge Cloudflare cache
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ZONE_ID != ''
+        env:
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+        run: |
+          curl -s -X POST \
+            "https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/purge_cache" \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}' | tee /tmp/purge-result.json
+          if ! grep -q '"success":true' /tmp/purge-result.json; then
+            echo "Cache purge failed:" && cat /tmp/purge-result.json && exit 1
+          fi
+          echo "Cache purged successfully."
+
       - name: Skip Cloudflare deploy notice
         if: env.CLOUDFLARE_API_TOKEN == '' || env.CLOUDFLARE_ACCOUNT_ID == ''
         run: echo "Cloudflare deploy skipped because CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID is not configured."
