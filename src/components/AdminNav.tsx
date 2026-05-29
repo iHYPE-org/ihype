@@ -18,7 +18,7 @@ const TABS: Array<{ key: Tab; href: string; label: string }> = [
 
 export function AdminNav({ active }: { active: Tab }) {
   return (
-    <nav className="admin-export-row" aria-label="Admin navigation" style={{ marginBottom: 12 }}>
+    <nav className="admin-export-row" aria-label="Admin navigation" style={{ marginBottom: 12 }} data-admin-nav="">
       {TABS.map((tab) => (
         <Link
           key={tab.key}
