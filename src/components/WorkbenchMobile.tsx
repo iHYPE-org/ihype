@@ -63,9 +63,9 @@ function WMPill({ children, tone = 'soft', style }: { children: React.ReactNode;
 }
 
 // ─── Chip button ─────────────────────────────────────────────
-function WMChip({ children, accent = false, style }: { children: React.ReactNode; accent?: boolean; style?: React.CSSProperties }) {
+function WMChip({ children, accent = false, style, onClick }: { children: React.ReactNode; accent?: boolean; style?: React.CSSProperties; onClick?: () => void }) {
   return (
-    <button style={{
+    <button onClick={onClick} style={{
       padding: '7px 11px', borderRadius: 7, fontFamily: T.fm, fontSize: 12, fontWeight: 600,
       letterSpacing: '.08em', textTransform: 'uppercase', cursor: 'pointer',
       background: accent ? T.ink : 'transparent', color: accent ? T.bg : T.ink2,
@@ -1013,6 +1013,15 @@ function ScreenMe({ data }: { data: WorkbenchData }) {
         </WMCard>
       </div>
 
+      {/* Listening history */}
+      <ListeningHistorySection />
+
+      {/* Playlists */}
+      <PlaylistsSection />
+
+      {/* Ad Campaigns (if advertiser) */}
+      <AdCampaignsSection />
+
       {/* Danger zone */}
       <div style={{ padding: '14px 18px 32px' }}>
         <button
@@ -1029,6 +1038,121 @@ function ScreenMe({ data }: { data: WorkbenchData }) {
         </button>
       </div>
     </>
+  );
+}
+
+// ─── Listening History Section ────────────────────────────────
+function ListeningHistorySection() {
+  const [history, setHistory] = React.useState<{ id: string; title: string; artistName: string; createdAt: string }[]>([]);
+  const [loaded, setLoaded] = React.useState(false);
+
+  React.useEffect(() => {
+    fetch('/api/me/listening-history')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.history) setHistory(d.history.slice(0, 10)); })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, []);
+
+  if (loaded && history.length === 0) return null;
+
+  return (
+    <div style={{ padding: '14px 18px 0' }}>
+      <WMCard>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <div style={{ fontFamily: T.fd, fontWeight: 700, letterSpacing: '-.01em', fontSize: 14, color: T.ink }}>Listening history</div>
+          <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.1em', textTransform: 'uppercase' }}>recent</div>
+        </div>
+        {!loaded && <WMSkeleton h={48} />}
+        {history.map((h, i) => (
+          <div key={h.id} style={{ display: 'flex', gap: 10, padding: '6px 0', borderTop: i === 0 ? 'none' : `1px dashed ${T.line}` }}>
+            <div style={{ width: 28, height: 28, borderRadius: 5, background: T.bg3, flexShrink: 0 }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: T.fb, fontWeight: 600, fontSize: 13, color: T.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.title}</div>
+              <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.04em' }}>{h.artistName}</div>
+            </div>
+            <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3, whiteSpace: 'nowrap', alignSelf: 'center' }}>
+              {new Date(h.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </div>
+          </div>
+        ))}
+      </WMCard>
+    </div>
+  );
+}
+
+// ─── Playlists Section ────────────────────────────────────────
+function PlaylistsSection() {
+  const [playlists, setPlaylists] = React.useState<{ id: string; name: string; items: { id: string }[] }[]>([]);
+  const [loaded, setLoaded] = React.useState(false);
+
+  React.useEffect(() => {
+    fetch('/api/playlists')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.playlists) setPlaylists(d.playlists); })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, []);
+
+  if (loaded && playlists.length === 0) return null;
+
+  return (
+    <div style={{ padding: '14px 18px 0' }}>
+      <WMCard>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <div style={{ fontFamily: T.fd, fontWeight: 700, letterSpacing: '-.01em', fontSize: 14, color: T.ink }}>My playlists</div>
+          <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.1em', textTransform: 'uppercase' }}>{playlists.length}</div>
+        </div>
+        {!loaded && <WMSkeleton h={40} />}
+        {playlists.map((pl, i) => (
+          <a key={pl.id} href={`/playlist/${pl.id}`} style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            padding: '8px 0', borderTop: i === 0 ? 'none' : `1px dashed ${T.line}`,
+            textDecoration: 'none', color: T.ink,
+          }}>
+            <div style={{ fontFamily: T.fb, fontSize: 13, fontWeight: 600 }}>{pl.name}</div>
+            <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3 }}>{pl.items.length} tracks ›</div>
+          </a>
+        ))}
+      </WMCard>
+    </div>
+  );
+}
+
+// ─── Ad Campaigns Section ─────────────────────────────────────
+function AdCampaignsSection() {
+  const [campaigns, setCampaigns] = React.useState<{ id: string; title: string; status: string; impressions: number; clicks: number }[]>([]);
+  const [loaded, setLoaded] = React.useState(false);
+
+  React.useEffect(() => {
+    fetch('/api/advertise/campaigns')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.campaigns) setCampaigns(d.campaigns); })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, []);
+
+  if (loaded && campaigns.length === 0) return null;
+
+  return (
+    <div style={{ padding: '14px 18px 0' }}>
+      <WMCard>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <div style={{ fontFamily: T.fd, fontWeight: 700, letterSpacing: '-.01em', fontSize: 14, color: T.ink }}>Ad campaigns</div>
+          <a href="/advertise/dashboard" style={{ fontFamily: T.fm, fontSize: 12, color: T.teal, letterSpacing: '.1em', textTransform: 'uppercase', textDecoration: 'none' }}>Manage →</a>
+        </div>
+        {!loaded && <WMSkeleton h={40} />}
+        {campaigns.slice(0, 3).map((c, i) => (
+          <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderTop: i === 0 ? 'none' : `1px dashed ${T.line}` }}>
+            <div>
+              <div style={{ fontFamily: T.fb, fontSize: 13, fontWeight: 600, color: T.ink }}>{c.title}</div>
+              <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3 }}>{c.impressions} impressions · {c.clicks} clicks</div>
+            </div>
+            <WMPill tone={c.status === 'APPROVED' ? 'teal' : c.status === 'REJECTED' ? 'live' : 'amber'}>{c.status}</WMPill>
+          </div>
+        ))}
+      </WMCard>
+    </div>
   );
 }
 
@@ -1333,12 +1457,16 @@ function ScreenSeeds({ data, onHypersSheet }: { data: WorkbenchData; onHypersShe
         </div>
 
         {/* Why this seed */}
-        <WMCard style={{ marginBottom: 24, fontSize: 12, color: T.ink2, lineHeight: 1.5 }}>
+        <WMCard style={{ marginBottom: 14, fontSize: 12, color: T.ink2, lineHeight: 1.5 }}>
           <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.2em', fontWeight: 700, textTransform: 'uppercase' }}>Why this seed?</div>
           <div style={{ fontFamily: T.fb, fontSize: 12, color: T.ink2, lineHeight: 1.5 }}>
             You hyped <span style={{ color: T.accent, fontWeight: 600 }}>3 tracks</span> from this artist this month — promoter test pressing from their unreleased EP.
           </div>
         </WMCard>
+
+        {/* Collab board */}
+        <CollabBoardSection />
+        <div style={{ height: 24 }} />
       </div>
     </>
   );
@@ -1455,6 +1583,60 @@ function ScreenRadio({ data, onSetlistSheet, onHypersSheet, onSeedsTab }: { data
 
 // ─── Screen: Studio ──────────────────────────────────────────
 function ScreenStudio({ data }: { data: WorkbenchData }) {
+  const [disputeSheetShowId, setDisputeSheetShowId] = React.useState<string | null>(null);
+  const [disputeReason, setDisputeReason] = React.useState('');
+  const [disputeAmount, setDisputeAmount] = React.useState('');
+  const [disputeState, setDisputeState] = React.useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+  const [embedCopied, setEmbedCopied] = React.useState(false);
+  const [fanMailOpen, setFanMailOpen] = React.useState(false);
+  const [fanMailSubject, setFanMailSubject] = React.useState('');
+  const [fanMailContent, setFanMailContent] = React.useState('');
+  const [fanMailState, setFanMailState] = React.useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+  const [scheduleDate, setScheduleDate] = React.useState('');
+
+  const handleCopyEmbed = () => {
+    const profileHexId = data.profileHexId ?? '';
+    if (!profileHexId) return;
+    const snippet = `<iframe src="https://ihype.org/embed/${profileHexId}" width="320" height="80" frameborder="0" scrolling="no" allow="autoplay" style="border-radius:12px;overflow:hidden"></iframe>`;
+    navigator.clipboard.writeText(snippet).then(() => {
+      setEmbedCopied(true);
+      setTimeout(() => setEmbedCopied(false), 2500);
+    }).catch(() => {});
+  };
+
+  const handleFanMail = async () => {
+    const profileId = data.profileId ?? '';
+    if (!profileId || !fanMailSubject.trim() || !fanMailContent.trim()) return;
+    setFanMailState('loading');
+    try {
+      const res = await fetch(`/api/profile/${profileId}/fan-mail`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject: fanMailSubject, content: fanMailContent }),
+      });
+      setFanMailState(res.ok ? 'done' : 'error');
+      if (res.ok) setTimeout(() => { setFanMailOpen(false); setFanMailState('idle'); setFanMailSubject(''); setFanMailContent(''); }, 2000);
+    } catch { setFanMailState('error'); }
+  };
+
+  const handleDispute = async (showId: string) => {
+    if (!disputeReason.trim()) return;
+    setDisputeState('loading');
+    try {
+      const res = await fetch('/api/payouts/dispute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          showId,
+          reason: disputeReason,
+          expectedAmountCents: Math.round(parseFloat(disputeAmount || '0') * 100),
+        }),
+      });
+      setDisputeState(res.ok ? 'done' : 'error');
+      if (res.ok) setTimeout(() => { setDisputeSheetShowId(null); setDisputeState('idle'); setDisputeReason(''); setDisputeAmount(''); }, 2000);
+    } catch { setDisputeState('error'); }
+  };
+
   const clips = [
     { n: '01', t: 'Intro — Welcome back',         m: 'Maya · spoken',               type: 'VOICE', d: '0:42' },
     { n: '02', t: 'Sundown',                      m: 'Maya Reyes · Halflight EP',   type: 'TRACK', d: '3:24' },
@@ -1478,7 +1660,12 @@ function ScreenStudio({ data }: { data: WorkbenchData }) {
         eyebrow="SHOW CREATOR · PRERECORDED RADIO"
         title="Studio"
         sub="Drag tracks into the timeline. Splits auto-calc: 45/45/10."
-        actions={<><WMChip>↥ Import</WMChip><WMChip accent>⬤ Publish</WMChip></>}
+        actions={<>
+          <WMChip>↥ Import</WMChip>
+          <WMChip accent>⬤ Publish</WMChip>
+          <WMChip onClick={handleCopyEmbed}>{embedCopied ? '✓ Copied!' : '⊞ Embed'}</WMChip>
+          <WMChip onClick={() => setFanMailOpen(true)}>✉ Fan mail</WMChip>
+        </>}
       />
 
       <div style={{ padding: '0 18px' }}>
@@ -1544,6 +1731,16 @@ function ScreenStudio({ data }: { data: WorkbenchData }) {
             <WMChip>⏵ Voice</WMChip>
             <WMChip style={{ marginLeft: 'auto' }} accent>Save draft</WMChip>
           </div>
+          {/* Schedule release */}
+          <div style={{ marginTop: 10, display: 'flex', gap: 8, alignItems: 'center' }}>
+            <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.08em', whiteSpace: 'nowrap' }}>Schedule:</div>
+            <input
+              type="datetime-local"
+              value={scheduleDate}
+              onChange={e => setScheduleDate(e.target.value)}
+              style={{ flex: 1, background: T.bg3, border: `1px solid ${T.line2}`, borderRadius: 7, color: T.ink, fontFamily: T.fm, fontSize: 12, padding: '6px 8px', outline: 'none' }}
+            />
+          </div>
         </div>
 
         {/* Revenue split */}
@@ -1590,11 +1787,95 @@ function ScreenStudio({ data }: { data: WorkbenchData }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'flex-end' }}>
                 <WMPill tone={d.pill[0]}>{d.pill[1]}</WMPill>
                 <span style={{ fontFamily: T.fm, fontSize: 12, color: T.ink2 }}>{d.r}</span>
+                {d.pill[1] === 'PUBLISHED' && (
+                  <button
+                    onClick={() => setDisputeSheetShowId(d.t)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.amber, fontFamily: T.fm, fontSize: 11, padding: 0, fontWeight: 700 }}
+                  >
+                    Dispute payout →
+                  </button>
+                )}
               </div>
             </div>
           ))}
         </div>
       </div>
+
+      {/* Fan mail sheet */}
+      {fanMailOpen && (
+        <>
+          <div onClick={() => setFanMailOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 59, background: 'rgba(0,0,0,.6)' }} />
+          <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 60, background: T.bg3, borderTop: `1px solid ${T.line2}`, borderRadius: '18px 18px 0 0', padding: '20px 18px 40px' }}>
+            <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 18, marginBottom: 4 }}>Email your fans</div>
+            <div style={{ fontFamily: T.fm, fontSize: 13, color: T.ink3, marginBottom: 14 }}>Send a message to all your followers. Limited to once per 7 days.</div>
+            {fanMailState === 'done' ? (
+              <div style={{ textAlign: 'center', padding: '24px 0', color: T.teal, fontFamily: T.fb }}>Mail sent!</div>
+            ) : (
+              <>
+                <input
+                  type="text"
+                  value={fanMailSubject}
+                  onChange={e => setFanMailSubject(e.target.value.slice(0, 100))}
+                  placeholder="Subject (max 100 chars)"
+                  style={{ width: '100%', background: T.bg2, border: `1px solid ${T.line2}`, borderRadius: 10, color: T.ink, fontFamily: T.fb, fontSize: 14, padding: '10px 12px', marginBottom: 10, boxSizing: 'border-box', outline: 'none' }}
+                />
+                <textarea
+                  value={fanMailContent}
+                  onChange={e => setFanMailContent(e.target.value.slice(0, 2000))}
+                  placeholder="Message to your fans… (max 2000 chars)"
+                  rows={5}
+                  style={{ width: '100%', background: T.bg2, border: `1px solid ${T.line2}`, borderRadius: 10, color: T.ink, fontFamily: T.fb, fontSize: 14, padding: '10px 12px', marginBottom: 12, boxSizing: 'border-box', outline: 'none', resize: 'none' }}
+                />
+                <button
+                  onClick={handleFanMail}
+                  disabled={fanMailState === 'loading' || !fanMailSubject.trim() || !fanMailContent.trim()}
+                  style={{ width: '100%', padding: '13px 0', borderRadius: 10, border: 'none', background: (fanMailSubject.trim() && fanMailContent.trim()) ? `linear-gradient(135deg,${T.accent},${T.pink})` : T.bg4, color: (fanMailSubject.trim() && fanMailContent.trim()) ? T.bg : T.ink3, fontFamily: T.fd, fontWeight: 800, fontSize: 15, cursor: (fanMailSubject.trim() && fanMailContent.trim()) ? 'pointer' : 'default' }}
+                >
+                  {fanMailState === 'loading' ? 'Sending…' : fanMailState === 'error' ? 'Failed — retry' : 'Send to fans'}
+                </button>
+              </>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Dispute payout sheet */}
+      {disputeSheetShowId && (
+        <>
+          <div onClick={() => setDisputeSheetShowId(null)} style={{ position: 'fixed', inset: 0, zIndex: 59, background: 'rgba(0,0,0,.6)' }} />
+          <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 60, background: T.bg3, borderTop: `1px solid ${T.line2}`, borderRadius: '18px 18px 0 0', padding: '20px 18px 40px' }}>
+            <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 18, marginBottom: 4 }}>Dispute payout</div>
+            <div style={{ fontFamily: T.fm, fontSize: 13, color: T.ink3, marginBottom: 14 }}>Submit a payout dispute for admin review.</div>
+            {disputeState === 'done' ? (
+              <div style={{ textAlign: 'center', padding: '24px 0', color: T.teal, fontFamily: T.fb }}>Dispute submitted!</div>
+            ) : (
+              <>
+                <input
+                  type="number"
+                  value={disputeAmount}
+                  onChange={(e) => setDisputeAmount(e.target.value)}
+                  placeholder="Expected payout amount ($)"
+                  style={{ width: '100%', background: T.bg2, border: `1px solid ${T.line2}`, borderRadius: 10, color: T.ink, fontFamily: T.fb, fontSize: 14, padding: '10px 12px', marginBottom: 10, boxSizing: 'border-box', outline: 'none' }}
+                />
+                <textarea
+                  value={disputeReason}
+                  onChange={(e) => setDisputeReason(e.target.value.slice(0, 500))}
+                  placeholder="Describe the issue with your payout…"
+                  rows={4}
+                  style={{ width: '100%', background: T.bg2, border: `1px solid ${T.line2}`, borderRadius: 10, color: T.ink, fontFamily: T.fb, fontSize: 14, padding: '10px 12px', marginBottom: 12, boxSizing: 'border-box', outline: 'none', resize: 'none' }}
+                />
+                <button
+                  onClick={() => handleDispute(disputeSheetShowId)}
+                  disabled={disputeState === 'loading' || !disputeReason.trim()}
+                  style={{ width: '100%', padding: '13px 0', borderRadius: 10, border: 'none', background: disputeReason.trim() ? `linear-gradient(135deg,${T.accent},${T.pink})` : T.bg4, color: disputeReason.trim() ? T.bg : T.ink3, fontFamily: T.fd, fontWeight: 800, fontSize: 15, cursor: disputeReason.trim() ? 'pointer' : 'default' }}
+                >
+                  {disputeState === 'loading' ? 'Submitting…' : disputeState === 'error' ? 'Failed — retry' : 'Submit dispute'}
+                </button>
+              </>
+            )}
+          </div>
+        </>
+      )}
     </>
   );
 }
@@ -1603,6 +1884,37 @@ function ScreenStudio({ data }: { data: WorkbenchData }) {
 function ScreenTicketing({ data, onHypersSheet, onRadioTab }: { data: WorkbenchData; onHypersSheet?: (showId: string) => void; onRadioTab?: () => void }) {
   const [subTab, setSubTab] = useState(0);
   const subTabs = ['Upcoming', 'My Tickets', 'Past', 'Sell'];
+  const [resendState, setResendState] = React.useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+  const [transferSheetOrderId, setTransferSheetOrderId] = React.useState<string | null>(null);
+  const [transferEmail, setTransferEmail] = React.useState('');
+  const [transferState, setTransferState] = React.useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+
+  const handleResend = async () => {
+    setResendState('loading');
+    try {
+      const res = await fetch('/api/tickets/resend-confirmation', { method: 'POST' });
+      setResendState(res.ok ? 'done' : 'error');
+      setTimeout(() => setResendState('idle'), 3000);
+    } catch { setResendState('error'); setTimeout(() => setResendState('idle'), 3000); }
+  };
+
+  const handleTransfer = async (orderId: string) => {
+    if (!transferEmail.trim()) return;
+    setTransferState('loading');
+    try {
+      const res = await fetch(`/api/tickets/${orderId}/transfer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ toEmail: transferEmail }),
+      });
+      if (res.ok) {
+        setTransferState('done');
+        setTimeout(() => { setTransferSheetOrderId(null); setTransferState('idle'); setTransferEmail(''); }, 2000);
+      } else {
+        setTransferState('error');
+      }
+    } catch { setTransferState('error'); }
+  };
 
   return (
     <>
@@ -1662,7 +1974,8 @@ function ScreenTicketing({ data, onHypersSheet, onRadioTab }: { data: WorkbenchD
                     <div style={{ fontFamily: T.fm, fontSize: 13, color: T.ink, fontWeight: 600, letterSpacing: '.06em' }}>{e.date} · {e.time}</div>
                     <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.06em', marginTop: 3 }}>{e.sold}/{e.capacity} sold</div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <a href={`/api/shows/${e.id}/qr`} target="_blank" rel="noreferrer" style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3, textDecoration: 'none', padding: '5px 8px', borderRadius: 6, border: `1px solid ${T.line2}`, letterSpacing: '.06em' }}>QR</a>
                     <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 18, letterSpacing: '-.025em', color: T.ink }}>${e.price}</div>
                     <button style={{
                       padding: '7px 14px', borderRadius: 7, fontFamily: T.fm, fontSize: 12, fontWeight: 700,
@@ -1712,12 +2025,61 @@ function ScreenTicketing({ data, onHypersSheet, onRadioTab }: { data: WorkbenchD
                   <span style={{ fontFamily: T.fm, fontSize: 12, color: T.ink2, fontWeight: 600, letterSpacing: '.08em' }}>{tk.seat}</span>
                   <WMPill tone={isWait ? 'amber' : 'teal'}>{tk.status}</WMPill>
                   {tk.showId && <IWasThereButton showId={tk.showId} />}
+                  {tk.id && (
+                    <button
+                      onClick={() => setTransferSheetOrderId(tk.id)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.accent, fontFamily: T.fm, fontSize: 11, padding: 0, fontWeight: 700 }}
+                    >
+                      Transfer →
+                    </button>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
+        {/* Resend confirmation */}
+        <button
+          onClick={handleResend}
+          disabled={resendState === 'loading'}
+          style={{ width: '100%', marginBottom: 12, padding: '10px 0', borderRadius: 8, border: `1px solid ${T.line2}`, background: 'transparent', color: resendState === 'done' ? T.teal : T.ink2, fontFamily: T.fm, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+        >
+          {resendState === 'idle' && 'Resend ticket confirmation email'}
+          {resendState === 'loading' && 'Sending…'}
+          {resendState === 'done' && '✓ Email sent!'}
+          {resendState === 'error' && 'Failed — try again'}
+        </button>
       </div>
+
+      {/* Transfer sheet */}
+      {transferSheetOrderId && (
+        <>
+          <div onClick={() => setTransferSheetOrderId(null)} style={{ position: 'fixed', inset: 0, zIndex: 59, background: 'rgba(0,0,0,.6)' }} />
+          <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 60, background: T.bg3, borderTop: `1px solid ${T.line2}`, borderRadius: '18px 18px 0 0', padding: '20px 18px 40px' }}>
+            <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 18, marginBottom: 16 }}>Transfer ticket</div>
+            {transferState === 'done' ? (
+              <div style={{ textAlign: 'center', padding: '24px 0', color: T.teal, fontFamily: T.fb }}>Ticket transferred!</div>
+            ) : (
+              <>
+                <input
+                  type="email"
+                  value={transferEmail}
+                  onChange={(e) => setTransferEmail(e.target.value)}
+                  placeholder="Recipient email address"
+                  style={{ width: '100%', background: T.bg2, border: `1px solid ${T.line2}`, borderRadius: 10, color: T.ink, fontFamily: T.fb, fontSize: 14, padding: '10px 12px', marginBottom: 12, boxSizing: 'border-box', outline: 'none' }}
+                />
+                <button
+                  onClick={() => handleTransfer(transferSheetOrderId)}
+                  disabled={transferState === 'loading' || !transferEmail.trim()}
+                  style={{ width: '100%', padding: '13px 0', borderRadius: 10, border: 'none', background: transferEmail.trim() ? `linear-gradient(135deg,${T.accent},${T.pink})` : T.bg4, color: transferEmail.trim() ? T.bg : T.ink3, fontFamily: T.fd, fontWeight: 800, fontSize: 15, cursor: transferEmail.trim() ? 'pointer' : 'default' }}
+                >
+                  {transferState === 'loading' ? 'Transferring…' : transferState === 'error' ? 'Failed — retry' : 'Transfer'}
+                </button>
+              </>
+            )}
+          </div>
+        </>
+      )}
     </>
   );
 }
@@ -1804,6 +2166,83 @@ function WMFeedbackSheet({ onClose }: { onClose: () => void }) {
       </div>
     </>
   );
+}
+
+// ─── Collab Board Section ─────────────────────────────────────
+function CollabBoardSection() {
+  const [posts, setPosts] = React.useState<{ id: string; type: string; description: string; profile: { name: string; slug: string } }[]>([]);
+  const [loaded, setLoaded] = React.useState(false);
+  const [newPost, setNewPost] = React.useState(false);
+  const [postType, setPostType] = React.useState('');
+  const [postDesc, setPostDesc] = React.useState('');
+  const [posting, setPosting] = React.useState(false);
+  const [posted, setPosted] = React.useState(false);
+
+  React.useEffect(() => {
+    fetch('/api/collab')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.posts) setPosts(d.posts.slice(0, 5)); })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, []);
+
+  const handlePost = async () => {
+    if (!postType || !postDesc.trim()) return;
+    setPosting(true);
+    try {
+      const res = await fetch('/api/collab', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: postType, description: postDesc }),
+      });
+      if (res.ok) {
+        setPosted(true);
+        setNewPost(false);
+        setPostType('');
+        setPostDesc('');
+        setTimeout(() => setPosted(false), 3000);
+      }
+    } catch { /* ignore */ } finally { setPosting(false); }
+  };
+
+  return (
+    <div style={{ padding: '14px 18px 0' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
+        <h2 style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 14, color: T.ink, margin: 0 }}>Collab board</h2>
+        <button onClick={() => setNewPost(!newPost)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.teal, fontFamily: T.fm, fontSize: 12, letterSpacing: '.1em', padding: 0 }}>+ Post</button>
+      </div>
+      {posted && <div style={{ color: T.teal, fontFamily: T.fm, fontSize: 13, marginBottom: 8 }}>Posted!</div>}
+      {newPost && (
+        <div style={{ background: T.bg2, border: `1px solid ${T.line2}`, borderRadius: 10, padding: 12, marginBottom: 10 }}>
+          <input
+            type="text" value={postType} onChange={e => setPostType(e.target.value.slice(0, 40))}
+            placeholder="Type (e.g. vocalist, producer, venue…)"
+            style={{ width: '100%', background: T.bg3, border: `1px solid ${T.line}`, borderRadius: 7, color: T.ink, fontFamily: T.fb, fontSize: 13, padding: '8px 10px', marginBottom: 8, boxSizing: 'border-box', outline: 'none' }}
+          />
+          <textarea
+            value={postDesc} onChange={e => setPostDesc(e.target.value.slice(0, 500))}
+            placeholder="Describe what you're looking for…"
+            rows={3}
+            style={{ width: '100%', background: T.bg3, border: `1px solid ${T.line}`, borderRadius: 7, color: T.ink, fontFamily: T.fb, fontSize: 13, padding: '8px 10px', marginBottom: 8, boxSizing: 'border-box', outline: 'none', resize: 'none' }}
+          />
+          <button
+            onClick={handlePost} disabled={posting || !postType || !postDesc.trim()}
+            style={{ width: '100%', padding: '9px 0', borderRadius: 8, border: 'none', background: (postType && postDesc.trim()) ? T.accent : T.bg4, color: (postType && postDesc.trim()) ? T.bg : T.ink3, fontFamily: T.fd, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}
+          >{posting ? 'Posting…' : 'Post'}</button>
+        </div>
+      )}
+      {!loaded && <WMSkeleton h={48} />}
+      {loaded && posts.length === 0 && <div style={{ fontFamily: T.fb, fontSize: 13, color: T.ink3, padding: '8px 0' }}>No collab posts yet — be the first!</div>}
+      {posts.map((p, i) => (
+        <div key={p.id} style={{ padding: '10px 0', borderBottom: i < posts.length - 1 ? `1px dashed ${T.line}` : 'none' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ fontFamily: T.fb, fontWeight: 600, fontSize: 13, color: T.ink }}>{p.profile.name}</div>
+            <WMPill>{p.type}</WMPill>
+          </div>
+          <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink2, marginTop: 4, lineHeight: 1.4 }}>{p.description.slice(0, 120)}{p.description.length > 120 ? '…' : ''}</div>
+        </div>
+      ))}
+    </div>  );
 }
 
 // ─── Main mobile export ───────────────────────────────────────

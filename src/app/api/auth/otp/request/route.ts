@@ -10,6 +10,7 @@ const schema = z.object({
   identifier: z.string().trim().min(1),
   password: z.string().default(''),
   tosAccepted: z.boolean().optional(),
+  inviteCode: z.string().optional(),
 });
 
 export async function POST(request: Request) {
@@ -34,15 +35,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid request.' }, { status: 400 });
     }
 
-    const isTempAdminRequest =
-      body.identifier.trim().toLowerCase() === 'admin@ihype.org' &&
-      body.password === 'demo12345';
-
-    if (!isTempAdminRequest && !isEmailDeliveryConfigured()) {
+    if (!isEmailDeliveryConfigured()) {
       return NextResponse.json(
         { error: 'Email delivery is not configured on this server. Contact support.' },
         { status: 503 }
       );
+    }
+
+    // Invite-only gate
+    if (process.env.INVITE_ONLY === 'true') {
+      const code = body.inviteCode;
+      if (!code) return NextResponse.json({ error: 'An invite code is required.' }, { status: 403 });
+      const invite = await db.inviteCode.findUnique({ where: { code } });
+      if (!invite || invite.usedAt || (invite.expiresAt && invite.expiresAt < new Date())) {
+        return NextResponse.json({ error: 'Invalid or expired invite code.' }, { status: 403 });
+      }
     }
 
     // Per-identifier limit prevents targeted inbox flooding independent of IP

@@ -111,13 +111,13 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
           profile: { select: { name: true } },
         },
       }).catch(() => [] as { id: string; createdAt: Date; profile: { name: string } | null }[]),
-      // Fetch radio shows (user-created)
+      // Fetch radio shows (user-created), featured first
       db.show.findMany({
         where: { creatorId: userId, isRadioShow: true },
         take: 5,
-        orderBy: { startsAt: 'desc' },
+        orderBy: [{ featured: 'desc' }, { startsAt: 'desc' }],
         select: {
-          id: true, title: true, status: true, startsAt: true,
+          id: true, title: true, status: true, startsAt: true, featured: true,
           headlinerProfile: { select: { name: true } },
         },
       }),

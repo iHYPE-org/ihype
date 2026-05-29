@@ -59,10 +59,26 @@ export async function getHealthSnapshot() {
         inviteOnlySignup,
         demoContentHidden
       },
+      sentryConfigured: !!process.env.NEXT_PUBLIC_SENTRY_DSN,
+      stripeMode: process.env.STRIPE_SECRET_KEY?.startsWith('sk_live_')
+        ? 'live'
+        : process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_')
+          ? 'test'
+          : 'not_configured',
       launchReadiness: {
         ready: launchBlockers.length === 0,
         blockers: launchBlockers
-      }
+      },
+      warnings: process.env.NODE_ENV === 'production'
+        ? [
+            !process.env.VAPID_PUBLIC_KEY && 'VAPID_PUBLIC_KEY is not set (push notifications disabled)',
+            !process.env.VAPID_PRIVATE_KEY && 'VAPID_PRIVATE_KEY is not set (push notifications disabled)',
+            !process.env.VAPID_SUBJECT && 'VAPID_SUBJECT is not set (push notifications disabled)',
+            !process.env.RESEND_API_KEY && 'RESEND_API_KEY is not set (email delivery disabled)',
+            !process.env.CRON_SECRET && 'CRON_SECRET is not set (cron jobs unprotected)',
+            !process.env.NEXT_PUBLIC_SENTRY_DSN && 'NEXT_PUBLIC_SENTRY_DSN is not set (error tracking disabled)',
+          ].filter(Boolean) as string[]
+        : []
     };
   } catch (error) {
     return {

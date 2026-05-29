@@ -10,6 +10,7 @@ import { DEFAULT_PROMOTER_AFFILIATE_PERCENT, validateTicketSplit } from '@/lib/t
 import { slugify } from '@/lib/utils';
 import { consumeRateLimit, rateLimitHeaders, rateLimitKey } from '@/lib/rate-limit';
 import { sanitizeShowInput } from '@/lib/sanitize';
+import { checkContent } from '@/lib/auto-mod';
 
 const radioTrackSchema = z.object({
   hexId: z.string().min(1),
@@ -97,6 +98,9 @@ export async function POST(request: NextRequest) {
     sanitizeShowInput(rawBody as Record<string, unknown>);
     const body = schema.parse(rawBody);
 
+    const modCheck = checkContent(`${body.title} ${body.description ?? ''}`);
+    const moderationStatus = modCheck.flagged ? 'FLAGGED' : 'APPROVED';
+
     if (body.isRadioShow) {
       const tracks = body.radioTracks ?? [];
       if (!tracks.length) {
@@ -160,7 +164,8 @@ export async function POST(request: NextRequest) {
             kind: 'radio',
             tracks: sortedTracks
           },
-          status
+          status,
+          moderationStatus
         }
       });
 
@@ -294,6 +299,7 @@ export async function POST(request: NextRequest) {
         promoterPayoutPercent: body.isTicketed ? body.promoterPayoutPercent ?? DEFAULT_PROMOTER_AFFILIATE_PERCENT : DEFAULT_PROMOTER_AFFILIATE_PERCENT,
         productionPlan: body.productionPlan,
         status: body.status,
+        moderationStatus,
         ...(body.productionPlan?.advertising !== undefined && {
           advertisingConfig: {
             create: {

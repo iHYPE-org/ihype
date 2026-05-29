@@ -37,7 +37,12 @@ export const metadata: Metadata = {
   },
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_BASE_URL || 'https://ihype.org'
-  )
+  ),
+  other: {
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'black-translucent',
+    'apple-mobile-web-app-title': 'iHYPE',
+  }
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

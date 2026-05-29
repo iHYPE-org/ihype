@@ -28,4 +28,12 @@ crons = [
   "0 13 * * *",   # show-payouts
   "0 14 * * *",   # onboarding
   "0 15 * * *",   # welcome-sequence
+  "0 5 * * *",    # backup-verify
+  "0 7 * * *",    # daily-ops
+  "0 * * * *",    # anomaly-check (every hour)
+  "30 3 * * *",   # dmca-enforce
+  "30 8 * * 1",   # social-digest (Monday)
+  "*/15 * * * *", # publish-scheduled (every 15min)
+  # NOTE: nearby-show-notify runs at "0 9 * * *" (already covered by daily 9am slot)
+  # NOTE: rsvp-reminders runs at "0 * * * *" (already covered by hourly slot)
 ]

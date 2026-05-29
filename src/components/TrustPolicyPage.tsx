@@ -4,19 +4,23 @@ type TrustPolicyPageProps = {
   badge: string;
   title: string;
   intro: string;
+  lastUpdated?: string;
   sections: Array<{
     title: string;
     body: string;
   }>;
 };
 
-export function TrustPolicyPage({ badge, title, intro, sections }: TrustPolicyPageProps) {
+export function TrustPolicyPage({ badge, title, intro, lastUpdated, sections }: TrustPolicyPageProps) {
   return (
     <main className="container section trust-policy-page">
       <section className="panel trust-policy-hero">
         <div className="badge">{badge}</div>
         <h1>{title}</h1>
         <p className="subtitle">{intro}</p>
+        {lastUpdated && (
+          <p style={{ fontSize: 13, opacity: 0.6, marginTop: 8 }}>Last updated: {lastUpdated}</p>
+        )}
         <div className="trust-policy-links">
           <Link className="text-link" href="/privacy">Privacy</Link>
           <Link className="text-link" href="/terms">Terms</Link>

@@ -8,6 +8,7 @@ export default function TermsPage() {
       badge="Terms"
       title="Simple platform terms"
       intro="These beta terms summarize the core rules while final counsel-reviewed terms are prepared."
+      lastUpdated="May 29, 2026"
       sections={[
         { title: 'Use iHYPE lawfully', body: 'Users may not abuse the service, misrepresent identity, manipulate hype, scrape accounts, or interfere with platform security.' },
         { title: 'Own or control uploads', body: 'Artists and promoters must have the rights needed for any media, images, logos, or show material they upload or use.' },

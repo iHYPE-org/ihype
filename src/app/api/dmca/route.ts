@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { recordAuditEvent } from '@/lib/audit';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
+import { db } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,6 +38,53 @@ export async function POST(request: NextRequest) {
       description: String(description).slice(0, 5000)
     }
   });
+
+  // Try to match URL to a show or profile slug and flag it
+  try {
+    const urlStr = String(url);
+    const dmcaDeadline = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000);
+
+    // Check for show slug pattern: /shows/<slug> or /s/<slug>
+    const showSlugMatch = urlStr.match(/\/(?:shows?|s)\/([a-z0-9-]+)/i);
+    if (showSlugMatch) {
+      const slug = showSlugMatch[1];
+      const show = await db.show.findUnique({ where: { slug }, select: { id: true, creatorId: true } });
+      if (show) {
+        await db.show.update({
+          where: { id: show.id },
+          data: { dmcaDeadline, dmcaStatus: 'PENDING' },
+        });
+        // Notify content owner
+        await db.notification.create({
+          data: {
+            userId: show.creatorId,
+            type: 'DMCA_NOTICE',
+            body: 'A DMCA notice has been filed against your show. You have 10 days to respond.',
+            link: `/home`,
+          },
+        });
+      }
+    }
+
+    // Check for profile slug pattern: /<slug> or /p/<slug>
+    const profileSlugMatch = urlStr.match(/\/(?:p\/)?([a-z0-9-]+)(?:\/|$)/i);
+    if (!showSlugMatch && profileSlugMatch) {
+      const slug = profileSlugMatch[1];
+      const profile = await db.profile.findUnique({ where: { slug }, select: { id: true, ownerId: true } });
+      if (profile) {
+        await db.notification.create({
+          data: {
+            userId: profile.ownerId,
+            type: 'DMCA_NOTICE',
+            body: 'A DMCA notice has been filed referencing your profile. Please review.',
+            link: `/home`,
+          },
+        });
+      }
+    }
+  } catch (err) {
+    console.error('[dmca] post-audit notification failed', err);
+  }
 
   return NextResponse.json({ ok: true });
 }

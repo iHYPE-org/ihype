@@ -112,6 +112,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Global circuit breaker — if >500 hype events in the last 5 seconds, shed load
+  const last5s = new Date(Date.now() - 5000);
+  const globalBurst = await db.hypeEvent.count({ where: { createdAt: { gte: last5s } } });
+  if (globalBurst > 500) {
+    return NextResponse.json({ error: 'Service busy, try again shortly.' }, { status: 503 });
+  }
+
   try {
     const payload = schema.parse(await request.json());
 

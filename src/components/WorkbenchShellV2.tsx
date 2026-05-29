@@ -301,15 +301,16 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
         button, [role="button"] { min-height: 44px; }
         .wb-tab-btn { min-height: 44px !important; }
       `}</style>
+      <div style={{ position: 'fixed', inset: 0, background: 'var(--bg)', fontFamily: 'var(--f-b)', color: 'var(--ink)' }}>
       <div
         className="wb-shell"
         style={{
-          position: 'fixed', inset: 0, display: 'grid',
+          position: 'absolute', top: 0, bottom: 0,
+          left: '50%', transform: 'translateX(-50%)',
+          width: '100%', maxWidth: 1600,
+          display: 'grid',
           gridTemplateColumns: colTemplate,
           gridTemplateRows: rowTemplate,
-          background: 'var(--bg)',
-          fontFamily: 'var(--f-b)',
-          color: 'var(--ink)',
         }}
       >
         {/* Topbar — spans all columns */}
@@ -376,6 +377,7 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
             onSeek={onSeekProgress}
           />
         )}
+      </div>
       </div>
       {/* Hidden audio element for real playback */}
       <audio ref={audioRef} preload="metadata" style={{ display: 'none' }} />

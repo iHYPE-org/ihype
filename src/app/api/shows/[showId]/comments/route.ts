@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
+import { checkContent } from '@/lib/auto-mod';
 
 export const dynamic = 'force-dynamic';
 const MAX_CONTENT = 1500;
@@ -35,6 +36,19 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const show = await db.show.findUnique({ where: { id: showId }, select: { id: true } });
   if (!show) return NextResponse.json({ error: 'Show not found.' }, { status: 404 });
+
+  const modCheck = checkContent(content);
+  if (modCheck.flagged) {
+    await db.supportRequest.create({
+      data: {
+        requesterUserId: session.user.id,
+        type: 'AUTO_MOD_FLAG',
+        subject: `Auto-mod flag on comment`,
+        details: `Comment content flagged (${modCheck.reason ?? 'unknown'}): ${content.slice(0, 500)}`,
+        priority: 'NORMAL',
+      },
+    });
+  }
 
   const comment = await db.showComment.create({
     data: { showId: show.id, userId: session.user.id, content },

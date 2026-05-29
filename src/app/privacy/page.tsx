@@ -8,6 +8,7 @@ export default function PrivacyPage() {
       badge="Privacy"
       title="Your privacy at iHYPE"
       intro="We collect only what we need to run the platform. We don't sell your data and we never will."
+      lastUpdated="May 29, 2026"
       sections={[
         {
           title: 'Data we collect',

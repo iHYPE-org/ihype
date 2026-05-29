@@ -46,11 +46,25 @@ const JOBS: CronJob[] = [
   { path: '/api/cron?job=follow-digest',      schedule: '0 9 * * 1'   },
   { path: '/api/cron?job=audit-log-rotate',   schedule: '0 4 * * 1'   },
 
+  // Backup verification — 5am daily
+  { path: '/api/cron/backup-verify',             schedule: '0 5 * * *'   },
+
   // Additional daily jobs
   { path: '/api/cron?job=close-stale-bookings',  schedule: '0 1 * * *'   },
   { path: '/api/cron?job=artist-onboarding',     schedule: '0 11 * * *'  },
   { path: '/api/cron?job=show-payouts',          schedule: '0 13 * * *'  },
   { path: '/api/cron?job=stripe-connect-health', schedule: '0 */6 * * *' },
+
+  // Operator tools
+  { path: '/api/cron/daily-ops',     schedule: '0 7 * * *'   },  // daily ops report
+  { path: '/api/cron/anomaly-check', schedule: '0 * * * *'   },  // hourly anomaly check
+  { path: '/api/cron/dmca-enforce',  schedule: '30 3 * * *'  },  // DMCA enforcement at 3:30am
+  { path: '/api/cron/social-digest', schedule: '30 8 * * 1'  },  // social digest Monday 8:30am
+
+  // New feature crons
+  { path: '/api/cron/nearby-show-notify', schedule: '0 9 * * *'  },  // daily nearby show notifications at 9am
+  { path: '/api/cron/publish-scheduled',  schedule: '*/15 * * * *' },  // publish scheduled releases every 15min
+  { path: '/api/cron/rsvp-reminders',     schedule: '0 * * * *'   },  // RSVP reminders every hour
 ];
 
 export default {
@@ -65,6 +79,7 @@ export default {
     await Promise.all(
       matched.map(async (job) => {
         const url = `${env.APP_BASE_URL}${job.path}`;
+        console.log('[cron] Firing:', job.path, 'at', new Date().toISOString());
         try {
           const res = await fetch(url, {
             method: 'GET',

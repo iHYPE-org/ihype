@@ -13,6 +13,10 @@ export const runtime = 'nodejs';
  * because the unique stripePaymentIntentId constraint prevents double-processing.
  */
 export async function POST(request: NextRequest) {
+  if (process.env.NODE_ENV === 'production' && process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_')) {
+    console.error('[stripe/webhook] WARNING: Using test Stripe key in production!');
+  }
+
   if (!isStripeConfigured()) {
     return NextResponse.json({ error: 'Payments not configured.' }, { status: 503 });
   }
