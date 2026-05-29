@@ -91,13 +91,14 @@ jobs:
           SMOKE_ALLOW_EDGE_BLOCK: '1'
 
       - name: Purge Cloudflare cache
-        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ZONE_ID != ''
+        if: secrets.CLOUDFLARE_CACHE_PURGE_TOKEN != '' && env.CLOUDFLARE_ZONE_ID != ''
         env:
           CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_CACHE_PURGE_TOKEN: ${{ secrets.CLOUDFLARE_CACHE_PURGE_TOKEN }}
         run: |
           curl -s -X POST \
             "https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/purge_cache" \
-            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            -H "Authorization: Bearer ${CLOUDFLARE_CACHE_PURGE_TOKEN}" \
             -H "Content-Type: application/json" \
             --data '{"purge_everything":true}' | tee /tmp/purge-result.json
           if ! grep -q '"success":true' /tmp/purge-result.json; then
