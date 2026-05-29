@@ -1076,3 +1076,22 @@ model FeatureFlag {
   description String?
   updatedAt   DateTime @updatedAt
 }
+
+model PromoCode {
+  id            String        @id @default(cuid())
+  code          String        @unique
+  showId        String?
+  profileId     String?
+  discountType  String
+  discountValue Int
+  maxUses       Int?
+  useCount      Int           @default(0)
+  expiresAt     DateTime?
+  createdAt     DateTime      @default(now())
+  show          Show?         @relation(fields: [showId], references: [id])
+  profile       Profile?      @relation(fields: [profileId], references: [id])
+  orders        TicketOrder[]
+
+  @@index([showId])
+  @@index([profileId])
+}
