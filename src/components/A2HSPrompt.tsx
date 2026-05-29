@@ -10,7 +10,7 @@ export function A2HSPrompt() {
     const isInStandalone = ('standalone' in navigator) && (navigator as unknown as { standalone: boolean }).standalone;
     const dismissed = localStorage.getItem('a2hs-dismissed');
     if (isIOS && !isInStandalone && !dismissed) {
-      setTimeout(() => setShow(true), 5000);
+      setTimeout(() => setShow(true), 60_000);
     }
   }, []);
 
