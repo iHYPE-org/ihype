@@ -1,4 +1,5 @@
 import { kvGet } from '@/lib/kv';
+import { db } from '@/lib/db';
 
 function parseBooleanFlag(value: unknown, defaultValue: boolean) {
   if (value == null) {
@@ -130,6 +131,15 @@ export function isReservedPlatformEmail(email: string | null | undefined) {
   }
 
   return email.trim().toLowerCase().endsWith('@ihype.org');
+}
+
+export async function isFeatureEnabled(key: string): Promise<boolean> {
+  try {
+    const flag = await db.featureFlag.findUnique({ where: { key } });
+    return flag?.enabled ?? false;
+  } catch {
+    return false;
+  }
 }
 
 export function isProductionSeedingAllowed() {

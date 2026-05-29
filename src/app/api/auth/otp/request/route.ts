@@ -4,10 +4,12 @@ import { isEmailDeliveryConfigured } from '@/lib/mailer';
 import { createLoginOtpChallenge } from '@/lib/login-otp';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
+import { db } from '@/lib/db';
 
 const schema = z.object({
   identifier: z.string().trim().min(1),
-  password: z.string().default('')
+  password: z.string().default(''),
+  tosAccepted: z.boolean().optional(),
 });
 
 export async function POST(request: Request) {
@@ -62,6 +64,18 @@ export async function POST(request: Request) {
 
     if (!challenge) {
       return NextResponse.json({ error: 'Invalid credentials.' }, { status: 401 });
+    }
+
+    // Record ToS acceptance if provided
+    if (body.tosAccepted) {
+      const identifier = body.identifier.toLowerCase().trim();
+      const user = await db.user.findFirst({
+        where: { OR: [{ email: identifier }, { username: identifier }] },
+        select: { id: true, tosAcceptedAt: true },
+      });
+      if (user && !user.tosAcceptedAt) {
+        await db.user.update({ where: { id: user.id }, data: { tosAcceptedAt: new Date() } });
+      }
     }
 
     return NextResponse.json(challenge);

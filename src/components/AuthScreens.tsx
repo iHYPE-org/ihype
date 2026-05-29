@@ -170,6 +170,7 @@ export function LoginScreen({
   );
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tosAccepted, setTosAccepted] = useState(false);
 
   async function signInWithPasskey() {
     setError('');
@@ -206,7 +207,8 @@ export function LoginScreen({
     try {
       const payload = await postJson<{ challengeId: string; email?: string | null }>('/api/auth/otp/request', {
         identifier,
-        password
+        password,
+        tosAccepted: tosAccepted || undefined,
       });
       setChallengeId(payload.challengeId);
       setDeliveryEmail(payload.email || identifier);
@@ -325,6 +327,15 @@ export function LoginScreen({
               type="password"
               value={password}
             />
+          </label>
+          <label className="field" style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, fontSize: 13 }}>
+            <input
+              checked={tosAccepted}
+              onChange={e => setTosAccepted(e.target.checked)}
+              type="checkbox"
+              style={{ marginTop: 2, flexShrink: 0 }}
+            />
+            <span>I agree to the <a href="/terms" style={{ color: 'inherit' }}>Terms of Service</a> and confirm I am 13 or older</span>
           </label>
           <button className="button" disabled={isSubmitting} type="submit">
             {isSubmitting ? 'Sending code...' : 'Send email code'}

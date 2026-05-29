@@ -5,6 +5,7 @@
 //   4. Test the full OTP login flow and session persistence after the bump.
 //   5. Update the pinned version in package.json overrides AND the dependency specifier.
 import type { NextAuthConfig } from 'next-auth';
+import { db } from '@/lib/db';
 
 const useSecureCookies = process.env.NODE_ENV === 'production';
 const sessionMaxAgeSeconds = 12 * 60 * 60;
@@ -84,10 +85,28 @@ export const authConfig: NextAuthConfig = {
     updateAge: 24 * 60 * 60
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.role = (user as { role?: string }).role;
         token.emailVerified = (user as { emailVerified?: Date | null }).emailVerified ?? null;
+        // Store security version at login time for revocation checks.
+        const dbUser = await db.user.findUnique({
+          where: { id: (user as { id?: string }).id ?? token.sub ?? '' },
+          select: { userSecurityVersion: true }
+        }).catch(() => null);
+        token.securityVersion = dbUser?.userSecurityVersion ?? 0;
+      }
+      // On session update trigger, revalidate security version to detect revocation.
+      if (trigger === 'update' && token.sub) {
+        const dbUser = await db.user.findUnique({
+          where: { id: token.sub },
+          select: { userSecurityVersion: true }
+        }).catch(() => null);
+        if (dbUser && typeof token.securityVersion === 'number' &&
+            dbUser.userSecurityVersion !== token.securityVersion) {
+          // Version mismatch — revoke this token by returning null.
+          return null;
+        }
       }
       return token;
     },

@@ -39,7 +39,7 @@ function metaText(meta: Record<string, unknown>, key: string) {
   return typeof value === 'string' && value.trim() ? value : 'n/a';
 }
 
-export default async function AdminPage() {
+export default async function AdminPage({ searchParams }: { searchParams?: Promise<{ userSearch?: string }> }) {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -50,6 +50,7 @@ export default async function AdminPage() {
     redirect(WORKBENCH_PATH);
   }
 
+  const { userSearch } = searchParams ? await searchParams : {};
   const funnelSince = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const [
     userCount,
@@ -69,7 +70,10 @@ export default async function AdminPage() {
     health,
     recentTicketOrders,
     revenueAgg,
-    recentShows
+    recentShows,
+    recentSpamFlags,
+    recentLoginsCount,
+    userSearchResults
   ] = await Promise.all([
     db.user.count().catch(() => 0),
     db.profile.count().catch(() => 0),
@@ -137,7 +141,22 @@ export default async function AdminPage() {
         venueProfile: { select: { name: true } },
         _count: { select: { tickets: true } }
       }
-    }).catch(() => [])
+    }).catch(() => []),
+    db.notification.findMany({
+      where: { type: 'SPAM_FLAG', createdAt: { gte: new Date(Date.now() - 86400000) } },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+      include: { user: { select: { email: true, username: true } } }
+    }).catch(() => []),
+    db.user.count({ where: { lastLoginAt: { gte: new Date(Date.now() - 86400000) } } }).catch(() => 0),
+    userSearch ? db.user.findMany({
+      where: { OR: [
+        { email: { contains: userSearch, mode: 'insensitive' } },
+        { username: { contains: userSearch, mode: 'insensitive' } }
+      ]},
+      select: { id: true, email: true, username: true, role: true, createdAt: true, profiles: { select: { type: true, slug: true } } },
+      take: 10,
+    }).catch(() => []) : Promise.resolve([]),
   ]);
 
   const [
@@ -225,6 +244,41 @@ export default async function AdminPage() {
             About iHYPE
           </Link>
         </div>
+      </section>
+
+      <section className="panel admin-console-panel">
+        <div className="admin-console-panel-head">
+          <div>
+            <h2>User search</h2>
+            <p className="meta">Search by email or username.</p>
+          </div>
+        </div>
+        <form method="GET" style={{ display: 'flex', gap: 8, marginBottom: userSearchResults.length ? 16 : 0 }}>
+          <input
+            name="userSearch"
+            defaultValue={userSearch ?? ''}
+            placeholder="Email or username…"
+            style={{ flex: 1, padding: '8px 12px', borderRadius: 7, border: '1px solid var(--line2, #333)', background: 'var(--bg2, #111)', color: 'inherit', fontSize: 14 }}
+          />
+          <button type="submit" className="button small secondary">Search</button>
+          {userSearch && <Link className="button small secondary" href="/admin">Clear</Link>}
+        </form>
+        {userSearchResults.length > 0 && (
+          <div className="admin-list">
+            {userSearchResults.map(u => (
+              <div className="admin-list-row" key={u.id}>
+                <span>{u.username ?? u.email}</span>
+                <strong>{u.role}</strong>
+                <small>{u.email}</small>
+                <small>{u.profiles.map(p => p.type).join(', ') || 'no profiles'}</small>
+                <small>{u.createdAt.toISOString().slice(0, 10)}</small>
+              </div>
+            ))}
+          </div>
+        )}
+        {userSearch && userSearchResults.length === 0 && (
+          <div className="empty">No users found for &ldquo;{userSearch}&rdquo;.</div>
+        )}
       </section>
 
       <section className="admin-metric-grid">
@@ -533,6 +587,35 @@ export default async function AdminPage() {
             )}
           </div>
         </article>
+      </section>
+
+      <section className="panel admin-console-panel">
+        <div className="admin-console-panel-head">
+          <div>
+            <h2>Security</h2>
+            <p className="meta">Spam flags and login activity in the last 24 hours.</p>
+          </div>
+        </div>
+        <div className="admin-metric-grid" style={{ marginBottom: '1rem' }}>
+          <article className="card admin-metric-card">
+            <span>Spam flags (24h)</span>
+            <strong>{recentSpamFlags.length}</strong>
+          </article>
+          <article className="card admin-metric-card">
+            <span>Logins (24h)</span>
+            <strong>{recentLoginsCount}</strong>
+          </article>
+        </div>
+        {recentSpamFlags.length > 0 && (
+          <div className="admin-list">
+            {recentSpamFlags.map((flag) => (
+              <div className="admin-list-row" key={flag.id}>
+                <span>{flag.body}</span>
+                <small>{flag.user?.username ?? flag.user?.email ?? flag.userId} | {flag.createdAt.toISOString()}</small>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="section">

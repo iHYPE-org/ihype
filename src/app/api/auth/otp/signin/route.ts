@@ -31,6 +31,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid request.' }, { status: 400 });
     }
 
+    // Per-challenge brute-force check: look up email via challenge before verifying
+    const challengeForEmail = await db.mfaChallenge.findUnique({
+      where: { token: body.challengeId },
+      select: { user: { select: { email: true } } }
+    });
+    if (challengeForEmail?.user?.email) {
+      const emailRateLimit = await consumeRateLimit(
+        `otp-email:${challengeForEmail.user.email}`,
+        { limit: 5, windowMs: 15 * 60 * 1000 }
+      );
+      if (!emailRateLimit.allowed) {
+        return NextResponse.json(
+          { error: 'Too many failed attempts, try again in 15 minutes' },
+          { status: 429 }
+        );
+      }
+    }
+
     const challenge = await db.mfaChallenge.findUnique({
       where: { token: body.challengeId },
       include: {

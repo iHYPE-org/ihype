@@ -156,6 +156,7 @@ export type WbStat = {
 
 export type WbTicket = {
   id: string;
+  showId?: string;
   showName: string;
   date: string;
   seat: string;
@@ -233,6 +234,9 @@ export type WorkbenchData = {
   verificationRequested?: boolean;
   lifeStats?: { totalHype: number; totalEarnings: number; songsPlayed: number; eventsAttended: number };
   isAdmin?: boolean;
+  uploadStreak?: number;
+  needsGenreQuiz?: boolean;
+  degraded?: boolean;
 };
 
 // ── Default prefs ──────────────────────────────────────────────

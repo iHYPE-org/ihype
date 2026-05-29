@@ -10,6 +10,7 @@ import { db } from '@/lib/db';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { authConfig } from '@/lib/auth.config';
+import { sendGenericEmail } from '@/lib/mailer';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
@@ -45,6 +46,48 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!isValid) return null;
 
         await db.mfaChallenge.delete({ where: { id: challenge.id } });
+
+        // Suspicious login detection: alert if country differs from last known login country.
+        const currentCountry = (request as { headers?: { get?: (k: string) => string | null } }).headers?.get?.('cf-ipcountry') ?? null;
+        if (currentCountry && challenge.user.lastLoginCountry && challenge.user.lastLoginCountry !== currentCountry) {
+          const userEmail = challenge.user.email;
+          const userName = challenge.user.name?.trim() || userEmail || 'iHYPE user';
+          if (userEmail) {
+            sendGenericEmail({
+              to: userEmail,
+              subject: 'New login from a different country — iHYPE',
+              text: [
+                `Hi ${userName},`,
+                '',
+                `We detected a login to your iHYPE account from a new country (${currentCountry}).`,
+                `Your previous login was from ${challenge.user.lastLoginCountry}.`,
+                '',
+                'If this was you, no action is needed.',
+                'If you did not log in, please change your account credentials immediately.',
+                '',
+                '— iHYPE'
+              ].join('\n'),
+              html: `
+                <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#10182a;">
+                  <h2 style="margin:0 0 12px;">New login from a different country</h2>
+                  <p>Hi ${userName},</p>
+                  <p>We detected a login to your iHYPE account from <strong>${currentCountry}</strong>. Your previous login was from <strong>${challenge.user.lastLoginCountry}</strong>.</p>
+                  <p>If this was you, no action is needed. If you did not log in, please change your account credentials immediately.</p>
+                  <p style="color:#5b657a;font-size:12px;">— iHYPE</p>
+                </div>
+              `
+            }).catch(() => {});
+          }
+        }
+
+        // Update last login country and timestamp.
+        db.user.update({
+          where: { id: challenge.user.id },
+          data: {
+            lastLoginCountry: currentCountry ?? undefined,
+            lastLoginAt: new Date()
+          }
+        }).catch(() => {});
 
         return {
           id: challenge.user.id,

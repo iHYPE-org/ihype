@@ -13,7 +13,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
   }
 
-  let body: { profileId?: string; genre?: string } = {};
+  let body: { profileId?: string; genre?: string; genres?: string[] } = {};
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -48,6 +48,11 @@ export async function PATCH(request: NextRequest) {
     where: { id: profileId },
     data: { genre: genre || null }
   });
+
+  if (Array.isArray(body.genres)) {
+    const cleaned = body.genres.slice(0, 10).map((g: string) => String(g).trim().slice(0, 30));
+    await db.profile.update({ where: { id: profileId }, data: { genres: cleaned } });
+  }
 
   return NextResponse.json({ ok: true, genre: genre || null });
 }

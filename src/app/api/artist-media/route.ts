@@ -6,6 +6,7 @@ import { validateArtistMediaUpload } from '@/lib/media-validation';
 import { isBlobMediaStorageAvailable, uploadArtistMediaToBlob } from '@/lib/media-storage';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { areDatabaseMediaUploadsEnabledRuntime } from '@/lib/runtime-flags';
+import { validateAudioMagicBytes } from '@/lib/validate-upload';
 
 export const dynamic = 'force-dynamic';
 
@@ -81,8 +82,8 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const profileId = String(formData.get('profileId') ?? '').trim();
-    const requestedTitle = String(formData.get('title') ?? '').trim();
-    const notesValue = String(formData.get('notes') ?? '').trim();
+    const requestedTitle = String(formData.get('title') ?? '').trim().slice(0, 200);
+    const notesValue = String(formData.get('notes') ?? '').trim().slice(0, 1000);
     const freeUseEnabled = String(formData.get('freeUseEnabled') ?? '').toLowerCase() === 'true';
     const file = formData.get('file');
 
@@ -105,6 +106,12 @@ export async function POST(request: Request) {
 
     if (file.size > MAX_AUDIO_FILE_SIZE_BYTES) {
       return NextResponse.json({ error: 'Audio uploads are limited to 10MB.' }, { status: 400 });
+    }
+
+    // Magic byte validation — verify actual file content matches claimed audio type
+    const headerBuffer = await file.slice(0, 12).arrayBuffer();
+    if (!validateAudioMagicBytes(new Uint8Array(headerBuffer))) {
+      return NextResponse.json({ error: 'File content does not match a supported audio format.' }, { status: 400 });
     }
 
     const profile = await withDbRetry(() =>

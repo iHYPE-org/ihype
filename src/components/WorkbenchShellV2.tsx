@@ -292,6 +292,7 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
   return (
     <>
       <style>{`
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
         @keyframes eq { 0%,100% { height: 3px; } 50% { height: 10px; } }
         @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
@@ -344,7 +345,17 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
         }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 200, background: 'radial-gradient(ellipse at 50% -50%, rgba(255,80,41,.07), transparent 60%)', pointerEvents: 'none', zIndex: 0 }} />
           <div key={view} className="wb-view-anim" style={{ position: 'relative', zIndex: 1 }}>
-            {viewEl}
+            <React.Suspense fallback={
+              <div style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'linear-gradient(90deg, #1a1612 25%, #221c16 50%, #1a1612 75%)',
+                backgroundSize: '200% 100%',
+                animation: 'shimmer 1.4s infinite',
+              }} />
+            }>
+              {viewEl}
+            </React.Suspense>
           </div>
         </main>
 

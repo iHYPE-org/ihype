@@ -9,6 +9,7 @@ import { showProductionPlanSchema } from '@/lib/show-composer';
 import { DEFAULT_PROMOTER_AFFILIATE_PERCENT, validateTicketSplit } from '@/lib/ticketing';
 import { slugify } from '@/lib/utils';
 import { consumeRateLimit, rateLimitHeaders, rateLimitKey } from '@/lib/rate-limit';
+import { sanitizeShowInput } from '@/lib/sanitize';
 
 const radioTrackSchema = z.object({
   hexId: z.string().min(1),
@@ -92,7 +93,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const body = schema.parse(await request.json());
+    const rawBody = await request.json();
+    sanitizeShowInput(rawBody as Record<string, unknown>);
+    const body = schema.parse(rawBody);
 
     if (body.isRadioShow) {
       const tracks = body.radioTracks ?? [];

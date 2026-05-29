@@ -7,6 +7,7 @@ import { consumeRateLimit, rateLimitHeaders, rateLimitKey } from '@/lib/rate-lim
 import { sendGenericEmail } from '@/lib/mailer';
 import { checkAndAwardBadges } from '@/lib/badges';
 import { getBaseUrl } from '@/lib/utils';
+import { sendPushNotification } from '@/lib/push-notify';
 
 const HYPE_MILESTONES = [10, 50, 100, 500, 1000];
 
@@ -65,6 +66,29 @@ async function checkAndRecordMilestone(profileId: string, newCount: number) {
   }
 }
 
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const showId = searchParams.get('showId');
+  const limit = Math.min(parseInt(searchParams.get('limit') ?? '10'), 50);
+  if (!showId) return NextResponse.json({ error: 'showId required' }, { status: 400 });
+  const hypers = await db.hypeEvent.findMany({
+    where: { showId },
+    orderBy: { createdAt: 'asc' },
+    take: limit,
+    include: { user: { select: { id: true, username: true, image: true } } },
+  });
+  const total = await db.hypeEvent.count({ where: { showId } });
+  return NextResponse.json({
+    hypers: hypers.map((h, i) => ({
+      userId: h.userId,
+      username: h.user.username,
+      avatarUrl: h.user.image,
+      isFirst: i === 0,
+    })),
+    total,
+  });
+}
+
 const schema = z.discriminatedUnion('targetType', [
   z.object({ targetType: z.literal('show'), targetId: z.string().cuid() }),
   z.object({ targetType: z.literal('profile'), targetId: z.string().cuid() })
@@ -117,6 +141,25 @@ export async function POST(request: NextRequest) {
         entityId: payload.targetId
       });
 
+      // Spam detection: flag if user exceeds 100 hype actions in 60 seconds
+      const recentShowHypeCount = await db.hypeEvent.count({
+        where: { userId: session.user.id, createdAt: { gte: new Date(Date.now() - 60_000) } }
+      });
+      if (recentShowHypeCount > 100) {
+        const admins = await db.user.findMany({ where: { role: 'ADMIN' }, select: { id: true }, take: 1 });
+        if (admins[0]) {
+          await db.notification.create({
+            data: {
+              userId: admins[0].id,
+              type: 'SPAM_FLAG',
+              body: `User ${session.user.id} sent ${recentShowHypeCount} show hypes in 60s`,
+              link: `/admin`
+            }
+          });
+        }
+        return NextResponse.json({ error: 'Spam detected' }, { status: 429 });
+      }
+
       return NextResponse.json({ action: 'hyped', hypeCount: updatedShow.hypeCount });
     }
 
@@ -154,6 +197,18 @@ export async function POST(request: NextRequest) {
 
     await checkAndRecordMilestone(payload.targetId, updatedProfile.hypeCount);
     checkAndAwardBadges(session.user.id).catch(() => {});
+
+    // Push notification to track owner (fire-and-forget, skip self-hype)
+    db.profile.findUnique({ where: { id: payload.targetId }, select: { ownerId: true, name: true } })
+      .then(profile => {
+        if (profile && profile.ownerId !== session.user.id) {
+          sendPushNotification(profile.ownerId, {
+            title: 'Your track got hyped!',
+            body: `Someone just hyped ${profile.name} on iHYPE.`,
+          }).catch(() => {});
+        }
+      })
+      .catch(() => {});
 
     return NextResponse.json({ action: 'hyped', hypeCount: updatedProfile.hypeCount });
   } catch (err) {

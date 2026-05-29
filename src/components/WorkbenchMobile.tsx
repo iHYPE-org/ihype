@@ -167,6 +167,274 @@ function WMTrackSheet({ track, open, onClose }: { track: { title: string; artist
   );
 }
 
+// ─── Who Hyped This sheet ─────────────────────────────────────
+function WMShowHypersSheet({ showId, onClose }: { showId: string | null; onClose: () => void }) {
+  const [hypers, setHypers] = React.useState<{ userId: string; username: string | null; avatarUrl: string | null; isFirst: boolean }[]>([]);
+  const [total, setTotal] = React.useState(0);
+  const [loading, setLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!showId) return;
+    setLoading(true);
+    fetch(`/api/hype?showId=${showId}&limit=10`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) { setHypers(d.hypers ?? []); setTotal(d.total ?? 0); } })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [showId]);
+
+  const open = !!showId;
+  return (
+    <>
+      {open && <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 49, background: 'rgba(0,0,0,.6)' }} />}
+      <div style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
+        background: T.bg3, borderTop: `1px solid ${T.line2}`,
+        borderRadius: '18px 18px 0 0', padding: '0 0 env(safe-area-inset-bottom)',
+        transform: open ? 'translateY(0)' : 'translateY(100%)',
+        transition: 'transform .32s cubic-bezier(.4,0,.2,1)',
+        maxHeight: '70vh', display: 'flex', flexDirection: 'column',
+      }}>
+        <div style={{ padding: '14px 18px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.line}` }}>
+          <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 15, color: T.ink }}>Who Hyped This · {total.toLocaleString()}</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontSize: 20, lineHeight: 1 }}>✕</button>
+        </div>
+        <div style={{ overflowY: 'auto', padding: '10px 18px 18px' }}>
+          {loading && <div style={{ textAlign: 'center', padding: 24, color: T.ink3, fontFamily: T.fm, fontSize: 13 }}>Loading...</div>}
+          {!loading && hypers.length === 0 && (
+            <div style={{ textAlign: 'center', padding: 24, color: T.ink3, fontFamily: T.fm, fontSize: 13 }}>No hypes yet — be the first!</div>
+          )}
+          {hypers.map((h, i) => {
+            const initials = (h.username ?? 'U').slice(0, 2).toUpperCase();
+            return (
+              <div key={h.userId} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i < hypers.length - 1 ? `1px solid ${T.line}` : 'none' }}>
+                <div style={{
+                  width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
+                  background: h.avatarUrl ? 'transparent' : `linear-gradient(135deg,${T.accent},${T.pink})`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+                }}>
+                  {h.avatarUrl
+                    ? <img src={h.avatarUrl} alt={initials} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    : <span style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 14, color: T.bg }}>{initials}</span>
+                  }
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: T.fb, fontWeight: 600, fontSize: 14, color: T.ink }}>{h.username ?? 'Fan'}</div>
+                </div>
+                {h.isFirst && (
+                  <span style={{ background: 'rgba(255,184,74,.15)', color: T.amber, borderRadius: 99, padding: '3px 9px', fontFamily: T.fm, fontSize: 11, fontWeight: 700, letterSpacing: '.1em', whiteSpace: 'nowrap' }}>First Hyper ⚡</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── Trending city strip ──────────────────────────────────────
+function WMTrendingStrip({ city }: { city: string }) {
+  const [shows, setShows] = React.useState<{ id: string; title: string; hypeCount: number }[]>([]);
+
+  React.useEffect(() => {
+    if (!city) return;
+    fetch(`/api/trending-local?city=${encodeURIComponent(city.toLowerCase())}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.shows?.length) setShows(d.shows); })
+      .catch(() => {});
+  }, [city]);
+
+  if (shows.length === 0) return null;
+
+  return (
+    <div style={{ padding: '0 0 6px' }}>
+      <div style={{ padding: '0 18px 8px', fontFamily: T.fm, fontSize: 11, color: T.ink3, letterSpacing: '.18em', fontWeight: 700, textTransform: 'uppercase' }}>Trending near you</div>
+      <div style={{ display: 'flex', gap: 8, padding: '0 18px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+        {shows.map(s => (
+          <div key={s.id} style={{
+            flexShrink: 0, background: T.bg2, border: `1px solid ${T.line}`, borderRadius: 99,
+            padding: '6px 12px', fontFamily: T.fb, fontSize: 12, color: T.ink, whiteSpace: 'nowrap',
+          }}>
+            🔥 {s.title}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── I Was There button ───────────────────────────────────────
+function IWasThereButton({ showId }: { showId: string }) {
+  const [done, setDone] = React.useState(false);
+  const [count, setCount] = React.useState<number | null>(null);
+  const [loading, setLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    fetch(`/api/shows/${showId}/attendees`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setCount(d.count ?? 0); })
+      .catch(() => {});
+  }, [showId]);
+
+  const mark = async () => {
+    if (done || loading) return;
+    setLoading(true);
+    try {
+      const r = await fetch(`/api/shows/${showId}/attendees`, { method: 'POST' });
+      if (r.ok) { setDone(true); setCount(c => (c ?? 0) + 1); }
+    } catch { /* ignore */ } finally { setLoading(false); }
+  };
+
+  if (done) {
+    return (
+      <div style={{ fontFamily: T.fm, fontSize: 12, color: T.teal, fontWeight: 600, padding: '6px 0' }}>
+        ✓ You were there{count !== null ? ` · ${count} others` : ''}
+      </div>
+    );
+  }
+
+  return (
+    <button onClick={mark} disabled={loading} style={{
+      padding: '6px 12px', borderRadius: 7, border: `1px solid ${T.line2}`, background: T.bg3,
+      color: T.ink, fontFamily: T.fm, fontSize: 12, fontWeight: 700, cursor: loading ? 'default' : 'pointer',
+      letterSpacing: '.06em', opacity: loading ? .6 : 1,
+    }}>
+      {loading ? '...' : 'I Was There'}
+    </button>
+  );
+}
+
+// ─── Setlist vote sheet ───────────────────────────────────────
+function WMSetlistVoteSheet({ showId, onClose }: { showId: string | null; onClose: () => void }) {
+  const [tracks, setTracks] = React.useState<{ mediaId: string; title: string; voteCount: number; userVoted: boolean }[]>([]);
+  const [loading, setLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!showId) return;
+    setLoading(true);
+    fetch(`/api/shows/${showId}/setlist-vote`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.tracks) setTracks(d.tracks); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [showId]);
+
+  const vote = async (mediaId: string) => {
+    if (!showId) return;
+    // Optimistic update
+    setTracks(prev => prev.map(t => t.mediaId === mediaId
+      ? { ...t, userVoted: !t.userVoted, voteCount: t.userVoted ? t.voteCount - 1 : t.voteCount + 1 }
+      : t
+    ));
+    await fetch(`/api/shows/${showId}/setlist-vote`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mediaId }),
+    }).catch(() => {});
+  };
+
+  const open = !!showId;
+  return (
+    <>
+      {open && <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 49, background: 'rgba(0,0,0,.6)' }} />}
+      <div style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
+        background: T.bg3, borderTop: `1px solid ${T.line2}`,
+        borderRadius: '18px 18px 0 0', padding: '0 0 env(safe-area-inset-bottom)',
+        transform: open ? 'translateY(0)' : 'translateY(100%)',
+        transition: 'transform .32s cubic-bezier(.4,0,.2,1)',
+        maxHeight: '70vh', display: 'flex', flexDirection: 'column',
+      }}>
+        <div style={{ padding: '14px 18px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.line}` }}>
+          <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 15, color: T.ink }}>Vote for Setlist</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontSize: 20, lineHeight: 1 }}>✕</button>
+        </div>
+        <div style={{ overflowY: 'auto', padding: '10px 18px 18px' }}>
+          {loading && <div style={{ textAlign: 'center', padding: 24, color: T.ink3, fontFamily: T.fm, fontSize: 13 }}>Loading...</div>}
+          {!loading && tracks.length === 0 && (
+            <div style={{ textAlign: 'center', padding: 24, color: T.ink3, fontFamily: T.fm, fontSize: 13 }}>No tracks available for voting.</div>
+          )}
+          {tracks.map((t, i) => (
+            <div key={t.mediaId} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i < tracks.length - 1 ? `1px solid ${T.line}` : 'none' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: T.fb, fontWeight: 600, fontSize: 14, color: T.ink }}>{t.title}</div>
+                <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, marginTop: 3 }}>{t.voteCount} vote{t.voteCount !== 1 ? 's' : ''}</div>
+              </div>
+              <button onClick={() => vote(t.mediaId)} style={{
+                padding: '6px 14px', borderRadius: 99, border: `1px solid ${t.userVoted ? 'rgba(255,62,154,.5)' : T.line2}`,
+                background: t.userVoted ? 'rgba(255,62,154,.12)' : T.bg4,
+                color: t.userVoted ? T.pink : T.ink2, fontFamily: T.fm, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+              }}>
+                {t.userVoted ? '♥ Voted' : '♡ Vote'}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── Genre quiz sheet ─────────────────────────────────────────
+const GENRE_OPTIONS = ['Electronic', 'Hip-Hop', 'Indie', 'Jazz', 'R&B', 'Pop', 'House', 'Techno', 'Soul', 'Afrobeats'];
+
+function WMGenreQuizSheet({ profileId, onComplete }: { profileId: string; onComplete: () => void }) {
+  const [selected, setSelected] = React.useState<string[]>([]);
+  const [saving, setSaving] = React.useState(false);
+
+  const toggle = (g: string) => setSelected(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g]);
+
+  const save = async () => {
+    if (selected.length === 0) return;
+    setSaving(true);
+    try {
+      await fetch('/api/profile/genre', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileId, genres: selected }),
+      });
+      onComplete();
+    } catch { /* ignore */ } finally { setSaving(false); }
+  };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: T.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <div style={{ maxWidth: 400, width: '100%' }}>
+        <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3, letterSpacing: '.2em', textTransform: 'uppercase', marginBottom: 8 }}>Quick setup</div>
+        <h1 style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 28, letterSpacing: '-.025em', color: T.ink, margin: '0 0 8px' }}>What's your taste?</h1>
+        <p style={{ fontFamily: T.fb, fontSize: 14, color: T.ink2, marginBottom: 24, lineHeight: 1.5 }}>Pick genres you love — we'll tune your seeds and radio to match.</p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 32 }}>
+          {GENRE_OPTIONS.map(g => {
+            const active = selected.includes(g);
+            return (
+              <button key={g} onClick={() => toggle(g)} style={{
+                padding: '9px 16px', borderRadius: 99, cursor: 'pointer', fontFamily: T.fm, fontSize: 13, fontWeight: 700,
+                border: `1px solid ${active ? T.accent : T.line2}`,
+                background: active ? 'rgba(255,80,41,.15)' : T.bg2,
+                color: active ? T.accent : T.ink2,
+                transition: 'all .15s',
+              }}>{g}</button>
+            );
+          })}
+        </div>
+        <button onClick={save} disabled={saving || selected.length === 0} style={{
+          width: '100%', padding: '13px 0', borderRadius: 10, border: 'none',
+          background: selected.length > 0 ? `linear-gradient(135deg,${T.accent},${T.pink})` : T.bg3,
+          color: selected.length > 0 ? T.bg : T.ink3, fontFamily: T.fd, fontWeight: 800, fontSize: 15,
+          letterSpacing: '-.01em', cursor: selected.length > 0 ? 'pointer' : 'default',
+          opacity: saving ? .6 : 1,
+        }}>
+          {saving ? 'Saving...' : 'Save & Continue'}
+        </button>
+        {selected.length > 0 && (
+          <div style={{ textAlign: 'center', marginTop: 12, fontFamily: T.fm, fontSize: 12, color: T.ink3 }}>{selected.length} genre{selected.length !== 1 ? 's' : ''} selected</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── EQ animated bars ─────────────────────────────────────────
 const eqCss = `
 @keyframes wm-eq1{0%,100%{height:3px}50%{height:10px}}
@@ -184,11 +452,12 @@ const eqCss = `
 `;
 
 // ─── Top bar ─────────────────────────────────────────────────
-function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, notifCount }: {
+function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, notifCount, onFeedback }: {
   tab: MobileTab; onTab: (t: MobileTab) => void;
   listeningNow: number; userName: string; initials: string;
   onSearch?: () => void;
   notifCount?: number;
+  onFeedback?: () => void;
 }) {
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [searchOpen, setSearchOpen] = React.useState(false);
@@ -383,7 +652,6 @@ function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, noti
         {([
           { icon: 'ℹ️', label: 'About iHYPE', href: '/about' },
           { icon: '🔍', label: 'Transparency', href: '/transparency' },
-          { icon: '🐛', label: 'Report a bug', href: 'mailto:bugs@ihype.org' },
         ] as { icon: string; label: string; href: string }[]).map(item => (
           <a key={item.label} href={item.href} onClick={close} style={{
             display: 'flex', alignItems: 'center', gap: 14, padding: '13px 20px',
@@ -393,6 +661,13 @@ function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, noti
             <span style={{ fontFamily: T.fb, fontSize: 15, color: T.ink }}>{item.label}</span>
           </a>
         ))}
+        <button onClick={() => { close(); onFeedback?.(); }} style={{
+          display: 'flex', alignItems: 'center', gap: 14, padding: '13px 20px',
+          background: 'transparent', border: 'none', width: '100%', cursor: 'pointer', textAlign: 'left',
+        }}>
+          <span style={{ fontSize: 18, width: 24, textAlign: 'center' }}>🐛</span>
+          <span style={{ fontFamily: T.fb, fontSize: 15, color: T.ink }}>Report a bug</span>
+        </button>
       </div>
 
       {/* Divider */}
@@ -554,6 +829,26 @@ function ReferralPanel({ data }: { data: WorkbenchData }) {
         }}>
           {copied ? '✓ Copied!' : '🔗 Copy invite link'}
         </button>
+        <button
+          onClick={async () => {
+            const ref = data.profileHexId ?? '';
+            const shareText = `I joined iHYPE — the music discovery platform for real fans. Come join me! ihype.org/join?ref=${ref}`;
+            const shareUrl = `https://ihype.org/join?ref=${ref}`;
+            const nav = typeof navigator !== 'undefined' ? navigator as Navigator & { share?: (d: object) => Promise<void> } : null;
+            if (nav && nav.share) {
+              await nav.share({ title: 'Join me on iHYPE', text: shareText, url: shareUrl }).catch(() => {});
+            } else {
+              try { await (navigator as Navigator & { clipboard: { writeText: (s: string) => Promise<void> } }).clipboard.writeText(shareText); } catch { /* ignore */ }
+            }
+          }}
+          style={{
+            width: '100%', padding: '10px 0', borderRadius: 8, cursor: 'pointer',
+            border: `1px solid ${T.line2}`, background: 'transparent',
+            color: T.ink2, fontFamily: T.fm, fontSize: 13, fontWeight: 700, letterSpacing: '.08em',
+          }}
+        >
+          ↗ Share invite
+        </button>
       </WMCard>
     </div>
   );
@@ -561,6 +856,25 @@ function ReferralPanel({ data }: { data: WorkbenchData }) {
 
 // ─── Screen: Me ──────────────────────────────────────────────
 function ScreenMe({ data }: { data: WorkbenchData }) {
+  const [deletingAccount, setDeletingAccount] = React.useState(false);
+
+  const handleDeleteAccount = async () => {
+    if (!window.confirm('Are you sure you want to delete your account? This cannot be undone.')) return;
+    if (!window.confirm('Final confirmation: all your data will be permanently deleted.')) return;
+    setDeletingAccount(true);
+    try {
+      const res = await fetch('/api/settings/delete-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: 'DELETE' }),
+      });
+      if (res.ok) {
+        window.location.href = '/login';
+      }
+    } catch { /* ignore */ } finally {
+      setDeletingAccount(false);
+    }
+  };
   return (
     <>
       {/* Hero portrait card */}
@@ -587,6 +901,11 @@ function ScreenMe({ data }: { data: WorkbenchData }) {
               </div>
               <h1 style={{ fontFamily: T.fd, fontWeight: 800, letterSpacing: '-.025em', lineHeight: .95, fontSize: 30, margin: 0, color: T.ink }}>{data.userName}</h1>
               <p style={{ fontFamily: T.fm, fontSize: 12, color: T.ink2, letterSpacing: '.08em', marginTop: 6 }}>@{data.userName.toLowerCase().replace(/\s/g, '.')} · {data.city}</p>
+              {(data.uploadStreak ?? 0) > 0 && (
+                <span style={{ display: 'inline-block', marginTop: 6, background: 'rgba(245,158,11,.13)', color: '#f59e0b', borderRadius: 20, padding: '2px 10px', fontSize: 12, fontWeight: 700 }}>
+                  🔥 {data.uploadStreak}wk streak
+                </span>
+              )}
             </div>
           </div>
           <p style={{ fontFamily: T.fs, fontStyle: 'italic', fontSize: 14, color: T.ink2, marginTop: 14, lineHeight: 1.4, position: 'relative', zIndex: 2 }}>
@@ -661,7 +980,7 @@ function ScreenMe({ data }: { data: WorkbenchData }) {
       <ReferralPanel data={data} />
 
       {/* Activity */}
-      <div style={{ padding: '14px 18px 24px' }}>
+      <div style={{ padding: '14px 18px 0' }}>
         <WMCard>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <div style={{ fontFamily: T.fd, fontWeight: 700, letterSpacing: '-.01em', fontSize: 14, color: T.ink }}>Recent activity</div>
@@ -669,7 +988,7 @@ function ScreenMe({ data }: { data: WorkbenchData }) {
           </div>
           {data.activity.length === 0 && (
             <div style={{ padding: '16px 0', textAlign: 'center', fontFamily: T.fb, fontSize: 13, color: T.ink3 }}>
-              No activity yet — start by hyping a track.
+              Start exploring — hype tracks and follow artists to build your history
             </div>
           )}
           {data.activity.slice(0, 5).map((a, i, arr) => {
@@ -693,12 +1012,28 @@ function ScreenMe({ data }: { data: WorkbenchData }) {
           })}
         </WMCard>
       </div>
+
+      {/* Danger zone */}
+      <div style={{ padding: '14px 18px 32px' }}>
+        <button
+          onClick={handleDeleteAccount}
+          disabled={deletingAccount}
+          style={{
+            width: '100%', padding: '11px 0', borderRadius: 9, border: `1px solid rgba(239,68,68,.4)`,
+            background: 'rgba(239,68,68,.07)', color: '#ef4444',
+            fontFamily: T.fm, fontSize: 13, fontWeight: 700, letterSpacing: '.08em', cursor: 'pointer',
+            opacity: deletingAccount ? .6 : 1,
+          }}
+        >
+          {deletingAccount ? 'Deleting account…' : 'Delete account'}
+        </button>
+      </div>
     </>
   );
 }
 
 // ─── Screen: Seeds ───────────────────────────────────────────
-function ScreenSeeds({ data }: { data: WorkbenchData }) {
+function ScreenSeeds({ data, onHypersSheet }: { data: WorkbenchData; onHypersSheet?: (showId: string) => void }) {
   const waveform = [30, 55, 80, 42, 90, 70, 48, 88, 62, 35, 78, 55, 92, 40, 68, 82, 48, 30, 62, 88];
 
   // Deck state
@@ -831,6 +1166,7 @@ function ScreenSeeds({ data }: { data: WorkbenchData }) {
         sub="Hand-cut hooks from new uploads. Save it, hype it, skip it."
         actions={<><WMChip>⚙ Filters</WMChip><WMChip>Local · Chicago ▾</WMChip></>}
       />
+      {data.city && <WMTrendingStrip city={data.city} />}
 
       <div style={{ padding: '0 18px' }}>
         {/* Session stats */}
@@ -1009,7 +1345,7 @@ function ScreenSeeds({ data }: { data: WorkbenchData }) {
 }
 
 // ─── Screen: Radio ───────────────────────────────────────────
-function ScreenRadio({ data }: { data: WorkbenchData }) {
+function ScreenRadio({ data, onSetlistSheet, onHypersSheet, onSeedsTab }: { data: WorkbenchData; onSetlistSheet?: (showId: string) => void; onHypersSheet?: (showId: string) => void; onSeedsTab?: () => void }) {
   const shows = data.radioShows;
   const live = shows.find(s => s.live);
   const rest = shows.filter(s => !s.live);
@@ -1022,6 +1358,7 @@ function ScreenRadio({ data }: { data: WorkbenchData }) {
         sub="Live and prerecorded shows from DJs and artists — every spin pays the source."
         actions={<><WMChip>⌲ Schedule</WMChip><WMChip>+ New show</WMChip></>}
       />
+      {data.city && <WMTrendingStrip city={data.city} />}
 
       <div style={{ padding: '0 18px' }}>
         {/* Live hero */}
@@ -1073,7 +1410,10 @@ function ScreenRadio({ data }: { data: WorkbenchData }) {
         </div>
         {!live && shows.length === 0 && (
           <div style={{ textAlign: 'center', padding: '32px 18px', color: T.ink3, fontFamily: T.fb, fontSize: 14 }}>
-            No live shows right now — check back soon.
+            No live shows right now —{' '}
+            <button onClick={onSeedsTab} style={{ background: 'none', border: 'none', color: T.accent, cursor: 'pointer', fontFamily: T.fb, fontSize: 14, padding: 0, textDecoration: 'underline' }}>
+              explore Seeds to discover new music ↗
+            </button>
           </div>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
@@ -1094,7 +1434,15 @@ function ScreenRadio({ data }: { data: WorkbenchData }) {
                 <p style={{ fontFamily: T.fb, fontSize: 13, color: T.ink2, marginTop: 8, lineHeight: 1.4 }}>{r.desc}</p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, paddingTop: 8, borderTop: `1px dashed ${T.line}` }}>
                   <span style={{ fontFamily: T.fm, fontSize: 12, color: T.ink, fontWeight: 600 }}>{r.time}</span>
-                  <span style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.12em', textTransform: 'uppercase' }}>{r.next}</span>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    {!r.live && onSetlistSheet && (
+                      <button onClick={() => onSetlistSheet(r.id)} style={{
+                        background: 'none', border: `1px solid ${T.line2}`, borderRadius: 99, padding: '3px 9px',
+                        color: T.ink3, fontFamily: T.fm, fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+                      }}>Vote setlist →</button>
+                    )}
+                    <span style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.12em', textTransform: 'uppercase' }}>{r.next}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1252,7 +1600,7 @@ function ScreenStudio({ data }: { data: WorkbenchData }) {
 }
 
 // ─── Screen: Ticketing ───────────────────────────────────────
-function ScreenTicketing({ data }: { data: WorkbenchData }) {
+function ScreenTicketing({ data, onHypersSheet, onRadioTab }: { data: WorkbenchData; onHypersSheet?: (showId: string) => void; onRadioTab?: () => void }) {
   const [subTab, setSubTab] = useState(0);
   const subTabs = ['Upcoming', 'My Tickets', 'Past', 'Sell'];
 
@@ -1282,7 +1630,10 @@ function ScreenTicketing({ data }: { data: WorkbenchData }) {
           {data.shows.length === 0 && (
             <div style={{ textAlign: 'center', padding: '32px 18px', color: T.ink3, fontFamily: T.fb, fontSize: 14, background: T.bg2, borderRadius: 12, border: `1px solid ${T.line}` }}>
               <div style={{ fontSize: 28, marginBottom: 10 }}>🎟️</div>
-              No upcoming shows yet.{'\n'}Explore the scene to find events near you.
+              No tickets yet —{' '}
+              <button onClick={onRadioTab} style={{ background: 'none', border: 'none', color: T.accent, cursor: 'pointer', fontFamily: T.fb, fontSize: 14, padding: 0, textDecoration: 'underline' }}>
+                find shows near you in Radio →
+              </button>
             </div>
           )}
           {data.shows.map((e, i) => {
@@ -1298,9 +1649,9 @@ function ScreenTicketing({ data }: { data: WorkbenchData }) {
                       {e.status}
                     </WMPill>
                   </div>
-                  <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 2, fontFamily: T.fm, fontSize: 12, fontWeight: 700, color: '#fff', background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(8px)', padding: '4px 9px', borderRadius: 99 }}>
+                  <button onClick={() => onHypersSheet?.(e.id)} style={{ position: 'absolute', top: 10, right: 10, zIndex: 2, fontFamily: T.fm, fontSize: 12, fontWeight: 700, color: '#fff', background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(8px)', padding: '4px 9px', borderRadius: 99, border: 'none', cursor: 'pointer' }}>
                     ♥ {e.hype}
-                  </div>
+                  </button>
                   <div style={{ position: 'absolute', bottom: 12, left: 12, right: 12, zIndex: 2, color: '#fff' }}>
                     <h3 style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 20, letterSpacing: '-.025em', margin: 0 }}>{e.name}</h3>
                     <p style={{ fontFamily: T.fm, fontSize: 12, color: 'rgba(255,255,255,.78)', letterSpacing: '.1em', margin: '3px 0 0', textTransform: 'uppercase' }}>{e.venue} · CHICAGO</p>
@@ -1360,11 +1711,96 @@ function ScreenTicketing({ data }: { data: WorkbenchData }) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
                   <span style={{ fontFamily: T.fm, fontSize: 12, color: T.ink2, fontWeight: 600, letterSpacing: '.08em' }}>{tk.seat}</span>
                   <WMPill tone={isWait ? 'amber' : 'teal'}>{tk.status}</WMPill>
+                  {tk.showId && <IWasThereButton showId={tk.showId} />}
                 </div>
               </div>
             );
           })}
         </div>
+      </div>
+    </>
+  );
+}
+
+// ─── Feedback sheet ───────────────────────────────────────────
+function WMFeedbackSheet({ onClose }: { onClose: () => void }) {
+  const [category, setCategory] = React.useState<'bug' | 'suggestion' | 'other'>('bug');
+  const [message, setMessage] = React.useState('');
+  const [submitted, setSubmitted] = React.useState(false);
+  const [submitting, setSubmitting] = React.useState(false);
+
+  const handleSubmit = async () => {
+    if (!message.trim()) return;
+    setSubmitting(true);
+    try {
+      await fetch('/api/support/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, category, url: typeof window !== 'undefined' ? window.location.href : '' }),
+      });
+      setSubmitted(true);
+      setTimeout(() => onClose(), 2000);
+    } catch { /* ignore */ } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 59, background: 'rgba(0,0,0,.6)' }} />
+      <div style={{
+        position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 60,
+        background: T.bg3, borderTop: `1px solid ${T.line2}`,
+        borderRadius: '18px 18px 0 0',
+        boxShadow: '0 -12px 48px rgba(0,0,0,.7)',
+        padding: '20px 18px 40px',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 18, letterSpacing: '-.025em' }}>Send feedback</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: T.ink2, cursor: 'pointer', fontSize: 20, padding: 4 }}>✕</button>
+        </div>
+        {submitted ? (
+          <div style={{ textAlign: 'center', padding: '24px 0', fontFamily: T.fb, fontSize: 15, color: T.teal }}>
+            Thanks for your feedback!
+          </div>
+        ) : (
+          <>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+              {(['bug', 'suggestion', 'other'] as const).map(cat => (
+                <button key={cat} onClick={() => setCategory(cat)} style={{
+                  flex: 1, padding: '8px 0', borderRadius: 8, border: `1px solid ${category === cat ? T.accent : T.line2}`,
+                  background: category === cat ? 'rgba(255,80,41,.12)' : 'transparent',
+                  color: category === cat ? T.accent : T.ink2,
+                  fontFamily: T.fm, fontSize: 12, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', cursor: 'pointer',
+                }}>{cat}</button>
+              ))}
+            </div>
+            <div style={{ position: 'relative', marginBottom: 14 }}>
+              <textarea
+                value={message}
+                onChange={e => setMessage(e.target.value.slice(0, 500))}
+                placeholder="Describe what happened or what you'd like to see…"
+                rows={4}
+                style={{
+                  width: '100%', background: T.bg2, border: `1px solid ${T.line2}`, borderRadius: 10,
+                  color: T.ink, fontFamily: T.fb, fontSize: 14, padding: '10px 12px',
+                  resize: 'none', outline: 'none', boxSizing: 'border-box',
+                }}
+              />
+              <div style={{ position: 'absolute', bottom: 8, right: 10, fontFamily: T.fm, fontSize: 11, color: T.ink3 }}>{message.length}/500</div>
+            </div>
+            <button onClick={handleSubmit} disabled={submitting || !message.trim()} style={{
+              width: '100%', padding: '13px 0', borderRadius: 10, border: 'none',
+              background: message.trim() ? `linear-gradient(135deg,${T.accent},${T.pink})` : T.bg4,
+              color: message.trim() ? T.bg : T.ink3,
+              fontFamily: T.fd, fontWeight: 800, fontSize: 15, letterSpacing: '-.01em',
+              cursor: message.trim() ? 'pointer' : 'default',
+              opacity: submitting ? .6 : 1,
+            }}>
+              {submitting ? 'Sending…' : 'Submit'}
+            </button>
+          </>
+        )}
       </div>
     </>
   );
@@ -1379,6 +1815,15 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [notifCount, setNotifCount] = useState(0);
+  const [showFeedbackSheet, setShowFeedbackSheet] = useState(false);
+  const [seedsTooltipSeen, setSeedsTooltipSeen] = React.useState(() => {
+    if (typeof window === 'undefined') return true;
+    return !!localStorage.getItem('ihype_tooltip_seeds_seen');
+  });
+  const [radioTooltipSeen, setRadioTooltipSeen] = React.useState(() => {
+    if (typeof window === 'undefined') return true;
+    return !!localStorage.getItem('ihype_tooltip_radio_seen');
+  });
 
   useEffect(() => {
     fetch('/api/notifications')
@@ -1438,6 +1883,9 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
   }, [playing, track]);
 
   const [trackSheetOpen, setTrackSheetOpen] = useState(false);
+  const [hypersSheetShowId, setHypersSheetShowId] = useState<string | null>(null);
+  const [setlistSheetShowId, setSetlistSheetShowId] = useState<string | null>(null);
+  const [showGenreQuiz, setShowGenreQuiz] = useState(data.needsGenreQuiz ?? false);
   const [refreshing, setRefreshing] = useState(false);
   const pullStartY = useRef(0);
   const pullDeltaRef = useRef(0);
@@ -1509,10 +1957,10 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
   const screenEl = (() => {
     switch (tab) {
       case 'me':     return <ScreenMe data={data} />;
-      case 'seeds':  return <ScreenSeeds data={data} />;
-      case 'radio':  return <ScreenRadio data={data} />;
+      case 'seeds':  return <ScreenSeeds data={data} onHypersSheet={setHypersSheetShowId} />;
+      case 'radio':  return <ScreenRadio data={data} onSetlistSheet={setSetlistSheetShowId} onHypersSheet={setHypersSheetShowId} onSeedsTab={() => setTab('seeds')} />;
       case 'studio': return <ScreenStudio data={data} />;
-      case 'tick':   return <ScreenTicketing data={data} />;
+      case 'tick':   return <ScreenTicketing data={data} onHypersSheet={setHypersSheetShowId} onRadioTab={() => setTab('radio')} />;
     }
   })();
 
@@ -1524,8 +1972,13 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
       overflow: 'hidden',
     }}>
       <style>{eqCss}</style>
+      {data.degraded && (
+        <div style={{ background: '#f59e0b', color: '#000', textAlign: 'center', padding: '6px 12px', fontSize: 12, fontWeight: 600, position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999 }}>
+          Having trouble connecting — some data may be outdated
+        </div>
+      )}
       <audio ref={audioRef} preload="metadata" style={{ display: 'none' }} />
-      <WMTopBar tab={tab} onTab={setTab} listeningNow={data.listeningNow} userName={data.userName} initials={data.userInitials} onSearch={() => setSearchOpen(true)} notifCount={notifCount} />
+      <WMTopBar tab={tab} onTab={setTab} listeningNow={data.listeningNow} userName={data.userName} initials={data.userInitials} onSearch={() => setSearchOpen(true)} notifCount={notifCount} onFeedback={() => setShowFeedbackSheet(true)} />
       <div
         role="main"
         className="wm-scroll"
@@ -1559,7 +2012,57 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
         />
       )}
       <WMTrackSheet track={track ?? null} open={trackSheetOpen} onClose={() => setTrackSheetOpen(false)} />
+      <WMShowHypersSheet showId={hypersSheetShowId} onClose={() => setHypersSheetShowId(null)} />
+      <WMSetlistVoteSheet showId={setlistSheetShowId} onClose={() => setSetlistSheetShowId(null)} />
+      {showGenreQuiz && data.profileId && (
+        <WMGenreQuizSheet profileId={data.profileId} onComplete={() => setShowGenreQuiz(false)} />
+      )}
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
+      {showFeedbackSheet && <WMFeedbackSheet onClose={() => setShowFeedbackSheet(false)} />}
+      {/* Seeds tooltip */}
+      {!seedsTooltipSeen && data.tracks.length === 0 && tab === 'seeds' && (
+        <SeedsTooltip onDismiss={() => { localStorage.setItem('ihype_tooltip_seeds_seen', '1'); setSeedsTooltipSeen(true); }} />
+      )}
+      {/* Radio tooltip */}
+      {!radioTooltipSeen && data.radioShows.length === 0 && tab === 'radio' && (
+        <RadioTooltip onDismiss={() => { localStorage.setItem('ihype_tooltip_radio_seen', '1'); setRadioTooltipSeen(true); }} />
+      )}
+    </div>
+  );
+}
+
+function SeedsTooltip({ onDismiss }: { onDismiss: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDismiss, 4000);
+    return () => clearTimeout(t);
+  }, [onDismiss]);
+  return (
+    <div style={{
+      position: 'fixed', bottom: 100, left: 18, right: 18, zIndex: 70,
+      background: T.bg3, border: `1px solid ${T.line2}`, borderRadius: 12,
+      padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      boxShadow: '0 8px 32px rgba(0,0,0,.6)',
+    }}>
+      <span style={{ fontFamily: T.fb, fontSize: 14, color: T.ink }}>Swipe right to hype, left to skip, up to save</span>
+      <button onClick={onDismiss} style={{ background: 'none', border: 'none', color: T.ink3, cursor: 'pointer', fontSize: 18, padding: '0 0 0 10px' }}>✕</button>
+    </div>
+  );
+}
+
+function RadioTooltip({ onDismiss }: { onDismiss: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDismiss, 4000);
+    return () => clearTimeout(t);
+  }, [onDismiss]);
+  return (
+    <div style={{
+      position: 'fixed', bottom: 100, left: 18, right: 18, zIndex: 70,
+      background: T.bg3, border: `1px solid ${T.line2}`, borderRadius: 12,
+      padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      boxShadow: '0 8px 32px rgba(0,0,0,.6)',
+    }}>
+      <span style={{ fontFamily: T.fb, fontSize: 14, color: T.ink }}>Tune into live shows and upcoming events</span>
+      <button onClick={onDismiss} style={{ background: 'none', border: 'none', color: T.ink3, cursor: 'pointer', fontSize: 18, padding: '0 0 0 10px' }}>✕</button>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import type { WorkbenchData } from '@/components/WorkbenchShellV2';
 import { db } from '@/lib/db';
 import { MOCK_DATA } from '@/lib/workbench-mock';
+import { getArtistUploadStreak } from '@/lib/streaks';
 
 // Accent palette for tracks/shows when no color is stored
 const PALETTE = ['#ff5029', '#b983ff', '#22e5d4', '#ff3e9a', '#ffb84a', '#7fb3ff'];
@@ -24,6 +25,7 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
             verificationRequested: true,
             hypeCount: true,
             slug: true,
+            genres: true,
             mediaUploads: {
               take: 8,
               orderBy: { createdAt: 'desc' },
@@ -65,7 +67,8 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
     }
 
     // Fetch remaining data in parallel — none of these depend on each other
-    const [ticketOrders, hypeEvents, profileHypes, radioShows] = await Promise.all([
+    const primaryProfile = user.profiles[0];
+    const [ticketOrders, hypeEvents, profileHypes, radioShows, uploadStreak] = await Promise.all([
       // Fetch user's ticket orders
       db.ticketOrder.findMany({
         where: { buyerUserId: userId, status: { in: ['RESERVED', 'CAPTURED'] } },
@@ -118,6 +121,7 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
           headlinerProfile: { select: { name: true } },
         },
       }),
+      getArtistUploadStreak(primaryProfile?.id ?? ''),
     ]);
 
     // Count songs played by this user
@@ -127,7 +131,7 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
 
     // ── Shape the response ──────────────────────────────────────
 
-    const primaryProfile = user.profiles[0];
+    const needsGenreQuiz = (primaryProfile?.genres?.length ?? 0) === 0 && !!primaryProfile;
     const userName = primaryProfile?.name ?? user.name ?? 'Fan';
     const initials = userName.split(' ').slice(0, 2).map((w: string) => w[0]?.toUpperCase() ?? '').join('');
     const city = primaryProfile?.city ?? '';
@@ -193,6 +197,7 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
       const t = o.tickets[0];
       return {
         id: o.id,
+        showId: o.show.id,
         showName: o.show.title + (o.show.venueProfile?.name ? ` @ ${o.show.venueProfile.name}` : ''),
         date: o.show.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
         seat: 'GA',
@@ -264,6 +269,8 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
       activity: allActivity,
       radioShows: wbRadioShows,
       notifications: [],
+      uploadStreak: uploadStreak ?? 0,
+      needsGenreQuiz: needsGenreQuiz ?? false,
       lifeStats: {
         totalHype,
         totalEarnings: pendingCents / 100,
@@ -275,7 +282,15 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
     return responseData;
   } catch (e) {
     console.error('getWorkbenchData error:', e);
-    return MOCK_DATA;
+    return {
+      ...MOCK_DATA,
+      degraded: true,
+      tracks: [],
+      shows: [],
+      tickets: [],
+      radioShows: [],
+      notifications: [],
+    };
   }
 }
 

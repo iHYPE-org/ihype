@@ -27,4 +27,5 @@ crons = [
   "0 12 * * *",   # show-reminders
   "0 13 * * *",   # show-payouts
   "0 14 * * *",   # onboarding
+  "0 15 * * *",   # welcome-sequence
 ]

@@ -38,6 +38,17 @@ export async function POST(
 
   const { showId } = await params;
 
+  const show = await db.show.findUnique({ where: { id: showId }, select: { status: true } });
+  if (show?.status !== 'ENDED') {
+    return NextResponse.json({ error: 'Show has not ended' }, { status: 400 });
+  }
+  const hasTicket = await db.ticketOrder.findFirst({
+    where: { showId, buyerUserId: session.user.id, status: 'CAPTURED' },
+  });
+  if (!hasTicket) {
+    return NextResponse.json({ error: 'No confirmed ticket' }, { status: 403 });
+  }
+
   const existing = await db.showAttendee.findUnique({
     where: { userId_showId: { userId: session.user.id, showId } },
   });
