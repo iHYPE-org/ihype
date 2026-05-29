@@ -91,7 +91,7 @@ jobs:
           SMOKE_ALLOW_EDGE_BLOCK: '1'
 
       - name: Purge Cloudflare cache
-        if: secrets.CLOUDFLARE_CACHE_PURGE_TOKEN != '' && env.CLOUDFLARE_ZONE_ID != ''
+        if: env.CLOUDFLARE_CACHE_PURGE_TOKEN != '' && env.CLOUDFLARE_ZONE_ID != ''
         env:
           CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
           CLOUDFLARE_CACHE_PURGE_TOKEN: ${{ secrets.CLOUDFLARE_CACHE_PURGE_TOKEN }}

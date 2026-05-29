@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'ihype-v9';
+const CACHE_VERSION = 'ihype-v10';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const PAGE_CACHE = `${CACHE_VERSION}-pages`;
 
@@ -65,7 +65,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (request.destination === 'document' || url.pathname.endsWith('.html')) {
-    event.respondWith(staleWhileRevalidate(request, PAGE_CACHE));
+    event.respondWith(networkWithCacheFallback(request, PAGE_CACHE));
     return;
   }
 
