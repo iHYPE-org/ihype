@@ -133,6 +133,8 @@ model User {
   showAttendees           ShowAttendee[]
   setlistVotes            SetlistVote[]
   sentBookingRequests     BookingRequest[]         @relation("BookingRequestFromUser")
+  collabResponses         CollabResponse[]
+  advertisedAds           Ad[]
   userSecurityVersion     Int                      @default(0)
   lastLoginCountry        String?
   lastLoginAt             DateTime?
@@ -221,7 +223,9 @@ model Profile {
   availabilityDates             AvailabilityDate[]
   receivedBookingRequests       BookingRequest[]   @relation("BookingRequestToProfile")
   collabPosts                   CollabPost[]
+  collabResponses               CollabResponse[]
   promoCodes                    PromoCode[]
+  fanMailLastSentAt             DateTime?
 
   @@index([name])
   @@index([city, type])
@@ -291,6 +295,8 @@ model ArtistMediaAsset {
   freeUseEnabled   Boolean  @default(false)
   sortOrder        Int      @default(0)
   profileId        String
+  publishAt        DateTime?
+  isPublished      Boolean  @default(true)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   profile          Profile           @relation(fields: [profileId], references: [id], onDelete: Cascade)
@@ -298,6 +304,7 @@ model ArtistMediaAsset {
 
   @@index([profileId, createdAt])
   @@index([freeUseEnabled, createdAt])
+  @@index([publishAt, isPublished])
 }
 
 model RateLimitBucket {
@@ -1018,16 +1025,30 @@ model BookingRequest {
 }
 
 model CollabPost {
-  id          String   @id @default(cuid())
+  id          String          @id @default(cuid())
   profileId   String
   type        String
   description String
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  active      Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  profile     Profile         @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  responses   CollabResponse[]
 
   @@index([active, createdAt])
   @@index([profileId])
+}
+
+model CollabResponse {
+  id        String     @id @default(cuid())
+  postId    String
+  profileId String
+  userId    String
+  message   String
+  createdAt DateTime   @default(now())
+  post      CollabPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  profile   Profile    @relation(fields: [profileId], references: [id])
+  user      User       @relation(fields: [userId], references: [id])
+  @@unique([postId, profileId])
 }
 
 model CollabBoardPost {
@@ -1121,4 +1142,54 @@ model SocialPost {
   generatedAt DateTime  @default(now())
   postedAt    DateTime?
   platform    String?
+}
+
+model AdSlot {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  ads         Ad[]
+}
+
+model Ad {
+  id            String         @id @default(cuid())
+  slotId        String
+  advertiserId  String
+  title         String
+  audioUrl      String?
+  imageUrl      String?
+  clickUrl      String?
+  status        String         @default("PENDING")
+  budgetCents   Int            @default(0)
+  spentCents    Int            @default(0)
+  impressions   Int            @default(0)
+  clicks        Int            @default(0)
+  startsAt      DateTime?
+  endsAt        DateTime?
+  createdAt     DateTime       @default(now())
+  slot          AdSlot         @relation(fields: [slotId], references: [id])
+  advertiser    User           @relation(fields: [advertiserId], references: [id])
+  impressionLog AdImpression[]
+
+  @@index([slotId, status])
+  @@index([advertiserId])
+}
+
+model AdImpression {
+  id        String   @id @default(cuid())
+  adId      String
+  userId    String?
+  createdAt DateTime @default(now())
+  ad        Ad       @relation(fields: [adId], references: [id])
+
+  @@index([adId, createdAt])
+}
+
+model ABTest {
+  key         String   @id
+  description String?
+  enabled     Boolean  @default(false)
+  createdAt   DateTime @default(now())
 }
