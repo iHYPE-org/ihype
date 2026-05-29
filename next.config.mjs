@@ -66,6 +66,12 @@ const nextConfig = {
   poweredByHeader: false,
   webpack(config) {
     config.resolve.alias['@opentelemetry/instrumentation'] = false;
+    // CF Workers doesn't support these Node built-ins; stub them so
+    // @sentry/node integration files don't crash the Worker on cold start.
+    config.resolve.alias['node:child_process'] = false;
+    config.resolve.alias['node:readline'] = false;
+    config.resolve.alias['child_process'] = false;
+    config.resolve.alias['readline'] = false;
     return config;
   },
   images: {
