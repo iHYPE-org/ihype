@@ -182,6 +182,7 @@ model Profile {
   genres                        String[]
   genre                         String?
   links                         String?
+  merchUrl                      String?
   songUploadCount               Int                         @default(0)
   parkingDetails                String?
   stayRecommendations           String?
@@ -220,6 +221,7 @@ model Profile {
   availabilityDates             AvailabilityDate[]
   receivedBookingRequests       BookingRequest[]   @relation("BookingRequestToProfile")
   collabPosts                   CollabPost[]
+  promoCodes                    PromoCode[]
 
   @@index([name])
   @@index([city, type])
@@ -422,6 +424,7 @@ model Show {
   attendees              ShowAttendee[]
   setlistProgress        Json?
   setlistVotes           SetlistVote[]
+  promoCodes             PromoCode[]
 
   @@index([startsAt, status])
 }
@@ -471,6 +474,8 @@ model TicketOrder {
   affiliatePromoterProfile   Profile?               @relation("AffiliatePromoterTicketOrders", fields: [affiliatePromoterProfileId], references: [id], onDelete: SetNull)
   tickets                    Ticket[]
   accountsPayableEntries     AccountsPayableEntry[]
+  promoCodeId                String?
+  promoCode                  PromoCode?             @relation(fields: [promoCodeId], references: [id])
 }
 
 model Ticket {
