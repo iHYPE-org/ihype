@@ -2242,8 +2242,7 @@ function CollabBoardSection() {
           <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink2, marginTop: 4, lineHeight: 1.4 }}>{p.description.slice(0, 120)}{p.description.length > 120 ? '…' : ''}</div>
         </div>
       ))}
-    </div>
-  );
+    </div>  );
 }
 
 // ─── Main mobile export ───────────────────────────────────────
