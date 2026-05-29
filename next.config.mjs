@@ -64,6 +64,10 @@ const securityHeaders = [
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  webpack(config) {
+    config.resolve.alias['@opentelemetry/instrumentation'] = false;
+    return config;
+  },
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
