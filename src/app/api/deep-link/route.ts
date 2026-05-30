@@ -22,10 +22,16 @@ export function GET(request: NextRequest) {
   const ua = request.headers.get('user-agent') ?? '';
   const isMobile = /iPhone|iPad|Android/i.test(ua);
   if (isMobile) {
-    // Use JSON.stringify for correct JS string escaping in the <script> context.
-    // Encode & as &amp; in the HTML attribute context only.
-    const jsAppScheme = JSON.stringify(appScheme);
-    const jsWebUrl = JSON.stringify(webUrl);
+    // Encode as a JS string literal with < > / escaped so no </script> sequence
+    // can ever appear, even if JSON.stringify leaves slashes unescaped.
+    const toJsLiteral = (s: string) =>
+      JSON.stringify(s)
+        .replace(/</g, '\\u003c')
+        .replace(/>/g, '\\u003e')
+        .replace(/\//g, '\\u002f');
+    const jsAppScheme = toJsLiteral(appScheme);
+    const jsWebUrl = toJsLiteral(webUrl);
+    // In the HTML attribute, only & needs encoding (< > " are excluded by SAFE_PATH_RE).
     const attrWebUrl = webUrl.replace(/&/g, '&amp;');
     return new NextResponse(
       `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="1;url=${attrWebUrl}"><script>window.location=${jsAppScheme};setTimeout(function(){window.location=${jsWebUrl}},1000)</script></head><body></body></html>`,
