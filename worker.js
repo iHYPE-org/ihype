@@ -11,5 +11,8 @@ export default {
       return Response.redirect(url.toString(), 308);
     }
     return openNextWorker.fetch(request, env, ctx);
+  },
+  scheduled(event, env, ctx) {
+    return openNextWorker.scheduled?.(event, env, ctx);
   }
 };

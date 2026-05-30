@@ -7,16 +7,16 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ profileId: string }> }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
 
-  const { profileId } = await params;
+  const { slug } = await params;
 
   // Verify profile ownership
   const profile = await db.profile.findUnique({
-    where: { id: profileId, ownerId: session.user.id },
+    where: { id: slug, ownerId: session.user.id },
     select: { id: true, name: true, fanMailLastSentAt: true },
   });
   if (!profile) return NextResponse.json({ error: 'Profile not found or not yours.' }, { status: 403 });
@@ -41,7 +41,7 @@ export async function POST(
 
   // Get followers
   const follows = await db.follow.findMany({
-    where: { followeeProfileId: profileId },
+    where: { followeeProfileId: slug },
     include: { follower: { select: { email: true, emailBounced: true } } },
   });
 
@@ -64,7 +64,7 @@ export async function POST(
   }
 
   await db.profile.update({
-    where: { id: profileId },
+    where: { id: slug },
     data: { fanMailLastSentAt: new Date() },
   });
 
