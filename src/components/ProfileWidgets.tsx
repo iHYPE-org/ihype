@@ -147,7 +147,7 @@ export function MerchShelfWidget({ items }: { items: MerchItem[] }) {
         {items.map(item => (
           <div key={item.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {item.imageUrl && (
-              <img src={item.imageUrl} alt={item.name} style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 6 }} />
+              <img src={item.imageUrl} alt={item.name} loading="lazy" style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 6 }} />
             )}
             <div style={{ fontSize: '0.8rem', fontWeight: 600 }}>{item.name}</div>
             {item.price && <div style={{ fontSize: '0.75rem', opacity: 0.55 }}>{item.price}</div>}

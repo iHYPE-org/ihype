@@ -36,7 +36,7 @@ export default async function PlaylistPage({ params }: { params: Promise<{ slug:
           <div key={item.id} className="panel" style={{ padding: '12px 16px', display: 'flex', gap: 12, alignItems: 'center' }}>
             <span style={{ fontWeight: 700, color: '#888', minWidth: 24 }}>{i + 1}</span>
             {item.artworkUrl && (
-              <img src={item.artworkUrl} alt="" style={{ width: 44, height: 44, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />
+              <img src={item.artworkUrl} alt="" loading="lazy" style={{ width: 44, height: 44, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />
             )}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.title}</div>

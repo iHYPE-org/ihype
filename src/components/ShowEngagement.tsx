@@ -144,7 +144,7 @@ export function ShowEngagement({
               }}
             >
               {a.avatar ? (
-                <img alt={a.name ?? 'Fan'} src={a.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img alt={a.name ?? 'Fan'} src={a.avatar} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
                 (a.name?.[0] ?? '?').toUpperCase()
               )}

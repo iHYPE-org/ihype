@@ -55,6 +55,7 @@ export function CoHeadlinerSuggestions({ profileId }: { profileId: string }) {
               <img
                 alt={match.name}
                 src={match.avatarImage}
+                loading="lazy"
                 style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }}
               />
             )}

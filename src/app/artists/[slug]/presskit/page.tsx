@@ -22,7 +22,7 @@ export default async function PressKitPage({ params }: { params: Promise<{ slug:
         <h1 style={{ margin: 0 }}>{profile.name} — Press Kit</h1>
         <Link href={`/artists/${slug}`} className="button small secondary">← Back</Link>
       </div>
-      {profile.avatarImage && <img src={profile.avatarImage} alt={profile.name} style={{ width: 120, height: 120, borderRadius: '50%', objectFit: 'cover', marginBottom: 16 }} />}
+      {profile.avatarImage && <img src={profile.avatarImage} alt={profile.name} loading="lazy" style={{ width: 120, height: 120, borderRadius: '50%', objectFit: 'cover', marginBottom: 16 }} />}
       {profile.headline && <p style={{ fontSize: 18, fontWeight: 600 }}>{profile.headline}</p>}
       {profile.bio && <p style={{ lineHeight: 1.7 }}>{profile.bio}</p>}
       <p><strong>Genres:</strong> {(profile.genres as string[]).join(', ')}</p>

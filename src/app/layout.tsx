@@ -13,7 +13,6 @@ import { BugReportButton } from '@/components/BugReportButton';
 import Link from 'next/link';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { MiniPlayer } from '@/components/MiniPlayer';
-import { A2HSPrompt } from '@/components/A2HSPrompt';
 
 
 export const metadata: Metadata = {
@@ -68,7 +67,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             {children}
           </div>
           <MiniPlayer />
-          <A2HSPrompt />
           <BugReportButton />
           <PwaInstallPrompt />
           <ServiceWorkerRegister />

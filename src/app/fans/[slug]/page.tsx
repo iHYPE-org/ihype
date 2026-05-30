@@ -654,7 +654,7 @@ export default async function ListenerPage({
                           <Link className="fan-similar-row" href={`/fans/${fan.slug}`} key={fan.id}>
                             <div className="fan-similar-avatar">
                               {fan.avatarImage
-                                ? <img src={fan.avatarImage} alt={fan.name} />
+                                ? <img src={fan.avatarImage} alt={fan.name} loading="lazy" />
                                 : <span>{fan.name.slice(0, 1).toUpperCase()}</span>}
                             </div>
                             <div className="fan-similar-info">
