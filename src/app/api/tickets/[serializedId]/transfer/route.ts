@@ -7,14 +7,14 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ ticketOrderId: string }> }
+  { params }: { params: Promise<{ serializedId: string }> }
 ) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Login required' }, { status: 401 });
   }
 
-  const { ticketOrderId } = await params;
+  const { serializedId } = await params;
 
   let body: { toEmail?: string } = {};
   try {
@@ -29,7 +29,7 @@ export async function POST(
   }
 
   const order = await db.ticketOrder.findUnique({
-    where: { id: ticketOrderId },
+    where: { id: serializedId },
     include: {
       show: { select: { title: true, startsAt: true } },
       tickets: { select: { serializedId: true, holderName: true } },
@@ -49,7 +49,7 @@ export async function POST(
   }
 
   await db.ticketOrder.update({
-    where: { id: ticketOrderId },
+    where: { id: serializedId },
     data: { transferredAt: new Date(), transferredToEmail: toEmail },
   });
 
