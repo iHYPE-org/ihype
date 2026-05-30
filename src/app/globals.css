@@ -13426,13 +13426,20 @@ html.high-contrast p {
 .wb-vol-track { width: 70px; height: 3px; background: rgba(255,255,255,.06); border-radius: 2px; position: relative; }
 .wb-vol-fill { position: absolute; inset: 0; width: 60%; background: var(--wb-ink-2); border-radius: 2px; }
 
-/* Queue rail */
+/* Queue panel — centered overlay below the topbar */
 .wb-queue {
-  grid-column: 3; grid-row: 2;
-  border-left: 1px solid var(--wb-line);
+  position: absolute;
+  top: var(--wb-top-h);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 320px;
+  max-height: calc(100% - var(--wb-top-h) - var(--wb-player-h) - 16px);
+  z-index: 250;
+  border: 1px solid var(--wb-line-2);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
   display: flex; flex-direction: column;
-  background: var(--wb-bg); overflow: hidden;
-  min-height: 0;
+  background: var(--wb-bg-2); overflow: hidden;
 }
 .wb-queue-head { padding: 16px 18px 12px; display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid var(--wb-line); flex-shrink: 0; }
 .wb-queue-title { font-family: var(--f-d, 'Syne', sans-serif); font-weight: 700; font-size: 14px; }

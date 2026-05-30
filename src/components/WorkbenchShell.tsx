@@ -262,7 +262,7 @@ function applyPrefs(prefs: Prefs) {
   const densMap = { compact: 0.85, cozy: 1, comfy: 1.15 };
   root.style.setProperty('--wb-density', String(densMap[prefs.density]));
   root.style.setProperty('--wb-rail-w', prefs.density === 'compact' ? '52px' : '56px');
-  root.style.setProperty('--wb-queue-w', prefs.queueRail ? (prefs.density === 'compact' ? '270px' : '300px') : '0px');
+  root.style.setProperty('--wb-queue-w', '0px');
   root.style.setProperty('--wb-player-h', prefs.density === 'compact' ? '58px' : '64px');
 }
 
