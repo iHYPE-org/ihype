@@ -1,5 +1,5 @@
 import NextAuth from 'next-auth';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { authConfig } from '@/lib/auth.config';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 
@@ -10,7 +10,7 @@ function isLocalHost(hostname: string) {
   return normalizedHost === 'localhost' || normalizedHost === '127.0.0.1' || normalizedHost.endsWith('.localhost');
 }
 
-export default auth((request) => {
+const authMiddleware = auth((request) => {
   const hostHeader = request.headers.get('host') ?? request.nextUrl.hostname;
   const forwardedProto = request.headers.get('x-forwarded-proto');
 
@@ -39,6 +39,17 @@ export default auth((request) => {
 
   return NextResponse.next();
 });
+
+// Redirect www to apex BEFORE NextAuth sees the request — NextAuth rejects hosts
+// that don't match AUTH_URL, causing an Internal Server Error for www.ihype.org.
+export default function middleware(request: NextRequest) {
+  if (request.nextUrl.hostname === 'www.ihype.org') {
+    const url = request.nextUrl.clone();
+    url.hostname = 'ihype.org';
+    return NextResponse.redirect(url, 308);
+  }
+  return (authMiddleware as (req: NextRequest) => ReturnType<typeof NextResponse.next>)(request);
+}
 
 export const config = {
   matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)']
