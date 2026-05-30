@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
+import { requireRecentAdminReauth } from '@/lib/admin-confirmation';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,12 @@ export async function GET(request: NextRequest) {
   if (!session?.user?.id || !isAdminSession(session)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
+
+  const reauthed = await requireRecentAdminReauth(session.user.id);
+  if (!reauthed) {
+    return NextResponse.json({ requiresReauth: true }, { status: 401 });
+  }
+
   const url = new URL(request.url);
   const action = url.searchParams.get('action')?.trim() || undefined;
   const actor = url.searchParams.get('actor')?.trim() || undefined;

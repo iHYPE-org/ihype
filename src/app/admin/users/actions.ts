@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { recordAuditEvent } from '@/lib/audit';
 import { isAdminSession } from '@/lib/permissions';
+import { requireRecentAdminReauth } from '@/lib/admin-confirmation';
 
 async function requireAdmin() {
   const session = await auth();
@@ -19,13 +20,18 @@ export async function suspendUserAction(formData: FormData) {
   const userId = String(formData.get('userId') ?? '');
   if (!userId) return;
 
-  // Schema has no suspendedAt — record an audit event instead.
+  // Increment userSecurityVersion to invalidate existing JWTs for the suspended user.
+  await db.user.update({
+    where: { id: userId },
+    data: { userSecurityVersion: { increment: 1 } }
+  });
+
   await recordAuditEvent({
     actorUserId: session.user!.id!,
     action: 'admin_user_suspended',
     entityType: 'User',
     entityId: userId,
-    metadata: { note: 'soft-suspend via admin console (no schema field)' }
+    metadata: { note: 'soft-suspend via admin console — userSecurityVersion incremented to invalidate tokens' }
   });
 
   revalidatePath('/admin/users');
@@ -33,6 +39,8 @@ export async function suspendUserAction(formData: FormData) {
 
 export async function promoteToAdminAction(formData: FormData) {
   const session = await requireAdmin();
+  const reauthed = await requireRecentAdminReauth(session.user!.id!);
+  if (!reauthed) throw new Error('Recent re-authentication required.');
   const userId = String(formData.get('userId') ?? '');
   if (!userId) return;
 

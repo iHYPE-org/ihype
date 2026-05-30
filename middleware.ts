@@ -27,7 +27,7 @@ export default auth((request) => {
 
   const pathname = request.nextUrl.pathname;
 
-  if ((pathname === WORKBENCH_PATH || pathname.startsWith('/dashboard')) && !request.auth) {
+  if ((pathname === WORKBENCH_PATH || pathname.startsWith('/dashboard') || pathname.startsWith('/admin')) && !request.auth) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('callbackUrl', `${pathname}${request.nextUrl.search}`);
     return NextResponse.redirect(loginUrl);

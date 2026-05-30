@@ -16,7 +16,7 @@ export async function createEmailVerificationCode(
 ): Promise<string> {
   const code = crypto.randomInt(100000, 999999).toString();
   const expiresAt = new Date(Date.now() + EXPIRY_MS);
-  const codeHash = await bcrypt.hash(code, 8);
+  const codeHash = await bcrypt.hash(code, 12);
 
   // Remove any existing pending verification codes for this user.
   await db.passwordResetCode.deleteMany({
