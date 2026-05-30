@@ -92,12 +92,10 @@ const nextConfig = {
   },
   async redirects() {
     return [
-      {
-        source: '/:path*',
-        has: [{ type: 'host', value: 'www.ihype.org' }],
-        destination: 'https://ihype.org/:path*',
-        permanent: true
-      },
+      // www → apex redirect is handled in middleware.ts (before NextAuth runs).
+      // The next.config.mjs host-based redirect does not work correctly in
+      // Cloudflare Workers / OpenNext — it emits the literal string /:path*
+      // instead of substituting the captured path.
       {
         source: '/auth',
         destination: '/login',
