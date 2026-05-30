@@ -10,6 +10,15 @@ import { ADMIN_EMAIL } from '@/lib/env';
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
+function validateImageMagicBytes(buf: Buffer, mimeType: string): boolean {
+  if (buf.length < 4) return false;
+  if (mimeType === 'image/jpeg') return buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
+  if (mimeType === 'image/png') return buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47;
+  if (mimeType === 'image/gif') return buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46;
+  if (mimeType === 'image/webp') return buf.length >= 12 && buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46 && buf[8] === 0x57 && buf[9] === 0x45 && buf[10] === 0x42 && buf[11] === 0x50;
+  return false;
+}
+
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -56,9 +65,19 @@ export async function POST(request: Request) {
     if (!ALLOWED_MIME_TYPES.includes(file.type)) {
       return NextResponse.json({ error: 'Creative asset must be a JPEG, PNG, GIF, or WebP image.' }, { status: 400 });
     }
-    const buffer = await file.arrayBuffer();
-    const base64 = Buffer.from(buffer).toString('base64');
-    creativeAssetUrl = `data:${file.type};base64,${base64}`;
+    const buffer = Buffer.from(await file.arrayBuffer());
+    if (!validateImageMagicBytes(buffer, file.type)) {
+      return NextResponse.json({ error: 'Creative asset content does not match the declared image type.' }, { status: 400 });
+    }
+    const { storeMediaFile, isObjectStorageConfigured } = await import('@/lib/object-storage');
+    if (!isObjectStorageConfigured()) {
+      return NextResponse.json({ error: 'Creative asset storage is not configured.' }, { status: 503 });
+    }
+    const ext = file.type.split('/')[1] ?? 'bin';
+    const key = `ads/${crypto.randomUUID()}.${ext}`;
+    const base64 = buffer.toString('base64');
+    const stored = await storeMediaFile(key, `data:${file.type};base64,${base64}`, file.type);
+    creativeAssetUrl = stored.url;
   }
 
   const vettingResult = await vetAdvertisement({

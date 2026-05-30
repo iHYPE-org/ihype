@@ -45,9 +45,9 @@ export async function POST(request: Request) {
     // Don't re-issue the passkey bootstrap cookie once passkeys are already registered —
     // that window should only be open once.
     if (existing._count.passkeys > 0) {
-      return NextResponse.json({ exists: true, userId: existing.id });
+      return NextResponse.json({ exists: true });
     }
-    const resp = NextResponse.json({ exists: true, userId: existing.id });
+    const resp = NextResponse.json({ exists: true });
     return setCookie(resp, existing.id);
   }
 
@@ -71,6 +71,6 @@ export async function POST(request: Request) {
     metadata: { via: 'admin-setup' }
   });
 
-  const resp = NextResponse.json({ created: true, userId: created.id });
+  const resp = NextResponse.json({ created: true });
   return setCookie(resp, created.id);
 }

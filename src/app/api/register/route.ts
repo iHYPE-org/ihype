@@ -257,7 +257,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const passwordHash = body.password ? await bcrypt.hash(body.password, 8) : null;
+    const passwordHash = body.password ? await bcrypt.hash(body.password, 12) : null;
     const user = await db.user.create({
       data: {
         name: body.role === 'FAN' ? normalizedUsername : trimmedName,

@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 import { db, withDbRetry } from '@/lib/db';
+
+const ALLOWED_STORAGE_HOSTS_RE = /^[a-z0-9-]+\.r2\.cloudflarestorage\.com$|^[a-z0-9-]+\.r2\.dev$/i;
 
 function buildRangeHeaders(start: number, end: number, totalBytes: number, mimeType: string, fileName: string) {
   return {
@@ -17,6 +20,11 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ hexId: string }> }
 ) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+  }
+
   const { hexId } = await params;
 
   const asset = await withDbRetry(() =>
@@ -37,6 +45,13 @@ export async function GET(
 
   if (!asset.fileDataBase64) {
     if (asset.storageUrl) {
+      let parsedUrl: URL;
+      try { parsedUrl = new URL(asset.storageUrl); } catch {
+        return NextResponse.json({ error: 'Media storage is not available for this asset.' }, { status: 410 });
+      }
+      if (parsedUrl.protocol !== 'https:' || !ALLOWED_STORAGE_HOSTS_RE.test(parsedUrl.hostname)) {
+        return NextResponse.json({ error: 'Media storage is not available for this asset.' }, { status: 410 });
+      }
       return NextResponse.redirect(asset.storageUrl);
     }
 

@@ -2,13 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
+import { requireRecentAdminReauth } from '@/lib/admin-confirmation';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   const session = await auth();
-  if (!isAdminSession(session)) {
+  if (!isAdminSession(session) || !session?.user?.id) {
     return NextResponse.json({ error: 'Admin required' }, { status: 403 });
+  }
+
+  const reauthed = await requireRecentAdminReauth(session.user.id);
+  if (!reauthed) {
+    return NextResponse.json({ requiresReauth: true }, { status: 401 });
   }
 
   let body: { ids?: string[]; action?: string } = {};

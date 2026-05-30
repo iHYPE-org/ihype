@@ -69,6 +69,14 @@ export async function POST(request: Request) {
 
     const isValid = await bcrypt.compare(body.otp, challenge.secretCiphertext);
     if (!isValid) {
+      // Per-challenge attempt limit: delete the challenge after 5 failed attempts
+      // to prevent brute-force even from rotating IPs.
+      const { consumeRateLimit: rl } = await import('@/lib/rate-limit');
+      const challengeRl = await rl(`otp-challenge:${challenge.id}`, { limit: 5, windowMs: 15 * 60 * 1000 });
+      if (!challengeRl.allowed) {
+        await db.mfaChallenge.delete({ where: { id: challenge.id } });
+        return NextResponse.json({ error: 'Too many failed attempts. Please request a new code.' }, { status: 429 });
+      }
       return NextResponse.json({ error: 'Incorrect code.' }, { status: 401 });
     }
 

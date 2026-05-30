@@ -6,6 +6,7 @@ import { recordAuditEvent } from '@/lib/audit';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { sendGenericEmail } from '@/lib/mailer';
 import { readClientAddress } from '@/lib/request-meta';
+import { requireRecentAdminReauth } from '@/lib/admin-confirmation';
 
 const ROLES = ['FAN', 'ARTIST', 'DJ', 'VENUE', 'ALL'] as const;
 type TargetRole = (typeof ROLES)[number];
@@ -14,6 +15,11 @@ export async function POST(request: Request) {
   const session = await auth();
   if (!isAdminSession(session) || !session?.user?.id) {
     return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
+  }
+
+  const reauthed = await requireRecentAdminReauth(session.user.id);
+  if (!reauthed) {
+    return NextResponse.json({ requiresReauth: true }, { status: 401 });
   }
 
   const rl = await consumeRateLimit(`admin-broadcast:${session.user.id}`, {

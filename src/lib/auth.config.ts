@@ -85,7 +85,7 @@ export const authConfig: NextAuthConfig = {
     updateAge: 24 * 60 * 60
   },
   callbacks: {
-    async jwt({ token, user, trigger }) {
+    async jwt({ token, user }) {
       if (user) {
         token.role = (user as { role?: string }).role;
         token.emailVerified = (user as { emailVerified?: Date | null }).emailVerified ?? null;
@@ -94,7 +94,9 @@ export const authConfig: NextAuthConfig = {
           select: { userSecurityVersion: true }
         }).catch(() => null);
         token.securityVersion = dbUser?.userSecurityVersion ?? 0;
-      } else if (trigger === 'update' && token.sub) {
+      } else if (token.sub) {
+        // Check security version on every JWT validation to ensure
+        // suspensions and password changes take effect within one request.
         const dbUser = await db.user.findUnique({
           where: { id: token.sub },
           select: { userSecurityVersion: true }
