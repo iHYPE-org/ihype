@@ -7,7 +7,6 @@ import { HeaderLogo } from '@/components/HeaderLogo';
 import { PwaInstallPrompt } from '@/components/PwaInstallPrompt';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { BottomTabBar } from '@/components/BottomTabBar';
 import { NavDrawer } from '@/components/NavDrawer';
 import { SearchBar } from '@/components/SearchBar';
 import { BugReportButton } from '@/components/BugReportButton';
@@ -70,7 +69,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           </div>
           <MiniPlayer />
           <A2HSPrompt />
-          <BottomTabBar />
           <BugReportButton />
           <PwaInstallPrompt />
           <ServiceWorkerRegister />

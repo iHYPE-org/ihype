@@ -2,6 +2,14 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
+const primaryLinks = [
+  { href: '/home',     label: 'Home' },
+  { href: '/discover', label: 'Seeds' },
+  { href: '/shows',    label: 'Shows' },
+  { href: '/settings', label: 'You' },
+];
 
 const secondaryLinks = [
   { href: '/about', label: 'About' },
@@ -16,6 +24,7 @@ const secondaryLinks = [
 
 export function NavDrawer() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <>
@@ -43,6 +52,21 @@ export function NavDrawer() {
               ✕
             </button>
             <ul className="nav-drawer-list">
+              {primaryLinks.map((link) => {
+                const isActive = pathname === link.href || (link.href !== '/home' && pathname.startsWith(link.href));
+                return (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className={`nav-drawer-link nav-drawer-link--primary${isActive ? ' active' : ''}`}
+                      onClick={() => setOpen(false)}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                );
+              })}
+              <li className="nav-drawer-divider" aria-hidden="true" />
               {secondaryLinks.map((link) => (
                 <li key={link.href}>
                   <Link

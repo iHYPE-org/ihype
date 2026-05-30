@@ -14119,10 +14119,6 @@ html.high-contrast p {
 }
 .bottom-tab-label { font-size: 9px; line-height: 1; }
 
-@media (max-width: 768px) {
-  .bottom-tab-bar { display: flex; }
-  .site-shell { padding-bottom: 80px; }
-}
 
 /* 2. Nav drawer */
 .nav-drawer-trigger {
@@ -14194,6 +14190,9 @@ html.high-contrast p {
   transition: background .12s;
 }
 .nav-drawer-link:hover { background: var(--bg-3); }
+.nav-drawer-link--primary { font-size: 17px; font-weight: 600; }
+.nav-drawer-link--primary.active { color: var(--accent, #ff5029); }
+.nav-drawer-divider { height: 1px; background: var(--line); margin: 8px 0; }
 
 @media (max-width: 768px) {
   .nav-drawer-trigger { display: inline-flex; }
