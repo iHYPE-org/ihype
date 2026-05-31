@@ -69,11 +69,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <BugReportButton />
           <PwaInstallPrompt />
           <ServiceWorkerRegister />
-          <footer className="site-footer" style={{ borderTop: '1px solid rgba(255,255,255,.08)', padding: '24px 0', marginTop: 40 }}>
-            <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, opacity: 0.65 }}>
-              <span>© {new Date().getFullYear()} iHYPE — not-for-profit</span>
-            </div>
-          </footer>
+
         </AppProviders>
       </body>
     </html>
