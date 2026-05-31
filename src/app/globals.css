@@ -63,14 +63,20 @@
 
 * {
   box-sizing: border-box;
-  /* 2. Remove tap highlight on all elements */
   -webkit-tap-highlight-color: transparent;
 }
+html {
+  scroll-behavior: smooth;
+}
 html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: var(--f-b, 'DM Sans', 'Segoe UI', sans-serif); }
+::selection { background: rgba(255,80,41,.22); color: #f0ebe5; }
 a { color: inherit; text-decoration: none; }
 img { max-width: 100%; display: block; }
 button, input, select, textarea { font: inherit; }
-/* 2. Pointer cursor for interactive elements */
+input, select, textarea {
+  transition: border-color .15s, box-shadow .15s;
+}
+/* Pointer cursor for interactive elements */
 button, a, [role="button"] {
   cursor: pointer;
 }
@@ -601,7 +607,7 @@ body:has(.wb-root) .site-shell {
   font-weight: 700;
 }
 .hero { padding: 4rem 0 2rem; display: grid; gap: 1.5rem; } .panel{ background: rgba(16,24,42,0.85); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow); }
-.badge { display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid rgba(255,122,24,0.34); background: rgba(255,122,24,0.12); color: #ffe2d0; padding: 0.35rem 0.75rem; border-radius: 999px; font-size: 0.85rem; }
+.badge { display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid rgba(255,122,24,.38); background: rgba(255,122,24,.1); color: #ffe2d0; padding: 0.3rem 0.8rem; border-radius: 999px; font-size: 0.8rem; font-weight: 700; letter-spacing: .04em; box-shadow: 0 0 16px rgba(255,122,24,.1); }
 .title { font-size: clamp(2rem, 5vw, 4rem); margin: 0.75rem 0; line-height: 1; }
 .subtitle { color: var(--muted); max-width: 60ch; line-height: 1.6; }
 .grid { display: grid; gap: 1rem; }
@@ -668,13 +674,25 @@ body:has(.wb-root) .site-shell {
 .button:hover,
 .button:focus-visible {
   transform: translateY(-1px);
-  box-shadow: 0 18px 34px rgba(255, 79, 139, 0.24);
+  box-shadow: 0 18px 34px rgba(255, 79, 139, 0.28), 0 4px 12px rgba(0,0,0,.2);
+}
+.button:active {
+  transform: translateY(0.5px) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.2) !important;
+  transition-duration: 60ms !important;
 }
 .button.secondary {
-  border-color: rgba(255,255,255,0.09);
-  background: rgba(255,255,255,0.045);
+  border-color: rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
   color: #edf5ff;
   box-shadow: none;
+}
+.button.secondary:hover,
+.button.secondary:focus-visible {
+  border-color: rgba(255,255,255,.2);
+  background: rgba(255,255,255,.08);
+  box-shadow: none;
+  transform: translateY(-1px);
 }
 .button.small {
   min-height: 2.15rem;
@@ -707,9 +725,36 @@ body:has(.wb-root) .site-shell {
   background: rgba(255,255,255,0.04);
   color: var(--text);
 }
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: rgba(255,122,24,.5);
+  box-shadow: 0 0 0 3px rgba(255,122,24,.12);
+}
 .field input::placeholder,
 .field textarea::placeholder {
-  color: rgba(255,255,255,0.32);
+  color: rgba(255,255,255,0.3);
+}
+/* Generic workbench form input — used by inline forms and overlays */
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--line-2);
+  background: var(--bg-3);
+  color: var(--ink);
+  font-family: var(--f-b, inherit);
+  resize: vertical;
+  transition: border-color .15s, box-shadow .15s;
+}
+.input:focus {
+  outline: none;
+  border-color: rgba(255,80,41,.4);
+  box-shadow: 0 0 0 3px rgba(255,80,41,.1);
+}
+.input::placeholder {
+  color: var(--ink-3);
 }
 .text-link {
   padding: 0;
@@ -832,8 +877,11 @@ body:has(.wb-root) .site-shell {
   line-height: 1.45;
 }
 .auth-method-choice.active {
-  border-color: rgba(35,208,216,0.34);
-  background: rgba(35,208,216,0.1);
+  border-color: rgba(255,122,24,.45);
+  background: rgba(255,122,24,.1);
+}
+.auth-method-choice.active strong {
+  color: #ffe2c8;
 }
 .auth-code-actions,
 .auth-passkey-actions {
@@ -1231,12 +1279,14 @@ body:has(.wb-root) .site-shell {
 .scope-pill:hover,
 .scope-pill:focus-visible {
   transform: translateY(-1px);
-  border-color: rgba(35,208,216,0.25);
+  border-color: rgba(255,122,24,.3);
+  color: var(--text);
 }
 .scope-pill.active {
   color: var(--text);
-  border-color: rgba(35,208,216,0.35);
-  background: rgba(35,208,216,0.14);
+  border-color: rgba(255,122,24,.45);
+  background: rgba(255,122,24,.12);
+  box-shadow: 0 0 12px rgba(255,122,24,.12);
 }
 .map-layout {
   display: grid;
