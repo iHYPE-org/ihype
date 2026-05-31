@@ -17,7 +17,7 @@ export const TABS: { k: View; label: string }[] = [
   { k: 'seeds',    label: 'Seeds' },
   { k: 'radio',    label: 'Radio' },
   { k: 'studio',   label: 'Studio' },
-  { k: 'tickets',  label: 'Ticketing' },
+  { k: 'tickets',  label: 'Live Events' },
 ];
 
 export function AppTopbar({ view, setView, listeningNow, initials, userName, activeProfileTypes, onSettings, onSearch, onShortcuts, badges, notifCount, notifications }: {

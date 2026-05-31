@@ -340,7 +340,13 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
           fontSize: `calc(14px * var(--density, 1))`,
           position: 'relative',
         }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 320, background: 'radial-gradient(ellipse at 50% -30%, rgba(255,80,41,.12) 0%, rgba(255,62,154,.04) 40%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
+          {/* Ambient orb canvas — matches iHYPE Prototype.html design */}
+          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 0 }}>
+            <div className="wb-bg-orb" style={{ width: 580, height: 580, top: -160, left: -80, background: 'radial-gradient(circle, rgba(255,80,41,.16), transparent 70%)', animationDelay: '0s' }} />
+            <div className="wb-bg-orb" style={{ width: 650, height: 650, top: 80, right: -140, background: 'radial-gradient(circle, rgba(34,229,212,.09), transparent 70%)', animationDelay: '-8s' }} />
+            <div className="wb-bg-orb" style={{ width: 380, height: 380, bottom: '10%', left: '35%', background: 'radial-gradient(circle, rgba(255,62,154,.07), transparent 70%)', animationDelay: '-16s' }} />
+            <div className="wb-bg-grid" />
+          </div>
           <div key={view} className="wb-view-anim" style={{ position: 'relative', zIndex: 1 }}>
             <React.Suspense fallback={
               <div style={{

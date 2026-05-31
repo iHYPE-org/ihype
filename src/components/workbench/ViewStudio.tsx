@@ -5,6 +5,9 @@ import type { WorkbenchData } from '@/types/workbench';
 import { ArtistMediaUploadManager } from '@/components/ArtistMediaUploadManager';
 import { IcHeart } from './icons';
 import { Panel } from './primitives';
+import { HypeHeatmap } from '@/components/HypeHeatmap';
+import { RevenueSplitVisualizer } from '@/components/RevenueSplitVisualizer';
+import type { HypeHeatmapCity, HypeHeatmapVenuePing } from '@/components/HypeHeatmap';
 
 type CollabBoardPost = {
   id: string;
@@ -393,8 +396,52 @@ function PassedTheAux({ data }: { data: WorkbenchData }) {
   );
 }
 
+const SAMPLE_CITIES: HypeHeatmapCity[] = [
+  { name: 'Chicago',   x: .55, y: .42, hype: 1247, venuesAsking: 3, hot: true },
+  { name: 'Brooklyn',  x: .81, y: .42, hype: 892,  venuesAsking: 4, hot: true },
+  { name: 'Austin',    x: .45, y: .74, hype: 602,  venuesAsking: 3, hot: true },
+  { name: 'Detroit',   x: .67, y: .38, hype: 410,  venuesAsking: 2 },
+  { name: 'Portland',  x: .12, y: .30, hype: 320,  venuesAsking: 1 },
+  { name: 'Nashville', x: .61, y: .58, hype: 280,  venuesAsking: 2 },
+  { name: 'Denver',    x: .33, y: .48, hype: 190,  venuesAsking: 1 },
+];
+
+const SAMPLE_PINGS: HypeHeatmapVenuePing[] = [
+  { id: 'v1', name: 'Empty Bottle',    city: 'Chicago',  capacity: 400, statusLabel: 'wants Jul 12–14',   signal: 'urgent' },
+  { id: 'v2', name: 'Music Hall of Williamsburg', city: 'Brooklyn', capacity: 550, statusLabel: 'CONFIRMED Jun 18', signal: 'confirmed' },
+  { id: 'v3', name: 'Mohawk',          city: 'Austin',   capacity: 600, statusLabel: 'interested in Aug', signal: 'interest' },
+];
+
 export function ViewStudio({ data }: { data: WorkbenchData }) {
   const payout = data.lifeStats?.totalEarnings ?? 0;
+
+  const [splitMode, setSplitMode] = useState<'co-host' | 'referrer'>('referrer');
+  const [referrerLabel, setReferrerLabel] = useState('Anyone who shares your show');
+
+  const splitTracks = data.tracks.slice(0, 3).map(t => ({
+    id: t.id,
+    artistName: t.artistName,
+    trackTitle: t.title,
+    color: t.color,
+  }));
+
+  const [studioTab, setStudioTab] = useState<'uploads' | 'revenue' | 'hypemap'>('uploads');
+
+  const tabBtn = (id: typeof studioTab, label: string) => (
+    <button
+      key={id}
+      onClick={() => setStudioTab(id)}
+      style={{
+        padding: '6px 16px', borderRadius: 8, border: 'none', cursor: 'pointer',
+        fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 600, letterSpacing: '.06em',
+        background: studioTab === id ? 'rgba(255,80,41,.12)' : 'transparent',
+        color: studioTab === id ? 'var(--accent)' : 'var(--ink-3)',
+        borderBottom: studioTab === id ? '2px solid var(--accent)' : '2px solid transparent',
+        transition: 'all .15s',
+      }}
+    >{label}</button>
+  );
+
   return (
     <div style={{ padding: '24px 32px 32px' }}>
       <div style={{ marginBottom: 24 }}>
@@ -402,62 +449,98 @@ export function ViewStudio({ data }: { data: WorkbenchData }) {
         <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 42, letterSpacing: '-.03em', lineHeight: 1, margin: 0, color: 'var(--ink)' }}>Studio</h1>
         <p style={{ fontFamily: 'var(--f-b)', fontSize: 14, color: 'var(--ink-2)', marginTop: 10, maxWidth: 560, lineHeight: 1.5 }}>Upload tracks, build radio shows, track payouts. 45% of every ticket to you, always.</p>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-        <Panel title="Uploads">
-          <div style={{ padding: '4px 0' }}>
-            {data.tracks.length === 0 ? (
-              <div style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                padding: '40px 24px', gap: 14, textAlign: 'center',
-              }}>
-                <div style={{ fontSize: 40 }}>🎵</div>
-                <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 18, color: 'var(--ink)' }}>No uploads yet</div>
-                <div style={{ fontFamily: 'var(--f-b)', fontSize: 14, color: 'var(--ink-2)', maxWidth: '24ch', lineHeight: 1.5 }}>
-                  Drag an audio file here or click to upload your first track.
-                </div>
-                <button style={{
-                  marginTop: 4, padding: '11px 24px', borderRadius: 9,
-                  fontFamily: 'var(--f-m)', fontSize: 13, fontWeight: 700, letterSpacing: '.06em',
-                  textTransform: 'uppercase', cursor: 'pointer', border: 'none', color: '#fff',
-                  background: 'linear-gradient(135deg, var(--accent), var(--pink, #ff3e9a))',
-                }}>Upload a track</button>
-              </div>
-            ) : (
-              data.tracks.slice(0, 4).map((t) => (
-                <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--line)' }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 5, background: `linear-gradient(135deg, ${t.color}, ${t.color}80)`, flexShrink: 0 }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, color: 'var(--ink)' }}>{t.title}</div>
-                    <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', marginTop: 2 }}>{t.artistName} · {t.duration}</div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'var(--f-m)', fontSize: 13, color: '#ff3e9a' }}>
-                    <IcHeart s={10} c="#ff3e9a" /> {t.hypeCount}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </Panel>
-        <div style={{ border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)', padding: '24px 28px' }}>
-          <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.16em', color: 'var(--ink-3)', marginBottom: 8 }}>PAYOUT PENDING</div>
-          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 42, letterSpacing: '-.025em', color: 'var(--ink)' }}>${payout.toLocaleString()}</div>
-          <div style={{ fontFamily: 'var(--f-m)', fontSize: 13, color: '#ffb84a', letterSpacing: '.04em', marginTop: 6 }}>pending · next release</div>
-          <div style={{ marginTop: 18, padding: '10px 14px', background: 'var(--bg-3)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-2)', letterSpacing: '.04em' }}>
-            45% tickets · 45% venue · 10% referrer · $0 platform fee
-          </div>
-          <button style={{ marginTop: 14, width: '100%', padding: '10px', background: 'var(--accent)', color: 'var(--bg)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 600, letterSpacing: '.04em', border: 'none', cursor: 'pointer' }}>
-            + New show
-          </button>
-        </div>
+
+      {/* Tab bar */}
+      <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid var(--line)', marginBottom: 20 }}>
+        {tabBtn('uploads', 'UPLOADS')}
+        {tabBtn('revenue', 'REVENUE SPLIT')}
+        {tabBtn('hypemap', 'HYPE MAP')}
       </div>
-      {data.profileId && (
+
+      {studioTab === 'uploads' && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <Panel title="Uploads">
+            <div style={{ padding: '4px 0' }}>
+              {data.tracks.length === 0 ? (
+                <div style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  padding: '40px 24px', gap: 14, textAlign: 'center',
+                }}>
+                  <div style={{ fontSize: 40 }}>🎵</div>
+                  <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 18, color: 'var(--ink)' }}>No uploads yet</div>
+                  <div style={{ fontFamily: 'var(--f-b)', fontSize: 14, color: 'var(--ink-2)', maxWidth: '24ch', lineHeight: 1.5 }}>
+                    Drag an audio file here or click to upload your first track.
+                  </div>
+                  <button style={{
+                    marginTop: 4, padding: '11px 24px', borderRadius: 9,
+                    fontFamily: 'var(--f-m)', fontSize: 13, fontWeight: 700, letterSpacing: '.06em',
+                    textTransform: 'uppercase', cursor: 'pointer', border: 'none', color: '#fff',
+                    background: 'linear-gradient(135deg, var(--accent), #ff3e9a)',
+                  }}>Upload a track</button>
+                </div>
+              ) : (
+                data.tracks.slice(0, 4).map((t) => (
+                  <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--line)' }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 5, background: `linear-gradient(135deg, ${t.color}, ${t.color}80)`, flexShrink: 0 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, color: 'var(--ink)' }}>{t.title}</div>
+                      <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', marginTop: 2 }}>{t.artistName} · {t.duration}</div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'var(--f-m)', fontSize: 13, color: '#ff3e9a' }}>
+                      <IcHeart s={10} c="#ff3e9a" /> {t.hypeCount}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </Panel>
+          <div style={{ border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)', padding: '24px 28px' }}>
+            <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.16em', color: 'var(--ink-3)', marginBottom: 8 }}>ARTIST SHARE (PENDING)</div>
+            <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 42, letterSpacing: '-.025em', color: 'var(--ink)' }}>${payout.toLocaleString()}</div>
+            <div style={{ fontFamily: 'var(--f-m)', fontSize: 13, color: '#ffb84a', letterSpacing: '.04em', marginTop: 6 }}>pending · next release</div>
+            <div style={{ marginTop: 18, padding: '10px 14px', background: 'var(--bg-3)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-2)', letterSpacing: '.04em' }}>
+              45% artist · 45% venue · 10% referrer · 0% to iHYPE
+            </div>
+            <button style={{ marginTop: 14, width: '100%', padding: '10px', background: 'var(--accent)', color: 'var(--bg)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 600, letterSpacing: '.04em', border: 'none', cursor: 'pointer' }}>
+              + New show
+            </button>
+          </div>
+        </div>
+      )}
+
+      {studioTab === 'revenue' && (
+        <RevenueSplitVisualizer
+          tracks={splitTracks}
+          hostName={data.userName || 'You'}
+          referrerLabel={referrerLabel}
+          onReferrerLabelChange={setReferrerLabel}
+          mode={splitMode}
+          onModeChange={setSplitMode}
+          projection={data.tracks.length > 0 ? {
+            totalDollars: Math.round((data.lifeStats?.totalEarnings ?? 600) * 2.2),
+            windowLabel: 'based on your last 4 shows',
+            listens: data.lifeStats?.songsPlayed ?? 4800,
+          } : null}
+          onSchedule={() => setStudioTab('uploads')}
+        />
+      )}
+
+      {studioTab === 'hypemap' && (
+        <HypeHeatmap
+          cities={SAMPLE_CITIES}
+          venuePings={SAMPLE_PINGS}
+          suggestedRoute="CHI → BKN → ATX"
+        />
+      )}
+
+      {studioTab === 'uploads' && data.profileId && (
         <div style={{ marginTop: 32 }}>
           <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.18em', color: 'var(--accent)', marginBottom: 14 }}>UPLOAD TRACKS</div>
           <ArtistMediaUploadManager profileId={data.profileId} />
         </div>
       )}
-      <CollabBoard />
-      <PassedTheAux data={data} />
+      {studioTab === 'uploads' && <CollabBoard />}
+      {studioTab === 'uploads' && <PassedTheAux data={data} />}
     </div>
   );
 }

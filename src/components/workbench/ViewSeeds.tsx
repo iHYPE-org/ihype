@@ -462,7 +462,7 @@ export function ViewSeeds({
               { k: 'Reviewed', v: totalReviewed > 0 ? `${totalReviewed}` : '—', c: 'var(--ink)' },
               { k: 'Saved',    v: sessionStats.saved   > 0 ? `+${sessionStats.saved}`   : '—', c: '#22e5d4' },
               { k: 'Skipped',  v: sessionStats.skipped > 0 ? String(sessionStats.skipped) : '—', c: '#ff6b5a' },
-              { k: 'Hyped',    v: sessionStats.hyped   > 0 ? `+${sessionStats.hyped}`   : '—', c: 'var(--pink)' },
+              { k: 'HYPEd',    v: sessionStats.hyped   > 0 ? `+${sessionStats.hyped}`   : '—', c: '#ff3e9a' },
             ].map(r => (
               <div key={r.k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', fontFamily: 'var(--f-m)', fontSize: 11 }}>
                 <span style={{ color: 'var(--ink-3)', letterSpacing: '.08em' }}>{r.k}</span>
@@ -503,7 +503,7 @@ export function ViewSeeds({
               <div style={{ fontFamily: 'var(--f-b)', fontSize: 14, color: 'var(--ink-2)', maxWidth: '28ch', lineHeight: 1.5 }}>
                 Check back tomorrow 🎉
               </div>
-              <button onClick={() => fetchDeck(genreFilter, [])} style={{ marginTop: 8, padding: '10px 20px', borderRadius: 8, fontFamily: 'var(--f-m)', fontSize: 13, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', cursor: 'pointer', border: 'none', color: '#fff', background: 'linear-gradient(135deg, var(--accent), var(--pink))' }}>
+              <button onClick={() => fetchDeck(genreFilter, [])} style={{ marginTop: 8, padding: '10px 20px', borderRadius: 8, fontFamily: 'var(--f-m)', fontSize: 13, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', cursor: 'pointer', border: 'none', color: '#fff', background: 'linear-gradient(135deg, var(--accent), #ff3e9a)' }}>
                 Refresh
               </button>
             </div>
@@ -515,7 +515,7 @@ export function ViewSeeds({
                 Try clearing the genre filter.
               </div>
               {genreFilter.length > 0 && (
-                <button onClick={() => setGenreFilter([])} style={{ marginTop: 8, padding: '10px 20px', borderRadius: 8, fontFamily: 'var(--f-m)', fontSize: 13, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', cursor: 'pointer', border: 'none', color: '#fff', background: 'linear-gradient(135deg, var(--accent), var(--pink))' }}>
+                <button onClick={() => setGenreFilter([])} style={{ marginTop: 8, padding: '10px 20px', borderRadius: 8, fontFamily: 'var(--f-m)', fontSize: 13, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', cursor: 'pointer', border: 'none', color: '#fff', background: 'linear-gradient(135deg, var(--accent), #ff3e9a)' }}>
                   Clear filters
                 </button>
               )}
@@ -621,7 +621,7 @@ export function ViewSeeds({
                 title="HYPE (→)"
                 aria-label="Hype this track"
                 onClick={() => handleAction(frontTrack, 'hype')}
-                style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--bg-2)', border: `1px solid ${actionedIds.has(frontTrack.id) ? 'rgba(255,62,154,.8)' : 'rgba(255,62,154,.4)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: actionedIds.has(frontTrack.id) ? '#ff3e9a' : 'var(--pink)' }}
+                style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--bg-2)', border: `1px solid ${actionedIds.has(frontTrack.id) ? 'rgba(255,62,154,.8)' : 'rgba(255,62,154,.4)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: actionedIds.has(frontTrack.id) ? '#ff3e9a' : '#ff3e9a' }}
               >
                 <svg width={22} height={22} viewBox="0 0 24 24" fill={actionedIds.has(frontTrack.id) ? '#ff3e9a' : 'currentColor'}>
                   <path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/>

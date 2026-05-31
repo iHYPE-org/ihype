@@ -1,23 +1,34 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
+
+// ─────────────────────────────────────────────────────────────────
+// HYPE Heatmap — artist-side tour planner.
+//
+// A flat US-focused heatmap with HYPE concentration dots, plus side
+// panels for ranked cities and venue radar pings. Designed to live
+// alongside the live `ActivityMap` (which is globe-based) as a
+// complementary tour-planning lens for the artist Studio view.
+//
+// Pure presentation — pass in your data. To wire data-driven dots
+// from real lat/lng, use the same projection helpers as ActivityMap:
+//   x = (longitude + 180) / 360
+//   y = (90 - latitude)  / 180
+// then clip / pan to the bounding box you want.
+// ─────────────────────────────────────────────────────────────────
 
 export type HypeHeatmapCity = {
+  /** Display name, e.g. "Chicago". */
   name: string;
+  /** 0..1 within the map viewport (0 = left/top edge). */
   x: number;
   y: number;
+  /** Total HYPE concentration in this city. */
   hype: number;
+  /** Count of venues asking to book the artist in this city. */
   venuesAsking: number;
+  /** Mark this city as a hotspot — gets a glow + label badge. */
   hot?: boolean;
-  velocity?: number;
-  velocityTrend?: 'up' | 'down' | 'stable';
-  genreAffinityScore?: number;
-  signalBreakdown?: {
-    taste: number | null;
-    geo: number | null;
-    momentum: number;
-    collab: number | null;
-  };
 };
 
 export type HypeHeatmapVenuePing = {
@@ -25,368 +36,213 @@ export type HypeHeatmapVenuePing = {
   name: string;
   city: string;
   capacity: number;
+  /** Human-readable status, e.g. "wants Aug 8–10" or "CONFIRMED Jun 18". */
   statusLabel: string;
-  signal: 'urgent' | 'warm' | 'new';
+  /**
+   * 'confirmed' | 'urgent' | 'interest' — drives the dot/text color.
+   * confirmed = aqua, urgent = pink, interest = ember.
+   */
+  signal: 'confirmed' | 'urgent' | 'interest';
+  onReply?: () => void;
 };
 
-type Props = {
+export type HypeHeatmapProps = {
   cities: HypeHeatmapCity[];
   venuePings: HypeHeatmapVenuePing[];
+  /** Optional suggested tour route ("CHI → BKN → ATX"). */
   suggestedRoute?: string;
-  routeOrder?: string[];
-  artistGenres?: string[];
 };
 
-const DEMO_CITIES: HypeHeatmapCity[] = [
-  { name: 'Chicago',   x: .55, y: .42, hype: 1247, venuesAsking: 3, hot: true,  velocityTrend: 'up',     genreAffinityScore: 0.82, signalBreakdown: { taste: 0.78, geo: 0.91, momentum: 0.85, collab: 0.6  } },
-  { name: 'Brooklyn',  x: .81, y: .42, hype: 892,  venuesAsking: 4, hot: true,  velocityTrend: 'up',     genreAffinityScore: 0.75, signalBreakdown: { taste: 0.65, geo: 0.88, momentum: 0.72, collab: 0.5  } },
-  { name: 'Austin',    x: .45, y: .74, hype: 602,  venuesAsking: 3, hot: true,  velocityTrend: 'stable', genreAffinityScore: 0.61, signalBreakdown: { taste: 0.55, geo: 0.7,  momentum: 0.6,  collab: null } },
-  { name: 'LA',        x: .13, y: .56, hype: 441,  venuesAsking: 2, hot: false, velocityTrend: 'down',   genreAffinityScore: 0.22, signalBreakdown: { taste: 0.3,  geo: 0.45, momentum: 0.35, collab: 0.2  } },
-  { name: 'Seattle',   x: .10, y: .28, hype: 218,  venuesAsking: 1, hot: false, velocityTrend: 'stable', genreAffinityScore: 0.44, signalBreakdown: { taste: null, geo: 0.5,  momentum: 0.4,  collab: null } },
-  { name: 'Nashville', x: .62, y: .58, hype: 334,  venuesAsking: 2, hot: false, velocityTrend: 'up',     genreAffinityScore: 0.68, signalBreakdown: { taste: 0.6,  geo: 0.6,  momentum: 0.55, collab: 0.45 } },
-  { name: 'Denver',    x: .32, y: .44, hype: 189,  venuesAsking: 1, hot: false, velocityTrend: 'down',   genreAffinityScore: 0.18, signalBreakdown: { taste: 0.2,  geo: 0.35, momentum: 0.25, collab: null } },
-];
+const SIGNAL_COLORS = {
+  confirmed: '#22e5d4',
+  urgent: '#ff3e9a',
+  interest: '#ff5029',
+} as const;
 
-const DEMO_PINGS: HypeHeatmapVenuePing[] = [
-  { id: 'v1', name: 'Music Hall of Williamsburg', city: 'Brooklyn',  capacity: 550, statusLabel: 'wants Aug 8–10',  signal: 'urgent' },
-  { id: 'v2', name: 'Empty Bottle',               city: 'Chicago',   capacity: 200, statusLabel: 'open Sep',        signal: 'warm'   },
-  { id: 'v3', name: 'Mohawk',                     city: 'Austin',    capacity: 520, statusLabel: 'reach out',       signal: 'new'    },
-  { id: 'v4', name: 'Teragram Ballroom',          city: 'LA',        capacity: 650, statusLabel: 'holding Aug 22',  signal: 'urgent' },
-];
-
-const SIGNAL_COLOR: Record<string, string> = {
-  urgent: '#ff5029',
-  warm: '#ffb84a',
-  new: '#22e5d4',
-};
-
-const BREAKDOWN_COLORS: Record<string, string> = {
-  taste: '#b983ff',
-  geo: '#22e5d4',
-  momentum: '#ffb84a',
-  collab: '#ff5029',
-};
-
-function usProjection(x: number, y: number): { px: string; py: string } {
-  const lngMin = -125, lngMax = -67;
-  const latMin = 25, latMax = 50;
-  const lng = x * 360 - 180;
-  const lat = 90 - y * 180;
-  const px = `${((lng - lngMin) / (lngMax - lngMin)) * 100}%`;
-  const py = `${((latMax - lat) / (latMax - latMin)) * 100}%`;
-  return { px, py };
-}
-
-function cityToSvgCoords(x: number, y: number): { cx: number; cy: number } {
-  const lngMin = -125, lngMax = -67, latMin = 25, latMax = 50;
-  const lng = x * 360 - 180;
-  const lat = 90 - y * 180;
-  const cx = ((lng - lngMin) / (lngMax - lngMin)) * 800;
-  const cy = ((latMax - lat) / (latMax - latMin)) * 450;
-  return { cx, cy };
-}
-
-// Suppress unused variable warning — suggestedRoute is kept for backward compat
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function HypeHeatmap({ cities, venuePings, suggestedRoute: _suggestedRoute, routeOrder, artistGenres }: Props) {
-  const activeCities = cities.length > 0 ? cities : DEMO_CITIES;
-  const activePings = venuePings.length > 0 ? venuePings : DEMO_PINGS;
-  const [selected, setSelected] = useState<string | null>(null);
-  const [showGenreOverlay, setShowGenreOverlay] = useState(false);
-
-  const maxHype = Math.max(...activeCities.map(c => c.hype));
-
-  const selectedCity = activeCities.find(c => c.name === selected);
-  const cityPings = activePings.filter(p => p.city === selected);
-
-  // Build route polyline points in SVG coordinate space
-  const routePoints: { cx: number; cy: number; name: string }[] = [];
-  if (routeOrder && routeOrder.length >= 2) {
-    for (const name of routeOrder) {
-      const city = activeCities.find(c => c.name === name);
-      if (city) {
-        routePoints.push({ ...cityToSvgCoords(city.x, city.y), name });
-      }
-    }
-  }
-  const polylinePoints = routePoints.map(p => `${p.cx},${p.cy}`).join(' ');
+export function HypeHeatmap({ cities, venuePings, suggestedRoute }: HypeHeatmapProps) {
+  const maxHype = Math.max(1, ...cities.map((c) => c.hype));
+  const ranked = [...cities].sort((a, b) => b.hype - a.hype);
+  const totalHype = cities.reduce((s, c) => s + c.hype, 0);
+  const totalVenues = cities.reduce((s, c) => s + c.venuesAsking, 0);
+  const hotCount = cities.filter((c) => c.hot).length;
 
   return (
-    <div style={{ padding: '24px 32px 32px' }}>
-      <div style={{ marginBottom: 22 }}>
-        <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.18em', color: 'var(--ink-3)', marginBottom: 10 }}>
-          ● HYPE HEATMAP · TOUR PLANNER · ARTIST VIEW
-        </div>
-        <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 42, letterSpacing: '-.03em', lineHeight: 1, margin: 0, color: 'var(--ink)' }}>
-          Hype Map
-        </h1>
-        <p style={{ fontFamily: 'var(--f-b)', fontSize: 14, color: 'var(--ink-2)', marginTop: 10, maxWidth: 560, lineHeight: 1.5 }}>
-          Where your fans are loudest. Hot cities show venue interest — click to see who&apos;s asking.
-        </p>
-      </div>
+    <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 14 }}>
+      <section style={panel}>
+        <PanelHeader title={<>Where you&apos;re HYPEd <span style={panelCount}>· last 30 days</span></>} help="Bigger dot = more HYPE · ring = venue asking" />
 
-      {/* Controls bar */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-        {routeOrder && routeOrder.length >= 2 && (
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 12px', border: '1px solid rgba(255,184,74,.3)', borderRadius: 99, background: 'rgba(255,184,74,.06)' }}>
-            <span style={{ fontFamily: 'var(--f-m)', fontSize: 9, letterSpacing: '.16em', color: '#ffb84a' }}>OPTIMAL ROUTE</span>
-            <span style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, color: 'var(--ink)' }}>
-              {routeOrder.join(' → ')}
-            </span>
-          </div>
-        )}
-        {artistGenres && artistGenres.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setShowGenreOverlay(o => !o)}
-            style={{
-              padding: '5px 11px', borderRadius: 99, fontSize: '0.72rem',
-              background: showGenreOverlay ? 'rgba(34,229,212,0.15)' : 'rgba(255,255,255,0.05)',
-              border: `1px solid ${showGenreOverlay ? 'rgba(34,229,212,0.4)' : 'rgba(255,255,255,0.12)'}`,
-              color: showGenreOverlay ? '#22e5d4' : 'inherit', cursor: 'pointer',
-            }}
-          >
-            {showGenreOverlay ? '◉' : '○'} Genre affinity
-          </button>
-        )}
-      </div>
+        <div style={mapBox}>
+          <div style={mapBg} />
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={`h${i}`} style={{ ...mapGrid, top: `${((i + 1) * 100) / 7}%`, left: 0, right: 0, height: 1 }} />
+          ))}
+          {Array.from({ length: 7 }).map((_, i) => (
+            <div key={`v${i}`} style={{ ...mapGrid, left: `${((i + 1) * 100) / 8}%`, top: 0, bottom: 0, width: 1 }} />
+          ))}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 16, alignItems: 'start' }}>
-        {/* Map */}
-        <div style={{ position: 'relative', width: '100%', paddingBottom: '55%', border: '1px solid var(--line)', borderRadius: 12, background: 'var(--bg-2)', overflow: 'hidden' }}>
-
-          {/* SVG layer: heat blobs + pulse rings + route polyline + genre rings + US outline */}
-          <svg
-            viewBox="0 0 800 450"
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
-            preserveAspectRatio="none"
-          >
-            <defs>
-              <filter id="heat-blur" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="18" />
-              </filter>
-            </defs>
-
-            <style>{`
-              .pulse-ring { animation: heat-pulse 2s ease-out infinite; }
-              @keyframes heat-pulse {
-                0%   { opacity: 0.5; }
-                100% { opacity: 0; transform: scale(2.5); }
-              }
-            `}</style>
-
-            <rect width="800" height="450" fill="transparent" />
-
-            {/* US outline */}
-            <path
-              d="M 60 80 L 80 60 L 120 55 L 180 50 L 240 52 L 300 50 L 380 48 L 450 50 L 520 52 L 580 55 L 630 70 L 650 90 L 660 120 L 650 150 L 640 180 L 630 220 L 620 260 L 590 290 L 570 320 L 540 340 L 500 350 L 460 360 L 420 355 L 380 360 L 340 350 L 300 340 L 260 330 L 220 340 L 190 350 L 160 345 L 140 330 L 120 310 L 100 280 L 80 250 L 65 220 L 55 180 L 50 140 L 55 100 Z"
-              fill="rgba(255,255,255,.03)" stroke="var(--line-2)" strokeWidth="1.5"
-            />
-
-            {/* Heat blobs — rendered below everything else */}
-            <g filter="url(#heat-blur)">
-              {activeCities.map(city => {
-                const { cx, cy } = cityToSvgCoords(city.x, city.y);
-                const r = 40 + (city.hype / maxHype) * 60;
-                const fill = city.hot ? 'rgba(255,62,154,0.18)' : 'rgba(127,179,255,0.12)';
-                return <circle key={`blob-${city.name}`} cx={cx} cy={cy} r={r} fill={fill} />;
-              })}
-            </g>
-
-            {/* Route polyline — above blobs, below city dots */}
-            {routePoints.length >= 2 && (
-              <g>
-                <polyline
-                  points={polylinePoints}
-                  stroke="rgba(255,184,74,0.6)"
-                  strokeWidth="1.5"
-                  strokeDasharray="4 3"
-                  fill="none"
-                />
-                {routePoints.map(p => (
-                  <circle key={`wp-${p.name}`} cx={p.cx} cy={p.cy} r={2.5} fill="#ffb84a" opacity={0.8} />
-                ))}
-              </g>
-            )}
-
-            {/* Pulse rings for hot / trending-up cities */}
-            {activeCities.map(city => {
-              const isPulsing = city.hot === true || city.velocityTrend === 'up';
-              if (!isPulsing) return null;
-              const { cx, cy } = cityToSvgCoords(city.x, city.y);
-              const r = 6 + (city.hype / maxHype) * 18;
-              return (
-                <g key={`pulse-${city.name}`}>
-                  <circle
-                    cx={cx} cy={cy} r={r * 1.4}
-                    fill="none" stroke="rgba(255,62,154,0.4)" strokeWidth="1.5"
-                    className="pulse-ring"
-                    style={{ transformOrigin: `${cx}px ${cy}px`, transformBox: 'fill-box' as React.CSSProperties['transformBox'], animationDelay: '0s' }}
-                  />
-                  <circle
-                    cx={cx} cy={cy} r={r * 1.4}
-                    fill="none" stroke="rgba(255,62,154,0.4)" strokeWidth="1.5"
-                    className="pulse-ring"
-                    style={{ transformOrigin: `${cx}px ${cy}px`, transformBox: 'fill-box' as React.CSSProperties['transformBox'], animationDelay: '0.75s' }}
-                  />
-                </g>
-              );
-            })}
-
-            {/* Genre affinity highlight rings */}
-            {showGenreOverlay && activeCities.map(city => {
-              if ((city.genreAffinityScore ?? 0) < 0.6) return null;
-              const { cx, cy } = cityToSvgCoords(city.x, city.y);
-              const r = 6 + (city.hype / maxHype) * 18;
-              return (
-                <circle
-                  key={`affinity-${city.name}`}
-                  cx={cx} cy={cy} r={r + 5}
-                  fill="none" stroke="#22e5d4" strokeWidth="1.5" opacity={0.7}
-                />
-              );
-            })}
-          </svg>
-
-          {/* City buttons — absolutely positioned over SVG */}
-          {activeCities.map(city => {
-            const { px, py } = usProjection(city.x, city.y);
-            const r = 6 + (city.hype / maxHype) * 18;
-            const isSelected = selected === city.name;
-            const isHot = city.hot;
-            const affinityScore = city.genreAffinityScore ?? 1;
-            const isDimmed = showGenreOverlay && affinityScore < 0.3;
-
-            const trendSymbol =
-              city.velocityTrend === 'up'     ? { char: '↑', color: '#22c55e' } :
-              city.velocityTrend === 'down'   ? { char: '↓', color: 'rgba(255,255,255,0.3)' } :
-                                                { char: '→', color: 'rgba(255,255,255,0.2)' };
-
+          {cities.map((c) => {
+            const intensity = c.hype / maxHype;
+            const size = 10 + intensity * 34;
+            const color = c.hot ? '#ff3e9a' : intensity > 0.4 ? '#ff5029' : '#b983ff';
             return (
-              <button
-                key={city.name}
-                type="button"
-                onClick={() => setSelected(isSelected ? null : city.name)}
-                style={{
-                  position: 'absolute',
-                  left: px, top: py,
-                  transform: 'translate(-50%, -50%)',
-                  width: r * 2, height: r * 2, borderRadius: '50%',
-                  background: isHot
-                    ? `rgba(255,62,154,${0.15 + (city.hype / maxHype) * 0.45})`
-                    : `rgba(127,179,255,${0.12 + (city.hype / maxHype) * 0.35})`,
-                  border: `2px solid ${isSelected ? 'var(--accent)' : isHot ? 'rgba(255,62,154,.5)' : 'rgba(127,179,255,.3)'}`,
-                  cursor: 'pointer',
-                  zIndex: isSelected ? 10 : 2,
-                  transition: 'border-color .15s, transform .15s, opacity .15s',
-                  boxShadow: isSelected
-                    ? '0 0 0 3px rgba(255,80,41,.2)'
-                    : isHot ? `0 0 ${r}px rgba(255,62,154,.25)` : 'none',
-                  opacity: isDimmed ? 0.25 : 1,
-                }}
+              <div
+                key={c.name}
+                style={{ position: 'absolute', left: `${c.x * 100}%`, top: `${c.y * 100}%`, transform: 'translate(-50%,-50%)' }}
               >
-                <div style={{
-                  position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)',
-                  marginTop: 4, whiteSpace: 'nowrap', fontFamily: 'var(--f-m)', fontSize: 9,
-                  letterSpacing: '.1em', color: isSelected ? 'var(--accent)' : isHot ? '#ff3e9a' : 'var(--ink-3)',
-                  pointerEvents: 'none', textAlign: 'center', lineHeight: 1.3,
-                }}>
-                  {city.name}
-                  <br />
-                  <span style={{ color: trendSymbol.color, fontSize: 9 }}>{trendSymbol.char}</span>
+                <div style={{ width: size, height: size, borderRadius: '50%', background: `radial-gradient(circle, ${color} 0%, ${color}30 70%, transparent 100%)`, position: 'relative' }}>
+                  <div style={{ position: 'absolute', inset: size * 0.28, borderRadius: '50%', background: color, boxShadow: c.hot ? `0 0 12px ${color}` : 'none' }} />
+                  {c.venuesAsking > 0 && (
+                    <div style={{ position: 'absolute', inset: -4, border: `1.5px dashed ${color}80`, borderRadius: '50%' }} />
+                  )}
                 </div>
-              </button>
+                <div
+                  style={{
+                    position: 'absolute', left: '50%', transform: 'translateX(-50%)', marginTop: 6,
+                    fontFamily: 'var(--f-m)', fontSize: 9, letterSpacing: '.08em', whiteSpace: 'nowrap', textTransform: 'uppercase',
+                    color: intensity > 0.5 ? 'var(--ink)' : 'var(--ink-2)',
+                  }}
+                >
+                  {c.name}
+                </div>
+                {c.hot && (
+                  <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', marginTop: 22, padding: '1px 6px', background: '#ff3e9a', color: '#0a0805', fontFamily: 'var(--f-m)', fontSize: 8, fontWeight: 700, borderRadius: 3, letterSpacing: '.08em', whiteSpace: 'nowrap' }}>
+                    {c.hype}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          <Legend />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginTop: 12, padding: '12px 14px', background: 'var(--bg-3)', borderRadius: 8 }}>
+          <Stat label="TOTAL HYPE" value={totalHype.toLocaleString()} />
+          <Stat label="HOT CITIES" value={hotCount} valueColor="#ff3e9a" />
+          <Stat label="VENUES ASKING" value={totalVenues} valueColor="#22e5d4" />
+          <Stat label="SUGGESTED ROUTE" value={suggestedRoute ?? '—'} small />
+        </div>
+      </section>
+
+      <section style={panel}>
+        <PanelHeader title="Top cities" help="By HYPE" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {ranked.slice(0, 8).map((c, i) => {
+            const pct = (c.hype / maxHype) * 100;
+            const color = c.hot ? '#ff3e9a' : '#ff5029';
+            return (
+              <div key={c.name} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '.08em', width: 22 }}>
+                  {String(i + 1).padStart(2, '0')}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: 'var(--f-d)', fontWeight: 600, fontSize: 13, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {c.name}
+                    {c.hot && (
+                      <span style={{ padding: '1px 6px', background: '#ff3e9a', color: '#0a0805', fontFamily: 'var(--f-m)', fontSize: 8, fontWeight: 700, borderRadius: 3, letterSpacing: '.1em' }}>
+                        HOT
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ marginTop: 4, height: 3, background: 'rgba(255,255,255,.05)', borderRadius: 2, position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ position: 'absolute', inset: 0, width: `${pct}%`, background: color, borderRadius: 2 }} />
+                  </div>
+                </div>
+                <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, color: 'var(--ink-2)', minWidth: 44, textAlign: 'right' }}>
+                  {c.hype}
+                </div>
+              </div>
             );
           })}
         </div>
 
-        {/* Sidebar: selected city detail + venue pings + legend */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-
-          {/* Selected city detail */}
-          {selectedCity && (
-            <div style={{ padding: '16px', border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)' }}>
-              <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 16, color: 'var(--ink)', marginBottom: 4 }}>{selectedCity.name}</div>
-              <div style={{ display: 'flex', gap: 20, marginBottom: 12 }}>
-                <div>
-                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, letterSpacing: '.14em', color: 'var(--ink-3)', marginBottom: 3 }}>HYPE</div>
-                  <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 20, color: '#ff3e9a' }}>{selectedCity.hype.toLocaleString()}</div>
+        <PanelHeader
+          title={<>Venues asking <span style={panelCount}>· demand radar pings</span></>}
+          style={{ marginTop: 18 }}
+        />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {venuePings.map((v) => {
+            const color = SIGNAL_COLORS[v.signal];
+            return (
+              <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'var(--bg-3)', borderRadius: 6 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: color }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: 'var(--f-d)', fontWeight: 600, fontSize: 13, color: 'var(--ink)' }}>{v.name}</div>
+                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', marginTop: 2, letterSpacing: '.04em' }}>
+                    {v.city} · cap {v.capacity} · <span style={{ color }}>{v.statusLabel}</span>
+                  </div>
                 </div>
-                <div>
-                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, letterSpacing: '.14em', color: 'var(--ink-3)', marginBottom: 3 }}>VENUES ASKING</div>
-                  <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 20, color: '#ffb84a' }}>{selectedCity.venuesAsking}</div>
-                </div>
+                <button
+                  type="button"
+                  onClick={v.onReply}
+                  style={{ padding: '5px 10px', border: '1px solid var(--line-2)', borderRadius: 5, fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-2)', letterSpacing: '.08em', background: 'transparent', cursor: 'pointer' }}
+                >
+                  Reply →
+                </button>
               </div>
-
-              {/* Confidence breakdown */}
-              {selectedCity.signalBreakdown && (
-                <div style={{ marginBottom: 14, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
-                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, letterSpacing: '.14em', color: 'var(--ink-3)', marginBottom: 8 }}>SIGNAL CONFIDENCE</div>
-                  {(['taste', 'geo', 'momentum', 'collab'] as const).map(key => {
-                    const val = selectedCity.signalBreakdown![key];
-                    return (
-                      <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                        <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, letterSpacing: '.1em', color: 'var(--ink-3)', width: 60, textTransform: 'uppercase' }}>{key}</div>
-                        <div style={{ width: 120, height: 4, background: 'var(--line)', borderRadius: 2, flexShrink: 0, overflow: 'hidden' }}>
-                          {val !== null && (
-                            <div style={{ width: `${val * 100}%`, height: '100%', background: BREAKDOWN_COLORS[key], borderRadius: 2, transition: 'width .3s' }} />
-                          )}
-                        </div>
-                        <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-2)', width: 30, textAlign: 'right' }}>
-                          {val !== null ? `${Math.round(val * 100)}%` : '—'}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {cityPings.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {cityPings.map(ping => (
-                    <div key={ping.id} style={{ padding: '10px 12px', border: `1px solid ${SIGNAL_COLOR[ping.signal]}40`, borderRadius: 8, borderLeft: `3px solid ${SIGNAL_COLOR[ping.signal]}` }}>
-                      <div style={{ fontFamily: 'var(--f-d)', fontWeight: 600, fontSize: 13, color: 'var(--ink)' }}>{ping.name}</div>
-                      <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', marginTop: 3 }}>{ping.capacity} cap · {ping.statusLabel}</div>
-                      <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, letterSpacing: '.12em', color: SIGNAL_COLOR[ping.signal], marginTop: 4, textTransform: 'uppercase' }}>{ping.signal}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {cityPings.length === 0 && (
-                <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)' }}>No venue pings yet for {selectedCity.name}.</div>
-              )}
-            </div>
-          )}
-
-          {/* All venue pings */}
-          <div style={{ border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)', overflow: 'hidden' }}>
-            <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--line)', fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.14em', color: 'var(--ink-3)' }}>
-              VENUE PINGS · {activePings.length}
-            </div>
-            {activePings.map(ping => (
-              <div key={ping.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: '1px solid var(--line)', borderLeft: `3px solid ${SIGNAL_COLOR[ping.signal]}` }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: 'var(--f-d)', fontWeight: 600, fontSize: 13, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ping.name}</div>
-                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', marginTop: 2 }}>{ping.city} · {ping.statusLabel}</div>
-                </div>
-                <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-2)' }}>{ping.capacity}</div>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: SIGNAL_COLOR[ping.signal], flexShrink: 0 }} />
-              </div>
-            ))}
-          </div>
-
-          {/* Legend */}
-          <div style={{ padding: '12px 14px', border: '1px solid var(--line)', borderRadius: 8, background: 'var(--bg-2)' }}>
-            <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, letterSpacing: '.14em', color: 'var(--ink-3)', marginBottom: 8 }}>SIGNAL</div>
-            {(['urgent', 'warm', 'new'] as const).map(s => (
-              <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: SIGNAL_COLOR[s] }} />
-                <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-2)', textTransform: 'capitalize' }}>{s}</div>
-              </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
-      </div>
+      </section>
     </div>
   );
 }
+
+// ── Helpers ──────────────────────────────────────────────────────
+
+function PanelHeader({ title, help, style }: { title: React.ReactNode; help?: string; style?: React.CSSProperties }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14, gap: 12, ...style }}>
+      <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14, letterSpacing: '-.005em', color: 'var(--ink)' }}>
+        {title}
+      </div>
+      {help && (
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '.04em' }}>
+          {help}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Stat({ label, value, valueColor, small }: { label: string; value: React.ReactNode; valueColor?: string; small?: boolean }) {
+  return (
+    <div>
+      <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '.14em', marginBottom: 3 }}>{label}</div>
+      <div style={{ fontFamily: 'var(--f-d)', fontWeight: 600, fontSize: small ? 14 : 18, color: valueColor ?? 'var(--ink)' }}>{value}</div>
+    </div>
+  );
+}
+
+function Legend() {
+  return (
+    <div style={{
+      position: 'absolute', left: 14, bottom: 14, padding: '10px 12px',
+      background: 'rgba(10,8,5,.7)', backdropFilter: 'blur(8px)', border: '1px solid var(--line)',
+      borderRadius: 6, display: 'flex', flexDirection: 'column', gap: 5,
+    }}>
+      {[
+        { c: '#ff3e9a', label: 'HOTSPOT · plan a date', glow: true },
+        { c: '#ff5029', label: 'HYPE rising' },
+        { c: '#b983ff', label: 'Seeded · not yet hot' },
+        { c: 'transparent', label: 'Venue radar ping', ring: true },
+      ].map((row) => (
+        <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--f-m)', fontSize: 9, color: 'var(--ink-2)', letterSpacing: '.08em' }}>
+          <span style={{
+            width: 9, height: 9, borderRadius: '50%',
+            background: row.c,
+            boxShadow: row.glow ? `0 0 8px ${row.c}` : 'none',
+            border: row.ring ? '1.5px dashed #ff3e9a' : 'none',
+          }} />
+          {row.label}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const panel: React.CSSProperties = { border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)', padding: '16px 18px' };
+const panelCount: React.CSSProperties = { fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '.04em', fontWeight: 400 };
+const mapBox: React.CSSProperties = { position: 'relative', height: 380, borderRadius: 10, background: 'var(--bg-3)', overflow: 'hidden', border: '1px solid var(--line)' };
+const mapBg: React.CSSProperties = { position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 40% 45%, rgba(255,80,41,.04) 0%, transparent 60%), radial-gradient(ellipse at 80% 40%, rgba(255,62,154,.05) 0%, transparent 50%)' };
+const mapGrid: React.CSSProperties = { position: 'absolute', background: 'rgba(255,255,255,.025)' };
