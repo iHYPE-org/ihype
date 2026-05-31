@@ -6,6 +6,8 @@ import { getPasskeyAuthenticationOptions, verifyPasskeyAuthentication } from '@/
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 // GET — generate discoverable-credential authentication options
 export async function GET(request: Request) {
   const requestedRedirect = new URL(request.url).searchParams.get('callbackUrl');
@@ -24,6 +26,7 @@ export async function GET(request: Request) {
       sameSite: 'strict',
       maxAge: 300,
       path: '/',
+      secure: isProduction,
     });
     if (safeRedirect) {
       resp.cookies.set('pk_auth_callback', safeRedirect, {
@@ -31,6 +34,7 @@ export async function GET(request: Request) {
         sameSite: 'lax',
         maxAge: 300,
         path: '/',
+        secure: isProduction,
       });
     } else {
       resp.cookies.delete('pk_auth_callback');

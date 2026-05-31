@@ -89,6 +89,47 @@ export type WbRadioShow = {
   desc: string;
 };
 
+
+export type WbPageEditor = {
+  profileId: string;
+  slug: string;
+  type: string;
+  name: string;
+  headline: string;
+  bio: string;
+  aboutContent: string;
+  topFiveContent: string;
+  mediaContent: string;
+  nowPlaying: string;
+  links: string;
+  merchUrl: string;
+  merchContent: string;
+  tourContent: string;
+  requestContent: string;
+  upcomingContent: string;
+  previousShowHighlights: string;
+  addressLine1: string;
+  city: string;
+  stateRegion: string;
+  postalCode: string;
+  country: string;
+  hoursText: string;
+  parkingDetails: string;
+  stayRecommendations: string;
+  heroImage: string;
+  avatarImage: string;
+  logoImage: string;
+  galleryImage: string;
+  featureVideoUrl: string;
+  themePreset: string;
+  themeAccentTone: string;
+  themeBackdropTone: string;
+  fanShareEnabled: boolean;
+  songs: Array<{ hexId: string; title: string; notes: string | null; freeUseEnabled: boolean }>;
+  upcomingShows: WbShow[];
+  previousShows: WbShow[];
+};
+
 export type WorkbenchData = {
   userName: string;
   userInitials: string;
@@ -121,6 +162,7 @@ export type WorkbenchData = {
   uploadStreak?: number;
   needsGenreQuiz?: boolean;
   degraded?: boolean;
+  pageEditor?: WbPageEditor;
 };
 
 export const DEFAULT_PREFS = {

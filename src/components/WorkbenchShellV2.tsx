@@ -264,7 +264,8 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
 
   const isSeeds = view === 'seeds';
   const showQueue = prefs.queueRail && tracks.length > 0 && !isSeeds;
-  const colTemplate = showQueue ? '1fr var(--queue-w)' : '1fr';
+  const colTemplate = showQueue ? 'minmax(0, 1fr) var(--queue-w)' : '1fr';
+  const shellMaxWidth = showQueue ? 1300 : 1600;
   const rowTemplate = showDock ? 'var(--top-h) 1fr var(--player-h)' : 'var(--top-h) 1fr';
 
   const viewEl = (() => {
@@ -299,7 +300,9 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
         style={{
           position: 'absolute', top: 0, bottom: 0,
           left: '50%', transform: 'translateX(-50%)',
-          width: '100%', maxWidth: 1600,
+          // Keep the queue inside the same page/header frame instead of
+          // creating a wide, detached rail on the far right of large screens.
+          width: '100%', maxWidth: shellMaxWidth,
           display: 'grid',
           gridTemplateColumns: colTemplate,
           gridTemplateRows: rowTemplate,
@@ -332,7 +335,7 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
           gridColumn: 1, gridRow: 2,
           overflowY: isSeeds ? 'hidden' : 'auto',
           overflowX: 'hidden',
-          background: 'var(--bg)', minHeight: 0,
+          background: 'var(--bg)', minHeight: 0, minWidth: 0,
           fontSize: `calc(14px * var(--density, 1))`,
           position: 'relative',
         }}>

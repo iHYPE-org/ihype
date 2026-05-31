@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { consumeRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
+import { readClientAddress } from '@/lib/request-meta';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +18,7 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(request: NextRequest) {
   // 60 searches per minute per IP — allows normal autocomplete usage
-  const ip = request.headers.get('x-forwarded-for') ?? 'unknown';
+  const ip = readClientAddress(request);
   const rl = await consumeRateLimit(`search:ip:${ip}`, { limit: 60, windowMs: 60_000 });
   if (!rl.allowed) {
     return NextResponse.json(

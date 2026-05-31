@@ -89,6 +89,8 @@ These demo accounts are for local development and controlled staging only. Produ
 - Auth, signup, and workbench pages are intentionally marked `noindex`.
 - The Prisma seed is for local/demo data only and refuses production runs unless `ALLOW_PRODUCTION_SEEDING=true` is explicitly set.
 - Production starter content uses `.github/workflows/seed-launch-content.yml` and requires the manual confirmation phrase `seed ihype launch`.
+- Admin bootstrap is disabled unless `ALLOW_ADMIN_SETUP=true` and `ADMIN_SETUP_SECRET` are set; disable both immediately after the first admin passkey is registered.
+- Security hardening ties JWT sessions to `userSecurityVersion`, so deployments may force legacy sessions without that claim to sign in again.
 - Post-deploy smoke tests run against `/api/health`, `/`, `/login`, `/shows`, and `/status`.
 
 ## Cookie posture

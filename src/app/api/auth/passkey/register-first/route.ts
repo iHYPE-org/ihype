@@ -8,6 +8,7 @@ import { readClientAddress } from '@/lib/request-meta';
 
 // Only allow passkey registration for accounts created in the last 10 minutes
 const MAX_AGE_MS = 10 * 60 * 1000;
+const isProduction = process.env.NODE_ENV === 'production';
 
 // GET — generate registration options for a brand-new user (no session required)
 export async function GET(request: Request) {
@@ -41,6 +42,7 @@ export async function GET(request: Request) {
     sameSite: 'strict',
     maxAge: 300,
     path: '/',
+    secure: isProduction,
   });
   return resp;
 }

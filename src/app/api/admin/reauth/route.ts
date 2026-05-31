@@ -8,6 +8,8 @@ import { readClientAddress } from '@/lib/request-meta';
 
 export const dynamic = 'force-dynamic';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 // GET — generate passkey challenge for current admin user
 export async function GET() {
   const session = await auth();
@@ -20,7 +22,8 @@ export async function GET() {
     httpOnly: true,
     sameSite: 'strict',
     maxAge: 300,
-    path: '/'
+    path: '/',
+    secure: isProduction
   });
   return resp;
 }

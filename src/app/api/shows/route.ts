@@ -11,6 +11,7 @@ import { slugify } from '@/lib/utils';
 import { consumeRateLimit, rateLimitHeaders, rateLimitKey } from '@/lib/rate-limit';
 import { sanitizeShowInput } from '@/lib/sanitize';
 import { checkContent } from '@/lib/auto-mod';
+import { readClientAddress } from '@/lib/request-meta';
 
 const radioTrackSchema = z.object({
   hexId: z.string().min(1),
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
 
   // 10 show creations per hour per user — prevents automated abuse
   const rl = await consumeRateLimit(
-    rateLimitKey('show-create', session.user.id, request.headers.get('x-forwarded-for')),
+    rateLimitKey('show-create', session.user.id, readClientAddress(request)),
     { limit: 10, windowMs: 60 * 60_000 }
   );
   if (!rl.allowed) {

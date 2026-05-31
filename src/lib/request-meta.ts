@@ -1,24 +1,25 @@
+function firstHeaderValue(value: string | null) {
+  return value?.split(',')[0]?.trim() || '';
+}
+
 export function readClientAddress(request: Request | undefined) {
   if (!request) {
     return 'unknown';
   }
 
-  const forwardedFor = request.headers.get('x-forwarded-for');
-  if (forwardedFor) {
-    const firstAddress = forwardedFor.split(',')[0]?.trim();
-    if (firstAddress) {
-      return firstAddress;
-    }
-  }
-
-  const cfConnectingIp = request.headers.get('cf-connecting-ip');
+  const cfConnectingIp = firstHeaderValue(request.headers.get('cf-connecting-ip'));
   if (cfConnectingIp) {
-    return cfConnectingIp.trim();
+    return cfConnectingIp;
   }
 
-  const realIp = request.headers.get('x-real-ip');
+  const realIp = firstHeaderValue(request.headers.get('x-real-ip'));
   if (realIp) {
-    return realIp.trim();
+    return realIp;
+  }
+
+  const forwardedFor = firstHeaderValue(request.headers.get('x-forwarded-for'));
+  if (forwardedFor) {
+    return forwardedFor;
   }
 
   return 'unknown';

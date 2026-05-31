@@ -5,6 +5,8 @@ import { getPasskeyRegistrationOptions, verifyPasskeyRegistration } from '@/lib/
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 // GET — generate registration options for the current logged-in user
 export async function GET(request: Request) {
   const session = await auth();
@@ -25,6 +27,7 @@ export async function GET(request: Request) {
     sameSite: 'strict',
     maxAge: 300,
     path: '/',
+    secure: isProduction,
   });
   return resp;
 }

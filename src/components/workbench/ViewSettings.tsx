@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import type { WorkbenchData, WbTrack } from '@/types/workbench';
+import React, { useEffect, useState } from 'react';
+import type { WorkbenchData, WbPageEditor, WbTrack } from '@/types/workbench';
 import { DEFAULT_PREFS } from './types';
 import { IcLibrary, IcRadio, IcTicket, IcDisco, IcStudio, IcCheck, IcPlay, IcHeart } from './icons';
 import { Toggle } from './Toggle';
@@ -84,200 +84,298 @@ export function ViewDiscover({ data, onPickTrack, currentIdx }: { data: Workbenc
 // ─────────────────────────────────────────────────────────────
 // ViewSettings
 // ─────────────────────────────────────────────────────────────
+type EditorDraft = WbPageEditor;
+
+function Field({ label, value, onChange, placeholder, type = 'text' }: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  type?: string;
+}) {
+  return (
+    <label style={{ display: 'block' }}>
+      <span style={{ display: 'block', fontFamily: 'var(--f-m)', fontSize: 11, letterSpacing: '.12em', color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 6 }}>{label}</span>
+      <input
+        value={value}
+        type={type}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg-3)', color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: 13 }}
+      />
+    </label>
+  );
+}
+
+function TextArea({ label, value, onChange, placeholder, rows = 4 }: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  rows?: number;
+}) {
+  return (
+    <label style={{ display: 'block' }}>
+      <span style={{ display: 'block', fontFamily: 'var(--f-m)', fontSize: 11, letterSpacing: '.12em', color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 6 }}>{label}</span>
+      <textarea
+        value={value}
+        rows={rows}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg-3)', color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: 13, resize: 'vertical', lineHeight: 1.45 }}
+      />
+    </label>
+  );
+}
+
+function EditorPanel({ title, eyebrow, children, span = 1 }: { title: string; eyebrow?: string; children: React.ReactNode; span?: 1 | 2 }) {
+  return (
+    <section style={{ border: '1px solid var(--line)', borderRadius: 12, background: 'var(--bg-2)', padding: '18px 20px', gridColumn: span === 2 ? '1 / -1' : undefined }}>
+      {eyebrow ? <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.16em', color: 'var(--accent)', textTransform: 'uppercase', marginBottom: 6 }}>{eyebrow}</div> : null}
+      <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 18, letterSpacing: '-.015em', color: 'var(--ink)', margin: '0 0 14px' }}>{title}</h2>
+      <div style={{ display: 'grid', gap: 12 }}>{children}</div>
+    </section>
+  );
+}
+
+function ShowMiniList({ title, shows }: { title: string; shows: WbPageEditor['upcomingShows'] }) {
+  return (
+    <div style={{ border: '1px solid var(--line)', borderRadius: 8, overflow: 'hidden', background: 'var(--bg-3)' }}>
+      <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--line)', fontFamily: 'var(--f-m)', fontSize: 11, letterSpacing: '.12em', color: 'var(--ink-3)', textTransform: 'uppercase' }}>{title}</div>
+      {shows.length ? shows.slice(0, 4).map((show) => (
+        <div key={show.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '10px 12px', borderBottom: '1px solid var(--line)' }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{show.name}</div>
+            <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', marginTop: 3 }}>{show.venue} · {show.date}</div>
+          </div>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--accent)', flexShrink: 0 }}>{show.hype} HYPE</div>
+        </div>
+      )) : <div style={{ padding: '12px', fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)' }}>No shows yet.</div>}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// ViewSettings — public page editor
+// ─────────────────────────────────────────────────────────────
 export function ViewSettings({ prefs, setPref, data, onBack }: {
   prefs: typeof DEFAULT_PREFS;
   setPref: (k: string, v: unknown) => void;
   data: WorkbenchData;
   onBack?: () => void;
 }) {
-  void data; // data kept for potential future use
-  const ACCENTS = [
-    { v: '#ff5029', label: 'Ember' }, { v: '#ff3e9a', label: 'Hot pink' },
-    { v: '#b983ff', label: 'Lilac' }, { v: '#22e5d4', label: 'Aqua' },
-    { v: '#ffb84a', label: 'Amber' }, { v: '#7fb3ff', label: 'Sky' },
-  ];
-  const PIN_TOOLS = [
-    { k: 'library', label: 'Library', sub: 'HYPEd tracks, playlists', icon: <IcLibrary s={18} /> },
-    { k: 'radio', label: 'Radio', sub: 'Tune in to shows', icon: <IcRadio s={18} /> },
-    { k: 'tickets', label: 'Live Events', sub: 'Browse, hold, sell, scan', icon: <IcTicket s={18} /> },
-    { k: 'discover', label: 'Discover', sub: 'Seeds · swipe new artists', icon: <IcDisco s={18} /> },
-    { k: 'studio', label: 'Studio', sub: 'Show Creator · uploads', icon: <IcStudio s={18} /> },
-  ];
+  const editor = data.pageEditor;
+  const [draft, setDraft] = useState<EditorDraft | undefined>(editor);
+  const [status, setStatus] = useState<string>('');
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => setDraft(editor), [editor]);
+
+  if (!draft) {
+    return (
+      <div style={{ padding: '24px 32px 32px', maxWidth: 900 }}>
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.18em', color: 'var(--accent)', marginBottom: 10 }}>● PAGE EDITOR</div>
+        <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 42, letterSpacing: '-.03em', lineHeight: 1, margin: 0, color: 'var(--ink)' }}>Create your page</h1>
+        <p style={{ fontFamily: 'var(--f-b)', fontSize: 14, color: 'var(--ink-2)', marginTop: 10, maxWidth: 620, lineHeight: 1.5 }}>Create a listener, artist, promoter, or venue profile to unlock page editing.</p>
+      </div>
+    );
+  }
+
+  const currentDraft = draft;
+  const role = currentDraft.type;
+  const isArtist = role === 'ARTIST' || role === 'DJ';
+  const isVenue = role === 'VENUE';
+  const publicPath = role === 'VENUE' ? `/venues/${draft.slug}` : role === 'ARTIST' ? `/artists/${draft.slug}` : role === 'DJ' ? `/promoters/${draft.slug}` : `/fans/${draft.slug}`;
+  const roleLabel = isArtist ? 'artist page' : isVenue ? 'venue page' : 'listener page';
+  const patch = <K extends keyof EditorDraft>(key: K, value: EditorDraft[K]) => setDraft(prev => prev ? { ...prev, [key]: value } : prev);
+
+  async function savePage() {
+    if (!draft) return;
+    setSaving(true);
+    setStatus('Saving page…');
+    try {
+      const response = await fetch('/api/profile-editor', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(draft)
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(typeof payload.error === 'string' ? payload.error : 'Could not save page.');
+      setStatus('Page saved. Public profile updated.');
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Could not save page.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function uploadSong(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!isArtist) return;
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    formData.set('profileId', currentDraft.profileId);
+    setUploading(true);
+    setStatus('Uploading song…');
+    try {
+      const response = await fetch('/api/artist-media', { method: 'POST', body: formData });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(typeof payload.error === 'string' ? payload.error : 'Could not upload song.');
+      const asset = payload.asset as { hexId: string; title: string; notes?: string | null; freeUseEnabled?: boolean };
+      patch('songs', [{ hexId: asset.hexId, title: asset.title, notes: asset.notes ?? null, freeUseEnabled: Boolean(asset.freeUseEnabled) }, ...currentDraft.songs]);
+      form.reset();
+      setStatus('Song uploaded. You can publish it as a seed below.');
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : 'Could not upload song.');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function toggleSeed(hexId: string, freeUseEnabled: boolean) {
+    setStatus(freeUseEnabled ? 'Publishing seed…' : 'Removing seed…');
+    const nextSongs = currentDraft.songs.map(song => song.hexId === hexId ? { ...song, freeUseEnabled } : song);
+    patch('songs', nextSongs);
+    try {
+      const response = await fetch(`/api/artist-media/${hexId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ freeUseEnabled })
+      });
+      if (!response.ok) throw new Error('Could not update seed status.');
+      setStatus(freeUseEnabled ? 'Seed is live in discovery.' : 'Seed removed from discovery.');
+    } catch (error) {
+      patch('songs', currentDraft.songs);
+      setStatus(error instanceof Error ? error.message : 'Could not update seed status.');
+    }
+  }
 
   return (
     <div style={{ padding: '24px 32px 32px', maxWidth: 1180 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24, gap: 16 }}>
         <div>
-          <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.18em', color: 'var(--ink-3)', marginBottom: 10 }}>● PERSONAL · APPLIES TO THIS BROWSER</div>
-          <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 42, letterSpacing: '-.03em', lineHeight: 1, margin: 0, color: 'var(--ink)' }}>Settings <span style={{ color: 'var(--ink-2)', fontWeight: 500 }}>· page customization</span></h1>
-          <p style={{ fontFamily: 'var(--f-b)', fontSize: 14, color: 'var(--ink-2)', marginTop: 10, maxWidth: 580, lineHeight: 1.5 }}>Make iHYPE feel like yours. Changes apply live.</p>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.18em', color: 'var(--accent)', marginBottom: 10 }}>● PAGE EDITOR · {roleLabel.toUpperCase()}</div>
+          <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 42, letterSpacing: '-.03em', lineHeight: 1, margin: 0, color: 'var(--ink)' }}>Edit your public page</h1>
+          <p style={{ fontFamily: 'var(--f-b)', fontSize: 14, color: 'var(--ink-2)', marginTop: 10, maxWidth: 680, lineHeight: 1.5 }}>Control what fans, artists, promoters, and venues see: layout, background, media, top 5, songs, links, shows, ticketing, merch, and venue details.</p>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          {onBack && (
-            <button onClick={onBack} style={{ padding: '9px 14px', border: '1px solid var(--line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-2)', letterSpacing: '.04em', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>← Back</button>
-          )}
-          <button onClick={() => { if (window.confirm('Reset all settings to defaults?')) setPref('__reset__', null); }} style={{ padding: '9px 14px', border: '1px solid var(--line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-2)', letterSpacing: '.04em', background: 'none', cursor: 'pointer' }}>Reset to defaults</button>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          {onBack && <button onClick={onBack} style={{ padding: '9px 14px', border: '1px solid var(--line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-2)', letterSpacing: '.04em', background: 'none', cursor: 'pointer' }}>← Back</button>}
+          <a href={publicPath} target="_blank" rel="noreferrer" style={{ padding: '9px 14px', border: '1px solid var(--line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-2)', letterSpacing: '.04em', textDecoration: 'none' }}>View page</a>
+          <button onClick={() => void savePage()} disabled={saving} style={{ padding: '10px 16px', border: 'none', borderRadius: 7, fontFamily: 'var(--f-m)', fontSize: 13, color: '#fff', fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', background: `linear-gradient(135deg, ${prefs.accent}, var(--pink))`, cursor: saving ? 'wait' : 'pointer' }}>{saving ? 'Saving…' : 'Save page'}</button>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        {/* Accent */}
-        <section style={{ border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)', padding: '16px 18px' }}>
-          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 15, letterSpacing: '-.005em', color: 'var(--ink)', marginBottom: 4 }}>Accent color</div>
-          <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', letterSpacing: '.02em', marginBottom: 14 }}>Used for highlights, the player, and active nav.</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
-            {ACCENTS.map(c => (
-              <button key={c.v} onClick={() => setPref('accent', c.v)} style={{
-                position: 'relative', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
-                border: `1px solid ${prefs.accent === c.v ? c.v : 'var(--line)'}`,
-                borderRadius: 8, background: 'var(--bg-3)', transition: 'all .15s', textAlign: 'left', cursor: 'pointer',
-                boxShadow: prefs.accent === c.v ? `0 0 0 1px ${c.v}80` : 'none',
-              }}>
-                <div style={{ width: 22, height: 22, borderRadius: 5, background: c.v, flexShrink: 0 }} />
-                <div style={{ fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink)', letterSpacing: '.04em' }}>{c.label}</div>
-                {prefs.accent === c.v && <div style={{ position: 'absolute', top: 6, right: 6, color: c.v }}><IcCheck s={11} /></div>}
-              </button>
-            ))}
+      {status ? <div style={{ marginBottom: 14, padding: '10px 12px', border: '1px solid var(--line)', borderRadius: 8, background: 'var(--bg-2)', color: status.includes('Could not') ? '#ffb4a7' : 'var(--ink-2)', fontFamily: 'var(--f-m)', fontSize: 12 }}>{status}</div> : null}
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1.1fr .9fr', gap: 14 }}>
+        <EditorPanel title="Identity + layout" eyebrow="Who you are" span={2}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <Field label="Display name" value={draft.name} onChange={(value) => patch('name', value)} />
+            <Field label="Headline" value={draft.headline} onChange={(value) => patch('headline', value)} placeholder="One-line hook for your page" />
+            <TextArea label="Bio" value={draft.bio} onChange={(value) => patch('bio', value)} placeholder="Short intro shown near the top of the page" />
+            <TextArea label="About section" value={draft.aboutContent} onChange={(value) => patch('aboutContent', value)} placeholder="Longer story, page context, or booking notes" />
           </div>
-          {/* Accent preview */}
-          <div style={{
-            marginTop: 14, background: 'var(--bg-3)', border: '1px solid var(--line)',
-            borderRadius: 10, padding: 14, display: 'flex', alignItems: 'center', gap: 14
-          }}>
-            <div style={{
-              width: 44, height: 44, borderRadius: 8,
-              background: `linear-gradient(135deg, ${prefs.accent}, var(--pink))`,
-              flexShrink: 0
-            }} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: 'var(--f-b)', fontWeight: 600, fontSize: 13, color: 'var(--ink)' }}>Preview</div>
-              <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: prefs.accent, letterSpacing: '.08em', marginTop: 3 }}>
-                ♥ 1,247 HYPEs this week
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <TextArea label="Top 5" value={draft.topFiveContent} onChange={(value) => patch('topFiveContent', value)} placeholder="Top 5 artists, records, shows, or moments" rows={5} />
+            <TextArea label="Songs I'm listening to / now playing" value={draft.nowPlaying} onChange={(value) => patch('nowPlaying', value)} placeholder="What is in rotation right now?" rows={5} />
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-2)' }}>
+            <Toggle on={draft.fanShareEnabled} onChange={(value) => patch('fanShareEnabled', value)} small /> Make this custom page visible publicly
+          </label>
+        </EditorPanel>
+
+        <EditorPanel title="Background, graphics + media" eyebrow="Visual system">
+          <Field label="Hero/background image URL" value={draft.heroImage} onChange={(value) => patch('heroImage', value)} placeholder="https://…" />
+          <Field label="Avatar / portrait URL" value={draft.avatarImage} onChange={(value) => patch('avatarImage', value)} placeholder="https://…" />
+          <Field label="Logo image URL" value={draft.logoImage} onChange={(value) => patch('logoImage', value)} placeholder="https://…" />
+          <Field label="Gallery / feature image URL" value={draft.galleryImage} onChange={(value) => patch('galleryImage', value)} placeholder="https://…" />
+          <Field label="Feature video URL" value={draft.featureVideoUrl} onChange={(value) => patch('featureVideoUrl', value)} placeholder="https://…" />
+          <TextArea label="Media section copy" value={draft.mediaContent} onChange={(value) => patch('mediaContent', value)} placeholder="Describe videos, photos, press shots, or listening assets" />
+        </EditorPanel>
+
+        <EditorPanel title="Live preview" eyebrow="Public card">
+          <div style={{ border: '1px solid var(--line-2)', borderRadius: 14, overflow: 'hidden', background: 'linear-gradient(135deg, var(--bg-3), var(--bg))' }}>
+            <div style={{ height: 120, background: draft.heroImage ? `url(${draft.heroImage}) center/cover` : `linear-gradient(135deg, ${prefs.accent}, #ff3e9a, #b983ff)` }} />
+            <div style={{ padding: 16 }}>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <div style={{ width: 58, height: 58, borderRadius: 12, background: draft.avatarImage ? `url(${draft.avatarImage}) center/cover` : `linear-gradient(135deg, ${prefs.accent}, #b983ff)`, flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontFamily: 'var(--f-d)', fontSize: 24, fontWeight: 800, color: 'var(--ink)' }}>{draft.name || data.userName}</div>
+                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, letterSpacing: '.12em', color: 'var(--accent)', textTransform: 'uppercase' }}>{roleLabel}</div>
+                </div>
+              </div>
+              <p style={{ fontFamily: 'var(--f-b)', color: 'var(--ink-2)', fontSize: 13, lineHeight: 1.45 }}>{draft.headline || 'Add a headline to frame your page.'}</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 }}>
+                <div style={{ padding: 10, borderRadius: 8, background: 'var(--bg-2)' }}><strong style={{ color: 'var(--ink)' }}>Top 5</strong><br/><span style={{ color: 'var(--ink-3)', fontSize: 12 }}>{draft.topFiveContent ? draft.topFiveContent.split('\n')[0] : 'Add your first pick'}</span></div>
+                <div style={{ padding: 10, borderRadius: 8, background: 'var(--bg-2)' }}><strong style={{ color: 'var(--ink)' }}>Now</strong><br/><span style={{ color: 'var(--ink-3)', fontSize: 12 }}>{draft.nowPlaying || 'Listening notes'}</span></div>
               </div>
             </div>
-            <button style={{
-              padding: '7px 14px', borderRadius: 7, fontFamily: 'var(--f-m)', fontSize: 13,
-              fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase',
-              border: 'none', cursor: 'pointer', color: '#fff',
-              background: `linear-gradient(135deg, ${prefs.accent}, var(--pink))`
-            }}>HYPE</button>
           </div>
-        </section>
+        </EditorPanel>
 
-        {/* Density */}
-        <section style={{ border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)', padding: '16px 18px' }}>
-          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 15, letterSpacing: '-.005em', color: 'var(--ink)', marginBottom: 4 }}>Density</div>
-          <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', letterSpacing: '.02em', marginBottom: 14 }}>Tighter = more on screen. Comfortable = more breathing room.</div>
-          <div style={{ display: 'flex', gap: 4, padding: 4, background: 'var(--bg-3)', borderRadius: 7, border: '1px solid var(--line)' }}>
-            {[['compact','Compact'],['cozy','Cozy'],['comfy','Comfortable']].map(([k,l]) => (
-              <button key={k} onClick={() => setPref('density', k)} style={{
-                flex: 1, padding: '8px 10px', borderRadius: 5, fontFamily: 'var(--f-m)', fontSize: 13, letterSpacing: '.04em', border: 'none', cursor: 'pointer',
-                background: prefs.density === k ? 'var(--bg)' : 'transparent',
-                color: prefs.density === k ? 'var(--ink)' : 'var(--ink-3)',
-              }}>{l}</button>
-            ))}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>
-            {[
-              { k: 'queueRail', l: 'Show the queue rail', s: 'Right-hand sidebar. Off frees up ~300px.' },
-              { k: 'stickyDock', l: 'Sticky player dock', s: 'Always show the player at the bottom.' },
-            ].map(opt => (
-              <div key={opt.k} style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'space-between' }}>
-                <div>
-                  <div style={{ fontFamily: 'var(--f-d)', fontWeight: 600, fontSize: 13, color: 'var(--ink)' }}>{opt.l}</div>
-                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', marginTop: 2 }}>{opt.s}</div>
-                </div>
-                <Toggle on={(prefs as Record<string, unknown>)[opt.k] as boolean} onChange={v => setPref(opt.k, v)} />
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Pinned tools — span 2 */}
-        <section style={{ border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)', padding: '16px 18px', gridColumn: 'span 2' }}>
-          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 15, letterSpacing: '-.005em', color: 'var(--ink)', marginBottom: 4 }}>Pinned tools</div>
-          <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', letterSpacing: '.02em', marginBottom: 14 }}>What shows in the left rail. Home and Settings are always present.</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {PIN_TOOLS.map(t => {
-              const pinned = prefs.pinned.includes(t.k);
-              return (
-                <button key={t.k} onClick={() => setPref('togglePin', t.k)} style={{
-                  display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
-                  border: `1px solid ${pinned ? `${prefs.accent}50` : 'var(--line)'}`,
-                  borderRadius: 8, transition: 'all .15s', cursor: 'pointer',
-                  background: pinned ? `${prefs.accent}08` : 'var(--bg-3)',
-                }}>
-                  <div style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 5, background: 'var(--bg-2)', color: pinned ? prefs.accent : 'var(--ink-3)' }}>{t.icon}</div>
-                  <div style={{ flex: 1, textAlign: 'left' }}>
-                    <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, color: 'var(--ink)' }}>{t.label}</div>
-                    <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', letterSpacing: '.02em', marginTop: 2 }}>{t.sub}</div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 9px', border: `1px solid ${pinned ? `${prefs.accent}40` : 'var(--line-2)'}`, borderRadius: 99, fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.04em', color: pinned ? prefs.accent : 'var(--ink-3)' }}>
-                    {pinned ? <><IcCheck s={11} /> pinned</> : 'pin'}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Home panels — span 2 */}
-        <section style={{ border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)', padding: '16px 18px', gridColumn: 'span 2' }}>
-          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 15, letterSpacing: '-.005em', color: 'var(--ink)', marginBottom: 4 }}>Home page panels</div>
-          <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', letterSpacing: '.02em', marginBottom: 14 }}>What appears on Home below the greeting.</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {[
-              { k: 'panel_stats', l: 'Stat row', d: 'Hype, sales, plays, payouts' },
-              { k: 'panel_tonight', l: 'Tonight in Chicago', d: 'Local shows + capacity bars' },
-              { k: 'panel_activity', l: 'Activity feed', d: 'Hypes, payouts, bookings' },
-              { k: 'panel_hyped', l: 'Hyped this week', d: '6-up grid of trending tracks' },
-              { k: 'panel_roles', l: 'Your roles', d: 'Active + add new' },
-            ].map(p => (
-              <label key={p.k} style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px',
-                border: `1px solid ${(prefs as Record<string,unknown>)[p.k] ? `${prefs.accent}40` : 'var(--line)'}`,
-                borderRadius: 8, background: 'var(--bg-3)', cursor: 'pointer',
-              }}>
-                <Toggle on={(prefs as Record<string,unknown>)[p.k] as boolean} onChange={v => setPref(p.k, v)} small />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: 'var(--f-d)', fontWeight: 600, fontSize: 13, color: 'var(--ink)' }}>{p.l}</div>
-                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', marginTop: 2 }}>{p.d}</div>
-                </div>
+        {isArtist ? (
+          <EditorPanel title="Songs, seeds, merch + touring" eyebrow="Artist tools" span={2}>
+            <form onSubmit={(event) => void uploadSong(event)} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 10, alignItems: 'end', border: '1px solid var(--line)', borderRadius: 10, padding: 12, background: 'var(--bg-3)' }}>
+              <label style={{ display: 'block' }}>
+                <span style={{ display: 'block', fontFamily: 'var(--f-m)', fontSize: 11, letterSpacing: '.12em', color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 6 }}>Song title</span>
+                <input name="title" aria-label="Song title" placeholder="Optional title" style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: 13 }} />
               </label>
-            ))}
-          </div>
-        </section>
+              <label style={{ display: 'block' }}><span style={{ display: 'block', fontFamily: 'var(--f-m)', fontSize: 11, letterSpacing: '.12em', color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 6 }}>Audio file</span><input name="file" type="file" accept="audio/*" required style={{ color: 'var(--ink-2)', fontFamily: 'var(--f-m)', fontSize: 12 }} /></label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-2)' }}><input name="freeUseEnabled" value="true" type="checkbox" /> Publish as seed</label>
+              <button disabled={uploading} style={{ padding: '10px 14px', borderRadius: 7, border: '1px solid var(--line-2)', background: 'var(--bg)', color: 'var(--ink)', fontFamily: 'var(--f-m)', fontWeight: 800, cursor: uploading ? 'wait' : 'pointer' }}>{uploading ? 'Uploading…' : 'Upload song'}</button>
+            </form>
+            <div style={{ display: 'grid', gap: 8 }}>
+              {currentDraft.songs.length ? currentDraft.songs.map(song => (
+                <div key={song.hexId} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', border: '1px solid var(--line)', borderRadius: 8, background: 'var(--bg-3)' }}>
+                  <div style={{ flex: 1 }}><div style={{ color: 'var(--ink)', fontFamily: 'var(--f-d)', fontWeight: 700 }}>{song.title}</div><div style={{ color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: 11 }}>{song.notes || 'No notes yet'}</div></div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ink-2)', fontFamily: 'var(--f-m)', fontSize: 12 }}><Toggle small on={song.freeUseEnabled} onChange={(value) => void toggleSeed(song.hexId, value)} /> Seed</label>
+                </div>
+              )) : <div style={{ color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: 12 }}>Upload songs to build seeds from your catalog.</div>}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <Field label="Website / links" value={draft.links} onChange={(value) => patch('links', value)} placeholder="Website, socials, press links" />
+              <Field label="Merch URL" value={draft.merchUrl} onChange={(value) => patch('merchUrl', value)} placeholder="https://…" />
+              <TextArea label="Merch section" value={draft.merchContent} onChange={(value) => patch('merchContent', value)} />
+              <TextArea label="Tour / ticketing info" value={draft.tourContent} onChange={(value) => patch('tourContent', value)} placeholder="Dates, routing, ticket notes, booking context" />
+            </div>
+            <ShowMiniList title="Upcoming shows connected to this page" shows={draft.upcomingShows} />
+          </EditorPanel>
+        ) : null}
 
-        {/* City */}
-        <section style={{ border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)', padding: '16px 18px' }}>
-          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 15, letterSpacing: '-.005em', color: 'var(--ink)', marginBottom: 4 }}>City + scene</div>
-          <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', letterSpacing: '.02em', marginBottom: 14 }}>Used everywhere — &ldquo;Tonight in&rdquo;, radio picks, discover defaults.</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <select value={prefs.city} onChange={e => setPref('city', e.target.value)} style={{ padding: '8px 12px', background: 'var(--bg-3)', border: '1px solid var(--line)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink)' }}>
-              {['Chicago, IL','Brooklyn, NY','Los Angeles, CA','Austin, TX','Detroit, MI','Atlanta, GA'].map(c => <option key={c}>{c}</option>)}
-            </select>
-            <span style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', letterSpacing: '.06em' }}>· current</span>
-          </div>
-        </section>
+        {isVenue ? (
+          <EditorPanel title="Venue details, shows + local guidance" eyebrow="Venue tools" span={2}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <Field label="Address" value={draft.addressLine1} onChange={(value) => patch('addressLine1', value)} />
+              <Field label="Hours" value={draft.hoursText} onChange={(value) => patch('hoursText', value)} placeholder="Tue–Sun · 5PM–1AM" />
+              <Field label="City" value={draft.city} onChange={(value) => patch('city', value)} />
+              <Field label="State / region" value={draft.stateRegion} onChange={(value) => patch('stateRegion', value)} />
+              <TextArea label="Parking details" value={draft.parkingDetails} onChange={(value) => patch('parkingDetails', value)} />
+              <TextArea label="Stay recommendations" value={draft.stayRecommendations} onChange={(value) => patch('stayRecommendations', value)} />
+              <TextArea label="Upcoming shows intro" value={draft.upcomingContent} onChange={(value) => patch('upcomingContent', value)} />
+              <TextArea label="Previous show highlights" value={draft.previousShowHighlights} onChange={(value) => patch('previousShowHighlights', value)} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <ShowMiniList title="Upcoming shows" shows={draft.upcomingShows} />
+              <ShowMiniList title="Previous shows" shows={draft.previousShows} />
+            </div>
+          </EditorPanel>
+        ) : null}
 
-        {/* Greeting */}
-        <section style={{ border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)', padding: '16px 18px' }}>
-          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 15, letterSpacing: '-.005em', color: 'var(--ink)', marginBottom: 4 }}>Greeting style</div>
-          <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', letterSpacing: '.02em', marginBottom: 14 }}>The big line at the top of Home.</div>
-          <div style={{ display: 'flex', gap: 4, padding: 4, background: 'var(--bg-3)', borderRadius: 7, border: '1px solid var(--line)' }}>
-            {[['warm','Warm name'],['minimal','Minimal'],['data','Data first']].map(([k,l]) => (
-              <button key={k} onClick={() => setPref('greeting', k)} style={{
-                flex: 1, padding: '8px 10px', borderRadius: 5, fontFamily: 'var(--f-m)', fontSize: 13, letterSpacing: '.04em', border: 'none', cursor: 'pointer',
-                background: prefs.greeting === k ? 'var(--bg)' : 'transparent',
-                color: prefs.greeting === k ? 'var(--ink)' : 'var(--ink-3)',
-              }}>{l}</button>
-            ))}
-          </div>
-        </section>
+        {!isArtist && !isVenue ? (
+          <EditorPanel title="Listener page sections" eyebrow="Fan page" span={2}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <TextArea label="Top 5 artists / records / moments" value={draft.topFiveContent} onChange={(value) => patch('topFiveContent', value)} rows={6} />
+              <TextArea label="Songs I'm listening to" value={draft.nowPlaying} onChange={(value) => patch('nowPlaying', value)} rows={6} />
+              <TextArea label="Media / playlists / notes" value={draft.mediaContent} onChange={(value) => patch('mediaContent', value)} />
+              <TextArea label="Links" value={draft.links} onChange={(value) => patch('links', value)} placeholder="Playlist links, socials, recommendation forms" />
+            </div>
+          </EditorPanel>
+        ) : null}
       </div>
 
       <div style={{ marginTop: 20, padding: '14px 18px', border: '1px dashed var(--line-2)', borderRadius: 8, fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-3)', letterSpacing: '.02em' }}>
-        Preferences live in this browser. Sign in to sync across devices — keys never leave your control.
+        This editor changes your public page, not your browsing experience. Use it to curate the layout, background, media, songs, top 5, links, shows, merch, ticketing, and venue info visitors see.
       </div>
     </div>
   );

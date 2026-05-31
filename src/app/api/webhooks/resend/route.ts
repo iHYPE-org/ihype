@@ -1,20 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createHmac } from 'crypto';
 import { db } from '@/lib/db';
-
-function verifyResendSignature(
-  payload: string,
-  svixId: string,
-  svixTimestamp: string,
-  svixSignature: string,
-  secret: string
-): boolean {
-  const toSign = `${svixId}.${svixTimestamp}.${payload}`;
-  const hmac = createHmac('sha256', secret).update(toSign).digest('base64');
-  const expected = `v1,${hmac}`;
-  const signatures = svixSignature.split(' ');
-  return signatures.some((sig) => sig === expected);
-}
+import { verifyResendSignature } from '@/lib/resend-webhook';
 
 export async function POST(request: NextRequest) {
   const secret = process.env.RESEND_WEBHOOK_SECRET;
@@ -37,6 +23,14 @@ export async function POST(request: NextRequest) {
     event = JSON.parse(body);
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  }
+
+  try {
+    await db.processedWebhookEvent.create({
+      data: { source: 'resend', eventId: svixId }
+    });
+  } catch {
+    return NextResponse.json({ ok: true, duplicate: true });
   }
 
   if (event.type === 'email.bounced' || event.type === 'email.complained') {

@@ -114,7 +114,10 @@ export async function POST(request: Request) {
           id: resetCode.userId
         },
         data: {
-          passwordHash
+          passwordHash,
+          userSecurityVersion: {
+            increment: 1
+          }
         }
       })
     );

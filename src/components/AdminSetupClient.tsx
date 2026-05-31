@@ -78,7 +78,7 @@ export function AdminSetupClient() {
     >
       <h1 style={{ margin: '0 0 6px', fontSize: 22 }}>Admin setup</h1>
       <p style={{ margin: '0 0 18px', opacity: 0.75, fontSize: 14 }}>
-        Set up admin access for <strong>admin@ihype.org</strong>.
+        Set up admin access for <strong>admin@ihype.org</strong>. Requires <code>ALLOW_ADMIN_SETUP=true</code> and should be disabled after the first passkey is registered.
       </p>
 
       <form onSubmit={handleSubmit}>

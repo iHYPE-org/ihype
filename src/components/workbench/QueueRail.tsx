@@ -12,7 +12,7 @@ export function QueueRail({ tracks, currentIdx, onPick, onClear }: {
     <aside style={{
       width: 'var(--queue-w)', borderLeft: '1px solid var(--line)',
       display: 'flex', flexDirection: 'column', background: 'var(--bg)', overflow: 'hidden',
-      gridColumn: 3, gridRow: 2,
+      gridColumn: 2, gridRow: 2,
     }}>
       {/* Head */}
       <div style={{ padding: '18px 20px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '1px solid var(--line)', flexShrink: 0 }}>

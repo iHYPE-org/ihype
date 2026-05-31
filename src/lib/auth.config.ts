@@ -89,20 +89,32 @@ export const authConfig: NextAuthConfig = {
       if (user) {
         token.role = (user as { role?: string }).role;
         token.emailVerified = (user as { emailVerified?: Date | null }).emailVerified ?? null;
-        const dbUser = await db.user.findUnique({
-          where: { id: (user as { id?: string }).id ?? token.sub ?? '' },
-          select: { userSecurityVersion: true }
-        }).catch(() => null);
-        token.securityVersion = dbUser?.userSecurityVersion ?? 0;
+        try {
+          const dbUser = await db.user.findUnique({
+            where: { id: (user as { id?: string }).id ?? token.sub ?? '' },
+            select: { userSecurityVersion: true }
+          });
+          if (!dbUser) {
+            return null;
+          }
+          token.securityVersion = dbUser.userSecurityVersion;
+        } catch (err) {
+          console.error('[auth] Unable to read user security version during sign-in:', err);
+          return null;
+        }
       } else if (token.sub) {
         // Check security version on every JWT validation to ensure
         // suspensions and password changes take effect within one request.
-        const dbUser = await db.user.findUnique({
-          where: { id: token.sub },
-          select: { userSecurityVersion: true }
-        }).catch(() => null);
-        if (dbUser && typeof token.securityVersion === 'number' &&
-            dbUser.userSecurityVersion !== token.securityVersion) {
+        try {
+          const dbUser = await db.user.findUnique({
+            where: { id: token.sub },
+            select: { userSecurityVersion: true }
+          });
+          if (!dbUser || dbUser.userSecurityVersion !== token.securityVersion) {
+            return null;
+          }
+        } catch (err) {
+          console.error('[auth] Unable to validate user security version:', err);
           return null;
         }
       }

@@ -1,3 +1,5 @@
+import { verifyBearerToken } from '@/lib/secret-compare';
+
 function readCloudflareEnv(name: string): string | undefined {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -15,7 +17,5 @@ export function getCronSecret() {
 }
 
 export function isCronRequestAuthorized(request: Request) {
-  const secret = getCronSecret();
-  if (!secret) return false;
-  return request.headers.get('authorization') === `Bearer ${secret}`;
+  return verifyBearerToken(request.headers.get('authorization'), getCronSecret());
 }

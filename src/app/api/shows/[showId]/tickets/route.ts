@@ -18,6 +18,7 @@ import {
   calculateTicketOrderFinancials,
   formatCurrencyFromCents
 } from '@/lib/ticketing';
+import { readClientAddress } from '@/lib/request-meta';
 import {
   buildTicketQrCodeDataUrl,
   buildTicketVerificationUrl,
@@ -161,7 +162,7 @@ export async function POST(
 
   // 10 ticket orders per hour per user — prevents scripted bulk-buy abuse
   const rl = await consumeRateLimit(
-    rateLimitKey('ticket-purchase', session.user.id, request.headers.get('x-forwarded-for')),
+    rateLimitKey('ticket-purchase', session.user.id, readClientAddress(request)),
     { limit: 10, windowMs: 60 * 60 * 1000 }
   );
   if (!rl.allowed) {

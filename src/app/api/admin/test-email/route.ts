@@ -1,13 +1,10 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
-import { isAdminSession } from '@/lib/permissions';
+import { requireAdminApi } from '@/lib/admin-api';
 import { sendGenericEmail } from '@/lib/mailer';
 
 export async function GET() {
-  const session = await auth();
-  if (!session || !isAdminSession(session)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  const { session, response } = await requireAdminApi();
+  if (response) return response;
 
   const to = session.user?.email;
   if (!to) {
