@@ -10,7 +10,6 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { NavDrawer } from '@/components/NavDrawer';
 import { SearchBar } from '@/components/SearchBar';
 import { BugReportButton } from '@/components/BugReportButton';
-import Link from 'next/link';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { MiniPlayer } from '@/components/MiniPlayer';
 
@@ -71,17 +70,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <PwaInstallPrompt />
           <ServiceWorkerRegister />
           <footer className="site-footer" style={{ borderTop: '1px solid rgba(255,255,255,.08)', padding: '24px 0', marginTop: 40 }}>
-            <div className="container" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 24px', alignItems: 'center', justifyContent: 'center', fontSize: 13, opacity: 0.65 }}>
-              <Link href="/about">About</Link>
-              <Link href="/transparency">Transparency</Link>
-              <Link href="/discover?tab=fans">Leaderboard</Link>
-              <Link href="/advertise">Advertise</Link>
-              <Link href="/status">Status</Link>
-              <Link href="/privacy">Privacy</Link>
-              <Link href="/dmca">DMCA</Link>
-              <Link href="/playlists">Playlists</Link>
-              <Link href="/collab">Collab</Link>
-              <Link href="/feedback">Feedback</Link>
+            <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, opacity: 0.65 }}>
               <span>© {new Date().getFullYear()} iHYPE — not-for-profit</span>
             </div>
           </footer>

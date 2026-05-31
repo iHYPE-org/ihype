@@ -19,6 +19,8 @@ const secondaryLinks = [
   { href: '/dmca', label: 'DMCA' },
   { href: '/status', label: 'Status' },
   { href: '/playlists', label: 'Playlists' },
+  { href: '/collab', label: 'Collab' },
+  { href: '/feedback', label: 'Feedback' },
   { href: '/discover?tab=fans', label: 'Leaderboard' },
 ];
 
