@@ -33,22 +33,6 @@ const WMIcon = {
   tick:   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M2 6a1.5 1.5 0 0 0 0 3v3h12V9a1.5 1.5 0 0 0 0-3V3H2v3Z"/><path d="M9 3v10" strokeDasharray="1.4 1.4"/></svg>,
 };
 
-// ─── EQ animated bars CSS ─────────────────────────────────────
-const eqCss = `
-@keyframes wm-eq1{0%,100%{height:3px}50%{height:10px}}
-@keyframes wm-eq2{0%,100%{height:5px}50%{height:8px}}
-@keyframes wm-eq3{0%,100%{height:4px}50%{height:11px}}
-@keyframes wm-pulse{0%,100%{opacity:1}50%{opacity:.3}}
-@keyframes wm-shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-@keyframes wm-spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
-.wm-eq-bar:nth-child(1){animation:wm-eq1 1.1s infinite}
-.wm-eq-bar:nth-child(2){animation:wm-eq2 .9s infinite}
-.wm-eq-bar:nth-child(3){animation:wm-eq3 1.3s infinite}
-.wm-pulse{animation:wm-pulse 1.6s infinite}
-.wm-scroll::-webkit-scrollbar{display:none}
-.wm-skeleton{background:linear-gradient(90deg,#1a1612 25%,#221c16 50%,#1a1612 75%);background-size:200% 100%;animation:wm-shimmer 1.4s infinite}
-*:focus-visible { outline: 2px solid var(--accent, #ff5029); outline-offset: 3px; border-radius: 4px; }
-`;
 
 // ─── Top bar ─────────────────────────────────────────────────
 function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, notifCount, onFeedback, radioLive }: {
@@ -124,7 +108,7 @@ function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, noti
         </form>
       </div>
     )}
-    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 19, transform: menuOpen ? 'translateY(66px)' : 'translateY(calc(-100% - 66px))', transition: 'transform .24s cubic-bezier(.4,0,.2,1)', background: T.bg3, borderBottom: `1px solid ${T.line2}`, boxShadow: '0 16px 48px rgba(0,0,0,.7)', maxHeight: 'calc(100dvh - 66px)', overflowY: 'auto' }}>
+    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 19, transform: menuOpen ? 'translateY(66px)' : 'translateY(calc(-100% - 66px))', transition: 'transform .24s cubic-bezier(.4,0,.2,1)', background: T.bg3, borderBottom: `1px solid ${T.line2}`, boxShadow: '0 16px 48px rgba(0,0,0,.7)', maxHeight: 'calc(100dvh - 66px)', overflowY: 'auto', willChange: 'transform' }}>
       <div style={{ padding: '8px 0' }}>
         <div style={{ padding: '8px 20px 6px', fontFamily: T.fm, fontSize: 11, letterSpacing: '.18em', color: T.ink3, textTransform: 'uppercase' }}>Navigate</div>
         {([
@@ -372,7 +356,6 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', background: T.bg, color: T.ink, fontFamily: T.fb, overflow: 'hidden' }}>
-      <style>{eqCss}</style>
       {data.degraded && (
         <div style={{ background: '#f59e0b', color: '#000', textAlign: 'center', padding: '6px 12px', fontSize: 12, fontWeight: 600, position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999 }}>
           Having trouble connecting — some data may be outdated
@@ -390,7 +373,9 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
             ) : null}
           </div>
         )}
-        <ViewErrorBoundary viewName={tab}>{screenEl}</ViewErrorBoundary>
+        <ViewErrorBoundary key={tab} viewName={tab}>
+          <div className="wm-tab-screen">{screenEl}</div>
+        </ViewErrorBoundary>
       </div>
       {track && tab !== 'seeds' && <WMMiniPlayer track={track} playing={playing} onToggle={() => setPlaying(p => !p)} progress={progress} onAlbumTap={() => setTrackSheetOpen(true)} />}
       <WMTrackSheet track={track ?? null} open={trackSheetOpen} onClose={() => setTrackSheetOpen(false)} />

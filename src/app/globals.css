@@ -6034,6 +6034,23 @@ html.high-contrast p {
   padding-bottom: max(16px, env(safe-area-inset-bottom));
 }
 
+/* ── WorkbenchMobile animations (moved from inline <style> tag) ──────── */
+@keyframes wm-eq1{0%,100%{height:3px}50%{height:10px}}
+@keyframes wm-eq2{0%,100%{height:5px}50%{height:8px}}
+@keyframes wm-eq3{0%,100%{height:4px}50%{height:11px}}
+@keyframes wm-pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes wm-shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes wm-spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+@keyframes wm-fade-in{from{opacity:0}to{opacity:1}}
+.wm-eq-bar:nth-child(1){animation:wm-eq1 1.1s infinite}
+.wm-eq-bar:nth-child(2){animation:wm-eq2 .9s infinite}
+.wm-eq-bar:nth-child(3){animation:wm-eq3 1.3s infinite}
+.wm-pulse{animation:wm-pulse 1.6s infinite}
+.wm-scroll::-webkit-scrollbar{display:none}
+.wm-skeleton{background:linear-gradient(90deg,#1a1612 25%,#221c16 50%,#1a1612 75%);background-size:200% 100%;animation:wm-shimmer 1.4s infinite}
+.wm-tab-screen{animation:wm-fade-in .15s ease-out}
+*:focus-visible{outline:2px solid var(--accent,#ff5029);outline-offset:3px;border-radius:4px}
+
 /* ── Mobile polish additions ──────────────────────────────────────── */
 
 /* 1. iOS scroll momentum + overscroll containment */
