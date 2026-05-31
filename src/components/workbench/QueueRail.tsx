@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import type { WbTrack } from '@/components/WorkbenchShell';
+import type { WbTrack } from '@/types/workbench';
 import { IcDot, IcHeart } from './icons';
 
 export function QueueRail({ tracks, currentIdx, onPick, onClear }: {

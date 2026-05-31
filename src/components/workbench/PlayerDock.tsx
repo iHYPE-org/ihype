@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import type { WbTrack } from '@/components/WorkbenchShell';
+import type { WbTrack } from '@/types/workbench';
 import { IcHeart, IcShuffle, IcSkipP, IcPause, IcPlay, IcSkipN, IcRepeat, IcQueue, IcVol } from './icons';
 import { fmtTime } from './types';
 

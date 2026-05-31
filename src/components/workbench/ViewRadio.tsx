@@ -1,7 +1,7 @@
 'use client';
 
 import React, { memo, useState } from 'react';
-import type { WorkbenchData } from '@/components/WorkbenchShell';
+import type { WorkbenchData } from '@/types/workbench';
 import { IcBolt, IcDot, IcPlay, IcHeart } from './icons';
 import { Panel } from './primitives';
 

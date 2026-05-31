@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import type { WorkbenchData, WbTrack } from './WorkbenchShell';
+import type { WorkbenchData, WbTrack } from '@/types/workbench';
 import { SearchOverlay } from '@/components/workbench/SearchOverlay';
 import { ViewErrorBoundary } from '@/components/workbench/ErrorBoundary';
 

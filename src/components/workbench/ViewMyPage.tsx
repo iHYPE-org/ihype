@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import type { WorkbenchData, WbTicket } from '@/components/WorkbenchShell';
+import type { WorkbenchData, WbTicket } from '@/types/workbench';
 import { IcHeart, IcCheck } from './icons';
 import { Panel, TrackCard } from './primitives';
 

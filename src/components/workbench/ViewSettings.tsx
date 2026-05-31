@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import type { WorkbenchData, WbTrack } from '@/components/WorkbenchShell';
+import type { WorkbenchData, WbTrack } from '@/types/workbench';
 import { DEFAULT_PREFS } from './types';
 import { IcLibrary, IcRadio, IcTicket, IcDisco, IcStudio, IcCheck, IcPlay, IcHeart } from './icons';
 import { Toggle } from './Toggle';
