@@ -112,6 +112,17 @@ export function ViewSeeds({
   const audioCtxRef = useRef<AudioContext | null>(null);
   const oscRef = useRef<OscillatorNode | null>(null);
 
+  // ── Drag / swipe state ────────────────────────────────────────
+  const [dragX, setDragX] = useState(0);
+  const [dragY, setDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
+  const [flyOff, setFlyOff] = useState<{ x: number; y: number; rot: number } | null>(null);
+  const dragStart = useRef<{ x: number; y: number } | null>(null);
+  const dragXRef = useRef(0);
+  const dragYRef = useRef(0);
+  const rafRef = useRef<number | null>(null);
+
   // ── Seen persistence ─────────────────────────────────────────
   const SEEN_KEY = 'ihype-seeds-seen-v1';
   function loadSeen(): string[] {
@@ -167,48 +178,43 @@ export function ViewSeeds({
   }, [genreFilter]);
 
   // ── Action handler ────────────────────────────────────────────
-  const handleAction = useCallback(async (track: SeedTrack, action: SeedAction) => {
+  const handleAction = useCallback((track: SeedTrack, action: SeedAction, fromDrag = false, dragDx = 0, dragDy = 0) => {
     if (actionedIds.has(track.id)) return;
     setActionedIds(prev => new Set([...prev, track.id]));
 
-    // Advance card
-    setDeckIdx(i => i + 1);
-    setSeedPlaying(false);
+    // Fly-off direction
+    const flyX = action === 'hype' ? 700 : action === 'skip' ? -700 : fromDrag ? dragDx * 3 : 0;
+    const flyY = action === 'save' ? -800 : fromDrag ? dragDy * 2 : 0;
+    const rot  = action === 'hype' ? 25  : action === 'skip' ? -25 : dragDx * 0.15;
+    setFlyOff({ x: flyX, y: flyY, rot });
 
-    // Update session stats
-    setSessionStats(prev => ({
-      ...prev,
-      saved:   action === 'save'  ? prev.saved + 1  : prev.saved,
-      skipped: action === 'skip'  ? prev.skipped + 1 : prev.skipped,
-      hyped:   action === 'hype'  ? prev.hyped + 1  : prev.hyped,
-      xp: prev.xp + XP[action],
-    }));
+    setTimeout(() => {
+      setFlyOff(null);
+      setDeckIdx(i => i + 1);
+      setSeedPlaying(false);
 
-    // Persist seen
-    const seen = loadSeen();
-    saveSeen([...seen, track.id]);
+      setSessionStats(prev => ({
+        ...prev,
+        saved:   action === 'save'  ? prev.saved + 1  : prev.saved,
+        skipped: action === 'skip'  ? prev.skipped + 1 : prev.skipped,
+        hyped:   action === 'hype'  ? prev.hyped + 1  : prev.hyped,
+        xp: prev.xp + XP[action],
+      }));
 
-    // If this was a save, also load into player queue
-    if (action === 'save') {
-      const globalIdx = data.tracks.findIndex(t => t.id === track.id);
-      if (globalIdx >= 0) onSave?.(globalIdx);
-    }
-
-    // Record action in backend
-    try {
-      await fetch(`/api/discover/seeds/${encodeURIComponent(track.id)}/${action}`, {
-        method: 'POST',
-      });
-    } catch {
-      // Non-blocking — action is already recorded locally
-    }
-
-    // Load more cards when we're near the end of the deck
-    const remaining = deck.length - (deckIdx + 1);
-    if (remaining <= 3) {
       const seen = loadSeen();
-      fetchDeck(genreFilter, seen);
-    }
+      saveSeen([...seen, track.id]);
+
+      if (action === 'save') {
+        const globalIdx = data.tracks.findIndex(t => t.id === track.id);
+        if (globalIdx >= 0) onSave?.(globalIdx);
+      }
+
+      const remaining = deck.length - (deckIdx + 1);
+      if (remaining <= 3) fetchDeck(genreFilter, loadSeen());
+    }, 320);
+
+    // Non-blocking API call
+    fetch(`/api/discover/seeds/${encodeURIComponent(track.id)}/${action}`, { method: 'POST' }).catch(() => {});
   }, [actionedIds, deck.length, deckIdx, genreFilter, data.tracks, onSave, fetchDeck, setSeedPlaying]);
 
   // ── Audio tone (fallback when no real mediaUrl) ───────────────
@@ -268,6 +274,53 @@ export function ViewSeeds({
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [frontTrack, handleAction, setSeedPlaying, seedPlaying]);
+
+  // ── Pointer drag handlers ─────────────────────────────────────
+  function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragStart.current = { x: e.clientX, y: e.clientY };
+    dragXRef.current = 0;
+    dragYRef.current = 0;
+    setIsPressed(true);
+    setIsDragging(false);
+    setDragX(0);
+    setDragY(0);
+  }
+
+  function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!dragStart.current) return;
+    const dx = e.clientX - dragStart.current.x;
+    const dy = e.clientY - dragStart.current.y;
+    dragXRef.current = dx;
+    dragYRef.current = dy;
+    if (!isDragging && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
+      setIsDragging(true);
+      setIsPressed(false);
+    }
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      setDragX(dragXRef.current);
+      setDragY(dragYRef.current);
+    });
+  }
+
+  function handlePointerUp() {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    const dx = dragXRef.current;
+    const dy = dragYRef.current;
+    if (isDragging && frontTrack) {
+      if (dx > 100)       handleAction(frontTrack, 'hype', true, dx, dy);
+      else if (dx < -100) handleAction(frontTrack, 'skip', true, dx, dy);
+      else if (dy < -100) handleAction(frontTrack, 'save', true, dx, dy);
+    }
+    setIsPressed(false);
+    setIsDragging(false);
+    setDragX(0);
+    setDragY(0);
+    dragStart.current = null;
+    dragXRef.current = 0;
+    dragYRef.current = 0;
+  }
 
   // ── Genre picker options ──────────────────────────────────────
   const GENRES = ['Hip-Hop', 'Electronic', 'R&B', 'Indie', 'Jazz', 'Soul', 'House', 'Punk'];
@@ -477,9 +530,43 @@ export function ViewSeeds({
               ))}
 
               {/* Front card */}
-              <div style={{ position: 'absolute', inset: 0, borderRadius: 22, overflow: 'hidden', boxShadow: '0 30px 60px -10px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.06)', zIndex: 5 }}>
+              <div
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerLeave={handlePointerUp}
+                style={{
+                  position: 'absolute', inset: 0, borderRadius: 22, overflow: 'hidden', zIndex: 5,
+                  boxShadow: isPressed
+                    ? '0 12px 36px -6px rgba(0,0,0,.7), 0 0 0 2px rgba(255,255,255,.1)'
+                    : '0 30px 60px -10px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.06)',
+                  transform: flyOff
+                    ? `translateX(${flyOff.x}px) translateY(${flyOff.y}px) rotate(${flyOff.rot}deg)`
+                    : isDragging
+                      ? `translateX(${dragX}px) translateY(${dragY * 0.3}px) rotate(${dragX * 0.06}deg)`
+                      : isPressed ? 'scale(0.97)' : 'scale(1)',
+                  transition: flyOff
+                    ? 'transform .32s cubic-bezier(.4,0,.2,1)'
+                    : isDragging ? 'none'
+                    : 'transform .15s ease, box-shadow .15s ease',
+                  touchAction: 'none',
+                  userSelect: 'none',
+                  cursor: isDragging ? 'grabbing' : 'grab',
+                  willChange: 'transform',
+                }}
+              >
                 <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, ${frontTrack.color} 0%, #ff3e9a 60%, #221c16 100%)` }} />
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,.75) 100%)' }} />
+
+                {/* Drag tint overlays */}
+                {dragX > 0 && <div style={{ position: 'absolute', inset: 0, zIndex: 8, background: `rgba(34,200,80,${Math.min(dragX / 100, 1) * 0.55})`, pointerEvents: 'none', borderRadius: 22 }} />}
+                {dragX < 0 && <div style={{ position: 'absolute', inset: 0, zIndex: 8, background: `rgba(255,60,60,${Math.min(-dragX / 100, 1) * 0.55})`, pointerEvents: 'none', borderRadius: 22 }} />}
+                {dragY < 0 && <div style={{ position: 'absolute', inset: 0, zIndex: 8, background: `rgba(34,229,212,${Math.min(-dragY / 100, 1) * 0.55})`, pointerEvents: 'none', borderRadius: 22 }} />}
+
+                {/* Action pill badges */}
+                {dragX > 50 && <div style={{ position: 'absolute', top: 18, right: 18, zIndex: 9, padding: '6px 14px', borderRadius: 99, background: 'rgba(34,200,80,.92)', backdropFilter: 'blur(6px)', color: '#fff', fontFamily: 'var(--f-m)', fontWeight: 800, fontSize: 14, letterSpacing: '.08em', opacity: Math.min((dragX - 50) / 50, 1), pointerEvents: 'none' }}>♥ HYPE</div>}
+                {dragX < -50 && <div style={{ position: 'absolute', top: 18, left: 18, zIndex: 9, padding: '6px 14px', borderRadius: 99, background: 'rgba(255,60,60,.92)', backdropFilter: 'blur(6px)', color: '#fff', fontFamily: 'var(--f-m)', fontWeight: 800, fontSize: 14, letterSpacing: '.08em', opacity: Math.min((-dragX - 50) / 50, 1), pointerEvents: 'none' }}>✕ SKIP</div>}
+                {dragY < -50 && <div style={{ position: 'absolute', top: 18, left: '50%', transform: 'translateX(-50%)', zIndex: 9, padding: '6px 14px', borderRadius: 99, background: 'rgba(34,229,212,.92)', backdropFilter: 'blur(6px)', color: '#fff', fontFamily: 'var(--f-m)', fontWeight: 800, fontSize: 14, letterSpacing: '.08em', opacity: Math.min((-dragY - 50) / 50, 1), pointerEvents: 'none' }}>↑ SAVE</div>}
 
                 {/* Playing indicator */}
                 {seedPlaying && (

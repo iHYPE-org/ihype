@@ -274,7 +274,7 @@ export function WMShowHypersSheet({ showId, onClose }: { showId: string | null; 
                   display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
                 }}>
                   {h.avatarUrl
-                    ? <img src={h.avatarUrl} alt={initials} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ? <img src={h.avatarUrl} alt={initials} loading="lazy" width={38} height={38} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     : <span style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 14, color: T.bg }}>{initials}</span>
                   }
                 </div>
