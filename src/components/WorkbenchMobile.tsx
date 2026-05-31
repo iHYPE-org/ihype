@@ -50,12 +50,13 @@ const eqCss = `
 `;
 
 // ─── Top bar ─────────────────────────────────────────────────
-function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, notifCount, onFeedback }: {
+function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, notifCount, onFeedback, radioLive }: {
   tab: MobileTab; onTab: (t: MobileTab) => void;
   listeningNow: number; userName: string; initials: string;
   onSearch?: () => void;
   notifCount?: number;
   onFeedback?: () => void;
+  radioLive?: boolean;
 }) {
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [searchBarOpen, setSearchBarOpen] = React.useState(false);
@@ -123,6 +124,27 @@ function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, noti
       </div>
     )}
     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 19, transform: menuOpen ? 'translateY(66px)' : 'translateY(calc(-100% - 66px))', transition: 'transform .24s cubic-bezier(.4,0,.2,1)', background: T.bg3, borderBottom: `1px solid ${T.line2}`, boxShadow: '0 16px 48px rgba(0,0,0,.7)' }}>
+      <div style={{ padding: '8px 0' }}>
+        <div style={{ padding: '8px 20px 6px', fontFamily: T.fm, fontSize: 11, letterSpacing: '.18em', color: T.ink3, textTransform: 'uppercase' }}>Navigate</div>
+        {([
+          { id: 'me',     icon: '👤', label: 'My Page' },
+          { id: 'seeds',  icon: '🌱', label: 'Seeds' },
+          { id: 'radio',  icon: '📻', label: 'Radio',   badge: radioLive ? 'LIVE' : undefined },
+          { id: 'studio', icon: '🎙️', label: 'Studio' },
+          { id: 'tick',   icon: '🎟️', label: 'Tickets' },
+        ] as { id: MobileTab; icon: string; label: string; badge?: string }[]).map(it => {
+          const active = tab === it.id;
+          return (
+            <button key={it.id} onClick={() => { onTab(it.id); close(); }} style={{ width: '100%', padding: '13px 20px', background: active ? 'rgba(255,80,41,.07)' : 'transparent', border: 'none', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', textAlign: 'left' }}>
+              <span style={{ fontSize: 18, width: 24, textAlign: 'center' }}>{it.icon}</span>
+              <span style={{ fontFamily: T.fb, fontSize: 15, color: active ? T.accent : T.ink, flex: 1 }}>{it.label}</span>
+              {it.badge && <span style={{ fontSize: 11, fontWeight: 800, padding: '2px 6px', borderRadius: 99, fontFamily: T.fm, background: 'rgba(255,80,41,.18)', color: T.accent, border: '1px solid rgba(255,80,41,.4)', letterSpacing: '.08em' }}>{it.badge}</span>}
+              {active && <span style={{ width: 6, height: 6, borderRadius: '50%', background: T.accent, flexShrink: 0 }} />}
+            </button>
+          );
+        })}
+      </div>
+      <div style={{ height: 1, background: T.line, margin: '0 20px' }} />
       <div style={{ padding: '8px 0' }}>
         {[
           { icon: '🔔', label: `Notifications${(notifCount ?? 0) > 0 ? ` · ${notifCount}` : ''}`, action: close, accent: (notifCount ?? 0) > 0 },
@@ -384,7 +406,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
         </div>
       )}
       <audio ref={audioRef} preload="metadata" style={{ display: 'none' }} />
-      <WMTopBar tab={tab} onTab={setTab} listeningNow={data.listeningNow} userName={data.userName} initials={data.userInitials} onSearch={() => setResultsOpen(true)} notifCount={notifCount} onFeedback={() => setShowFeedbackSheet(true)} />
+      <WMTopBar tab={tab} onTab={setTab} listeningNow={data.listeningNow} userName={data.userName} initials={data.userInitials} onSearch={() => setResultsOpen(true)} notifCount={notifCount} onFeedback={() => setShowFeedbackSheet(true)} radioLive={data.radioShows.some(r => r.live)} />
       <div role="main" className="wm-scroll" style={{ flex: 1, overflowY: tab === 'seeds' ? 'hidden' : 'auto', overflowX: 'hidden', position: 'relative', scrollbarWidth: 'none' }} onTouchStart={handleMainTouchStart} onTouchMove={handleMainTouchMove} onTouchEnd={handleMainTouchEnd}>
         {tab !== 'seeds' && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, height: pullDelta > 0 ? pullDelta : refreshing ? 44 : 0, overflow: 'hidden', transition: refreshing ? 'none' : 'height .2s', fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.12em' }}>
@@ -394,7 +416,6 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
         <ViewErrorBoundary viewName={tab}>{screenEl}</ViewErrorBoundary>
       </div>
       {track && tab !== 'seeds' && <WMMiniPlayer track={track} playing={playing} onToggle={() => setPlaying(p => !p)} progress={progress} onAlbumTap={() => setTrackSheetOpen(true)} />}
-      <WMBottomTabs tab={tab} onTab={setTab} radioLive={data.radioShows.some(r => r.live)} />
       <WMTrackSheet track={track ?? null} open={trackSheetOpen} onClose={() => setTrackSheetOpen(false)} />
       <WMShowHypersSheet showId={hypersSheetShowId} onClose={() => setHypersSheetShowId(null)} />
       <WMSetlistVoteSheet showId={setlistSheetShowId} onClose={() => setSetlistSheetShowId(null)} />
