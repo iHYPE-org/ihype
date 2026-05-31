@@ -4,6 +4,7 @@ import { recordAuditEvent } from '@/lib/audit';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { readClientAddress } from '@/lib/request-meta';
+import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 
 const reportSchema = z.object({
   targetType: z.enum(['profile', 'show', 'media', 'ticket']),
@@ -20,6 +21,9 @@ export async function POST(request: Request) {
   }
 
   const clientAddress = readClientAddress(request);
+
+  const rl = await consumeRateLimit(rateLimitKey('content-report', session.user.id, clientAddress), { limit: 10, windowMs: 60 * 60 * 1000 });
+  if (!rl.allowed) return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
 
   try {
     const body = reportSchema.parse(await request.json());

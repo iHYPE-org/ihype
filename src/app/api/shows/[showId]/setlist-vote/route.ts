@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +55,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const { mediaId } = await request.json() as { mediaId: string };
   if (!mediaId) return NextResponse.json({ error: 'mediaId required' }, { status: 400 });
+
+  const rl = await consumeRateLimit(rateLimitKey('setlist-vote', session.user.id, null), { limit: 30, windowMs: 60 * 60 * 1000 });
+  if (!rl.allowed) return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
 
   const show = await db.show.findUnique({ where: { id: showId }, select: { status: true } });
   if (!show || !['SCHEDULED', 'LIVE'].includes(show.status)) {

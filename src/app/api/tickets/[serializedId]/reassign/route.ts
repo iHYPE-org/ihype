@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth';
 import { sendIssuedTicketEmail } from '@/lib/mailer';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { db } from '@/lib/db';
+import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 import { buildTicketQrCodeDataUrl, buildTicketVerificationUrl, formatTicketStatus } from '@/lib/tickets';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 
@@ -21,6 +22,9 @@ export async function POST(
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Login required' }, { status: 401 });
   }
+
+  const rl = await consumeRateLimit(rateLimitKey('ticket-reassign', session.user.id, null), { limit: 20, windowMs: 60 * 60 * 1000 });
+  if (!rl.allowed) return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
 
   try {
     const { serializedId } = await params;

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
+import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +14,9 @@ export async function POST(
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Login required' }, { status: 401 });
   }
+
+  const rl = await consumeRateLimit(rateLimitKey('ticket-transfer', session.user.id, null), { limit: 10, windowMs: 60 * 60 * 1000 });
+  if (!rl.allowed) return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
 
   const { serializedId } = await params;
 

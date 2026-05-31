@@ -66,6 +66,7 @@ async function main() {
     });
   }
 
+  await user('launch-fan@ihype.org', 'launch-fan', 'Launch Fan', Role.FAN);
   const artistOwner = await user('launch-artist@ihype.org', 'launch-artist', 'Launch Artist', Role.ARTIST);
   const venueOwner = await user('launch-venue@ihype.org', 'launch-venue', 'Launch Venue', Role.VENUE);
   const promoterOwner = await user('launch-promoter@ihype.org', 'launch-promoter', 'Launch Promoter', Role.DJ);
@@ -165,6 +166,23 @@ async function main() {
       ticketPriceCents: 0,
       tags: ['listening-room', 'artist-seed'],
       hypeCount: 24
+    }
+  });
+
+  await prisma.artistMediaAsset.upsert({
+    where: { hexId: '0xlaunch000000000000000000000000000010' },
+    update: {},
+    create: {
+      hexId: '0xlaunch000000000000000000000000000010',
+      title: 'Static Bloom — Demo Track',
+      originalFileName: 'static-bloom-demo.mp3',
+      mimeType: 'audio/mpeg',
+      fileSizeBytes: 0,
+      storageProvider: 'external',
+      storageUrl: 'https://ihype.org/seed/static-bloom-demo.mp3',
+      freeUseEnabled: true,
+      isPublished: true,
+      profileId: artist.id
     }
   });
 

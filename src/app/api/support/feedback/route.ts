@@ -3,9 +3,15 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { triageSupportRequest } from '@/lib/support-triage';
 import { sendGenericEmail } from '@/lib/mailer';
+import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
+import { readClientAddress } from '@/lib/request-meta';
 
 export async function POST(request: NextRequest) {
   const session = await auth();
+  const ip = readClientAddress(request);
+
+  const rl = await consumeRateLimit(rateLimitKey('support-feedback', session?.user?.id, ip), { limit: 5, windowMs: 60 * 60 * 1000 });
+  if (!rl.allowed) return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
 
   let body: { message?: string; category?: string; url?: string };
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid request.' }, { status: 400 }); }

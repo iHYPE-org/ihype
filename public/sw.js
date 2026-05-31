@@ -24,8 +24,13 @@ const NETWORK_ONLY_PATHS = [
   '/register',
   '/forgot',
   '/index.html',
-  '/api/auth',
-  '/api/register'
+  '/api'
+];
+
+// Paths that should use stale-while-revalidate (ticket availability changes frequently)
+const SWR_PATHS = [
+  '/shows/',
+  '/artists/'
 ];
 
 self.addEventListener('install', (event) => {
@@ -65,6 +70,11 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (request.destination === 'document' || url.pathname.endsWith('.html')) {
+    // Show and artist pages: stale-while-revalidate (ticket availability changes)
+    if (SWR_PATHS.some((p) => url.pathname.startsWith(p))) {
+      event.respondWith(staleWhileRevalidate(request, PAGE_CACHE));
+      return;
+    }
     event.respondWith(networkWithCacheFallback(request, PAGE_CACHE));
     return;
   }
@@ -117,7 +127,9 @@ async function networkWithCacheFallback(request, cacheName) {
 }
 
 function isStaticAsset(pathname) {
-  return /\.(css|js|png|jpe?g|svg|webp|woff2?|json)$/i.test(pathname);
+  // Exclude .json — manifest.json is pre-cached in STATIC_ASSETS; other .json
+  // files are typically API responses that must not be cached by the SW.
+  return /\.(css|js|png|jpe?g|svg|webp|woff2?)$/i.test(pathname);
 }
 
 function offlineFallback() {
