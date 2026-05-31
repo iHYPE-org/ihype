@@ -150,7 +150,7 @@ function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, noti
             <span style={{ fontFamily: T.fb, fontSize: 15, color: T.ink }}>{item.label}</span>
           </a>
         ))}
-        <button onClick={() => { close(); onFeedback?.(); }} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 20px', background: 'transparent', border: 'none', width: '100%', cursor: 'pointer', textAlign: 'left' }}>
+        <button onClick={() => { close(); window.dispatchEvent(new CustomEvent('ihype:open-bug-report')); }} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 20px', background: 'transparent', border: 'none', width: '100%', cursor: 'pointer', textAlign: 'left' }}>
           <span style={{ fontSize: 18, width: 24, textAlign: 'center' }}>🐛</span>
           <span style={{ fontFamily: T.fb, fontSize: 15, color: T.ink }}>Report a bug</span>
         </button>
