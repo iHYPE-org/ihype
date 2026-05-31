@@ -11,6 +11,8 @@ import {
   type ReactNode
 } from 'react';
 import { FanPlaylistManager } from '@/components/FanPlaylistManager';
+import { PlayerQueuePanel } from '@/components/PlayerQueuePanel';
+import { usePlayerKeyboard } from '@/lib/usePlayerKeyboard';
 
 export type MediaTrack = {
   id: string;
@@ -89,13 +91,6 @@ type PersistedPlayerState = {
 
 const STORAGE_KEY = 'ihype-global-media-player';
 
-function formatTime(seconds: number) {
-  if (!Number.isFinite(seconds) || seconds <= 0) return '0:00';
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60).toString().padStart(2, '0');
-  return `${m}:${s}`;
-}
-
 function shuffleAfter<T>(arr: T[], fromIndex: number): T[] {
   const head = arr.slice(0, fromIndex + 1);
   const tail = arr.slice(fromIndex + 1);
@@ -134,43 +129,26 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
   const sleepEndTimeRef = useRef<number | null>(null);
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────────
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
-      if (e.code === 'Space') {
-        e.preventDefault();
-        setCurrentTrack(t => { if (t) setIsPlaying(v => !v); return t; });
-      } else if (e.code === 'ArrowLeft') {
-        e.preventDefault();
+  usePlayerKeyboard(audioRef, {
+    togglePlayPause: useCallback(() => {
+      setCurrentTrack(t => { if (t) setIsPlaying(v => !v); return t; });
+    }, []),
+    skipNext: useCallback(() => {
+      setQueue(prev => { setCurrentIndex(ci => { const n = ci >= 0 && ci < prev.length - 1 ? ci + 1 : ci; if (n !== ci) { setCurrentTrack(prev[n] ?? null); setIsPlaying(true); } return n; }); return prev; });
+    }, []),
+    skipPrevious: useCallback(() => {
+      setQueue(prev => { setCurrentIndex(ci => { const p = ci > 0 ? ci - 1 : ci; if (p !== ci) { setCurrentTrack(prev[p] ?? null); setIsPlaying(true); } return p; }); return prev; });
+    }, []),
+    toggleMute: useCallback(() => {
+      setIsMuted(m => {
+        const next = !m;
         const a = audioRef.current;
-        if (a) { a.currentTime = Math.max(0, a.currentTime - 10); setCurrentTime(a.currentTime); }
-      } else if (e.code === 'ArrowRight') {
-        e.preventDefault();
-        const a = audioRef.current;
-        if (a && Number.isFinite(a.duration)) { a.currentTime = Math.min(a.duration, a.currentTime + 10); setCurrentTime(a.currentTime); }
-      } else if (e.code === 'KeyN') {
-        e.preventDefault();
-        setQueue(prev => { setCurrentIndex(ci => { const n = ci >= 0 && ci < prev.length - 1 ? ci + 1 : ci; if (n !== ci) { setCurrentTrack(prev[n] ?? null); setIsPlaying(true); } return n; }); return prev; });
-      } else if (e.code === 'KeyP') {
-        e.preventDefault();
-        const a = audioRef.current;
-        if (a && a.currentTime > 4) { a.currentTime = 0; setCurrentTime(0); return; }
-        setQueue(prev => { setCurrentIndex(ci => { const p = ci > 0 ? ci - 1 : ci; if (p !== ci) { setCurrentTrack(prev[p] ?? null); setIsPlaying(true); } return p; }); return prev; });
-      } else if (e.code === 'KeyM') {
-        e.preventDefault();
-        setIsMuted(m => {
-          const next = !m;
-          const a = audioRef.current;
-          if (a) a.volume = next ? 0 : preMuteVolumeRef.current;
-          return next;
-        });
-      }
-    }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
+        if (a) a.volume = next ? 0 : preMuteVolumeRef.current;
+        return next;
+      });
+    }, []),
+    setCurrentTime,
+  });
 
   // ── Restore persisted state ────────────────────────────────────────────────
   useEffect(() => {
@@ -610,52 +588,7 @@ export function useMediaPlayer(): MediaPlayerContextValue {
   return useMemo(() => ({ ...stable, ...volatile }), [stable, volatile]);
 }
 
-export function HeaderMediaPlayer() {
-  const {
-    currentTrack, isPlaying, currentTime, duration, volume, isMuted,
-    canGoBack, canGoForward, playTrack, togglePlayback, playNext, playPrevious, seekTo, setVolume, toggleMute
-  } = useMediaPlayer();
-
-  return (
-    <div className="header-player" role="region" aria-label="Global artist media player">
-      <div className="header-player-main">
-        <div className="header-player-copy">
-          <strong>{currentTrack?.title ?? 'Player standby'}</strong>
-          <span className="header-player-caption">
-            {currentTrack
-              ? `${currentTrack.artistName}${currentTrack.notes ? ` | ${currentTrack.notes}` : ''}`
-              : 'Play any artist upload to keep listening while you browse.'}
-          </span>
-        </div>
-        <div className="header-player-controls">
-          <button className="media-player-button" disabled={!canGoBack} onClick={playPrevious} type="button">Prev</button>
-          <button className="media-player-button media-player-button-primary" disabled={!currentTrack} onClick={togglePlayback} type="button">
-            {isPlaying ? 'Pause' : 'Play'}
-          </button>
-          <button className="media-player-button" disabled={!canGoForward} onClick={playNext} type="button">Next</button>
-        </div>
-      </div>
-      <div className="header-player-rail">
-        <div className="header-player-progress">
-          <span>{formatTime(currentTime)}</span>
-          <input aria-label="Playback position" className="media-player-range" max={duration || 0} min={0} onChange={e => seekTo(Number(e.target.value))} step={0.1} type="range" value={Math.min(currentTime, duration || 0)} />
-          <span>{formatTime(duration)}</span>
-        </div>
-        <div className="header-player-utility">
-          <label className="header-player-volume">
-            <button onClick={toggleMute} style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: isMuted ? 0.4 : 0.7, color: 'inherit', padding: 0, fontSize: '0.75rem' }} type="button" title={isMuted ? 'Unmute' : 'Mute'}>
-              {isMuted ? '🔇' : '🔊'}
-            </button>
-            <input aria-label="Playback volume" className="media-player-range" max={1} min={0} onChange={e => setVolume(Number(e.target.value))} step={0.05} type="range" value={isMuted ? 0 : volume} />
-          </label>
-          <FanPlaylistManager currentTrack={currentTrack} playTrack={playTrack} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── SVG icons ───────────────────────────────────────────────────────────────
+// ── SVG icons (dock-only) ────────────────────────────────────────────────────
 const DkPlay    = () => <svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20"/></svg>;
 const DkPause   = () => <svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>;
 const DkSkipP   = () => <svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor"><polygon points="19 4 9 12 19 20"/><rect x="5" y="4" width="2" height="16"/></svg>;
@@ -720,81 +653,18 @@ export function SitePlayerDock() {
   return (
     <div className="site-dock" role="region" aria-label="Media player" style={{ position: 'relative' }}>
 
-      {/* ── Popover panel (queue / history) ─────────────────────────────── */}
-      {panel !== null && (
-        <div style={{
-          position: 'absolute', bottom: '100%', right: 0, width: 300, maxHeight: 340,
-          display: 'flex', flexDirection: 'column',
-          background: 'var(--surface-1, #1a1714)', border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: '8px 8px 0 0', zIndex: 10
-        }}>
-          {/* Tab bar */}
-          <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-            {(['queue', 'history'] as DockPanel[]).map(p => (
-              <button
-                key={p}
-                onClick={() => setPanel(p)}
-                style={{ ...btnBase, flex: 1, padding: '6px 8px', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.06em', opacity: panel === p ? 1 : 0.4, borderBottom: panel === p ? '2px solid var(--accent, #ff5029)' : '2px solid transparent', fontWeight: panel === p ? 700 : 400 }}
-                type="button"
-              >
-                {p === 'queue' ? `Up next (${upcomingTracks.length})` : `History (${history.length})`}
-              </button>
-            ))}
-            <button onClick={() => setPanel(null)} style={{ ...btnBase, padding: '6px 10px', opacity: 0.4, fontSize: '0.8rem' }} type="button">✕</button>
-          </div>
-
-          {/* Content */}
-          <div style={{ overflowY: 'auto', flex: 1, padding: '0.4rem' }}>
-            {panel === 'queue' && (
-              upcomingTracks.length === 0
-                ? <p style={{ fontSize: '0.75rem', opacity: 0.4, margin: '0.5rem 0.25rem' }}>{isAutoplay ? 'Radio will load more when queue ends.' : 'Queue is empty.'}</p>
-                : upcomingTracks.map((track, i) => (
-                  <div key={track.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px', borderRadius: 4 }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    <span style={{ fontSize: '0.6rem', opacity: 0.35, width: 14, textAlign: 'right', flexShrink: 0 }}>{i + 1}</span>
-                    <div style={{ flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => playTrack(track, queue)}>
-                      <div style={{ fontSize: '0.77rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.title}</div>
-                      <div style={{ fontSize: '0.67rem', opacity: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.artistName}</div>
-                    </div>
-                    <button onClick={() => removeFromQueue(track.id)} style={{ ...btnBase, opacity: 0.3, fontSize: '0.65rem' }} title="Remove" type="button">✕</button>
-                  </div>
-                ))
-            )}
-            {panel === 'history' && (
-              history.length === 0
-                ? <p style={{ fontSize: '0.75rem', opacity: 0.4, margin: '0.5rem 0.25rem' }}>Nothing played yet this session.</p>
-                : history.map((track, i) => (
-                  <div key={`${track.id}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px', borderRadius: 4 }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    <span style={{ fontSize: '0.6rem', opacity: 0.35, width: 14, textAlign: 'right', flexShrink: 0 }}>{i + 1}</span>
-                    <div style={{ flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => playTrack(track)}>
-                      <div style={{ fontSize: '0.77rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.title}</div>
-                      <div style={{ fontSize: '0.67rem', opacity: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.artistName}</div>
-                    </div>
-                  </div>
-                ))
-            )}
-          </div>
-
-          {/* Autoplay toggle footer (queue panel only) */}
-          {panel === 'queue' && (
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '0.68rem', opacity: 0.6 }}>Autoplay radio</span>
-              <button
-                onClick={toggleAutoplay}
-                type="button"
-                style={{ ...btnBase, fontSize: '0.68rem', fontWeight: 700, opacity: isAutoplay ? 1 : 0.4, color: isAutoplay ? 'var(--accent, #ff5029)' : 'inherit' }}
-              >
-                {isAutoplay ? 'On' : 'Off'}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
+      {/* ── Queue / history popover ───────────────────────────────────────── */}
+      <PlayerQueuePanel
+        panel={panel}
+        setPanel={setPanel}
+        upcomingTracks={upcomingTracks}
+        history={history}
+        isAutoplay={isAutoplay}
+        toggleAutoplay={toggleAutoplay}
+        playTrack={playTrack}
+        removeFromQueue={removeFromQueue}
+        queue={queue}
+      />
 
       {/* ── Left: art + meta ─────────────────────────────────────────────── */}
       <div className="site-dock-l">
@@ -836,16 +706,14 @@ export function SitePlayerDock() {
         </div>
       </div>
 
-      {/* ── Right: utility controls ───────────────────────────────────────── */}
+      {/* ── Right: volume + utility controls ─────────────────────────────── */}
       <div className="site-dock-r" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
 
-        {/* Mute */}
+        {/* Mute + volume */}
         <button className="site-dock-btn" onClick={toggleMute} aria-label={isMuted ? 'Unmute' : 'Mute'} title={isMuted ? 'Unmute (M)' : 'Mute (M)'} type="button"
           style={{ opacity: isMuted ? 0.4 : 0.6, fontSize: '0.75rem' }}>
           {isMuted ? '🔇' : '🔊'}
         </button>
-
-        {/* Volume mini-slider */}
         <input
           aria-label="Volume"
           type="range" min={0} max={1} step={0.05}

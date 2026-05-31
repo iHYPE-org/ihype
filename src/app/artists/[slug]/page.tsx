@@ -469,7 +469,7 @@ export default async function ArtistPage({
               {media.notes ? <div className="artist-copy">{media.notes}</div> : null}
               {artworkUrl ? (
                 <div className="artist-media-visuals">
-                  <img alt={`${profile.name} featured artwork`} className="artist-media-visual-image" src={artworkUrl} />
+                  <img alt={`${profile.name} featured artwork`} className="artist-media-visual-image" src={artworkUrl} loading="lazy" />
                 </div>
               ) : null}
               {media.entries.length ? (
@@ -530,6 +530,7 @@ export default async function ArtistPage({
                     <img
                       src={believer.user.image}
                       alt={displayName}
+                      loading="lazy"
                       style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
                     />
                   ) : (

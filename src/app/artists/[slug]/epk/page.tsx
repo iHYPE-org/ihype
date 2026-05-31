@@ -52,6 +52,7 @@ export default async function EpkPage({ params }: { params: Promise<{ slug: stri
           <img
             alt={profile.name}
             src={avatarUrl}
+            loading="lazy"
             style={{ width: 160, height: 160, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }}
           />
         )}

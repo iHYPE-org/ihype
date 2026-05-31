@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
@@ -59,6 +60,7 @@
     "tsx": "^4.19.2",
     "typescript": "^5.8.3",
     "vitest": "^2.1.9",
+    "@playwright/test": "^1.49.0",
     "wrangler": "^4.93.0"
   },
   "overrides": {

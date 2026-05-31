@@ -19,6 +19,7 @@ export async function SoundsLike({ profileId, profileName }: { profileId: string
               <img
                 src={p.avatarImage}
                 alt={p.name}
+                loading="lazy"
                 style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover' }}
               />
             ) : (

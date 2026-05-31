@@ -332,7 +332,7 @@ export default async function VenuePage({
               <h2>About</h2>
               {featureImageUrl ? (
                 <div className="artist-media-visuals">
-                  <img alt={`${profile.name} featured visual`} className="artist-media-visual-image" src={featureImageUrl} />
+                  <img alt={`${profile.name} featured visual`} className="artist-media-visual-image" src={featureImageUrl} loading="lazy" />
                 </div>
               ) : null}
               {(profile.addressLine1 || profile.hoursText || profile.parkingDetails || profile.stayRecommendations) ? (

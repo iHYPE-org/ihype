@@ -291,7 +291,7 @@ export default async function PromoterPage({
               <div className="artist-copy">{profile.recommendContent || 'Use this section to explain the rooms, artists, and collaborations you like to champion.'}</div>
               {featureImageUrl ? (
                 <div className="artist-media-visuals">
-                  <img alt={`${profile.name} featured visual`} className="artist-media-visual-image" src={featureImageUrl} />
+                  <img alt={`${profile.name} featured visual`} className="artist-media-visual-image" src={featureImageUrl} loading="lazy" />
                 </div>
               ) : null}
               <NetworkEarthGlobe

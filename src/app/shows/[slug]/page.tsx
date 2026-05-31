@@ -3,21 +3,21 @@ import { cache } from 'react';
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { notFound } from 'next/navigation';
-import { HypeButton } from '@/components/HypeButton';
-import { ShowSequencePlayer } from '@/components/ShowSequencePlayer';
-import { TicketSaleCard } from '@/components/TicketSaleCard';
 import { db } from '@/lib/db';
 import { getShowVisibilitySignals } from '@/lib/integrity';
 import { isAdminSession } from '@/lib/permissions';
 import { detectRequestLocation } from '@/lib/request-location';
 import { parseShowProductionPlan } from '@/lib/show-composer';
-import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { formatShowTime, getBaseUrl } from '@/lib/utils';
 import { ShowComments } from '@/components/ShowComments';
 import { ShowEngagement } from '@/components/ShowEngagement';
 import { ShowSetlistEditor } from '@/components/ShowSetlistEditor';
 import { AdBanner } from '@/components/AdBanner';
 import { ShowRecapForm } from '@/components/ShowRecapForm';
+import { ShowMediaGrid } from './ShowMediaGrid';
+import { ShowProductionPlan } from './ShowProductionPlan';
+import { ShowTicketing } from './ShowTicketing';
+import { ShowTracklist } from './ShowTracklist';
 
 const getShowMeta = cache((slug: string) =>
   db.show.findUnique({
@@ -240,486 +240,90 @@ export default async function ShowDetailPage({
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-    <main className="container section">
-      <div className="profile-header">
-        <div className="badge">{show.status}</div>
-        <h1 className="title" style={{ fontSize: '2.7rem' }}>
-          {show.title}
-        </h1>
-        <p className="subtitle">{show.description}</p>
-        <p className="meta">
-          {formatShowTime(show.startsAt)}
-          {show.venueProfile ? ` | ${show.venueProfile.name}` : ''}
-          {show.headlinerProfile ? ` | ${show.headlinerProfile.name}` : ''}
-        </p>
-        <div style={{ marginTop: 10 }}>
-          <a className="button small secondary" href={`/shows/${slug}/poster?download=1`} download style={{ marginBottom: 8, display: 'inline-block' }}>
-            Download poster
-          </a>
-          <ShowEngagement
-            showId={show.id}
-            canRsvp={Boolean(session?.user?.id)}
-            initialCount={rsvpCount}
-            initialGoing={viewerGoing}
-            canRemind={Boolean(session?.user?.id)}
-            initialReminded={false}
-            showEnded={show.status === 'ENDED'}
-          />
+      <main className="container section">
+        <div className="profile-header">
+          <div className="badge">{show.status}</div>
+          <h1 className="title" style={{ fontSize: '2.7rem' }}>
+            {show.title}
+          </h1>
+          <p className="subtitle">{show.description}</p>
+          <p className="meta">
+            {formatShowTime(show.startsAt)}
+            {show.venueProfile ? ` | ${show.venueProfile.name}` : ''}
+            {show.headlinerProfile ? ` | ${show.headlinerProfile.name}` : ''}
+          </p>
+          <div style={{ marginTop: 10 }}>
+            <a className="button small secondary" href={`/shows/${slug}/poster?download=1`} download style={{ marginBottom: 8, display: 'inline-block' }}>
+              Download poster
+            </a>
+            <ShowEngagement
+              showId={show.id}
+              canRsvp={Boolean(session?.user?.id)}
+              initialCount={rsvpCount}
+              initialGoing={viewerGoing}
+              canRemind={Boolean(session?.user?.id)}
+              initialReminded={false}
+              showEnded={show.status === 'ENDED'}
+            />
+          </div>
         </div>
-      </div>
 
-      <div className="grid grid-2">
-        <section className="panel" style={{ padding: '1rem' }}>
-          <div className="video-shell">
-            {productionPlan ? (
-              <ShowSequencePlayer
-                autoPlay={show.status === 'LIVE'}
-                isPreview={show.status === 'DRAFT'}
-                productionPlan={productionPlan}
-                showId={show.id}
-                showSlug={show.slug}
-                title={show.title}
-              />
-            ) : (
-              <div className="show-art" style={{ minHeight: 320 }}>
-                {show.posterImage
-                  ? <img alt={show.title} src={show.posterImage} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <span className="meta">No audio uploaded yet</span>}
-              </div>
-            )}
-          </div>
-          {show.status !== 'DRAFT' ? (
-            <HypeButton entityLabel="show" initialCount={show.hypeCount} initiallyHyped={!!userShowHype} targetId={show.id} targetType="show" />
-          ) : (
-            <p className="meta">Draft previews stay private until the promoter broadcasts the show live.</p>
-          )}
-        </section>
+        <ShowMediaGrid
+          productionPlan={productionPlan}
+          show={show}
+          userShowHype={userShowHype}
+          visibility={visibility}
+        />
 
-        <aside className="panel" style={{ padding: '1.25rem' }}>
-          <h2>Show details</h2>
-          <div className="tag-row">
-            {show.tags.map((tag) => (
-              <span className="tag" key={tag}>
-                {tag}
-              </span>
-            ))}
-          </div>
-          <table className="table">
-            <tbody>
-              <tr>
-                <th>Status</th>
-                <td>{show.status}</td>
-              </tr>
-              <tr>
-                <th>Venue</th>
-                <td>{show.venueProfile?.name ?? 'TBA'}</td>
-              </tr>
-              <tr>
-                <th>Headliner</th>
-                <td>{show.headlinerProfile?.name ?? 'TBA'}</td>
-              </tr>
-              <tr>
-                <th>Promoter</th>
-                <td>{show.promoterProfile?.name ?? 'Promoter pool unassigned'}</td>
-              </tr>
-              <tr>
-                <th>Ticketing</th>
-                <td>{show.isTicketed ? 'Enabled' : 'Not enabled'}</td>
-              </tr>
-              {show.isTicketed ? (
-                <>
-                  <tr>
-                    <th>Ticket price</th>
-                    <td>{formatCurrencyFromCents(show.ticketPriceCents)}</td>
-                  </tr>
-                  <tr>
-                    <th>Tickets sold</th>
-                    <td>{show.ticketsSoldCount}</td>
-                  </tr>
-                  <tr>
-                    <th>Capacity</th>
-                    <td>{show.ticketCapacity ?? 'Open'}</td>
-                  </tr>
-                  <tr>
-                    <th>Gross sales</th>
-                    <td>{formatCurrencyFromCents(show.ticketPriceCents * show.ticketsSoldCount)}</td>
-                  </tr>
-                  <tr>
-                    <th>Venue split</th>
-                    <td>{show.venuePayoutPercent ?? 0}%</td>
-                  </tr>
-                  <tr>
-                    <th>Artist split</th>
-                    <td>{show.artistPayoutPercent ?? 0}%</td>
-                  </tr>
-                  <tr>
-                    <th>Promoter pool</th>
-                    <td>{show.promoterPayoutPercent}%</td>
-                  </tr>
-                  <tr>
-                    <th>Event officially opens</th>
-                    <td>{show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt) : 'Venue-controlled'}</td>
-                  </tr>
-                </>
-              ) : null}
-              <tr>
-                <th>Hype</th>
-                <td>{show.hypeCount}</td>
-              </tr>
-              <tr>
-                <th>Heuristics</th>
-                <td>{visibility.version}</td>
-              </tr>
-            </tbody>
-          </table>
+        {productionPlan ? (
+          <ShowProductionPlan productionPlan={productionPlan} />
+        ) : null}
 
-          <div className="explanation-block">
-            <h3>Why you&apos;re seeing this</h3>
-            <ul className="launch-list">
-              {visibility.reasons.map((reason) => (
-                <li key={reason}>{reason}</li>
-              ))}
-            </ul>
-          </div>
-          {show.bookingLegalNotes ? (
-            <div className="explanation-block">
-              <h3>Legal booking snapshot</h3>
-              <p>{show.bookingLegalNotes}</p>
-            </div>
-          ) : null}
-        </aside>
-      </div>
+        <ShowTicketing
+          affiliatePromoter={affiliatePromoter}
+          currentFan={currentFan}
+          show={show}
+          viewerLocation={viewerLocation}
+        />
 
-      {productionPlan ? (
-        <section className="section">
-          <div className="panel composer-plan-panel">
-            <div className="composer-header">
-                <div>
-                  <div className="badge">Production plan</div>
-                  <h2>Promoter run of show</h2>
-                  <p className="kicker">
-                  This show was assembled from artist songs and videos, recorded voice-over overdubs, sampler pads, and ad breaks inserted after every three media slots.
-                  </p>
-                </div>
-              </div>
+        {show.isRadioShow && show.radioTracks.length > 0 ? (
+          <ShowTracklist tracks={show.radioTracks} />
+        ) : null}
 
-            <div className="composer-grid">
-              <div className="composer-column">
-                <div className="composer-card">
-                  <h3>Artist media</h3>
-                  {productionPlan.mediaItems.length ? (
-                    <div className="composer-library-list">
-                      {productionPlan.mediaItems.map((item) => (
-                        <div className="composer-media-card" key={item.mediaId}>
-                          <div>
-                            <div className="composer-media-code">{item.mediaId}</div>
-                            <strong>{item.title}</strong>
-                            <p className="meta">
-                              {item.artistName}
-                              {item.notes ? ` | ${item.notes}` : ''}
-                            </p>
-                          </div>
-                          <div className="composer-media-actions">
-                            <a className="button small secondary" href={item.url} rel="noreferrer" target="_blank">
-                              Open media
-                            </a>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="empty">No artist media is attached to this show.</div>
-                  )}
-                </div>
-              </div>
-
-              <div className="composer-column">
-                <div className="composer-card">
-                  <h3>Voice-over cues</h3>
-                  {productionPlan.voiceOvers.length ? (
-                    <div className="composer-voice-list">
-                      {productionPlan.voiceOvers.map((voiceCue) => (
-                        <div className="composer-voice-card" key={voiceCue.id}>
-                          <strong>{voiceCue.title}</strong>
-                          <p className="meta">
-                            {voiceCue.durationSeconds ? `${voiceCue.durationSeconds}s` : 'Open duration'}
-                            {voiceCue.cueAfterMediaId ? ` | cue after ${voiceCue.cueAfterMediaId}` : ''}
-                          </p>
-                          {voiceCue.script ? <p>{voiceCue.script}</p> : <p className="meta">Recorded take with no text notes.</p>}
-                          {voiceCue.recordingDataUrl ? (
-                            <audio className="composer-audio-preview" controls src={voiceCue.recordingDataUrl} />
-                          ) : null}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="empty">No voice-over cues were saved for this show.</div>
-                  )}
-                </div>
-
-                <div className="composer-card">
-                  <h3>Sample pad assignments</h3>
-                  {productionPlan.samplePads.length ? (
-                    <div className="composer-sample-grid">
-                      {productionPlan.samplePads
-                        .slice()
-                        .sort((left, right) => (left.assignedPad ?? 99) - (right.assignedPad ?? 99))
-                        .map((sample) => (
-                          <div className="composer-sample-card" key={`${sample.sampleId}-${sample.assignedPad ?? 'open'}`}>
-                            <div>
-                              {sample.assignedPad ? (
-                                <div className="composer-media-code">Pad {String(sample.assignedPad).padStart(2, '0')}</div>
-                              ) : null}
-                              <strong>{sample.title}</strong>
-                              <p className="meta">{sample.notes ?? 'Royalty-free sample.'}</p>
-                              <div className="composer-media-code">{sample.sampleId}</div>
-                            </div>
-                            <a className="button small secondary" href={sample.url}>
-                              Open sample
-                            </a>
-                          </div>
-                        ))}
-                    </div>
-                  ) : (
-                    <div className="empty">No sample pads were saved for this show.</div>
-                  )}
-                </div>
-              </div>
-
-              <div className="composer-column">
-                <div className="composer-card">
-                  <h3>Show sequence</h3>
-                  {productionPlan.sequence.length ? (
-                    <div className="composer-sequence-list">
-                      {productionPlan.sequence.map((item, index) => (
-                        <div className="composer-sequence-card" key={item.id}>
-                          <div>
-                            <span className="composer-sequence-index">{String(index + 1).padStart(2, '0')}</span>
-                            <strong>{item.label}</strong>
-                          </div>
-                          <div className="composer-media-code">{item.kind}</div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="empty">No run-of-show sequence was saved.</div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      ) : null}
-
-      {show.isTicketed && show.venueProfile && show.headlinerProfile && show.venuePayoutPercent !== null && show.artistPayoutPercent !== null ? (
-        <section className="section">
-          <TicketSaleCard
-            affiliatePromoterName={affiliatePromoter?.name ?? null}
-            affiliatePromoterProfileId={affiliatePromoter?.id ?? null}
-            artistName={show.headlinerProfile.name}
-            artistPayoutPercent={show.artistPayoutPercent}
-            currentFan={
-              currentFan?.role === 'FAN'
-                ? {
-                    name: currentFan.name,
-                    email: currentFan.email ?? '',
-                    hasStoredPaymentToken: Boolean(currentFan.storedPaymentTokenRef),
-                    storedPaymentTokenBrand: currentFan.storedPaymentTokenBrand,
-                    storedPaymentTokenLast4: currentFan.storedPaymentTokenLast4
-                  }
-                : null
-            }
-            promoterName={show.promoterProfile?.name ?? null}
-            promoterPayoutPercent={show.promoterPayoutPercent}
-            showId={show.id}
-            ticketCapacity={show.ticketCapacity}
-            ticketPriceCents={show.ticketPriceCents}
-            ticketingOpen={show.status === 'LIVE' || Boolean(show.ticketingOpensAt && show.ticketingOpensAt <= new Date())}
-            ticketingOpensAtLabel={show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt) : null}
-            ticketsSoldCount={show.ticketsSoldCount}
-            title={show.title}
-            venueName={show.venueProfile.name}
-            venueLocation={{
-              postalCode: show.venueProfile.postalCode,
-              stateRegion: show.venueProfile.stateRegion,
-              country: show.venueProfile.country
-            }}
-            venuePayoutPercent={show.venuePayoutPercent}
-            viewerLocation={{
-              city: viewerLocation?.city,
-              stateRegion: viewerLocation?.stateRegion,
-              country: viewerLocation?.country,
-              postalCode: viewerLocation?.postalCode
-            }}
-          />
-        </section>
-      ) : null}
-
-      {show.ticketOrders.length ? (
-        <section className="section">
-          <div className="panel" style={{ padding: '1.25rem' }}>
-            <h2>Recent ticket orders</h2>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Status</th>
-                  <th>Tax</th>
-                  <th>Code</th>
-                  <th>Buyer</th>
-                  <th>Qty</th>
-                  <th>Total</th>
-                  <th>Venue</th>
-                  <th>Artist</th>
-                  <th>Promoter</th>
-                  <th title="Total reassignments across all tickets in this order">Passed</th>
-                </tr>
-              </thead>
-              <tbody>
-                {show.ticketOrders.map((order) => {
-                  const totalPassed = order.tickets.reduce((sum, t) => sum + t.reassignCount, 0);
-                  return (
-                  <tr key={order.id}>
-                    <td>{order.status}</td>
-                    <td>{formatCurrencyFromCents(order.totalTaxCents)}</td>
-                    <td>{order.confirmationCode}</td>
-                    <td>{order.buyerName}</td>
-                    <td>{order.quantity}</td>
-                    <td>{formatCurrencyFromCents(order.totalChargeCents || order.subtotalCents)}</td>
-                    <td>{formatCurrencyFromCents(order.venuePayoutCents)}</td>
-                    <td>{formatCurrencyFromCents(order.artistPayoutCents)}</td>
-                    <td>{formatCurrencyFromCents(order.promoterPayoutCents)}</td>
-                    <td style={totalPassed > 0 ? { color: 'var(--accent-3)', fontWeight: 600 } : { color: 'var(--muted)' }}>
-                      {totalPassed > 0 ? `${totalPassed}×` : '—'}
-                    </td>
-                  </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      ) : null}
-
-      {show.isTicketed && show.ticketOrders.length > 0 && (
-        <section className="section">
-          <div className="panel" style={{ padding: '1.25rem' }}>
-            <h2>Transfer your ticket</h2>
-            <p className="subtitle" style={{ marginBottom: '1rem' }}>Can't make it? You can transfer your ticket to a friend — no fees, just update the holder name.</p>
-            <p className="meta">Find your ticket confirmation email and visit the ticket link to reassign it, or go to <Link href="/home">your dashboard</Link> to manage your orders.</p>
-          </div>
-        </section>
-      )}
-
-      {show.isRadioShow && show.radioTracks.length > 0 && (() => {
-        const totalSecs = show.radioTracks.reduce((sum, t) => sum + (t.durationSecs ?? 0), 0);
-        const totalDuration = totalSecs > 0
-          ? `${Math.floor(totalSecs / 3600) > 0 ? `${Math.floor(totalSecs / 3600)}h ` : ''}${Math.floor((totalSecs % 3600) / 60)}m`
-          : null;
-
-        // Group tracks by blockLabel (null label = ungrouped)
-        const blocks: { label: string | null; tracks: typeof show.radioTracks }[] = [];
-        for (const track of show.radioTracks) {
-          const last = blocks[blocks.length - 1];
-          if (last && last.label === (track.blockLabel ?? null)) {
-            last.tracks.push(track);
-          } else {
-            blocks.push({ label: track.blockLabel ?? null, tracks: [track] });
-          }
-        }
-
-        return (
+        {setlistTracks.length ? (
           <section className="section">
-            <div className="panel" style={{ padding: '1.25rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h2 style={{ margin: 0 }}>Tracklist</h2>
-                {totalDuration && <span className="meta">{show.radioTracks.length} tracks · {totalDuration}</span>}
-              </div>
-              <div style={{ display: 'grid', gap: '1rem' }}>
-                {blocks.map((block, bi) => (
-                  <div key={bi}>
-                    {block.label && (
-                      <div style={{ fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '0.4rem', paddingLeft: '0.75rem' }}>
-                        {block.label}
-                      </div>
-                    )}
-                    <ol style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: '0.35rem' }}>
-                      {block.tracks.map((track) => (
-                        <li
-                          key={track.id}
-                          style={{
-                            display: 'grid',
-                            gridTemplateColumns: '2rem 1fr auto',
-                            gap: '0.75rem',
-                            alignItems: 'center',
-                            padding: '0.6rem 0.75rem',
-                            borderRadius: '10px',
-                            background: 'rgba(255,255,255,0.03)'
-                          }}
-                        >
-                          <span className="meta" style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                            {String(track.position + 1).padStart(2, '0')}
-                          </span>
-                          <div>
-                            <strong style={{ display: 'block' }}>{track.title}</strong>
-                            {track.artistName && <span className="meta">{track.artistName}</span>}
-                          </div>
-                          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                            {track.durationSecs && (
-                              <span className="meta" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                {Math.floor(track.durationSecs / 60)}:{String(track.durationSecs % 60).padStart(2, '0')}
-                              </span>
-                            )}
-                            {track.externalUrl && (
-                              <a href={track.externalUrl} target="_blank" rel="noreferrer" className="button small secondary" style={{ fontSize: '0.75rem' }}>
-                                Play ↗
-                              </a>
-                            )}
-                          </div>
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-                ))}
-              </div>
+            <div className="panel" style={{ padding: '1rem 1.25rem' }}>
+              <h2 style={{ marginTop: 0 }}>Setlist</h2>
+              <ol style={{ paddingLeft: '1.2rem', lineHeight: 1.7, margin: 0 }}>
+                {setlistTracks.map((t, i) => <li key={i}>{t}</li>)}
+              </ol>
             </div>
           </section>
-        );
-      })()}
+        ) : null}
+        {isShowOwner ? <ShowSetlistEditor showId={show.id} initialTracks={setlistTracks} /> : null}
 
-      {setlistTracks.length ? (
-        <section className="section">
-          <div className="panel" style={{ padding: '1rem 1.25rem' }}>
-            <h2 style={{ marginTop: 0 }}>Setlist</h2>
-            <ol style={{ paddingLeft: '1.2rem', lineHeight: 1.7, margin: 0 }}>
-              {setlistTracks.map((t, i) => <li key={i}>{t}</li>)}
-            </ol>
-          </div>
-        </section>
-      ) : null}
-      {isShowOwner ? <ShowSetlistEditor showId={show.id} initialTracks={setlistTracks} /> : null}
-
-      {/* Who's going is now embedded in ShowEngagement above */}
-      {show.recapText && (
-        <section className="section">
-          <div className="panel" style={{ padding: '1.25rem' }}>
-            <h2>Show recap</h2>
-            <p style={{ whiteSpace: 'pre-wrap' }}>{show.recapText}</p>
-          </div>
-        </section>
-      )}
-      {isShowOwner && show.status === 'ENDED' && (
-        <section className="section">
-          <div className="panel" style={{ padding: '1.25rem' }}>
-            <h2 style={{ marginTop: 0 }}>Write a recap</h2>
-            <ShowRecapForm showId={show.id} initialRecap={show.recapText} />
-          </div>
-        </section>
-      )}
-      <ShowComments showId={show.id} canPost={Boolean(session?.user?.id)} />
-      <div style={{ marginTop: 24 }}>
-        <AdBanner />
-      </div>
-    </main>
+        {/* Who's going is now embedded in ShowEngagement above */}
+        {show.recapText && (
+          <section className="section">
+            <div className="panel" style={{ padding: '1.25rem' }}>
+              <h2>Show recap</h2>
+              <p style={{ whiteSpace: 'pre-wrap' }}>{show.recapText}</p>
+            </div>
+          </section>
+        )}
+        {isShowOwner && show.status === 'ENDED' && (
+          <section className="section">
+            <div className="panel" style={{ padding: '1.25rem' }}>
+              <h2 style={{ marginTop: 0 }}>Write a recap</h2>
+              <ShowRecapForm showId={show.id} initialRecap={show.recapText} />
+            </div>
+          </section>
+        )}
+        <ShowComments showId={show.id} canPost={Boolean(session?.user?.id)} />
+        <div style={{ marginTop: 24 }}>
+          <AdBanner />
+        </div>
+      </main>
     </>
   );
 }

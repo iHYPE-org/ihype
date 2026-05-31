@@ -339,7 +339,7 @@ export function TicketSaleCard({
         <div className="ticket-issued-grid">
           {issuedTickets.map((ticket) => (
             <article className="ticket-issued-card" key={ticket.id}>
-              <img alt={`${ticket.label} QR`} className="ticket-issued-qr" src={ticket.qrCodeDataUrl} />
+              <img alt={`${ticket.label} QR`} className="ticket-issued-qr" loading="lazy" src={ticket.qrCodeDataUrl} />
               <div className="ticket-issued-copy">
                 <strong>{ticket.label}</strong>
                 <span>{ticket.serializedId}</span>

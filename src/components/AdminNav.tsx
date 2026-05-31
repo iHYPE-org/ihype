@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-type Tab = 'dashboard' | 'users' | 'review' | 'broadcast' | 'audit' | 'journal' | 'ads' | 'playlists' | 'feedback' | 'rate-limits' | 'moderation';
+type Tab = 'dashboard' | 'users' | 'review' | 'broadcast' | 'audit' | 'journal' | 'ads' | 'playlists' | 'feedback' | 'moderation';
 
 const TABS: Array<{ key: Tab; href: string; label: string }> = [
   { key: 'dashboard', href: '/admin', label: 'Dashboard' },
@@ -12,7 +12,6 @@ const TABS: Array<{ key: Tab; href: string; label: string }> = [
   { key: 'journal', href: '/admin/journal', label: 'Journal' },
   { key: 'playlists', href: '/admin/playlists', label: 'Playlists' },
   { key: 'feedback', href: '/admin/feedback', label: 'Feedback' },
-  { key: 'rate-limits', href: '/admin/rate-limits', label: 'Rate Limits' },
   { key: 'moderation', href: '/admin/moderation', label: 'Moderation' }
 ];
 

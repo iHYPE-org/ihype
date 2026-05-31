@@ -13,7 +13,7 @@ import { kvGet, kvPut } from '@/lib/kv';
 //      assertion, which calls `markAdminReauth(userId)` on success.
 //   4. Client retries the original destructive action.
 
-const REAUTH_TTL_SECONDS = 5 * 60;
+const REAUTH_TTL_SECONDS = 15 * 60;
 
 function key(userId: string) {
   return `admin_reauth:${userId}`;

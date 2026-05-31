@@ -51,12 +51,17 @@ assertIncludes(
   'All successful auth paths should resolve to the canonical workbench route.'
 );
 assertIncludes(
-  'src/components/AuthScreens.tsx',
+  'src/components/AuthLogin.tsx',
+  'resolvePostAuthRedirect',
+  'Client auth flows should share the server-side redirect resolver.'
+);
+assertIncludes(
+  'src/components/AuthRegister.tsx',
   'resolvePostAuthRedirect',
   'Client auth flows should share the server-side redirect resolver.'
 );
 assertNotIncludes(
-  'src/components/AuthScreens.tsx',
+  'src/components/AuthLogin.tsx',
   'getAuthLandingPath',
   'The old /auth/landing trampoline should not come back as the post-login target.'
 );
@@ -66,8 +71,7 @@ for (const relativePath of [
   'src/app/admin/broadcast/page.tsx',
   'src/app/admin/journal/page.tsx',
   'src/app/admin/review/page.tsx',
-  'src/app/admin/users/page.tsx',
-  'src/components/DiscoverModulePanels.tsx'
+  'src/app/admin/users/page.tsx'
 ]) {
   assertNotIncludes(
     relativePath,

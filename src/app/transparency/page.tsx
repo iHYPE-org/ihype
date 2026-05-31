@@ -1,3 +1,4 @@
+import '../marketing.css';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { db } from '@/lib/db';

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import type { WorkbenchData } from '@/components/WorkbenchShell';
+import type { WorkbenchData } from '@/types/workbench';
 import { ArtistMediaUploadManager } from '@/components/ArtistMediaUploadManager';
 import { IcHeart } from './icons';
 import { Panel } from './primitives';

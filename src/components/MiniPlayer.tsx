@@ -40,7 +40,7 @@ export function MiniPlayer() {
     <div
       style={{
         position: 'fixed',
-        bottom: 'calc(72px + env(safe-area-inset-bottom))',
+        bottom: 'env(safe-area-inset-bottom, 0px)',
         left: 0,
         right: 0,
         zIndex: 200,

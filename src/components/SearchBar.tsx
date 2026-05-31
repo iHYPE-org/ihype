@@ -17,7 +17,7 @@ export function SearchBar() {
     e.preventDefault();
     const q = inputRef.current?.value.trim();
     if (q) {
-      router.push(`/search?q=${encodeURIComponent(q)}`);
+      router.push(`/home?q=${encodeURIComponent(q)}`);
       setExpanded(false);
     }
   }
@@ -30,7 +30,7 @@ export function SearchBar() {
     <>
       {/* Desktop: always visible inline form */}
       <form
-        action="/search"
+        action="/home"
         method="get"
         className="search-bar-desktop"
       >

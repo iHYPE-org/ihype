@@ -3,10 +3,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 // ── Re-export types that home/page.tsx imports ────────────────
-export type { WbStat, WbTrack, WbShow, WbActivity, WbNotification, WbRadioShow, WorkbenchData } from './WorkbenchShell';
-export type { Prefs } from './WorkbenchShell';
+export type { WbStat, WbTrack, WbShow, WbActivity, WbNotification, WbRadioShow, WorkbenchData, Prefs, StarterPackItem } from '@/types/workbench';
 
-import type { WorkbenchData } from './WorkbenchShell';
+import type { WorkbenchData, StarterPackItem } from '@/types/workbench';
 
 import { DEFAULT_PREFS, loadPrefs, shiftAccent } from './workbench/types';
 import type { View } from './workbench/types';
@@ -22,13 +21,6 @@ import { ViewSettings } from './workbench/ViewSettings';
 import { Toast, WelcomeDialog, KeyboardShortcutsDialog } from './workbench/Overlays';
 import { ViewErrorBoundary } from './workbench/ErrorBoundary';
 import { SearchOverlay } from './workbench/SearchOverlay';
-
-// ─────────────────────────────────────────────────────────────
-// StarterPack type (for compat with home/page.tsx)
-// ─────────────────────────────────────────────────────────────
-export type StarterPackItem = {
-  id: string; name: string; slug: string; hypeCount: number; city: string | null; genre: string | null;
-};
 
 // ─────────────────────────────────────────────────────────────
 // Main WorkbenchShell export

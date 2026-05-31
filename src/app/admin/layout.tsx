@@ -1,3 +1,4 @@
+import './admin.css';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { isAdminSession } from '@/lib/permissions';

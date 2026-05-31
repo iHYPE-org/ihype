@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import type { WorkbenchData } from '@/components/WorkbenchShell';
+import type { WorkbenchData } from '@/types/workbench';
 import { IcPlay, IcPause } from './icons';
 
 // XP per action

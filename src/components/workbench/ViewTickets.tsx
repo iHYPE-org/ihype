@@ -2,7 +2,7 @@
 
 import React, { memo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { WorkbenchData } from '@/components/WorkbenchShell';
+import type { WorkbenchData } from '@/types/workbench';
 import { IcDot, IcCheck, IcArrow, IcQR } from './icons';
 import { StatCard } from './primitives';
 
