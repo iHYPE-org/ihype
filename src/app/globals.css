@@ -3612,15 +3612,6 @@ body:has(.wb-root) .site-shell {
 .directory-switcher-link{
   background: rgba(255,255,255,0.035);
 }
-.directory-hero,
-
-
-
-
-@media (max-width: 720px){
-
-}
-
 
 body {
   background:

@@ -4,8 +4,11 @@
 //   3. Verify PrismaAdapter interface parity with the new @auth/prisma-adapter release.
 //   4. Test the full OTP login flow and session persistence after the bump.
 //   5. Update the pinned version in package.json overrides AND the dependency specifier.
+//
+// Edge-safe: this file must not import Node.js-only modules or @prisma/client/wasm.
+// It is used directly in middleware.ts which runs on the Edge runtime.
+// DB-dependent callbacks (jwt security-version check, session enrichment) live in auth.ts.
 import type { NextAuthConfig } from 'next-auth';
-import { db } from '@/lib/db';
 
 const useSecureCookies = process.env.NODE_ENV === 'production';
 const sessionMaxAgeSeconds = 12 * 60 * 60;
@@ -83,52 +86,6 @@ export const authConfig: NextAuthConfig = {
     strategy: 'jwt',
     maxAge: sessionMaxAgeSeconds,
     updateAge: 24 * 60 * 60
-  },
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.role = (user as { role?: string }).role;
-        token.emailVerified = (user as { emailVerified?: Date | null }).emailVerified ?? null;
-        try {
-          const dbUser = await db.user.findUnique({
-            where: { id: (user as { id?: string }).id ?? token.sub ?? '' },
-            select: { userSecurityVersion: true }
-          });
-          if (!dbUser) {
-            return null;
-          }
-          token.securityVersion = dbUser.userSecurityVersion;
-        } catch (err) {
-          console.error('[auth] Unable to read user security version during sign-in:', err);
-          return null;
-        }
-      } else if (token.sub) {
-        // Check security version on every JWT validation to ensure
-        // suspensions and password changes take effect within one request.
-        try {
-          const dbUser = await db.user.findUnique({
-            where: { id: token.sub },
-            select: { userSecurityVersion: true }
-          });
-          if (!dbUser || dbUser.userSecurityVersion !== token.securityVersion) {
-            return null;
-          }
-        } catch (err) {
-          console.error('[auth] Unable to validate user security version:', err);
-          return null;
-        }
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.sub ?? '';
-        session.user.role = typeof token.role === 'string' ? token.role : 'FAN';
-        (session.user as { emailVerified?: Date | null }).emailVerified =
-          token.emailVerified ? new Date(token.emailVerified as string) : null;
-      }
-      return session;
-    }
   },
   events: {
     async signIn({ user }) {

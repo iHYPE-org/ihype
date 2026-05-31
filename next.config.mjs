@@ -12,7 +12,7 @@ const contentSecurityPolicy = [
   "media-src 'self' data: blob: https:",
   "font-src 'self' data: https:",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  `script-src 'self'${isProduction ? '' : " 'unsafe-inline' 'unsafe-eval'"}`,
+  `script-src 'self' 'unsafe-inline'${isProduction ? '' : " 'unsafe-eval'"}`,
   "script-src-attr 'none'",
   "connect-src 'self'",
   "frame-src 'self'",
