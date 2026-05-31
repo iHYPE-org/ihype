@@ -21,6 +21,7 @@ import { ViewSettings } from './workbench/ViewSettings';
 import { Toast, WelcomeDialog, KeyboardShortcutsDialog } from './workbench/Overlays';
 import { ViewErrorBoundary } from './workbench/ErrorBoundary';
 import { SearchOverlay } from './workbench/SearchOverlay';
+import { PasskeyNudge } from './workbench/PasskeyNudge';
 
 // ─────────────────────────────────────────────────────────────
 // Main WorkbenchShell export
@@ -380,6 +381,7 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
       {showWelcome && <WelcomeDialog onDismiss={() => { localStorage.setItem('ihype-welcome-seen', '1'); setShowWelcome(false); }} />}
       {shortcutsOpen && <KeyboardShortcutsDialog onDismiss={() => setShortcutsOpen(false)} />}
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <PasskeyNudge />
     </>
   );
 }

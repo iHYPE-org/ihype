@@ -275,6 +275,11 @@ body:has(.wb-root) .site-shell {
   0%, 100% { box-shadow: var(--album-glow, 0 4px 24px rgba(255,80,41,.35)), 0 0 0 1px rgba(255,255,255,.08); }
   50%       { box-shadow: var(--album-glow, 0 4px 36px rgba(255,80,41,.55)), 0 0 0 1px rgba(255,255,255,.12); }
 }
+/* Passkey nudge slide-in from bottom-right */
+@keyframes nudge-slide-in {
+  from { opacity: 0; transform: translateY(24px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
 .nav-logo-right { justify-self: end; }
 .wb-sidebar {
   border-right: 1px solid rgba(255,255,255,.07);
