@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const primaryLinks = [
   { href: '/home',     label: 'Home' },
@@ -81,6 +82,10 @@ export function NavDrawer() {
                 </li>
               ))}
             </ul>
+            <div style={{ borderTop: '1px solid var(--line)', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 13, opacity: 0.5 }}>Theme</span>
+              <ThemeToggle />
+            </div>
           </nav>
         </>
       )}

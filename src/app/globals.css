@@ -210,7 +210,7 @@ body:has(.site-dock) .site-shell {
 /* Marketing nav layout (root) */
 .nav-inner-marketing {
   display: grid;
-  grid-template-columns: auto 1fr auto auto auto;
+  grid-template-columns: auto 1fr auto auto;
   align-items: center;
   gap: 1rem;
   padding: 0.6rem 0;
@@ -5680,12 +5680,13 @@ html.high-contrast p {
 
 /* ── Mobile-first improvements ──────────────────────────────────── */
 
-/* Marketing header: collapse to logo + icon controls on small screens */
+/* Marketing header: collapse to logo + search icon + hamburger on small screens */
 @media (max-width: 580px) {
   .nav-inner-marketing {
-    grid-template-columns: auto 1fr auto auto auto;
+    grid-template-columns: auto 1fr auto;
   }
-  /* Hide the Shows/Artists/Venues nav on small phones */
+  /* BugReportButton: authenticated hamburger has "Report a bug", so hide floating btn on mobile */
+  .bug-report-btn { display: none; }
   /* Auth slot spans last column only */
   .nav-auth-slot {
     justify-self: end;

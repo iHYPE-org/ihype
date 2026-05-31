@@ -282,7 +282,7 @@ export const SeedsGamifiedView = memo(function SeedsGamifiedView({ seeds: apiSee
           <div style={{ fontFamily: 'var(--f-m)', fontSize: 8, color: C.amber, letterSpacing: '.18em', fontWeight: 700 }}>DAILY QUEST · RESETS IN 6H 24M</div>
           <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, letterSpacing: '-.005em', marginTop: 1 }}>HYPE 5 seeds from Chicago artists tonight</div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 300, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flexShrink: 1 }}>
           <span style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--wb-ink)', fontWeight: 600, minWidth: 64 }}>
             <b style={{ color: C.amber }}>{questNum}</b> / 5 HYPED
           </span>

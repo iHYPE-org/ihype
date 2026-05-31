@@ -6,7 +6,6 @@ import { HeaderAuthLinks } from '@/components/HeaderAuthLinks';
 import { HeaderLogo } from '@/components/HeaderLogo';
 import { PwaInstallPrompt } from '@/components/PwaInstallPrompt';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import { NavDrawer } from '@/components/NavDrawer';
 import { SearchBar } from '@/components/SearchBar';
 import { BugReportButton } from '@/components/BugReportButton';
@@ -57,7 +56,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <div className="container nav-inner-marketing">
               <HeaderLogo />
               <SearchBar />
-              <ThemeToggle />
               <HeaderAuthLinks />
               <NavDrawer />
             </div>
@@ -69,11 +67,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <BugReportButton />
           <PwaInstallPrompt />
           <ServiceWorkerRegister />
-          <footer className="site-footer" style={{ borderTop: '1px solid rgba(255,255,255,.08)', padding: '24px 0', marginTop: 40 }}>
-            <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, opacity: 0.65 }}>
-              <span>© {new Date().getFullYear()} iHYPE — not-for-profit</span>
-            </div>
-          </footer>
+
         </AppProviders>
       </body>
     </html>
