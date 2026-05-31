@@ -33,16 +33,20 @@ jobs:
         run: npm test
 
       - name: Install Playwright browsers
+        if: vars.E2E_ENABLED == 'true'
         run: npx playwright install chromium --with-deps
 
       - name: E2E smoke test
+        if: vars.E2E_ENABLED == 'true'
         run: npm run test:e2e
         env:
-          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           NEXT_PUBLIC_BASE_URL: https://ihype.org
           NEXT_PUBLIC_APP_URL: https://ihype.org
-          NEXTAUTH_SECRET: ci-placeholder-secret-not-real
-          AUTH_SECRET: ci-placeholder-secret-not-real
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_OTP: ${{ secrets.TEST_USER_OTP }}
 
       - name: Cloudflare build
         run: npm run cf:build
