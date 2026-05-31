@@ -17,6 +17,12 @@ export function BugReportButton() {
     return () => { console.error = orig; };
   }, []);
 
+  useEffect(() => {
+    const handler = () => setOpen(true);
+    window.addEventListener('ihype:open-bug-report', handler);
+    return () => window.removeEventListener('ihype:open-bug-report', handler);
+  }, []);
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     await fetch('/api/bug-report', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ description: desc, url: window.location.href, errors: errors.current, viewport: `${window.innerWidth}x${window.innerHeight}` }) });

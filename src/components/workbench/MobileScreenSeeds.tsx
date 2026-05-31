@@ -104,15 +104,19 @@ export function MobileScreenSeeds({ data, onHypersSheet }: { data: WorkbenchData
   const dragYRef = useRef(0);
   const rafRef = useRef<number | null>(null);
 
-  // Fetch deck on mount
-  useEffect(() => {
+  const lastTapTimeRef = useRef(0);
+
+  const refreshDeck = useCallback(() => {
     setLoadingDeck(true);
     fetch('/api/discover/seeds')
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.seeds?.length) setDeck(d.seeds); })
+      .then(d => { if (d?.seeds?.length) { setDeck(d.seeds); setDeckIdx(0); } })
       .catch(() => {})
       .finally(() => setLoadingDeck(false));
   }, []);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { refreshDeck(); }, []);
 
   const handleAction = useCallback((action: 'save' | 'skip' | 'hype', fromDrag = false, dragDx = 0, dragDy = 0) => {
     const front = deck[deckIdx % Math.max(deck.length, 1)];
@@ -197,6 +201,15 @@ export function MobileScreenSeeds({ data, onHypersSheet }: { data: WorkbenchData
       if (dx > 100)       handleAction('hype', true, dx, dy);
       else if (dx < -100) handleAction('skip', true, dx, dy);
       else if (dy < -100) handleAction('save', true, dx, dy);
+    } else if (!flyOff && front && Math.abs(dx) < 8 && Math.abs(dy) < 8) {
+      // Double-tap to hype
+      const now = Date.now();
+      if (now - lastTapTimeRef.current < 350) {
+        handleAction('hype');
+        lastTapTimeRef.current = 0;
+      } else {
+        lastTapTimeRef.current = now;
+      }
     }
     setIsPressed(false);
     setIsDragging(false);
@@ -233,10 +246,25 @@ export function MobileScreenSeeds({ data, onHypersSheet }: { data: WorkbenchData
             ].map((s, i) => (
               <div key={i}>
                 <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.12em', textTransform: 'uppercase' }}>{s.k}</div>
-                <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 14, color: s.c, marginTop: 2 }}>{s.v}</div>
+                <div key={s.v} className="wm-stat-pop" style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 14, color: s.c, marginTop: 2 }}>{s.v}</div>
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Deck progress + refresh */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <div style={{ flex: 1, height: 3, borderRadius: 99, background: T.bg3, overflow: 'hidden' }}>
+            <div style={{ height: '100%', borderRadius: 99, background: `linear-gradient(90deg,${T.accent},${T.pink})`, width: `${Math.min((deckIdx / Math.max(deck.length - 1, 1)) * 100, 100)}%`, transition: 'width .3s ease' }} />
+          </div>
+          <button
+            onClick={refreshDeck}
+            disabled={loadingDeck}
+            aria-label="Refresh deck"
+            style={{ width: 28, height: 28, borderRadius: '50%', background: T.bg2, border: `1px solid ${T.line}`, color: loadingDeck ? T.ink4 : T.ink2, cursor: loadingDeck ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, padding: 0 }}
+          >
+            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className={loadingDeck ? 'wm-spin' : undefined}><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10"/><path d="M23 14l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+          </button>
         </div>
 
         {/* Card stack */}

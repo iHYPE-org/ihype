@@ -150,7 +150,7 @@ function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, noti
             <span style={{ fontFamily: T.fb, fontSize: 15, color: T.ink }}>{item.label}</span>
           </a>
         ))}
-        <button onClick={() => { close(); onFeedback?.(); }} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 20px', background: 'transparent', border: 'none', width: '100%', cursor: 'pointer', textAlign: 'left' }}>
+        <button onClick={() => { close(); window.dispatchEvent(new CustomEvent('ihype:open-bug-report')); }} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 20px', background: 'transparent', border: 'none', width: '100%', cursor: 'pointer', textAlign: 'left' }}>
           <span style={{ fontSize: 18, width: 24, textAlign: 'center' }}>🐛</span>
           <span style={{ fontFamily: T.fb, fontSize: 15, color: T.ink }}>Report a bug</span>
         </button>
@@ -232,7 +232,11 @@ function RadioTooltip({ onDismiss }: { onDismiss: () => void }) {
 
 // ─── Main mobile export ───────────────────────────────────────
 export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
-  const [tab, setTab] = useState<MobileTab>('me');
+  const [tab, setTab] = useState<MobileTab>(() => {
+    if (typeof window === 'undefined') return 'me';
+    const saved = localStorage.getItem('ihype_mobile_tab') as MobileTab | null;
+    return (saved && (['me', 'seeds', 'radio', 'studio', 'tick'] as MobileTab[]).includes(saved)) ? saved : 'me';
+  });
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0.42);
   const [currentTrackIdx, setCurrentTrackIdx] = useState(0);
@@ -240,6 +244,11 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
   const [resultsOpen, setResultsOpen] = useState(false);
   const [notifCount, setNotifCount] = useState(0);
   const [showFeedbackSheet, setShowFeedbackSheet] = useState(false);
+  const [swipeHintSeen, setSwipeHintSeen] = React.useState(() => {
+    if (typeof window === 'undefined') return true;
+    return !!localStorage.getItem('ihype_swipe_hint_seen');
+  });
+  const [showSwipeHint, setShowSwipeHint] = React.useState(false);
   const [seedsTooltipSeen, setSeedsTooltipSeen] = React.useState(() => {
     if (typeof window === 'undefined') return true;
     return !!localStorage.getItem('ihype_tooltip_seeds_seen');
@@ -283,6 +292,21 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
     }, 1000);
     return () => clearInterval(iv);
   }, [playing, track]);
+
+  useEffect(() => {
+    localStorage.setItem('ihype_mobile_tab', tab);
+  }, [tab]);
+
+  useEffect(() => {
+    if (swipeHintSeen || tab === 'seeds') return;
+    const t1 = setTimeout(() => setShowSwipeHint(true), 800);
+    const t2 = setTimeout(() => {
+      setShowSwipeHint(false);
+      localStorage.setItem('ihype_swipe_hint_seen', '1');
+      setSwipeHintSeen(true);
+    }, 3300);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [swipeHintSeen, tab]);
 
   const [trackSheetOpen, setTrackSheetOpen] = useState(false);
   const [hypersSheetShowId, setHypersSheetShowId] = useState<string | null>(null);
@@ -389,6 +413,15 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
       )}
       {!radioTooltipSeen && data.radioShows.length === 0 && tab === 'radio' && (
         <RadioTooltip onDismiss={() => { localStorage.setItem('ihype_tooltip_radio_seen', '1'); setRadioTooltipSeen(true); }} />
+      )}
+      {showSwipeHint && (
+        <div className="wm-swipe-hint" style={{ position: 'fixed', bottom: 90, left: 0, right: 0, zIndex: 60, display: 'flex', justifyContent: 'center' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(10px)', borderRadius: 99, padding: '8px 18px', fontFamily: T.fm, fontSize: 13, letterSpacing: '.06em', color: 'rgba(255,255,255,.7)', border: '1px solid rgba(255,255,255,.1)' }}>
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            swipe between tabs
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </span>
+        </div>
       )}
     </div>
   );
