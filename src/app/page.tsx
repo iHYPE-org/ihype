@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { PiAdminButton } from '@/components/PiAdminButton';
 
 export const metadata = {
   title: 'iHYPE — Independent music built for the scene',
@@ -274,6 +275,7 @@ export default async function RootPage() {
         </div>
       </section>
 
+      <PiAdminButton />
     </div>
   );
 }
