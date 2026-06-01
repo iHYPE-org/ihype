@@ -13,24 +13,41 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/login?error=invalid_magic_link', request.url));
   }
 
-  const record = await db.magicLinkToken.findUnique({
-    where: { token },
-    include: { user: { select: { id: true, name: true, email: true, image: true, role: true, emailVerified: true } } }
-  });
+  let record;
+  try {
+    record = await db.magicLinkToken.findUnique({
+      where: { token },
+      include: {
+        user: {
+          select: {
+            id: true, name: true, email: true, image: true,
+            role: true, emailVerified: true, userSecurityVersion: true,
+          }
+        }
+      }
+    });
+  } catch (err) {
+    console.error('[magic-link] DB lookup failed:', err);
+    return NextResponse.redirect(new URL('/login?error=server_error', request.url));
+  }
 
   if (!record || record.used || record.expiresAt < new Date()) {
     return NextResponse.redirect(new URL('/login?error=expired_magic_link', request.url));
   }
 
-  await db.magicLinkToken.update({ where: { id: record.id }, data: { used: true } });
+  try {
+    await db.magicLinkToken.update({ where: { id: record.id }, data: { used: true } });
+  } catch (err) {
+    console.error('[magic-link] Token mark-used failed:', err);
+    // non-fatal — proceed with sign-in
+  }
 
   const sessionCookie = await buildAuthSessionCookie(record.user);
   if (!sessionCookie) {
+    console.error('[magic-link] buildAuthSessionCookie returned null for user', record.user.id);
     return NextResponse.redirect(new URL('/login?error=server_error', request.url));
   }
 
-  // Resolve destination: admin users go to /admin, others go to /home.
-  // Also honour an optional ?callbackUrl= param set by the link sender.
   const rawCallback = searchParams.get('callbackUrl');
   const defaultDest = record.user.role === 'ADMIN' ? '/admin' : undefined;
   const dest = resolvePostAuthRedirect(rawCallback ?? defaultDest);
