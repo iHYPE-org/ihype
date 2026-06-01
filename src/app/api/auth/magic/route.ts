@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (err) {
     console.error('[magic-link] DB lookup failed:', err);
-    return NextResponse.redirect(new URL('/login?error=server_error', request.url));
+    return NextResponse.redirect(new URL('/login?error=ml_db_error', request.url));
   }
 
   if (!record || record.used || record.expiresAt < new Date()) {
@@ -42,10 +42,15 @@ export async function GET(request: NextRequest) {
     // non-fatal — proceed with sign-in
   }
 
+  if (!process.env.AUTH_SECRET) {
+    console.error('[magic-link] AUTH_SECRET is not set');
+    return NextResponse.redirect(new URL('/login?error=ml_no_secret', request.url));
+  }
+
   const sessionCookie = await buildAuthSessionCookie(record.user);
   if (!sessionCookie) {
-    console.error('[magic-link] buildAuthSessionCookie returned null for user', record.user.id);
-    return NextResponse.redirect(new URL('/login?error=server_error', request.url));
+    console.error('[magic-link] buildAuthSessionCookie returned null for user', record.user.id, 'securityVersion:', record.user.userSecurityVersion);
+    return NextResponse.redirect(new URL('/login?error=ml_cookie_error', request.url));
   }
 
   const rawCallback = searchParams.get('callbackUrl');
