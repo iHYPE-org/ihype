@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   await db.magicLinkToken.create({ data: { token, userId: user.id, expiresAt } });
 
   const baseUrl = process.env.NEXTAUTH_URL ?? process.env.APP_URL ?? 'https://ihype.org';
-  const link = `${baseUrl}/auth/magic?token=${token}`;
+  const link = `${baseUrl}/api/auth/magic?token=${token}`;
 
   await sendGenericEmail({
     to: email,
