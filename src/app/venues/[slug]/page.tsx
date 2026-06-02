@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { cache } from 'react';
+
+export const revalidate = 60;
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
@@ -332,7 +334,7 @@ export default async function VenuePage({
               <h2>About</h2>
               {featureImageUrl ? (
                 <div className="artist-media-visuals">
-                  <img alt={`${profile.name} featured visual`} className="artist-media-visual-image" src={featureImageUrl} loading="lazy" />
+                  <img alt={`${profile.name} featured visual`} className="artist-media-visual-image" src={featureImageUrl} />
                 </div>
               ) : null}
               {(profile.addressLine1 || profile.hoursText || profile.parkingDetails || profile.stayRecommendations) ? (

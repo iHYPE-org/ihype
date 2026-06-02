@@ -4,7 +4,7 @@ import { sendGenericEmail } from '@/lib/mailer';
 async function getUserForEmail(userId: string) {
   return db.user.findUnique({
     where: { id: userId },
-    select: { id: true, email: true, username: true, name: true }
+    select: { id: true, email: true, username: true, name: true, emailBounced: true }
   });
 }
 
@@ -14,7 +14,7 @@ function wrapText(text: string): string {
 
 export async function sendDay1Email(userId: string): Promise<void> {
   const user = await getUserForEmail(userId);
-  if (!user?.email) return;
+  if (!user?.email || user.emailBounced) return;
 
   const name = user.name ?? user.username;
   const text = [
@@ -30,7 +30,7 @@ export async function sendDay1Email(userId: string): Promise<void> {
 
 export async function sendDay3Email(userId: string): Promise<void> {
   const user = await getUserForEmail(userId);
-  if (!user?.email) return;
+  if (!user?.email || user.emailBounced) return;
 
   const name = user.name ?? user.username;
   const text = [
@@ -48,7 +48,7 @@ export async function sendDay3Email(userId: string): Promise<void> {
 
 export async function sendDay7Email(userId: string): Promise<void> {
   const user = await getUserForEmail(userId);
-  if (!user?.email) return;
+  if (!user?.email || user.emailBounced) return;
 
   const name = user.name ?? user.username;
   const text = [

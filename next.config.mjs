@@ -13,7 +13,6 @@ const contentSecurityPolicy = [
   "font-src 'self' data: https:",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   `script-src 'self' 'unsafe-inline'${isProduction ? '' : " 'unsafe-eval'"}`,
-  "script-src-attr 'none'",
   "connect-src 'self'",
   "frame-src 'self'",
   'upgrade-insecure-requests'
@@ -77,12 +76,9 @@ const nextConfig = {
   },
   images: {
     formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 86400,
     remotePatterns: [
-      { protocol: 'https', hostname: '*.r2.cloudflarestorage.com' },
-      { protocol: 'https', hostname: '*.r2.dev' },
-      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
-      { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
-      { protocol: 'https', hostname: '*.googleusercontent.com' }
+      { protocol: 'https', hostname: '**' }
     ]
   },
   outputFileTracingIncludes: {
@@ -93,10 +89,12 @@ const nextConfig = {
   },
   async redirects() {
     return [
-      // www → apex redirect is handled in middleware.ts (before NextAuth runs).
-      // The next.config.mjs host-based redirect does not work correctly in
-      // Cloudflare Workers / OpenNext — it emits the literal string /:path*
-      // instead of substituting the captured path.
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.ihype.org' }],
+        destination: 'https://ihype.org/:path*',
+        permanent: true
+      },
       {
         source: '/auth',
         destination: '/login',
@@ -452,8 +450,23 @@ const nextConfig = {
         source: '/investor',
         headers: [{ key: 'Cache-Control', value: 'no-cache, must-revalidate' }]
       },
+      {
+        source: '/artists/:slug',
+        headers: [{ key: 'Cache-Control', value: 'public, s-maxage=60, stale-while-revalidate=300' }]
+      },
+      {
+        source: '/shows/:slug',
+        headers: [{ key: 'Cache-Control', value: 'public, s-maxage=30, stale-while-revalidate=120' }]
+      },
+      {
+        source: '/venues/:slug',
+        headers: [{ key: 'Cache-Control', value: 'public, s-maxage=60, stale-while-revalidate=300' }]
+      },
+      {
+        source: '/fans/:slug',
+        headers: [{ key: 'Cache-Control', value: 'public, s-maxage=60, stale-while-revalidate=300' }]
+      },
       // /profile/:slug — cache headers set directly in the route handler
-      // /shows/:slug   — handled by src/app/shows/[slug]/page.tsx (no static rewrite)
     ];
   }
 };

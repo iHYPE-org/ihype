@@ -1,15 +1,21 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+
+export const revalidate = 60;
 import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { ContentReportControl } from '@/components/ContentReportControl';
+import { HypeButton } from '@/components/HypeButton';
+import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
+import { FanRecommendationsPanel } from '@/components/FanRecommendationsPanel';
 import { getSafeBackgroundImageStyle, getSafeImageUrl } from '@/lib/asset-safety';
 import { getSharedDiscoverFeed, isLocalMatch, isRegionalMatch } from '@/lib/discover-feed';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getProfileDesignStyleVars } from '@/lib/profile-design';
 import { detectRequestLocation, type RequestLocation } from '@/lib/request-location';
 import { calculateFanLevel } from '@/lib/fan-level';
+import { BadgeShelf } from '@/components/BadgeShelf';
 import {
   getDemoCreatorExclusion,
   getDemoOwnerExclusion,
@@ -18,9 +24,6 @@ import {
   isDemoUser,
   shouldHideDemoContent
 } from '@/lib/runtime-flags';
-import { FanHero } from './FanHero';
-import { FanAbout } from './FanAbout';
-import { FanRecommend } from './FanRecommend';
 
 const listenerSections = ['about', 'recommend'] as const;
 
@@ -42,6 +45,23 @@ function getActiveSection(section: string | string[] | undefined): ListenerSecti
 
 function getSectionLabel(section: ListenerSection) {
   return section.charAt(0).toUpperCase() + section.slice(1);
+}
+
+function getInitials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('');
+}
+
+function formatShowDate(value: Date) {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  }).format(value);
 }
 
 function getTopFiveItems(content: string | null) {
@@ -100,14 +120,6 @@ function sortByLocationSignal<
 
     return left.name.localeCompare(right.name);
   });
-}
-
-function formatShowDate(value: Date) {
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  }).format(value);
 }
 
 export async function generateMetadata(
@@ -534,16 +546,42 @@ export default async function ListenerPage({
 
   return (
     <main className="container section profile-design-shell fan-page-shell" style={pageDesignStyle}>
-      <FanHero
-        avatarImage={avatarImage}
-        badges={badges}
-        bannerStyle={bannerStyle}
-        fanLevel={fanLevel}
-        fullShowListenCount={fullShowListenCount}
-        fullSongListenCount={fullSongListenCount}
-        isOwner={isOwner}
-        profile={profile}
-      />
+      <header className="artist-banner panel fan-page-banner" style={bannerStyle}>
+        <div className="profile-banner-row">
+          {avatarImage ? (
+            <img alt={`${profile.name} avatar`} className="profile-avatar profile-avatar-hero" src={avatarImage} />
+          ) : (
+            <div className="profile-avatar profile-avatar-hero profile-avatar-fallback">{getInitials(profile.name)}</div>
+          )}
+          <div className="artist-banner-copy">
+            <div className="badge">FAN</div>
+            <h1 className="title fan-page-title">{profile.name}</h1>
+            <p className="artist-headline">{profile.headline || 'Capture the shows, artists, and moments you keep coming back to.'}</p>
+            <p className="subtitle">{profile.bio}</p>
+            <p className="meta">{[profile.city, profile.country].filter(Boolean).join(', ')}</p>
+            <p className="meta">Share ID: <Link href={`/profiles/${profile.hexId}`}>{profile.hexId}</Link></p>
+            <p className="meta">FAN Level {fanLevel} | {fullSongListenCount} full songs | {fullShowListenCount} full shows</p>
+            {profile.nowPlaying && (
+              <p className="meta" style={{ fontStyle: 'italic' }}>🎵 Now playing: {profile.nowPlaying}</p>
+            )}
+            <BadgeShelf badges={badges} />
+            <div className="tag-row">{profile.genres.map((genre) => <span key={genre} className="tag">{genre}</span>)}</div>
+            <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} entityLabel="fan page" />
+            <div className="profile-public-actions">
+              <Link className="button small secondary" href={`/fans/${profile.slug}?section=recommend`}>See recommendations</Link>
+              <Link className="button small secondary" href="/artists">Browse artists</Link>
+              <Link className="button small secondary" href="/register?role=FAN">Join fan lane</Link>
+            </div>
+          </div>
+          {isOwner ? (
+            <div className="profile-banner-actions">
+              <Link className="button small secondary" href={`/home?profile=${profile.id}&edit=menu`}>
+                Edit Page
+              </Link>
+            </div>
+          ) : null}
+        </div>
+      </header>
 
       <section className="section">
         <nav className="section-tabs" aria-label="Fan page sections">
@@ -560,33 +598,148 @@ export default async function ListenerPage({
 
         <div className="panel artist-section-panel">
           {activeSection === 'about' ? (
-            <FanAbout
-              compactPreviousShows={compactPreviousShows}
-              compactUpcomingShows={compactUpcomingShows}
-              fanGenres={fanGenres}
-              fanLevel={fanLevel}
-              fullShowListenCount={fullShowListenCount}
-              fullSongListenCount={fullSongListenCount}
-              hypePoints={hypePoints}
-              pastEventCount={pastEventCount}
-              profile={profile}
-              scoredFans={scoredFans}
-              topFiveItems={topFiveItems}
-              upcomingEventCount={upcomingEventCount}
-            />
+            <>
+              <div className="fan-page-about-grid">
+                <section className="fan-page-about-card fan-page-about-copy-card">
+                  <div className="fan-page-section-head">
+                    <h2>About</h2>
+                    <span className="meta">A compact view of this fan profile.</span>
+                  </div>
+                  <div className="artist-copy fan-page-about-copy">
+                    {profile.aboutContent || profile.bio || 'This fan has not filled out the About section yet.'}
+                  </div>
+                </section>
+
+                <section className="fan-page-about-card fan-page-about-stats-card">
+                  <div className="fan-page-section-head">
+                    <h3>Stats</h3>
+                    <span className="meta">Live totals</span>
+                  </div>
+                  <div className="fan-page-stat-grid">
+                    <div className="fan-page-stat-pill"><span>Fan level</span><strong>{fanLevel}</strong></div>
+                    <div className="fan-page-stat-pill"><span>Hype points</span><strong>{hypePoints}</strong></div>
+                    <div className="fan-page-stat-pill"><span>Songs</span><strong>{fullSongListenCount}</strong></div>
+                    <div className="fan-page-stat-pill"><span>Shows</span><strong>{fullShowListenCount}</strong></div>
+                    <div className="fan-page-stat-pill"><span>Past events</span><strong>{pastEventCount}</strong></div>
+                    <div className="fan-page-stat-pill"><span>Upcoming</span><strong>{upcomingEventCount}</strong></div>
+                  </div>
+                </section>
+
+                <section className="fan-page-about-card fan-page-about-topfive-card">
+                  <div className="fan-page-section-head">
+                    <h3>Top 5</h3>
+                    <span className="meta">Current favorites</span>
+                  </div>
+                  {topFiveItems.length ? (
+                    <ol className="fan-page-topfive-list">
+                      {topFiveItems.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <div className="empty fan-page-empty-compact">No top 5 list yet.</div>
+                  )}
+                </section>
+
+                {scoredFans.length > 0 && (
+                  <section className="fan-page-about-card fan-page-about-similar-card">
+                    <div className="fan-page-section-head">
+                      <h3>Fans like you</h3>
+                      <span className="meta">Overlapping taste</span>
+                    </div>
+                    <div className="fan-similar-list">
+                      {scoredFans.map((fan) => {
+                        const sharedGenres = fan.genres.filter((g) =>
+                          fanGenres.some((fg) => fg.toLowerCase() === g.toLowerCase())
+                        ).slice(0, 3);
+                        return (
+                          <Link className="fan-similar-row" href={`/fans/${fan.slug}`} key={fan.id}>
+                            <div className="fan-similar-avatar">
+                              {fan.avatarImage
+                                ? <img src={fan.avatarImage} alt={fan.name} />
+                                : <span>{fan.name.slice(0, 1).toUpperCase()}</span>}
+                            </div>
+                            <div className="fan-similar-info">
+                              <strong>{fan.name}</strong>
+                              <span className="meta">{[fan.city, fan.country].filter(Boolean).join(', ')}</span>
+                              {sharedGenres.length > 0 && (
+                                <div className="fan-similar-genres">
+                                  {sharedGenres.map((g) => (
+                                    <span className="tag" key={g}>{g}</span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </section>
+                )}
+
+                <section className="fan-page-about-card fan-page-about-events-card">
+                  <div className="fan-page-section-head">
+                    <h3>Events</h3>
+                    <span className="meta">Next and recent shows</span>
+                  </div>
+                  <div className="fan-page-event-columns">
+                    <div className="fan-page-event-column">
+                      <strong>Upcoming</strong>
+                      {compactUpcomingShows.length ? (
+                        <div className="fan-page-event-list">
+                          {compactUpcomingShows.map((show) => (
+                            <Link className="fan-page-event-row" href={`/shows/${show.slug}`} key={show.id}>
+                              <span>{show.title}</span>
+                              <small>{formatShowDate(show.startsAt)}</small>
+                            </Link>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="empty fan-page-empty-compact">No upcoming saved shows yet.</div>
+                      )}
+                    </div>
+
+                    <div className="fan-page-event-column">
+                      <strong>Previous</strong>
+                      {compactPreviousShows.length ? (
+                        <div className="fan-page-event-list">
+                          {compactPreviousShows.map((show) => (
+                            <Link className="fan-page-event-row" href={`/shows/${show.slug}`} key={show.id}>
+                              <span>{show.title}</span>
+                              <small>{formatShowDate(show.startsAt)}</small>
+                            </Link>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="empty fan-page-empty-compact">No previous saved shows yet.</div>
+                      )}
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </>
           ) : null}
 
           {activeSection === 'recommend' ? (
-            <FanRecommend
-              globeRouteStops={globeRouteStops}
-              nearbyPromoters={nearbyPromoters}
-              nearbyVenues={nearbyVenues}
-              newArtists={newArtists}
-              promoterGenreMatches={promoterGenreMatches}
-              trendingArtists={trendingArtists}
-              venues={venues}
-              viewerLocation={viewerLocation}
-            />
+            <>
+              <NetworkEarthGlobe
+                description="Start at the detected ZIP from this request, highlight nearby venues, then zoom out to browse farther scenes and trace the shows this fan has already attended."
+                emptyRouteLabel="No previous attended shows are mapped yet."
+                routeLabel="Attended shows"
+                routeStops={globeRouteStops}
+                title="Earth globe for nearby venues and attended shows"
+                venues={venues}
+                viewerLocation={viewerLocation}
+              />
+              <FanRecommendationsPanel
+                nearbyPromoters={nearbyPromoters}
+                nearbyVenues={nearbyVenues}
+                newArtists={newArtists}
+                promoterGenreMatches={promoterGenreMatches}
+                trendingArtists={trendingArtists}
+                zipLabel={viewerLocation?.postalCode ?? viewerLocation?.city ?? viewerLocation?.stateRegion ?? null}
+              />
+            </>
           ) : null}
         </div>
       </section>
