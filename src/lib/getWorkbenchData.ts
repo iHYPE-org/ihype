@@ -18,6 +18,7 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
         profiles: {
           select: {
             id: true,
+            hexId: true,
             type: true,
             name: true,
             city: true,
@@ -71,17 +72,7 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
 
     // Fetch remaining data in parallel — none of these depend on each other
     const primaryProfile = user.profiles[0];
-    const [
-      ticketOrders,
-      hypeEvents,
-      profileHypes,
-      radioShows,
-      uploadStreak,
-      songsPlayedCount,
-      listeningNow,
-      hypedToday,
-      eventsAttended,
-    ] = await Promise.all([
+    const [ticketOrders, hypeEvents, profileHypes, radioShows, uploadStreak, weeklyHypeCounts] = await Promise.all([
       // Fetch user's ticket orders
       db.ticketOrder.findMany({
         where: { buyerUserId: userId, status: { in: ['RESERVED', 'CAPTURED'] } },
@@ -100,11 +91,7 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
             select: { id: true, serializedId: true, status: true, holderName: true },
           },
         },
-      }).catch(() => [] as {
-        id: string; confirmationCode: string; status: string;
-        show: { id: string; title: string; startsAt: Date; ticketPriceCents: number; venueProfile: { name: string } | null };
-        tickets: { id: string; serializedId: string | null; status: string; holderName: string | null }[];
-      }[]),
+      }),
       // Fetch hype events (shows this user hyped) for activity
       db.hypeEvent.findMany({
         where: { userId },
@@ -114,7 +101,7 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
           id: true, createdAt: true,
           show: { select: { title: true } },
         },
-      }).catch(() => [] as { id: string; createdAt: Date; show: { title: string } }[]),
+      }),
       // Fetch incoming hypes on user's profiles
       db.profileHypeEvent.findMany({
         where: {
@@ -137,33 +124,26 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
           id: true, title: true, status: true, startsAt: true, featured: true,
           headlinerProfile: { select: { name: true } },
         },
-      }).catch(() => [] as { id: string; title: string; status: string; startsAt: Date; featured: boolean; headlinerProfile: { name: string } | null }[]),
-      getArtistUploadStreak(primaryProfile?.id ?? '').catch(() => 0),
-      // Count songs played by this user
-      db.mediaListen.count({ where: { userId } }).catch(() => 0),
-      // Count distinct listeners on this user's media in the last 30 minutes
-      user.profiles.length > 0
-        ? db.mediaListen.count({
-            where: {
-              artistProfileSlug: { in: user.profiles.map((p) => p.slug) },
-              createdAt: { gte: new Date(Date.now() - 30 * 60 * 1000) },
-            },
-          }).catch(() => 0)
-        : Promise.resolve(0),
-      // Count profile hype events targeting this user's profiles today (UTC)
+      }),
+      getArtistUploadStreak(primaryProfile?.id ?? ''),
+      // Count profile hype events per profile in the last 7 days
       profileIds.length > 0
-        ? db.profileHypeEvent.count({
+        ? db.profileHypeEvent.groupBy({
+            by: ['profileId'],
             where: {
               profileId: { in: profileIds },
-              createdAt: {
-                gte: new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00.000Z'),
-              },
+              createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
             },
-          }).catch(() => 0)
-        : Promise.resolve(0),
-      // Count shows this user has attended
-      db.showAttendee.count({ where: { userId } }).catch(() => 0),
+            _count: { profileId: true },
+            orderBy: { _count: { profileId: 'desc' } },
+          }).catch(() => [] as { profileId: string; _count: { profileId: number } }[])
+        : Promise.resolve([] as { profileId: string; _count: { profileId: number } }[]),
     ]);
+
+    // Count songs played by this user
+    const songsPlayedCount = await db.mediaListen.count({
+      where: { userId },
+    }).catch(() => 0);
 
     // ── Shape the response ──────────────────────────────────────
 
@@ -282,16 +262,24 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
     // Total hype count
     const totalHype = user.profiles.reduce((s, p) => s + p.hypeCount, 0);
 
+    // Build weekly hype map for merging into profile data
+    const weeklyMap: Record<string, number> = {};
+    for (const row of weeklyHypeCounts) {
+      weeklyMap[row.profileId] = row._count.profileId;
+    }
+
     const responseData: WorkbenchData = {
       userName,
       userInitials: initials || 'FN',
       city,
       greeting: `Welcome back, ${userName.split(' ')[0]}.`,
-      listeningNow,
-      hypedToday,
+      listeningNow: 0,
+      hypedToday: 0,
       showsTonight: allShows.filter((s) => s.status === 'TONIGHT').length,
       activeProfileTypes,
       profileType: (primaryProfile?.type as string) ?? 'LISTENER',
+      profileId: primaryProfile?.id,
+      profileHexId: primaryProfile?.hexId,
       isAdmin: user.role === 'ADMIN',
       profilePath: primaryProfile ? `/${primaryProfile.type.toLowerCase()}s/${primaryProfile.slug}` : '',
       isVerified: primaryProfile?.isVerified ?? false,
@@ -307,11 +295,12 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
       notifications: [],
       uploadStreak: uploadStreak ?? 0,
       needsGenreQuiz: needsGenreQuiz ?? false,
+      hypeCount7d: primaryProfile ? (weeklyMap[primaryProfile.id] ?? 0) : 0,
       lifeStats: {
         totalHype,
         totalEarnings: pendingCents / 100,
         songsPlayed: songsPlayedCount,
-        eventsAttended,
+        eventsAttended: 0,
       },
     };
 
@@ -329,7 +318,6 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
     };
   }
 }
-
 
 function timeAgo(date: Date): string {
   const diff = Date.now() - date.getTime();

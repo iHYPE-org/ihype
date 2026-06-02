@@ -1,13 +1,141 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import type { WorkbenchData } from '@/types/workbench';
+import type { WorkbenchData } from '@/components/WorkbenchShellV2';
 import { ArtistMediaUploadManager } from '@/components/ArtistMediaUploadManager';
+import { HypeHeatmap } from '@/components/HypeHeatmap';
+import type { HypeHeatmapCity, HypeHeatmapVenuePing } from '@/components/HypeHeatmap';
 import { IcHeart } from './icons';
 import { Panel } from './primitives';
-import { HypeHeatmap } from '@/components/HypeHeatmap';
-import { RevenueSplitVisualizer } from '@/components/RevenueSplitVisualizer';
-import type { HypeHeatmapCity, HypeHeatmapVenuePing } from '@/components/HypeHeatmap';
+
+// ── City coordinate lookup (normalized 0..1 within a US bounding box) ──
+// x = (lng + 125) / 57,  y = (50 - lat) / 27  (approx CONUS bounding box)
+const CITY_COORDS: Record<string, { x: number; y: number }> = {
+  'New York':        { x: 0.84, y: 0.35 },
+  'Brooklyn':        { x: 0.84, y: 0.36 },
+  'Los Angeles':     { x: 0.09, y: 0.62 },
+  'Chicago':         { x: 0.55, y: 0.30 },
+  'Houston':         { x: 0.44, y: 0.75 },
+  'Phoenix':         { x: 0.20, y: 0.63 },
+  'Philadelphia':    { x: 0.82, y: 0.37 },
+  'San Antonio':     { x: 0.42, y: 0.78 },
+  'San Diego':       { x: 0.10, y: 0.65 },
+  'Dallas':          { x: 0.45, y: 0.68 },
+  'San Jose':        { x: 0.06, y: 0.47 },
+  'Austin':          { x: 0.44, y: 0.73 },
+  'Jacksonville':    { x: 0.74, y: 0.68 },
+  'Fort Worth':      { x: 0.45, y: 0.68 },
+  'Columbus':        { x: 0.68, y: 0.38 },
+  'Charlotte':       { x: 0.73, y: 0.50 },
+  'San Francisco':   { x: 0.06, y: 0.45 },
+  'Indianapolis':    { x: 0.63, y: 0.38 },
+  'Seattle':         { x: 0.08, y: 0.14 },
+  'Denver':          { x: 0.31, y: 0.43 },
+  'Nashville':       { x: 0.62, y: 0.53 },
+  'Oklahoma City':   { x: 0.43, y: 0.60 },
+  'El Paso':         { x: 0.29, y: 0.70 },
+  'Washington':      { x: 0.80, y: 0.42 },
+  'Las Vegas':       { x: 0.16, y: 0.55 },
+  'Louisville':      { x: 0.64, y: 0.46 },
+  'Memphis':         { x: 0.57, y: 0.58 },
+  'Portland':        { x: 0.08, y: 0.20 },
+  'Baltimore':       { x: 0.80, y: 0.41 },
+  'Milwaukee':       { x: 0.58, y: 0.28 },
+  'Detroit':         { x: 0.67, y: 0.30 },
+  'Atlanta':         { x: 0.68, y: 0.60 },
+  'Miami':           { x: 0.77, y: 0.82 },
+  'Minneapolis':     { x: 0.50, y: 0.20 },
+  'Cleveland':       { x: 0.70, y: 0.34 },
+  'New Orleans':     { x: 0.57, y: 0.74 },
+  'Boston':          { x: 0.88, y: 0.29 },
+  'Pittsburgh':      { x: 0.74, y: 0.37 },
+  'Kansas City':     { x: 0.50, y: 0.48 },
+  'St. Louis':       { x: 0.56, y: 0.47 },
+  'Tampa':           { x: 0.73, y: 0.76 },
+  'Orlando':         { x: 0.75, y: 0.74 },
+  'Cincinnati':      { x: 0.66, y: 0.42 },
+  'Raleigh':         { x: 0.77, y: 0.49 },
+  'Sacramento':      { x: 0.08, y: 0.43 },
+  'Salt Lake City':  { x: 0.22, y: 0.38 },
+  'Richmond':        { x: 0.79, y: 0.44 },
+};
+
+function cityToHeatmapCity(
+  city: string,
+  count: number,
+  rank: number,
+  maxCount: number,
+  fallbackIndex: number,
+): HypeHeatmapCity {
+  const coords = CITY_COORDS[city] ?? {
+    // Spread unknown cities in a row near the bottom so they don't overlap
+    x: 0.1 + (fallbackIndex % 9) * 0.09,
+    y: 0.88,
+  };
+  return {
+    name: city,
+    x: coords.x,
+    y: coords.y,
+    hype: count,
+    venuesAsking: 0,
+    hot: rank <= 3 && count > maxCount * 0.5,
+  };
+}
+
+// Static venue pings — venue demand radar is not yet in the DB
+const STATIC_VENUE_PINGS: HypeHeatmapVenuePing[] = [];
+
+function HypeHeatmapLive() {
+  const [cities, setCities] = useState<HypeHeatmapCity[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/hype/heatmap')
+      .then((r) => r.json())
+      .then((data: { cities: Array<{ city: string; count: number; rank: number }> }) => {
+        const maxCount = data.cities[0]?.count ?? 1;
+        let fallbackIndex = 0;
+        const mapped = data.cities.map((c) => {
+          const item = cityToHeatmapCity(c.city, c.count, c.rank, maxCount, fallbackIndex);
+          if (!CITY_COORDS[c.city]) fallbackIndex++;
+          return item;
+        });
+        setCities(mapped);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        height: 300, fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-3)',
+        letterSpacing: '.06em',
+      }}>
+        Loading hype data…
+      </div>
+    );
+  }
+
+  if (cities.length === 0) {
+    return (
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        height: 300, fontFamily: 'var(--f-b)', fontSize: 14, color: 'var(--ink-3)',
+      }}>
+        No hype events in the last 30 days yet.
+      </div>
+    );
+  }
+
+  return (
+    <HypeHeatmap
+      cities={cities}
+      venuePings={STATIC_VENUE_PINGS}
+    />
+  );
+}
 
 type CollabBoardPost = {
   id: string;
@@ -396,36 +524,9 @@ function PassedTheAux({ data }: { data: WorkbenchData }) {
   );
 }
 
-const SAMPLE_CITIES: HypeHeatmapCity[] = [
-  { name: 'Chicago',   x: .55, y: .42, hype: 1247, venuesAsking: 3, hot: true },
-  { name: 'Brooklyn',  x: .81, y: .42, hype: 892,  venuesAsking: 4, hot: true },
-  { name: 'Austin',    x: .45, y: .74, hype: 602,  venuesAsking: 3, hot: true },
-  { name: 'Detroit',   x: .67, y: .38, hype: 410,  venuesAsking: 2 },
-  { name: 'Portland',  x: .12, y: .30, hype: 320,  venuesAsking: 1 },
-  { name: 'Nashville', x: .61, y: .58, hype: 280,  venuesAsking: 2 },
-  { name: 'Denver',    x: .33, y: .48, hype: 190,  venuesAsking: 1 },
-];
-
-const SAMPLE_PINGS: HypeHeatmapVenuePing[] = [
-  { id: 'v1', name: 'Empty Bottle',    city: 'Chicago',  capacity: 400, statusLabel: 'wants Jul 12–14',   signal: 'urgent' },
-  { id: 'v2', name: 'Music Hall of Williamsburg', city: 'Brooklyn', capacity: 550, statusLabel: 'CONFIRMED Jun 18', signal: 'confirmed' },
-  { id: 'v3', name: 'Mohawk',          city: 'Austin',   capacity: 600, statusLabel: 'interested in Aug', signal: 'interest' },
-];
-
 export function ViewStudio({ data }: { data: WorkbenchData }) {
   const payout = data.lifeStats?.totalEarnings ?? 0;
-
-  const [splitMode, setSplitMode] = useState<'co-host' | 'referrer'>('referrer');
-  const [referrerLabel, setReferrerLabel] = useState('Anyone who shares your show');
-
-  const splitTracks = data.tracks.slice(0, 3).map(t => ({
-    id: t.id,
-    artistName: t.artistName,
-    trackTitle: t.title,
-    color: t.color,
-  }));
-
-  const [studioTab, setStudioTab] = useState<'uploads' | 'revenue' | 'hypemap'>('uploads');
+  const [studioTab, setStudioTab] = useState<'uploads' | 'hypemap'>('uploads');
 
   const tabBtn = (id: typeof studioTab, label: string) => (
     <button
@@ -453,94 +554,67 @@ export function ViewStudio({ data }: { data: WorkbenchData }) {
       {/* Tab bar */}
       <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid var(--line)', marginBottom: 20 }}>
         {tabBtn('uploads', 'UPLOADS')}
-        {tabBtn('revenue', 'REVENUE SPLIT')}
         {tabBtn('hypemap', 'HYPE MAP')}
       </div>
 
-      {studioTab === 'uploads' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-          <Panel title="Uploads">
-            <div style={{ padding: '4px 0' }}>
-              {data.tracks.length === 0 ? (
-                <div style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                  padding: '40px 24px', gap: 14, textAlign: 'center',
-                }}>
-                  <div style={{ fontSize: 40 }}>🎵</div>
-                  <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 18, color: 'var(--ink)' }}>No uploads yet</div>
-                  <div style={{ fontFamily: 'var(--f-b)', fontSize: 14, color: 'var(--ink-2)', maxWidth: '24ch', lineHeight: 1.5 }}>
-                    Drag an audio file here or click to upload your first track.
-                  </div>
-                  <button style={{
-                    marginTop: 4, padding: '11px 24px', borderRadius: 9,
-                    fontFamily: 'var(--f-m)', fontSize: 13, fontWeight: 700, letterSpacing: '.06em',
-                    textTransform: 'uppercase', cursor: 'pointer', border: 'none', color: '#fff',
-                    background: 'linear-gradient(135deg, var(--accent), #ff3e9a)',
-                  }}>Upload a track</button>
+      {studioTab === 'hypemap' && <HypeHeatmapLive />}
+
+      {studioTab === 'uploads' && <><div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <Panel title="Uploads">
+          <div style={{ padding: '4px 0' }}>
+            {data.tracks.length === 0 ? (
+              <div style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                padding: '40px 24px', gap: 14, textAlign: 'center',
+              }}>
+                <div style={{ fontSize: 40 }}>🎵</div>
+                <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 18, color: 'var(--ink)' }}>No uploads yet</div>
+                <div style={{ fontFamily: 'var(--f-b)', fontSize: 14, color: 'var(--ink-2)', maxWidth: '24ch', lineHeight: 1.5 }}>
+                  Drag an audio file here or click to upload your first track.
                 </div>
-              ) : (
-                data.tracks.slice(0, 4).map((t) => (
-                  <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--line)' }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 5, background: `linear-gradient(135deg, ${t.color}, ${t.color}80)`, flexShrink: 0 }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, color: 'var(--ink)' }}>{t.title}</div>
-                      <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', marginTop: 2 }}>{t.artistName} · {t.duration}</div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'var(--f-m)', fontSize: 13, color: '#ff3e9a' }}>
-                      <IcHeart s={10} c="#ff3e9a" /> {t.hypeCount}
-                    </div>
+                <button style={{
+                  marginTop: 4, padding: '11px 24px', borderRadius: 9,
+                  fontFamily: 'var(--f-m)', fontSize: 13, fontWeight: 700, letterSpacing: '.06em',
+                  textTransform: 'uppercase', cursor: 'pointer', border: 'none', color: '#fff',
+                  background: 'linear-gradient(135deg, var(--accent), var(--pink, #ff3e9a))',
+                }}>Upload a track</button>
+              </div>
+            ) : (
+              data.tracks.slice(0, 4).map((t) => (
+                <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--line)' }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 5, background: `linear-gradient(135deg, ${t.color}, ${t.color}80)`, flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, color: 'var(--ink)' }}>{t.title}</div>
+                    <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', marginTop: 2 }}>{t.artistName} · {t.duration}</div>
                   </div>
-                ))
-              )}
-            </div>
-          </Panel>
-          <div style={{ border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)', padding: '24px 28px' }}>
-            <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.16em', color: 'var(--ink-3)', marginBottom: 8 }}>ARTIST SHARE (PENDING)</div>
-            <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 42, letterSpacing: '-.025em', color: 'var(--ink)' }}>${payout.toLocaleString()}</div>
-            <div style={{ fontFamily: 'var(--f-m)', fontSize: 13, color: '#ffb84a', letterSpacing: '.04em', marginTop: 6 }}>pending · next release</div>
-            <div style={{ marginTop: 18, padding: '10px 14px', background: 'var(--bg-3)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-2)', letterSpacing: '.04em' }}>
-              45% artist · 45% venue · 10% referrer · 0% to iHYPE
-            </div>
-            <button style={{ marginTop: 14, width: '100%', padding: '10px', background: 'var(--accent)', color: 'var(--bg)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 600, letterSpacing: '.04em', border: 'none', cursor: 'pointer' }}>
-              + New show
-            </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'var(--f-m)', fontSize: 13, color: '#ff3e9a' }}>
+                    <IcHeart s={10} c="#ff3e9a" /> {t.hypeCount}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
+        </Panel>
+        <div style={{ border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)', padding: '24px 28px' }}>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.16em', color: 'var(--ink-3)', marginBottom: 8 }}>PAYOUT PENDING</div>
+          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 42, letterSpacing: '-.025em', color: 'var(--ink)' }}>${payout.toLocaleString()}</div>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: 13, color: '#ffb84a', letterSpacing: '.04em', marginTop: 6 }}>pending · next release</div>
+          <div style={{ marginTop: 18, padding: '10px 14px', background: 'var(--bg-3)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-2)', letterSpacing: '.04em' }}>
+            45% tickets · 45% venue · 10% referrer · $0 platform fee
+          </div>
+          <button style={{ marginTop: 14, width: '100%', padding: '10px', background: 'var(--accent)', color: 'var(--bg)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 600, letterSpacing: '.04em', border: 'none', cursor: 'pointer' }}>
+            + New show
+          </button>
         </div>
-      )}
-
-      {studioTab === 'revenue' && (
-        <RevenueSplitVisualizer
-          tracks={splitTracks}
-          hostName={data.userName || 'You'}
-          referrerLabel={referrerLabel}
-          onReferrerLabelChange={setReferrerLabel}
-          mode={splitMode}
-          onModeChange={setSplitMode}
-          projection={data.tracks.length > 0 ? {
-            totalDollars: Math.round((data.lifeStats?.totalEarnings ?? 600) * 2.2),
-            windowLabel: 'based on your last 4 shows',
-            listens: data.lifeStats?.songsPlayed ?? 4800,
-          } : null}
-          onSchedule={() => setStudioTab('uploads')}
-        />
-      )}
-
-      {studioTab === 'hypemap' && (
-        <HypeHeatmap
-          cities={SAMPLE_CITIES}
-          venuePings={SAMPLE_PINGS}
-          suggestedRoute="CHI → BKN → ATX"
-        />
-      )}
-
-      {studioTab === 'uploads' && data.profileId && (
+      </div>
+      {data.profileId && (
         <div style={{ marginTop: 32 }}>
           <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.18em', color: 'var(--accent)', marginBottom: 14 }}>UPLOAD TRACKS</div>
           <ArtistMediaUploadManager profileId={data.profileId} />
         </div>
       )}
-      {studioTab === 'uploads' && <CollabBoard />}
-      {studioTab === 'uploads' && <PassedTheAux data={data} />}
+      <CollabBoard />
+      <PassedTheAux data={data} /></>}
     </div>
   );
 }

@@ -154,6 +154,7 @@ export type WorkbenchData = {
   referralStats?: { clicks: number; buyers: number; grossCents: number; payoutCents: number };
   listeningNow: number;
   hypedToday: number;
+  hypeCount7d?: number;
   showsTonight: number;
   isVerified?: boolean;
   verificationRequested?: boolean;
