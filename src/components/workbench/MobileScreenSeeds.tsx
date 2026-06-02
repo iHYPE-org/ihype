@@ -156,7 +156,7 @@ export function MobileScreenSeeds({ data, onHypersSheet }: { data: WorkbenchData
     }, 320);
   }, [deck, deckIdx, actionedIds]);
 
-  const front = deck[deckIdx % Math.max(deck.length, 1)];
+  const front = deck.length > 0 && deckIdx < deck.length ? deck[deckIdx] : undefined;
   const behind = deck.length > 1 ? [
     deck[(deckIdx + 2) % deck.length],
     deck[(deckIdx + 1) % deck.length],
@@ -272,6 +272,24 @@ export function MobileScreenSeeds({ data, onHypersSheet }: { data: WorkbenchData
           {/* Skeleton loading state */}
           {loadingDeck && (
             <div className="wm-skeleton" style={{ position: 'absolute', inset: 0, borderRadius: 18 }} />
+          )}
+          {/* All-reviewed state */}
+          {!loadingDeck && deck.length > 0 && !front && (
+            <div style={{ position: 'absolute', inset: 0, borderRadius: 18, background: T.bg2, border: `1px solid ${T.line}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+              <div style={{ fontSize: 36 }}>✅</div>
+              <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 15, color: T.ink }}>You&#39;re all caught up!</div>
+              <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.06em', textAlign: 'center', maxWidth: 200 }}>You reviewed {totalReviewed} seed{totalReviewed !== 1 ? 's' : ''} this session.</div>
+              <button onClick={refreshDeck} style={{ marginTop: 4, padding: '7px 20px', borderRadius: 99, background: T.accent, color: '#fff', border: 'none', fontFamily: T.fd, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Load more</button>
+            </div>
+          )}
+          {/* Empty state */}
+          {!loadingDeck && deck.length === 0 && (
+            <div style={{ position: 'absolute', inset: 0, borderRadius: 18, background: T.bg2, border: `1px solid ${T.line}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+              <div style={{ fontSize: 36 }}>🌱</div>
+              <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 15, color: T.ink }}>No seeds right now</div>
+              <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.06em', textAlign: 'center', maxWidth: 200 }}>Check back soon — new music drops daily.</div>
+              <button onClick={refreshDeck} style={{ marginTop: 4, padding: '7px 20px', borderRadius: 99, background: T.accent, color: '#fff', border: 'none', fontFamily: T.fd, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Refresh</button>
+            </div>
           )}
           {/* behind cards */}
           {!loadingDeck && behind.map((t, i) => (
