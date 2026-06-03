@@ -146,6 +146,7 @@ function PasskeyPanel() {
   const [passkeys, setPasskeys] = React.useState<PasskeyRow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [registering, setRegistering] = React.useState(false);
+  const [deleting, setDeleting] = React.useState<string | null>(null);
   const [status, setStatus] = React.useState('');
 
   React.useEffect(() => {
@@ -181,6 +182,22 @@ function PasskeyPanel() {
     }
   }
 
+  async function removePasskey(id: string) {
+    if (!confirm('Remove this passkey? You won\'t be able to use it to sign in.')) return;
+    setDeleting(id);
+    setStatus('');
+    try {
+      const res = await fetch(`/api/auth/passkey/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Could not remove passkey.');
+      setPasskeys(prev => prev.filter(pk => pk.id !== id));
+      setStatus('Passkey removed.');
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Could not remove passkey.');
+    } finally {
+      setDeleting(null);
+    }
+  }
+
   return (
     <EditorPanel title="Passkeys" eyebrow="Security">
       <p style={{ fontFamily: 'var(--f-b)', fontSize: 13, color: 'var(--ink-2)', margin: '0 0 12px', lineHeight: 1.5 }}>
@@ -200,6 +217,14 @@ function PasskeyPanel() {
                   {pk.backedUp ? ' · Synced' : ''}
                 </div>
               </div>
+              <button
+                onClick={() => void removePasskey(pk.id)}
+                disabled={deleting === pk.id}
+                aria-label="Remove passkey"
+                style={{ padding: '6px 10px', border: '1px solid rgba(255,80,80,.3)', borderRadius: 6, background: 'none', color: '#ff8080', fontFamily: 'var(--f-m)', fontSize: 11, cursor: deleting === pk.id ? 'wait' : 'pointer', flexShrink: 0 }}
+              >
+                {deleting === pk.id ? '…' : 'Remove'}
+              </button>
             </div>
           ))}
         </div>
@@ -213,7 +238,7 @@ function PasskeyPanel() {
       >
         {registering ? 'Setting up…' : 'Add a passkey'}
       </button>
-      {status ? <p style={{ marginTop: 8, fontFamily: 'var(--f-m)', fontSize: 12, color: status.includes('success') ? '#22e5d4' : '#ffb4a7' }}>{status}</p> : null}
+      {status ? <p style={{ marginTop: 8, fontFamily: 'var(--f-m)', fontSize: 12, color: status.includes('success') || status.includes('removed') ? '#22e5d4' : '#ffb4a7' }}>{status}</p> : null}
     </EditorPanel>
   );
 }
@@ -394,6 +419,23 @@ export function ViewSettings({ prefs, setPref, data, onBack }: {
       </div>
 
       {status ? <div style={{ marginBottom: 14, padding: '11px 14px', border: '1px solid rgba(255,80,41,.2)', borderRadius: 10, background: status.includes('Could not') ? 'rgba(255,80,80,.08)' : 'rgba(255,80,41,.06)', color: status.includes('Could not') ? '#ffb4a7' : 'var(--ink-2)', fontFamily: 'var(--f-m)', fontSize: 13 }}>{status}</div> : null}
+
+      {data.profileCompletion && data.profileCompletion.percent < 100 && (
+        <div style={{ marginBottom: 14, padding: '14px 16px', border: '1px solid rgba(255,184,74,.2)', borderRadius: 10, background: 'rgba(255,184,74,.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <span style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: '#ffb84a', letterSpacing: '.08em' }}>PROFILE {data.profileCompletion.percent}% COMPLETE</span>
+            <span style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)' }}>{data.profileCompletion.missing.length} field{data.profileCompletion.missing.length !== 1 ? 's' : ''} missing</span>
+          </div>
+          <div style={{ height: 5, borderRadius: 3, background: 'var(--line)', overflow: 'hidden', marginBottom: 8 }}>
+            <div style={{ height: '100%', width: `${data.profileCompletion.percent}%`, background: 'linear-gradient(90deg, #ffb84a, #ff5029)', borderRadius: 3, transition: 'width .4s' }} />
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {data.profileCompletion.missing.map(field => (
+              <span key={field} style={{ padding: '3px 8px', borderRadius: 99, border: '1px solid rgba(255,184,74,.3)', fontFamily: 'var(--f-m)', fontSize: 11, color: '#ffb84a' }}>{field}</span>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1.1fr .9fr', gap: 14 }}>
         <EditorPanel title="Identity + layout" eyebrow="Who you are" span={2}>

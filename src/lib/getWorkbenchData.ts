@@ -101,8 +101,11 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
     // Collect profile ids needed for aggregation queries
     const profileIds = user.profiles.map((p) => p.id);
 
-    // Fetch remaining data in parallel — none of these depend on each other
-    const primaryProfile = user.profiles[0];
+    // Pick primary profile by type priority: ARTIST > DJ > VENUE > LISTENER (fan)
+    const TYPE_PRIORITY: Record<string, number> = { ARTIST: 0, DJ: 1, VENUE: 2 };
+    const primaryProfile = user.profiles.slice().sort((a, b) =>
+      (TYPE_PRIORITY[a.type] ?? 99) - (TYPE_PRIORITY[b.type] ?? 99)
+    )[0];
     const [ticketOrders, hypeEvents, profileHypes, radioShows, uploadStreak, weeklyHypeCounts, pastShows] = await Promise.all([
       // Fetch user's ticket orders
       db.ticketOrder.findMany({
@@ -384,7 +387,7 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
         totalHype,
         totalEarnings: pendingCents / 100,
         songsPlayed: songsPlayedCount,
-        eventsAttended: 0,
+        eventsAttended: ticketOrders.filter(o => o.status === 'CAPTURED').length,
       },
       pageEditor: primaryProfile ? {
         profileId: primaryProfile.id,
