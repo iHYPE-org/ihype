@@ -12,9 +12,9 @@ const contentSecurityPolicy = [
   "media-src 'self' data: blob: https:",
   "font-src 'self' data: https:",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  `script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com${isProduction ? '' : " 'unsafe-eval'"}`,
-  "connect-src 'self' https://challenges.cloudflare.com",
-  "frame-src 'self' https://challenges.cloudflare.com",
+  `script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://js.stripe.com${isProduction ? '' : " 'unsafe-eval'"}`,
+  "connect-src 'self' https://challenges.cloudflare.com https://api.stripe.com",
+  "frame-src 'self' https://challenges.cloudflare.com https://js.stripe.com",
   'upgrade-insecure-requests'
 ].join('; ');
 

@@ -81,7 +81,7 @@ export async function POST(request: Request) {
   const onboardingUrl = await createConnectOnboardingUrl({
     connectAccountId,
     returnUrl: `${appUrl}/api/stripe/connect/return?profileId=${profile.id}`,
-    refreshUrl: `${appUrl}/api/stripe/connect/onboard`
+    refreshUrl: `${appUrl}/api/stripe/connect/refresh?profileId=${profile.id}`
   });
 
   return NextResponse.json({ onboardingUrl });

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import type { WorkbenchData, WbPageEditor } from '@/types/workbench';
 import { DEFAULT_PREFS } from './types';
 import { IcLibrary, IcRadio, IcTicket, IcDisco, IcStudio, IcCheck } from './icons';
@@ -209,6 +210,7 @@ export function ViewSettings({ prefs, setPref, data, onBack }: {
   data: WorkbenchData;
   onBack?: () => void;
 }) {
+  const router = useRouter();
   const editor = data.pageEditor;
   const [draft, setDraft] = useState<EditorDraft | undefined>(editor);
   const [status, setStatus] = useState<string>('');
@@ -249,6 +251,7 @@ export function ViewSettings({ prefs, setPref, data, onBack }: {
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(typeof payload.error === 'string' ? payload.error : 'Could not save page.');
       setStatus('Page saved. Public profile updated.');
+      router.refresh();
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Could not save page.');
     } finally {

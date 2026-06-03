@@ -28,10 +28,40 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
             slug: true,
             genres: true,
             stripeConnectOnboarded: true,
+            // Page editor fields
+            headline: true,
+            bio: true,
+            aboutContent: true,
+            topFiveContent: true,
+            mediaContent: true,
+            nowPlaying: true,
+            links: true,
+            merchUrl: true,
+            merchContent: true,
+            tourContent: true,
+            requestContent: true,
+            upcomingContent: true,
+            previousShowHighlights: true,
+            addressLine1: true,
+            stateRegion: true,
+            postalCode: true,
+            country: true,
+            hoursText: true,
+            parkingDetails: true,
+            stayRecommendations: true,
+            heroImage: true,
+            avatarImage: true,
+            logoImage: true,
+            galleryImage: true,
+            featureVideoUrl: true,
+            themePreset: true,
+            themeAccentTone: true,
+            themeBackdropTone: true,
+            fanShareEnabled: true,
             mediaUploads: {
               take: 8,
               orderBy: { createdAt: 'desc' },
-              select: { id: true, hexId: true, title: true, storageUrl: true },
+              select: { id: true, hexId: true, title: true, storageUrl: true, notes: true, freeUseEnabled: true },
             },
             hostedShows: {
               where: { status: { in: ['SCHEDULED', 'LIVE'] }, startsAt: { gte: new Date() } },
@@ -73,7 +103,7 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
 
     // Fetch remaining data in parallel — none of these depend on each other
     const primaryProfile = user.profiles[0];
-    const [ticketOrders, hypeEvents, profileHypes, radioShows, uploadStreak, weeklyHypeCounts] = await Promise.all([
+    const [ticketOrders, hypeEvents, profileHypes, radioShows, uploadStreak, weeklyHypeCounts, pastShows] = await Promise.all([
       // Fetch user's ticket orders
       db.ticketOrder.findMany({
         where: { buyerUserId: userId, status: { in: ['RESERVED', 'CAPTURED'] } },
@@ -143,6 +173,34 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
             orderBy: { _count: { profileId: 'desc' } },
           }).catch(() => [] as { profileId: string; _count: { profileId: number } }[])
         : Promise.resolve([] as { profileId: string; _count: { profileId: number } }[]),
+      // Fetch past shows for the primary profile's page editor
+      primaryProfile
+        ? db.show.findMany({
+            where: {
+              status: 'ENDED',
+              OR: [
+                { headlinerProfileId: primaryProfile.id },
+                { venueProfileId: primaryProfile.id },
+              ],
+            },
+            take: 4,
+            orderBy: { startsAt: 'desc' },
+            select: {
+              id: true, title: true, startsAt: true, hypeCount: true,
+              ticketsSoldCount: true, ticketCapacity: true, ticketPriceCents: true,
+              venueProfile: { select: { name: true } },
+              headlinerProfile: { select: { name: true } },
+            },
+          }).catch(() => [] as {
+            id: string; title: string; startsAt: Date; hypeCount: number;
+            ticketsSoldCount: number; ticketCapacity: number | null; ticketPriceCents: number;
+            venueProfile: { name: string } | null; headlinerProfile: { name: string } | null;
+          }[])
+        : Promise.resolve([] as {
+            id: string; title: string; startsAt: Date; hypeCount: number;
+            ticketsSoldCount: number; ticketCapacity: number | null; ticketPriceCents: number;
+            venueProfile: { name: string } | null; headlinerProfile: { name: string } | null;
+          }[]),
     ]);
 
     // Count songs played by this user
@@ -308,6 +366,86 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
         songsPlayed: songsPlayedCount,
         eventsAttended: 0,
       },
+      pageEditor: primaryProfile ? {
+        profileId: primaryProfile.id,
+        slug: primaryProfile.slug,
+        type: primaryProfile.type,
+        name: primaryProfile.name,
+        headline: primaryProfile.headline ?? '',
+        bio: primaryProfile.bio ?? '',
+        aboutContent: primaryProfile.aboutContent ?? '',
+        topFiveContent: primaryProfile.topFiveContent ?? '',
+        mediaContent: primaryProfile.mediaContent ?? '',
+        nowPlaying: primaryProfile.nowPlaying ?? '',
+        links: primaryProfile.links ?? '',
+        merchUrl: primaryProfile.merchUrl ?? '',
+        merchContent: primaryProfile.merchContent ?? '',
+        tourContent: primaryProfile.tourContent ?? '',
+        requestContent: primaryProfile.requestContent ?? '',
+        upcomingContent: primaryProfile.upcomingContent ?? '',
+        previousShowHighlights: primaryProfile.previousShowHighlights ?? '',
+        addressLine1: primaryProfile.addressLine1 ?? '',
+        city: primaryProfile.city ?? '',
+        stateRegion: primaryProfile.stateRegion ?? '',
+        postalCode: primaryProfile.postalCode ?? '',
+        country: primaryProfile.country ?? '',
+        hoursText: primaryProfile.hoursText ?? '',
+        parkingDetails: primaryProfile.parkingDetails ?? '',
+        stayRecommendations: primaryProfile.stayRecommendations ?? '',
+        heroImage: primaryProfile.heroImage ?? '',
+        avatarImage: primaryProfile.avatarImage ?? '',
+        logoImage: primaryProfile.logoImage ?? '',
+        galleryImage: primaryProfile.galleryImage ?? '',
+        featureVideoUrl: primaryProfile.featureVideoUrl ?? '',
+        themePreset: primaryProfile.themePreset ?? '',
+        themeAccentTone: primaryProfile.themeAccentTone ?? '',
+        themeBackdropTone: primaryProfile.themeBackdropTone ?? '',
+        fanShareEnabled: primaryProfile.fanShareEnabled ?? false,
+        songs: primaryProfile.mediaUploads.map((m) => ({
+          hexId: m.hexId,
+          title: m.title ?? '',
+          notes: m.notes ?? null,
+          freeUseEnabled: m.freeUseEnabled,
+        })),
+        upcomingShows: [
+          ...primaryProfile.headlinerShows.map((s) => ({
+            id: s.id,
+            name: s.title,
+            venue: s.venueProfile?.name ?? 'TBD',
+            date: s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+            time: s.startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+            hype: s.hypeCount,
+            sold: s.ticketsSoldCount,
+            capacity: s.ticketCapacity ?? 0,
+            price: Math.round(s.ticketPriceCents / 100),
+            status: 'UPCOMING' as const,
+          })),
+          ...primaryProfile.hostedShows.map((s) => ({
+            id: s.id,
+            name: s.headlinerProfile?.name ?? s.title,
+            venue: primaryProfile.name,
+            date: s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+            time: s.startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+            hype: s.hypeCount,
+            sold: s.ticketsSoldCount,
+            capacity: s.ticketCapacity ?? 0,
+            price: Math.round(s.ticketPriceCents / 100),
+            status: 'UPCOMING' as const,
+          })),
+        ],
+        previousShows: pastShows.map((s) => ({
+          id: s.id,
+          name: s.headlinerProfile?.name ?? s.title,
+          venue: s.venueProfile?.name ?? primaryProfile.name,
+          date: s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+          time: s.startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+          hype: s.hypeCount,
+          sold: s.ticketsSoldCount,
+          capacity: s.ticketCapacity ?? 0,
+          price: Math.round(s.ticketPriceCents / 100),
+          status: 'UPCOMING' as const,
+        })),
+      } : undefined,
     };
 
     return responseData;
