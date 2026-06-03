@@ -234,9 +234,12 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
       ...p.headlinerShows.map((s) => {
         const now = new Date();
         const diff = s.startsAt.getTime() - now.getTime();
+        const sold = s.ticketsSoldCount;
+        const cap = s.ticketCapacity ?? 0;
+        const nearSold = cap > 0 && sold / cap > 0.85;
         const tonight = diff < 86400000 && diff > 0;
         const thisWeek = diff < 7 * 86400000 && diff > 0;
-        const status: 'TONIGHT' | 'THIS WEEK' | 'UPCOMING' = tonight ? 'TONIGHT' : thisWeek ? 'THIS WEEK' : 'UPCOMING';
+        const status: 'TONIGHT' | 'THIS WEEK' | 'UPCOMING' | 'NEAR SOLD' = nearSold ? 'NEAR SOLD' : tonight ? 'TONIGHT' : thisWeek ? 'THIS WEEK' : 'UPCOMING';
         return {
           id: s.id,
           name: s.title,
@@ -244,8 +247,8 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
           date: s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
           time: s.startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
           hype: s.hypeCount,
-          sold: s.ticketsSoldCount,
-          capacity: s.ticketCapacity ?? 0,
+          sold,
+          capacity: cap,
           price: Math.round(s.ticketPriceCents / 100),
           status,
         };
@@ -253,9 +256,12 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
       ...p.hostedShows.map((s) => {
         const now = new Date();
         const diff = s.startsAt.getTime() - now.getTime();
+        const sold = s.ticketsSoldCount;
+        const cap = s.ticketCapacity ?? 0;
+        const nearSold = cap > 0 && sold / cap > 0.85;
         const tonight = diff < 86400000 && diff > 0;
         const thisWeek = diff < 7 * 86400000 && diff > 0;
-        const status: 'TONIGHT' | 'THIS WEEK' | 'UPCOMING' = tonight ? 'TONIGHT' : thisWeek ? 'THIS WEEK' : 'UPCOMING';
+        const status: 'TONIGHT' | 'THIS WEEK' | 'UPCOMING' | 'NEAR SOLD' = nearSold ? 'NEAR SOLD' : tonight ? 'TONIGHT' : thisWeek ? 'THIS WEEK' : 'UPCOMING';
         return {
           id: s.id,
           name: s.headlinerProfile?.name ?? s.title,
@@ -263,8 +269,8 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
           date: s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
           time: s.startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
           hype: s.hypeCount,
-          sold: s.ticketsSoldCount,
-          capacity: s.ticketCapacity ?? 0,
+          sold,
+          capacity: cap,
           price: Math.round(s.ticketPriceCents / 100),
           status,
         };
@@ -348,7 +354,21 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
       isVerified: primaryProfile?.isVerified ?? false,
       verificationRequested: primaryProfile?.verificationRequested ?? false,
       pendingVenueRequestCount: 0,
-      profileCompletion: { percent: 100, missing: [] },
+      profileCompletion: (() => {
+        if (!primaryProfile) return { percent: 100, missing: [] };
+        const checks: Array<{ label: string; ok: boolean }> = [
+          { label: 'Display name', ok: !!primaryProfile.name?.trim() },
+          { label: 'Bio', ok: !!primaryProfile.bio?.trim() },
+          { label: 'Headline', ok: !!primaryProfile.headline?.trim() },
+          { label: 'Avatar image', ok: !!primaryProfile.avatarImage?.trim() },
+          { label: 'Hero image', ok: !!primaryProfile.heroImage?.trim() },
+          { label: 'Genres', ok: (primaryProfile.genres?.length ?? 0) > 0 },
+          { label: 'City', ok: !!primaryProfile.city?.trim() },
+        ];
+        const ok = checks.filter(c => c.ok).length;
+        const missing = checks.filter(c => !c.ok).map(c => c.label);
+        return { percent: Math.round((ok / checks.length) * 100), missing, checks };
+      })(),
       stats,
       tracks: allMedia.length > 0 ? allMedia : [],
       shows: allShows,
@@ -408,30 +428,40 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
           freeUseEnabled: m.freeUseEnabled,
         })),
         upcomingShows: [
-          ...primaryProfile.headlinerShows.map((s) => ({
-            id: s.id,
-            name: s.title,
-            venue: s.venueProfile?.name ?? 'TBD',
-            date: s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
-            time: s.startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-            hype: s.hypeCount,
-            sold: s.ticketsSoldCount,
-            capacity: s.ticketCapacity ?? 0,
-            price: Math.round(s.ticketPriceCents / 100),
-            status: 'UPCOMING' as const,
-          })),
-          ...primaryProfile.hostedShows.map((s) => ({
-            id: s.id,
-            name: s.headlinerProfile?.name ?? s.title,
-            venue: primaryProfile.name,
-            date: s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
-            time: s.startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-            hype: s.hypeCount,
-            sold: s.ticketsSoldCount,
-            capacity: s.ticketCapacity ?? 0,
-            price: Math.round(s.ticketPriceCents / 100),
-            status: 'UPCOMING' as const,
-          })),
+          ...primaryProfile.headlinerShows.map((s) => {
+            const cap = s.ticketCapacity ?? 0;
+            const sold = s.ticketsSoldCount;
+            const nearSold = cap > 0 && sold / cap > 0.85;
+            return {
+              id: s.id,
+              name: s.title,
+              venue: s.venueProfile?.name ?? 'TBD',
+              date: s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+              time: s.startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+              hype: s.hypeCount,
+              sold,
+              capacity: cap,
+              price: Math.round(s.ticketPriceCents / 100),
+              status: (nearSold ? 'NEAR SOLD' : 'UPCOMING') as 'NEAR SOLD' | 'UPCOMING',
+            };
+          }),
+          ...primaryProfile.hostedShows.map((s) => {
+            const cap = s.ticketCapacity ?? 0;
+            const sold = s.ticketsSoldCount;
+            const nearSold = cap > 0 && sold / cap > 0.85;
+            return {
+              id: s.id,
+              name: s.headlinerProfile?.name ?? s.title,
+              venue: primaryProfile.name,
+              date: s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+              time: s.startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+              hype: s.hypeCount,
+              sold,
+              capacity: cap,
+              price: Math.round(s.ticketPriceCents / 100),
+              status: (nearSold ? 'NEAR SOLD' : 'UPCOMING') as 'NEAR SOLD' | 'UPCOMING',
+            };
+          }),
         ],
         previousShows: pastShows.map((s) => ({
           id: s.id,
@@ -443,7 +473,7 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
           sold: s.ticketsSoldCount,
           capacity: s.ticketCapacity ?? 0,
           price: Math.round(s.ticketPriceCents / 100),
-          status: 'UPCOMING' as const,
+          status: 'ENDED' as const,
         })),
       } : undefined,
     };

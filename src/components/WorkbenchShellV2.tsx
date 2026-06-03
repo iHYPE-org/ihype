@@ -24,6 +24,7 @@ import { Toast, WelcomeDialog, KeyboardShortcutsDialog } from './workbench/Overl
 import { ViewErrorBoundary } from './workbench/ErrorBoundary';
 import { SearchOverlay } from './workbench/SearchOverlay';
 import { PasskeyNudge } from './workbench/PasskeyNudge';
+import { WMGenreQuizSheet } from './workbench/MobilePrimitives';
 
 // ─────────────────────────────────────────────────────────────
 // Main WorkbenchShell export
@@ -225,6 +226,17 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
       .catch(() => {});
   }, []);
 
+  // Genre quiz — shown after 2 s if profile has no genres and not dismissed
+  const [showGenreQuiz, setShowGenreQuiz] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const dismissed = !!localStorage.getItem('ihype_genre_quiz_dismissed');
+    if (!dismissed && data.needsGenreQuiz === true) {
+      const t = setTimeout(() => setShowGenreQuiz(true), 2000);
+      return () => clearTimeout(t);
+    }
+  }, [data.needsGenreQuiz]);
+
   // Search overlay state
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -394,6 +406,12 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
       {shortcutsOpen && <KeyboardShortcutsDialog onDismiss={() => setShortcutsOpen(false)} />}
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
       <PasskeyNudge />
+      {showGenreQuiz && data.profileId && (
+        <WMGenreQuizSheet
+          profileId={data.profileId}
+          onComplete={() => { setShowGenreQuiz(false); localStorage.setItem('ihype_genre_quiz_dismissed', '1'); }}
+        />
+      )}
     </>
   );
 }

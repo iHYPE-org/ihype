@@ -24,7 +24,7 @@ export type WbShow = {
   sold: number;
   capacity: number;
   price: number;
-  status: 'TONIGHT' | 'THIS WEEK' | 'UPCOMING' | 'NEAR SOLD';
+  status: 'TONIGHT' | 'THIS WEEK' | 'UPCOMING' | 'NEAR SOLD' | 'ENDED';
 };
 
 export type WbStat = {

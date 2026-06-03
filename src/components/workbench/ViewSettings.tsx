@@ -141,6 +141,83 @@ function ShowMiniList({ title, shows }: { title: string; shows: WbPageEditor['up
 // ─────────────────────────────────────────────────────────────
 // ViewSettings — public page editor
 // ─────────────────────────────────────────────────────────────
+function PasskeyPanel() {
+  type PasskeyRow = { id: string; deviceType: string | null; createdAt: string; backedUp: boolean; name: string | null };
+  const [passkeys, setPasskeys] = React.useState<PasskeyRow[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [registering, setRegistering] = React.useState(false);
+  const [status, setStatus] = React.useState('');
+
+  React.useEffect(() => {
+    fetch('/api/auth/passkey/list')
+      .then(r => r.ok ? r.json() : { passkeys: [] })
+      .then(d => setPasskeys(d.passkeys ?? []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function addPasskey() {
+    setRegistering(true);
+    setStatus('');
+    try {
+      const optRes = await fetch('/api/auth/passkey/register');
+      if (!optRes.ok) throw new Error('Could not start passkey registration.');
+      const options = await optRes.json();
+      const { startRegistration } = await import('@simplewebauthn/browser');
+      const attestation = await startRegistration({ optionsJSON: options });
+      const verRes = await fetch('/api/auth/passkey/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(attestation),
+      });
+      if (!verRes.ok) throw new Error('Passkey registration failed.');
+      const result = await verRes.json();
+      setPasskeys(prev => [...prev, result.passkey]);
+      setStatus('Passkey added successfully.');
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Could not add passkey.');
+    } finally {
+      setRegistering(false);
+    }
+  }
+
+  return (
+    <EditorPanel title="Passkeys" eyebrow="Security">
+      <p style={{ fontFamily: 'var(--f-b)', fontSize: 13, color: 'var(--ink-2)', margin: '0 0 12px', lineHeight: 1.5 }}>
+        Passkeys let you sign in with Face ID, Touch ID, or a hardware key — no password needed.
+      </p>
+      {loading ? (
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)' }}>Loading…</div>
+      ) : passkeys.length > 0 ? (
+        <div style={{ display: 'grid', gap: 8, marginBottom: 12 }}>
+          {passkeys.map(pk => (
+            <div key={pk.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', border: '1px solid var(--line)', borderRadius: 8, background: 'var(--bg-3)' }}>
+              <span style={{ fontSize: 18 }}>🔑</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, color: 'var(--ink)' }}>{pk.name || pk.deviceType || 'Passkey'}</div>
+                <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', marginTop: 2 }}>
+                  Added {new Date(pk.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  {pk.backedUp ? ' · Synced' : ''}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', marginBottom: 12 }}>No passkeys yet.</div>
+      )}
+      <button
+        onClick={() => void addPasskey()}
+        disabled={registering}
+        style={{ padding: '10px 16px', border: 'none', borderRadius: 7, background: 'linear-gradient(135deg, var(--accent), #ff3e9a)', color: '#fff', fontFamily: 'var(--f-m)', fontSize: 13, fontWeight: 800, cursor: registering ? 'wait' : 'pointer' }}
+      >
+        {registering ? 'Setting up…' : 'Add a passkey'}
+      </button>
+      {status ? <p style={{ marginTop: 8, fontFamily: 'var(--f-m)', fontSize: 12, color: status.includes('success') ? '#22e5d4' : '#ffb4a7' }}>{status}</p> : null}
+    </EditorPanel>
+  );
+}
+
 function StripeConnectPanel({ data }: { data: WorkbenchData }) {
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState('');
@@ -226,6 +303,7 @@ export function ViewSettings({ prefs, setPref, data, onBack }: {
         <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 42, letterSpacing: '-.03em', lineHeight: 1, margin: 0, color: 'var(--ink)' }}>Create your page</h1>
         <p style={{ fontFamily: 'var(--f-b)', fontSize: 14, color: 'var(--ink-2)', marginTop: 10, maxWidth: 620, lineHeight: 1.5 }}>Create a listener, artist, promoter, or venue profile to unlock page editing.</p>
         <div style={{ marginTop: 24 }}><StripeConnectPanel data={data} /></div>
+        <div style={{ marginTop: 14 }}><PasskeyPanel /></div>
       </div>
     );
   }
@@ -424,6 +502,8 @@ export function ViewSettings({ prefs, setPref, data, onBack }: {
       </div>
 
       <div style={{ marginTop: 14 }}><StripeConnectPanel data={data} /></div>
+
+      <div style={{ marginTop: 14 }}><PasskeyPanel /></div>
 
       <div style={{ marginTop: 20, padding: '14px 18px', border: '1px dashed var(--line-2)', borderRadius: 8, fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-3)', letterSpacing: '.02em' }}>
         This editor changes your public page, not your browsing experience. Use it to curate the layout, background, media, songs, top 5, links, shows, merch, ticketing, and venue info visitors see.
