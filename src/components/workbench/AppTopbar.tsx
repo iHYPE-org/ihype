@@ -31,7 +31,7 @@ export const ROLE_TABS: { k: View; label: string; role: string }[] = [
 export function AppTopbar({ view, setView, listeningNow, initials, userName, activeProfileTypes, onSettings, onSearch, onShortcuts, badges, notifCount, notifications }: {
   view: View; setView: (v: View) => void;
   listeningNow: number; initials: string; userName: string;
-  activeProfileTypes: string[]; onSettings: () => void;
+  activeProfileTypes: string[]; onSettings?: () => void;
   onSearch?: () => void;
   onShortcuts?: () => void;
   badges: Record<string, string | undefined>;
@@ -162,20 +162,33 @@ export function AppTopbar({ view, setView, listeningNow, initials, userName, act
 
       {/* Right: listening + user */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <a href="/advertise" style={{
+          display: 'flex', alignItems: 'center', gap: 6, padding: '6px 13px',
+          borderRadius: 8, border: '1px solid rgba(255,80,41,.25)', background: 'rgba(255,80,41,.07)',
+          color: 'var(--accent)', cursor: 'pointer', fontFamily: 'var(--f-b)', fontWeight: 600, fontSize: 13,
+          textDecoration: 'none', letterSpacing: '-.005em', transition: 'background .15s, border-color .15s',
+        }}
+          onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,80,41,.14)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,80,41,.45)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,80,41,.07)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,80,41,.25)'; }}
+        >
+          <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          Advertise
+        </a>
         {onSearch && (
           <button
             aria-label={`Search (${kbShortcut})`}
             onClick={onSearch}
             title={`Search (${kbShortcut})`}
             style={{
-              display: 'flex', alignItems: 'center', gap: 8, padding: '5px 12px',
+              display: 'flex', alignItems: 'center', gap: 8, padding: '5px 16px',
               borderRadius: 8, border: '1px solid var(--line-2)', background: 'var(--bg-3)',
               color: 'var(--ink-3)', cursor: 'pointer', fontFamily: 'var(--f-m)', fontSize: 13,
+              minWidth: 160,
             }}
           >
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
             Search
-            <kbd style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-4)', border: '1px solid var(--line-2)', borderRadius: 4, padding: '1px 5px' }}>{kbShortcut}</kbd>
+            <kbd style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-4)', border: '1px solid var(--line-2)', borderRadius: 4, padding: '1px 5px', marginLeft: 'auto' }}>{kbShortcut}</kbd>
           </button>
         )}
         <span style={{ display: 'flex', alignItems: 'center', gap: 7, fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-2)', paddingRight: 14, borderRight: '1px solid var(--line)', marginRight: 6 }}>
@@ -260,15 +273,6 @@ export function AppTopbar({ view, setView, listeningNow, initials, userName, act
           </div>
           <span style={{ padding: '3px 7px', borderRadius: 99, background: 'rgba(255,184,74,.12)', color: '#ffb84a', fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 700, letterSpacing: '.08em', border: '1px solid rgba(255,184,74,.28)' }}>LVL 14</span>
         </div>
-        <button onClick={onSettings} aria-label="Open settings" title="Settings" style={{
-          width: 32, height: 32, borderRadius: 7, background: 'none', border: 'none',
-          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: 'var(--ink-3)',
-        }}>
-          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-          </svg>
-        </button>
       </div>
     </header>
   );

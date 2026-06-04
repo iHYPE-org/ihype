@@ -172,13 +172,16 @@ function isRetryablePrismaError(error: unknown) {
       msg.includes('Connection terminated') ||
       msg.includes('ECONNREFUSED') ||
       msg.includes('ECONNRESET') ||
-      msg.includes('Server has closed the connection')
+      msg.includes('Server has closed the connection') ||
+      msg.includes("Can't reach database") ||
+      msg.includes('Connection pool timeout') ||
+      msg.includes('DB query timeout')
     );
   }
   return false;
 }
 
-export async function withDbRetry<T>(operation: () => Promise<T>, attempts = 3): Promise<T> {
+export async function withDbRetry<T>(operation: () => Promise<T>, attempts = 5): Promise<T> {
   let lastError: unknown;
 
   for (let attempt = 1; attempt <= attempts; attempt += 1) {

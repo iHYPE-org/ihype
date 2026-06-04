@@ -183,6 +183,7 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
   const [referral, setReferral] = useState<{ link: string; count: number } | null>(null);
   const [copied, setCopied] = useState(false);
   const [anniversaryDismissed, setAnniversaryDismissed] = useState(false);
+  const [degradedDismissed, setDegradedDismissed] = useState(false);
   const [streakData, setStreakData] = useState<{ streak: number; daysActive: number } | null>(null);
 
   const handleHype = async (showId: string) => {
@@ -225,10 +226,12 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
   return (
     <div style={{ padding: '32px 48px 48px', maxWidth: 1600, margin: '0 auto' }}>
 
-      {data.degraded && (
+      {data.degraded && !degradedDismissed && (
         <div style={{ marginBottom: 16, padding: '11px 16px', borderRadius: 10, border: '1px solid rgba(255,184,74,.25)', background: 'rgba(255,184,74,.07)', display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 16 }}>⚠️</span>
-          <span style={{ fontFamily: 'var(--f-m)', fontSize: 13, color: '#ffb84a' }}>Some data couldn't load — you're seeing a cached view. Refresh to retry.</span>
+          <span style={{ fontFamily: 'var(--f-m)', fontSize: 13, color: '#ffb84a', flex: 1 }}>Some data couldn't load — you're seeing a cached view.</span>
+          <button onClick={() => window.location.reload()} style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: '#ffb84a', background: 'rgba(255,184,74,.15)', border: '1px solid rgba(255,184,74,.3)', borderRadius: 6, padding: '3px 10px', cursor: 'pointer' }}>Retry</button>
+          <button onClick={() => setDegradedDismissed(true)} aria-label="Dismiss" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', padding: '2px 4px', lineHeight: 1, fontSize: 16 }}>×</button>
         </div>
       )}
 
