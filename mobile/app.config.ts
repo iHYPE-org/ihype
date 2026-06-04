@@ -32,7 +32,7 @@ const config: ExpoConfig = {
     // Set API_BASE_URL in your EAS build environment or local .env
     apiBaseUrl: process.env.API_BASE_URL ?? 'https://ihype.org',
     eas: {
-      projectId: process.env.EAS_PROJECT_ID ?? '',
+      projectId: process.env.EAS_PROJECT_ID ?? 'e14117e6-05c3-4987-944a-988ef6c844fa',
     },
   },
 };
