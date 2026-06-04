@@ -2,9 +2,10 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { WorkbenchData } from '@/types/workbench';
+import { ArtistMediaUploadManager } from '@/components/ArtistMediaUploadManager';
 
 /* ── types ───────────────────────────────────────────────── */
-type CkMode = 'page' | 'insights' | 'tour' | 'release';
+type CkMode = 'page' | 'insights' | 'tour' | 'release' | 'library';
 type Device = 'desktop' | 'mobile';
 
 interface Msg { side: 'me' | 'ai'; html: string; applied?: string[]; }
@@ -242,6 +243,7 @@ export function ViewArtistPage({ data }: { data: WorkbenchData }) {
           <RailBtn active={mode === 'insights'} onClick={() => setMode('insights')} label="Insights" icon={<IconInsights />} />
           <RailBtn active={mode === 'tour'} onClick={() => setMode('tour')} label="Tour" icon={<IconTour />} />
           <RailBtn active={mode === 'release'} onClick={() => setMode('release')} label="Release" icon={<IconRelease />} />
+          <RailBtn active={mode === 'library'} onClick={() => setMode('library')} label="Library" icon={<IconLibrary />} />
 
           <div style={{ marginTop: 16, padding: '0 4px' }}>
             <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(244,239,233,.25)', marginBottom: 8 }}>Quick Jump</div>
@@ -551,6 +553,21 @@ export function ViewArtistPage({ data }: { data: WorkbenchData }) {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mode: Library — media uploads */}
+        {mode === 'library' && (
+          <div style={{ position: 'absolute', inset: 0, overflowY: 'auto' }}>
+            <div style={{ padding: '28px 32px', maxWidth: 800, margin: '0 auto' }}>
+              <h2 style={{ fontFamily: 'var(--f-d,sans-serif)', fontSize: 22, fontWeight: 800, color: 'var(--ink,#f4efe9)', marginBottom: 6 }}>Media Library</h2>
+              <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 12, color: 'rgba(244,239,233,.4)', marginBottom: 24 }}>Upload tracks, photos, and stems to your artist page</div>
+              {data.profileId ? (
+                <ArtistMediaUploadManager profileId={data.profileId} />
+              ) : (
+                <p style={{ fontFamily: 'var(--f-b,sans-serif)', fontSize: 13, color: 'rgba(244,239,233,.4)' }}>No artist profile found.</p>
+              )}
             </div>
           </div>
         )}
@@ -1052,6 +1069,9 @@ function IconTour() {
 }
 function IconRelease() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 8v4l3 3" strokeLinecap="round" /></svg>;
+}
+function IconLibrary() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M3 12h18M3 18h18" strokeLinecap="round" /><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></svg>;
 }
 
 function TypingDot({ delay, ..._ }: { delay: number; [k: string]: unknown }) {

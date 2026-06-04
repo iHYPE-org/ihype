@@ -13,9 +13,5 @@ export default async function RadioStudioPage() {
   if (!session?.user?.id) {
     redirect('/login?callbackUrl=/radio/studio');
   }
-  const role = (session.user as { role?: string }).role ?? '';
-  if (role !== 'DJ' && role !== 'PROMOTER' && role !== 'ADMIN') {
-    redirect('/radio');
-  }
   return <RadioStudio />;
 }

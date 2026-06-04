@@ -9,7 +9,7 @@ import type { WorkbenchData } from '@/types/workbench';
    No AI network call here: uses the curated fallback + heuristic refine.
    ────────────────────────────────────────────────────────────────────────── */
 
-type Role = 'artist' | 'venue' | 'promoter' | 'fan';
+type Role = 'artist' | 'venue' | 'fan';
 type Device = 'desktop' | 'mobile';
 type FontKey = 'editorial' | 'grotesk' | 'serif' | 'mono';
 type LayoutKey = 'spotlight' | 'zine' | 'poster' | 'gallery';
@@ -128,16 +128,6 @@ const ROLES: Record<Role, RoleDef> = {
       { kind: 'about', title: 'The room', items: [{ t: 'Capacity 400', m: 'Standing · two bars · green room' }, { t: 'Load-in', m: 'Alley access · house backline available' }] },
     ],
   },
-  promoter: {
-    label: 'Promoter', defaultName: 'Late Hour Collective', defaultVibe: 'tastemaker club nights — house, techno, after-dark energy',
-    hero: { kicker: 'PROMOTER · CHICAGO', stat: '128', statLabel: 'shows presented', cta: 'Pitch me a date' },
-    tagline: 'We throw the nights you hear about Monday.',
-    bio: 'Independent promoters since 2019. House, techno, and the occasional left turn. 81% average sell-through across 128 shows.',
-    sections: [
-      { kind: 'shows', title: 'Recent nights', items: [{ t: 'Basement Heat · Vol 9', m: 'Sold out · 480 cap' }, { t: 'After Dark w/ Dossier', m: '92% paid · Pilsen' }, { t: 'Warehouse Series 04', m: 'Sold out · secret location' }] },
-      { kind: 'about', title: 'What we book', items: [{ t: 'House · techno · club', m: '300–800 cap rooms' }, { t: 'Late slots', m: '10pm–4am · weekends' }] },
-    ],
-  },
   fan: {
     label: 'Fan', defaultName: 'Riley', defaultVibe: 'a music-obsessed regular who lives for live shows',
     hero: { kicker: 'FAN · CHICAGO', stat: '1,204', statLabel: 'HYPE given', cta: '+ Follow' },
@@ -158,7 +148,6 @@ const PALETTES: [string, string][] = [
 const CHIPS: Record<Role, string[]> = {
   artist: ['moody late-night R&B', 'sun-faded indie folk', 'neon hyperpop', 'DIY punk zine', 'dreamy blue shoegaze', 'bold rap energy'],
   venue: ['gritty beloved dive', 'sleek modern club', 'warm listening room', 'industrial warehouse', 'vintage theater', 'rooftop summer vibe'],
-  promoter: ['after-dark techno', 'tastemaker indie nights', 'big festival energy', 'underground warehouse', 'glossy pop spectacle', 'cozy DIY booker'],
   fan: ['certified early adopter', 'vinyl-obsessed purist', 'front-row regular', 'chill bedroom listener', 'hyperpop stan', 'jazz & soul head'],
 };
 
@@ -702,7 +691,7 @@ export default function ViewPageStudio({ data }: { data?: WorkbenchData }) {
     applyTheme(await heuristicRefine(m === 'light' ? 'light' : 'dark', theme, contentRef.current));
   };
 
-  const ROLE_KEYS: Role[] = ['artist', 'venue', 'promoter', 'fan'];
+  const ROLE_KEYS: Role[] = ['artist', 'venue', 'fan'];
 
   return (
     <div className="ps-app">

@@ -230,12 +230,11 @@ function PremiumInterestCard({ userEmail }: { userEmail: string | null }) {
 
 export function WorkbenchExtras({ activeProfileTypes, profileId, profilePath: _profilePath, profileSlug, userEmail }: Props) {
   const isArtist = activeProfileTypes.includes('ARTIST');
-  const isPromoter = activeProfileTypes.includes('DJ') || activeProfileTypes.includes('VENUE') || isArtist;
   const isFan = activeProfileTypes.length === 0 || activeProfileTypes.includes('LISTENER');
   return (
     <>
       {isArtist && profileId && profileSlug ? <RoadJournalWidget profileId={profileId} profileSlug={profileSlug} /> : null}
-      {isPromoter ? <ReferralEarningsCard /> : null}
+      <ReferralEarningsCard />
       {(isFan || activeProfileTypes.includes('LISTENER')) ? (
         <PremiumInterestCard userEmail={userEmail} />
       ) : null}
