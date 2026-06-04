@@ -40,6 +40,7 @@
     "prisma/seed.ts",
     "ihype",
     ".open-next",
-    ".wrangler"
+    ".wrangler",
+    "mobile"
   ]
 }
