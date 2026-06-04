@@ -2,13 +2,16 @@ import type { WorkbenchData, WbTrendingProfile } from '@/components/WorkbenchShe
 import { db } from '@/lib/db';
 import { MOCK_DATA } from '@/lib/workbench-mock';
 import { getArtistUploadStreak } from '@/lib/streaks';
+import * as Sentry from '@sentry/nextjs';
 
 // Accent palette for tracks/shows when no color is stored
 const PALETTE = ['#ff5029', '#b983ff', '#22e5d4', '#ff3e9a', '#ffb84a', '#7fb3ff'];
 
 export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
   try {
-    // Fetch user + profiles in one query
+    // Step 1: Lean user + profile scalar query (no nested relations).
+    // Keeping this query small prevents slow-join timeouts from the old
+    // monolithic query that embedded mediaUploads/shows/AP-entries inline.
     const user = await db.user.findUnique({
       where: { id: userId },
       select: {
@@ -28,7 +31,6 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
             slug: true,
             genres: true,
             stripeConnectOnboarded: true,
-            // Page editor fields
             headline: true,
             bio: true,
             aboutContent: true,
@@ -58,37 +60,6 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
             themeAccentTone: true,
             themeBackdropTone: true,
             fanShareEnabled: true,
-            mediaUploads: {
-              take: 8,
-              orderBy: { createdAt: 'desc' },
-              select: { id: true, hexId: true, title: true, storageUrl: true, notes: true, freeUseEnabled: true },
-            },
-            hostedShows: {
-              where: { status: { in: ['SCHEDULED', 'LIVE'] }, startsAt: { gte: new Date() } },
-              take: 4,
-              orderBy: { startsAt: 'asc' },
-              select: {
-                id: true, title: true, startsAt: true, hypeCount: true,
-                ticketsSoldCount: true, ticketCapacity: true, ticketPriceCents: true,
-                headlinerProfile: { select: { name: true } },
-              },
-            },
-            headlinerShows: {
-              where: { status: { in: ['SCHEDULED', 'LIVE'] }, startsAt: { gte: new Date() } },
-              take: 4,
-              orderBy: { startsAt: 'asc' },
-              select: {
-                id: true, title: true, startsAt: true, hypeCount: true,
-                ticketsSoldCount: true, ticketCapacity: true, ticketPriceCents: true,
-                venueProfile: { select: { name: true } },
-              },
-            },
-            accountsPayableEntries: {
-              where: { status: 'PENDING' },
-              take: 10,
-              orderBy: { createdAt: 'desc' },
-              select: { id: true, amountCents: true, payeeLabel: true, createdAt: true },
-            },
           },
         },
       },
@@ -108,7 +79,14 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
     )[0];
     const isCreatorProfile = primaryProfile && ['ARTIST', 'DJ', 'VENUE'].includes(primaryProfile.type);
 
-    const [ticketOrders, hypeEvents, profileHypes, radioShows, uploadStreak, weeklyHypeCounts, pastShows, hypedToday, listeningNowCount, trendingProfiles] = await Promise.all([
+    // Step 2: All remaining queries in one Promise.all — every item has .catch()
+    // so a single slow or failing query cannot propagate to the outer catch.
+    const [
+      ticketOrders, hypeEvents, profileHypes, radioShows,
+      uploadStreak, weeklyHypeCounts, pastShows,
+      hypedToday, listeningNowCount, trendingProfiles,
+      mediaUploads, hostedShows, headlinerShows, accountsPayableEntries,
+    ] = await Promise.all([
       // Fetch user's ticket orders
       db.ticketOrder.findMany({
         where: { buyerUserId: userId, status: { in: ['RESERVED', 'CAPTURED'] } },
@@ -132,7 +110,7 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
         show: { id: string; title: string; startsAt: Date; ticketPriceCents: number; venueProfile: { name: string } | null };
         tickets: { id: string; serializedId: string | null; status: string; holderName: string | null }[];
       }[]),
-      // Fetch hype events (shows this user hyped) for activity
+      // Hype events (shows this user hyped) for activity
       db.hypeEvent.findMany({
         where: { userId },
         take: 5,
@@ -142,20 +120,17 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
           show: { select: { title: true } },
         },
       }).catch(() => [] as { id: string; createdAt: Date; show: { title: string } }[]),
-      // Fetch incoming hypes on user's profiles
+      // Incoming hypes on user's profiles
       db.profileHypeEvent.findMany({
-        where: {
-          profile: { ownerId: userId },
-        },
+        where: { profile: { ownerId: userId } },
         take: 5,
         orderBy: { createdAt: 'desc' },
         select: {
-          id: true,
-          createdAt: true,
+          id: true, createdAt: true,
           profile: { select: { name: true } },
         },
       }).catch(() => [] as { id: string; createdAt: Date; profile: { name: string } | null }[]),
-      // Fetch radio shows (user-created), featured first
+      // Radio shows created by user
       db.show.findMany({
         where: { creatorId: userId, isRadioShow: true },
         take: 5,
@@ -165,9 +140,9 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
           headlinerProfile: { select: { name: true } },
         },
       }).catch(() => [] as { id: string; title: string; status: string; startsAt: Date; featured: boolean; headlinerProfile: { name: string } | null }[]),
-      // Skip upload streak for listener-only profiles (irrelevant)
+      // Upload streak (skip for listener-only profiles)
       isCreatorProfile ? getArtistUploadStreak(primaryProfile!.id).catch(() => 0) : Promise.resolve(0),
-      // Count profile hype events per profile in the last 7 days
+      // Weekly hype counts per profile
       profileIds.length > 0
         ? db.profileHypeEvent.groupBy({
             by: ['profileId'],
@@ -179,7 +154,7 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
             orderBy: { _count: { profileId: 'desc' } },
           }).catch(() => [] as { profileId: string; _count: { profileId: number } }[])
         : Promise.resolve([] as { profileId: string; _count: { profileId: number } }[]),
-      // Skip past shows for listener-only profiles
+      // Past shows for creator profiles
       isCreatorProfile && primaryProfile
         ? db.show.findMany({
             where: {
@@ -207,21 +182,87 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
             ticketsSoldCount: number; ticketCapacity: number | null; ticketPriceCents: number;
             venueProfile: { name: string } | null; headlinerProfile: { name: string } | null;
           }[]),
-      // Count global hype events today
+      // Global hype count today
       db.hypeEvent.count({
         where: { createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) } },
       }).catch(() => 0),
-      // Count media listens in the last 5 minutes as a proxy for listening now
+      // Listening now proxy: media listens in last 5 minutes
       db.mediaListen.count({
         where: { completedAt: { gte: new Date(Date.now() - 5 * 60 * 1000) } },
       }).catch(() => 0),
-      // Top trending artist/DJ profiles by overall hype count
+      // Trending artist/DJ profiles
       db.profile.findMany({
         where: { type: { in: ['ARTIST', 'DJ'] }, hypeCount: { gt: 0 }, fanShareEnabled: true },
         orderBy: { hypeCount: 'desc' },
         take: 6,
         select: { id: true, name: true, slug: true, city: true, genres: true, hypeCount: true, avatarImage: true, type: true },
       }).catch(() => [] as { id: string; name: string; slug: string; city: string | null; genres: string[]; hypeCount: number; avatarImage: string | null; type: string }[]),
+      // Media uploads for all of the user's profiles
+      profileIds.length > 0
+        ? db.artistMediaAsset.findMany({
+            where: { profileId: { in: profileIds } },
+            take: 50,
+            orderBy: { createdAt: 'desc' },
+            select: { id: true, hexId: true, title: true, storageUrl: true, notes: true, freeUseEnabled: true, profileId: true },
+          }).catch(() => [] as { id: string; hexId: string; title: string; storageUrl: string | null; notes: string | null; freeUseEnabled: boolean; profileId: string }[])
+        : Promise.resolve([] as { id: string; hexId: string; title: string; storageUrl: string | null; notes: string | null; freeUseEnabled: boolean; profileId: string }[]),
+      // Upcoming hosted shows (venue perspective)
+      profileIds.length > 0
+        ? db.show.findMany({
+            where: { venueProfileId: { in: profileIds }, status: { in: ['SCHEDULED', 'LIVE'] }, startsAt: { gte: new Date() } },
+            take: 20,
+            orderBy: { startsAt: 'asc' },
+            select: {
+              id: true, title: true, startsAt: true, hypeCount: true,
+              ticketsSoldCount: true, ticketCapacity: true, ticketPriceCents: true,
+              venueProfileId: true,
+              headlinerProfile: { select: { name: true } },
+            },
+          }).catch(() => [] as {
+            id: string; title: string; startsAt: Date; hypeCount: number;
+            ticketsSoldCount: number; ticketCapacity: number | null; ticketPriceCents: number;
+            venueProfileId: string | null;
+            headlinerProfile: { name: string } | null;
+          }[])
+        : Promise.resolve([] as {
+            id: string; title: string; startsAt: Date; hypeCount: number;
+            ticketsSoldCount: number; ticketCapacity: number | null; ticketPriceCents: number;
+            venueProfileId: string | null;
+            headlinerProfile: { name: string } | null;
+          }[]),
+      // Upcoming headliner shows (artist/DJ perspective)
+      profileIds.length > 0
+        ? db.show.findMany({
+            where: { headlinerProfileId: { in: profileIds }, status: { in: ['SCHEDULED', 'LIVE'] }, startsAt: { gte: new Date() } },
+            take: 20,
+            orderBy: { startsAt: 'asc' },
+            select: {
+              id: true, title: true, startsAt: true, hypeCount: true,
+              ticketsSoldCount: true, ticketCapacity: true, ticketPriceCents: true,
+              headlinerProfileId: true,
+              venueProfile: { select: { name: true } },
+            },
+          }).catch(() => [] as {
+            id: string; title: string; startsAt: Date; hypeCount: number;
+            ticketsSoldCount: number; ticketCapacity: number | null; ticketPriceCents: number;
+            headlinerProfileId: string | null;
+            venueProfile: { name: string } | null;
+          }[])
+        : Promise.resolve([] as {
+            id: string; title: string; startsAt: Date; hypeCount: number;
+            ticketsSoldCount: number; ticketCapacity: number | null; ticketPriceCents: number;
+            headlinerProfileId: string | null;
+            venueProfile: { name: string } | null;
+          }[]),
+      // Pending payouts for all profiles
+      profileIds.length > 0
+        ? db.accountsPayableEntry.findMany({
+            where: { profileId: { in: profileIds }, status: 'PENDING' },
+            take: 50,
+            orderBy: { createdAt: 'desc' },
+            select: { id: true, amountCents: true, payeeLabel: true, createdAt: true, profileId: true },
+          }).catch(() => [] as { id: string; amountCents: number; payeeLabel: string; createdAt: Date; profileId: string | null }[])
+        : Promise.resolve([] as { id: string; amountCents: number; payeeLabel: string; createdAt: Date; profileId: string | null }[]),
     ]);
 
     // Count songs played by this user
@@ -237,66 +278,97 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
     const city = primaryProfile?.city ?? '';
     const activeProfileTypes = user.profiles.map((p) => p.type as string);
 
+    // Group fetched nested data by profileId for O(1) lookups
+    const mediaByProfile = new Map<string, typeof mediaUploads>();
+    for (const m of mediaUploads) {
+      const arr = mediaByProfile.get(m.profileId) ?? [];
+      arr.push(m);
+      mediaByProfile.set(m.profileId, arr);
+    }
+
+    const hostedByProfile = new Map<string, typeof hostedShows>();
+    for (const s of hostedShows) {
+      if (!s.venueProfileId) continue;
+      const arr = hostedByProfile.get(s.venueProfileId) ?? [];
+      arr.push(s);
+      hostedByProfile.set(s.venueProfileId, arr);
+    }
+
+    const headlinerByProfile = new Map<string, typeof headlinerShows>();
+    for (const s of headlinerShows) {
+      if (!s.headlinerProfileId) continue;
+      const arr = headlinerByProfile.get(s.headlinerProfileId) ?? [];
+      arr.push(s);
+      headlinerByProfile.set(s.headlinerProfileId, arr);
+    }
+
     // Tracks from media uploads across all profiles
-    const allMedia = user.profiles.flatMap((p) => p.mediaUploads.map((m, i) => ({
-      id: m.id,
-      title: m.title,
-      artistName: primaryProfile?.name ?? userName,
-      duration: '3:00',
-      durationSec: 180,
-      hypeCount: 0,
-      color: PALETTE[i % PALETTE.length],
-      album: 'Single',
-      mediaUrl: m.storageUrl ?? '',
-    })));
+    const allMedia = user.profiles.flatMap((p) => {
+      const uploads = mediaByProfile.get(p.id) ?? [];
+      return uploads.slice(0, 8).map((m, i) => ({
+        id: m.id,
+        title: m.title,
+        artistName: primaryProfile?.name ?? userName,
+        duration: '3:00',
+        durationSec: 180,
+        hypeCount: 0,
+        color: PALETTE[i % PALETTE.length],
+        album: 'Single',
+        mediaUrl: m.storageUrl ?? '',
+      }));
+    });
 
     // Shows from headliner + hosted
-    const allShows = user.profiles.flatMap((p) => [
-      ...p.headlinerShows.map((s) => {
-        const now = new Date();
-        const diff = s.startsAt.getTime() - now.getTime();
-        const sold = s.ticketsSoldCount;
-        const cap = s.ticketCapacity ?? 0;
-        const nearSold = cap > 0 && sold / cap > 0.85;
-        const tonight = diff < 86400000 && diff > 0;
-        const thisWeek = diff < 7 * 86400000 && diff > 0;
-        const status: 'TONIGHT' | 'THIS WEEK' | 'UPCOMING' | 'NEAR SOLD' = nearSold ? 'NEAR SOLD' : tonight ? 'TONIGHT' : thisWeek ? 'THIS WEEK' : 'UPCOMING';
-        return {
-          id: s.id,
-          name: s.title,
-          venue: s.venueProfile?.name ?? 'TBD',
-          date: s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
-          time: s.startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-          hype: s.hypeCount,
-          sold,
-          capacity: cap,
-          price: Math.round(s.ticketPriceCents / 100),
-          status,
-        };
-      }),
-      ...p.hostedShows.map((s) => {
-        const now = new Date();
-        const diff = s.startsAt.getTime() - now.getTime();
-        const sold = s.ticketsSoldCount;
-        const cap = s.ticketCapacity ?? 0;
-        const nearSold = cap > 0 && sold / cap > 0.85;
-        const tonight = diff < 86400000 && diff > 0;
-        const thisWeek = diff < 7 * 86400000 && diff > 0;
-        const status: 'TONIGHT' | 'THIS WEEK' | 'UPCOMING' | 'NEAR SOLD' = nearSold ? 'NEAR SOLD' : tonight ? 'TONIGHT' : thisWeek ? 'THIS WEEK' : 'UPCOMING';
-        return {
-          id: s.id,
-          name: s.headlinerProfile?.name ?? s.title,
-          venue: primaryProfile?.name ?? 'Venue',
-          date: s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
-          time: s.startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-          hype: s.hypeCount,
-          sold,
-          capacity: cap,
-          price: Math.round(s.ticketPriceCents / 100),
-          status,
-        };
-      }),
-    ]);
+    const allShows = user.profiles.flatMap((p) => {
+      const pHeadliner = headlinerByProfile.get(p.id) ?? [];
+      const pHosted = hostedByProfile.get(p.id) ?? [];
+      return [
+        ...pHeadliner.map((s) => {
+          const now = new Date();
+          const diff = s.startsAt.getTime() - now.getTime();
+          const sold = s.ticketsSoldCount;
+          const cap = s.ticketCapacity ?? 0;
+          const nearSold = cap > 0 && sold / cap > 0.85;
+          const tonight = diff < 86400000 && diff > 0;
+          const thisWeek = diff < 7 * 86400000 && diff > 0;
+          const status: 'TONIGHT' | 'THIS WEEK' | 'UPCOMING' | 'NEAR SOLD' = nearSold ? 'NEAR SOLD' : tonight ? 'TONIGHT' : thisWeek ? 'THIS WEEK' : 'UPCOMING';
+          return {
+            id: s.id,
+            name: s.title,
+            venue: s.venueProfile?.name ?? 'TBD',
+            date: s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+            time: s.startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+            hype: s.hypeCount,
+            sold,
+            capacity: cap,
+            price: Math.round(s.ticketPriceCents / 100),
+            status,
+          };
+        }),
+        ...pHosted.map((s) => {
+          const now = new Date();
+          const diff = s.startsAt.getTime() - now.getTime();
+          const sold = s.ticketsSoldCount;
+          const cap = s.ticketCapacity ?? 0;
+          const nearSold = cap > 0 && sold / cap > 0.85;
+          const tonight = diff < 86400000 && diff > 0;
+          const thisWeek = diff < 7 * 86400000 && diff > 0;
+          const status: 'TONIGHT' | 'THIS WEEK' | 'UPCOMING' | 'NEAR SOLD' = nearSold ? 'NEAR SOLD' : tonight ? 'TONIGHT' : thisWeek ? 'THIS WEEK' : 'UPCOMING';
+          return {
+            id: s.id,
+            name: s.headlinerProfile?.name ?? s.title,
+            venue: p.name,
+            date: s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+            time: s.startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+            hype: s.hypeCount,
+            sold,
+            capacity: cap,
+            price: Math.round(s.ticketPriceCents / 100),
+            status,
+          };
+        }),
+      ];
+    });
 
     // Tickets
     const tickets = ticketOrders.map((o) => {
@@ -305,7 +377,7 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
         id: o.id,
         showId: o.show.id,
         showName: o.show.title + (o.show.venueProfile?.name ? ` @ ${o.show.venueProfile.name}` : ''),
-        date: o.show.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
+        date: o.show.startsAt.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }),
         seat: 'GA',
         price: Math.round(o.show.ticketPriceCents / 100),
         status: t?.status === 'VALID' ? 'CONFIRMED' : (t?.status ?? 'CONFIRMED'),
@@ -328,7 +400,7 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
     ].slice(0, 10);
 
     // Pending payout
-    const pendingCents = user.profiles.flatMap((p) => p.accountsPayableEntries).reduce((s, e) => s + e.amountCents, 0);
+    const pendingCents = accountsPayableEntries.reduce((s, e) => s + e.amountCents, 0);
 
     // Radio shows
     const wbRadioShows = radioShows.map((r, i) => ({
@@ -352,11 +424,16 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
     // Total hype count
     const totalHype = user.profiles.reduce((s, p) => s + p.hypeCount, 0);
 
-    // Build weekly hype map for merging into profile data
+    // Build weekly hype map
     const weeklyMap: Record<string, number> = {};
     for (const row of weeklyHypeCounts) {
       weeklyMap[row.profileId] = row._count.profileId;
     }
+
+    // Primary profile's media uploads and shows (for pageEditor)
+    const primaryUploads = primaryProfile ? (mediaByProfile.get(primaryProfile.id) ?? []).slice(0, 8) : [];
+    const primaryHosted = primaryProfile ? (hostedByProfile.get(primaryProfile.id) ?? []) : [];
+    const primaryHeadliner = primaryProfile ? (headlinerByProfile.get(primaryProfile.id) ?? []) : [];
 
     const responseData: WorkbenchData = {
       userName,
@@ -452,14 +529,14 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
         themeAccentTone: primaryProfile.themeAccentTone ?? '',
         themeBackdropTone: primaryProfile.themeBackdropTone ?? '',
         fanShareEnabled: primaryProfile.fanShareEnabled ?? false,
-        songs: primaryProfile.mediaUploads.map((m) => ({
+        songs: primaryUploads.map((m) => ({
           hexId: m.hexId,
           title: m.title ?? '',
           notes: m.notes ?? null,
           freeUseEnabled: m.freeUseEnabled,
         })),
         upcomingShows: [
-          ...primaryProfile.headlinerShows.map((s) => {
+          ...primaryHeadliner.map((s) => {
             const cap = s.ticketCapacity ?? 0;
             const sold = s.ticketsSoldCount;
             const nearSold = cap > 0 && sold / cap > 0.85;
@@ -476,7 +553,7 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
               status: (nearSold ? 'NEAR SOLD' : 'UPCOMING') as 'NEAR SOLD' | 'UPCOMING',
             };
           }),
-          ...primaryProfile.hostedShows.map((s) => {
+          ...primaryHosted.map((s) => {
             const cap = s.ticketCapacity ?? 0;
             const sold = s.ticketsSoldCount;
             const nearSold = cap > 0 && sold / cap > 0.85;
@@ -511,7 +588,9 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
 
     return responseData;
   } catch (e) {
-    console.error('getWorkbenchData error:', e);
+    const msg = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+    console.error('getWorkbenchData error:', msg, e instanceof Error ? e.stack : '');
+    Sentry.captureException(e, { tags: { location: 'getWorkbenchData' } });
     return {
       ...MOCK_DATA,
       degraded: true,
