@@ -281,7 +281,7 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
 
   const isSeeds = view === 'seeds';
   const isTour = view === 'tour';
-  const isPageStudio = view === 'pagestudio' || view === 'artistpage' || view === 'venuepage' || isTour;
+  const isPageStudio = view === 'pagestudio' || view === 'artistpage' || view === 'venuepage';
   const showQueue = prefs.queueRail && tracks.length > 0 && !isSeeds;
   const colTemplate = showQueue ? 'minmax(0, 1fr) var(--queue-w)' : '1fr';
   const shellMaxWidth = showQueue ? 1300 : 1600;
@@ -296,7 +296,7 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
       case 'tickets':  return <ViewErrorBoundary viewName="Live Events"><ViewTickets data={data} /></ViewErrorBoundary>;
       case 'settings':     return <ViewErrorBoundary viewName="Settings"><ViewSettings prefs={prefs} setPref={setPref} data={data} onBack={() => navigateTo(prevView)} /></ViewErrorBoundary>;
       case 'tour':         return <ViewErrorBoundary viewName="Tour Planner"><ViewTour data={data} /></ViewErrorBoundary>;
-      case 'pagestudio':   return <ViewErrorBoundary viewName="Fan Page"><ViewPageStudio /></ViewErrorBoundary>;
+      case 'pagestudio':   return <ViewErrorBoundary viewName="Fan Page"><ViewPageStudio data={data} /></ViewErrorBoundary>;
       case 'artistpage':   return <ViewErrorBoundary viewName="Artist Page"><ViewArtistPage data={data} /></ViewErrorBoundary>;
       case 'venuepage':    return <ViewErrorBoundary viewName="Venue Page"><ViewVenuePage data={data} /></ViewErrorBoundary>;
       default:             return <ViewErrorBoundary viewName="My Page"><ViewMyPage data={data} onPickTrack={onPickTrack} currentIdx={currentIdx} /></ViewErrorBoundary>;

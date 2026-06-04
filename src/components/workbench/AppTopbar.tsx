@@ -20,7 +20,6 @@ export const TABS: { k: View; label: string }[] = [
   { k: 'radio',       label: 'Radio' },
   { k: 'studio',      label: 'Studio' },
   { k: 'tickets',     label: 'Live Events' },
-  { k: 'tour',        label: 'Tour Planner' },
   { k: 'pagestudio',  label: 'Fan Page' },
 ];
 

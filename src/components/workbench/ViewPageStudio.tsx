@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { WorkbenchData } from '@/types/workbench';
 
 /* ──────────────────────────────────────────────────────────────────────────
    iHYPE AI Page Studio — React port of the prototype.
@@ -32,6 +33,7 @@ interface Theme {
   tagline: string | null;
   bio: string | null;
   radius: number;
+  heroUrl?: string;
 }
 interface FontDef {
   name: string;
@@ -110,7 +112,7 @@ const ROLES: Record<Role, RoleDef> = {
     label: 'Artist', defaultName: 'Jordan Nore', defaultVibe: 'moody late-night alt-R&B, smooth and a little mysterious',
     hero: { kicker: 'ARTIST · CHICAGO', stat: '2,140', statLabel: 'HYPE this month', cta: '▶ Listen' },
     tagline: 'Slow songs for late trains home.',
-    bio: 'Alt-R&B out of Logan Square. I write at night and record into whatever’s closest. Three EPs, one band, zero rush.',
+    bio: "Alt-R&B out of Logan Square. I write at night and record into whatever's closest. Three EPs, one band, zero rush.",
     sections: [
       { kind: 'tracks', title: 'Top tracks', items: [{ t: 'Velvet Hours', m: '2:58 · 540 HYPE' }, { t: 'Carmine', m: '3:24 · 412 HYPE' }, { t: 'Northbound', m: '4:01 · 388 HYPE' }, { t: 'Slow Combust', m: '3:12 · 301 HYPE' }] },
       { kind: 'shows', title: 'Next shows', items: [{ t: 'Empty Bottle', m: 'Fri Jun 6 · Ukrainian Village' }, { t: 'Sleeping Village', m: 'Sat Jun 21 · Avondale' }] },
@@ -119,8 +121,8 @@ const ROLES: Record<Role, RoleDef> = {
   venue: {
     label: 'Venue', defaultName: 'Empty Bottle', defaultVibe: 'gritty, beloved 400-cap room — indie, punk, electronic',
     hero: { kicker: 'VENUE · UKRAINIAN VILLAGE', stat: '400', statLabel: 'capacity', cta: 'Book this room' },
-    tagline: 'Chicago’s living room for loud music.',
-    bio: '400 capacity, open since ’92. Indie, punk, and electronic seven nights a week. If it’s about to break, it played here first.',
+    tagline: "Chicago's living room for loud music.",
+    bio: "400 capacity, open since '92. Indie, punk, and electronic seven nights a week. If it's about to break, it played here first.",
     sections: [
       { kind: 'shows', title: 'This month', items: [{ t: 'Mau Lwin', m: 'Thu Jun 5 · bedroom pop' }, { t: 'The Veldt Kids', m: 'Sat Jun 14 · post-punk' }, { t: 'Dossier', m: 'Fri Jun 27 · house / electronic' }] },
       { kind: 'about', title: 'The room', items: [{ t: 'Capacity 400', m: 'Standing · two bars · green room' }, { t: 'Load-in', m: 'Alley access · house backline available' }] },
@@ -140,10 +142,10 @@ const ROLES: Record<Role, RoleDef> = {
     label: 'Fan', defaultName: 'Riley', defaultVibe: 'a music-obsessed regular who lives for live shows',
     hero: { kicker: 'FAN · CHICAGO', stat: '1,204', statLabel: 'HYPE given', cta: '+ Follow' },
     tagline: 'I was into them before, obviously.',
-    bio: 'Show-goer, seed-swiper, certified early adopter. I’ve HYPEd 1,204 times and been to 38 shows this year. Ask me who’s next.',
+    bio: "Show-goer, seed-swiper, certified early adopter. I've HYPEd 1,204 times and been to 38 shows this year. Ask me who's next.",
     sections: [
       { kind: 'tracks', title: 'My top 5 this week', items: [{ t: 'Jordan Nore', m: 'Alt-R&B · 12 HYPE' }, { t: 'Mau Lwin', m: 'Bedroom pop · 9 HYPE' }, { t: 'The Veldt Kids', m: 'Post-punk · 7 HYPE' }, { t: 'Sasha Quill', m: 'Hyperpop · 6 HYPE' }] },
-      { kind: 'shows', title: 'Shows I’ve been to', items: [{ t: '38 shows', m: 'this year · 6 cities' }, { t: 'Front row certified', m: 'Empty Bottle regular' }] },
+      { kind: 'shows', title: "Shows I've been to", items: [{ t: '38 shows', m: 'this year · 6 cities' }, { t: 'Front row certified', m: 'Empty Bottle regular' }] },
     ],
   },
 };
@@ -210,7 +212,7 @@ function fallbackDirections(vibe: string, role: Role): Theme[] {
   }));
 }
 
-function heuristicRefine(ins: string, theme: Theme, content: Content): Theme {
+async function heuristicRefine(ins: string, theme: Theme, content: Content, profileHeroImage?: string): Promise<Theme> {
   const t = clone(theme);
   const s = ins.toLowerCase();
   const P = t.palette;
@@ -225,6 +227,37 @@ function heuristicRefine(ins: string, theme: Theme, content: Content): Theme {
   const colorMap: Record<string, string> = { red: '#ff5029', orange: '#ff7a29', pink: '#ff3e9a', purple: '#b983ff', blue: '#5b8dff', teal: '#22e5d4', green: '#1f8a5b', amber: '#ffb84a', gold: '#ffb84a' };
   for (const k in colorMap) if (s.includes(k)) { P.accent = colorMap[k]; break; }
   t.bio = theme.bio || content.bio;
+
+  // Hero image: prefer user's uploaded profile image, then fetch from Unsplash by genre
+  if (profileHeroImage) {
+    t.heroUrl = profileHeroImage;
+  } else {
+    const genreKeywords: [RegExp, string][] = [
+      [/\bpunk|hardcore|thrash|grunge\b/, 'punk'],
+      [/\bjazz|blues|soul|bebop\b/, 'jazz'],
+      [/\bhip.?hop|rap|trap|drill\b/, 'hip-hop'],
+      [/\belectronic|techno|house|rave|edm|synth\b/, 'electronic'],
+      [/\bfolk|country|americana|bluegrass\b/, 'folk'],
+      [/\bindierock|indie.rock|rock\b/, 'rock'],
+      [/\bmetal|doom|sludge|death.metal\b/, 'metal'],
+      [/\bclassical|orchestra|chamber|baroque\b/, 'classical'],
+      [/\brnb|r&b|neo.soul\b/, 'rnb'],
+    ];
+    let detectedGenre = '';
+    for (const [re, g] of genreKeywords) {
+      if (re.test(s)) { detectedGenre = g; break; }
+    }
+    if (detectedGenre) {
+      try {
+        const r = await fetch(`/api/page-hero?genre=${encodeURIComponent(detectedGenre)}`);
+        if (r.ok) {
+          const d = await r.json() as { url?: string };
+          if (d.url) t.heroUrl = d.url;
+        }
+      } catch { /* ignore */ }
+    }
+  }
+
   return t;
 }
 
@@ -353,8 +386,8 @@ const STYLES = `
 .ps-stage { position:relative; overflow:hidden; background:
     radial-gradient(ellipse 70% 50% at 50% 0%, rgba(255,80,41,.06), transparent 60%),
     repeating-linear-gradient(45deg, transparent 0 11px, rgba(255,255,255,.012) 11px 12px),
-    #0c0a08; display:flex; align-items:center; justify-content:center; padding:34px; }
-.ps-stage-bar { position:absolute; top:0; left:0; right:0; height:42px; display:flex; align-items:center; gap:10px; padding:0 18px; z-index:6; }
+    #0c0a08; display:flex; flex-direction:column; align-items:stretch; height:100%; }
+.ps-stage-bar { flex-shrink:0; height:42px; display:flex; align-items:center; gap:10px; padding:0 18px; z-index:6; border-bottom:1px solid rgba(255,255,255,.04); }
 .ps-url { display:flex; align-items:center; gap:8px; background:rgba(16,13,9,.7); backdrop-filter:blur(8px); border:1px solid var(--line); border-radius:99px; padding:6px 13px; font-family:var(--fm); font-size:11px; color:var(--ink2); letter-spacing:.02em; }
 .ps-url .ps-lock { color:var(--ink3); }
 .ps-url b { color:var(--ink); font-weight:600; }
@@ -367,9 +400,9 @@ const STYLES = `
 .ps-thinking { position:absolute; bottom:22px; left:50%; transform:translateX(-50%) translateY(12px); z-index:8; background:var(--bg3); border:1px solid var(--purple,#b983ff); color:var(--ink); padding:10px 18px; border-radius:99px; font-family:var(--fm); font-size:11.5px; font-weight:500; letter-spacing:.02em; opacity:0; transition:opacity .25s, transform .25s; box-shadow:0 12px 36px rgba(0,0,0,.5); max-width:70%; text-align:center; pointer-events:none; }
 .ps-thinking.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
-.ps-viewport { position:relative; background:var(--p-bg,#111); border-radius:16px; overflow:hidden; box-shadow:0 40px 90px -30px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.05); transition:box-shadow .3s ease, border-radius .35s cubic-bezier(.4,0,.2,1); }
-.ps-stage[data-device="desktop"] .ps-viewport { width:980px; max-width:100%; height:min(78vh, 760px); }
-.ps-stage[data-device="mobile"] .ps-viewport { width:380px; height:min(78vh, 760px); border-radius:34px; border:9px solid #1a1612; box-shadow:0 40px 90px -30px rgba(0,0,0,.7); }
+.ps-viewport { position:relative; background:var(--p-bg,#111); border-radius:16px; overflow:hidden; box-shadow:0 20px 60px -20px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.05); transition:box-shadow .3s ease, border-radius .35s cubic-bezier(.4,0,.2,1); margin:24px; }
+.ps-stage[data-device="desktop"] .ps-viewport { flex:1; min-height:0; }
+.ps-stage[data-device="mobile"] .ps-viewport { width:380px; max-width:calc(100% - 48px); align-self:center; border-radius:34px; border:9px solid #1a1612; box-shadow:0 40px 90px -30px rgba(0,0,0,.7); }
 .ps-stage.generating .ps-viewport { animation:ps-pulseGlow 1.1s ease-in-out infinite; }
 @keyframes ps-pulseGlow { 0%,100%{ box-shadow:0 40px 90px -30px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.05);} 50%{ box-shadow:0 40px 90px -30px rgba(0,0,0,.7), 0 0 0 2px var(--purple,#b983ff);} }
 
@@ -383,7 +416,8 @@ const STYLES = `
 .ps-empty .ps-hintline { margin-top:18px; font-family:var(--fm); font-size:10px; color:var(--ink3); letter-spacing:.08em; display:flex; align-items:center; gap:8px; }
 .ps-empty .ps-hintline::before, .ps-empty .ps-hintline::after { content:''; height:1px; width:30px; background:var(--line2); }
 
-#ps-pageRoot .pg-hero { position:relative; padding:0; }
+#ps-pageRoot .pg-hero { position:relative; padding:0; background-image:var(--p-hero-url,none); background-size:cover; background-position:center top; }
+#ps-pageRoot .pg-hero.has-hero .pg-hero-scrim { background:linear-gradient(180deg, rgba(0,0,0,.35) 0%, var(--p-bg) 88%); }
 #ps-pageRoot .pg-hero-scrim { position:absolute; inset:0; background:linear-gradient(180deg, color-mix(in srgb, var(--p-bg) 30%, transparent), var(--p-bg) 92%); }
 #ps-pageRoot .pg-hero-inner { position:relative; padding:54px 44px 40px; display:flex; flex-direction:column; align-items:flex-start; gap:15px; }
 #ps-pageRoot[data-layout="spotlight"] .pg-hero-inner { align-items:center; text-align:center; padding-top:64px; }
@@ -431,25 +465,56 @@ const STYLES = `
 .ps-stage[data-device="mobile"] #ps-pageRoot .pg-tagline { font-size:17px; }
 .ps-stage[data-device="mobile"] #ps-pageRoot .pg-body { padding:8px 22px 34px; }
 .ps-stage[data-device="mobile"] #ps-pageRoot .pg-cards { grid-template-columns:1fr !important; }
+
+.ps-chat-dock { width:320px; flex-shrink:0; display:flex; flex-direction:column; background:var(--bg2,#0e0b09); border-left:1px solid var(--line); overflow:hidden; }
+.ps-chat-header { padding:13px 15px; border-bottom:1px solid var(--line); font-family:var(--fd); font-size:13px; font-weight:700; color:var(--ink); display:flex; align-items:center; gap:7px; }
+.ps-chat-sub { font-family:var(--fm); font-size:10px; color:var(--ink3); font-weight:400; margin-left:auto; }
+.ps-chat-chips { padding:10px 13px; border-bottom:1px solid var(--line); display:flex; flex-wrap:wrap; gap:5px; }
+.ps-chat-chip { padding:5px 9px; border-radius:99px; border:1px solid var(--line2,rgba(255,255,255,.1)); background:rgba(255,255,255,.03); color:var(--ink3); font-family:var(--fm); font-size:9.5px; cursor:pointer; }
+.ps-chat-chip:hover { color:var(--ink); border-color:var(--line2); background:rgba(255,255,255,.06); }
+.ps-chat-thread { flex:1; overflow-y:auto; padding:12px 13px; display:flex; flex-direction:column; gap:10px; }
+.ps-chat-row { display:flex; gap:7px; }
+.ps-chat-row.me { flex-direction:row-reverse; }
+.ps-chat-avatar { width:24px; height:24px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-family:var(--fm); font-size:9px; font-weight:800; }
+.ps-chat-avatar.ai { background:rgba(255,80,41,.15); color:#ff5029; }
+.ps-chat-avatar.me { background:rgba(255,255,255,.08); color:var(--ink2); }
+.ps-chat-bubble { max-width:80%; padding:7px 10px; border-radius:4px 11px 11px 11px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.06); font-family:var(--fb); font-size:12px; line-height:1.5; color:var(--ink); }
+.ps-chat-row.me .ps-chat-bubble { border-radius:11px 4px 11px 11px; background:rgba(255,80,41,.1); border-color:rgba(255,80,41,.18); }
+.ps-chat-typing { display:flex; gap:4px; align-items:center; min-height:28px; }
+.ps-chat-typing span { width:5px; height:5px; border-radius:50%; background:var(--ink3); animation:ps-dots 1.1s ease-in-out infinite; }
+.ps-chat-typing span:nth-child(2) { animation-delay:.18s; }
+.ps-chat-typing span:nth-child(3) { animation-delay:.36s; }
+@keyframes ps-dots { 0%,100% { transform:translateY(0); opacity:.5; } 50% { transform:translateY(-4px); opacity:1; } }
+.ps-chat-applied { margin-top:5px; padding:4px 8px; border-radius:5px; background:rgba(34,229,212,.08); border:1px solid rgba(34,229,212,.15); font-size:10px; color:#22e5d4; font-weight:700; display:inline-block; }
+.ps-chat-input-row { padding:9px 11px; border-top:1px solid var(--line); display:flex; gap:7px; align-items:flex-end; }
+.ps-chat-input { flex:1; resize:none; border:1px solid var(--line2,rgba(255,255,255,.1)); border-radius:9px; padding:8px 11px; background:rgba(255,255,255,.04); color:var(--ink); font-family:var(--fb); font-size:12px; line-height:1.5; outline:none; max-height:100px; overflow:auto; }
+.ps-chat-input:focus { border-color:var(--accent); }
+.ps-chat-send { width:34px; height:34px; flex-shrink:0; border-radius:9px; border:none; cursor:pointer; background:rgba(255,80,41,.2); color:rgba(244,239,233,.4); display:flex; align-items:center; justify-content:center; transition:all .15s; }
+.ps-chat-send.active { background:#ff5029; color:#fff; }
 `;
 
 const FONT_HREF = 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Bricolage+Grotesque:wght@400;600;700;800&display=swap';
 
-export default function ViewPageStudio() {
+interface ChatMsg { side: 'me' | 'ai'; text: string; chips?: string[]; }
+
+export default function ViewPageStudio({ data }: { data?: WorkbenchData }) {
   const [role, setRole] = useState<Role>('artist');
   const [device, setDevice] = useState<Device>('desktop');
   const [theme, setTheme] = useState<Theme | null>(null);
   const [directions, setDirections] = useState<Theme[]>([]);
   const [vibe, setVibe] = useState('');
-  const [refineText, setRefineText] = useState('');
   const [busy, setBusy] = useState(false);
   const [thinking, setThinking] = useState('');
   const [urlName, setUrlName] = useState('you');
   const [publishLabel, setPublishLabel] = useState('Publish page');
+  const [chatMsgs, setChatMsgs] = useState<ChatMsg[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatTyping, setChatTyping] = useState(false);
 
   const contentRef = useRef<Content>(makeContent('artist'));
   const pageRootRef = useRef<HTMLDivElement>(null);
   const pageScrollRef = useRef<HTMLDivElement>(null);
+  const chatThreadRef = useRef<HTMLDivElement>(null);
   const thinkTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const publishTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -477,6 +542,10 @@ export default function ViewPageStudio() {
     };
   }, []);
 
+  useEffect(() => {
+    if (chatThreadRef.current) chatThreadRef.current.scrollTop = chatThreadRef.current.scrollHeight;
+  }, [chatMsgs, chatTyping]);
+
   const flashThinking = useCallback((msg: string) => {
     setThinking(msg);
     if (thinkTimer.current) clearTimeout(thinkTimer.current);
@@ -503,6 +572,13 @@ export default function ViewPageStudio() {
       '--p-radius': (t.radius != null ? t.radius : 16) + 'px',
     };
     for (const k in map) root.style.setProperty(k, map[k]);
+    if (t.heroUrl) {
+      root.style.setProperty('--p-hero-url', `url('${t.heroUrl}')`);
+      root.classList.add('has-hero');
+    } else {
+      root.style.removeProperty('--p-hero-url');
+      root.classList.remove('has-hero');
+    }
     root.dataset.mood = t.mood || 'dark';
     root.dataset.layout = t.layout || 'spotlight';
 
@@ -539,21 +615,43 @@ export default function ViewPageStudio() {
       setDirections(dirs);
       applyTheme(dirs[0]);
       setBusy(false);
-      flashThinking(`Built 3 directions from “${v.length > 38 ? v.slice(0, 38) + '…' : v}”. Tap to compare.`);
+      flashThinking(`Built 3 directions from "${v.length > 38 ? v.slice(0, 38) + '…' : v}". Tap to compare.`);
     },
     [busy, vibe, role, applyTheme, flashThinking],
   );
 
   const refine = useCallback(
-    (instruction: string) => {
+    async (instruction: string) => {
       if (busy || !theme) return;
       setBusy(true);
-      const next = heuristicRefine(instruction, theme, contentRef.current);
+      const profileHeroImage = data?.pageEditor?.heroImage || undefined;
+      const next = await heuristicRefine(instruction, theme, contentRef.current, profileHeroImage);
       applyTheme(next);
       setBusy(false);
-      flashThinking(`Updated: “${instruction}”.`);
+      flashThinking(`Updated: "${instruction}".`);
     },
-    [busy, theme, applyTheme, flashThinking],
+    [busy, theme, applyTheme, flashThinking, data],
+  );
+
+  const chatSend = useCallback(
+    async (text: string) => {
+      text = text.trim();
+      if (!text || chatTyping || !theme) return;
+      setChatMsgs(m => [...m, { side: 'me', text }]);
+      setChatInput('');
+      setChatTyping(true);
+      const profileHeroImage = data?.pageEditor?.heroImage || undefined;
+      const next = await heuristicRefine(text, theme, contentRef.current, profileHeroImage);
+      applyTheme(next);
+      setChatTyping(false);
+      const chips: string[] = [];
+      if (next.heroUrl) chips.push('Hero image added');
+      const reply = chips.length
+        ? `Done — applied to your page.`
+        : `Updated your page. Try "more minimal", "punk energy", "purple accent", or "elegant serif".`;
+      setChatMsgs(m => [...m, { side: 'ai', text: reply, chips }]);
+    },
+    [chatTyping, theme, applyTheme, data],
   );
 
   const changeRole = useCallback(
@@ -564,6 +662,7 @@ export default function ViewPageStudio() {
       setVibe('');
       setTheme(null);
       setDirections([]);
+      setChatMsgs([]);
       setUrlName('you');
       if (pageScrollRef.current) pageScrollRef.current.innerHTML = '';
     },
@@ -598,9 +697,9 @@ export default function ViewPageStudio() {
     t.layout = l;
     applyTheme(t);
   };
-  const applyMood = (m: MoodKey) => {
+  const applyMood = async (m: MoodKey) => {
     if (!theme) return;
-    applyTheme(heuristicRefine(m === 'light' ? 'light' : 'dark', theme, contentRef.current));
+    applyTheme(await heuristicRefine(m === 'light' ? 'light' : 'dark', theme, contentRef.current));
   };
 
   const ROLE_KEYS: Role[] = ['artist', 'venue', 'promoter', 'fan'];
@@ -627,7 +726,7 @@ export default function ViewPageStudio() {
           <div className="ps-vibe-box">
             <textarea
               value={vibe}
-              placeholder={`e.g. “${ROLES[role].defaultVibe}”`}
+              placeholder={`e.g. "${ROLES[role].defaultVibe}"`}
               onChange={(e) => setVibe(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
@@ -682,29 +781,6 @@ export default function ViewPageStudio() {
             </div>
           </div>
         )}
-
-        <div className="ps-pn">
-          <div className="ps-eyebrow"><span className="ps-num">3</span>MAKE IT YOURS · JUST ASK</div>
-          <div className="ps-refine-box">
-            <input
-              value={refineText}
-              placeholder={'“make it darker and bolder”'}
-              onChange={(e) => setRefineText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && refineText.trim()) {
-                  refine(refineText.trim());
-                  setRefineText('');
-                }
-              }}
-            />
-            <button className="ps-refine-btn" title="Apply" onClick={() => { const v = refineText.trim(); if (v) { refine(v); setRefineText(''); } }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            </button>
-          </div>
-          <div className="ps-refine-hint">
-            Try <b>{'“more minimal”'}</b>, <b>{'“warmer colors”'}</b>, <b>{'“make it pop”'}</b>, <b>{'“elegant serif”'}</b>, <b>{'“purple accent”'}</b>. You can also edit the name, tagline, and bio right on the page.
-          </div>
-        </div>
 
         <div className="ps-pn">
           <div className="ps-eyebrow">FINE-TUNE <span style={{ color: 'var(--ink4)' }}>· OPTIONAL</span></div>
@@ -773,18 +849,83 @@ export default function ViewPageStudio() {
           </div>
         </div>
 
-        <div className="ps-viewport">
-          <div id="ps-pageRoot" ref={pageRootRef} data-mood="dark" data-layout="spotlight">
-            <div className="ps-pageScroll" ref={pageScrollRef} style={{ display: theme ? 'block' : 'none' }} />
-            {!theme && (
-              <div className="ps-empty">
-                <div className="ps-spark">{'✦'}</div>
-                <h3>Let&apos;s build your page</h3>
-                <p>You&apos;re a <b>{ROLES[role].label.toLowerCase()}</b> with great taste and zero interest in fiddling with fonts. Describe a vibe on the left and watch a cool page appear here in seconds.</p>
-                <div className="ps-hintline">START WITH A VIBE</div>
-              </div>
-            )}
+        <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+          {/* page preview */}
+          <div className="ps-viewport">
+            <div id="ps-pageRoot" ref={pageRootRef} data-mood="dark" data-layout="spotlight">
+              <div className="ps-pageScroll" ref={pageScrollRef} style={{ display: theme ? 'block' : 'none' }} />
+              {!theme && (
+                <div className="ps-empty">
+                  <div className="ps-spark">{'✦'}</div>
+                  <h3>Let&apos;s build your page</h3>
+                  <p>You&apos;re a <b>{ROLES[role].label.toLowerCase()}</b> with great taste and zero interest in fiddling with fonts. Describe a vibe on the left and watch a cool page appear here in seconds.</p>
+                  <div className="ps-hintline">START WITH A VIBE</div>
+                </div>
+              )}
+            </div>
           </div>
+
+          {/* AI chat dock — only visible after page is generated */}
+          {theme && (
+            <div className="ps-chat-dock">
+              <div className="ps-chat-header">
+                <span style={{ color: '#ff5029' }}>✦</span> AI Editor
+                <span className="ps-chat-sub">Describe changes — they apply live</span>
+              </div>
+
+              {/* suggestion chips when empty */}
+              {chatMsgs.length === 0 && (
+                <div className="ps-chat-chips">
+                  {['Make it punk', 'Darker & moodier', 'Purple accent', 'Elegant serif', 'More minimal', 'Warmer colors'].map(s => (
+                    <button key={s} className="ps-chat-chip" onClick={() => chatSend(s)}>
+                      &ldquo;{s}&rdquo;
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* thread */}
+              <div className="ps-chat-thread" ref={chatThreadRef}>
+                {chatMsgs.map((m, i) => (
+                  <div key={i} className={'ps-chat-row ' + m.side}>
+                    <div className={'ps-chat-avatar ' + m.side}>{m.side === 'ai' ? '✦' : data?.userInitials || '?'}</div>
+                    <div className="ps-chat-bubble">
+                      {m.text}
+                      {m.chips?.map(c => (
+                        <div key={c} className="ps-chat-applied">{c}</div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                {chatTyping && (
+                  <div className="ps-chat-row ai">
+                    <div className="ps-chat-avatar ai">✦</div>
+                    <div className="ps-chat-bubble ps-chat-typing">
+                      <span /><span /><span />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* input */}
+              <div className="ps-chat-input-row">
+                <textarea
+                  className="ps-chat-input"
+                  value={chatInput}
+                  onChange={e => setChatInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); chatSend(chatInput); } }}
+                  placeholder="Describe a change…"
+                  rows={1}
+                />
+                <button
+                  className={'ps-chat-send' + (chatInput.trim() ? ' active' : '')}
+                  onClick={() => chatSend(chatInput)}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" strokeLinejoin="round" strokeLinecap="round" /></svg>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className={'ps-thinking' + (thinking ? ' show' : '')}>{thinking}</div>

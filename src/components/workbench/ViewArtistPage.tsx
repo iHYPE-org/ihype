@@ -11,17 +11,30 @@ interface Msg { side: 'me' | 'ai'; html: string; applied?: string[]; }
 interface PageVars {
   '--p-bg': string; '--p-surface': string; '--p-ink': string; '--p-ink2': string;
   '--p-accent': string; '--p-accent2': string; '--p-line': string;
-  '--p-display': string; '--p-radius': string;
+  '--p-display': string; '--p-radius': string; '--p-hero-url': string;
 }
 
 const DEFAULT_VARS: PageVars = {
   '--p-bg': '#0e0b09', '--p-surface': '#181310', '--p-ink': '#f4efe9',
   '--p-ink2': '#9c9082', '--p-accent': '#ff5029', '--p-accent2': '#ff3e9a',
   '--p-line': 'rgba(255,255,255,.07)', '--p-display': '"Syne",sans-serif', '--p-radius': '12px',
+  '--p-hero-url': '',
 };
 
+const GENRE_PATTERNS: [RegExp, string][] = [
+  [/\bpunk|hardcore|thrash|grunge\b/, 'punk'],
+  [/\bjazz|blues|soul|bebop\b/, 'jazz'],
+  [/\bhip.?hop|rap|trap|drill\b/, 'hip-hop'],
+  [/\belectronic|techno|house|rave|edm|synth\b/, 'electronic'],
+  [/\bfolk|country|americana|bluegrass\b/, 'folk'],
+  [/\bindierock|indie.rock\b/, 'indie'],
+  [/\bmetal|doom|sludge|death.metal\b/, 'metal'],
+  [/\bclassical|orchestra|chamber\b/, 'classical'],
+  [/\brnb|r&b|neo.soul\b/, 'rnb'],
+];
+
 /* ── AI command interpreter ──────────────────────────────── */
-function applyCommand(text: string, vars: PageVars): { reply: string; applied: string[]; newVars: PageVars } {
+function applyCommand(text: string, vars: PageVars): { reply: string; applied: string[]; newVars: PageVars; detectedGenre: string } {
   const t = text.toLowerCase();
   const v = { ...vars };
   const applied: string[] = [];
@@ -40,6 +53,28 @@ function applyCommand(text: string, vars: PageVars): { reply: string; applied: s
   }
   if (/\bwarm/.test(t)) { set('--p-bg', '#120c08'); set('--p-surface', '#1d140d'); applied.push('Tone → warmer'); }
   if (/\bcool|cold|blue tone/.test(t)) { set('--p-bg', '#080a0d'); set('--p-surface', '#101620'); applied.push('Tone → cooler'); }
+
+  // Genre-aware theming: punk, jazz, electronic, etc.
+  const genreThemes: Record<string, Partial<PageVars>> = {
+    punk:       { '--p-bg': '#0c0805', '--p-surface': '#1a110a', '--p-accent': '#ff5029', '--p-accent2': '#ffb84a', '--p-radius': '3px' },
+    jazz:       { '--p-bg': '#080710', '--p-surface': '#120f1e', '--p-accent': '#b983ff', '--p-accent2': '#ff3e9a', '--p-display': '"Instrument Serif",serif' },
+    'hip-hop':  { '--p-bg': '#060606', '--p-surface': '#101010', '--p-accent': '#ffb84a', '--p-accent2': '#ff5029', '--p-radius': '6px' },
+    electronic: { '--p-bg': '#07060f', '--p-surface': '#120f24', '--p-accent': '#22e5d4', '--p-accent2': '#ff3e9a', '--p-radius': '4px' },
+    folk:       { '--p-bg': '#f4ece0', '--p-surface': '#fbf6ee', '--p-ink': '#211a12', '--p-ink2': '#6f5f4a', '--p-accent': '#c2451f', '--p-line': 'rgba(0,0,0,.1)', '--p-display': '"Instrument Serif",serif' },
+    metal:      { '--p-bg': '#050505', '--p-surface': '#0e0e0e', '--p-accent': '#e8e8ea', '--p-accent2': '#ff5029', '--p-radius': '2px' },
+    classical:  { '--p-bg': '#f9f5ef', '--p-surface': '#ffffff', '--p-ink': '#1a1612', '--p-ink2': '#6b6056', '--p-accent': '#8b4513', '--p-line': 'rgba(0,0,0,.08)', '--p-display': '"Instrument Serif",serif' },
+    rnb:        { '--p-bg': '#0a0812', '--p-surface': '#151020', '--p-accent': '#ff3e9a', '--p-accent2': '#b983ff' },
+    indie:      { '--p-bg': '#0e0b0a', '--p-surface': '#181410', '--p-accent': '#5b8dff', '--p-accent2': '#22e5d4' },
+  };
+  let detectedGenre = '';
+  for (const [re, g] of GENRE_PATTERNS) {
+    if (re.test(t)) {
+      detectedGenre = g;
+      const gt = genreThemes[g];
+      if (gt) { Object.entries(gt).forEach(([k, val]) => { v[k as keyof PageVars] = val; }); applied.push(`Scene → ${g}`); }
+      break;
+    }
+  }
 
   const colors: Record<string, string> = {
     purple: '#b983ff', teal: '#22e5d4', pink: '#ff3e9a', blue: '#7fb3ff',
@@ -69,9 +104,9 @@ function applyCommand(text: string, vars: PageVars): { reply: string; applied: s
     reply = 'Done — ' + (applied.length > 1 ? applied.length + ' changes are live.' : "that's live on your page.");
   } else {
     set('--p-accent', '#ff5029');
-    reply = 'I tightened the accent. Try "make it darker", "purple accent", "elegant serif", or "rounder corners".';
+    reply = 'I tightened the accent. Try "make it punk", "jazz mood", "purple accent", "elegant serif", or "rounder corners".';
   }
-  return { reply, applied, newVars: v };
+  return { reply, applied, newVars: v, detectedGenre };
 }
 
 /* ── sub-components ──────────────────────────────────────── */
@@ -117,33 +152,52 @@ export function ViewArtistPage({ data }: { data: WorkbenchData }) {
     if (threadRef.current) threadRef.current.scrollTop = threadRef.current.scrollHeight;
   }, [msgs, typing]);
 
-  const send = useCallback((text: string) => {
+  const send = useCallback(async (text: string) => {
     text = text.trim();
     if (!text) return;
     setMsgs(m => [...m, { side: 'me', html: esc(text) }]);
     setInput('');
     setTyping(true);
     setGenerating(true);
-    setTimeout(() => {
-      const res = applyCommand(text, pageVars);
-      // also handle sections
-      if (/\btour|shows?|dates|gig|concert/.test(text.toLowerCase())) {
-        setShowShows(true);
-        if (!res.applied.includes('Added · Tour dates')) res.applied.push('Added · Tour dates');
-      }
-      if (/\bmerch|shop|store|tee|vinyl/.test(text.toLowerCase())) {
-        setShowMerch(true);
-        if (!res.applied.includes('Added · Merch shelf')) res.applied.push('Added · Merch shelf');
-      }
-      setPageVars(res.newVars);
-      setTyping(false);
-      setGenerating(false);
-      const chip = res.applied.length
-        ? '<div style="margin-top:8px;padding:6px 10px;border-radius:6px;background:rgba(34,229,212,.08);border:1px solid rgba(34,229,212,.18);font-size:11px;color:#22e5d4;font-weight:700">✓ ' + res.applied.join(' · ') + '</div>'
-        : '';
-      setMsgs(m => [...m, { side: 'ai', html: esc(res.reply) + chip, applied: res.applied }]);
-    }, 1100);
-  }, [pageVars]);
+
+    // Simulate AI thinking delay while we fetch any hero image in parallel
+    const res = applyCommand(text, pageVars);
+    if (/\btour|shows?|dates|gig|concert/.test(text.toLowerCase())) {
+      setShowShows(true);
+      if (!res.applied.includes('Added · Tour dates')) res.applied.push('Added · Tour dates');
+    }
+    if (/\bmerch|shop|store|tee|vinyl/.test(text.toLowerCase())) {
+      setShowMerch(true);
+      if (!res.applied.includes('Added · Merch shelf')) res.applied.push('Added · Merch shelf');
+    }
+
+    // Hero image: prefer user's uploaded profile image, then fetch from Unsplash by genre
+    let heroUrl = '';
+    const uploadedHero = data.pageEditor?.heroImage;
+    if (uploadedHero) {
+      heroUrl = uploadedHero;
+      if (!res.applied.some(a => a.startsWith('Hero'))) res.applied.push('Hero → your photo');
+    } else if (res.detectedGenre) {
+      try {
+        const r = await fetch(`/api/page-hero?genre=${encodeURIComponent(res.detectedGenre)}`);
+        if (r.ok) {
+          const d = await r.json() as { url?: string };
+          if (d.url) { heroUrl = d.url; res.applied.push('Hero → ' + res.detectedGenre + ' photo'); }
+        }
+      } catch { /* ignore */ }
+    }
+
+    const newVars: PageVars = { ...res.newVars, '--p-hero-url': heroUrl ? `url('${heroUrl}')` : '' };
+
+    await new Promise(r => setTimeout(r, heroUrl ? 400 : 1100));
+    setPageVars(newVars);
+    setTyping(false);
+    setGenerating(false);
+    const chip = res.applied.length
+      ? '<div style="margin-top:8px;padding:6px 10px;border-radius:6px;background:rgba(34,229,212,.08);border:1px solid rgba(34,229,212,.18);font-size:11px;color:#22e5d4;font-weight:700">✓ ' + res.applied.join(' · ') + '</div>'
+      : '';
+    setMsgs(m => [...m, { side: 'ai', html: esc(res.reply) + chip, applied: res.applied }]);
+  }, [pageVars, data]);
 
   const artistSlug = 'ihype.fm/maya';
   const artistName = data.userName || 'Maya Reyes';
@@ -291,7 +345,7 @@ export function ViewArtistPage({ data }: { data: WorkbenchData }) {
                 <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--line-2,rgba(255,255,255,.07))' }}>
                   <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(244,239,233,.3)', marginBottom: 8 }}>Try these</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {['Add my tour dates', 'Make it darker & moodier', 'Purple accent', 'Elegant serif headline', 'Add a merch shelf', 'Rewrite my bio'].map(s => (
+                    {['Make it punk', 'Jazz mood', 'Electronic rave energy', 'Make it darker & moodier', 'Purple accent', 'Add my tour dates'].map(s => (
                       <button key={s} onClick={() => send(s)} style={{
                         padding: '5px 10px', borderRadius: 20, border: '1px solid rgba(255,255,255,.1)',
                         background: 'rgba(255,255,255,.04)', color: 'rgba(244,239,233,.6)',
@@ -602,11 +656,17 @@ function PublicPage({ artistName, initials, vars, editOn, showShows, showMerch }
   showShows: boolean; showMerch: boolean;
 }) {
   const s = vars;
+  const hasHero = !!s['--p-hero-url'];
   return (
     <div style={{ background: s['--p-bg'], color: s['--p-ink'], minHeight: '100%', fontFamily: 'system-ui,sans-serif' }}>
       {/* hero */}
-      <div style={{ padding: '48px 36px 32px', borderBottom: `1px solid ${s['--p-line']}` }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 24 }}>
+      <div style={{
+        padding: '48px 36px 32px', borderBottom: `1px solid ${s['--p-line']}`,
+        position: 'relative', overflow: 'hidden',
+        ...(hasHero ? { backgroundImage: s['--p-hero-url'], backgroundSize: 'cover', backgroundPosition: 'center' } : {}),
+      }}>
+        {hasHero && <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, rgba(0,0,0,.45) 0%, ${s['--p-bg']}ee 90%)`, zIndex: 0 }} />}
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 20, marginBottom: 24 }}>
           <div style={{
             width: 72, height: 72, borderRadius: s['--p-radius'],
             background: `linear-gradient(135deg,${s['--p-accent']},${s['--p-accent2']})`,
@@ -614,18 +674,20 @@ function PublicPage({ artistName, initials, vars, editOn, showShows, showMerch }
             fontFamily: s['--p-display'], fontSize: 24, fontWeight: 800, color: '#fff', flexShrink: 0,
           }}>{initials}</div>
           <div>
-            <div style={{ fontFamily: s['--p-display'], fontSize: 32, fontWeight: 800, color: s['--p-ink'], lineHeight: 1.1 }}
+            <div style={{ fontFamily: s['--p-display'], fontSize: 32, fontWeight: 800, color: hasHero ? '#fff' : s['--p-ink'], lineHeight: 1.1 }}
               contentEditable={editOn} suppressContentEditableWarning>{artistName}</div>
-            <div style={{ fontFamily: 'system-ui', fontSize: 14, color: s['--p-ink2'], marginTop: 4 }}>Artist · Chicago, IL</div>
+            <div style={{ fontFamily: 'system-ui', fontSize: 14, color: hasHero ? 'rgba(255,255,255,.65)' : s['--p-ink2'], marginTop: 4 }}>Artist · Chicago, IL</div>
           </div>
         </div>
-        <div style={{ fontFamily: 'system-ui', fontSize: 15, color: s['--p-ink2'], lineHeight: 1.6, maxWidth: 520 }}
-          contentEditable={editOn} suppressContentEditableWarning>
-          Late-night songs for long drives. New EP out now — the rest is being written in a basement on Western Ave.
-        </div>
-        <div style={{ marginTop: 20, display: 'flex', gap: 10 }}>
-          <button style={{ padding: '10px 22px', borderRadius: s['--p-radius'], border: 'none', background: s['--p-accent'], color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>Follow</button>
-          <button style={{ padding: '10px 22px', borderRadius: s['--p-radius'], border: `1px solid ${s['--p-line']}`, background: 'transparent', color: s['--p-ink2'], fontSize: 14, cursor: 'pointer' }}>Share</button>
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ fontFamily: 'system-ui', fontSize: 15, color: hasHero ? 'rgba(255,255,255,.8)' : s['--p-ink2'], lineHeight: 1.6, maxWidth: 520 }}
+            contentEditable={editOn} suppressContentEditableWarning>
+            Late-night songs for long drives. New EP out now — the rest is being written in a basement on Western Ave.
+          </div>
+          <div style={{ marginTop: 20, display: 'flex', gap: 10 }}>
+            <button style={{ padding: '10px 22px', borderRadius: s['--p-radius'], border: 'none', background: s['--p-accent'], color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>Follow</button>
+            <button style={{ padding: '10px 22px', borderRadius: s['--p-radius'], border: `1px solid ${s['--p-line']}`, background: 'transparent', color: hasHero ? 'rgba(255,255,255,.7)' : s['--p-ink2'], fontSize: 14, cursor: 'pointer' }}>Share</button>
+          </div>
         </div>
       </div>
 
