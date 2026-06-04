@@ -1,5 +1,5 @@
 import type { WorkbenchData, WbTrendingProfile } from '@/components/WorkbenchShellV2';
-import { db } from '@/lib/db';
+import { db, withDbRetry } from '@/lib/db';
 import { MOCK_DATA } from '@/lib/workbench-mock';
 import { getArtistUploadStreak } from '@/lib/streaks';
 
@@ -11,7 +11,7 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
     // Step 1: Lean user + profile scalar query (no nested relations).
     // Keeping this query small prevents slow-join timeouts from the old
     // monolithic query that embedded mediaUploads/shows/AP-entries inline.
-    const user = await db.user.findUnique({
+    const user = await withDbRetry(() => db.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -62,7 +62,7 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
           },
         },
       },
-    });
+    }));
 
     if (!user) {
       return MOCK_DATA;
