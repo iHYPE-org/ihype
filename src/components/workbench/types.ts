@@ -1,7 +1,7 @@
 'use client';
 
 // ── View type (v2 simplified) ─────────────────────────────────
-export type View = 'me' | 'seeds' | 'radio' | 'studio' | 'tickets' | 'settings' | 'matchmaker' | 'pagestudio' | 'artistpage' | 'venuepage';
+export type View = 'me' | 'seeds' | 'radio' | 'studio' | 'tickets' | 'settings' | 'tour' | 'pagestudio' | 'artistpage' | 'venuepage';
 
 // ── Prefs ─────────────────────────────────────────────────────
 export const PREFS_VERSION = 2; // bump when DEFAULT_PREFS schema changes

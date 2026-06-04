@@ -10,7 +10,7 @@ export const TAB_ICONS: Record<string, React.ReactNode> = {
   radio: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2.5"/><circle cx="8" cy="8" r=".6" fill="currentColor"/></svg>,
   studio: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="12" height="8" rx="1.5"/><path d="M5 8h1M8 6v4M11 7v2"/></svg>,
   tickets: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6a1.5 1.5 0 0 0 0 3v3h12V9a1.5 1.5 0 0 0 0-3V3H2v3Z"/><path d="M9 3v10" strokeDasharray="1.4 1.4"/></svg>,
-  matchmaker: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="5" cy="8" r="2"/><circle cx="11" cy="8" r="2"/><path d="M7 8h2"/><path d="M3 4l-1.5-2M13 4l1.5-2M5 11l-1 3M11 11l1 3"/></svg>,
+  tour: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="4" cy="11" r="1.5"/><circle cx="12" cy="5" r="1.5"/><path d="M5.2 10.2 10.8 5.8"/><path d="M2 4h2.5M2 7h4M2 10h1.5"/></svg>,
   pagestudio: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 6h6M5 9h4"/><circle cx="11.5" cy="10.5" r="1.5" fill="currentColor" stroke="none"/></svg>,
 };
 
@@ -20,7 +20,7 @@ export const TABS: { k: View; label: string }[] = [
   { k: 'radio',       label: 'Radio' },
   { k: 'studio',      label: 'Studio' },
   { k: 'tickets',     label: 'Live Events' },
-  { k: 'matchmaker',  label: 'Matchmaker' },
+  { k: 'tour',        label: 'Tour Planner' },
   { k: 'pagestudio',  label: 'Fan Page' },
 ];
 
