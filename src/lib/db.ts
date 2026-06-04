@@ -155,10 +155,27 @@ export const db = new Proxy({} as DbClient, {
 });
 
 function isRetryablePrismaError(error: unknown) {
-  return (
-    error instanceof Prisma.PrismaClientKnownRequestError &&
-    (error.code === 'P5010' || error.message.includes('fetch failed'))
-  );
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    return error.code === 'P5010' || error.message.includes('fetch failed');
+  }
+  // PrismaClientInitializationError covers cold-start TCP timeouts (P1017, P1001, etc.)
+  if (error instanceof Prisma.PrismaClientInitializationError) {
+    return true;
+  }
+  // Raw pg pool / Node network errors that escape Prisma's wrapper
+  if (error instanceof Error) {
+    const msg = error.message;
+    return (
+      msg.includes('fetch failed') ||
+      msg.includes('connect ETIMEDOUT') ||
+      msg.includes('connect timeout') ||
+      msg.includes('Connection terminated') ||
+      msg.includes('ECONNREFUSED') ||
+      msg.includes('ECONNRESET') ||
+      msg.includes('Server has closed the connection')
+    );
+  }
+  return false;
 }
 
 export async function withDbRetry<T>(operation: () => Promise<T>, attempts = 3): Promise<T> {
@@ -174,7 +191,7 @@ export async function withDbRetry<T>(operation: () => Promise<T>, attempts = 3):
         throw error;
       }
 
-      await new Promise((resolve) => setTimeout(resolve, attempt * 150));
+      await new Promise((resolve) => setTimeout(resolve, attempt * 300));
     }
   }
 
