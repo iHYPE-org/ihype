@@ -157,6 +157,14 @@ export function ViewArtistPage({ data }: { data: WorkbenchData }) {
   const [showBooking, setShowBooking] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   useEffect(() => {
     if (threadRef.current) threadRef.current.scrollTop = threadRef.current.scrollHeight;
@@ -215,11 +223,20 @@ export function ViewArtistPage({ data }: { data: WorkbenchData }) {
   const artistName = data.userName || 'Maya Reyes';
   const initials = artistName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
 
+  const ARTIST_TABS: { k: CkMode; label: string; icon: React.ReactNode }[] = [
+    { k: 'page',      label: 'Page',     icon: <IconPage /> },
+    { k: 'insights',  label: 'Insights', icon: <IconInsights /> },
+    { k: 'tour',      label: 'Tour',     icon: <IconTour /> },
+    { k: 'release',   label: 'Release',  icon: <IconRelease /> },
+    { k: 'library',   label: 'Library',  icon: <IconLibrary /> },
+    { k: 'presskit',  label: 'Press Kit',icon: <IconPressKit /> },
+  ];
+
   return (
-    <div style={{ position: 'absolute', inset: 0, display: 'grid', gridTemplateColumns: '200px 1fr', background: 'var(--bg,#0c0a09)', overflow: 'hidden' }}>
-      {/* ── left rail ── */}
+    <div style={{ position: 'absolute', inset: 0, display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '200px 1fr', background: 'var(--bg,#0c0a09)', overflow: 'hidden' }}>
+      {/* ── left rail (desktop) ── */}
       <div style={{
-        display: 'flex', flexDirection: 'column',
+        display: isMobile ? 'none' : 'flex', flexDirection: 'column',
         background: 'var(--bg-2,#121009)', borderRight: '1px solid var(--line-2,rgba(255,255,255,.07))',
         overflow: 'hidden',
       }}>
@@ -288,11 +305,11 @@ export function ViewArtistPage({ data }: { data: WorkbenchData }) {
       </div>
 
       {/* ── stage ── */}
-      <div style={{ position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', overflow: 'hidden', paddingBottom: isMobile ? 58 : 0, boxSizing: 'border-box' }}>
 
         {/* Mode: Page Editor */}
         {mode === 'page' && (
-          <div style={{ position: 'absolute', inset: 0, display: 'grid', gridTemplateColumns: '1fr 360px' }}>
+          <div style={{ position: 'absolute', inset: 0, display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 360px' }}>
             {/* live preview */}
             <div style={{ position: 'relative', overflow: 'hidden', background: '#1a1612' }}>
               {/* toolbar */}
@@ -358,7 +375,7 @@ export function ViewArtistPage({ data }: { data: WorkbenchData }) {
             </div>
 
             {/* AI chat dock */}
-            <div style={{ display: 'flex', flexDirection: 'column', background: 'var(--bg-2,#121009)', borderLeft: '1px solid var(--line-2,rgba(255,255,255,.07))' }}>
+            <div style={{ display: isMobile ? 'none' : 'flex', flexDirection: 'column', background: 'var(--bg-2,#121009)', borderLeft: '1px solid var(--line-2,rgba(255,255,255,.07))' }}>
               <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--line-2,rgba(255,255,255,.07))' }}>
                 <div style={{ fontFamily: 'var(--f-d,sans-serif)', fontSize: 14, fontWeight: 700, color: 'var(--ink,#f4efe9)' }}>✦ AI Editor</div>
                 <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 11, color: 'rgba(244,239,233,.4)', marginTop: 2 }}>Describe changes — they apply live</div>
@@ -672,6 +689,29 @@ export function ViewArtistPage({ data }: { data: WorkbenchData }) {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── bottom tab bar (mobile) ── */}
+      {isMobile && (
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0, height: 58,
+          display: 'flex', alignItems: 'stretch',
+          background: 'rgba(10,8,5,.96)', backdropFilter: 'blur(16px)',
+          borderTop: '1px solid rgba(255,255,255,.08)',
+          gridColumn: '1 / -1',
+        }}>
+          {ARTIST_TABS.map(t => (
+            <button key={t.k} onClick={() => setMode(t.k)} style={{
+              flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              gap: 3, border: 'none', cursor: 'pointer', background: 'transparent',
+              color: mode === t.k ? '#ff5029' : 'rgba(244,239,233,.4)',
+              transition: 'color .15s',
+            }}>
+              <span style={{ width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{t.icon}</span>
+              <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 8, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase' }}>{t.label}</span>
+            </button>
+          ))}
         </div>
       )}
     </div>

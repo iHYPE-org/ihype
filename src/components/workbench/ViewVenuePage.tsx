@@ -127,14 +127,30 @@ function TypingDot({ delay }: { delay: number }) {
 /* ── main component ──────────────────────────────────────── */
 export function ViewVenuePage({ data }: { data: WorkbenchData }) {
   const [mode, setMode] = useState<VenueMode>('overview');
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const venueName = data.userName || 'The Venue';
   const initials = venueName.split(' ').slice(0, 2).map((w: string) => w[0]?.toUpperCase() ?? '').join('');
 
+  const VENUE_TABS: { k: VenueMode; label: string; icon: React.ReactNode }[] = [
+    { k: 'overview',  label: 'Overview',  icon: <IconOverview /> },
+    { k: 'shows',     label: 'Shows',     icon: <IconShows /> },
+    { k: 'bookings',  label: 'Bookings',  icon: <IconBookings /> },
+    { k: 'page',      label: 'Page',      icon: <IconPageAI /> },
+    { k: 'gallery',   label: 'Gallery',   icon: <IconGallery /> },
+  ];
+
   return (
-    <div style={{ position: 'absolute', inset: 0, display: 'grid', gridTemplateColumns: '200px 1fr', background: 'var(--bg,#0c0a09)', overflow: 'hidden' }}>
-      {/* ── left rail ── */}
-      <div style={{ display: 'flex', flexDirection: 'column', background: 'var(--bg-2,#121009)', borderRight: '1px solid var(--line-2,rgba(255,255,255,.07))', overflow: 'hidden' }}>
+    <div style={{ position: 'absolute', inset: 0, display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '200px 1fr', background: 'var(--bg,#0c0a09)', overflow: 'hidden' }}>
+      {/* ── left rail (desktop) ── */}
+      <div style={{ display: isMobile ? 'none' : 'flex', flexDirection: 'column', background: 'var(--bg-2,#121009)', borderRight: '1px solid var(--line-2,rgba(255,255,255,.07))', overflow: 'hidden' }}>
         {/* identity */}
         <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid var(--line-2,rgba(255,255,255,.07))' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
@@ -178,13 +194,36 @@ export function ViewVenuePage({ data }: { data: WorkbenchData }) {
       </div>
 
       {/* ── stage ── */}
-      <div style={{ position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', overflow: 'hidden', paddingBottom: isMobile ? 58 : 0, boxSizing: 'border-box' }}>
         {mode === 'overview'  && <OverviewPanel data={data} />}
         {mode === 'shows'     && <ShowsPanel venueName={venueName} />}
         {mode === 'bookings'  && <BookingsPanel />}
         {mode === 'page'      && <PageAIPanel venueName={venueName} initials={initials} />}
         {mode === 'gallery'   && <GalleryPanel />}
       </div>
+
+      {/* ── bottom tab bar (mobile) ── */}
+      {isMobile && (
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0, height: 58,
+          display: 'flex', alignItems: 'stretch',
+          background: 'rgba(10,8,5,.96)', backdropFilter: 'blur(16px)',
+          borderTop: '1px solid rgba(255,255,255,.08)',
+          gridColumn: '1 / -1',
+        }}>
+          {VENUE_TABS.map(t => (
+            <button key={t.k} onClick={() => setMode(t.k)} style={{
+              flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              gap: 3, border: 'none', cursor: 'pointer', background: 'transparent',
+              color: mode === t.k ? '#22e5d4' : 'rgba(244,239,233,.4)',
+              transition: 'color .15s',
+            }}>
+              <span style={{ width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{t.icon}</span>
+              <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9, fontWeight: 700, letterSpacing: '.07em', textTransform: 'uppercase' }}>{t.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -199,7 +238,7 @@ function OverviewPanel({ data }: { data: WorkbenchData }) {
         <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 12, color: 'rgba(244,239,233,.4)', marginBottom: 28 }}>Last 30 days · updated hourly</div>
 
         {/* KPIs */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 32 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 14, marginBottom: 32 }}>
           <KpiCard label="HYPE Count"          value={(data.lifeStats?.totalHype ?? 640).toLocaleString()} delta="+22% this month"   color="#ff5029" />
           <KpiCard label="Followers"           value="1,840"  delta="+140 this month"    color="#ff3e9a" />
           <KpiCard label="Monthly Page Views"  value="12,400" delta="+31% vs last month" color="#b983ff" />
@@ -525,7 +564,15 @@ function PageAIPanel({ venueName, initials }: { venueName: string; initials: str
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [typing, setTyping] = useState(false);
   const [input, setInput] = useState('');
+  const [isMobile, setIsMobile] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   useEffect(() => {
     if (threadRef.current) threadRef.current.scrollTop = threadRef.current.scrollHeight;
@@ -548,7 +595,7 @@ function PageAIPanel({ venueName, initials }: { venueName: string; initials: str
   }, [pageVars]);
 
   return (
-    <div style={{ position: 'absolute', inset: 0, display: 'grid', gridTemplateColumns: '1fr 360px' }}>
+    <div style={{ position: 'absolute', inset: 0, display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 360px' }}>
       {/* Preview */}
       <div style={{ position: 'relative', overflow: 'hidden', background: '#1a1612' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 46, zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', background: 'rgba(14,11,9,.9)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(255,255,255,.06)' }}>
@@ -571,7 +618,7 @@ function PageAIPanel({ venueName, initials }: { venueName: string; initials: str
       </div>
 
       {/* AI dock */}
-      <div style={{ display: 'flex', flexDirection: 'column', background: 'var(--bg-2,#121009)', borderLeft: '1px solid var(--line-2,rgba(255,255,255,.07))' }}>
+      <div style={{ display: isMobile ? 'none' : 'flex', flexDirection: 'column', background: 'var(--bg-2,#121009)', borderLeft: '1px solid var(--line-2,rgba(255,255,255,.07))' }}>
         <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--line-2,rgba(255,255,255,.07))' }}>
           <div style={{ fontFamily: 'var(--f-d,sans-serif)', fontSize: 14, fontWeight: 700, color: 'var(--ink,#f4efe9)' }}>✦ AI Editor</div>
           <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 11, color: 'rgba(244,239,233,.4)', marginTop: 2 }}>Describe the vibe — changes apply live</div>
