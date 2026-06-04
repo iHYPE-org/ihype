@@ -15,13 +15,18 @@ export const TAB_ICONS: Record<string, React.ReactNode> = {
 };
 
 export const TABS: { k: View; label: string }[] = [
-  { k: 'me',          label: 'My Page' },
+  { k: 'me',          label: 'Me' },
   { k: 'seeds',       label: 'Seeds' },
   { k: 'radio',       label: 'Radio' },
   { k: 'studio',      label: 'Studio' },
   { k: 'tickets',     label: 'Live Events' },
   { k: 'matchmaker',  label: 'Matchmaker' },
-  { k: 'pagestudio',  label: 'Page Studio' },
+  { k: 'pagestudio',  label: 'Fan Page' },
+];
+
+export const ROLE_TABS: { k: View; label: string; role: string }[] = [
+  { k: 'artistpage', label: 'Artist Page', role: 'ARTIST' },
+  { k: 'venuepage',  label: 'Venue Page',  role: 'VENUE'  },
 ];
 
 export function AppTopbar({ view, setView, listeningNow, initials, userName, activeProfileTypes, onSettings, onSearch, onShortcuts, badges, notifCount, notifications }: {
@@ -79,7 +84,7 @@ export function AppTopbar({ view, setView, listeningNow, initials, userName, act
 
       {/* Tabs */}
       <nav role="navigation" aria-label="Main navigation" style={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: 'center' }}>
-        {TABS.map(tab => {
+        {TABS.filter(t => t.k !== 'pagestudio').map(tab => {
           const active = view === tab.k;
           return (
             <button key={tab.k} onClick={() => setView(tab.k)} aria-current={active ? 'page' : undefined} style={{
@@ -109,6 +114,51 @@ export function AppTopbar({ view, setView, listeningNow, initials, userName, act
             </button>
           );
         })}
+        {/* Separator + role-specific pages + Fan Page */}
+        <span style={{ width: 1, height: 20, background: 'var(--line-2)', margin: '0 6px', flexShrink: 0 }} />
+        {ROLE_TABS.filter(rt => activeProfileTypes.includes(rt.role)).map(tab => {
+          const active = view === tab.k;
+          return (
+            <button key={tab.k} onClick={() => setView(tab.k)} aria-current={active ? 'page' : undefined} style={{
+              display: 'flex', alignItems: 'center', gap: 7, padding: '7px 14px',
+              borderRadius: 8, cursor: 'pointer',
+              border: active ? '1px solid rgba(185,131,255,.22)' : '1px solid transparent',
+              color: active ? '#b983ff' : 'var(--ink-2)',
+              background: active ? 'rgba(185,131,255,.1)' : 'transparent',
+              fontFamily: 'var(--f-b)', fontWeight: 600, fontSize: 13, letterSpacing: '-.005em',
+              position: 'relative', transition: 'color .15s, background .15s, border-color .15s',
+              boxShadow: active ? '0 0 18px rgba(185,131,255,.12), inset 0 1px 0 rgba(255,255,255,.06)' : 'none',
+            }}
+              onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,.04)'; (e.currentTarget as HTMLButtonElement).style.color = '#f0ebe5'; } }}
+              onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--ink-2)'; } }}
+            >
+              {TAB_ICONS['pagestudio']}
+              {tab.label}
+            </button>
+          );
+        })}
+        {(() => {
+          const tab = TABS.find(t => t.k === 'pagestudio')!;
+          const active = view === 'pagestudio';
+          return (
+            <button key="pagestudio" onClick={() => setView('pagestudio')} aria-current={active ? 'page' : undefined} style={{
+              display: 'flex', alignItems: 'center', gap: 7, padding: '7px 14px',
+              borderRadius: 8, cursor: 'pointer',
+              border: active ? '1px solid rgba(255,80,41,.22)' : '1px solid transparent',
+              color: active ? 'var(--ink)' : 'var(--ink-2)',
+              background: active ? 'rgba(255,80,41,.1)' : 'transparent',
+              fontFamily: 'var(--f-b)', fontWeight: 600, fontSize: 13, letterSpacing: '-.005em',
+              position: 'relative', transition: 'color .15s, background .15s, border-color .15s',
+              boxShadow: active ? '0 0 18px rgba(255,80,41,.12), inset 0 1px 0 rgba(255,255,255,.06)' : 'none',
+            }}
+              onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,.04)'; (e.currentTarget as HTMLButtonElement).style.color = '#f0ebe5'; } }}
+              onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--ink-2)'; } }}
+            >
+              {TAB_ICONS['pagestudio']}
+              {tab.label}
+            </button>
+          );
+        })()}
       </nav>
 
       {/* Right: listening + user */}
@@ -194,10 +244,10 @@ export function AppTopbar({ view, setView, listeningNow, initials, userName, act
             </div>
           )}
         </div>
-        <button onClick={onSettings} aria-label="Open settings" style={{
+        <div style={{
           display: 'flex', alignItems: 'center', gap: 10, padding: '5px 10px 5px 5px',
           borderRadius: 99, background: 'var(--bg-3)', border: '1px solid var(--line-2)',
-          cursor: 'pointer', transition: 'border-color .15s',
+          userSelect: 'none',
         }}>
           <span style={{
             width: 28, height: 28, borderRadius: '50%',
@@ -210,6 +260,15 @@ export function AppTopbar({ view, setView, listeningNow, initials, userName, act
             <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', letterSpacing: '.08em', marginTop: 2 }}>{activeProfileTypes.slice(0, 2).join(' + ')}</div>
           </div>
           <span style={{ padding: '3px 7px', borderRadius: 99, background: 'rgba(255,184,74,.12)', color: '#ffb84a', fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 700, letterSpacing: '.08em', border: '1px solid rgba(255,184,74,.28)' }}>LVL 14</span>
+        </div>
+        <button onClick={onSettings} aria-label="Open settings" title="Settings" style={{
+          width: 32, height: 32, borderRadius: 7, background: 'none', border: 'none',
+          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: 'var(--ink-3)',
+        }}>
+          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
         </button>
       </div>
     </header>

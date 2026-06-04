@@ -232,51 +232,6 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
         </div>
       )}
 
-      {/* ── DISCOVER — Trending Near You + sidebar ──────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 260px', gap: 20, marginBottom: 32 }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <h3 style={{ fontFamily: 'var(--f-d)', fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--ink)' }}>Trending Near You</h3>
-            <span style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)' }}>This week</span>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
-            {trendingArtists.length > 0
-              ? trendingArtists.map((a, i) => <TrendingCard key={a.id} artist={a} idx={i} />)
-              : <div style={{ gridColumn: '1/-1', padding: '32px 0', textAlign: 'center', fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-3)' }}>No trending artists yet — be the first to HYPE someone.</div>
-            }
-          </div>
-        </div>
-
-        {/* Sidebar */}
-        <div>
-          {/* Hype activity bars */}
-          <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 14, padding: '14px 16px', marginBottom: 12 }}>
-            <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-3)', fontWeight: 600, marginBottom: 12 }}>Hype activity near you</div>
-            {[
-              { label: 'Brooklyn, NY', pct: 85, count: '4.2k' },
-              { label: 'Chicago, IL',  pct: 62, count: '3.1k' },
-              { label: 'Austin, TX',   pct: 41, count: '2.0k' },
-              { label: 'Los Angeles',  pct: 30, count: '1.5k' },
-              { label: 'Atlanta, GA',  pct: 18, count: '900'  },
-            ].map(r => (
-              <div key={r.label} style={{ display: 'grid', gridTemplateColumns: '80px 1fr 28px', gap: 6, alignItems: 'center', marginBottom: 7 }}>
-                <div style={{ fontFamily: 'var(--f-m)', color: 'var(--ink-2)', fontSize: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.label}</div>
-                <div style={{ height: 4, background: 'var(--line)', borderRadius: 2, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${r.pct}%`, background: '#22e5d4', borderRadius: 2 }} />
-                </div>
-                <div style={{ fontFamily: 'var(--f-m)', color: 'var(--ink-3)', fontSize: 10, textAlign: 'right' }}>{r.count}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Recent Hypers */}
-          <RecentHypers profileId={data.profileId} />
-        </div>
-      </div>
-
-      {/* Section divider */}
-      <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, var(--line-2) 30%, var(--line-2) 70%, transparent)', marginBottom: 28 }} />
-
       {/* Hero — 3-col grid */}
       <div className="me-hero-grid" style={{
         display: 'grid', gridTemplateColumns: '200px 1fr auto', gap: 28, alignItems: 'center',
@@ -334,6 +289,51 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
           ))}
         </div>
       </div>
+
+      {/* ── DISCOVER — Trending Near You + sidebar ──────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 260px', gap: 20, marginBottom: 32 }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <h3 style={{ fontFamily: 'var(--f-d)', fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--ink)' }}>Trending Near You</h3>
+            <span style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)' }}>This week</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
+            {trendingArtists.length > 0
+              ? trendingArtists.map((a, i) => <TrendingCard key={a.id} artist={a} idx={i} />)
+              : <div style={{ gridColumn: '1/-1', padding: '32px 0', textAlign: 'center', fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-3)' }}>No trending artists yet — be the first to HYPE someone.</div>
+            }
+          </div>
+        </div>
+
+        {/* Sidebar */}
+        <div>
+          {/* Hype activity bars */}
+          <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 14, padding: '14px 16px', marginBottom: 12 }}>
+            <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-3)', fontWeight: 600, marginBottom: 12 }}>Hype activity near you</div>
+            {[
+              { label: 'Brooklyn, NY', pct: 85, count: '4.2k' },
+              { label: 'Chicago, IL',  pct: 62, count: '3.1k' },
+              { label: 'Austin, TX',   pct: 41, count: '2.0k' },
+              { label: 'Los Angeles',  pct: 30, count: '1.5k' },
+              { label: 'Atlanta, GA',  pct: 18, count: '900'  },
+            ].map(r => (
+              <div key={r.label} style={{ display: 'grid', gridTemplateColumns: '80px 1fr 28px', gap: 6, alignItems: 'center', marginBottom: 7 }}>
+                <div style={{ fontFamily: 'var(--f-m)', color: 'var(--ink-2)', fontSize: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.label}</div>
+                <div style={{ height: 4, background: 'var(--line)', borderRadius: 2, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${r.pct}%`, background: '#22e5d4', borderRadius: 2 }} />
+                </div>
+                <div style={{ fontFamily: 'var(--f-m)', color: 'var(--ink-3)', fontSize: 10, textAlign: 'right' }}>{r.count}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Recent Hypers */}
+          <RecentHypers profileId={data.profileId} />
+        </div>
+      </div>
+
+      {/* Section divider */}
+      <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, var(--line-2) 30%, var(--line-2) 70%, transparent)', marginBottom: 28 }} />
 
       {/* Stat tiles — 4-col + streak card */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr) auto', gap: 14, marginBottom: 20, alignItems: 'stretch' }}>
