@@ -2,7 +2,6 @@ import type { WorkbenchData, WbTrendingProfile } from '@/components/WorkbenchShe
 import { db } from '@/lib/db';
 import { MOCK_DATA } from '@/lib/workbench-mock';
 import { getArtistUploadStreak } from '@/lib/streaks';
-import * as Sentry from '@sentry/nextjs';
 
 // Accent palette for tracks/shows when no color is stored
 const PALETTE = ['#ff5029', '#b983ff', '#22e5d4', '#ff3e9a', '#ffb84a', '#7fb3ff'];
@@ -590,7 +589,11 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
   } catch (e) {
     const msg = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
     console.error('getWorkbenchData error:', msg, e instanceof Error ? e.stack : '');
-    Sentry.captureException(e, { tags: { location: 'getWorkbenchData' } });
+    // Dynamically capture to Sentry without a static import that breaks the CF Workers bundle
+    try {
+      const { captureException } = await import('@sentry/nextjs');
+      captureException(e, { tags: { location: 'getWorkbenchData' } });
+    } catch { /* Sentry unavailable — console.error above is sufficient */ }
     return {
       ...MOCK_DATA,
       degraded: true,
