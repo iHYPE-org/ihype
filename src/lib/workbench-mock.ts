@@ -12,6 +12,8 @@ export const MOCK_DATA: WorkbenchData = {
   profileType: 'ARTIST',
   isAdmin: false,
   profilePath: '/artists/maya-reyes',
+  profileId: 'mock-profile',
+  profileHexId: 'mock-hex',
   isVerified: true,
   verificationRequested: false,
   pendingVenueRequestCount: 0,
