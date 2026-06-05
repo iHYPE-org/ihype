@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { db, withDbRetry } from '@/lib/db';
 import { sortShowsForFeed } from '@/lib/integrity';
 import { canManageOwnedResource, isAdminSession } from '@/lib/permissions';
 import { getDemoCreatorExclusion } from '@/lib/runtime-flags';
@@ -278,7 +278,7 @@ export async function POST(request: NextRequest) {
       slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
     }
 
-    const show = await db.show.create({
+    const show = await withDbRetry(() => db.show.create({
       data: {
         slug,
         title: body.title,
@@ -311,11 +311,15 @@ export async function POST(request: NextRequest) {
           }
         })
       }
-    });
+    }));
 
     return NextResponse.json(show, { status: 201 });
   } catch (err) {
     console.error('[shows]', err);
-    return NextResponse.json({ error: 'Invalid show payload' }, { status: 400 });
+    const msg = err instanceof Error && (err.message.includes('unavailable') || err.message.includes('timeout') || err.message.includes('connect'))
+      ? 'Database unavailable — please try again in a moment.'
+      : 'Invalid show payload';
+    const status = msg.includes('Database') ? 503 : 400;
+    return NextResponse.json({ error: msg }, { status });
   }
 }
