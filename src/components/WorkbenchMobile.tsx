@@ -4,6 +4,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { WorkbenchData, WbTrack } from './WorkbenchShellV2';
 import { SearchOverlay } from '@/components/workbench/SearchOverlay';
 import { ViewErrorBoundary } from '@/components/workbench/ErrorBoundary';
+import { ViewArtistPage } from '@/components/workbench/ViewArtistPage';
+import { ViewVenuePage } from '@/components/workbench/ViewVenuePage';
 
 // ─── Design tokens (match Workbench Mobile design) ───────────
 const T = {
@@ -29,7 +31,7 @@ const T = {
   fs: '"Instrument Serif",serif',
 };
 
-type MobileTab = 'me' | 'seeds' | 'radio' | 'studio' | 'tick';
+type MobileTab = 'me' | 'seeds' | 'radio' | 'studio' | 'tick' | 'artistpage' | 'venuepage';
 
 // ─── Icons ────────────────────────────────────────────────────
 const WMIcon = {
@@ -452,13 +454,14 @@ const eqCss = `
 `;
 
 // ─── Top bar ─────────────────────────────────────────────────
-function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, notifCount, onFeedback, onNotif }: {
+function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, notifCount, onFeedback, onNotif, activeProfileTypes }: {
   tab: MobileTab; onTab: (t: MobileTab) => void;
   listeningNow: number; userName: string; initials: string;
   onSearch?: () => void;
   notifCount?: number;
   onFeedback?: () => void;
   onNotif?: () => void;
+  activeProfileTypes?: string[];
 }) {
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [searchOpen, setSearchOpen] = React.useState(false);
@@ -466,6 +469,7 @@ function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, noti
   const searchInputRef = React.useRef<HTMLInputElement>(null);
   const titles: Record<MobileTab, string> = {
     me: 'my page', seeds: 'seeds', radio: 'radio', studio: 'studio', tick: 'tickets',
+    artistpage: 'artist page', venuepage: 'venue page',
   };
   const navItems: { id: MobileTab; icon: string; label: string; badge?: string }[] = [
     { id: 'me',     icon: '👤', label: 'My Page' },
@@ -473,6 +477,8 @@ function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, noti
     { id: 'radio',  icon: '📻', label: 'Radio',   badge: 'LIVE' },
     { id: 'studio', icon: '🎙️', label: 'Studio' },
     { id: 'tick',   icon: '🎟️', label: 'Tickets', badge: '3' },
+    ...(activeProfileTypes?.includes('ARTIST') ? [{ id: 'artistpage' as MobileTab, icon: '🎸', label: 'Artist Page' }] : []),
+    ...(activeProfileTypes?.includes('VENUE')  ? [{ id: 'venuepage'  as MobileTab, icon: '🏛️', label: 'Venue Page'  }] : []),
   ];
   const close = () => setMenuOpen(false);
 
@@ -2384,7 +2390,11 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
   const pullDeltaRef = useRef(0);
   const [pullDelta, setPullDelta] = useState(0);
 
-  const TABS_ORDER: MobileTab[] = ['me', 'seeds', 'radio', 'studio', 'tick'];
+  const TABS_ORDER: MobileTab[] = [
+    'me', 'seeds', 'radio', 'studio', 'tick',
+    ...(data.activeProfileTypes?.includes('ARTIST') ? ['artistpage' as MobileTab] : []),
+    ...(data.activeProfileTypes?.includes('VENUE')  ? ['venuepage'  as MobileTab] : []),
+  ];
   const tabSwipeStart = useRef<{ x: number; y: number } | null>(null);
   const tabSwipeLocked = useRef<'h' | 'v' | null>(null);
 
@@ -2449,11 +2459,13 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
 
   const screenEl = (() => {
     switch (tab) {
-      case 'me':     return <ScreenMe data={data} />;
-      case 'seeds':  return <ScreenSeeds data={data} onHypersSheet={setHypersSheetShowId} />;
-      case 'radio':  return <ScreenRadio data={data} onSetlistSheet={setSetlistSheetShowId} onHypersSheet={setHypersSheetShowId} onSeedsTab={() => setTab('seeds')} />;
-      case 'studio': return <ScreenStudio data={data} />;
-      case 'tick':   return <ScreenTicketing data={data} onHypersSheet={setHypersSheetShowId} onRadioTab={() => setTab('radio')} />;
+      case 'me':         return <ScreenMe data={data} />;
+      case 'seeds':      return <ScreenSeeds data={data} onHypersSheet={setHypersSheetShowId} />;
+      case 'radio':      return <ScreenRadio data={data} onSetlistSheet={setSetlistSheetShowId} onHypersSheet={setHypersSheetShowId} onSeedsTab={() => setTab('seeds')} />;
+      case 'studio':     return <ScreenStudio data={data} />;
+      case 'tick':       return <ScreenTicketing data={data} onHypersSheet={setHypersSheetShowId} onRadioTab={() => setTab('radio')} />;
+      case 'artistpage': return <ViewArtistPage data={data} />;
+      case 'venuepage':  return <ViewVenuePage data={data} />;
     }
   })();
 
@@ -2471,11 +2483,11 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
         </div>
       )}
       <audio ref={audioRef} preload="metadata" style={{ display: 'none' }} />
-      <WMTopBar tab={tab} onTab={setTab} listeningNow={data.listeningNow} userName={data.userName} initials={data.userInitials} onSearch={() => setSearchOpen(true)} notifCount={notifCount} onFeedback={() => setShowFeedbackSheet(true)} onNotif={() => setShowNotifSheet(true)} />
+      <WMTopBar tab={tab} onTab={setTab} listeningNow={data.listeningNow} userName={data.userName} initials={data.userInitials} onSearch={() => setSearchOpen(true)} notifCount={notifCount} onFeedback={() => setShowFeedbackSheet(true)} onNotif={() => setShowNotifSheet(true)} activeProfileTypes={data.activeProfileTypes} />
       <div
         role="main"
         className="wm-scroll"
-        style={{ flex: 1, overflowY: tab === 'seeds' ? 'hidden' : 'auto', overflowX: 'hidden', position: 'relative', scrollbarWidth: 'none' }}
+        style={{ flex: 1, overflowY: (tab === 'seeds' || tab === 'artistpage' || tab === 'venuepage') ? 'hidden' : 'auto', overflowX: 'hidden', position: 'relative', scrollbarWidth: 'none' }}
         onTouchStart={handleMainTouchStart}
         onTouchMove={handleMainTouchMove}
         onTouchEnd={handleMainTouchEnd}

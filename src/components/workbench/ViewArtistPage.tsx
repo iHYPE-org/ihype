@@ -517,9 +517,15 @@ export function ViewArtistPage({ data }: { data: WorkbenchData }) {
         )}
 
         {/* Mode: Tour / Live Events */}
-        {mode === 'tour' && data.profileId && (
+        {mode === 'tour' && (data.profileId ? (
           <TourManager profileId={data.profileId} artistName={artistName} existingShows={data.shows ?? []} />
-        )}
+        ) : (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+            <div style={{ fontSize: 32 }}>🎤</div>
+            <div style={{ fontFamily: 'var(--f-d,sans-serif)', fontSize: 16, fontWeight: 700, color: 'var(--ink,#f4efe9)' }}>Tour & Events</div>
+            <div style={{ fontFamily: 'var(--f-b,sans-serif)', fontSize: 13, color: 'rgba(244,239,233,.45)', textAlign: 'center', maxWidth: 280 }}>Artist profile not found. Refresh the page to reload your data.</div>
+          </div>
+        ))}
 
         {/* Mode: Library — media uploads */}
         {mode === 'library' && (
