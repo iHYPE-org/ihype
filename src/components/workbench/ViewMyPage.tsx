@@ -3,17 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import type { WorkbenchData } from '@/components/WorkbenchShellV2';
 import type { WbTicket, WbTrendingProfile } from '@/types/workbench';
-import { IcHeart, IcCheck } from './icons';
+import { IcHeart } from './icons';
 import { Panel, TrackCard } from './primitives';
 
 const STUB_ACCENT_PALETTE = ['#ff5029', '#b983ff', '#22e5d4', '#ff3e9a', '#ffb84a', '#4af0b0'];
-
-function urlBase64ToUint8Array(base64String: string) {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const raw = window.atob(base64);
-  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
-}
 
 function TicketStubQR({ code }: { code: string }) {
   const SIZE = 9;
@@ -187,50 +180,10 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
   data: WorkbenchData; onPickTrack: (i: number) => void; currentIdx: number;
 }) {
   const [hypedIds, setHypedIds] = useState<Set<string>>(new Set());
-  const [referral, setReferral] = useState<{ link: string; count: number; referrals?: Array<{ username: string; joinedAt: string }>; shareText?: string } | null>(null);
+  const [referral, setReferral] = useState<{ link: string; count: number } | null>(null);
   const [copied, setCopied] = useState(false);
   const [anniversaryDismissed, setAnniversaryDismissed] = useState(false);
-  const [degradedDismissed, setDegradedDismissed] = useState(false);
   const [streakData, setStreakData] = useState<{ streak: number; daysActive: number } | null>(null);
-  const [pushPrompt, setPushPrompt] = useState<'hidden' | 'visible' | 'subscribing' | 'done'>('hidden');
-
-  // Show push opt-in prompt after 3s, once, if not yet granted/dismissed
-  useEffect(() => {
-    if (typeof window === 'undefined' || !('Notification' in window) || !('serviceWorker' in navigator)) return;
-    if (Notification.permission !== 'default') return;
-    if (localStorage.getItem('ihype_push_prompt_dismissed')) return;
-    const t = setTimeout(() => setPushPrompt('visible'), 3000);
-    return () => clearTimeout(t);
-  }, []);
-
-  async function enablePush() {
-    setPushPrompt('subscribing');
-    try {
-      const permission = await Notification.requestPermission();
-      if (permission !== 'granted') { setPushPrompt('hidden'); return; }
-      const reg = await navigator.serviceWorker.ready;
-      const keyRes = await fetch('/api/push/vapid-key');
-      const { key } = await keyRes.json() as { key: string | null };
-      if (!key) { setPushPrompt('done'); return; }
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(key),
-      });
-      await fetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sub.toJSON()),
-      });
-      setPushPrompt('done');
-    } catch {
-      setPushPrompt('hidden');
-    }
-  }
-
-  function dismissPush() {
-    localStorage.setItem('ihype_push_prompt_dismissed', '1');
-    setPushPrompt('hidden');
-  }
 
   const handleHype = async (showId: string) => {
     if (hypedIds.has(showId)) return; // already hyped
@@ -249,7 +202,7 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
   useEffect(() => {
     fetch('/api/referral')
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.referralLink) setReferral({ link: d.referralLink, count: d.referralCount ?? 0, referrals: d.referrals, shareText: d.shareText }); })
+      .then(d => { if (d?.referralLink) setReferral({ link: d.referralLink, count: d.referralCount ?? 0 }); })
       .catch(() => {});
   }, []);
 
@@ -272,37 +225,10 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
   return (
     <div style={{ padding: '32px 48px 48px', maxWidth: 1600, margin: '0 auto' }}>
 
-      {data.degraded && !degradedDismissed && (
+      {data.degraded && (
         <div style={{ marginBottom: 16, padding: '11px 16px', borderRadius: 10, border: '1px solid rgba(255,184,74,.25)', background: 'rgba(255,184,74,.07)', display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 16 }}>⚠️</span>
-          <span style={{ fontFamily: 'var(--f-m)', fontSize: 13, color: '#ffb84a', flex: 1 }}>Some data couldn't load — you're seeing a cached view.</span>
-          <button onClick={() => window.location.reload()} style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: '#ffb84a', background: 'rgba(255,184,74,.15)', border: '1px solid rgba(255,184,74,.3)', borderRadius: 6, padding: '3px 10px', cursor: 'pointer' }}>Retry</button>
-          <button onClick={() => setDegradedDismissed(true)} aria-label="Dismiss" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', padding: '2px 4px', lineHeight: 1, fontSize: 16 }}>×</button>
-        </div>
-      )}
-
-      {/* Push notification opt-in prompt */}
-      {pushPrompt === 'visible' && (
-        <div style={{ marginBottom: 16, padding: '12px 16px', borderRadius: 10, border: '1px solid rgba(34,229,212,.2)', background: 'rgba(34,229,212,.06)', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 18, flexShrink: 0 }}>🔔</span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, color: 'var(--ink)', marginBottom: 2 }}>Stay in the loop</div>
-            <div style={{ fontFamily: 'var(--f-b)', fontSize: 12, color: 'var(--ink-2)', lineHeight: 1.4 }}>Get notified when someone HYPEs your tracks or a show goes live near you.</div>
-          </div>
-          <button onClick={enablePush} style={{ fontFamily: 'var(--f-m)', fontSize: 11, fontWeight: 700, letterSpacing: '.06em', color: '#22e5d4', background: 'rgba(34,229,212,.14)', border: '1px solid rgba(34,229,212,.35)', borderRadius: 7, padding: '6px 14px', cursor: 'pointer', whiteSpace: 'nowrap' }}>Enable</button>
-          <button onClick={dismissPush} aria-label="Dismiss" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', padding: '2px 4px', lineHeight: 1, fontSize: 16, flexShrink: 0 }}>×</button>
-        </div>
-      )}
-      {pushPrompt === 'subscribing' && (
-        <div style={{ marginBottom: 16, padding: '12px 16px', borderRadius: 10, border: '1px solid rgba(34,229,212,.2)', background: 'rgba(34,229,212,.06)', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: '#22e5d4' }}>Enabling notifications…</span>
-        </div>
-      )}
-      {pushPrompt === 'done' && (
-        <div style={{ marginBottom: 16, padding: '12px 16px', borderRadius: 10, border: '1px solid rgba(95,211,138,.2)', background: 'rgba(95,211,138,.06)', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 16 }}>✓</span>
-          <span style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: '#5fd38a' }}>Notifications enabled — you&apos;re all set.</span>
-          <button onClick={() => setPushPrompt('hidden')} aria-label="Dismiss" style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', padding: '2px 4px', lineHeight: 1, fontSize: 16 }}>×</button>
+          <span style={{ fontFamily: 'var(--f-m)', fontSize: 13, color: '#ffb84a' }}>Some data couldn't load — you're seeing a cached view. Refresh to retry.</span>
         </div>
       )}
 
@@ -460,13 +386,42 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
         })()}
       </div>
 
+      {/* See Your Page button */}
+      {(() => {
+        const slug = data.pageEditor?.slug;
+        const type = data.pageEditor?.type;
+        const href = slug
+          ? (type === 'ARTIST' ? `/artists/${slug}` : type === 'VENUE' ? `/venues/${slug}` : `/fans/${slug}`)
+          : '/home';
+        return (
+          <div style={{ marginBottom: 14 }}>
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                padding: '8px 16px', borderRadius: 8,
+                border: '1px solid rgba(255,80,41,.4)',
+                background: 'rgba(255,80,41,.06)',
+                color: '#ff5029',
+                fontFamily: 'var(--f-m)', fontSize: 13, fontWeight: 700,
+                cursor: 'pointer', letterSpacing: '.06em',
+                textDecoration: 'none',
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+              }}
+            >
+              See Your Page →
+            </a>
+          </div>
+        );
+      })()}
+
       {/* Referral link */}
       {referral && (
-        <>
         <div style={{
           display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px',
-          border: '1px solid var(--line)', borderRadius: referral.referrals && referral.referrals.length > 0 ? '10px 10px 0 0' : 10, background: 'var(--bg-2)',
-          marginBottom: referral.referrals && referral.referrals.length > 0 ? 0 : 14,
+          border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)',
+          marginBottom: 14,
         }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, letterSpacing: '.18em', color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 4 }}>
@@ -491,55 +446,10 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
           >
             {copied ? '✓ Copied' : 'Copy link'}
           </button>
-          <button
-            onClick={async () => {
-              const text = referral.shareText ?? `Join me on iHYPE → ${referral.link}`;
-              if (navigator.share) {
-                try { await navigator.share({ text, url: referral.link }); } catch {}
-              } else {
-                await navigator.clipboard.writeText(text).catch(() => {});
-              }
-            }}
-            style={{
-              padding: '8px 10px', borderRadius: 7, border: '1px solid var(--line-2)',
-              fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
-              background: 'var(--bg-3)', color: 'var(--ink-2)', transition: 'all .2s', flexShrink: 0,
-              display: 'flex', alignItems: 'center', gap: 5,
-            }}
-            title="Share your referral link"
-          >
-            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
-            </svg>
-            Share
-          </button>
           <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', flexShrink: 0, textAlign: 'right', maxWidth: 100, lineHeight: 1.4 }}>
             Earn 10% of each ticket sale
           </div>
         </div>
-        {referral.referrals && referral.referrals.length > 0 && (
-          <div style={{ marginBottom: 14, padding: '10px 18px', border: '1px solid var(--line)', borderTop: 'none', borderRadius: '0 0 10px 10px', background: 'var(--bg-2)' }}>
-            <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, letterSpacing: '.14em', color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 6 }}>
-              Friends who joined
-            </div>
-            {referral.referrals.slice(0, 5).map((r) => {
-              const daysAgo = Math.floor((Date.now() - new Date(r.joinedAt).getTime()) / 86400000);
-              const when = daysAgo === 0 ? 'today' : daysAgo === 1 ? 'yesterday' : `${daysAgo}d ago`;
-              return (
-                <div key={r.username} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '3px 0', fontFamily: 'var(--f-m)', fontSize: 12 }}>
-                  <span style={{ color: 'var(--ink-2)' }}>@{r.username}</span>
-                  <span style={{ color: 'var(--ink-3)' }}>{when}</span>
-                </div>
-              );
-            })}
-            {referral.referrals.length > 5 && (
-              <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', marginTop: 4 }}>
-                +{referral.referrals.length - 5} more
-              </div>
-            )}
-          </div>
-        )}
-        </>
       )}
 
       {/* Artist Anniversary Card */}
@@ -679,44 +589,6 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
         )}
       </Panel>
 
-      {/* Your roles */}
-      <Panel title="Your roles">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, padding: '14px 16px' }}>
-          {(['LISTENER','ARTIST','VENUE','DJ'] as const).map(rk => {
-            const active = data.activeProfileTypes.includes(rk);
-            const roleColors: Record<string, string> = { LISTENER: '#b983ff', ARTIST: '#ff5029', VENUE: '#22e5d4', DJ: '#ff3e9a' };
-            const roleLabels: Record<string, { label: string; sub: string }> = {
-              LISTENER: { label: 'Fan', sub: 'HYPE tracks, swipe seeds, attend' },
-              ARTIST:   { label: 'Artist', sub: 'Upload, seed, tour · 45% of every ticket' },
-              VENUE:    { label: 'Venue', sub: 'List shows · 45% · demand radar' },
-              DJ:       { label: 'Promoter/DJ', sub: 'Referral links · 10% on tickets you drive' },
-            };
-            const col = roleColors[rk];
-            const info = roleLabels[rk];
-            return (
-              <div key={rk} style={{
-                display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px',
-                border: `1px solid ${active ? col : 'var(--line)'}`, borderRadius: 8,
-                background: active ? `${col}08` : 'var(--bg-2)',
-              }}>
-                <div style={{ width: 8, height: 8, borderRadius: 2, background: col, flexShrink: 0 }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, color: 'var(--ink)' }}>{info.label}</div>
-                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', letterSpacing: '.04em', marginTop: 2 }}>{info.sub}</div>
-                </div>
-                <button style={{
-                  display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px',
-                  border: `1px solid ${active ? col + '40' : 'var(--line-2)'}`, borderRadius: 99,
-                  fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.04em',
-                  color: active ? col : 'var(--ink-2)', background: 'none', cursor: 'pointer',
-                }}>
-                  {active ? <><IcCheck s={11} /> active</> : 'add →'}
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      </Panel>
     </div>
   );
 }

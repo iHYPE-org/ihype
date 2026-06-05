@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { WorkbenchData } from '@/types/workbench';
+import type { WorkbenchData } from '@/components/WorkbenchShellV2';
 
 /* ──────────────────────────────────────────────────────────────────────────
    iHYPE AI Page Studio — React port of the prototype.
@@ -9,7 +9,7 @@ import type { WorkbenchData } from '@/types/workbench';
    No AI network call here: uses the curated fallback + heuristic refine.
    ────────────────────────────────────────────────────────────────────────── */
 
-type Role = 'artist' | 'venue' | 'fan';
+type Role = 'artist' | 'venue' | 'promoter' | 'fan';
 type Device = 'desktop' | 'mobile';
 type FontKey = 'editorial' | 'grotesk' | 'serif' | 'mono';
 type LayoutKey = 'spotlight' | 'zine' | 'poster' | 'gallery';
@@ -105,6 +105,14 @@ const LOOKS: Look[] = [
   { id: 'cobalt', name: 'Cobalt Midnight', mood: 'dark', font: 'editorial', layout: 'spotlight', kw: ['blue', 'cool', 'dreamy', 'shoegaze', 'synth', 'melancholy', 'wave', 'deep', 'ocean', 'night'], palette: { bg: '#070a14', surface: '#0f1626', line: '#1d2940', ink: '#eef3fb', ink2: '#9db4d6', accent: '#5b8dff', accent2: '#22e5d4' } },
   { id: 'bubblegum', name: 'Bubblegum', mood: 'light', font: 'grotesk', layout: 'poster', kw: ['fun', 'playful', 'pop', 'cute', 'bubbly', 'bright', 'happy', 'colorful', 'teen', 'sweet'], palette: { bg: '#fff0f6', surface: '#ffffff', line: '#ffd0e4', ink: '#2a0a1c', ink2: '#a04f72', accent: '#ff3e9a', accent2: '#b983ff' } },
   { id: 'noir', name: 'Concrete Noir', mood: 'dark', font: 'mono', layout: 'zine', kw: ['industrial', 'techno', 'minimal', 'brutal', 'grey', 'underground', 'warehouse', 'raw', 'noir', 'experimental'], palette: { bg: '#0a0a0b', surface: '#141416', line: '#262629', ink: '#f2f2f3', ink2: '#9a9a9e', accent: '#e8e8ea', accent2: '#ff5029' } },
+  { id: 'punk', name: 'Punk Zine', mood: 'dark', font: 'mono', layout: 'zine', kw: ['punk', 'hardcore', 'diy', 'raw', 'zine', 'grunge', 'riot'], palette: { bg: '#0a0a08', surface: '#141410', line: '#2c2c24', ink: '#f5f5e8', ink2: '#b0b09a', accent: '#e8ff00', accent2: '#ff2222' } },
+  { id: 'space', name: 'Deep Space', mood: 'dark', font: 'editorial', layout: 'spotlight', kw: ['space', 'cosmic', 'galaxy', 'ethereal', 'celestial', 'astro', 'sci-fi'], palette: { bg: '#030408', surface: '#080c18', line: '#141c38', ink: '#e8f0ff', ink2: '#8099cc', accent: '#7060ff', accent2: '#22e5d4' } },
+  { id: 'girly', name: 'Girly Pop', mood: 'light', font: 'grotesk', layout: 'gallery', kw: ['girly', 'feminine', 'cute', 'pink', 'soft', 'pastel', 'kawaii', 'dreamy', 'pop'], palette: { bg: '#fff4f9', surface: '#ffffff', line: '#ffd8ec', ink: '#2a0a1c', ink2: '#a04f72', accent: '#ff69b4', accent2: '#b983ff' } },
+  { id: 'country', name: 'Golden Hour', mood: 'light', font: 'serif', layout: 'poster', kw: ['country', 'western', 'americana', 'twang', 'golden', 'rustic', 'sunset'], palette: { bg: '#fdf4e3', surface: '#fff8ec', line: '#e8d5b0', ink: '#2a1a00', ink2: '#7a5a2a', accent: '#c07a00', accent2: '#8b3a00' } },
+  { id: 'lofi', name: 'Lo-Fi Bedroom', mood: 'dark', font: 'mono', layout: 'zine', kw: ['lofi', 'bedroom', 'cassette', 'tape', 'chill', 'hazy', 'vintage', 'lo-fi'], palette: { bg: '#1a1610', surface: '#231e18', line: '#352e24', ink: '#f0e8d0', ink2: '#a89070', accent: '#d4a060', accent2: '#8090a0' } },
+  { id: 'metal', name: 'Iron Gate', mood: 'dark', font: 'mono', layout: 'poster', kw: ['metal', 'heavy', 'death', 'black metal', 'doom', 'sludge', 'gothic', 'dark'], palette: { bg: '#060606', surface: '#0e0e0e', line: '#1e1e1e', ink: '#cccccc', ink2: '#888888', accent: '#cc0000', accent2: '#666666' } },
+  { id: 'jazz', name: 'Blue Note', mood: 'dark', font: 'serif', layout: 'spotlight', kw: ['jazz', 'soul', 'blues', 'smooth', 'bebop', 'classic', 'vinyl'], palette: { bg: '#08080f', surface: '#12121e', line: '#20203a', ink: '#f0ece4', ink2: '#9090a8', accent: '#4060ff', accent2: '#d4b060' } },
+  { id: 'rave', name: 'Warehouse Rave', mood: 'dark', font: 'mono', layout: 'gallery', kw: ['rave', 'techno', 'warehouse', 'underground', 'acid', 'trance', 'bass'], palette: { bg: '#040408', surface: '#0a0a14', line: '#16163a', ink: '#f0f0ff', ink2: '#8080cc', accent: '#ff00ff', accent2: '#00ffff' } },
 ];
 
 const ROLES: Record<Role, RoleDef> = {
@@ -128,6 +136,16 @@ const ROLES: Record<Role, RoleDef> = {
       { kind: 'about', title: 'The room', items: [{ t: 'Capacity 400', m: 'Standing · two bars · green room' }, { t: 'Load-in', m: 'Alley access · house backline available' }] },
     ],
   },
+  promoter: {
+    label: 'Promoter', defaultName: 'Late Hour Collective', defaultVibe: 'tastemaker club nights — house, techno, after-dark energy',
+    hero: { kicker: 'PROMOTER · CHICAGO', stat: '128', statLabel: 'shows presented', cta: 'Pitch me a date' },
+    tagline: 'We throw the nights you hear about Monday.',
+    bio: 'Independent promoters since 2019. House, techno, and the occasional left turn. 81% average sell-through across 128 shows.',
+    sections: [
+      { kind: 'shows', title: 'Recent nights', items: [{ t: 'Basement Heat · Vol 9', m: 'Sold out · 480 cap' }, { t: 'After Dark w/ Dossier', m: '92% paid · Pilsen' }, { t: 'Warehouse Series 04', m: 'Sold out · secret location' }] },
+      { kind: 'about', title: 'What we book', items: [{ t: 'House · techno · club', m: '300–800 cap rooms' }, { t: 'Late slots', m: '10pm–4am · weekends' }] },
+    ],
+  },
   fan: {
     label: 'Fan', defaultName: 'Riley', defaultVibe: 'a music-obsessed regular who lives for live shows',
     hero: { kicker: 'FAN · CHICAGO', stat: '1,204', statLabel: 'HYPE given', cta: '+ Follow' },
@@ -148,6 +166,7 @@ const PALETTES: [string, string][] = [
 const CHIPS: Record<Role, string[]> = {
   artist: ['moody late-night R&B', 'sun-faded indie folk', 'neon hyperpop', 'DIY punk zine', 'dreamy blue shoegaze', 'bold rap energy'],
   venue: ['gritty beloved dive', 'sleek modern club', 'warm listening room', 'industrial warehouse', 'vintage theater', 'rooftop summer vibe'],
+  promoter: ['after-dark techno', 'tastemaker indie nights', 'big festival energy', 'underground warehouse', 'glossy pop spectacle', 'cozy DIY booker'],
   fan: ['certified early adopter', 'vinyl-obsessed purist', 'front-row regular', 'chill bedroom listener', 'hyperpop stan', 'jazz & soul head'],
 };
 
@@ -201,7 +220,7 @@ function fallbackDirections(vibe: string, role: Role): Theme[] {
   }));
 }
 
-async function heuristicRefine(ins: string, theme: Theme, content: Content, profileHeroImage?: string): Promise<Theme> {
+function heuristicRefine(ins: string, theme: Theme, content: Content): Theme {
   const t = clone(theme);
   const s = ins.toLowerCase();
   const P = t.palette;
@@ -216,37 +235,6 @@ async function heuristicRefine(ins: string, theme: Theme, content: Content, prof
   const colorMap: Record<string, string> = { red: '#ff5029', orange: '#ff7a29', pink: '#ff3e9a', purple: '#b983ff', blue: '#5b8dff', teal: '#22e5d4', green: '#1f8a5b', amber: '#ffb84a', gold: '#ffb84a' };
   for (const k in colorMap) if (s.includes(k)) { P.accent = colorMap[k]; break; }
   t.bio = theme.bio || content.bio;
-
-  // Hero image: prefer user's uploaded profile image, then fetch from Unsplash by genre
-  if (profileHeroImage) {
-    t.heroUrl = profileHeroImage;
-  } else {
-    const genreKeywords: [RegExp, string][] = [
-      [/\bpunk|hardcore|thrash|grunge\b/, 'punk'],
-      [/\bjazz|blues|soul|bebop\b/, 'jazz'],
-      [/\bhip.?hop|rap|trap|drill\b/, 'hip-hop'],
-      [/\belectronic|techno|house|rave|edm|synth\b/, 'electronic'],
-      [/\bfolk|country|americana|bluegrass\b/, 'folk'],
-      [/\bindierock|indie.rock|rock\b/, 'rock'],
-      [/\bmetal|doom|sludge|death.metal\b/, 'metal'],
-      [/\bclassical|orchestra|chamber|baroque\b/, 'classical'],
-      [/\brnb|r&b|neo.soul\b/, 'rnb'],
-    ];
-    let detectedGenre = '';
-    for (const [re, g] of genreKeywords) {
-      if (re.test(s)) { detectedGenre = g; break; }
-    }
-    if (detectedGenre) {
-      try {
-        const r = await fetch(`/api/page-hero?genre=${encodeURIComponent(detectedGenre)}`);
-        if (r.ok) {
-          const d = await r.json() as { url?: string };
-          if (d.url) t.heroUrl = d.url;
-        }
-      } catch { /* ignore */ }
-    }
-  }
-
   return t;
 }
 
@@ -375,8 +363,8 @@ const STYLES = `
 .ps-stage { position:relative; overflow:hidden; background:
     radial-gradient(ellipse 70% 50% at 50% 0%, rgba(255,80,41,.06), transparent 60%),
     repeating-linear-gradient(45deg, transparent 0 11px, rgba(255,255,255,.012) 11px 12px),
-    #0c0a08; display:flex; flex-direction:column; align-items:stretch; height:100%; }
-.ps-stage-bar { flex-shrink:0; height:42px; display:flex; align-items:center; gap:10px; padding:0 18px; z-index:6; border-bottom:1px solid rgba(255,255,255,.04); }
+    #0c0a08; display:flex; align-items:center; justify-content:center; padding:34px; }
+.ps-stage-bar { position:absolute; top:0; left:0; right:0; height:42px; display:flex; align-items:center; gap:10px; padding:0 18px; z-index:6; }
 .ps-url { display:flex; align-items:center; gap:8px; background:rgba(16,13,9,.7); backdrop-filter:blur(8px); border:1px solid var(--line); border-radius:99px; padding:6px 13px; font-family:var(--fm); font-size:11px; color:var(--ink2); letter-spacing:.02em; }
 .ps-url .ps-lock { color:var(--ink3); }
 .ps-url b { color:var(--ink); font-weight:600; }
@@ -389,9 +377,9 @@ const STYLES = `
 .ps-thinking { position:absolute; bottom:22px; left:50%; transform:translateX(-50%) translateY(12px); z-index:8; background:var(--bg3); border:1px solid var(--purple,#b983ff); color:var(--ink); padding:10px 18px; border-radius:99px; font-family:var(--fm); font-size:11.5px; font-weight:500; letter-spacing:.02em; opacity:0; transition:opacity .25s, transform .25s; box-shadow:0 12px 36px rgba(0,0,0,.5); max-width:70%; text-align:center; pointer-events:none; }
 .ps-thinking.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
-.ps-viewport { position:relative; background:var(--p-bg,#111); border-radius:16px; overflow:hidden; box-shadow:0 20px 60px -20px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.05); transition:box-shadow .3s ease, border-radius .35s cubic-bezier(.4,0,.2,1); margin:24px; }
-.ps-stage[data-device="desktop"] .ps-viewport { flex:1; min-height:0; }
-.ps-stage[data-device="mobile"] .ps-viewport { width:380px; max-width:calc(100% - 48px); align-self:center; border-radius:34px; border:9px solid #1a1612; box-shadow:0 40px 90px -30px rgba(0,0,0,.7); }
+.ps-viewport { position:relative; background:var(--p-bg,#111); border-radius:16px; overflow:hidden; box-shadow:0 40px 90px -30px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.05); transition:box-shadow .3s ease, border-radius .35s cubic-bezier(.4,0,.2,1); }
+.ps-stage[data-device="desktop"] .ps-viewport { width:980px; max-width:100%; height:min(78vh, 760px); }
+.ps-stage[data-device="mobile"] .ps-viewport { width:380px; height:min(78vh, 760px); border-radius:34px; border:9px solid #1a1612; box-shadow:0 40px 90px -30px rgba(0,0,0,.7); }
 .ps-stage.generating .ps-viewport { animation:ps-pulseGlow 1.1s ease-in-out infinite; }
 @keyframes ps-pulseGlow { 0%,100%{ box-shadow:0 40px 90px -30px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.05);} 50%{ box-shadow:0 40px 90px -30px rgba(0,0,0,.7), 0 0 0 2px var(--purple,#b983ff);} }
 
@@ -405,8 +393,7 @@ const STYLES = `
 .ps-empty .ps-hintline { margin-top:18px; font-family:var(--fm); font-size:10px; color:var(--ink3); letter-spacing:.08em; display:flex; align-items:center; gap:8px; }
 .ps-empty .ps-hintline::before, .ps-empty .ps-hintline::after { content:''; height:1px; width:30px; background:var(--line2); }
 
-#ps-pageRoot .pg-hero { position:relative; padding:0; background-image:var(--p-hero-url,none); background-size:cover; background-position:center top; }
-#ps-pageRoot .pg-hero.has-hero .pg-hero-scrim { background:linear-gradient(180deg, rgba(0,0,0,.35) 0%, var(--p-bg) 88%); }
+#ps-pageRoot .pg-hero { position:relative; padding:0; }
 #ps-pageRoot .pg-hero-scrim { position:absolute; inset:0; background:linear-gradient(180deg, color-mix(in srgb, var(--p-bg) 30%, transparent), var(--p-bg) 92%); }
 #ps-pageRoot .pg-hero-inner { position:relative; padding:54px 44px 40px; display:flex; flex-direction:column; align-items:flex-start; gap:15px; }
 #ps-pageRoot[data-layout="spotlight"] .pg-hero-inner { align-items:center; text-align:center; padding-top:64px; }
@@ -454,56 +441,30 @@ const STYLES = `
 .ps-stage[data-device="mobile"] #ps-pageRoot .pg-tagline { font-size:17px; }
 .ps-stage[data-device="mobile"] #ps-pageRoot .pg-body { padding:8px 22px 34px; }
 .ps-stage[data-device="mobile"] #ps-pageRoot .pg-cards { grid-template-columns:1fr !important; }
-
-.ps-chat-dock { width:320px; flex-shrink:0; display:flex; flex-direction:column; background:var(--bg2,#0e0b09); border-left:1px solid var(--line); overflow:hidden; }
-.ps-chat-header { padding:13px 15px; border-bottom:1px solid var(--line); font-family:var(--fd); font-size:13px; font-weight:700; color:var(--ink); display:flex; align-items:center; gap:7px; }
-.ps-chat-sub { font-family:var(--fm); font-size:10px; color:var(--ink3); font-weight:400; margin-left:auto; }
-.ps-chat-chips { padding:10px 13px; border-bottom:1px solid var(--line); display:flex; flex-wrap:wrap; gap:5px; }
-.ps-chat-chip { padding:5px 9px; border-radius:99px; border:1px solid var(--line2,rgba(255,255,255,.1)); background:rgba(255,255,255,.03); color:var(--ink3); font-family:var(--fm); font-size:9.5px; cursor:pointer; }
-.ps-chat-chip:hover { color:var(--ink); border-color:var(--line2); background:rgba(255,255,255,.06); }
-.ps-chat-thread { flex:1; overflow-y:auto; padding:12px 13px; display:flex; flex-direction:column; gap:10px; }
-.ps-chat-row { display:flex; gap:7px; }
-.ps-chat-row.me { flex-direction:row-reverse; }
-.ps-chat-avatar { width:24px; height:24px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-family:var(--fm); font-size:9px; font-weight:800; }
-.ps-chat-avatar.ai { background:rgba(255,80,41,.15); color:#ff5029; }
-.ps-chat-avatar.me { background:rgba(255,255,255,.08); color:var(--ink2); }
-.ps-chat-bubble { max-width:80%; padding:7px 10px; border-radius:4px 11px 11px 11px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.06); font-family:var(--fb); font-size:12px; line-height:1.5; color:var(--ink); }
-.ps-chat-row.me .ps-chat-bubble { border-radius:11px 4px 11px 11px; background:rgba(255,80,41,.1); border-color:rgba(255,80,41,.18); }
-.ps-chat-typing { display:flex; gap:4px; align-items:center; min-height:28px; }
-.ps-chat-typing span { width:5px; height:5px; border-radius:50%; background:var(--ink3); animation:ps-dots 1.1s ease-in-out infinite; }
-.ps-chat-typing span:nth-child(2) { animation-delay:.18s; }
-.ps-chat-typing span:nth-child(3) { animation-delay:.36s; }
-@keyframes ps-dots { 0%,100% { transform:translateY(0); opacity:.5; } 50% { transform:translateY(-4px); opacity:1; } }
-.ps-chat-applied { margin-top:5px; padding:4px 8px; border-radius:5px; background:rgba(34,229,212,.08); border:1px solid rgba(34,229,212,.15); font-size:10px; color:#22e5d4; font-weight:700; display:inline-block; }
-.ps-chat-input-row { padding:9px 11px; border-top:1px solid var(--line); display:flex; gap:7px; align-items:flex-end; }
-.ps-chat-input { flex:1; resize:none; border:1px solid var(--line2,rgba(255,255,255,.1)); border-radius:9px; padding:8px 11px; background:rgba(255,255,255,.04); color:var(--ink); font-family:var(--fb); font-size:12px; line-height:1.5; outline:none; max-height:100px; overflow:auto; }
-.ps-chat-input:focus { border-color:var(--accent); }
-.ps-chat-send { width:34px; height:34px; flex-shrink:0; border-radius:9px; border:none; cursor:pointer; background:rgba(255,80,41,.2); color:rgba(244,239,233,.4); display:flex; align-items:center; justify-content:center; transition:all .15s; }
-.ps-chat-send.active { background:#ff5029; color:#fff; }
 `;
 
 const FONT_HREF = 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Bricolage+Grotesque:wght@400;600;700;800&display=swap';
 
-interface ChatMsg { side: 'me' | 'ai'; text: string; chips?: string[]; }
-
-export default function ViewPageStudio({ data }: { data?: WorkbenchData }) {
-  const [role, setRole] = useState<Role>('artist');
+export default function ViewPageStudio({ data }: { data?: WorkbenchData } = {}) {
+  const [role, setRole] = useState<Role>(() => {
+    if (data?.activeProfileTypes?.includes('ARTIST')) return 'artist';
+    if (data?.activeProfileTypes?.includes('VENUE')) return 'venue';
+    return 'fan';
+  });
   const [device, setDevice] = useState<Device>('desktop');
   const [theme, setTheme] = useState<Theme | null>(null);
   const [directions, setDirections] = useState<Theme[]>([]);
   const [vibe, setVibe] = useState('');
+  const [refineText, setRefineText] = useState('');
   const [busy, setBusy] = useState(false);
   const [thinking, setThinking] = useState('');
   const [urlName, setUrlName] = useState('you');
   const [publishLabel, setPublishLabel] = useState('Publish page');
-  const [chatMsgs, setChatMsgs] = useState<ChatMsg[]>([]);
-  const [chatInput, setChatInput] = useState('');
-  const [chatTyping, setChatTyping] = useState(false);
+  const [heroImageUrl, setHeroImageUrl] = useState('');
 
   const contentRef = useRef<Content>(makeContent('artist'));
   const pageRootRef = useRef<HTMLDivElement>(null);
   const pageScrollRef = useRef<HTMLDivElement>(null);
-  const chatThreadRef = useRef<HTMLDivElement>(null);
   const thinkTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const publishTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -531,10 +492,6 @@ export default function ViewPageStudio({ data }: { data?: WorkbenchData }) {
     };
   }, []);
 
-  useEffect(() => {
-    if (chatThreadRef.current) chatThreadRef.current.scrollTop = chatThreadRef.current.scrollHeight;
-  }, [chatMsgs, chatTyping]);
-
   const flashThinking = useCallback((msg: string) => {
     setThinking(msg);
     if (thinkTimer.current) clearTimeout(thinkTimer.current);
@@ -553,21 +510,17 @@ export default function ViewPageStudio({ data }: { data?: WorkbenchData }) {
     if (!root || !scroll) return;
     const p = t.palette;
     const f = FONTS[t.font] || FONTS.editorial;
+    // heroUrl is always a blob: URL from URL.createObjectURL — applied via CSS var, never innerHTML
+    const safeHeroUrl = t.heroUrl?.startsWith('blob:') ? t.heroUrl : '';
     const map: Record<string, string> = {
       '--p-bg': p.bg, '--p-surface': p.surface, '--p-line': p.line, '--p-ink': p.ink,
       '--p-ink2': p.ink2, '--p-accent': p.accent, '--p-accent2': p.accent2,
       '--p-display': f.display, '--p-body': f.body, '--p-label': f.label, '--p-serif': f.accent,
       '--p-dweight': String(f.dWeight), '--p-tight': f.tight,
       '--p-radius': (t.radius != null ? t.radius : 16) + 'px',
+      '--p-hero-url': safeHeroUrl ? `url(${safeHeroUrl})` : 'none',
     };
     for (const k in map) root.style.setProperty(k, map[k]);
-    if (t.heroUrl) {
-      root.style.setProperty('--p-hero-url', `url('${t.heroUrl}')`);
-      root.classList.add('has-hero');
-    } else {
-      root.style.removeProperty('--p-hero-url');
-      root.classList.remove('has-hero');
-    }
     root.dataset.mood = t.mood || 'dark';
     root.dataset.layout = t.layout || 'spotlight';
 
@@ -610,37 +563,15 @@ export default function ViewPageStudio({ data }: { data?: WorkbenchData }) {
   );
 
   const refine = useCallback(
-    async (instruction: string) => {
+    (instruction: string) => {
       if (busy || !theme) return;
       setBusy(true);
-      const profileHeroImage = data?.pageEditor?.heroImage || undefined;
-      const next = await heuristicRefine(instruction, theme, contentRef.current, profileHeroImage);
+      const next = heuristicRefine(instruction, theme, contentRef.current);
       applyTheme(next);
       setBusy(false);
       flashThinking(`Updated: "${instruction}".`);
     },
-    [busy, theme, applyTheme, flashThinking, data],
-  );
-
-  const chatSend = useCallback(
-    async (text: string) => {
-      text = text.trim();
-      if (!text || chatTyping || !theme) return;
-      setChatMsgs(m => [...m, { side: 'me', text }]);
-      setChatInput('');
-      setChatTyping(true);
-      const profileHeroImage = data?.pageEditor?.heroImage || undefined;
-      const next = await heuristicRefine(text, theme, contentRef.current, profileHeroImage);
-      applyTheme(next);
-      setChatTyping(false);
-      const chips: string[] = [];
-      if (next.heroUrl) chips.push('Hero image added');
-      const reply = chips.length
-        ? `Done — applied to your page.`
-        : `Updated your page. Try "more minimal", "punk energy", "purple accent", or "elegant serif".`;
-      setChatMsgs(m => [...m, { side: 'ai', text: reply, chips }]);
-    },
-    [chatTyping, theme, applyTheme, data],
+    [busy, theme, applyTheme, flashThinking],
   );
 
   const changeRole = useCallback(
@@ -651,7 +582,6 @@ export default function ViewPageStudio({ data }: { data?: WorkbenchData }) {
       setVibe('');
       setTheme(null);
       setDirections([]);
-      setChatMsgs([]);
       setUrlName('you');
       if (pageScrollRef.current) pageScrollRef.current.innerHTML = '';
     },
@@ -686,30 +616,31 @@ export default function ViewPageStudio({ data }: { data?: WorkbenchData }) {
     t.layout = l;
     applyTheme(t);
   };
-  const applyMood = async (m: MoodKey) => {
+  const applyMood = (m: MoodKey) => {
     if (!theme) return;
-    applyTheme(await heuristicRefine(m === 'light' ? 'light' : 'dark', theme, contentRef.current));
+    applyTheme(heuristicRefine(m === 'light' ? 'light' : 'dark', theme, contentRef.current));
   };
 
-  const ROLE_KEYS: Role[] = ['artist', 'venue', 'fan'];
+  const applyLook = useCallback((lk: Look) => {
+    if (!theme) return;
+    applyTheme({ ...theme, palette: lk.palette, mood: lk.mood, font: lk.font, layout: lk.layout, name: lk.name });
+  }, [theme, applyTheme]);
+
+  const CHAT_SUGGESTIONS: Record<Role, string[]> = {
+    artist: ['Make it punk', 'Darker & moodier', 'Purple accent', 'Add cosmic space vibes', 'More lo-fi bedroom', 'Bold & aggressive'],
+    venue: ['Industrial warehouse feel', 'Warmer & intimate', 'Add neon nightclub energy', 'More minimal & clean', 'Gritty & underground', 'Elegant & upscale'],
+    promoter: ['Underground techno', 'Darker & edgier', 'Neon club energy', 'Bold & loud', 'Minimal & sleek', 'Warm & intimate'],
+    fan: ['Make it more personal', 'Add girly pop energy', 'Darker & moody', 'Bright & colorful', 'Vintage & retro', 'Minimalist'],
+  };
+
+  const ROLE_KEYS: Role[] = ['artist', 'venue', 'promoter', 'fan'];
 
   return (
     <div className="ps-app">
       {/* LEFT PANEL */}
       <aside className="ps-panel">
-        <div className="ps-pn">
-          <div className="ps-eyebrow"><span className="ps-num">1</span>WHO ARE YOU?</div>
-          <div className="ps-role-seg">
-            {ROLE_KEYS.map((r) => (
-              <button key={r} className={'ps-seg' + (role === r ? ' on' : '')} onClick={() => changeRole(r)}>
-                {ROLES[r].label}
-              </button>
-            ))}
-          </div>
-        </div>
-
         <div className="ps-pn ps-hero-prompt">
-          <div className="ps-eyebrow"><span className="ps-num">2</span>DESCRIBE YOUR VIBE</div>
+          <div className="ps-eyebrow"><span className="ps-num">1</span>DESCRIBE YOUR VIBE</div>
           <h2>No design skills? <span className="ps-grad">Good.</span></h2>
           <p>Just tell us the feeling in plain words. The AI builds the whole page — colors, type, layout, even your bio. Tweak after.</p>
           <div className="ps-vibe-box">
@@ -772,6 +703,36 @@ export default function ViewPageStudio({ data }: { data?: WorkbenchData }) {
         )}
 
         <div className="ps-pn">
+          <div className="ps-eyebrow"><span className="ps-num">2</span>MAKE IT YOURS · JUST ASK</div>
+          <div className="ps-refine-box">
+            <input
+              value={refineText}
+              placeholder={'"make it darker and bolder"'}
+              onChange={(e) => setRefineText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && refineText.trim()) {
+                  refine(refineText.trim());
+                  setRefineText('');
+                }
+              }}
+            />
+            <button className="ps-refine-btn" title="Apply" onClick={() => { const v = refineText.trim(); if (v) { refine(v); setRefineText(''); } }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </button>
+          </div>
+          <div className="ps-chips" style={{ marginTop: 9 }}>
+            {CHAT_SUGGESTIONS[role].map((s) => (
+              <button key={s} className="ps-chip" onClick={() => { refine(s); }}>
+                {s}
+              </button>
+            ))}
+          </div>
+          <div className="ps-refine-hint" style={{ marginTop: 7 }}>
+            You can also edit the name, tagline, and bio right on the page.
+          </div>
+        </div>
+
+        <div className="ps-pn">
           <div className="ps-eyebrow">FINE-TUNE <span style={{ color: 'var(--ink4)' }}>· OPTIONAL</span></div>
           <div className="ps-ctl">
             <div className="ps-ctl-l">ACCENT PALETTE</div>
@@ -801,6 +762,51 @@ export default function ViewPageStudio({ data }: { data?: WorkbenchData }) {
                   {k}
                 </button>
               ))}
+            </div>
+          </div>
+          <div className="ps-ctl">
+            <div className="ps-ctl-l">SCHEMA</div>
+            <div className="ps-seg2-row" style={{ flexWrap: 'wrap', gap: 4 }}>
+              {LOOKS.map((lk) => (
+                <button key={lk.id} className={'ps-seg2' + (theme && theme.name === lk.name ? ' on' : '')}
+                  onClick={() => {
+                    if (theme) applyLook(lk);
+                    else { setVibe(lk.kw[0]); generate(lk.kw[0]); }
+                  }}
+                  title={lk.kw.slice(0, 3).join(', ')}
+                >
+                  {lk.name}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="ps-ctl">
+            <div className="ps-ctl-l">HERO IMAGE <span style={{ color: 'var(--ink4)', fontSize: 10 }}> · no copyright use</span></div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <label style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: '1px dashed var(--line2)', borderRadius: 8, padding: '10px',
+                cursor: 'pointer', fontSize: 12, color: 'var(--ink3)', fontFamily: 'var(--f-label)',
+                letterSpacing: '.1em', gap: 6,
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                UPLOAD IMAGE
+                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  const url = URL.createObjectURL(f);
+                  setHeroImageUrl(url);
+                  if (theme) applyTheme({ ...theme, heroUrl: url });
+                }} />
+              </label>
+              {heroImageUrl && (
+                <div style={{ position: 'relative', borderRadius: 6, overflow: 'hidden', height: 60 }}>
+                  <img src={heroImageUrl} alt="hero" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <button onClick={() => { setHeroImageUrl(''); if (theme) applyTheme({ ...theme, heroUrl: undefined }); }}
+                    style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,.7)', border: 'none', color: '#fff', borderRadius: 99, width: 20, height: 20, cursor: 'pointer', fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+                </div>
+              )}
+              <div style={{ fontSize: 10, color: 'var(--ink4)', fontFamily: 'var(--f-label)', letterSpacing: '.08em' }}>Only upload images you own or have rights to use.</div>
             </div>
           </div>
           <div className="ps-ctl" style={{ marginBottom: 0 }}>
@@ -838,83 +844,18 @@ export default function ViewPageStudio({ data }: { data?: WorkbenchData }) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
-          {/* page preview */}
-          <div className="ps-viewport">
-            <div id="ps-pageRoot" ref={pageRootRef} data-mood="dark" data-layout="spotlight">
-              <div className="ps-pageScroll" ref={pageScrollRef} style={{ display: theme ? 'block' : 'none' }} />
-              {!theme && (
-                <div className="ps-empty">
-                  <div className="ps-spark">{'✦'}</div>
-                  <h3>Let&apos;s build your page</h3>
-                  <p>You&apos;re a <b>{ROLES[role].label.toLowerCase()}</b> with great taste and zero interest in fiddling with fonts. Describe a vibe on the left and watch a cool page appear here in seconds.</p>
-                  <div className="ps-hintline">START WITH A VIBE</div>
-                </div>
-              )}
-            </div>
+        <div className="ps-viewport">
+          <div id="ps-pageRoot" ref={pageRootRef} data-mood="dark" data-layout="spotlight">
+            <div className="ps-pageScroll" ref={pageScrollRef} style={{ display: theme ? 'block' : 'none' }} />
+            {!theme && (
+              <div className="ps-empty">
+                <div className="ps-spark">{'✦'}</div>
+                <h3>Let&apos;s build your page</h3>
+                <p>You&apos;re a <b>{ROLES[role].label.toLowerCase()}</b> with great taste and zero interest in fiddling with fonts. Describe a vibe on the left and watch a cool page appear here in seconds.</p>
+                <div className="ps-hintline">START WITH A VIBE</div>
+              </div>
+            )}
           </div>
-
-          {/* AI chat dock — only visible after page is generated */}
-          {theme && (
-            <div className="ps-chat-dock">
-              <div className="ps-chat-header">
-                <span style={{ color: '#ff5029' }}>✦</span> AI Editor
-                <span className="ps-chat-sub">Describe changes — they apply live</span>
-              </div>
-
-              {/* suggestion chips when empty */}
-              {chatMsgs.length === 0 && (
-                <div className="ps-chat-chips">
-                  {['Make it punk', 'Darker & moodier', 'Purple accent', 'Elegant serif', 'More minimal', 'Warmer colors'].map(s => (
-                    <button key={s} className="ps-chat-chip" onClick={() => chatSend(s)}>
-                      &ldquo;{s}&rdquo;
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* thread */}
-              <div className="ps-chat-thread" ref={chatThreadRef}>
-                {chatMsgs.map((m, i) => (
-                  <div key={i} className={'ps-chat-row ' + m.side}>
-                    <div className={'ps-chat-avatar ' + m.side}>{m.side === 'ai' ? '✦' : data?.userInitials || '?'}</div>
-                    <div className="ps-chat-bubble">
-                      {m.text}
-                      {m.chips?.map(c => (
-                        <div key={c} className="ps-chat-applied">{c}</div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-                {chatTyping && (
-                  <div className="ps-chat-row ai">
-                    <div className="ps-chat-avatar ai">✦</div>
-                    <div className="ps-chat-bubble ps-chat-typing">
-                      <span /><span /><span />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* input */}
-              <div className="ps-chat-input-row">
-                <textarea
-                  className="ps-chat-input"
-                  value={chatInput}
-                  onChange={e => setChatInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); chatSend(chatInput); } }}
-                  placeholder="Describe a change…"
-                  rows={1}
-                />
-                <button
-                  className={'ps-chat-send' + (chatInput.trim() ? ' active' : '')}
-                  onClick={() => chatSend(chatInput)}
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" strokeLinejoin="round" strokeLinecap="round" /></svg>
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
         <div className={'ps-thinking' + (thinking ? ' show' : '')}>{thinking}</div>
