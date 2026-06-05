@@ -27,6 +27,7 @@ import { ViewErrorBoundary } from './workbench/ErrorBoundary';
 import { SearchOverlay } from './workbench/SearchOverlay';
 import { PasskeyNudge } from './workbench/PasskeyNudge';
 import { WMGenreQuizSheet } from './workbench/MobilePrimitives';
+import { SkeletonMeView } from './workbench/SkeletonMeView';
 
 // ─────────────────────────────────────────────────────────────
 // Main WorkbenchShell export
@@ -34,6 +35,7 @@ import { WMGenreQuizSheet } from './workbench/MobilePrimitives';
 export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData; starterPack?: StarterPackItem[] }) {
   void starterPack;
   const [liveData, setLiveData] = useState<WorkbenchData>(data);
+  const [revalidating, setRevalidating] = useState(data.degraded === true);
   const [view, setView] = useState<View>('me');
   const [prevView, setPrevView] = useState<View>('me');
   const mainRef = useRef<HTMLDivElement>(null);
@@ -72,13 +74,16 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
     fetch('/api/workbench')
       .then(r => r.ok ? r.json() : null)
       .then((freshData: WorkbenchData | null) => {
-        if (!freshData) return;
-        // Always apply fresh data: clears degraded state if DB recovered,
-        // and keeps data current even when the initial SSR load succeeded.
-        setLiveData(freshData);
+        if (freshData) {
+          // Always apply fresh data: clears degraded state if DB recovered,
+          // and keeps data current even when the initial SSR load succeeded.
+          setLiveData(freshData);
+        }
+        setRevalidating(false);
       })
       .catch(() => {
         // Network failure — keep whatever SSR data we have (degraded or real).
+        setRevalidating(false);
       });
   }, []);
 
@@ -306,7 +311,9 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
 
   const viewEl = (() => {
     switch (view) {
-      case 'me':       return <ViewErrorBoundary viewName="My Page"><ViewMyPage data={liveData} onPickTrack={onPickTrack} currentIdx={currentIdx} /></ViewErrorBoundary>;
+      case 'me':       return revalidating
+        ? <SkeletonMeView />
+        : <ViewErrorBoundary viewName="My Page"><ViewMyPage data={liveData} onPickTrack={onPickTrack} currentIdx={currentIdx} /></ViewErrorBoundary>;
       case 'seeds':    return <ViewErrorBoundary viewName="Seeds"><ViewSeeds data={liveData} seedPlaying={seedPlaying} setSeedPlaying={setSeedPlaying} onSave={onSeedSave} /></ViewErrorBoundary>;
       case 'radio':    return <ViewErrorBoundary viewName="Radio"><ViewRadio data={liveData} onPickTrack={onPickTrack} /></ViewErrorBoundary>;
       case 'studio':   return <ViewErrorBoundary viewName="Studio"><ViewStudio data={liveData} /></ViewErrorBoundary>;
