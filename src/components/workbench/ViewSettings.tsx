@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { WorkbenchData, WbPageEditor } from '@/types/workbench';
 import { DEFAULT_PREFS } from './types';
@@ -318,8 +318,44 @@ export function ViewSettings({ prefs, setPref, data, onBack }: {
   const [status, setStatus] = useState<string>('');
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [autoSaveState, setAutoSaveState] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isFirstRender = useRef(true);
 
   useEffect(() => setDraft(editor), [editor]);
+
+  // Debounced autosave — fires 1.5 s after the last change, skips the initial load
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (!draft) return;
+
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+
+    autoSaveTimer.current = setTimeout(() => {
+      setAutoSaveState('saving');
+      void (async () => {
+        try {
+          const response = await fetch('/api/profile-editor', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(draft),
+          });
+          if (!response.ok) throw new Error('autosave failed');
+          setAutoSaveState('saved');
+        } catch {
+          setAutoSaveState('idle');
+        }
+      })();
+    }, 1500);
+
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft]);
 
   if (!draft) {
     return (
@@ -414,6 +450,22 @@ export function ViewSettings({ prefs, setPref, data, onBack }: {
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           {onBack && <button onClick={onBack} style={{ padding: '9px 14px', border: '1px solid var(--line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-2)', letterSpacing: '.04em', background: 'none', cursor: 'pointer' }}>← Back</button>}
           <a href={publicPath} target="_blank" rel="noreferrer" style={{ padding: '9px 14px', border: '1px solid var(--line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-2)', letterSpacing: '.04em', textDecoration: 'none' }}>View page</a>
+          {autoSaveState !== 'idle' && (
+            <span style={{
+              padding: '5px 10px',
+              borderRadius: 6,
+              fontFamily: 'monospace',
+              fontSize: 11,
+              letterSpacing: '.04em',
+              background: autoSaveState === 'saving' ? 'rgba(255,184,74,.12)' : 'rgba(34,229,212,.12)',
+              color: autoSaveState === 'saving' ? '#ffb84a' : '#22e5d4',
+              border: `1px solid ${autoSaveState === 'saving' ? 'rgba(255,184,74,.3)' : 'rgba(34,229,212,.3)'}`,
+              transition: 'opacity .3s',
+              whiteSpace: 'nowrap',
+            }}>
+              {autoSaveState === 'saving' ? 'saving…' : '✓ saved'}
+            </span>
+          )}
           <button onClick={() => void savePage()} disabled={saving} style={{ padding: '10px 16px', border: 'none', borderRadius: 7, fontFamily: 'var(--f-m)', fontSize: 13, color: '#fff', fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', background: `linear-gradient(135deg, ${prefs.accent}, #ff3e9a)`, cursor: saving ? 'wait' : 'pointer' }}>{saving ? 'Saving…' : 'Save page'}</button>
         </div>
       </div>
