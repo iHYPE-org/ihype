@@ -87,6 +87,35 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
       });
   }, []);
 
+  // 30-second hype count polling — silently updates counts in place
+  useEffect(() => {
+    function poll() {
+      if (document.visibilityState !== 'visible') return;
+      const trackIds = liveData.tracks.map(t => t.id);
+      const showIds = liveData.shows.map(s => s.id);
+      if (trackIds.length === 0 && showIds.length === 0) return;
+      const params = new URLSearchParams();
+      if (trackIds.length > 0) params.set('trackIds', trackIds.join(','));
+      if (showIds.length > 0) params.set('showIds', showIds.join(','));
+      fetch(`/api/hype/counts?${params.toString()}`)
+        .then(r => r.ok ? r.json() : null)
+        .then((freshCounts: { tracks: Record<string, number>; shows: Record<string, number> } | null) => {
+          if (!freshCounts) return;
+          setLiveData(prev => ({
+            ...prev,
+            tracks: prev.tracks.map(t => ({ ...t, hypeCount: freshCounts.tracks[t.id] ?? t.hypeCount })),
+            shows: prev.shows.map(s => ({ ...s, hype: freshCounts.shows[s.id] ?? s.hype })),
+          }));
+        })
+        .catch(() => {
+          // Network failure — keep existing counts
+        });
+    }
+
+    const interval = setInterval(poll, 30_000);
+    return () => clearInterval(interval);
+  }, [liveData.tracks, liveData.shows]);
+
   // Apply prefs as CSS vars
   useEffect(() => {
     if (!mounted) return;
