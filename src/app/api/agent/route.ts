@@ -36,10 +36,15 @@ function buildSystemPrompt(context: {
   city: string;
   activeProfileTypes: string[];
   mode: string;
+  upcomingShows?: string;
 }) {
   const roles = context.activeProfileTypes.length
     ? context.activeProfileTypes.join(', ').toLowerCase()
     : 'listener';
+
+  const showsSection = context.upcomingShows
+    ? `\nUpcoming shows the user can see:\n${context.upcomingShows}\n`
+    : '';
 
   return `You are iHYPE's friendly guide — a music app assistant that helps users navigate and enjoy the platform.
 
@@ -47,7 +52,7 @@ User: ${context.userName}, based in ${context.city || 'unknown city'}.
 Their roles: ${roles}.
 Current mode: ${context.mode}.
 Currently viewing: ${context.view}.
-
+${showsSection}
 ${VIEW_DESCRIPTIONS}
 
 ALWAYS respond with valid JSON in this exact shape:
@@ -83,6 +88,7 @@ export async function POST(request: Request) {
       city: string;
       activeProfileTypes: string[];
       mode: string;
+      upcomingShows?: string;
       history?: { role: 'user' | 'assistant'; content: string }[];
     };
   };

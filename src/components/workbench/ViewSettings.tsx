@@ -595,6 +595,45 @@ export function ViewSettings({ prefs, setPref, data, onBack }: {
         ) : null}
       </div>
 
+      {/* Display & accessibility */}
+      <div style={{ marginTop: 14, padding: '18px 20px', border: '1px solid var(--line)', borderRadius: 12, background: 'var(--bg-2)' }}>
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.18em', color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 4 }}>Accessibility</div>
+        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 15, color: 'var(--ink)', marginBottom: 14 }}>Display settings</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <div>
+              <div style={{ fontFamily: 'var(--f-b)', fontSize: 14, color: 'var(--ink)', fontWeight: 600 }}>Large text</div>
+              <div style={{ fontFamily: 'var(--f-b)', fontSize: 12, color: 'var(--ink-3)', marginTop: 2 }}>Increases font size across the app for easier reading</div>
+            </div>
+            <Toggle value={!!prefs.largeText} onChange={v => setPref('largeText', v)} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <div>
+              <div style={{ fontFamily: 'var(--f-b)', fontSize: 14, color: 'var(--ink)', fontWeight: 600 }}>Density</div>
+              <div style={{ fontFamily: 'var(--f-b)', fontSize: 12, color: 'var(--ink-3)', marginTop: 2 }}>Controls spacing and element sizing</div>
+            </div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {(['compact', 'cozy', 'comfy'] as const).map(d => (
+                <button
+                  key={d}
+                  onClick={() => setPref('density', d)}
+                  style={{
+                    padding: '6px 12px', borderRadius: 6, border: '1px solid',
+                    borderColor: prefs.density === d ? 'var(--accent)' : 'var(--line-2)',
+                    background: prefs.density === d ? 'rgba(255,80,41,.1)' : 'var(--bg-3)',
+                    color: prefs.density === d ? 'var(--accent)' : 'var(--ink-3)',
+                    fontFamily: 'var(--f-m)', fontSize: 12, cursor: 'pointer',
+                    textTransform: 'capitalize',
+                  }}
+                >
+                  {d}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div style={{ marginTop: 14 }}><StripeConnectPanel data={data} /></div>
 
       <div style={{ marginTop: 14 }}><PasskeyPanel /></div>

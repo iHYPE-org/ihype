@@ -332,6 +332,59 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
         </div>
       </div>
 
+      {/* Profile completion progress */}
+      {data.profileCompletion && data.profileCompletion.percent < 100 && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 14,
+          padding: '14px 18px', marginBottom: 16,
+          border: '1px solid rgba(255,184,74,.25)',
+          borderRadius: 12, background: 'rgba(255,184,74,.06)',
+        }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <span style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: '#ffb84a', fontWeight: 600, letterSpacing: '.08em' }}>
+                Profile {data.profileCompletion.percent}% complete
+              </span>
+              <span style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)' }}>
+                {data.profileCompletion.missing.length > 0 ? `Add: ${data.profileCompletion.missing.slice(0, 2).join(', ')}` : ''}
+              </span>
+            </div>
+            <div style={{ height: 5, background: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${data.profileCompletion.percent}%`, background: 'linear-gradient(90deg, #ffb84a, #ff5029)', borderRadius: 3, transition: 'width .6s ease-out' }} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Upcoming shows near you */}
+      {data.shows.filter(s => s.status !== 'ENDED').length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <h3 style={{ fontFamily: 'var(--f-d)', fontSize: 15, fontWeight: 700, margin: 0, color: 'var(--ink)' }}>Shows Near You</h3>
+            <span style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--accent)', cursor: 'pointer' }}>See all →</span>
+          </div>
+          <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
+            {data.shows.filter(s => s.status !== 'ENDED').slice(0, 6).map((show) => {
+              const statusColor: Record<string, string> = { TONIGHT: '#ff3e9a', 'THIS WEEK': '#ffb84a', 'NEAR SOLD': '#ff5029', UPCOMING: '#22e5d4' };
+              const color = statusColor[show.status] ?? '#22e5d4';
+              return (
+                <div key={show.id} style={{
+                  flexShrink: 0, width: 180,
+                  padding: '12px 14px', borderRadius: 12,
+                  border: `1px solid ${color}33`,
+                  background: `${color}08`,
+                }}>
+                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 5 }}>{show.status}</div>
+                  <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, color: 'var(--ink)', lineHeight: 1.3, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{show.name}</div>
+                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{show.venue}</div>
+                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', marginTop: 4 }}>{show.date} · ${show.price}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Section divider */}
       <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, var(--line-2) 30%, var(--line-2) 70%, transparent)', marginBottom: 28 }} />
 

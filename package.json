@@ -5,7 +5,7 @@
   "packageManager": "npm@10.9.2",
   "scripts": {
     "dev": "next dev",
-    "prebuild": "npm run guard:design",
+    "prebuild": "npm run guard:design && node scripts/bump-sw-version.mjs",
     "build": "next build --webpack",
     "guard:design": "node scripts/guard-claude-design.mjs",
     "start": "next start",

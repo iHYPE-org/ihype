@@ -1,7 +1,7 @@
 'use client';
 
 // ── View type (v2 simplified) ─────────────────────────────────
-export type View = 'me' | 'seeds' | 'radio' | 'studio' | 'tickets' | 'settings' | 'tour' | 'pagestudio' | 'artistpage' | 'venuepage';
+export type View = 'me' | 'seeds' | 'radio' | 'studio' | 'tickets' | 'settings' | 'tour' | 'pagestudio' | 'artistpage' | 'venuepage' | 'notifications';
 
 // ── Prefs ─────────────────────────────────────────────────────
 export const PREFS_VERSION = 2; // bump when DEFAULT_PREFS schema changes
@@ -20,6 +20,7 @@ export const DEFAULT_PREFS = {
   panel_roles: true,
   city: 'Chicago, IL',
   greeting: 'warm' as 'warm' | 'minimal' | 'data',
+  largeText: false,
 };
 
 export function loadPrefs() {

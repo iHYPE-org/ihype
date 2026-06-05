@@ -3,6 +3,10 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { WorkbenchData } from '@/types/workbench';
 
+const HISTORY_KEY = 'ihype-agent-history';
+const VISIT_KEY = 'ihype-last-visit';
+const MAX_STORED_MESSAGES = 12;
+
 type AgentMode = 'listener' | 'artist' | 'venue';
 
 type Message = {
@@ -34,6 +38,36 @@ const MODE_GREETINGS: Record<AgentMode, string> = {
   listener: "Hey! I'm your iHYPE guide. I can help you find shows, discover music, or hype your favorite artists. What sounds good?",
   artist:   "Welcome! I'm here to help you manage your artist page, upload tracks, and reach more fans. Where do you want to start?",
   venue:    "Hey! I can help you promote shows, manage your venue page, and connect with performers. What do you need?",
+};
+
+const MODE_TIPS: Record<AgentMode, { icon: string; headline: string; bullets: string[] }> = {
+  listener: {
+    icon: '🎵',
+    headline: "Here's how to get the most out of iHYPE",
+    bullets: [
+      'Swipe Seeds to discover new artists — hype the ones you love',
+      'Browse Live Events to find shows near you',
+      'Ask me anything — I can find music, shows, and artists for you',
+    ],
+  },
+  artist: {
+    icon: '🎤',
+    headline: "Here's how to grow on iHYPE",
+    bullets: [
+      'Upload tracks to your Artist Page and publish them as Seeds',
+      'Check your Insights to see who\'s listening and where',
+      'Ask me to help write your bio, set up shows, or find promoters',
+    ],
+  },
+  venue: {
+    icon: '🏟️',
+    headline: "Here's how to fill your venue with iHYPE",
+    bullets: [
+      'List shows on your Venue Page to appear in discovery',
+      'Connect Stripe to sell tickets with zero platform fees',
+      'Ask me to help find artists, promote shows, or manage bookings',
+    ],
+  },
 };
 
 const MODE_CHIPS: Record<AgentMode, string[]> = {
@@ -79,6 +113,8 @@ export function AgentShell({ data, currentView, onNavigate, onOpenSearch }: Agen
   const [mounted, setMounted] = useState(false);
   const [mode, setMode] = useState<AgentMode | null>(null);
   const [open, setOpen] = useState(false);
+  const [showTip, setShowTip] = useState(false);
+  const [pendingMode, setPendingMode] = useState<AgentMode | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputVal, setInputVal] = useState('');
   const [pending, setPending] = useState(false);
@@ -92,8 +128,52 @@ export function AgentShell({ data, currentView, onNavigate, onOpenSearch }: Agen
     const saved = localStorage.getItem('ihype-agent-mode') as AgentMode | null;
     setMode(saved);
     setSpeechSupported(hasSpeechRecognition());
+
+    // Restore message history
+    if (saved) {
+      try {
+        const stored = localStorage.getItem(HISTORY_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored) as Message[];
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setMessages(parsed);
+          }
+        }
+      } catch {}
+    }
+
     setMounted(true);
   }, []);
+
+  // Persist history to localStorage whenever messages change
+  useEffect(() => {
+    if (!mounted || messages.length === 0) return;
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(messages.slice(-MAX_STORED_MESSAGES)));
+    } catch {}
+  }, [messages, mounted]);
+
+  // Proactive nudge on first open after 48h+ absence
+  useEffect(() => {
+    if (!open || !mode || !mounted) return;
+    const now = Date.now();
+    const lastVisit = Number(localStorage.getItem(VISIT_KEY) || '0');
+    localStorage.setItem(VISIT_KEY, String(now));
+    const absent = now - lastVisit;
+    if (lastVisit && absent > 48 * 3600 * 1000 && messages.length <= 1) {
+      const upcoming = data.shows.filter(s => s.status !== 'ENDED').length;
+      setMessages((prev: Message[]) => [
+        {
+          id: uid(),
+          role: 'assistant',
+          content: `Hey, welcome back! You've been away for a bit — there ${upcoming === 1 ? 'is' : 'are'} ${upcoming || 'some'} upcoming show${upcoming === 1 ? '' : 's'} near you and new music to discover. Want to catch up?`,
+          chips: ['See upcoming shows', 'Discover new music', 'What did I miss?'],
+        },
+        ...prev,
+      ]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   // Scroll messages to bottom on new message
   useEffect(() => {
@@ -110,8 +190,16 @@ export function AgentShell({ data, currentView, onNavigate, onOpenSearch }: Agen
   }, [open]);
 
   const selectMode = useCallback((m: AgentMode) => {
+    setPendingMode(m);
+    setShowTip(true);
+  }, []);
+
+  const confirmMode = useCallback((m: AgentMode) => {
     localStorage.setItem('ihype-agent-mode', m);
+    localStorage.setItem(VISIT_KEY, String(Date.now()));
     setMode(m);
+    setShowTip(false);
+    setPendingMode(null);
     setMessages([
       {
         id: uid(),
@@ -152,6 +240,13 @@ export function AgentShell({ data, currentView, onNavigate, onOpenSearch }: Agen
       // Build history from existing messages (exclude the new user msg)
       const history = messages.slice(-6).map((m: Message) => ({ role: m.role, content: m.content }));
 
+      // Summarize upcoming shows for agent context
+      const upcomingShows = data.shows
+        .filter((s) => s.status !== 'ENDED')
+        .slice(0, 5)
+        .map((s) => `${s.name} at ${s.venue} — ${s.date} ${s.time} (${s.status})`)
+        .join('\n');
+
       try {
         const res = await fetch('/api/agent', {
           method: 'POST',
@@ -164,6 +259,7 @@ export function AgentShell({ data, currentView, onNavigate, onOpenSearch }: Agen
               city: data.city || '',
               activeProfileTypes: data.activeProfileTypes,
               mode: mode ?? 'listener',
+              upcomingShows: upcomingShows || undefined,
               history,
             },
           }),
@@ -289,6 +385,55 @@ export function AgentShell({ data, currentView, onNavigate, onOpenSearch }: Agen
     );
   }
 
+  // ── Post-mode tip overlay ─────────────────────────────────────────────────
+  if (showTip && pendingMode) {
+    const tip = MODE_TIPS[pendingMode];
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 9999,
+        background: 'rgba(10,8,6,0.97)',
+        backdropFilter: 'blur(12px)',
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        padding: '24px',
+        animation: 'agentFadeIn .3s ease-out both',
+      }}>
+        <div style={{ fontSize: 44, marginBottom: 16 }}>{tip.icon}</div>
+        <h2 style={{ color: '#fff', fontSize: 20, fontWeight: 700, margin: '0 0 20px', textAlign: 'center', maxWidth: '32ch' }}>
+          {tip.headline}
+        </h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 380, marginBottom: 32 }}>
+          {tip.bullets.map((b, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+              <div style={{
+                width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
+                background: 'linear-gradient(135deg, #ff5029, #ff3e9a)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 12, color: '#fff', fontWeight: 700, marginTop: 1,
+              }}>
+                {i + 1}
+              </div>
+              <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, lineHeight: 1.5 }}>{b}</div>
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={() => confirmMode(pendingMode)}
+          style={{
+            padding: '14px 32px', borderRadius: 12,
+            background: 'linear-gradient(135deg, #ff5029, #ff3e9a)',
+            border: 'none', color: '#fff',
+            fontFamily: 'var(--f-m, sans-serif)', fontSize: 15, fontWeight: 700,
+            cursor: 'pointer',
+            boxShadow: '0 4px 20px rgba(255,80,41,0.4)',
+          }}
+        >
+          Got it — let&apos;s go →
+        </button>
+      </div>
+    );
+  }
+
   // ── Floating button + chat drawer ─────────────────────────────────────────
   const lastChips = [...messages].reverse().find((m) => m.role === 'assistant' && m.chips?.length)?.chips ?? [];
 
@@ -379,7 +524,7 @@ export function AgentShell({ data, currentView, onNavigate, onOpenSearch }: Agen
                     {mode === 'listener' ? 'Listener mode' : mode === 'artist' ? 'Artist mode' : 'Venue mode'}
                     {' · '}
                     <button
-                      onClick={() => { localStorage.removeItem('ihype-agent-mode'); setMode(null); setOpen(false); setMessages([]); }}
+                      onClick={() => { localStorage.removeItem('ihype-agent-mode'); localStorage.removeItem(HISTORY_KEY); setMode(null); setOpen(false); setMessages([]); }}
                       style={{ background: 'none', border: 'none', color: 'rgba(255,80,41,0.7)', fontSize: 11, cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
                     >
                       switch

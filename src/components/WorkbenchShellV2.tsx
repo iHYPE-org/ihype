@@ -22,6 +22,7 @@ import { ViewTour } from './workbench/ViewTour';
 import { ViewArtistPage } from './workbench/ViewArtistPage';
 import { ViewVenuePage } from './workbench/ViewVenuePage';
 import ViewPageStudio from './workbench/ViewPageStudio';
+import { ViewNotifications } from './workbench/ViewNotifications';
 import { Toast, WelcomeDialog, KeyboardShortcutsDialog } from './workbench/Overlays';
 import { ViewErrorBoundary } from './workbench/ErrorBoundary';
 import { SearchOverlay } from './workbench/SearchOverlay';
@@ -130,6 +131,12 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
     root.style.setProperty('--queue-w', prefs.queueRail ? '300px' : '0px');
     root.style.setProperty('--player-h', prefs.density === 'compact' ? '68px' : prefs.density === 'comfy' ? '88px' : '78px');
     root.style.setProperty('--top-h', '60px');
+    root.style.setProperty('--large-text', prefs.largeText ? '1.18' : '1');
+    if (prefs.largeText) {
+      root.style.fontSize = '18px';
+    } else {
+      root.style.fontSize = '';
+    }
   }, [prefs, mounted]);
 
   // Sync audio element with playing state
@@ -352,8 +359,9 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
       case 'tour':         return <ViewErrorBoundary viewName="Tour Planner"><ViewTour data={liveData} /></ViewErrorBoundary>;
       case 'pagestudio':   return <ViewErrorBoundary viewName="Fan Page"><ViewPageStudio data={liveData} /></ViewErrorBoundary>;
       case 'artistpage':   return <ViewErrorBoundary viewName="Artist Page"><ViewArtistPage data={liveData} /></ViewErrorBoundary>;
-      case 'venuepage':    return <ViewErrorBoundary viewName="Venue Page"><ViewVenuePage data={liveData} /></ViewErrorBoundary>;
-      default:             return <ViewErrorBoundary viewName="My Page"><ViewMyPage data={liveData} onPickTrack={onPickTrack} currentIdx={currentIdx} /></ViewErrorBoundary>;
+      case 'venuepage':       return <ViewErrorBoundary viewName="Venue Page"><ViewVenuePage data={liveData} /></ViewErrorBoundary>;
+      case 'notifications':   return <ViewErrorBoundary viewName="Notifications"><ViewNotifications /></ViewErrorBoundary>;
+      default:                return <ViewErrorBoundary viewName="My Page"><ViewMyPage data={liveData} onPickTrack={onPickTrack} currentIdx={currentIdx} /></ViewErrorBoundary>;
     }
   })();
 
