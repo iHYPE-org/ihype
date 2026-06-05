@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { recordAuditEvent } from '@/lib/audit';
-import { db } from '@/lib/db';
+import { db, withDbRetry } from '@/lib/db';
 import { z } from 'zod';
 import { consumeRateLimit, rateLimitHeaders, rateLimitKey } from '@/lib/rate-limit';
 import { sendGenericEmail } from '@/lib/mailer';
@@ -177,23 +177,23 @@ export async function POST(request: NextRequest) {
     const payload = schema.parse(await request.json());
 
     if (payload.targetType === 'show') {
-      const existing = await db.hypeEvent.findUnique({
+      const existing = await withDbRetry(() => db.hypeEvent.findUnique({
         where: { userId_showId: { userId: session.user.id, showId: payload.targetId } }
-      });
+      }));
 
       if (existing) {
         // Toggle off: unhype the show.
-        const [, updatedShow] = await db.$transaction([
+        const [, updatedShow] = await withDbRetry(() => db.$transaction([
           db.hypeEvent.delete({ where: { userId_showId: { userId: session.user.id, showId: payload.targetId } } }),
           db.show.update({ where: { id: payload.targetId }, data: { hypeCount: { decrement: 1 } } })
-        ]);
+        ]));
         return NextResponse.json({ action: 'unhyped', hypeCount: Math.max(0, updatedShow.hypeCount) });
       }
 
-      const [, updatedShow] = await db.$transaction([
+      const [, updatedShow] = await withDbRetry(() => db.$transaction([
         db.hypeEvent.create({ data: { userId: session.user.id, showId: payload.targetId } }),
         db.show.update({ where: { id: payload.targetId }, data: { hypeCount: { increment: 1 } } })
-      ]);
+      ]));
 
       await recordAuditEvent({
         actorUserId: session.user.id,

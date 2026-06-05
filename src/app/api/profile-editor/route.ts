@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { db, withDbRetry } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
@@ -65,10 +65,15 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON.' }, { status: 400 });
   }
 
-  const profile = await db.profile.findUnique({
-    where: { id: body.profileId },
-    select: { id: true, ownerId: true, type: true }
-  });
+  let profile: { id: string; ownerId: string; type: string } | null;
+  try {
+    profile = await withDbRetry(() => db.profile.findUnique({
+      where: { id: body.profileId },
+      select: { id: true, ownerId: true, type: true }
+    }));
+  } catch {
+    return NextResponse.json({ error: 'Database unavailable — please try again in a moment.' }, { status: 503 });
+  }
 
   if (!profile) {
     return NextResponse.json({ error: 'Profile not found.' }, { status: 404 });
@@ -112,11 +117,16 @@ export async function PATCH(request: Request) {
     fanShareEnabled: body.fanShareEnabled
   };
 
-  const updated = await db.profile.update({
-    where: { id: profile.id },
-    data,
-    select: { id: true, slug: true, type: true, updatedAt: true }
-  });
+  let updated: { id: string; slug: string; type: string; updatedAt: Date };
+  try {
+    updated = await withDbRetry(() => db.profile.update({
+      where: { id: profile!.id },
+      data,
+      select: { id: true, slug: true, type: true, updatedAt: true }
+    }));
+  } catch {
+    return NextResponse.json({ error: 'Database unavailable — your changes could not be saved. Please try again.' }, { status: 503 });
+  }
 
   return NextResponse.json({ ok: true, profile: updated });
 }
