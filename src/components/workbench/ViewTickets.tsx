@@ -302,6 +302,25 @@ export const ViewTickets = memo(function ViewTickets({ data }: { data: Workbench
   const router = useRouter();
   const [tab, setTab] = useState<'browse' | 'mine' | 'selling' | 'scan' | 'map'>('browse');
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'CHICAGO' | 'THIS WEEK' | 'UNDER $20'>('CHICAGO');
+  const [reportingId, setReportingId] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState('');
+  const [reportStatus, setReportStatus] = useState<'idle' | 'sending' | 'done'>('idle');
+
+  async function submitReport(showId: string) {
+    if (!reportReason.trim()) return;
+    setReportStatus('sending');
+    try {
+      await fetch('/api/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entityType: 'show', entityId: showId, reason: reportReason.trim() }),
+      });
+      setReportStatus('done');
+      setTimeout(() => { setReportingId(null); setReportReason(''); setReportStatus('idle'); }, 1500);
+    } catch {
+      setReportStatus('idle');
+    }
+  }
   const tabs = [
     ['browse','Browse'],
     ['map','Map'],
@@ -311,6 +330,7 @@ export const ViewTickets = memo(function ViewTickets({ data }: { data: Workbench
   ] as const;
 
   return (
+    <>
     <div style={{ padding: '24px 32px 32px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 22, gap: 24 }}>
         <div>
@@ -392,8 +412,15 @@ export const ViewTickets = memo(function ViewTickets({ data }: { data: Workbench
                     <div style={{ position: 'absolute', top: 12, left: 12, display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', background: 'rgba(0,0,0,.55)', borderRadius: 99, fontFamily: 'var(--f-m)', fontSize: 12, color: '#fff', letterSpacing: '.14em' }}>
                       <span style={{ width: 6, height: 6, borderRadius: '50%', background: statusColor, display: 'inline-block' }} /> {s.status}
                     </div>
-                    <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', background: 'rgba(0,0,0,.55)', borderRadius: 99, fontFamily: 'var(--f-m)', fontSize: 12, color: '#fff' }}>
-                      ♡ {s.hype} HYPE
+                    <div style={{ position: 'absolute', top: 12, right: 12, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', background: 'rgba(0,0,0,.55)', borderRadius: 99, fontFamily: 'var(--f-m)', fontSize: 12, color: '#fff' }}>
+                        ♡ {s.hype} HYPE
+                      </div>
+                      {s.sold > 0 && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 8px', background: 'rgba(34,229,212,.18)', borderRadius: 99, fontFamily: 'var(--f-m)', fontSize: 11, color: '#22e5d4', border: '1px solid rgba(34,229,212,.3)' }}>
+                          👥 {s.sold} going
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div style={{ padding: '14px 16px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -428,10 +455,16 @@ export const ViewTickets = memo(function ViewTickets({ data }: { data: Workbench
                         </svg>
                       </button>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 8, marginTop: 2, borderTop: '1px solid var(--line)', fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', letterSpacing: '.04em' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, marginTop: 2, borderTop: '1px solid var(--line)', fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', letterSpacing: '.04em' }}>
                       <span>${(s.price * 0.45).toFixed(2)} → artist</span>
                       <span>${(s.price * 0.45).toFixed(2)} → venue</span>
-                      <span>${(s.price * 0.10).toFixed(2)} → referrer</span>
+                      <button
+                        onClick={() => { setReportingId(s.id); setReportReason(''); setReportStatus('idle'); }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: 11, padding: '2px 4px', opacity: 0.6 }}
+                        title="Report this show"
+                      >
+                        ⚑ Report
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -609,5 +642,42 @@ export const ViewTickets = memo(function ViewTickets({ data }: { data: Workbench
         </div>
       )}
     </div>
+
+    {/* Report modal */}
+    {reportingId && (
+      <div
+        style={{ position: 'fixed', inset: 0, zIndex: 9000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+        onClick={(e) => { if (e.target === e.currentTarget) setReportingId(null); }}
+      >
+        <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 16, padding: '24px 24px 20px', width: '100%', maxWidth: 400 }}>
+          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 18, color: 'var(--ink)', marginBottom: 6 }}>Report this show</div>
+          <p style={{ fontFamily: 'var(--f-b)', fontSize: 13, color: 'var(--ink-2)', margin: '0 0 14px', lineHeight: 1.5 }}>Tell us what&apos;s wrong — spam, misleading info, or anything suspicious.</p>
+          {reportStatus === 'done' ? (
+            <div style={{ textAlign: 'center', padding: '20px 0', fontFamily: 'var(--f-m)', fontSize: 14, color: '#22e5d4' }}>✓ Report submitted — thank you.</div>
+          ) : (
+            <>
+              <textarea
+                value={reportReason}
+                onChange={(e) => setReportReason(e.target.value)}
+                placeholder="Describe the issue…"
+                rows={3}
+                style={{ width: '100%', background: 'var(--bg-3)', border: '1px solid var(--line)', borderRadius: 8, color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: 13, padding: '10px 12px', resize: 'none', boxSizing: 'border-box' }}
+              />
+              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                <button onClick={() => setReportingId(null)} style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line-2)', background: 'none', color: 'var(--ink-2)', fontFamily: 'var(--f-m)', fontSize: 13, cursor: 'pointer' }}>Cancel</button>
+                <button
+                  onClick={() => void submitReport(reportingId)}
+                  disabled={!reportReason.trim() || reportStatus === 'sending'}
+                  style={{ flex: 1, padding: '10px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #ff5029, #ff3e9a)', color: '#fff', fontFamily: 'var(--f-m)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                >
+                  {reportStatus === 'sending' ? 'Submitting…' : 'Submit report'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    )}
+    </>
   );
 });

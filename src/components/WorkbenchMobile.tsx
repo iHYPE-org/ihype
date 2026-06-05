@@ -766,12 +766,12 @@ function WMBottomTabs({ tab, onTab }: { tab: MobileTab; onTab: (t: MobileTab) =>
       {items.map(it => {
         const on = tab === it.id;
         return (
-          <button key={it.id} aria-label={it.label} onClick={() => onTab(it.id)} style={{
+          <button key={it.id} aria-label={it.label} onClick={() => { navigator.vibrate?.(8); onTab(it.id); }} style={{
             flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
             background: 'none', border: 'none', color: on ? T.ink : T.ink3,
             fontFamily: T.fb, fontSize: 12, fontWeight: 600, letterSpacing: '-.005em',
-            padding: '6px 0 4px', cursor: 'pointer', position: 'relative',
-            minHeight: 44, minWidth: 44,
+            padding: '8px 0 6px', cursor: 'pointer', position: 'relative',
+            minHeight: 56, minWidth: 44,
           }}>
             {on && <span style={{ position: 'absolute', top: 0, width: 24, height: 2, borderRadius: '0 0 2px 2px', background: T.accent, boxShadow: `0 0 8px ${T.accent}` }} />}
             <span style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>

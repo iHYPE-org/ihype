@@ -88,7 +88,10 @@ function TrendingCard({ artist, idx }: { artist: WbTrendingProfile; idx: number 
         background: gradient ?? `url(${artist.avatarImage}) center/cover`,
         display: 'flex', alignItems: 'flex-end', padding: '8px 10px', gap: 6,
       }}>
-        <span style={{ fontFamily: 'var(--f-m)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', background: 'rgba(0,0,0,.45)', backdropFilter: 'blur(6px)', padding: '2px 7px', borderRadius: 99, color: '#fff', border: '1px solid rgba(255,255,255,.12)' }}>
+        <span style={{ fontFamily: 'var(--f-m)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', background: 'rgba(0,0,0,.45)', backdropFilter: 'blur(6px)', padding: '2px 7px', borderRadius: 99, color: '#fff', border: '1px solid rgba(255,255,255,.12)', display: 'flex', alignItems: 'center', gap: 4 }}>
+          {(artist as WbTrendingProfile & { verified?: boolean }).verified && (
+            <span title="Verified" style={{ color: '#22e5d4', fontWeight: 700 }}>✓</span>
+          )}
           {artist.type}
         </span>
         {artist.genre && (
@@ -388,6 +391,41 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
       {/* Section divider */}
       <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, var(--line-2) 30%, var(--line-2) 70%, transparent)', marginBottom: 28 }} />
 
+      {/* Because you hyped — recommendation row */}
+      {data.tracks.length > 0 && data.trending && data.trending.length > 0 && (
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <div>
+              <h3 style={{ fontFamily: 'var(--f-d)', fontSize: 15, fontWeight: 700, margin: 0, color: 'var(--ink)' }}>
+                Because you hyped {data.tracks[0].artistName}
+              </h3>
+              <p style={{ fontFamily: 'var(--f-b)', fontSize: 12, color: 'var(--ink-3)', margin: '3px 0 0' }}>Artists you might love</p>
+            </div>
+            <span style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)' }}>Based on your taste</span>
+          </div>
+          <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
+            {data.trending.slice(0, 5).map((a, i) => (
+              <a key={a.id} href={`/artists/${a.slug}`} target="_blank" rel="noopener noreferrer" style={{ flexShrink: 0, width: 148, textDecoration: 'none' }}>
+                <div style={{
+                  borderRadius: 12, overflow: 'hidden',
+                  border: '1px solid var(--line-2)', background: 'var(--bg-2)',
+                }}>
+                  <div style={{
+                    height: 80,
+                    background: a.avatarImage ? `url(${a.avatarImage}) center/cover` : COVER_GRADIENTS[i % COVER_GRADIENTS.length],
+                  }} />
+                  <div style={{ padding: '8px 10px 10px' }}>
+                    <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name}</div>
+                    <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', marginTop: 2 }}>{a.genre || a.city}</div>
+                    <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: '#ff5029', marginTop: 4 }}>♥ {a.hypeCount.toLocaleString()}</div>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Stat tiles — 4-col + streak card */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr) auto', gap: 14, marginBottom: 20, alignItems: 'stretch' }}>
         {[
@@ -431,6 +469,15 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
                   <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', letterSpacing: '.1em', textTransform: 'uppercase', marginTop: 4 }}>day streak</div>
                   {streakData.daysActive > s && (
                     <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', marginTop: 2 }}>{streakData.daysActive} days active</div>
+                  )}
+                  {s >= 2 && (
+                    <a
+                      href="#seeds"
+                      onClick={e => { e.preventDefault(); (window as Window & { __ihypeNav?: (v: string) => void }).__ihypeNav?.('seeds'); }}
+                      style={{ display: 'inline-block', marginTop: 8, padding: '5px 10px', borderRadius: 6, background: 'rgba(255,80,41,.18)', color: '#ff5029', fontFamily: 'var(--f-m)', fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textDecoration: 'none', cursor: 'pointer' }}
+                    >
+                      Keep it going →
+                    </a>
                   )}
                 </>
               )}

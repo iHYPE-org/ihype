@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'ihype-v12';
+const CACHE_VERSION = 'ihype-dc713da';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const PAGE_CACHE = `${CACHE_VERSION}-pages`;
 
@@ -131,6 +131,37 @@ function isStaticAsset(pathname) {
   // files are typically API responses that must not be cached by the SW.
   return /\.(css|js|png|jpe?g|svg|webp|woff2?)$/i.test(pathname);
 }
+
+self.addEventListener('push', (event) => {
+  let data = { title: 'iHYPE', body: 'Something new is happening on iHYPE.' };
+  try {
+    if (event.data) data = { ...data, ...event.data.json() };
+  } catch { /* ignore */ }
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
+      data: { url: data.url || '/home' },
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || '/home';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          client.navigate(url);
+          return client.focus();
+        }
+      }
+      return self.clients.openWindow(url);
+    })
+  );
+});
 
 function offlineFallback() {
   return new Response(

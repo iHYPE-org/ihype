@@ -49,6 +49,11 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
       if (mainRef.current) mainRef.current.scrollTop = 0;
     }, 0);
   };
+  useEffect(() => {
+    (window as Window & { __ihypeNav?: (v: string) => void }).__ihypeNav = (v: string) => navigateTo(v as View);
+    return () => { delete (window as Window & { __ihypeNav?: (v: string) => void }).__ihypeNav; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [prefs, setPrefs] = useState<typeof DEFAULT_PREFS>(DEFAULT_PREFS);
   const [mounted, setMounted] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);

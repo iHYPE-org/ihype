@@ -18,6 +18,7 @@ type Message = {
 
 type AgentAction =
   | { type: 'NAVIGATE'; view: string }
+  | { type: 'NAVIGATE_URL'; url: string }
   | { type: 'OPEN_SEARCH' }
   | { type: 'DISMISS' };
 
@@ -217,6 +218,8 @@ export function AgentShell({ data, currentView, onNavigate, onOpenSearch }: Agen
       if (action.type === 'NAVIGATE') {
         onNavigate(action.view);
         setOpen(false);
+      } else if (action.type === 'NAVIGATE_URL') {
+        window.open(action.url, '_blank', 'noopener,noreferrer');
       } else if (action.type === 'OPEN_SEARCH') {
         onOpenSearch();
         setOpen(false);
@@ -247,6 +250,12 @@ export function AgentShell({ data, currentView, onNavigate, onOpenSearch }: Agen
         .map((s) => `${s.name} at ${s.venue} — ${s.date} ${s.time} (${s.status})`)
         .join('\n');
 
+      // Trending artists with slugs for deep-link navigation
+      const trendingArtists = (data.trending ?? [])
+        .slice(0, 6)
+        .map((a) => `${a.name} (${a.genre || a.type}) — /artists/${a.slug}`)
+        .join('\n');
+
       try {
         const res = await fetch('/api/agent', {
           method: 'POST',
@@ -260,6 +269,7 @@ export function AgentShell({ data, currentView, onNavigate, onOpenSearch }: Agen
               activeProfileTypes: data.activeProfileTypes,
               mode: mode ?? 'listener',
               upcomingShows: upcomingShows || undefined,
+              trendingArtists: trendingArtists || undefined,
               history,
             },
           }),

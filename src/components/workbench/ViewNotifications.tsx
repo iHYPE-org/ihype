@@ -46,6 +46,38 @@ export function ViewNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [markingRead, setMarkingRead] = useState(false);
+  const [pushState, setPushState] = useState<'idle' | 'requesting' | 'granted' | 'denied'>('idle');
+
+  useEffect(() => {
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'granted') setPushState('granted');
+    else if (Notification.permission === 'denied') setPushState('denied');
+  }, []);
+
+  async function enablePush() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    setPushState('requesting');
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') { setPushState('denied'); return; }
+      const reg = await navigator.serviceWorker.ready;
+      const vapidRes = await fetch('/api/push/vapid-key');
+      if (!vapidRes.ok) { setPushState('idle'); return; }
+      const { publicKey } = await vapidRes.json() as { publicKey: string };
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: publicKey,
+      });
+      await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sub),
+      });
+      setPushState('granted');
+    } catch {
+      setPushState('idle');
+    }
+  }
 
   useEffect(() => {
     fetch('/api/notifications')
@@ -96,6 +128,22 @@ export function ViewNotifications() {
           </button>
         )}
       </div>
+
+      {pushState !== 'granted' && pushState !== 'denied' && 'Notification' in window && (
+        <div style={{ marginBottom: 20, padding: '14px 18px', borderRadius: 12, border: '1px solid rgba(185,131,255,.3)', background: 'rgba(185,131,255,.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14, color: 'var(--ink)', marginBottom: 3 }}>Stay in the loop</div>
+            <div style={{ fontFamily: 'var(--f-b)', fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.45 }}>Get notified when artists you follow drop music or shows go on sale.</div>
+          </div>
+          <button
+            onClick={() => void enablePush()}
+            disabled={pushState === 'requesting'}
+            style={{ padding: '9px 18px', borderRadius: 9, border: 'none', cursor: 'pointer', background: '#b983ff', color: '#fff', fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 700, letterSpacing: '.06em', flexShrink: 0 }}
+          >
+            {pushState === 'requesting' ? 'Enabling…' : 'Enable Push'}
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

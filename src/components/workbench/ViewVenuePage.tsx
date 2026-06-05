@@ -319,6 +319,12 @@ function ShowsPanel({ venueName }: { venueName: string }) {
   function addShow(e: React.FormEvent) {
     e.preventDefault();
     if (!showTitle.trim() || !showDate) return;
+    const titleNorm = showTitle.trim().toLowerCase();
+    const duplicate = scheduledShows.find(s => s.title.toLowerCase() === titleNorm && s.date === showDate);
+    if (duplicate) {
+      alert(`A show named "${duplicate.title}" is already scheduled on ${showDate}. Change the title or date to add another.`);
+      return;
+    }
     const d = new Date(showDate + 'T00:00');
     const day = d.getDate();
     showDots.add(day);

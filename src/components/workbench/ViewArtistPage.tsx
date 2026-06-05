@@ -295,13 +295,20 @@ export function ViewArtistPage({ data }: { data: WorkbenchData }) {
         <div style={{ padding: '12px 14px', borderTop: '1px solid var(--line-2,rgba(255,255,255,.07))' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
             <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(244,239,233,.35)' }}>Page health</span>
-            <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, fontWeight: 700, color: '#22e5d4' }}>72%</span>
+            <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, fontWeight: 700, color: '#22e5d4' }}>{data.profileCompletion?.percent ?? 72}%</span>
           </div>
           <div style={{ height: 4, background: 'rgba(255,255,255,.07)', borderRadius: 99, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: '72%', background: 'linear-gradient(90deg,#22e5d4,#5fd38a)', borderRadius: 99 }} />
+            <div style={{ height: '100%', width: `${data.profileCompletion?.percent ?? 72}%`, background: 'linear-gradient(90deg,#22e5d4,#5fd38a)', borderRadius: 99 }} />
           </div>
-          <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: 'rgba(244,239,233,.35)', marginTop: 6 }}>Add bio to reach 80%</div>
+          <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: 'rgba(244,239,233,.35)', marginTop: 6 }}>
+            {data.profileCompletion?.missing?.[0] ? `Add ${data.profileCompletion.missing[0]} to improve` : 'Add bio to reach 80%'}
+          </div>
         </div>
+
+        {/* Onboarding checklist */}
+        {data.profileCompletion && data.profileCompletion.percent < 100 && (
+          <ArtistOnboardingChecklist missing={data.profileCompletion.missing} onGoTo={setMode} />
+        )}
       </div>
 
       {/* ── stage ── */}
@@ -516,6 +523,8 @@ export function ViewArtistPage({ data }: { data: WorkbenchData }) {
               <ChartSection title="Advertising Recommendations" subtitle="AI-suggested campaigns based on your audience data">
                 <AdvertisingRecs setMode={setMode} />
               </ChartSection>
+
+              <SimilarArtistsSection artistSlug={data.pageEditor?.slug ?? ''} />
             </div>
           </div>
         )}
@@ -632,7 +641,7 @@ export function ViewArtistPage({ data }: { data: WorkbenchData }) {
 
         {/* Mode: Press Kit */}
         {mode === 'presskit' && (
-          <PressKitPanel artistName={artistName} artistSlug="maya" />
+          <PressKitPanel artistName={artistName} artistSlug={data.pageEditor?.slug ?? 'maya'} />
         )}
       </div>
 
@@ -726,6 +735,85 @@ export function ViewArtistPage({ data }: { data: WorkbenchData }) {
   );
 }
 
+/* ── Artist Onboarding Checklist ─────────────────────────── */
+function ArtistOnboardingChecklist({ missing, onGoTo }: { missing: string[]; onGoTo: (m: CkMode) => void }) {
+  const [dismissed, setDismissed] = useState(false);
+  if (dismissed || missing.length === 0) return null;
+  const TASK_MAP: Record<string, { label: string; cta: string; mode: CkMode }> = {
+    bio:     { label: 'Write your artist bio', cta: 'Edit page', mode: 'page' },
+    photo:   { label: 'Add a press photo', cta: 'Library', mode: 'library' },
+    track:   { label: 'Upload your first track', cta: 'Library', mode: 'library' },
+    show:    { label: 'Schedule a show', cta: 'Tour', mode: 'tour' },
+    presskit:{ label: 'Complete your press kit', cta: 'Press Kit', mode: 'presskit' },
+  };
+  const tasks = missing.slice(0, 5).map(m => TASK_MAP[m.toLowerCase()] ?? { label: `Add ${m}`, cta: 'Edit page', mode: 'page' as CkMode });
+  return (
+    <div style={{ margin: '8px 10px', padding: '12px 14px', borderRadius: 10, background: 'rgba(255,184,74,.07)', border: '1px solid rgba(255,184,74,.2)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#ffb84a' }}>Getting started</span>
+        <button onClick={() => setDismissed(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(244,239,233,.3)', fontSize: 14, lineHeight: 1, padding: 2 }}>×</button>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {tasks.map((t, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+            <span style={{ fontFamily: 'var(--f-b,sans-serif)', fontSize: 11, color: 'rgba(244,239,233,.65)', flex: 1, lineHeight: 1.35 }}>{t.label}</span>
+            <button
+              onClick={() => onGoTo(t.mode)}
+              style={{ padding: '3px 8px', borderRadius: 5, border: 'none', cursor: 'pointer', background: 'rgba(255,184,74,.18)', color: '#ffb84a', fontFamily: 'var(--f-m,monospace)', fontSize: 9, fontWeight: 700, flexShrink: 0 }}
+            >{t.cta}</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Similar Artists Section ─────────────────────────────── */
+function SimilarArtistsSection({ artistSlug }: { artistSlug: string }) {
+  const [artists, setArtists] = useState<{ name: string; slug: string; reason: string }[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [fetched, setFetched] = useState(false);
+
+  useEffect(() => {
+    if (!artistSlug || fetched) return;
+    setFetched(true);
+    setLoading(true);
+    fetch(`/api/artists/${encodeURIComponent(artistSlug)}/sounds-like`)
+      .then(r => r.ok ? r.json() : null)
+      .then((d: { artists?: { name: string; slug: string; reason: string }[] } | null) => {
+        if (d?.artists?.length) setArtists(d.artists.slice(0, 6));
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [artistSlug, fetched]);
+
+  if (!loading && artists.length === 0) return null;
+
+  return (
+    <div style={{ marginBottom: 28 }}>
+      <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 11, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: 'rgba(244,239,233,.4)', marginBottom: 14 }}>Sounds Like</div>
+      {loading ? (
+        <div style={{ display: 'flex', gap: 10 }}>
+          {[1, 2, 3].map(i => <div key={i} style={{ width: 100, height: 60, borderRadius: 10, background: 'var(--bg-2)', animation: 'shimmer 1.4s infinite' }} />)}
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+          {artists.map(a => (
+            <a key={a.slug} href={`/artists/${a.slug}`} target="_blank" rel="noopener noreferrer" style={{
+              padding: '10px 14px', borderRadius: 10, textDecoration: 'none',
+              background: 'var(--bg-2,#121009)', border: '1px solid var(--line-2,rgba(255,255,255,.07))',
+              display: 'flex', flexDirection: 'column', gap: 3, minWidth: 120,
+            }}>
+              <span style={{ fontFamily: 'var(--f-d,sans-serif)', fontWeight: 700, fontSize: 13, color: 'var(--ink,#f4efe9)' }}>{a.name}</span>
+              <span style={{ fontFamily: 'var(--f-b,sans-serif)', fontSize: 11, color: 'rgba(244,239,233,.4)', lineHeight: 1.35 }}>{a.reason}</span>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── Press Kit Panel ─────────────────────────────────────── */
 function PressKitPanel({ artistName, artistSlug }: { artistName: string; artistSlug: string }) {
   const [bio, setBio] = useState(`${artistName} makes late-night songs for long drives. Based in Chicago, IL, their sound blends hazy guitar work with confessional lyrics that land somewhere between indie folk and alternative pop. Their debut EP, recorded live in a basement on Western Ave, has accumulated over 2,000 streams and counting.`);
@@ -744,6 +832,8 @@ function PressKitPanel({ artistName, artistSlug }: { artistName: string; artistS
   }
 
   function copyLink() {
+    const url = `${typeof window !== 'undefined' ? window.location.origin : 'https://ihype.fm'}/artists/${artistSlug}/epk`;
+    navigator.clipboard.writeText(url).catch(() => {});
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }

@@ -37,6 +37,7 @@ function buildSystemPrompt(context: {
   activeProfileTypes: string[];
   mode: string;
   upcomingShows?: string;
+  trendingArtists?: string;
 }) {
   const roles = context.activeProfileTypes.length
     ? context.activeProfileTypes.join(', ').toLowerCase()
@@ -45,6 +46,9 @@ function buildSystemPrompt(context: {
   const showsSection = context.upcomingShows
     ? `\nUpcoming shows the user can see:\n${context.upcomingShows}\n`
     : '';
+  const artistsSection = context.trendingArtists
+    ? `\nTrending artists (use slug for NAVIGATE_URL):\n${context.trendingArtists}\n`
+    : '';
 
   return `You are iHYPE's friendly guide — a music app assistant that helps users navigate and enjoy the platform.
 
@@ -52,20 +56,21 @@ User: ${context.userName}, based in ${context.city || 'unknown city'}.
 Their roles: ${roles}.
 Current mode: ${context.mode}.
 Currently viewing: ${context.view}.
-${showsSection}
+${showsSection}${artistsSection}
 ${VIEW_DESCRIPTIONS}
 
 ALWAYS respond with valid JSON in this exact shape:
 {
   "reply": "short friendly message (1-2 sentences max)",
-  "action": { "type": "NAVIGATE", "view": "<viewKey>" } | { "type": "OPEN_SEARCH" } | { "type": "DISMISS" } | null,
+  "action": { "type": "NAVIGATE", "view": "<viewKey>" } | { "type": "NAVIGATE_URL", "url": "<absolute-path-like-/artists/slug>" } | { "type": "OPEN_SEARCH" } | { "type": "DISMISS" } | null,
   "chips": ["chip 1", "chip 2", "chip 3"]
 }
 
 Rules:
 - Keep replies short and warm. Never use jargon like "hex ID" or "workbench".
 - Chips are quick-tap follow-ups (2-4 words each, max 3 chips).
-- If the user wants to go somewhere, set a NAVIGATE action.
+- If the user wants to go somewhere in the app, set a NAVIGATE action with the view key.
+- If the user wants to see a specific artist or show page, use NAVIGATE_URL with the path (e.g. /artists/slug-name).
 - If the user says done / bye / thanks / got it, use DISMISS.
 - If the user asks to search for something, use OPEN_SEARCH.
 - For listeners: focus on discovery, shows, and artists they might like.
@@ -89,6 +94,7 @@ export async function POST(request: Request) {
       activeProfileTypes: string[];
       mode: string;
       upcomingShows?: string;
+      trendingArtists?: string;
       history?: { role: 'user' | 'assistant'; content: string }[];
     };
   };
