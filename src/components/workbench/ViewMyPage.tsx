@@ -8,6 +8,13 @@ import { Panel, TrackCard } from './primitives';
 
 const STUB_ACCENT_PALETTE = ['#ff5029', '#b983ff', '#22e5d4', '#ff3e9a', '#ffb84a', '#4af0b0'];
 
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = window.atob(base64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
 function TicketStubQR({ code }: { code: string }) {
   const SIZE = 9;
   // Seed a simple hash from the code string for deterministic pixel pattern
@@ -185,6 +192,45 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
   const [anniversaryDismissed, setAnniversaryDismissed] = useState(false);
   const [degradedDismissed, setDegradedDismissed] = useState(false);
   const [streakData, setStreakData] = useState<{ streak: number; daysActive: number } | null>(null);
+  const [pushPrompt, setPushPrompt] = useState<'hidden' | 'visible' | 'subscribing' | 'done'>('hidden');
+
+  // Show push opt-in prompt after 3s, once, if not yet granted/dismissed
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('Notification' in window) || !('serviceWorker' in navigator)) return;
+    if (Notification.permission !== 'default') return;
+    if (localStorage.getItem('ihype_push_prompt_dismissed')) return;
+    const t = setTimeout(() => setPushPrompt('visible'), 3000);
+    return () => clearTimeout(t);
+  }, []);
+
+  async function enablePush() {
+    setPushPrompt('subscribing');
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') { setPushPrompt('hidden'); return; }
+      const reg = await navigator.serviceWorker.ready;
+      const keyRes = await fetch('/api/push/vapid-key');
+      const { key } = await keyRes.json() as { key: string | null };
+      if (!key) { setPushPrompt('done'); return; }
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(key),
+      });
+      await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sub.toJSON()),
+      });
+      setPushPrompt('done');
+    } catch {
+      setPushPrompt('hidden');
+    }
+  }
+
+  function dismissPush() {
+    localStorage.setItem('ihype_push_prompt_dismissed', '1');
+    setPushPrompt('hidden');
+  }
 
   const handleHype = async (showId: string) => {
     if (hypedIds.has(showId)) return; // already hyped
@@ -232,6 +278,31 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
           <span style={{ fontFamily: 'var(--f-m)', fontSize: 13, color: '#ffb84a', flex: 1 }}>Some data couldn't load — you're seeing a cached view.</span>
           <button onClick={() => window.location.reload()} style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: '#ffb84a', background: 'rgba(255,184,74,.15)', border: '1px solid rgba(255,184,74,.3)', borderRadius: 6, padding: '3px 10px', cursor: 'pointer' }}>Retry</button>
           <button onClick={() => setDegradedDismissed(true)} aria-label="Dismiss" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', padding: '2px 4px', lineHeight: 1, fontSize: 16 }}>×</button>
+        </div>
+      )}
+
+      {/* Push notification opt-in prompt */}
+      {pushPrompt === 'visible' && (
+        <div style={{ marginBottom: 16, padding: '12px 16px', borderRadius: 10, border: '1px solid rgba(34,229,212,.2)', background: 'rgba(34,229,212,.06)', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 18, flexShrink: 0 }}>🔔</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, color: 'var(--ink)', marginBottom: 2 }}>Stay in the loop</div>
+            <div style={{ fontFamily: 'var(--f-b)', fontSize: 12, color: 'var(--ink-2)', lineHeight: 1.4 }}>Get notified when someone HYPEs your tracks or a show goes live near you.</div>
+          </div>
+          <button onClick={enablePush} style={{ fontFamily: 'var(--f-m)', fontSize: 11, fontWeight: 700, letterSpacing: '.06em', color: '#22e5d4', background: 'rgba(34,229,212,.14)', border: '1px solid rgba(34,229,212,.35)', borderRadius: 7, padding: '6px 14px', cursor: 'pointer', whiteSpace: 'nowrap' }}>Enable</button>
+          <button onClick={dismissPush} aria-label="Dismiss" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', padding: '2px 4px', lineHeight: 1, fontSize: 16, flexShrink: 0 }}>×</button>
+        </div>
+      )}
+      {pushPrompt === 'subscribing' && (
+        <div style={{ marginBottom: 16, padding: '12px 16px', borderRadius: 10, border: '1px solid rgba(34,229,212,.2)', background: 'rgba(34,229,212,.06)', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: '#22e5d4' }}>Enabling notifications…</span>
+        </div>
+      )}
+      {pushPrompt === 'done' && (
+        <div style={{ marginBottom: 16, padding: '12px 16px', borderRadius: 10, border: '1px solid rgba(95,211,138,.2)', background: 'rgba(95,211,138,.06)', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 16 }}>✓</span>
+          <span style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: '#5fd38a' }}>Notifications enabled — you&apos;re all set.</span>
+          <button onClick={() => setPushPrompt('hidden')} aria-label="Dismiss" style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', padding: '2px 4px', lineHeight: 1, fontSize: 16 }}>×</button>
         </div>
       )}
 
