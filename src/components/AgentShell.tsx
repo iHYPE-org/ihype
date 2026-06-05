@@ -46,12 +46,17 @@ function uid() {
   return Math.random().toString(36).slice(2, 10);
 }
 
-// Web Speech API — not in all TypeScript lib sets; access via cast
+// Web Speech API — not present in all TypeScript DOM lib versions; define locally
+type SpeechRecognitionResultItem = { transcript: string };
+type SpeechRecognitionResult = { [index: number]: SpeechRecognitionResultItem };
+type SpeechRecognitionResultList = { [index: number]: SpeechRecognitionResult };
+type LocalSpeechRecognitionEvent = { results: SpeechRecognitionResultList };
+
 type SpeechRecognitionInstance = {
   lang: string;
   interimResults: boolean;
   maxAlternatives: number;
-  onresult: ((e: SpeechRecognitionEvent) => void) | null;
+  onresult: ((e: LocalSpeechRecognitionEvent) => void) | null;
   onend: (() => void) | null;
   onerror: (() => void) | null;
   start: () => void;
@@ -202,7 +207,7 @@ export function AgentShell({ data, currentView, onNavigate, onOpenSearch }: Agen
     recog.lang = 'en-US';
     recog.interimResults = false;
     recog.maxAlternatives = 1;
-    recog.onresult = (e: SpeechRecognitionEvent) => {
+    recog.onresult = (e: LocalSpeechRecognitionEvent) => {
       const transcript = e.results[0]?.[0]?.transcript ?? '';
       if (transcript) sendMessage(transcript);
     };
