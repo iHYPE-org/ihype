@@ -331,6 +331,57 @@ export function AgentShell({ data, currentView, onNavigate, onOpenSearch }: Agen
 
   if (!mounted) return null;
 
+  // ── Post-mode tip overlay — must precede the mode === null check ──────────
+  // selectMode sets pendingMode/showTip without changing mode, so this guard
+  // must run first or the onboarding screen will re-render instead of the tip.
+  if (showTip && pendingMode) {
+    const tip = MODE_TIPS[pendingMode];
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 9999,
+        background: 'rgba(10,8,6,0.97)',
+        backdropFilter: 'blur(12px)',
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        padding: '24px',
+        animation: 'agentFadeIn .3s ease-out both',
+      }}>
+        <div style={{ fontSize: 44, marginBottom: 16 }}>{tip.icon}</div>
+        <h2 style={{ color: '#fff', fontSize: 20, fontWeight: 700, margin: '0 0 20px', textAlign: 'center', maxWidth: '32ch' }}>
+          {tip.headline}
+        </h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 380, marginBottom: 32 }}>
+          {tip.bullets.map((b, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+              <div style={{
+                width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
+                background: 'linear-gradient(135deg, #ff5029, #ff3e9a)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 12, color: '#fff', fontWeight: 700, marginTop: 1,
+              }}>
+                {i + 1}
+              </div>
+              <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, lineHeight: 1.5 }}>{b}</div>
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={() => confirmMode(pendingMode)}
+          style={{
+            padding: '14px 32px', borderRadius: 12,
+            background: 'linear-gradient(135deg, #ff5029, #ff3e9a)',
+            border: 'none', color: '#fff',
+            fontFamily: 'var(--f-m, sans-serif)', fontSize: 15, fontWeight: 700,
+            cursor: 'pointer',
+            boxShadow: '0 4px 20px rgba(255,80,41,0.4)',
+          }}
+        >
+          Got it — let&apos;s go →
+        </button>
+      </div>
+    );
+  }
+
   // ── Onboarding overlay (first visit) ──────────────────────────────────────
   if (mode === null) {
     return (
@@ -392,55 +443,6 @@ export function AgentShell({ data, currentView, onNavigate, onOpenSearch }: Agen
           </button>
         </div>
       </>
-    );
-  }
-
-  // ── Post-mode tip overlay ─────────────────────────────────────────────────
-  if (showTip && pendingMode) {
-    const tip = MODE_TIPS[pendingMode];
-    return (
-      <div style={{
-        position: 'fixed', inset: 0, zIndex: 9999,
-        background: 'rgba(10,8,6,0.97)',
-        backdropFilter: 'blur(12px)',
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        padding: '24px',
-        animation: 'agentFadeIn .3s ease-out both',
-      }}>
-        <div style={{ fontSize: 44, marginBottom: 16 }}>{tip.icon}</div>
-        <h2 style={{ color: '#fff', fontSize: 20, fontWeight: 700, margin: '0 0 20px', textAlign: 'center', maxWidth: '32ch' }}>
-          {tip.headline}
-        </h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 380, marginBottom: 32 }}>
-          {tip.bullets.map((b, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-              <div style={{
-                width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
-                background: 'linear-gradient(135deg, #ff5029, #ff3e9a)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 12, color: '#fff', fontWeight: 700, marginTop: 1,
-              }}>
-                {i + 1}
-              </div>
-              <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, lineHeight: 1.5 }}>{b}</div>
-            </div>
-          ))}
-        </div>
-        <button
-          onClick={() => confirmMode(pendingMode)}
-          style={{
-            padding: '14px 32px', borderRadius: 12,
-            background: 'linear-gradient(135deg, #ff5029, #ff3e9a)',
-            border: 'none', color: '#fff',
-            fontFamily: 'var(--f-m, sans-serif)', fontSize: 15, fontWeight: 700,
-            cursor: 'pointer',
-            boxShadow: '0 4px 20px rgba(255,80,41,0.4)',
-          }}
-        >
-          Got it — let&apos;s go →
-        </button>
-      </div>
     );
   }
 
