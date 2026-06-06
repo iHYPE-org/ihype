@@ -1813,69 +1813,391 @@ function esc(s: string) {
 }
 
 /* ── AdvertisingRecs ─────────────────────────────────────── */
+type CampaignStatus = 'idle' | 'building' | 'active' | 'completed';
+
+type AdRec = {
+  id: string;
+  color: string;
+  icon: string;
+  title: string;
+  body: string;
+  action: string;
+  score: number; // 0–100 urgency
+  scoreLabel: string;
+  reachLow: number;
+  reachHigh: number;
+  sparkline: number[]; // 7 values 0–100
+  targets: string[];
+  onAction?: () => void;
+};
+
+function MiniSparkline({ values, color }: { values: number[]; color: string }) {
+  const max = Math.max(...values, 1);
+  const w = 56, h = 24;
+  const pts = values.map((v, i) => `${Math.round((i / (values.length - 1)) * w)},${Math.round(h - (v / max) * h)}`).join(' ');
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ overflow: 'visible' }}>
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" opacity={0.8} />
+      <circle cx={pts.split(' ').at(-1)!.split(',')[0]} cy={pts.split(' ').at(-1)!.split(',')[1]} r="2.5" fill={color} />
+    </svg>
+  );
+}
+
+function ScorePill({ score, label }: { score: number; label: string }) {
+  const color = score >= 80 ? '#ff5029' : score >= 60 ? '#ffb84a' : '#22e5d4';
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+      <div style={{ width: 28, height: 28, borderRadius: '50%', border: `2px solid ${color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, position: 'relative' }}>
+        <svg viewBox="0 0 36 36" width="28" height="28" style={{ position: 'absolute', inset: 0 }}>
+          <circle cx="18" cy="18" r="15.9" fill="none" stroke={`${color}22`} strokeWidth="3.2" />
+          <circle cx="18" cy="18" r="15.9" fill="none" stroke={color} strokeWidth="3.2"
+            strokeDasharray={`${(score / 100) * 100} 100`}
+            strokeDashoffset="25"
+            strokeLinecap="round"
+            transform="rotate(-90 18 18)"
+          />
+        </svg>
+        <span style={{ fontFamily: 'var(--f-d,sans-serif)', fontSize: 8, fontWeight: 800, color, position: 'relative', zIndex: 1 }}>{score}</span>
+      </div>
+      <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: 'rgba(244,239,233,.45)', lineHeight: 1.3, maxWidth: 80 }}>{label}</span>
+    </div>
+  );
+}
+
+function CampaignBuilder({ rec, onLaunch, onClose }: {
+  rec: AdRec;
+  onLaunch: (budget: number, days: number, targets: string[]) => void;
+  onClose: () => void;
+}) {
+  const [budget, setBudget] = useState(25);
+  const [days, setDays] = useState(7);
+  const [targets, setTargets] = useState<string[]>(rec.targets.slice(0, 2));
+
+  const reach = Math.round((budget / 25) * ((rec.reachLow + rec.reachHigh) / 2) * (days / 7));
+  const cpm = ((budget / reach) * 1000).toFixed(2);
+
+  const allTargets = ['Chicago', 'Milwaukee', 'Seeds Deck', 'Radio DJs', 'Genre Match', 'Similar Artists'];
+
+  return (
+    <div style={{ marginTop: 14, padding: '16px 18px', background: 'rgba(255,255,255,.04)', borderRadius: 10, border: '1px solid rgba(255,255,255,.08)' }}>
+      <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(244,239,233,.4)', marginBottom: 14 }}>Campaign builder</div>
+
+      {/* Budget slider */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+          <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 11, color: 'rgba(244,239,233,.5)' }}>Budget</span>
+          <span style={{ fontFamily: 'var(--f-d,sans-serif)', fontWeight: 800, fontSize: 14, color: rec.color }}>${budget}</span>
+        </div>
+        <input
+          type="range" min={5} max={500} step={5} value={budget}
+          onChange={e => setBudget(Number(e.target.value))}
+          style={{ width: '100%', accentColor: rec.color, cursor: 'pointer' }}
+        />
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: 'rgba(244,239,233,.3)', marginTop: 2 }}>
+          <span>$5</span><span>$500</span>
+        </div>
+      </div>
+
+      {/* Duration */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 11, color: 'rgba(244,239,233,.5)', marginBottom: 8 }}>Duration</div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {[3, 7, 14].map(d => (
+            <button key={d} onClick={() => setDays(d)} style={{
+              flex: 1, padding: '7px 0', borderRadius: 7, border: `1px solid ${days === d ? `${rec.color}60` : 'rgba(255,255,255,.1)'}`,
+              background: days === d ? `rgba(${hexToRgb(rec.color)},.12)` : 'transparent',
+              color: days === d ? rec.color : 'rgba(244,239,233,.45)',
+              fontFamily: 'var(--f-m,monospace)', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+            }}>
+              {d}d<br />
+              <span style={{ fontSize: 9, fontWeight: 400 }}>${(budget / d).toFixed(1)}/day</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Target selector */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 11, color: 'rgba(244,239,233,.5)', marginBottom: 8 }}>Targets</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {allTargets.map(t => {
+            const on = targets.includes(t);
+            return (
+              <button key={t} onClick={() => setTargets(prev => on ? prev.filter(x => x !== t) : [...prev, t])} style={{
+                padding: '4px 10px', borderRadius: 99, border: `1px solid ${on ? `${rec.color}50` : 'rgba(255,255,255,.1)'}`,
+                background: on ? `rgba(${hexToRgb(rec.color)},.1)` : 'transparent',
+                color: on ? rec.color : 'rgba(244,239,233,.4)',
+                fontFamily: 'var(--f-m,monospace)', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+              }}>{t}</button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Reach estimate */}
+      <div style={{ padding: '10px 14px', borderRadius: 8, background: `rgba(${hexToRgb(rec.color)},.07)`, border: `1px solid rgba(${hexToRgb(rec.color)},.15)`, marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <div style={{ fontFamily: 'var(--f-d,sans-serif)', fontWeight: 800, fontSize: 18, color: rec.color }}>{reach.toLocaleString()}</div>
+          <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: 'rgba(244,239,233,.4)', marginTop: 2 }}>est. impressions</div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontFamily: 'var(--f-d,sans-serif)', fontWeight: 700, fontSize: 14, color: 'rgba(244,239,233,.7)' }}>${cpm} CPM</div>
+          <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: 'rgba(244,239,233,.4)', marginTop: 2 }}>{days}-day window</div>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button onClick={onClose} style={{ flex: 1, padding: '9px 0', borderRadius: 8, border: '1px solid rgba(255,255,255,.1)', background: 'transparent', color: 'rgba(244,239,233,.4)', fontFamily: 'var(--f-m,monospace)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+        <button
+          onClick={() => onLaunch(budget, days, targets)}
+          disabled={targets.length === 0}
+          style={{ flex: 2, padding: '9px 0', borderRadius: 8, border: 'none', background: targets.length === 0 ? 'rgba(255,255,255,.1)' : rec.color, color: targets.length === 0 ? 'rgba(244,239,233,.3)' : '#fff', fontFamily: 'var(--f-m,monospace)', fontSize: 11, fontWeight: 700, cursor: targets.length === 0 ? 'default' : 'pointer', letterSpacing: '.06em' }}
+        >🚀 Launch Campaign</button>
+      </div>
+    </div>
+  );
+}
+
 function AdvertisingRecs({ setMode }: { setMode: (m: CkMode) => void }) {
-  const recs = [
+  const [statuses, setStatuses] = useState<Record<string, CampaignStatus>>({});
+  const [building, setBuilding] = useState<string | null>(null);
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const [lastDismissed, setLastDismissed] = useState<string | null>(null);
+  const [activeSpend, setActiveSpend] = useState<Record<string, { budget: number; days: number; elapsed: number }>>({});
+
+  const recs: AdRec[] = [
     {
+      id: 'milwaukee-boost',
       color: '#ffb84a',
+      icon: '📍',
       title: 'Boost Milwaukee reach',
-      body: 'Your save rate in Milwaukee jumped 8pts this week. Run a 3-day local boost to capture momentum.',
-      action: 'Create campaign →',
-      onAction: () => {},
+      body: 'Your save rate in Milwaukee jumped 8pts this week — 410 listeners, trending window closing. 3-day local boost to capture momentum.',
+      action: 'Create campaign',
+      score: 87,
+      scoreLabel: 'trending window closes in 2 days',
+      reachLow: 2400,
+      reachHigh: 3800,
+      sparkline: [30, 38, 42, 55, 68, 79, 88],
+      targets: ['Milwaukee', 'Genre Match'],
     },
     {
+      id: 'seed-release',
       color: '#22e5d4',
+      icon: '🌱',
       title: 'Seed a new release',
       body: 'Tracks submitted to Seeds in the first 48h after upload get 3× more saves. Your next drop should go to Seeds day-of-release.',
-      action: 'Submit to Seeds →',
-      onAction: () => {},
+      action: 'Create campaign',
+      score: 74,
+      scoreLabel: 'next optimal drop window: Friday',
+      reachLow: 1800,
+      reachHigh: 3200,
+      sparkline: [55, 50, 62, 58, 65, 70, 74],
+      targets: ['Seeds Deck', 'Genre Match'],
     },
     {
+      id: 'dj-radio',
       color: '#b983ff',
+      icon: '📻',
       title: 'DJ radio placement',
-      body: '7 DJs in your genre have open radio show slots this week. Enable free use on your top track to get placed.',
-      action: 'Enable free use →',
+      body: '7 DJs in your genre have open radio show slots this week. Enable free use on your top track to get placed on air.',
+      action: 'Enable & boost',
+      score: 61,
+      scoreLabel: '7 open slots this week',
+      reachLow: 3500,
+      reachHigh: 6000,
+      sparkline: [60, 58, 62, 59, 61, 63, 61],
+      targets: ['Radio DJs', 'Chicago'],
       onAction: () => setMode('library'),
     },
+    {
+      id: 'playlist-pitch',
+      color: '#ff3e9a',
+      icon: '🎵',
+      title: 'Playlist pitch opportunity',
+      body: '3 curators who cover Alt-Indie have open submission slots. A placement typically adds 400–900 streams in the first week.',
+      action: 'Create campaign',
+      score: 68,
+      scoreLabel: 'submission windows close Sunday',
+      reachLow: 1200,
+      reachHigh: 2800,
+      sparkline: [40, 45, 48, 52, 60, 65, 68],
+      targets: ['Genre Match', 'Similar Artists'],
+    },
+    {
+      id: 'show-promo',
+      color: '#ff5029',
+      icon: '🎟️',
+      title: 'Upcoming show promo',
+      body: 'You have a show in 12 days. Campaigns started 7–10 days out sell 2.4× more tickets vs. last-minute pushes.',
+      action: 'Create campaign',
+      score: 82,
+      scoreLabel: 'optimal window closes in 3 days',
+      reachLow: 2000,
+      reachHigh: 4500,
+      sparkline: [20, 30, 45, 60, 72, 80, 82],
+      targets: ['Chicago', 'Seeds Deck'],
+    },
+    {
+      id: 'crosscity',
+      color: '#4af0b0',
+      icon: '🌆',
+      title: 'Cross-city push',
+      body: 'Minneapolis listeners are saving your tracks at a 31% rate — above your avg. A targeted boost could build a second home market.',
+      action: 'Create campaign',
+      score: 55,
+      scoreLabel: 'emerging opportunity',
+      reachLow: 900,
+      reachHigh: 2100,
+      sparkline: [20, 28, 33, 38, 44, 50, 55],
+      targets: ['Genre Match', 'Similar Artists'],
+    },
   ];
+
+  const visible = recs.filter(r => !dismissed.has(r.id));
+
+  function launch(id: string, budget: number, days: number) {
+    setStatuses(s => ({ ...s, [id]: 'active' }));
+    setBuilding(null);
+    setActiveSpend(s => ({ ...s, [id]: { budget, days, elapsed: 0 } }));
+    // Simulate spend ticking
+    const interval = setInterval(() => {
+      setActiveSpend(s => {
+        const cur = s[id];
+        if (!cur || cur.elapsed >= cur.days) { clearInterval(interval); setStatuses(st => ({ ...st, [id]: 'completed' })); return s; }
+        return { ...s, [id]: { ...cur, elapsed: cur.elapsed + 1 / 288 } }; // ~5min ticks at 1/288 day
+      });
+    }, 5000);
+  }
+
+  function dismiss(id: string) {
+    setDismissed(prev => new Set([...prev, id]));
+    setLastDismissed(id);
+    setTimeout(() => setLastDismissed(d => d === id ? null : d), 5000);
+  }
+
+  function undoDismiss(id: string) {
+    setDismissed(prev => { const n = new Set(prev); n.delete(id); return n; });
+    setLastDismissed(null);
+  }
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {recs.map(rec => (
-        <div
-          key={rec.title}
-          style={{
-            background: `rgba(${hexToRgb(rec.color)},.05)`,
-            border: `1px solid rgba(${hexToRgb(rec.color)},.18)`,
-            borderRadius: 10,
-            padding: '14px 16px',
-            display: 'flex',
-            gap: 12,
-            alignItems: 'flex-start',
-          }}
-        >
-          <span style={{ fontSize: 14, marginTop: 1, color: rec.color }}>✦</span>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: 'var(--f-d,sans-serif)', fontSize: 13, fontWeight: 700, color: rec.color, marginBottom: 4 }}>{rec.title}</div>
-            <div style={{ fontFamily: 'var(--f-b,sans-serif)', fontSize: 13, color: 'rgba(244,239,233,.6)', lineHeight: 1.5, marginBottom: 10 }}>{rec.body}</div>
-            <button
-              onClick={rec.onAction}
+    <div>
+      {/* Undo toast */}
+      {lastDismissed && (
+        <div style={{ marginBottom: 12, padding: '9px 14px', borderRadius: 8, background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <span style={{ fontFamily: 'var(--f-b,sans-serif)', fontSize: 13, color: 'rgba(244,239,233,.6)' }}>Recommendation dismissed</span>
+          <button onClick={() => undoDismiss(lastDismissed)} style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,.15)', background: 'transparent', color: 'rgba(244,239,233,.7)', fontFamily: 'var(--f-m,monospace)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Undo</button>
+        </div>
+      )}
+
+      {visible.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '32px 0', color: 'rgba(244,239,233,.4)', fontFamily: 'var(--f-b,sans-serif)', fontSize: 14 }}>
+          All recommendations dismissed. Check back after your next upload or show.
+        </div>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 14 }}>
+        {visible.map(rec => {
+          const status = statuses[rec.id] ?? 'idle';
+          const spend = activeSpend[rec.id];
+          const isBuilding = building === rec.id;
+
+          return (
+            <div
+              key={rec.id}
               style={{
-                background: 'transparent',
-                border: `1px solid rgba(${hexToRgb(rec.color)},.3)`,
-                borderRadius: 6,
-                padding: '5px 12px',
-                fontFamily: 'var(--f-m,monospace)',
-                fontSize: 11,
-                fontWeight: 700,
-                color: rec.color,
-                cursor: 'pointer',
-                letterSpacing: '.04em',
+                background: `rgba(${hexToRgb(rec.color)},.05)`,
+                border: `1px solid rgba(${hexToRgb(rec.color)},${status === 'active' ? '.4' : '.18'})`,
+                borderRadius: 12,
+                padding: '16px 18px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 0,
+                position: 'relative',
+                transition: 'border-color .2s',
               }}
             >
-              {rec.action}
-            </button>
-          </div>
-        </div>
-      ))}
+              {/* Dismiss button */}
+              {status === 'idle' && (
+                <button onClick={() => dismiss(rec.id)} style={{ position: 'absolute', top: 10, right: 10, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(244,239,233,.25)', fontSize: 16, lineHeight: 1, padding: 4, borderRadius: 4 }} title="Dismiss">×</button>
+              )}
+
+              {/* Header row */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 10 }}>
+                <span style={{ fontSize: 20, lineHeight: 1.2, flexShrink: 0 }}>{rec.icon}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: 'var(--f-d,sans-serif)', fontSize: 14, fontWeight: 700, color: rec.color, marginBottom: 3, paddingRight: 20 }}>{rec.title}</div>
+                  <div style={{ fontFamily: 'var(--f-b,sans-serif)', fontSize: 12, color: 'rgba(244,239,233,.55)', lineHeight: 1.5 }}>{rec.body}</div>
+                </div>
+              </div>
+
+              {/* Score + sparkline */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid rgba(${hexToRgb(rec.color)},.12)` }}>
+                <ScorePill score={rec.score} label={rec.scoreLabel} />
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6 }}>
+                  <MiniSparkline values={rec.sparkline} color={rec.color} />
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: 'rgba(244,239,233,.35)' }}>est. reach</div>
+                    <div style={{ fontFamily: 'var(--f-d,sans-serif)', fontWeight: 700, fontSize: 12, color: rec.color }}>{(rec.reachLow / 1000).toFixed(1)}k–{(rec.reachHigh / 1000).toFixed(1)}k</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status: active */}
+              {status === 'active' && spend && (
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--f-m,monospace)', fontSize: 11, color: 'rgba(244,239,233,.5)', marginBottom: 5 }}>
+                    <span style={{ color: rec.color, fontWeight: 700 }}>● LIVE</span>
+                    <span>${(spend.budget * (spend.elapsed / spend.days)).toFixed(2)} of ${spend.budget} spent</span>
+                  </div>
+                  <div style={{ height: 4, background: 'rgba(255,255,255,.08)', borderRadius: 99, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${Math.min(100, (spend.elapsed / spend.days) * 100)}%`, background: rec.color, borderRadius: 99, transition: 'width 1s' }} />
+                  </div>
+                  <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: 'rgba(244,239,233,.35)', marginTop: 4 }}>Day {Math.ceil(spend.elapsed + 0.01)} of {spend.days}</div>
+                </div>
+              )}
+
+              {/* Status: completed */}
+              {status === 'completed' && (
+                <div style={{ padding: '10px 12px', borderRadius: 8, background: 'rgba(34,229,212,.07)', border: '1px solid rgba(34,229,212,.2)', marginBottom: 10, fontFamily: 'var(--f-b,sans-serif)', fontSize: 12, color: '#22e5d4', lineHeight: 1.5 }}>
+                  ✓ Campaign complete — check Insights for results
+                </div>
+              )}
+
+              {/* Campaign builder (expanded) */}
+              {isBuilding && status === 'idle' && (
+                <CampaignBuilder
+                  rec={rec}
+                  onLaunch={(budget, days) => launch(rec.id, budget, days)}
+                  onClose={() => setBuilding(null)}
+                />
+              )}
+
+              {/* CTA */}
+              {!isBuilding && status === 'idle' && (
+                <button
+                  onClick={() => { rec.onAction?.(); setBuilding(rec.id); }}
+                  style={{
+                    alignSelf: 'flex-start',
+                    background: 'transparent',
+                    border: `1px solid rgba(${hexToRgb(rec.color)},.3)`,
+                    borderRadius: 6,
+                    padding: '6px 14px',
+                    fontFamily: 'var(--f-m,monospace)',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: rec.color,
+                    cursor: 'pointer',
+                    letterSpacing: '.04em',
+                  }}
+                >
+                  {rec.action} →
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
