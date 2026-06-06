@@ -394,6 +394,10 @@ const nextConfig = {
         headers: securityHeaders
       },
       {
+        source: '/sw.js',
+        headers: [{ key: 'Cache-Control', value: 'no-cache, no-store' }]
+      },
+      {
         source: '/:path*.html',
         headers: [{ key: 'Cache-Control', value: 'no-cache, must-revalidate' }]
       },
