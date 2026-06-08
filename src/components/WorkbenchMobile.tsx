@@ -3027,6 +3027,7 @@ function ManageConsole({ data, onExit }: { data: WorkbenchData; onExit: () => vo
 
 // ─── Main mobile export ───────────────────────────────────────
 export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
+  const [liveData, setLiveData] = useState<WorkbenchData>(data);
   const [tab, setTab] = useState<MobileTab>('listen');
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0.42);
@@ -3040,8 +3041,16 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
   const pullDeltaRef = useRef(0);
   const [pullDelta, setPullDelta] = useState(0);
 
-  const currentTrack = data.tracks[currentTrackIdx % Math.max(data.tracks.length, 1)];
-  const track = currentTrack ?? data.tracks[0];
+  // Client-side revalidation — clears degraded banner after DB cold-start recovery
+  useEffect(() => {
+    fetch('/api/workbench')
+      .then(r => r.ok ? r.json() : null)
+      .then((freshData: WorkbenchData | null) => { if (freshData) setLiveData(freshData); })
+      .catch(() => {});
+  }, []);
+
+  const currentTrack = liveData.tracks[currentTrackIdx % Math.max(liveData.tracks.length, 1)];
+  const track = currentTrack ?? liveData.tracks[0];
 
   // Real audio playback
   useEffect(() => {
@@ -3066,7 +3075,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
       if (audio.duration) setProgress(audio.currentTime / audio.duration);
     };
     const onEnded = () => {
-      setCurrentTrackIdx(ci => (ci + 1) % Math.max(data.tracks.length, 1));
+      setCurrentTrackIdx(ci => (ci + 1) % Math.max(liveData.tracks.length, 1));
       setProgress(0);
     };
     audio.addEventListener('timeupdate', onTimeUpdate);
@@ -3075,7 +3084,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
       audio.removeEventListener('timeupdate', onTimeUpdate);
       audio.removeEventListener('ended', onEnded);
     };
-  }, [data.tracks.length]);
+  }, [liveData.tracks.length]);
 
   // Fallback tick when no mediaUrl
   useEffect(() => {
@@ -3147,10 +3156,10 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
 
   const screenEl = (() => {
     switch (tab) {
-      case 'listen': return <ScreenListen data={data} onPlay={setCurrentTrackIdx} onExpand={() => setExpanded(true)} currentIdx={currentTrackIdx} />;
-      case 'seeds':  return <ScreenSeeds data={data} />;
-      case 'shows':  return <ScreenShowsNew data={data} />;
-      case 'you':    return <ScreenYouNew data={data} onManage={() => setManageMode(true)} />;
+      case 'listen': return <ScreenListen data={liveData} onPlay={setCurrentTrackIdx} onExpand={() => setExpanded(true)} currentIdx={currentTrackIdx} />;
+      case 'seeds':  return <ScreenSeeds data={liveData} />;
+      case 'shows':  return <ScreenShowsNew data={liveData} />;
+      case 'you':    return <ScreenYouNew data={liveData} onManage={() => setManageMode(true)} />;
     }
   })();
 
@@ -3159,7 +3168,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
       <div style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', background: T.bg, color: T.ink, fontFamily: T.fb, overflow: 'hidden' }}>
         <style>{eqCss}</style>
         <audio ref={audioRef} preload="metadata" style={{ display: 'none' }} />
-        <ManageConsole data={data} onExit={() => setManageMode(false)} />
+        <ManageConsole data={liveData} onExit={() => setManageMode(false)} />
       </div>
     );
   }
@@ -3168,7 +3177,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
     <div style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', background: T.bg, color: T.ink, fontFamily: T.fb, overflow: 'hidden' }}>
       <style>{eqCss}</style>
       <style>{`@keyframes hypePop { from { transform: scale(.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }`}</style>
-      {data.degraded && (
+      {liveData.degraded && (
         <div style={{ background: '#f59e0b', color: '#000', textAlign: 'center', padding: '6px 12px', fontSize: 12, fontWeight: 600, position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999 }}>
           Having trouble connecting — some data may be outdated
         </div>
