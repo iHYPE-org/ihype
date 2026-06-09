@@ -84,7 +84,7 @@ export function MobileScreenTicketing({ data, onHypersSheet, onRadioTab }: {
                 <div style={{ height: 110, position: 'relative', overflow: 'hidden', background: `linear-gradient(135deg,${data.tracks[i % data.tracks.length]?.color ?? T.accent},${T.bg4})` }}>
                   <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,transparent 40%,rgba(0,0,0,.8) 100%)' }} />
                   <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 2 }}>
-                    <WMPill tone={e.status === 'TONIGHT' ? 'live' : e.status === 'NEAR SOLD' ? 'pink' : 'soft'}>
+                    <WMPill tone={e.status === 'TONIGHT' ? 'live' : e.status === 'NEAR SOLD' ? 'pink' : e.status === 'THIS WEEK' ? 'amber' : 'soft'}>
                       {e.status === 'TONIGHT' && <span style={{ width: 5, height: 5, borderRadius: '50%', background: T.accent, display: 'inline-block' }} />}
                       {e.status}
                     </WMPill>

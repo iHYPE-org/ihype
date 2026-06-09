@@ -2676,10 +2676,12 @@ function ScreenShowsNew({ data }: { data: WorkbenchData }) {
   }
 
   const tonight = shows.filter(s => s.status === 'TONIGHT');
+  const nearSold = shows.filter(s => s.status === 'NEAR SOLD');
   const thisWeek = shows.filter(s => s.status === 'THIS WEEK' || s.status === 'UPCOMING');
-  const sections = [
-    { label: 'TONIGHT', items: tonight },
-    { label: 'THIS WEEK', items: thisWeek },
+  const sections: { label: string; items: WbShow[]; hot?: boolean; accent?: string }[] = [
+    { label: 'TONIGHT',   items: tonight,  hot: true,  accent: T.accent },
+    { label: 'NEAR SOLD', items: nearSold, hot: true,  accent: T.pink   },
+    { label: 'THIS WEEK', items: thisWeek, hot: false, accent: T.teal   },
   ].filter(s => s.items.length > 0);
 
   const totalShows = shows.length;
@@ -2711,23 +2713,38 @@ function ScreenShowsNew({ data }: { data: WorkbenchData }) {
 
         {sections.map(sec => (
           <div key={sec.label} style={{ marginBottom: 18 }}>
-            <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, letterSpacing: '.18em', marginBottom: 8, textTransform: 'uppercase' }}>{sec.label}</div>
+            <div style={{ fontFamily: T.fm, fontSize: 9, color: sec.hot ? sec.accent : T.ink3, letterSpacing: '.18em', marginBottom: 8, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 5 }}>
+              {sec.hot && <span style={{ width: 5, height: 5, borderRadius: 99, background: sec.accent, display: 'inline-block', flexShrink: 0 }} />}
+              {sec.label}
+            </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {sec.items.map(show => (
-                <div key={show.id} onClick={() => { setSelected(show); setShowView('detail'); }}
-                  style={{ padding: 12, background: T.bg2, border: `1px solid ${T.line}`, borderRadius: 12, display: 'flex', alignItems: 'center', gap: 11, cursor: 'pointer' }}>
-                  <AlbumArt c={show.hype > 100 ? T.accent : T.teal} size={48} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 14, letterSpacing: '-.01em' }}>{show.name}</div>
-                    <div style={{ fontFamily: T.fb, fontSize: 11.5, color: T.ink2, marginTop: 2 }}>{show.venue}</div>
-                    <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, marginTop: 3, letterSpacing: '.06em' }}>{show.date} · {show.time}</div>
+              {sec.items.map(show => {
+                const pct = show.capacity > 0 ? Math.round(show.sold / show.capacity * 100) : 0;
+                const cardAccent = show.status === 'TONIGHT' ? T.accent : show.status === 'NEAR SOLD' ? T.pink : T.teal;
+                return (
+                  <div key={show.id} onClick={() => { setSelected(show); setShowView('detail'); }}
+                    style={{ background: T.bg2, border: `1px solid ${show.status === 'NEAR SOLD' ? 'rgba(255,62,154,.25)' : T.line}`, borderRadius: 12, overflow: 'hidden', cursor: 'pointer' }}>
+                    <div style={{ padding: 12, display: 'flex', alignItems: 'center', gap: 11 }}>
+                      <AlbumArt c={cardAccent} size={48} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 14, letterSpacing: '-.01em' }}>{show.name}</div>
+                        <div style={{ fontFamily: T.fb, fontSize: 11.5, color: T.ink2, marginTop: 2 }}>{show.venue}</div>
+                        <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, marginTop: 3, letterSpacing: '.06em' }}>{show.date} · {show.time}</div>
+                      </div>
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 15 }}>${show.price}</div>
+                        <div style={{ fontFamily: T.fm, fontSize: 8, color: T.ink3, marginTop: 2, letterSpacing: '.1em' }}>FACE</div>
+                        {pct > 0 && <div style={{ fontFamily: T.fm, fontSize: 8, color: pct >= 85 ? T.pink : T.ink3, marginTop: 3, letterSpacing: '.06em' }}>{pct}% sold</div>}
+                      </div>
+                    </div>
+                    {pct > 0 && (
+                      <div style={{ height: 3, background: T.bg3 }}>
+                        <div style={{ height: '100%', width: `${pct}%`, background: pct >= 85 ? `linear-gradient(90deg,${T.accent},${T.pink})` : `linear-gradient(90deg,${T.teal},${T.accent})`, transition: 'width .3s' }} />
+                      </div>
+                    )}
                   </div>
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 15 }}>${show.price}</div>
-                    <div style={{ fontFamily: T.fm, fontSize: 8, color: T.ink3, marginTop: 2, letterSpacing: '.1em' }}>FACE</div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ))}
