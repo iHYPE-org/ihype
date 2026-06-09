@@ -12,6 +12,14 @@ type MoodKey = 'dark' | 'light';
 type ApTab = 'sections' | 'photos' | 'music' | 'links' | 'library';
 
 interface LibItem { id: string; label: string; kw: string[]; bg: string; }
+interface PhotoItem { id: string; name: string; url: string; hero: boolean; }
+interface TrackItem { id: string; name: string; dur: string; }
+interface SectionDef { id: string; label: string; icon: string; on: boolean; }
+interface PressQuote { q: string; pub: string; yr: string; }
+interface PressData { quotes: PressQuote[]; mentions: string; }
+interface ReleaseData { title: string; type: string; date: string; artSrc: string; streams: Record<string, string>; }
+interface BookingData { genres: string[]; market: string; contact: string; cap: string; note: string; }
+interface NewsletterData { headline: string; cta: string; }
 
 interface Palette { bg: string; surface: string; line: string; ink: string; ink2: string; accent: string; accent2: string; }
 interface Theme { name: string; mood: MoodKey; font: FontKey; layout: LayoutKey; palette: Palette; tagline: string | null; bio: string | null; radius: number; heroUrl?: string; }
@@ -71,6 +79,28 @@ const LIBRARY: LibItem[] = [
   {id:'l15',label:'Ice arena',        kw:['edm','rave','trance','bright','electronic','festival'],bg:'linear-gradient(160deg,#080c14 0%,#102030 55%,#20c8f0 100%)'},
   {id:'l16',label:'Warm R&B',         kw:['r&b','soul','warm','smooth','sultry','evening'],      bg:'linear-gradient(145deg,#100806 0%,#2e1408 55%,#c84820 100%)'},
 ];
+
+const DEFAULT_SECTIONS: SectionDef[] = [
+  { id:'bio',        label:'Bio & About',       icon:'📝', on:true  },
+  { id:'music',      label:'Music',             icon:'🎵', on:true  },
+  { id:'release',    label:'Release Spotlight', icon:'💿', on:false },
+  { id:'shows',      label:'Shows & Tour',      icon:'📅', on:true  },
+  { id:'press',      label:'Press',             icon:'📰', on:false },
+  { id:'booking',    label:'Booking Info',      icon:'🤝', on:false },
+  { id:'newsletter', label:'Newsletter',        icon:'✉️', on:false },
+];
+
+const LK_PLATFORMS = [
+  { key:'spotify',    label:'Spotify',      icon:'♫', ph:'spotify.com/artist/…' },
+  { key:'apple',      label:'Apple Music',  icon:'♪', ph:'music.apple.com/…'    },
+  { key:'instagram',  label:'Instagram',    icon:'📸', ph:'instagram.com/…'       },
+  { key:'tiktok',     label:'TikTok',       icon:'♬', ph:'tiktok.com/@…'         },
+  { key:'website',    label:'Website',      icon:'🌐', ph:'yoursite.com'          },
+  { key:'soundcloud', label:'SoundCloud',   icon:'☁️', ph:'soundcloud.com/…'     },
+  { key:'bandcamp',   label:'Bandcamp',     icon:'♩', ph:'you.bandcamp.com'       },
+];
+
+const BOOKING_GENRES = ['R&B','Hip-Hop','Pop','Rock','Indie','Electronic','Folk','Jazz','Other'];
 
 const ROLES: Record<Role, RoleDef> = {
   artist: {
@@ -173,6 +203,38 @@ function heuristicRefine(ins: string, theme: Theme, content: Content): Theme {
   return t;
 }
 
+// ── SECTION RENDERERS ──────────────────────────────────────────────────────
+function pressHTML(data: PressData): string {
+  const quotes = data.quotes.filter(q => q.q || q.pub);
+  const mentions = (data.mentions || '').split(',').map(s => s.trim()).filter(Boolean);
+  if (!quotes.length && !mentions.length) {
+    return `<section class="pg-sec"><h2 class="pg-sec-t">Press</h2><p style="font-size:13px;color:var(--p-ink2);padding:10px 0;font-family:var(--p-body)">Add press quotes in <b>📋 Sections</b></p></section>`;
+  }
+  const qHtml = quotes.map(q => `<div class="pg-pq"><div class="pg-pq-text">"${esc(q.q)}"</div><div class="pg-pq-src">— ${esc(q.pub)}${q.yr ? ' · ' + esc(q.yr) : ''}</div></div>`).join('');
+  const mHtml = mentions.length ? `<div class="pg-mentions"><span>As seen in</span>${mentions.map(m => `<b>${esc(m)}</b>`).join('<span style="opacity:.35;padding:0 2px">·</span>')}</div>` : '';
+  return `<section class="pg-sec"><h2 class="pg-sec-t">Press</h2>${qHtml}${mHtml}</section>`;
+}
+
+function releaseHTML(data: ReleaseData): string {
+  const streams = Object.entries(data.streams).filter(([, v]) => v);
+  const artHtml = data.artSrc
+    ? `<img src="${esc(data.artSrc)}" alt="" style="width:100%;height:100%;object-fit:cover">`
+    : `<span style="font-size:32px">💿</span>`;
+  return `<section class="pg-sec pg-release-sec"><h2 class="pg-sec-t">Release</h2><div class="pg-rel-inner"><div class="pg-rel-art">${artHtml}</div><div class="pg-rel-info"><span class="pg-chip" style="display:inline-block;margin-bottom:10px">${esc(data.date || 'Out Now')}</span><div class="pg-rel-title">${esc(data.title || 'Untitled Release')}</div><div style="font-size:11px;color:var(--p-ink2);margin:4px 0 12px;font-family:var(--p-label)">${esc(data.type)}</div>${streams.length ? `<div class="pg-streams">${streams.map(([p, u]) => `<a class="pg-stream-btn" href="${esc(u)}" target="_blank">${esc(p)}</a>`).join('')}</div>` : ''}</div></div></section>`;
+}
+
+function bookingHTML(data: BookingData): string {
+  if (!data.contact && !data.market && !data.genres.length) {
+    return `<section class="pg-sec"><h2 class="pg-sec-t">Booking</h2><p style="font-size:13px;color:var(--p-ink2);padding:10px 0;font-family:var(--p-body)">Fill in booking details in <b>📋 Sections</b></p></section>`;
+  }
+  const tagsHtml = data.genres.length ? `<div class="pg-gtags">${data.genres.map(g => `<span class="pg-gtag">${esc(g)}</span>`).join('')}</div>` : '';
+  return `<section class="pg-sec"><h2 class="pg-sec-t">Booking</h2><div class="pg-card" style="flex-direction:column;align-items:flex-start;gap:10px">${tagsHtml}${data.market ? `<div style="font-size:13px;color:var(--p-ink)">📍 ${esc(data.market)}</div>` : ''}${data.cap ? `<div style="font-size:13px;color:var(--p-ink)">🎪 ${esc(data.cap)}</div>` : ''}${data.note ? `<div style="font-size:12px;color:var(--p-ink2);line-height:1.5">${esc(data.note)}</div>` : ''}${data.contact ? `<a href="mailto:${esc(data.contact)}" class="pg-cta" style="text-decoration:none;display:inline-block;margin-top:4px">✉ Book me</a>` : ''}</div></section>`;
+}
+
+function newsletterHTML(data: NewsletterData): string {
+  return `<section class="pg-sec"><h2 class="pg-sec-t">Stay Connected</h2><div class="pg-news"><p>${esc(data.headline)}</p><div class="pg-news-form"><input placeholder="your@email.com" style="flex:1;background:var(--p-surface);border:1px solid var(--p-line);border-radius:14px;padding:10px 14px;font-size:13px;color:var(--p-ink);font-family:var(--p-body)"><button class="pg-cta">${esc(data.cta)}</button></div></div></section>`;
+}
+
 // ── PREVIEW HTML ───────────────────────────────────────────────────────────
 function sectionHTML(s: Section): string {
   if (s.kind === 'tracks') {
@@ -184,21 +246,71 @@ function sectionHTML(s: Section): string {
   return `<section class="pg-sec"><h2 class="pg-sec-t">${esc(s.title)}</h2><div class="pg-cards">${s.items.map(it=>`<div class="pg-card plain"><div class="pg-card-b"><b>${esc(it.t)}</b><small>${esc(it.m)}</small></div></div>`).join('')}</div></section>`;
 }
 
-function renderPreviewHTML(content: Content, theme: Theme, heroBgCss?: string): string {
+interface PreviewExtras {
+  heroBgCss?: string;
+  heroPhotoUrl?: string;
+  avatarUrl?: string;
+  tracks?: TrackItem[];
+  links?: Record<string, string>;
+  sections?: SectionDef[];
+  press?: PressData;
+  release?: ReleaseData;
+  booking?: BookingData;
+  newsletter?: NewsletterData;
+}
+
+function renderPreviewHTML(content: Content, theme: Theme, extras: PreviewExtras = {}): string {
   const c = content; const h = c.hero;
   const ini = c.name.split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
-  const safeHero = theme.heroUrl?.startsWith('blob:') ? theme.heroUrl : '';
-  const heroPart = safeHero
-    ? `<img src="${safeHero}" style="width:100%;height:100%;object-fit:cover;display:block" alt="">`
-    : heroBgCss
-      ? `<div style="width:100%;height:100%;${heroBgCss}"></div>`
+  const heroUrl = extras.heroPhotoUrl || '';
+  const heroPart = heroUrl
+    ? `<img src="${heroUrl}" style="width:100%;height:100%;object-fit:cover;display:block" alt="">`
+    : extras.heroBgCss
+      ? `<div style="width:100%;height:100%;${extras.heroBgCss}"></div>`
       : `<div style="width:100%;height:100%;background:${theme.palette.surface}"></div>`;
+  const avPart = extras.avatarUrl
+    ? `<img src="${extras.avatarUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" alt="">`
+    : `<div class="pg-av-fb">${esc(ini)}</div>`;
+
+  const activeSecs = extras.sections ? extras.sections.filter(s => s.on) : null;
+
+  function buildSections(): string {
+    if (!activeSecs) {
+      return `<section class="pg-sec"><h2 class="pg-sec-t">About</h2><p class="pg-bio" contenteditable="true" spellcheck="false" data-edit="bio">${esc(c.bio)}</p></section>${c.sections.map(sectionHTML).join('')}`;
+    }
+    return activeSecs.map(sec => {
+      if (sec.id === 'bio') return `<section class="pg-sec"><h2 class="pg-sec-t">About</h2><p class="pg-bio" contenteditable="true" spellcheck="false" data-edit="bio">${esc(c.bio)}</p></section>`;
+      if (sec.id === 'music') {
+        const ts = c.sections.find(s => s.kind === 'tracks');
+        return ts ? sectionHTML(ts) : '';
+      }
+      if (sec.id === 'shows') {
+        const ss = c.sections.find(s => s.kind === 'shows');
+        return ss ? sectionHTML(ss) : '';
+      }
+      if (sec.id === 'press' && extras.press) return pressHTML(extras.press);
+      if (sec.id === 'release' && extras.release) return releaseHTML(extras.release);
+      if (sec.id === 'booking' && extras.booking) return bookingHTML(extras.booking);
+      if (sec.id === 'newsletter' && extras.newsletter) return newsletterHTML(extras.newsletter);
+      return '';
+    }).join('');
+  }
+
+  const uploadedTracks = extras.tracks && extras.tracks.length
+    ? `<section class="pg-sec"><h2 class="pg-sec-t">My Music</h2><div class="pg-rows">${extras.tracks.map((t, i) => `<div class="pg-row"><span class="pg-rn">${String(i+1).padStart(2,'0')}</span><span class="pg-pl">▶</span><span class="pg-rm"><b>${esc(t.name)}</b><small>${t.dur}</small></span><button class="pg-hype">♥ HYPE</button></div>`).join('')}</div></section>`
+    : '';
+
+  const lkEntries = extras.links ? Object.entries(extras.links).filter(([, v]) => v) : [];
+  const linksSection = lkEntries.length
+    ? `<section class="pg-sec"><h2 class="pg-sec-t">Find Me</h2><div class="pg-cards">${lkEntries.map(([p, u]) => `<div class="pg-card plain"><div class="pg-card-b"><b>${esc(p)}</b><small>${esc(u)}</small></div></div>`).join('')}</div></section>`
+    : '';
+
   return `
     <div class="pg-hero" style="min-height:${theme.layout==='poster'?'360px':'270px'}">
       <div class="pg-hbg">${heroPart}</div>
       <div class="pg-scrim"></div>
       <div class="pg-in">
-        <div class="pg-av-wrap"><div class="pg-av-fb">${esc(ini)}</div></div>
+        <div class="pg-av-wrap">${avPart}</div>
         <div class="pg-kicker">${esc(h.kicker)}</div>
         <h1 class="pg-name" contenteditable="true" spellcheck="false" data-edit="name">${esc(c.name)}</h1>
         <p class="pg-tag" contenteditable="true" spellcheck="false" data-edit="tagline">${esc(c.tagline)}</p>
@@ -209,8 +321,9 @@ function renderPreviewHTML(content: Content, theme: Theme, heroBgCss?: string): 
       </div>
     </div>
     <div class="pg-body">
-      <section class="pg-sec"><h2 class="pg-sec-t">About</h2><p class="pg-bio" contenteditable="true" spellcheck="false" data-edit="bio">${esc(c.bio)}</p></section>
-      ${c.sections.map(sectionHTML).join('')}
+      ${buildSections()}
+      ${uploadedTracks}
+      ${linksSection}
       <div class="pg-foot">Made with <b>iHYPE</b> · ihype.fm/${toSlug(c.name)}</div>
     </div>`;
 }
@@ -412,6 +525,103 @@ const STYLES = `
 .ps2-li.on { border-color:#ff5029; }
 .ps2-li-img { width:100%; aspect-ratio:4/3; display:block; }
 .ps2-li-cap { position:absolute; bottom:0; left:0; right:0; padding:5px 7px 6px; background:linear-gradient(transparent,rgba(0,0,0,.88)); font-family:'JetBrains Mono',monospace; font-size:8.5px; letter-spacing:.04em; color:rgba(255,255,255,.82); pointer-events:none; }
+
+/* ── UPLOAD ZONE ── */
+.ps2-upz { border:2px dashed rgba(255,255,255,.12); border-radius:11px; padding:20px 14px; text-align:center; cursor:pointer; transition:border-color .14s,background .14s; position:relative; margin-bottom:12px; }
+.ps2-upz:hover,.ps2-upz.over { border-color:#ff5029; background:rgba(255,80,41,.04); }
+.ps2-upz input[type="file"] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+.ps2-upz-ico { font-size:24px; margin-bottom:6px; }
+.ps2-upz h4 { font-family:'Syne',sans-serif; font-size:12px; font-weight:700; color:#f0ebe5; margin-bottom:3px; }
+.ps2-upz p { font-family:'JetBrains Mono',monospace; font-size:9px; color:#5a5048; letter-spacing:.06em; }
+
+/* ── AVATAR ZONE ── */
+.ps2-avz { display:flex; align-items:center; gap:11px; padding:10px 12px; background:#1a1612; border:1px solid rgba(255,255,255,.07); border-radius:10px; cursor:pointer; margin-bottom:14px; position:relative; overflow:hidden; }
+.ps2-avz input[type="file"] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+.ps2-avz-prev { width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,.07); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; overflow:hidden; }
+.ps2-avz-prev img { width:100%; height:100%; object-fit:cover; }
+.ps2-avz-text h4 { font-family:'Syne',sans-serif; font-size:12px; font-weight:700; color:#f0ebe5; margin-bottom:2px; }
+.ps2-avz-text p { font-family:'JetBrains Mono',monospace; font-size:9px; color:#5a5048; letter-spacing:.04em; }
+
+/* ── PHOTO GRID ── */
+.ps2-ph-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:10px; }
+.ps2-ph-th { border-radius:8px; overflow:hidden; cursor:pointer; position:relative; border:2px solid transparent; transition:border-color .14s; aspect-ratio:4/3; }
+.ps2-ph-th:hover { border-color:rgba(255,255,255,.2); }
+.ps2-ph-th.hero { border-color:#ff5029; }
+.ps2-ph-th img { width:100%; height:100%; object-fit:cover; display:block; }
+.ps2-ph-badge { position:absolute; top:4px; right:4px; font-family:'JetBrains Mono',monospace; font-size:8px; font-weight:700; letter-spacing:.06em; background:rgba(0,0,0,.7); color:#f0ebe5; padding:3px 7px; border-radius:99px; }
+.ps2-ph-th.hero .ps2-ph-badge { background:#ff5029; color:#0a0805; }
+.ps2-ph-hint { font-family:'JetBrains Mono',monospace; font-size:9px; color:#5a5048; letter-spacing:.04em; margin-top:8px; text-align:center; }
+
+/* ── TRACK LIST ── */
+.ps2-tr-list { display:flex; flex-direction:column; gap:4px; margin-top:4px; }
+.ps2-tr { display:flex; align-items:center; gap:9px; padding:9px 10px; background:#1a1612; border:1px solid rgba(255,255,255,.07); border-radius:9px; }
+.ps2-tr-play { color:#ff5029; font-size:10px; flex-shrink:0; }
+.ps2-tr-inf { flex:1; display:flex; flex-direction:column; gap:2px; overflow:hidden; }
+.ps2-tr-inf b { font-size:12px; font-weight:600; color:#f0ebe5; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ps2-tr-inf small { font-family:'JetBrains Mono',monospace; font-size:9px; color:#5a5048; letter-spacing:.04em; }
+.ps2-tr-del { width:22px; height:22px; border-radius:5px; background:rgba(255,255,255,.07); color:#5a5048; display:flex; align-items:center; justify-content:center; font-size:11px; flex-shrink:0; }
+.ps2-tr-del:hover { background:rgba(255,80,41,.2); color:#ff5029; }
+
+/* ── LINK ROWS ── */
+.ps2-lk-row { display:flex; align-items:center; gap:7px; margin-bottom:7px; }
+.ps2-lk-ic { width:26px; height:26px; border-radius:7px; background:#1a1612; border:1px solid rgba(255,255,255,.07); display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; }
+.ps2-lk-in { flex:1; background:#1a1612; border:1px solid rgba(255,255,255,.15); border-radius:8px; padding:7px 10px; font-size:11px; color:#f0ebe5; outline:none; font-family:'JetBrains Mono',monospace; }
+.ps2-lk-in::placeholder { color:#5a5048; }
+.ps2-lk-in:focus { border-color:#ff5029; }
+.ps2-lk-add { width:26px; height:26px; border-radius:7px; background:#ff5029; color:#0a0805; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; flex-shrink:0; }
+.ps2-lk-add:hover { filter:brightness(1.1); }
+
+/* ── SECTION COMPOSER ── */
+.ps2-sec-list { display:flex; flex-direction:column; gap:4px; }
+.ps2-sec-row { display:flex; align-items:center; gap:8px; padding:9px 10px; background:#1a1612; border:1px solid rgba(255,255,255,.07); border-radius:9px; }
+.ps2-sec-lft { flex:1; display:flex; align-items:center; gap:7px; min-width:0; }
+.ps2-sec-handle { color:#3a342e; font-size:14px; cursor:grab; flex-shrink:0; }
+.ps2-sec-ico { font-size:13px; flex-shrink:0; }
+.ps2-sec-lbl { font-size:11.5px; font-weight:500; color:#f0ebe5; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ps2-sec-rgt { display:flex; align-items:center; gap:5px; flex-shrink:0; }
+.ps2-sec-edit { font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:600; color:#ff5029; letter-spacing:.04em; padding:4px 8px; border-radius:6px; border:1px solid rgba(255,80,41,.3); background:rgba(255,80,41,.07); }
+.ps2-sec-edit:hover { background:rgba(255,80,41,.14); }
+.ps2-sec-ord { display:flex; flex-direction:column; gap:1px; }
+.ps2-sec-arr { width:18px; height:15px; border-radius:4px; background:rgba(255,255,255,.05); color:#5a5048; font-size:9px; display:flex; align-items:center; justify-content:center; }
+.ps2-sec-arr:hover { color:#f0ebe5; background:rgba(255,255,255,.1); }
+.ps2-sec-toggle { font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; letter-spacing:.06em; padding:4px 8px; border-radius:6px; border:1px solid rgba(255,255,255,.1); color:#5a5048; background:rgba(255,255,255,.04); min-width:36px; text-align:center; }
+.ps2-sec-toggle:hover { border-color:rgba(255,255,255,.2); color:#f0ebe5; }
+.ps2-sec-toggle.on { background:rgba(255,80,41,.12); border-color:rgba(255,80,41,.4); color:#ff5029; }
+
+/* ── SECTION FORM ── */
+.ps2-sec-back-btn { display:flex; align-items:center; gap:5px; font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:600; letter-spacing:.04em; color:#9e9080; padding:6px 0; margin-bottom:10px; }
+.ps2-sec-back-btn:hover { color:#f0ebe5; }
+.ps2-press-card { background:#1a1612; border:1px solid rgba(255,255,255,.07); border-radius:9px; padding:10px; margin-bottom:8px; }
+.ps2-press-ta { width:100%; background:transparent; border:none; outline:none; font-size:12px; color:#f0ebe5; line-height:1.55; resize:none; font-family:'DM Sans',sans-serif; }
+.ps2-press-ta::placeholder { color:#5a5048; }
+.ps2-press-row2 { display:flex; gap:6px; margin-top:6px; border-top:1px solid rgba(255,255,255,.07); padding-top:6px; }
+.ps2-press-in { flex:1; background:rgba(255,255,255,.05); border:none; outline:none; border-radius:6px; padding:5px 8px; font-size:11px; color:#f0ebe5; font-family:'JetBrains Mono',monospace; }
+.ps2-press-in::placeholder { color:#5a5048; }
+.ps2-add-quote-btn { font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:600; letter-spacing:.04em; color:#ff5029; padding:8px 0; display:flex; align-items:center; gap:5px; }
+.ps2-genre-tags { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:12px; }
+.ps2-gtag-btn { font-family:'JetBrains Mono',monospace; font-size:9.5px; font-weight:600; letter-spacing:.04em; padding:5px 10px; border-radius:99px; border:1px solid rgba(255,255,255,.12); color:#9e9080; }
+.ps2-gtag-btn:hover { border-color:rgba(255,255,255,.25); color:#f0ebe5; }
+.ps2-gtag-btn.on { background:rgba(255,80,41,.12); border-color:rgba(255,80,41,.5); color:#ff5029; }
+
+/* ── PAGE SECTIONS (press/release/booking/newsletter) ── */
+#ps2-pr .pg-pq { padding:14px 0; border-bottom:1px solid var(--p-line); }
+#ps2-pr .pg-pq:last-of-type { border-bottom:none; }
+#ps2-pr .pg-pq-text { font-family:var(--p-serif,'Instrument Serif'),serif; font-style:italic; font-size:17px; color:var(--p-ink); line-height:1.5; margin-bottom:6px; }
+#ps2-pr .pg-pq-src { font-family:var(--p-label,'JetBrains Mono'),monospace; font-size:10px; color:var(--p-ink2); letter-spacing:.08em; }
+#ps2-pr .pg-mentions { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:14px; font-family:var(--p-label,'JetBrains Mono'),monospace; font-size:10px; color:var(--p-ink2); letter-spacing:.08em; }
+#ps2-pr .pg-mentions b { color:var(--p-ink); }
+#ps2-pr .pg-rel-inner { display:flex; gap:16px; align-items:flex-start; }
+#ps2-pr .pg-rel-art { width:80px; height:80px; border-radius:10px; background:var(--p-surface); border:1px solid var(--p-line); display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; font-size:28px; }
+#ps2-pr .pg-rel-art img { width:100%; height:100%; object-fit:cover; }
+#ps2-pr .pg-rel-title { font-family:var(--p-display,'Syne'),sans-serif; font-weight:700; font-size:17px; color:var(--p-ink); letter-spacing:-.01em; line-height:1.2; }
+#ps2-pr .pg-streams { display:flex; flex-wrap:wrap; gap:5px; margin-top:10px; }
+#ps2-pr .pg-stream-btn { font-family:var(--p-label,'JetBrains Mono'),monospace; font-size:9px; font-weight:700; letter-spacing:.06em; color:var(--p-bg); background:var(--p-accent); padding:5px 10px; border-radius:99px; text-decoration:none; display:inline-block; }
+#ps2-pr .pg-gtags { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px; }
+#ps2-pr .pg-gtag { font-family:var(--p-label,'JetBrains Mono'),monospace; font-size:9px; font-weight:600; letter-spacing:.06em; color:var(--p-accent); border:1px solid color-mix(in srgb,var(--p-accent) 40%,transparent); padding:4px 9px; border-radius:99px; }
+#ps2-pr .pg-news { background:var(--p-surface); border:1px solid var(--p-line); border-radius:14px; padding:20px; }
+#ps2-pr .pg-news p { font-family:var(--p-serif,'Instrument Serif'),serif; font-style:italic; font-size:17px; color:var(--p-ink); line-height:1.4; margin-bottom:14px; }
+#ps2-pr .pg-news-form { display:flex; gap:8px; }
+#ps2-pr .pg-news-form input { flex:1; background:var(--p-bg); border:1px solid var(--p-line); border-radius:8px; padding:10px 14px; font-size:13px; color:var(--p-ink); font-family:var(--p-body,'DM Sans'),sans-serif; }
 `;
 
 const FONT_HREF = 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Bricolage+Grotesque:wght@400;600;700;800&display=swap';
@@ -440,6 +650,8 @@ export default function ViewPageStudio({ data }: { data?: WorkbenchData } = {}) 
   const [apOpen, setApOpen] = useState(false);
   const [apTab, setApTab] = useState<ApTab>('library');
   const [libQ, setLibQ] = useState('');
+  const [panelVersion, setPanelVersion] = useState(0);
+  const [editingSecId, setEditingSecId] = useState<string | null>(null);
 
   // artist-specific
   const [artistGenre, setArtistGenre] = useState('');
@@ -458,6 +670,18 @@ export default function ViewPageStudio({ data }: { data?: WorkbenchData } = {}) 
   const artistGenreRef = useRef('');
   const artistStageRef = useRef('');
   const heroBgRef = useRef('');
+  const photosRef = useRef<PhotoItem[]>([]);
+  const tracksRef = useRef<TrackItem[]>([]);
+  const linksRef = useRef<Record<string, string>>({});
+  const heroPhotoRef = useRef('');
+  const avatarRef = useRef('');
+  const sectionsRef = useRef<SectionDef[]>(clone(DEFAULT_SECTIONS));
+  const pressRef = useRef<PressData>({ quotes: [{ q:'', pub:'', yr:'' }], mentions: '' });
+  const releaseRef = useRef<ReleaseData>({ title:'', type:'Single', date:'Out Now', artSrc:'', streams: { spotify:'', apple:'', youtube:'', soundcloud:'' } });
+  const bookingRef = useRef<BookingData>({ genres: [], market:'', contact:'', cap:'', note:'' });
+  const newsletterRef = useRef<NewsletterData>({ headline:'Stay in the loop', cta:'Subscribe' });
+
+  const forcePanel = () => setPanelVersion(v => v + 1);
 
   /* inject styles + fonts once */
   useEffect(() => {
@@ -511,6 +735,17 @@ export default function ViewPageStudio({ data }: { data?: WorkbenchData } = {}) 
     setArtistStage(''); artistStageRef.current = '';
     setHeroBg(''); heroBgRef.current = '';
     setApOpen(false);
+    setEditingSecId(null);
+    photosRef.current = [];
+    tracksRef.current = [];
+    linksRef.current = {};
+    heroPhotoRef.current = '';
+    avatarRef.current = '';
+    sectionsRef.current = clone(DEFAULT_SECTIONS);
+    pressRef.current = { quotes: [{ q:'', pub:'', yr:'' }], mentions: '' };
+    releaseRef.current = { title:'', type:'Single', date:'Out Now', artSrc:'', streams: { spotify:'', apple:'', youtube:'', soundcloud:'' } };
+    bookingRef.current = { genres: [], market:'', contact:'', cap:'', note:'' };
+    newsletterRef.current = { headline:'Stay in the loop', cta:'Subscribe' };
     contentRef.current = makeContent(roleRef.current);
     if (pageScrollRef.current) pageScrollRef.current.innerHTML = '';
 
@@ -716,7 +951,18 @@ export default function ViewPageStudio({ data }: { data?: WorkbenchData } = {}) 
     root.dataset.layout = t.layout;
 
     const heroBgItem = LIBRARY.find(l => l.id === heroBgRef.current);
-    scroll.innerHTML = renderPreviewHTML(content, t, heroBgItem?.bg);
+    scroll.innerHTML = renderPreviewHTML(content, t, {
+      heroBgCss: heroBgItem?.bg,
+      heroPhotoUrl: heroPhotoRef.current,
+      avatarUrl: avatarRef.current,
+      tracks: tracksRef.current,
+      links: linksRef.current,
+      sections: sectionsRef.current,
+      press: pressRef.current,
+      release: releaseRef.current,
+      booking: bookingRef.current,
+      newsletter: newsletterRef.current,
+    });
 
     scroll.querySelectorAll<HTMLElement>('[data-edit]').forEach((el: HTMLElement) => {
       const field = el.dataset.edit;
@@ -743,6 +989,99 @@ export default function ViewPageStudio({ data }: { data?: WorkbenchData } = {}) 
     setHeroBg(next);
     heroBgRef.current = next;
     if (themeRef.current) applyTheme(themeRef.current);
+  }
+
+  /* ── PHOTOS ── */
+  function addPhoto(file: File) {
+    const url = URL.createObjectURL(file);
+    const isFirst = photosRef.current.length === 0;
+    const item: PhotoItem = { id: makeId(), name: file.name, url, hero: isFirst };
+    photosRef.current.push(item);
+    if (isFirst) {
+      heroPhotoRef.current = url;
+      heroBgRef.current = '';
+      setHeroBg('');
+    }
+    if (themeRef.current) applyTheme(themeRef.current);
+    forcePanel();
+    toast(isFirst ? 'Hero background set' : 'Photo added');
+  }
+  function setHeroPhoto(idx: number) {
+    photosRef.current.forEach((p, i) => { p.hero = i === idx; });
+    heroPhotoRef.current = photosRef.current[idx].url;
+    heroBgRef.current = '';
+    setHeroBg('');
+    if (themeRef.current) applyTheme(themeRef.current);
+    forcePanel();
+    toast('Hero updated');
+  }
+  function setAvatar(file: File) {
+    avatarRef.current = URL.createObjectURL(file);
+    if (themeRef.current) applyTheme(themeRef.current);
+    forcePanel();
+    toast('Profile photo set');
+  }
+
+  /* ── MUSIC ── */
+  function addTrack(file: File) {
+    const name = file.name.replace(/\.[^.]+$/, '');
+    const track: TrackItem = { id: makeId(), name, dur: '—' };
+    tracksRef.current.push(track);
+    const au = new Audio(URL.createObjectURL(file));
+    const idx = tracksRef.current.length - 1;
+    au.addEventListener('loadedmetadata', () => {
+      const s = Math.round(au.duration);
+      tracksRef.current[idx].dur = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+      if (themeRef.current) applyTheme(themeRef.current);
+      forcePanel();
+    });
+    if (themeRef.current) applyTheme(themeRef.current);
+    forcePanel();
+    toast(`Added: ${name}`);
+  }
+  function removeTrack(idx: number) {
+    tracksRef.current.splice(idx, 1);
+    if (themeRef.current) applyTheme(themeRef.current);
+    forcePanel();
+  }
+
+  /* ── LINKS ── */
+  function saveLink(key: string, val: string) {
+    linksRef.current[key] = val;
+    if (themeRef.current) applyTheme(themeRef.current);
+    toast('Link saved');
+  }
+
+  /* ── EPK EXPORT ── */
+  function exportEPK() {
+    if (!themeRef.current || !contentRef.current) return toast('Generate your page first!');
+    const c = contentRef.current; const p = themeRef.current.palette;
+    const ini = (c.name || '').split(/\s+/).map(w => w[0]).slice(0,2).join('').toUpperCase();
+    const avHTML = avatarRef.current
+      ? `<img src="${avatarRef.current}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+      : `<div style="width:100%;height:100%;background:linear-gradient(135deg,${p.accent},${p.accent2});border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:32px;color:#fff">${ini}</div>`;
+    const trackList = c.sections.find(s => s.kind === 'tracks')?.items || [];
+    const showList = c.sections.find(s => s.kind === 'shows')?.items || [];
+    const quotes = pressRef.current.quotes.filter(q => q.q);
+    const links = Object.entries(linksRef.current).filter(([, v]) => v);
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(c.name)} · EPK</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',sans-serif;background:#fff;color:#111;max-width:760px;margin:0 auto;padding:52px 44px;-webkit-font-smoothing:antialiased}@media print{@page{margin:1in}body{padding:0}}.hd{display:flex;gap:28px;align-items:flex-start;margin-bottom:44px;padding-bottom:36px;border-bottom:3px solid ${p.accent}}.av{width:100px;height:100px;flex-shrink:0;overflow:hidden}.name{font-family:'Syne',sans-serif;font-weight:800;font-size:40px;letter-spacing:-.03em;line-height:1;color:#111;margin-bottom:8px}.kicker{font-size:11px;color:#888;letter-spacing:.14em;text-transform:uppercase;margin-bottom:8px}.tagline{font-family:'Instrument Serif',serif;font-style:italic;font-size:19px;color:#555;margin-top:10px;line-height:1.4}h2{font-family:'Syne',sans-serif;font-weight:700;font-size:10px;letter-spacing:.2em;color:${p.accent};text-transform:uppercase;margin:32px 0 14px;padding-bottom:9px;border-bottom:1px solid #e0e0e0}.bio{font-size:16px;line-height:1.75;color:#333;max-width:580px}.tracks{list-style:none}.tracks li{display:flex;gap:14px;align-items:center;padding:9px 0;border-bottom:1px solid #f0f0f0;font-size:14px;color:#222}.tracks li span{color:#bbb;font-size:12px;width:22px;text-align:right;flex-shrink:0}.shows{display:grid;grid-template-columns:1fr 1fr;gap:10px}.show{padding:12px 14px;border:1px solid #eee;border-radius:8px}.show b{display:block;font-size:14px;font-weight:600;color:#111;margin-bottom:3px}.show small{font-size:12px;color:#888}.pq{padding:16px 0;border-bottom:1px solid #f0f0f0}.pq blockquote{font-family:'Instrument Serif',serif;font-style:italic;font-size:18px;color:#222;line-height:1.5;margin-bottom:7px}.pq cite{font-size:11px;color:#999;letter-spacing:.08em;text-transform:uppercase}.book{background:#f9f9f9;border-radius:8px;padding:20px 22px;margin-top:14px}.book p{font-size:14px;color:#444;line-height:1.6;margin-bottom:6px}.links{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.ltag{padding:6px 14px;border:1px solid #ddd;border-radius:99px;font-size:12px;color:#555;text-decoration:none}.foot{margin-top:52px;padding-top:20px;border-top:2px solid ${p.accent};display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#aaa}.foot b{color:${p.accent};font-size:13px}.print-btn{position:fixed;top:20px;right:20px;padding:10px 18px;background:${p.accent};color:#fff;border:none;border-radius:8px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;letter-spacing:.06em;cursor:pointer}@media print{.print-btn{display:none}}</style>
+</head><body>
+<button class="print-btn" onclick="window.print()">Save as PDF</button>
+<div class="hd"><div class="av">${avHTML}</div><div><div class="kicker">${esc(c.hero.kicker)}</div><div class="name">${esc(c.name)}</div><div class="tagline">${esc(c.tagline)}</div></div></div>
+<h2>Bio</h2><p class="bio">${esc(c.bio)}</p>
+${trackList.length || tracksRef.current.length ? `<h2>Music</h2><ul class="tracks">${[...trackList.map(t => ({ n: t.t })), ...tracksRef.current].map((t, i) => `<li><span>${String(i+1).padStart(2,'0')}</span>${esc((t as {n?:string;name?:string}).n || (t as {name?:string}).name || '')}</li>`).join('')}</ul>` : ''}
+${showList.length ? `<h2>Shows</h2><div class="shows">${showList.map(s => `<div class="show"><b>${esc(s.t)}</b><small>${esc(s.m)}</small></div>`).join('')}</div>` : ''}
+${quotes.length ? `<h2>Press</h2>${quotes.map(q => `<div class="pq"><blockquote>"${esc(q.q)}"</blockquote><cite>— ${esc(q.pub)}${q.yr ? ' · ' + esc(q.yr) : ''}</cite></div>`).join('')}` : ''}
+${pressRef.current.mentions ? `<p style="margin-top:14px;font-size:13px;color:#666"><b style="color:#111">As seen in:</b> ${esc(pressRef.current.mentions)}</p>` : ''}
+${bookingRef.current.contact || bookingRef.current.market ? `<h2>Booking</h2><div class="book">${bookingRef.current.genres.length ? `<p><b>Genres:</b> ${bookingRef.current.genres.join(', ')}</p>` : ''}${bookingRef.current.market ? `<p><b>Market:</b> ${esc(bookingRef.current.market)}</p>` : ''}${bookingRef.current.cap ? `<p><b>Stage size:</b> ${esc(bookingRef.current.cap)}</p>` : ''}${bookingRef.current.note ? `<p>${esc(bookingRef.current.note)}</p>` : ''}${bookingRef.current.contact ? `<p style="margin-top:10px"><b>Booking contact:</b> <a href="mailto:${esc(bookingRef.current.contact)}">${esc(bookingRef.current.contact)}</a></p>` : ''}</div>` : ''}
+${links.length ? `<h2>Links</h2><div class="links">${links.map(([pl, u]) => `<a class="ltag" href="${esc(u)}">${esc(pl)}</a>`).join('')}</div>` : ''}
+<div class="foot"><div>Electronic Press Kit · ${new Date().toLocaleDateString('en-US', { month:'long', year:'numeric' })}</div><b>ihype.fm/${toSlug(c.name)}</b></div>
+</body></html>`;
+    const w = window.open('', '_blank', 'width=860,height=740,scrollbars=yes');
+    if (w) { w.document.write(html); w.document.close(); } else toast('Allow popups to open the EPK');
+    toast('EPK ready — click "Save as PDF" in the new window');
   }
 
   function resetAll() {
@@ -926,7 +1265,7 @@ export default function ViewPageStudio({ data }: { data?: WorkbenchData } = {}) 
               </button>
             </div>
             <div className="ps2-theme-tag">THEME · <b>{theme?.name ?? '—'}</b></div>
-            <button className="ps2-epk-btn" onClick={() => toast('EPK export — coming soon')}>⎘ Export EPK</button>
+            <button className="ps2-epk-btn" onClick={exportEPK}>⎘ Export EPK</button>
             <button className="ps2-pub-btn" onClick={onPublish}>{pubLabel}</button>
           </div>
         </div>
@@ -974,7 +1313,7 @@ export default function ViewPageStudio({ data }: { data?: WorkbenchData } = {}) 
             <button className="ps2-ap-x" onClick={() => setApOpen(false)} title="Close">×</button>
           </div>
 
-          <div className="ps2-ap-body">
+          <div className="ps2-ap-body" key={panelVersion}>
             {apTab === 'library' && (() => {
               const q = libQ.trim().toLowerCase();
               const items = q
@@ -1007,33 +1346,266 @@ export default function ViewPageStudio({ data }: { data?: WorkbenchData } = {}) 
               );
             })()}
 
-            {apTab === 'photos' && (
-              <>
-                <div className="ps2-ap-label">PHOTOS</div>
-                <div className="ps2-ap-hint">Upload a hero photo or avatar. Coming soon.</div>
-              </>
-            )}
+            {apTab === 'photos' && (() => {
+              const photos = photosRef.current;
+              return (
+                <>
+                  <div className="ps2-ap-label">PROFILE PHOTO</div>
+                  <div className="ps2-avz">
+                    <input type="file" accept="image/*" onChange={(e: React.ChangeEvent<HTMLInputElement>) => { if (e.target.files?.[0]) setAvatar(e.target.files[0]); }} />
+                    <div className="ps2-avz-prev">
+                      {avatarRef.current ? <img src={avatarRef.current} alt="" /> : '👤'}
+                    </div>
+                    <div className="ps2-avz-text">
+                      <h4>Profile photo</h4>
+                      <p>{avatarRef.current ? 'Click to replace' : 'Upload your avatar'}</p>
+                    </div>
+                  </div>
+                  <div className="ps2-ap-label">HERO BACKGROUND</div>
+                  <div
+                    className="ps2-upz"
+                    onDragOver={(e) => { e.preventDefault(); (e.currentTarget as HTMLElement).classList.add('over'); }}
+                    onDragLeave={(e) => { (e.currentTarget as HTMLElement).classList.remove('over'); }}
+                    onDrop={(e: React.DragEvent) => {
+                      e.preventDefault(); (e.currentTarget as HTMLElement).classList.remove('over');
+                      Array.from(e.dataTransfer.files).forEach(f => { if (f.type.startsWith('image/')) addPhoto(f); });
+                    }}
+                  >
+                    <input type="file" accept="image/*" multiple onChange={(e: React.ChangeEvent<HTMLInputElement>) => { Array.from(e.target.files || []).forEach(addPhoto); }} />
+                    <div className="ps2-upz-ico">🖼️</div>
+                    <h4>Drop photos here</h4>
+                    <p>JPG · PNG · WEBP</p>
+                  </div>
+                  {photos.length > 0 && (
+                    <>
+                      <div className="ps2-ph-grid">
+                        {photos.map((ph, i) => (
+                          <div key={ph.id} className={'ps2-ph-th' + (ph.hero ? ' hero' : '')} onClick={() => setHeroPhoto(i)}>
+                            <img src={ph.url} alt={ph.name} />
+                            <div className="ps2-ph-badge">{ph.hero ? 'HERO' : '✓'}</div>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="ps2-ph-hint">Tap to set as hero background</p>
+                    </>
+                  )}
+                </>
+              );
+            })()}
 
-            {apTab === 'music' && (
-              <>
-                <div className="ps2-ap-label">MUSIC</div>
-                <div className="ps2-ap-hint">Attach tracks or embeds. Coming soon.</div>
-              </>
-            )}
+            {apTab === 'music' && (() => {
+              const tracks = tracksRef.current;
+              return (
+                <>
+                  <div className="ps2-ap-label">TRACKS</div>
+                  <div
+                    className="ps2-upz"
+                    onDragOver={(e) => { e.preventDefault(); (e.currentTarget as HTMLElement).classList.add('over'); }}
+                    onDragLeave={(e) => { (e.currentTarget as HTMLElement).classList.remove('over'); }}
+                    onDrop={(e: React.DragEvent) => {
+                      e.preventDefault(); (e.currentTarget as HTMLElement).classList.remove('over');
+                      Array.from(e.dataTransfer.files).forEach(f => { if (f.type.startsWith('audio/')) addTrack(f); });
+                    }}
+                  >
+                    <input type="file" accept="audio/*" multiple onChange={(e: React.ChangeEvent<HTMLInputElement>) => { Array.from(e.target.files || []).forEach(addTrack); }} />
+                    <div className="ps2-upz-ico">🎵</div>
+                    <h4>Drop tracks here</h4>
+                    <p>MP3 · WAV · FLAC</p>
+                  </div>
+                  {tracks.length > 0 && (
+                    <div className="ps2-tr-list">
+                      {tracks.map((t, i) => (
+                        <div key={t.id} className="ps2-tr">
+                          <span className="ps2-tr-play">▶</span>
+                          <div className="ps2-tr-inf">
+                            <b>{t.name}</b>
+                            <small>{t.dur}</small>
+                          </div>
+                          <button className="ps2-tr-del" onClick={() => removeTrack(i)}>✕</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
 
             {apTab === 'links' && (
               <>
                 <div className="ps2-ap-label">LINKS</div>
-                <div className="ps2-ap-hint">Add Spotify, Apple Music, SoundCloud links. Coming soon.</div>
+                <div className="ps2-ap-hint">Links appear on your published page</div>
+                {LK_PLATFORMS.map(pl => {
+                  const inputRef = React.createRef<HTMLInputElement>();
+                  return (
+                    <div key={pl.key} className="ps2-lk-row">
+                      <div className="ps2-lk-ic">{pl.icon}</div>
+                      <input
+                        ref={inputRef}
+                        className="ps2-lk-in"
+                        placeholder={pl.ph}
+                        defaultValue={linksRef.current[pl.key] || ''}
+                        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === 'Enter') { saveLink(pl.key, (e.currentTarget as HTMLInputElement).value.trim()); (e.currentTarget as HTMLInputElement).blur(); } }}
+                        onBlur={(e: React.FocusEvent<HTMLInputElement>) => saveLink(pl.key, e.currentTarget.value.trim())}
+                      />
+                      <button className="ps2-lk-add" onClick={() => { if (inputRef.current) saveLink(pl.key, inputRef.current.value.trim()); }}>+</button>
+                    </div>
+                  );
+                })}
               </>
             )}
 
-            {apTab === 'sections' && (
-              <>
-                <div className="ps2-ap-label">PAGE SECTIONS</div>
-                <div className="ps2-ap-hint">Toggle and reorder sections. Coming soon.</div>
-              </>
-            )}
+            {apTab === 'sections' && (() => {
+              if (editingSecId) {
+                const sec = sectionsRef.current.find(s => s.id === editingSecId);
+                return (
+                  <>
+                    <button className="ps2-sec-back-btn" onClick={() => setEditingSecId(null)}>← Back to sections</button>
+                    <div className="ps2-ap-label">{sec?.icon} {sec?.label?.toUpperCase()}</div>
+
+                    {editingSecId === 'press' && (() => {
+                      const pr = pressRef.current;
+                      return (
+                        <>
+                          <div className="ps2-ap-hint">Press quotes appear as pull quotes on your page</div>
+                          {pr.quotes.map((q, i) => (
+                            <div key={i} className="ps2-press-card">
+                              <textarea
+                                className="ps2-press-ta"
+                                rows={2}
+                                placeholder='"Best new artist in the city"'
+                                defaultValue={q.q}
+                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => { pr.quotes[i].q = e.target.value; if (themeRef.current) applyTheme(themeRef.current); }}
+                              />
+                              <div className="ps2-press-row2">
+                                <input className="ps2-press-in" placeholder="Publication" defaultValue={q.pub} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { pr.quotes[i].pub = e.target.value; if (themeRef.current) applyTheme(themeRef.current); }} />
+                                <input className="ps2-press-in" placeholder="Year" defaultValue={q.yr} style={{ maxWidth:'64px' }} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { pr.quotes[i].yr = e.target.value; if (themeRef.current) applyTheme(themeRef.current); }} />
+                              </div>
+                            </div>
+                          ))}
+                          <button className="ps2-add-quote-btn" onClick={() => { pr.quotes.push({ q:'', pub:'', yr:'' }); forcePanel(); }}>+ Add another quote</button>
+                          <div className="ps2-ap-label" style={{ marginTop:'14px' }}>AS SEEN IN</div>
+                          <input className="ps2-lk-in" style={{ width:'100%', marginBottom:'4px' }} placeholder="Pitchfork, Rolling Stone, Resident Advisor…" defaultValue={pr.mentions} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { pr.mentions = e.target.value; if (themeRef.current) applyTheme(themeRef.current); }} />
+                          <div className="ps2-ap-hint">Comma-separated — shows as "As seen in" row</div>
+                        </>
+                      );
+                    })()}
+
+                    {editingSecId === 'release' && (() => {
+                      const rd = releaseRef.current;
+                      return (
+                        <>
+                          {[
+                            { key:'title', label:'RELEASE TITLE', ph:'Album / EP / Single name' },
+                            { key:'date',  label:'STATUS',         ph:'Out Now · or release date' },
+                            { key:'type',  label:'FORMAT',         ph:'Single, EP, Album, Mixtape' },
+                          ].map(f => (
+                            <React.Fragment key={f.key}>
+                              <div className="ps2-ap-label">{f.label}</div>
+                              <input className="ps2-lk-in" style={{ width:'100%', marginBottom:'10px' }} placeholder={f.ph} defaultValue={(rd as Record<string,string>)[f.key] || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { (rd as Record<string,string>)[f.key] = e.target.value; if (themeRef.current) applyTheme(themeRef.current); }} />
+                            </React.Fragment>
+                          ))}
+                          <div className="ps2-ap-label">ALBUM ART</div>
+                          <div className="ps2-upz" style={{ marginBottom:'12px' }}>
+                            <input type="file" accept="image/*" onChange={(e: React.ChangeEvent<HTMLInputElement>) => { if (e.target.files?.[0]) { rd.artSrc = URL.createObjectURL(e.target.files[0]); if (themeRef.current) applyTheme(themeRef.current); forcePanel(); } }} />
+                            <div className="ps2-upz-ico">{rd.artSrc ? '✓' : '💿'}</div>
+                            <h4>{rd.artSrc ? 'Art uploaded' : 'Upload album art'}</h4>
+                            <p>Square 1:1 works best</p>
+                          </div>
+                          <div className="ps2-ap-label">STREAMING LINKS</div>
+                          {['spotify','apple','youtube','soundcloud'].map(s => (
+                            <input key={s} className="ps2-lk-in" style={{ width:'100%', marginBottom:'7px' }} placeholder={`${s.charAt(0).toUpperCase()+s.slice(1)} URL`} defaultValue={rd.streams[s] || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { rd.streams[s] = e.target.value; if (themeRef.current) applyTheme(themeRef.current); }} />
+                          ))}
+                        </>
+                      );
+                    })()}
+
+                    {editingSecId === 'booking' && (() => {
+                      const bd = bookingRef.current;
+                      return (
+                        <>
+                          <div className="ps2-ap-label">GENRES</div>
+                          <div className="ps2-genre-tags">
+                            {BOOKING_GENRES.map(g => (
+                              <button
+                                key={g}
+                                className={'ps2-gtag-btn' + (bd.genres.includes(g) ? ' on' : '')}
+                                onClick={() => {
+                                  const idx = bd.genres.indexOf(g);
+                                  if (idx > -1) bd.genres.splice(idx, 1); else bd.genres.push(g);
+                                  if (themeRef.current) applyTheme(themeRef.current);
+                                  forcePanel();
+                                }}
+                              >{g}</button>
+                            ))}
+                          </div>
+                          {[
+                            { key:'market',  label:'MARKET / CITY',    ph:'Chicago, IL · Midwest' },
+                            { key:'cap',     label:'STAGE SIZE',       ph:'300–800 cap'            },
+                            { key:'contact', label:'BOOKING CONTACT',  ph:'booking@email.com'       },
+                            { key:'note',    label:'NOTE',             ph:'Available weekends, touring summer 2025' },
+                          ].map(f => (
+                            <React.Fragment key={f.key}>
+                              <div className="ps2-ap-label">{f.label}</div>
+                              <input className="ps2-lk-in" style={{ width:'100%', marginBottom:'10px' }} placeholder={f.ph} defaultValue={(bd as Record<string,string>)[f.key] || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { (bd as Record<string,string>)[f.key] = e.target.value; if (themeRef.current) applyTheme(themeRef.current); }} />
+                            </React.Fragment>
+                          ))}
+                        </>
+                      );
+                    })()}
+
+                    {editingSecId === 'newsletter' && (() => {
+                      const nd = newsletterRef.current;
+                      return (
+                        <>
+                          {[
+                            { key:'headline', label:'HEADLINE',    ph:'Stay in the loop' },
+                            { key:'cta',      label:'BUTTON TEXT', ph:'Subscribe'         },
+                          ].map(f => (
+                            <React.Fragment key={f.key}>
+                              <div className="ps2-ap-label">{f.label}</div>
+                              <input className="ps2-lk-in" style={{ width:'100%', marginBottom:'10px' }} placeholder={f.ph} defaultValue={(nd as Record<string,string>)[f.key] || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { (nd as Record<string,string>)[f.key] = e.target.value; if (themeRef.current) applyTheme(themeRef.current); }} />
+                            </React.Fragment>
+                          ))}
+                        </>
+                      );
+                    })()}
+                  </>
+                );
+              }
+
+              // Section list
+              const secs = sectionsRef.current;
+              return (
+                <>
+                  <div className="ps2-ap-label">PAGE SECTIONS</div>
+                  <div className="ps2-ap-hint">Toggle on/off · ▲▼ to reorder · tap Edit to fill content</div>
+                  <div className="ps2-sec-list">
+                    {secs.map((sec, i) => (
+                      <div key={sec.id} className="ps2-sec-row">
+                        <div className="ps2-sec-lft">
+                          <span className="ps2-sec-handle">≡</span>
+                          <span className="ps2-sec-ico">{sec.icon}</span>
+                          <span className="ps2-sec-lbl">{sec.label}</span>
+                        </div>
+                        <div className="ps2-sec-rgt">
+                          {sec.on && ['press','release','booking','newsletter'].includes(sec.id) && (
+                            <button className="ps2-sec-edit" onClick={() => setEditingSecId(sec.id)}>Edit →</button>
+                          )}
+                          <div className="ps2-sec-ord">
+                            {i > 0 && <button className="ps2-sec-arr" onClick={() => { secs.splice(i, 1); secs.splice(i-1, 0, sec); if (themeRef.current) applyTheme(themeRef.current); forcePanel(); }}>▲</button>}
+                            {i < secs.length - 1 && <button className="ps2-sec-arr" onClick={() => { secs.splice(i, 1); secs.splice(i+1, 0, sec); if (themeRef.current) applyTheme(themeRef.current); forcePanel(); }}>▼</button>}
+                          </div>
+                          <button
+                            className={'ps2-sec-toggle' + (sec.on ? ' on' : '')}
+                            onClick={() => { sec.on = !sec.on; if (themeRef.current) applyTheme(themeRef.current); forcePanel(); toast(`${sec.label} ${sec.on ? 'enabled' : 'hidden'}`); }}
+                          >{sec.on ? 'ON' : 'OFF'}</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </aside>
       )}
