@@ -2456,6 +2456,49 @@ function ScreenListen({ data, onPlay, onExpand, currentIdx }: {
             </div>
           ))}
         </div>
+
+        {/* Radio */}
+        {data.radioShows.length > 0 && (
+          <div style={{ marginTop: 28 }}>
+            <div style={{ padding: '0 22px 10px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 16, height: 16, color: T.pink }}>{WMIcon.radio}</div>
+                <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 18, letterSpacing: '-.01em' }}>Radio</div>
+                {data.radioShows.some(r => r.live) && (
+                  <WMPill tone="live">● LIVE</WMPill>
+                )}
+              </div>
+              <div style={{ fontFamily: T.fm, fontSize: 9.5, color: T.pink, letterSpacing: '.1em' }}>
+                {data.radioShows.reduce((a, r) => a + r.listeners, 0).toLocaleString()} listening
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 11, overflowX: 'auto', padding: '0 22px 4px', scrollbarWidth: 'none' }}>
+              {data.radioShows.map(r => (
+                <div key={r.id} style={{ width: 148, flexShrink: 0 }}>
+                  <div style={{
+                    width: 148, height: 148, borderRadius: 14, position: 'relative', overflow: 'hidden',
+                    background: `linear-gradient(135deg, ${r.color}, ${r.color}55 60%, ${T.bg3})`,
+                    border: r.live ? `1.5px solid ${r.color}80` : `1px solid ${T.line}`,
+                  }}>
+                    <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 28% 24%, rgba(255,255,255,.22), transparent 60%)' }} />
+                    {r.live && (
+                      <div style={{ position: 'absolute', top: 9, left: 9 }}>
+                        <WMPill tone="live">● ON AIR</WMPill>
+                      </div>
+                    )}
+                    <div style={{ position: 'absolute', left: 10, bottom: 9, right: 9 }}>
+                      <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 13, color: 'rgba(255,255,255,.95)', textShadow: '0 1px 6px rgba(0,0,0,.5)', lineHeight: 1.1 }}>{r.name}</div>
+                      <div style={{ fontFamily: T.fm, fontSize: 9.5, color: 'rgba(255,255,255,.65)', marginTop: 3, letterSpacing: '.04em' }}>{r.host}</div>
+                    </div>
+                  </div>
+                  <div style={{ fontFamily: T.fm, fontSize: 9.5, color: T.ink3, marginTop: 7, letterSpacing: '.04em' }}>
+                    {r.live ? `${r.listeners.toLocaleString()} listening` : r.time}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         </>)}
       </div>
     </div>
