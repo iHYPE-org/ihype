@@ -118,7 +118,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                   <p style="color:#5b657a;font-size:12px;">— iHYPE</p>
                 </div>
               `
-            }).catch(() => {});
+            }).catch((e: unknown) => { console.error('[auth] login-country email failed', e); });
           }
         }
 
@@ -129,7 +129,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             lastLoginCountry: currentCountry ?? undefined,
             lastLoginAt: new Date()
           }
-        }).catch(() => {});
+        }).catch((e: unknown) => { console.error('[auth] last-login update failed', e); });
 
         return {
           id: challenge.user.id,

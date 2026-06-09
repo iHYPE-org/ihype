@@ -20,7 +20,7 @@ export async function sendWeeklyPicksEmails(): Promise<{ sent: number; skipped: 
   let aiBlurb = '';
   try {
     const msg = await client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-haiku-4-5',
       max_tokens: 200,
       messages: [{
         role: 'user',

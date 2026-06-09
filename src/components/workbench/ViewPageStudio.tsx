@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { WorkbenchData } from '@/components/WorkbenchShellV2';
+import { sanitizeChatHtml, sanitizePreviewHtml } from '@/lib/sanitize-html';
 
 // ── TYPES ──────────────────────────────────────────────────────────────────
 type Role = 'artist' | 'venue' | 'promoter' | 'fan';
@@ -1025,7 +1026,7 @@ export default function ViewPageStudio({ data }: { data?: WorkbenchData } = {}) 
     root.dataset.layout = t.layout;
 
     const heroBgItem = LIBRARY.find(l => l.id === heroBgRef.current);
-    scroll.innerHTML = renderPreviewHTML(content, t, {
+    scroll.innerHTML = sanitizePreviewHtml(renderPreviewHTML(content, t, {
       heroBgCss: heroBgItem?.bg,
       heroPhotoUrl: heroPhotoRef.current,
       avatarUrl: avatarRef.current,
@@ -1036,7 +1037,7 @@ export default function ViewPageStudio({ data }: { data?: WorkbenchData } = {}) 
       release: releaseRef.current,
       booking: bookingRef.current,
       newsletter: newsletterRef.current,
-    });
+    }));
 
     scroll.querySelectorAll<HTMLElement>('[data-edit]').forEach((el: HTMLElement) => {
       const field = el.dataset.edit;
@@ -1277,7 +1278,7 @@ ${links.length ? `<h2>Links</h2><div class="links">${links.map(([pl, u]) => `<a 
             if (msg.type === 'ai') return (
               <div key={msg.id} className="ps2-msg ai">
                 <div className="ps2-av">✦</div>
-                <div className="ps2-bub" dangerouslySetInnerHTML={{ __html: msg.html }} />
+                <div className="ps2-bub" dangerouslySetInnerHTML={{ __html: sanitizeChatHtml(msg.html) }} />
               </div>
             );
             if (msg.type === 'user') return (

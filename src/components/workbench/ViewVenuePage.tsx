@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { WorkbenchData } from '@/types/workbench';
 import ViewPageStudio from './ViewPageStudio';
+import { sanitizeChatHtml } from '@/lib/sanitize-html';
 
 /* ── types ───────────────────────────────────────────────── */
 type VenueMode = 'overview' | 'shows' | 'bookings' | 'page' | 'gallery';
@@ -648,7 +649,7 @@ function PageAIPanel({ venueName, initials }: { venueName: string; initials: str
               <div style={{ width: 26, height: 26, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: m.side === 'ai' ? 'rgba(34,229,212,.15)' : 'rgba(255,255,255,.08)', fontFamily: 'var(--f-m,monospace)', fontSize: 10, fontWeight: 800, color: m.side === 'ai' ? '#22e5d4' : 'rgba(244,239,233,.6)' }}>
                 {m.side === 'ai' ? '✦' : initials.slice(0, 2)}
               </div>
-              <div style={{ maxWidth: '80%', padding: '8px 11px', borderRadius: m.side === 'ai' ? '4px 12px 12px 12px' : '12px 4px 12px 12px', background: m.side === 'ai' ? 'rgba(255,255,255,.05)' : 'rgba(34,229,212,.1)', border: `1px solid ${m.side === 'ai' ? 'rgba(255,255,255,.07)' : 'rgba(34,229,212,.2)'}`, fontFamily: 'var(--f-b,sans-serif)', fontSize: 13, lineHeight: 1.5, color: 'var(--ink,#f4efe9)' }} dangerouslySetInnerHTML={{ __html: m.html }} />
+              <div style={{ maxWidth: '80%', padding: '8px 11px', borderRadius: m.side === 'ai' ? '4px 12px 12px 12px' : '12px 4px 12px 12px', background: m.side === 'ai' ? 'rgba(255,255,255,.05)' : 'rgba(34,229,212,.1)', border: `1px solid ${m.side === 'ai' ? 'rgba(255,255,255,.07)' : 'rgba(34,229,212,.2)'}`, fontFamily: 'var(--f-b,sans-serif)', fontSize: 13, lineHeight: 1.5, color: 'var(--ink,#f4efe9)' }} dangerouslySetInnerHTML={{ __html: sanitizeChatHtml(m.html) }} />
             </div>
           ))}
           {typing && (
