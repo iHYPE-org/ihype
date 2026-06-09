@@ -28,7 +28,6 @@ import { ViewErrorBoundary } from './workbench/ErrorBoundary';
 import { SearchOverlay } from './workbench/SearchOverlay';
 import { PasskeyNudge } from './workbench/PasskeyNudge';
 import { WMGenreQuizSheet } from './workbench/MobilePrimitives';
-import { AgentShell } from './AgentShell';
 import { SkeletonMeView } from './workbench/SkeletonMeView';
 
 // ─────────────────────────────────────────────────────────────
@@ -477,12 +476,6 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
       {shortcutsOpen && <KeyboardShortcutsDialog onDismiss={() => setShortcutsOpen(false)} />}
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
       <PasskeyNudge />
-      <AgentShell
-        data={liveData}
-        currentView={view}
-        onNavigate={(v) => navigateTo(v as Parameters<typeof navigateTo>[0])}
-        onOpenSearch={() => setSearchOpen(true)}
-      />
       {showGenreQuiz && liveData.profileId && (
         <WMGenreQuizSheet
           profileId={liveData.profileId}
