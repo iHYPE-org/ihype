@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import Anthropic from '@anthropic-ai/sdk';
+import { consumeRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -83,6 +84,11 @@ export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Login required' }, { status: 401 });
+  }
+
+  const rl = await consumeRateLimit(`agent:${session.user.id}`, { limit: 20, windowMs: 60 * 60 * 1000 });
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Too many requests. Try again in a bit.' }, { status: 429 });
   }
 
   let body: {

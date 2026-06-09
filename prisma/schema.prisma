@@ -439,6 +439,7 @@ model Show {
   dmcaStatus             String?
 
   @@index([startsAt, status])
+  @@index([creatorId])
 }
 
 model ShowAdvertisingConfig {
@@ -490,6 +491,8 @@ model TicketOrder {
   accountsPayableEntries     AccountsPayableEntry[]
   promoCodeId                String?
   promoCode                  PromoCode?             @relation(fields: [promoCodeId], references: [id])
+
+  @@index([buyerUserId])
 }
 
 model Ticket {

@@ -9,37 +9,38 @@ export const maxDuration = 60;
 const ADMIN_EMAIL = 'admin@ihype.org';
 
 export async function GET(request: NextRequest) {
-  if (!isCronRequestAuthorized(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  try {
+    if (!isCronRequestAuthorized(request)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-  const [userCount, showCount, profileCount] = await Promise.all([
-    db.user.count(),
-    db.show.count(),
-    db.profile.count(),
-  ]);
+    const [userCount, showCount, profileCount] = await Promise.all([
+      db.user.count(),
+      db.show.count(),
+      db.profile.count(),
+    ]);
 
-  const isWarning = userCount === 0 || profileCount === 0;
+    const isWarning = userCount === 0 || profileCount === 0;
 
-  const subject = isWarning
-    ? `⚠️ iHYPE backup check WARNING — unexpected zero counts`
-    : `✓ iHYPE daily backup check — ${userCount} users, ${showCount} shows, ${profileCount} profiles`;
+    const subject = isWarning
+      ? `⚠️ iHYPE backup check WARNING — unexpected zero counts`
+      : `✓ iHYPE daily backup check — ${userCount} users, ${showCount} shows, ${profileCount} profiles`;
 
-  const text = [
-    subject,
-    '',
-    `Users:    ${userCount}`,
-    `Shows:    ${showCount}`,
-    `Profiles: ${profileCount}`,
-    '',
-    isWarning
-      ? 'WARNING: One or more counts are zero — verify database backup integrity.'
-      : 'All counts look healthy.',
-    '',
-    `Checked at: ${new Date().toISOString()}`,
-  ].join('\n');
+    const text = [
+      subject,
+      '',
+      `Users:    ${userCount}`,
+      `Shows:    ${showCount}`,
+      `Profiles: ${profileCount}`,
+      '',
+      isWarning
+        ? 'WARNING: One or more counts are zero — verify database backup integrity.'
+        : 'All counts look healthy.',
+      '',
+      `Checked at: ${new Date().toISOString()}`,
+    ].join('\n');
 
-  const html = `
+    const html = `
     <div style="font-family:Arial,sans-serif;max-width:560px;padding:24px;color:#10182a;">
       <h2 style="margin:0 0 12px;">${isWarning ? '⚠️ Backup Check WARNING' : '✓ Daily Backup Check'}</h2>
       <table style="border-collapse:collapse;width:100%;">
@@ -52,9 +53,13 @@ export async function GET(request: NextRequest) {
     </div>
   `;
 
-  await sendGenericEmail({ to: ADMIN_EMAIL, subject, text, html }).catch((err) => {
-    console.error('[cron/backup-verify] Failed to send email:', err);
-  });
+    await sendGenericEmail({ to: ADMIN_EMAIL, subject, text, html }).catch((err) => {
+      console.error('[cron/backup-verify] Failed to send email:', err);
+    });
 
-  return NextResponse.json({ ok: true, userCount, showCount, profileCount });
+    return NextResponse.json({ ok: true, userCount, showCount, profileCount });
+  } catch (err) {
+    console.error('[cron/backup-verify] error', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }

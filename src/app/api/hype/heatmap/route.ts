@@ -4,37 +4,42 @@ import { db } from '@/lib/db';
 export const runtime = 'nodejs';
 
 export async function GET() {
-  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  try {
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-  const events = await db.profileHypeEvent.findMany({
-    where: { createdAt: { gte: since } },
-    select: { profile: { select: { city: true } } },
-  });
+    const events = await db.profileHypeEvent.findMany({
+      where: { createdAt: { gte: since } },
+      select: { profile: { select: { city: true } } },
+    });
 
-  // Aggregate by city in JS since Prisma groupBy doesn't support relation fields
-  const counts = new Map<string, number>();
-  for (const e of events) {
-    const city = e.profile?.city?.trim();
-    if (!city) continue;
-    counts.set(city, (counts.get(city) ?? 0) + 1);
-  }
+    // Aggregate by city in JS since Prisma groupBy doesn't support relation fields
+    const counts = new Map<string, number>();
+    for (const e of events) {
+      const city = e.profile?.city?.trim();
+      if (!city) continue;
+      counts.set(city, (counts.get(city) ?? 0) + 1);
+    }
 
-  const sorted = Array.from(counts.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 20);
+    const sorted = Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 20);
 
-  const cities = sorted.map(([city, count], i) => ({
-    city,
-    count,
-    rank: i + 1,
-  }));
+    const cities = sorted.map(([city, count], i) => ({
+      city,
+      count,
+      rank: i + 1,
+    }));
 
-  return NextResponse.json(
-    { cities },
-    {
-      headers: {
-        'Cache-Control': 'public, max-age=300',
+    return NextResponse.json(
+      { cities },
+      {
+        headers: {
+          'Cache-Control': 'public, max-age=300',
+        },
       },
-    },
-  );
+    );
+  } catch (err) {
+    console.error('[api/hype/heatmap] error', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }

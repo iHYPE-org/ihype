@@ -9,8 +9,9 @@ export const dynamic = 'force-dynamic';
 // Ordered by artist hypeCount so trending artists surface first.
 // Excludes track IDs passed in the `exclude` query param (comma-separated hexIds).
 export async function GET(request: Request) {
-  const session = await auth().catch(() => null);
-  const { searchParams } = new URL(request.url);
+  try {
+    const session = await auth().catch(() => null);
+    const { searchParams } = new URL(request.url);
   const excludeParam = searchParams.get('exclude') ?? '';
   const excludeIds = excludeParam ? excludeParam.split(',').filter(Boolean) : [];
   const limit = 20;
@@ -73,5 +74,9 @@ export async function GET(request: Request) {
       artworkUrl: t.profile.avatarImage ?? null
     }));
 
-  return NextResponse.json({ tracks });
+    return NextResponse.json({ tracks });
+  } catch (err) {
+    console.error('[api/radio] error', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }

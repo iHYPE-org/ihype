@@ -37,7 +37,6 @@ type RuntimeFlagKey =
   | 'demo_logins'
   | 'invite_only_signup'
   | 'hide_demo_content'
-  | 'live_streams'
   | 'blob_media_storage'
   | 'ticket_payment_capture';
 
@@ -155,14 +154,6 @@ export function areDatabaseMediaUploadsEnabled() {
 
 export async function areDatabaseMediaUploadsEnabledRuntime() {
   return getRuntimeFlag('blob_media_storage', areDatabaseMediaUploadsEnabled());
-}
-
-export function areLiveStreamsEnabled() {
-  return parseBooleanFlag(process.env.FEATURE_ENABLE_LIVE_STREAMS, false);
-}
-
-export async function areLiveStreamsEnabledRuntime() {
-  return getRuntimeFlag('live_streams', areLiveStreamsEnabled());
 }
 
 export function isInviteCodeRequired() {

@@ -6,66 +6,71 @@ import { getBaseUrl } from '@/lib/utils';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const user = await db.user.findUnique({
-    where: { id: session.user.id },
-    select: { username: true, profiles: { select: { hexId: true }, take: 1 } }
-  });
-  if (!user) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    const user = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: { username: true, profiles: { select: { hexId: true }, take: 1 } }
+    });
+    if (!user) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const baseUrl = getBaseUrl();
-  const hexId = user.profiles[0]?.hexId ?? null;
-  const referralLink = hexId
-    ? `${baseUrl}/register?ref=${hexId}`
-    : `${baseUrl}/register?ref=${user.username}`;
+    const baseUrl = getBaseUrl();
+    const hexId = user.profiles[0]?.hexId ?? null;
+    const referralLink = hexId
+      ? `${baseUrl}/register?ref=${hexId}`
+      : `${baseUrl}/register?ref=${user.username}`;
 
-  // Count referrals — username-based and hexId-based
-  const usernameCount = await db.auditLog.count({
-    where: {
-      action: 'REFERRAL_SIGNUP',
-      metadata: { path: ['referrer'], equals: user.username }
-    }
-  });
-  const hexIdCount = hexId
-    ? await db.auditLog.count({
-        where: {
-          action: 'REFERRAL_SIGNUP',
-          metadata: { path: ['referrerHexId'], equals: hexId }
-        }
-      })
-    : 0;
-  // Use the higher of the two counts (deduplicated via username check in register route)
-  const referralCount = Math.max(usernameCount, hexIdCount);
+    // Count referrals — username-based and hexId-based
+    const usernameCount = await db.auditLog.count({
+      where: {
+        action: 'REFERRAL_SIGNUP',
+        metadata: { path: ['referrer'], equals: user.username }
+      }
+    });
+    const hexIdCount = hexId
+      ? await db.auditLog.count({
+          where: {
+            action: 'REFERRAL_SIGNUP',
+            metadata: { path: ['referrerHexId'], equals: hexId }
+          }
+        })
+      : 0;
+    // Use the higher of the two counts (deduplicated via username check in register route)
+    const referralCount = Math.max(usernameCount, hexIdCount);
 
-  // Get the last 10 referrals
-  const recentLogs = await db.auditLog.findMany({
-    where: {
-      action: 'REFERRAL_SIGNUP',
-      metadata: { path: ['referrer'], equals: user.username }
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 10,
-    select: { entityId: true, createdAt: true }
-  });
+    // Get the last 10 referrals
+    const recentLogs = await db.auditLog.findMany({
+      where: {
+        action: 'REFERRAL_SIGNUP',
+        metadata: { path: ['referrer'], equals: user.username }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      select: { entityId: true, createdAt: true }
+    });
 
-  const userIds = recentLogs.map((l) => l.entityId).filter(Boolean) as string[];
-  const referredUsers = userIds.length > 0
-    ? await db.user.findMany({ where: { id: { in: userIds } }, select: { id: true, username: true } })
-    : [];
-  const usernameById = new Map(referredUsers.map((u) => [u.id, u.username]));
+    const userIds = recentLogs.map((l) => l.entityId).filter(Boolean) as string[];
+    const referredUsers = userIds.length > 0
+      ? await db.user.findMany({ where: { id: { in: userIds } }, select: { id: true, username: true } })
+      : [];
+    const usernameById = new Map(referredUsers.map((u) => [u.id, u.username]));
 
-  const referrals = recentLogs
-    .filter((l) => l.entityId && usernameById.has(l.entityId))
-    .map((l) => ({
-      username: usernameById.get(l.entityId!)!,
-      joinedAt: l.createdAt.toISOString()
-    }));
+    const referrals = recentLogs
+      .filter((l) => l.entityId && usernameById.has(l.entityId))
+      .map((l) => ({
+        username: usernameById.get(l.entityId!)!,
+        joinedAt: l.createdAt.toISOString()
+      }));
 
-  const shareText = referralCount > 0
-    ? `I've brought ${referralCount} ${referralCount === 1 ? 'friend' : 'friends'} to iHYPE! Join the music community → ${referralLink}`
-    : `Join me on iHYPE — the music community → ${referralLink}`;
+    const shareText = referralCount > 0
+      ? `I've brought ${referralCount} ${referralCount === 1 ? 'friend' : 'friends'} to iHYPE! Join the music community → ${referralLink}`
+      : `Join me on iHYPE — the music community → ${referralLink}`;
 
-  return NextResponse.json({ referralLink, referralCount, referrals, shareText });
+    return NextResponse.json({ referralLink, referralCount, referrals, shareText });
+  } catch (err) {
+    console.error('[api/referral] error', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }

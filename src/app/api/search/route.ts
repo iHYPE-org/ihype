@@ -17,6 +17,7 @@ export const dynamic = 'force-dynamic';
  * strings found across matched artist profiles.
  */
 export async function GET(request: NextRequest) {
+  try {
   // 60 searches per minute per IP — allows normal autocomplete usage
   const ip = readClientAddress(request);
   const rl = await consumeRateLimit(`search:ip:${ip}`, { limit: 60, windowMs: 60_000 });
@@ -178,4 +179,8 @@ export async function GET(request: NextRequest) {
       genres:    genreMatches.size,
     }
   });
+  } catch (err) {
+    console.error('[api/search] error', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }

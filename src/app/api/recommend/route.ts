@@ -68,6 +68,7 @@ function finalScore(signals: { taste: number | null; geo: number | null; social:
 }
 
 export async function GET(request: Request) {
+  try {
   const { searchParams } = new URL(request.url);
   const typeParam = searchParams.get('type')?.toUpperCase() as ProfileType | null;
   const limitParam = Number.parseInt(searchParams.get('limit') ?? '40', 10);
@@ -332,4 +333,8 @@ export async function GET(request: Request) {
       weights: WEIGHTS
     }
   });
+  } catch (err) {
+    console.error('[api/recommend] error', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }
