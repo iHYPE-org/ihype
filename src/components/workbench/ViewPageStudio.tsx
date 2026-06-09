@@ -1501,7 +1501,7 @@ ${links.length ? `<h2>Links</h2><div class="links">${links.map(([pl, u]) => `<a 
                           ].map(f => (
                             <React.Fragment key={f.key}>
                               <div className="ps2-ap-label">{f.label}</div>
-                              <input className="ps2-lk-in" style={{ width:'100%', marginBottom:'10px' }} placeholder={f.ph} defaultValue={(rd as Record<string,string>)[f.key] || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { (rd as Record<string,string>)[f.key] = e.target.value; if (themeRef.current) applyTheme(themeRef.current); }} />
+                              <input className="ps2-lk-in" style={{ width:'100%', marginBottom:'10px' }} placeholder={f.ph} defaultValue={(rd as unknown as Record<string,string>)[f.key] || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { (rd as unknown as Record<string,string>)[f.key] = e.target.value; if (themeRef.current) applyTheme(themeRef.current); }} />
                             </React.Fragment>
                           ))}
                           <div className="ps2-ap-label">ALBUM ART</div>
@@ -1546,7 +1546,7 @@ ${links.length ? `<h2>Links</h2><div class="links">${links.map(([pl, u]) => `<a 
                           ].map(f => (
                             <React.Fragment key={f.key}>
                               <div className="ps2-ap-label">{f.label}</div>
-                              <input className="ps2-lk-in" style={{ width:'100%', marginBottom:'10px' }} placeholder={f.ph} defaultValue={(bd as Record<string,string>)[f.key] || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { (bd as Record<string,string>)[f.key] = e.target.value; if (themeRef.current) applyTheme(themeRef.current); }} />
+                              <input className="ps2-lk-in" style={{ width:'100%', marginBottom:'10px' }} placeholder={f.ph} defaultValue={(bd as unknown as Record<string,string>)[f.key] || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { (bd as unknown as Record<string,string>)[f.key] = e.target.value; if (themeRef.current) applyTheme(themeRef.current); }} />
                             </React.Fragment>
                           ))}
                         </>
@@ -1563,7 +1563,7 @@ ${links.length ? `<h2>Links</h2><div class="links">${links.map(([pl, u]) => `<a 
                           ].map(f => (
                             <React.Fragment key={f.key}>
                               <div className="ps2-ap-label">{f.label}</div>
-                              <input className="ps2-lk-in" style={{ width:'100%', marginBottom:'10px' }} placeholder={f.ph} defaultValue={(nd as Record<string,string>)[f.key] || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { (nd as Record<string,string>)[f.key] = e.target.value; if (themeRef.current) applyTheme(themeRef.current); }} />
+                              <input className="ps2-lk-in" style={{ width:'100%', marginBottom:'10px' }} placeholder={f.ph} defaultValue={(nd as unknown as Record<string,string>)[f.key] || ''} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { (nd as unknown as Record<string,string>)[f.key] = e.target.value; if (themeRef.current) applyTheme(themeRef.current); }} />
                             </React.Fragment>
                           ))}
                         </>
