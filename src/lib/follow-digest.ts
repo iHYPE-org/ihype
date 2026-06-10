@@ -62,9 +62,12 @@ export async function sendFollowDigest(): Promise<{ sent: number }> {
       const showLines = prefs?.newShows === false ? [] : update.shows.map(s => `New show: ${s}`);
       const postLines = prefs?.journalPosts === false ? [] : update.posts.map(p => `New post: ${p}`);
       if (showLines.length === 0 && postLines.length === 0) continue;
-      const lines = [...showLines, ...postLines].join('<br/>');
+      // Titles are user-generated: escape them for the HTML body and use the
+      // raw strings for the plaintext body (never regex-strip tags from HTML).
+      const allLines = [...showLines, ...postLines];
+      const htmlLines = allLines.map(escHtml).join('<br/>');
       try {
-        const result = await sendMarketingEmail(f.follower.id, { to: f.follower.email, subject: `${update.name} has new activity on iHYPE`, html: `<p><strong><a href="${BASE}/artists/${escHtml(update.slug)}">${escHtml(update.name)}</a></strong> posted:</p><p>${lines}</p>`, text: lines.replace(/<[^>]+>/g, '') });
+        const result = await sendMarketingEmail(f.follower.id, { to: f.follower.email, subject: `${update.name} has new activity on iHYPE`, html: `<p><strong><a href="${BASE}/artists/${escHtml(update.slug)}">${escHtml(update.name)}</a></strong> posted:</p><p>${htmlLines}</p>`, text: allLines.join('\n') });
         if (!result.skipped) sent++;
       } catch { /* continue */ }
     }
