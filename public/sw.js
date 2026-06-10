@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'ihype-2950f01';
+const CACHE_VERSION = 'ihype-2155aca';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const PAGE_CACHE = `${CACHE_VERSION}-pages`;
 
@@ -33,7 +33,11 @@ const SWR_PATHS = [
   '/artists/'
 ];
 
+// True when a previous SW was already active — i.e. this is an update, not a first install.
+let isUpdate = false;
+
 self.addEventListener('install', (event) => {
+  isUpdate = Boolean(self.registration.active);
   event.waitUntil(
     Promise.all([
       caches.open(STATIC_CACHE).then((cache) => cache.addAll(STATIC_ASSETS)),
@@ -54,6 +58,15 @@ self.addEventListener('activate', (event) => {
         )
       )
       .then(() => self.clients.claim())
+      .then(async () => {
+        if (!isUpdate) return;
+        // Navigate all open windows to reload fresh content after an update.
+        // Works even when the page code pre-dates the controllerchange listener.
+        const clients = await self.clients.matchAll({ type: 'window' });
+        for (const client of clients) {
+          try { client.navigate(client.url); } catch { /* older browser — page-side reload handles it */ }
+        }
+      })
   );
 });
 
