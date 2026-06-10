@@ -65,6 +65,7 @@ const JOBS: CronJob[] = [
   { path: '/api/cron/nearby-show-notify', schedule: '0 9 * * *'  },  // daily nearby show notifications at 9am
   { path: '/api/cron/publish-scheduled',  schedule: '*/15 * * * *' },  // publish scheduled releases every 15min
   { path: '/api/cron/rsvp-reminders',     schedule: '0 * * * *'   },  // RSVP reminders every hour
+  { path: '/api/cron/post-show-recap',    schedule: '0 16 * * *'  },  // morning-after recap for attendees at 4pm UTC
 ];
 
 export default {

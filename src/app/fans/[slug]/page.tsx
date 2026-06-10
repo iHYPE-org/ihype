@@ -7,6 +7,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { ContentReportControl } from '@/components/ContentReportControl';
 import { HypeButton } from '@/components/HypeButton';
+import { ShareButton } from '@/components/ShareButton';
 import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
 import { FanRecommendationsPanel } from '@/components/FanRecommendationsPanel';
 import { getSafeBackgroundImageStyle, getSafeImageUrl } from '@/lib/asset-safety';
@@ -568,6 +569,7 @@ export default async function ListenerPage({
             <div className="tag-row">{profile.genres.map((genre) => <span key={genre} className="tag">{genre}</span>)}</div>
             <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} entityLabel="fan page" />
             <div className="profile-public-actions">
+              <ShareButton path={`/fans/${profile.slug}`} title={`${profile.name} · iHYPE`} />
               <Link className="button small secondary" href={`/fans/${profile.slug}?section=recommend`}>See recommendations</Link>
               <Link className="button small secondary" href="/artists">Browse artists</Link>
               <Link className="button small secondary" href="/register?role=FAN">Join fan lane</Link>

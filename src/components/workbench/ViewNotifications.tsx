@@ -10,6 +10,13 @@ type Notification = {
   createdAt: string;
 };
 
+type FollowPref = {
+  profileId: string;
+  name: string;
+  slug: string;
+  notifyShows: boolean;
+};
+
 const KIND_ICON: Record<string, string> = {
   hype: '♥',
   show: '🎟️',
@@ -47,6 +54,7 @@ export function ViewNotifications() {
   const [loading, setLoading] = useState(true);
   const [markingRead, setMarkingRead] = useState(false);
   const [pushState, setPushState] = useState<'idle' | 'requesting' | 'granted' | 'denied'>('idle');
+  const [follows, setFollows] = useState<FollowPref[]>([]);
 
   useEffect(() => {
     if (!('Notification' in window)) return;
@@ -88,6 +96,30 @@ export function ViewNotifications() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    fetch('/api/follow/prefs')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { follows?: FollowPref[] } | null) => {
+        if (data?.follows) setFollows(data.follows);
+      })
+      .catch(() => {});
+  }, []);
+
+  async function toggleNotifyShows(profileId: string, notifyShows: boolean) {
+    // optimistic
+    setFollows((prev) => prev.map((f) => (f.profileId === profileId ? { ...f, notifyShows } : f)));
+    try {
+      const res = await fetch('/api/follow/prefs', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileId, notifyShows }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setFollows((prev) => prev.map((f) => (f.profileId === profileId ? { ...f, notifyShows: !notifyShows } : f)));
+    }
+  }
 
   async function markAllRead() {
     setMarkingRead(true);
@@ -208,6 +240,49 @@ export function ViewNotifications() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {follows.length > 0 && (
+        <div style={{ marginTop: 36 }}>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.18em', color: 'var(--accent)', marginBottom: 6 }}>
+            ● FOLLOWING
+          </div>
+          <p style={{ fontFamily: 'var(--f-b)', fontSize: 13, color: 'var(--ink-2)', margin: '0 0 14px', lineHeight: 1.5 }}>
+            Mute show and activity notifications per artist without unfollowing.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {follows.map((f) => (
+              <div
+                key={f.profileId}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 14,
+                  padding: '12px 16px', borderRadius: 12,
+                  border: '1px solid var(--line)', background: 'var(--bg-2)',
+                }}
+              >
+                <div style={{ flex: 1, minWidth: 0, fontFamily: 'var(--f-b)', fontSize: 14, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {f.name}
+                </div>
+                <button
+                  onClick={() => void toggleNotifyShows(f.profileId, !f.notifyShows)}
+                  title={f.notifyShows ? 'Mute notifications' : 'Unmute notifications'}
+                  aria-label={f.notifyShows ? `Mute notifications from ${f.name}` : `Unmute notifications from ${f.name}`}
+                  type="button"
+                  style={{
+                    width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
+                    border: '1px solid var(--line-2)', cursor: 'pointer',
+                    background: f.notifyShows ? 'rgba(34,229,212,.1)' : 'none',
+                    color: f.notifyShows ? 'var(--ink)' : 'var(--ink-3)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 15,
+                  }}
+                >
+                  {f.notifyShows ? '🔔' : '🔕'}
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

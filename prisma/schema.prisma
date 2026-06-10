@@ -871,6 +871,7 @@ model Follow {
   id                String   @id @default(cuid())
   followerId        String
   followeeProfileId String
+  notifyShows       Boolean  @default(true)
   createdAt         DateTime @default(now())
   follower          User     @relation("FollowerUser", fields: [followerId], references: [id], onDelete: Cascade)
   followeeProfile   Profile  @relation("FollowedProfile", fields: [followeeProfileId], references: [id], onDelete: Cascade)

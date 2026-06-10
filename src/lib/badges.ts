@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { getDiscoveryStreak } from '@/lib/streaks';
 
-type BadgeType = 'first_hype' | 'hype_10' | 'hype_50' | 'listener_100' | 'streak_7' | 'referral_1' | 'referral_5' | 'referral_10';
+type BadgeType = 'first_hype' | 'hype_10' | 'hype_50' | 'listener_100' | 'streak_7' | 'referral_1' | 'referral_5' | 'referral_10' | 'early_fan';
 
 export async function checkAndAwardBadges(userId: string, opts?: { referrerUsername?: string }): Promise<void> {
   try {
@@ -20,6 +20,25 @@ export async function checkAndAwardBadges(userId: string, opts?: { referrerUsern
     if (hyped >= 50 && !awarded.has('hype_50')) toAward.push('hype_50');
     if (listened >= 100 && !awarded.has('listener_100')) toAward.push('listener_100');
     if (streak >= 7 && !awarded.has('streak_7')) toAward.push('streak_7');
+
+    // Early Fan: user was among the first 25 hypers on any profile that now has hypeCount >= 100
+    if (!awarded.has('early_fan')) {
+      const userHypeEvents = await db.profileHypeEvent.findMany({
+        where: { userId, profile: { hypeCount: { gte: 100 } } },
+        select: { profileId: true, createdAt: true },
+        take: 100
+      });
+      if (userHypeEvents.length > 0) {
+        const counts = await Promise.all(
+          userHypeEvents.map((e) =>
+            db.profileHypeEvent.count({
+              where: { profileId: e.profileId, createdAt: { lt: e.createdAt } }
+            })
+          )
+        );
+        if (counts.some((c) => c < 25)) toAward.push('early_fan');
+      }
+    }
 
     if (opts?.referrerUsername) {
       const referralCount = await db.auditLog.count({

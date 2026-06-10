@@ -17,6 +17,7 @@ import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { formatShowTime, getBaseUrl } from '@/lib/utils';
 import { ShowComments } from '@/components/ShowComments';
 import { ShowEngagement } from '@/components/ShowEngagement';
+import { ShowSetlistVote } from '@/components/ShowSetlistVote';
 import { ShowSetlistEditor } from '@/components/ShowSetlistEditor';
 import { AdBanner } from '@/components/AdBanner';
 import { ShowRecapForm } from '@/components/ShowRecapForm';
@@ -269,6 +270,32 @@ export default async function ShowDetailPage({
           />
         </div>
       </div>
+
+      {show.status === 'LIVE' && show.headlinerProfileId ? (
+        <a
+          href="#setlist-vote"
+          className="panel"
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 12,
+            flexWrap: 'wrap',
+            padding: '0.85rem 1.25rem',
+            margin: '14px 0 4px',
+            border: '1px solid var(--accent)',
+            background: 'rgba(255,80,41,0.12)',
+            textDecoration: 'none',
+            color: 'inherit'
+          }}
+        >
+          <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span className="badge" style={{ color: 'var(--accent)' }}>● LIVE</span>
+            <strong>The show is live — vote on the setlist and shape what plays next.</strong>
+          </span>
+          <span className="button small">Vote on the setlist</span>
+        </a>
+      ) : null}
 
       <div className="grid grid-2">
         <section className="panel" style={{ padding: '1rem' }}>
@@ -700,6 +727,14 @@ export default async function ShowDetailPage({
       ) : null}
       {isShowOwner ? <ShowSetlistEditor showId={show.id} initialTracks={setlistTracks} /> : null}
 
+      {['SCHEDULED', 'LIVE'].includes(show.status) && show.headlinerProfileId ? (
+        <ShowSetlistVote
+          showId={show.id}
+          canVote={Boolean(session?.user?.id)}
+          isLive={show.status === 'LIVE'}
+        />
+      ) : null}
+
       {/* Who's going is now embedded in ShowEngagement above */}
       {show.recapText && (
         <section className="section">
@@ -717,7 +752,12 @@ export default async function ShowDetailPage({
           </div>
         </section>
       )}
-      <ShowComments showId={show.id} canPost={Boolean(session?.user?.id)} />
+      <ShowComments
+        showId={show.id}
+        canPost={Boolean(session?.user?.id)}
+        isLive={show.status === 'LIVE'}
+        goingCount={rsvpCount}
+      />
       <div style={{ marginTop: 24 }}>
         <AdBanner />
       </div>

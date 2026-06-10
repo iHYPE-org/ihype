@@ -114,21 +114,71 @@ export async function GET(request: NextRequest) {
       }));
     });
 
-    // 1h reminders: push only
+    // 1h reminders: push only, with optional social proof
+    // Collect all RSVP user IDs across 1h shows for a single follow lookup.
+    const allRsvpUserIds1h = [...new Set(shows1h.flatMap((s) => s.rsvps.map((r) => r.userId)))];
+
+    // Step 1: profiles owned by RSVP'd users.
+    const profiles1h = allRsvpUserIds1h.length > 0
+      ? await db.profile.findMany({
+          where: { ownerId: { in: allRsvpUserIds1h } },
+          select: { id: true, ownerId: true },
+        })
+      : [];
+
+    // Step 2: follows among those users/profiles (both queries use the same id sets).
+    const profileIds1h = profiles1h.map((p) => p.id);
+    const follows1h = allRsvpUserIds1h.length > 0 && profileIds1h.length > 0
+      ? await db.follow.findMany({
+          where: {
+            followerId: { in: allRsvpUserIds1h },
+            followeeProfileId: { in: profileIds1h },
+          },
+          select: { followerId: true, followeeProfileId: true },
+        })
+      : [];
+
+    // Map profileId → ownerId for quick lookup.
+    const profileOwner1h = new Map<string, string>(profiles1h.map((p) => [p.id, p.ownerId]));
+
+    // Map followerId → Set of followeeProfileIds.
+    const followerMap1h = new Map<string, Set<string>>();
+    for (const f of follows1h) {
+      if (!followerMap1h.has(f.followerId)) followerMap1h.set(f.followerId, new Set());
+      followerMap1h.get(f.followerId)!.add(f.followeeProfileId);
+    }
+
     const tasks1h: ReminderTask[] = shows1h.flatMap((show) => {
       const venueName = show.venueProfile?.name ?? 'Unknown venue';
+      const showRsvpUserIds = new Set(show.rsvps.map((r) => r.userId));
 
-      return show.rsvps.map((rsvp): ReminderTask => ({
-        userId: rsvp.userId,
-        dedupKey: `rsvp-1h:${show.id}:${rsvp.userId}`,
-        notificationBody: `Starting soon: ${show.title} is in 1 hour!`,
-        link: `/shows/${show.slug}`,
-        push: {
-          title: `Starting soon: ${show.title}`,
-          body: `${show.title} @ ${venueName} is in 1 hour!`,
-          url: `/shows/${show.slug}`,
-        },
-      }));
+      return show.rsvps.map((rsvp): ReminderTask => {
+        const followedByRecipient = followerMap1h.get(rsvp.userId) ?? new Set<string>();
+        // Count followed profiles whose owner (≠ recipient) also RSVP'd to this show.
+        let socialCount = 0;
+        for (const profileId of followedByRecipient) {
+          const ownerId = profileOwner1h.get(profileId);
+          if (ownerId && ownerId !== rsvp.userId && showRsvpUserIds.has(ownerId)) {
+            socialCount++;
+          }
+        }
+
+        const pushBody = socialCount > 0
+          ? `${show.title} @ ${venueName} is in 1 hour! ${socialCount} ${socialCount === 1 ? 'artist' : 'artists'} you follow ${socialCount === 1 ? 'is' : 'are'} going.`
+          : `${show.title} @ ${venueName} is in 1 hour!`;
+
+        return {
+          userId: rsvp.userId,
+          dedupKey: `rsvp-1h:${show.id}:${rsvp.userId}`,
+          notificationBody: `Starting soon: ${show.title} is in 1 hour!`,
+          link: `/shows/${show.slug}`,
+          push: {
+            title: `Starting soon: ${show.title}`,
+            body: pushBody,
+            url: `/shows/${show.slug}`,
+          },
+        };
+      });
     });
 
     const [pending24h, pending1h] = await Promise.all([

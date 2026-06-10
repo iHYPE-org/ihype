@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { getShowsAttended } from '@/lib/streaks';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,9 +42,10 @@ export async function GET() {
     const hypeRating = primaryProfile?.hypeCount ?? 0;
 
     // ── Song & show plays ──────────────────────────────────────────
-    const [songPlays, showPlays] = await Promise.all([
+    const [songPlays, showPlays, showsAttended] = await Promise.all([
       db.mediaListen.count({ where: { userId } }),
-      db.showListen.count({ where: { userId } })
+      db.showListen.count({ where: { userId } }),
+      getShowsAttended(userId)
     ]);
 
     // ── Role-specific stats ────────────────────────────────────────
@@ -160,6 +162,7 @@ export async function GET() {
       role,
       hype: { given: hypeGiven, received: hypeReceived, rating: hypeRating },
       plays: { songs: songPlays, shows: showPlays },
+      showsAttended,
       profiles: profiles.map(p => ({ id: p.id, type: p.type, name: p.name, slug: p.slug, hypeCount: p.hypeCount })),
       showStats,
       ticketStats,
