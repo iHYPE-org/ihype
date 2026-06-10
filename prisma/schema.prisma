@@ -231,6 +231,15 @@ model Profile {
   @@index([name])
   @@index([city, type])
   @@index([ownerId])
+  // Trigram indexes for /api/search ILIKE %q% lookups — without these every
+  // search keystroke seq-scans the table (BitmapOr needs all OR arms indexed).
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "Profile_name_trgm_idx")
+  @@index([headline(ops: raw("gin_trgm_ops"))], type: Gin, map: "Profile_headline_trgm_idx")
+  @@index([bio(ops: raw("gin_trgm_ops"))], type: Gin, map: "Profile_bio_trgm_idx")
+  @@index([city(ops: raw("gin_trgm_ops"))], type: Gin, map: "Profile_city_trgm_idx")
+  @@index([stateRegion(ops: raw("gin_trgm_ops"))], type: Gin, map: "Profile_stateRegion_trgm_idx")
+  @@index([hometown(ops: raw("gin_trgm_ops"))], type: Gin, map: "Profile_hometown_trgm_idx")
+  @@index([genres], type: Gin, map: "Profile_genres_gin_idx")
 }
 
 model FanPlaylist {
@@ -307,6 +316,8 @@ model ArtistMediaAsset {
   @@index([profileId, createdAt])
   @@index([freeUseEnabled, createdAt])
   @@index([publishAt, isPublished])
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "ArtistMediaAsset_title_trgm_idx")
+  @@index([notes(ops: raw("gin_trgm_ops"))], type: Gin, map: "ArtistMediaAsset_notes_trgm_idx")
 }
 
 model RateLimitBucket {
@@ -441,6 +452,8 @@ model Show {
 
   @@index([startsAt, status])
   @@index([creatorId])
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "Show_title_trgm_idx")
+  @@index([description(ops: raw("gin_trgm_ops"))], type: Gin, map: "Show_description_trgm_idx")
 }
 
 model ShowAdvertisingConfig {
@@ -858,6 +871,7 @@ model Follow {
   id                String   @id @default(cuid())
   followerId        String
   followeeProfileId String
+  notifyShows       Boolean  @default(true)
   createdAt         DateTime @default(now())
   follower          User     @relation("FollowerUser", fields: [followerId], references: [id], onDelete: Cascade)
   followeeProfile   Profile  @relation("FollowedProfile", fields: [followeeProfileId], references: [id], onDelete: Cascade)

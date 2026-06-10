@@ -58,6 +58,16 @@ database_id = "72feb348-a07a-4bd5-a6ee-5b27b751999d"
 binding = "HYPERDRIVE"
 id = "03f39c51f80a45d3bb6792a9676e292e"
 
+# Atomic rate-limit counters — class defined in worker.js, consumed by
+# src/lib/rate-limit.ts (falls back to KV when the binding is absent).
+[[durable_objects.bindings]]
+name = "RATE_LIMITER_DO"
+class_name = "RateLimiterDO"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["RateLimiterDO"]
+
 [[analytics_engine_datasets]]
 binding = "AE"
 dataset = "ihype_analytics"

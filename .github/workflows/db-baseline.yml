@@ -1,0 +1,50 @@
+name: DB baseline (one-time)
+
+# The production database was created with `prisma db push`, so it has no
+# `_prisma_migrations` table and `prisma migrate deploy` refuses to run
+# against it (P3005). Run this workflow ONCE (Actions → DB baseline → Run
+# workflow) to:
+#   1. push any schema drift to the live database (fails on destructive
+#      changes rather than applying them), and
+#   2. mark every migration in prisma/migrations as applied,
+# after which the deploy workflow's `migrate deploy` step works normally and
+# this workflow can be deleted.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  baseline:
+    name: Sync schema and baseline Prisma migrations
+    runs-on: ubuntu-latest
+    environment: Production – ihype
+    permissions:
+      contents: read
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_DATABASE_URL: ${{ secrets.DIRECT_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Push schema drift to live database
+        # No --accept-data-loss: aborts loudly if anything destructive would
+        # be required, instead of dropping columns/tables.
+        run: npx prisma db push --skip-generate
+
+      - name: Baseline all migrations as applied
+        run: |
+          for d in prisma/migrations/*/; do
+            name=$(basename "$d")
+            npx prisma migrate resolve --applied "$name" || echo "already recorded: $name"
+          done
+
+      - name: Verify
+        run: npx prisma migrate status

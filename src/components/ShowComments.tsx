@@ -14,7 +14,17 @@ type Comment = {
 
 const EMOJIS = ['👍', '❤️', '🔥'];
 
-export function ShowComments({ showId, canPost }: { showId: string; canPost: boolean }) {
+export function ShowComments({
+  showId,
+  canPost,
+  isLive = false,
+  goingCount = null
+}: {
+  showId: string;
+  canPost: boolean;
+  isLive?: boolean;
+  goingCount?: number | null;
+}) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
@@ -38,6 +48,34 @@ export function ShowComments({ showId, canPost }: { showId: string; canPost: boo
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showId]);
+
+  // While the show is LIVE, refresh comments every 15s — but only while the tab is visible.
+  useEffect(() => {
+    if (!isLive) return;
+    let intervalId: number | null = null;
+    const stop = () => {
+      if (intervalId !== null) {
+        window.clearInterval(intervalId);
+        intervalId = null;
+      }
+    };
+    const start = () => {
+      if (intervalId === null) {
+        intervalId = window.setInterval(() => void load(), 15_000);
+      }
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') start();
+      else stop();
+    };
+    onVisibilityChange();
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      stop();
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLive, showId]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -83,7 +121,15 @@ export function ShowComments({ showId, canPost }: { showId: string; canPost: boo
 
   return (
     <section className="section">
-      <h2>Comments</h2>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
+        <h2 style={{ margin: 0 }}>Comments</h2>
+        {typeof goingCount === 'number' && goingCount > 0 ? (
+          <span className="meta">{goingCount} going</span>
+        ) : null}
+        {isLive ? (
+          <span className="meta" style={{ color: 'var(--accent)' }}>● Live — updating automatically</span>
+        ) : null}
+      </div>
       {canPost ? (
         <form onSubmit={submit} style={{ display: 'grid', gap: 8, marginBottom: 12 }}>
           <textarea

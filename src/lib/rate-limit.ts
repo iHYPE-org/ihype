@@ -167,9 +167,60 @@ function consumeMemory(key: string, { limit, windowMs }: RateLimitOptions): Rate
 }
 
 // ---------------------------------------------------------------------------
+// Durable Object implementation (atomic counters)
+// ---------------------------------------------------------------------------
+
+type RateLimiterStub = {
+  consume(limit: number, windowMs: number): Promise<RateLimitResult>;
+};
+
+type RateLimiterNamespace = {
+  idFromName(name: string): unknown;
+  get(id: unknown): RateLimiterStub;
+};
+
+function getRateLimiterStub(key: string): RateLimiterStub | null {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { getCloudflareContext } = require('@opennextjs/cloudflare');
+    const ctx = getCloudflareContext();
+    const ns = (ctx.env as Record<string, unknown>).RATE_LIMITER_DO as RateLimiterNamespace | undefined;
+    if (!ns) return null;
+    return ns.get(ns.idFromName(key));
+  } catch {
+    return null;
+  }
+}
+
+// One Durable Object per bucket key serializes increments, so counts stay
+// exact under concurrent load — KV's read-then-write counter undercounts.
+async function consumeDurableObject(key: string, options: RateLimitOptions): Promise<RateLimitResult | null> {
+  const stub = getRateLimiterStub(key);
+  if (!stub) return null;
+
+  try {
+    const result = await withKvTimeout(stub.consume(options.limit, options.windowMs), 'DO rate limit');
+    if (!result.allowed) {
+      // Track hits-per-bucket over a rolling 1h window for the admin dashboard.
+      try {
+        await kvIncr(`rate-limit-hits:${key}`, 3600);
+      } catch {
+        // best-effort
+      }
+    }
+    return result;
+  } catch (err) {
+    console.error('[rate-limit] DO error, falling back to KV:', err);
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
 export async function consumeRateLimit(key: string, options: RateLimitOptions): Promise<RateLimitResult> {
+  const atomic = await consumeDurableObject(key, options);
+  if (atomic) return atomic;
   return consumeKv(key, options);
 }

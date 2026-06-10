@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import dynamic from 'next/dynamic';
 
 // ── Re-export types that home/page.tsx imports ────────────────
 export type { WbStat, WbTrack, WbShow, WbActivity, WbNotification, WbRadioShow, WorkbenchData, Prefs, StarterPackItem, WbTrendingProfile } from '@/types/workbench';
@@ -19,16 +20,29 @@ import { ViewTickets } from './workbench/ViewTickets';
 import { ViewStudio } from './workbench/ViewStudio';
 import { ViewSettings } from './workbench/ViewSettings';
 import { ViewTour } from './workbench/ViewTour';
-import { ViewArtistPage } from './workbench/ViewArtistPage';
-import { ViewVenuePage } from './workbench/ViewVenuePage';
-import ViewPageStudio from './workbench/ViewPageStudio';
 import { ViewNotifications } from './workbench/ViewNotifications';
+import { DiscoverDailyCard } from './workbench/DiscoverDailyCard';
 import { Toast, WelcomeDialog, KeyboardShortcutsDialog } from './workbench/Overlays';
 import { ViewErrorBoundary } from './workbench/ErrorBoundary';
 import { SearchOverlay } from './workbench/SearchOverlay';
 import { PasskeyNudge } from './workbench/PasskeyNudge';
 import { WMGenreQuizSheet } from './workbench/MobilePrimitives';
 import { SkeletonMeView } from './workbench/SkeletonMeView';
+
+// Heavy, conditionally-rendered views (1.7–2.1k LOC each) are code-split so
+// they don't weigh down the initial workbench bundle. The shell is fully
+// client-side ('use client' + returns null until mounted), so SSR is a no-op.
+const viewLoading = () => (
+  <div style={{
+    minHeight: 240,
+    background: 'linear-gradient(90deg, #1a1612 25%, #221c16 50%, #1a1612 75%)',
+    backgroundSize: '200% 100%',
+    animation: 'shimmer 1.4s infinite',
+  }} />
+);
+const ViewArtistPage = dynamic(() => import('./workbench/ViewArtistPage').then(m => m.ViewArtistPage), { loading: viewLoading });
+const ViewVenuePage = dynamic(() => import('./workbench/ViewVenuePage').then(m => m.ViewVenuePage), { loading: viewLoading });
+const ViewPageStudio = dynamic(() => import('./workbench/ViewPageStudio'), { loading: viewLoading });
 
 // ─────────────────────────────────────────────────────────────
 // Main WorkbenchShell export
@@ -93,10 +107,11 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
       });
   }, []);
 
-  // 30-second hype count polling — silently updates counts in place
+  // 30-second hype count polling — silently updates counts in place.
+  // The interval is only armed while the tab is visible: torn down on
+  // visibilitychange→hidden, re-armed (with an immediate poll) on →visible.
   useEffect(() => {
     function poll() {
-      if (document.visibilityState !== 'visible') return;
       const trackIds = liveData.tracks.map(t => t.id);
       const showIds = liveData.shows.map(s => s.id);
       if (trackIds.length === 0 && showIds.length === 0) return;
@@ -118,8 +133,23 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
         });
     }
 
-    const interval = setInterval(poll, 30_000);
-    return () => clearInterval(interval);
+    let interval: ReturnType<typeof setInterval> | null = null;
+    const arm = () => { if (interval === null) interval = setInterval(poll, 30_000); };
+    const disarm = () => { if (interval !== null) { clearInterval(interval); interval = null; } };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        poll(); // catch up immediately after returning to the tab
+        arm();
+      } else {
+        disarm();
+      }
+    };
+    if (document.visibilityState === 'visible') arm();
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      disarm();
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, [liveData.tracks, liveData.shows]);
 
   // Apply prefs as CSS vars
@@ -354,7 +384,10 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
     switch (view) {
       case 'me':       return revalidating
         ? <SkeletonMeView />
-        : <ViewErrorBoundary viewName="My Page"><ViewMyPage data={liveData} onPickTrack={onPickTrack} currentIdx={currentIdx} /></ViewErrorBoundary>;
+        : <ViewErrorBoundary viewName="My Page">
+            <DiscoverDailyCard />
+            <ViewMyPage data={liveData} onPickTrack={onPickTrack} currentIdx={currentIdx} />
+          </ViewErrorBoundary>;
       case 'seeds':    return <ViewErrorBoundary viewName="Seeds"><ViewSeeds data={liveData} seedPlaying={seedPlaying} setSeedPlaying={setSeedPlaying} onSave={onSeedSave} /></ViewErrorBoundary>;
       case 'radio':    return <ViewErrorBoundary viewName="Radio"><ViewRadio data={liveData} onPickTrack={onPickTrack} /></ViewErrorBoundary>;
       case 'studio':   return <ViewErrorBoundary viewName="Studio"><ViewStudio data={liveData} /></ViewErrorBoundary>;

@@ -47,22 +47,25 @@ jobs:
         run: npm test
 
       - name: Run migrations
+        # Fail closed: `migrate deploy` is idempotent, so always run it and
+        # block the deploy if it can't complete. The old grep on `migrate
+        # status` output failed open — any status error (e.g. a missing env
+        # var) read as "all migrations applied" and the deploy shipped against
+        # a stale schema.
         run: |
-          STATUS=$(npx prisma migrate status 2>&1) || true
-          echo "$STATUS"
-          if echo "$STATUS" | grep -qE "unapplied migration|not yet been applied"; then
-            for i in 1 2 3; do
-              npx prisma migrate deploy && exit 0
-              echo "Migration attempt $i failed, retrying in 15s..."
-              sleep 15
-            done
-            exit 1
-          else
-            echo "All migrations already applied; skipping migrate deploy."
-          fi
+          npx prisma migrate status || true
+          for i in 1 2 3; do
+            npx prisma migrate deploy && exit 0
+            echo "Migration attempt $i failed, retrying in 15s..."
+            sleep 15
+          done
+          echo "::error::prisma migrate deploy failed; blocking deploy."
+          exit 1
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          # schema.prisma reads env("DIRECT_DATABASE_URL") — this was
+          # previously exported as DIRECT_URL, which Prisma never saw.
+          DIRECT_DATABASE_URL: ${{ secrets.DIRECT_URL }}
 
       - name: Build for Cloudflare Workers
         run: npm run cf:build

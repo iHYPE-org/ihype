@@ -3,14 +3,13 @@ import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { db, withDbRetry } from '@/lib/db';
 import {
-  hashPasswordResetCode,
   isPasswordResetExpired,
   normalizeEmailAddress,
-  PASSWORD_RESET_MAX_ATTEMPTS
+  PASSWORD_RESET_MAX_ATTEMPTS,
+  verifyPasswordResetCode
 } from '@/lib/password-reset';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
-import { constantTimeEqual } from '@/lib/secret-compare';
 
 const confirmSchema = z
   .object({
@@ -82,9 +81,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const codeHash = hashPasswordResetCode(email, body.code);
+    const codeValid = await verifyPasswordResetCode(body.code, resetCode.codeHash);
 
-    if (!constantTimeEqual(codeHash, resetCode.codeHash)) {
+    if (!codeValid) {
       const nextAttempts = resetCode.attempts + 1;
 
       await withDbRetry(() =>

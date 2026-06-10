@@ -1,6 +1,35 @@
 import { db } from '@/lib/db';
 
 /**
+ * Returns the count of shows the user RSVPed to that have since ended,
+ * broken down by this calendar month and all-time.
+ */
+export async function getShowsAttended(
+  userId: string
+): Promise<{ thisMonth: number; allTime: number }> {
+  const now = new Date();
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+
+  const [allTime, thisMonth] = await Promise.all([
+    db.showRsvp.count({
+      where: {
+        userId,
+        show: { status: 'ENDED' }
+      }
+    }),
+    db.showRsvp.count({
+      where: {
+        userId,
+        createdAt: { gte: monthStart },
+        show: { status: 'ENDED' }
+      }
+    })
+  ]);
+
+  return { thisMonth, allTime };
+}
+
+/**
  * Returns the user's current discovery streak — number of consecutive days
  * (ending today or yesterday) on which they recorded at least one Seed
  * action. Returns 0 if no recent activity.

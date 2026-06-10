@@ -77,8 +77,11 @@ const nextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 86400,
+    // Restrict the optimizer to our own media host. A '**' wildcard turns
+    // /_next/image into an open proxy that will fetch and re-serve any URL.
     remotePatterns: [
-      { protocol: 'https', hostname: '**' }
+      { protocol: 'https', hostname: 'ihype.org' },
+      { protocol: 'https', hostname: '*.ihype.org' }
     ]
   },
   outputFileTracingIncludes: {

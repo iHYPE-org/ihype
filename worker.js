@@ -1,6 +1,39 @@
+import { DurableObject } from 'cloudflare:workers';
 import openNextWorker from './.open-next/worker.js';
 
 export { BucketCachePurge, DOQueueHandler, DOShardedTagCache } from './.open-next/worker.js';
+
+/**
+ * Atomic rate-limit counter. One object per bucket key (idFromName), so all
+ * requests for a key serialize through the same instance — unlike KV, where
+ * read-increment-write races undercount under concurrent load.
+ * Consumed by src/lib/rate-limit.ts via the RATE_LIMITER_DO binding.
+ */
+export class RateLimiterDO extends DurableObject {
+  async consume(limit, windowMs) {
+    const now = Date.now();
+    let record = await this.ctx.storage.get('bucket');
+    if (!record || record.resetAt <= now) {
+      record = { count: 0, resetAt: now + windowMs };
+    }
+    record.count += 1;
+    await this.ctx.storage.put('bucket', record);
+    // Wipe storage after the window so idle buckets don't accumulate.
+    await this.ctx.storage.setAlarm(record.resetAt);
+    return {
+      allowed: record.count <= limit,
+      remaining: Math.max(0, limit - record.count),
+      retryAfterSeconds: Math.max(1, Math.ceil((record.resetAt - now) / 1000)),
+    };
+  }
+
+  async alarm() {
+    const record = await this.ctx.storage.get('bucket');
+    if (!record || record.resetAt <= Date.now()) {
+      await this.ctx.storage.deleteAll();
+    }
+  }
+}
 
 export default {
   async fetch(request, env, ctx) {

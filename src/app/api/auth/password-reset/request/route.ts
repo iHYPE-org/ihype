@@ -89,7 +89,7 @@ export async function POST(request: Request) {
 
     const code = createPasswordResetCode();
     const expiresAt = createPasswordResetExpiry();
-    const codeHash = hashPasswordResetCode(email, code);
+    const codeHash = await hashPasswordResetCode(code);
 
     await withDbRetry(() =>
       db.passwordResetCode.deleteMany({

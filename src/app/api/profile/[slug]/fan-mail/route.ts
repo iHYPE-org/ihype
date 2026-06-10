@@ -41,7 +41,7 @@ export async function POST(
 
   // Get followers
   const follows = await db.follow.findMany({
-    where: { followeeProfileId: slug },
+    where: { followeeProfileId: slug, notifyShows: true },
     include: { follower: { select: { email: true, emailBounced: true } } },
   });
 

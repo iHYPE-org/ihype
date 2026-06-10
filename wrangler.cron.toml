@@ -34,6 +34,7 @@ crons = [
   "30 3 * * *",   # dmca-enforce
   "30 8 * * 1",   # social-digest (Monday)
   "*/15 * * * *", # publish-scheduled (every 15min)
+  "0 16 * * *",   # post-show-recap (morning-after recap for attendees)
   # NOTE: nearby-show-notify runs at "0 9 * * *" (already covered by daily 9am slot)
   # NOTE: rsvp-reminders runs at "0 * * * *" (already covered by hourly slot)
 ]

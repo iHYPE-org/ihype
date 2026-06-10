@@ -44,7 +44,7 @@ export async function sendFollowDigest(): Promise<{ sent: number }> {
   let sent = 0;
   for (const [profileId, update] of profileUpdates) {
     const followers = await db.follow.findMany({
-      where: { followeeProfileId: profileId },
+      where: { followeeProfileId: profileId, notifyShows: true },
       select: { follower: { select: { email: true } } }
     });
     const lines = [...update.shows.map(s => `New show: ${s}`), ...update.posts.map(p => `New post: ${p}`)].join('<br/>');
