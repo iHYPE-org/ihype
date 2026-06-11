@@ -4,6 +4,13 @@ export async function register() {
     Sentry.init({
       dsn: process.env.SENTRY_DSN,
       environment: process.env.NODE_ENV,
+      integrations(defaults) {
+        // ContextLines (readline) and LocalVariables (child_process) are Node.js-only.
+        // Cloudflare Workers doesn't support these even with nodejs_compat.
+        return defaults.filter(
+          i => i.name !== 'ContextLines' && i.name !== 'LocalVariables'
+        );
+      },
       tracesSampler(ctx) {
         if (ctx.parentSampled !== undefined) return ctx.parentSampled;
         const url = ctx.name ?? '';

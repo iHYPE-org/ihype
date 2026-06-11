@@ -7,7 +7,7 @@ base_dir = ".open-next/server-functions/default"
 # Production routes for ihype.org and www.ihype.org are managed in the Cloudflare dashboard.
 workers_dev = false
 
-# bcryptjs with 12 salt rounds needs ~800ms CPU; raise the limit so auth routes don't hit the 30ms default.
+# bcryptjs with 10 salt rounds needs ~200ms CPU; raise the limit so auth routes don't hit the 30ms default.
 [limits]
 cpu_ms = 1500
 
