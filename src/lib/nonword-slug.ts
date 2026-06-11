@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto';
+import { randomInt } from 'node:crypto';
 
 // Pronounceable non-dictionary slugs ("veloka", "taniro") built from
 // consonant-vowel syllables. The consonant set is curated to avoid
@@ -6,21 +6,12 @@ import { randomBytes } from 'node:crypto';
 const CONSONANTS = ['b', 'd', 'f', 'g', 'k', 'l', 'm', 'n', 'p', 'r', 's', 't', 'v', 'z'] as const;
 const VOWELS = ['a', 'e', 'i', 'o', 'u'] as const;
 
-/** Crypto-safe uniform integer in [0, maxExclusive). Works on the Workers runtime (nodejs_compat). */
-function randomInt(maxExclusive: number): number {
-  // Rejection sampling over a single byte keeps the distribution uniform.
-  const limit = 256 - (256 % maxExclusive);
-  let byte: number;
-  do {
-    byte = randomBytes(1)[0];
-  } while (byte >= limit);
-  return byte % maxExclusive;
-}
-
 /** Returns a pronounceable nonword like "veloka" (3 CV syllables, 6 letters). */
 export function generateNonwordSlug(syllables = 3): string {
   let slug = '';
   for (let i = 0; i < syllables; i += 1) {
+    // node:crypto randomInt is unbiased (rejection sampling) and works on
+    // the Workers runtime via nodejs_compat — same usage as password-reset.
     slug += CONSONANTS[randomInt(CONSONANTS.length)] + VOWELS[randomInt(VOWELS.length)];
   }
   return slug;
