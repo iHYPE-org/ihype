@@ -91,6 +91,19 @@ commits that would be lost from each side and ask before proceeding.
 - Do NOT recreate `/artists`, `/promoters`, `/venues`, `/fans`, `/discover`, `/playlists`, `/collab`, `/settings`, or `/radio` as full pages for authenticated users. The middleware already redirects logged-in users from these paths to `/home`.
 - The old role-based layout with separate user-type pages and module choices is permanently retired. Never restore it.
 
+### Two workbench surfaces — features must mount in BOTH
+
+`home/page.tsx` renders two separate UIs, CSS-toggled by viewport:
+`WorkbenchShellV2` (desktop) and `WorkbenchMobile` + the
+`src/components/workbench/MobileScreen*` files (phone). They do not share
+screen composition. **Any user-facing workbench feature must be mounted in
+both surfaces in the same PR** — a component added only to the desktop shell
+is invisible to every phone user, and vice versa. This has silently dropped
+features twice (setlist voting existed only in mobile; the daily discovery
+card shipped desktop-only). Before finishing a workbench feature, grep for
+its component name in both `WorkbenchShellV2.tsx` and the `MobileScreen*`
+files and verify it renders in each.
+
 ### Build script
 
 `npm run build` (and `cf:build`) does **not** run migrations. Migrations run in
