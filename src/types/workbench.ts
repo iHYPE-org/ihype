@@ -171,12 +171,6 @@ export type WbPageEditor = {
   previousShows: WbShow[];
 };
 
-export type WbAvailabilityDate = {
-  id: string;
-  date: string;
-  note: string | null;
-};
-
 export type WorkbenchData = {
   userName: string;
   userInitials: string;
@@ -203,9 +197,7 @@ export type WorkbenchData = {
   notifications?: WbNotification[];
   venueRequests?: WbVenueRequest[];
   badges?: WbBadge[];
-  followerCount?: number;
   collabPosts?: WbCollabPost[];
-  availabilityDates?: WbAvailabilityDate[];
   referralStats?: { clicks: number; buyers: number; grossCents: number; payoutCents: number };
   listeningNow: number;
   hypedToday: number;
