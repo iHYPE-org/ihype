@@ -147,12 +147,12 @@ export default async function ShowDetailPage({
       : Promise.resolve(null),
     refHexId
       ? db.profile.findFirst({
-          where: { hexId: refHexId, type: 'DJ' },
+          where: { hexId: refHexId },
           select: { id: true, name: true }
         })
       : affiliateId
         ? db.profile.findFirst({
-            where: { id: affiliateId, type: 'DJ' },
+            where: { id: affiliateId },
             select: { id: true, name: true }
           })
         : Promise.resolve(null)

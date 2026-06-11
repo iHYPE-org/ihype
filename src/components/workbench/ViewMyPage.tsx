@@ -184,8 +184,9 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
   data: WorkbenchData; onPickTrack: (i: number) => void; currentIdx: number;
 }) {
   const [hypedIds, setHypedIds] = useState<Set<string>>(new Set());
-  const [referral, setReferral] = useState<{ link: string; count: number } | null>(null);
+  const [referral, setReferral] = useState<{ link: string; count: number; artistLink?: string | null; venueLink?: string | null; djLink?: string | null } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [anniversaryDismissed, setAnniversaryDismissed] = useState(false);
   const [streakData, setStreakData] = useState<{ streak: number; daysActive: number } | null>(null);
 
@@ -206,7 +207,7 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
   useEffect(() => {
     fetch('/api/referral')
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.referralLink) setReferral({ link: d.referralLink, count: d.referralCount ?? 0 }); })
+      .then(d => { if (d?.referralLink) setReferral({ link: d.referralLink, count: d.referralCount ?? 0, artistLink: d.artistLink ?? null, venueLink: d.venueLink ?? null, djLink: d.djLink ?? null }); })
       .catch(() => {});
   }, []);
 
@@ -488,41 +489,80 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
         style={{ marginBottom: 14 }}
       />
 
-      {/* Referral link */}
-      {referral && (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px',
-          border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)',
-          marginBottom: 14,
-        }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, letterSpacing: '.18em', color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 4 }}>
-              Your referral link · {referral.count} signup{referral.count !== 1 ? 's' : ''}
+      {/* Referral links */}
+      {referral && (() => {
+        const copyLink = async (url: string, key: string) => {
+          await navigator.clipboard.writeText(url).catch(() => {});
+          setCopied(true);
+          setCopiedKey(key);
+          setTimeout(() => { setCopied(false); setCopiedKey(null); }, 2000);
+        };
+        const secondaryLinks = [
+          referral.artistLink ? { label: 'Artist link', sublabel: 'For promoting artist content', url: referral.artistLink, key: 'artist', color: '#ff5029' } : null,
+          referral.venueLink ? { label: 'Venue link', sublabel: 'For promoting venue shows', url: referral.venueLink, key: 'venue', color: '#22e5d4' } : null,
+          referral.djLink ? { label: 'DJ link', sublabel: 'For promoting DJ events', url: referral.djLink, key: 'dj', color: '#ff3e9a' } : null,
+        ].filter(Boolean) as { label: string; sublabel: string; url: string; key: string; color: string }[];
+        return (
+          <div style={{ marginBottom: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {/* Fan / Promoter link */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px',
+              border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)',
+            }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, letterSpacing: '.18em', color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 4 }}>
+                  {secondaryLinks.length > 0 ? 'Fan / Promoter link' : 'Your referral link'} · {referral.count} signup{referral.count !== 1 ? 's' : ''}
+                </div>
+                <div style={{ fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {referral.link}
+                </div>
+              </div>
+              <button
+                onClick={() => copyLink(referral.link, 'fan')}
+                style={{
+                  padding: '8px 14px', borderRadius: 7, border: (copied && copiedKey === 'fan') ? '1px solid rgba(34,229,212,.4)' : '1px solid var(--line-2)',
+                  fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 700, letterSpacing: '.06em', cursor: 'pointer',
+                  background: (copied && copiedKey === 'fan') ? 'rgba(34,229,212,.08)' : 'var(--bg-3)',
+                  color: (copied && copiedKey === 'fan') ? '#22e5d4' : 'var(--ink-2)', transition: 'all .2s', flexShrink: 0,
+                }}
+              >
+                {(copied && copiedKey === 'fan') ? '✓ Copied' : 'Copy link'}
+              </button>
+              <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', flexShrink: 0, textAlign: 'right', maxWidth: 100, lineHeight: 1.4 }}>
+                Earn 10% of each ticket sale
+              </div>
             </div>
-            <div style={{ fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {referral.link}
-            </div>
+            {/* Secondary artist / venue / DJ links */}
+            {secondaryLinks.map(sl => (
+              <div key={sl.key} style={{
+                display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px',
+                border: `1px solid ${sl.color}33`, borderRadius: 10, background: `${sl.color}08`,
+              }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, letterSpacing: '.18em', color: sl.color, textTransform: 'uppercase', marginBottom: 4 }}>
+                    {sl.label}
+                  </div>
+                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {sl.url}
+                  </div>
+                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', marginTop: 2 }}>{sl.sublabel} · no promoter credit on own shows</div>
+                </div>
+                <button
+                  onClick={() => copyLink(sl.url, sl.key)}
+                  style={{
+                    padding: '8px 14px', borderRadius: 7, border: (copied && copiedKey === sl.key) ? `1px solid ${sl.color}66` : '1px solid var(--line-2)',
+                    fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 700, letterSpacing: '.06em', cursor: 'pointer',
+                    background: (copied && copiedKey === sl.key) ? `${sl.color}18` : 'var(--bg-3)',
+                    color: (copied && copiedKey === sl.key) ? sl.color : 'var(--ink-2)', transition: 'all .2s', flexShrink: 0,
+                  }}
+                >
+                  {(copied && copiedKey === sl.key) ? '✓ Copied' : 'Copy link'}
+                </button>
+              </div>
+            ))}
           </div>
-          <button
-            onClick={async () => {
-              await navigator.clipboard.writeText(referral.link).catch(() => {});
-              setCopied(true);
-              setTimeout(() => setCopied(false), 2000);
-            }}
-            style={{
-              padding: '8px 14px', borderRadius: 7, border: copied ? '1px solid rgba(34,229,212,.4)' : '1px solid var(--line-2)',
-              fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 700, letterSpacing: '.06em', cursor: 'pointer',
-              background: copied ? 'rgba(34,229,212,.08)' : 'var(--bg-3)',
-              color: copied ? '#22e5d4' : 'var(--ink-2)', transition: 'all .2s', flexShrink: 0,
-            }}
-          >
-            {copied ? '✓ Copied' : 'Copy link'}
-          </button>
-          <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', flexShrink: 0, textAlign: 'right', maxWidth: 100, lineHeight: 1.4 }}>
-            Earn 10% of each ticket sale
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Artist Anniversary Card */}
       {!anniversaryDismissed && data.lifeStats && data.lifeStats.totalHype > 0 && (

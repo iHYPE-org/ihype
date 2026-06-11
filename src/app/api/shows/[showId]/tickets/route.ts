@@ -192,8 +192,8 @@ export async function POST(
       db.show.findUnique({
         where: { id: showId },
         include: {
-          venueProfile: { select: { id: true, name: true, postalCode: true, stateRegion: true, country: true, stripeConnectAccountId: true } },
-          headlinerProfile: { select: { id: true, name: true, stripeConnectAccountId: true } },
+          venueProfile: { select: { id: true, name: true, postalCode: true, stateRegion: true, country: true, stripeConnectAccountId: true, ownerId: true } },
+          headlinerProfile: { select: { id: true, name: true, stripeConnectAccountId: true, ownerId: true } },
           promoterProfile: { select: { id: true, name: true } }
         }
       })
@@ -240,11 +240,20 @@ export async function POST(
     if (body.affiliatePromoterProfileId) {
       affiliatePromoterProfile = await db.profile.findUnique({
         where: { id: body.affiliatePromoterProfileId },
-        select: { id: true, type: true, name: true }
+        select: { id: true, type: true, name: true, ownerId: true }
       });
 
-      if (!affiliatePromoterProfile || affiliatePromoterProfile.type !== 'DJ') {
+      if (!affiliatePromoterProfile) {
         return NextResponse.json({ error: 'Affiliate promoter profile not found' }, { status: 400 });
+      }
+
+      // Double-dipping prevention: artists/venues cannot earn promoter credit on their own shows
+      const showOwnerIds = [show.headlinerProfile?.ownerId, show.venueProfile?.ownerId].filter(Boolean);
+      if (showOwnerIds.includes(affiliatePromoterProfile.ownerId)) {
+        return NextResponse.json(
+          { error: 'Artists and venues cannot earn referral credit on their own shows' },
+          { status: 400 }
+        );
       }
     }
 

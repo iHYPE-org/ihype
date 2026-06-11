@@ -352,19 +352,25 @@ export async function POST(request: Request) {
           // Try username first, then hexId-based profile lookup
           let resolvedUsername: string | null = null;
           let referrerId: string | null = null;
+          let referrerProfileId: string | null = null;
 
-          const refUser = await db.user.findUnique({ where: { username: refValue }, select: { id: true, username: true } });
+          const refUser = await db.user.findUnique({
+            where: { username: refValue },
+            select: { id: true, username: true, profiles: { select: { id: true }, orderBy: { createdAt: 'asc' }, take: 1 } }
+          });
           if (refUser) {
             resolvedUsername = refUser.username;
             referrerId = refUser.id;
+            referrerProfileId = refUser.profiles[0]?.id ?? null;
           } else {
             const refProfile = await db.profile.findUnique({
               where: { hexId: refValue },
-              select: { owner: { select: { id: true, username: true } } }
+              select: { id: true, owner: { select: { id: true, username: true } } }
             });
             if (refProfile?.owner) {
               resolvedUsername = refProfile.owner.username;
               referrerId = refProfile.owner.id;
+              referrerProfileId = refProfile.id;
             }
           }
 
@@ -377,6 +383,14 @@ export async function POST(request: Request) {
             entityId: user.id,
             metadata: { referrer: resolvedUsername, referrerHexId: refValue }
           });
+
+          // Award a hype point to the referrer's profile for bringing in a new user
+          if (referrerProfileId) {
+            db.$transaction([
+              db.profileHypeEvent.create({ data: { userId: user.id, profileId: referrerProfileId } }),
+              db.profile.update({ where: { id: referrerProfileId }, data: { hypeCount: { increment: 1 } } })
+            ]).catch(() => {});
+          }
 
           // Referrer badge check
           checkAndAwardBadges(referrerId, { referrerUsername: resolvedUsername }).catch(() => {});

@@ -12,15 +12,24 @@ export async function GET() {
 
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      select: { username: true, profiles: { select: { hexId: true }, take: 1 } }
+      select: { username: true, profiles: { select: { hexId: true, type: true }, orderBy: { createdAt: 'asc' } } }
     });
     if (!user) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     const baseUrl = getBaseUrl();
-    const hexId = user.profiles[0]?.hexId ?? null;
+    const fanProfile = user.profiles.find(p => p.type === 'LISTENER') ?? user.profiles[0];
+    const artistProfile = user.profiles.find(p => p.type === 'ARTIST');
+    const venueProfile = user.profiles.find(p => p.type === 'VENUE');
+    const djProfile = user.profiles.find(p => p.type === 'DJ');
+
+    const hexId = fanProfile?.hexId ?? null;
     const referralLink = hexId
       ? `${baseUrl}/register?ref=${hexId}`
       : `${baseUrl}/register?ref=${user.username}`;
+
+    const artistLink = artistProfile?.hexId ? `${baseUrl}/register?ref=${artistProfile.hexId}` : null;
+    const venueLink = venueProfile?.hexId ? `${baseUrl}/register?ref=${venueProfile.hexId}` : null;
+    const djLink = djProfile?.hexId ? `${baseUrl}/register?ref=${djProfile.hexId}` : null;
 
     // Count referrals — username-based and hexId-based
     const usernameCount = await db.auditLog.count({
@@ -68,7 +77,7 @@ export async function GET() {
       ? `I've brought ${referralCount} ${referralCount === 1 ? 'friend' : 'friends'} to iHYPE! Join the music community → ${referralLink}`
       : `Join me on iHYPE — the music community → ${referralLink}`;
 
-    return NextResponse.json({ referralLink, referralCount, referrals, shareText });
+    return NextResponse.json({ referralLink, referralCount, referrals, shareText, artistLink, venueLink, djLink });
   } catch (err) {
     console.error('[api/referral] error', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
