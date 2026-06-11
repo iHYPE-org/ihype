@@ -1,18 +1,27 @@
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useWorkbenchData } from '@/hooks/useWorkbenchData';
 
 export default function TicketsScreen() {
-  const state = useWorkbenchData();
+  const result = useWorkbenchData();
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.heading}>MY TICKETS</Text>
 
-        {state.status === 'loading' && <ActivityIndicator color="#ff5029" />}
+        {result.status === 'loading' && <ActivityIndicator color="#ff5029" />}
 
-        {state.status === 'ok' && state.data.tickets.map((t) => (
+        {result.status === 'error' && (
+          <View style={styles.center}>
+            <Text style={styles.errorText}>Couldn't load tickets</Text>
+            <Pressable style={styles.retryBtn} onPress={result.refresh}>
+              <Text style={styles.retryText}>TRY AGAIN</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {result.status === 'ok' && result.data.tickets.map((t) => (
           <View key={t.id} style={styles.ticket}>
             <View style={styles.ticketLeft}>
               <Text style={styles.ticketShow} numberOfLines={2}>{t.showName}</Text>
@@ -30,7 +39,7 @@ export default function TicketsScreen() {
           </View>
         ))}
 
-        {state.status === 'ok' && state.data.tickets.length === 0 && (
+        {result.status === 'ok' && result.data.tickets.length === 0 && (
           <View style={styles.empty}>
             <Text style={styles.emptyTitle}>No tickets yet</Text>
             <Text style={styles.emptySub}>Browse upcoming shows to grab yours.</Text>
@@ -44,6 +53,7 @@ export default function TicketsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0a0a0a' },
   scroll: { padding: 20, paddingBottom: 40 },
+  center: { alignItems: 'center', marginTop: 60 },
   heading: { color: '#fff', fontSize: 22, fontWeight: '900', letterSpacing: 3, marginBottom: 20 },
   ticket: {
     flexDirection: 'row', backgroundColor: '#141414', borderRadius: 12,
@@ -68,4 +78,7 @@ const styles = StyleSheet.create({
   empty: { alignItems: 'center', marginTop: 60 },
   emptyTitle: { color: '#fff', fontSize: 18, fontWeight: '700', marginBottom: 8 },
   emptySub: { color: '#555', fontSize: 13 },
+  errorText: { color: '#fff', fontSize: 15, fontWeight: '600', marginBottom: 16 },
+  retryBtn: { backgroundColor: '#1e1e1e', borderRadius: 8, paddingVertical: 12, paddingHorizontal: 24 },
+  retryText: { color: '#ff5029', fontSize: 13, fontWeight: '700', letterSpacing: 2 },
 });

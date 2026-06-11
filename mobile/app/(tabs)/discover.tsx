@@ -3,16 +3,25 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useWorkbenchData } from '@/hooks/useWorkbenchData';
 
 export default function DiscoverScreen() {
-  const state = useWorkbenchData();
+  const result = useWorkbenchData();
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.heading}>DISCOVER</Text>
 
-        {state.status === 'loading' && <ActivityIndicator color="#ff5029" />}
+        {result.status === 'loading' && <ActivityIndicator color="#ff5029" />}
 
-        {state.status === 'ok' && (state.data as { trending?: { id: string; name: string; city: string; genre: string; hypeCount: number }[] }).trending?.map((p) => (
+        {result.status === 'error' && (
+          <View style={styles.center}>
+            <Text style={styles.errorText}>Couldn't load artists</Text>
+            <Pressable style={styles.retryBtn} onPress={result.refresh}>
+              <Text style={styles.retryText}>TRY AGAIN</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {result.status === 'ok' && result.data.trending?.map((p) => (
           <Pressable key={p.id} style={styles.card}>
             <View style={styles.cardInner}>
               <Text style={styles.cardName}>{p.name}</Text>
@@ -25,7 +34,7 @@ export default function DiscoverScreen() {
           </Pressable>
         ))}
 
-        {state.status === 'ok' && !(state.data as { trending?: unknown[] }).trending?.length && (
+        {result.status === 'ok' && !result.data.trending?.length && (
           <Text style={styles.empty}>No trending artists right now. Check back soon.</Text>
         )}
       </ScrollView>
@@ -36,6 +45,7 @@ export default function DiscoverScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0a0a0a' },
   scroll: { padding: 20, paddingBottom: 40 },
+  center: { alignItems: 'center', marginTop: 60 },
   heading: { color: '#fff', fontSize: 22, fontWeight: '900', letterSpacing: 3, marginBottom: 20 },
   card: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#141414',
@@ -48,4 +58,7 @@ const styles = StyleSheet.create({
   hypeNum: { color: '#ff5029', fontSize: 16, fontWeight: '800' },
   hypeLabel: { color: '#555', fontSize: 8, letterSpacing: 1 },
   empty: { color: '#444', fontSize: 14, textAlign: 'center', marginTop: 40 },
+  errorText: { color: '#fff', fontSize: 15, fontWeight: '600', marginBottom: 16 },
+  retryBtn: { backgroundColor: '#1e1e1e', borderRadius: 8, paddingVertical: 12, paddingHorizontal: 24 },
+  retryText: { color: '#ff5029', fontSize: 13, fontWeight: '700', letterSpacing: 2 },
 });

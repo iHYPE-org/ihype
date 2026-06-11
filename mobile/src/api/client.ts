@@ -3,6 +3,10 @@ import { getToken } from '@/lib/auth';
 
 const BASE_URL: string = Constants.expoConfig?.extra?.apiBaseUrl ?? 'https://ihype.org';
 
+export class UnauthorizedError extends Error {
+  constructor() { super('Unauthorized'); this.name = 'UnauthorizedError'; }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = await getToken();
   const headers: Record<string, string> = {
@@ -12,6 +16,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   const res = await fetch(`${BASE_URL}${path}`, { ...init, headers });
+  if (res.status === 401) throw new UnauthorizedError();
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
   return res.json() as Promise<T>;
 }

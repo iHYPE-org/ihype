@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Text } from 'react-native';
+import { WorkbenchProvider } from '@/context/WorkbenchContext';
 
 function Icon({ label, focused }: { label: string; focused: boolean }) {
   return <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.4 }}>{label}</Text>;
@@ -7,6 +8,7 @@ function Icon({ label, focused }: { label: string; focused: boolean }) {
 
 export default function TabLayout() {
   return (
+    <WorkbenchProvider>
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -38,5 +40,6 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+    </WorkbenchProvider>
   );
 }
