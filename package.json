@@ -23,7 +23,7 @@
     "smoke:production": "node scripts/smoke-production.mjs",
     "admin:reset-test-logins": "node scripts/reset-test-logins.mjs",
     "analyze": "ANALYZE=true npm run build",
-    "cf:build": "opennextjs-cloudflare build && node scripts/patch-worker-bundle.mjs",
+    "cf:build": "node scripts/bump-sw-version.mjs && opennextjs-cloudflare build && node scripts/patch-worker-bundle.mjs",
     "cf:preview": "opennextjs-cloudflare preview",
     "cf:dev": "wrangler dev",
     "cf:deploy": "wrangler deploy worker.js --experimental-autoconfig=false"
