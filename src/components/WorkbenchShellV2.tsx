@@ -439,6 +439,7 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
             initials={liveData.userInitials}
             userName={liveData.userName}
             activeProfileTypes={liveData.activeProfileTypes}
+            hasPublishedPage={liveData.hasPublishedPage}
             onSettings={() => navigateTo('settings')}
             onSearch={() => setSearchOpen(true)}
             onShortcuts={() => setShortcutsOpen(true)}

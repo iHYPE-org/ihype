@@ -154,6 +154,7 @@ export type WorkbenchData = {
   radioShows: WbRadioShow[];
   /** Profile types the logged-in user has: 'ARTIST' | 'VENUE' | 'LISTENER' | 'DJ' */
   activeProfileTypes: string[];
+  hasPublishedPage?: boolean;
   profileType?: string;
   profileId?: string;
   profileHexId?: string;

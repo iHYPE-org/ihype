@@ -28,10 +28,10 @@ export const ROLE_TABS: { k: View; label: string; role: string }[] = [
   { k: 'venuepage',  label: 'Venue Page',  role: 'VENUE'  },
 ];
 
-export function AppTopbar({ view, setView, listeningNow, initials, userName, activeProfileTypes, onSettings, onSearch, onShortcuts, badges, notifCount, notifications }: {
+export function AppTopbar({ view, setView, listeningNow, initials, userName, activeProfileTypes, hasPublishedPage, onSettings, onSearch, onShortcuts, badges, notifCount, notifications }: {
   view: View; setView: (v: View) => void;
   listeningNow: number; initials: string; userName: string;
-  activeProfileTypes: string[]; onSettings?: () => void;
+  activeProfileTypes: string[]; hasPublishedPage?: boolean; onSettings?: () => void;
   onSearch?: () => void;
   onShortcuts?: () => void;
   badges: Record<string, string | undefined>;
@@ -137,7 +137,6 @@ export function AppTopbar({ view, setView, listeningNow, initials, userName, act
           );
         })}
         {(() => {
-          const tab = TABS.find(t => t.k === 'pagestudio')!;
           const active = view === 'pagestudio';
           return (
             <button key="pagestudio" onClick={() => setView('pagestudio')} aria-current={active ? 'page' : undefined} style={{
@@ -154,7 +153,7 @@ export function AppTopbar({ view, setView, listeningNow, initials, userName, act
               onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--ink-2)'; } }}
             >
               {TAB_ICONS['pagestudio']}
-              {tab.label}
+              {hasPublishedPage ? 'Fan Page' : 'Page Editor'}
             </button>
           );
         })()}
