@@ -12,6 +12,13 @@ import { ScreenShowsNew } from '@/components/workbench/MobileScreenShowsNew';
 import { ScreenYouNew, ManageConsole } from '@/components/workbench/MobileScreenYouNew';
 import ViewJournal from '@/components/workbench/ViewJournal';
 import ViewDiscover from '@/components/workbench/ViewDiscover';
+import { MobileScreenStudio } from '@/components/workbench/MobileScreenStudio';
+import { MobileScreenCollab } from '@/components/workbench/MobileScreenCollab';
+import { ViewTour } from '@/components/workbench/ViewTour';
+import { ViewNotifications } from '@/components/workbench/ViewNotifications';
+import { ViewSettings } from '@/components/workbench/ViewSettings';
+import ViewPageStudio from '@/components/workbench/ViewPageStudio';
+import { DEFAULT_PREFS, loadPrefs } from '@/components/workbench/types';
 
 // ─── Design tokens (match Workbench Mobile design) ───────────
 const T = {
@@ -37,7 +44,7 @@ const T = {
   fs: '"Instrument Serif",serif',
 };
 
-type MobileTab = 'listen' | 'seeds' | 'shows' | 'you';
+type MobileTab = 'listen' | 'seeds' | 'shows' | 'you' | 'more';
 
 // ─── Icons ────────────────────────────────────────────────────
 const WMIcon = {
@@ -474,7 +481,7 @@ function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, noti
   const [searchVal, setSearchVal] = React.useState('');
   const searchInputRef = React.useRef<HTMLInputElement>(null);
   const titles: Record<MobileTab, string> = {
-    listen: 'listen', seeds: 'seeds', shows: 'shows', you: 'you',
+    listen: 'listen', seeds: 'seeds', shows: 'shows', you: 'you', more: 'more',
   };
   const navItems: { id: MobileTab; icon: string; label: string; badge?: string }[] = [
     { id: 'listen', icon: '🎵', label: 'Listen' },
@@ -754,7 +761,48 @@ function WMMiniPlayer({ track, playing, onToggle, progress, onAlbumTap }: {
   );
 }
 
-// ─── Bottom Tab Bar — 4-tab design (Listen · Seeds · Shows · You) ─
+// ─── More screen ─────────────────────────────────────────────
+interface MoreProps { data: WorkbenchData; onStudio: () => void; onTour: () => void; onCollab: () => void; onPage: () => void; onNotif: () => void; onSettings: () => void; onJournal: () => void; onDiscover: () => void; }
+function MobileScreenMore({ data, onStudio, onTour, onCollab, onPage, onNotif, onSettings, onJournal, onDiscover }: MoreProps) {
+  const role = (data.profileType ?? '').toUpperCase();
+  const isCreator = role === 'ARTIST' || role === 'DJ';
+  const isVenue = role === 'VENUE';
+  type Item = { label: string; sub: string; color: string; on: () => void; icon: React.ReactNode };
+  const items: Item[] = [
+    ...(isCreator ? [{ label: 'Studio', sub: 'Tracks, releases & tools', color: T.purple, on: onStudio, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><rect x="2" y="5" width="16" height="10" rx="2"/><path d="M6 10h1.5M10 8v4M13.5 9v2" strokeLinecap="round"/></svg> }] : []),
+    ...(isVenue ? [{ label: 'Page Studio', sub: 'Edit your venue page', color: T.teal, on: onPage, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><rect x="2" y="2" width="16" height="16" rx="2"/><path d="M2 7h16M7 18V7"/></svg> }] : []),
+    ...(isCreator ? [{ label: 'Page Studio', sub: 'Edit your artist page', color: T.teal, on: onPage, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><rect x="2" y="2" width="16" height="16" rx="2"/><path d="M2 7h16M7 18V7"/></svg> }] : []),
+    { label: 'Tour', sub: 'Booking & routing', color: T.amber, on: onTour, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><path d="M3 10h14M10 3l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/></svg> },
+    { label: 'Collabs', sub: 'Find collaborators', color: T.pink, on: onCollab, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><circle cx="7" cy="8" r="2.5"/><circle cx="13" cy="8" r="2.5"/><path d="M2 17c0-2.8 2.2-4 5-4M11 13c2.8 0 7 1.2 7 4" strokeLinecap="round"/></svg> },
+    { label: 'Journal', sub: 'Posts & updates', color: T.accent, on: onJournal, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><rect x="3" y="2" width="14" height="16" rx="2"/><path d="M7 7h6M7 11h4" strokeLinecap="round"/></svg> },
+    { label: 'Discover', sub: 'Artists & venues', color: T.teal, on: onDiscover, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><circle cx="10" cy="10" r="7"/><path d="M13 7l-2 3-3 1.5 2-3L13 7z" fill="currentColor" stroke="none"/></svg> },
+    { label: 'Notifications', sub: 'Alerts & activity', color: T.blue, on: onNotif, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><path d="M5 8a5 5 0 0 1 10 0v3.5l1.5 2.5h-13L5 11.5V8Z"/><path d="M8.5 16.5a1.5 1.5 0 0 0 3 0" strokeLinecap="round"/></svg> },
+    { label: 'Settings', sub: 'Account & preferences', color: T.ink2, on: onSettings, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><circle cx="10" cy="10" r="2.5"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.2 4.2l1.4 1.4M14.4 14.4l1.4 1.4M4.2 15.8l1.4-1.4M14.4 5.6l1.4-1.4" strokeLinecap="round"/></svg> },
+  ];
+  return (
+    <div style={{ overflowY: 'auto', padding: '20px 16px', paddingBottom: 80 }}>
+      <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3, letterSpacing: '.18em', textTransform: 'uppercase', marginBottom: 18 }}>More Features</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        {items.map(item => (
+          <button key={item.label} onClick={item.on} style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 10,
+            padding: '16px 14px', borderRadius: 14,
+            background: T.bg2, border: `1px solid ${T.line}`,
+            cursor: 'pointer', textAlign: 'left',
+          }}>
+            <span style={{ color: item.color, display: 'flex', alignItems: 'center' }}>{item.icon}</span>
+            <div>
+              <div style={{ fontFamily: T.fd, fontSize: 15, fontWeight: 700, color: T.ink }}>{item.label}</div>
+              <div style={{ fontFamily: T.fb, fontSize: 12, color: T.ink2, marginTop: 2 }}>{item.sub}</div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Bottom Tab Bar — 5-tab design (Listen · Seeds · Shows · You · More) ─
 function WMBottomTabs({ tab, onTab }: { tab: MobileTab; onTab: (t: MobileTab) => void }) {
   const items: { id: MobileTab; label: string; icon: (s: number, c: string, filled?: boolean) => React.ReactNode }[] = [
     { id: 'listen', label: 'Listen', icon: (s, c) => (
@@ -778,6 +826,11 @@ function WMBottomTabs({ tab, onTab }: { tab: MobileTab; onTab: (t: MobileTab) =>
       <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
         <circle cx="12" cy="8" r="4" stroke={c} strokeWidth="1.7"/>
         <path d="M4.5 20.5c0-4 3.4-7 7.5-7s7.5 3 7.5 7" stroke={c} strokeWidth="1.7" strokeLinecap="round"/>
+      </svg>
+    )},
+    { id: 'more', label: 'More', icon: (s, c) => (
+      <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+        <circle cx="5" cy="12" r="1.5" fill={c}/><circle cx="12" cy="12" r="1.5" fill={c}/><circle cx="19" cy="12" r="1.5" fill={c}/>
       </svg>
     )},
   ];
@@ -1913,6 +1966,15 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
   const [manageMode, setManageMode] = useState(false);
   const [journalMode, setJournalMode] = useState(false);
   const [discoverMode, setDiscoverMode] = useState(false);
+  const [studioMode, setStudioMode] = useState(false);
+  const [tourMode, setTourMode] = useState(false);
+  const [collabMode, setCollabMode] = useState(false);
+  const [pageMode, setPageMode] = useState(false);
+  const [notifMode, setNotifMode] = useState(false);
+  const [settingsMode, setSettingsMode] = useState(false);
+  const [prefs, setPrefs] = useState<typeof DEFAULT_PREFS>(DEFAULT_PREFS);
+  const setPref = useCallback((k: string, v: unknown) => setPrefs(p => ({ ...p, [k]: v })), []);
+  useEffect(() => { setPrefs(loadPrefs()); }, []);
   const [refreshing, setRefreshing] = useState(false);
   const pullStartY = useRef(0);
   const pullDeltaRef = useRef(0);
@@ -1975,7 +2037,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
     return () => clearInterval(iv);
   }, [playing, track]);
 
-  const TABS_ORDER: MobileTab[] = ['listen', 'seeds', 'shows', 'you'];
+  const TABS_ORDER: MobileTab[] = ['listen', 'seeds', 'shows', 'you', 'more'];
   const tabSwipeStart = useRef<{ x: number; y: number } | null>(null);
   const tabSwipeLocked = useRef<'h' | 'v' | null>(null);
 
@@ -2037,6 +2099,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
       case 'seeds':  return <ScreenSeeds data={liveData} />;
       case 'shows':  return <ScreenShowsNew data={liveData} />;
       case 'you':    return <ScreenYouNew data={liveData} onManage={() => setManageMode(true)} onJournal={() => setJournalMode(true)} onDiscover={() => setDiscoverMode(true)} />;
+      case 'more':   return <MobileScreenMore data={liveData} onStudio={() => setStudioMode(true)} onTour={() => setTourMode(true)} onCollab={() => setCollabMode(true)} onPage={() => setPageMode(true)} onNotif={() => setNotifMode(true)} onSettings={() => setSettingsMode(true)} onJournal={() => setJournalMode(true)} onDiscover={() => setDiscoverMode(true)} />;
     }
   })();
 
@@ -2076,6 +2139,27 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
         <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
           <ViewDiscover data={liveData} />
         </div>
+      </div>
+    );
+  }
+
+  const overlayModes: { active: boolean; close: () => void; title: string; color: string; children: React.ReactNode }[] = [
+    { active: studioMode,   close: () => setStudioMode(false),   title: 'Studio',        color: T.purple, children: <MobileScreenStudio data={liveData} /> },
+    { active: tourMode,     close: () => setTourMode(false),     title: 'Tour',          color: T.amber,  children: <ViewTour data={liveData} /> },
+    { active: collabMode,   close: () => setCollabMode(false),   title: 'Collabs',       color: T.pink,   children: <MobileScreenCollab data={liveData} /> },
+    { active: pageMode,     close: () => setPageMode(false),     title: 'Page Studio',   color: T.teal,   children: <ViewPageStudio data={liveData} /> },
+    { active: notifMode,    close: () => setNotifMode(false),    title: 'Notifications', color: T.blue,   children: <ViewNotifications /> },
+    { active: settingsMode, close: () => setSettingsMode(false), title: 'Settings',      color: T.ink2,   children: <ViewSettings prefs={prefs} setPref={setPref} data={liveData} onBack={() => setSettingsMode(false)} /> },
+  ];
+  for (const m of overlayModes) {
+    if (m.active) return (
+      <div style={{ position: 'fixed', inset: 0, background: T.bg, color: T.ink, fontFamily: T.fb, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <style>{eqCss}</style>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px 10px', borderBottom: `1px solid ${T.line}`, flexShrink: 0 }}>
+          <button onClick={m.close} style={{ background: 'none', border: 'none', color: m.color, fontFamily: T.fm, fontSize: 13, cursor: 'pointer', padding: '4px 0' }}>← Back</button>
+          <span style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 16 }}>{m.title}</span>
+        </div>
+        <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>{m.children}</div>
       </div>
     );
   }
