@@ -298,6 +298,12 @@ export function MobileScreenSeeds({ data, onHypersSheet }: { data: WorkbenchData
               </div>
             ))}
           </div>
+          {(data.hypeStreak ?? 0) > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+              <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, letterSpacing: '.12em', textTransform: 'uppercase' }}>Streak</div>
+              <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 14, color: T.accent, marginTop: 2 }}>🔥{data.hypeStreak}d</div>
+            </div>
+          )}
         </div>
 
         {/* Saved seeds strip */}

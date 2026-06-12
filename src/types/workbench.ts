@@ -211,6 +211,7 @@ export type WorkbenchData = {
   weeklyListens?: number;
   isAdmin?: boolean;
   uploadStreak?: number;
+  hypeStreak?: number;
   needsGenreQuiz?: boolean;
   degraded?: boolean;
   stripeConnectOnboarded?: boolean;

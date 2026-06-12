@@ -630,6 +630,12 @@ export function ViewSeeds({
                 <span style={{ color: 'var(--ink-3)', letterSpacing: '.08em' }}>XP earned</span>
                 <AnimCount value={sessionStats.xp} color="#ffb84a" />
               </div>
+              {(data.hypeStreak ?? 0) > 0 && (
+                <div style={{ paddingTop: 10, marginTop: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontFamily: 'var(--f-m)', fontSize: 12 }}>
+                  <span style={{ color: 'var(--ink-3)', letterSpacing: '.08em' }}>Hype streak</span>
+                  <span style={{ color: 'var(--accent)', fontFamily: 'var(--f-d)', fontWeight: 700 }}>🔥 {data.hypeStreak}d</span>
+                </div>
+              )}
             </div>
 
             {/* Daily quest — radial arc */}

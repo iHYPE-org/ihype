@@ -92,7 +92,7 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
     // so a single slow or failing query cannot propagate to the outer catch.
     const [
       ticketOrders, hypeEvents, profileHypes, radioShows,
-      uploadStreak, weeklyHypeCounts, pastShows,
+      uploadStreak, hypeSeedDays, weeklyHypeCounts, pastShows,
       hypedToday, listeningNowCount, trendingProfiles,
       mediaUploads, hostedShows, headlinerShows, accountsPayableEntries,
       dbNotifications, weeklyListensCount, totalHypeGivenCount,
@@ -153,6 +153,12 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
       }).catch(() => [] as { id: string; title: string; description: string | null; status: string; startsAt: Date; featured: boolean; headlinerProfile: { id: string; name: string } | null }[]),
       // Upload streak (skip for listener-only profiles)
       isCreatorProfile ? getArtistUploadStreak(primaryProfile!.id).catch(() => 0) : Promise.resolve(0),
+      // Hype streak: days with at least one hype seed in last 30 days
+      db.seed.findMany({
+        where: { userId, action: 'hype', createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } },
+        orderBy: { createdAt: 'desc' },
+        select: { createdAt: true },
+      }).catch(() => [] as { createdAt: Date }[]),
       // Weekly hype counts per profile
       profileIds.length > 0
         ? db.profileHypeEvent.groupBy({
@@ -579,6 +585,20 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
         isOwn: p.userId === userId,
       })),
       uploadStreak: uploadStreak ?? 0,
+      hypeStreak: (() => {
+        const days = new Set(hypeSeedDays.map(h => {
+          const d = new Date(h.createdAt);
+          return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+        }));
+        let streak = 0;
+        const now = new Date();
+        for (let i = 0; i < 30; i++) {
+          const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+          if (!days.has(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`)) break;
+          streak++;
+        }
+        return streak;
+      })(),
       needsGenreQuiz: needsGenreQuiz ?? false,
       stripeConnectOnboarded: primaryProfile?.stripeConnectOnboarded ?? false,
       hypeCount7d: primaryProfile ? (weeklyMap[primaryProfile.id] ?? 0) : 0,

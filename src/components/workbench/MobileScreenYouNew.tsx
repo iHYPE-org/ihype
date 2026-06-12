@@ -148,6 +148,20 @@ export function ManageConsole({ data, onExit }: { data: WorkbenchData; onExit: (
   const rc = isVenue ? T.teal : T.accent;
   const name = data.userName;
   const [live, setLive] = React.useState(true);
+  const [requests, setRequests] = React.useState(data.venueRequests?.filter(r => r.status === 'PENDING') ?? []);
+  const [busyId, setBusyId] = React.useState<string | null>(null);
+
+  const handleRequest = async (id: string, status: 'BOOKED' | 'DISMISSED') => {
+    setBusyId(id);
+    try {
+      await fetch(`/api/venue-requests/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      setRequests(prev => prev.filter(r => r.id !== id));
+    } catch { /* ignore */ } finally { setBusyId(null); }
+  };
 
   const stats: [string, string, string][] = isVenue ? [
     ['$1,830', 'Sold tonight', T.teal],
@@ -161,7 +175,6 @@ export function ManageConsole({ data, onExit }: { data: WorkbenchData; onExit: (
 
   const quick = isVenue ? [
     { t: "Post tonight's lineup", d: 'Pushes to fans within 3 mi', ic: 'megaphone' as const },
-    { t: 'Approve booking request', d: `${data.pendingVenueRequestCount ?? 0} pending`, ic: 'inbox' as const, badge: String(data.pendingVenueRequestCount ?? '') || undefined },
     { t: 'Update door + capacity', d: `Capacity ${data.shows[0]?.capacity ?? 0}`, ic: 'edit' as const },
   ] : [
     { t: 'Post an update', d: 'New single, show, or note to fans', ic: 'megaphone' as const },
@@ -233,6 +246,32 @@ export function ManageConsole({ data, onExit }: { data: WorkbenchData; onExit: (
               {q.badge && <div style={{ minWidth: 20, height: 20, borderRadius: 99, background: rc, color: T.bg, fontFamily: T.fd, fontWeight: 800, fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 6px' }}>{q.badge}</div>}
             </button>
           ))}
+          {/* Booking requests — venue only */}
+          {isVenue && requests.length > 0 && (
+            <>
+              <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, letterSpacing: '.18em', marginTop: 8, marginBottom: 6, textTransform: 'uppercase' }}>
+                Booking requests <span style={{ background: rc, color: T.bg, borderRadius: 99, padding: '1px 7px', fontFamily: T.fd, fontWeight: 800, fontSize: 9, marginLeft: 4 }}>{requests.length}</span>
+              </div>
+              {requests.map(r => (
+                <div key={r.id} style={{ padding: '12px 14px', background: T.bg2, border: `1px solid ${T.teal}40`, borderRadius: 13 }}>
+                  <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 14, marginBottom: 2 }}>{r.artistName}</div>
+                  {r.note && <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink2, marginBottom: 8, lineHeight: 1.4 }}>{r.note.slice(0, 100)}{r.note.length > 100 ? '…' : ''}</div>}
+                  <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                    <button
+                      disabled={busyId === r.id}
+                      onClick={() => handleRequest(r.id, 'BOOKED')}
+                      style={{ flex: 1, padding: '9px 0', borderRadius: 9, border: 'none', background: T.teal, color: T.bg, fontFamily: T.fd, fontWeight: 700, fontSize: 12, cursor: 'pointer', opacity: busyId === r.id ? 0.5 : 1 }}
+                    >Accept</button>
+                    <button
+                      disabled={busyId === r.id}
+                      onClick={() => handleRequest(r.id, 'DISMISSED')}
+                      style={{ flex: 1, padding: '9px 0', borderRadius: 9, border: `1px solid ${T.line2}`, background: T.bg3, color: T.ink2, fontFamily: T.fd, fontWeight: 700, fontSize: 12, cursor: 'pointer', opacity: busyId === r.id ? 0.5 : 1 }}
+                    >Dismiss</button>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
         </div>
 
         {/* desktop punts */}
