@@ -58,6 +58,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true, updated: result.count });
     }
 
+    case 'resolve_reports': {
+      const result = await db.contentReport.updateMany({
+        where: { id: { in: ids }, status: 'OPEN' },
+        data: { status: 'RESOLVED' },
+      });
+      return NextResponse.json({ ok: true, updated: result.count });
+    }
+
+    case 'dismiss_reports': {
+      const result = await db.contentReport.updateMany({
+        where: { id: { in: ids }, status: 'OPEN' },
+        data: { status: 'DISMISSED' },
+      });
+      return NextResponse.json({ ok: true, updated: result.count });
+    }
+
     default:
       return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 });
   }

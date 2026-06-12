@@ -49,11 +49,12 @@ type Report = {
   reporter: { id: string; name: string | null; email: string | null } | null;
 };
 
+const REPORT_PAGE_SIZE = 25;
 
 export default async function AdminReviewPage({
   searchParams
 }: {
-  searchParams?: Promise<{ tab?: string }>;
+  searchParams?: Promise<{ tab?: string; status?: string; type?: string; from?: string; to?: string; page?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
@@ -62,19 +63,36 @@ export default async function AdminReviewPage({
   const resolved = searchParams ? await searchParams : {};
   const rawTab = resolved.tab;
   const tab: Tab = rawTab === 'verifications' || rawTab === 'duplicates' ? rawTab : 'reports';
+  const rStatus = resolved.status ?? 'OPEN';
+  const rType = resolved.type ?? '';
+  const rFrom = resolved.from ? new Date(resolved.from) : undefined;
+  const rTo = resolved.to ? new Date(resolved.to) : undefined;
+  const rPage = Math.max(1, parseInt(resolved.page ?? '1', 10));
 
   // ── REPORTS ──
   let reports: Report[] = [];
+  let reportsTotal = 0;
   let profileMap = new Map<string, { id: string; name: string; slug: string; type: string }>();
   let showMap = new Map<string, { id: string; title: string; slug: string }>();
   let commentMap = new Map<string, { id: string; content: string }>();
 
   if (tab === 'reports') {
-    reports = (await db.contentReport.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: { reporter: { select: { id: true, name: true, email: true } } },
-      take: 200
-    })) as Report[];
+    const rWhere: Record<string, unknown> = { status: rStatus };
+    if (rType) rWhere.targetType = rType;
+    if (rFrom || rTo) rWhere.createdAt = { ...(rFrom ? { gte: rFrom } : {}), ...(rTo ? { lte: rTo } : {}) };
+
+    const [raw, total] = await Promise.all([
+      db.contentReport.findMany({
+        where: rWhere,
+        orderBy: { createdAt: 'desc' },
+        take: REPORT_PAGE_SIZE,
+        skip: (rPage - 1) * REPORT_PAGE_SIZE,
+        include: { reporter: { select: { id: true, name: true, email: true } } },
+      }),
+      db.contentReport.count({ where: rWhere }),
+    ]);
+    reports = raw as Report[];
+    reportsTotal = total;
     const profileIds = reports.filter(r => r.targetType === 'profile').map(r => r.targetId);
     const showIds = reports.filter(r => r.targetType === 'show').map(r => r.targetId);
     const commentIds = reports.filter(r => r.targetType === 'comment').map(r => r.targetId);
@@ -149,11 +167,61 @@ export default async function AdminReviewPage({
         <Link href="/admin/review?tab=duplicates" className={`button small${tab === 'duplicates' ? '' : ' secondary'}`}>Duplicates</Link>
       </nav>
 
-      {tab === 'reports' && (
+      {tab === 'reports' && (() => {
+        const reportPages = Math.ceil(reportsTotal / REPORT_PAGE_SIZE);
+        const rpHref = (overrides: Record<string, string>) => {
+          const p = new URLSearchParams({ tab: 'reports', status: rStatus, ...(rType ? { type: rType } : {}), ...(resolved.from ? { from: resolved.from } : {}), ...(resolved.to ? { to: resolved.to } : {}), page: String(rPage), ...overrides });
+          return `/admin/review?${p}`;
+        };
+        return (
         <>
-          <p style={{ fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-2)', marginBottom: 32 }}>{reports.length} report{reports.length !== 1 ? 's' : ''} total</p>
+          <form method="get" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16, alignItems: 'flex-end' }}>
+            <input type="hidden" name="tab" value="reports" />
+            <select name="status" defaultValue={rStatus} className="input" style={{ width: 130 }}>
+              <option value="OPEN">Open</option>
+              <option value="RESOLVED">Resolved</option>
+              <option value="DISMISSED">Dismissed</option>
+            </select>
+            <select name="type" defaultValue={rType} className="input" style={{ width: 130 }}>
+              <option value="">All types</option>
+              <option value="profile">Profile</option>
+              <option value="show">Show</option>
+              <option value="comment">Comment</option>
+              <option value="track">Track</option>
+            </select>
+            <label style={{ display: 'grid', gap: 2 }}>
+              <span className="meta" style={{ fontSize: 10 }}>From</span>
+              <input className="input" type="date" name="from" defaultValue={resolved.from ?? ''} />
+            </label>
+            <label style={{ display: 'grid', gap: 2 }}>
+              <span className="meta" style={{ fontSize: 10 }}>To</span>
+              <input className="input" type="date" name="to" defaultValue={resolved.to ?? ''} />
+            </label>
+            <input type="hidden" name="page" value="1" />
+            <button className="button small" type="submit">Filter</button>
+            {(rStatus !== 'OPEN' || rType || resolved.from || resolved.to) && (
+              <Link className="button small secondary" href="/admin/review?tab=reports">Reset</Link>
+            )}
+          </form>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <p style={{ fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-2)', margin: 0 }}>{reportsTotal} {rStatus.toLowerCase()} report{reportsTotal !== 1 ? 's' : ''}</p>
+            {rStatus === 'OPEN' && reports.length > 0 && (
+              <form method="post" action="/api/admin/bulk-actions" style={{ display: 'flex', gap: 6 }}>
+                <input type="hidden" name="action" value="resolve_reports" />
+                {reports.map(r => <input key={r.id} type="hidden" name="ids" value={r.id} />)}
+                <button type="submit" style={{ background: 'rgba(34,229,212,.1)', color: '#22e5d4', border: '1px solid rgba(34,229,212,.25)', borderRadius: 6, padding: '5px 14px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--f-m)' }}>
+                  Resolve all on page ({reports.length})
+                </button>
+                <button type="submit" onClick={e => { (e.currentTarget.previousElementSibling as HTMLInputElement | null)?.setAttribute('value', 'dismiss_reports'); }} style={{ background: 'rgba(255,255,255,.06)', color: 'var(--ink-2)', border: '1px solid var(--line)', borderRadius: 6, padding: '5px 14px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--f-m)' }}>
+                  Dismiss all on page
+                </button>
+              </form>
+            )}
+          </div>
+
           {reports.length === 0 ? (
-            <p style={{ fontFamily: 'var(--f-m)', fontSize: 14, color: 'var(--ink-3)' }}>No reports yet.</p>
+            <p style={{ fontFamily: 'var(--f-m)', fontSize: 14, color: 'var(--ink-3)' }}>No reports found.</p>
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--f-m)', fontSize: 12 }}>
@@ -200,8 +268,16 @@ export default async function AdminReviewPage({
               </table>
             </div>
           )}
+          {reportPages > 1 && (
+            <div style={{ display: 'flex', gap: 8, marginTop: 16, alignItems: 'center' }}>
+              {rPage > 1 && <Link className="button small secondary" href={rpHref({ page: String(rPage - 1) })}>← Prev</Link>}
+              <span style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)' }}>Page {rPage} of {reportPages}</span>
+              {rPage < reportPages && <Link className="button small secondary" href={rpHref({ page: String(rPage + 1) })}>Next →</Link>}
+            </div>
+          )}
         </>
-      )}
+        );
+      })()}
 
       {tab === 'verifications' && (
         <div>
