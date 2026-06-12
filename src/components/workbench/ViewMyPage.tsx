@@ -79,6 +79,7 @@ const COVER_GRADIENTS = [
 function TrendingCard({ artist, idx }: { artist: WbTrendingProfile; idx: number }) {
   const [hyped, setHyped] = useState(false);
   const [count, setCount] = useState(artist.hypeCount);
+  const [followed, setFollowed] = useState(false);
   const gradient = artist.avatarImage
     ? undefined
     : COVER_GRADIENTS[idx % COVER_GRADIENTS.length];
@@ -109,28 +110,50 @@ function TrendingCard({ artist, idx }: { artist: WbTrendingProfile; idx: number 
             <div style={{ fontFamily: 'var(--f-d)', fontSize: 15, fontWeight: 700, color: 'var(--ink)' }}>{count.toLocaleString()}</div>
             <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, color: 'var(--ink-3)', letterSpacing: '.1em', textTransform: 'uppercase', marginTop: 1 }}>hypes</div>
           </div>
-          <button
-            onClick={() => {
-              if (hyped) return;
-              setHyped(true);
-              setCount(c => c + 1);
-              fetch('/api/hype', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ targetType: 'profile', targetId: artist.id }),
-              }).catch(() => {});
-            }}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 12px',
-              borderRadius: 99, fontSize: 12, fontWeight: 600, fontFamily: 'var(--f-b)',
-              border: hyped ? '2px solid transparent' : '2px solid rgba(255,80,41,.5)',
-              background: hyped ? 'linear-gradient(135deg,#ff5029,#ff3e9a)' : 'rgba(255,80,41,.1)',
-              color: hyped ? '#fff' : 'var(--accent)', cursor: 'pointer', minHeight: 'unset',
-            }}
-          >
-            <svg width={10} height={10} viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>
-            {hyped ? 'Hyped!' : 'Hype'}
-          </button>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button
+              onClick={() => {
+                if (hyped) return;
+                setHyped(true);
+                setCount(c => c + 1);
+                fetch('/api/hype', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ targetType: 'profile', targetId: artist.id }),
+                }).catch(() => {});
+              }}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 12px',
+                borderRadius: 99, fontSize: 12, fontWeight: 600, fontFamily: 'var(--f-b)',
+                border: hyped ? '2px solid transparent' : '2px solid rgba(255,80,41,.5)',
+                background: hyped ? 'linear-gradient(135deg,#ff5029,#ff3e9a)' : 'rgba(255,80,41,.1)',
+                color: hyped ? '#fff' : 'var(--accent)', cursor: 'pointer', minHeight: 'unset',
+              }}
+            >
+              <svg width={10} height={10} viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+              {hyped ? 'Hyped!' : 'Hype'}
+            </button>
+            <button
+              onClick={() => {
+                if (followed) return;
+                setFollowed(true);
+                fetch('/api/follow', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ profileId: artist.id }),
+                }).catch(() => {});
+              }}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 12px',
+                borderRadius: 99, fontSize: 12, fontWeight: 600, fontFamily: 'var(--f-b)',
+                border: followed ? '2px solid rgba(34,229,212,.2)' : '2px solid rgba(34,229,212,.5)',
+                background: 'rgba(34,229,212,.1)',
+                color: followed ? 'rgba(34,229,212,.5)' : '#22e5d4', cursor: 'pointer', minHeight: 'unset',
+              }}
+            >
+              {followed ? 'Following' : 'Follow'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -237,9 +237,9 @@ function OverviewPanel({ data }: { data: WorkbenchData }) {
           <KpiCard label="Booking Requests" value={(data.pendingVenueRequestCount ?? 0).toString()} delta={`${data.pendingVenueRequestCount ?? 0} pending`} color="#22e5d4" />
         </div>
 
-        {/* Listens chart */}
-        <SectionCard title="Page Views" subtitle="Daily visits over the past 30 days">
-          <SparkLine color="#22e5d4" />
+        {/* Hype activity chart */}
+        <SectionCard title="Hype Activity" subtitle="Daily hypes over the past 30 days">
+          <SparkLine color="#22e5d4" profileId={data.profileId} />
         </SectionCard>
 
         {/* Audience */}
@@ -802,10 +802,25 @@ function SectionCard({ title, subtitle, children }: { title: string; subtitle: s
   );
 }
 
-function SparkLine({ color }: { color: string }) {
-  const pts = [40,55,48,72,68,90,85,110,95,120,105,130,115,140,125,155,140,170,145,180,160,190,175,200,185,210,195,220,205,230];
-  const max = Math.max(...pts); const h = 80; const w = 600;
-  const d = pts.map((v, i) => `${i === 0 ? 'M' : 'L'}${(i / (pts.length - 1)) * w},${h - (v / max) * h}`).join(' ');
+function SparkLine({ color, profileId }: { color: string; profileId?: string }) {
+  const [pts, setPts] = React.useState<number[]>([]);
+  const [loaded, setLoaded] = React.useState(false);
+  React.useEffect(() => {
+    if (!profileId) { setLoaded(true); return; }
+    fetch(`/api/hype/chart?profileId=${profileId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then((d: { days: { date: string; count: number }[] } | null) => {
+        if (d?.days) setPts(d.days.map(x => x.count));
+      })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, [profileId]);
+
+  const data = pts.length > 0 ? pts : Array(30).fill(0);
+  const max = Math.max(...data, 1);
+  const h = 80; const w = 600;
+  const d = data.map((v, i) => `${i === 0 ? 'M' : 'L'}${(i / (data.length - 1)) * w},${h - (v / max) * h}`).join(' ');
+  if (!loaded) return <div style={{ height: 90, background: 'rgba(255,255,255,.03)', borderRadius: 6 }} />;
   return (
     <svg viewBox={`0 0 ${w} ${h + 10}`} style={{ width: '100%', height: 90 }}>
       <defs><linearGradient id="vspkl" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={color} stopOpacity="0.3" /><stop offset="100%" stopColor={color} stopOpacity="0" /></linearGradient></defs>

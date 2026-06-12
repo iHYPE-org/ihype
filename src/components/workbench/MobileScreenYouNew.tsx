@@ -5,7 +5,7 @@ import { T } from './MobilePrimitives';
 import { EmailPreferencesPanel } from './ViewSettings';
 import { PageActions } from './PageActions';
 
-export function ScreenYouNew({ data, onManage }: { data: WorkbenchData; onManage: () => void }) {
+export function ScreenYouNew({ data, onManage, onJournal, onDiscover }: { data: WorkbenchData; onManage: () => void; onJournal?: () => void; onDiscover?: () => void }) {
   const isCreator = data.activeProfileTypes.includes('ARTIST') || data.activeProfileTypes.includes('VENUE');
   const roleColor = data.activeProfileTypes.includes('VENUE') ? T.teal : data.activeProfileTypes.includes('ARTIST') ? T.accent : T.purple;
   const roleLabel = data.activeProfileTypes.includes('VENUE') ? 'VENUE' : data.activeProfileTypes.includes('ARTIST') ? 'ARTIST' : 'FAN';
@@ -116,6 +116,22 @@ export function ScreenYouNew({ data, onManage }: { data: WorkbenchData; onManage
             <div style={{ color: T.ink3, fontFamily: T.fm, fontSize: 12, padding: '8px 0' }}>Start exploring — hype tracks to build your history</div>
           )}
         </div>
+
+        {/* Quick links */}
+        {(onJournal || onDiscover) && (
+          <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+            {onJournal && (
+              <button onClick={onJournal} style={{ flex: 1, padding: '12px 0', borderRadius: 12, cursor: 'pointer', fontFamily: T.fd, fontWeight: 700, fontSize: 13, background: `rgba(255,80,41,.1)`, border: `1px solid rgba(255,80,41,.3)`, color: T.accent }}>
+                📝 Journal
+              </button>
+            )}
+            {onDiscover && (
+              <button onClick={onDiscover} style={{ flex: 1, padding: '12px 0', borderRadius: 12, cursor: 'pointer', fontFamily: T.fd, fontWeight: 700, fontSize: 13, background: `rgba(34,229,212,.08)`, border: `1px solid rgba(34,229,212,.3)`, color: T.teal }}>
+                🔍 Discover
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Email preferences — same panel as desktop Settings */}
         <div style={{ marginTop: 22 }}>
