@@ -19,6 +19,7 @@ import { ViewNotifications } from '@/components/workbench/ViewNotifications';
 import { ViewSettings } from '@/components/workbench/ViewSettings';
 import ViewPageStudio from '@/components/workbench/ViewPageStudio';
 import { logoutAction } from '@/app/logout/actions';
+import { WelcomeDialog } from '@/components/workbench/Overlays';
 import { DEFAULT_PREFS, loadPrefs } from '@/components/workbench/types';
 
 // ─── Design tokens (match Workbench Mobile design) ───────────
@@ -805,7 +806,7 @@ function MobileScreenMore({ data, onStudio, onTour, onCollab, onPage, onNotif, o
 }
 
 // ─── Bottom Tab Bar — 5-tab design (Listen · Seeds · Shows · You · More) ─
-function WMBottomTabs({ tab, onTab }: { tab: MobileTab; onTab: (t: MobileTab) => void }) {
+function WMBottomTabs({ tab, onTab, notifCount = 0 }: { tab: MobileTab; onTab: (t: MobileTab) => void; notifCount?: number }) {
   const items: { id: MobileTab; label: string; icon: (s: number, c: string, filled?: boolean) => React.ReactNode }[] = [
     { id: 'listen', label: 'Listen', icon: (s, c) => (
       <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
@@ -852,10 +853,13 @@ function WMBottomTabs({ tab, onTab }: { tab: MobileTab; onTab: (t: MobileTab) =>
             background: 'none', border: 'none', color: c,
             fontFamily: T.fm, fontSize: 9, fontWeight: 600, letterSpacing: '.08em',
             padding: '0 12px', cursor: 'pointer', textTransform: 'uppercase',
-            minHeight: 56, minWidth: 44,
+            minHeight: 56, minWidth: 44, position: 'relative',
           }}>
-            <span style={{ width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
               {it.icon(25, c, on && it.id === 'seeds')}
+              {it.id === 'more' && notifCount > 0 && (
+                <span style={{ position: 'absolute', top: 0, right: 0, width: 7, height: 7, borderRadius: '50%', background: T.accent, border: `1.5px solid rgba(10,8,5,.88)` }} />
+              )}
             </span>
             {it.label}
           </button>
@@ -1977,6 +1981,8 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
   const [prefs, setPrefs] = useState<typeof DEFAULT_PREFS>(DEFAULT_PREFS);
   const setPref = useCallback((k: string, v: unknown) => setPrefs(p => ({ ...p, [k]: v })), []);
   useEffect(() => { setPrefs(loadPrefs()); }, []);
+  const [showWelcome, setShowWelcome] = useState(false);
+  useEffect(() => { if (!localStorage.getItem('ihype-welcome-seen')) setShowWelcome(true); }, []);
   const [refreshing, setRefreshing] = useState(false);
   const pullStartY = useRef(0);
   const pullDeltaRef = useRef(0);
@@ -2208,7 +2214,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
       )}
 
       {/* Bottom tab bar */}
-      <WMBottomTabs tab={tab} onTab={setTab} />
+      <WMBottomTabs tab={tab} onTab={setTab} notifCount={liveData.notifications?.length ?? 0} />
 
       {/* Full player overlay */}
       {expanded && track && (
@@ -2229,6 +2235,13 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
         <div style={{ position: 'absolute', inset: 0, zIndex: 60 }}>
           <HypeOverlay track={hypeTrack} onDone={() => setHypeTrack(null)} />
         </div>
+      )}
+
+      {showWelcome && (
+        <WelcomeDialog
+          onDismiss={() => { localStorage.setItem('ihype-welcome-seen', '1'); setShowWelcome(false); }}
+          onNavigate={(v) => { if (v === 'seeds') setTab('seeds'); }}
+        />
       )}
     </div>
   );

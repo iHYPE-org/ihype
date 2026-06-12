@@ -123,37 +123,39 @@ const WELCOME_STEPS = [
   },
   {
     emoji: '🌱',
-    title: 'Seeds',
+    title: 'Your first move',
     body: (
       <>
+        Go to <strong style={{ color: 'var(--ink)' }}>Seeds</strong> and swipe on a few tracks.{' '}
         Swipe <strong style={{ color: 'var(--ink)' }}>right</strong> to hype,{' '}
         <strong style={{ color: 'var(--ink)' }}>left</strong> to skip,{' '}
         <strong style={{ color: 'var(--ink)' }}>up</strong> to save. Every swipe shapes your
-        local scene and feeds real demand data to artists and venues.
+        local scene.
       </>
     ),
     cta: 'Next →',
   },
   {
     emoji: '⚡',
-    title: "You're all set",
+    title: 'Follow 3 artists',
     body: (
       <>
-        Explore the menu, hype what moves you, and earn from every ticket you sell. Your
-        workbench is ready.
+        Find artists you love in <strong style={{ color: 'var(--ink)' }}>Seeds</strong> or{' '}
+        search for them. Following three unlocks a personalised feed and tells
+        artists their fans are here.
       </>
     ),
-    cta: "Let's go",
+    cta: 'Go to Seeds →',
   },
 ];
 
-export function WelcomeDialog({ onDismiss }: { onDismiss: () => void }) {
+export function WelcomeDialog({ onDismiss, onNavigate }: { onDismiss: () => void; onNavigate?: (view: string) => void }) {
   const [step, setStep] = React.useState(0);
   const current = WELCOME_STEPS[step];
   const isLast = step === WELCOME_STEPS.length - 1;
 
   function handleCta() {
-    if (!isLast) { setStep(s => s + 1); } else { onDismiss(); }
+    if (!isLast) { setStep(s => s + 1); } else { onNavigate?.('seeds'); onDismiss(); }
   }
 
   return (

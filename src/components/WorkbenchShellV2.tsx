@@ -512,7 +512,7 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
       {/* Hidden audio element for real playback */}
       <audio ref={audioRef} preload="metadata" style={{ display: 'none' }} />
       {toast && <Toast message={toast} onUndo={() => { setPlaying(false); setCurrentIdx(0); setToast(null); }} />}
-      {showWelcome && <WelcomeDialog onDismiss={() => { localStorage.setItem('ihype-welcome-seen', '1'); setShowWelcome(false); }} />}
+      {showWelcome && <WelcomeDialog onDismiss={() => { localStorage.setItem('ihype-welcome-seen', '1'); setShowWelcome(false); }} onNavigate={(v) => navigateTo(v as Parameters<typeof navigateTo>[0])} />}
       {shortcutsOpen && <KeyboardShortcutsDialog onDismiss={() => setShortcutsOpen(false)} />}
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
       <PasskeyNudge />

@@ -92,6 +92,14 @@ export function MobileScreenSeeds({ data, onHypersSheet }: { data: WorkbenchData
   const [actionedIds, setActionedIds] = useState<Set<string>>(new Set());
   const [sessionStats, setSessionStats] = useState({ saved: 0, skipped: 0, hyped: 0 });
   const [loadingDeck, setLoadingDeck] = useState(true);
+  const [dailyPick, setDailyPick] = useState<string | null>(null);
+  useEffect(() => {
+    fetch('/api/discover/daily-pick')
+      .then(r => r.ok ? r.json() : null)
+      .then((d: { reason?: string } | null) => { if (d?.reason) setDailyPick(d.reason); })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Swipe / drag state — use refs for hot-path, state only for render triggers
   const [dragX, setDragX] = useState(0);
@@ -232,6 +240,16 @@ export function MobileScreenSeeds({ data, onHypersSheet }: { data: WorkbenchData
       {data.city && <WMTrendingStrip city={data.city} />}
 
       <div style={{ padding: '0 18px' }}>
+        {/* Daily Pick AI banner */}
+        {dailyPick && (
+          <div style={{ marginBottom: 12, padding: '10px 14px', borderRadius: 10, background: `${T.accent}12`, border: `1px solid ${T.accent}30`, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+            <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>⚡</span>
+            <div>
+              <div style={{ fontFamily: T.fm, fontSize: 9, color: T.accent, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: 2 }}>Today's Pick</div>
+              <div style={{ fontFamily: T.fb, fontSize: 12, color: T.ink, lineHeight: 1.4 }}>{dailyPick}</div>
+            </div>
+          </div>
+        )}
         {/* Session stats */}
         <div style={{
           background: T.bg2, border: `1px solid ${T.line}`, borderRadius: 10, padding: '10px 12px',
