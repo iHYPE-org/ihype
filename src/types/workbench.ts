@@ -92,6 +92,7 @@ export type WbRadioShow = {
   id: string;
   name: string;
   host: string;
+  hostProfileId?: string;
   time: string;
   next: string;
   live: boolean;

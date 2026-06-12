@@ -105,6 +105,22 @@ function ShowDetailNew({ show, onBack, onBuy }: { show: WbShow; onBack: () => vo
   const pct = show.capacity > 0 ? Math.round(show.sold / show.capacity * 100) : 0;
   const showColor = show.hype > 100 ? T.accent : T.teal;
   const [rsvpState, setRsvpState] = React.useState<'idle' | 'loading' | 'done'>('idle');
+  const [shareState, setShareState] = React.useState<'idle' | 'copied'>('idle');
+
+  async function handleShare() {
+    let link = `${window.location.origin}/shows/${show.id}`;
+    try {
+      const r = await fetch('/api/referral');
+      if (r.ok) { const d = await r.json() as { referralLink?: string }; if (d.referralLink) link = d.referralLink; }
+    } catch { /* use default link */ }
+    const text = `${show.name} at ${show.venue} — face-value tickets, 0% fees on iHYPE 🎵`;
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try { await navigator.share({ title: show.name, text, url: link }); return; } catch { /* fall through */ }
+    }
+    try { await navigator.clipboard.writeText(`${text}\n${link}`); } catch { /* ignore */ }
+    setShareState('copied');
+    setTimeout(() => setShareState('idle'), 2000);
+  }
 
   const handleRsvp = async () => {
     if (rsvpState !== 'idle') return;
@@ -181,6 +197,24 @@ function ShowDetailNew({ show, onBack, onBuy }: { show: WbShow; onBack: () => vo
             }}
           >
             {rsvpState === 'done' ? '✓ RSVPed' : rsvpState === 'loading' ? '…' : 'RSVP'}
+          </button>
+          <button
+            onClick={() => void handleShare()}
+            style={{
+              padding: '14px 16px', borderRadius: 12, fontFamily: T.fd, fontWeight: 700, fontSize: 13,
+              cursor: 'pointer', border: `1px solid ${shareState === 'copied' ? T.accent + '60' : T.line2}`,
+              background: shareState === 'copied' ? `${T.accent}18` : T.bg2,
+              color: shareState === 'copied' ? T.accent : T.ink3,
+              transition: 'background .2s, color .2s, border-color .2s',
+            }}
+            title="Share & earn"
+          >
+            {shareState === 'copied' ? '✓' : (
+              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              </svg>
+            )}
           </button>
         </div>
       </div>

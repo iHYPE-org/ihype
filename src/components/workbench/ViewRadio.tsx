@@ -1,6 +1,6 @@
 'use client';
 
-import React, { memo, useState } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import type { WorkbenchData } from '@/types/workbench';
 import { IcBolt, IcDot, IcPlay, IcHeart } from './icons';
 import { Panel } from './primitives';
@@ -21,6 +21,32 @@ export const ViewRadio = memo(function ViewRadio({ data, onPickTrack }: {
   const [desc, setDesc] = useState('');
   const [creating, setCreating] = useState(false);
   const [createErr, setCreateErr] = useState('');
+  const [followingHost, setFollowingHost] = useState(false);
+  const [followBusy, setFollowBusy] = useState(false);
+
+  useEffect(() => {
+    if (!show?.hostProfileId) return;
+    setFollowingHost(false);
+    void fetch(`/api/follow?profileId=${show.hostProfileId}`)
+      .then(r => r.json())
+      .then((d: { following?: boolean }) => { if (d.following !== undefined) setFollowingHost(d.following); })
+      .catch(() => null);
+  }, [show?.hostProfileId]);
+
+  async function toggleFollowHost() {
+    if (!show?.hostProfileId || followBusy) return;
+    setFollowBusy(true);
+    const prev = followingHost;
+    setFollowingHost(!followingHost);
+    try {
+      const res = await fetch('/api/follow', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileId: show.hostProfileId }),
+      });
+      if (!res.ok) setFollowingHost(prev);
+      else { const d = (await res.json()) as { following: boolean }; setFollowingHost(d.following); }
+    } catch { setFollowingHost(prev); } finally { setFollowBusy(false); }
+  }
 
   async function createRadioShow() {
     if (!title.trim()) return;
@@ -176,6 +202,21 @@ export const ViewRadio = memo(function ViewRadio({ data, onPickTrack }: {
               >
                 {subscribed ? '✓ Subscribed' : '＋ Subscribe'}
               </button>
+              {show.hostProfileId && (
+                <button
+                  onClick={() => void toggleFollowHost()} disabled={followBusy}
+                  style={{
+                    padding: '9px 14px', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.04em',
+                    display: 'flex', alignItems: 'center', gap: 6, cursor: followBusy ? 'default' : 'pointer',
+                    border: followingHost ? '1px solid rgba(34,229,212,.4)' : '1px solid var(--line-2)',
+                    background: followingHost ? 'rgba(34,229,212,.08)' : 'none',
+                    color: followingHost ? '#22e5d4' : 'var(--ink)',
+                    transition: 'background .15s, color .15s, border-color .15s',
+                  }}
+                >
+                  {followingHost ? '✓ Following DJ' : '+ Follow DJ'}
+                </button>
+              )}
               <button
                 onClick={async () => {
                   setHyped(true);

@@ -148,9 +148,9 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
         orderBy: [{ featured: 'desc' }, { startsAt: 'desc' }],
         select: {
           id: true, title: true, description: true, status: true, startsAt: true, featured: true,
-          headlinerProfile: { select: { name: true } },
+          headlinerProfile: { select: { id: true, name: true } },
         },
-      }).catch(() => [] as { id: string; title: string; description: string | null; status: string; startsAt: Date; featured: boolean; headlinerProfile: { name: string } | null }[]),
+      }).catch(() => [] as { id: string; title: string; description: string | null; status: string; startsAt: Date; featured: boolean; headlinerProfile: { id: string; name: string } | null }[]),
       // Upload streak (skip for listener-only profiles)
       isCreatorProfile ? getArtistUploadStreak(primaryProfile!.id).catch(() => 0) : Promise.resolve(0),
       // Weekly hype counts per profile
@@ -480,6 +480,7 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
       id: r.id,
       name: r.title,
       host: r.headlinerProfile?.name ?? userName,
+      hostProfileId: r.headlinerProfile?.id,
       time: r.startsAt.toLocaleDateString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' }),
       next: r.status === 'LIVE' ? 'now' : 'upcoming',
       live: r.status === 'LIVE',

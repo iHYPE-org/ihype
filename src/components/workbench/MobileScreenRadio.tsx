@@ -4,6 +4,50 @@ import React from 'react';
 import type { WorkbenchData } from '@/types/workbench';
 import { T, WMPill, WMChip, WMViewHead, WMTrendingStrip } from './MobilePrimitives';
 
+function FollowDJ({ profileId }: { profileId: string }) {
+  const [following, setFollowing] = React.useState(false);
+  const [busy, setBusy] = React.useState(false);
+
+  React.useEffect(() => {
+    void fetch(`/api/follow?profileId=${profileId}`)
+      .then(r => r.json())
+      .then((d: { following?: boolean }) => { if (d.following !== undefined) setFollowing(d.following); })
+      .catch(() => null);
+  }, [profileId]);
+
+  async function toggle() {
+    if (busy) return;
+    setBusy(true);
+    const prev = following;
+    setFollowing(!following);
+    try {
+      const res = await fetch('/api/follow', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileId }),
+      });
+      if (!res.ok) setFollowing(prev);
+      else { const d = (await res.json()) as { following: boolean }; setFollowing(d.following); }
+    } catch { setFollowing(prev); } finally { setBusy(false); }
+  }
+
+  return (
+    <button
+      onClick={e => { e.stopPropagation(); void toggle(); }} disabled={busy}
+      style={{
+        padding: '4px 12px', borderRadius: 99,
+        border: following ? `1px solid ${T.teal}60` : `1px solid ${T.line2}`,
+        background: following ? `${T.teal}18` : T.bg2,
+        color: following ? T.teal : T.ink3,
+        fontFamily: T.fm, fontSize: 11, fontWeight: 700,
+        cursor: busy ? 'default' : 'pointer', whiteSpace: 'nowrap',
+        letterSpacing: '.04em', transition: 'background .15s, color .15s',
+      }}
+    >
+      {following ? '✓ Following' : '+ Follow DJ'}
+    </button>
+  );
+}
+
 // ─── Screen: Radio ───────────────────────────────────────────
 export function MobileScreenRadio({ data, onSetlistSheet, onHypersSheet, onSeedsTab }: {
   data: WorkbenchData;
@@ -47,7 +91,10 @@ export function MobileScreenRadio({ data, onSetlistSheet, onHypersSheet, onSeeds
                   ON AIR · {live.listeners.toLocaleString()}
                 </div>
                 <h2 style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 22, letterSpacing: '-.025em', margin: '5px 0 0', color: T.ink }}>{live.name}</h2>
-                <p style={{ fontFamily: T.fs, fontStyle: 'italic', fontSize: 13, color: T.ink2, margin: '3px 0 0' }}>with {live.host}</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3 }}>
+                  <p style={{ fontFamily: T.fs, fontStyle: 'italic', fontSize: 13, color: T.ink2, margin: 0 }}>with {live.host}</p>
+                  {live.hostProfileId && <FollowDJ profileId={live.hostProfileId} />}
+                </div>
               </div>
             </div>
             <div style={{
@@ -100,6 +147,7 @@ export function MobileScreenRadio({ data, onSetlistSheet, onHypersSheet, onSeeds
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, paddingTop: 8, borderTop: `1px dashed ${T.line}` }}>
                   <span style={{ fontFamily: T.fm, fontSize: 12, color: T.ink, fontWeight: 600 }}>{r.time}</span>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    {r.hostProfileId && <FollowDJ profileId={r.hostProfileId} />}
                     {!r.live && onSetlistSheet && (
                       <button onClick={() => onSetlistSheet(r.id)} style={{
                         background: 'none', border: `1px solid ${T.line2}`, borderRadius: 99, padding: '3px 9px',

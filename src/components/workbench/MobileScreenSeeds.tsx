@@ -86,6 +86,11 @@ function CollabBoardSection() {
 export function MobileScreenSeeds({ data, onHypersSheet }: { data: WorkbenchData; onHypersSheet?: (showId: string) => void }) {
   const waveform = [30, 55, 80, 42, 90, 70, 48, 88, 62, 35, 78, 55, 92, 40, 68, 82, 48, 30, 62, 88];
 
+  // Genre picker state (cold start)
+  const GENRE_OPTIONS = ['Hip-Hop', 'Electronic', 'Indie', 'R&B', 'Jazz', 'Rock', 'Pop', 'Classical', 'Country', 'Metal', 'Folk', 'Soul'];
+  const [pickedGenres, setPickedGenres] = useState<string[]>([]);
+  const [savingGenres, setSavingGenres] = useState(false);
+
   // Deck state
   const [deck, setDeck] = useState(data.tracks);
   const [deckIdx, setDeckIdx] = useState(0);
@@ -125,6 +130,20 @@ export function MobileScreenSeeds({ data, onHypersSheet }: { data: WorkbenchData
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { refreshDeck(); }, []);
+
+  async function saveGenres() {
+    if (pickedGenres.length < 2 || !data.profileId || savingGenres) return;
+    setSavingGenres(true);
+    try {
+      await fetch('/api/profile/genre', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileId: data.profileId, genres: pickedGenres }),
+      });
+    } catch { /* ignore */ } finally {
+      setSavingGenres(false);
+      refreshDeck();
+    }
+  }
 
   const handleAction = useCallback((action: 'save' | 'skip' | 'hype', fromDrag = false, dragDx = 0, dragDy = 0) => {
     const front = deck[deckIdx % Math.max(deck.length, 1)];
@@ -300,13 +319,51 @@ export function MobileScreenSeeds({ data, onHypersSheet }: { data: WorkbenchData
               <button onClick={refreshDeck} style={{ marginTop: 4, padding: '7px 20px', borderRadius: 99, background: T.accent, color: '#fff', border: 'none', fontFamily: T.fd, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Load more</button>
             </div>
           )}
-          {/* Empty state */}
+          {/* Empty state / Genre picker */}
           {!loadingDeck && deck.length === 0 && (
-            <div style={{ position: 'absolute', inset: 0, borderRadius: 18, background: T.bg2, border: `1px solid ${T.line}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-              <div style={{ fontSize: 36 }}>🌱</div>
-              <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 15, color: T.ink }}>No seeds right now</div>
-              <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.06em', textAlign: 'center', maxWidth: 200 }}>Check back soon — new music drops daily.</div>
-              <button onClick={refreshDeck} style={{ marginTop: 4, padding: '7px 20px', borderRadius: 99, background: T.accent, color: '#fff', border: 'none', fontFamily: T.fd, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Refresh</button>
+            <div style={{ position: 'absolute', inset: 0, borderRadius: 18, background: T.bg2, border: `1px solid ${T.line}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '0 20px' }}>
+              {data.needsGenreQuiz ? (
+                <>
+                  <div style={{ fontSize: 32 }}>🎵</div>
+                  <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 16, color: T.ink, textAlign: 'center' }}>Pick your sound</div>
+                  <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, textAlign: 'center', maxWidth: 220 }}>Tap 2+ genres so we know what to play you.</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, justifyContent: 'center', marginTop: 4 }}>
+                    {GENRE_OPTIONS.map(g => {
+                      const on = pickedGenres.includes(g);
+                      return (
+                        <button
+                          key={g}
+                          onClick={() => setPickedGenres(prev => on ? prev.filter(x => x !== g) : [...prev, g])}
+                          style={{
+                            padding: '6px 14px', borderRadius: 99, fontFamily: T.fm, fontSize: 12, fontWeight: 700,
+                            cursor: 'pointer', border: on ? `1px solid ${T.accent}` : `1px solid ${T.line2}`,
+                            background: on ? `${T.accent}22` : T.bg3, color: on ? T.accent : T.ink2,
+                            transition: 'background .12s, color .12s, border-color .12s',
+                          }}
+                        >{g}</button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    onClick={() => void saveGenres()}
+                    disabled={pickedGenres.length < 2 || savingGenres}
+                    style={{
+                      marginTop: 8, padding: '10px 28px', borderRadius: 99, border: 'none',
+                      background: pickedGenres.length >= 2 ? T.accent : T.bg3,
+                      color: pickedGenres.length >= 2 ? '#fff' : T.ink3,
+                      fontFamily: T.fd, fontWeight: 700, fontSize: 13, cursor: pickedGenres.length >= 2 ? 'pointer' : 'default',
+                      transition: 'background .15s, color .15s',
+                    }}
+                  >{savingGenres ? 'Saving…' : `Let's go →`}</button>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontSize: 36 }}>🌱</div>
+                  <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 15, color: T.ink }}>No seeds right now</div>
+                  <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.06em', textAlign: 'center', maxWidth: 200 }}>Check back soon — new music drops daily.</div>
+                  <button onClick={refreshDeck} style={{ marginTop: 4, padding: '7px 20px', borderRadius: 99, background: T.accent, color: '#fff', border: 'none', fontFamily: T.fd, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Refresh</button>
+                </>
+              )}
             </div>
           )}
           {/* behind cards */}
