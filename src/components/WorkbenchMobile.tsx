@@ -10,6 +10,8 @@ import { ScreenListen, FullPlayer, HypeOverlay } from '@/components/workbench/Mo
 import { MobileScreenSeeds as ScreenSeeds } from '@/components/workbench/MobileScreenSeeds';
 import { ScreenShowsNew } from '@/components/workbench/MobileScreenShowsNew';
 import { ScreenYouNew, ManageConsole } from '@/components/workbench/MobileScreenYouNew';
+import ViewJournal from '@/components/workbench/ViewJournal';
+import ViewDiscover from '@/components/workbench/ViewDiscover';
 
 // ─── Design tokens (match Workbench Mobile design) ───────────
 const T = {
@@ -1909,6 +1911,8 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
   const [expanded, setExpanded] = useState(false);
   const [hypeTrack, setHypeTrack] = useState<WbTrack | null>(null);
   const [manageMode, setManageMode] = useState(false);
+  const [journalMode, setJournalMode] = useState(false);
+  const [discoverMode, setDiscoverMode] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const pullStartY = useRef(0);
   const pullDeltaRef = useRef(0);
@@ -2032,7 +2036,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
       case 'listen': return <ScreenListen data={liveData} onPlay={setCurrentTrackIdx} onExpand={() => setExpanded(true)} currentIdx={currentTrackIdx} />;
       case 'seeds':  return <ScreenSeeds data={liveData} />;
       case 'shows':  return <ScreenShowsNew data={liveData} />;
-      case 'you':    return <ScreenYouNew data={liveData} onManage={() => setManageMode(true)} />;
+      case 'you':    return <ScreenYouNew data={liveData} onManage={() => setManageMode(true)} onJournal={() => setJournalMode(true)} onDiscover={() => setDiscoverMode(true)} />;
     }
   })();
 
@@ -2042,6 +2046,36 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
         <style>{eqCss}</style>
         <audio ref={audioRef} preload="metadata" style={{ display: 'none' }} />
         <ManageConsole data={liveData} onExit={() => setManageMode(false)} />
+      </div>
+    );
+  }
+
+  if (journalMode) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: T.bg, color: T.ink, fontFamily: T.fb, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <style>{eqCss}</style>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px 10px', borderBottom: `1px solid ${T.line}` }}>
+          <button onClick={() => setJournalMode(false)} style={{ background: 'none', border: 'none', color: T.accent, fontFamily: T.fm, fontSize: 13, cursor: 'pointer', padding: '4px 0' }}>← Back</button>
+          <span style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 16 }}>Journal</span>
+        </div>
+        <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+          <ViewJournal data={liveData} />
+        </div>
+      </div>
+    );
+  }
+
+  if (discoverMode) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: T.bg, color: T.ink, fontFamily: T.fb, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <style>{eqCss}</style>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px 10px', borderBottom: `1px solid ${T.line}` }}>
+          <button onClick={() => setDiscoverMode(false)} style={{ background: 'none', border: 'none', color: T.teal, fontFamily: T.fm, fontSize: 13, cursor: 'pointer', padding: '4px 0' }}>← Back</button>
+          <span style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 16 }}>Discover</span>
+        </div>
+        <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+          <ViewDiscover data={liveData} />
+        </div>
       </div>
     );
   }

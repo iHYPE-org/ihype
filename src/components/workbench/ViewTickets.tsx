@@ -298,6 +298,32 @@ function VenueLeaderboard({ shows }: { shows: WorkbenchData['shows'] }) {
   );
 }
 
+function RsvpButton({ showId }: { showId: string }) {
+  const [going, setGoing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  return (
+    <button
+      disabled={loading}
+      onClick={async () => {
+        setLoading(true);
+        try {
+          const res = await fetch(`/api/shows/${showId}/rsvp`, { method: 'POST' });
+          if (res.ok) { const d = await res.json(); setGoing(d.going); }
+        } finally { setLoading(false); }
+      }}
+      style={{
+        padding: '9px 14px', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 600,
+        letterSpacing: '.04em', cursor: loading ? 'default' : 'pointer',
+        border: going ? '1px solid rgba(34,229,212,.4)' : '1px solid rgba(34,229,212,.3)',
+        background: going ? 'rgba(34,229,212,.15)' : 'transparent',
+        color: going ? '#22e5d4' : 'var(--ink-2)',
+      }}
+    >
+      {going ? '✓ Going' : 'Going?'}
+    </button>
+  );
+}
+
 export const ViewTickets = memo(function ViewTickets({ data }: { data: WorkbenchData }) {
   const router = useRouter();
   const [tab, setTab] = useState<'browse' | 'mine' | 'selling' | 'scan' | 'map'>('browse');
@@ -435,6 +461,7 @@ export const ViewTickets = memo(function ViewTickets({ data }: { data: Workbench
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
                       <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 26, letterSpacing: '-.02em', color: 'var(--ink)' }}>${s.price}</div>
+                      <RsvpButton showId={s.id} />
                       <button onClick={() => router.push(`/shows/${s.id}`)} style={{ padding: '9px 16px', background: 'var(--ink)', color: 'var(--bg)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 600, letterSpacing: '.04em', border: 'none', cursor: 'pointer' }}>Get ticket →</button>
                       <button
                         aria-label="Share show"
