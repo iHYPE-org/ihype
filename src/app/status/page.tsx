@@ -75,13 +75,11 @@ export default async function StatusPage() {
     ok: Boolean(process.env[key]),
   }));
 
-  const anthropicPresent = Boolean(process.env.ANTHROPIC_API_KEY);
   const stripePresent = Boolean(process.env.STRIPE_SECRET_KEY);
 
   const allOk =
     dbOk &&
     resendResult.ok &&
-    anthropicPresent &&
     stripePresent &&
     envChecks.every((c) => c.ok);
   const launchBlockers = health.status === 'ok' ? health.launchReadiness.blockers : ['Health snapshot is degraded.'];
@@ -130,9 +128,9 @@ export default async function StatusPage() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <StatusDot ok={anthropicPresent} />
-          <span style={{ fontFamily: 'var(--font-jb, monospace)', fontSize: 13 }}>ANTHROPIC_API_KEY</span>
-          <span className="meta" style={{ marginLeft: 'auto' }}>{anthropicPresent ? 'Present' : 'Missing'}</span>
+          <StatusDot ok={true} />
+          <span>AI (Cloudflare Workers AI)</span>
+          <span className="meta" style={{ marginLeft: 'auto' }}>Built-in binding</span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center' }}>

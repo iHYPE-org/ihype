@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import Anthropic from '@anthropic-ai/sdk';
+import { runAI } from '@/lib/ai';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
-  const client = new Anthropic();
   const { slug } = await params;
   const profile = await db.profile.findUnique({
     where: { slug },
@@ -13,7 +12,6 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ slu
   });
   if (!profile) return NextResponse.json({ similar: [] });
 
-  // Get other artists in same genres
   const candidates = await db.profile.findMany({
     where: { type: { in: ['ARTIST', 'DJ'] }, slug: { not: slug }, genres: { hasSome: profile.genres as string[] } },
     select: { name: true, slug: true, genres: true, bio: true },
@@ -22,19 +20,19 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ slu
   });
   if (candidates.length === 0) return NextResponse.json({ similar: [] });
 
-  try {
-    const msg = await client.messages.create({
-      model: 'claude-haiku-4-5',
-      max_tokens: 300,
-      messages: [{
-        role: 'user',
-        content: `Artist: ${profile.name} (${(profile.genres as string[]).join(', ')}). Bio: ${profile.bio ?? 'N/A'}.
+  const raw = await runAI([
+    {
+      role: 'user',
+      content: `Artist: ${profile.name} (${(profile.genres as string[]).join(', ')}). Bio: ${profile.bio ?? 'N/A'}.
 Candidates: ${candidates.map(c => `${c.name} (${(c.genres as string[]).join(', ')})`).join('; ')}.
 Return a JSON array of the 3 best matches as slugs: {"similar":["slug1","slug2","slug3"]}. Only return JSON.`
-      }]
-    });
-    const text = (msg.content[0] as { text: string }).text;
-    const parsed = JSON.parse(text) as { similar: string[] };
+    }
+  ], 300);
+
+  if (!raw) return NextResponse.json({ similar: candidates.slice(0, 3) });
+
+  try {
+    const parsed = JSON.parse(raw) as { similar: string[] };
     const matched = parsed.similar
       .map(name => candidates.find(c => c.name === name || c.slug === name))
       .filter(Boolean)

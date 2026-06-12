@@ -77,5 +77,8 @@ dataset = "ihype_analytics"
 binding = "WORKER_SELF_REFERENCE"
 service = "ihype"
 
+[ai]
+binding = "AI"
+
 [build]
 command = "npm run cf:build"

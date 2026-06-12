@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import Anthropic from '@anthropic-ai/sdk';
+import { runAI } from '@/lib/ai';
 import { consumeRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
-const client = new Anthropic();
-
 type AgentAction =
   | { type: 'NAVIGATE'; view: string }
+  | { type: 'NAVIGATE_URL'; url: string }
   | { type: 'OPEN_SEARCH' }
   | { type: 'DISMISS' };
 
@@ -117,42 +116,32 @@ export async function POST(request: Request) {
   }
 
   const systemPrompt = buildSystemPrompt(context);
-
-  // Build message history (last 6 turns max to keep tokens low)
   const history = (context.history ?? []).slice(-6).map(m => ({
-    role: m.role,
+    role: m.role as 'user' | 'assistant',
     content: m.content,
   }));
 
-  try {
-    const response = await client.messages.create({
-      model: 'claude-haiku-4-5',
-      max_tokens: 256,
-      system: systemPrompt,
-      messages: [
-        ...history,
-        { role: 'user', content: message.trim().slice(0, 500) },
-      ],
-    });
+  const raw = await runAI([
+    { role: 'system', content: systemPrompt },
+    ...history,
+    { role: 'user', content: message.trim().slice(0, 500) },
+  ], 256);
 
-    const raw = response.content[0]?.type === 'text' ? response.content[0].text : '';
-
-    let parsed: AgentResponse;
-    try {
-      // Extract JSON from the response (Claude sometimes adds prose before/after)
-      const jsonMatch = raw.match(/\{[\s\S]*\}/);
-      parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : { reply: raw, action: null, chips: [] };
-    } catch {
-      parsed = { reply: raw || "I'm here to help! What would you like to do?", action: null, chips: [] };
-    }
-
-    return NextResponse.json({
-      reply: String(parsed.reply ?? '').slice(0, 300),
-      action: parsed.action ?? null,
-      chips: Array.isArray(parsed.chips) ? parsed.chips.slice(0, 3).map(String) : [],
-    });
-  } catch (err) {
-    console.error('Agent API error', err);
+  if (!raw) {
     return NextResponse.json({ error: 'Could not reach the guide right now.' }, { status: 500 });
   }
+
+  let parsed: AgentResponse;
+  try {
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : { reply: raw, action: null, chips: [] };
+  } catch {
+    parsed = { reply: raw || "I'm here to help! What would you like to do?", action: null, chips: [] };
+  }
+
+  return NextResponse.json({
+    reply: String(parsed.reply ?? '').slice(0, 300),
+    action: parsed.action ?? null,
+    chips: Array.isArray(parsed.chips) ? parsed.chips.slice(0, 3).map(String) : [],
+  });
 }

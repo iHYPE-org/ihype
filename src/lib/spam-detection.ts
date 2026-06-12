@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { runAI } from '@/lib/ai';
 
 export type SpamResult = { isSpam: boolean; confidence: number };
 
@@ -10,32 +10,21 @@ export async function checkForSpam(
     return { isSpam: false, confidence: 0 };
   }
 
-  const prompt = `You are a spam and bot detection system for iHYPE, an independent music platform.
-Context: ${context}
-Text to evaluate:
-"""
-${text.slice(0, 1000)}
-"""
+  const raw = await runAI([
+    {
+      role: 'system',
+      content: 'You are a spam detection system. Respond ONLY with valid JSON: {"isSpam": true/false, "confidence": 0.0-1.0}. No explanation.'
+    },
+    {
+      role: 'user',
+      content: `Context: ${context}\nText:\n"""\n${text.slice(0, 1000)}\n"""\n\nIs this spam, bot-generated, or automated abuse? Consider: promotional links unrelated to independent music, generic templated text, fake engagement bait, clearly automated content.\n\nRespond with ONLY valid JSON: {"isSpam": true/false, "confidence": 0.0-1.0}`
+    }
+  ], 100);
 
-Is this spam, bot-generated content, or automated abuse? Consider:
-- Promotional links unrelated to independent music
-- Generic templated text with suspicious patterns
-- Fake engagement bait
-- Clearly automated or nonsensical content
+  if (!raw) return { isSpam: false, confidence: 0 };
 
-Respond with ONLY valid JSON: {"isSpam": true/false, "confidence": 0.0-1.0}
-No explanation, just the JSON object.`;
-
-  const client = new Anthropic();
   try {
-    const message = await client.messages.create({
-      model: 'claude-haiku-4-5',
-      max_tokens: 100,
-      messages: [{ role: 'user', content: prompt }]
-    });
-
-    const responseText = message.content[0].type === 'text' ? message.content[0].text.trim() : '{}';
-    const result = JSON.parse(responseText) as { isSpam?: boolean; confidence?: number };
+    const result = JSON.parse(raw) as { isSpam?: boolean; confidence?: number };
     return {
       isSpam: Boolean(result.isSpam),
       confidence: typeof result.confidence === 'number' ? Math.min(1, Math.max(0, result.confidence)) : 0

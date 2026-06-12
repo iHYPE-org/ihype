@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { runAI } from '@/lib/ai';
 import { db } from '@/lib/db';
 
 type ProfileSummary = {
@@ -22,25 +22,21 @@ export async function getSoundsLike(profileId: string): Promise<ProfileSummary[]
   const genreStr = [...profile.genres, profile.genre].filter(Boolean).join(', ');
   const bioSnippet = profile.bio?.slice(0, 200) ?? '';
 
-  const prompt = `You are a music recommendation engine for the iHYPE platform.
-Artist name: "${profile.name}"
-Genres: ${genreStr || 'unknown'}
-Bio snippet: "${bioSnippet}"
+  const raw = await runAI([
+    {
+      role: 'system',
+      content: 'You are a music recommendation engine. Respond ONLY with a JSON array of 3 artist name strings. No explanation, no markdown.'
+    },
+    {
+      role: 'user',
+      content: `Artist name: "${profile.name}"\nGenres: ${genreStr || 'unknown'}\nBio snippet: "${bioSnippet}"\n\nList exactly 3 artist names from the iHYPE platform that sound similar. Respond ONLY with a JSON array: ["Artist One", "Artist Two", "Artist Three"]`
+    }
+  ], 200);
 
-List exactly 3 artist names (first and last name or stage name only) from the iHYPE platform that sound similar to this artist.
-Respond with ONLY a JSON array of strings, e.g. ["Artist One", "Artist Two", "Artist Three"].
-No explanation, no markdown, just the JSON array.`;
+  if (!raw) return [];
 
-  const client = new Anthropic();
   try {
-    const message = await client.messages.create({
-      model: 'claude-haiku-4-5',
-      max_tokens: 200,
-      messages: [{ role: 'user', content: prompt }]
-    });
-
-    const text = message.content[0].type === 'text' ? message.content[0].text.trim() : '[]';
-    const names: unknown = JSON.parse(text);
+    const names: unknown = JSON.parse(raw);
     if (!Array.isArray(names)) return [];
 
     const nameStrings = (names as unknown[])
@@ -49,7 +45,7 @@ No explanation, no markdown, just the JSON array.`;
 
     if (nameStrings.length === 0) return [];
 
-    const matches = await db.profile.findMany({
+    return db.profile.findMany({
       where: {
         name: { in: nameStrings, mode: 'insensitive' },
         type: { in: ['ARTIST', 'DJ'] },
@@ -60,8 +56,6 @@ No explanation, no markdown, just the JSON array.`;
       },
       take: 3
     });
-
-    return matches;
   } catch {
     return [];
   }
