@@ -244,6 +244,87 @@ function PasskeyPanel() {
   );
 }
 
+function urlBase64ToUint8Array(b64: string): Uint8Array {
+  const pad = '='.repeat((4 - (b64.length % 4)) % 4);
+  const bin = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from(bin, c => c.charCodeAt(0));
+}
+
+export function PushNotificationsPanel() {
+  const [status, setStatus] = React.useState<'loading' | 'unsupported' | 'denied' | 'subscribed' | 'unsubscribed'>('loading');
+  const [busy, setBusy] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined' || !('Notification' in window) || !('serviceWorker' in navigator)) {
+      setStatus('unsupported'); return;
+    }
+    if (Notification.permission === 'denied') { setStatus('denied'); return; }
+    navigator.serviceWorker.ready
+      .then(reg => reg.pushManager.getSubscription())
+      .then(sub => setStatus(sub ? 'subscribed' : 'unsubscribed'))
+      .catch(() => setStatus('unsupported'));
+  }, []);
+
+  async function toggle() {
+    if (busy || status === 'unsupported' || status === 'denied') return;
+    setBusy(true);
+    try {
+      if (status === 'subscribed') {
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) {
+          await fetch('/api/push/unsubscribe', {
+            method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ endpoint: sub.endpoint }),
+          });
+          await sub.unsubscribe();
+        }
+        setStatus('unsubscribed');
+      } else {
+        const { key } = await fetch('/api/push/vapid-key').then(r => r.json()) as { key: string | null };
+        if (!key) { setStatus('unsupported'); return; }
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') { setStatus('denied'); return; }
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(key) });
+        const json = sub.toJSON() as { endpoint: string; keys: { auth: string; p256dh: string } };
+        await fetch('/api/push/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(json) });
+        setStatus('subscribed');
+      }
+    } catch { /* ignore */ } finally { setBusy(false); }
+  }
+
+  if (status === 'loading') return null;
+  if (status === 'unsupported') return null;
+
+  return (
+    <EditorPanel title="Push notifications" eyebrow="Notifications">
+      <p style={{ fontFamily: 'var(--f-b)', fontSize: 13, color: 'var(--ink-2)', margin: 0, lineHeight: 1.5 }}>
+        Get notified when DJs you follow go live or someone hypes a track you saved.
+      </p>
+      {status === 'denied' ? (
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)' }}>
+          Notifications blocked in your browser — enable them in browser settings.
+        </div>
+      ) : (
+        <button
+          onClick={() => void toggle()} disabled={busy}
+          style={{
+            padding: '9px 18px', borderRadius: 7, cursor: busy ? 'default' : 'pointer',
+            border: status === 'subscribed' ? '1px solid rgba(34,229,212,.4)' : '1px solid var(--line-2)',
+            background: status === 'subscribed' ? 'rgba(34,229,212,.08)' : 'var(--bg-3)',
+            color: status === 'subscribed' ? '#22e5d4' : 'var(--ink)',
+            fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 700, letterSpacing: '.06em',
+            transition: 'background .15s, color .15s, border-color .15s',
+          }}
+        >
+          {busy ? '…' : status === 'subscribed' ? '✓ Notifications on — turn off' : '🔔 Turn on notifications'}
+        </button>
+      )}
+    </EditorPanel>
+  );
+}
+
 export function EmailPreferencesPanel() {
   type EmailPrefs = { newShows: boolean; journalPosts: boolean; milestones: boolean; weeklyDigest: boolean };
   const [emailPrefs, setEmailPrefs] = React.useState<EmailPrefs | null>(null);
@@ -499,6 +580,7 @@ export function ViewSettings({ prefs, setPref, data, onBack }: {
         <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 42, letterSpacing: '-.03em', lineHeight: 1, margin: 0, color: 'var(--ink)' }}>Create your page</h1>
         <p style={{ fontFamily: 'var(--f-b)', fontSize: 14, color: 'var(--ink-2)', marginTop: 10, maxWidth: 620, lineHeight: 1.5 }}>Create a listener, artist, promoter, or venue profile to unlock page editing.</p>
         <div style={{ marginTop: 24 }}><StripeConnectPanel data={data} /></div>
+        <div style={{ marginTop: 14 }}><PushNotificationsPanel /></div>
         <div style={{ marginTop: 14 }}><EmailPreferencesPanel /></div>
         <div style={{ marginTop: 14 }}><PasskeyPanel /></div>
       </div>
@@ -771,6 +853,8 @@ export function ViewSettings({ prefs, setPref, data, onBack }: {
       </div>
 
       <div style={{ marginTop: 14 }}><StripeConnectPanel data={data} /></div>
+
+      <div style={{ marginTop: 14 }}><PushNotificationsPanel /></div>
 
       <div style={{ marginTop: 14 }}><EmailPreferencesPanel /></div>
 

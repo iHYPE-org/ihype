@@ -145,6 +145,17 @@ export function MobileScreenSeeds({ data, onHypersSheet }: { data: WorkbenchData
     }
   }
 
+  // Saved seeds history
+  type HistorySeed = { id: string; title: string; artistName: string; action: string };
+  const [history, setHistory] = useState<HistorySeed[]>([]);
+  useEffect(() => {
+    fetch('/api/discover/history')
+      .then(r => r.ok ? r.json() : null)
+      .then((d: { seeds?: HistorySeed[] } | null) => { if (d?.seeds?.length) setHistory(d.seeds); })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleAction = useCallback((action: 'save' | 'skip' | 'hype', fromDrag = false, dragDx = 0, dragDy = 0) => {
     const front = deck[deckIdx % Math.max(deck.length, 1)];
     if (!front || actionedIds.has(front.id)) return;
@@ -288,6 +299,22 @@ export function MobileScreenSeeds({ data, onHypersSheet }: { data: WorkbenchData
             ))}
           </div>
         </div>
+
+        {/* Saved seeds strip */}
+        {history.length > 0 && (
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, letterSpacing: '.18em', textTransform: 'uppercase', marginBottom: 7 }}>Saved &amp; Hyped</div>
+            <div style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
+              {history.map(h => (
+                <div key={h.id} style={{ flexShrink: 0, padding: '7px 10px', borderRadius: 8, background: T.bg2, border: `1px solid ${h.action === 'hype' ? T.pink + '40' : T.teal + '40'}`, minWidth: 130, maxWidth: 130 }}>
+                  <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 11, color: T.ink, letterSpacing: '-.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.title}</div>
+                  <div style={{ fontFamily: T.fm, fontSize: 10, color: T.ink3, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.artistName}</div>
+                  <div style={{ fontFamily: T.fm, fontSize: 9, color: h.action === 'hype' ? T.pink : T.teal, marginTop: 3, letterSpacing: '.1em', textTransform: 'uppercase' }}>{h.action === 'hype' ? '♥ Hyped' : '↑ Saved'}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Deck progress + refresh */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>

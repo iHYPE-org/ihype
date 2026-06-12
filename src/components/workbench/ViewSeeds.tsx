@@ -172,6 +172,17 @@ export function ViewSeeds({
   const hintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [hintWobble, setHintWobble] = useState(false);
 
+  // ── Saved seeds history ───────────────────────────────────────
+  type HistorySeed = { id: string; title: string; artistName: string; action: string };
+  const [seedHistory, setSeedHistory] = useState<HistorySeed[]>([]);
+  useEffect(() => {
+    fetch('/api/discover/history')
+      .then(r => r.ok ? r.json() : null)
+      .then((d: { seeds?: HistorySeed[] } | null) => { if (d?.seeds?.length) setSeedHistory(d.seeds); })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ── Battle mode ───────────────────────────────────────────────
   type BattleTrack = { id: string; title: string; artistName: string; hypeCount: number; color: string };
   const [battleOpen, setBattleOpen] = useState(false);
@@ -873,6 +884,26 @@ export function ViewSeeds({
                 </div>
               </div>
             )}
+          {/* Saved & Hyped history */}
+          {seedHistory.length > 0 && (
+            <div style={{ marginTop: 18 }}>
+              <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, letterSpacing: '.18em', color: 'var(--ink-3)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 8 }}>Saved &amp; Hyped</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                {seedHistory.slice(0, 8).map(h => (
+                  <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 10px', background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 7 }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 12, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.title}</div>
+                      <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', marginTop: 1 }}>{h.artistName}</div>
+                    </div>
+                    <span style={{ fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: h.action === 'hype' ? '#ff3e9a' : '#22e5d4', flexShrink: 0, marginLeft: 8 }}>
+                      {h.action === 'hype' ? '♥' : '↑'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           </aside>
 
         </div>

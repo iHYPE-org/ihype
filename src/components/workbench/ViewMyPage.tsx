@@ -541,6 +541,22 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
         style={{ marginBottom: 14 }}
       />
 
+      {/* Referral earnings stats */}
+      {data.referralStats && (
+        <div style={{ marginBottom: 14, display: 'flex', gap: 10 }}>
+          {[
+            { k: 'Clicks',  v: String(data.referralStats.clicks),  c: 'var(--ink-2)' },
+            { k: 'Joined',  v: String(data.referralStats.buyers),  c: 'var(--ink-2)' },
+            { k: 'Earned',  v: `$${(data.referralStats.payoutCents / 100).toFixed(0)}`, c: '#ffb84a' },
+          ].map(s => (
+            <div key={s.k} style={{ flex: 1, padding: '10px 14px', background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 8 }}>
+              <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 22, color: s.c }}>{s.v}</div>
+              <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', letterSpacing: '.14em', textTransform: 'uppercase', marginTop: 2 }}>{s.k}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Referral links */}
       {referral && (() => {
         const copyLink = async (url: string, key: string) => {
