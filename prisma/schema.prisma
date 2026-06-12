@@ -983,6 +983,9 @@ model AdSubmission {
   reviewedAt       DateTime?
   reviewedBy       String?
   impressions      Int       @default(0)
+  clicks           Int       @default(0)
+  budgetCents      Int       @default(0)
+  spentCents       Int       @default(0)
   tier             String    @default("standard")
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt

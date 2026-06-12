@@ -22,9 +22,25 @@ export async function POST(request: NextRequest) {
   const adId = typeof body.adId === 'string' ? body.adId : '';
   if (!adId) return NextResponse.json({ error: 'adId is required.' }, { status: 400 });
 
+  // Per-user 24h dedup
+  if (session?.user?.id) {
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const existing = await db.adImpression.findFirst({
+      where: { adId, userId: session.user.id, createdAt: { gte: since } },
+      select: { id: true },
+    });
+    if (existing) return NextResponse.json({ ok: true, skipped: true });
+  }
+
+  // Budget enforcement (0 = unlimited)
+  const ad = await db.ad.findUnique({ where: { id: adId }, select: { budgetCents: true, spentCents: true } });
+  if (ad && ad.budgetCents > 0 && ad.spentCents >= ad.budgetCents) {
+    return NextResponse.json({ ok: true, skipped: true, reason: 'budget_exhausted' });
+  }
+
   await Promise.all([
     db.adImpression.create({ data: { adId, userId: session?.user?.id ?? undefined } }),
-    db.ad.update({ where: { id: adId }, data: { impressions: { increment: 1 } } }),
+    db.ad.update({ where: { id: adId }, data: { impressions: { increment: 1 }, spentCents: { increment: 9 } } }),
   ]);
 
   return NextResponse.json({ ok: true });
