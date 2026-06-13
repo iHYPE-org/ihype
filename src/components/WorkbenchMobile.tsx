@@ -465,7 +465,10 @@ const eqCss = `
 .wm-pulse{animation:wm-pulse 1.6s infinite}
 .wm-scroll::-webkit-scrollbar{display:none}
 @keyframes wm-badge-pop{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.3)}100%{transform:scale(1);opacity:1}}
+@keyframes wm-tab-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 .wm-skeleton{background:linear-gradient(90deg,#1a1612 25%,#221c16 50%,#1a1612 75%);background-size:200% 100%;animation:wm-shimmer 1.4s infinite}
+button:active,[role=button]:active{transform:scale(.95);transition:transform .06s}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 @keyframes wm-toast-progress{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 .wm-toast-bar{transform-origin:left center;animation:wm-toast-progress 2.35s linear forwards}
 *:focus-visible { outline: 2px solid var(--accent, #ff5029); outline-offset: 3px; border-radius: 4px; }
@@ -2201,7 +2204,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
           <span style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 16 }}>Journal</span>
         </div>
         <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-          <ViewJournal data={liveData} />
+          <ViewJournal data={liveData} onToast={showToast} />
         </div>
       </div>
     );
@@ -2286,7 +2289,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
             <button onClick={() => { localStorage.setItem('profileNudgeDismissed', '1'); setNudgeDismissed(true); }} style={{ fontFamily: T.fm, fontSize: 16, color: T.ink3, background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px', lineHeight: 1, minHeight: 'unset' }} aria-label="Dismiss">×</button>
           </div>
         )}
-        <ViewErrorBoundary viewName={tab}>{screenEl}</ViewErrorBoundary>
+        <div key={tab} style={{ animation: 'wm-tab-in .12s ease-out both' }}><ViewErrorBoundary viewName={tab}>{screenEl}</ViewErrorBoundary></div>
       </div>
 
       {/* Mini player sits above tab bar */}

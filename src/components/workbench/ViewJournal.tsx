@@ -29,7 +29,7 @@ function SwipeRow({ entry, onDelete, timeAgo }: { entry: JournalEntry; onDelete:
   );
 }
 
-export default function ViewJournal({ data }: { data: WorkbenchData }) {
+export default function ViewJournal({ data, onToast }: { data: WorkbenchData; onToast?: (msg: string, color?: string) => void }) {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -38,6 +38,8 @@ export default function ViewJournal({ data }: { data: WorkbenchData }) {
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [pendingDelete, setPendingDelete] = useState<JournalEntry | null>(null);
+  const deleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const profileId = data.profileId;
 
@@ -80,8 +82,23 @@ export default function ViewJournal({ data }: { data: WorkbenchData }) {
   }
 
   function deleteEntry(id: string) {
-    fetch(`/api/journal?id=${id}`, { method: 'DELETE' }).catch(() => {});
+    const entry = entries.find(e => e.id === id);
+    if (!entry) return;
     setEntries(es => es.filter(e => e.id !== id));
+    if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current);
+    setPendingDelete(entry);
+    deleteTimerRef.current = setTimeout(() => {
+      fetch(`/api/journal?id=${id}`, { method: 'DELETE' }).catch(() => {});
+      setPendingDelete(null);
+      deleteTimerRef.current = null;
+    }, 2000);
+  }
+
+  function undoDelete() {
+    if (!pendingDelete) return;
+    if (deleteTimerRef.current) { clearTimeout(deleteTimerRef.current); deleteTimerRef.current = null; }
+    setEntries(es => [pendingDelete, ...es]);
+    setPendingDelete(null);
   }
 
   const timeAgo = (iso: string) => {
@@ -108,11 +125,19 @@ export default function ViewJournal({ data }: { data: WorkbenchData }) {
           <form onSubmit={submit} style={{ background: 'var(--bg-2,#121009)', border: '1px solid var(--line-2,rgba(255,255,255,.08))', borderRadius: 12, padding: 20, marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" maxLength={140} required style={{ padding: '10px 12px', background: 'var(--bg-3,#1a1612)', border: '1px solid var(--line-2,rgba(255,255,255,.08))', borderRadius: 8, color: 'var(--ink,#f4efe9)', fontFamily: 'var(--f-d,sans-serif)', fontSize: 16, fontWeight: 700 }} />
             <textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Write your update…" maxLength={5000} rows={5} required style={{ padding: '10px 12px', background: 'var(--bg-3,#1a1612)', border: '1px solid var(--line-2,rgba(255,255,255,.08))', borderRadius: 8, color: 'var(--ink,#f4efe9)', fontFamily: 'var(--f-b,sans-serif)', fontSize: 14, resize: 'vertical', lineHeight: 1.55 }} />
+            <div style={{ textAlign: 'right', fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: content.length > 4500 ? 'rgba(255,80,41,.8)' : 'rgba(244,239,233,.25)', marginTop: -4 }}>{content.length.toLocaleString()} / 5,000</div>
             {err && <div style={{ color: '#ff5029', fontFamily: 'var(--f-m,monospace)', fontSize: 12 }}>{err}</div>}
             <button type="submit" disabled={saving || !title.trim() || !content.trim()} style={{ padding: '9px 0', borderRadius: 8, cursor: 'pointer', fontFamily: 'var(--f-m,monospace)', fontSize: 12, fontWeight: 700, background: 'rgba(255,80,41,.15)', border: '1px solid rgba(255,80,41,.4)', color: '#ff5029', opacity: saving ? 0.6 : 1 }}>
               {saving ? 'Publishing…' : 'Publish post'}
             </button>
           </form>
+        )}
+
+        {pendingDelete && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', marginBottom: 14, borderRadius: 10, background: 'rgba(255,80,41,.08)', border: '1px solid rgba(255,80,41,.18)' }}>
+            <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 12, color: 'rgba(244,239,233,.6)' }}>Post deleted</span>
+            <button onClick={undoDelete} style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 12, fontWeight: 700, color: '#ff5029', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0' }}>Undo</button>
+          </div>
         )}
 
         {loading ? (
