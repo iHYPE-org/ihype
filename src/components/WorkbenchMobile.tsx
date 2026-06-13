@@ -465,6 +465,8 @@ const eqCss = `
 .wm-pulse{animation:wm-pulse 1.6s infinite}
 .wm-scroll::-webkit-scrollbar{display:none}
 .wm-skeleton{background:linear-gradient(90deg,#1a1612 25%,#221c16 50%,#1a1612 75%);background-size:200% 100%;animation:wm-shimmer 1.4s infinite}
+@keyframes wm-toast-progress{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+.wm-toast-bar{transform-origin:left center;animation:wm-toast-progress 2.35s linear forwards}
 *:focus-visible { outline: 2px solid var(--accent, #ff5029); outline-offset: 3px; border-radius: 4px; }
 `;
 
@@ -2117,8 +2119,10 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
       if (el.scrollTop === 0) {
         const dy = t.clientY - pullStartY.current;
         if (dy > 0) {
-          pullDeltaRef.current = Math.min(dy * 0.4, 70);
-          setPullDelta(pullDeltaRef.current);
+          const next = Math.min(dy * 0.4, 70);
+          if (pullDeltaRef.current < 50 && next >= 50) navigator.vibrate?.(12);
+          pullDeltaRef.current = next;
+          setPullDelta(next);
         }
       }
     }
@@ -2282,7 +2286,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
       )}
 
       {/* Bottom tab bar */}
-      <WMBottomTabs tab={tab} onTab={setTab} notifCount={liveData.notifications?.length ?? 0} />
+      <WMBottomTabs tab={tab} onTab={(t) => { if (t === tab) mainScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' }); setTab(t); }} notifCount={liveData.notifications?.length ?? 0} />
 
       {/* Full player overlay */}
       {expanded && track && (
@@ -2317,15 +2321,18 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
         <div style={{ position: 'absolute', left: 16, right: 16, bottom: 140, zIndex: 200, pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
           {toasts.map(t => (
             <div key={t.id} style={{
-              padding: '10px 14px', borderRadius: 10,
+              padding: '10px 14px 6px', borderRadius: 10,
               background: T.bg3, border: `1px solid ${t.color}40`,
               fontFamily: T.fb, fontSize: 13, color: T.ink,
               boxShadow: '0 8px 24px rgba(0,0,0,.5)',
               animation: 'fadeIn .15s ease-out both',
-              display: 'flex', alignItems: 'center', gap: 8,
+              overflow: 'hidden',
             }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: t.color, flexShrink: 0 }} />
-              {t.msg}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 8 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: t.color, flexShrink: 0 }} />
+                {t.msg}
+              </div>
+              <div className="wm-toast-bar" style={{ height: 2, borderRadius: 99, background: t.color, opacity: 0.45 }} />
             </div>
           ))}
         </div>

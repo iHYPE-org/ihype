@@ -79,8 +79,8 @@ export default function ViewJournal({ data }: { data: WorkbenchData }) {
     } finally { setSaving(false); }
   }
 
-  async function deleteEntry(id: string) {
-    await fetch(`/api/journal?id=${id}`, { method: 'DELETE' });
+  function deleteEntry(id: string) {
+    fetch(`/api/journal?id=${id}`, { method: 'DELETE' }).catch(() => {});
     setEntries(es => es.filter(e => e.id !== id));
   }
 
@@ -106,7 +106,7 @@ export default function ViewJournal({ data }: { data: WorkbenchData }) {
 
         {showForm && (
           <form onSubmit={submit} style={{ background: 'var(--bg-2,#121009)', border: '1px solid var(--line-2,rgba(255,255,255,.08))', borderRadius: 12, padding: 20, marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" maxLength={140} required style={{ padding: '10px 12px', background: 'var(--bg-3,#1a1612)', border: '1px solid var(--line-2,rgba(255,255,255,.08))', borderRadius: 8, color: 'var(--ink,#f4efe9)', fontFamily: 'var(--f-d,sans-serif)', fontSize: 16, fontWeight: 700 }} />
+            <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Title" maxLength={140} required style={{ padding: '10px 12px', background: 'var(--bg-3,#1a1612)', border: '1px solid var(--line-2,rgba(255,255,255,.08))', borderRadius: 8, color: 'var(--ink,#f4efe9)', fontFamily: 'var(--f-d,sans-serif)', fontSize: 16, fontWeight: 700 }} />
             <textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Write your update…" maxLength={5000} rows={5} required style={{ padding: '10px 12px', background: 'var(--bg-3,#1a1612)', border: '1px solid var(--line-2,rgba(255,255,255,.08))', borderRadius: 8, color: 'var(--ink,#f4efe9)', fontFamily: 'var(--f-b,sans-serif)', fontSize: 14, resize: 'vertical', lineHeight: 1.55 }} />
             {err && <div style={{ color: '#ff5029', fontFamily: 'var(--f-m,monospace)', fontSize: 12 }}>{err}</div>}
             <button type="submit" disabled={saving || !title.trim() || !content.trim()} style={{ padding: '9px 0', borderRadius: 8, cursor: 'pointer', fontFamily: 'var(--f-m,monospace)', fontSize: 12, fontWeight: 700, background: 'rgba(255,80,41,.15)', border: '1px solid rgba(255,80,41,.4)', color: '#ff5029', opacity: saving ? 0.6 : 1 }}>
