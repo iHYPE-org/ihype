@@ -2076,7 +2076,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
 
   function handleOverlayTouchStart(e: React.TouchEvent) {
     const t = e.touches[0];
-    edgeSwipeRef.current = t.clientX < 28 ? { x: t.clientX, y: t.clientY } : null;
+    edgeSwipeRef.current = (t.clientX < 28 || t.clientY < 60) ? { x: t.clientX, y: t.clientY } : null;
   }
 
   function makeOverlayTouchEnd(onClose: () => void) {
@@ -2084,9 +2084,10 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
       if (!edgeSwipeRef.current) return;
       const t = e.changedTouches[0];
       const dx = t.clientX - edgeSwipeRef.current.x;
-      const dy = Math.abs(t.clientY - edgeSwipeRef.current.y);
+      const dy = t.clientY - edgeSwipeRef.current.y;
       edgeSwipeRef.current = null;
-      if (dx > 80 && dy < 60) { navigator.vibrate?.(8); onClose(); }
+      if (dx > 80 && Math.abs(dy) < 60) { navigator.vibrate?.(8); onClose(); return; }
+      if (dy > 80 && Math.abs(dx) < 60) { navigator.vibrate?.(8); onClose(); }
     };
   }
 

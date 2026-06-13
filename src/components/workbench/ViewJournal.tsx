@@ -1,8 +1,33 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { WorkbenchData } from '@/types/workbench';
 
 type JournalEntry = { id: string; title: string; content: string; createdAt: string };
+
+function SwipeRow({ entry, onDelete, timeAgo }: { entry: JournalEntry; onDelete: () => void; timeAgo: (iso: string) => string }) {
+  const [swipeX, setSwipeX] = useState(0);
+  const dragRef = useRef<{ startX: number; dragging: boolean }>({ startX: 0, dragging: false });
+  const REVEAL = 76;
+  return (
+    <div style={{ position: 'relative', overflow: 'hidden', borderRadius: 12 }}>
+      <div onClick={onDelete} style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: REVEAL, background: '#c0392b', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', borderRadius: '0 12px 12px 0' }}>
+        <span style={{ color: '#fff', fontFamily: 'var(--f-m,monospace)', fontSize: 11, fontWeight: 700, letterSpacing: '.06em' }}>DELETE</span>
+      </div>
+      <article style={{ background: 'var(--bg-2,#121009)', border: '1px solid var(--line-2,rgba(255,255,255,.07))', borderRadius: 12, padding: '18px 20px', transform: `translateX(${-swipeX}px)`, transition: dragRef.current.dragging ? 'none' : 'transform .2s', touchAction: 'pan-y', userSelect: 'none' }}
+        onPointerDown={e => { dragRef.current = { startX: e.clientX, dragging: false }; (e.currentTarget as Element).setPointerCapture(e.pointerId); }}
+        onPointerMove={e => { const dx = dragRef.current.startX - e.clientX; if (dx > 8) { dragRef.current.dragging = true; setSwipeX(Math.min(REVEAL, Math.max(0, dx))); } }}
+        onPointerUp={() => { dragRef.current.dragging = false; setSwipeX(prev => prev > REVEAL / 2 ? REVEAL : 0); }}
+        onPointerLeave={() => { if (dragRef.current.dragging) { dragRef.current.dragging = false; setSwipeX(0); } }}
+      >
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
+          <div style={{ fontFamily: 'var(--f-d,sans-serif)', fontSize: 18, fontWeight: 700, color: 'var(--ink,#f4efe9)', lineHeight: 1.2 }}>{entry.title}</div>
+          <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: 'rgba(244,239,233,.3)', flexShrink: 0 }}>{timeAgo(entry.createdAt)}</span>
+        </div>
+        <div style={{ fontFamily: 'var(--f-b,sans-serif)', fontSize: 14, color: 'rgba(244,239,233,.75)', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{entry.content}</div>
+      </article>
+    </div>
+  );
+}
 
 export default function ViewJournal({ data }: { data: WorkbenchData }) {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
@@ -97,16 +122,7 @@ export default function ViewJournal({ data }: { data: WorkbenchData }) {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {entries.map(e => (
-              <article key={e.id} style={{ background: 'var(--bg-2,#121009)', border: '1px solid var(--line-2,rgba(255,255,255,.07))', borderRadius: 12, padding: '18px 20px' }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
-                  <div style={{ fontFamily: 'var(--f-d,sans-serif)', fontSize: 18, fontWeight: 700, color: 'var(--ink,#f4efe9)', lineHeight: 1.2 }}>{e.title}</div>
-                  <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                    <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: 'rgba(244,239,233,.3)' }}>{timeAgo(e.createdAt)}</span>
-                    <button onClick={() => deleteEntry(e.id)} style={{ padding: '2px 8px', borderRadius: 6, cursor: 'pointer', fontFamily: 'var(--f-m,monospace)', fontSize: 10, background: 'transparent', border: '1px solid rgba(255,80,41,.2)', color: 'rgba(255,80,41,.6)' }}>delete</button>
-                  </div>
-                </div>
-                <div style={{ fontFamily: 'var(--f-b,sans-serif)', fontSize: 14, color: 'rgba(244,239,233,.75)', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{e.content}</div>
-              </article>
+              <SwipeRow key={e.id} entry={e} onDelete={() => deleteEntry(e.id)} timeAgo={timeAgo} />
             ))}
           </div>
         )}
