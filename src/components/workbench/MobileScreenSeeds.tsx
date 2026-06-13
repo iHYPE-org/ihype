@@ -28,6 +28,7 @@ export function MobileScreenSeeds({ data, onHypersSheet }: { data: WorkbenchData
   const [sheetDragY, setSheetDragY] = useState(0);
   const [isDraggingSheet, setIsDraggingSheet] = useState(false);
   const sheetDragRef = useRef<number | null>(null);
+  const [hintDismissed, setHintDismissed] = useState(() => typeof window !== 'undefined' && !!sessionStorage.getItem('seeds-hint-seen'));
   const [loadingDeck, setLoadingDeck] = useState(true);
   const [dailyPick, setDailyPick] = useState<string | null>(null);
   useEffect(() => {
@@ -496,9 +497,16 @@ export function MobileScreenSeeds({ data, onHypersSheet }: { data: WorkbenchData
             }}>{b.label}</button>
           ))}
         </div>
-        <div style={{ textAlign: 'center', fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: 10 }}>
-          swipe · ↑ save · → hype
-        </div>
+        {!hintDismissed ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, padding: '9px 12px', borderRadius: 10, background: T.bg3, border: `1px solid ${T.line2}`, animation: 'fadeIn .2s ease-out both' }}>
+            <span style={{ fontFamily: T.fm, fontSize: 11, color: T.ink2, letterSpacing: '.06em' }}>← Skip · ↑ Save · → Hype · Double-tap ♥</span>
+            <button onClick={() => { sessionStorage.setItem('seeds-hint-seen', '1'); setHintDismissed(true); }} style={{ background: 'none', border: 'none', color: T.ink4, fontFamily: T.fm, fontSize: 14, cursor: 'pointer', padding: '0 0 0 10px', lineHeight: 1, flexShrink: 0 }} aria-label="Dismiss hint">✕</button>
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: 10 }}>
+            swipe · ↑ save · → hype
+          </div>
+        )}
 
         {pendingUndo ? (
           <div style={{

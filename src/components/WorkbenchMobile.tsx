@@ -464,6 +464,7 @@ const eqCss = `
 .wm-eq-bar:nth-child(3){animation:wm-eq3 1.3s infinite}
 .wm-pulse{animation:wm-pulse 1.6s infinite}
 .wm-scroll::-webkit-scrollbar{display:none}
+@keyframes wm-badge-pop{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.3)}100%{transform:scale(1);opacity:1}}
 .wm-skeleton{background:linear-gradient(90deg,#1a1612 25%,#221c16 50%,#1a1612 75%);background-size:200% 100%;animation:wm-shimmer 1.4s infinite}
 @keyframes wm-toast-progress{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 .wm-toast-bar{transform-origin:left center;animation:wm-toast-progress 2.35s linear forwards}
@@ -861,7 +862,7 @@ function WMBottomTabs({ tab, onTab, notifCount = 0 }: { tab: MobileTab; onTab: (
             <span style={{ width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
               {it.icon(25, c, on && it.id === 'seeds')}
               {it.id === 'more' && notifCount > 0 && (
-                <span style={{ position: 'absolute', top: -2, right: -4, minWidth: 16, height: 16, borderRadius: 99, background: T.accent, border: `1.5px solid rgba(10,8,5,.88)`, fontFamily: T.fm, fontSize: 9, fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
+                <span style={{ position: 'absolute', top: -2, right: -4, minWidth: 16, height: 16, borderRadius: 99, background: T.accent, border: `1.5px solid rgba(10,8,5,.88)`, fontFamily: T.fm, fontSize: 9, fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', animation: 'wm-badge-pop .3s cubic-bezier(.4,0,.2,1) both' }}>
                   {notifCount > 99 ? '99+' : notifCount}
                 </span>
               )}
@@ -2001,6 +2002,20 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
     return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
   }, []);
   const [refreshing, setRefreshing] = useState(false);
+  const lastRefreshRef = useRef<number>(Date.now());
+  const [lastRefreshAge, setLastRefreshAge] = useState('just now');
+  useEffect(() => {
+    const tick = () => {
+      const d = Date.now() - lastRefreshRef.current;
+      if (d < 60000) setLastRefreshAge('just now');
+      else if (d < 3600000) setLastRefreshAge(`${Math.floor(d / 60000)}m ago`);
+      else setLastRefreshAge(`${Math.floor(d / 3600000)}h ago`);
+    };
+    const id = setInterval(tick, 30000);
+    return () => clearInterval(id);
+  }, []);
+  const showBackToTopRef = useRef(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
   const [toasts, setToasts] = useState<{ id: number; msg: string; color: string }[]>([]);
   const toastIdRef = useRef(0);
   const showToast = useCallback((msg: string, color = T.teal) => {
@@ -2099,7 +2114,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
     if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
     try {
       const res = await fetch('/api/workbench');
-      if (res.ok) { const fresh = await res.json() as WorkbenchData; if (fresh) setLiveData(fresh); }
+      if (res.ok) { const fresh = await res.json() as WorkbenchData; if (fresh) { setLiveData(fresh); lastRefreshRef.current = Date.now(); setLastRefreshAge('just now'); } }
     } catch { showToast('Failed to refresh', T.accent); } finally {
       setRefreshing(false);
     }
@@ -2162,7 +2177,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
       case 'listen': return <ScreenListen data={liveData} onPlay={setCurrentTrackIdx} onExpand={() => setExpanded(true)} currentIdx={currentTrackIdx} />;
       case 'seeds':  return <ScreenSeeds data={liveData} />;
       case 'shows':  return <ScreenShowsNew data={liveData} onToast={showToast} />;
-      case 'you':    return <ScreenYouNew data={liveData} onManage={() => setManageMode(true)} onJournal={() => setJournalMode(true)} onDiscover={() => setDiscoverMode(true)} />;
+      case 'you':    return <ScreenYouNew data={liveData} onManage={() => setManageMode(true)} onJournal={() => setJournalMode(true)} onDiscover={() => setDiscoverMode(true)} onToast={showToast} />;
       case 'more':   return <MobileScreenMore data={liveData} onStudio={() => setStudioMode(true)} onTour={() => setTourMode(true)} onPage={() => setPageMode(true)} onNotif={() => setNotifMode(true)} onSettings={() => setSettingsMode(true)} onJournal={() => setJournalMode(true)} onDiscover={() => setDiscoverMode(true)} onAdvertise={() => setAdvertiseMode(true)} />;
     }
   })();
@@ -2243,7 +2258,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
         onTouchStart={handleMainTouchStart}
         onTouchMove={handleMainTouchMove}
         onTouchEnd={handleMainTouchEnd}
-        onScroll={e => { scrollPositions.current[tab] = (e.currentTarget as HTMLDivElement).scrollTop; }}
+        onScroll={e => { const st = (e.currentTarget as HTMLDivElement).scrollTop; scrollPositions.current[tab] = st; const show = st > 200; if (show !== showBackToTopRef.current) { showBackToTopRef.current = show; setShowBackToTop(show); } }}
       >
         {tab !== 'seeds' && (
           <div style={{
@@ -2254,7 +2269,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
           }}>
             {refreshing ? (
               <><span className="wm-pulse" style={{ width: 6, height: 6, borderRadius: '50%', background: T.accent, display: 'inline-block' }} />REFRESHING</>
-            ) : pullDelta > 40 ? '↓ RELEASE' : pullDelta > 10 ? '↓ PULL TO REFRESH' : null}
+            ) : pullDelta > 40 ? '↓ RELEASE' : pullDelta > 10 ? `↓ PULL · ${lastRefreshAge}` : null}
           </div>
         )}
         {!isOnline && (
@@ -2314,6 +2329,13 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
           onDismiss={() => { localStorage.setItem('ihype-welcome-seen', '1'); setShowWelcome(false); }}
           onNavigate={(v) => { if (v === 'seeds') setTab('seeds'); }}
         />
+      )}
+
+      {/* Back to top */}
+      {showBackToTop && tab !== 'seeds' && (
+        <button onClick={() => mainScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })} aria-label="Scroll to top" style={{ position: 'absolute', right: 16, bottom: 156, zIndex: 150, width: 38, height: 38, borderRadius: '50%', background: T.bg3, border: `1px solid ${T.line2}`, color: T.ink2, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 4px 16px rgba(0,0,0,.45)', animation: 'fadeIn .15s ease-out both', padding: 0 }}>
+          <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+        </button>
       )}
 
       {/* Toast notifications */}

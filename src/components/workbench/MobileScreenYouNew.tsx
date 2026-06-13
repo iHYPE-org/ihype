@@ -5,7 +5,23 @@ import { T } from './MobilePrimitives';
 import { EmailPreferencesPanel } from './ViewSettings';
 import { PageActions } from './PageActions';
 
-export function ScreenYouNew({ data, onManage, onJournal, onDiscover }: { data: WorkbenchData; onManage: () => void; onJournal?: () => void; onDiscover?: () => void }) {
+export function ScreenYouNew({ data, onManage, onJournal, onDiscover, onToast }: { data: WorkbenchData; onManage: () => void; onJournal?: () => void; onDiscover?: () => void; onToast?: (msg: string) => void }) {
+  const lpTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  function startAvatarLongPress() {
+    lpTimerRef.current = setTimeout(() => {
+      navigator.vibrate?.([8, 40, 8]);
+      const slug = data.pageEditor?.slug;
+      const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/p/${slug ?? data.profileHexId ?? ''}`;
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        navigator.share({ title: data.userName, url }).catch(() => {});
+      } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(() => onToast?.('Profile link copied')).catch(() => {});
+      }
+    }, 600);
+  }
+  function cancelAvatarLongPress() {
+    if (lpTimerRef.current) { clearTimeout(lpTimerRef.current); lpTimerRef.current = null; }
+  }
   const isCreator = data.activeProfileTypes.includes('ARTIST') || data.activeProfileTypes.includes('VENUE');
   const roleColor = data.activeProfileTypes.includes('VENUE') ? T.teal : data.activeProfileTypes.includes('ARTIST') ? T.accent : T.purple;
   const roleLabel = data.activeProfileTypes.includes('VENUE') ? 'VENUE' : data.activeProfileTypes.includes('ARTIST') ? 'ARTIST' : 'FAN';
@@ -32,7 +48,11 @@ export function ScreenYouNew({ data, onManage, onJournal, onDiscover }: { data: 
       <div style={{ flex: 1, overflowY: 'auto', padding: '4px 22px 130px' }}>
         {/* identity */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, paddingBottom: 16 }}>
-          <div style={{ width: 64, height: 64, borderRadius: 18, background: `linear-gradient(135deg, ${roleColor}, ${T.accent})`, color: T.bg, fontFamily: T.fd, fontWeight: 800, fontSize: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <div
+            onPointerDown={startAvatarLongPress}
+            onPointerUp={cancelAvatarLongPress}
+            onPointerLeave={cancelAvatarLongPress}
+            style={{ width: 64, height: 64, borderRadius: 18, background: `linear-gradient(135deg, ${roleColor}, ${T.accent})`, color: T.bg, fontFamily: T.fd, fontWeight: 800, fontSize: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer', userSelect: 'none' }}>
             {data.userInitials}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
