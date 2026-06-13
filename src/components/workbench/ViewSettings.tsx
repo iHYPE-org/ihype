@@ -173,8 +173,12 @@ function PasskeyPanel() {
         body: JSON.stringify(attestation),
       });
       if (!verRes.ok) throw new Error('Passkey registration failed.');
-      const result = await verRes.json();
-      setPasskeys(prev => [...prev, result.passkey]);
+      // Re-fetch the list so we get the real DB record with all fields
+      const listRes = await fetch('/api/auth/passkey/list');
+      if (listRes.ok) {
+        const d = await listRes.json();
+        setPasskeys(d.passkeys ?? []);
+      }
       setStatus('Passkey added successfully.');
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not add passkey.');

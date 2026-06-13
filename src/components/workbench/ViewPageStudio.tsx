@@ -346,6 +346,13 @@ function renderPreviewHTML(content: Content, theme: Theme, extras: PreviewExtras
 const STYLES = `
 /* ── APP GRID ── */
 .ps2-app { display:grid; grid-template-columns:370px 1fr; height:100%; overflow:hidden; background:#0a0805; color:#f0ebe5; font-family:'DM Sans',sans-serif; -webkit-font-smoothing:antialiased; }
+@media (max-width:640px) {
+  .ps2-app { grid-template-columns:1fr !important; height:auto; overflow:visible; }
+  .ps2-stage { display:none !important; }
+  .ps2-chat { overflow:visible; height:auto; }
+  .ps2-msgs { max-height:55vh; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .ps2-chat-ft { position:sticky; bottom:0; background:#100d09; }
+}
 .ps2-app *,.ps2-app *::before,.ps2-app *::after { box-sizing:border-box; margin:0; padding:0; }
 .ps2-app button { font:inherit; color:inherit; background:none; border:none; cursor:pointer; }
 .ps2-app input,.ps2-app textarea { font:inherit; color:inherit; }
