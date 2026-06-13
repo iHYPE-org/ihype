@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       action: 'admin_device_setup_sent',
       entityType: 'user',
       entityId: admin.id,
-      performedById: admin.id,
+      actorUserId: admin.id,
     },
   }).catch(() => {});
 

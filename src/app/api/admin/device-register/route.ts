@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       action: 'admin_device_registered',
       entityType: 'user',
       entityId: session.user.id,
-      performedById: session.user.id,
+      actorUserId: session.user.id,
     },
   }).catch(() => {});
 

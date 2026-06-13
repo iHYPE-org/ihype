@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       action: 'admin_device_change_requested',
       entityType: 'user',
       entityId: session.user.id,
-      performedById: session.user.id,
+      actorUserId: session.user.id,
     },
   }).catch(() => {});
 
