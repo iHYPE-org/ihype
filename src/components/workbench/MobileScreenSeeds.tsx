@@ -25,6 +25,9 @@ export function MobileScreenSeeds({ data, onHypersSheet }: { data: WorkbenchData
   const [longPressCard, setLongPressCard] = useState<SeedDeckTrack | null>(null);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressedRef = useRef(false);
+  const [sheetDragY, setSheetDragY] = useState(0);
+  const [isDraggingSheet, setIsDraggingSheet] = useState(false);
+  const sheetDragRef = useRef<number | null>(null);
   const [loadingDeck, setLoadingDeck] = useState(true);
   const [dailyPick, setDailyPick] = useState<string | null>(null);
   useEffect(() => {
@@ -106,9 +109,11 @@ export function MobileScreenSeeds({ data, onHypersSheet }: { data: WorkbenchData
     const front = deck[deckIdx % Math.max(deck.length, 1)];
     if (!front || actionedIds.has(front.id)) return;
 
-    // Haptic feedback
+    // Haptic feedback — distinct pattern per action
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
-      navigator.vibrate(action === 'hype' ? [10, 30, 10] : 8);
+      if (action === 'hype') navigator.vibrate([15, 30, 15]);
+      else if (action === 'save') navigator.vibrate([8, 60, 8]);
+      // skip: no haptic (negative feedback)
     }
 
     // Compute fly-off direction
@@ -564,8 +569,13 @@ export function MobileScreenSeeds({ data, onHypersSheet }: { data: WorkbenchData
       {longPressCard && (
         <>
           <div onClick={() => setLongPressCard(null)} style={{ position: 'fixed', inset: 0, zIndex: 49, background: 'rgba(0,0,0,.6)' }} />
-          <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 50, background: T.bg3, borderTop: `1px solid ${T.line2}`, borderRadius: '18px 18px 0 0', padding: '20px 18px 40px' }}>
-            <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: 12 }}>
+          <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 50, background: T.bg3, borderTop: `1px solid ${T.line2}`, borderRadius: '18px 18px 0 0', padding: '20px 18px 40px', transform: `translateY(${sheetDragY}px)`, transition: isDraggingSheet ? 'none' : 'transform .2s' }}>
+            <div
+              style={{ display: 'flex', justifyContent: 'center', paddingBottom: 12, paddingTop: 4, touchAction: 'none', cursor: 'grab' }}
+              onPointerDown={e => { sheetDragRef.current = e.clientY; setIsDraggingSheet(true); (e.currentTarget as Element).setPointerCapture(e.pointerId); }}
+              onPointerMove={e => { if (sheetDragRef.current === null) return; setSheetDragY(Math.max(0, e.clientY - sheetDragRef.current)); }}
+              onPointerUp={e => { if (sheetDragRef.current === null) return; const dy = Math.max(0, e.clientY - sheetDragRef.current); sheetDragRef.current = null; setIsDraggingSheet(false); setSheetDragY(0); if (dy > 80) setLongPressCard(null); }}
+            >
               <div style={{ width: 36, height: 4, borderRadius: 2, background: T.line2 }} />
             </div>
             <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 16, color: T.ink, marginBottom: 4 }}>{longPressCard.title}</div>

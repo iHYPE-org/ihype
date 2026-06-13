@@ -17,6 +17,9 @@ export function ScreenShowsNew({ data, onToast }: { data: WorkbenchData; onToast
   const [longPressShow, setLongPressShow] = React.useState<WbShow | null>(null);
   const longPressTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressedRef = React.useRef(false);
+  const [sheetDragY, setSheetDragY] = React.useState(0);
+  const [isDraggingSheet, setIsDraggingSheet] = React.useState(false);
+  const sheetDragRef = React.useRef<number | null>(null);
   const shows = data.shows;
 
   function handleShowPointerDown(show: WbShow) {
@@ -92,7 +95,7 @@ export function ScreenShowsNew({ data, onToast }: { data: WorkbenchData; onToast
                     onPointerMove={cancelLongPress}
                     onPointerUp={cancelLongPress}
                     onPointerLeave={cancelLongPress}
-                    style={{ background: T.bg2, border: `1px solid ${show.status === 'NEAR SOLD' ? 'rgba(255,62,154,.25)' : T.line}`, borderRadius: 12, overflow: 'hidden', cursor: 'pointer' }}>
+                    style={{ background: T.bg2, border: `1px solid ${show.status === 'NEAR SOLD' ? 'rgba(255,62,154,.25)' : T.line}`, borderRadius: 12, overflow: 'hidden', cursor: 'pointer', userSelect: 'none' }}>
                     <div style={{ padding: 12, display: 'flex', alignItems: 'center', gap: 11 }}>
                       <AlbumArt c={cardAccent} size={48} />
                       <div style={{ flex: 1, minWidth: 0 }}>
@@ -123,8 +126,13 @@ export function ScreenShowsNew({ data, onToast }: { data: WorkbenchData; onToast
       {longPressShow && (
         <>
           <div onClick={() => setLongPressShow(null)} style={{ position: 'fixed', inset: 0, zIndex: 49, background: 'rgba(0,0,0,.6)' }} />
-          <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 50, background: T.bg3, borderTop: `1px solid ${T.line2}`, borderRadius: '18px 18px 0 0', padding: '20px 18px 40px' }}>
-            <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: 12 }}>
+          <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 50, background: T.bg3, borderTop: `1px solid ${T.line2}`, borderRadius: '18px 18px 0 0', padding: '20px 18px 40px', transform: `translateY(${sheetDragY}px)`, transition: isDraggingSheet ? 'none' : 'transform .2s' }}>
+            <div
+              style={{ display: 'flex', justifyContent: 'center', paddingBottom: 12, paddingTop: 4, touchAction: 'none', cursor: 'grab' }}
+              onPointerDown={e => { sheetDragRef.current = e.clientY; setIsDraggingSheet(true); (e.currentTarget as Element).setPointerCapture(e.pointerId); }}
+              onPointerMove={e => { if (sheetDragRef.current === null) return; setSheetDragY(Math.max(0, e.clientY - sheetDragRef.current)); }}
+              onPointerUp={e => { if (sheetDragRef.current === null) return; const dy = Math.max(0, e.clientY - sheetDragRef.current); sheetDragRef.current = null; setIsDraggingSheet(false); setSheetDragY(0); if (dy > 80) setLongPressShow(null); }}
+            >
               <div style={{ width: 36, height: 4, borderRadius: 2, background: T.line2 }} />
             </div>
             <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 16, color: T.ink, marginBottom: 4 }}>{longPressShow.name}</div>

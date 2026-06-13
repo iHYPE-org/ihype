@@ -12,8 +12,18 @@ export default function ViewJournal({ data }: { data: WorkbenchData }) {
   const [content, setContent] = useState('');
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const profileId = data.profileId;
+
+  useEffect(() => {
+    const vv = typeof window !== 'undefined' ? window.visualViewport : null;
+    if (!vv) return;
+    const update = () => setKeyboardHeight(Math.max(0, window.innerHeight - vv.height - vv.offsetTop));
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    return () => { vv.removeEventListener('resize', update); vv.removeEventListener('scroll', update); };
+  }, []);
 
   useEffect(() => {
     if (!profileId) { setLoading(false); return; }
@@ -57,7 +67,7 @@ export default function ViewJournal({ data }: { data: WorkbenchData }) {
   };
 
   return (
-    <div style={{ position: 'absolute', inset: 0, overflowY: 'auto' }}>
+    <div style={{ position: 'absolute', inset: 0, overflowY: 'auto', paddingBottom: showForm ? keyboardHeight : 0 }}>
       <div style={{ padding: '20px 16px', maxWidth: 800, margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
           <div>

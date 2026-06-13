@@ -1989,6 +1989,15 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
   useEffect(() => { if (!localStorage.getItem('ihype-welcome-seen')) setShowWelcome(true); }, []);
   const [nudgeDismissed, setNudgeDismissed] = useState(true);
   useEffect(() => { setNudgeDismissed(!!localStorage.getItem('profileNudgeDismissed')); }, []);
+  const [isOnline, setIsOnline] = useState(true);
+  useEffect(() => {
+    setIsOnline(navigator.onLine);
+    const on = () => setIsOnline(true);
+    const off = () => setIsOnline(false);
+    window.addEventListener('online', on);
+    window.addEventListener('offline', off);
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
+  }, []);
   const [refreshing, setRefreshing] = useState(false);
   const [toasts, setToasts] = useState<{ id: number; msg: string; color: string }[]>([]);
   const toastIdRef = useRef(0);
@@ -2241,6 +2250,12 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
             {refreshing ? (
               <><span className="wm-pulse" style={{ width: 6, height: 6, borderRadius: '50%', background: T.accent, display: 'inline-block' }} />REFRESHING</>
             ) : pullDelta > 40 ? '↓ RELEASE' : pullDelta > 10 ? '↓ PULL TO REFRESH' : null}
+          </div>
+        )}
+        {!isOnline && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', background: 'rgba(255,80,41,.1)', borderBottom: `1px solid rgba(255,80,41,.2)` }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: T.accent, flexShrink: 0, display: 'inline-block' }} />
+            <span style={{ fontFamily: T.fm, fontSize: 11, color: T.accent, letterSpacing: '.08em' }}>No connection — changes won&apos;t save</span>
           </div>
         )}
         {!nudgeDismissed && tab !== 'seeds' && (liveData.profileCompletion?.percent ?? 100) < 100 && (
