@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { WorkbenchData, WbTrack } from '@/types/workbench';
 import { T, WMPill } from './MobilePrimitives';
 import { DiscoverDailyCard } from './DiscoverDailyCard';
@@ -7,6 +7,11 @@ import { DiscoverDailyCard } from './DiscoverDailyCard';
 // ─── Icons (local, only needed here) ─────────────────────────
 const WMIcon = {
   radio: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2.5"/><circle cx="8" cy="8" r=".6" fill="currentColor"/></svg>,
+};
+
+type ChartTrack = {
+  id: string; title: string; artistName: string;
+  hypeCount: number; color: string;
 };
 
 // ─── Album art gradient placeholder ──────────────────────────
@@ -26,6 +31,16 @@ export function ScreenListen({ data, onPlay, onExpand, currentIdx }: {
   currentIdx: number;
 }) {
   const [q, setQ] = useState('');
+  const [charts, setCharts] = useState<{ national: ChartTrack[]; local: ChartTrack[]; forYou: ChartTrack[] } | null>(null);
+  const [chartTab, setChartTab] = useState<'local' | 'national' | 'forYou'>('local');
+  useEffect(() => {
+    fetch(`/api/charts?city=${encodeURIComponent(data.city ?? '')}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setCharts(d); })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const queue = data.tracks;
   // Static playlist shapes mapped to real data
   const playlists = [
@@ -143,38 +158,88 @@ export function ScreenListen({ data, onPlay, onExpand, currentIdx }: {
           ))}
         </div>
 
-        {/* Rising in city */}
-        <div style={{ padding: '0 22px 10px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-          <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 18, letterSpacing: '-.01em' }}>Rising in {data.city ?? 'Your City'}</div>
-          <div style={{ fontFamily: T.fm, fontSize: 9.5, color: T.purple, letterSpacing: '.1em' }}>CHARTS ›</div>
-        </div>
-        <div style={{ padding: '0 22px', display: 'flex', flexDirection: 'column', gap: 7 }}>
-          {rising.length === 0 ? (
-            <div style={{ padding: '20px 0', color: T.ink3, fontFamily: T.fm, fontSize: 12, textAlign: 'center' }}>No tracks yet — explore Seeds to discover music</div>
-          ) : rising.map((tk, i) => (
-            <div key={tk.id} onClick={() => onPlay(queue.indexOf(tk))} style={{
-              display: 'flex', alignItems: 'center', gap: 12, padding: '8px 10px', borderRadius: 11, cursor: 'pointer',
-              background: currentIdx === queue.indexOf(tk) ? `${tk.color}12` : 'transparent',
-              border: `1px solid ${currentIdx === queue.indexOf(tk) ? `${tk.color}40` : 'transparent'}`,
-            }}>
-              <div style={{ width: 22, textAlign: 'center', fontFamily: T.fd, fontWeight: 800, fontSize: 15, color: T.ink3 }}>{i + 1}</div>
-              <AlbumArt c={tk.color} size={42} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 14, letterSpacing: '-.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tk.title}</div>
-                <div style={{ fontFamily: T.fb, fontSize: 11.5, color: T.ink3, marginTop: 1 }}>{tk.artistName}</div>
+        {/* Charts */}
+        <div style={{ marginTop: 22 }}>
+          <div style={{ padding: '0 22px 10px' }}>
+            <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 18, letterSpacing: '-.01em' }}>Charts</div>
+          </div>
+          <div style={{ display: 'flex', gap: 8, padding: '0 22px 14px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+            {([
+              { k: 'local'    as const, l: data.city ?? 'Local'   },
+              { k: 'national' as const, l: 'National'              },
+              { k: 'forYou'   as const, l: 'For You'               },
+            ]).map(tab => (
+              <button key={tab.k} onClick={() => setChartTab(tab.k)} style={{
+                padding: '6px 14px', borderRadius: 99, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
+                fontFamily: T.fm, fontSize: 11, letterSpacing: '.08em', fontWeight: 700,
+                background: chartTab === tab.k ? T.purple : T.bg3,
+                color: chartTab === tab.k ? T.bg : T.ink3,
+                transition: 'background .15s, color .15s',
+              }}>{tab.l}</button>
+            ))}
+          </div>
+          {(() => {
+            const tabTracks: ChartTrack[] = charts?.[chartTab] ?? rising.slice(0, 5);
+            if (!tabTracks.length) return (
+              <div style={{ padding: '20px 22px', color: T.ink3, fontFamily: T.fm, fontSize: 12, textAlign: 'center' }}>
+                {chartTab === 'local' ? `No local tracks yet in ${data.city ?? 'your city'}` : 'No chart data yet — keep hyping tracks'}
               </div>
-              <div style={{ fontFamily: T.fm, fontSize: 10, color: T.pink, letterSpacing: '.06em', whiteSpace: 'nowrap' }}>♥ {tk.hypeCount}</div>
-            </div>
-          ))}
+            );
+            return (
+              <div style={{ padding: '0 22px', display: 'flex', flexDirection: 'column', gap: 7 }}>
+                {tabTracks.slice(0, 10).map((tk, i) => (
+                  <div key={tk.id} onClick={() => onPlay(Math.max(0, queue.findIndex(q2 => q2.id === tk.id)))} style={{
+                    display: 'flex', alignItems: 'center', gap: 12, padding: '8px 10px', borderRadius: 11, cursor: 'pointer',
+                  }}>
+                    <div style={{ width: 22, textAlign: 'center', fontFamily: T.fd, fontWeight: 800, fontSize: 15, color: i < 3 ? T.purple : T.ink3 }}>{i + 1}</div>
+                    <AlbumArt c={tk.color} size={42} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 14, letterSpacing: '-.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tk.title}</div>
+                      <div style={{ fontFamily: T.fb, fontSize: 11.5, color: T.ink3, marginTop: 1 }}>{tk.artistName}</div>
+                    </div>
+                    <div style={{ fontFamily: T.fm, fontSize: 10, color: T.pink, letterSpacing: '.06em', whiteSpace: 'nowrap' }}>♥ {tk.hypeCount}</div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </div>
 
-        {/* Radio */}
+        {/* Algorithmic radio stations */}
+        <div style={{ marginTop: 28 }}>
+          <div style={{ padding: '0 22px 10px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+            <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 18, letterSpacing: '-.01em' }}>Stations</div>
+            <div style={{ fontFamily: T.fm, fontSize: 9.5, color: T.pink, letterSpacing: '.1em' }}>AUTO-MIX</div>
+          </div>
+          <div style={{ display: 'flex', gap: 11, overflowX: 'auto', padding: '0 22px 4px', scrollbarWidth: 'none' }}>
+            {([
+              { n: 'Your Mix',    sub: 'Tuned to your hypes',     c: T.purple },
+              { n: 'Local Scene', sub: data.city ?? 'Nearby artists', c: T.teal   },
+              { n: 'Rising Now',  sub: '7-day chart risers',      c: T.pink   },
+            ] as const).map((s, si) => (
+              <div key={s.n} onClick={() => { onPlay(si % Math.max(1, queue.length)); onExpand(); }} style={{ width: 148, flexShrink: 0, cursor: 'pointer' }}>
+                <div style={{ width: 148, height: 148, borderRadius: 14, position: 'relative', overflow: 'hidden', background: `linear-gradient(135deg, ${s.c}, ${s.c}55 60%, ${T.bg3})` }}>
+                  <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 28% 24%, rgba(255,255,255,.22), transparent 60%)' }} />
+                  <div style={{ position: 'absolute', top: 9, left: 9 }}>
+                    <div style={{ background: 'rgba(0,0,0,.45)', borderRadius: 99, padding: '3px 8px', fontFamily: T.fm, fontSize: 9, color: 'rgba(255,255,255,.8)', letterSpacing: '.1em' }}>STATION</div>
+                  </div>
+                  <div style={{ position: 'absolute', left: 10, bottom: 9, right: 9 }}>
+                    <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 13, color: 'rgba(255,255,255,.95)', textShadow: '0 1px 6px rgba(0,0,0,.5)', lineHeight: 1.1 }}>{s.n}</div>
+                    <div style={{ fontFamily: T.fm, fontSize: 9.5, color: 'rgba(255,255,255,.65)', marginTop: 3, letterSpacing: '.04em' }}>{s.sub}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Live radio shows */}
         {data.radioShows.length > 0 && (
           <div style={{ marginTop: 28 }}>
             <div style={{ padding: '0 22px 10px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div style={{ width: 16, height: 16, color: T.pink }}>{WMIcon.radio}</div>
-                <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 18, letterSpacing: '-.01em' }}>Radio</div>
+                <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 18, letterSpacing: '-.01em' }}>Live Radio</div>
                 {data.radioShows.some(r => r.live) && (
                   <WMPill tone="live">● LIVE</WMPill>
                 )}
