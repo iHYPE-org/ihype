@@ -1,72 +1,164 @@
 :root {
-  /* Workbench design tokens */
-  --bg: #0a0805;
-  --bg-2: #100d09;
-  --bg-3: #1a1612;
-  --bg-4: #221c16;
-  --ink: #f0ebe5;
-  --ink-2: #9e9080;
-  --ink-3: #7a7060;
-  --ink-4: #3a342e;
-  --line: rgba(255,255,255,.06);
+  /* ── Surfaces (warm near-black, low → high elevation) ─────────────── */
+  --bg:    #0a0805;
+  --bg-2:  #100d09;
+  --bg-3:  #1a1612;
+  --bg-4:  #221c16;
+
+  /* ── Ink (warm off-white → muted taupe) ──────────────────────────── */
+  --ink:         #f0ebe5;
+  --ink-2:       #9e9080;
+  --ink-3:       #7a7060;
+  --ink-4:       #3a342e;
+  --ink-on-tint: #b3a899;
+
+  /* ── Hairlines ───────────────────────────────────────────────────── */
+  --line:   rgba(255,255,255,.06);
   --line-2: rgba(255,255,255,.14);
-  --accent: #ff5029;
-  --accent-2: #ff3e9a;
-  --f-d: var(--font-syne, 'Syne', sans-serif);
-  --f-b: var(--font-dm, 'DM Sans', sans-serif);
-  --f-m: var(--font-jb, 'JetBrains Mono', monospace);
+
+  /* ── Brand accents ───────────────────────────────────────────────── */
+  --accent:      #ff5029;
+  --accent-2:    #ff3e9a;
+  --accent-grad: linear-gradient(90deg, var(--accent), var(--accent-2) 40%, #b983ff);
+
+  /* ── Role colors ─────────────────────────────────────────────────── */
+  --role-fan:      #b983ff;
+  --role-artist:   #ff5029;
+  --role-venue:    #22e5d4;
+  --role-promoter: #ffb84a;
+
+  /* ── Status ──────────────────────────────────────────────────────── */
+  --live:    #ff3c3c;
+  --success: #22e5d4;
+  --warning: #ffb84a;
+  --danger:  #ff5029;
+
+  /* ── Semantic aliases ────────────────────────────────────────────── */
+  --surface-page:   var(--bg);
+  --surface-sunken: var(--bg-2);
+  --surface-card:   var(--bg-3);
+  --surface-raised: var(--bg-4);
+  --text-strong:    var(--ink);
+  --text-body:      var(--ink-2);
+  --text-muted:     var(--ink-3);
+  --border-subtle:  var(--line);
+  --border-strong:  var(--line-2);
+
+  /* ── Legacy aliases (referenced throughout existing CSS) ──────────── */
+  --text:  var(--ink);
+  --muted: var(--ink-3);
+
+  /* ── Font families ───────────────────────────────────────────────── */
+  --f-d: var(--font-syne,  'Syne', sans-serif);
+  --f-b: var(--font-dm,    'DM Sans', sans-serif);
+  --f-m: var(--font-jb,    'JetBrains Mono', monospace);
   --f-s: var(--font-serif, 'Instrument Serif', serif);
-  --queue-w: 300px;
-  --player-h: 64px;
-  --top-h: 42px;
-  /* Legacy compat */
-  --text: #f0ebe5;
-  --muted: #7a7060;
-  --shadow: 0 18px 42px rgba(0,0,0,.35);
+  --font-display:      var(--f-d);
+  --font-body:         var(--f-b);
+  --font-mono:         var(--f-m);
+  --font-serif-accent: var(--f-s);
+
+  /* ── Type scale ──────────────────────────────────────────────────── */
+  --text-xs:      0.72rem;
+  --text-sm:      0.85rem;
+  --text-base:    1rem;
+  --text-lg:      1.2rem;
+  --text-xl:      1.5rem;
+  --text-2xl:     2rem;
+  --text-3xl:     3rem;
+  --text-display: clamp(3rem, 8vw, 6.5rem);
+
+  /* ── Weights ─────────────────────────────────────────────────────── */
+  --fw-regular:  400;
+  --fw-medium:   500;
+  --fw-semibold: 600;
+  --fw-bold:     700;
+  --fw-black:    800;
+
+  /* ── Line heights ────────────────────────────────────────────────── */
+  --lh-display: 0.93;
+  --lh-tight:   1.1;
+  --lh-snug:    1.4;
+  --lh-body:    1.65;
+
+  /* ── Tracking ────────────────────────────────────────────────────── */
+  --tracking-display: -0.04em;
+  --tracking-tight:   -0.02em;
+  --tracking-mono:    0.08em;
+  --tracking-caps:    0.2em;
+
+  /* ── Spacing ─────────────────────────────────────────────────────── */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* ── Radii ───────────────────────────────────────────────────────── */
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   18px;
+  --radius-xl:   22px;
+  --radius-2xl:  28px;
+  --radius-pill: 999px;
+
+  /* ── Shadows ─────────────────────────────────────────────────────── */
+  --shadow-sm:     0 4px 24px rgba(0,0,0,.25);
+  --shadow:        0 18px 42px rgba(0,0,0,.35);
+  --shadow-lg:     0 12px 40px rgba(0,0,0,.3), 0 0 0 1px rgba(255,255,255,.04);
+  --shadow-glow:   0 18px 34px rgba(255,80,41,.22);
+  --shadow-accent: 0 8px 48px rgba(255,80,41,.10);
+
+  /* ── Focus ring ──────────────────────────────────────────────────── */
+  --focus-border: var(--accent);
+  --focus-ring:   0 0 0 3px rgba(255,80,41,.16);
+
+  /* ── Layout rails ────────────────────────────────────────────────── */
+  --queue-w:       300px;
+  --player-h:      64px;
+  --top-h:         42px;
+  --container-max: 1100px;
+
+  /* ── Z-index ─────────────────────────────────────────────────────── */
+  --z-base:    1;
+  --z-sticky:  20;
+  --z-overlay: 50;
+  --z-modal:   100;
+  --z-toast:   200;
+
+  /* ── Motion ──────────────────────────────────────────────────────── */
+  --dur-fast: 120ms;
+  --dur:      170ms;
+  --dur-slow: 240ms;
+  --dur-pop:  350ms;
+  --ease:     cubic-bezier(.4, 0, .2, 1);
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+  --ease-pop: cubic-bezier(.34, 1.56, .64, 1);
 }
 
-/* Dark mode is the default. Re-assert it explicitly for OS-level dark preference
-   so any future light defaults do not regress, and so vendor extensions that
-   override `:root` defaults still produce the intended palette. */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #050407;
-    --bg-2: #0c0a10;
-    --bg-3: #15131a;
-    --bg-4: #1f1c25;
-    --ink: #f4f1ea;
-    --ink-2: #a8a094;
-    --ink-3: #7a7060;
-    --ink-4: #3f372f;
-    --line: rgba(255,255,255,.08);
-    --line-2: rgba(255,255,255,.16);
-    --text: #f4f1ea;
-    --muted: #7a7060;
-  }
-}
-
-/* Light theme override */
+/* Opt-in light theme. Dark is canonical. */
 [data-theme="light"] {
-  --bg: #f5f2ed;
-  --bg-2: #ede9e2;
-  --bg-3: #e4dfd6;
-  --bg-4: #d8d0c6;
-  --ink: #1a1410;
+  --bg:    #f5f2ed;
+  --bg-2:  #ede9e2;
+  --bg-3:  #e4dfd6;
+  --bg-4:  #d8d0c6;
+  --ink:   #1a1410;
   --ink-2: #4a3f35;
   --ink-3: #7a6e64;
   --ink-4: #b0a898;
-  --line: rgba(0,0,0,.08);
+  --line:   rgba(0,0,0,.08);
   --line-2: rgba(0,0,0,.16);
-  --text: #1a1410;
-  --muted: #7a6e64;
 }
 
-/* Reduced-motion: cut animations to a flash so vestibular users aren't affected. */
+/* Reduced-motion: neutralize all animation so vestibular users aren't affected. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
-    animation-duration: 0.01ms !important;
+    animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
 }
@@ -104,12 +196,19 @@ body:has(.site-dock) .site-shell {
   padding-bottom: 80px;
 }
 
-/* Lightweight pulse animation used by skeleton loaders. */
+/* Pulse: skeleton loaders and live-dot opacity cycling. */
 @keyframes ihype-pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  50% { opacity: .4; }
 }
 .animate-pulse { animation: ihype-pulse 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+/* Pop: the signature hype bounce — scale 1 → 1.18 → 0.95 → 1 over 350ms. */
+@keyframes ihype-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.18); }
+  70%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
 .site-background {
   position: fixed;
   inset: 0;
@@ -119,33 +218,30 @@ body:has(.site-dock) .site-shell {
 }
 .site-background-orb {
   position: absolute;
+  width: 60vmax;
+  height: 60vmax;
   border-radius: 50%;
-  filter: blur(60px);
-  opacity: 0.28;
+  filter: blur(120px);
+  opacity: 0.5;
 }
 .site-background-orb-a {
-  top: -120px;
-  left: -80px;
-  width: 420px;
-  height: 420px;
-  background: radial-gradient(circle, rgba(255,122,24,0.8), rgba(255,122,24,0));
+  top: -20vmax;
+  left: -10vmax;
+  background: radial-gradient(circle, rgba(255,80,41,.22), transparent 70%);
 }
 .site-background-orb-b {
-  right: -120px;
-  top: 120px;
-  width: 520px;
-  height: 520px;
-  background: radial-gradient(circle, rgba(46,230,214,0.48), rgba(46,230,214,0));
+  bottom: -25vmax;
+  right: -10vmax;
+  background: radial-gradient(circle, rgba(185,131,255,.18), transparent 70%);
 }
 .site-background-grid {
   position: absolute;
   inset: 0;
-  opacity: 0.12;
   background-image:
-    linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px);
+    linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px);
   background-size: 48px 48px;
-  mask-image: radial-gradient(circle at top, rgba(0,0,0,1), rgba(0,0,0,0.22) 68%, transparent 100%);
+  mask-image: radial-gradient(circle at 50% 30%, #000, transparent 80%);
 }
 .nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 90; backdrop-filter: blur(18px);
