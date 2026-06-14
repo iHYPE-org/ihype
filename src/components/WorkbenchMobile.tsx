@@ -469,6 +469,7 @@ const eqCss = `
 @keyframes wm-stat-pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
 .wm-stat-pop{animation:wm-stat-pop .25s cubic-bezier(.4,0,.2,1) both}
 @keyframes wm-overlay-in{from{opacity:.85;transform:translateY(5%)}to{opacity:1;transform:translateY(0)}}
+@keyframes wm-sheet-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .wm-skeleton{background:linear-gradient(90deg,#1a1612 25%,#221c16 50%,#1a1612 75%);background-size:200% 100%;animation:wm-shimmer 1.4s infinite}
 button:active,[role=button]:active{transform:scale(.95);transition:transform .06s}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
@@ -2025,7 +2026,11 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [toasts, setToasts] = useState<{ id: number; msg: string; color: string }[]>([]);
   const toastIdRef = useRef(0);
+  const lastToastRef = useRef<{ msg: string; time: number }>({ msg: '', time: 0 });
   const showToast = useCallback((msg: string, color = T.teal) => {
+    const now = Date.now();
+    if (msg === lastToastRef.current.msg && now - lastToastRef.current.time < 1000) return;
+    lastToastRef.current = { msg, time: now };
     const id = ++toastIdRef.current;
     setToasts(prev => [...prev, { id, msg, color }]);
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 2500);
@@ -2120,7 +2125,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
     setRefreshing(true);
     if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
     try {
-      const res = await fetch('/api/workbench');
+      const [res] = await Promise.all([fetch('/api/workbench'), new Promise<void>(r => setTimeout(r, 400))]);
       if (res.ok) { const fresh = await res.json() as WorkbenchData; if (fresh) { setLiveData(fresh); lastRefreshRef.current = Date.now(); setLastRefreshAge('just now'); } }
     } catch { showToast('Failed to refresh', T.accent); } finally {
       setRefreshing(false);
@@ -2170,8 +2175,8 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
       const dx = e.changedTouches[0].clientX - tabSwipeStart.current.x;
       if (Math.abs(dx) > 60 && tab !== 'seeds') {
         const idx = TABS_ORDER.indexOf(tab);
-        if (dx < 0 && idx < TABS_ORDER.length - 1) setTab(TABS_ORDER[idx + 1]);
-        if (dx > 0 && idx > 0) setTab(TABS_ORDER[idx - 1]);
+        if (dx < 0 && idx < TABS_ORDER.length - 1) { navigator.vibrate?.(6); setTab(TABS_ORDER[idx + 1]); }
+        if (dx > 0 && idx > 0) { navigator.vibrate?.(6); setTab(TABS_ORDER[idx - 1]); }
       }
     }
     tabSwipeStart.current = null;
