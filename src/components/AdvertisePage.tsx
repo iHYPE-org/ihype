@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
 
 /* ── Types ───────────────────────────────────────────────── */
 type Tier = { id: string; nm: string; ds: string; pop: number; cps: number };
@@ -292,6 +293,11 @@ function CoverageBuilder() {
               Nothing charges until your creative clears the AI screen.
               <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: '#ff5029', marginLeft: 3, verticalAlign: 'middle' }} />
             </p>
+            <div style={{ marginTop: 20, paddingTop: 18, borderTop: '1px solid rgba(255,255,255,.07)' }}>
+              <a href="/advertise/dashboard" className="adv-btn-solid" style={{ width: '100%', justifyContent: 'center' }}>
+                Submit your creative →
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -476,6 +482,7 @@ function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
 
 /* ── Main page ───────────────────────────────────────────── */
 export function AdvertisePage() {
+  const { data: session } = useSession();
   const [liveCount, setLiveCount] = useState(3418);
 
   useEffect(() => {
@@ -514,8 +521,8 @@ export function AdvertisePage() {
         <div style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px', height: 62, display: 'flex', alignItems: 'center', gap: 28 }}>
           <Wordmark />
           <div style={{ display: 'flex', gap: 24, marginLeft: 8 }}>
-            {['Discover', 'Charts', 'Seeds', 'For Artists'].map(l => (
-              <a key={l} href="#" className="adv-nav-link">{l}</a>
+            {[['Discover', '/home'], ['Charts', '/home'], ['Seeds', '/home'], ['For Artists', '/home']].map(([l, h]) => (
+              <a key={l} href={h} className="adv-nav-link">{l}</a>
             ))}
             <a href="#top" className="adv-nav-link on">Advertise</a>
           </div>
@@ -524,6 +531,9 @@ export function AdvertisePage() {
               <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: '#ff5029' }} />
               {liveCount.toLocaleString()} listening right now
             </span>
+            {session && (
+              <a href="/advertise/dashboard" className="adv-btn-ghost adv-btn-sm">My campaigns</a>
+            )}
             <a href="#build" className="adv-btn-ghost adv-btn-sm">Buy coverage</a>
           </div>
         </div>
@@ -643,7 +653,7 @@ export function AdvertisePage() {
                 Referral-funded spots split billing across backers automatically.
               </div>
               <div style={{ marginTop: 'auto', paddingTop: 22 }}>
-                <a href="#build" className="adv-btn-solid">Buy from dashboard →</a>
+                <a href="/advertise/dashboard" className="adv-btn-solid">Go to my dashboard →</a>
               </div>
             </div>
 
@@ -731,7 +741,7 @@ export function AdvertisePage() {
             <div>
               <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9, letterSpacing: '.16em', textTransform: 'uppercase', color: '#5a5048', marginBottom: 14 }}>Platform</div>
               {['Discover', 'Charts', 'Seeds', 'For Artists'].map(l => (
-                <a key={l} href="#" style={{ display: 'block', fontSize: 13, color: '#9e9080', padding: '5px 0', textDecoration: 'none' }}>{l}</a>
+                <a key={l} href="/home" style={{ display: 'block', fontSize: 13, color: '#9e9080', padding: '5px 0', textDecoration: 'none' }}>{l}</a>
               ))}
             </div>
           </div>
