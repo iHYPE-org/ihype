@@ -347,7 +347,9 @@ body:has(.site-dock) .site-shell {
 }
 /* Hide public marketing nav when authenticated workbench shells are active */
 body:has(.wb-shell) .site-nav,
-body:has(.wb-root) .site-nav { display: none !important; }
+body:has(.wb-root) .site-nav,
+body:has(.standalone-page) .site-nav { display: none !important; }
+body:has(.standalone-page) .site-shell { padding-top: 0; }
 body:has(.wb-root) .site-shell {
   isolation: auto;
   padding-top: 0;
