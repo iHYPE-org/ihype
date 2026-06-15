@@ -153,7 +153,7 @@ export function AppTopbar({ view, setView, listeningNow, initials, userName, act
               onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--ink-2)'; } }}
             >
               {TAB_ICONS['pagestudio']}
-              {hasPublishedPage ? 'Fan Page' : 'Page Editor'}
+              {'Fan Page'}
             </button>
           );
         })()}

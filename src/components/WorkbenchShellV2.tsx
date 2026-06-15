@@ -398,7 +398,7 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
       case 'tickets':  return <ViewErrorBoundary viewName="Live Events"><ViewTickets data={liveData} /></ViewErrorBoundary>;
       case 'settings':     return <ViewErrorBoundary viewName="Settings"><ViewSettings prefs={prefs} setPref={setPref} data={liveData} onBack={() => navigateTo(prevView)} /></ViewErrorBoundary>;
       case 'tour':         return <ViewErrorBoundary viewName="Tour Planner"><ViewTour data={liveData} /></ViewErrorBoundary>;
-      case 'pagestudio':   return <ViewErrorBoundary viewName="Fan Page"><ViewPageStudio data={liveData} /></ViewErrorBoundary>;
+      case 'pagestudio':   return <ViewErrorBoundary viewName="Fan Page"><ViewPageStudio data={liveData} defaultRole="fan" /></ViewErrorBoundary>;
       case 'artistpage':   return <ViewErrorBoundary viewName="Artist Page"><ViewArtistPage data={liveData} /></ViewErrorBoundary>;
       case 'venuepage':       return <ViewErrorBoundary viewName="Venue Page"><ViewVenuePage data={liveData} /></ViewErrorBoundary>;
       case 'journal': {
@@ -526,7 +526,7 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
       {toast && <Toast message={toast} onUndo={() => { setPlaying(false); setCurrentIdx(0); setToast(null); }} />}
       {showWelcome && <WelcomeDialog onDismiss={() => { localStorage.setItem('ihype-welcome-seen', '1'); setShowWelcome(false); }} onNavigate={(v) => navigateTo(v as Parameters<typeof navigateTo>[0])} />}
       {shortcutsOpen && <KeyboardShortcutsDialog onDismiss={() => setShortcutsOpen(false)} />}
-      <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} activeProfileTypes={liveData.activeProfileTypes} />
       <PasskeyNudge />
       {showGenreQuiz && liveData.profileId && (
         <WMGenreQuizSheet

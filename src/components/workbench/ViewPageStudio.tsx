@@ -650,9 +650,10 @@ const STYLES = `
 const FONT_HREF = 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Bricolage+Grotesque:wght@400;600;700;800&display=swap';
 
 // ── COMPONENT ──────────────────────────────────────────────────────────────
-export default function ViewPageStudio({ data }: { data?: WorkbenchData } = {}) {
-  const initRole: Role = data?.activeProfileTypes?.includes('ARTIST') ? 'artist'
-    : data?.activeProfileTypes?.includes('VENUE') ? 'venue' : 'fan';
+export default function ViewPageStudio({ data, defaultRole }: { data?: WorkbenchData; defaultRole?: Role } = {}) {
+  const initRole: Role = defaultRole
+    ?? (data?.activeProfileTypes?.includes('ARTIST') ? 'artist'
+      : data?.activeProfileTypes?.includes('VENUE') ? 'venue' : 'fan');
 
   const [role, setRole] = useState<Role>(initRole);
   const [device, setDevice] = useState<Device>('desktop');
@@ -695,6 +696,9 @@ export default function ViewPageStudio({ data }: { data?: WorkbenchData } = {}) 
   const serverSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // DB profile id used for server-side draft/publish persistence.
   const profileIdRef = useRef(data?.pageEditor?.profileId || data?.profileId || '');
+  // Reactive mirror of profileIdRef so the publish button re-renders correctly
+  // when client-side data arrives after a degraded SSR render.
+  const [localProfileId, setLocalProfileId] = useState(profileIdRef.current);
   const stepRef = useRef(0);
   const themeRef = useRef<Theme | null>(null);
   const directionsRef = useRef<Theme[]>([]);
@@ -719,6 +723,16 @@ export default function ViewPageStudio({ data }: { data?: WorkbenchData } = {}) 
   const profileType = data?.pageEditor?.type ?? '';
   const publicPath = profileSlug && profileType ? getProfilePathForType(profileType, profileSlug) : '';
   const publicUrlLabel = publicPath ? `ihype.org${publicPath}` : `ihype.org/${urlName}`;
+
+  /* sync profileId when client-side data arrives after a degraded SSR render */
+  useEffect(() => {
+    const incoming = data?.pageEditor?.profileId || data?.profileId || '';
+    if (incoming && !profileIdRef.current) {
+      profileIdRef.current = incoming;
+      setLocalProfileId(incoming);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.pageEditor?.profileId, data?.profileId]);
 
   /* inject styles + fonts once */
   useEffect(() => {
@@ -1504,7 +1518,7 @@ ${links.length ? `<h2>Links</h2><div class="links">${links.map(([pl, u]) => `<a 
               </button>
             </div>
             <div className="ps2-theme-tag">THEME · <b>{theme?.name ?? '—'}</b></div>
-            {profileIdRef.current ? (
+            {localProfileId ? (
               <div className="ps2-save-tag" title={publishedAtIso ? `Published ${relTime(publishedAtIso)}` : undefined}>
                 {saveState === 'saving' ? 'Saving…'
                   : saveState === 'saved' ? 'Saved · draft'
@@ -1519,8 +1533,8 @@ ${links.length ? `<h2>Links</h2><div class="links">${links.map(([pl, u]) => `<a 
             <button
               className="ps2-pub-btn"
               onClick={onPublish}
-              disabled={publishing || !profileIdRef.current}
-              title={!profileIdRef.current ? 'Create a profile to publish your page' : undefined}
+              disabled={publishing || !localProfileId}
+              title={!localProfileId ? 'Create a profile to publish your page' : undefined}
             >{pubLabel}</button>
           </div>
         </div>

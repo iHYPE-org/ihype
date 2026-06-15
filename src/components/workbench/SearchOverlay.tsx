@@ -12,7 +12,70 @@ interface SearchResult {
 
 const GENRE_SUGGESTIONS = ['Hip-Hop', 'Electronic', 'R&B', 'Indie', 'Jazz', 'Soul', 'House', 'Punk'];
 
-export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
+interface QuickAction {
+  id: string;
+  label: string;
+  sub: string;
+  icon: React.ReactNode;
+  view?: string;
+  href?: string;
+}
+
+const QUICK_ACTIONS: QuickAction[] = [
+  {
+    id: 'fan-page',
+    label: 'Fan Page',
+    sub: 'Build or edit your fan page with AI',
+    icon: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 6h6M5 9h4"/><circle cx="11.5" cy="10.5" r="1.5" fill="currentColor" stroke="none"/></svg>,
+    view: 'pagestudio',
+  },
+  {
+    id: 'artist-page',
+    label: 'Artist Page',
+    sub: 'Edit your artist profile and page',
+    icon: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 6h6M5 9h4"/><circle cx="11.5" cy="10.5" r="1.5" fill="currentColor" stroke="none"/></svg>,
+    view: 'artistpage',
+  },
+  {
+    id: 'seeds',
+    label: 'Seeds',
+    sub: 'Discover new music to hype',
+    icon: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2c2 3 4 4 4 7a4 4 0 1 1-8 0c0-3 2-4 4-7Z"/></svg>,
+    view: 'seeds',
+  },
+  {
+    id: 'radio',
+    label: 'Radio',
+    sub: 'Listen to live and recorded radio shows',
+    icon: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2.5"/><circle cx="8" cy="8" r=".6" fill="currentColor"/></svg>,
+    view: 'radio',
+  },
+  {
+    id: 'studio',
+    label: 'Studio',
+    sub: 'Upload and manage your music',
+    icon: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="12" height="8" rx="1.5"/><path d="M5 8h1M8 6v4M11 7v2"/></svg>,
+    view: 'studio',
+  },
+  {
+    id: 'tickets',
+    label: 'Ticketing',
+    sub: 'Manage events and ticket sales',
+    icon: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6a1.5 1.5 0 0 0 0 3v3h12V9a1.5 1.5 0 0 0 0-3V3H2v3Z"/><path d="M9 3v10" strokeDasharray="1.4 1.4"/></svg>,
+    view: 'tickets',
+  },
+];
+
+function navigate(action: QuickAction, onClose: () => void) {
+  onClose();
+  if (action.href) {
+    window.location.href = action.href;
+  } else if (action.view) {
+    (window as Window & { __ihypeNav?: (v: string) => void }).__ihypeNav?.(action.view);
+  }
+}
+
+export function SearchOverlay({ open, onClose, activeProfileTypes }: { open: boolean; onClose: () => void; activeProfileTypes?: string[] }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [apiGenres, setApiGenres] = useState<string[]>([]);
@@ -147,8 +210,29 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
           </div>
         )}
         {!query && (
-          <div style={{ padding: '20px 18px', fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', letterSpacing: '.06em' }}>
-            Try: <strong style={{ color: 'var(--ink-2)' }}>artist name</strong>, track title, venue, show…
+          <div>
+            <div style={{ padding: '12px 18px 6px', fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-4)', letterSpacing: '.1em', textTransform: 'uppercase' }}>Quick Navigation</div>
+            {QUICK_ACTIONS.filter(a => {
+              if (a.id === 'artist-page') return activeProfileTypes?.includes('ARTIST') || activeProfileTypes?.includes('DJ');
+              return true;
+            }).map(action => (
+              <div key={action.id}
+                onClick={() => navigate(action, onClose)}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 18px', cursor: 'pointer', borderBottom: '1px solid var(--line)' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,80,41,.05)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                <span style={{ color: 'var(--ink-3)', flexShrink: 0 }}>{action.icon}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: 'var(--f-b)', fontSize: 14, color: 'var(--ink)' }}>{action.label}</div>
+                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', marginTop: 2 }}>{action.sub}</div>
+                </div>
+                <svg width={12} height={12} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ color: 'var(--ink-4)', flexShrink: 0 }}><path d="M6 3l5 5-5 5"/></svg>
+              </div>
+            ))}
+            <div style={{ padding: '10px 18px 14px', fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', letterSpacing: '.04em' }}>
+              Or search: <strong style={{ color: 'var(--ink-2)' }}>artist name</strong>, track title, venue, show…
+            </div>
           </div>
         )}
         </div>{/* end scrollable */}
