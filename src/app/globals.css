@@ -6282,3 +6282,29 @@ html.high-contrast p {
   100% { box-shadow: 0 0 0 24px rgba(255,80,41,0); opacity: 0; }
 }
 
+
+/* ── Design-system utility classes ──────────────────────────────── */
+.ds-display {
+  font-family: var(--f-d);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 0.93;
+  color: var(--ink);
+}
+.ds-kicker {
+  font-family: var(--f-m);
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.ds-body {
+  font-family: var(--f-b);
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--ink-2);
+}
+.ds-serif {
+  font-family: var(--f-s);
+  font-weight: 400;
+}

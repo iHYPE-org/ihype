@@ -1,6 +1,7 @@
 'use client';
 
 import React, { memo, useState } from 'react';
+import { SplitBar } from '@/components/SplitBar';
 import { useRouter } from 'next/navigation';
 import type { WorkbenchData } from '@/types/workbench';
 import { IcDot, IcCheck, IcArrow, IcQR } from './icons';
@@ -482,9 +483,8 @@ export const ViewTickets = memo(function ViewTickets({ data }: { data: Workbench
                         </svg>
                       </button>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, marginTop: 2, borderTop: '1px solid var(--line)', fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', letterSpacing: '.04em' }}>
-                      <span>${(s.price * 0.45).toFixed(2)} → artist</span>
-                      <span>${(s.price * 0.45).toFixed(2)} → venue</span>
+                    <div style={{ paddingTop: 8, marginTop: 2, borderTop: '1px solid var(--line)' }}>
+                      <SplitBar total={s.price} compact height={6} style={{ marginBottom: 6 }} />
                       <button
                         onClick={() => { setReportingId(s.id); setReportReason(''); setReportStatus('idle'); }}
                         style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: 11, padding: '2px 4px', opacity: 0.6 }}

@@ -6,6 +6,7 @@ import type { WbTicket, WbTrendingProfile } from '@/types/workbench';
 import { IcHeart } from './icons';
 import { Panel, TrackCard } from './primitives';
 import { PageActions } from './PageActions';
+import { SplitBar } from '@/components/SplitBar';
 
 const STUB_ACCENT_PALETTE = ['#ff5029', '#b983ff', '#22e5d4', '#ff3e9a', '#ffb84a', '#4af0b0'];
 
@@ -330,6 +331,51 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
         </div>
       </div>
 
+      {/* ── Hype currency explainer ─────────────────────────────── */}
+      {(() => {
+        const hypesGiven = data.stats?.hypesGiven ?? 0;
+        const WEEKLY_ALLOTMENT = 10;
+        const hypesLeft = Math.max(0, WEEKLY_ALLOTMENT - hypesGiven);
+        const usedPct = Math.min(100, (hypesGiven / WEEKLY_ALLOTMENT) * 100);
+        return (
+          <div style={{
+            marginBottom: 24, padding: '18px 22px', borderRadius: 14,
+            border: '1px solid rgba(255,80,41,.2)',
+            background: 'linear-gradient(135deg, rgba(255,80,41,.08), rgba(255,184,74,.05))',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <svg width={20} height={20} viewBox="0 0 24 24" fill="#ff5029" aria-hidden="true"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+              <span style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 18, color: 'var(--ink)', letterSpacing: '-.02em' }}>
+                You have {hypesLeft} hype{hypesLeft !== 1 ? 's' : ''} this week
+              </span>
+            </div>
+            <p style={{ fontFamily: 'var(--f-b)', fontSize: 13, color: 'var(--ink-2)', margin: '0 0 12px', lineHeight: 1.6, maxWidth: '60ch' }}>
+              Hype is scarce on purpose — it&apos;s a real signal, not a like. Spend it on artists you believe in.
+            </p>
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                <span style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', letterSpacing: '.1em', textTransform: 'uppercase' }}>Used {hypesGiven} / {WEEKLY_ALLOTMENT}</span>
+                <span style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: hypesLeft > 0 ? '#22e5d4' : '#ff5029' }}>{hypesLeft} remaining</span>
+              </div>
+              <div style={{ height: 6, background: 'rgba(255,255,255,.08)', borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${usedPct}%`, background: usedPct >= 100 ? '#ff5029' : 'linear-gradient(90deg, #ff5029, #ffb84a)', borderRadius: 3, transition: 'width .5s ease-out' }} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 20px' }}>
+              {[
+                { icon: '🎟️', text: 'Early ticket access' },
+                { icon: '💸', text: 'Referral earnings (10% promoter cut)' },
+                { icon: '⚡', text: 'Fan presale windows' },
+              ].map(p => (
+                <span key={p.text} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-2)' }}>
+                  {p.icon} {p.text}
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ── DISCOVER — Trending Near You + sidebar ──────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 260px', gap: 20, marginBottom: 32 }}>
         <div>
@@ -424,6 +470,7 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
                   <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, color: 'var(--ink)', lineHeight: 1.3, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{show.name}</div>
                   <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{show.venue}</div>
                   <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', marginTop: 4 }}>{show.date} · ${show.price}</div>
+                  <div style={{ marginTop: 8 }}><SplitBar total={show.price} compact height={5} /></div>
                 </div>
               );
             })}
