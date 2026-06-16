@@ -4,6 +4,42 @@ import type { WorkbenchData, WbTrack } from '@/types/workbench';
 import { T, WMPill } from './MobilePrimitives';
 import { DiscoverDailyCard } from './DiscoverDailyCard';
 
+const STATIONS = [
+  { freq: 87.3,  label: 'INDIE',     name: 'The Indie Stream',    color: '#ff5029', nowTrack: 'Sundown',          nowArtist: 'Maya Reyes' },
+  { freq: 94.1,  label: 'VENUES',    name: 'Live from the Floor', color: '#22e5d4', nowTrack: 'Halflight',        nowArtist: 'Maya Reyes' },
+  { freq: 101.7, label: 'DISCOVER',  name: 'New This Week',       color: '#b983ff', nowTrack: 'Riverside Memory', nowArtist: 'Colin Atwood' },
+  { freq: 107.9, label: 'PROMOTERS', name: 'Curated Radio',       color: '#ff3e9a', nowTrack: 'Cobalt Hour',      nowArtist: 'Vela' },
+] as const;
+
+function HalflightCard() {
+  const [stationIdx, setStationIdx] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const s = STATIONS[stationIdx];
+  return (
+    <div style={{ margin: '0 22px 22px', borderRadius: 16, overflow: 'hidden', border: `1px solid ${s.color}44`, background: `linear-gradient(135deg, ${s.color}18, ${T.bg2})` }}>
+      <div style={{ padding: '14px 16px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{ fontFamily: T.fm, fontSize: 9, letterSpacing: '.18em', color: s.color, textTransform: 'uppercase', marginBottom: 3 }}>● HALFLIGHT FM · {s.label}</div>
+          <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 16, color: T.ink, letterSpacing: '-.01em' }}>{s.nowTrack}</div>
+          <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3, marginTop: 1 }}>{s.nowArtist}</div>
+        </div>
+        <button onClick={() => setPlaying(p => !p)} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', fontFamily: T.fm, fontSize: 12, fontWeight: 700, background: playing ? 'rgba(255,255,255,.1)' : s.color, color: playing ? T.ink : '#fff', flexShrink: 0 }}>
+          {playing ? '⏸' : '▶'}
+        </button>
+      </div>
+      <div style={{ display: 'flex', gap: 6, padding: '0 16px 14px', overflowX: 'auto' }}>
+        {STATIONS.map((st, i) => (
+          <button key={st.freq} onClick={() => { setStationIdx(i); setPlaying(true); }} style={{
+            padding: '5px 11px', borderRadius: 20, border: `1px solid ${stationIdx === i ? st.color : 'rgba(255,255,255,.1)'}`,
+            background: stationIdx === i ? `${st.color}20` : 'transparent',
+            color: stationIdx === i ? st.color : T.ink3, fontFamily: T.fm, fontSize: 10, fontWeight: 700, letterSpacing: '.08em', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+          }}>{st.label}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Icons (local, only needed here) ─────────────────────────
 const WMIcon = {
   radio: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2.5"/><circle cx="8" cy="8" r=".6" fill="currentColor"/></svg>,
@@ -121,6 +157,7 @@ export function ScreenListen({ data, onPlay, onExpand, currentIdx }: {
             )}
           </div>
         ) : (<>
+        <HalflightCard />
         {/* Hero: resume queue */}
         <div onClick={() => { onPlay(0); onExpand(); }} style={{
           margin: '0 22px 20px', padding: 18, borderRadius: 18, position: 'relative', overflow: 'hidden', cursor: 'pointer',
