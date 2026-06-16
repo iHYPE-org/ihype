@@ -15,10 +15,7 @@ import { PlayerDock } from './workbench/PlayerDock';
 import { QueueRail } from './workbench/QueueRail';
 import { ViewMyPage } from './workbench/ViewMyPage';
 import { ViewSeeds } from './workbench/ViewSeeds';
-import { ViewRadio } from './workbench/ViewRadio';
-import { ViewTickets } from './workbench/ViewTickets';
 import { ViewStudio } from './workbench/ViewStudio';
-import { ViewSettings } from './workbench/ViewSettings';
 import { ViewTour } from './workbench/ViewTour';
 import { ViewNotifications } from './workbench/ViewNotifications';
 import { DiscoverDailyCard } from './workbench/DiscoverDailyCard';
@@ -30,6 +27,10 @@ import { WMGenreQuizSheet } from './workbench/MobilePrimitives';
 import { SkeletonMeView } from './workbench/SkeletonMeView';
 import { ViewHalflightFM } from './workbench/ViewHalflightFM';
 import { ViewMatchmaker } from './workbench/ViewMatchmaker';
+import { ViewListen } from './workbench/ViewListen';
+import { ViewDiscoverHub } from './workbench/ViewDiscoverHub';
+import { ViewEventsHub } from './workbench/ViewEventsHub';
+import { ViewPagesHub } from './workbench/ViewPagesHub';
 
 // Heavy, conditionally-rendered views (1.7–2.1k LOC each) are code-split so
 // they don't weigh down the initial workbench bundle. The shell is fully
@@ -42,12 +43,8 @@ const viewLoading = () => (
     animation: 'shimmer 1.4s infinite',
   }} />
 );
-const ViewArtistPage = dynamic(() => import('./workbench/ViewArtistPage').then(m => m.ViewArtistPage), { loading: viewLoading });
-const ViewVenuePage = dynamic(() => import('./workbench/ViewVenuePage').then(m => m.ViewVenuePage), { loading: viewLoading });
-const ViewPageStudio = dynamic(() => import('./workbench/ViewPageStudio'), { loading: viewLoading });
 const ViewCockpit = dynamic(() => import('./workbench/ViewCockpit').then(m => m.ViewCockpit), { loading: viewLoading });
 import ViewJournal from './workbench/ViewJournal';
-import ViewDiscover from './workbench/ViewDiscover';
 
 // ─────────────────────────────────────────────────────────────
 // Main WorkbenchShell export
@@ -56,8 +53,8 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
   void starterPack;
   const [liveData, setLiveData] = useState<WorkbenchData>(data);
   const [revalidating, setRevalidating] = useState(data.degraded === true);
-  const [view, setView] = useState<View>('me');
-  const [prevView, setPrevView] = useState<View>('me');
+  const [view, setView] = useState<View>('listen');
+  const [prevView, setPrevView] = useState<View>('listen');
   const mainRef = useRef<HTMLDivElement>(null);
   const navigateTo = (v: View) => {
     if (v !== view) setPrevView(view);
@@ -381,7 +378,8 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
 
   const isSeeds = view === 'seeds';
   const isTour = view === 'tour';
-  const isPageStudio = view === 'pagestudio' || view === 'artistpage' || view === 'venuepage' || view === 'cockpit';
+  const isPageStudio = view === 'pages' || view === 'pagestudio' || view === 'artistpage' || view === 'venuepage' || view === 'cockpit';
+  const isDiscover = view === 'discover';
   const showQueue = prefs.queueRail && tracks.length > 0 && !isSeeds;
   const colTemplate = showQueue ? 'minmax(0, 1fr) var(--queue-w)' : '1fr';
   const shellMaxWidth = showQueue ? 1300 : 1600;
@@ -389,6 +387,25 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
 
   const viewEl = (() => {
     switch (view) {
+      // ── 4 primary hub views ─────────────────────────────────
+      case 'listen':
+        return <ViewErrorBoundary viewName="Listen">
+          <ViewListen data={liveData} onPickTrack={onPickTrack} currentIdx={currentIdx} />
+        </ViewErrorBoundary>;
+      case 'discover':
+        return <ViewErrorBoundary viewName="Discover">
+          <ViewDiscoverHub data={liveData} seedPlaying={seedPlaying} setSeedPlaying={setSeedPlaying} onSeedSave={onSeedSave} onPickTrack={onPickTrack} />
+        </ViewErrorBoundary>;
+      case 'events':
+        return <ViewErrorBoundary viewName="Events">
+          <ViewEventsHub data={liveData} />
+        </ViewErrorBoundary>;
+      case 'pages':
+        return <ViewErrorBoundary viewName="Pages">
+          <ViewPagesHub data={liveData} prefs={prefs} setPref={setPref} onBack={() => navigateTo(prevView)} />
+        </ViewErrorBoundary>;
+
+      // ── Legacy sub-views (reachable via deep-links / overlays) ──
       case 'me':       return revalidating
         ? <SkeletonMeView />
         : <ViewErrorBoundary viewName="My Page">
@@ -396,25 +413,18 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
             <ViewMyPage data={liveData} onPickTrack={onPickTrack} currentIdx={currentIdx} />
           </ViewErrorBoundary>;
       case 'seeds':    return <ViewErrorBoundary viewName="Seeds"><ViewSeeds data={liveData} seedPlaying={seedPlaying} setSeedPlaying={setSeedPlaying} onSave={onSeedSave} /></ViewErrorBoundary>;
-      case 'radio':    return <ViewErrorBoundary viewName="Radio"><ViewRadio data={liveData} onPickTrack={onPickTrack} /></ViewErrorBoundary>;
       case 'studio':   return <ViewErrorBoundary viewName="Studio"><ViewStudio data={liveData} /></ViewErrorBoundary>;
-      case 'tickets':  return <ViewErrorBoundary viewName="Live Events"><ViewTickets data={liveData} /></ViewErrorBoundary>;
-      case 'settings':     return <ViewErrorBoundary viewName="Settings"><ViewSettings prefs={prefs} setPref={setPref} data={liveData} onBack={() => navigateTo(prevView)} /></ViewErrorBoundary>;
       case 'tour':         return <ViewErrorBoundary viewName="Tour Planner"><ViewTour data={liveData} /></ViewErrorBoundary>;
-      case 'pagestudio':   return <ViewErrorBoundary viewName="Fan Page"><ViewPageStudio data={liveData} defaultRole="fan" /></ViewErrorBoundary>;
-      case 'artistpage':   return <ViewErrorBoundary viewName="Artist Page"><ViewArtistPage data={liveData} /></ViewErrorBoundary>;
-      case 'venuepage':       return <ViewErrorBoundary viewName="Venue Page"><ViewVenuePage data={liveData} /></ViewErrorBoundary>;
       case 'journal': {
         const role = (liveData.profileType ?? '').toUpperCase();
         const canJournal = role === 'ARTIST' || role === 'DJ' || role === 'VENUE';
         return canJournal ? <ViewErrorBoundary viewName="Journal"><ViewJournal data={liveData} /></ViewErrorBoundary> : null;
       }
-      case 'discover':        return <ViewErrorBoundary viewName="Discover"><ViewDiscover data={liveData} /></ViewErrorBoundary>;
       case 'notifications':   return <ViewErrorBoundary viewName="Notifications"><ViewNotifications /></ViewErrorBoundary>;
       case 'halflight':       return <ViewErrorBoundary viewName="Halflight FM"><ViewHalflightFM data={liveData} /></ViewErrorBoundary>;
       case 'matchmaker':      return <ViewErrorBoundary viewName="Booking Matchmaker"><ViewMatchmaker /></ViewErrorBoundary>;
       case 'cockpit':         return <ViewErrorBoundary viewName="Page Cockpit"><ViewCockpit data={liveData} /></ViewErrorBoundary>;
-      default:                return <ViewErrorBoundary viewName="My Page"><ViewMyPage data={liveData} onPickTrack={onPickTrack} currentIdx={currentIdx} /></ViewErrorBoundary>;
+      default:                return <ViewErrorBoundary viewName="Listen"><ViewListen data={liveData} onPickTrack={onPickTrack} currentIdx={currentIdx} /></ViewErrorBoundary>;
     }
   })();
 
@@ -456,7 +466,7 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
             userName={liveData.userName}
             activeProfileTypes={liveData.activeProfileTypes}
             hasPublishedPage={liveData.hasPublishedPage}
-            onSettings={() => navigateTo('settings')}
+            onSettings={() => navigateTo('pages')}
             onSearch={() => setSearchOpen(true)}
             onShortcuts={() => setShortcutsOpen(true)}
             badges={{
@@ -472,7 +482,7 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
         {/* Main content */}
         <main ref={mainRef} role="main" style={{
           gridColumn: 1, gridRow: 2,
-          overflowY: isSeeds || isTour || isPageStudio ? 'hidden' : 'auto',
+          overflowY: isSeeds || isTour || isPageStudio || isDiscover ? 'hidden' : 'auto',
           overflowX: 'hidden',
           background: 'var(--bg)', minHeight: 0, minWidth: 0,
           fontSize: `calc(14px * var(--density, 1))`,
@@ -487,13 +497,13 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
           </div>
           {!nudgeDismissed && (liveData.profileCompletion?.percent ?? 100) < 100 && (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 18px', background: 'rgba(255,184,74,.12)', borderBottom: '1px solid rgba(255,184,74,.25)', position: 'relative', zIndex: 2, flexShrink: 0 }}>
-              <button onClick={() => navigateTo('settings')} style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'rgba(255,184,74,.9)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, letterSpacing: '.06em', minHeight: 'unset' }}>
+              <button onClick={() => navigateTo('pages')} style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'rgba(255,184,74,.9)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, letterSpacing: '.06em', minHeight: 'unset' }}>
                 Complete your profile ({liveData.profileCompletion?.percent ?? 0}%) →
               </button>
               <button onClick={() => { localStorage.setItem('profileNudgeDismissed', '1'); setNudgeDismissed(true); }} style={{ fontFamily: 'var(--f-m)', fontSize: 14, color: 'var(--ink-3)', background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px', lineHeight: 1, minHeight: 'unset' }} aria-label="Dismiss">×</button>
             </div>
           )}
-          <div key={view} className="wb-view-anim" style={{ position: isTour || isPageStudio ? 'absolute' : 'relative', zIndex: 1, ...(isTour || isPageStudio ? { inset: 0 } : {}) }}>
+          <div key={view} className="wb-view-anim" style={{ position: isTour || isPageStudio || isDiscover ? 'absolute' : 'relative', zIndex: 1, ...(isTour || isPageStudio || isDiscover ? { inset: 0 } : {}) }}>
             <React.Suspense fallback={
               <div style={{
                 position: 'absolute',

@@ -10,7 +10,7 @@ import { ViewVenuePage } from '@/components/workbench/ViewVenuePage';
 import { ScreenListen, FullPlayer, HypeOverlay } from '@/components/workbench/MobileScreenListen';
 import { MobileScreenSeeds as ScreenSeeds } from '@/components/workbench/MobileScreenSeeds';
 import { ScreenShowsNew } from '@/components/workbench/MobileScreenShowsNew';
-import { ScreenYouNew, ManageConsole } from '@/components/workbench/MobileScreenYouNew';
+import { ManageConsole } from '@/components/workbench/MobileScreenYouNew';
 import ViewJournal from '@/components/workbench/ViewJournal';
 import ViewDiscover from '@/components/workbench/ViewDiscover';
 import { MobileScreenStudio } from '@/components/workbench/MobileScreenStudio';
@@ -49,7 +49,7 @@ const T = {
   fs: '"Instrument Serif",serif',
 };
 
-type MobileTab = 'listen' | 'seeds' | 'shows' | 'you' | 'more';
+type MobileTab = 'listen' | 'discover' | 'events' | 'pages';
 
 // ─── Icons ────────────────────────────────────────────────────
 const WMIcon = {
@@ -496,13 +496,13 @@ function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, noti
   const [searchVal, setSearchVal] = React.useState('');
   const searchInputRef = React.useRef<HTMLInputElement>(null);
   const titles: Record<MobileTab, string> = {
-    listen: 'listen', seeds: 'seeds', shows: 'shows', you: 'you', more: 'more',
+    listen: 'listen', discover: 'discover', events: 'events', pages: 'pages',
   };
   const navItems: { id: MobileTab; icon: string; label: string; badge?: string }[] = [
-    { id: 'listen', icon: '🎵', label: 'Listen' },
-    { id: 'seeds',  icon: '🌱', label: 'Seeds' },
-    { id: 'shows',  icon: '🎟️', label: 'Events' },
-    { id: 'you',    icon: '👤', label: 'You' },
+    { id: 'listen',   icon: '🎵', label: 'Listen' },
+    { id: 'discover', icon: '🌱', label: 'Discover' },
+    { id: 'events',   icon: '🎟️', label: 'Events' },
+    { id: 'pages',    icon: '👤', label: 'Pages' },
   ];
   const close = () => setMenuOpen(false);
 
@@ -770,14 +770,16 @@ function WMMiniPlayer({ track, playing, onToggle, progress, onAlbumTap }: {
 }
 
 // ─── More screen ─────────────────────────────────────────────
-interface MoreProps { data: WorkbenchData; onStudio: () => void; onTour: () => void; onPage: () => void; onNotif: () => void; onSettings: () => void; onJournal: () => void; onDiscover: () => void; onAdvertise: () => void; onHalflight?: () => void; onMatchmaker?: () => void; onCockpit?: () => void; }
-function MobileScreenMore({ data, onStudio, onTour, onPage, onNotif, onSettings, onJournal, onDiscover, onAdvertise, onHalflight, onMatchmaker, onCockpit }: MoreProps) {
+interface MoreProps { data: WorkbenchData; onStudio: () => void; onTour: () => void; onPage: () => void; onNotif: () => void; onSettings: () => void; onJournal: () => void; onDiscover: () => void; onAdvertise: () => void; onHalflight?: () => void; onMatchmaker?: () => void; onCockpit?: () => void; onManage?: () => void; }
+function MobileScreenMore({ data, onStudio, onTour, onPage, onNotif, onSettings, onJournal, onDiscover, onAdvertise, onHalflight, onMatchmaker, onCockpit, onManage }: MoreProps) {
   const role = (data.profileType ?? '').toUpperCase();
   const isCreator = role === 'ARTIST' || role === 'DJ';
   const isVenue = role === 'VENUE';
   const canJournal = isCreator || isVenue;
+  const canManage = isCreator || isVenue;
   type Item = { label: string; sub: string; color: string; on: () => void; icon: React.ReactNode };
   const items: Item[] = [
+    ...(canManage && onManage ? [{ label: 'Console', sub: isVenue ? 'Venue requests & stats' : 'Artist stats & tools', color: T.teal, on: onManage, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><rect x="1" y="4" width="18" height="12" rx="2"/><path d="M5 10h2.5M10 7.5v5M14 9v3"/></svg> }] : []),
     ...(isCreator ? [{ label: 'Studio', sub: 'Tracks, releases & tools', color: T.purple, on: onStudio, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><rect x="2" y="5" width="16" height="10" rx="2"/><path d="M6 10h1.5M10 8v4M13.5 9v2" strokeLinecap="round"/></svg> }] : []),
     { label: 'Page Creator', sub: isVenue ? 'Edit your venue page' : isCreator ? 'Edit your artist page' : 'Build your fan page', color: T.teal, on: onPage, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><rect x="2" y="2" width="16" height="16" rx="2"/><path d="M2 7h16M7 18V7"/></svg> },
     { label: 'Tour', sub: 'Booking & routing', color: T.amber, on: onTour, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><path d="M3 10h14M10 3l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/></svg> },
@@ -816,7 +818,7 @@ function MobileScreenMore({ data, onStudio, onTour, onPage, onNotif, onSettings,
 
 // ─── Bottom Tab Bar — 5-tab design (Listen · Seeds · Shows · You · More) ─
 function WMBottomTabs({ tab, onTab, notifCount = 0 }: { tab: MobileTab; onTab: (t: MobileTab) => void; notifCount?: number }) {
-  const items: { id: MobileTab; label: string; icon: (s: number, c: string, filled?: boolean) => React.ReactNode }[] = [
+  const items: { id: MobileTab; label: string; icon: (s: number, c: string) => React.ReactNode }[] = [
     { id: 'listen', label: 'Listen', icon: (s, c) => (
       <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
         <path d="M9 18V6l10-2v12" stroke={c} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
@@ -824,25 +826,22 @@ function WMBottomTabs({ tab, onTab, notifCount = 0 }: { tab: MobileTab; onTab: (
         <circle cx="16" cy="16" r="3" stroke={c} strokeWidth="1.7"/>
       </svg>
     )},
-    { id: 'seeds', label: 'Seeds', icon: (s, c, filled) => filled
-      ? <svg width={s} height={s} viewBox="0 0 24 24" fill={c}><path d="M12 21s-7-4.5-9.5-9.2C.8 8.2 3 4.5 6.5 4.5c2 0 3.5 1 5.5 3 2-2 3.5-3 5.5-3C21 4.5 23.2 8.2 21.5 11.8 19 16.5 12 21 12 21z"/></svg>
-      : <svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M12 20s-6.5-4.2-9-8.5C1.4 8.4 3 5.5 6.2 5.5c2 0 3.2 1.2 4.8 3 1.6-1.8 2.8-3 4.8-3 3.2 0 4.8 2.9 3.2 6C18.5 15.8 12 20 12 20z" stroke={c} strokeWidth="1.7" strokeLinejoin="round"/></svg>
-    },
-    { id: 'shows', label: 'Events', icon: (s, c) => (
+    { id: 'discover', label: 'Discover', icon: (s, c) => (
+      <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+        <path d="M12 20s-6.5-4.2-9-8.5C1.4 8.4 3 5.5 6.2 5.5c2 0 3.2 1.2 4.8 3 1.6-1.8 2.8-3 4.8-3 3.2 0 4.8 2.9 3.2 6C18.5 15.8 12 20 12 20z" stroke={c} strokeWidth="1.7" strokeLinejoin="round"/>
+      </svg>
+    )},
+    { id: 'events', label: 'Events', icon: (s, c) => (
       <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
         <rect x="3" y="5" width="18" height="16" rx="2.5" stroke={c} strokeWidth="1.7"/>
         <path d="M3 10h18M8 3v4M16 3v4" stroke={c} strokeWidth="1.7" strokeLinecap="round"/>
       </svg>
     )},
-    { id: 'you', label: 'You', icon: (s, c) => (
+    { id: 'pages', label: 'Pages', icon: (s, c) => (
       <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="8" r="4" stroke={c} strokeWidth="1.7"/>
-        <path d="M4.5 20.5c0-4 3.4-7 7.5-7s7.5 3 7.5 7" stroke={c} strokeWidth="1.7" strokeLinecap="round"/>
-      </svg>
-    )},
-    { id: 'more', label: 'More', icon: (s, c) => (
-      <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
-        <circle cx="5" cy="12" r="1.5" fill={c}/><circle cx="12" cy="12" r="1.5" fill={c}/><circle cx="19" cy="12" r="1.5" fill={c}/>
+        <rect x="3" y="3" width="18" height="18" rx="3" stroke={c} strokeWidth="1.7"/>
+        <path d="M7 9h10M7 13h7" stroke={c} strokeWidth="1.7" strokeLinecap="round"/>
+        <circle cx="17" cy="16" r="2" stroke={c} strokeWidth="1.5"/>
       </svg>
     )},
   ];
@@ -866,8 +865,8 @@ function WMBottomTabs({ tab, onTab, notifCount = 0 }: { tab: MobileTab; onTab: (
             minHeight: 56, minWidth: 44, position: 'relative',
           }}>
             <span style={{ width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-              {it.icon(25, c, on && it.id === 'seeds')}
-              {it.id === 'more' && notifCount > 0 && (
+              {it.icon(25, c)}
+              {it.id === 'pages' && notifCount > 0 && (
                 <span style={{ position: 'absolute', top: -2, right: -4, minWidth: 16, height: 16, borderRadius: 99, background: T.accent, border: `1.5px solid rgba(10,8,5,.88)`, fontFamily: T.fm, fontSize: 9, fontWeight: 800, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', animation: 'wm-badge-pop .3s cubic-bezier(.4,0,.2,1) both' }}>
                   {notifCount > 99 ? '99+' : notifCount}
                 </span>
@@ -2098,7 +2097,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
     return () => clearInterval(iv);
   }, [playing, track]);
 
-  const TABS_ORDER: MobileTab[] = ['listen', 'seeds', 'shows', 'you', 'more'];
+  const TABS_ORDER: MobileTab[] = ['listen', 'discover', 'events', 'pages'];
   const tabSwipeStart = useRef<{ x: number; y: number } | null>(null);
   const tabSwipeLocked = useRef<'h' | 'v' | null>(null);
   const scrollPositions = useRef<Partial<Record<MobileTab, number>>>({});
@@ -2148,7 +2147,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
 
   function handleMainTouchMove(e: React.TouchEvent) {
     const t = e.touches[0];
-    if (tab !== 'seeds') {
+    if (tab !== 'discover') {
       const el = e.currentTarget as HTMLElement;
       if (el.scrollTop === 0) {
         const dy = t.clientY - pullStartY.current;
@@ -2175,7 +2174,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
     setPullDelta(0);
     if (tabSwipeLocked.current === 'h' && tabSwipeStart.current) {
       const dx = e.changedTouches[0].clientX - tabSwipeStart.current.x;
-      if (Math.abs(dx) > 60 && tab !== 'seeds') {
+      if (Math.abs(dx) > 60 && tab !== 'discover') {
         const idx = TABS_ORDER.indexOf(tab);
         if (dx < 0 && idx < TABS_ORDER.length - 1) { navigator.vibrate?.(6); setTab(TABS_ORDER[idx + 1]); }
         if (dx > 0 && idx > 0) { navigator.vibrate?.(6); setTab(TABS_ORDER[idx - 1]); }
@@ -2193,11 +2192,10 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
 
   const screenEl = (() => {
     switch (tab) {
-      case 'listen': return <ScreenListen data={liveData} onPlay={setCurrentTrackIdx} onExpand={() => setExpanded(true)} currentIdx={currentTrackIdx} />;
-      case 'seeds':  return <ScreenSeeds data={liveData} />;
-      case 'shows':  return <ScreenShowsNew data={liveData} onToast={showToast} />;
-      case 'you':    return <ScreenYouNew data={liveData} onManage={() => setManageMode(true)} onJournal={() => setJournalMode(true)} onDiscover={() => setDiscoverMode(true)} onToast={showToast} />;
-      case 'more':   return <MobileScreenMore data={liveData} onStudio={() => setStudioMode(true)} onTour={() => setTourMode(true)} onPage={() => setPageMode(true)} onNotif={() => setNotifMode(true)} onSettings={() => setSettingsMode(true)} onJournal={() => setJournalMode(true)} onDiscover={() => setDiscoverMode(true)} onAdvertise={() => setAdvertiseMode(true)} onHalflight={() => setHalflightMode(true)} onMatchmaker={() => setMatchmakerMode(true)} onCockpit={() => setCockpitMode(true)} />;
+      case 'listen':   return <ScreenListen data={liveData} onPlay={setCurrentTrackIdx} onExpand={() => setExpanded(true)} currentIdx={currentTrackIdx} />;
+      case 'discover': return <ScreenSeeds data={liveData} />;
+      case 'events':   return <ScreenShowsNew data={liveData} onToast={showToast} />;
+      case 'pages':    return <MobileScreenMore data={liveData} onStudio={() => setStudioMode(true)} onTour={() => setTourMode(true)} onPage={() => setPageMode(true)} onNotif={() => setNotifMode(true)} onSettings={() => setSettingsMode(true)} onJournal={() => setJournalMode(true)} onDiscover={() => setDiscoverMode(true)} onAdvertise={() => setAdvertiseMode(true)} onHalflight={() => setHalflightMode(true)} onMatchmaker={() => setMatchmakerMode(true)} onCockpit={() => setCockpitMode(true)} onManage={() => setManageMode(true)} />;
     }
   })();
 
@@ -2276,13 +2274,13 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
         ref={mainScrollRef}
         role="main"
         className="wm-scroll"
-        style={{ flex: 1, overflowY: tab === 'seeds' ? 'hidden' : 'auto', overflowX: 'hidden', position: 'relative', scrollbarWidth: 'none' }}
+        style={{ flex: 1, overflowY: tab === 'discover' ? 'hidden' : 'auto', overflowX: 'hidden', position: 'relative', scrollbarWidth: 'none' }}
         onTouchStart={handleMainTouchStart}
         onTouchMove={handleMainTouchMove}
         onTouchEnd={handleMainTouchEnd}
         onScroll={e => { const st = (e.currentTarget as HTMLDivElement).scrollTop; scrollPositions.current[tab] = st; const show = st > 200; if (show !== showBackToTopRef.current) { showBackToTopRef.current = show; setShowBackToTop(show); } }}
       >
-        {tab !== 'seeds' && (
+        {tab !== 'discover' && (
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             height: pullDelta > 0 ? pullDelta : refreshing ? 44 : 0,
@@ -2300,7 +2298,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
             <span style={{ fontFamily: T.fm, fontSize: 11, color: T.accent, letterSpacing: '.08em' }}>No connection — changes won&apos;t save</span>
           </div>
         )}
-        {!nudgeDismissed && tab !== 'seeds' && (liveData.profileCompletion?.percent ?? 100) < 100 && (
+        {!nudgeDismissed && tab !== 'discover' && (liveData.profileCompletion?.percent ?? 100) < 100 && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', background: 'rgba(255,184,74,.12)', borderBottom: `1px solid rgba(255,184,74,.25)` }}>
             <button onClick={() => setSettingsMode(true)} style={{ fontFamily: T.fm, fontSize: 11, color: 'rgba(255,184,74,.9)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, letterSpacing: '.06em', minHeight: 'unset' }}>
               Complete your profile ({liveData.profileCompletion?.percent ?? 0}%) →
@@ -2349,12 +2347,12 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
       {showWelcome && (
         <WelcomeDialog
           onDismiss={() => { localStorage.setItem('ihype-welcome-seen', '1'); setShowWelcome(false); }}
-          onNavigate={(v) => { if (v === 'seeds') setTab('seeds'); }}
+          onNavigate={(v) => { if (v === 'seeds') setTab('discover'); }}
         />
       )}
 
       {/* Back to top */}
-      {showBackToTop && tab !== 'seeds' && (
+      {showBackToTop && tab !== 'discover' && (
         <button onClick={() => mainScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })} aria-label="Scroll to top" style={{ position: 'absolute', right: 16, bottom: 156, zIndex: 150, width: 38, height: 38, borderRadius: '50%', background: T.bg3, border: `1px solid ${T.line2}`, color: T.ink2, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 4px 16px rgba(0,0,0,.45)', animation: 'fadeIn .15s ease-out both', padding: 0 }}>
           <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
         </button>

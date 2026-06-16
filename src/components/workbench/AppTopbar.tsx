@@ -6,6 +6,11 @@ import type { View } from './types';
 
 export const TAB_ICONS: Record<string, React.ReactNode> = {
   me: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="6" r="2.5"/><path d="M3 14c0-2.8 2.2-5 5-5s5 2.2 5 5"/></svg>,
+  listen: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="6"/><path d="M6 6.5a2 2 0 1 1 0 3"/><circle cx="10.5" cy="8" r="1.5"/></svg>,
+  discover: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2c2 3 4 4 4 7a4 4 0 1 1-8 0c0-3 2-4 4-7Z"/></svg>,
+  events: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M2 6a1.5 1.5 0 0 0 0 3v3h12V9a1.5 1.5 0 0 0 0-3V3H2v3Z"/><path d="M9 3v10" strokeDasharray="1.4 1.4"/></svg>,
+  pages: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 6h6M5 9h4"/><circle cx="11.5" cy="10.5" r="1.5" fill="currentColor" stroke="none"/></svg>,
+  // legacy icons retained for sub-views
   seeds: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M8 2c2 3 4 4 4 7a4 4 0 1 1-8 0c0-3 2-4 4-7Z"/></svg>,
   radio: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2.5"/><circle cx="8" cy="8" r=".6" fill="currentColor"/></svg>,
   studio: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="12" height="8" rx="1.5"/><path d="M5 8h1M8 6v4M11 7v2"/></svg>,
@@ -17,15 +22,12 @@ export const TAB_ICONS: Record<string, React.ReactNode> = {
   cockpit: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="14" height="10" rx="1.5"/><path d="M4 8h2M8 6v4M12 7v2"/><circle cx="13" cy="12" r="1" fill="currentColor" stroke="none"/></svg>,
 };
 
+/** Primary 4-tab navigation per the iHYPE design system. */
 export const TABS: { k: View; label: string }[] = [
-  { k: 'me',          label: 'Me' },
-  { k: 'seeds',       label: 'Seeds' },
-  { k: 'radio',       label: 'Radio' },
-  { k: 'halflight',   label: 'Halflight FM' },
-  { k: 'studio',      label: 'Studio' },
-  { k: 'tickets',     label: 'Ticketing' },
-  { k: 'pagestudio',  label: 'Fan Page' },
-  { k: 'matchmaker',  label: 'Matchmaker' },
+  { k: 'listen',   label: 'Listen' },
+  { k: 'discover', label: 'Discover' },
+  { k: 'events',   label: 'Events' },
+  { k: 'pages',    label: 'Pages' },
 ];
 
 export const ROLE_TABS: { k: View; label: string; role: string }[] = [
@@ -86,9 +88,9 @@ export function AppTopbar({ view, setView, listeningNow, initials, userName, act
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs — 4 primary hubs */}
       <nav role="navigation" aria-label="Main navigation" style={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: 'center' }}>
-        {TABS.filter(t => t.k !== 'pagestudio').map(tab => {
+        {TABS.map(tab => {
           const active = view === tab.k;
           return (
             <button key={tab.k} onClick={() => setView(tab.k)} aria-current={active ? 'page' : undefined} style={{
@@ -118,50 +120,6 @@ export function AppTopbar({ view, setView, listeningNow, initials, userName, act
             </button>
           );
         })}
-        {/* Separator + role-specific pages + Fan Page */}
-        <span style={{ width: 1, height: 20, background: 'var(--line-2)', margin: '0 6px', flexShrink: 0 }} />
-        {ROLE_TABS.filter(rt => activeProfileTypes.includes(rt.role)).map(tab => {
-          const active = view === tab.k;
-          return (
-            <button key={tab.k} onClick={() => setView(tab.k)} aria-current={active ? 'page' : undefined} style={{
-              display: 'flex', alignItems: 'center', gap: 7, padding: '7px 14px',
-              borderRadius: 8, cursor: 'pointer',
-              border: active ? '1px solid rgba(185,131,255,.22)' : '1px solid transparent',
-              color: active ? '#b983ff' : 'var(--ink-2)',
-              background: active ? 'rgba(185,131,255,.1)' : 'transparent',
-              fontFamily: 'var(--f-b)', fontWeight: 600, fontSize: 13, letterSpacing: '-.005em',
-              position: 'relative', transition: 'color .15s, background .15s, border-color .15s',
-              boxShadow: active ? '0 0 18px rgba(185,131,255,.12), inset 0 1px 0 rgba(255,255,255,.06)' : 'none',
-            }}
-              onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,.04)'; (e.currentTarget as HTMLButtonElement).style.color = '#f0ebe5'; } }}
-              onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--ink-2)'; } }}
-            >
-              {TAB_ICONS['pagestudio']}
-              {tab.label}
-            </button>
-          );
-        })}
-        {(() => {
-          const active = view === 'pagestudio';
-          return (
-            <button key="pagestudio" onClick={() => setView('pagestudio')} aria-current={active ? 'page' : undefined} style={{
-              display: 'flex', alignItems: 'center', gap: 7, padding: '7px 14px',
-              borderRadius: 8, cursor: 'pointer',
-              border: active ? '1px solid rgba(255,80,41,.22)' : '1px solid transparent',
-              color: active ? 'var(--ink)' : 'var(--ink-2)',
-              background: active ? 'rgba(255,80,41,.1)' : 'transparent',
-              fontFamily: 'var(--f-b)', fontWeight: 600, fontSize: 13, letterSpacing: '-.005em',
-              position: 'relative', transition: 'color .15s, background .15s, border-color .15s',
-              boxShadow: active ? '0 0 18px rgba(255,80,41,.12), inset 0 1px 0 rgba(255,255,255,.06)' : 'none',
-            }}
-              onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,.04)'; (e.currentTarget as HTMLButtonElement).style.color = '#f0ebe5'; } }}
-              onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--ink-2)'; } }}
-            >
-              {TAB_ICONS['pagestudio']}
-              {'Fan Page'}
-            </button>
-          );
-        })()}
       </nav>
 
       {/* Right: listening + user */}

@@ -23,6 +23,7 @@
 
   /* ── Role colors ─────────────────────────────────────────────────── */
   --role-fan:      #b983ff;
+  --role-dj:       #5b8cff;  /* azure — radio-show curators */
   --role-artist:   #ff5029;
   --role-venue:    #22e5d4;
   --role-promoter: #ffb84a;

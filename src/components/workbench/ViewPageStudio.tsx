@@ -7,7 +7,7 @@ import { getProfilePathForType } from '@/lib/profile-paths';
 import { PageActions } from './PageActions';
 
 // ── TYPES ──────────────────────────────────────────────────────────────────
-type Role = 'artist' | 'venue' | 'promoter' | 'fan';
+type Role = 'artist' | 'venue' | 'dj' | 'fan';
 type Device = 'desktop' | 'mobile';
 type FontKey = 'editorial' | 'grotesk' | 'serif' | 'mono';
 type LayoutKey = 'spotlight' | 'zine' | 'poster' | 'gallery';
@@ -126,14 +126,14 @@ const ROLES: Record<Role, RoleDef> = {
       { kind:'about', title:'The room',   items:[{t:'Capacity 400',m:'Standing · two bars · green room'},{t:'Load-in',m:'Alley access · house backline available'}] },
     ],
   },
-  promoter: {
-    label:'Promoter', defaultName:'Late Hour Collective', defaultVibe:'tastemaker club nights — house, techno, after-dark energy',
-    hero:{ kicker:'PROMOTER · CHICAGO', stat:'128', statLabel:'shows presented', cta:'Pitch me a date' },
-    tagline:'We throw the nights you hear about Monday.',
-    bio:'Independent promoters since 2019. House, techno, and the occasional left turn. 81% average sell-through across 128 shows.',
+  dj: {
+    label:'DJ', defaultName:'DJ Mirage', defaultVibe:'club-night curator — house, techno, after-dark energy',
+    hero:{ kicker:'DJ · CHICAGO', stat:'128', statLabel:'sets played', cta:'Book me' },
+    tagline:'From the booth to your eardrum.',
+    bio:'Radio-show host and touring DJ since 2019. House, techno, and the occasional left turn. Resident at Smartbar and Empty Bottle.',
     sections:[
-      { kind:'shows', title:'Recent nights', items:[{t:'Basement Heat · Vol 9',m:'Sold out · 480 cap'},{t:'After Dark w/ Dossier',m:'92% paid · Pilsen'},{t:'Warehouse Series 04',m:'Sold out · secret location'}] },
-      { kind:'about', title:'What we book', items:[{t:'House · techno · club',m:'300–800 cap rooms'},{t:'Late slots',m:'10pm–4am · weekends'}] },
+      { kind:'shows', title:'Upcoming sets', items:[{t:'Basement Heat · Vol 9',m:'Fri Jun 6 · Smartbar'},{t:'After Dark w/ Dossier',m:'Sat Jun 14 · Pilsen'},{t:'Warehouse Series 04',m:'Sat Jun 28 · secret location'}] },
+      { kind:'about', title:'What I play', items:[{t:'House · techno · club',m:'300–800 cap rooms'},{t:'Late slots',m:'10pm–4am · weekends'}] },
     ],
   },
   fan: {
@@ -151,7 +151,7 @@ const ROLES: Record<Role, RoleDef> = {
 const VIBE_CHIPS: Record<Role, string[]> = {
   artist:   ['moody late-night R&B','sun-faded indie folk','neon hyperpop','DIY punk zine','dreamy shoegaze','bold rap energy'],
   venue:    ['gritty beloved dive','sleek modern club','warm listening room','industrial warehouse'],
-  promoter: ['after-dark techno','tastemaker indie nights','big festival energy','underground warehouse'],
+  dj: ['after-dark techno','tastemaker indie nights','big festival energy','underground warehouse'],
   fan:      ['certified early adopter','vinyl-obsessed purist','front-row regular','hyperpop stan'],
 };
 
@@ -886,10 +886,11 @@ export default function ViewPageStudio({ data, defaultRole }: { data?: Workbench
     const savedRaw = typeof window !== 'undefined' ? localStorage.getItem(saveKeyRef.current) : null;
     if (!fresh && savedRaw) {
       try {
-        const saved = JSON.parse(savedRaw) as { role: Role; theme: Theme; content: { name: string; tagline: string; bio: string }; sections: SectionDef[]; heroBg: string; tracks: TrackItem[]; links: Record<string, string> };
-        roleRef.current = saved.role;
-        setRole(saved.role);
-        contentRef.current = { ...makeContent(saved.role), ...saved.content };
+        const saved = JSON.parse(savedRaw) as { role: Role | 'promoter'; theme: Theme; content: { name: string; tagline: string; bio: string }; sections: SectionDef[]; heroBg: string; tracks: TrackItem[]; links: Record<string, string> };
+        const migratedRole: Role = (saved.role as string) === 'promoter' ? 'dj' : (saved.role as Role);
+        roleRef.current = migratedRole;
+        setRole(migratedRole);
+        contentRef.current = { ...makeContent(migratedRole), ...saved.content };
         sectionsRef.current = saved.sections || clone(DEFAULT_SECTIONS);
         heroBgRef.current = saved.heroBg || '';
         setHeroBg(saved.heroBg || '');
@@ -950,7 +951,7 @@ export default function ViewPageStudio({ data, defaultRole }: { data?: Workbench
         const chipsMsgId = makeId();
         addMsg({
           id: chipsMsgId, type: 'chips', kind: 'role',
-          chips: [{ value: 'artist', label: '🎵 Artist' }, { value: 'venue', label: '🏟 Venue' }, { value: 'promoter', label: '📣 Promoter' }, { value: 'fan', label: '🎧 Fan' }],
+          chips: [{ value: 'artist', label: '🎵 Artist' }, { value: 'venue', label: '🏟 Venue' }, { value: 'dj', label: '🎧 DJ' }, { value: 'fan', label: '⚡ Fan' }],
         });
         scrollChat();
       }, 350);
@@ -962,7 +963,7 @@ export default function ViewPageStudio({ data, defaultRole }: { data?: Workbench
     roleRef.current = val;
     setRole(val);
     contentRef.current = makeContent(val);
-    addMsg({ id: makeId(), type: 'user', text: { artist: 'Artist 🎵', venue: 'Venue 🏟', promoter: 'Promoter 📣', fan: 'Fan 🎧' }[val] });
+    addMsg({ id: makeId(), type: 'user', text: { artist: 'Artist 🎵', venue: 'Venue 🏟', dj: 'DJ 🎧', fan: 'Fan ⚡' }[val] });
     stepRef.current = 1;
     setFlowStep(1);
     setTimeout(() => {
