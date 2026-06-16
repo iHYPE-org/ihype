@@ -141,6 +141,86 @@ function RadialProgress({ value, max, color }: { value: number; max: number; col
   );
 }
 
+// ── Static leaderboard data (replaced by real API when available) ─────────────
+const LEADERBOARD_ROWS = [
+  { rank: 1, name: 'Nikki K.',      xp: 8420, delta: null, you: false },
+  { rank: 2, name: 'DJ Halflight',  xp: 7180, delta: null, you: false },
+  { rank: 3, name: 'Cobalt Vela',   xp: 6420, delta: null, you: false },
+  { rank: 17, name: 'You',          xp: 0,    delta: 4,    you: true  },
+  { rank: 18, name: 'Sade R.',      xp: 3100, delta: null, you: false },
+];
+
+const ACHIEVEMENTS_DATA = [
+  { id: 'first_hype',  label: 'FIRST HYPE',   icon: '♥',  color: '#ff3e9a', threshold: 1,   field: 'hyped' as const },
+  { id: 'combo_10',    label: '10 COMBO',      icon: '⚡', color: '#ffb84a', threshold: 10,  field: 'hyped' as const },
+  { id: 'saved_5',     label: 'GOLDEN EAR',    icon: '★',  color: '#22e5d4', threshold: 5,   field: 'saved' as const },
+  { id: 'scout',       label: 'SCOUT',         icon: '🔭', color: '#b983ff', threshold: 20,  field: 'hyped' as const },
+  { id: 'curator',     label: 'CURATOR',       icon: '🎯', color: '#ff3e9a', threshold: 50,  field: 'hyped' as const },
+  { id: 'tastemaker',  label: 'TASTEMAKER',    icon: '👑', color: '#ffb84a', threshold: 100, field: 'hyped' as const },
+  { id: 'day_fire',    label: '7-DAY FIRE',    icon: '🔥', color: '#ff5029', threshold: 50,  field: 'saved' as const },
+  { id: 'picked_hit',  label: 'PICKED A HIT',  icon: '📻', color: '#22e5d4', threshold: 30,  field: 'saved' as const },
+];
+
+function SeedsLeaderboard({ xp }: { xp: number }) {
+  const rows = LEADERBOARD_ROWS.map(r => r.you ? { ...r, xp } : r);
+  return (
+    <div style={{ marginTop: 18 }}>
+      <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, letterSpacing: '.18em', color: 'var(--ink-3)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 8 }}>
+        WEEKLY LEADERBOARD · RESETS FRI
+      </div>
+      <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 10, overflow: 'hidden' }}>
+        {rows.map((r, i) => (
+          <div key={r.rank} style={{
+            display: 'grid', gridTemplateColumns: '28px 1fr auto', alignItems: 'center', gap: 10, padding: '8px 12px',
+            borderBottom: i < rows.length - 1 ? '1px solid var(--line)' : 'none',
+            background: r.you ? 'rgba(34,229,212,.06)' : 'transparent',
+          }}>
+            <span style={{ fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 700, color: r.rank <= 3 ? '#ffb84a' : 'var(--ink-3)', letterSpacing: '.1em' }}>
+              {String(r.rank).padStart(2, '0')}
+            </span>
+            <span style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, color: r.you ? '#22e5d4' : 'var(--ink)' }}>
+              {r.name}
+              {r.delta != null && r.delta > 0 && (
+                <span style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: '#22e5d4', marginLeft: 6 }}>↑{r.delta}</span>
+              )}
+            </span>
+            <span style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-2)' }}>{r.xp.toLocaleString()}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SeedsAchievements({ hyped, saved }: { hyped: number; saved: number }) {
+  const unlocked = ACHIEVEMENTS_DATA.filter(a => (a.field === 'hyped' ? hyped : saved) >= a.threshold);
+  return (
+    <div style={{ marginTop: 18, paddingBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, letterSpacing: '.18em', color: 'var(--ink-3)', textTransform: 'uppercase', fontWeight: 700 }}>ACHIEVEMENTS</div>
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)' }}>{unlocked.length}/{ACHIEVEMENTS_DATA.length}</div>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        {ACHIEVEMENTS_DATA.map(a => {
+          const on = (a.field === 'hyped' ? hyped : saved) >= a.threshold;
+          return (
+            <div key={a.id} title={a.label} style={{
+              width: 48, height: 48, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: on ? `${a.color}20` : 'var(--bg-2)', border: `1px solid ${on ? a.color + '55' : 'var(--line)'}`,
+              opacity: on ? 1 : 0.4, cursor: 'default', fontSize: 20, transition: 'opacity .2s',
+            }}>{a.icon}</div>
+          );
+        })}
+      </div>
+      {unlocked.length > 0 && (
+        <div style={{ marginTop: 8, fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', letterSpacing: '.06em' }}>
+          Latest: <span style={{ color: '#ffb84a' }}>{unlocked[unlocked.length - 1].label}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ViewSeeds({
   data,
   seedPlaying,
@@ -929,6 +1009,12 @@ export function ViewSeeds({
               </div>
             </div>
           )}
+
+          {/* Weekly leaderboard */}
+          <SeedsLeaderboard xp={sessionStats.xp} />
+
+          {/* Achievements */}
+          <SeedsAchievements hyped={sessionStats.hyped} saved={sessionStats.saved} />
 
           </aside>
 

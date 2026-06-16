@@ -28,6 +28,7 @@ import { SearchOverlay } from './workbench/SearchOverlay';
 import { PasskeyNudge } from './workbench/PasskeyNudge';
 import { WMGenreQuizSheet } from './workbench/MobilePrimitives';
 import { SkeletonMeView } from './workbench/SkeletonMeView';
+import { ViewHalflightFM } from './workbench/ViewHalflightFM';
 
 // Heavy, conditionally-rendered views (1.7–2.1k LOC each) are code-split so
 // they don't weigh down the initial workbench bundle. The shell is fully
@@ -408,6 +409,7 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
       }
       case 'discover':        return <ViewErrorBoundary viewName="Discover"><ViewDiscover data={liveData} /></ViewErrorBoundary>;
       case 'notifications':   return <ViewErrorBoundary viewName="Notifications"><ViewNotifications /></ViewErrorBoundary>;
+      case 'halflight':       return <ViewErrorBoundary viewName="Halflight FM"><ViewHalflightFM data={liveData} /></ViewErrorBoundary>;
       default:                return <ViewErrorBoundary viewName="My Page"><ViewMyPage data={liveData} onPickTrack={onPickTrack} currentIdx={currentIdx} /></ViewErrorBoundary>;
     }
   })();
