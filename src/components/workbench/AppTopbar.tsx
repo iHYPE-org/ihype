@@ -13,6 +13,7 @@ export const TAB_ICONS: Record<string, React.ReactNode> = {
   tour: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="4" cy="11" r="1.5"/><circle cx="12" cy="5" r="1.5"/><path d="M5.2 10.2 10.8 5.8"/><path d="M2 4h2.5M2 7h4M2 10h1.5"/></svg>,
   pagestudio: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 6h6M5 9h4"/><circle cx="11.5" cy="10.5" r="1.5" fill="currentColor" stroke="none"/></svg>,
   halflight: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="5" width="14" height="9" rx="1.5"/><path d="M5 5V3.5a3 3 0 0 1 6 0V5"/><circle cx="8" cy="9.5" r="1.5"/><path d="M8 11v1.5"/></svg>,
+  matchmaker: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="5" cy="6" r="2.5"/><circle cx="11" cy="6" r="2.5"/><path d="M1 14c0-2.2 1.8-4 4-4M15 14c0-2.2-1.8-4-4-4M7.5 13h1M8 10v3"/></svg>,
 };
 
 export const TABS: { k: View; label: string }[] = [
@@ -23,6 +24,7 @@ export const TABS: { k: View; label: string }[] = [
   { k: 'studio',      label: 'Studio' },
   { k: 'tickets',     label: 'Ticketing' },
   { k: 'pagestudio',  label: 'Fan Page' },
+  { k: 'matchmaker',  label: 'Matchmaker' },
 ];
 
 export const ROLE_TABS: { k: View; label: string; role: string }[] = [

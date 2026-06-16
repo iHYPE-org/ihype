@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { WorkbenchData, WbTrack, WbShow } from './WorkbenchShellV2';
 import { ViewHalflightFMMobile } from '@/components/workbench/ViewHalflightFM';
+import { ViewMatchmaker } from '@/components/workbench/ViewMatchmaker';
 import { SearchOverlay } from '@/components/workbench/SearchOverlay';
 import { ViewErrorBoundary } from '@/components/workbench/ErrorBoundary';
 import { ViewArtistPage } from '@/components/workbench/ViewArtistPage';
@@ -768,8 +769,8 @@ function WMMiniPlayer({ track, playing, onToggle, progress, onAlbumTap }: {
 }
 
 // ─── More screen ─────────────────────────────────────────────
-interface MoreProps { data: WorkbenchData; onStudio: () => void; onTour: () => void; onPage: () => void; onNotif: () => void; onSettings: () => void; onJournal: () => void; onDiscover: () => void; onAdvertise: () => void; onHalflight?: () => void; }
-function MobileScreenMore({ data, onStudio, onTour, onPage, onNotif, onSettings, onJournal, onDiscover, onAdvertise, onHalflight }: MoreProps) {
+interface MoreProps { data: WorkbenchData; onStudio: () => void; onTour: () => void; onPage: () => void; onNotif: () => void; onSettings: () => void; onJournal: () => void; onDiscover: () => void; onAdvertise: () => void; onHalflight?: () => void; onMatchmaker?: () => void; }
+function MobileScreenMore({ data, onStudio, onTour, onPage, onNotif, onSettings, onJournal, onDiscover, onAdvertise, onHalflight, onMatchmaker }: MoreProps) {
   const role = (data.profileType ?? '').toUpperCase();
   const isCreator = role === 'ARTIST' || role === 'DJ';
   const isVenue = role === 'VENUE';
@@ -781,6 +782,7 @@ function MobileScreenMore({ data, onStudio, onTour, onPage, onNotif, onSettings,
     { label: 'Tour', sub: 'Booking & routing', color: T.amber, on: onTour, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><path d="M3 10h14M10 3l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/></svg> },
     ...(canJournal ? [{ label: 'Journal', sub: 'Posts & updates', color: T.accent, on: onJournal, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><rect x="3" y="2" width="14" height="16" rx="2"/><path d="M7 7h6M7 11h4" strokeLinecap="round"/></svg> }] : []),
     { label: 'Halflight FM', sub: 'Live radio, 4 stations', color: T.teal, on: () => onHalflight?.(), icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><rect x="1" y="6" width="18" height="11" rx="2"/><path d="M6 6V4.5a4 4 0 0 1 8 0V6"/><circle cx="10" cy="11.5" r="2"/><path d="M10 13.5v1.5"/></svg> },
+    { label: 'Booking Matchmaker', sub: 'Find artists & venues', color: T.purple, on: () => onMatchmaker?.(), icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><circle cx="6.5" cy="7" r="3"/><circle cx="13.5" cy="7" r="3"/><path d="M1.5 18c0-2.8 2.2-5 5-5M18.5 18c0-2.8-2.2-5-5-5M9 17h2M10 13v4" strokeLinecap="round"/></svg> },
     { label: 'Advertise', sub: 'Promote your brand', color: T.pink, on: onAdvertise, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><path d="M3 14V6l10-3v14L3 14z" strokeLinejoin="round"/><path d="M13 7l4 1v4l-4 1"/><circle cx="6.5" cy="16.5" r="1.5"/></svg> },
     { label: 'Discover', sub: 'Artists & venues', color: T.teal, on: onDiscover, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><circle cx="10" cy="10" r="7"/><path d="M13 7l-2 3-3 1.5 2-3L13 7z" fill="currentColor" stroke="none"/></svg> },
     { label: 'Notifications', sub: 'Alerts & activity', color: T.blue, on: onNotif, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><path d="M5 8a5 5 0 0 1 10 0v3.5l1.5 2.5h-13L5 11.5V8Z"/><path d="M8.5 16.5a1.5 1.5 0 0 0 3 0" strokeLinecap="round"/></svg> },
@@ -1983,6 +1985,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
   const [studioMode, setStudioMode] = useState(false);
   const [tourMode, setTourMode] = useState(false);
   const [halflightMode, setHalflightMode] = useState(false);
+  const [matchmakerMode, setMatchmakerMode] = useState(false);
 
   const [pageMode, setPageMode] = useState(false);
   const [advertiseMode, setAdvertiseMode] = useState(false);
@@ -2191,7 +2194,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
       case 'seeds':  return <ScreenSeeds data={liveData} />;
       case 'shows':  return <ScreenShowsNew data={liveData} onToast={showToast} />;
       case 'you':    return <ScreenYouNew data={liveData} onManage={() => setManageMode(true)} onJournal={() => setJournalMode(true)} onDiscover={() => setDiscoverMode(true)} onToast={showToast} />;
-      case 'more':   return <MobileScreenMore data={liveData} onStudio={() => setStudioMode(true)} onTour={() => setTourMode(true)} onPage={() => setPageMode(true)} onNotif={() => setNotifMode(true)} onSettings={() => setSettingsMode(true)} onJournal={() => setJournalMode(true)} onDiscover={() => setDiscoverMode(true)} onAdvertise={() => setAdvertiseMode(true)} onHalflight={() => setHalflightMode(true)} />;
+      case 'more':   return <MobileScreenMore data={liveData} onStudio={() => setStudioMode(true)} onTour={() => setTourMode(true)} onPage={() => setPageMode(true)} onNotif={() => setNotifMode(true)} onSettings={() => setSettingsMode(true)} onJournal={() => setJournalMode(true)} onDiscover={() => setDiscoverMode(true)} onAdvertise={() => setAdvertiseMode(true)} onHalflight={() => setHalflightMode(true)} onMatchmaker={() => setMatchmakerMode(true)} />;
     }
   })();
 
@@ -2237,6 +2240,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
 
   const overlayModes: { active: boolean; close: () => void; title: string; color: string; children: React.ReactNode; scroll?: boolean }[] = [
     { active: halflightMode, close: () => setHalflightMode(false), title: 'Halflight FM',  color: T.teal,   children: <ViewHalflightFMMobile data={liveData} />, scroll: true },
+    { active: matchmakerMode, close: () => setMatchmakerMode(false), title: 'Booking Matchmaker', color: '#b983ff', children: <ViewMatchmaker />, scroll: true },
     { active: studioMode,    close: () => setStudioMode(false),    title: 'Studio',        color: T.purple, children: <MobileScreenStudio data={liveData} /> },
     { active: tourMode,      close: () => setTourMode(false),      title: 'Tour',          color: T.amber,  children: <ViewTour data={liveData} /> },
     { active: pageMode,      close: () => setPageMode(false),      title: 'Page Creator',  color: T.teal,   children: <ViewPageStudio data={liveData} />, scroll: true },
