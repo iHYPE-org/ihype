@@ -45,6 +45,7 @@ const viewLoading = () => (
 const ViewArtistPage = dynamic(() => import('./workbench/ViewArtistPage').then(m => m.ViewArtistPage), { loading: viewLoading });
 const ViewVenuePage = dynamic(() => import('./workbench/ViewVenuePage').then(m => m.ViewVenuePage), { loading: viewLoading });
 const ViewPageStudio = dynamic(() => import('./workbench/ViewPageStudio'), { loading: viewLoading });
+const ViewCockpit = dynamic(() => import('./workbench/ViewCockpit').then(m => m.ViewCockpit), { loading: viewLoading });
 import ViewJournal from './workbench/ViewJournal';
 import ViewDiscover from './workbench/ViewDiscover';
 
@@ -380,7 +381,7 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
 
   const isSeeds = view === 'seeds';
   const isTour = view === 'tour';
-  const isPageStudio = view === 'pagestudio' || view === 'artistpage' || view === 'venuepage';
+  const isPageStudio = view === 'pagestudio' || view === 'artistpage' || view === 'venuepage' || view === 'cockpit';
   const showQueue = prefs.queueRail && tracks.length > 0 && !isSeeds;
   const colTemplate = showQueue ? 'minmax(0, 1fr) var(--queue-w)' : '1fr';
   const shellMaxWidth = showQueue ? 1300 : 1600;
@@ -412,6 +413,7 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
       case 'notifications':   return <ViewErrorBoundary viewName="Notifications"><ViewNotifications /></ViewErrorBoundary>;
       case 'halflight':       return <ViewErrorBoundary viewName="Halflight FM"><ViewHalflightFM data={liveData} /></ViewErrorBoundary>;
       case 'matchmaker':      return <ViewErrorBoundary viewName="Booking Matchmaker"><ViewMatchmaker /></ViewErrorBoundary>;
+      case 'cockpit':         return <ViewErrorBoundary viewName="Page Cockpit"><ViewCockpit data={liveData} /></ViewErrorBoundary>;
       default:                return <ViewErrorBoundary viewName="My Page"><ViewMyPage data={liveData} onPickTrack={onPickTrack} currentIdx={currentIdx} /></ViewErrorBoundary>;
     }
   })();

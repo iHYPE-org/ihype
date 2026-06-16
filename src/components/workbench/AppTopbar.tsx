@@ -14,6 +14,7 @@ export const TAB_ICONS: Record<string, React.ReactNode> = {
   pagestudio: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 6h6M5 9h4"/><circle cx="11.5" cy="10.5" r="1.5" fill="currentColor" stroke="none"/></svg>,
   halflight: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="5" width="14" height="9" rx="1.5"/><path d="M5 5V3.5a3 3 0 0 1 6 0V5"/><circle cx="8" cy="9.5" r="1.5"/><path d="M8 11v1.5"/></svg>,
   matchmaker: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="5" cy="6" r="2.5"/><circle cx="11" cy="6" r="2.5"/><path d="M1 14c0-2.2 1.8-4 4-4M15 14c0-2.2-1.8-4-4-4M7.5 13h1M8 10v3"/></svg>,
+  cockpit: <svg width={14} height={14} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="14" height="10" rx="1.5"/><path d="M4 8h2M8 6v4M12 7v2"/><circle cx="13" cy="12" r="1" fill="currentColor" stroke="none"/></svg>,
 };
 
 export const TABS: { k: View; label: string }[] = [
