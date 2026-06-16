@@ -333,7 +333,7 @@ export function ViewMyPage({ data, onPickTrack, currentIdx }: {
 
       {/* ── Hype currency explainer ─────────────────────────────── */}
       {(() => {
-        const hypesGiven = data.stats?.hypesGiven ?? 0;
+        const hypesGiven = data.lifeStats?.totalHypeGiven ?? data.hypedToday ?? 0;
         const WEEKLY_ALLOTMENT = 10;
         const hypesLeft = Math.max(0, WEEKLY_ALLOTMENT - hypesGiven);
         const usedPct = Math.min(100, (hypesGiven / WEEKLY_ALLOTMENT) * 100);

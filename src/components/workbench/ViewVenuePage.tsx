@@ -5,7 +5,7 @@ import { WorkbenchData, WbVenueRequest } from '@/types/workbench';
 import ViewPageStudio from './ViewPageStudio';
 
 /* ── types ───────────────────────────────────────────────── */
-type VenueMode = 'overview' | 'shows' | 'bookings' | 'page' | 'gallery';
+type VenueMode = 'overview' | 'shows' | 'bookings' | 'insights' | 'tools' | 'page' | 'gallery';
 
 /* ── helpers ─────────────────────────────────────────────── */
 const INPUT_STYLE: React.CSSProperties = {
@@ -49,6 +49,8 @@ export function ViewVenuePage({ data }: { data: WorkbenchData }) {
     { k: 'overview',  label: 'Overview',  icon: <IconOverview /> },
     { k: 'shows',     label: 'Shows',     icon: <IconShows /> },
     { k: 'bookings',  label: 'Bookings',  icon: <IconBookings /> },
+    { k: 'insights',  label: 'Insights',  icon: <IconInsights /> },
+    { k: 'tools',     label: 'Tools',     icon: <IconTools /> },
     { k: 'page',      label: 'Page',      icon: <IconPageAI /> },
     { k: 'gallery',   label: 'Gallery',   icon: <IconGallery /> },
   ];
@@ -82,6 +84,8 @@ export function ViewVenuePage({ data }: { data: WorkbenchData }) {
           <RailBtn active={mode === 'overview'}  onClick={() => setMode('overview')}  label="Overview"  icon={<IconOverview />} />
           <RailBtn active={mode === 'shows'}     onClick={() => setMode('shows')}     label="Shows"     icon={<IconShows />} />
           <RailBtn active={mode === 'bookings'}  onClick={() => setMode('bookings')}  label="Bookings"  icon={<IconBookings />} />
+          <RailBtn active={mode === 'insights'}  onClick={() => setMode('insights')}  label="Insights"  icon={<IconInsights />} />
+          <RailBtn active={mode === 'tools'}     onClick={() => setMode('tools')}     label="Tools"     icon={<IconTools />} />
           <RailBtn active={mode === 'page'}      onClick={() => setMode('page')}      label="Page + AI" icon={<IconPageAI />} />
           <RailBtn active={mode === 'gallery'}   onClick={() => setMode('gallery')}   label="Gallery"   icon={<IconGallery />} />
         </div>
@@ -89,13 +93,13 @@ export function ViewVenuePage({ data }: { data: WorkbenchData }) {
         {/* health bar */}
         <div style={{ padding: '12px 14px', borderTop: '1px solid var(--line-2,rgba(255,255,255,.07))' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-            <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(244,239,233,.35)' }}>Page health</span>
-            <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, fontWeight: 700, color: '#22e5d4' }}>82%</span>
+            <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(244,239,233,.35)' }}>Calendar fill</span>
+            <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, fontWeight: 700, color: '#ffb84a' }}>71%</span>
           </div>
           <div style={{ height: 4, background: 'rgba(255,255,255,.07)', borderRadius: 99, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: '82%', background: 'linear-gradient(90deg,#22e5d4,#5fd38a)', borderRadius: 99 }} />
+            <div style={{ height: '100%', width: '71%', background: 'linear-gradient(90deg,#ffb84a,#ff5029)', borderRadius: 99 }} />
           </div>
-          <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: 'rgba(244,239,233,.35)', marginTop: 6 }}>Add gallery to reach 90%</div>
+          <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: 'rgba(244,239,233,.35)', marginTop: 6 }}>9 open nights this month</div>
         </div>
       </div>
 
@@ -104,6 +108,8 @@ export function ViewVenuePage({ data }: { data: WorkbenchData }) {
         {mode === 'overview'  && <OverviewPanel data={data} />}
         {mode === 'shows'     && <ShowsPanel venueName={venueName} />}
         {mode === 'bookings'  && <BookingsPanel data={data} />}
+        {mode === 'insights'  && <InsightsPanel />}
+        {mode === 'tools'     && <VenueToolsPanel />}
         {mode === 'page'      && <ViewPageStudio data={data} />}
         {mode === 'gallery'   && <GalleryPanel />}
       </div>
@@ -574,7 +580,197 @@ function SparkLine({ color, profileId }: { color: string; profileId?: string }) 
   );
 }
 
+/* ── Insights panel ──────────────────────────────────────── */
+function InsightsPanel() {
+  const revMix = [
+    { label: 'Ticket sales', pct: 45, color: '#22e5d4' },
+    { label: 'Venue share (45%)', pct: 45, color: '#5fd38a' },
+    { label: 'Referrer fees (10%)', pct: 10, color: '#b983ff' },
+  ];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun'];
+  const fill = [62, 55, 78, 71, 83, 71];
+  const maxFill = Math.max(...fill);
+
+  return (
+    <div style={{ position: 'absolute', inset: 0, overflowY: 'auto' }}>
+      <div style={{ padding: '28px 36px', maxWidth: 1000, margin: '0 auto' }}>
+        <h2 style={{ fontFamily: 'var(--f-d,sans-serif)', fontSize: 22, fontWeight: 800, color: 'var(--ink,#f4efe9)', marginBottom: 6 }}>Insights</h2>
+        <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 12, color: 'rgba(244,239,233,.4)', marginBottom: 28 }}>Revenue mix · Calendar fill · Audience</div>
+
+        {/* KPIs */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 14, marginBottom: 32 }}>
+          <KpiCard label="Avg Ticket Rev" value="$1,840" delta="per show" color="#22e5d4" />
+          <KpiCard label="Repeat Buyers" value="38%" delta="+6% vs last mo" color="#5fd38a" />
+          <KpiCard label="Calendar Fill" value="71%" delta="9 open nights" color="#ffb84a" />
+          <KpiCard label="Sell-through" value="81%" delta="avg across shows" color="#b983ff" />
+        </div>
+
+        {/* Revenue mix */}
+        <SectionCard title="Revenue mix" subtitle="How your ticket revenue is split per iHYPE's 45/45/10 model">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {revMix.map(r => (
+              <div key={r.label}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                  <span style={{ fontFamily: 'var(--f-b,sans-serif)', fontSize: 13, color: 'rgba(244,239,233,.7)' }}>{r.label}</span>
+                  <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 12, fontWeight: 700, color: r.color }}>{r.pct}%</span>
+                </div>
+                <div style={{ height: 6, background: 'rgba(255,255,255,.06)', borderRadius: 99, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${r.pct}%`, background: r.color, borderRadius: 99 }} />
+                </div>
+              </div>
+            ))}
+            <div style={{ marginTop: 8, fontFamily: 'var(--f-m,monospace)', fontSize: 11, color: 'rgba(244,239,233,.3)', lineHeight: 1.55 }}>
+              $0 platform fee — iHYPE keeps nothing from ticket sales.
+            </div>
+          </div>
+        </SectionCard>
+
+        {/* Calendar fill bar chart */}
+        <SectionCard title="Calendar fill" subtitle="Booked nights as % of available nights per month">
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, height: 100 }}>
+            {months.map((m, i) => (
+              <div key={m} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: i === months.length - 1 ? '#ffb84a' : 'rgba(244,239,233,.5)', fontWeight: i === months.length - 1 ? 700 : 400 }}>{fill[i]}%</div>
+                <div style={{ width: '100%', background: 'rgba(255,255,255,.05)', borderRadius: 4, overflow: 'hidden', height: 60, display: 'flex', alignItems: 'flex-end' }}>
+                  <div style={{ width: '100%', height: `${(fill[i] / maxFill) * 100}%`, background: i === months.length - 1 ? '#ffb84a' : '#22e5d4', borderRadius: '4px 4px 0 0', opacity: i === months.length - 1 ? 1 : 0.5 }} />
+                </div>
+                <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: 'rgba(244,239,233,.4)' }}>{m}</div>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
+
+        {/* Repeat buyers */}
+        <SectionCard title="Repeat buyers" subtitle="Fans who bought tickets to more than one show at your venue">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+            <div>
+              <div style={{ fontFamily: 'var(--f-d,sans-serif)', fontSize: 42, fontWeight: 800, letterSpacing: '-.03em', color: '#5fd38a', lineHeight: 1 }}>38%</div>
+              <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 12, color: 'rgba(244,239,233,.4)', marginTop: 6 }}>of all ticket buyers</div>
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: 'var(--f-b,sans-serif)', fontSize: 13, color: 'rgba(244,239,233,.65)', lineHeight: 1.6 }}>
+                Fans who return spend 2.4× more per visit on avg. Repeat rate above 35% suggests strong venue loyalty.
+              </div>
+              <div style={{ marginTop: 10, fontFamily: 'var(--f-m,monospace)', fontSize: 11, color: '#5fd38a' }}>+6% vs last month ↑</div>
+            </div>
+          </div>
+        </SectionCard>
+      </div>
+    </div>
+  );
+}
+
+/* ── Venue Tools (backline / rider / specs) ──────────────── */
+function VenueToolsPanel() {
+  const [saved, setSaved] = useState(false);
+  const [spec, setSpec] = useState({
+    stageDims: "20' × 16' · 24\" riser",
+    pa: 'd&b · 4 monitor mixes',
+    backline: 'House drum kit · DI boxes on request',
+    loadIn: 'Alley door · available from 4PM',
+    green: 'Ground floor · wifi · fridge',
+  });
+  const [rider, setRider] = useState('Standard hospitality rider:\n- 2× cases of water\n- 1× case of beer (domestic OK)\n- Hot meal for 4 (can be catered or per-diem $20/head)');
+  const [offer, setOffer] = useState({ base: '400', door: '70', guarantee: false, notes: '' });
+  const [aiOffer, setAiOffer] = useState('');
+  const [generating, setGenerating] = useState(false);
+
+  function save(e: React.FormEvent) {
+    e.preventDefault();
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+  }
+
+  function generateOffer() {
+    setGenerating(true);
+    setTimeout(() => {
+      setAiOffer(`Based on your 220-cap room, a ${offer.guarantee ? 'guaranteed' : 'door-deal'} offer of $${offer.base} flat + ${offer.door}% of door after expenses is within the Chicago indie market range for a mid-tier regional draw. For a first booking, consider adding a $50 hotel contribution to close faster.`);
+      setGenerating(false);
+    }, 1200);
+  }
+
+  const fieldStyle: React.CSSProperties = {
+    padding: '9px 12px', background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.1)',
+    borderRadius: 8, color: 'var(--ink,#f4efe9)', fontFamily: 'var(--f-b,sans-serif)',
+    fontSize: 13, outline: 'none', width: '100%', boxSizing: 'border-box',
+  };
+
+  return (
+    <div style={{ position: 'absolute', inset: 0, overflowY: 'auto' }}>
+      <div style={{ padding: '28px 36px', maxWidth: 900, margin: '0 auto' }}>
+        <h2 style={{ fontFamily: 'var(--f-d,sans-serif)', fontSize: 22, fontWeight: 800, color: 'var(--ink,#f4efe9)', marginBottom: 6 }}>Venue Tools</h2>
+        <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 12, color: 'rgba(244,239,233,.4)', marginBottom: 28 }}>Tech specs · Rider · Offer builder</div>
+
+        <form onSubmit={save}>
+          {/* Backline / tech spec */}
+          <div style={{ background: 'var(--bg-2,#121009)', border: '1px solid rgba(255,255,255,.07)', borderRadius: 14, padding: '22px 26px', marginBottom: 20 }}>
+            <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: 'rgba(244,239,233,.4)', marginBottom: 18 }}>House &amp; Tech Specs</div>
+            <div style={{ display: 'grid', gap: 12 }}>
+              {([
+                ['Stage dimensions', 'stageDims'],
+                ['PA system', 'pa'],
+                ['Backline available', 'backline'],
+                ['Load-in', 'loadIn'],
+                ['Green room', 'green'],
+              ] as [string, keyof typeof spec][]).map(([label, key]) => (
+                <div key={key}>
+                  <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: 'rgba(244,239,233,.4)', marginBottom: 5, letterSpacing: '.06em', textTransform: 'uppercase' as const }}>{label}</div>
+                  <input style={fieldStyle} value={spec[key]} onChange={e => setSpec(s => ({ ...s, [key]: e.target.value }))} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Hospitality rider */}
+          <div style={{ background: 'var(--bg-2,#121009)', border: '1px solid rgba(255,255,255,.07)', borderRadius: 14, padding: '22px 26px', marginBottom: 20 }}>
+            <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: 'rgba(244,239,233,.4)', marginBottom: 14 }}>Hospitality Rider</div>
+            <textarea style={{ ...fieldStyle, minHeight: 100, resize: 'vertical' as const, fontFamily: 'var(--f-b,sans-serif)' }} value={rider} onChange={e => setRider(e.target.value)} />
+            <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 11, color: 'rgba(244,239,233,.3)', marginTop: 8 }}>This will appear on your booking confirmation page for artists.</div>
+          </div>
+
+          {/* AI offer builder */}
+          <div style={{ background: 'var(--bg-2,#121009)', border: '1px solid rgba(255,255,255,.07)', borderRadius: 14, padding: '22px 26px', marginBottom: 24 }}>
+            <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: 'rgba(244,239,233,.4)', marginBottom: 14 }}>AI Offer Builder</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+              <div>
+                <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: 'rgba(244,239,233,.4)', marginBottom: 5, letterSpacing: '.06em', textTransform: 'uppercase' as const }}>Base offer ($)</div>
+                <input style={fieldStyle} type="number" min="0" value={offer.base} onChange={e => setOffer(o => ({ ...o, base: e.target.value }))} />
+              </div>
+              <div>
+                <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: 'rgba(244,239,233,.4)', marginBottom: 5, letterSpacing: '.06em', textTransform: 'uppercase' as const }}>Door %</div>
+                <input style={fieldStyle} type="number" min="0" max="100" value={offer.door} onChange={e => setOffer(o => ({ ...o, door: e.target.value }))} />
+              </div>
+            </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--f-m,monospace)', fontSize: 12, color: 'rgba(244,239,233,.6)', cursor: 'pointer', marginBottom: 12 }}>
+              <input type="checkbox" checked={offer.guarantee} onChange={e => setOffer(o => ({ ...o, guarantee: e.target.checked }))} style={{ width: 15, height: 15 }} />
+              Guarantee (no door split)
+            </label>
+            <textarea style={{ ...fieldStyle, minHeight: 60, resize: 'vertical' as const, marginBottom: 12 }} placeholder="Any notes for the artist (load-in window, parking, etc.)…" value={offer.notes} onChange={e => setOffer(o => ({ ...o, notes: e.target.value }))} />
+            <button type="button" onClick={generateOffer} disabled={generating}
+              style={{ padding: '9px 20px', borderRadius: 9, border: '1px solid rgba(185,131,255,.35)', cursor: generating ? 'wait' : 'pointer', background: 'rgba(185,131,255,.15)', color: '#b983ff', fontFamily: 'var(--f-m,monospace)', fontSize: 12, fontWeight: 700, letterSpacing: '.04em' } as React.CSSProperties}>
+              {generating ? '✦ Thinking…' : '✦ AI — draft offer summary'}
+            </button>
+            {aiOffer && (
+              <div style={{ marginTop: 14, padding: '14px 16px', borderRadius: 10, background: 'rgba(185,131,255,.06)', border: '1px solid rgba(185,131,255,.2)', fontFamily: 'var(--f-b,sans-serif)', fontSize: 13, color: 'rgba(244,239,233,.75)', lineHeight: 1.65 }}>
+                {aiOffer}
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button type="submit" style={{ padding: '11px 28px', borderRadius: 10, border: 'none', cursor: 'pointer', background: '#22e5d4', color: '#0a0805', fontFamily: 'var(--f-m,monospace)', fontSize: 12, fontWeight: 700, letterSpacing: '.06em' }}>
+              {saved ? '✓ Saved' : 'Save changes'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 /* ── Icons ───────────────────────────────────────────────── */
+function IconInsights() { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 20h18M6 14l4-6 4 4 4-8" strokeLinecap="round" strokeLinejoin="round" /></svg>; }
+function IconTools()    { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" strokeLinecap="round" strokeLinejoin="round" /></svg>; }
 function IconOverview() { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 20h18M8 16V8M12 16V4M16 16v-6" strokeLinecap="round" /></svg>; }
 function IconShows()    { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round" /></svg>; }
 function IconBookings() { return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .91h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" /></svg>; }

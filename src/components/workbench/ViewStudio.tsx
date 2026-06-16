@@ -399,17 +399,207 @@ function ShowCreator({ data }: { data: WorkbenchData }) {
   );
 }
 
+// ── Uploads tab ───────────────────────────────────────────────
+type MediaAsset = {
+  hexId: string; title: string; notes: string | null; mimeType: string;
+  fileSizeBytes: number; freeUseEnabled: boolean; createdAt: string;
+};
+
+function UploadsTab({ data }: { data: WorkbenchData }) {
+  const profileId = data.profileId;
+  const isArtist = data.profileType === 'ARTIST';
+  const [assets, setAssets] = useState<MediaAsset[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [file, setFile] = useState<File | null>(null);
+  const [title, setTitle] = useState('');
+  const [freeUse, setFreeUse] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [err, setErr] = useState('');
+  const fileRef = React.useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!profileId || !isArtist) { setLoading(false); return; }
+    fetch(`/api/artist-media?profileId=${encodeURIComponent(profileId)}`)
+      .then(r => r.json())
+      .then((d: { tracks?: MediaAsset[] }) => { setAssets(d.tracks ?? []); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [profileId, isArtist]);
+
+  async function handleUpload(e: React.FormEvent) {
+    e.preventDefault();
+    if (!file || !profileId) return;
+    setUploading(true); setErr('');
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('profileId', profileId);
+    fd.append('title', title || file.name);
+    fd.append('freeUseEnabled', String(freeUse));
+    try {
+      const res = await fetch('/api/artist-media', { method: 'POST', body: fd });
+      const json = await res.json();
+      if (!res.ok) { setErr(json.error ?? 'Upload failed.'); return; }
+      setAssets(prev => [json.asset as MediaAsset, ...prev]);
+      setFile(null); setTitle(''); setFreeUse(false);
+      if (fileRef.current) fileRef.current.value = '';
+    } catch { setErr('Upload failed.'); }
+    finally { setUploading(false); }
+  }
+
+  function fmtSize(b: number) {
+    if (b < 1024) return `${b} B`;
+    if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
+    return `${(b / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  if (!isArtist) {
+    return (
+      <div style={{ padding: '28px 0', textAlign: 'center', fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-3)' }}>
+        Music uploads are available for artist profiles.
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ marginTop: 4 }}>
+      {/* Upload form */}
+      <form onSubmit={e => void handleUpload(e)} style={{ border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)', overflow: 'hidden', marginBottom: 24 }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--line)' }}>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.16em', color: 'var(--accent)', marginBottom: 4 }}>🎵 UPLOAD TRACK</div>
+          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 18, color: 'var(--ink)' }}>Add music</div>
+        </div>
+        <div style={{ padding: '18px 20px', display: 'grid', gap: 12 }}>
+          <div
+            onClick={() => fileRef.current?.click()}
+            style={{ border: `2px dashed ${file ? 'var(--accent)' : 'rgba(255,255,255,.12)'}`, borderRadius: 10, padding: '20px 16px', textAlign: 'center', cursor: 'pointer', background: file ? 'rgba(255,80,41,.04)' : 'transparent', transition: 'all .14s' }}>
+            <input ref={fileRef} type="file" accept="audio/*" style={{ display: 'none' }} onChange={e => { setFile(e.target.files?.[0] ?? null); setTitle(e.target.files?.[0]?.name.replace(/\.[^.]+$/, '') ?? ''); }} />
+            <div style={{ fontSize: 22, marginBottom: 6 }}>🎵</div>
+            <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, color: 'var(--ink)', marginBottom: 3 }}>{file ? file.name : 'Click to choose audio'}</div>
+            <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', letterSpacing: '.04em' }}>MP3, WAV, FLAC — max 10 MB</div>
+          </div>
+          <input
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            placeholder="Track title"
+            style={{ padding: '9px 12px', borderRadius: 7, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: 13, boxSizing: 'border-box' as const }}
+          />
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-2)', cursor: 'pointer' }}>
+            <input type="checkbox" checked={freeUse} onChange={e => setFreeUse(e.target.checked)} style={{ width: 15, height: 15 }} />
+            Free-use — other creators can use this track
+          </label>
+          {err && <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: '#ff5029' }}>{err}</div>}
+          <button type="submit" disabled={uploading || !file}
+            style={{ padding: '10px 20px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg,var(--accent),#ff3e9a)', color: '#fff', fontFamily: 'var(--f-m)', fontSize: 13, fontWeight: 800, cursor: (uploading || !file) ? 'not-allowed' : 'pointer', opacity: (!file) ? 0.5 : 1, alignSelf: 'flex-start' }}>
+            {uploading ? 'Uploading…' : 'Upload track'}
+          </button>
+        </div>
+      </form>
+
+      {/* Track list */}
+      {loading ? (
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', padding: '12px 0' }}>Loading uploads…</div>
+      ) : assets.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '24px 0', fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-3)' }}>No uploads yet — add your first track above.</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {assets.map(a => (
+            <div key={a.hexId} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px', borderRadius: 9, border: '1px solid var(--line)', background: 'var(--bg-2)' }}>
+              <span style={{ fontSize: 16, flexShrink: 0 }}>🎵</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.title}</div>
+                <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', marginTop: 2 }}>{fmtSize(a.fileSizeBytes)} · {a.mimeType.replace('audio/', '').toUpperCase()}{a.freeUseEnabled ? ' · Free use' : ''}</div>
+              </div>
+              <a href={`/api/media/${a.hexId}`} target="_blank" rel="noreferrer" style={{ fontFamily: 'var(--f-m)', fontSize: 11, fontWeight: 700, color: 'var(--accent)', textDecoration: 'none', flexShrink: 0 }}>▶ Play</a>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Payouts tab ────────────────────────────────────────────────
+function PayoutsTab({ data }: { data: WorkbenchData }) {
+  const life = data.lifeStats;
+  const ref = data.referralStats;
+  const totalCents = (life?.totalEarnings ?? 0) * 100;
+  const refPayoutCents = ref?.payoutCents ?? 0;
+  const ticketCents = totalCents - refPayoutCents;
+
+  function fmt(cents: number) {
+    return `$${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  const splits = [
+    { label: 'Ticket sales (45%)', value: fmt(ticketCents), color: 'var(--accent)', pct: totalCents > 0 ? (ticketCents / totalCents) * 100 : 45 },
+    { label: 'Referral commissions (10%)', value: fmt(refPayoutCents), color: '#b983ff', pct: totalCents > 0 ? (refPayoutCents / totalCents) * 100 : 10 },
+  ];
+
+  return (
+    <div style={{ marginTop: 4 }}>
+      {/* Summary card */}
+      <div style={{ border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)', padding: '24px 28px', marginBottom: 20 }}>
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.16em', color: 'var(--accent)', marginBottom: 8 }}>💰 LIFETIME EARNINGS</div>
+        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 44, letterSpacing: '-.03em', color: 'var(--ink)', lineHeight: 1, marginBottom: 4 }}>{fmt(totalCents)}</div>
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)' }}>$0 platform fee · iHYPE keeps nothing</div>
+      </div>
+
+      {/* Split breakdown */}
+      <div style={{ border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)', padding: '20px 24px', marginBottom: 20 }}>
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.14em', color: 'var(--ink-3)', marginBottom: 16, fontWeight: 700 }}>REVENUE BREAKDOWN</div>
+        {splits.map(s => (
+          <div key={s.label} style={{ marginBottom: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span style={{ fontFamily: 'var(--f-b)', fontSize: 13, color: 'var(--ink-2)' }}>{s.label}</span>
+              <span style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, color: s.color }}>{s.value}</span>
+            </div>
+            <div style={{ height: 5, background: 'rgba(255,255,255,.07)', borderRadius: 99, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${Math.min(100, s.pct)}%`, background: s.color, borderRadius: 99 }} />
+            </div>
+          </div>
+        ))}
+        <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between' }}>
+          <span style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>Total</span>
+          <span style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 16, color: 'var(--accent)' }}>{fmt(totalCents)}</span>
+        </div>
+      </div>
+
+      {/* Referral stats */}
+      {ref && (
+        <div style={{ border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)', padding: '20px 24px' }}>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.14em', color: 'var(--ink-3)', marginBottom: 16, fontWeight: 700 }}>🔗 REFERRAL PROGRAMME</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+            {[
+              { label: 'Link clicks', value: ref.clicks.toLocaleString(), color: '#7fb3ff' },
+              { label: 'Buyers', value: ref.buyers.toLocaleString(), color: '#22e5d4' },
+              { label: 'Your cut', value: fmt(ref.payoutCents), color: '#b983ff' },
+            ].map(s => (
+              <div key={s.label} style={{ padding: '14px 16px', borderRadius: 9, background: 'rgba(255,255,255,.03)', border: '1px solid var(--line)' }}>
+                <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, letterSpacing: '.1em', color: 'var(--ink-3)', marginBottom: 8, textTransform: 'uppercase' as const }}>{s.label}</div>
+                <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 22, color: s.color }}>{s.value}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 12, fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', lineHeight: 1.55 }}>
+            Share your iHYPE link and earn 10% of every ticket sold through your referral — paid out automatically at month end.
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ViewStudio({ data }: { data: WorkbenchData }) {
   const payout = data.lifeStats?.totalEarnings ?? 0;
-  const [studioTab, setStudioTab] = useState<'sets' | 'shows' | 'hypemap'>('sets');
+  const [studioTab, setStudioTab] = useState<'sets' | 'shows' | 'hypemap' | 'uploads' | 'payouts'>('sets');
 
   const tabBtn = (id: typeof studioTab, label: string) => (
     <button
       key={id}
       onClick={() => setStudioTab(id)}
       style={{
-        padding: '6px 16px', borderRadius: 8, border: 'none', cursor: 'pointer',
-        fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 600, letterSpacing: '.06em',
+        padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
+        fontFamily: 'var(--f-m)', fontSize: 11, fontWeight: 600, letterSpacing: '.06em',
         background: studioTab === id ? 'rgba(255,80,41,.12)' : 'transparent',
         color: studioTab === id ? 'var(--accent)' : 'var(--ink-3)',
         borderBottom: studioTab === id ? '2px solid var(--accent)' : '2px solid transparent',
@@ -441,16 +631,18 @@ export function ViewStudio({ data }: { data: WorkbenchData }) {
       </div>
 
       {/* Tab bar */}
-      <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid var(--line)', marginBottom: 20 }}>
+      <div style={{ display: 'flex', gap: 2, borderBottom: '1px solid var(--line)', marginBottom: 20, flexWrap: 'wrap' }}>
         {tabBtn('sets', 'BUILD A SET')}
         {tabBtn('shows', 'CREATE SHOW')}
+        {tabBtn('uploads', 'UPLOADS')}
+        {tabBtn('payouts', 'PAYOUTS')}
         {tabBtn('hypemap', 'HYPE MAP')}
       </div>
 
       {studioTab === 'sets' && <PassedTheAux data={data} />}
-
       {studioTab === 'shows' && <ShowCreator data={data} />}
-
+      {studioTab === 'uploads' && <UploadsTab data={data} />}
+      {studioTab === 'payouts' && <PayoutsTab data={data} />}
       {studioTab === 'hypemap' && <HypeHeatmapLive />}
     </div>
   );
