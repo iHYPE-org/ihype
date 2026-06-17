@@ -1,8 +1,144 @@
 'use client';
 import React from 'react';
 import type { WorkbenchData, WbShow } from '@/types/workbench';
-import { T, WMPill } from './MobilePrimitives';
+import { T } from './MobilePrimitives';
 
+// ─── Tab types & static data ──────────────────────────────────
+type EventTab = 'Upcoming' | 'Favorites' | 'For you' | 'Shows';
+const TAB_LIST: EventTab[] = ['Upcoming', 'Favorites', 'For you', 'Shows'];
+
+const SAVED_VENUES = [
+  { id: 'sv1', name: 'The Empty Bottle',   city: 'Chicago, IL',     tint: '#ff5029' },
+  { id: 'sv2', name: 'Bowery Ballroom',    city: 'New York, NY',    tint: '#22e5d4' },
+  { id: 'sv3', name: 'Troubadour',         city: 'Los Angeles, CA', tint: '#b983ff' },
+  { id: 'sv4', name: 'Neumos',             city: 'Seattle, WA',     tint: '#ffb84a' },
+  { id: 'sv5', name: 'Schubas Tavern',     city: 'Chicago, IL',     tint: '#ff3e9a' },
+];
+
+const RADIO_SHOWS = [
+  { id: 'rs1', name: 'The Halflight Hour',   host: 'Maya Reyes',   schedule: 'Fridays 9pm',    listeners: 1240, color: '#ff5029' },
+  { id: 'rs2', name: 'Basement Frequencies', host: 'Colin Atwood', schedule: 'Tuesdays 11pm',  listeners: 880,  color: '#22e5d4' },
+  { id: 'rs3', name: 'Curated by Vela',      host: 'Vela',         schedule: 'Sundays 8pm',    listeners: 2100, color: '#b983ff' },
+  { id: 'rs4', name: 'Local Dispatch',       host: 'DJ Trace',     schedule: 'Saturdays 10pm', listeners: 650,  color: '#ffb84a' },
+  { id: 'rs5', name: 'Indigo Sessions',      host: 'Mara Solano',  schedule: 'Wednesdays 7pm', listeners: 430,  color: '#ff3e9a' },
+];
+
+const FY_REASONS = ['Because you hyped similar artists', 'Trending in your city', 'Matches your genre taste', 'Artist you follow'];
+const FY_TINTS = [T.teal, T.purple, T.amber, T.pink];
+
+// ─── Tab panels ───────────────────────────────────────────────
+function FavoritesTab() {
+  const [venues, setVenues] = React.useState(SAVED_VENUES);
+  const [cities, setCities] = React.useState(['Chicago', 'New York', 'Los Angeles', 'Austin']);
+  return (
+    <div style={{ flex: 1, overflowY: 'auto', padding: '0 18px 130px' }}>
+      <div style={{ marginBottom: 22 }}>
+        <div style={{ fontFamily: T.fm, fontSize: 10, color: T.ink3, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: 10 }}>Saved venues</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {venues.map(v => (
+            <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, border: `1px solid ${T.line}`, background: T.bg2 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 9, flexShrink: 0, background: `linear-gradient(135deg,${v.tint}cc,${v.tint}44)`, display: 'grid', placeItems: 'center' }}>
+                <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 13 }}>{v.name}</div>
+                <div style={{ fontFamily: T.fm, fontSize: 10, color: T.ink3, marginTop: 2 }}>{v.city}</div>
+              </div>
+              <button onClick={() => setVenues(p => p.filter(x => x.id !== v.id))} style={{ padding: '5px 10px', borderRadius: 7, cursor: 'pointer', fontFamily: T.fb, fontWeight: 600, fontSize: 12, border: `1px solid ${T.line2}`, background: 'transparent', color: T.ink3 }}>Unfollow</button>
+            </div>
+          ))}
+          {venues.length === 0 && <div style={{ padding: '20px 0', textAlign: 'center', fontFamily: T.fm, fontSize: 12, color: T.ink3 }}>No saved venues yet.</div>}
+        </div>
+      </div>
+      <div>
+        <div style={{ fontFamily: T.fm, fontSize: 10, color: T.ink3, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: 10 }}>Saved cities</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {cities.map(c => (
+            <div key={c} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 12px', borderRadius: 99, border: `1px solid ${T.line2}`, background: T.bg2 }}>
+              <span style={{ fontFamily: T.fb, fontWeight: 600, fontSize: 13, color: T.ink }}>{c}</span>
+              <button onClick={() => setCities(p => p.filter(x => x !== c))} aria-label={`Unfollow ${c}`} style={{ display: 'grid', placeItems: 'center', width: 16, height: 16, borderRadius: '50%', background: 'rgba(255,255,255,.08)', border: 'none', cursor: 'pointer', color: T.ink3, fontSize: 10 }}>×</button>
+            </div>
+          ))}
+          {cities.length === 0 && <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3 }}>No saved cities yet.</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ForYouTab({ data }: { data: WorkbenchData }) {
+  const shows = data.shows.slice(0, 4);
+  return (
+    <div style={{ flex: 1, overflowY: 'auto', padding: '0 18px 130px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {shows.map((s, i) => {
+        const tint = FY_TINTS[i % FY_TINTS.length];
+        return (
+          <div key={s.id} style={{ background: T.bg2, border: `1px solid ${T.line}`, borderRadius: 14, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', gap: 12, padding: '14px 14px 8px' }}>
+              <span style={{ width: 48, height: 48, borderRadius: 10, flexShrink: 0, background: `linear-gradient(135deg,${tint}cc,${tint}44)`, display: 'grid', placeItems: 'center' }}>
+                <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round">
+                  <path d="M12 2c2 3 4 4 4 7a4 4 0 1 1-8 0c0-3 2-4 4-7Z"/>
+                </svg>
+              </span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: T.fm, fontSize: 9, color: tint, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 4 }}>{FY_REASONS[i % FY_REASONS.length]}</div>
+                <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 14 }}>{s.name}</div>
+                <div style={{ fontFamily: T.fm, fontSize: 10, color: T.ink3, marginTop: 2 }}>{s.date}</div>
+              </div>
+            </div>
+            <div style={{ padding: '4px 14px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontFamily: T.fm, fontSize: 11, color: T.teal }}>$0 fees</span>
+              <button style={{ padding: '7px 14px', borderRadius: 8, fontFamily: T.fd, fontWeight: 700, fontSize: 13, cursor: 'pointer', border: 'none', color: '#fff', background: `linear-gradient(135deg,${T.accent},${T.pink})` }}>
+                ${s.price} · Get tickets
+              </button>
+            </div>
+          </div>
+        );
+      })}
+      {shows.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '40px 18px', color: T.ink3, fontFamily: T.fb, fontSize: 14 }}>
+          No personalized picks yet — explore more shows!
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ShowsTab() {
+  return (
+    <div style={{ flex: 1, overflowY: 'auto', padding: '0 18px 130px' }}>
+      <div style={{ marginBottom: 14, padding: '11px 13px', borderRadius: 11, background: `${T.amber}0d`, border: `1px solid ${T.amber}33`, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+        <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={T.amber} strokeWidth="1.8" strokeLinecap="round" style={{ flexShrink: 0, marginTop: 1 }}>
+          <circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/>
+        </svg>
+        <div style={{ fontFamily: T.fb, fontSize: 12, color: T.ink2, lineHeight: 1.5 }}>
+          These are <strong style={{ color: T.ink }}>radio broadcasts</strong>, not live events. Tune in to hear curated shows.
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+        {RADIO_SHOWS.map(s => (
+          <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, background: `linear-gradient(90deg,${s.color}0e,${T.bg2})`, border: `1px solid ${s.color}28` }}>
+            <div style={{ width: 40, height: 40, borderRadius: 9, flexShrink: 0, background: `linear-gradient(135deg,${s.color}cc,${s.color}44)`, display: 'grid', placeItems: 'center' }}>
+              <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round">
+                <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M12 2v1.5M12 20.5V22M2 12h1.5M20.5 12H22"/>
+              </svg>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
+              <div style={{ fontFamily: T.fm, fontSize: 10, color: T.ink3, marginTop: 2 }}>{s.host} · {s.schedule}</div>
+            </div>
+            <div style={{ fontFamily: T.fm, fontSize: 10, color: s.color, flexShrink: 0, textAlign: 'right', marginRight: 6, lineHeight: 1.4 }}>{s.listeners.toLocaleString()}<br/>listening</div>
+            <button style={{ padding: '6px 12px', borderRadius: 8, flexShrink: 0, fontFamily: T.fd, fontWeight: 700, fontSize: 12, cursor: 'pointer', border: `1px solid ${s.color}55`, background: `${s.color}14`, color: s.color }}>Tune in</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Album art placeholder ────────────────────────────────────
 function AlbumArt({ c = T.accent, size = 48 }: { c?: string; size?: number }) {
   return (
     <div style={{ width: size, height: size, borderRadius: Math.max(6, Math.round(size / 6)), background: `linear-gradient(135deg, ${c}, ${c}66 60%, ${T.bg3})`, position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
@@ -11,7 +147,9 @@ function AlbumArt({ c = T.accent, size = 48 }: { c?: string; size?: number }) {
   );
 }
 
+// ─── Main screen ──────────────────────────────────────────────
 export function ScreenShowsNew({ data, onToast }: { data: WorkbenchData; onToast?: (msg: string) => void }) {
+  const [tab, setTab] = React.useState<EventTab>('Upcoming');
   const [showView, setShowView] = React.useState<'list' | 'detail' | 'ticket'>('list');
   const [selected, setSelected] = React.useState<WbShow | null>(null);
   const [longPressShow, setLongPressShow] = React.useState<WbShow | null>(null);
@@ -50,80 +188,99 @@ export function ScreenShowsNew({ data, onToast }: { data: WorkbenchData; onToast
     { label: 'THIS WEEK', items: thisWeek, hot: false, accent: T.teal   },
   ].filter(s => s.items.length > 0);
 
-  const totalShows = shows.length;
-
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', color: T.ink, fontFamily: T.fb }}>
-      <div style={{ padding: '4px 22px 12px', flexShrink: 0 }}>
+      {/* Header */}
+      <div style={{ padding: '4px 22px 8px', flexShrink: 0 }}>
         <div style={{ fontFamily: T.fm, fontSize: 10, color: T.teal, letterSpacing: '.14em', textTransform: 'uppercase' }}>
-          ● {totalShows > 0 ? `${totalShows} Shows` : 'Shows'} in {data.city ?? 'Your City'} · 0% Fees
+          ● {shows.length > 0 ? `${shows.length} Shows` : 'Events'} in {data.city ?? 'Your City'} · 0% Fees
         </div>
-        <h1 style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 30, letterSpacing: '-.025em', margin: '6px 0 0', lineHeight: 1 }}>Shows</h1>
+        <h1 style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 30, letterSpacing: '-.025em', margin: '6px 0 0', lineHeight: 1 }}>Events</h1>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 22px 130px' }}>
-        {/* 0% fees banner */}
-        <div style={{ marginBottom: 16, padding: '12px 14px', borderRadius: 12, background: `${T.teal}10`, border: `1px solid ${T.teal}40`, display: 'flex', alignItems: 'center', gap: 11 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 8, background: T.teal, color: T.bg, fontFamily: T.fd, fontWeight: 800, fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>0%</div>
-          <div>
-            <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 13 }}>Every ticket. 0% fees.</div>
-            <div style={{ fontFamily: T.fm, fontSize: 10, color: T.ink3, marginTop: 2 }}>Face value goes to the artist &amp; venue. Always.</div>
-          </div>
-        </div>
-
-        {shows.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '40px 18px', color: T.ink3, fontFamily: T.fb, fontSize: 14 }}>
-            No shows right now — check back soon
-            <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink4, marginTop: 8, letterSpacing: '.1em' }}>Pull down to refresh</div>
-          </div>
-        )}
-
-        {sections.map(sec => (
-          <div key={sec.label} style={{ marginBottom: 18 }}>
-            <div style={{ fontFamily: T.fm, fontSize: 11, color: sec.hot ? sec.accent : T.ink3, letterSpacing: '.18em', marginBottom: 8, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 5 }}>
-              {sec.hot && <span style={{ width: 5, height: 5, borderRadius: 99, background: sec.accent, display: 'inline-block', flexShrink: 0 }} />}
-              {sec.label}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {sec.items.map(show => {
-                const pct = show.capacity > 0 ? Math.round(show.sold / show.capacity * 100) : 0;
-                const cardAccent = show.status === 'TONIGHT' ? T.accent : show.status === 'NEAR SOLD' ? T.pink : T.teal;
-                return (
-                  <div key={show.id}
-                    onClick={() => { if (longPressedRef.current) { longPressedRef.current = false; return; } setSelected(show); setShowView('detail'); }}
-                    onPointerDown={() => handleShowPointerDown(show)}
-                    onPointerMove={cancelLongPress}
-                    onPointerUp={cancelLongPress}
-                    onPointerLeave={cancelLongPress}
-                    style={{ background: T.bg2, border: `1px solid ${show.status === 'NEAR SOLD' ? 'rgba(255,62,154,.25)' : T.line}`, borderRadius: 12, overflow: 'hidden', cursor: 'pointer', userSelect: 'none' }}>
-                    <div style={{ padding: 12, display: 'flex', alignItems: 'center', gap: 11 }}>
-                      <AlbumArt c={cardAccent} size={48} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 14, letterSpacing: '-.01em' }}>{show.name}</div>
-                        <div style={{ fontFamily: T.fb, fontSize: 11.5, color: T.ink2, marginTop: 2 }}>{show.venue}</div>
-                        <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3, marginTop: 3, letterSpacing: '.06em' }}>{show.date} · {show.time}</div>
-                      </div>
-                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 15 }}>${show.price}</div>
-                        <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3, marginTop: 2, letterSpacing: '.1em' }}>FACE</div>
-                        {pct > 0 && <div style={{ fontFamily: T.fm, fontSize: 11, color: pct >= 85 ? T.pink : T.ink3, marginTop: 3, letterSpacing: '.06em' }}>{pct}% sold</div>}
-                      </div>
-                    </div>
-                    {pct > 0 && (
-                      <div style={{ height: 3, background: T.bg3 }}>
-                        <div style={{ height: '100%', width: `${pct}%`, background: pct >= 85 ? `linear-gradient(90deg,${T.accent},${T.pink})` : `linear-gradient(90deg,${T.teal},${T.accent})`, transition: 'width .3s' }} />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+      {/* Sub-tabs */}
+      <div style={{ display: 'flex', gap: 6, padding: '0 16px 10px', overflowX: 'auto', scrollbarWidth: 'none', flexShrink: 0 }}>
+        {TAB_LIST.map(t => (
+          <button key={t} onClick={() => setTab(t)} style={{
+            padding: '6px 14px', borderRadius: 99, cursor: 'pointer', flexShrink: 0,
+            fontFamily: T.fb, fontWeight: 600, fontSize: 13,
+            border: t === tab ? `1px solid ${T.accent}55` : `1px solid ${T.line2}`,
+            background: t === tab ? `${T.accent}18` : 'transparent',
+            color: t === tab ? T.ink : T.ink2,
+          }}>{t}</button>
         ))}
       </div>
 
-      {/* Long-press quick action sheet */}
-      {longPressShow && (
+      {/* Upcoming tab content */}
+      {tab === 'Upcoming' && (
+        <div style={{ flex: 1, overflowY: 'auto', padding: '0 22px 130px' }}>
+          {/* 0% fees banner */}
+          <div style={{ marginBottom: 16, padding: '12px 14px', borderRadius: 12, background: `${T.teal}10`, border: `1px solid ${T.teal}40`, display: 'flex', alignItems: 'center', gap: 11 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 8, background: T.teal, color: T.bg, fontFamily: T.fd, fontWeight: 800, fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>0%</div>
+            <div>
+              <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 13 }}>Every ticket. 0% fees.</div>
+              <div style={{ fontFamily: T.fm, fontSize: 10, color: T.ink3, marginTop: 2 }}>Face value goes to the artist &amp; venue. Always.</div>
+            </div>
+          </div>
+
+          {shows.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '40px 18px', color: T.ink3, fontFamily: T.fb, fontSize: 14 }}>
+              No shows right now — check back soon
+              <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink4, marginTop: 8, letterSpacing: '.1em' }}>Pull down to refresh</div>
+            </div>
+          )}
+
+          {sections.map(sec => (
+            <div key={sec.label} style={{ marginBottom: 18 }}>
+              <div style={{ fontFamily: T.fm, fontSize: 11, color: sec.hot ? sec.accent : T.ink3, letterSpacing: '.18em', marginBottom: 8, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 5 }}>
+                {sec.hot && <span style={{ width: 5, height: 5, borderRadius: 99, background: sec.accent, display: 'inline-block', flexShrink: 0 }} />}
+                {sec.label}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {sec.items.map(show => {
+                  const pct = show.capacity > 0 ? Math.round(show.sold / show.capacity * 100) : 0;
+                  const cardAccent = show.status === 'TONIGHT' ? T.accent : show.status === 'NEAR SOLD' ? T.pink : T.teal;
+                  return (
+                    <div key={show.id}
+                      onClick={() => { if (longPressedRef.current) { longPressedRef.current = false; return; } setSelected(show); setShowView('detail'); }}
+                      onPointerDown={() => handleShowPointerDown(show)}
+                      onPointerMove={cancelLongPress}
+                      onPointerUp={cancelLongPress}
+                      onPointerLeave={cancelLongPress}
+                      style={{ background: T.bg2, border: `1px solid ${show.status === 'NEAR SOLD' ? 'rgba(255,62,154,.25)' : T.line}`, borderRadius: 12, overflow: 'hidden', cursor: 'pointer', userSelect: 'none' }}>
+                      <div style={{ padding: 12, display: 'flex', alignItems: 'center', gap: 11 }}>
+                        <AlbumArt c={cardAccent} size={48} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 14, letterSpacing: '-.01em' }}>{show.name}</div>
+                          <div style={{ fontFamily: T.fb, fontSize: 11.5, color: T.ink2, marginTop: 2 }}>{show.venue}</div>
+                          <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3, marginTop: 3, letterSpacing: '.06em' }}>{show.date} · {show.time}</div>
+                        </div>
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                          <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 15 }}>${show.price}</div>
+                          <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3, marginTop: 2, letterSpacing: '.1em' }}>FACE</div>
+                          {pct > 0 && <div style={{ fontFamily: T.fm, fontSize: 11, color: pct >= 85 ? T.pink : T.ink3, marginTop: 3, letterSpacing: '.06em' }}>{pct}% sold</div>}
+                        </div>
+                      </div>
+                      {pct > 0 && (
+                        <div style={{ height: 3, background: T.bg3 }}>
+                          <div style={{ height: '100%', width: `${pct}%`, background: pct >= 85 ? `linear-gradient(90deg,${T.accent},${T.pink})` : `linear-gradient(90deg,${T.teal},${T.accent})`, transition: 'width .3s' }} />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab === 'Favorites' && <FavoritesTab />}
+      {tab === 'For you' && <ForYouTab data={data} />}
+      {tab === 'Shows' && <ShowsTab />}
+
+      {/* Long-press quick action sheet (Upcoming only) */}
+      {tab === 'Upcoming' && longPressShow && (
         <>
           <div onClick={() => setLongPressShow(null)} style={{ position: 'fixed', inset: 0, zIndex: 49, background: 'rgba(0,0,0,.6)' }} />
           <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 50, background: T.bg3, borderTop: `1px solid ${T.line2}`, borderRadius: '18px 18px 0 0', padding: '20px 18px 40px', transform: `translateY(${sheetDragY}px)`, transition: isDraggingSheet ? 'none' : 'transform .2s', animation: 'wm-sheet-in .2s cubic-bezier(.4,0,.2,1)' }}>

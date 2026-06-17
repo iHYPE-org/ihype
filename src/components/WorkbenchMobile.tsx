@@ -20,30 +20,7 @@ import { ViewCockpitMobile } from '@/components/workbench/ViewCockpit';
 import { AdvertisePage } from '@/components/AdvertisePage';
 import { WelcomeDialog } from '@/components/workbench/Overlays';
 import { DEFAULT_PREFS, loadPrefs } from '@/components/workbench/types';
-
-// ─── Design tokens (match Workbench Mobile design) ───────────
-const T = {
-  bg:     '#0a0805',
-  bg2:    '#100d09',
-  bg3:    '#1a1612',
-  bg4:    '#221c16',
-  ink:    '#f0ebe5',
-  ink2:   '#9e9080',
-  ink3:   '#5a5048',
-  ink4:   '#3a342e',
-  line:   'rgba(255,255,255,.06)',
-  line2:  'rgba(255,255,255,.14)',
-  accent: '#ff5029',
-  pink:   '#ff3e9a',
-  teal:   '#22e5d4',
-  purple: '#b983ff',
-  amber:  '#ffb84a',
-  blue:   '#7fb3ff',
-  fd: '"Syne",sans-serif',
-  fb: '"DM Sans",sans-serif',
-  fm: '"JetBrains Mono",monospace',
-  fs: '"Instrument Serif",serif',
-};
+import { T, WMPill, WMChip, WMViewHead, WMCard, WMSkeleton } from '@/components/workbench/MobilePrimitives';
 
 type MobileTab = 'listen' | 'discover' | 'events' | 'pages';
 
@@ -57,69 +34,6 @@ const WMIcon = {
   search: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>,
   bell:   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M4 7a4 4 0 1 1 8 0v3l1.5 2h-11L4 10V7z"/><path d="M6.5 13.5a1.5 1.5 0 0 0 3 0"/></svg>,
 };
-
-// ─── Pill ─────────────────────────────────────────────────────
-function WMPill({ children, tone = 'soft', style }: { children: React.ReactNode; tone?: string; style?: React.CSSProperties }) {
-  const tones: Record<string, { bg: string; fg: string; bd: string }> = {
-    soft:  { bg: T.bg3,                        fg: T.ink2,   bd: T.line2 },
-    live:  { bg: 'rgba(255,80,41,.12)',         fg: T.accent, bd: 'rgba(255,80,41,.3)' },
-    teal:  { bg: 'rgba(34,229,212,.1)',         fg: T.teal,   bd: 'rgba(34,229,212,.3)' },
-    pink:  { bg: 'rgba(255,62,154,.1)',         fg: T.pink,   bd: 'rgba(255,62,154,.3)' },
-    amber: { bg: 'rgba(255,184,74,.1)',         fg: T.amber,  bd: 'rgba(255,184,74,.3)' },
-  };
-  const t = tones[tone] ?? tones.soft;
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 5,
-      padding: '3px 7px', borderRadius: 99,
-      fontFamily: T.fm, fontSize: 12, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase',
-      background: t.bg, color: t.fg, border: `1px solid ${t.bd}`, ...style,
-    }}>{children}</span>
-  );
-}
-
-// ─── Chip button ─────────────────────────────────────────────
-function WMChip({ children, accent = false, style, onClick }: { children: React.ReactNode; accent?: boolean; style?: React.CSSProperties; onClick?: () => void }) {
-  return (
-    <button onClick={onClick} style={{
-      padding: '7px 11px', borderRadius: 7, fontFamily: T.fm, fontSize: 12, fontWeight: 600,
-      letterSpacing: '.08em', textTransform: 'uppercase', cursor: 'pointer',
-      background: accent ? T.ink : 'transparent', color: accent ? T.bg : T.ink2,
-      border: accent ? `1px solid ${T.ink}` : `1px solid ${T.line2}`,
-      display: 'inline-flex', alignItems: 'center', gap: 6, ...style,
-    }}>{children}</button>
-  );
-}
-
-// ─── View header ──────────────────────────────────────────────
-function WMViewHead({ eyebrow, title, italic, sub, actions }: {
-  eyebrow: string; title: string; italic?: string; sub?: string; actions?: React.ReactNode;
-}) {
-  return (
-    <div style={{ padding: '18px 18px 14px', borderBottom: `1px solid ${T.line}`, marginBottom: 16 }}>
-      <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.2em', fontWeight: 700, textTransform: 'uppercase', marginBottom: 6 }}>{eyebrow}</div>
-      <h1 style={{ fontFamily: T.fd, fontWeight: 800, letterSpacing: '-.025em', lineHeight: 1, fontSize: 28, margin: 0 }}>
-        {title}{italic && <em style={{ fontFamily: T.fs, fontStyle: 'italic', fontWeight: 400, color: T.ink2 }}> {italic}</em>}
-      </h1>
-      {sub && <p style={{ fontFamily: T.fs, fontStyle: 'italic', fontSize: 14, color: T.ink2, marginTop: 6, lineHeight: 1.35 }}>{sub}</p>}
-      {actions && <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>{actions}</div>}
-    </div>
-  );
-}
-
-// ─── Card ─────────────────────────────────────────────────────
-function WMCard({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
-  return (
-    <div style={{ background: T.bg2, border: `1px solid ${T.line}`, borderRadius: 12, padding: 14, display: 'flex', flexDirection: 'column', gap: 10, ...style }}>
-      {children}
-    </div>
-  );
-}
-
-// ─── Skeleton block ───────────────────────────────────────────
-function WMSkeleton({ w = '100%', h = 14, r = 6, style }: { w?: string | number; h?: number; r?: number; style?: React.CSSProperties }) {
-  return <div className="wm-skeleton" style={{ width: w, height: h, borderRadius: r, ...style }} />;
-}
 
 // ─── Track bottom sheet ───────────────────────────────────────
 function WMTrackSheet({ track, open, onClose }: { track: { title: string; artistName: string; album: string; color: string; hypeCount: number } | null; open: boolean; onClose: () => void }) {

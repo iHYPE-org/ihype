@@ -57,7 +57,7 @@ export function MobileScreenPages({ data, onPage, onCockpit, onStudio, onManage,
   const canTools = isCreator || isVenue;
 
   const pageTypeLabel = isArtist ? 'Artist Page' : isDJ ? 'DJ Page' : isVenue ? 'Venue Page' : 'Fan Page';
-  const hasPage = hasPowerPage || (data.profileCompletion?.percent ?? 0) >= 25;
+  const hasPage = data.hasPublishedPage ?? hasPowerPage;
 
   return (
     <div style={{ overflowY: 'auto', paddingBottom: 80 }}>
