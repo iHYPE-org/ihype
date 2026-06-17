@@ -396,6 +396,7 @@ export function FullPlayer({ track, playing, onToggle, onCollapse, onHype, onPre
   progress: number;
 }) {
   const [pull, setPull] = React.useState(0);
+  const [menuOpen, setMenuOpen] = React.useState(false);
   const drag = React.useRef<{ y: number } | null>(null);
 
   const startDrag = (y: number) => { drag.current = { y }; };
@@ -428,7 +429,7 @@ export function FullPlayer({ track, playing, onToggle, onCollapse, onHype, onPre
           <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, letterSpacing: '.16em', textTransform: 'uppercase' }}>Now Playing</div>
           <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 12.5, marginTop: 2 }}>Tonight&#39;s Queue</div>
         </div>
-        <div style={{ width: 34, height: 34, borderRadius: 99, background: 'rgba(255,255,255,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, color: T.ink, cursor: 'pointer' }}>⋯</div>
+        <button onClick={() => setMenuOpen(true)} style={{ width: 34, height: 34, borderRadius: 99, background: 'rgba(255,255,255,.1)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, color: T.ink, cursor: 'pointer' }}>⋯</button>
       </div>
 
       {/* art */}
@@ -501,6 +502,39 @@ export function FullPlayer({ track, playing, onToggle, onCollapse, onHype, onPre
           </div>
         </div>
       </div>
+
+      {/* Track options sheet */}
+      {menuOpen && (
+        <div
+          style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', zIndex: 10 }}
+          onClick={() => setMenuOpen(false)}
+        >
+          <div style={{ background: T.bg2, borderRadius: '18px 18px 0 0', padding: '12px 0 40px' }} onClick={e => e.stopPropagation()}>
+            <div style={{ width: 36, height: 4, borderRadius: 99, background: 'rgba(255,255,255,.18)', margin: '0 auto 20px' }} />
+            <div style={{ padding: '0 6px 10px', fontFamily: T.fm, fontSize: 10, color: T.ink3, letterSpacing: '.14em', textAlign: 'center', textTransform: 'uppercase' }}>{track.title}</div>
+            {([
+              { icon: '＋', label: 'Add to playlist', action: () => setMenuOpen(false) },
+              { icon: '↗', label: `Share "${track.title}"`, action: () => {
+                setMenuOpen(false);
+                if (navigator.share) {
+                  navigator.share({ title: track.title, text: `${track.title} by ${track.artistName}` }).catch(() => {});
+                } else {
+                  navigator.clipboard.writeText(`${track.title} by ${track.artistName}`).catch(() => {});
+                }
+              }},
+              { icon: '→', label: `View ${track.artistName}`, action: () => {
+                setMenuOpen(false);
+                if (track.artistSlug) window.location.href = `/artists/${track.artistSlug}`;
+              }},
+            ] as { icon: string; label: string; action: () => void }[]).map(opt => (
+              <button key={opt.label} onClick={opt.action} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 16, padding: '15px 24px', background: 'none', border: 'none', color: T.ink, cursor: 'pointer', textAlign: 'left', fontFamily: T.fb, fontSize: 15 }}>
+                <span style={{ width: 26, fontFamily: T.fd, fontWeight: 700, color: T.ink3, textAlign: 'center', fontSize: 16 }}>{opt.icon}</span>
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

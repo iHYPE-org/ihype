@@ -332,6 +332,9 @@ export const ViewTickets = memo(function ViewTickets({ data }: { data: Workbench
   const [reportingId, setReportingId] = useState<string | null>(null);
   const [reportReason, setReportReason] = useState('');
   const [reportStatus, setReportStatus] = useState<'idle' | 'sending' | 'done'>('idle');
+  const [sortByHype, setSortByHype] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(null), 2800); }
 
   async function submitReport(showId: string) {
     if (!reportReason.trim()) return;
@@ -381,12 +384,12 @@ export const ViewTickets = memo(function ViewTickets({ data }: { data: Workbench
       </div>
 
       {tab === 'browse' && (() => {
-        const filteredShows = data.shows.filter(s => {
+        const filteredShows = [...data.shows.filter(s => {
           if (activeFilter === 'CHICAGO') return true; // city not available on WbShow — show all
           if (activeFilter === 'UNDER $20') return s.price < 20;
           if (activeFilter === 'THIS WEEK') return s.status === 'TONIGHT' || s.status === 'UPCOMING';
           return true;
-        });
+        })].sort(sortByHype ? (a, b) => b.hype - a.hype : () => 0);
         return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -398,7 +401,7 @@ export const ViewTickets = memo(function ViewTickets({ data }: { data: Workbench
               );
             })}
             <span style={{ flex: 1 }} />
-            <button style={{ padding: '7px 12px', border: '1px solid var(--line)', borderRadius: 99, fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-2)', background: 'var(--bg-2)', cursor: 'pointer' }}>Sort · by HYPE ↓</button>
+            <button onClick={() => setSortByHype(v => !v)} style={{ padding: '7px 12px', border: `1px solid ${sortByHype ? 'var(--line-2)' : 'var(--line)'}`, borderRadius: 99, fontFamily: 'var(--f-m)', fontSize: 12, color: sortByHype ? 'var(--ink)' : 'var(--ink-2)', background: sortByHype ? 'var(--bg-4)' : 'var(--bg-2)', cursor: 'pointer' }}>Sort · by HYPE ↓</button>
           </div>
           {filteredShows.length === 0 && (
             <div style={{
@@ -539,11 +542,18 @@ export const ViewTickets = memo(function ViewTickets({ data }: { data: Workbench
                     ))}
                   </div>
                   <div style={{ display: 'flex', gap: 8, marginTop: 22, flexWrap: 'wrap' }}>
-                    <button style={{ padding: '9px 16px', background: 'var(--ink)', color: 'var(--bg)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 600, letterSpacing: '.04em', border: 'none', cursor: 'pointer' }}>Show at door →</button>
+                    <button onClick={() => setTab('scan')} style={{ padding: '9px 16px', background: 'var(--ink)', color: 'var(--bg)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 600, letterSpacing: '.04em', border: 'none', cursor: 'pointer' }}>Show at door →</button>
                     {['Transfer', 'Add to Wallet'].map(l => (
-                      <button key={l} style={{ padding: '9px 14px', border: '1px solid var(--line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.04em', color: 'var(--ink)', background: 'none', cursor: 'pointer' }}>{l}</button>
+                      <button key={l} onClick={() => showToast(`${l} coming soon`)} style={{ padding: '9px 14px', border: '1px solid var(--line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.04em', color: 'var(--ink)', background: 'none', cursor: 'pointer' }}>{l}</button>
                     ))}
-                    <button style={{ padding: '9px 14px', border: '1px solid rgba(255,80,41,.3)', color: '#ff5029', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.04em', background: 'none', cursor: 'pointer' }}>Request refund</button>
+                    <button onClick={async () => {
+                      try {
+                        const r = await fetch(`/api/tickets/${data.tickets[0].id}/refund`, { method: 'POST' });
+                        showToast(r.ok ? 'Refund requested — expect a reply within 24 hrs' : 'Couldn\'t submit refund');
+                      } catch {
+                        showToast('Couldn\'t submit refund — try again');
+                      }
+                    }} style={{ padding: '9px 14px', border: '1px solid rgba(255,80,41,.3)', color: '#ff5029', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.04em', background: 'none', cursor: 'pointer' }}>Request refund</button>
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
@@ -600,7 +610,7 @@ export const ViewTickets = memo(function ViewTickets({ data }: { data: Workbench
           <div style={{ border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)', overflow: 'hidden' }}>
             <div style={{ padding: '12px 18px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>Shows on sale</div>
-              <button style={{ padding: '9px 16px', background: 'var(--ink)', color: 'var(--bg)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 600, letterSpacing: '.04em', border: 'none', cursor: 'pointer' }}>＋ New show</button>
+              <button onClick={() => showToast('New show creation coming soon')} style={{ padding: '9px 16px', background: 'var(--ink)', color: 'var(--bg)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 600, letterSpacing: '.04em', border: 'none', cursor: 'pointer' }}>＋ New show</button>
             </div>
             {data.shows.map(s => {
               const pct = s.capacity > 0 ? (s.sold / s.capacity) * 100 : 0;
@@ -620,7 +630,7 @@ export const ViewTickets = memo(function ViewTickets({ data }: { data: Workbench
                   </div>
                   <div style={{ minWidth: 60 }}><div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', letterSpacing: '.14em', marginBottom: 3 }}>PRICE</div><div style={{ fontFamily: 'var(--f-d)', fontWeight: 600, fontSize: 13, color: 'var(--ink)' }}>${s.price}</div></div>
                   <div style={{ minWidth: 80 }}><div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)', letterSpacing: '.14em', marginBottom: 3 }}>GROSS</div><div style={{ fontFamily: 'var(--f-d)', fontWeight: 600, fontSize: 13, color: 'var(--ink)' }}>${(s.sold * s.price).toLocaleString()}</div></div>
-                  <button style={{ padding: '7px 12px', border: '1px solid var(--line-2)', borderRadius: 5, fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-2)', background: 'none', cursor: 'pointer' }}>Manage →</button>
+                  <button onClick={() => router.push(`/shows/${s.id}`)} style={{ padding: '7px 12px', border: '1px solid var(--line-2)', borderRadius: 5, fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-2)', background: 'none', cursor: 'pointer' }}>Manage →</button>
                 </div>
               );
             })}
@@ -669,6 +679,13 @@ export const ViewTickets = memo(function ViewTickets({ data }: { data: Workbench
         </div>
       )}
     </div>
+
+    {/* Toast */}
+    {toast && (
+      <div style={{ position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)', zIndex: 8999, background: '#1a2540', border: '1px solid rgba(255,255,255,.12)', borderRadius: 10, padding: '12px 20px', fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink)', whiteSpace: 'nowrap', boxShadow: '0 4px 20px rgba(0,0,0,.5)', pointerEvents: 'none' }}>
+        {toast}
+      </div>
+    )}
 
     {/* Report modal */}
     {reportingId && (
