@@ -298,8 +298,6 @@ function AccordionItem({
 export function ViewListen({ data, onPickTrack, currentIdx }: { data: WorkbenchData; onPickTrack: (i: number) => void; currentIdx: number }) {
   const [openSection, setOpenSection] = useState<SectionId>('Search');
 
-  const toggle = (id: SectionId) => setOpenSection(prev => prev === id ? id : id);
-
   return (
     <div>
       {/* Static header */}
