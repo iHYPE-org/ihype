@@ -39,9 +39,10 @@ function MyPagePanel({ data }: { data: WorkbenchData }) {
   const role = (data.profileType ?? '').toUpperCase();
   if (role === 'ARTIST') return <ViewArtistPage data={data} />;
   if (role === 'VENUE') return <ViewVenuePage data={data} />;
+  const djRole: 'dj' | 'fan' = role === 'DJ' ? 'dj' : 'fan';
   return (
     <div style={{ padding: '0 32px 32px' }}>
-      <ViewPageStudio data={data} defaultRole={role.toLowerCase() as 'fan' | 'dj' | 'artist' | 'venue'} />
+      <ViewPageStudio data={data} defaultRole={djRole} />
     </div>
   );
 }
@@ -66,6 +67,8 @@ export function ViewPagesHub({
   const role = (data.profileType ?? '').toUpperCase();
   const hasPowerPage = role === 'ARTIST' || role === 'VENUE' || role === 'DJ';
   const tabs = hasPowerPage ? ['Page Editor', 'My Page', 'Settings'] : ['Page Editor', 'Settings'];
+  const studioRole: 'artist' | 'venue' | 'dj' | 'fan' =
+    role === 'ARTIST' ? 'artist' : role === 'VENUE' ? 'venue' : role === 'DJ' ? 'dj' : 'fan';
 
   const [sub, setSub] = useState('Page Editor');
   const [kicker, title] = HEADERS[sub] ?? HEADERS['Page Editor'];
@@ -82,7 +85,7 @@ export function ViewPagesHub({
 
       {sub === 'Page Editor' && (
         <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
-          <ViewPageStudio data={data} defaultRole={role.toLowerCase() as 'fan' | 'dj' | 'artist' | 'venue'} />
+          <ViewPageStudio data={data} defaultRole={studioRole} />
         </div>
       )}
       {sub === 'My Page' && (
