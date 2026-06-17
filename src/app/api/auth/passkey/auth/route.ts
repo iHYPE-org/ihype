@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   try {
     const clientAddress = readClientAddress(request);
     const rl = await consumeRateLimit(`pk-auth-options:${clientAddress}`, { limit: 20, windowMs: 60 * 1000 });
-    if (!rl.allowed) return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
+    if (!rl.allowed) return NextResponse.json({ error: 'Too many sign-in attempts — wait a minute and try again.' }, { status: 429 });
 
     const options = await getPasskeyAuthenticationOptions();
 
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
   try {
     const clientAddress = readClientAddress(request);
     const rl = await consumeRateLimit(`pk-auth:${clientAddress}`, { limit: 10, windowMs: 60 * 1000 });
-    if (!rl.allowed) return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
+    if (!rl.allowed) return NextResponse.json({ error: 'Too many sign-in attempts — wait a minute and try again.' }, { status: 429 });
 
     const { cookies } = await import('next/headers');
     const jar = await cookies();

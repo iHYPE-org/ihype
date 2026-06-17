@@ -14,7 +14,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 export async function GET(request: Request) {
   const clientAddress = readClientAddress(request);
   const rl = await consumeRateLimit(`pk-reg-first-opt:${clientAddress}`, { limit: 10, windowMs: 5 * 60 * 1000 });
-  if (!rl.allowed) return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
+  if (!rl.allowed) return NextResponse.json({ error: "Too many attempts — wait a minute and try again." }, { status: 429 });
 
   const { cookies } = await import('next/headers');
   const jar = await cookies();
@@ -51,7 +51,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const clientAddress = readClientAddress(request);
   const rl = await consumeRateLimit(`pk-reg-first:${clientAddress}`, { limit: 5, windowMs: 5 * 60 * 1000 });
-  if (!rl.allowed) return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
+  if (!rl.allowed) return NextResponse.json({ error: "Too many attempts — wait a minute and try again." }, { status: 429 });
 
   const { cookies } = await import('next/headers');
   const jar = await cookies();
