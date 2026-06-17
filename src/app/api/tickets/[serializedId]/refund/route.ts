@@ -26,14 +26,14 @@ export async function POST(
 
   if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
   if (order.buyerUserId !== session.user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  if (order.status === 'REFUNDED') return NextResponse.json({ error: 'Already refunded' }, { status: 409 });
+  if (order.status === 'VOID') return NextResponse.json({ error: 'Order already voided' }, { status: 409 });
 
   const supportRequest = await db.supportRequest.create({
     data: {
       requesterUserId: session.user.id,
       type: 'TICKET_REFUND',
       subject: `Refund request for order ${serializedId}`,
-      details: `Show: ${order.show?.title ?? serializedId}. Amount paid: $${(order.totalCents / 100).toFixed(2)}.`,
+      details: `Show: ${order.show?.title ?? serializedId}. Amount paid: $${(order.subtotalCents / 100).toFixed(2)}.`,
       priority: 'HIGH',
       status: 'OPEN',
     },
