@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import type { WorkbenchData } from '@/types/workbench';
 import { T } from './MobilePrimitives';
 import { logoutAction } from '@/app/logout/actions';
@@ -48,16 +48,34 @@ function ToolRow({ label, sub, icon, onClick, last = false }: {
 }
 
 export function MobileScreenPages({ data, onPage, onCockpit, onStudio, onManage, onJournal, onNotif, onSettings }: Props) {
+  const [shareStatus, setShareStatus] = useState<'idle' | 'done'>('idle');
   const role = (data.profileType ?? '').toUpperCase();
   const isArtist = role === 'ARTIST';
   const isDJ = role === 'DJ';
   const isVenue = role === 'VENUE';
+  const isFan = role === 'LISTENER';
   const isCreator = isArtist || isDJ;
   const hasPowerPage = isArtist || isDJ || isVenue;
   const canTools = isCreator || isVenue;
+  const showShareLink = (isDJ || isFan) && !!data.profileHexId;
 
   const pageTypeLabel = isArtist ? 'Artist Page' : isDJ ? 'DJ Page' : isVenue ? 'Venue Page' : 'Fan Page';
   const hasPage = data.hasPublishedPage ?? hasPowerPage;
+
+  async function handleShareInvite() {
+    const url = new URL(`/invite/${data.profileHexId}`, window.location.origin).toString();
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Join me on iHYPE', url });
+      } else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        window.prompt('Copy your invite link', url);
+      }
+      setShareStatus('done');
+      window.setTimeout(() => setShareStatus('idle'), 1800);
+    } catch { /* ignored */ }
+  }
 
   return (
     <div style={{ overflowY: 'auto', paddingBottom: 80 }}>
@@ -84,6 +102,21 @@ export function MobileScreenPages({ data, onPage, onCockpit, onStudio, onManage,
               </div>
             </div>
             <div style={{ display: 'flex', borderTop: `1px solid ${T.line}` }}>
+              {data.profilePath && (
+                <a
+                  href={data.profilePath}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    flex: 1, padding: '14px 0', background: 'none', border: 'none',
+                    borderRight: `1px solid ${T.line}`, cursor: 'pointer', textAlign: 'center',
+                    fontFamily: T.fm, fontSize: 11, fontWeight: 700, color: '#ff5029', letterSpacing: '.1em',
+                    textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  VIEW ↗
+                </a>
+              )}
               <button onClick={onPage} style={{
                 flex: 1, padding: '14px 0', background: 'none', border: 'none',
                 borderRight: `1px solid ${T.line}`, cursor: 'pointer',
@@ -120,6 +153,39 @@ export function MobileScreenPages({ data, onPage, onCockpit, onStudio, onManage,
           </button>
         )}
       </div>
+
+      {/* Share My Link — fan & DJ referral invite */}
+      {showShareLink && (
+        <div style={{ margin: '-8px 16px 24px' }}>
+          <button
+            onClick={() => { void handleShareInvite(); }}
+            style={{
+              width: '100%', padding: '14px 18px', borderRadius: 14, cursor: 'pointer', textAlign: 'left',
+              background: shareStatus === 'done' ? 'rgba(34,229,212,.1)' : 'rgba(185,131,255,.07)',
+              border: `1px solid ${shareStatus === 'done' ? 'rgba(34,229,212,.35)' : 'rgba(185,131,255,.25)'}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              transition: 'background .2s, border-color .2s',
+            }}
+          >
+            <div>
+              <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 14, color: T.ink, lineHeight: 1, marginBottom: 3 }}>
+                {shareStatus === 'done' ? 'Link copied!' : 'Share My Link'}
+              </div>
+              <div style={{ fontFamily: T.fb, fontSize: 11, color: T.ink2, lineHeight: 1.3 }}>
+                Earn iHYPE points for every new sign-up
+              </div>
+            </div>
+            <div style={{
+              padding: '7px 13px', borderRadius: 99,
+              background: shareStatus === 'done' ? 'rgba(34,229,212,.2)' : 'rgba(185,131,255,.15)',
+              fontFamily: T.fm, fontSize: 10, fontWeight: 700, letterSpacing: '.08em',
+              color: shareStatus === 'done' ? '#22e5d4' : T.purple,
+            }}>
+              {shareStatus === 'done' ? '✓ DONE' : 'SHARE →'}
+            </div>
+          </button>
+        </div>
+      )}
 
       {/* Role tools */}
       {canTools && (
