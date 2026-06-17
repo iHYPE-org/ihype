@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { DEFAULT_PROFILE_DESIGN_PRESET, getProfileDesignStyleVars } from '@/lib/profile-design';
+import { DEFAULT_PROFILE_DESIGN_PRESET, getProfileDesignStyleVars, getBuilderDesignStyleVars } from '@/lib/profile-design';
 import { ContentReportControl } from '@/components/ContentReportControl';
 import { ShowCard } from '@/components/ShowCard';
 import { HypeButton } from '@/components/HypeButton';
@@ -198,11 +198,13 @@ export default async function VenuePage({
     .map((bookableProfile) => ({ id: bookableProfile.id, name: bookableProfile.name }));
   const canViewCustomPage = isOwner || profile.fanShareEnabled;
   const sharedThemePreset = canViewCustomPage ? profile.themePreset : DEFAULT_PROFILE_DESIGN_PRESET;
-  const pageDesignStyle = getProfileDesignStyleVars(sharedThemePreset, {
-    accentTone: canViewCustomPage ? profile.themeAccentTone : undefined,
-    backdropTone: canViewCustomPage ? profile.themeBackdropTone : undefined,
-    fontPreset: canViewCustomPage ? profile.themeFontPreset : undefined
-  });
+  const pageDesignStyle = published?.builderPalette
+    ? getBuilderDesignStyleVars(published.builderPalette, published.builderFont, published.builderRadius, published.builderMood)
+    : getProfileDesignStyleVars(sharedThemePreset, {
+        accentTone: canViewCustomPage ? profile.themeAccentTone : undefined,
+        backdropTone: canViewCustomPage ? profile.themeBackdropTone : undefined,
+        fontPreset: canViewCustomPage ? profile.themeFontPreset : undefined
+      });
   const bannerStyle = canViewCustomPage ? getSafeBackgroundImageStyle(profile.heroImage) : undefined;
   const logoUrl = canViewCustomPage ? getSafeImageUrl(profile.logoImage || profile.avatarImage) : null;
   const featureImageUrl = canViewCustomPage ? getSafeImageUrl(profile.galleryImage || profile.heroImage) : null;
@@ -277,13 +279,21 @@ export default async function VenuePage({
             </h1>
             <p className="artist-headline">{published?.headline || profile.headline || 'Set the tone for the room and what kind of nights belong here.'}</p>
             <p className="subtitle">{published?.bio || profile.bio}</p>
+            {published?.builderPalette && profile.hypeCount > 0 ? (
+              <div className="builder-hype-stat builder-stat-live">
+                <span className="builder-hype-num">{profile.hypeCount.toLocaleString()}</span>
+                <span className="builder-hype-label">HYPE</span>
+              </div>
+            ) : null}
             <p className="meta">{[profile.city, profile.country].filter(Boolean).join(', ')}</p>
             <p className="meta">Share ID: <Link href={`/profiles/${profile.hexId}`}>{profile.hexId}</Link></p>
-            <p className="meta">Fan hype: {fanHypeCount}</p>
+            {!published?.builderPalette ? <p className="meta">Fan hype: {fanHypeCount}</p> : null}
             {profile.addressLine1 ? <p className="meta">{[profile.addressLine1, profile.postalCode].filter(Boolean).join(', ')}</p> : null}
             {profile.contactInfo ? <p className="meta">{profile.contactInfo}</p> : null}
             {profile.hoursText ? <p className="meta">{profile.hoursText}</p> : null}
-            <div className="tag-row">{profile.genres.map((genre) => <span key={genre} className="tag">{genre}</span>)}</div>
+            <div className={published?.builderPalette ? 'builder-badge-block' : 'tag-row'}>
+              {profile.genres.map((genre) => <span key={genre} className={published?.builderPalette ? 'builder-badge' : 'tag'}>{genre}</span>)}
+            </div>
             <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} initiallyHyped={!!userHype} entityLabel="venue" />
             <div className="cta-row" style={{ marginTop: 12 }}>
               {profile.contactInfo && profile.contactInfo.includes('@') ? (

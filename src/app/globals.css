@@ -6309,3 +6309,72 @@ html.high-contrast p {
   font-family: var(--f-s);
   font-weight: 400;
 }
+
+/* ── Builder-published page enhancements ─────────────────────────────────── */
+@keyframes builder-hype-float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%       { transform: translateY(-3px) scale(1.04); }
+}
+@keyframes builder-accent-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(var(--builder-accent-rgb, 35,208,216), 0); }
+  50%       { box-shadow: 0 0 18px 4px rgba(var(--builder-accent-rgb, 35,208,216), 0.28); }
+}
+.builder-stat-live {
+  animation: builder-hype-float 4s ease-in-out infinite;
+  will-change: transform;
+}
+.builder-stat-glow {
+  animation: builder-accent-glow 3s ease-in-out infinite;
+}
+/* Personality badge block shown when builder data is present */
+.builder-badge-block {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0 0.5rem;
+}
+.builder-badge-block .builder-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--profile-design-border);
+  background: var(--profile-design-accent-soft);
+  color: var(--profile-design-text);
+  font-family: var(--profile-design-body-font);
+}
+.builder-badge-block .builder-badge-accent {
+  border-color: var(--profile-design-accent);
+  background: var(--profile-design-accent);
+  color: #000;
+}
+/* Hype stat card with builder accent */
+.builder-hype-stat {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: 0.7rem 1.1rem;
+  border-radius: var(--profile-design-panel-radius, 16px);
+  border: 1px solid var(--profile-design-border);
+  background: var(--profile-design-accent-soft);
+  margin-bottom: 0.75rem;
+}
+.builder-hype-stat .builder-hype-num {
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--profile-design-accent);
+  font-family: var(--profile-design-display-font);
+}
+.builder-hype-stat .builder-hype-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--profile-design-muted);
+  font-family: var(--profile-design-body-font);
+}

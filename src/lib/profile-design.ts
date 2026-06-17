@@ -1,5 +1,10 @@
 import type { CSSProperties } from 'react';
 
+export type BuilderPalette = {
+  bg: string; surface: string; line: string;
+  ink: string; ink2: string; accent: string; accent2: string;
+};
+
 export const profileDesignPresetIds = [
   'midnight-neon',
   'sunset-paper',
@@ -636,5 +641,52 @@ export function getProfileDesignStyleVars(
     '--profile-design-panel-shadow': preset.panelShadow,
     '--profile-design-display-font': fontPreset.displayFamily,
     '--profile-design-body-font': fontPreset.bodyFamily
+  } as CSSProperties;
+}
+
+const BUILDER_FONT_MAP: Record<string, { display: string; body: string }> = {
+  editorial: { display: "'Syne', sans-serif",                body: "'DM Sans', sans-serif"      },
+  grotesk:   { display: "'Bricolage Grotesque', sans-serif", body: "'Space Grotesk', sans-serif" },
+  serif:     { display: "'Instrument Serif', serif",         body: "'DM Sans', sans-serif"       },
+  mono:      { display: "'Space Grotesk', sans-serif",       body: "'JetBrains Mono', monospace" },
+};
+
+// Converts a 6-digit hex (#rrggbb) to an "r,g,b" string for rgba().
+function hexToRgb(hex: string): string {
+  const n = parseInt(hex.slice(1), 16);
+  return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`;
+}
+
+/**
+ * Maps builder palette/font/radius directly to the profile-design CSS vars
+ * without requiring a preset name. Use this when publishedPage.builderPalette
+ * is present.
+ */
+export function getBuilderDesignStyleVars(
+  palette: BuilderPalette,
+  font: string | null,
+  radius: number | null,
+  mood: string | null
+): CSSProperties {
+  const f   = BUILDER_FONT_MAP[font ?? ''] ?? BUILDER_FONT_MAP.editorial;
+  const r   = radius ?? 16;
+  const rgb = hexToRgb(palette.accent);
+  const isDark = mood !== 'light';
+  return {
+    '--profile-design-surface':      palette.bg,
+    '--profile-design-overlay':      'none',
+    '--profile-design-panel':        palette.surface,
+    '--profile-design-hero':         `linear-gradient(135deg, rgba(${rgb},0.22), rgba(${rgb},0.07))`,
+    '--profile-design-accent':       palette.accent,
+    '--profile-design-accent-soft':  `rgba(${rgb},0.18)`,
+    '--profile-design-text':         palette.ink,
+    '--profile-design-muted':        palette.ink2,
+    '--profile-design-border':       palette.line,
+    '--profile-design-panel-radius': `${r}px`,
+    '--profile-design-panel-shadow': isDark
+      ? '0 24px 64px rgba(0,0,0,0.42)'
+      : '0 12px 32px rgba(0,0,0,0.14)',
+    '--profile-design-display-font': f.display,
+    '--profile-design-body-font':    f.body,
   } as CSSProperties;
 }

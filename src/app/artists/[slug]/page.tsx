@@ -20,7 +20,7 @@ import { CollapsibleText } from '@/components/CollapsibleText';
 import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
 import { getSafeBackgroundImageStyle, getSafeImageUrl } from '@/lib/asset-safety';
 import { canManageOwnedResource } from '@/lib/permissions';
-import { DEFAULT_PROFILE_DESIGN_PRESET, getProfileDesignStyleVars } from '@/lib/profile-design';
+import { DEFAULT_PROFILE_DESIGN_PRESET, getProfileDesignStyleVars, getBuilderDesignStyleVars } from '@/lib/profile-design';
 import { parsePublishedPage } from '@/lib/page-builder';
 import { detectRequestLocation } from '@/lib/request-location';
 import { AdBanner } from '@/components/AdBanner';
@@ -250,11 +250,13 @@ export default async function ArtistPage({
   const sharedThemePreset = publishedPage?.themePreset
     ?? (canViewCustomPage ? profile.themePreset : DEFAULT_PROFILE_DESIGN_PRESET);
   const bannerStyle = canViewCustomPage ? getSafeBackgroundImageStyle(profile.heroImage) : undefined;
-  const pageDesignStyle = getProfileDesignStyleVars(sharedThemePreset, {
-    accentTone: canViewCustomPage ? profile.themeAccentTone : undefined,
-    backdropTone: canViewCustomPage ? profile.themeBackdropTone : undefined,
-    fontPreset: canViewCustomPage ? profile.themeFontPreset : undefined
-  });
+  const pageDesignStyle = publishedPage?.builderPalette
+    ? getBuilderDesignStyleVars(publishedPage.builderPalette, publishedPage.builderFont, publishedPage.builderRadius, publishedPage.builderMood)
+    : getProfileDesignStyleVars(sharedThemePreset, {
+        accentTone: canViewCustomPage ? profile.themeAccentTone : undefined,
+        backdropTone: canViewCustomPage ? profile.themeBackdropTone : undefined,
+        fontPreset: canViewCustomPage ? profile.themeFontPreset : undefined
+      });
   const artworkUrl = canViewCustomPage
     ? getSafeImageUrl(profile.galleryImage || profile.heroImage)
     : null;
@@ -337,14 +339,20 @@ export default async function ArtistPage({
             </h1>
             <p className="artist-headline">{publishedPage?.headline || profile.headline || 'Build your headline banner and tell people what this chapter sounds like.'}</p>
             <p className="subtitle">{publishedPage?.bio || profile.bio}</p>
+            {publishedPage?.builderPalette && profile.hypeCount > 0 ? (
+              <div className="builder-hype-stat builder-stat-live">
+                <span className="builder-hype-num">{profile.hypeCount.toLocaleString()}</span>
+                <span className="builder-hype-label">HYPE</span>
+              </div>
+            ) : null}
             <p className="meta">{[profile.city, profile.country].filter(Boolean).join(', ')}</p>
             {profile.contactInfo ? <p className="meta">Contact: {profile.contactInfo}</p> : null}
             <p className="meta">Share ID: <Link href={`/profiles/${profile.hexId}`}>{profile.hexId}</Link></p>
-            <p className="meta">Fan hype: {fanHypeCount}</p>
-            <div className="tag-row">
-              {isBookMeReady ? <span className="tag artist-ready-tag">Book me ready</span> : null}
-              {profile.genres.map((genre) => <span key={genre} className="tag">{genre}</span>)}
-              {profile.genre ? <span className="tag">{profile.genre}</span> : null}
+            {!publishedPage?.builderPalette ? <p className="meta">Fan hype: {fanHypeCount}</p> : null}
+            <div className={publishedPage?.builderPalette ? 'builder-badge-block' : 'tag-row'}>
+              {isBookMeReady ? <span className={publishedPage?.builderPalette ? 'builder-badge builder-badge-accent' : 'tag artist-ready-tag'}>Book me ready</span> : null}
+              {profile.genres.map((genre) => <span key={genre} className={publishedPage?.builderPalette ? 'builder-badge' : 'tag'}>{genre}</span>)}
+              {profile.genre ? <span className={publishedPage?.builderPalette ? 'builder-badge' : 'tag'}>{profile.genre}</span> : null}
             </div>
             <ProfileLinkShelf linksJson={profile.links ?? null} />
             <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} initiallyHyped={!!userHype} entityLabel="artist" />

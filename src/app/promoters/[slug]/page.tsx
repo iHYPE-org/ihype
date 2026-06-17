@@ -9,7 +9,7 @@ import { ContentReportControl } from '@/components/ContentReportControl';
 import { ShowCard } from '@/components/ShowCard';
 import { HypeButton } from '@/components/HypeButton';
 import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
-import { DEFAULT_PROFILE_DESIGN_PRESET, getProfileDesignStyleVars } from '@/lib/profile-design';
+import { DEFAULT_PROFILE_DESIGN_PRESET, getProfileDesignStyleVars, getBuilderDesignStyleVars } from '@/lib/profile-design';
 import { getSafeBackgroundImageStyle, getSafeImageUrl } from '@/lib/asset-safety';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { detectRequestLocation } from '@/lib/request-location';
@@ -182,11 +182,13 @@ export default async function PromoterPage({
   const canViewCustomPage = isOwner || profile.fanShareEnabled;
   const sharedThemePreset = canViewCustomPage ? profile.themePreset : DEFAULT_PROFILE_DESIGN_PRESET;
   const bannerStyle = canViewCustomPage ? getSafeBackgroundImageStyle(profile.heroImage) : undefined;
-  const pageDesignStyle = getProfileDesignStyleVars(sharedThemePreset, {
-    accentTone: canViewCustomPage ? profile.themeAccentTone : undefined,
-    backdropTone: canViewCustomPage ? profile.themeBackdropTone : undefined,
-    fontPreset: canViewCustomPage ? profile.themeFontPreset : undefined
-  });
+  const pageDesignStyle = published?.builderPalette
+    ? getBuilderDesignStyleVars(published.builderPalette, published.builderFont, published.builderRadius, published.builderMood)
+    : getProfileDesignStyleVars(sharedThemePreset, {
+        accentTone: canViewCustomPage ? profile.themeAccentTone : undefined,
+        backdropTone: canViewCustomPage ? profile.themeBackdropTone : undefined,
+        fontPreset: canViewCustomPage ? profile.themeFontPreset : undefined
+      });
   const logoUrl = canViewCustomPage ? getSafeImageUrl(profile.logoImage || profile.avatarImage) : null;
   const featureImageUrl = canViewCustomPage ? getSafeImageUrl(profile.galleryImage || profile.heroImage) : null;
   const globeRouteStops = previousShows
@@ -226,11 +228,19 @@ export default async function PromoterPage({
             <h1 className="title" style={{ fontSize: '2.9rem' }}>{profile.name}</h1>
             <p className="artist-headline">{published?.headline || profile.headline || 'Set the tone for the nights, talent, and scenes you champion.'}</p>
             <p className="subtitle">{published?.bio || profile.bio}</p>
+            {published?.builderPalette && profile.hypeCount > 0 ? (
+              <div className="builder-hype-stat builder-stat-live">
+                <span className="builder-hype-num">{profile.hypeCount.toLocaleString()}</span>
+                <span className="builder-hype-label">HYPE</span>
+              </div>
+            ) : null}
             <p className="meta">{[profile.city, profile.country].filter(Boolean).join(', ')}</p>
             {profile.contactInfo ? <p className="meta">{profile.contactInfo}</p> : null}
             <p className="meta">Share ID: <Link href={`/profiles/${profile.hexId}`}>{profile.hexId}</Link></p>
-            <p className="meta">Fan hype: {fanHypeCount}</p>
-            <div className="tag-row">{profile.genres.map((genre) => <span key={genre} className="tag">{genre}</span>)}</div>
+            {!published?.builderPalette ? <p className="meta">Fan hype: {fanHypeCount}</p> : null}
+            <div className={published?.builderPalette ? 'builder-badge-block' : 'tag-row'}>
+              {profile.genres.map((genre) => <span key={genre} className={published?.builderPalette ? 'builder-badge' : 'tag'}>{genre}</span>)}
+            </div>
             <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} initiallyHyped={!!userHype} entityLabel="promoter" />
             <div className="profile-public-actions">
               <Link className="button small secondary" href="/register?role=ARTIST">Submit artist page</Link>

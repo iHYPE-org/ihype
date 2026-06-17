@@ -14,7 +14,7 @@ import { FanRecommendationsPanel } from '@/components/FanRecommendationsPanel';
 import { getSafeBackgroundImageStyle, getSafeImageUrl } from '@/lib/asset-safety';
 import { getSharedDiscoverFeed, isLocalMatch, isRegionalMatch } from '@/lib/discover-feed';
 import { canManageOwnedResource } from '@/lib/permissions';
-import { getProfileDesignStyleVars } from '@/lib/profile-design';
+import { getProfileDesignStyleVars, getBuilderDesignStyleVars } from '@/lib/profile-design';
 import { detectRequestLocation, type RequestLocation } from '@/lib/request-location';
 import { calculateFanLevel } from '@/lib/fan-level';
 import { BadgeShelf } from '@/components/BadgeShelf';
@@ -512,11 +512,13 @@ export default async function ListenerPage({
     })
     .slice(0, 4);
   const bannerStyle = getSafeBackgroundImageStyle(profile.heroImage);
-  const pageDesignStyle = getProfileDesignStyleVars(profile.themePreset, {
-    accentTone: profile.themeAccentTone,
-    backdropTone: profile.themeBackdropTone,
-    fontPreset: profile.themeFontPreset
-  });
+  const pageDesignStyle = published?.builderPalette
+    ? getBuilderDesignStyleVars(published.builderPalette, published.builderFont, published.builderRadius, published.builderMood)
+    : getProfileDesignStyleVars(profile.themePreset, {
+        accentTone: profile.themeAccentTone,
+        backdropTone: profile.themeBackdropTone,
+        fontPreset: profile.themeFontPreset
+      });
   const avatarImage = getSafeImageUrl(profile.avatarImage);
   const fanLevel = calculateFanLevel(fullSongListenCount, fullShowListenCount);
   const hypePoints = hypedShows.length + profileHypes.length;
@@ -561,7 +563,13 @@ export default async function ListenerPage({
             <div className="badge">FAN</div>
             <h1 className="title fan-page-title">{profile.name}</h1>
             <p className="artist-headline">{published?.headline || profile.headline || 'Capture the shows, artists, and moments you keep coming back to.'}</p>
-            <p className="subtitle">{profile.bio}</p>
+            <p className="subtitle">{published?.bio || profile.bio}</p>
+            {published?.builderPalette && profile.hypeCount > 0 ? (
+              <div className="builder-hype-stat builder-stat-live">
+                <span className="builder-hype-num">{profile.hypeCount.toLocaleString()}</span>
+                <span className="builder-hype-label">HYPE</span>
+              </div>
+            ) : null}
             <p className="meta">{[profile.city, profile.country].filter(Boolean).join(', ')}</p>
             <p className="meta">Share ID: <Link href={`/profiles/${profile.hexId}`}>{profile.hexId}</Link></p>
             <p className="meta">FAN Level {fanLevel} | {fullSongListenCount} full songs | {fullShowListenCount} full shows</p>
@@ -569,7 +577,9 @@ export default async function ListenerPage({
               <p className="meta" style={{ fontStyle: 'italic' }}>🎵 Now playing: {profile.nowPlaying}</p>
             )}
             <BadgeShelf badges={badges} />
-            <div className="tag-row">{profile.genres.map((genre) => <span key={genre} className="tag">{genre}</span>)}</div>
+            <div className={published?.builderPalette ? 'builder-badge-block' : 'tag-row'}>
+              {profile.genres.map((genre) => <span key={genre} className={published?.builderPalette ? 'builder-badge' : 'tag'}>{genre}</span>)}
+            </div>
             <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} entityLabel="fan page" />
             <div className="profile-public-actions">
               <ShareButton path={`/fans/${profile.slug}`} title={`${profile.name} · iHYPE`} />
