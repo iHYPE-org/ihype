@@ -1931,9 +1931,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
   const [hypeTrack, setHypeTrack] = useState<WbTrack | null>(null);
   const [manageMode, setManageMode] = useState(false);
   const [journalMode, setJournalMode] = useState(false);
-  const [discoverMode, setDiscoverMode] = useState(false);
   const [studioMode, setStudioMode] = useState(false);
-  const [tourMode, setTourMode] = useState(false);
   const [halflightMode, setHalflightMode] = useState(false);
   const [matchmakerMode, setMatchmakerMode] = useState(false);
   const [cockpitMode, setCockpitMode] = useState(false);
@@ -2173,26 +2171,10 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
     );
   }
 
-  if (discoverMode) {
-    return (
-      <div style={{ position: 'fixed', inset: 0, background: T.bg, color: T.ink, fontFamily: T.fb, overflow: 'hidden', display: 'flex', flexDirection: 'column', animation: 'wm-overlay-in .22s cubic-bezier(.4,0,.2,1)' }} onTouchStart={handleOverlayTouchStart} onTouchEnd={makeOverlayTouchEnd(() => setDiscoverMode(false))}>
-        <style>{eqCss}</style>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px 10px', borderBottom: `1px solid ${T.line}` }}>
-          <button onClick={() => setDiscoverMode(false)} style={{ background: 'none', border: 'none', color: T.teal, fontFamily: T.fm, fontSize: 13, cursor: 'pointer', padding: '4px 0' }}>← Back</button>
-          <span style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 16 }}>Discover</span>
-        </div>
-        <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-          <ViewDiscover data={liveData} />
-        </div>
-      </div>
-    );
-  }
-
   const overlayModes: { active: boolean; close: () => void; title: string; color: string; children: React.ReactNode; scroll?: boolean }[] = [
     { active: halflightMode, close: () => setHalflightMode(false), title: 'Halflight FM',  color: T.teal,   children: <ViewHalflightFMMobile data={liveData} />, scroll: true },
     { active: matchmakerMode, close: () => setMatchmakerMode(false), title: 'Booking Matchmaker', color: '#b983ff', children: <ViewMatchmaker />, scroll: true },
     { active: studioMode,    close: () => setStudioMode(false),    title: 'Studio',        color: T.purple, children: <MobileScreenStudio data={liveData} /> },
-    { active: tourMode,      close: () => setTourMode(false),      title: 'Tour',          color: T.amber,  children: <ViewTour data={liveData} /> },
     { active: pageMode,      close: () => setPageMode(false),      title: 'Page Creator',  color: T.teal,   children: <ViewPageStudio data={liveData} />, scroll: true },
     { active: advertiseMode,   close: () => setAdvertiseMode(false),   title: 'Advertise',          color: T.pink,   children: <AdvertisePage />, scroll: true },
     { active: notifMode,       close: () => setNotifMode(false),       title: 'Notifications',      color: T.blue,   children: <ViewNotifications /> },
