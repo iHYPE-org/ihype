@@ -1108,11 +1108,11 @@ export default function ViewPageStudio({ data, defaultRole }: { data?: Workbench
       doGenerate(val);
     } else if (stepRef.current === 7) {
       addMsg({ id: makeId(), type: 'user', text: val });
-      doRefine(val);
+      void doRefine(val);
     }
   }
 
-  function doRefine(ins: string) {
+  async function doRefine(ins: string) {
     if (!themeRef.current) return;
     if (IMAGE_RE.test(ins)) {
       addMsg({ id: makeId(), type: 'ai', html: "I can't generate images — upload your own in <b>📷 Photos</b>, or browse free backgrounds in <b>🖼 Library</b>." });
@@ -1121,8 +1121,47 @@ export default function ViewPageStudio({ data, defaultRole }: { data?: Workbench
       scrollChat();
       return;
     }
-    const next = heuristicRefine(ins, themeRef.current, contentRef.current);
-    applyTheme(next);
+
+    setInputEnabled(false);
+    setShowTyping(true);
+    scrollChat();
+
+    let applied = false;
+    try {
+      const res = await fetch('/api/page-builder/refine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instruction: ins, theme: themeRef.current, role: roleRef.current }),
+      });
+      if (res.ok) {
+        const json = await res.json() as { changes?: Record<string, unknown>; aiAvailable?: boolean };
+        if (json.changes && typeof json.changes === 'object') {
+          const ch = json.changes;
+          const cur = themeRef.current;
+          const next: Theme = {
+            ...cur,
+            ...(ch.mood ? { mood: ch.mood as typeof cur.mood } : {}),
+            ...(ch.font ? { font: ch.font as typeof cur.font } : {}),
+            ...(ch.layout ? { layout: ch.layout as typeof cur.layout } : {}),
+            ...(typeof ch.tagline === 'string' ? { tagline: ch.tagline } : {}),
+            ...(typeof ch.bio === 'string' ? { bio: ch.bio } : {}),
+            palette: ch.palette ? { ...cur.palette, ...(ch.palette as Partial<Palette>) } : cur.palette,
+          };
+          if (typeof ch.bio === 'string') contentRef.current.bio = ch.bio;
+          if (typeof ch.tagline === 'string') contentRef.current.tagline = ch.tagline;
+          applyTheme(next);
+          applied = true;
+        }
+      }
+    } catch { /* fall through to heuristic */ }
+
+    setShowTyping(false);
+
+    if (!applied) {
+      const next = heuristicRefine(ins, themeRef.current, contentRef.current);
+      applyTheme(next);
+    }
+
     addMsg({ id: makeId(), type: 'ai', html: `Done — updated: <b>${esc(ins)}</b>` });
     setInputPlaceholder('"make it darker", "purple accent", "serif font"…');
     setInputEnabled(true);
@@ -1428,7 +1467,6 @@ ${links.length ? `<h2>Links</h2><div class="links">${links.map(([pl, u]) => `<a 
           <div>
             <div className="ps2-chat-title">AI Page Builder</div>
           </div>
-          <div className="ps2-chat-sub">POWERED BY CLAUDE</div>
           <button className="ps2-new-btn" onClick={resetAll}>↺ New</button>
         </div>
 
