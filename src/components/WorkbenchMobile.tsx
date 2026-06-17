@@ -5,23 +5,19 @@ import type { WorkbenchData, WbTrack, WbShow } from './WorkbenchShellV2';
 import { ViewHalflightFMMobile } from '@/components/workbench/ViewHalflightFM';
 import { SearchOverlay } from '@/components/workbench/SearchOverlay';
 import { ViewErrorBoundary } from '@/components/workbench/ErrorBoundary';
-import { ViewArtistPage } from '@/components/workbench/ViewArtistPage';
-import { ViewVenuePage } from '@/components/workbench/ViewVenuePage';
 import { ScreenListen, FullPlayer, HypeOverlay } from '@/components/workbench/MobileScreenListen';
 import { MobileScreenSeeds as ScreenSeeds } from '@/components/workbench/MobileScreenSeeds';
 import { ScreenShowsNew } from '@/components/workbench/MobileScreenShowsNew';
 import { ManageConsole } from '@/components/workbench/MobileScreenYouNew';
+import { MobileScreenPages } from '@/components/workbench/MobileScreenPages';
 import ViewJournal from '@/components/workbench/ViewJournal';
-import ViewDiscover from '@/components/workbench/ViewDiscover';
 import { MobileScreenStudio } from '@/components/workbench/MobileScreenStudio';
-import { ViewTour } from '@/components/workbench/ViewTour';
 import { ViewNotifications } from '@/components/workbench/ViewNotifications';
 import { ViewSettings } from '@/components/workbench/ViewSettings';
 import ViewPageStudio from '@/components/workbench/ViewPageStudio';
 import { ViewMatchmaker } from '@/components/workbench/ViewMatchmaker';
 import { ViewCockpitMobile } from '@/components/workbench/ViewCockpit';
 import { AdvertisePage } from '@/components/AdvertisePage';
-import { logoutAction } from '@/app/logout/actions';
 import { WelcomeDialog } from '@/components/workbench/Overlays';
 import { DEFAULT_PREFS, loadPrefs } from '@/components/workbench/types';
 
@@ -765,53 +761,6 @@ function WMMiniPlayer({ track, playing, onToggle, progress, onAlbumTap }: {
           ? <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><rect x="4" y="3" width="3" height="10"/><rect x="9" y="3" width="3" height="10"/></svg>
           : <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M4 3v10l10-5z"/></svg>}
       </button>
-    </div>
-  );
-}
-
-// ─── More screen ─────────────────────────────────────────────
-interface MoreProps { data: WorkbenchData; onStudio: () => void; onTour: () => void; onPage: () => void; onNotif: () => void; onSettings: () => void; onJournal: () => void; onDiscover: () => void; onAdvertise: () => void; onHalflight?: () => void; onMatchmaker?: () => void; onCockpit?: () => void; onManage?: () => void; }
-function MobileScreenMore({ data, onStudio, onTour, onPage, onNotif, onSettings, onJournal, onDiscover, onAdvertise, onHalflight, onMatchmaker, onCockpit, onManage }: MoreProps) {
-  const role = (data.profileType ?? '').toUpperCase();
-  const isCreator = role === 'ARTIST' || role === 'DJ';
-  const isVenue = role === 'VENUE';
-  const canJournal = isCreator || isVenue;
-  const canManage = isCreator || isVenue;
-  type Item = { label: string; sub: string; color: string; on: () => void; icon: React.ReactNode };
-  const items: Item[] = [
-    ...(canManage && onManage ? [{ label: 'Console', sub: isVenue ? 'Venue requests & stats' : 'Artist stats & tools', color: T.teal, on: onManage, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><rect x="1" y="4" width="18" height="12" rx="2"/><path d="M5 10h2.5M10 7.5v5M14 9v3"/></svg> }] : []),
-    ...(isCreator ? [{ label: 'Studio', sub: 'Tracks, releases & tools', color: T.purple, on: onStudio, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><rect x="2" y="5" width="16" height="10" rx="2"/><path d="M6 10h1.5M10 8v4M13.5 9v2" strokeLinecap="round"/></svg> }] : []),
-    { label: 'Page Creator', sub: isVenue ? 'Edit your venue page' : isCreator ? 'Edit your artist page' : 'Build your fan page', color: T.teal, on: onPage, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><rect x="2" y="2" width="16" height="16" rx="2"/><path d="M2 7h16M7 18V7"/></svg> },
-    { label: 'Tour', sub: 'Booking & routing', color: T.amber, on: onTour, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><path d="M3 10h14M10 3l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/></svg> },
-    ...(canJournal ? [{ label: 'Journal', sub: 'Posts & updates', color: T.accent, on: onJournal, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><rect x="3" y="2" width="14" height="16" rx="2"/><path d="M7 7h6M7 11h4" strokeLinecap="round"/></svg> }] : []),
-    { label: 'Halflight FM', sub: 'Live radio, 4 stations', color: T.teal, on: () => onHalflight?.(), icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><rect x="1" y="6" width="18" height="11" rx="2"/><path d="M6 6V4.5a4 4 0 0 1 8 0V6"/><circle cx="10" cy="11.5" r="2"/><path d="M10 13.5v1.5"/></svg> },
-    { label: 'Booking Matchmaker', sub: 'Find artists & venues', color: T.purple, on: () => onMatchmaker?.(), icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><circle cx="6.5" cy="7" r="3"/><circle cx="13.5" cy="7" r="3"/><path d="M1.5 18c0-2.8 2.2-5 5-5M18.5 18c0-2.8-2.2-5-5-5M9 17h2M10 13v4" strokeLinecap="round"/></svg> },
-    { label: 'Page Cockpit', sub: 'AI-powered page editor', color: T.purple, on: () => onCockpit?.(), icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><rect x="1" y="4" width="18" height="12" rx="2"/><path d="M5 10h2.5M10 7.5v5M14 9v3"/></svg> },
-    { label: 'Advertise', sub: 'Promote your brand', color: T.pink, on: onAdvertise, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><path d="M3 14V6l10-3v14L3 14z" strokeLinejoin="round"/><path d="M13 7l4 1v4l-4 1"/><circle cx="6.5" cy="16.5" r="1.5"/></svg> },
-    { label: 'Discover', sub: 'Artists & venues', color: T.teal, on: onDiscover, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><circle cx="10" cy="10" r="7"/><path d="M13 7l-2 3-3 1.5 2-3L13 7z" fill="currentColor" stroke="none"/></svg> },
-    { label: 'Notifications', sub: 'Alerts & activity', color: T.blue, on: onNotif, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><path d="M5 8a5 5 0 0 1 10 0v3.5l1.5 2.5h-13L5 11.5V8Z"/><path d="M8.5 16.5a1.5 1.5 0 0 0 3 0" strokeLinecap="round"/></svg> },
-    { label: 'Settings', sub: 'Account & preferences', color: T.ink2, on: onSettings, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><circle cx="10" cy="10" r="2.5"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.2 4.2l1.4 1.4M14.4 14.4l1.4 1.4M4.2 15.8l1.4-1.4M14.4 5.6l1.4-1.4" strokeLinecap="round"/></svg> },
-    { label: 'Sign out', sub: 'End your session', color: '#ff4444', on: () => { void logoutAction(); }, icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" width={22} height={22}><path d="M7 3H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h3M13 14l3-4-3-4M16 10H8" strokeLinecap="round" strokeLinejoin="round"/></svg> },
-  ];
-  return (
-    <div style={{ overflowY: 'auto', padding: '20px 16px', paddingBottom: 80 }}>
-      <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3, letterSpacing: '.18em', textTransform: 'uppercase', marginBottom: 18 }}>More Features</div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        {items.map(item => (
-          <button key={item.label} onClick={item.on} style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 10,
-            padding: '16px 14px', borderRadius: 14,
-            background: T.bg2, border: `1px solid ${T.line}`,
-            cursor: 'pointer', textAlign: 'left',
-          }}>
-            <span style={{ color: item.color, display: 'flex', alignItems: 'center' }}>{item.icon}</span>
-            <div>
-              <div style={{ fontFamily: T.fd, fontSize: 15, fontWeight: 700, color: T.ink }}>{item.label}</div>
-              <div style={{ fontFamily: T.fb, fontSize: 12, color: T.ink2, marginTop: 2 }}>{item.sub}</div>
-            </div>
-          </button>
-        ))}
-      </div>
     </div>
   );
 }
@@ -2195,7 +2144,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
       case 'listen':   return <ScreenListen data={liveData} onPlay={setCurrentTrackIdx} onExpand={() => setExpanded(true)} currentIdx={currentTrackIdx} />;
       case 'discover': return <ScreenSeeds data={liveData} />;
       case 'events':   return <ScreenShowsNew data={liveData} onToast={showToast} />;
-      case 'pages':    return <MobileScreenMore data={liveData} onStudio={() => setStudioMode(true)} onTour={() => setTourMode(true)} onPage={() => setPageMode(true)} onNotif={() => setNotifMode(true)} onSettings={() => setSettingsMode(true)} onJournal={() => setJournalMode(true)} onDiscover={() => setDiscoverMode(true)} onAdvertise={() => setAdvertiseMode(true)} onHalflight={() => setHalflightMode(true)} onMatchmaker={() => setMatchmakerMode(true)} onCockpit={() => setCockpitMode(true)} onManage={() => setManageMode(true)} />;
+      case 'pages':    return <MobileScreenPages data={liveData} onPage={() => setPageMode(true)} onCockpit={() => setCockpitMode(true)} onStudio={() => setStudioMode(true)} onManage={() => setManageMode(true)} onJournal={() => setJournalMode(true)} onNotif={() => setNotifMode(true)} onSettings={() => setSettingsMode(true)} />;
     }
   })();
 
