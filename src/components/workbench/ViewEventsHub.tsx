@@ -2,11 +2,10 @@
 
 import React, { useState } from 'react';
 import type { WorkbenchData } from '@/types/workbench';
-import { ViewTickets } from './ViewTickets';
 
 function SubTabs({ value, options, onChange }: { value: string; options: string[]; onChange: (v: string) => void }) {
   return (
-    <div style={{ display: 'flex', gap: 6, padding: '0 32px', marginBottom: 28 }}>
+    <div style={{ display: 'flex', gap: 6, padding: '0 32px', marginBottom: 28, flexWrap: 'wrap' }}>
       {options.map(o => (
         <button
           key={o}
@@ -25,7 +24,9 @@ function SubTabs({ value, options, onChange }: { value: string; options: string[
   );
 }
 
-function NearMePanel({ data }: { data: WorkbenchData }) {
+// ─── Upcoming (formerly Near Me) ──────────────────────────────
+
+function UpcomingPanel({ data }: { data: WorkbenchData }) {
   const shows = data.shows.slice(0, 6);
   const distances = ['0.4 mi', '1.1 mi', '2.3 mi', '3.0 mi', '4.5 mi', '6.2 mi'];
   const TINTS = ['#ff5029', '#22e5d4', '#b983ff', '#ffb84a', '#ff3e9a', '#5b8cff'];
@@ -90,6 +91,107 @@ function NearMePanel({ data }: { data: WorkbenchData }) {
   );
 }
 
+// ─── Favorites Panel ──────────────────────────────────────────
+
+const SAVED_VENUES = [
+  { id: 'sv1', name: 'The Empty Bottle',   city: 'Chicago, IL',    tint: '#ff5029' },
+  { id: 'sv2', name: 'Bowery Ballroom',    city: 'New York, NY',   tint: '#22e5d4' },
+  { id: 'sv3', name: 'Troubadour',         city: 'Los Angeles, CA', tint: '#b983ff' },
+  { id: 'sv4', name: 'Neumos',             city: 'Seattle, WA',    tint: '#ffb84a' },
+  { id: 'sv5', name: 'Schubas Tavern',     city: 'Chicago, IL',    tint: '#ff3e9a' },
+];
+
+const SAVED_CITIES = [
+  { name: 'Chicago' },
+  { name: 'New York' },
+  { name: 'Los Angeles' },
+  { name: 'Austin' },
+];
+
+function FavoritesPanel() {
+  const [venues, setVenues] = useState(SAVED_VENUES);
+  const [cities, setCities] = useState(SAVED_CITIES);
+
+  return (
+    <div style={{ padding: '0 32px 32px' }}>
+      {/* Saved venues */}
+      <div style={{ marginBottom: 32 }}>
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: 14 }}>
+          Saved venues
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {venues.map(v => (
+            <div key={v.id} style={{
+              display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px',
+              borderRadius: 14, border: '1px solid var(--line)', background: 'var(--bg-2)',
+            }}>
+              <div style={{
+                width: 40, height: 40, borderRadius: 10, flexShrink: 0,
+                background: `linear-gradient(135deg, ${v.tint}cc, ${v.tint}44)`,
+                display: 'grid', placeItems: 'center',
+              }}>
+                <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v.name}</div>
+                <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', marginTop: 2 }}>{v.city}</div>
+              </div>
+              <button
+                onClick={() => setVenues(prev => prev.filter(x => x.id !== v.id))}
+                style={{
+                  padding: '5px 12px', borderRadius: 8, cursor: 'pointer',
+                  fontFamily: 'var(--f-b)', fontWeight: 600, fontSize: 12,
+                  border: '1px solid var(--line-2)', background: 'transparent',
+                  color: 'var(--ink-3)',
+                }}
+              >Unfollow</button>
+            </div>
+          ))}
+          {venues.length === 0 && (
+            <div style={{ padding: '24px 0', textAlign: 'center', fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-3)' }}>
+              No saved venues yet — follow a venue from Upcoming or Shows.
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Saved cities */}
+      <div>
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: 14 }}>
+          Saved cities
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {cities.map(c => (
+            <div key={c.name} style={{
+              display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px',
+              borderRadius: 99, border: '1px solid var(--line-2)', background: 'var(--bg-2)',
+            }}>
+              <span style={{ fontFamily: 'var(--f-b)', fontWeight: 600, fontSize: 13, color: 'var(--ink)' }}>{c.name}</span>
+              <button
+                onClick={() => setCities(prev => prev.filter(x => x.name !== c.name))}
+                style={{
+                  display: 'grid', placeItems: 'center', width: 18, height: 18, borderRadius: '50%',
+                  background: 'rgba(255,255,255,.08)', border: 'none', cursor: 'pointer',
+                  color: 'var(--ink-3)', fontSize: 11, lineHeight: 1,
+                }}
+                aria-label={`Unfollow ${c.name}`}
+              >×</button>
+            </div>
+          ))}
+          {cities.length === 0 && (
+            <div style={{ fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-3)' }}>No saved cities yet.</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── For You Panel ────────────────────────────────────────────
+
 function ForYouPanel({ data }: { data: WorkbenchData }) {
   const recommended = data.shows.slice(0, 4);
   const TINTS = ['#22e5d4', '#b983ff', '#ffb84a', '#ff3e9a'];
@@ -139,16 +241,93 @@ function ForYouPanel({ data }: { data: WorkbenchData }) {
   );
 }
 
-const SUB_TABS = ['Tickets', 'Near me', 'For you'];
+// ─── Shows Panel ──────────────────────────────────────────────
+
+const RADIO_SHOWS = [
+  { id: 'rs1', name: 'The Halflight Hour',   host: 'Maya Reyes',    schedule: 'Fridays 9pm',    listeners: 1240, color: '#ff5029' },
+  { id: 'rs2', name: 'Basement Frequencies', host: 'Colin Atwood',  schedule: 'Tuesdays 11pm',  listeners: 880,  color: '#22e5d4' },
+  { id: 'rs3', name: 'Curated by Vela',      host: 'Vela',          schedule: 'Sundays 8pm',    listeners: 2100, color: '#b983ff' },
+  { id: 'rs4', name: 'Local Dispatch',       host: 'DJ Trace',      schedule: 'Saturdays 10pm', listeners: 650,  color: '#ffb84a' },
+  { id: 'rs5', name: 'Indigo Sessions',      host: 'Mara Solano',   schedule: 'Wednesdays 7pm', listeners: 430,  color: '#ff3e9a' },
+];
+
+function ShowsPanel() {
+  return (
+    <div style={{ padding: '0 32px 32px' }}>
+      {/* Clarification banner */}
+      <div style={{
+        display: 'flex', gap: 12, alignItems: 'flex-start', padding: '12px 16px',
+        borderRadius: 12, background: 'rgba(255,184,74,.08)', border: '1px solid rgba(255,184,74,.2)',
+        marginBottom: 24,
+      }}>
+        <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#ffb84a" strokeWidth="1.8" strokeLinecap="round" style={{ flexShrink: 0, marginTop: 1 }}>
+          <circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/>
+        </svg>
+        <div style={{ fontFamily: 'var(--f-b)', fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.5 }}>
+          These are <strong style={{ color: 'var(--ink)' }}>radio broadcasts</strong>, not live events or ticket sales. Tune in to hear curated shows from artists and DJs.
+        </div>
+      </div>
+
+      {/* Shows list */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {RADIO_SHOWS.map(show => (
+          <div key={show.id} style={{
+            display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px',
+            borderRadius: 14,
+            background: `linear-gradient(90deg, ${show.color}0e, var(--bg-2))`,
+            border: `1px solid ${show.color}28`,
+          }}>
+            {/* Icon */}
+            <div style={{
+              width: 44, height: 44, borderRadius: 10, flexShrink: 0,
+              background: `linear-gradient(135deg, ${show.color}cc, ${show.color}44)`,
+              display: 'grid', placeItems: 'center',
+            }}>
+              <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round">
+                <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M12 2v1.5M12 20.5V22M2 12h1.5M20.5 12H22"/>
+              </svg>
+            </div>
+            {/* Info */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{show.name}</div>
+              <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', marginTop: 2 }}>
+                {show.host} · {show.schedule}
+              </div>
+            </div>
+            {/* Listeners */}
+            <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: show.color, flexShrink: 0, textAlign: 'right' }}>
+              {show.listeners.toLocaleString()} listening
+            </div>
+            {/* CTA */}
+            <button style={{
+              padding: '7px 14px', borderRadius: 8, cursor: 'pointer', flexShrink: 0,
+              fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13,
+              border: `1px solid ${show.color}55`,
+              background: `${show.color}14`,
+              color: show.color,
+            }}>
+              Tune in
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────
+
+const SUB_TABS = ['Upcoming', 'Favorites', 'For you', 'Shows'];
 
 const HEADERS: Record<string, [string, string]> = {
-  Tickets:  ['Tonight & upcoming', "What's hyped near you."],
-  'Near me': ['Within 5 miles', 'Shows around the corner.'],
+  Upcoming:  ['Near you',            'Shows around the corner.'],
+  Favorites: ['Your saved spots',    'Venues and cities you follow.'],
   'For you': ['Based on your hypes', 'Picked for you.'],
+  Shows:     ['Radio broadcasts',    'Shows on air, not on stage.'],
 };
 
 export function ViewEventsHub({ data }: { data: WorkbenchData }) {
-  const [sub, setSub] = useState('Tickets');
+  const [sub, setSub] = useState('Upcoming');
   const [kicker, title] = HEADERS[sub];
 
   return (
@@ -158,9 +337,10 @@ export function ViewEventsHub({ data }: { data: WorkbenchData }) {
         <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 'clamp(2rem,4vw,3rem)', letterSpacing: '-.04em', margin: '0 0 20px', lineHeight: 1 }}>{title}</h1>
       </div>
       <SubTabs value={sub} options={SUB_TABS} onChange={setSub} />
-      {sub === 'Tickets' && <ViewTickets data={data} />}
-      {sub === 'Near me' && <NearMePanel data={data} />}
-      {sub === 'For you' && <ForYouPanel data={data} />}
+      {sub === 'Upcoming'  && <UpcomingPanel data={data} />}
+      {sub === 'Favorites' && <FavoritesPanel />}
+      {sub === 'For you'   && <ForYouPanel data={data} />}
+      {sub === 'Shows'     && <ShowsPanel />}
     </div>
   );
 }
