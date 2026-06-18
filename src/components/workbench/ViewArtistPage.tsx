@@ -1689,6 +1689,9 @@ function LibraryManager({ profileId }: { profileId: string }) {
   const [dragOver, setDragOver] = useState(false);
   const [imageDragOver, setImageDragOver] = useState(false);
   const [imagePreview, setImagePreview] = useState<{ url: string; name: string; width: number; height: number } | null>(null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageUploadedUrl, setImageUploadedUrl] = useState<string | null>(null);
+  const [imageCopied, setImageCopied] = useState(false);
   const [albumNotes, setAlbumNotes] = useState('');
   const [albumNotesSaved, setAlbumNotesSaved] = useState(false);
   const [submittedSeeds, setSubmittedSeeds] = useState<Set<string>>(new Set());
@@ -1783,12 +1786,21 @@ function LibraryManager({ profileId }: { profileId: string }) {
   }
 
   function handleImageDrop(file: File) {
-    const url = URL.createObjectURL(file);
+    const localUrl = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
-      setImagePreview({ url, name: file.name, width: img.naturalWidth, height: img.naturalHeight });
+      setImagePreview({ url: localUrl, name: file.name, width: img.naturalWidth, height: img.naturalHeight });
     };
-    img.src = url;
+    img.src = localUrl;
+    setImageUploadedUrl(null);
+    setImageUploading(true);
+    const fd = new FormData();
+    fd.append('file', file);
+    fetch('/api/profile/upload-graphic', { method: 'POST', body: fd })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then((d: { url: string }) => setImageUploadedUrl(d.url))
+      .catch(() => {})
+      .finally(() => setImageUploading(false));
   }
 
   function saveAlbumNotes() {
@@ -1999,9 +2011,9 @@ function LibraryManager({ profileId }: { profileId: string }) {
 
       {/* ── Cover Art & Graphics ── */}
       <div style={{ ...sx.card, marginBottom: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <div style={sx.label}>Cover Art & Graphics</div>
-          <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9, fontWeight: 700, letterSpacing: '.06em', color: '#ffb84a', background: 'rgba(255,184,74,.1)', border: '1px solid rgba(255,184,74,.2)', borderRadius: 4, padding: '2px 6px' }}>COMING SOON</span>
+          {imageUploading && <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: 'rgba(244,239,233,.4)' }}>Uploading…</span>}
         </div>
         <div
           onDragOver={e => { e.preventDefault(); setImageDragOver(true); }}
@@ -2012,33 +2024,54 @@ function LibraryManager({ profileId }: { profileId: string }) {
             const file = e.dataTransfer.files[0];
             if (file && file.type.startsWith('image/')) handleImageDrop(file);
           }}
+          onClick={() => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/jpeg,image/png,image/gif,image/webp';
+            input.onchange = () => { if (input.files?.[0]) handleImageDrop(input.files[0]); };
+            input.click();
+          }}
           style={{
             border: `2px dashed ${imageDragOver ? '#ffb84a' : 'rgba(255,255,255,.1)'}`,
-            borderRadius: 10, padding: '20px', textAlign: 'center', cursor: 'default',
+            borderRadius: 10, padding: '20px', textAlign: 'center', cursor: 'pointer',
             background: imageDragOver ? 'rgba(255,184,74,.05)' : 'rgba(255,255,255,.02)',
             marginBottom: imagePreview ? 14 : 0, transition: 'all .15s',
           }}
         >
-          <div style={{ fontFamily: 'var(--f-d,sans-serif)', fontSize: 13, fontWeight: 700, color: 'rgba(244,239,233,.5)', marginBottom: 4 }}>Drop image here to preview</div>
-          <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 11, color: 'rgba(244,239,233,.25)' }}>Graphic uploads coming soon — save to your device for now</div>
+          <div style={{ fontFamily: 'var(--f-d,sans-serif)', fontSize: 13, fontWeight: 700, color: 'rgba(244,239,233,.5)', marginBottom: 4 }}>Drop image or click to browse</div>
+          <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 11, color: 'rgba(244,239,233,.25)' }}>JPEG · PNG · GIF · WebP · max 8 MB</div>
         </div>
         {imagePreview && (
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
             <img src={imagePreview.url} alt="preview" style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 8, border: '1px solid rgba(255,255,255,.1)', flexShrink: 0 }} />
-            <div>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: 'var(--f-b,sans-serif)', fontSize: 13, color: 'var(--ink,#f4efe9)', marginBottom: 4 }}>{imagePreview.name}</div>
               <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 11, color: 'rgba(244,239,233,.4)', marginBottom: 10 }}>{imagePreview.width} × {imagePreview.height} px</div>
-              <a
-                href={imagePreview.url}
-                download={imagePreview.name}
-                style={{
-                  display: 'inline-block', fontFamily: 'var(--f-m,monospace)', fontSize: 11, fontWeight: 700,
-                  color: '#ffb84a', border: '1px solid rgba(255,184,74,.3)', borderRadius: 6,
-                  padding: '5px 12px', textDecoration: 'none',
-                }}
-              >
-                Download
-              </a>
+              {imageUploadedUrl && (
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: '#5fd38a', marginBottom: 6 }}>Uploaded — copy URL to use in page builder</div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <input
+                      readOnly
+                      value={imageUploadedUrl}
+                      style={{ flex: 1, minWidth: 0, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 6, padding: '5px 8px', color: 'rgba(244,239,233,.6)', fontFamily: 'var(--f-m,monospace)', fontSize: 10, outline: 'none' }}
+                    />
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(imageUploadedUrl).catch(() => {});
+                        setImageCopied(true);
+                        setTimeout(() => setImageCopied(false), 1500);
+                      }}
+                      style={{ padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(255,184,74,.3)', background: 'none', color: '#ffb84a', fontFamily: 'var(--f-m,monospace)', fontSize: 10, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                    >
+                      {imageCopied ? 'Copied!' : 'Copy'}
+                    </button>
+                  </div>
+                </div>
+              )}
+              {imageUploading && !imageUploadedUrl && (
+                <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 11, color: 'rgba(244,239,233,.3)' }}>Uploading…</div>
+              )}
             </div>
           </div>
         )}

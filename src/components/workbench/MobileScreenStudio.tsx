@@ -5,6 +5,12 @@ import type { WorkbenchData } from '@/types/workbench';
 import { T, WMPill, WMChip, WMViewHead, WMCard } from './MobilePrimitives';
 import { PageActions } from './PageActions';
 
+type MobileBookingReq = {
+  id: string; message: string; status: string; createdAt: string;
+  fromUser?: { name: string | null; profiles?: Array<{ name: string; type: string }> } | null;
+  toProfile?: { name: string; type: string } | null;
+};
+
 // ─── Screen: Studio ──────────────────────────────────────────
 export function MobileScreenStudio({ data }: { data: WorkbenchData }) {
   const [disputeSheetShowId, setDisputeSheetShowId] = React.useState<string | null>(null);
@@ -19,6 +25,20 @@ export function MobileScreenStudio({ data }: { data: WorkbenchData }) {
   const [scheduleDate, setScheduleDate] = React.useState('');
   const [draftSaved, setDraftSaved] = React.useState(false);
   const [localToast, setLocalToast] = React.useState<string | null>(null);
+  const [publishOpen, setPublishOpen] = React.useState(false);
+  const [publishTitle, setPublishTitle] = React.useState('Halflight FM · Ep 05');
+  const [publishState, setPublishState] = React.useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+  const [trackPickerOpen, setTrackPickerOpen] = React.useState(false);
+  const [voiceOpen, setVoiceOpen] = React.useState(false);
+  const [recording, setRecording] = React.useState(false);
+  const [recordedBlob, setRecordedBlob] = React.useState<Blob | null>(null);
+  const [voiceUploading, setVoiceUploading] = React.useState(false);
+  const [bookingsOpen, setBookingsOpen] = React.useState(false);
+  const [bookings, setBookings] = React.useState<{ received: MobileBookingReq[]; sent: MobileBookingReq[] } | null>(null);
+  const [bookingsLoading, setBookingsLoading] = React.useState(false);
+  const [bookingPatching, setBookingPatching] = React.useState<string | null>(null);
+  const mediaRecorderRef = React.useRef<MediaRecorder | null>(null);
+  const chunksRef = React.useRef<Blob[]>([]);
 
   function showToast(msg: string) {
     setLocalToast(msg);
@@ -68,6 +88,93 @@ export function MobileScreenStudio({ data }: { data: WorkbenchData }) {
     } catch { setDisputeState('error'); }
   };
 
+  const handlePublish = async () => {
+    if (!publishTitle.trim()) return;
+    setPublishState('loading');
+    try {
+      const startsAt = scheduleDate ? new Date(scheduleDate).toISOString() : new Date().toISOString();
+      const res = await fetch('/api/shows', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: publishTitle,
+          isRadioShow: false,
+          status: scheduleDate ? 'SCHEDULED' : 'DRAFT',
+          startsAt,
+        }),
+      });
+      if (res.ok) {
+        setPublishState('done');
+        setTimeout(() => { setPublishOpen(false); setPublishState('idle'); showToast('Episode published!'); }, 1500);
+      } else {
+        const d = await res.json().catch(() => ({})) as { error?: string };
+        setPublishState('error');
+        setTimeout(() => setPublishState('idle'), 2000);
+        showToast(d.error ?? 'Failed to publish');
+      }
+    } catch {
+      setPublishState('error');
+      setTimeout(() => setPublishState('idle'), 2000);
+    }
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      chunksRef.current = [];
+      mr.ondataavailable = e => chunksRef.current.push(e.data);
+      mr.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        setRecordedBlob(blob);
+        stream.getTracks().forEach(t => t.stop());
+      };
+      mediaRecorderRef.current = mr;
+      mr.start();
+      setRecording(true);
+    } catch {
+      showToast('Microphone access denied');
+    }
+  };
+
+  const stopRecording = () => {
+    mediaRecorderRef.current?.stop();
+    setRecording(false);
+  };
+
+  const openBookings = React.useCallback(() => {
+    setBookingsOpen(true);
+    if (!bookings) {
+      setBookingsLoading(true);
+      fetch('/api/booking-requests')
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then((d: { received?: MobileBookingReq[]; sent?: MobileBookingReq[] }) => {
+          setBookings({ received: d.received ?? [], sent: d.sent ?? [] });
+        })
+        .catch(() => setBookings({ received: [], sent: [] }))
+        .finally(() => setBookingsLoading(false));
+    }
+  }, [bookings]);
+
+  async function respondBooking(id: string, status: 'accepted' | 'declined') {
+    setBookingPatching(id);
+    try {
+      await fetch('/api/booking-requests', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
+      });
+      setBookings(null);
+      setBookingsLoading(true);
+      fetch('/api/booking-requests')
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then((d: { received?: MobileBookingReq[]; sent?: MobileBookingReq[] }) => setBookings({ received: d.received ?? [], sent: d.sent ?? [] }))
+        .catch(() => {})
+        .finally(() => setBookingsLoading(false));
+    } catch {}
+    finally { setBookingPatching(null); }
+  }
+
   const trackList = data.tracks;
   const clips = trackList.map((tr, i) => ({
     n: String(i + 1).padStart(2, '0'),
@@ -91,10 +198,11 @@ export function MobileScreenStudio({ data }: { data: WorkbenchData }) {
         title="Studio"
         sub="Drag tracks into the timeline. Splits auto-calc: 45/45/10."
         actions={<>
-          <WMChip onClick={() => showToast('Import from library coming soon')}>↥ Import</WMChip>
-          <WMChip accent onClick={() => showToast('Publish flow coming soon — schedule a date below first')}>⬤ Publish</WMChip>
+          <WMChip onClick={() => setTrackPickerOpen(true)}>↥ Import</WMChip>
+          <WMChip accent onClick={() => setPublishOpen(true)}>⬤ Publish</WMChip>
           <WMChip onClick={handleCopyEmbed}>{embedCopied ? '✓ Copied!' : '⊞ Embed'}</WMChip>
           <WMChip onClick={() => setFanMailOpen(true)}>✉ Fan mail</WMChip>
+          <WMChip onClick={openBookings}>⟳ Bookings</WMChip>
           <PageActions
             compact
             type={data.pageEditor?.type ?? data.profileType}
@@ -175,8 +283,8 @@ export function MobileScreenStudio({ data }: { data: WorkbenchData }) {
           </div>
 
           <div style={{ display: 'flex', gap: 6, marginTop: 14, paddingTop: 12, borderTop: `1px solid ${T.line}`, flexWrap: 'wrap' }}>
-            <WMChip onClick={() => showToast('Import from library coming soon')}>+ Track</WMChip>
-            <WMChip onClick={() => showToast('Voice recorder coming soon')}>⏵ Voice</WMChip>
+            <WMChip onClick={() => setTrackPickerOpen(true)}>+ Track</WMChip>
+            <WMChip onClick={() => setVoiceOpen(true)}>⏵ Voice</WMChip>
             <WMChip style={{ marginLeft: 'auto' }} accent onClick={() => { setDraftSaved(true); showToast('Draft saved'); setTimeout(() => setDraftSaved(false), 3000); }}>{draftSaved ? '✓ Saved' : 'Save draft'}</WMChip>
           </div>
           {/* Schedule release */}
@@ -210,42 +318,40 @@ export function MobileScreenStudio({ data }: { data: WorkbenchData }) {
           </div>
         </WMCard>
 
-        {/* Drafts */}
+        {/* My shows */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
-          <h2 style={{ fontFamily: T.fd, fontWeight: 700, letterSpacing: '-.01em', fontSize: 14, color: T.ink, margin: 0 }}>My drafts</h2>
-          <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.08em' }}>4 total</div>
+          <h2 style={{ fontFamily: T.fd, fontWeight: 700, letterSpacing: '-.01em', fontSize: 14, color: T.ink, margin: 0 }}>My shows</h2>
+          <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.08em' }}>{data.shows.length} upcoming</div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
-          {[
-            { t: 'Halflight FM · Ep 04', m: '8 tracks · 60:00 · 2,284 plays',   pill: ['teal',  'PUBLISHED'], r: '$184.20', g: `linear-gradient(135deg,${T.accent},${T.amber})` },
-            { t: 'Halflight FM · Ep 05', m: '6 tracks · 47:00 · Sun Jun 22',    pill: ['amber', 'EDITING'],   r: 'co 15%',  g: `linear-gradient(135deg,${T.accent},${T.pink})`,  curr: true },
-            { t: 'Writing room',         m: '5 tracks · 35:00 · unscheduled',   pill: ['soft',  'DRAFT'],     r: '—',       g: `linear-gradient(135deg,${T.blue},${T.bg4})` },
-            { t: 'Sundown · back-half',  m: '4 tracks · 30:00 · co: DJ Vex 10%',pill: ['soft',  'DRAFT'],     r: '—',       g: `linear-gradient(135deg,${T.pink},${T.purple})` },
-          ].map((d, i) => (
-            <div key={i} style={{
-              display: 'grid', gridTemplateColumns: '42px 1fr auto', gap: 10, alignItems: 'center',
-              background: d.curr ? 'rgba(255,80,41,.04)' : T.bg2,
-              border: `1px solid ${d.curr ? T.accent : T.line}`, borderRadius: 9, padding: 10,
-            }}>
-              <div style={{ width: 42, height: 42, borderRadius: 6, background: d.g }} />
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontFamily: T.fd, fontWeight: 700, letterSpacing: '-.01em', fontSize: 12.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: T.ink }}>{d.t}</div>
-                <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.06em', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.m}</div>
+          {data.shows.length === 0 ? (
+            <div style={{ fontFamily: T.fm, fontSize: 13, color: T.ink3, textAlign: 'center', padding: '20px 0' }}>No upcoming shows yet</div>
+          ) : data.shows.map(s => {
+            const tone = s.status === 'TONIGHT' ? 'teal' : s.status === 'NEAR SOLD' || s.status === 'THIS WEEK' ? 'amber' : 'soft';
+            const label = s.status;
+            const meta = `${s.venue} · ${s.date} ${s.time}`;
+            const revenue = s.sold > 0 ? `${s.sold}/${s.capacity} sold` : s.price > 0 ? `$${s.price}` : 'Free';
+            const grad = s.status === 'TONIGHT' ? `linear-gradient(135deg,${T.accent},${T.amber})`
+              : s.status === 'NEAR SOLD' ? `linear-gradient(135deg,${T.amber},${T.pink})`
+              : `linear-gradient(135deg,${T.accent},${T.pink})`;
+            return (
+              <div key={s.id} style={{
+                display: 'grid', gridTemplateColumns: '42px 1fr auto', gap: 10, alignItems: 'center',
+                background: s.status === 'TONIGHT' ? 'rgba(255,80,41,.04)' : T.bg2,
+                border: `1px solid ${s.status === 'TONIGHT' ? T.accent : T.line}`, borderRadius: 9, padding: 10,
+              }}>
+                <div style={{ width: 42, height: 42, borderRadius: 6, background: grad }} />
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontFamily: T.fd, fontWeight: 700, letterSpacing: '-.01em', fontSize: 12.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: T.ink }}>{s.name}</div>
+                  <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.06em', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{meta}</div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'flex-end' }}>
+                  <WMPill tone={tone}>{label}</WMPill>
+                  <span style={{ fontFamily: T.fm, fontSize: 12, color: T.ink2 }}>{revenue}</span>
+                </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'flex-end' }}>
-                <WMPill tone={d.pill[0]}>{d.pill[1]}</WMPill>
-                <span style={{ fontFamily: T.fm, fontSize: 12, color: T.ink2 }}>{d.r}</span>
-                {d.pill[1] === 'PUBLISHED' && (
-                  <button
-                    onClick={() => setDisputeSheetShowId(d.t)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.amber, fontFamily: T.fm, fontSize: 11, padding: 0, fontWeight: 700 }}
-                  >
-                    Dispute payout →
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -329,6 +435,207 @@ export function MobileScreenStudio({ data }: { data: WorkbenchData }) {
                 >
                   {disputeState === 'loading' ? 'Submitting…' : disputeState === 'error' ? 'Failed — retry' : 'Submit dispute'}
                 </button>
+              </>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Publish sheet */}
+      {publishOpen && (
+        <>
+          <div onClick={() => setPublishOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 59, background: 'rgba(0,0,0,.6)' }} />
+          <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 60, background: T.bg3, borderTop: `1px solid ${T.line2}`, borderRadius: '18px 18px 0 0', padding: '20px 18px 40px' }}>
+            <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 18, marginBottom: 4 }}>Publish episode</div>
+            <div style={{ fontFamily: T.fm, fontSize: 13, color: T.ink3, marginBottom: 14 }}>
+              {scheduleDate ? `Scheduled for ${new Date(scheduleDate).toLocaleString()}` : 'No schedule set — will save as draft.'}
+            </div>
+            {publishState === 'done' ? (
+              <div style={{ textAlign: 'center', padding: '24px 0', color: T.teal, fontFamily: T.fb }}>Published!</div>
+            ) : (
+              <>
+                <input
+                  type="text"
+                  value={publishTitle}
+                  onChange={e => setPublishTitle(e.target.value.slice(0, 100))}
+                  placeholder="Episode title"
+                  style={{ width: '100%', background: T.bg2, border: `1px solid ${T.line2}`, borderRadius: 10, color: T.ink, fontFamily: T.fb, fontSize: 14, padding: '10px 12px', marginBottom: 12, boxSizing: 'border-box', outline: 'none' }}
+                />
+                <button
+                  onClick={handlePublish}
+                  disabled={publishState === 'loading' || !publishTitle.trim()}
+                  style={{ width: '100%', padding: '13px 0', borderRadius: 10, border: 'none', background: publishTitle.trim() ? `linear-gradient(135deg,${T.accent},${T.pink})` : T.bg4, color: publishTitle.trim() ? T.bg : T.ink3, fontFamily: T.fd, fontWeight: 800, fontSize: 15, cursor: publishTitle.trim() ? 'pointer' : 'default' }}
+                >
+                  {publishState === 'loading' ? 'Publishing…' : publishState === 'error' ? 'Failed — retry' : scheduleDate ? 'Schedule & publish' : 'Save as draft'}
+                </button>
+              </>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Track picker sheet */}
+      {trackPickerOpen && (
+        <>
+          <div onClick={() => setTrackPickerOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 59, background: 'rgba(0,0,0,.6)' }} />
+          <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 60, background: T.bg3, borderTop: `1px solid ${T.line2}`, borderRadius: '18px 18px 0 0', padding: '20px 18px', maxHeight: '72vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 18 }}>Import from library</div>
+              <button onClick={() => setTrackPickerOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontSize: 20, lineHeight: 1 }}>✕</button>
+            </div>
+            <div style={{ overflowY: 'auto', paddingBottom: 32 }}>
+              {data.tracks.length === 0 ? (
+                <div style={{ padding: '28px 0', textAlign: 'center', color: T.ink3, fontFamily: T.fb, fontSize: 13 }}>No tracks in your library yet.</div>
+              ) : data.tracks.map((t, i) => (
+                <button
+                  key={t.id}
+                  onClick={() => { showToast(`Added "${t.title}"`); setTrackPickerOpen(false); }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', background: 'none', border: 'none', borderBottom: i < data.tracks.length - 1 ? `1px solid ${T.line}` : 'none', cursor: 'pointer', textAlign: 'left' }}
+                >
+                  <div style={{ width: 36, height: 36, borderRadius: 6, background: `linear-gradient(135deg,${t.color},${t.color}80)`, flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: T.fb, fontSize: 14, color: T.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</div>
+                    <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3 }}>{t.artistName} · {t.duration}</div>
+                  </div>
+                  <span style={{ color: T.teal, fontFamily: T.fm, fontSize: 11, fontWeight: 700, letterSpacing: '.06em', flexShrink: 0 }}>+ ADD</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Voice recorder sheet */}
+      {voiceOpen && (
+        <>
+          <div onClick={() => { if (!recording) setVoiceOpen(false); }} style={{ position: 'fixed', inset: 0, zIndex: 59, background: 'rgba(0,0,0,.6)' }} />
+          <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 60, background: T.bg3, borderTop: `1px solid ${T.line2}`, borderRadius: '18px 18px 0 0', padding: '20px 18px 40px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 18 }}>Voice recorder</div>
+              {!recording && <button onClick={() => setVoiceOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontSize: 20, lineHeight: 1 }}>✕</button>}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18, padding: '24px 0' }}>
+              {recordedBlob ? (
+                <>
+                  <audio controls src={URL.createObjectURL(recordedBlob)} style={{ width: '100%' }} />
+                  <div style={{ display: 'flex', gap: 10, width: '100%' }}>
+                    <button onClick={() => setRecordedBlob(null)} style={{ flex: 1, padding: '11px 0', borderRadius: 9, border: `1px solid ${T.line2}`, background: 'none', color: T.ink2, fontFamily: T.fm, fontSize: 13, cursor: 'pointer' }}>Re-record</button>
+                    <button
+                      disabled={voiceUploading}
+                      onClick={async () => {
+                        if (!recordedBlob) return;
+                        setVoiceUploading(true);
+                        try {
+                          const fd = new FormData();
+                          const ts = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+                          fd.append('file', new File([recordedBlob], `voice-note-${Date.now()}.webm`, { type: 'audio/webm' }));
+                          fd.append('title', `Voice Note ${ts}`);
+                          fd.append('freeUseEnabled', 'false');
+                          const res = await fetch('/api/artist-media', { method: 'POST', body: fd });
+                          if (res.ok) {
+                            showToast('Voice note saved to library');
+                          } else {
+                            showToast('Saved locally — upload failed');
+                          }
+                        } catch {
+                          showToast('Saved locally — upload failed');
+                        } finally {
+                          setVoiceUploading(false);
+                          setVoiceOpen(false);
+                          setRecordedBlob(null);
+                        }
+                      }}
+                      style={{ flex: 1, padding: '11px 0', borderRadius: 9, border: 'none', background: voiceUploading ? T.bg2 : `linear-gradient(135deg,${T.accent},${T.pink})`, color: voiceUploading ? T.ink3 : T.bg, fontFamily: T.fd, fontWeight: 800, fontSize: 13, cursor: voiceUploading ? 'default' : 'pointer' }}
+                    >{voiceUploading ? 'Saving…' : 'Add to episode'}</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ width: 80, height: 80, borderRadius: '50%', background: recording ? 'rgba(255,80,41,.15)' : T.bg2, border: `2px solid ${recording ? T.accent : T.line2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s' }}>
+                    <svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke={recording ? T.accent : T.ink2} strokeWidth="1.5">
+                      <path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3M8 22h8"/>
+                    </svg>
+                  </div>
+                  {recording && <div style={{ fontFamily: T.fm, fontSize: 13, color: T.accent, letterSpacing: '.12em' }}>● RECORDING</div>}
+                  <button
+                    onClick={recording ? stopRecording : startRecording}
+                    style={{ padding: '12px 32px', borderRadius: 10, border: recording ? `1px solid ${T.accent}` : 'none', background: recording ? 'rgba(255,80,41,.18)' : `linear-gradient(135deg,${T.accent},${T.pink})`, color: recording ? T.accent : T.bg, fontFamily: T.fd, fontWeight: 800, fontSize: 15, cursor: 'pointer' }}
+                  >
+                    {recording ? 'Stop recording' : 'Start recording'}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Bookings sheet */}
+      {bookingsOpen && (
+        <>
+          <div onClick={() => setBookingsOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 59, background: 'rgba(0,0,0,.6)' }} />
+          <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 60, background: T.bg3, borderTop: `1px solid ${T.line2}`, borderRadius: '18px 18px 0 0', padding: '20px 18px 40px', maxHeight: '75vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 18 }}>Booking requests</div>
+              <button onClick={() => setBookingsOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontSize: 20, lineHeight: 1 }}>✕</button>
+            </div>
+            {bookingsLoading ? (
+              <div style={{ textAlign: 'center', padding: '24px 0', fontFamily: T.fm, fontSize: 13, color: T.ink3 }}>Loading…</div>
+            ) : !bookings || (bookings.received.length === 0 && bookings.sent.length === 0) ? (
+              <div style={{ textAlign: 'center', padding: '24px 0', fontFamily: T.fm, fontSize: 13, color: T.ink3 }}>No booking requests yet</div>
+            ) : (
+              <>
+                {bookings.received.length > 0 && (
+                  <>
+                    <div style={{ fontFamily: T.fm, fontSize: 10, fontWeight: 700, letterSpacing: '.12em', color: T.ink3, marginBottom: 10 }}>RECEIVED</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+                      {bookings.received.map(r => {
+                        const name = r.fromUser?.profiles?.[0]?.name ?? r.fromUser?.name ?? 'Someone';
+                        const statusColor = r.status === 'accepted' ? T.teal : r.status === 'declined' ? T.ink3 : T.amber;
+                        return (
+                          <div key={r.id} style={{ background: T.bg2, border: `1px solid ${T.line}`, borderRadius: 10, padding: 14 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                              <span style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 14, color: T.ink }}>{name}</span>
+                              <span style={{ fontFamily: T.fm, fontSize: 10, fontWeight: 700, color: statusColor, letterSpacing: '.08em' }}>{r.status.toUpperCase()}</span>
+                            </div>
+                            <div style={{ fontFamily: T.fb, fontSize: 13, color: T.ink2, marginBottom: r.status === 'pending' ? 12 : 0 }}>{r.message || 'No message.'}</div>
+                            {r.status === 'pending' && (
+                              <div style={{ display: 'flex', gap: 8 }}>
+                                <button disabled={bookingPatching === r.id} onClick={() => void respondBooking(r.id, 'accepted')}
+                                  style={{ flex: 1, padding: '9px 0', borderRadius: 8, border: 'none', background: `rgba(34,229,212,.15)`, color: T.teal, fontFamily: T.fd, fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>
+                                  Accept
+                                </button>
+                                <button disabled={bookingPatching === r.id} onClick={() => void respondBooking(r.id, 'declined')}
+                                  style={{ flex: 1, padding: '9px 0', borderRadius: 8, border: `1px solid ${T.line2}`, background: 'none', color: T.ink2, fontFamily: T.fm, fontSize: 13, cursor: 'pointer' }}>
+                                  Decline
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+                {bookings.sent.length > 0 && (
+                  <>
+                    <div style={{ fontFamily: T.fm, fontSize: 10, fontWeight: 700, letterSpacing: '.12em', color: T.ink3, marginBottom: 10 }}>SENT</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {bookings.sent.map(r => {
+                        const statusColor = r.status === 'accepted' ? T.teal : r.status === 'declined' ? T.ink3 : T.amber;
+                        return (
+                          <div key={r.id} style={{ background: T.bg2, border: `1px solid ${T.line}`, borderRadius: 10, padding: 14 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                              <span style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 14, color: T.ink }}>{r.toProfile?.name ?? 'Unknown'}</span>
+                              <span style={{ fontFamily: T.fm, fontSize: 10, fontWeight: 700, color: statusColor, letterSpacing: '.08em' }}>{r.status.toUpperCase()}</span>
+                            </div>
+                            <div style={{ fontFamily: T.fb, fontSize: 13, color: T.ink2 }}>{r.message || 'No message.'}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
               </>
             )}
           </div>

@@ -340,7 +340,57 @@ export const ViewTickets = memo(function ViewTickets({ data }: { data: Workbench
   const [reportStatus, setReportStatus] = useState<'idle' | 'sending' | 'done'>('idle');
   const [sortByHype, setSortByHype] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [newShowOpen, setNewShowOpen] = useState(false);
+  const [newShowTitle, setNewShowTitle] = useState('');
+  const [newShowDate, setNewShowDate] = useState('');
+  const [newShowState, setNewShowState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [transferEmail, setTransferEmail] = useState('');
+  const [transferState, setTransferState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(null), 2800); }
+
+  const createShow = async () => {
+    if (!newShowTitle.trim() || !newShowDate) return;
+    setNewShowState('loading');
+    try {
+      const res = await fetch('/api/shows', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newShowTitle, isRadioShow: false, status: 'SCHEDULED', startsAt: new Date(newShowDate).toISOString() }),
+      });
+      if (res.ok) {
+        setNewShowState('done');
+        setTimeout(() => { setNewShowOpen(false); setNewShowState('idle'); setNewShowTitle(''); setNewShowDate(''); showToast('Event created!'); }, 1500);
+      } else {
+        const d = await res.json().catch(() => ({})) as { error?: string };
+        setNewShowState('error');
+        setTimeout(() => setNewShowState('idle'), 2000);
+        showToast(d.error ?? 'Failed to create event');
+      }
+    } catch { setNewShowState('error'); setTimeout(() => setNewShowState('idle'), 2000); }
+  };
+
+  const doTransfer = async () => {
+    const ticketId = data.tickets[0]?.id;
+    if (!ticketId || !transferEmail.trim()) return;
+    setTransferState('loading');
+    try {
+      const res = await fetch(`/api/tickets/${ticketId}/transfer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ toEmail: transferEmail }),
+      });
+      if (res.ok) {
+        setTransferState('done');
+        setTimeout(() => { setTransferOpen(false); setTransferState('idle'); setTransferEmail(''); showToast('Ticket transferred!'); }, 1500);
+      } else {
+        const d = await res.json().catch(() => ({})) as { error?: string };
+        setTransferState('error');
+        setTimeout(() => setTransferState('idle'), 2000);
+        showToast(d.error ?? 'Transfer failed');
+      }
+    } catch { setTransferState('error'); setTimeout(() => setTransferState('idle'), 2000); }
+  };
 
   async function submitReport(showId: string) {
     if (!reportReason.trim()) return;
@@ -549,9 +599,8 @@ export const ViewTickets = memo(function ViewTickets({ data }: { data: Workbench
                   </div>
                   <div style={{ display: 'flex', gap: 8, marginTop: 22, flexWrap: 'wrap' }}>
                     <button onClick={() => setTab('scan')} style={{ padding: '9px 16px', background: 'var(--ink)', color: 'var(--bg)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 600, letterSpacing: '.04em', border: 'none', cursor: 'pointer' }}>Show at door →</button>
-                    {['Transfer', 'Add to Wallet'].map(l => (
-                      <button key={l} onClick={() => showToast(`${l} coming soon`)} style={{ padding: '9px 14px', border: '1px solid var(--line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.04em', color: 'var(--ink)', background: 'none', cursor: 'pointer' }}>{l}</button>
-                    ))}
+                    <button onClick={() => setTransferOpen(true)} style={{ padding: '9px 14px', border: '1px solid var(--line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.04em', color: 'var(--ink)', background: 'none', cursor: 'pointer' }}>Transfer</button>
+                    <button onClick={() => showToast('Add to Wallet coming soon')} style={{ padding: '9px 14px', border: '1px solid var(--line-2)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.04em', color: 'var(--ink)', background: 'none', cursor: 'pointer' }}>Add to Wallet</button>
                     <button onClick={async () => {
                       try {
                         const r = await fetch(`/api/tickets/${data.tickets[0].id}/refund`, { method: 'POST' });
@@ -616,7 +665,7 @@ export const ViewTickets = memo(function ViewTickets({ data }: { data: Workbench
           <div style={{ border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)', overflow: 'hidden' }}>
             <div style={{ padding: '12px 18px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>Shows on sale</div>
-              <button onClick={() => showToast('New show creation coming soon')} style={{ padding: '9px 16px', background: 'var(--ink)', color: 'var(--bg)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 600, letterSpacing: '.04em', border: 'none', cursor: 'pointer' }}>＋ New show</button>
+              <button onClick={() => setNewShowOpen(true)} style={{ padding: '9px 16px', background: 'var(--ink)', color: 'var(--bg)', borderRadius: 6, fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 600, letterSpacing: '.04em', border: 'none', cursor: 'pointer' }}>＋ New show</button>
             </div>
             {data.shows.map(s => {
               const pct = s.capacity > 0 ? (s.sold / s.capacity) * 100 : 0;
@@ -721,6 +770,80 @@ export const ViewTickets = memo(function ViewTickets({ data }: { data: Workbench
                   style={{ flex: 1, padding: '10px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #ff5029, #ff3e9a)', color: '#fff', fontFamily: 'var(--f-m)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
                 >
                   {reportStatus === 'sending' ? 'Submitting…' : 'Submit report'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    )}
+
+    {/* New show modal */}
+    {newShowOpen && (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 9000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+        onClick={(e) => { if (e.target === e.currentTarget) setNewShowOpen(false); }}>
+        <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 16, padding: '24px 24px 20px', width: '100%', maxWidth: 420 }}>
+          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 18, color: 'var(--ink)', marginBottom: 6 }}>Create new event</div>
+          <p style={{ fontFamily: 'var(--f-b)', fontSize: 13, color: 'var(--ink-2)', margin: '0 0 16px', lineHeight: 1.5 }}>Add an event to your shows-on-sale listing.</p>
+          {newShowState === 'done' ? (
+            <div style={{ textAlign: 'center', padding: '20px 0', fontFamily: 'var(--f-m)', fontSize: 14, color: '#22e5d4' }}>✓ Event created!</div>
+          ) : (
+            <>
+              <input
+                type="text"
+                value={newShowTitle}
+                onChange={e => setNewShowTitle(e.target.value.slice(0, 120))}
+                placeholder="Event title (e.g. Summer Night at Metro)"
+                style={{ width: '100%', background: 'var(--bg-3)', border: '1px solid var(--line)', borderRadius: 8, color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: 13, padding: '10px 12px', marginBottom: 10, boxSizing: 'border-box', outline: 'none' }}
+              />
+              <input
+                type="datetime-local"
+                value={newShowDate}
+                onChange={e => setNewShowDate(e.target.value)}
+                style={{ width: '100%', background: 'var(--bg-3)', border: '1px solid var(--line)', borderRadius: 8, color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: 13, padding: '10px 12px', marginBottom: 14, boxSizing: 'border-box', outline: 'none' }}
+              />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => setNewShowOpen(false)} style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line-2)', background: 'none', color: 'var(--ink-2)', fontFamily: 'var(--f-m)', fontSize: 13, cursor: 'pointer' }}>Cancel</button>
+                <button
+                  onClick={createShow}
+                  disabled={!newShowTitle.trim() || !newShowDate || newShowState === 'loading'}
+                  style={{ flex: 1, padding: '10px', borderRadius: 8, border: 'none', background: (newShowTitle.trim() && newShowDate) ? 'linear-gradient(135deg, var(--accent), var(--pink, #ff3e9a))' : 'var(--bg-4)', color: (newShowTitle.trim() && newShowDate) ? '#fff' : 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: 13, fontWeight: 700, cursor: (newShowTitle.trim() && newShowDate) ? 'pointer' : 'default' }}
+                >
+                  {newShowState === 'loading' ? 'Creating…' : newShowState === 'error' ? 'Failed — retry' : 'Create event'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    )}
+
+    {/* Transfer ticket modal */}
+    {transferOpen && (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 9000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+        onClick={(e) => { if (e.target === e.currentTarget) setTransferOpen(false); }}>
+        <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 16, padding: '24px 24px 20px', width: '100%', maxWidth: 400 }}>
+          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 18, color: 'var(--ink)', marginBottom: 6 }}>Transfer ticket</div>
+          <p style={{ fontFamily: 'var(--f-b)', fontSize: 13, color: 'var(--ink-2)', margin: '0 0 14px', lineHeight: 1.5 }}>Enter the recipient&apos;s email. They&apos;ll receive the ticket via email.</p>
+          {transferState === 'done' ? (
+            <div style={{ textAlign: 'center', padding: '20px 0', fontFamily: 'var(--f-m)', fontSize: 14, color: '#22e5d4' }}>✓ Ticket transferred!</div>
+          ) : (
+            <>
+              <input
+                type="email"
+                value={transferEmail}
+                onChange={e => setTransferEmail(e.target.value)}
+                placeholder="recipient@email.com"
+                style={{ width: '100%', background: 'var(--bg-3)', border: '1px solid var(--line)', borderRadius: 8, color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: 13, padding: '10px 12px', marginBottom: 14, boxSizing: 'border-box', outline: 'none' }}
+              />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => setTransferOpen(false)} style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid var(--line-2)', background: 'none', color: 'var(--ink-2)', fontFamily: 'var(--f-m)', fontSize: 13, cursor: 'pointer' }}>Cancel</button>
+                <button
+                  onClick={doTransfer}
+                  disabled={!transferEmail.trim() || transferState === 'loading'}
+                  style={{ flex: 1, padding: '10px', borderRadius: 8, border: 'none', background: transferEmail.trim() ? 'linear-gradient(135deg, #22e5d4, #1db954)' : 'var(--bg-4)', color: transferEmail.trim() ? '#fff' : 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: 13, fontWeight: 700, cursor: transferEmail.trim() ? 'pointer' : 'default' }}
+                >
+                  {transferState === 'loading' ? 'Transferring…' : transferState === 'error' ? 'Failed — retry' : 'Transfer ticket'}
                 </button>
               </div>
             </>

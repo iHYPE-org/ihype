@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import type { WorkbenchData } from '@/components/WorkbenchShellV2';
 import { HypeHeatmap } from '@/components/HypeHeatmap';
 import type { HypeHeatmapCity, HypeHeatmapVenuePing } from '@/components/HypeHeatmap';
@@ -81,25 +81,29 @@ function cityToHeatmapCity(
   };
 }
 
-// Static venue pings — venue demand radar is not yet in the DB
-const STATIC_VENUE_PINGS: HypeHeatmapVenuePing[] = [];
-
 function HypeHeatmapLive() {
   const [cities, setCities] = useState<HypeHeatmapCity[]>([]);
+  const [venuePings, setVenuePings] = useState<HypeHeatmapVenuePing[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/hype/heatmap')
-      .then((r) => r.json())
-      .then((data: { cities: Array<{ city: string; count: number; rank: number }> }) => {
-        const maxCount = data.cities[0]?.count ?? 1;
+    Promise.all([
+      fetch('/api/hype/heatmap').then((r) => r.json()),
+      fetch('/api/hype/venue-pings').then((r) => r.json()),
+    ])
+      .then(([heatmapData, pingsData]: [
+        { cities: Array<{ city: string; count: number; rank: number }> },
+        { pings: HypeHeatmapVenuePing[] }
+      ]) => {
+        const maxCount = heatmapData.cities[0]?.count ?? 1;
         let fallbackIndex = 0;
-        const mapped = data.cities.map((c) => {
+        const mapped = heatmapData.cities.map((c) => {
           const item = cityToHeatmapCity(c.city, c.count, c.rank, maxCount, fallbackIndex);
           if (!CITY_COORDS[c.city]) fallbackIndex++;
           return item;
         });
         setCities(mapped);
+        setVenuePings(pingsData.pings ?? []);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -131,7 +135,7 @@ function HypeHeatmapLive() {
   return (
     <HypeHeatmap
       cities={cities}
-      venuePings={STATIC_VENUE_PINGS}
+      venuePings={venuePings}
     />
   );
 }
@@ -291,6 +295,20 @@ function PassedTheAux({ data }: { data: WorkbenchData }) {
 }
 
 // ── Show creator form ─────────────────────────────────────────
+type RawShow = {
+  id: string; slug: string; title: string; status: string;
+  startsAt: string; isTicketed: boolean; isRadioShow: boolean;
+  ticketCapacity: number | null; ticketsSoldCount: number;
+  venueProfile?: { name: string } | null;
+  headlinerProfile?: { name: string } | null;
+};
+
+type BookingReq = {
+  id: string; message: string; status: string; createdAt: string;
+  fromUser?: { name: string | null; profiles?: Array<{ name: string; type: string; id: string }> } | null;
+  toProfile?: { name: string; type: string; id: string } | null;
+};
+
 function ShowCreator({ data }: { data: WorkbenchData }) {
   const [title, setTitle] = useState('');
   const [startsAt, setStartsAt] = useState('');
@@ -300,10 +318,21 @@ function ShowCreator({ data }: { data: WorkbenchData }) {
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState('');
   const [created, setCreated] = useState<{ id: string; slug: string } | null>(null);
+  const [myShows, setMyShows] = useState<RawShow[]>([]);
 
   const profileId = data.profileId;
   const profileType = data.profileType;
   const isCreator = profileType === 'ARTIST' || profileType === 'DJ' || profileType === 'VENUE';
+
+  const fetchMyShows = useCallback(async () => {
+    try {
+      const res = await fetch('/api/shows?mine=1');
+      const d = await res.json();
+      if (Array.isArray(d)) setMyShows((d as RawShow[]).filter(s => !s.isRadioShow));
+    } catch {}
+  }, []);
+
+  useEffect(() => { if (isCreator) void fetchMyShows(); }, [isCreator, fetchMyShows]);
 
   if (!isCreator) {
     return (
@@ -341,6 +370,7 @@ function ShowCreator({ data }: { data: WorkbenchData }) {
       if (!res.ok) throw new Error(typeof payload.error === 'string' ? payload.error : 'Could not create show.');
       setCreated({ id: payload.id ?? '', slug: payload.slug ?? '' });
       setTitle(''); setStartsAt(''); setTicketPrice(''); setCapacity(''); setIsTicketed(false);
+      void fetchMyShows();
     } catch (err) {
       setStatus(err instanceof Error ? err.message : 'Could not create show.');
     } finally {
@@ -348,53 +378,211 @@ function ShowCreator({ data }: { data: WorkbenchData }) {
     }
   }
 
+  const statusColor: Record<string, string> = {
+    SCHEDULED: '#22e5d4', LIVE: '#ff5029', DRAFT: 'var(--ink-3)', ENDED: 'var(--ink-3)', CANCELED: '#ff3e9a',
+  };
+
   return (
-    <div style={{ border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)', overflow: 'hidden' }}>
-      <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--line)' }}>
-        <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.16em', color: 'var(--accent)', marginBottom: 4 }}>📅 SHOW CREATOR</div>
-        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 18, color: 'var(--ink)' }}>Create a show</div>
+    <>
+      <div style={{ border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)', overflow: 'hidden', marginBottom: 24 }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--line)' }}>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.16em', color: 'var(--accent)', marginBottom: 4 }}>📅 SHOW CREATOR</div>
+          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 18, color: 'var(--ink)' }}>Create a show</div>
+        </div>
+        <form onSubmit={e => void submit(e)} style={{ padding: '18px 20px', display: 'grid', gap: 12 }}>
+          {created && (
+            <div style={{ padding: '12px 14px', borderRadius: 8, background: 'rgba(34,229,212,.08)', border: '1px solid rgba(34,229,212,.25)', fontFamily: 'var(--f-m)', fontSize: 13, color: '#22e5d4' }}>
+              ✓ Show created!{' '}
+              <a href={`/shows/${created.slug}`} target="_blank" rel="noreferrer" style={{ color: '#22e5d4', fontWeight: 700 }}>View show →</a>
+            </div>
+          )}
+          <label style={{ display: 'block' }}>
+            <span style={{ display: 'block', fontFamily: 'var(--f-m)', fontSize: 11, letterSpacing: '.1em', color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 5 }}>Show title</span>
+            <input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Friday Night Sessions" required
+              style={{ width: '100%', padding: '9px 12px', borderRadius: 7, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: 13, boxSizing: 'border-box' }} />
+          </label>
+          <label style={{ display: 'block' }}>
+            <span style={{ display: 'block', fontFamily: 'var(--f-m)', fontSize: 11, letterSpacing: '.1em', color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 5 }}>Date &amp; time</span>
+            <input type="datetime-local" value={startsAt} onChange={e => setStartsAt(e.target.value)} required
+              style={{ width: '100%', padding: '9px 12px', borderRadius: 7, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: 13, boxSizing: 'border-box' }} />
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-2)', cursor: 'pointer' }}>
+            <input type="checkbox" checked={isTicketed} onChange={e => setIsTicketed(e.target.checked)} style={{ width: 16, height: 16 }} />
+            Enable ticketing
+          </label>
+          {isTicketed && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <label style={{ display: 'block' }}>
+                <span style={{ display: 'block', fontFamily: 'var(--f-m)', fontSize: 11, letterSpacing: '.1em', color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 5 }}>Ticket price ($)</span>
+                <input type="number" min="0" step="0.01" value={ticketPrice} onChange={e => setTicketPrice(e.target.value)} placeholder="0.00"
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 7, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: 13, boxSizing: 'border-box' }} />
+              </label>
+              <label style={{ display: 'block' }}>
+                <span style={{ display: 'block', fontFamily: 'var(--f-m)', fontSize: 11, letterSpacing: '.1em', color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 5 }}>Capacity</span>
+                <input type="number" min="1" value={capacity} onChange={e => setCapacity(e.target.value)} placeholder="e.g. 200"
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 7, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: 13, boxSizing: 'border-box' }} />
+              </label>
+            </div>
+          )}
+          {status && <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: '#ffb4a7' }}>{status}</div>}
+          <button type="submit" disabled={submitting}
+            style={{ padding: '11px 20px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, var(--accent), #ff3e9a)', color: '#fff', fontFamily: 'var(--f-m)', fontSize: 13, fontWeight: 800, cursor: submitting ? 'wait' : 'pointer', alignSelf: 'flex-start' }}>
+            {submitting ? 'Creating…' : 'Create show'}
+          </button>
+        </form>
       </div>
-      <form onSubmit={e => void submit(e)} style={{ padding: '18px 20px', display: 'grid', gap: 12 }}>
-        {created && (
-          <div style={{ padding: '12px 14px', borderRadius: 8, background: 'rgba(34,229,212,.08)', border: '1px solid rgba(34,229,212,.25)', fontFamily: 'var(--f-m)', fontSize: 13, color: '#22e5d4' }}>
-            ✓ Show created!{' '}
-            <a href={`/shows/${created.slug}`} target="_blank" rel="noreferrer" style={{ color: '#22e5d4', fontWeight: 700 }}>View show →</a>
+
+      {/* Schedule list */}
+      {myShows.length > 0 && (
+        <div style={{ border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)', overflow: 'hidden' }}>
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.14em', color: 'var(--ink-3)', fontWeight: 700 }}>
+            MY SCHEDULE · {myShows.length} SHOW{myShows.length !== 1 ? 'S' : ''}
           </div>
-        )}
-        <label style={{ display: 'block' }}>
-          <span style={{ display: 'block', fontFamily: 'var(--f-m)', fontSize: 11, letterSpacing: '.1em', color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 5 }}>Show title</span>
-          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Friday Night Sessions" required
-            style={{ width: '100%', padding: '9px 12px', borderRadius: 7, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: 13, boxSizing: 'border-box' }} />
-        </label>
-        <label style={{ display: 'block' }}>
-          <span style={{ display: 'block', fontFamily: 'var(--f-m)', fontSize: 11, letterSpacing: '.1em', color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 5 }}>Date &amp; time</span>
-          <input type="datetime-local" value={startsAt} onChange={e => setStartsAt(e.target.value)} required
-            style={{ width: '100%', padding: '9px 12px', borderRadius: 7, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: 13, boxSizing: 'border-box' }} />
-        </label>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-2)', cursor: 'pointer' }}>
-          <input type="checkbox" checked={isTicketed} onChange={e => setIsTicketed(e.target.checked)} style={{ width: 16, height: 16 }} />
-          Enable ticketing
-        </label>
-        {isTicketed && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <label style={{ display: 'block' }}>
-              <span style={{ display: 'block', fontFamily: 'var(--f-m)', fontSize: 11, letterSpacing: '.1em', color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 5 }}>Ticket price ($)</span>
-              <input type="number" min="0" step="0.01" value={ticketPrice} onChange={e => setTicketPrice(e.target.value)} placeholder="0.00"
-                style={{ width: '100%', padding: '9px 12px', borderRadius: 7, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: 13, boxSizing: 'border-box' }} />
-            </label>
-            <label style={{ display: 'block' }}>
-              <span style={{ display: 'block', fontFamily: 'var(--f-m)', fontSize: 11, letterSpacing: '.1em', color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: 5 }}>Capacity</span>
-              <input type="number" min="1" value={capacity} onChange={e => setCapacity(e.target.value)} placeholder="e.g. 200"
-                style={{ width: '100%', padding: '9px 12px', borderRadius: 7, border: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: 13, boxSizing: 'border-box' }} />
-            </label>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {myShows.map((s, i) => {
+              const date = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(s.startsAt));
+              const venue = s.venueProfile?.name ?? (s.headlinerProfile?.name ? `with ${s.headlinerProfile.name}` : '');
+              const sold = s.isTicketed ? `${s.ticketsSoldCount}/${s.ticketCapacity ?? '?'} sold` : 'Free entry';
+              return (
+                <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 20px', borderBottom: i < myShows.length - 1 ? '1px solid var(--line)' : 'none' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14, color: 'var(--ink)', marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.title}</div>
+                    <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', letterSpacing: '.04em' }}>{date}{venue ? ` · ${venue}` : ''}</div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                    <span style={{ fontFamily: 'var(--f-m)', fontSize: 10, fontWeight: 700, letterSpacing: '.08em', color: statusColor[s.status] ?? 'var(--ink-3)' }}>{s.status}</span>
+                    {s.isTicketed && <span style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)' }}>{sold}</span>}
+                  </div>
+                  <a href={`/shows/${s.slug}`} target="_blank" rel="noreferrer" style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--accent)', textDecoration: 'none', flexShrink: 0 }}>View →</a>
+                </div>
+              );
+            })}
           </div>
-        )}
-        {status && <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: '#ffb4a7' }}>{status}</div>}
-        <button type="submit" disabled={submitting}
-          style={{ padding: '11px 20px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, var(--accent), #ff3e9a)', color: '#fff', fontFamily: 'var(--f-m)', fontSize: 13, fontWeight: 800, cursor: submitting ? 'wait' : 'pointer', alignSelf: 'flex-start' }}>
-          {submitting ? 'Creating…' : 'Create show'}
-        </button>
-      </form>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ── Bookings tab ──────────────────────────────────────────────
+function BookingsTab() {
+  const [received, setReceived] = useState<BookingReq[]>([]);
+  const [sent, setSent] = useState<BookingReq[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [patchingId, setPatchingId] = useState<string | null>(null);
+
+  const fetchAll = useCallback(async () => {
+    try {
+      const res = await fetch('/api/booking-requests');
+      const d = await res.json() as { received?: BookingReq[]; sent?: BookingReq[] };
+      setReceived(d.received ?? []);
+      setSent(d.sent ?? []);
+    } catch {}
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { void fetchAll(); }, [fetchAll]);
+
+  async function respond(id: string, status: 'accepted' | 'declined') {
+    setPatchingId(id);
+    try {
+      await fetch('/api/booking-requests', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
+      });
+      void fetchAll();
+    } catch {}
+    finally { setPatchingId(null); }
+  }
+
+  const statusBadge = (s: string) => {
+    const cfg: Record<string, { color: string; bg: string }> = {
+      pending:  { color: '#ffb84a', bg: 'rgba(255,184,74,.12)' },
+      accepted: { color: '#22e5d4', bg: 'rgba(34,229,212,.12)' },
+      declined: { color: 'var(--ink-3)', bg: 'rgba(255,255,255,.05)' },
+    };
+    const c = cfg[s] ?? cfg.pending;
+    return (
+      <span style={{ fontFamily: 'var(--f-m)', fontSize: 9, fontWeight: 700, letterSpacing: '.1em', padding: '2px 7px', borderRadius: 99, background: c.bg, color: c.color }}>
+        {s.toUpperCase()}
+      </span>
+    );
+  };
+
+  if (loading) return <div style={{ padding: '40px 0', textAlign: 'center', fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-3)' }}>Loading…</div>;
+
+  const noData = received.length === 0 && sent.length === 0;
+  if (noData) return (
+    <div style={{ padding: '40px 0', textAlign: 'center', fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-3)' }}>
+      No booking requests yet. Use the Matchmaker to send your first request.
+    </div>
+  );
+
+  const cardStyle = { border: '1px solid var(--line)', borderRadius: 10, background: 'var(--bg-2)', overflow: 'hidden', marginBottom: 24 };
+  const rowStyle = (last: boolean): React.CSSProperties => ({ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '14px 20px', borderBottom: last ? 'none' : '1px solid var(--line)' });
+
+  return (
+    <div style={{ marginTop: 4 }}>
+      {received.length > 0 && (
+        <div style={cardStyle}>
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.14em', color: 'var(--ink-3)', fontWeight: 700 }}>
+            RECEIVED · {received.length}
+          </div>
+          {received.map((r, i) => {
+            const senderProfile = r.fromUser?.profiles?.[0];
+            const senderName = senderProfile?.name ?? r.fromUser?.name ?? 'Someone';
+            return (
+              <div key={r.id} style={rowStyle(i === received.length - 1)}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+                    <span style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>{senderName}</span>
+                    {statusBadge(r.status)}
+                  </div>
+                  <div style={{ fontFamily: 'var(--f-b)', fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.5, marginBottom: r.status === 'pending' ? 10 : 0 }}>{r.message || 'No message provided.'}</div>
+                  {r.status === 'pending' && (
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button disabled={patchingId === r.id} onClick={() => void respond(r.id, 'accepted')}
+                        style={{ padding: '6px 16px', borderRadius: 7, border: 'none', background: 'rgba(34,229,212,.15)', color: '#22e5d4', fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                        Accept
+                      </button>
+                      <button disabled={patchingId === r.id} onClick={() => void respond(r.id, 'declined')}
+                        style={{ padding: '6px 16px', borderRadius: 7, border: '1px solid var(--line)', background: 'none', color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: 12, cursor: 'pointer' }}>
+                        Decline
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', flexShrink: 0 }}>
+                  {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(r.createdAt))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {sent.length > 0 && (
+        <div style={cardStyle}>
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.14em', color: 'var(--ink-3)', fontWeight: 700 }}>
+            SENT · {sent.length}
+          </div>
+          {sent.map((r, i) => (
+            <div key={r.id} style={rowStyle(i === sent.length - 1)}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+                  <span style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14, color: 'var(--ink)' }}>{r.toProfile?.name ?? 'Unknown'}</span>
+                  {statusBadge(r.status)}
+                </div>
+                <div style={{ fontFamily: 'var(--f-b)', fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.5 }}>{r.message || 'No message.'}</div>
+              </div>
+              <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', flexShrink: 0 }}>
+                {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(r.createdAt))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -591,7 +779,7 @@ function PayoutsTab({ data }: { data: WorkbenchData }) {
 
 export function ViewStudio({ data }: { data: WorkbenchData }) {
   const payout = data.lifeStats?.totalEarnings ?? 0;
-  const [studioTab, setStudioTab] = useState<'sets' | 'shows' | 'hypemap' | 'uploads' | 'payouts'>('sets');
+  const [studioTab, setStudioTab] = useState<'sets' | 'shows' | 'bookings' | 'hypemap' | 'uploads' | 'payouts'>('sets');
 
   const tabBtn = (id: typeof studioTab, label: string) => (
     <button
@@ -634,6 +822,7 @@ export function ViewStudio({ data }: { data: WorkbenchData }) {
       <div style={{ display: 'flex', gap: 2, borderBottom: '1px solid var(--line)', marginBottom: 20, flexWrap: 'wrap' }}>
         {tabBtn('sets', 'BUILD A SET')}
         {tabBtn('shows', 'CREATE SHOW')}
+        {tabBtn('bookings', 'BOOKINGS')}
         {tabBtn('uploads', 'UPLOADS')}
         {tabBtn('payouts', 'PAYOUTS')}
         {tabBtn('hypemap', 'HYPE MAP')}
@@ -641,6 +830,7 @@ export function ViewStudio({ data }: { data: WorkbenchData }) {
 
       {studioTab === 'sets' && <PassedTheAux data={data} />}
       {studioTab === 'shows' && <ShowCreator data={data} />}
+      {studioTab === 'bookings' && <BookingsTab />}
       {studioTab === 'uploads' && <UploadsTab data={data} />}
       {studioTab === 'payouts' && <PayoutsTab data={data} />}
       {studioTab === 'hypemap' && <HypeHeatmapLive />}

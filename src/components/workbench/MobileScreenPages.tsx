@@ -87,11 +87,30 @@ function ActionChip({ label, accent, onClick }: { label: string; accent?: string
   );
 }
 
+type AdRec = { headline: string; body: string; channel: string; cta: string };
+const AD_CHANNEL_COLORS: Record<string, string> = {
+  Instagram: '#e040fb', TikTok: '#22e5d4', Spotify: '#1db954', 'Local Flyers': '#ffb84a',
+};
+
 export function MobileScreenPages({
   data, onPage, onCockpit, onStudio, onManage, onJournal, onNotif, onSettings, onTour, onEvents,
 }: Props) {
   const [shareStatus, setShareStatus] = useState<'idle' | 'done'>('idle');
   const [selectedPage, setSelectedPage] = useState<PageRole | null>(null);
+  const [adRecsOpen, setAdRecsOpen] = useState(false);
+  const [adRecs, setAdRecs] = useState<AdRec[] | null>(null);
+  const [adRecsLoading, setAdRecsLoading] = useState(false);
+
+  const openAdRecs = useCallback(() => {
+    setAdRecsOpen(true);
+    if (!adRecs) {
+      setAdRecsLoading(true);
+      fetch('/api/page-builder/ad-recs')
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then((d: { recs: AdRec[] }) => { setAdRecs(d.recs); setAdRecsLoading(false); })
+        .catch(() => setAdRecsLoading(false));
+    }
+  }, [adRecs]);
 
   const pages = derivePages(data);
   const activePage = selectedPage ?? pages[0] ?? 'LISTENER';
@@ -122,6 +141,7 @@ export function MobileScreenPages({
   }, [data.profileHexId]);
 
   return (
+    <>
     <div style={{ overflowY: 'auto', paddingBottom: 80 }}>
       {/* Header */}
       <div style={{ padding: '20px 20px 12px' }}>
@@ -225,7 +245,7 @@ export function MobileScreenPages({
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {isCreatorOrVenue && <ActionChip label="Tour Builder" accent={T.teal} onClick={onTour} />}
             {isCreatorOrVenue && <ActionChip label="Event Creator" accent="#ff5029" onClick={onEvents} />}
-            {isCreatorOrVenue && <ActionChip label="Ad Recs" accent="#ffd700" onClick={() => { /* future */ }} />}
+            {isCreatorOrVenue && <ActionChip label="Ad Recs" accent="#ffd700" onClick={openAdRecs} />}
           </div>
         </div>
       )}
@@ -323,5 +343,43 @@ export function MobileScreenPages({
         </div>
       </div>
     </div>
+
+      {/* Ad Recs bottom sheet */}
+      {adRecsOpen && (
+        <>
+          <div onClick={() => setAdRecsOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 59, background: 'rgba(0,0,0,.65)' }} />
+          <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 60, background: T.bg3, borderTop: `1px solid ${T.line2}`, borderRadius: '18px 18px 0 0', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '14px 18px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.line}`, flexShrink: 0 }}>
+              <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 16, color: T.ink }}>Ad Recommendations</div>
+              <button onClick={() => setAdRecsOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontSize: 20, lineHeight: 1 }}>✕</button>
+            </div>
+            <div style={{ overflowY: 'auto', padding: '14px 18px 40px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ fontFamily: T.fb, fontSize: 12, color: T.ink2, marginBottom: 4, lineHeight: 1.4 }}>
+                AI-generated campaign ideas tailored to your profile.
+              </div>
+              {adRecsLoading && [0,1,2,3].map(i => (
+                <div key={i} style={{ height: 88, borderRadius: 12, background: T.bg2, opacity: 0.6 }} />
+              ))}
+              {adRecs?.map((r, i) => {
+                const col = AD_CHANNEL_COLORS[r.channel] ?? T.purple;
+                return (
+                  <div key={i} style={{ borderRadius: 12, border: `1px solid rgba(255,255,255,.07)`, background: 'rgba(255,255,255,.02)', padding: '14px 16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
+                      <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 14, color: T.ink, lineHeight: 1.2, flex: 1 }}>{r.headline}</div>
+                      <span style={{ padding: '3px 8px', borderRadius: 99, background: `${col}1a`, fontFamily: T.fm, fontSize: 10, fontWeight: 700, letterSpacing: '.1em', color: col, whiteSpace: 'nowrap', flexShrink: 0 }}>{r.channel}</span>
+                    </div>
+                    <div style={{ fontFamily: T.fb, fontSize: 12, color: T.ink2, lineHeight: 1.4, marginBottom: 4 }}>{r.body}</div>
+                    <div style={{ fontFamily: T.fm, fontSize: 11, fontWeight: 700, color: col, letterSpacing: '.04em' }}>{r.cta}</div>
+                  </div>
+                );
+              })}
+              {!adRecsLoading && adRecs !== null && adRecs.length === 0 && (
+                <div style={{ padding: '24px 0', textAlign: 'center', color: T.ink3, fontFamily: T.fb, fontSize: 13 }}>No recommendations available.</div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </>
   );
 }
