@@ -52,11 +52,11 @@ export function ScreenYouNew({ data, onManage, onJournal, onDiscover, onToast }:
             onPointerDown={startAvatarLongPress}
             onPointerUp={cancelAvatarLongPress}
             onPointerLeave={cancelAvatarLongPress}
-            style={{ width: 64, height: 64, borderRadius: 18, background: `linear-gradient(135deg, ${roleColor}, ${T.accent})`, color: T.bg, fontFamily: T.fd, fontWeight: 800, fontSize: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer', userSelect: 'none' }}>
+            style={{ width: 64, aspectRatio: '1 / 1', borderRadius: 18, background: `linear-gradient(135deg, ${roleColor}, ${T.accent})`, color: T.bg, fontFamily: T.fd, fontWeight: 800, fontSize: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer', userSelect: 'none' }}>
             {data.userInitials}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 22, letterSpacing: '-.02em' }}>{data.userName}</div>
+            <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 'clamp(18px, 5.5vw, 22px)', letterSpacing: '-.02em', lineHeight: 1.1 }}>{data.userName}</div>
             <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3, marginTop: 3 }}>
               {data.profileHexId ? `iH/${data.profileHexId.slice(0, 4).toUpperCase()}` : 'iH/—'} · {data.city}
             </div>
@@ -96,8 +96,8 @@ export function ScreenYouNew({ data, onManage, onJournal, onDiscover, onToast }:
         <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
           {stats.map((s, i) => (
             <div key={i} style={{ flex: 1, padding: 12, background: T.bg2, border: `1px solid ${T.line}`, borderRadius: 12 }}>
-              <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 22, color: s[2], letterSpacing: '-.02em', lineHeight: 1 }}>{s[0]}</div>
-              <div style={{ fontFamily: T.fm, fontSize: 8.5, color: T.ink3, marginTop: 5, letterSpacing: '.1em', textTransform: 'uppercase' }}>{s[1]}</div>
+              <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 'clamp(18px, 5vw, 22px)', color: s[2], letterSpacing: '-.02em', lineHeight: 1 }}>{s[0]}</div>
+              <div style={{ fontFamily: T.fm, fontSize: 9, color: T.ink3, marginTop: 5, letterSpacing: '.1em', textTransform: 'uppercase', lineHeight: 1.3 }}>{s[1]}</div>
             </div>
           ))}
         </div>

@@ -60,7 +60,7 @@ type ChartTrack = {
 // ─── Album art gradient placeholder ──────────────────────────
 function AlbumArt({ c = T.accent, size = 48 }: { c?: string; size?: number }) {
   return (
-    <div style={{ width: size, height: size, borderRadius: Math.max(6, Math.round(size / 6)), background: `linear-gradient(135deg, ${c}, ${c}66 60%, ${T.bg3})`, position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
+    <div style={{ width: size, aspectRatio: '1 / 1', borderRadius: Math.max(6, Math.round(size / 6)), background: `linear-gradient(135deg, ${c}, ${c}66 60%, ${T.bg3})`, position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
       <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 30% 25%, rgba(255,255,255,.22), transparent 60%)' }} />
     </div>
   );

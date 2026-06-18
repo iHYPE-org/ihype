@@ -30,7 +30,7 @@ function FavoritesTab() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {venues.map(v => (
             <div key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 12, border: `1px solid ${T.line}`, background: T.bg2 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 9, flexShrink: 0, background: `linear-gradient(135deg,${v.tint}cc,${v.tint}44)`, display: 'grid', placeItems: 'center' }}>
+              <div style={{ width: 38, aspectRatio: '1 / 1', borderRadius: 9, flexShrink: 0, background: `linear-gradient(135deg,${v.tint}cc,${v.tint}44)`, display: 'grid', placeItems: 'center' }}>
                 <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round">
                   <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
                 </svg>
@@ -70,7 +70,7 @@ function ForYouTab({ data }: { data: WorkbenchData }) {
         return (
           <div key={s.id} style={{ background: T.bg2, border: `1px solid ${T.line}`, borderRadius: 14, overflow: 'hidden' }}>
             <div style={{ display: 'flex', gap: 12, padding: '14px 14px 8px' }}>
-              <span style={{ width: 48, height: 48, borderRadius: 10, flexShrink: 0, background: `linear-gradient(135deg,${tint}cc,${tint}44)`, display: 'grid', placeItems: 'center' }}>
+              <span style={{ width: 48, aspectRatio: '1 / 1', borderRadius: 10, flexShrink: 0, background: `linear-gradient(135deg,${tint}cc,${tint}44)`, display: 'grid', placeItems: 'center' }}>
                 <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round">
                   <path d="M12 2c2 3 4 4 4 7a4 4 0 1 1-8 0c0-3 2-4 4-7Z"/>
                 </svg>

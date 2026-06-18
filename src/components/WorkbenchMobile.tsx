@@ -67,9 +67,9 @@ function WMShowHypersSheet({ showId, onClose }: { showId: string | null; onClose
         transition: 'transform .32s cubic-bezier(.4,0,.2,1)',
         maxHeight: '70vh', display: 'flex', flexDirection: 'column',
       }}>
-        <div style={{ padding: '14px 18px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.line}` }}>
-          <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 15, color: T.ink }}>Who Hyped This · {total.toLocaleString()}</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontSize: 20, lineHeight: 1 }}>✕</button>
+        <div style={{ padding: '12px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.line}`, minHeight: 52 }}>
+          <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 15, color: T.ink, lineHeight: 1.2 }}>Who Hyped This · {total.toLocaleString()}</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontSize: 18, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 6, flexShrink: 0 }}>✕</button>
         </div>
         <div style={{ overflowY: 'auto', padding: '10px 18px 18px' }}>
           {loading && <div style={{ textAlign: 'center', padding: 24, color: T.ink3, fontFamily: T.fm, fontSize: 13 }}>Loading...</div>}
@@ -218,9 +218,9 @@ function WMSetlistVoteSheet({ showId, onClose }: { showId: string | null; onClos
         transition: 'transform .32s cubic-bezier(.4,0,.2,1)',
         maxHeight: '70vh', display: 'flex', flexDirection: 'column',
       }}>
-        <div style={{ padding: '14px 18px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.line}` }}>
-          <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 15, color: T.ink }}>Vote for Setlist</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontSize: 20, lineHeight: 1 }}>✕</button>
+        <div style={{ padding: '12px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.line}`, minHeight: 52 }}>
+          <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 15, color: T.ink, lineHeight: 1.2 }}>Vote for Setlist</div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontSize: 18, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 6, flexShrink: 0 }}>✕</button>
         </div>
         <div style={{ overflowY: 'auto', padding: '10px 18px 18px' }}>
           {loading && <div style={{ textAlign: 'center', padding: 24, color: T.ink3, fontFamily: T.fm, fontSize: 13 }}>Loading...</div>}
@@ -274,7 +274,7 @@ function WMGenreQuizSheet({ profileId, onComplete }: { profileId: string; onComp
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: T.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div style={{ maxWidth: 400, width: '100%' }}>
         <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3, letterSpacing: '.2em', textTransform: 'uppercase', marginBottom: 8 }}>Quick setup</div>
-        <h1 style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 28, letterSpacing: '-.025em', color: T.ink, margin: '0 0 8px' }}>What's your taste?</h1>
+        <h1 style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 'clamp(22px, 6vw, 28px)', letterSpacing: '-.025em', lineHeight: 1, color: T.ink, margin: '0 0 8px' }}>What's your taste?</h1>
         <p style={{ fontFamily: T.fb, fontSize: 14, color: T.ink2, marginBottom: 24, lineHeight: 1.5 }}>Pick genres you love — we'll tune your seeds and radio to match.</p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 32 }}>
           {GENRE_OPTIONS.map(g => {

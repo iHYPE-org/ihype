@@ -153,7 +153,7 @@ export function MobileScreenMe({ data }: { data: WorkbenchData }) {
           <div style={{ position: 'absolute', top: '-40%', right: '-20%', width: '70%', height: '200%', background: `radial-gradient(ellipse,rgba(255,80,41,.22),transparent 60%)`, pointerEvents: 'none' }} />
           <div style={{ display: 'flex', gap: 14, alignItems: 'center', position: 'relative', zIndex: 2 }}>
             <div style={{
-              width: 90, height: 90, borderRadius: 12, flexShrink: 0,
+              width: 90, aspectRatio: '1 / 1', borderRadius: 12, flexShrink: 0,
               background: `linear-gradient(135deg,${T.accent},${T.pink},${T.purple})`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
@@ -165,7 +165,7 @@ export function MobileScreenMe({ data }: { data: WorkbenchData }) {
                 {data.activeProfileTypes.includes('ARTIST') && <WMPill><span style={{ width: 5, height: 5, borderRadius: '50%', background: T.accent, display: 'inline-block' }} />ARTIST</WMPill>}
                 <WMPill tone="amber">⚡ LV {Math.max(1, Math.floor((data.lifeStats?.totalHype ?? 0) / 100) + 1)}</WMPill>
               </div>
-              <h1 style={{ fontFamily: T.fd, fontWeight: 800, letterSpacing: '-.025em', lineHeight: .95, fontSize: 30, margin: 0, color: T.ink }}>{data.userName}</h1>
+              <h1 style={{ fontFamily: T.fd, fontWeight: 800, letterSpacing: '-.025em', lineHeight: 1, fontSize: 'clamp(24px, 7vw, 30px)', margin: 0, color: T.ink }}>{data.userName}</h1>
               <p style={{ fontFamily: T.fm, fontSize: 12, color: T.ink2, letterSpacing: '.08em', marginTop: 6 }}>@{data.userName.toLowerCase().replace(/\s/g, '.')} · {data.city}</p>
               {(data.uploadStreak ?? 0) > 0 && (
                 <span style={{ display: 'inline-block', marginTop: 6, background: 'rgba(245,158,11,.13)', color: '#f59e0b', borderRadius: 20, padding: '2px 10px', fontSize: 12, fontWeight: 700 }}>
@@ -185,8 +185,8 @@ export function MobileScreenMe({ data }: { data: WorkbenchData }) {
               { v: (data.stats.find(s => s.label.toLowerCase().includes('top'))?.value ?? String(data.tracks.length)), k: 'Tracks' },
             ].map((s, i) => (
               <div key={i}>
-                <div style={{ fontFamily: T.fd, fontWeight: 800, letterSpacing: '-.025em', fontSize: 18, color: s.accent ? T.accent : T.ink }}>{s.v}</div>
-                <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.14em', textTransform: 'uppercase', marginTop: 3 }}>{s.k}</div>
+                <div style={{ fontFamily: T.fd, fontWeight: 800, letterSpacing: '-.025em', fontSize: 18, lineHeight: 1, color: s.accent ? T.accent : T.ink }}>{s.v}</div>
+                <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3, letterSpacing: '.12em', textTransform: 'uppercase', marginTop: 4 }}>{s.k}</div>
               </div>
             ))}
           </div>
@@ -212,10 +212,10 @@ export function MobileScreenMe({ data }: { data: WorkbenchData }) {
               { k: 'Next show',     v: nextShow ? nextShow.date : '—', d: nextShow ? nextShow.name : 'No shows yet', c: T.pink },
             ];
           })().map((t, i) => (
-            <div key={i} style={{ flex: '0 0 142px', background: T.bg2, border: `1px solid ${T.line}`, borderRadius: 10, padding: '12px 13px' }}>
-              <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.14em', textTransform: 'uppercase' }}>{t.k}</div>
-              <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 22, letterSpacing: '-.025em', marginTop: 5, color: t.c }}>{t.v}</div>
-              <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink2, marginTop: 3, letterSpacing: '.04em' }}>{t.d}</div>
+            <div key={i} style={{ flex: '0 0 clamp(120px, 38vw, 148px)', background: T.bg2, border: `1px solid ${T.line}`, borderRadius: 10, padding: '12px 13px' }}>
+              <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3, letterSpacing: '.14em', textTransform: 'uppercase', lineHeight: 1.2 }}>{t.k}</div>
+              <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 'clamp(18px, 5vw, 22px)', letterSpacing: '-.025em', marginTop: 5, lineHeight: 1, color: t.c }}>{t.v}</div>
+              <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink2, marginTop: 4, letterSpacing: '.04em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.d}</div>
             </div>
           ))}
         </div>

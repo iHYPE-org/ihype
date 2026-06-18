@@ -70,10 +70,10 @@ export function WMViewHead({ eyebrow, title, italic, sub, actions }: {
   return (
     <div style={{ padding: '18px 18px 14px', borderBottom: `1px solid ${T.line}`, marginBottom: 16 }}>
       <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.2em', fontWeight: 700, textTransform: 'uppercase', marginBottom: 6 }}>{eyebrow}</div>
-      <h1 style={{ fontFamily: T.fd, fontWeight: 800, letterSpacing: '-.025em', lineHeight: 1, fontSize: 28, margin: 0 }}>
+      <h1 style={{ fontFamily: T.fd, fontWeight: 800, letterSpacing: '-.025em', lineHeight: 1, fontSize: 'clamp(22px, 6vw, 28px)', margin: 0 }}>
         {title}{italic && <em style={{ fontFamily: T.fs, fontStyle: 'italic', fontWeight: 400, color: T.ink2 }}> {italic}</em>}
       </h1>
-      {sub && <p style={{ fontFamily: T.fs, fontStyle: 'italic', fontSize: 14, color: T.ink2, marginTop: 6, lineHeight: 1.35 }}>{sub}</p>}
+      {sub && <p style={{ fontFamily: T.fs, fontStyle: 'italic', fontSize: 'clamp(13px, 3.5vw, 15px)', color: T.ink2, marginTop: 6, lineHeight: 1.4 }}>{sub}</p>}
       {actions && <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>{actions}</div>}
     </div>
   );
@@ -187,13 +187,13 @@ export function WMTrackSheet({ track, open, onClose }: { track: { title: string;
           <div style={{ padding: '20px 22px 0' }}>
             <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 20 }}>
               <div style={{
-                width: 72, height: 72, borderRadius: 12, flexShrink: 0,
+                width: 72, aspectRatio: '1 / 1', borderRadius: 12, flexShrink: 0,
                 background: `linear-gradient(135deg,${track.color},${track.color}80)`,
                 boxShadow: `0 8px 24px ${track.color}55`,
               }} />
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 20, letterSpacing: '-.02em', color: T.ink, lineHeight: 1.1 }}>{track.title}</div>
-                <div style={{ fontFamily: T.fb, fontSize: 14, color: T.ink2, marginTop: 5 }}>{track.artistName}</div>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 'clamp(17px, 5vw, 20px)', letterSpacing: '-.02em', color: T.ink, lineHeight: 1.15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{track.title}</div>
+                <div style={{ fontFamily: T.fb, fontSize: 14, color: T.ink2, marginTop: 5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{track.artistName}</div>
                 <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink3, letterSpacing: '.06em', marginTop: 3 }}>{track.album}</div>
               </div>
             </div>
@@ -255,9 +255,9 @@ export function WMShowHypersSheet({ showId, onClose }: { showId: string | null; 
         transition: 'transform .32s cubic-bezier(.4,0,.2,1)',
         maxHeight: '70vh', display: 'flex', flexDirection: 'column',
       }}>
-        <div style={{ padding: '14px 18px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.line}` }}>
-          <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 15, color: T.ink }}>Who Hyped This · {total.toLocaleString()}</div>
-          <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontSize: 20, lineHeight: 1 }}>✕</button>
+        <div style={{ padding: '12px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.line}`, minHeight: 52 }}>
+          <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 15, color: T.ink, lineHeight: 1.2 }}>Who Hyped This · {total.toLocaleString()}</div>
+          <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontSize: 18, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 6, flexShrink: 0 }}>✕</button>
         </div>
         <div style={{ overflowY: 'auto', padding: '10px 18px 18px' }}>
           {loading && <div style={{ textAlign: 'center', padding: 24, color: T.ink3, fontFamily: T.fm, fontSize: 13 }}>Loading...</div>}
@@ -269,12 +269,12 @@ export function WMShowHypersSheet({ showId, onClose }: { showId: string | null; 
             return (
               <div key={h.userId} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i < hypers.length - 1 ? `1px solid ${T.line}` : 'none' }}>
                 <div style={{
-                  width: 38, height: 38, borderRadius: '50%', flexShrink: 0,
+                  width: 38, aspectRatio: '1 / 1', borderRadius: '50%', flexShrink: 0,
                   background: h.avatarUrl ? 'transparent' : `linear-gradient(135deg,${T.accent},${T.pink})`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
                 }}>
                   {h.avatarUrl
-                    ? <img src={h.avatarUrl} alt={initials} loading="lazy" width={38} height={38} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ? <img src={h.avatarUrl} alt={initials} loading="lazy" width={38} height={38} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                     : <span style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 14, color: T.bg }}>{initials}</span>
                   }
                 </div>
@@ -334,9 +334,9 @@ export function WMSetlistVoteSheet({ showId, onClose }: { showId: string | null;
         transition: 'transform .32s cubic-bezier(.4,0,.2,1)',
         maxHeight: '70vh', display: 'flex', flexDirection: 'column',
       }}>
-        <div style={{ padding: '14px 18px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.line}` }}>
-          <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 15, color: T.ink }}>Vote for Setlist</div>
-          <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontSize: 20, lineHeight: 1 }}>✕</button>
+        <div style={{ padding: '12px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.line}`, minHeight: 52 }}>
+          <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 15, color: T.ink, lineHeight: 1.2 }}>Vote for Setlist</div>
+          <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontSize: 18, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 6, flexShrink: 0 }}>✕</button>
         </div>
         <div style={{ overflowY: 'auto', padding: '10px 18px 18px' }}>
           {loading && <div style={{ textAlign: 'center', padding: 24, color: T.ink3, fontFamily: T.fm, fontSize: 13 }}>Loading...</div>}
