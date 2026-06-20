@@ -4,95 +4,298 @@ import type { WorkbenchData, WbTrack } from '@/types/workbench';
 import { T, WMPill } from './MobilePrimitives';
 import { DiscoverDailyCard } from './DiscoverDailyCard';
 
-const STATIONS = [
-  { freq: 87.3,  label: 'INDIE',     name: 'The Indie Stream',    color: '#ff5029', nowTrack: 'Sundown',          nowArtist: 'Maya Reyes' },
-  { freq: 94.1,  label: 'VENUES',    name: 'Live from the Floor', color: '#22e5d4', nowTrack: 'Halflight',        nowArtist: 'Maya Reyes' },
-  { freq: 101.7, label: 'DISCOVER',  name: 'New This Week',       color: '#b983ff', nowTrack: 'Riverside Memory', nowArtist: 'Colin Atwood' },
-  { freq: 107.9, label: 'PROMOTERS', name: 'Curated Radio',       color: '#ff3e9a', nowTrack: 'Cobalt Hour',      nowArtist: 'Vela' },
-] as const;
+type ListenSubTab = 'search' | 'seeds' | 'radio' | 'charts' | 'playlists' | 'following';
+const SUB_TABS: { id: ListenSubTab; label: string }[] = [
+  { id: 'search',    label: 'Search'    },
+  { id: 'seeds',     label: 'Seeds'     },
+  { id: 'radio',     label: 'Radio'     },
+  { id: 'charts',    label: 'Charts'    },
+  { id: 'playlists', label: 'Playlists' },
+  { id: 'following', label: 'Following' },
+];
 
-function HalflightCard({ onOpenFM }: { onOpenFM?: () => void }) {
-  const [stationIdx, setStationIdx] = useState(0);
-  const [playing, setPlaying] = useState(false);
-  const s = STATIONS[stationIdx];
+// ─── Album art gradient placeholder ──────────────────────────
+function AlbumArt({ c = T.accent, size = 48 }: { c?: string; size?: number }) {
   return (
-    <div style={{ margin: '0 22px 22px', borderRadius: 16, overflow: 'hidden', border: `1px solid ${s.color}44`, background: `linear-gradient(135deg, ${s.color}18, ${T.bg2})` }}>
-      <div style={{ padding: '14px 16px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <div style={{ fontFamily: T.fm, fontSize: 9, letterSpacing: '.18em', color: s.color, textTransform: 'uppercase', marginBottom: 3 }}>● HALFLIGHT FM · {s.label}</div>
-          <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 16, color: T.ink, letterSpacing: '-.01em' }}>{s.nowTrack}</div>
-          <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3, marginTop: 1 }}>{s.nowArtist}</div>
-        </div>
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'center' }}>
-          <button onClick={() => setPlaying(p => !p)} style={{ padding: '8px 16px', borderRadius: 8, border: 'none', cursor: 'pointer', fontFamily: T.fm, fontSize: 12, fontWeight: 700, background: playing ? 'rgba(255,255,255,.1)' : s.color, color: playing ? T.ink : '#fff' }}>
-            {playing ? '⏸' : '▶'}
-          </button>
-          {onOpenFM && (
-            <button onClick={onOpenFM} style={{ padding: '8px 12px', borderRadius: 8, border: `1px solid ${s.color}44`, cursor: 'pointer', fontFamily: T.fm, fontSize: 12, fontWeight: 700, background: 'transparent', color: s.color }}>
-              All ↗
-            </button>
-          )}
-        </div>
+    <div style={{ width: size, height: size, borderRadius: Math.max(6, Math.round(size / 6)), background: `linear-gradient(135deg, ${c}, ${c}66 60%, ${T.bg3})`, position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 30% 25%, rgba(255,255,255,.22), transparent 60%)' }} />
+    </div>
+  );
+}
+
+// ─── Search tab ───────────────────────────────────────────────
+const LS_HISTORY_KEY = 'ihype_search_history';
+function getHistory(): string[] {
+  try { return JSON.parse(localStorage.getItem(LS_HISTORY_KEY) ?? '[]') as string[]; } catch { return []; }
+}
+
+function SearchTab({ data, onPlay, currentIdx }: { data: WorkbenchData; onPlay: (i: number) => void; currentIdx: number }) {
+  const [q, setQ] = useState('');
+  const [history, setHistory] = useState<string[]>([]);
+
+  useEffect(() => { setHistory(getHistory()); }, []);
+
+  const queue = data.tracks;
+  const ql = q.toLowerCase().trim();
+  const results = ql ? queue.filter(t => t.title.toLowerCase().includes(ql) || t.artistName.toLowerCase().includes(ql)).slice(0, 20) : [];
+
+  function commit(term: string) {
+    const next = [term, ...history.filter(x => x !== term)].slice(0, 5);
+    localStorage.setItem(LS_HISTORY_KEY, JSON.stringify(next));
+    setHistory(next);
+    setQ(term);
+  }
+
+  return (
+    <div style={{ padding: '0 18px' }}>
+      <div style={{ position: 'relative', marginBottom: 14 }}>
+        <svg style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: T.ink3, pointerEvents: 'none' }} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input value={q} onChange={e => setQ(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' && q.trim()) commit(q.trim()); }}
+          placeholder="Search artists, tracks, playlists…"
+          style={{ width: '100%', padding: '10px 36px 10px 38px', borderRadius: 12, border: `1px solid ${T.line}`, background: T.bg3, color: T.ink, fontFamily: T.fb, fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
+        />
+        {q && <button onClick={() => setQ('')} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: T.ink3, cursor: 'pointer', fontSize: 16, padding: 0, lineHeight: 1 }}>×</button>}
       </div>
-      <div style={{ display: 'flex', gap: 6, padding: '0 16px 14px', overflowX: 'auto' }}>
-        {STATIONS.map((st, i) => (
-          <button key={st.freq} onClick={() => { setStationIdx(i); setPlaying(true); }} style={{
-            padding: '5px 11px', borderRadius: 20, border: `1px solid ${stationIdx === i ? st.color : 'rgba(255,255,255,.1)'}`,
-            background: stationIdx === i ? `${st.color}20` : 'transparent',
-            color: stationIdx === i ? st.color : T.ink3, fontFamily: T.fm, fontSize: 10, fontWeight: 700, letterSpacing: '.08em', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
-          }}>{st.label}</button>
+
+      {!q && history.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <div style={{ fontFamily: T.fm, fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: T.ink3 }}>Recent</div>
+            <button onClick={() => { localStorage.removeItem(LS_HISTORY_KEY); setHistory([]); }} style={{ background: 'none', border: 'none', color: T.ink3, fontFamily: T.fm, fontSize: 11, cursor: 'pointer' }}>Clear</button>
+          </div>
+          {history.map(h => (
+            <div key={h} onClick={() => setQ(h)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '.55rem 0', borderBottom: `1px solid ${T.line2}`, cursor: 'pointer' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={T.ink3} strokeWidth="2" strokeLinecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/></svg>
+              <span style={{ fontFamily: T.fb, fontSize: 13, color: T.ink2 }}>{h}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!q && (
+        <div>
+          <div style={{ fontFamily: T.fm, fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: T.ink3, marginBottom: 10 }}>Trending now</div>
+          {queue.slice(0, 6).map(t => (
+            <div key={t.id} onClick={() => commit(t.title)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '.65rem 0', borderBottom: `1px solid ${T.line2}`, cursor: 'pointer' }}>
+              <AlbumArt c={t.color} size={38} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</div>
+                <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3, marginTop: 1 }}>{t.artistName}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {q && results.length === 0 && <div style={{ textAlign: 'center', padding: '2rem 1rem', fontFamily: T.fm, fontSize: 13, color: T.ink3 }}>No results for &ldquo;{q}&rdquo;</div>}
+      {q && results.map((t, i) => (
+        <div key={t.id} onClick={() => { commit(t.title); onPlay(queue.indexOf(t)); }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 6px', borderBottom: `1px solid ${T.line2}`, cursor: 'pointer', background: currentIdx === queue.indexOf(t) ? `${t.color}12` : 'transparent', borderRadius: 8 }}>
+          <div style={{ width: 22, textAlign: 'center', fontFamily: T.fd, fontWeight: 800, fontSize: 14, color: T.ink3 }}>{i + 1}</div>
+          <AlbumArt c={t.color} size={42} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</div>
+            <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3, marginTop: 1 }}>{t.artistName}</div>
+          </div>
+          <div style={{ fontFamily: T.fm, fontSize: 10, color: T.pink, letterSpacing: '.06em', whiteSpace: 'nowrap' }}>♥ {t.hypeCount}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Seeds tab (cards from daily discovery) ───────────────────
+function SeedsTab({ data, onPlay }: { data: WorkbenchData; onPlay: (i: number) => void }) {
+  const queue = data.tracks;
+  return (
+    <div style={{ padding: '0 18px' }}>
+      <div style={{ marginBottom: 16 }}>
+        <div onClick={() => { onPlay(0); }} style={{ margin: '0 0 20px', padding: 18, borderRadius: 18, position: 'relative', overflow: 'hidden', cursor: 'pointer', background: `linear-gradient(135deg, ${T.accent} 0%, ${T.accent}88 32%, ${T.bg3} 100%)` }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 82% 18%, rgba(255,255,255,.28), transparent 55%)' }} />
+          <div style={{ position: 'relative' }}>
+            <div style={{ fontFamily: T.fm, fontSize: 9, color: T.bg, letterSpacing: '.16em', opacity: .85, textTransform: 'uppercase' }}>● Pick up where you left off</div>
+            <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 22, color: T.bg, marginTop: 8, lineHeight: 1.02, letterSpacing: '-.02em' }}>Tonight&#39;s Queue</div>
+            <div style={{ fontFamily: T.fb, fontSize: 12, color: 'rgba(0,0,0,.65)', marginTop: 5 }}>{queue.length} tracks · finish a track to Hype it</div>
+            <div style={{ marginTop: 14, display: 'inline-flex', alignItems: 'center', gap: 7, padding: '10px 18px', background: T.bg, color: T.ink, borderRadius: 99, fontFamily: T.fd, fontWeight: 700, fontSize: 13 }}>
+              <svg width={12} height={12} viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l14 8L6 20z"/></svg> Play
+            </div>
+          </div>
+        </div>
+        <DiscoverDailyCard />
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        {queue.slice(0, 6).map((t, i) => (
+          <button key={t.id} onClick={() => onPlay(i)} style={{ textAlign: 'left', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+            <div style={{ width: '100%', aspectRatio: '1', borderRadius: 16, background: `linear-gradient(150deg, ${t.color}, #1a1612 92%)`, position: 'relative', overflow: 'hidden', border: `1px solid ${T.line}` }}>
+              <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="rgba(255,255,255,.92)"><path d="M6 4l14 8L6 20z"/></svg>
+              </div>
+              <div style={{ position: 'absolute', left: 8, top: 8, padding: '2px 7px', borderRadius: 999, background: 'rgba(10,8,5,.5)', fontFamily: T.fm, fontSize: 9, letterSpacing: '.06em', textTransform: 'uppercase', color: '#fff' }}>0:30</div>
+            </div>
+            <div style={{ fontFamily: T.fb, fontWeight: 700, fontSize: 13, color: T.ink, marginTop: 8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</div>
+            <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.artistName}</div>
+          </button>
         ))}
       </div>
     </div>
   );
 }
 
-// ─── Icons (local, only needed here) ─────────────────────────
-const WMIcon = {
-  radio: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.7"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2.5"/><circle cx="8" cy="8" r=".6" fill="currentColor"/></svg>,
-};
+// ─── Radio tab ─────────────────────────────────────────────────
+function RadioTab({ data, onOpenFM }: { data: WorkbenchData; onOpenFM?: () => void }) {
+  const [active, setActive] = useState<string | null>(null);
+  const shows = data.radioShows;
 
-type ChartTrack = {
-  id: string; title: string; artistName: string;
-  hypeCount: number; color: string;
-};
+  if (shows.length === 0) {
+    return (
+      <div style={{ textAlign: 'center', padding: '3rem 1.5rem' }}>
+        <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 12 }}>No live shows right now</div>
+        {onOpenFM && (
+          <button onClick={onOpenFM} style={{ padding: '10px 20px', borderRadius: 99, background: T.bg2, border: `1px solid ${T.teal}44`, color: T.teal, fontFamily: T.fd, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>Open Halflight FM ↗</button>
+        )}
+      </div>
+    );
+  }
 
-// ─── Album art gradient placeholder ──────────────────────────
-function AlbumArt({ c = T.accent, size = 48 }: { c?: string; size?: number }) {
   return (
-    <div style={{ width: size, aspectRatio: '1 / 1', borderRadius: Math.max(6, Math.round(size / 6)), background: `linear-gradient(135deg, ${c}, ${c}66 60%, ${T.bg3})`, position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 30% 25%, rgba(255,255,255,.22), transparent 60%)' }} />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '0 18px' }}>
+      {shows.map(s => {
+        const on = active === s.id;
+        return (
+          <div key={s.id} onClick={() => setActive(on ? null : s.id)} style={{ padding: 14, borderRadius: 16, border: `1px solid ${on ? s.color + '55' : T.line}`, background: on ? `${s.color}0d` : T.bg2, cursor: 'pointer' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 48, height: 48, borderRadius: 12, background: `linear-gradient(135deg,${s.color}cc,${s.color}33)`, display: 'grid', placeItems: 'center', color: '#fff', flexShrink: 0, fontSize: 20 }}>
+                {on ? '⏸' : '▶'}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 14 }}>{s.name}</div>
+                <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3, marginTop: 2 }}>by {s.host} · {s.time}</div>
+                <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3, marginTop: 2 }}>{s.listeners.toLocaleString()} listening</div>
+              </div>
+              {s.live && <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ff3c3c', flexShrink: 0 }} />}
+            </div>
+            {on && <div style={{ marginTop: 12, height: 3, borderRadius: 999, background: T.bg4, overflow: 'hidden' }}><div style={{ height: '100%', width: '38%', background: `linear-gradient(90deg,${s.color},${T.accent})`, borderRadius: 999 }} /></div>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Charts tab ────────────────────────────────────────────────
+type ChartPeriod = 'week' | 'month' | 'alltime';
+type ChartTrack = { id: string; title: string; artistName: string; hypeCount: number; color: string };
+
+function ChartsTab({ data, onPlay }: { data: WorkbenchData; onPlay: (i: number) => void }) {
+  const [period, setPeriod] = useState<ChartPeriod>('week');
+  const [charts, setCharts] = useState<{ national: ChartTrack[]; local: ChartTrack[]; forYou: ChartTrack[] } | null>(null);
+  const queue = data.tracks;
+
+  useEffect(() => {
+    fetch(`/api/charts?city=${encodeURIComponent(data.city ?? '')}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setCharts(d as { national: ChartTrack[]; local: ChartTrack[]; forYou: ChartTrack[] }); })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const PERIODS: [ChartPeriod, string][] = [['week', 'This week'], ['month', 'This month'], ['alltime', 'All time']];
+  const rising = [...queue].sort((a, b) => b.hypeCount - a.hypeCount).slice(0, 5);
+  const tracks: ChartTrack[] = charts?.local ?? rising;
+
+  return (
+    <div style={{ padding: '0 18px' }}>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+        {PERIODS.map(([id, label]) => {
+          const on = period === id;
+          return (
+            <button key={id} onClick={() => setPeriod(id)} style={{ padding: '5px 12px', borderRadius: 999, border: `1px solid ${on ? T.accent : T.line}`, background: on ? 'rgba(255,80,41,.12)' : 'transparent', color: on ? T.accent : T.ink3, fontFamily: T.fm, fontSize: 11, cursor: 'pointer', fontWeight: on ? 700 : 500 }}>{label}</button>
+          );
+        })}
+      </div>
+      <div style={{ fontFamily: T.fm, fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: T.ink3, marginBottom: 12 }}>Top hypes · {data.city ?? 'Your city'}</div>
+      {tracks.map((t, i) => (
+        <div key={t.id} onClick={() => onPlay(Math.max(0, queue.findIndex(q2 => q2.id === t.id)))} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '.7rem 0', borderBottom: `1px solid ${T.line2}`, cursor: 'pointer' }}>
+          <span style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 18, color: i < 3 ? T.purple : T.ink3, minWidth: 24, textAlign: 'center' }}>{i + 1}</span>
+          <AlbumArt c={t.color} size={36} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: T.fb, fontWeight: 700, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</div>
+            <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3, marginTop: 1 }}>{t.artistName}</div>
+          </div>
+          <span style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3 }}>♥ {t.hypeCount.toLocaleString()}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Playlists tab ─────────────────────────────────────────────
+function PlaylistsTab({ data, onPlay }: { data: WorkbenchData; onPlay: (i: number) => void }) {
+  const queue = data.tracks;
+  const playlists = [
+    { n: "Tonight's Queue", meta: `${queue.length} tracks · auto-mixed`, c: T.accent },
+    { n: 'Hyped by You',    meta: `${data.lifeStats?.totalHype ?? 0} hypes`,  c: T.purple },
+    { n: `${data.city ?? 'Local'} Indie`, meta: 'Local scene', c: T.teal },
+    { n: 'Late Drives',     meta: 'Your mix',    c: T.amber },
+    { n: 'New Arrivals',    meta: 'This week',   c: T.pink },
+    { n: 'Chill Sessions',  meta: 'Curated',     c: '#5c9eff' },
+  ];
+
+  return (
+    <div style={{ padding: '0 18px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+      {playlists.map((p, i) => (
+        <div key={i} onClick={() => onPlay(i % Math.max(1, queue.length))} style={{ padding: '1rem', borderRadius: 16, border: `1px solid ${T.line}`, background: T.bg2, cursor: 'pointer', position: 'relative' }}>
+          <div style={{ width: '100%', aspectRatio: '1', borderRadius: 12, background: `linear-gradient(135deg,${p.c}cc,${p.c}22)`, marginBottom: 10, position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', bottom: -10, right: -10, width: '60%', aspectRatio: '1', borderRadius: '50%', background: `${p.c}44`, filter: 'blur(16px)' }} />
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontFamily: T.fd, fontWeight: 800, fontSize: 22, letterSpacing: '-.04em', color: 'rgba(255,255,255,.85)', textAlign: 'center', lineHeight: 1.1 }}>{p.n.split(' ').map(w => w[0]).join('').slice(0, 2)}</div>
+          </div>
+          <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 14, lineHeight: 1.2, marginBottom: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{p.n}</span>
+            <span style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(255,80,41,.2)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill={T.accent}><polygon points="5,3 19,12 5,21"/></svg>
+            </span>
+          </div>
+          <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3 }}>{p.meta}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Following tab ─────────────────────────────────────────────
+const FOLLOWING_FEED = [
+  { name: 'Midnight Echo', role: 'Artist', action: 'Dropped tickets', detail: 'Live at The Echo · face value · $18', time: '2m', tint: '#ff5029' },
+  { name: 'DJ Caro',       role: 'DJ',     action: 'Starting a live show', detail: 'Late Night Frequencies · 2.4K listening', time: '1h', tint: '#b983ff' },
+  { name: 'Nyla',          role: 'Artist', action: 'Added track to Seeds', detail: 'Goldenrod · new preview available', time: '3h', tint: '#22e5d4' },
+  { name: 'Sunroom',       role: 'Artist', action: 'Announced new event', detail: 'Album Release · Gold-Diggers · Sun Jun 22', time: '1d', tint: '#ffb84a' },
+  { name: 'The Echo',      role: 'Venue',  action: 'Booking offers open', detail: 'Fridays in July · capacity 300', time: '2d', tint: '#22e5d4' },
+];
+
+function FollowingTab() {
+  return (
+    <div style={{ padding: '0 18px' }}>
+      <div style={{ fontFamily: T.fm, fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: T.ink3, marginBottom: 12 }}>Activity from people you follow</div>
+      {FOLLOWING_FEED.map((f, i) => (
+        <div key={i} style={{ display: 'flex', gap: 12, padding: '.85rem 0', borderBottom: `1px solid ${T.line2}` }}>
+          <div style={{ width: 40, height: 40, borderRadius: 10, background: `linear-gradient(135deg,${f.tint}88,${f.tint}22)`, flexShrink: 0, display: 'grid', placeItems: 'center', fontSize: 18 }}>
+            <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 14, color: '#fff' }}>{f.name[0]}</div>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+              <span style={{ fontFamily: T.fb, fontWeight: 700, fontSize: 13 }}>{f.name}</span>
+              <span style={{ fontFamily: T.fm, fontSize: 10, color: T.ink3, padding: '1px 6px', borderRadius: 999, border: `1px solid ${T.line2}`, background: T.bg3 }}>{f.role}</span>
+            </div>
+            <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink2, marginBottom: 2 }}>{f.action}</div>
+            <div style={{ fontFamily: T.fm, fontSize: 11, color: T.ink3 }}>{f.detail}</div>
+          </div>
+          <div style={{ fontFamily: T.fm, fontSize: 10, color: T.ink3, flexShrink: 0, marginTop: 2 }}>{f.time}</div>
+        </div>
+      ))}
     </div>
   );
 }
 
 // ─── Screen: Listen ──────────────────────────────────────────
-type SectionKey = 'playlists' | 'radio' | 'charts';
-
-function SectionHeader({ title, sub, open, onToggle }: { title: string; sub: string; open: boolean; onToggle: () => void }) {
-  return (
-    <button
-      onClick={onToggle}
-      style={{
-        width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '14px 22px', background: 'none', border: 'none', borderTop: '1px solid rgba(255,255,255,.06)',
-        textAlign: 'left', cursor: 'pointer',
-      }}
-    >
-      <div>
-        <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 15, color: T.ink, lineHeight: 1 }}>{title}</div>
-        <div style={{ fontFamily: T.fm, fontSize: 10, color: T.ink3, marginTop: 3, letterSpacing: '.04em' }}>{sub}</div>
-      </div>
-      <svg
-        width={14} height={14} viewBox="0 0 24 24" fill="none" stroke={T.ink3} strokeWidth="2.2" strokeLinecap="round"
-        style={{ flexShrink: 0, transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform .2s' }}
-      >
-        <path d="m9 18 6-6-6-6"/>
-      </svg>
-    </button>
-  );
-}
-
 export function ScreenListen({ data, onPlay, onExpand, currentIdx, onOpenFM }: {
   data: WorkbenchData;
   onPlay: (i: number) => void;
@@ -100,285 +303,33 @@ export function ScreenListen({ data, onPlay, onExpand, currentIdx, onOpenFM }: {
   currentIdx: number;
   onOpenFM?: () => void;
 }) {
-  const [q, setQ] = useState('');
-  const [charts, setCharts] = useState<{ national: ChartTrack[]; local: ChartTrack[]; forYou: ChartTrack[] } | null>(null);
-  const [chartTab, setChartTab] = useState<'local' | 'national' | 'forYou'>('local');
-  const [autoMix, setAutoMix] = useState(false);
-  const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>({
-    playlists: true,
-    radio: true,
-    charts: true,
-  });
-  const toggleSection = (key: SectionKey) => setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
-  useEffect(() => {
-    fetch(`/api/charts?city=${encodeURIComponent(data.city ?? '')}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) setCharts(d); })
-      .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const queue = data.tracks;
-  // Static playlist shapes mapped to real data
-  const playlists = [
-    { n: "Tonight's Queue", meta: `${queue.length} tracks · auto-mixed`, c: T.accent },
-    { n: 'Hyped by You',    meta: `${data.lifeStats?.totalHype ?? 0} hypes`,  c: T.purple },
-    { n: `${data.city ?? 'Local'} Indie`, meta: 'Local scene', c: T.teal },
-    { n: 'Late Drives',     meta: 'Your mix',    c: T.amber },
-  ];
-  // Rising = top 5 by hypeCount; search covers the full queue
-  const allRising = [...queue].sort((a, b) => b.hypeCount - a.hypeCount).slice(0, 5);
-  const rising = allRising;
-  const ql = q.toLowerCase().trim();
-  const searchResults = ql
-    ? queue.filter(t => t.title.toLowerCase().includes(ql) || t.artistName.toLowerCase().includes(ql)).slice(0, 20)
-    : [];
-
-  const dayParts = ['MORNING', 'AFTERNOON', 'EVENING', 'NIGHT'];
-  const h = new Date().getHours();
-  const timeLabel = h < 12 ? dayParts[0] : h < 17 ? dayParts[1] : h < 21 ? dayParts[2] : dayParts[3];
+  const [sub, setSub] = useState<ListenSubTab>('seeds');
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', color: T.ink, fontFamily: T.fb }}>
-      <div style={{ padding: '4px 22px 12px', flexShrink: 0 }}>
-        <div style={{ fontFamily: T.fm, fontSize: 10, color: T.ink3, letterSpacing: '.14em', textTransform: 'uppercase' }}>
-          {timeLabel} · {data.city ?? 'YOUR CITY'}
-        </div>
-        <h1 style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 30, letterSpacing: '-.025em', margin: '6px 0 0', lineHeight: 1 }}>Listen</h1>
-        <div style={{ marginTop: 12, position: 'relative' }}>
-          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
-            style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: T.ink3, pointerEvents: 'none' }}>
-            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
-          </svg>
-          <input
-            value={q}
-            onChange={e => setQ(e.target.value)}
-            placeholder="Search tracks & artists…"
-            style={{
-              width: '100%', boxSizing: 'border-box',
-              padding: '9px 12px 9px 32px',
-              background: T.bg3, border: `1px solid rgba(255,255,255,.07)`,
-              borderRadius: 12, color: T.ink, fontFamily: T.fb, fontSize: 13,
-              outline: 'none',
-            }}
-          />
-        </div>
+      {/* Sub-nav */}
+      <div style={{ display: 'flex', gap: 0, flexShrink: 0, borderBottom: `1px solid ${T.line}`, overflowX: 'auto', scrollbarWidth: 'none' }}>
+        {SUB_TABS.map(({ id, label }) => {
+          const on = sub === id;
+          return (
+            <button key={id} onClick={() => setSub(id)} style={{
+              flex: 1, minWidth: 0, padding: '10px 4px 8px', borderRadius: 0,
+              border: 'none', borderBottom: on ? `2px solid ${T.accent}` : '2px solid transparent',
+              background: 'transparent', color: on ? T.ink : T.ink3,
+              fontFamily: T.fm, fontSize: 11, letterSpacing: '.02em', fontWeight: on ? 700 : 500,
+              cursor: 'pointer', transition: 'color .15s, border-color .15s', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>{label}</button>
+          );
+        })}
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '0 0 130px' }}>
-        {ql ? (
-          /* ── search results ── */
-          <div style={{ padding: '0 22px' }}>
-            <div style={{ fontFamily: T.fm, fontSize: 10, color: T.ink3, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 14 }}>
-              {searchResults.length ? `${searchResults.length} result${searchResults.length !== 1 ? 's' : ''} for "${q}"` : `No results for "${q}"`}
-            </div>
-            {searchResults.length === 0 ? (
-              <div style={{ paddingTop: 40, color: T.ink3, fontFamily: T.fm, fontSize: 12, textAlign: 'center' }}>
-                Try searching for a track title or artist name
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-                {searchResults.map((tk, i) => (
-                  <div key={tk.id} onClick={() => onPlay(queue.indexOf(tk))} style={{
-                    display: 'flex', alignItems: 'center', gap: 12, padding: '8px 10px', borderRadius: 11, cursor: 'pointer',
-                    background: currentIdx === queue.indexOf(tk) ? `${tk.color}12` : 'transparent',
-                    border: `1px solid ${currentIdx === queue.indexOf(tk) ? `${tk.color}40` : 'transparent'}`,
-                  }}>
-                    <div style={{ width: 22, textAlign: 'center', fontFamily: T.fd, fontWeight: 800, fontSize: 15, color: T.ink3 }}>{i + 1}</div>
-                    <AlbumArt c={tk.color} size={42} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 14, letterSpacing: '-.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tk.title}</div>
-                      <div style={{ fontFamily: T.fb, fontSize: 11.5, color: T.ink3, marginTop: 1 }}>{tk.artistName}</div>
-                    </div>
-                    <div style={{ fontFamily: T.fm, fontSize: 10, color: T.pink, letterSpacing: '.06em', whiteSpace: 'nowrap' }}>♥ {tk.hypeCount}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ) : (<>
-        {/* Hero: resume queue */}
-        <div onClick={() => { onPlay(0); onExpand(); }} style={{
-          margin: '0 22px 20px', padding: 18, borderRadius: 18, position: 'relative', overflow: 'hidden', cursor: 'pointer',
-          background: `linear-gradient(135deg, ${T.accent} 0%, ${T.accent}88 32%, ${T.bg3} 100%)`,
-        }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 82% 18%, rgba(255,255,255,.28), transparent 55%)' }} />
-          <div style={{ position: 'relative' }}>
-            <div style={{ fontFamily: T.fm, fontSize: 9, color: T.bg, letterSpacing: '.16em', opacity: .85, textTransform: 'uppercase' }}>● Pick up where you left off</div>
-            <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 23, color: T.bg, marginTop: 8, lineHeight: 1.02, letterSpacing: '-.02em' }}>Tonight&#39;s Queue</div>
-            <div style={{ fontFamily: T.fb, fontSize: 12, color: 'rgba(0,0,0,.65)', marginTop: 5 }}>{queue.length} tracks · finish a track to Hype it</div>
-            <div style={{ marginTop: 14, display: 'inline-flex', alignItems: 'center', gap: 7, padding: '10px 18px', background: T.bg, color: T.ink, borderRadius: 99, fontFamily: T.fd, fontWeight: 700, fontSize: 13 }}>
-              <svg width={12} height={12} viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l14 8L6 20z"/></svg> Play
-            </div>
-          </div>
-        </div>
-
-        {/* Daily discovery pick — same card the desktop workbench shows */}
-        <div style={{ margin: '0 22px 20px' }}>
-          <DiscoverDailyCard />
-        </div>
-
-        {/* ── Playlists section ── */}
-        <SectionHeader
-          title="Playlists"
-          sub="Collections you keep on repeat"
-          open={openSections.playlists}
-          onToggle={() => toggleSection('playlists')}
-        />
-        {openSections.playlists && (
-          <>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'flex-end', padding: '8px 22px 6px' }}>
-              <div style={{ fontFamily: T.fm, fontSize: 9.5, color: T.accent, letterSpacing: '.1em' }}>ALL ›</div>
-            </div>
-            <div style={{ display: 'flex', gap: 11, overflowX: 'auto', padding: '0 22px 4px', marginBottom: 4, scrollbarWidth: 'none' }}>
-              {playlists.map((p, i) => (
-                <div key={i} onClick={() => onPlay(i % Math.max(1, queue.length))} style={{ width: 130, flexShrink: 0, cursor: 'pointer' }}>
-                  <div style={{ width: 130, height: 130, borderRadius: 14, position: 'relative', overflow: 'hidden', background: `linear-gradient(135deg, ${p.c}, ${p.c}55 60%, ${T.bg3})` }}>
-                    <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 28% 24%, rgba(255,255,255,.25), transparent 60%)' }} />
-                    <div style={{ position: 'absolute', left: 10, bottom: 9, fontFamily: T.fd, fontWeight: 800, fontSize: 14, color: 'rgba(255,255,255,.95)', textShadow: '0 1px 6px rgba(0,0,0,.5)', lineHeight: 1, maxWidth: 108 }}>{p.n}</div>
-                  </div>
-                  <div style={{ fontFamily: T.fm, fontSize: 9.5, color: T.ink3, marginTop: 7, letterSpacing: '.04em' }}>{p.meta}</div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* ── Radio section ── */}
-        <SectionHeader
-          title="Radio"
-          sub="Artist-curated stations & live shows"
-          open={openSections.radio}
-          onToggle={() => toggleSection('radio')}
-        />
-        {openSections.radio && (
-          <div style={{ paddingBottom: 4 }}>
-            <HalflightCard onOpenFM={onOpenFM} />
-
-            {/* Algorithmic radio stations */}
-            <div style={{ padding: '0 22px 10px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 10 }}>
-              <div style={{ fontFamily: T.fd, fontWeight: 600, fontSize: 13, color: T.ink2, letterSpacing: '-.01em' }}>Stations</div>
-              <button onClick={() => setAutoMix(v => !v)} style={{ fontFamily: T.fm, fontSize: 9.5, color: autoMix ? T.bg : T.pink, letterSpacing: '.1em', background: autoMix ? T.pink : 'transparent', border: `1px solid ${T.pink}`, borderRadius: 99, padding: '3px 9px', cursor: 'pointer' }}>AUTO-MIX</button>
-            </div>
-            <div style={{ display: 'flex', gap: 11, overflowX: 'auto', padding: '0 22px 4px', scrollbarWidth: 'none' }}>
-              {([
-                { n: 'Your Mix',    sub: 'Tuned to your hypes',     c: T.purple },
-                { n: 'Local Scene', sub: data.city ?? 'Nearby artists', c: T.teal   },
-                { n: 'Rising Now',  sub: '7-day chart risers',      c: T.pink   },
-              ] as const).map((s, si) => (
-                <div key={s.n} onClick={() => { const idx = autoMix ? Math.floor(Math.random() * Math.max(1, queue.length)) : si % Math.max(1, queue.length); onPlay(idx); onExpand(); }} style={{ width: 148, flexShrink: 0, cursor: 'pointer' }}>
-                  <div style={{ width: 148, height: 148, borderRadius: 14, position: 'relative', overflow: 'hidden', background: `linear-gradient(135deg, ${s.c}, ${s.c}55 60%, ${T.bg3})` }}>
-                    <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 28% 24%, rgba(255,255,255,.22), transparent 60%)' }} />
-                    <div style={{ position: 'absolute', top: 9, left: 9 }}>
-                      <div style={{ background: 'rgba(0,0,0,.45)', borderRadius: 99, padding: '3px 8px', fontFamily: T.fm, fontSize: 9, color: 'rgba(255,255,255,.8)', letterSpacing: '.1em' }}>STATION</div>
-                    </div>
-                    <div style={{ position: 'absolute', left: 10, bottom: 9, right: 9 }}>
-                      <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 13, color: 'rgba(255,255,255,.95)', textShadow: '0 1px 6px rgba(0,0,0,.5)', lineHeight: 1.1 }}>{s.n}</div>
-                      <div style={{ fontFamily: T.fm, fontSize: 9.5, color: 'rgba(255,255,255,.65)', marginTop: 3, letterSpacing: '.04em' }}>{s.sub}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Live radio shows */}
-            {data.radioShows.length > 0 && (
-              <div style={{ marginTop: 20 }}>
-                <div style={{ padding: '0 22px 10px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ width: 16, height: 16, color: T.pink }}>{WMIcon.radio}</div>
-                    <div style={{ fontFamily: T.fd, fontWeight: 600, fontSize: 13, color: T.ink2, letterSpacing: '-.01em' }}>Live Radio</div>
-                    {data.radioShows.some(r => r.live) && (
-                      <WMPill tone="live">● LIVE</WMPill>
-                    )}
-                  </div>
-                  <div style={{ fontFamily: T.fm, fontSize: 9.5, color: T.pink, letterSpacing: '.1em' }}>
-                    {data.radioShows.reduce((a, r) => a + r.listeners, 0).toLocaleString()} listening
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: 11, overflowX: 'auto', padding: '0 22px 4px', scrollbarWidth: 'none' }}>
-                  {data.radioShows.map(r => (
-                    <div key={r.id} style={{ width: 148, flexShrink: 0 }}>
-                      <div style={{
-                        width: 148, height: 148, borderRadius: 14, position: 'relative', overflow: 'hidden',
-                        background: `linear-gradient(135deg, ${r.color}, ${r.color}55 60%, ${T.bg3})`,
-                        border: r.live ? `1.5px solid ${r.color}80` : `1px solid ${T.line}`,
-                      }}>
-                        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 28% 24%, rgba(255,255,255,.22), transparent 60%)' }} />
-                        {r.live && (
-                          <div style={{ position: 'absolute', top: 9, left: 9 }}>
-                            <WMPill tone="live">● ON AIR</WMPill>
-                          </div>
-                        )}
-                        <div style={{ position: 'absolute', left: 10, bottom: 9, right: 9 }}>
-                          <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 13, color: 'rgba(255,255,255,.95)', textShadow: '0 1px 6px rgba(0,0,0,.5)', lineHeight: 1.1 }}>{r.name}</div>
-                          <div style={{ fontFamily: T.fm, fontSize: 9.5, color: 'rgba(255,255,255,.65)', marginTop: 3, letterSpacing: '.04em' }}>{r.host}</div>
-                        </div>
-                      </div>
-                      <div style={{ fontFamily: T.fm, fontSize: 9.5, color: T.ink3, marginTop: 7, letterSpacing: '.04em' }}>
-                        {r.live ? `${r.listeners.toLocaleString()} listening` : r.time}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── Charts section ── */}
-        <SectionHeader
-          title="Charts"
-          sub="What your city is hyping"
-          open={openSections.charts}
-          onToggle={() => toggleSection('charts')}
-        />
-        {openSections.charts && (
-          <div style={{ paddingBottom: 8 }}>
-            <div style={{ display: 'flex', gap: 8, padding: '10px 22px 14px', overflowX: 'auto', scrollbarWidth: 'none' }}>
-              {([
-                { k: 'local'    as const, l: data.city ?? 'Local'   },
-                { k: 'national' as const, l: 'National'              },
-                { k: 'forYou'   as const, l: 'For You'               },
-              ]).map(tab => (
-                <button key={tab.k} onClick={() => setChartTab(tab.k)} style={{
-                  padding: '6px 14px', borderRadius: 99, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
-                  fontFamily: T.fm, fontSize: 11, letterSpacing: '.08em', fontWeight: 700,
-                  background: chartTab === tab.k ? T.purple : T.bg3,
-                  color: chartTab === tab.k ? T.bg : T.ink3,
-                  transition: 'background .15s, color .15s',
-                }}>{tab.l}</button>
-              ))}
-            </div>
-            {(() => {
-              const tabTracks: ChartTrack[] = charts?.[chartTab] ?? rising.slice(0, 5);
-              if (!tabTracks.length) return (
-                <div style={{ padding: '20px 22px', color: T.ink3, fontFamily: T.fm, fontSize: 12, textAlign: 'center' }}>
-                  {chartTab === 'local' ? `No local tracks yet in ${data.city ?? 'your city'}` : 'No chart data yet — keep hyping tracks'}
-                </div>
-              );
-              return (
-                <div style={{ padding: '0 22px', display: 'flex', flexDirection: 'column', gap: 7 }}>
-                  {tabTracks.slice(0, 10).map((tk, i) => (
-                    <div key={tk.id} onClick={() => onPlay(Math.max(0, queue.findIndex(q2 => q2.id === tk.id)))} style={{
-                      display: 'flex', alignItems: 'center', gap: 12, padding: '8px 10px', borderRadius: 11, cursor: 'pointer',
-                    }}>
-                      <div style={{ width: 22, textAlign: 'center', fontFamily: T.fd, fontWeight: 800, fontSize: 15, color: i < 3 ? T.purple : T.ink3 }}>{i + 1}</div>
-                      <AlbumArt c={tk.color} size={42} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 14, letterSpacing: '-.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tk.title}</div>
-                        <div style={{ fontFamily: T.fb, fontSize: 11.5, color: T.ink3, marginTop: 1 }}>{tk.artistName}</div>
-                      </div>
-                      <div style={{ fontFamily: T.fm, fontSize: 10, color: T.pink, letterSpacing: '.06em', whiteSpace: 'nowrap' }}>♥ {tk.hypeCount}</div>
-                    </div>
-                  ))}
-                </div>
-              );
-            })()}
-          </div>
-        )}
-
-        </>)}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 0 130px' }}>
+        {sub === 'search'    && <SearchTab data={data} onPlay={onPlay} currentIdx={currentIdx} />}
+        {sub === 'seeds'     && <SeedsTab data={data} onPlay={i => { onPlay(i); onExpand(); }} />}
+        {sub === 'radio'     && <RadioTab data={data} onOpenFM={onOpenFM} />}
+        {sub === 'charts'    && <ChartsTab data={data} onPlay={onPlay} />}
+        {sub === 'playlists' && <PlaylistsTab data={data} onPlay={i => { onPlay(i); onExpand(); }} />}
+        {sub === 'following' && <FollowingTab />}
       </div>
     </div>
   );
@@ -420,7 +371,6 @@ export function FullPlayer({ track, playing, onToggle, onCollapse, onHype, onPre
       color: T.ink, fontFamily: T.fb,
       background: `linear-gradient(180deg, ${track.color}38 0%, ${T.bg} 52%), ${T.bg}`,
     }}>
-      {/* header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 22px 4px' }}>
         <button onClick={onCollapse} style={{ width: 34, height: 34, borderRadius: 99, background: 'rgba(255,255,255,.1)', border: 'none', color: T.ink, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
           <svg width={15} height={15} viewBox="0 0 24 24" fill="none"><path d="M5 12h14m-5 6l6-6-6-6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" transform="rotate(90 12 12)"/></svg>
@@ -432,7 +382,6 @@ export function FullPlayer({ track, playing, onToggle, onCollapse, onHype, onPre
         <button onClick={() => setMenuOpen(true)} style={{ width: 34, height: 34, borderRadius: 99, background: 'rgba(255,255,255,.1)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, color: T.ink, cursor: 'pointer' }}>⋯</button>
       </div>
 
-      {/* art */}
       <div style={{ padding: '18px 30px 0' }}>
         <div style={{ width: '100%', aspectRatio: '1', borderRadius: 20, position: 'relative', overflow: 'hidden', background: `linear-gradient(135deg, ${track.color}, ${track.color}77 50%, ${T.bg3})`, boxShadow: `0 30px 80px ${track.color}40` }}>
           <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(circle at 30% 25%, rgba(255,255,255,.3), transparent 55%)' }} />
@@ -440,13 +389,11 @@ export function FullPlayer({ track, playing, onToggle, onCollapse, onHype, onPre
         </div>
       </div>
 
-      {/* meta */}
       <div style={{ padding: '22px 30px 0' }}>
         <h1 style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 26, margin: 0, letterSpacing: '-.02em', lineHeight: 1 }}>{track.title}</h1>
         <div style={{ fontFamily: T.fb, fontSize: 15, color: T.ink2, marginTop: 5 }}>{track.artistName}</div>
       </div>
 
-      {/* progress */}
       <div style={{ padding: '20px 30px 0' }}>
         <div style={{ height: 4, background: 'rgba(255,255,255,.12)', borderRadius: 2 }}>
           <div style={{ width: `${progress * 100}%`, height: '100%', background: T.ink, borderRadius: 2, position: 'relative' }}>
@@ -458,7 +405,6 @@ export function FullPlayer({ track, playing, onToggle, onCollapse, onHype, onPre
         </div>
       </div>
 
-      {/* transport */}
       <div style={{ padding: '14px 30px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <button onClick={onPrev} disabled={!onPrev} style={{ background: 'none', border: 'none', cursor: onPrev ? 'pointer' : 'default', color: onPrev ? T.ink2 : T.ink4, padding: 0 }}>
           <svg width={22} height={22} viewBox="0 0 24 24" fill="currentColor"><path d="M11 19V5l-9 7 9 7zm2-14v14l9-7-9-7z"/></svg>
@@ -503,7 +449,6 @@ export function FullPlayer({ track, playing, onToggle, onCollapse, onHype, onPre
         </div>
       </div>
 
-      {/* Track options sheet */}
       {menuOpen && (
         <div
           style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', zIndex: 10 }}
