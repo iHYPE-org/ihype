@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useApp } from './context';
 import { IHYPE_DATA, lookupArtist } from '@/lib/data';
 import { track } from '@/lib/analytics';
@@ -137,6 +138,14 @@ export function SettingsSheet() {
       <div style={{ marginTop: 16, padding: '10px', borderRadius: 12, background: 'rgba(255,184,74,.08)', border: '1px solid rgba(255,184,74,.2)' }}>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: '.7rem', color: '#ffb84a', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 4 }}>Beta 0.1.0-beta.5</div>
         <div style={{ fontFamily: 'var(--font-body)', fontSize: '.78rem', color: 'var(--ink-3)', lineHeight: 1.5 }}>Simulated purchases only. No real transactions in beta.</div>
+      </div>
+      <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <Link href="/register" style={{ display: 'block', padding: '11px', borderRadius: 12, background: 'var(--accent)', color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '.9rem', textAlign: 'center', textDecoration: 'none' }}>
+          Create a real account →
+        </Link>
+        <Link href="/login" style={{ display: 'block', padding: '10px', borderRadius: 12, border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-2)', fontFamily: 'var(--font-mono)', fontSize: '.78rem', textAlign: 'center', textDecoration: 'none' }}>
+          Log in
+        </Link>
       </div>
     </SheetBase>
   );

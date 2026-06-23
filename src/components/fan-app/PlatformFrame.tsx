@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { AppProvider } from './context';
 import { AppShell } from './Shell';
 
@@ -182,7 +183,14 @@ export function PlatformFrame() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: '100vh', padding: '40px 20px', background: 'var(--bg-base)' }}>
-      {/* Logo */}
+      {/* Logo + back link */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: 1100, marginBottom: 8 }}>
+        <Link href="/" style={{ fontFamily: 'var(--font-mono)', fontSize: '.68rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3)', textDecoration: 'none' }}>← ihype.org</Link>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Link href="/register" style={{ fontFamily: 'var(--font-mono)', fontSize: '.68rem', letterSpacing: '.08em', padding: '5px 12px', borderRadius: 999, border: '1px solid rgba(255,80,41,.4)', background: 'rgba(255,80,41,.08)', color: 'var(--accent)', textDecoration: 'none' }}>Sign up free</Link>
+          <Link href="/login" style={{ fontFamily: 'var(--font-mono)', fontSize: '.68rem', letterSpacing: '.08em', padding: '5px 12px', borderRadius: 999, border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-3)', textDecoration: 'none' }}>Log in</Link>
+        </div>
+      </div>
       <div style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: '1.8rem', letterSpacing: '-.04em', color: 'var(--accent)', marginBottom: 8 }}>iHYPE</div>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: '.68rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 32 }}>Fan App Demo · Closed Beta</div>
 

@@ -80,9 +80,25 @@ export default async function RootPage() {
                 brought the fan. iHYPE takes nothing — and that&apos;s locked in.
               </p>
 
-              <Link href="/login" style={{ fontFamily: 'var(--f-b)', fontSize: '0.9rem', color: 'var(--ink-3)', textDecoration: 'none' }}>
-                Already have an account? <span style={{ color: 'var(--ink-2)', textDecoration: 'underline' }}>Sign in</span>
-              </Link>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <Link
+                  href="/app"
+                  style={{
+                    display: 'inline-block',
+                    padding: '0.65rem 1.5rem', borderRadius: 999,
+                    border: '1px solid rgba(255,80,41,.4)',
+                    background: 'rgba(255,80,41,.08)',
+                    color: 'var(--accent)',
+                    fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: '0.9rem',
+                    textDecoration: 'none',
+                  }}
+                >
+                  Try the fan app →
+                </Link>
+                <Link href="/login" style={{ fontFamily: 'var(--f-b)', fontSize: '0.9rem', color: 'var(--ink-3)', textDecoration: 'none' }}>
+                  Already have an account? <span style={{ color: 'var(--ink-2)', textDecoration: 'underline' }}>Sign in</span>
+                </Link>
+              </div>
             </div>
 
           </div>
@@ -282,7 +298,7 @@ export default async function RootPage() {
             <p style={{ fontFamily: 'var(--f-b)', fontSize: '1rem', color: 'var(--ink-2)', margin: '0 0 2rem', maxWidth: '44ch', marginInline: 'auto', lineHeight: 1.65 }}>
               No subscription. No fees. Just music, community, and a platform that&apos;s actually on your side.
             </p>
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
               <Link
                 href="/register"
                 style={{
@@ -295,6 +311,20 @@ export default async function RootPage() {
                 }}
               >
                 Get started free →
+              </Link>
+              <Link
+                href="/app"
+                style={{
+                  display: 'inline-block',
+                  padding: '0.9rem 2.5rem', borderRadius: 999,
+                  border: '1px solid rgba(255,80,41,.35)',
+                  background: 'rgba(255,80,41,.07)',
+                  color: 'var(--accent)',
+                  fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: '1.05rem',
+                  textDecoration: 'none',
+                }}
+              >
+                Try the fan app
               </Link>
             </div>
             <div style={{ marginTop: '1.25rem' }}>

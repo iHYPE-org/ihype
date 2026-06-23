@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useApp } from './context';
 import { track } from '@/lib/analytics';
 
@@ -64,6 +65,14 @@ export function BetaGate() {
         <span style={{ color: 'var(--warn)', cursor: 'pointer' }} onClick={() => setCode('IHYPE')}>
           Use demo code
         </span>
+      </div>
+      <div style={{ borderTop: '1px solid var(--line-2)', marginTop: 28, paddingTop: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+        <Link href="/register" style={{ display: 'block', width: '100%', maxWidth: 260, padding: '11px', borderRadius: 999, background: 'transparent', border: '1px solid var(--line)', color: 'var(--ink-2)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '.88rem', textAlign: 'center', textDecoration: 'none' }}>
+          Sign up free →
+        </Link>
+        <Link href="/login" style={{ fontFamily: 'var(--font-mono)', fontSize: '.68rem', color: 'var(--ink-3)', textDecoration: 'none', letterSpacing: '.06em' }}>
+          Already have an account? <span style={{ color: 'var(--ink-2)', textDecoration: 'underline' }}>Log in</span>
+        </Link>
       </div>
     </div>
   );

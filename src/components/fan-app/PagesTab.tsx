@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useApp } from './context';
 import { track } from '@/lib/analytics';
 
@@ -335,6 +336,9 @@ function CreatePageFlow({ toast, onDone }: { toast: (msg: string) => void; onDon
           )}
           <button onClick={publish} style={{ width: '100%', padding: '13px', borderRadius: 999, border: 'none', background: rf.tint, color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '.96rem', cursor: 'pointer', boxShadow: `0 6px 22px ${rf.tint}44` }}>Publish {role} page →</button>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: '.7rem', color: 'var(--ink-3)', marginTop: 10, textAlign: 'center', lineHeight: 1.5 }}>Beta: simulated publish. Real pages go live after verification.</div>
+          <Link href="/register" style={{ display: 'block', marginTop: 10, padding: '10px', borderRadius: 12, border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-2)', fontFamily: 'var(--font-mono)', fontSize: '.78rem', textAlign: 'center', textDecoration: 'none', letterSpacing: '.04em' }}>
+            Create your real iHYPE page →
+          </Link>
         </div>
       )}
     </div>
