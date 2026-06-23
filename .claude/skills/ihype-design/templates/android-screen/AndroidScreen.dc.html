@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Android Screen" description="Mobile screen scaffold — status bar, scrollable content area, bottom nav with all 5 tabs" -->
+<helmet>
+  <script src="./ds-base.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <style>html,body{margin:0;background:#0a0805;} *{box-sizing:border-box;}</style>
+</helmet>
+
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px;background:#0a0805;">
+  <div style="width:390px;border-radius:52px;overflow:hidden;background:#0a0805;color:#f0ebe5;border:8px solid rgba(116,119,117,0.5);box-shadow:0 30px 80px rgba(0,0,0,0.5),inset 0 0 0 1px rgba(255,255,255,0.06);display:flex;flex-direction:column;font-family:'DM Sans',system-ui,sans-serif;">
+
+    <!-- Status bar -->
+    <div style="height:40px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;position:relative;">
+      <div style="font-size:14px;font-weight:400;">9:41</div>
+      <div style="position:absolute;left:50%;top:8px;transform:translateX(-50%);width:24px;height:24px;border-radius:50%;background:#1a1612;"></div>
+      <div style="display:flex;align-items:center;gap:5px;">
+        <svg width="15" height="11" viewBox="0 0 15 11" fill="#f0ebe5"><rect x="0" y="4" width="2.5" height="7" rx="1"/><rect x="3.5" y="2.5" width="2.5" height="8.5" rx="1"/><rect x="7" y="0" width="2.5" height="11" rx="1"/><rect x="10.5" y="1.5" width="2.5" height="9.5" rx="1"/></svg>
+        <svg width="16" height="11" viewBox="0 0 16 11" fill="none"><rect x="0.5" y="0.5" width="13" height="10" rx="2.5" stroke="#f0ebe5" strokeOpacity=".35"/><rect x="14" y="3.5" width="1.5" height="4" rx=".75" fill="#f0ebe5" fillOpacity=".4"/><rect x="2" y="2" width="9" height="7" rx="1.5" fill="#f0ebe5"/></svg>
+      </div>
+    </div>
+
+    <!-- Scrollable content -->
+    <div style="flex:1;overflow-y:auto;overflow-x:hidden;min-height:600px;">
+      <div style="padding:8px 20px 24px;">
+
+        <!-- Replace below with your screen content -->
+        <div style="height:28px;"></div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#5a5048;">YOUR SECTION</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px;letter-spacing:-.02em;color:#f0ebe5;margin-top:6px;line-height:1.05;">Screen title</div>
+
+        <div style="margin-top:24px;padding:16px;border:1px solid rgba(255,255,255,.06);border-radius:10px;background:#100d09;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;color:#5a5048;text-transform:uppercase;">Content block</div>
+          <div style="font-family:'DM Sans',sans-serif;font-size:14px;color:#9e9080;margin-top:8px;">Replace this with your content. Use --bg-surface cards, Eyebrow labels, and Syne display text to stay on-brand.</div>
+        </div>
+
+        <div style="margin-top:12px;height:1px;background:rgba(255,255,255,.06);"></div>
+
+      </div>
+    </div>
+
+    <!-- Bottom nav -->
+    <div style="height:72px;border-top:1px solid rgba(255,255,255,.06);display:flex;align-items:center;flex-shrink:0;background:#100d09;">
+
+      <!-- Home (active) -->
+      <button style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;cursor:pointer;border:none;background:transparent;color:#ff5029;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/></svg>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:7px;letter-spacing:.14em;text-transform:uppercase;">Home</span>
+      </button>
+
+      <!-- Seeds -->
+      <button style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;cursor:pointer;border:none;background:transparent;color:#5a5048;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-9.5-9.2C.8 8.2 3 4.5 6.5 4.5c2 0 3.5 1 5.5 3 2-2 3.5-3 5.5-3C21 4.5 23.2 8.2 21.5 11.8 19 16.5 12 21 12 21z"/></svg>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:7px;letter-spacing:.14em;text-transform:uppercase;">Seeds</span>
+      </button>
+
+      <!-- Shows -->
+      <button style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;cursor:pointer;border:none;background:transparent;color:#5a5048;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="1.6"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" strokeWidth="1.6"/></svg>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:7px;letter-spacing:.14em;text-transform:uppercase;">Shows</span>
+      </button>
+
+      <!-- Charts -->
+      <button style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;cursor:pointer;border:none;background:transparent;color:#5a5048;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 17l6-6 4 4 8-9M17 6h4v4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:7px;letter-spacing:.14em;text-transform:uppercase;">Charts</span>
+      </button>
+
+      <!-- You -->
+      <button style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;cursor:pointer;border:none;background:transparent;color:#5a5048;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.6"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:7px;letter-spacing:.14em;text-transform:uppercase;">You</span>
+      </button>
+
+    </div>
+
+    <!-- Gesture bar -->
+    <div style="height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#100d09;">
+      <div style="width:108px;height:4px;border-radius:2px;background:rgba(255,255,255,0.22);"></div>
+    </div>
+
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>

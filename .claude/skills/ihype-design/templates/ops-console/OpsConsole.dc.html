@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Operator Console" description="iH/OPS single-operator admin — ad review queue, platform health, accounts, audit log" -->
+<helmet>
+  <script src="./ds-base.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>html,body{margin:0;height:100%;overflow:hidden;background:#0a0805}*{box-sizing:border-box;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent}::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}</style>
+</helmet>
+
+<div style="width:100vw;height:100vh;display:flex;flex-direction:column;background:#0a0805;color:#f0ebe5;overflow:hidden;font-family:'DM Sans',system-ui,sans-serif">
+
+  <!-- Top bar -->
+  <div style="height:42px;border-bottom:1px solid rgba(255,255,255,.06);background:#100d09;display:flex;align-items:center;padding:0 16px;gap:14px;flex-shrink:0">
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;letter-spacing:-.02em">i<span style="color:#ff5029">H</span><span style="color:#5a5048">/</span><span style="color:#ff5029">OPS</span></div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;padding:3px 8px;border:1px solid rgba(34,229,212,.4);border-radius:4px;color:#22e5d4;display:flex;align-items:center;gap:5px">
+      <span style="width:5px;height:5px;border-radius:50%;background:#22e5d4;display:inline-block"></span>LIVE
+    </div>
+    <div style="flex:1"></div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048;letter-spacing:.1em" id="ops-clock"></div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048;padding:3px 10px;border-radius:4px;background:#1a1612;border:1px solid rgba(255,255,255,.06)">Single operator · Automated admin</div>
+  </div>
+
+  <!-- Body -->
+  <div style="flex:1;display:flex;min-height:0;overflow:hidden">
+
+    <!-- Rail -->
+    <div style="width:88px;border-right:1px solid rgba(255,255,255,.06);background:#100d09;padding:12px 0;display:flex;flex-direction:column;gap:1px;flex-shrink:0">
+      <sc-if value="{{ isQueue }}" hint-placeholder-val="{{ true }}">
+        <div onClick="{{ navQueue }}" style="padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:#f0ebe5;background:#1a1612;border-left:2px solid #ff5029;position:relative">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.6"/><rect x="3" y="10" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.6"/><rect x="3" y="17" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.6"/></svg>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase">Queue</div>
+          <div style="position:absolute;top:6px;right:6px;width:16px;height:16px;border-radius:50%;background:#ff5029;color:#0a0805;font-family:'Syne',sans-serif;font-weight:800;font-size:9px;display:flex;align-items:center;justify-content:center">6</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ notQueue }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ navQueue }}" style="padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:#5a5048;background:transparent;border-left:2px solid transparent;position:relative">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.6"/><rect x="3" y="10" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.6"/><rect x="3" y="17" width="18" height="4" rx="1.5" stroke="currentColor" stroke-width="1.6"/></svg>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase">Queue</div>
+          <div style="position:absolute;top:6px;right:6px;width:16px;height:16px;border-radius:50%;background:#ff5029;color:#0a0805;font-family:'Syne',sans-serif;font-weight:800;font-size:9px;display:flex;align-items:center;justify-content:center">6</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isPlatform }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ navPlatform }}" style="padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:#f0ebe5;background:#1a1612;border-left:2px solid #ff5029">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 17l6-6 4 4 8-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase">Platform</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ notPlatform }}" hint-placeholder-val="{{ true }}">
+        <div onClick="{{ navPlatform }}" style="padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:#5a5048;background:transparent;border-left:2px solid transparent">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 17l6-6 4 4 8-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase">Platform</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isAccounts }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ navAccounts }}" style="padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:#f0ebe5;background:#1a1612;border-left:2px solid #ff5029">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M16 3.13a4 4 0 010 7.75M21 20c0-3.5-2.7-6-6-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase">Accounts</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ notAccounts }}" hint-placeholder-val="{{ true }}">
+        <div onClick="{{ navAccounts }}" style="padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:#5a5048;background:transparent;border-left:2px solid transparent">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M16 3.13a4 4 0 010 7.75M21 20c0-3.5-2.7-6-6-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase">Accounts</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isLog }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ navLog }}" style="padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:#f0ebe5;background:#1a1612;border-left:2px solid #ff5029">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 12h6M9 8h6M9 16h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M5 20V4a1 1 0 011-1h8l5 5v12a1 1 0 01-1 1H6a1 1 0 01-1-1z" stroke="currentColor" stroke-width="1.6"/></svg>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase">Log</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ notLog }}" hint-placeholder-val="{{ true }}">
+        <div onClick="{{ navLog }}" style="padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:#5a5048;background:transparent;border-left:2px solid transparent">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 12h6M9 8h6M9 16h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M5 20V4a1 1 0 011-1h8l5 5v12a1 1 0 01-1 1H6a1 1 0 01-1-1z" stroke="currentColor" stroke-width="1.6"/></svg>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase">Log</div>
+        </div>
+      </sc-if>
+    </div>
+
+    <!-- Content -->
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+
+      <!-- QUEUE -->
+      <sc-if value="{{ isQueue }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1;display:flex;min-height:0;overflow:hidden">
+          <!-- List -->
+          <div style="width:300px;border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden">
+            <div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;align-items:center">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#ff5029">PENDING</div>
+              <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px">6</div>
+            </div>
+            <div style="flex:1;overflow-y:auto">
+              <div style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.06);background:#1a1612;border-left:2px solid #ff5029">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:#ff5029;background:rgba(255,80,41,.15);padding:2px 7px;border-radius:4px">Artist</span>
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048">2m ago</div>
+                </div>
+                <div style="font-size:12px;font-weight:500;line-height:1.4">"Nocturnal" — North American tour 2026</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048;margin-top:4px">The Midnight</div>
+                <div style="display:flex;gap:5px;margin-top:7px;align-items:center">
+                  <div style="width:18px;height:18px;border-radius:4px;background:rgba(34,229,212,.18);border:1px solid rgba(34,229,212,.3);color:#22e5d4;display:flex;align-items:center;justify-content:center"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+                  <div style="width:18px;height:18px;border-radius:4px;background:rgba(34,229,212,.18);border:1px solid rgba(34,229,212,.3);color:#22e5d4;display:flex;align-items:center;justify-content:center"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+                  <div style="width:18px;height:18px;border-radius:4px;background:rgba(34,229,212,.18);border:1px solid rgba(34,229,212,.3);color:#22e5d4;display:flex;align-items:center;justify-content:center"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#22e5d4;letter-spacing:.1em;text-transform:uppercase;margin-left:4px">CLEAR</span>
+                </div>
+              </div>
+              <div style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:#ff4545;background:rgba(255,69,69,.15);padding:2px 7px;border-radius:4px">3rd-Party</span>
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048">12m ago</div>
+                </div>
+                <div style="font-size:12px;font-weight:500;line-height:1.4">Earn crypto while listening to music</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048;margin-top:4px">CryptoTune</div>
+                <div style="display:flex;gap:5px;margin-top:7px;align-items:center">
+                  <div style="width:18px;height:18px;border-radius:4px;background:rgba(255,69,69,.18);border:1px solid rgba(255,69,69,.3);color:#ff4545;display:flex;align-items:center;justify-content:center"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+                  <div style="width:18px;height:18px;border-radius:4px;background:rgba(255,69,69,.18);border:1px solid rgba(255,69,69,.3);color:#ff4545;display:flex;align-items:center;justify-content:center"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#ff4545;letter-spacing:.1em;text-transform:uppercase;margin-left:4px">AUTO-REJECT</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Detail -->
+          <div style="flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:16px">
+            <div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:#ff5029;background:rgba(255,80,41,.15);padding:2px 7px;border-radius:4px">Artist</span>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#5a5048">ADV-2847 · 2m ago</div>
+              </div>
+              <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;letter-spacing:-.015em;color:#f0ebe5;margin-top:8px">"Nocturnal" — North American tour 2026</div>
+              <div style="font-size:13px;color:#9e9080;margin-top:4px">The Midnight · 24 dates across US + Canada. Tickets on sale June 24.</div>
+            </div>
+            <!-- Gates -->
+            <div style="background:#100d09;border:1px solid rgba(255,255,255,.06);border-radius:10px;overflow:hidden">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.06)">
+                <div style="width:18px;height:18px;border-radius:4px;background:rgba(34,229,212,.18);border:1px solid rgba(34,229,212,.3);color:#22e5d4;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+                <div style="flex:1;font-size:13px">Buyer vetting</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#22e5d4">PASS</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.06)">
+                <div style="width:18px;height:18px;border-radius:4px;background:rgba(34,229,212,.18);border:1px solid rgba(34,229,212,.3);color:#22e5d4;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+                <div style="flex:1;font-size:13px">Music-only relevance</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#22e5d4">PASS</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;padding:12px 16px">
+                <div style="width:18px;height:18px;border-radius:4px;background:rgba(34,229,212,.18);border:1px solid rgba(34,229,212,.3);color:#22e5d4;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+                <div style="flex:1;font-size:13px">Copyright firewall</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#22e5d4">PASS</div>
+              </div>
+            </div>
+            <!-- Actions -->
+            <div style="display:flex;gap:10px">
+              <button style="padding:6px 14px;background:#22e5d4;color:#0a0805;border:none;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.08em;display:inline-flex;align-items:center;gap:6px;cursor:pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Approve</button>
+              <button style="padding:6px 14px;background:#ff4545;color:#f0ebe5;border:none;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.08em;display:inline-flex;align-items:center;gap:6px;cursor:pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>Reject</button>
+              <button style="padding:6px 14px;background:transparent;color:#f0ebe5;border:1px solid rgba(255,255,255,.14);border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.08em;cursor:pointer">Flag for review</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- PLATFORM -->
+      <sc-if value="{{ isPlatform }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px">
+          <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#ff5029">PLATFORM HEALTH</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;letter-spacing:-.02em;color:#f0ebe5;margin-top:5px">Operator dashboard</div></div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+            <div style="padding:14px 16px;border:1px solid rgba(255,255,255,.06);border-radius:10px;background:#100d09"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#5a5048">Submissions today</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:26px;color:#f0ebe5;margin-top:8px">1,247</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#ff5029;margin-top:5px;letter-spacing:.06em">↑ 12% vs yesterday</div></div>
+            <div style="padding:14px 16px;border:1px solid rgba(255,255,255,.06);border-radius:10px;background:#100d09"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#5a5048">Clearance rate</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:26px;color:#f0ebe5;margin-top:8px">94%</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#22e5d4;margin-top:5px;letter-spacing:.06em">Auto-cleared in &lt;60s</div></div>
+            <div style="padding:14px 16px;border:1px solid rgba(255,255,255,.06);border-radius:10px;background:#100d09"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#5a5048">Active campaigns</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:26px;color:#f0ebe5;margin-top:8px">38</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#b983ff;margin-top:5px;letter-spacing:.06em">Across all tiers</div></div>
+            <div style="padding:14px 16px;border:1px solid rgba(255,255,255,.06);border-radius:10px;background:#100d09"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#5a5048">Avg review time</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:26px;color:#f0ebe5;margin-top:8px">42ms</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#7fb3ff;margin-top:5px;letter-spacing:.06em">HYPE Screen latency</div></div>
+            <div style="padding:14px 16px;border:1px solid rgba(255,255,255,.06);border-radius:10px;background:#100d09"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#5a5048">Rejected today</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:26px;color:#f0ebe5;margin-top:8px">74</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#ff4545;margin-top:5px;letter-spacing:.06em">6% rejection rate</div></div>
+            <div style="padding:14px 16px;border:1px solid rgba(255,255,255,.06);border-radius:10px;background:#100d09"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#5a5048">Queue depth</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:26px;color:#f0ebe5;margin-top:8px">6</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#ffb84a;margin-top:5px;letter-spacing:.06em">Awaiting manual review</div></div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ACCOUNTS -->
+      <sc-if value="{{ isAccounts }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px">
+          <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#7fb3ff">ADVERTISER ACCOUNTS</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;letter-spacing:-.02em;color:#f0ebe5;margin-top:5px">Accounts</div></div>
+          <div style="border:1px solid rgba(255,255,255,.06);border-radius:10px;background:#100d09;overflow:hidden">
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:8px 16px;border-bottom:1px solid rgba(255,255,255,.06)">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#5a5048">Account</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#5a5048">Type</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#5a5048">Status</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#5a5048">Spend</div>
+            </div>
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.06);align-items:center"><div style="font-size:13px;font-weight:500">The Midnight</div><span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:#ff5029;background:rgba(255,80,41,.15);padding:2px 7px;border-radius:4px;display:inline-block;width:fit-content">Artist</span><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#22e5d4">Active</div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px">$1,240</div></div>
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.06);align-items:center"><div style="font-size:13px;font-weight:500">Empty Bottle</div><span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:#22e5d4;background:rgba(34,229,212,.15);padding:2px 7px;border-radius:4px;display:inline-block;width:fit-content">Venue</span><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#22e5d4">Active</div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px">$3,820</div></div>
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:11px 16px;align-items:center"><div style="font-size:13px;font-weight:500">CryptoTune</div><span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:#7fb3ff;background:rgba(127,179,255,.15);padding:2px 7px;border-radius:4px;display:inline-block;width:fit-content">3rd-Party</span><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#ff4545">Banned</div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:#5a5048">$0</div></div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- LOG -->
+      <sc-if value="{{ isLog }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px">
+          <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#5a5048">AUDIT TRAIL</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;letter-spacing:-.02em;color:#f0ebe5;margin-top:5px">Decision log</div></div>
+          <div style="border:1px solid rgba(255,255,255,.06);border-radius:10px;background:#100d09;overflow:hidden">
+            <div style="display:flex;align-items:center;gap:16px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.06)"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048;flex-shrink:0;width:44px">08:42</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#22e5d4;background:rgba(34,229,212,.15);padding:3px 8px;border-radius:4px;flex-shrink:0">APPROVED</div><div style="flex:1;font-size:12px;font-weight:500">Hovvdy</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048">ADV-2843</div></div>
+            <div style="display:flex;align-items:center;gap:16px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.06)"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048;flex-shrink:0;width:44px">08:39</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#ff4545;background:rgba(255,69,69,.15);padding:3px 8px;border-radius:4px;flex-shrink:0">REJECTED</div><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500">CryptoWave</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#ff4545;margin-top:2px;letter-spacing:.04em">Non-musical product category</div></div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048">ADV-2844</div></div>
+            <div style="display:flex;align-items:center;gap:16px;padding:12px 16px"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048;flex-shrink:0;width:44px">08:36</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#22e5d4;background:rgba(34,229,212,.15);padding:3px 8px;border-radius:4px;flex-shrink:0">APPROVED</div><div style="flex:1;font-size:12px;font-weight:500">Sleeping Village</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048">ADV-2845</div></div>
+          </div>
+        </div>
+      </sc-if>
+
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { screen: 'queue' };
+  componentDidMount() {
+    const tick = () => {
+      const el = document.getElementById('ops-clock');
+      if (el) el.textContent = new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    };
+    tick();
+    this._clock = setInterval(tick, 1000);
+  }
+  componentWillUnmount() { clearInterval(this._clock); }
+  renderVals() {
+    const s = this.state.screen;
+    const is  = n => s === n;
+    const not = n => s !== n;
+    return {
+      isQueue:    is('queue'),    notQueue:    not('queue'),
+      isPlatform: is('platform'), notPlatform: not('platform'),
+      isAccounts: is('accounts'), notAccounts: not('accounts'),
+      isLog:      is('log'),      notLog:      not('log'),
+      navQueue:    () => this.setState({ screen: 'queue' }),
+      navPlatform: () => this.setState({ screen: 'platform' }),
+      navAccounts: () => this.setState({ screen: 'accounts' }),
+      navLog:      () => this.setState({ screen: 'log' }),
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<!-- @dsCard group="Beta" viewport="900x600" name="Error / Crash Screen" subtitle="Branded fallback when the app breaks" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iHYPE — Something broke</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { background: var(--bg-base); color: var(--ink-1); font-family: var(--font-body); display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .card { max-width: 380px; text-align: center; }
+  .glyph { font-family: var(--font-display); font-weight: 800; font-size: 3.4rem; letter-spacing: -.04em; color: var(--accent); position: relative; display: inline-block; animation: glitch 2.4s infinite; }
+  @keyframes glitch { 0%,92%,100% { transform: translate(0); } 93% { transform: translate(-2px,1px); } 95% { transform: translate(2px,-1px); } 97% { transform: translate(-1px,0); } }
+  h1 { font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; letter-spacing: -.02em; margin: 22px 0 8px; }
+  p { color: var(--ink-2); font-size: .92rem; line-height: 1.6; margin: 0 0 26px; }
+  .code { font-family: var(--font-mono); font-size: .68rem; color: var(--ink-3); letter-spacing: .1em; margin-top: 24px; }
+  .btn { display: block; width: 100%; padding: 13px; border-radius: 999px; border: none; font-family: var(--font-display); font-weight: 800; font-size: .92rem; cursor: pointer; }
+  .btn.primary { background: var(--accent); color: #fff; box-shadow: 0 6px 24px rgba(255,80,41,.32); }
+  .btn.ghost { background: transparent; color: var(--ink-2); margin-top: 10px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="glyph">iH·YPE</div>
+    <h1>The beat dropped&hellip; the app didn't catch it.</h1>
+    <p>Something glitched on our end. Your tickets, hype, and crate are all safe — try reloading.</p>
+    <button class="btn primary" onclick="location.reload()">Reload iHYPE</button>
+    <button class="btn ghost" onclick="alert('Opens feedback widget')">Report what happened</button>
+    <div class="code">err_ref · 7c2a · v0.1.0-beta.5</div>
+  </div>
+</body>
+</html>

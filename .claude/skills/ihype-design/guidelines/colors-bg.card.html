@@ -1,0 +1,40 @@
+<!-- @dsCard group="Colors" viewport="700x160" name="Backgrounds" subtitle="Four warm-black surface tiers" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { margin: 0; padding: 16px 20px; background: #1a1612; font-family: var(--font-mono); }
+  .row { display: flex; gap: 10px; }
+  .swatch { flex: 1; border-radius: 8px; padding: 14px 14px 10px; border: 1px solid rgba(255,255,255,0.12); }
+  .dot { width: 32px; height: 32px; border-radius: 8px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1); }
+  .name { font-size: 9px; letter-spacing: .14em; color: var(--ink-3); text-transform: uppercase; }
+  .val  { font-size: 10px; color: var(--ink-2); margin-top: 3px; }
+</style>
+</head>
+<body>
+<div class="row">
+  <div class="swatch">
+    <div class="dot" style="background:var(--bg-base)"></div>
+    <div class="name">--bg-base</div>
+    <div class="val">#0a0805</div>
+  </div>
+  <div class="swatch">
+    <div class="dot" style="background:var(--bg-surface)"></div>
+    <div class="name">--bg-surface</div>
+    <div class="val">#100d09</div>
+  </div>
+  <div class="swatch">
+    <div class="dot" style="background:var(--bg-raised)"></div>
+    <div class="name">--bg-raised</div>
+    <div class="val">#1a1612</div>
+  </div>
+  <div class="swatch">
+    <div class="dot" style="background:var(--bg-overlay)"></div>
+    <div class="name">--bg-overlay</div>
+    <div class="val">#221c16</div>
+  </div>
+</div>
+</body>
+</html>

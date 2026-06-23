@@ -1,0 +1,142 @@
+<!-- @dsCard group="Components" viewport="700x900" name="Core Components" subtitle="Button · Badge · Chip · Checkbox · Radio · Select · Input · Tabs · Toast · Skeleton · ProgressBar · Card · Avatar · Toggle · Icon · Dialog" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>
+body{margin:0;padding:18px 22px;background:var(--bg-base);font-family:var(--font-body)}
+.sec{margin-bottom:18px}
+.lbl{font-family:var(--font-mono);font-size:9px;letter-spacing:.18em;color:var(--ink-3);text-transform:uppercase;margin-bottom:8px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { Button, Badge, Chip, Card, Eyebrow, Avatar, Toggle, Input, Tabs, Toast,
+        Select, Dialog, Checkbox, Radio, Skeleton, SkeletonText, ProgressBar, Icon } = window.IHYPEDesignSystem_39bcce;
+
+function Demo() {
+  const [tog, setTog] = React.useState(true);
+  const [chk, setChk] = React.useState(true);
+  const [rad, setRad] = React.useState('fan');
+  const [sel, setSel] = React.useState('regional');
+  const [dlg, setDlg] = React.useState(false);
+  const [tab, setTab] = React.useState('hypes');
+
+  return <div>
+    <div className="sec"><div className="lbl">Buttons</div>
+      <div className="row">
+        <Button tone="solid">Get ticket</Button>
+        <Button tone="ghost">RSVP free</Button>
+        <Button tone="outline">Follow</Button>
+        <Button tone="solid" accent="#b983ff">Fan</Button>
+        <Button tone="solid" accent="#22e5d4">Venue</Button>
+        <Button tone="solid" disabled>Disabled</Button>
+      </div>
+    </div>
+
+    <div className="sec"><div className="lbl">Badges + Chips</div>
+      <div className="row">
+        <Badge color="#ff5029">Artist</Badge>
+        <Badge color="#b983ff">Fan</Badge>
+        <Badge color="#22e5d4">Venue</Badge>
+        <Badge color="#ff3e9a">Promoter</Badge>
+        <Chip active>Bedroom Pop</Chip>
+        <Chip active accent="#b983ff">Indie</Chip>
+        <Chip>Shoegaze</Chip>
+      </div>
+    </div>
+
+    <div className="sec"><div className="lbl">Input + Select</div>
+      <div style={{display:'flex',gap:10,alignItems:'flex-start'}}>
+        <Input label="Artist name" placeholder="e.g. Maya Reyes" style={{flex:1}} />
+        <Select label="Coverage" options={[{value:'local',label:'Local'},{value:'regional',label:'Regional'},{value:'national',label:'National'}]} value={sel} onChange={setSel} style={{flex:1}} />
+      </div>
+    </div>
+
+    <div className="sec"><div className="lbl">Checkbox + Radio + Toggle</div>
+      <div style={{display:'flex',gap:28,alignItems:'flex-start'}}>
+        <Checkbox checked={chk} onChange={setChk} label="Show my Hypes publicly" detail="Other fans can see your votes" />
+        <Radio options={[{value:'fan',label:'Fan'},{value:'artist',label:'Artist'},{value:'venue',label:'Venue'}]} value={rad} onChange={setRad} />
+        <Toggle checked={tog} onChange={setTog} label="Receive ads" detail="Music industry only" />
+      </div>
+    </div>
+
+    <div className="sec"><div className="lbl">Tabs</div>
+      <Tabs tabs={[{id:'hypes',label:'Hypes',count:127},{id:'shows',label:'Shows',count:14},{id:'seeds',label:'Seeds'}]} active={tab} onChange={setTab} />
+    </div>
+
+    <div className="sec"><div className="lbl">Toast</div>
+      <div className="row" style={{flexDirection:'column',alignItems:'flex-start'}}>
+        <Toast message="HYPE cast!" detail="Collision · 3:38 — you boosted this track" variant="success" />
+        <Toast message="Show sold out" detail="Empty Bottle · Jun 27" variant="warn" onClose={() => {}} />
+        <Toast message="Ad rejected" detail="Copyright issue found in creative copy" variant="error" onClose={() => {}} />
+        <Toast message="New governance vote" detail="Open until Jun 24" variant="info" onClose={() => {}} />
+      </div>
+    </div>
+
+    <div className="sec"><div className="lbl">Progress + Skeleton</div>
+      <div style={{display:'flex',gap:18,alignItems:'flex-start'}}>
+        <div style={{flex:1,display:'flex',flexDirection:'column',gap:8}}>
+          <ProgressBar value={72} label="To artists" showValue accent="#ff5029" />
+          <ProgressBar value={18} label="Platform" showValue accent="#9e9080" />
+          <ProgressBar value={94} label="Clearance rate" showValue accent="#22e5d4" />
+        </div>
+        <div style={{flex:1,display:'flex',flexDirection:'column',gap:8}}>
+          <Skeleton width="100%" height={14} />
+          <SkeletonText lines={3} />
+          <div style={{display:'flex',gap:8}}>
+            <Skeleton width={40} height={40} radius={10} />
+            <Skeleton width={40} height={40} radius={10} />
+            <Skeleton width={40} height={40} radius={10} />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div className="sec"><div className="lbl">Avatars + Icons</div>
+      <div className="row">
+        <Avatar name="Maya Reyes" role="artist" size={40} />
+        <Avatar name="Jordan Lee" role="fan" size={40} />
+        <Avatar name="Empty Bottle" role="venue" size={40} />
+        <Avatar name="Jam Productions" role="promoter" size={40} />
+        <div style={{width:1,height:32,background:'rgba(255,255,255,.06)'}} />
+        {Icon && <>
+          <Icon name="music" size={18} />
+          <Icon name="heart" size={18} color="#ff5029" />
+          <Icon name="calendar" size={18} color="#22e5d4" />
+          <Icon name="zap" size={18} color="#b983ff" />
+          <Icon name="shield" size={18} color="#7fb3ff" />
+        </>}
+      </div>
+    </div>
+
+    <div className="sec"><div className="lbl">Dialog</div>
+      <div className="row">
+        <Button tone="solid" onClick={() => setDlg(true)}>Open Dialog</Button>
+        {dlg && <span style={{fontFamily:'var(--font-mono)',fontSize:9,color:'var(--ink-3)',letterSpacing:'.1em'}}>Dialog open ↓</span>}
+      </div>
+      <Dialog open={dlg} title="Confirm HYPE" description="Cast your HYPE on this track. You get 3 per day." onClose={() => setDlg(false)}>
+        <div style={{display:'flex',flexDirection:'column',gap:12}}>
+          <div style={{padding:'12px 14px',background:'var(--bg-raised)',borderRadius:8,fontSize:13,color:'var(--ink-2)'}}>Collision — Maya Reyes · 3:38</div>
+          <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+            <Button tone="ghost" size="sm" onClick={() => setDlg(false)}>Cancel</Button>
+            <Button tone="solid" size="sm" onClick={() => setDlg(false)}>Cast HYPE</Button>
+          </div>
+        </div>
+      </Dialog>
+    </div>
+  </div>;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script>
+</body>
+</html>

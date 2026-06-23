@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Workbench Screen" description="Desktop dashboard scaffold — top bar, left rail nav (6 items), full-viewport content area" -->
+<helmet>
+  <script src="./ds-base.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <style>html,body{margin:0;height:100%;overflow:hidden;background:#0a0805;} *{box-sizing:border-box;}</style>
+</helmet>
+
+<div style="width:100vw;height:100vh;display:flex;flex-direction:column;background:#0a0805;color:#f0ebe5;font-family:'DM Sans',system-ui,sans-serif;overflow:hidden;">
+
+  <!-- Top bar -->
+  <div style="height:42px;border-bottom:1px solid rgba(255,255,255,.06);background:#100d09;display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0;">
+
+    <!-- Wordmark -->
+    <div style="font-family:'Syne',sans-serif;font-weight:800;letter-spacing:-.02em;font-size:16px;">
+      i<span style="color:#ff5029;">HYPE</span>
+    </div>
+
+    <!-- Role chip — swap color and label per role: Artist #ff5029 · Fan #b983ff · Venue #22e5d4 · Promoter #ff3e9a -->
+    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;padding:3px 8px;border:1px solid rgba(255,80,41,.4);border-radius:4px;color:#ff5029;">ARTIST</div>
+
+    <!-- Search bar -->
+    <div style="flex:1;position:relative;">
+      <div style="display:flex;align-items:center;gap:8px;height:26px;padding:0 12px;background:#1a1612;border:1px solid rgba(255,255,255,.06);border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#5a5048;max-width:320px;margin:0 auto;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.6"/><path d="M20 20l-3.5-3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
+        Search artists, shows, venues
+        <span style="margin-left:auto;font-size:9px;color:#3a342e;">⌘K</span>
+      </div>
+    </div>
+
+    <!-- Avatar — initials from user's name, bg = role color -->
+    <div style="width:26px;height:26px;border-radius:99px;background:#ff5029;color:#0a0805;font-family:'Syne',sans-serif;font-weight:800;font-size:10px;display:flex;align-items:center;justify-content:center;">MR</div>
+
+  </div>
+
+  <!-- Body -->
+  <div style="flex:1;display:flex;min-height:0;">
+
+    <!-- Left rail -->
+    <div style="width:88px;border-right:1px solid rgba(255,255,255,.06);background:#100d09;padding:12px 0;display:flex;flex-direction:column;gap:1px;flex-shrink:0;">
+
+      <!-- Home (active) -->
+      <div style="padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:#f0ebe5;background:#1a1612;border-left:2px solid #ff5029;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/></svg>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;">Home</div>
+      </div>
+
+      <!-- Seeds -->
+      <div style="padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:#5a5048;border-left:2px solid transparent;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-9.5-9.2C.8 8.2 3 4.5 6.5 4.5c2 0 3.5 1 5.5 3 2-2 3.5-3 5.5-3C21 4.5 23.2 8.2 21.5 11.8 19 16.5 12 21 12 21z"/></svg>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;">Seeds</div>
+      </div>
+
+      <!-- Charts -->
+      <div style="padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:#5a5048;border-left:2px solid transparent;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 17l6-6 4 4 8-9M17 6h4v4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;">Charts</div>
+      </div>
+
+      <!-- Shows -->
+      <div style="padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:#5a5048;border-left:2px solid transparent;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="1.6"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" strokeWidth="1.6"/></svg>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;">Shows</div>
+      </div>
+
+      <!-- Govern -->
+      <div style="padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:#5a5048;border-left:2px solid transparent;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 11l4 4 12-12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M20 12v7a2 2 0 01-2 2H6a2 2 0 01-2-2V8" stroke="currentColor" strokeWidth="1.6"/></svg>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;">Govern</div>
+      </div>
+
+      <!-- Settings -->
+      <div style="padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:#5a5048;border-left:2px solid transparent;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3h0a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8v0a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z" stroke="currentColor" strokeWidth="1.4"/></svg>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;">Settings</div>
+      </div>
+
+    </div>
+
+    <!-- Content area — replace with your screen content -->
+    <div style="flex:1;overflow-y:auto;padding:22px 24px;display:flex;flex-direction:column;gap:16px;">
+
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#5a5048;">YOUR SECTION</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;letter-spacing:-.02em;color:#f0ebe5;margin-top:5px;">Screen title</div>
+      </div>
+
+      <div style="border:1px solid rgba(255,255,255,.06);border-radius:10px;background:#100d09;padding:20px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#5a5048;">Content area</div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:#9e9080;margin-top:10px;line-height:1.6;">Replace this panel with your content. Use the Panel, StatCard, and Sparkbar patterns from the Workbench UI kit as reference. Stat blocks use --bg-surface, border-radius 10px, and 1px solid --line.</div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iHYPE · iH/OPS — Automated Admin Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root{ --ac:#ff5029; }
+  *,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; background:#0a0805; color:#f0ebe5; font-family:'DM Sans',sans-serif; -webkit-font-smoothing:antialiased; overflow:hidden; }
+  button{ font:inherit; }
+  button:focus{ outline:none; }
+  ::-webkit-scrollbar{ width:10px; height:10px; }
+  ::-webkit-scrollbar-track{ background:transparent; }
+  ::-webkit-scrollbar-thumb{ background:rgba(255,255,255,.07); border-radius:5px; border:2px solid #0a0805; }
+  ::-webkit-scrollbar-thumb:hover{ background:rgba(255,255,255,.14); }
+  @keyframes opsPulse{ 0%{ box-shadow:0 0 0 0 currentColor; } 70%{ box-shadow:0 0 0 5px rgba(0,0,0,0); } 100%{ box-shadow:0 0 0 0 rgba(0,0,0,0); } }
+  @keyframes opsSpin{ to{ transform:rotate(360deg); } }
+  @keyframes opsFade{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:none; } }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" fill="#0a0805"/>
+    <text x="50" y="46" font-family="Syne,sans-serif" font-weight="800" font-size="22" fill="#f0ebe5" text-anchor="middle" letter-spacing="-1">iH</text>
+    <circle cx="58" cy="33" r="3.4" fill="#ff5029"/>
+    <text x="50" y="64" font-family="monospace" font-size="8" fill="#9e9080" text-anchor="middle" letter-spacing="2">iH/OPS</text>
+    <rect x="34" y="72" width="32" height="3" rx="1.5" fill="#ff5029"/>
+  </svg>
+</template>
+
+<script type="text/babel" src="ops/shared.jsx"></script>
+<script type="text/babel" src="ops/tweaks-panel.jsx"></script>
+<script type="text/babel" src="ops/login.jsx"></script>
+<script type="text/babel" src="ops/console.jsx"></script>
+<script type="text/babel" src="ops/views.jsx"></script>
+<script type="text/babel" src="ops/app.jsx"></script>
+</body>
+</html>

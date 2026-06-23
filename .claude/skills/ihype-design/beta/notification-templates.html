@@ -1,0 +1,85 @@
+<!-- @dsCard group="Beta" viewport="700x780" name="Push Notification Templates" subtitle="Live · ticket · referral · drop · waitlist" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iHYPE — Notification Templates</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  * { box-sizing: border-box; }
+  body { background: var(--bg-base); color: var(--ink-1); font-family: var(--font-body); padding: 28px; margin: 0; }
+  .grid { max-width: 620px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+  .lbl { font-family: var(--font-mono); font-size: .6rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); margin: 8px 0 -4px; }
+  .notif { display: flex; gap: 13px; align-items: flex-start; background: rgba(28,24,20,.92); backdrop-filter: blur(20px); border: 1px solid var(--line); border-radius: 18px; padding: 14px 15px; }
+  .ico { width: 38px; height: 38px; border-radius: 10px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+  .body { flex: 1; min-width: 0; }
+  .top { display: flex; justify-content: space-between; align-items: baseline; }
+  .app { font-family: var(--font-mono); font-size: .62rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2); }
+  .time { font-family: var(--font-mono); font-size: .62rem; color: var(--ink-3); }
+  .ttl { font-weight: 700; font-size: .92rem; margin: 3px 0 2px; letter-spacing: -.01em; }
+  .msg { font-size: .82rem; color: var(--ink-2); line-height: 1.45; }
+  .live .ico { background: rgba(255,80,41,.16); }
+  .live .ttl { color: var(--accent); }
+  .tk .ico { background: rgba(34,229,212,.14); }
+  .ref .ico { background: rgba(255,62,154,.14); }
+  .drop .ico { background: rgba(185,131,255,.14); }
+  .wl .ico { background: rgba(255,184,74,.14); }
+  .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 5px; animation: pulse 1.2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div class="lbl">Artist you hype is live</div>
+    <div class="notif live">
+      <div class="ico">🔴</div>
+      <div class="body">
+        <div class="top"><span class="app">iHYPE</span><span class="time">now</span></div>
+        <div class="ttl"><span class="dot"></span>Nyla is LIVE</div>
+        <div class="msg">Glasslight Tour just went live at The Echoplex. 412 listening — jump in.</div>
+      </div>
+    </div>
+
+    <div class="lbl">Ticket confirmed</div>
+    <div class="notif tk">
+      <div class="ico">🎟️</div>
+      <div class="body">
+        <div class="top"><span class="app">iHYPE</span><span class="time">2m</span></div>
+        <div class="ttl">You're in — Nyla, Jul 10</div>
+        <div class="msg">Ticket added to your wallet. Tap to view your QR pass.</div>
+      </div>
+    </div>
+
+    <div class="lbl">Referral earned</div>
+    <div class="notif ref">
+      <div class="ico">💸</div>
+      <div class="body">
+        <div class="top"><span class="app">iHYPE</span><span class="time">14m</span></div>
+        <div class="ttl">You earned $2.52</div>
+        <div class="msg">Theo bought a Nyla ticket with your link. Your share is accruing — clears after the show.</div>
+      </div>
+    </div>
+
+    <div class="lbl">Artist dropped a track</div>
+    <div class="notif drop">
+      <div class="ico">🎵</div>
+      <div class="body">
+        <div class="top"><span class="app">iHYPE</span><span class="time">1h</span></div>
+        <div class="ttl">Midnight Echo dropped "Neon Vellum"</div>
+        <div class="msg">New from an artist you hype. Be one of the first to listen.</div>
+      </div>
+    </div>
+
+    <div class="lbl">Waitlist opened</div>
+    <div class="notif wl">
+      <div class="ico">⚡</div>
+      <div class="body">
+        <div class="top"><span class="app">iHYPE</span><span class="time">3h</span></div>
+        <div class="ttl">A spot opened — Wax Tropic</div>
+        <div class="msg">You're next on the waitlist. Grab it in the next 10 min before it passes on.</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

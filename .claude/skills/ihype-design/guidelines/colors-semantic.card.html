@@ -1,0 +1,37 @@
+<!-- @dsCard group="Colors" viewport="700x150" name="Semantic Colors" subtitle="Warn · Info · Success · Destructive utility tokens" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { margin: 0; padding: 20px 24px; background: var(--bg-base); display: flex; gap: 14px; align-items: stretch; }
+  .chip { flex: 1; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 8; }
+  .swatch { width: 28px; height: 28px; border-radius: 6px; }
+  .name { font-family: var(--font-mono); font-size: 8px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); }
+  .val  { font-family: var(--font-mono); font-size: 10px; color: var(--ink-2); }
+</style>
+</head>
+<body>
+  <div class="chip" style="background:rgba(255,184,74,.07)">
+    <div class="swatch" style="background:var(--warn)"></div>
+    <div class="name">Warn</div>
+    <div class="val">#ffb84a</div>
+  </div>
+  <div class="chip" style="background:rgba(127,179,255,.07)">
+    <div class="swatch" style="background:var(--blue)"></div>
+    <div class="name">Info</div>
+    <div class="val">#7fb3ff</div>
+  </div>
+  <div class="chip" style="background:rgba(34,229,212,.07)">
+    <div class="swatch" style="background:var(--green)"></div>
+    <div class="name">Success</div>
+    <div class="val">#22e5d4</div>
+  </div>
+  <div class="chip" style="background:rgba(255,80,41,.07)">
+    <div class="swatch" style="background:var(--red)"></div>
+    <div class="name">Destructive</div>
+    <div class="val">#ff5029</div>
+  </div>
+</body>
+</html>

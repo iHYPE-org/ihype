@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Advertise" description="Marketing website — campaign builder, AI vetting demo, two-path advertiser split, transparency section" -->
+<helmet>
+  <script src="./ds-base.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;600&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
+  <style>
+    html,body{margin:0;background:#0a0805;color:#f0ebe5;-webkit-font-smoothing:antialiased}
+    *{box-sizing:border-box}a{color:inherit;text-decoration:none}
+    @keyframes adPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.75)}}
+  </style>
+</helmet>
+
+<!-- NAV -->
+<nav style="position:fixed;top:0;width:100%;z-index:100;background:rgba(10,8,5,.92);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.06)">
+  <div style="max-width:1100px;margin:0 auto;padding:0 40px;display:flex;align-items:center;gap:24px;height:54px">
+    <a href="#top" style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;letter-spacing:-.02em">i<span style="color:#ff5029">H</span><em style="font-style:italic">y</em><span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#ff5029;vertical-align:super;font-size:0;margin-left:1px"></span>pe</a>
+    <div style="display:flex;gap:20px;flex:1">
+      <a href="#" style="font-size:13px;color:#5a5048">Discover</a>
+      <a href="#" style="font-size:13px;color:#5a5048">Charts</a>
+      <a href="#" style="font-size:13px;color:#5a5048">Seeds</a>
+      <a href="#" style="font-size:13px;color:#5a5048">For Artists</a>
+      <a href="#top" style="font-size:13px;color:#f0ebe5">Advertise</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;color:#5a5048;display:flex;align-items:center;gap:6px">
+        <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#ff5029;animation:adPulse 2s ease-in-out infinite"></span>
+        3,418 listening
+      </span>
+      <a href="#build" style="display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:8px;background:#1a1612;color:#f0ebe5;border:1px solid rgba(255,255,255,.14);font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif">Buy coverage</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header id="top" style="padding:130px 0 80px">
+  <div style="max-width:1100px;margin:0 auto;padding:0 40px;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start">
+    <div>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#ff5029;display:inline-flex;align-items:center;gap:6px">
+        <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#ff5029"></span>Advertise on iHYPE
+      </span>
+      <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:50px;letter-spacing:-.025em;line-height:1.06;margin:12px 0 20px">Put your music<br>in front of the<br>people who <em style="font-family:'Instrument Serif',serif;font-style:italic;font-weight:400">dig deepest.</em></h1>
+      <p style="font-size:15px;color:#9e9080;line-height:1.75;max-width:480px;margin:0 0 28px">Buy reach by the spot — <strong>local to global</strong>, by the day. Every ad is AI-screened before it runs: <strong>music only, no copyrighted material, no name-drops.</strong></p>
+      <div style="display:flex;gap:12px">
+        <a href="#build" style="display:inline-flex;align-items:center;height:44px;padding:0 20px;border-radius:12px;background:#ff5029;color:#0a0805;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif">Build a campaign →</a>
+        <a href="#guard" style="display:inline-flex;align-items:center;height:44px;padding:0 20px;border-radius:12px;background:#1a1612;color:#f0ebe5;border:1px solid rgba(255,255,255,.14);font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif">See how vetting works</a>
+      </div>
+      <div style="display:flex;gap:32px;margin-top:36px;padding-top:28px;border-top:1px solid rgba(255,255,255,.06)">
+        <div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px">{{ spotsToday }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#5a5048;margin-top:4px">Spots today</div></div>
+        <div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px">94%</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#5a5048;margin-top:4px">Auto-cleared</div></div>
+        <div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px">100%</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#5a5048;margin-top:4px">Music-related</div></div>
+      </div>
+    </div>
+    <!-- Ticker -->
+    <div style="background:#100d09;border:1px solid rgba(255,255,255,.14);border-radius:14px;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid rgba(255,255,255,.06)">
+        <span style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;border:1px solid rgba(34,229,212,.4);color:#22e5d4">
+          <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#22e5d4;animation:adPulse 2s ease-in-out infinite"></span>Live
+        </span>
+        <span style="font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;flex:1">Vetting queue</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048;letter-spacing:.06em">{{ queueCount }} today</span>
+      </div>
+      <div style="min-height:200px">
+        <div style="display:flex;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.06)"><div style="width:20px;height:20px;border-radius:4px;background:rgba(34,229,212,.12);border:1px solid rgba(34,229,212,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 7" stroke="#22e5d4" stroke-width="2.5" stroke-linecap="round"/></svg></div><div style="flex:1;min-width:0"><div style="font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500">"Nocturnal" — North American tour 2026</div><div style="display:flex;gap:8px;margin-top:3px"><span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:#ff5029;background:rgba(255,80,41,.12);padding:2px 6px;border-radius:4px">Artist</span><span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048">The Midnight</span></div></div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#22e5d4;letter-spacing:.1em;text-transform:uppercase;flex-shrink:0;margin-top:1px">CLEARED</div></div>
+        <div style="display:flex;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.06)"><div style="width:20px;height:20px;border-radius:4px;background:rgba(34,229,212,.12);border:1px solid rgba(34,229,212,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 7" stroke="#22e5d4" stroke-width="2.5" stroke-linecap="round"/></svg></div><div style="flex:1;min-width:0"><div style="font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500">Flash sale — 40% off effects pedals</div><div style="display:flex;gap:8px;margin-top:3px"><span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:#ffb84a;background:rgba(255,184,74,.12);padding:2px 6px;border-radius:4px">Music Store</span><span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048">MusicGear.co</span></div></div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#22e5d4;letter-spacing:.1em;text-transform:uppercase;flex-shrink:0;margin-top:1px">CLEARED</div></div>
+        <div style="display:flex;gap:10px;padding:10px 14px"><div style="width:20px;height:20px;border-radius:4px;background:rgba(255,69,69,.12);border:1px solid rgba(255,69,69,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#ff4545" stroke-width="2.5" stroke-linecap="round"/></svg></div><div style="flex:1;min-width:0"><div style="font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500">Earn crypto listening to music</div><div style="display:flex;gap:8px;margin-top:3px"><span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:#7fb3ff;background:rgba(127,179,255,.12);padding:2px 6px;border-radius:4px">3rd-Party</span><span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048">CryptoTune</span></div></div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#ff4545;letter-spacing:.1em;text-transform:uppercase;flex-shrink:0;margin-top:1px">REJECTED</div></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:9px 16px;border-top:1px solid rgba(255,255,255,.06);font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048;letter-spacing:.06em">
+        <span>Reviewed by <strong style="color:#f0ebe5">HYPE Screen</strong> · automated</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- CAMPAIGN BUILDER -->
+<section id="build" style="padding:88px 0;border-top:1px solid rgba(255,255,255,.06)">
+  <div style="max-width:1100px;margin:0 auto;padding:0 40px">
+    <div style="max-width:640px;margin:0 auto 56px;text-align:center">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#ff5029">Step 01 · Build</span>
+      <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:40px;letter-spacing:-.02em;margin:10px 0 16px;line-height:1.1">Pick your <em style="font-family:'Instrument Serif',serif;font-style:italic;font-weight:400">reach.</em> Pick your <em style="font-family:'Instrument Serif',serif;font-style:italic;font-weight:400">volume.</em></h2>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div style="background:#100d09;border:1px solid rgba(255,255,255,.06);border-radius:14px;overflow:hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.06)">
+          <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px">Campaign</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;color:#5a5048;text-transform:uppercase">No contract · cancel anytime</span>
+        </div>
+        <div style="padding:20px;display:flex;flex-direction:column;gap:22px">
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#5a5048;margin-bottom:10px"><span style="color:#ff5029;margin-right:3px">A.</span>Coverage area</div>
+            <div style="display:flex;gap:8px">
+              <div style="flex:1;background:#1a1612;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:11px 6px;text-align:center;cursor:pointer"><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px">Local</div><div style="font-family:'JetBrains Mono',monospace;font-size:7px;color:#5a5048;letter-spacing:.1em;text-transform:uppercase;margin-top:3px">Your city</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048;margin-top:4px">$0.15/spot</div></div>
+              <div style="flex:1;background:rgba(255,80,41,.08);border:1px solid rgba(255,80,41,.5);border-radius:10px;padding:11px 6px;text-align:center;cursor:pointer"><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px">Regional</div><div style="font-family:'JetBrains Mono',monospace;font-size:7px;color:#5a5048;letter-spacing:.1em;text-transform:uppercase;margin-top:3px">State/metro</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#ff5029;margin-top:4px">$0.35/spot</div></div>
+              <div style="flex:1;background:#1a1612;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:11px 6px;text-align:center;cursor:pointer"><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px">National</div><div style="font-family:'JetBrains Mono',monospace;font-size:7px;color:#5a5048;letter-spacing:.1em;text-transform:uppercase;margin-top:3px">US-wide</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048;margin-top:4px">$0.80/spot</div></div>
+              <div style="flex:1;background:#1a1612;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:11px 6px;text-align:center;cursor:pointer"><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px">Global</div><div style="font-family:'JetBrains Mono',monospace;font-size:7px;color:#5a5048;letter-spacing:.1em;text-transform:uppercase;margin-top:3px">Worldwide</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048;margin-top:4px">$1.50/spot</div></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#5a5048;margin-bottom:10px"><span style="color:#ff5029;margin-right:3px">B.</span>Spots per day</div>
+            <div style="display:flex;align-items:center;background:#1a1612;border:1px solid rgba(255,255,255,.12);border-radius:10px;overflow:hidden;width:fit-content">
+              <button onClick="{{ decSpots }}" style="width:40px;height:40px;background:transparent;border:none;color:#f0ebe5;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center">−</button>
+              <div style="min-width:52px;text-align:center;font-family:'Syne',sans-serif;font-weight:800;font-size:20px">{{ spots }}</div>
+              <button onClick="{{ incSpots }}" style="width:40px;height:40px;background:transparent;border:none;color:#f0ebe5;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center">+</button>
+            </div>
+          </div>
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#5a5048;margin-bottom:10px"><span style="color:#ff5029;margin-right:3px">C.</span>Run length</div>
+            <div style="display:flex;background:#1a1612;border:1px solid rgba(255,255,255,.12);border-radius:10px;overflow:hidden">
+              <sc-if value="{{ dur7on }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ setDur7 }}" style="flex:1;padding:10px 0;background:#ff5029;border:none;color:#0a0805;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;cursor:pointer">7 days</button>
+              </sc-if>
+              <sc-if value="{{ dur7off }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ setDur7 }}" style="flex:1;padding:10px 0;background:transparent;border:none;color:#5a5048;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;cursor:pointer">7 days</button>
+              </sc-if>
+              <sc-if value="{{ dur14on }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ setDur14 }}" style="flex:1;padding:10px 0;background:#ff5029;border:none;color:#0a0805;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;cursor:pointer">14 days</button>
+              </sc-if>
+              <sc-if value="{{ dur14off }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ setDur14 }}" style="flex:1;padding:10px 0;background:transparent;border:none;color:#5a5048;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;cursor:pointer">14 days</button>
+              </sc-if>
+              <sc-if value="{{ dur30on }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ setDur30 }}" style="flex:1;padding:10px 0;background:#ff5029;border:none;color:#0a0805;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;cursor:pointer">30 days</button>
+              </sc-if>
+              <sc-if value="{{ dur30off }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ setDur30 }}" style="flex:1;padding:10px 0;background:transparent;border:none;color:#5a5048;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;cursor:pointer">30 days</button>
+              </sc-if>
+              <sc-if value="{{ dur90on }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ setDur90 }}" style="flex:1;padding:10px 0;background:#ff5029;border:none;color:#0a0805;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;cursor:pointer">90 days</button>
+              </sc-if>
+              <sc-if value="{{ dur90off }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ setDur90 }}" style="flex:1;padding:10px 0;background:transparent;border:none;color:#5a5048;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;cursor:pointer">90 days</button>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="background:#100d09;border:1px solid rgba(255,255,255,.06);border-radius:14px;overflow:hidden">
+        <div style="padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;align-items:center">
+          <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px">Regional reach</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;color:#5a5048;text-transform:uppercase">500k potential listeners</span>
+        </div>
+        <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+            <div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px">{{ dailyImp }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:#5a5048;margin-top:4px">Daily impressions</div></div>
+            <div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px">{{ totalImp }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:#5a5048;margin-top:4px">Total over run</div></div>
+            <div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px">{{ cpm }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:#5a5048;margin-top:4px">Effective CPM</div></div>
+          </div>
+          <div style="background:#1a1612;border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px">
+            <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);font-family:'JetBrains Mono',monospace;font-size:10px;color:#5a5048"><span>Regional</span><span style="color:#f0ebe5;font-weight:600">$0.35/spot</span></div>
+            <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);font-family:'JetBrains Mono',monospace;font-size:10px;color:#5a5048"><span>{{ spots }} spots/day × {{ dur }} days</span><span style="color:#f0ebe5;font-weight:600">{{ dailyCost }}/day</span></div>
+            <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);font-family:'JetBrains Mono',monospace;font-size:10px;color:#5a5048"><span>Co-op handling · 0%</span><span style="color:#22e5d4;font-weight:600">$0.00</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 0 4px">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#5a5048">Total</span>
+              <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;color:#ff5029">{{ totalCost }}</span>
+            </div>
+            <p style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048;letter-spacing:.06em;margin:8px 0 0">Nothing charges until your creative clears the AI screen.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GUARDRAILS -->
+<section id="guard" style="padding:88px 0;border-top:1px solid rgba(255,255,255,.06)">
+  <div style="max-width:1100px;margin:0 auto;padding:0 40px">
+    <div style="max-width:640px;margin:0 auto 56px;text-align:center">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#ff5029">Step 02 · The screen</span>
+      <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:40px;letter-spacing:-.02em;margin:10px 0 16px;line-height:1.1">Every ad clears <em style="font-family:'Instrument Serif',serif;font-style:italic;font-weight:400">three gates</em> before a single listener sees it.</h2>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px">
+      <div style="display:flex;flex-direction:column;gap:32px">
+        <div style="display:flex;gap:20px"><span style="font-family:'Syne',sans-serif;font-weight:800;font-size:32px;color:rgba(255,255,255,.12);flex-shrink:0;min-width:36px">01</span><div><div style="font-weight:600;font-size:16px;margin-bottom:8px">Buyer vetting</div><p style="font-size:14px;color:#9e9080;line-height:1.7;margin:0">Accounts matched against the music ecosystem. Anything outside it is flagged before checkout.</p></div></div>
+        <div style="display:flex;gap:20px"><span style="font-family:'Syne',sans-serif;font-weight:800;font-size:32px;color:rgba(255,255,255,.12);flex-shrink:0;min-width:36px">02</span><div><div style="font-weight:600;font-size:16px;margin-bottom:8px">Music-only relevance</div><p style="font-size:14px;color:#9e9080;line-height:1.7;margin:0">If the ad isn't about live music, releases, gear, or merch — it doesn't run.</p></div></div>
+        <div style="display:flex;gap:20px"><span style="font-family:'Syne',sans-serif;font-weight:800;font-size:32px;color:rgba(255,255,255,.12);flex-shrink:0;min-width:36px">03</span><div><div style="font-weight:600;font-size:16px;margin-bottom:8px">Copyright firewall</div><p style="font-size:14px;color:#9e9080;line-height:1.7;margin:0">Audio fingerprinted, copy scanned for protected song titles, lyrics, and artist name-drops.</p></div></div>
+      </div>
+      <div style="background:#100d09;border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:12px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;color:#5a5048;text-transform:uppercase">Cleared example</div>
+        <div style="background:#1a1612;border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:14px">
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:15px;letter-spacing:-.01em;margin-bottom:4px">"Collision" live at Empty Bottle</div>
+          <div style="font-size:12px;color:#9e9080">Wristbands at the door · June 27 · Chicago</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;background:rgba(34,229,212,.1);border:1px solid rgba(34,229,212,.25);font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#22e5d4"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="flex:1">Gate 1 — Buyer vetting</span><span>PASS</span></div>
+          <div style="display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;background:rgba(34,229,212,.1);border:1px solid rgba(34,229,212,.25);font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#22e5d4"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="flex:1">Gate 2 — Music relevance</span><span>PASS</span></div>
+          <div style="display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;background:rgba(34,229,212,.1);border:1px solid rgba(34,229,212,.25);font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#22e5d4"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="flex:1">Gate 3 — Copyright</span><span>PASS</span></div>
+        </div>
+        <div style="padding:10px 14px;border-radius:10px;background:rgba(34,229,212,.1);border:1px solid rgba(34,229,212,.3);font-family:'Syne',sans-serif;font-weight:800;font-size:14px;text-align:center;color:#22e5d4">✓ CLEARED — Ad approved to run</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRANSPARENCY -->
+<section style="padding:88px 0;background:#f0ead6;border-top:1px solid rgba(255,255,255,.06)">
+  <div style="max-width:1100px;margin:0 auto;padding:0 40px">
+    <div style="max-width:640px;margin:0 auto 48px;text-align:center">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#5a4a3a">The co-op promise</span>
+      <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:38px;letter-spacing:-.02em;margin:10px 0;line-height:1.1;color:#1c1510">Ad money feeds the <em style="font-family:'Instrument Serif',serif;font-style:italic;font-weight:400">artists</em>, not a feed.</h2>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:56px;align-items:start">
+      <p style="font-size:17px;color:#5a4a3a;line-height:1.75;margin:0">iHYPE is run by one director and a lot of automation — so almost every dollar of ad spend <strong style="color:#1c1510">goes back into the music</strong>, not overhead.</p>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;align-items:center;gap:14px"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#5a4a3a;width:160px;flex-shrink:0">To artists &amp; payouts</span><div style="flex:1;height:6px;background:rgba(0,0,0,.1);border-radius:99px;overflow:hidden"><div style="width:72%;height:100%;background:#ff5029;border-radius:99px"></div></div><span style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:#ff5029;width:44px;text-align:right">72%</span></div>
+        <div style="display:flex;align-items:center;gap:14px"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#5a4a3a;width:160px;flex-shrink:0">Platform &amp; hosting</span><div style="flex:1;height:6px;background:rgba(0,0,0,.1);border-radius:99px;overflow:hidden"><div style="width:18%;height:100%;background:#1c1510;border-radius:99px"></div></div><span style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:#1c1510;width:44px;text-align:right">18%</span></div>
+        <div style="display:flex;align-items:center;gap:14px"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#5a4a3a;width:160px;flex-shrink:0">Moderation &amp; AI</span><div style="flex:1;height:6px;background:rgba(0,0,0,.1);border-radius:99px;overflow:hidden"><div style="width:10%;height:100%;background:#5a4a3a;border-radius:99px"></div></div><span style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:#5a4a3a;width:44px;text-align:right">10%</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer style="background:#100d09;border-top:1px solid rgba(255,255,255,.06);padding:40px 0 24px">
+  <div style="max-width:1100px;margin:0 auto;padding:0 40px;display:flex;gap:56px;padding-bottom:28px;border-bottom:1px solid rgba(255,255,255,.06)">
+    <div style="flex:1">
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;letter-spacing:-.02em">i<span style="color:#ff5029">H</span><em style="font-style:italic">y</em><span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#ff5029;vertical-align:super;font-size:0;margin-left:1px"></span>pe</div>
+      <p style="font-size:13px;color:#5a5048;margin-top:8px;max-width:280px;line-height:1.6">A music co-op where the ads are about music — and a machine makes sure of it.</p>
+    </div>
+    <div style="display:flex;gap:48px">
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#5a5048;margin-bottom:4px">Advertise</div><a href="#build" style="font-size:13px;color:#5a5048">Buy coverage</a><a href="#guard" style="font-size:13px;color:#5a5048">How vetting works</a></div>
+      <div style="display:flex;flex-direction:column;gap:8px"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#5a5048;margin-bottom:4px">Platform</div><a href="#" style="font-size:13px;color:#5a5048">Discover</a><a href="#" style="font-size:13px;color:#5a5048">Charts</a><a href="#" style="font-size:13px;color:#5a5048">For Artists</a></div>
+    </div>
+  </div>
+  <div style="max-width:1100px;margin:0 auto;padding:20px 40px 0;display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048;letter-spacing:.06em">
+    <span>© 2026 iHYPE Music Co-op</span>
+    <span>Ad policy v3.1 · Copyright firewall enabled</span>
+  </div>
+</footer>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { spots: 6, dur: 14 };
+  renderVals() {
+    const { spots, dur } = this.state;
+    const rate = 0.35, impPerSpot = 3000;
+    const daily = rate * spots;
+    const total = daily * dur;
+    const dailyImp = impPerSpot * spots;
+    const totalImp = dailyImp * dur;
+    const cpm = total / (totalImp / 1000);
+    const fmt = n => n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n >= 1e3 ? Math.round(n/1e3)+'k' : String(n);
+    const durBg = d => d === dur ? '#ff5029' : 'transparent';
+    const durC  = d => d === dur ? '#0a0805' : '#5a5048';
+    return {
+      spots, dur,
+      spotsToday:  '1,247',
+      queueCount:  '312',
+      dailyImp:    fmt(dailyImp),
+      totalImp:    fmt(totalImp),
+      cpm:         '$' + cpm.toFixed(2),
+      dailyCost:   '$' + daily.toFixed(2),
+      totalCost:   '$' + total.toFixed(2),
+      incSpots:    () => this.setState(s => ({ spots: Math.min(50, s.spots + 1) })),
+      decSpots:    () => this.setState(s => ({ spots: Math.max(1, s.spots - 1) })),
+      setDur7:     () => this.setState({ dur: 7 }),
+      setDur14:    () => this.setState({ dur: 14 }),
+      setDur30:    () => this.setState({ dur: 30 }),
+      setDur90:    () => this.setState({ dur: 90 }),
+      dur7on:  dur === 7,   dur7off:  dur !== 7,
+      dur14on: dur === 14,  dur14off: dur !== 14,
+      dur30on: dur === 30,  dur30off: dur !== 30,
+      dur90on: dur === 90,  dur90off: dur !== 90,
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+/* iHYPE Breakpoint Tokens */
+/* Usage: use these in @media queries — not as CSS custom properties (they can't be used in media queries).
+   Reference: --bp-sm etc. are documented here for consistency; use the px values directly in @media. */
+:root {
+  --bp-xs:  375px;  /* small phone  */
+  --bp-sm:  480px;  /* large phone  */
+  --bp-md:  768px;  /* tablet       */
+  --bp-lg:  1024px; /* small desktop / iPad landscape */
+  --bp-xl:  1280px; /* desktop      */
+  --bp-2xl: 1536px; /* wide desktop */
+}
+
+/*
+  Canonical breakpoints (copy into components as needed):
+
+  Mobile-first:
+    @media (min-width: 480px)  { ... }   sm
+    @media (min-width: 768px)  { ... }   md
+    @media (min-width: 1024px) { ... }   lg
+    @media (min-width: 1280px) { ... }   xl
+
+  Max-width (override down):
+    @media (max-width: 767px)  { ... }   below md (phone-only)
+    @media (max-width: 1023px) { ... }   below lg (tablet and below)
+
+  Fan app shell breakpoints:
+    < 480px  → mobile shell (bottom tabs, full-bleed)
+    480–1023 → mobile web (wider phone / small tablet)
+    ≥ 1024px → desktop shell (sidebar nav, wider content)
+
+  iOS Dynamic Island: 375 × 812 (iPhone SE 2) → 430 × 932 (iPhone 15 Pro Max)
+  Android material: 360 × 800 baseline
+*/

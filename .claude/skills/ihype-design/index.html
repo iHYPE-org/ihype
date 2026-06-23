@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>iHYPE Design System</title>
+<link rel="icon" type="image/svg+xml" href="assets/logo/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#0a0805;color:#f0ebe5;font-family:'DM Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1120px;margin:0 auto;padding:0 40px}
+
+/* ── Nav ── */
+.site-nav{position:sticky;top:0;z-index:50;background:rgba(10,8,5,.92);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,.06)}
+.site-nav .wrap{height:52px;display:flex;align-items:center;gap:28px}
+.wm{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;letter-spacing:-.02em}
+.wm span{color:#ff5029}
+.nav-links{display:flex;gap:20px;flex:1}
+.nav-links a{font-size:13px;color:#5a5048;transition:color 120ms}.nav-links a:hover{color:#f0ebe5}
+
+/* ── Hero ── */
+.hero{padding:88px 0 72px;border-bottom:1px solid rgba(255,255,255,.06)}
+.hero-eyebrow{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#ff5029;display:flex;align-items:center;gap:6px;margin-bottom:16px}
+.hero-eyebrow::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:#ff5029}
+.hero h1{font-family:'Syne',sans-serif;font-weight:800;font-size:56px;letter-spacing:-.025em;line-height:1.05;margin:0 0 20px}
+.hero h1 em{font-style:normal;color:#ff5029}
+.hero p{font-size:16px;color:#9e9080;line-height:1.7;max-width:560px;margin:0 0 32px}
+.hero-meta{display:flex;gap:32px;padding-top:28px;border-top:1px solid rgba(255,255,255,.06)}
+.hm-stat .n{font-family:'Syne',sans-serif;font-weight:800;font-size:24px;letter-spacing:-.015em;color:#f0ebe5}
+.hm-stat .l{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#5a5048;margin-top:3px}
+
+/* ── Section headings ── */
+.sec{padding:64px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.sec-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#5a5048;margin-bottom:20px}
+.sec-title{font-family:'Syne',sans-serif;font-weight:800;font-size:28px;letter-spacing:-.015em;margin:0 0 32px}
+
+/* ── Surface cards ── */
+.surfaces{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.surf-card{border:1px solid rgba(255,255,255,.06);border-radius:16px;overflow:hidden;background:#100d09;display:flex;flex-direction:column;transition:border-color 200ms}
+.surf-card:hover{border-color:rgba(255,255,255,.18)}
+.surf-thumb{height:220px;position:relative;overflow:hidden}
+.surf-thumb iframe{width:200%;height:200%;border:none;transform:scale(.5);transform-origin:top left;pointer-events:none}
+.surf-thumb-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#1a1612}
+.surf-body{padding:20px 22px 22px;flex:1;display:flex;flex-direction:column}
+.surf-tag{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.14em;text-transform:uppercase;padding:3px 8px;border-radius:4px;display:inline-flex;margin-bottom:10px;width:fit-content}
+.surf-name{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;letter-spacing:-.01em;margin-bottom:6px}
+.surf-desc{font-size:13px;color:#9e9080;line-height:1.6;flex:1;margin-bottom:16px}
+.surf-link{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 16px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;transition:opacity 120ms;width:fit-content}
+.surf-link:hover{opacity:.8}
+.surf-link svg{flex-shrink:0}
+
+/* ── Token strip ── */
+.tokens-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tok-card{background:#100d09;border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px 16px}
+.tok-card .count{font-family:'Syne',sans-serif;font-weight:800;font-size:28px;letter-spacing:-.015em;color:#f0ebe5}
+.tok-card .label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#5a5048;margin-top:4px}
+.tok-swatches{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.swatch{width:22px;height:22px;border-radius:5px}
+
+/* ── Component strip ── */
+.comp-grid{display:flex;flex-wrap:wrap;gap:8px}
+.comp-pill{display:flex;align-items:center;gap:8px;padding:8px 14px;background:#100d09;border:1px solid rgba(255,255,255,.06);border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;transition:border-color 120ms}
+.comp-pill:hover{border-color:rgba(255,255,255,.18)}
+.comp-dot{width:7px;height:7px;border-radius:50%;background:#ff5029;flex-shrink:0}
+
+/* ── Guideline links ── */
+.guide-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.guide-item{background:#100d09;border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px;transition:border-color 150ms;display:flex;flex-direction:column;gap:6px}
+.guide-item:hover{border-color:rgba(255,255,255,.18)}
+.guide-item .gi-tag{font-family:'JetBrains Mono',monospace;font-size:7px;letter-spacing:.14em;text-transform:uppercase}
+.guide-item .gi-name{font-family:'Syne',sans-serif;font-weight:700;font-size:13px}
+.guide-item .gi-sub{font-size:11px;color:#5a5048;line-height:1.5}
+
+/* ── Footer ── */
+.site-footer{padding:40px 0;border-top:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
+.site-footer .wm{font-size:16px}
+.site-footer p{font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048;letter-spacing:.06em;margin:0}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="site-nav">
+  <div class="wrap">
+    <div class="wm">i<span>HYPE</span></div>
+    <div class="nav-links">
+      <a href="#surfaces">Surfaces</a>
+      <a href="#website">Website</a>
+      <a href="#tokens">Tokens</a>
+      <a href="#components">Components</a>
+      <a href="#guidelines">Guidelines</a>
+    </div>
+    <a href="ui_kits/ops/index.html" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;padding:4px 10px;border:1px solid rgba(34,229,212,.4);border-radius:4px;color:#22e5d4">iH/OPS →</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-eyebrow">iHYPE Design System</div>
+    <h1>Music fan engagement,<br><em>designed</em> from the ground up.</h1>
+    <p>Tokens, components, UI kits, and templates for every iHYPE surface — fan app, artist workbench, advertising, and operator tools.</p>
+    <div style="display:flex;gap:12px">
+      <a href="ui_kits/android_app/index.html" style="display:inline-flex;align-items:center;height:44px;padding:0 20px;border-radius:12px;background:#ff5029;color:#0a0805;font-weight:600;font-size:14px">Fan App →</a>
+      <a href="ui_kits/workbench/index.html" style="display:inline-flex;align-items:center;height:44px;padding:0 20px;border-radius:12px;background:#100d09;color:#f0ebe5;font-size:14px;font-weight:600;border:1px solid rgba(255,255,255,.14)">Workbench →</a>
+      <a href="ui_kits/advertise/index.html" style="display:inline-flex;align-items:center;height:44px;padding:0 20px;border-radius:12px;background:#100d09;color:#f0ebe5;font-size:14px;font-weight:600;border:1px solid rgba(255,255,255,.14)">Advertise →</a>
+    </div>
+    <div class="hero-meta" style="margin-top:40px">
+      <div class="hm-stat"><div class="n">10</div><div class="l">Components</div></div>
+      <div class="hm-stat"><div class="n">59</div><div class="l">Tokens</div></div>
+      <div class="hm-stat"><div class="n">4</div><div class="l">UI Kits</div></div>
+      <div class="hm-stat"><div class="n">6</div><div class="l">Templates</div></div>
+      <div class="hm-stat"><div class="n">4</div><div class="l">Typefaces</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- Surfaces -->
+<section class="sec" id="surfaces">
+  <div class="wrap">
+    <div class="sec-label">UI Kits · Interactive prototypes</div>
+    <div class="sec-title">Four complete surfaces</div>
+    <div class="surfaces">
+
+      <!-- Fan App — All Platforms -->
+      <div class="surf-card">
+        <div class="surf-thumb" style="background:linear-gradient(135deg,#0a0805 0%,#221c16 100%)">
+          <div class="surf-thumb-placeholder">
+            <div style="text-align:center">
+              <div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px">
+                <div style="width:28px;height:48px;border-radius:10px;background:#1a1612;border:1.5px solid rgba(255,80,41,.4)"></div>
+                <div style="width:44px;height:48px;border-radius:12px;background:#ff5029;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" stroke="#0a0805" stroke-width="2" fill="#0a0805" stroke-linejoin="round"/></svg></div>
+                <div style="width:28px;height:48px;border-radius:10px;background:#1a1612;border:1.5px solid rgba(185,131,255,.4)"></div>
+              </div>
+              <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:13px">All Platforms</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048;letter-spacing:.1em;text-transform:uppercase;margin-top:4px">Desktop · Mobile · iOS · Android</div>
+            </div>
+          </div>
+        </div>
+        <div class="surf-body">
+          <div class="surf-tag" style="background:rgba(255,80,41,.15);color:#ff5029">Fan · All Platforms</div>
+          <div class="surf-name">Fan App — Unified</div>
+          <div class="surf-desc">Single file, 4 platforms. Switch between Desktop, Mobile web, iOS (pixel-faithful Dynamic Island), and Android with one tab row — all screens update together.</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,80,41,.12);border-radius:4px;color:#ff5029">Desktop</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(185,131,255,.12);border-radius:4px;color:#b983ff">iOS</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(34,229,212,.08);border-radius:4px;color:#22e5d4">Android</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">Mobile</span>
+          </div>
+          <a href="ui_kits/fan-app/index.html" class="surf-link" style="background:#ff5029;color:#0a0805">Open Fan App <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12h14m-5-6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        </div>
+      </div>
+
+      <!-- Fan App -->
+      <div class="surf-card">
+        <div class="surf-thumb" style="background:linear-gradient(135deg,#0a0805 0%,#1a1612 100%)">
+          <div class="surf-thumb-placeholder">
+            <div style="text-align:center">
+              <div style="width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,#ff5029,#b983ff);margin:0 auto 12px;display:flex;align-items:center;justify-content:center">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" stroke="#0a0805" stroke-width="2" stroke-linejoin="round" fill="#0a0805"/></svg>
+              </div>
+              <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:14px">Fan App</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048;letter-spacing:.1em;text-transform:uppercase;margin-top:4px">Android · 390×844</div>
+            </div>
+          </div>
+        </div>
+        <div class="surf-body">
+          <div class="surf-tag" style="background:rgba(255,80,41,.15);color:#ff5029">Fan · Listener</div>
+          <div class="surf-name">Android App</div>
+          <div class="surf-desc">Full fan-facing prototype — now playing, Seeds swipe deck, show discovery, profile with taste map, privacy, and transparency ledger.</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">Home</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">Seeds</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">Shows</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">You</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">Privacy</span>
+          </div>
+          <a href="ui_kits/android_app/index.html" class="surf-link" style="background:#ff5029;color:#0a0805">Open App <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12h14m-5-6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        </div>
+      </div>
+
+      <!-- Workbench -->
+      <div class="surf-card">
+        <div class="surf-thumb" style="background:linear-gradient(135deg,#0a0805 0%,#1a1612 100%)">
+          <div class="surf-thumb-placeholder">
+            <div style="text-align:center">
+              <div style="width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,#ff5029,#ff3e9a);margin:0 auto 12px;display:flex;align-items:center;justify-content:center">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M3 17l6-6 4 4 8-9" stroke="#0a0805" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:14px">Workbench</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048;letter-spacing:.1em;text-transform:uppercase;margin-top:4px">Desktop · Full viewport</div>
+            </div>
+          </div>
+        </div>
+        <div class="surf-body">
+          <div class="surf-tag" style="background:rgba(255,62,154,.15);color:#ff3e9a">Artist · Venue · Promoter</div>
+          <div class="surf-name">Workbench</div>
+          <div class="surf-desc">Back-office dashboard with HYPE analytics, track performance, show management, and community governance.</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">Analytics</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">Seeds</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">Shows</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">Govern</span>
+          </div>
+          <a href="ui_kits/workbench/index.html" class="surf-link" style="background:#ff3e9a;color:#0a0805">Open Workbench <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12h14m-5-6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        </div>
+      </div>
+
+      <!-- Advertise -->
+      <div class="surf-card">
+        <div class="surf-thumb" style="background:linear-gradient(135deg,#0a0805 0%,#1a1612 100%)">
+          <div class="surf-thumb-placeholder">
+            <div style="text-align:center">
+              <div style="width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,#7fb3ff,#22e5d4);margin:0 auto 12px;display:flex;align-items:center;justify-content:center">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.5 2.5L18 4l1 3.5L22 9l-1.5 3 1.5 3-3 1.5-1 3.5-3.5-.5L12 22l-2.5-2.5L6 20l-1-3.5L2 15l1.5-3L2 9l3-1.5L6 4l3.5.5L12 2z" stroke="#0a0805" stroke-width="1.6" fill="#0a0805"/></svg>
+              </div>
+              <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:14px">Advertise</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048;letter-spacing:.1em;text-transform:uppercase;margin-top:4px">Marketing · Full width</div>
+            </div>
+          </div>
+        </div>
+        <div class="surf-body">
+          <div class="surf-tag" style="background:rgba(127,179,255,.15);color:#7fb3ff">3rd-Party · Members</div>
+          <div class="surf-name">Advertise</div>
+          <div class="surf-desc">Self-serve campaign builder with live vetting ticker, interactive pricing calculator, AI scanner demo, and co-op transparency section.</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">Builder</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">Vetting</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">Pricing</span>
+          </div>
+          <a href="ui_kits/advertise/index.html" class="surf-link" style="background:#7fb3ff;color:#0a0805">Open Advertise <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12h14m-5-6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        </div>
+      </div>
+
+      <!-- Onboarding -->
+      <div class="surf-card">
+        <div class="surf-thumb" style="background:linear-gradient(135deg,#0a0805 0%,#1a1612 100%)">
+          <div class="surf-thumb-placeholder">
+            <div style="text-align:center">
+              <div style="width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,#ff5029,#b983ff);margin:0 auto 12px;display:flex;align-items:center;justify-content:center">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" stroke="#0a0805" stroke-width="2" fill="#0a0805" stroke-linejoin="round"/></svg>
+              </div>
+              <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:14px">Onboarding</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048;letter-spacing:.1em;text-transform:uppercase;margin-top:4px">Android · 3-step flow</div>
+            </div>
+          </div>
+        </div>
+        <div class="surf-body">
+          <div class="surf-tag" style="background:rgba(185,131,255,.15);color:#b983ff">Fan · New user</div>
+          <div class="surf-name">Onboarding</div>
+          <div class="surf-desc">3-step new-user flow: welcome screen, role selection (Fan/Artist/Venue/Promoter), and genre taste-seeding with interactive toggles.</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">Welcome</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">Role pick</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">Taste seed</span>
+          </div>
+          <a href="ui_kits/android_app/onboarding.html" class="surf-link" style="background:#b983ff;color:#0a0805">Open Onboarding <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12h14m-5-6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        </div>
+      </div>
+
+      <!-- Ops -->
+      <div class="surf-card">
+        <div class="surf-thumb" style="background:linear-gradient(135deg,#0a0805 0%,#1a1612 100%)">
+          <div class="surf-thumb-placeholder">
+            <div style="text-align:center">
+              <div style="width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,#22e5d4,#7fb3ff);margin:0 auto 12px;display:flex;align-items:center;justify-content:center">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="#0a0805"><rect x="3" y="3" width="18" height="4" rx="1.5"/><rect x="3" y="10" width="18" height="4" rx="1.5"/><rect x="3" y="17" width="18" height="4" rx="1.5"/></svg>
+              </div>
+              <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:14px">iH/OPS</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048;letter-spacing:.1em;text-transform:uppercase;margin-top:4px">Operator · Desktop</div>
+            </div>
+          </div>
+        </div>
+        <div class="surf-body">
+          <div class="surf-tag" style="background:rgba(34,229,212,.15);color:#22e5d4">Single Operator</div>
+          <div class="surf-name">Operator Console</div>
+          <div class="surf-desc">Ad review queue, platform health dashboard, advertiser account management, and decision audit log for the single iHYPE operator.</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">Queue</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">Platform</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">Accounts</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">Log</span>
+          </div>
+          <a href="ui_kits/ops/index.html" class="surf-link" style="background:#22e5d4;color:#0a0805">Open iH/OPS <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12h14m-5-6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Website -->
+<section class="sec" id="website">
+  <div class="wrap">
+    <div class="sec-label">Public website · Marketing + recruiting</div>
+    <div class="sec-title">Website surfaces</div>
+    <div class="surfaces">
+
+      <div class="surf-card">
+        <div class="surf-thumb" style="background:linear-gradient(160deg,#1f0e07,#0a0805)">
+          <div class="surf-thumb-placeholder">
+            <div style="text-align:center">
+              <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:32px;letter-spacing:-.04em;color:#ff5029">iH·YPE</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048;letter-spacing:.1em;text-transform:uppercase;margin-top:8px">Public landing · waitlist</div>
+              <div style="margin-top:12px;display:flex;gap:6px;justify-content:center">
+                <div style="width:8px;height:8px;border-radius:50%;background:#ffb84a;animation:none"></div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:7px;color:#ffb84a;letter-spacing:.1em;text-transform:uppercase">Closed beta · invite only</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="surf-body">
+          <div class="surf-tag" style="background:rgba(255,80,41,.12);color:#ff5029">Public · Marketing</div>
+          <div class="surf-name">Landing Page</div>
+          <div class="surf-desc">Public marketing site with hero, role-selector waitlist form, 45% split bar, how-it-works, roles grid, FAQ accordion, and footer. Wired to <code style="font-size:11px">lib/api.js</code>.</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">Hero</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">Waitlist</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">FAQ</span>
+          </div>
+          <a href="beta/landing.html" class="surf-link" style="background:#ff5029;color:#0a0805">Open Landing <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12h14m-5-6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        </div>
+      </div>
+
+      <div class="surf-card">
+        <div class="surf-thumb" style="background:linear-gradient(160deg,#1f0e07,#0a0805)">
+          <div class="surf-thumb-placeholder">
+            <div style="text-align:center">
+              <div style="width:60px;height:60px;border-radius:18px;background:linear-gradient(135deg,#ff5029,#ff3e9a);margin:0 auto 12px;display:flex;align-items:center;justify-content:center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M9 18V5l12-2v13" stroke="#0a0805" stroke-width="2" stroke-linecap="round" fill="#0a0805"/><circle cx="6" cy="18" r="3" fill="#0a0805"/><circle cx="18" cy="16" r="3" fill="#0a0805"/></svg></div>
+              <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:14px">For Artists</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048;letter-spacing:.1em;text-transform:uppercase;margin-top:4px">Recruiting · Apply</div>
+            </div>
+          </div>
+        </div>
+        <div class="surf-body">
+          <div class="surf-tag" style="background:rgba(255,80,41,.12);color:#ff5029">Artist · Recruiting</div>
+          <div class="surf-name">Artist Kit</div>
+          <div class="surf-desc">Dedicated artist recruiting page with inline apply form, charter explainer, 6-feature grid, 4-step onboarding flow, and links to <code style="font-size:11px">lib/api.js</code> for real submissions.</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">Charter</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">Apply</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;background:rgba(255,255,255,.06);border-radius:4px;color:#9e9080">Features</span>
+          </div>
+          <a href="beta/artist-kit.html" class="surf-link" style="background:#ff5029;color:#0a0805">Open Artist Kit <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12h14m-5-6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- API + DB -->
+<section class="sec" id="api">
+  <div class="wrap">
+    <div class="sec-label">Backend prep · API + IndexedDB</div>
+    <div class="sec-title">API client &amp; DB layer</div>
+    <div class="tokens-strip">
+      <div class="tok-card">
+        <div class="count" style="font-size:18px;color:#22e5d4">lib/api.js</div>
+        <div class="label">API Client</div>
+        <div style="font-size:12px;color:#5a5048;margin-top:10px;line-height:1.6">Mock + real mode. Auth, feed, hype, tickets, referrals, studio, telemetry, payouts (gated). Set <code>window.IHYPE_API_BASE</code> to switch to real backend.</div>
+      </div>
+      <div class="tok-card">
+        <div class="count" style="font-size:18px;color:#b983ff">lib/db.js</div>
+        <div class="label">IndexedDB Store</div>
+        <div style="font-size:12px;color:#5a5048;margin-top:10px;line-height:1.6">Offline-first. 6 stores: users, events, tickets, tracks, feed_cache, kv. localStorage fallback. Feed TTL cache + full clear.</div>
+      </div>
+      <div class="tok-card">
+        <div class="count" style="font-size:18px;color:#ffb84a">⚠ Gated</div>
+        <div class="label">Payouts · Banking</div>
+        <div style="font-size:12px;color:#5a5048;margin-top:10px;line-height:1.6">Real payout transfers blocked until nonprofit EIN + Stripe Connect. All other endpoints run in test mode now. See <a href="engineering/BACKEND_SPEC.md" style="color:#ffb84a">engineering/BACKEND_SPEC.md</a>.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Tokens -->
+<section class="sec" id="tokens">
+  <div class="wrap">
+    <div class="sec-label">Foundation</div>
+    <div class="sec-title">59 design tokens</div>
+    <div class="tokens-strip">
+      <div class="tok-card">
+        <div class="count">22</div>
+        <div class="label">Color tokens</div>
+        <div class="tok-swatches">
+          <div class="swatch" style="background:#0a0805;border:1px solid rgba(255,255,255,.1)"></div>
+          <div class="swatch" style="background:#100d09;border:1px solid rgba(255,255,255,.08)"></div>
+          <div class="swatch" style="background:#1a1612"></div>
+          <div class="swatch" style="background:#ff5029"></div>
+          <div class="swatch" style="background:#b983ff"></div>
+          <div class="swatch" style="background:#22e5d4"></div>
+          <div class="swatch" style="background:#ff3e9a"></div>
+          <div class="swatch" style="background:#ffb84a"></div>
+          <div class="swatch" style="background:#7fb3ff"></div>
+        </div>
+      </div>
+      <div class="tok-card">
+        <div class="count">17</div>
+        <div class="label">Typography tokens</div>
+        <div style="margin-top:12px;display:flex;flex-direction:column;gap:5px">
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;letter-spacing:-.015em;line-height:1">Syne 800 · display</div>
+          <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:#9e9080">DM Sans · body</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#5a5048">JetBrains · eyebrow</div>
+        </div>
+      </div>
+      <div class="tok-card">
+        <div class="count">20</div>
+        <div class="label">Spacing + radius + shadow</div>
+        <div style="display:flex;gap:8px;margin-top:12px;align-items:flex-end">
+          <div style="width:8px;height:8px;background:#ff5029;border-radius:1px"></div>
+          <div style="width:16px;height:16px;background:#ff5029;border-radius:2px"></div>
+          <div style="width:24px;height:24px;background:#ff5029;border-radius:4px"></div>
+          <div style="width:32px;height:32px;background:#ff5029;border-radius:8px"></div>
+          <div style="width:40px;height:40px;background:#ff5029;border-radius:99px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Components -->
+<section class="sec" id="components">
+  <div class="wrap">
+    <div class="sec-label">Components · 10 primitives</div>
+    <div class="sec-title">Core component library</div>
+    <div class="comp-grid">
+      <div class="comp-pill"><span class="comp-dot" style="background:#ff5029"></span>Button</div>
+      <div class="comp-pill"><span class="comp-dot" style="background:#b983ff"></span>Badge</div>
+      <div class="comp-pill"><span class="comp-dot" style="background:#22e5d4"></span>Chip</div>
+      <div class="comp-pill"><span class="comp-dot" style="background:#ff3e9a"></span>Card</div>
+      <div class="comp-pill"><span class="comp-dot" style="background:#5a5048"></span>Eyebrow</div>
+      <div class="comp-pill"><span class="comp-dot" style="background:#7fb3ff"></span>Input</div>
+      <div class="comp-pill"><span class="comp-dot" style="background:#ffb84a"></span>Tabs</div>
+      <div class="comp-pill"><span class="comp-dot" style="background:#22e5d4"></span>Toast</div>
+      <div class="comp-pill"><span class="comp-dot" style="background:#ff5029"></span>Toggle</div>
+      <div class="comp-pill"><span class="comp-dot" style="background:#b983ff"></span>Avatar</div>
+    </div>
+  </div>
+</section>
+
+<!-- Guidelines -->
+<section class="sec" id="guidelines">
+  <div class="wrap">
+    <div class="sec-label">Foundation · Specimen cards</div>
+    <div class="sec-title">Design guidelines</div>
+    <div class="guide-grid">
+      <a href="guidelines/colors-bg.card.html" class="guide-item">
+        <div class="gi-tag" style="color:#5a5048">Colors</div>
+        <div class="gi-name">Backgrounds</div>
+        <div class="gi-sub">4-tier dark surface scale</div>
+      </a>
+      <a href="guidelines/colors-accent.card.html" class="guide-item">
+        <div class="gi-tag" style="color:#ff5029">Colors</div>
+        <div class="gi-name">Accent + Roles</div>
+        <div class="gi-sub">Fan · Artist · Venue · Promoter</div>
+      </a>
+      <a href="guidelines/type-scale.card.html" class="guide-item">
+        <div class="gi-tag" style="color:#b983ff">Type</div>
+        <div class="gi-name">Type Scale</div>
+        <div class="gi-sub">9px → 54px, 7 steps</div>
+      </a>
+      <a href="guidelines/type-display.card.html" class="guide-item">
+        <div class="gi-tag" style="color:#b983ff">Type</div>
+        <div class="gi-name">Syne Display</div>
+        <div class="gi-sub">Wordmark + display headers</div>
+      </a>
+      <a href="guidelines/spacing-tokens.card.html" class="guide-item">
+        <div class="gi-tag" style="color:#ffb84a">Spacing</div>
+        <div class="gi-name">Spacing Scale</div>
+        <div class="gi-sub">4px → 64px, 10 steps</div>
+      </a>
+      <a href="guidelines/spacing-radius.card.html" class="guide-item">
+        <div class="gi-tag" style="color:#ffb84a">Spacing</div>
+        <div class="gi-name">Border Radius</div>
+        <div class="gi-sub">sm · md · lg · full</div>
+      </a>
+      <a href="guidelines/brand-wordmark.card.html" class="guide-item">
+        <div class="gi-tag" style="color:#22e5d4">Brand</div>
+        <div class="gi-name">Wordmark</div>
+        <div class="gi-sub">Syne 800 CSS text mark</div>
+      </a>
+      <a href="guidelines/brand-roles.card.html" class="guide-item">
+        <div class="gi-tag" style="color:#22e5d4">Brand</div>
+        <div class="gi-name">Role Colors</div>
+        <div class="gi-sub">Identity system by role</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="sec" style="border-bottom:none">
+  <div class="wrap site-footer">
+    <div class="wm">i<span style="color:#ff5029">HYPE</span> <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#5a5048;font-weight:400;letter-spacing:.1em">Design System</span></div>
+    <p>18 components · 67 tokens · 4 typefaces · 7 templates · 6 surfaces · lib/api.js · lib/db.js</p>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!-- @dsCard group="Beta" viewport="816x1056" name="Product Brief (1-pager)" subtitle="Printable · press / venues / artists" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iHYPE — Product Brief</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  * { box-sizing: border-box; }
+  body { background: #1a1612; margin: 0; padding: 24px; font-family: var(--font-body); }
+  .page { width: 816px; min-height: 1056px; margin: 0 auto; background: var(--bg-base); color: var(--ink-1); padding: 56px 60px; }
+  .head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--accent); padding-bottom: 20px; }
+  .wm { font-family: var(--font-display); font-weight: 800; font-size: 2.4rem; letter-spacing: -.04em; color: var(--accent); line-height: 1; }
+  .tag { font-family: var(--font-mono); font-size: .66rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2); margin-top: 6px; }
+  .meta { text-align: right; font-family: var(--font-mono); font-size: .64rem; color: var(--ink-3); line-height: 1.7; letter-spacing: .06em; }
+  h1 { font-family: var(--font-display); font-weight: 800; font-size: 2rem; letter-spacing: -.03em; line-height: 1.1; margin: 30px 0 12px; }
+  h1 em { color: var(--accent); font-style: normal; }
+  .lede { font-size: 1.02rem; line-height: 1.6; color: var(--ink-2); margin: 0 0 30px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  h2 { font-family: var(--font-mono); font-size: .68rem; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); margin: 0 0 12px; }
+  p { font-size: .9rem; line-height: 1.6; color: var(--ink-1); margin: 0 0 12px; }
+  .stat-row { display: flex; gap: 14px; margin: 30px 0; }
+  .stat { flex: 1; background: var(--bg-surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+  .stat .n { font-family: var(--font-display); font-weight: 800; font-size: 1.7rem; letter-spacing: -.02em; }
+  .stat .l { font-family: var(--font-mono); font-size: .6rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); margin-top: 4px; }
+  .a { color: var(--accent); } .f { color: var(--role-fan); } .d { color: var(--role-dj); } .v { color: var(--role-venue); }
+  .roles { display: flex; gap: 10px; margin: 8px 0 0; }
+  .role { flex: 1; padding: 11px; border-radius: 10px; border: 1px solid var(--line); text-align: center; }
+  .role .ic { font-size: 1.1rem; } .role .nm { font-family: var(--font-mono); font-size: .62rem; letter-spacing: .08em; text-transform: uppercase; margin-top: 5px; color: var(--ink-2); }
+  .split { background: var(--bg-surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin-top: 8px; }
+  .bar { display: flex; height: 24px; border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
+  .seg { display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: .58rem; color: #0a0805; font-weight: 600; }
+  .legend { font-family: var(--font-mono); font-size: .66rem; color: var(--ink-2); line-height: 1.7; }
+  .foot { margin-top: 36px; padding-top: 18px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: .64rem; color: var(--ink-3); letter-spacing: .06em; }
+  @media print { body { background: #fff; padding: 0; } .page { margin: 0; } }
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="head">
+      <div><div class="wm">iH·YPE</div><div class="tag">Artist-owned live music</div></div>
+      <div class="meta">PRODUCT BRIEF<br>v0.1.0-beta · Jun 2026<br>Nonprofit · 501(c) pending</div>
+    </div>
+
+    <h1>The gate belongs to the <em>artists</em>.</h1>
+    <p class="lede">iHYPE is a live-music platform where fans hype the artists they love, buy tickets directly, and even earn by promoting shows — with <b style="color:var(--ink-1)">45% of every ticket locked to the artist</b>, by charter, forever.</p>
+
+    <div class="stat-row">
+      <div class="stat"><div class="n a">45%</div><div class="l">To the artist · locked</div></div>
+      <div class="stat"><div class="n d">10%</div><div class="l">Max promoter share</div></div>
+      <div class="stat"><div class="n f">4</div><div class="l">Roles, one account</div></div>
+    </div>
+
+    <div class="grid2">
+      <div>
+        <h2>The problem</h2>
+        <p>Ticketing giants take 30%+ in fees and own the fan relationship. Artists see little of the gate and none of the data. Discovery is pay-to-play.</p>
+        <h2 style="margin-top:24px">The model</h2>
+        <p>Every event publishes with a <b>frozen charter</b> — a split that can never change after sale. Fans buy direct. Promoters (any DJ or fan) earn a referral share drawn from the platform's slice, never the artist's.</p>
+      </div>
+      <div>
+        <h2>Four roles</h2>
+        <div class="roles">
+          <div class="role"><div class="ic">🎤</div><div class="nm">Artist</div></div>
+          <div class="role"><div class="ic">🎧</div><div class="nm">Fan</div></div>
+          <div class="role"><div class="ic">🎛️</div><div class="nm">DJ</div></div>
+          <div class="role"><div class="ic">🏛️</div><div class="nm">Venue</div></div>
+        </div>
+        <h2 style="margin-top:24px">Gate split</h2>
+        <div class="split">
+          <div class="bar">
+            <div class="seg" style="width:45%;background:#ff5029">45% Artist</div>
+            <div class="seg" style="width:20%;background:#22e5d4">20% Venue</div>
+            <div class="seg" style="width:25%;background:#9e9080">25% Platform</div>
+            <div class="seg" style="width:10%;background:#ff3e9a">10%</div>
+          </div>
+          <div class="legend">Promoter's up-to-10% comes out of the platform slice — proportional to the gate they drove.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-row" style="margin-bottom:0">
+      <div class="stat"><div class="n">🎟️</div><div class="l">Direct ticketing + QR wallet</div></div>
+      <div class="stat"><div class="n">📻</div><div class="l">DJ radio studio · free-use library</div></div>
+      <div class="stat"><div class="n">🔴</div><div class="l">Live shows · hype · chat</div></div>
+    </div>
+
+    <div class="foot"><span>ihype.app · hello@ihype.app</span><span>Closed beta — simulated payments</span></div>
+  </div>
+</body>
+</html>

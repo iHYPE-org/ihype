@@ -1,0 +1,88 @@
+<!-- @dsCard group="Brand" viewport="700x320" name="Motion & Animation" subtitle="9 keyframes — fade, slide, scale, pulse, shimmer, hype-burst" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+body{margin:0;padding:20px 24px;background:var(--bg-base);font-family:var(--font-body)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.cell{background:var(--bg-surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.demo{height:40px;display:flex;align-items:center;justify-content:center}
+.box{width:32px;height:32px;border-radius:8px;background:var(--accent)}
+.lbl{font-family:var(--font-mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.code{font-family:var(--font-mono);font-size:8px;color:var(--ink-3);letter-spacing:.04em;margin-top:2px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--color-success)}
+.bar{height:5px;border-radius:99px;background:var(--bg-raised);overflow:hidden}
+.fill{height:100%;border-radius:99px;background:var(--accent);width:60%}
+.skel{height:10px;border-radius:5px;background:linear-gradient(90deg,var(--bg-raised) 25%,rgba(255,255,255,.04) 50%,var(--bg-raised) 75%);background-size:200% 100%}
+/* animations */
+.a-fade{animation:ihype-fade-in 1.2s var(--ease) infinite alternate}
+.a-slide{animation:ihype-slide-up 1s var(--ease) infinite alternate}
+.a-scale{animation:ihype-scale-in 1s var(--ease) infinite alternate}
+.a-pulse{animation:ihype-pulse 1.4s ease-in-out infinite}
+.a-spin{animation:ihype-spin .9s linear infinite}
+.a-burst{animation:ihype-hype-burst .8s var(--ease) infinite}
+.a-scan{position:relative;overflow:hidden;width:100%;height:36px;border-radius:6px;background:var(--bg-raised)}
+.a-scan::after{content:'';position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:ihype-scan 1.6s linear infinite}
+.a-shimmer{animation:ihype-shimmer 1.4s ease-in-out infinite}
+.a-fadein-stop{animation:ihype-fade-in .6s var(--ease) both}
+</style>
+</head>
+<body>
+<div class="grid">
+  <div class="cell">
+    <div class="lbl">ihype-fade-in</div>
+    <div class="demo"><div class="box a-fade"></div></div>
+    <div class="code">opacity 0→1 + translateY(4px)→0</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">ihype-slide-up</div>
+    <div class="demo"><div class="box a-slide"></div></div>
+    <div class="code">opacity 0→1 + translateY(12px)→0</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">ihype-scale-in</div>
+    <div class="demo"><div class="box a-scale"></div></div>
+    <div class="code">opacity 0→1 + scale(.94)→1</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">ihype-pulse</div>
+    <div class="demo"><div class="dot a-pulse" style="width:14px;height:14px"></div></div>
+    <div class="code">live status indicator</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">ihype-spin</div>
+    <div class="demo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="a-spin"><circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,.2)" stroke-width="2"/><path d="M12 3a9 9 0 019 9" stroke="#ff5029" stroke-width="2" stroke-linecap="round"/></svg></div>
+    <div class="code">loading spinner</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">ihype-hype-burst</div>
+    <div class="demo"><svg width="22" height="22" viewBox="0 0 24 24" fill="#ff5029" class="a-burst"><path d="M12 21s-7-4.5-9.5-9.2C.8 8.2 3 4.5 6.5 4.5c2 0 3.5 1 5.5 3 2-2 3.5-3 5.5-3C21 4.5 23.2 8.2 21.5 11.8 19 16.5 12 21 12 21z"/></svg></div>
+    <div class="code">HYPE cast confirmation</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">ihype-scan</div>
+    <div class="demo"><div class="a-scan"></div></div>
+    <div class="code">AI vetting scanline</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">ihype-shimmer</div>
+    <div class="demo" style="flex-direction:column;gap:6px;width:100%">
+      <div class="skel a-shimmer" style="width:100%"></div>
+      <div class="skel a-shimmer" style="width:75%"></div>
+    </div>
+    <div class="code">skeleton loading</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">Usage</div>
+    <div class="demo" style="flex-direction:column;gap:4px;width:100%;align-items:flex-start">
+      <div class="code" style="color:var(--ink-2)">animation: ihype-fade-in</div>
+      <div class="code" style="color:var(--ink-2)">  var(--duration-base)</div>
+      <div class="code" style="color:var(--ink-2)">  var(--ease) both;</div>
+    </div>
+    <div class="code">tokens/motion.css</div>
+  </div>
+</div>
+</body>
+</html>

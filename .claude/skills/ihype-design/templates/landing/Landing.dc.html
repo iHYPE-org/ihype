@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Landing Page" description="Public marketing site — hero, role-selector waitlist, split bar, roles grid, artist section, FAQ, footer. Wired to lib/api.js." -->
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<script src="../../lib/api.js"></script>
+<style>
+  @keyframes blink { 50% { opacity: .3; } }
+  @keyframes float { 50% { transform: translateY(-20px); } }
+  *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: #0a0805; color: #f0ebe5; font-family: 'DM Sans', sans-serif; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+</style>
+</helmet>
+
+<!-- Nav -->
+<nav style="position:sticky;top:0;z-index:50;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);background:rgba(10,8,5,.72);border-bottom:1px solid rgba(255,255,255,.08)">
+  <div style="max-width:1120px;margin:0 auto;padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:64px">
+    <a href="#top" style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;letter-spacing:-.04em;color:#ff5029">iH·YPE</a>
+    <div style="display:flex;gap:26px;align-items:center">
+      <a href="#how" style="font-size:.9rem;color:#9e9080">How it works</a>
+      <a href="#roles" style="font-size:.9rem;color:#9e9080">Roles</a>
+      <a href="#artists" style="font-size:.9rem;color:#9e9080">For artists</a>
+      <a href="#join" style="font-family:'Syne',sans-serif;font-weight:800;font-size:.88rem;background:#ff5029;color:#fff;padding:9px 18px;border-radius:999px;box-shadow:0 4px 18px rgba(255,80,41,.3)">Join beta</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<header id="top" style="position:relative;overflow:hidden;padding:120px 0 96px;text-align:center">
+  <div style="position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:900px;height:700px;background:radial-gradient(circle,rgba(255,80,41,.18),transparent 60%);pointer-events:none"></div>
+  <div style="max-width:1120px;margin:0 auto;padding:0 32px;position:relative">
+    <span style="display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:#ffb84a;border:1px solid rgba(255,184,74,.3);background:rgba(255,184,74,.08);border-radius:999px;padding:6px 15px">
+      <span style="width:7px;height:7px;border-radius:50%;background:#ffb84a;animation:blink 1.4s infinite;flex-shrink:0"></span>Closed beta · invite only
+    </span>
+    <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2.8rem,7.5vw,6rem);letter-spacing:-.05em;line-height:.95;margin:28px auto 0;max-width:900px">The gate belongs<br>to the <span style="color:#ff5029">artists.</span></h1>
+    <p style="font-size:clamp(1.05rem,2vw,1.35rem);color:#9e9080;max-width:640px;margin:24px auto 0;line-height:1.6">iHYPE is live music built for the people who make it. Hype who you believe in, buy tickets direct, and earn by spreading the word — with <strong style="color:#f0ebe5">45% of every ticket locked to the artist, forever.</strong></p>
+
+    <!-- Role selector -->
+    <div id="roleSegs" style="display:inline-flex;gap:6px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:5px;margin:24px auto 0">
+      <button onclick="setRole('fan',this)" style="font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:8px 16px;border-radius:999px;border:none;background:#b983ff;color:#0a0805;font-weight:700;cursor:pointer">Fan</button>
+      <button onclick="setRole('artist',this)" style="font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:8px 16px;border-radius:999px;border:none;background:transparent;color:#9e9080;cursor:pointer">Artist</button>
+      <button onclick="setRole('dj',this)" style="font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:8px 16px;border-radius:999px;border:none;background:transparent;color:#9e9080;cursor:pointer">DJ</button>
+      <button onclick="setRole('venue',this)" style="font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:8px 16px;border-radius:999px;border:none;background:transparent;color:#9e9080;cursor:pointer">Venue</button>
+    </div>
+
+    <!-- Waitlist -->
+    <div id="join" style="max-width:500px;margin:32px auto 0">
+      <form id="joinForm" onsubmit="joinWaitlist(event)" style="display:flex;gap:10px">
+        <input type="email" id="wlEmail" placeholder="your@email.com" required style="flex:1;padding:15px 20px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:1rem;outline:none">
+        <button type="submit" style="background:#ff5029;color:#fff;border:none;border-radius:999px;padding:0 24px;font-family:'Syne',sans-serif;font-weight:800;font-size:.9rem;cursor:pointer;white-space:nowrap;box-shadow:0 4px 20px rgba(255,80,41,.3)">Request invite</button>
+      </form>
+      <p style="font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#5a5048;margin-top:12px;letter-spacing:.04em">No spam. Small waves. Artists + fans first.</p>
+      <div id="wlOk" style="display:none;padding:16px 20px;background:rgba(34,229,212,.08);border:1px solid rgba(34,229,212,.3);border-radius:14px;margin-top:14px">
+        <div style="font-family:'Syne',sans-serif;font-weight:800;color:#22e5d4">You're on the list 🔥</div>
+        <p style="font-size:.9rem;color:#9e9080;margin-top:6px;line-height:1.5">We'll email your invite code soon.</p>
+      </div>
+    </div>
+
+    <!-- Stats strip -->
+    <div style="border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07);margin-top:72px;display:flex">
+      <div style="flex:1;padding:26px 0;text-align:center;border-right:1px solid rgba(255,255,255,.07)"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;letter-spacing:-.03em;color:#ff5029">45%</div><div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:#9e9080;margin-top:6px">To artist · locked</div></div>
+      <div style="flex:1;padding:26px 0;text-align:center;border-right:1px solid rgba(255,255,255,.07)"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;letter-spacing:-.03em;color:#ff3e9a">10%</div><div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:#9e9080;margin-top:6px">Max promoter share</div></div>
+      <div style="flex:1;padding:26px 0;text-align:center;border-right:1px solid rgba(255,255,255,.07)"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;letter-spacing:-.03em;color:#22e5d4">$0</div><div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:#9e9080;margin-top:6px">Scalper markup</div></div>
+      <div style="flex:1;padding:26px 0;text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;letter-spacing:-.03em">4</div><div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:#9e9080;margin-top:6px">Roles · one account</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- How it works -->
+<section id="how" style="padding:96px 0">
+  <div style="max-width:1120px;margin:0 auto;padding:0 32px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:#ff5029">How it works</div>
+    <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2rem,4.5vw,3.2rem);letter-spacing:-.03em;line-height:1.06;margin:14px 0 0;max-width:18ch">Discover, hype, buy direct.</h2>
+    <p style="font-size:1.08rem;color:#9e9080;line-height:1.6;margin-top:18px;max-width:52ch">Every step moves value from the middlemen back to artists and the fans who found them first.</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:52px">
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:28px 26px"><div style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:#ff5029;letter-spacing:.1em;margin-bottom:14px">01 · HYPE</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:-.02em;margin-bottom:10px">Back the artists you believe in</h3><p style="font-size:.96rem;line-height:1.55;color:#9e9080">A weekly flame budget lets you hype any artist, track, or show. The HYPE chart rises in real time.</p></div>
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:28px 26px"><div style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:#ff5029;letter-spacing:.1em;margin-bottom:14px">02 · TICKETS</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:-.02em;margin-bottom:10px">Buy direct, frozen charter</h3><p style="font-size:.96rem;line-height:1.55;color:#9e9080">Every event publishes a split that can never change after sale. You see exactly where your money goes.</p></div>
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:28px 26px"><div style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:#ff5029;letter-spacing:.1em;margin-bottom:14px">03 · PROMOTE</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:-.02em;margin-bottom:10px">Spread the word, earn a cut</h3><p style="font-size:.96rem;line-height:1.55;color:#9e9080">Share any event with your referral link. Earn up to 10% of the gate you drove — from the platform slice, never the artist's.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- Split bar -->
+<section style="background:rgba(255,80,41,.04);border-top:1px solid rgba(255,80,41,.1);border-bottom:1px solid rgba(255,80,41,.1);padding:88px 0">
+  <div style="max-width:1120px;margin:0 auto;padding:0 32px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:#ff5029">The model</div>
+    <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2rem,4.5vw,3.2rem);letter-spacing:-.03em;line-height:1.06;margin:14px 0 0">Every ticket, every time.</h2>
+    <div style="display:flex;height:80px;border-radius:14px;overflow:hidden;margin-top:40px">
+      <div style="width:45%;background:#ff5029;display:flex;flex-direction:column;justify-content:center;padding-left:20px;color:#0a0805"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem">45%</div><div style="font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.08em">ARTIST</div></div>
+      <div style="width:20%;background:#22e5d4;display:flex;flex-direction:column;justify-content:center;padding-left:18px;color:#0a0805"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem">20%</div><div style="font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.08em">VENUE</div></div>
+      <div style="width:25%;background:#9e9080;display:flex;flex-direction:column;justify-content:center;padding-left:18px;color:#0a0805"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem">25%</div><div style="font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.08em">PLATFORM</div></div>
+      <div style="width:10%;background:#ff3e9a;display:flex;flex-direction:column;justify-content:center;padding-left:14px;color:#0a0805"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem">10%</div><div style="font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.06em">PROMO</div></div>
+    </div>
+    <p style="font-size:.96rem;color:#9e9080;margin-top:20px;max-width:60ch;line-height:1.55">The promoter's 10% comes out of the platform's 25% — never the artist's 45%.</p>
+  </div>
+</section>
+
+<!-- Roles -->
+<section id="roles" style="padding:96px 0">
+  <div style="max-width:1120px;margin:0 auto;padding:0 32px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:#ff5029">Who it's for</div>
+    <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2rem,4.5vw,3.2rem);letter-spacing:-.03em;line-height:1.06;margin:14px 0 0">Four roles. One account.</h2>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:48px">
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-top:4px solid #ff5029;border-radius:16px;padding:26px 22px"><div style="font-size:2.2rem">🎤</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:-.02em;margin:14px 0 8px">Artist</h3><p style="font-size:.9rem;line-height:1.5;color:#9e9080">Upload, go live, sell direct. Keeps 45%.</p></div>
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-top:4px solid #b983ff;border-radius:16px;padding:26px 22px"><div style="font-size:2.2rem">🎧</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:-.02em;margin:14px 0 8px">Fan</h3><p style="font-size:.9rem;line-height:1.5;color:#9e9080">Hype, discover, buy, attend, earn referrals.</p></div>
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-top:4px solid #ff3e9a;border-radius:16px;padding:26px 22px"><div style="font-size:2.2rem">🎛️</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:-.02em;margin:14px 0 8px">DJ</h3><p style="font-size:.9rem;line-height:1.5;color:#9e9080">Build radio shows from the free-use library.</p></div>
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-top:4px solid #22e5d4;border-radius:16px;padding:26px 22px"><div style="font-size:2.2rem">🏛️</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:-.02em;margin:14px 0 8px">Venue</h3><p style="font-size:.9rem;line-height:1.5;color:#9e9080">List events, manage door, share the gate.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- Artist band -->
+<section id="artists" style="padding:88px 0">
+  <div style="max-width:1120px;margin:0 auto;padding:0 32px">
+    <div style="background:linear-gradient(160deg,#1f0e07,#0a0805);border:1px solid rgba(255,80,41,.18);border-radius:24px;padding:64px 56px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:-150px;right:-100px;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(255,80,41,.22),transparent 65%)"></div>
+      <div style="max-width:640px;position:relative">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:#ff5029">For artists</div>
+        <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2rem,4vw,3rem);letter-spacing:-.03em;line-height:1.06;margin:14px 0 0">Your music. Your gate. Your fans.</h2>
+        <p style="font-size:1.08rem;color:#9e9080;line-height:1.6;margin-top:18px">iHYPE is a nonprofit. The 45% to you is enshrined in the charter, legally, before a single ticket sells. No agent required.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:9px;margin-top:24px">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.76rem;color:#f0ebe5;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:7px 14px">45% split · locked</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.76rem;color:#f0ebe5;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:7px 14px">Direct fan data</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.76rem;color:#f0ebe5;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:7px 14px">Tour creator</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.76rem;color:#f0ebe5;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:7px 14px">Live show hosting</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.76rem;color:#f0ebe5;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:7px 14px">No agent needed</span>
+        </div>
+        <form id="artistForm" onsubmit="applyArtist(event)" style="display:flex;gap:10px;margin-top:30px;max-width:480px">
+          <input type="email" id="artistEmail" placeholder="your@email.com" required style="flex:1;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,80,41,.3);background:rgba(255,80,41,.06);color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:.96rem;outline:none">
+          <button type="submit" style="background:#ff5029;color:#fff;border:none;border-radius:12px;padding:0 22px;font-family:'Syne',sans-serif;font-weight:800;font-size:.9rem;cursor:pointer;white-space:nowrap">Apply →</button>
+        </form>
+        <div id="artistOk" style="display:none;margin-top:14px;font-size:.92rem;color:#22e5d4">✓ Application received — we'll reach out within 48 hours.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer style="border-top:1px solid rgba(255,255,255,.07);padding:56px 0 64px">
+  <div style="max-width:1120px;margin:0 auto;padding:0 32px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:40px">
+    <div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.8rem;letter-spacing:-.04em;color:#ff5029">iH·YPE</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.68rem;color:#5a5048;margin-top:8px;letter-spacing:.06em">Artist-owned live music · 501(c) pending</div>
+    </div>
+    <div style="display:flex;gap:48px">
+      <div style="display:flex;flex-direction:column;gap:10px"><div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;color:#5a5048;margin-bottom:4px">Product</div><a href="#how" style="font-size:.92rem;color:#9e9080">How it works</a><a href="#roles" style="font-size:.92rem;color:#9e9080">Roles</a><a href="#artists" style="font-size:.92rem;color:#9e9080">For artists</a></div>
+      <div style="display:flex;flex-direction:column;gap:10px"><div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;color:#5a5048;margin-bottom:4px">Legal</div><a href="#" style="font-size:.92rem;color:#9e9080">Privacy</a><a href="#" style="font-size:.92rem;color:#9e9080">Terms</a></div>
+    </div>
+  </div>
+  <div style="max-width:1120px;margin:40px auto 0;padding:0 32px;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:#5a5048;letter-spacing:.04em">© 2026 iHYPE. Beta — payments are simulated.</div>
+</footer>
+
+<script>
+  let selectedRole = 'fan';
+  function setRole(role, btn) {
+    selectedRole = role;
+    const cols = {fan:'#b983ff',artist:'#ff5029',dj:'#ff3e9a',venue:'#22e5d4'};
+    document.querySelectorAll('#roleSegs button').forEach(b => { b.style.background='transparent'; b.style.color='#9e9080'; b.style.fontWeight='400'; });
+    btn.style.background = cols[role]; btn.style.color = '#0a0805'; btn.style.fontWeight = '700';
+  }
+  async function joinWaitlist(e) {
+    e.preventDefault();
+    const email = document.getElementById('wlEmail').value;
+    try { if (window.IHYPE_API) await window.IHYPE_API.auth.joinWaitlist(email, selectedRole); } catch {}
+    document.getElementById('joinForm').style.display = 'none';
+    document.getElementById('wlOk').style.display = 'block';
+  }
+  async function applyArtist(e) {
+    e.preventDefault();
+    const email = document.getElementById('artistEmail').value;
+    try { if (window.IHYPE_API) await window.IHYPE_API.auth.artistApply({ email, type: 'artist' }); } catch {}
+    document.getElementById('artistForm').style.display = 'none';
+    document.getElementById('artistOk').style.display = 'block';
+  }
+</script>
+</x-dc>
+</body>
+</html>

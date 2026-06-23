@@ -1,0 +1,63 @@
+<!-- @dsCard group="Beta" viewport="1280x760" name="Feedback Triage Board" subtitle="Kanban for beta bug + idea intake" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iHYPE — Feedback Triage</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  * { box-sizing: border-box; }
+  body { background: var(--bg-base); color: var(--ink-1); font-family: var(--font-body); margin: 0; padding: 28px; }
+  header { max-width: 1200px; margin: 0 auto 22px; display: flex; align-items: baseline; justify-content: space-between; }
+  h1 { font-family: var(--font-display); font-weight: 800; font-size: 1.4rem; letter-spacing: -.02em; margin: 0; }
+  h1 .o { color: var(--accent); }
+  .meta { font-family: var(--font-mono); font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); }
+  .board { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .col { background: var(--bg-surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+  .ch { font-family: var(--font-mono); font-size: .66rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2); display: flex; justify-content: space-between; margin-bottom: 14px; }
+  .count { background: var(--bg-raised); border-radius: 999px; padding: 1px 8px; color: var(--ink-1); }
+  .ticket { background: var(--bg-raised); border: 1px solid var(--line); border-radius: 11px; padding: 11px 12px; margin-bottom: 9px; cursor: grab; }
+  .ticket:hover { border-color: var(--line-2); }
+  .tags { display: flex; gap: 5px; margin-bottom: 7px; flex-wrap: wrap; }
+  .tag { font-family: var(--font-mono); font-size: .56rem; letter-spacing: .08em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; }
+  .bug { background: rgba(255,69,69,.12); color: #ff6b6b; }
+  .idea { background: rgba(127,179,255,.12); color: var(--blue); }
+  .love { background: rgba(255,62,154,.12); color: var(--role-dj); }
+  .sev-high { background: rgba(255,69,69,.16); color: #ff7a7a; }
+  .sev-med { background: rgba(255,184,74,.14); color: var(--warn); }
+  .scr { background: rgba(255,255,255,.05); color: var(--ink-2); }
+  .txt { font-size: .82rem; line-height: 1.45; color: var(--ink-1); }
+  .by { font-family: var(--font-mono); font-size: .6rem; color: var(--ink-3); margin-top: 7px; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>iH<span class="o">·</span>YPE — Feedback Triage</h1>
+    <span class="meta">Closed beta · drag cards across lanes</span>
+  </header>
+  <div class="board">
+    <div class="col">
+      <div class="ch"><span>📥 New</span><span class="count">3</span></div>
+      <div class="ticket"><div class="tags"><span class="tag bug">Bug</span><span class="tag sev-high">Blocking</span><span class="tag scr">Checkout</span></div><div class="txt">QR pass doesn't load after purchase on iOS Safari</div><div class="by">@jessr · 2h</div></div>
+      <div class="ticket"><div class="tags"><span class="tag idea">Idea</span><span class="tag scr">Listen</span></div><div class="txt">Let me share a track straight to Instagram stories</div><div class="by">@theo · 4h</div></div>
+      <div class="ticket"><div class="tags"><span class="tag bug">Bug</span><span class="tag sev-med">Annoying</span><span class="tag scr">Studio</span></div><div class="txt">SFX pad lags when I record voice at the same time</div><div class="by">@djcaro · 5h</div></div>
+    </div>
+    <div class="col">
+      <div class="ch"><span>🔍 Triaging</span><span class="count">2</span></div>
+      <div class="ticket"><div class="tags"><span class="tag bug">Bug</span><span class="tag sev-med">Annoying</span><span class="tag scr">Events</span></div><div class="txt">Age gate re-appears every time I reopen the app</div><div class="by">@theo · 1d</div></div>
+      <div class="ticket"><div class="tags"><span class="tag idea">Idea</span><span class="tag scr">Referral</span></div><div class="txt">Show a leaderboard of top promoters per event</div><div class="by">@jessr · 1d</div></div>
+    </div>
+    <div class="col">
+      <div class="ch"><span>🔧 Fixing</span><span class="count">2</span></div>
+      <div class="ticket"><div class="tags"><span class="tag bug">Bug</span><span class="tag sev-high">Blocking</span><span class="tag scr">Onboarding</span></div><div class="txt">Skip-to-demo doesn't seed taste prefs on Android</div><div class="by">@djcaro · 2d</div></div>
+      <div class="ticket"><div class="tags"><span class="tag idea">Idea</span><span class="tag scr">Live</span></div><div class="txt">Add reactions (🔥❤️) to live chat</div><div class="by">@theo · 2d</div></div>
+    </div>
+    <div class="col">
+      <div class="ch"><span>✅ Done</span><span class="count">2</span></div>
+      <div class="ticket" style="opacity:.7"><div class="tags"><span class="tag love">Love</span><span class="tag scr">Seeds</span></div><div class="txt">The swipe-to-hype animation is SO satisfying 🔥</div><div class="by">@jessr · 3d</div></div>
+      <div class="ticket" style="opacity:.7"><div class="tags"><span class="tag bug">Bug</span><span class="tag scr">Studio</span></div><div class="txt">Mic-denied now shows a friendly banner ✓ shipped</div><div class="by">@djcaro · 3d</div></div>
+    </div>
+  </div>
+</body>
+</html>

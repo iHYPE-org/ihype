@@ -1,0 +1,59 @@
+{
+  "_comment": "iHYPE seed data — matches schema.sql. Load into test env so demos aren't empty. Cents for money.",
+  "users": [
+    { "id": "u_nyla", "handle": "nyla", "display_name": "Nyla", "email": "nyla@ihype.test", "city": "Los Angeles", "genres": ["dream-pop","r&b"], "roles": ["artist","fan"], "verified": true },
+    { "id": "u_midnight", "handle": "midnightecho", "display_name": "Midnight Echo", "email": "me@ihype.test", "city": "Los Angeles", "genres": ["shoegaze","indie-rock"], "roles": ["artist"], "verified": true },
+    { "id": "u_caro", "handle": "djcaro", "display_name": "DJ Caro", "email": "caro@ihype.test", "city": "New York", "genres": ["electronic","lo-fi"], "roles": ["dj","fan"], "verified": true },
+    { "id": "u_wax", "handle": "waxtropic", "display_name": "Wax Tropic", "email": "wax@ihype.test", "city": "Austin", "genres": ["jazz","electronic"], "roles": ["artist"], "verified": true },
+    { "id": "u_cold", "handle": "coldharbor", "display_name": "Cold Harbor", "email": "cold@ihype.test", "city": "Portland", "genres": ["punk","indie-rock"], "roles": ["artist"], "verified": true },
+    { "id": "u_jess", "handle": "jessr", "display_name": "Jess R.", "email": "jess@ihype.test", "city": "Los Angeles", "genres": ["dream-pop","lo-fi","electronic"], "roles": ["fan"], "verified": false },
+    { "id": "u_theo", "handle": "theo", "display_name": "Theo", "email": "theo@ihype.test", "city": "New York", "genres": ["hip-hop","r&b"], "roles": ["fan"], "verified": false }
+  ],
+  "venues": [
+    { "id": "v_echoplex", "owner_id": null, "name": "The Echoplex", "city": "Los Angeles", "capacity": 700 },
+    { "id": "v_baby", "owner_id": null, "name": "Baby's All Right", "city": "New York", "capacity": 280 },
+    { "id": "v_mohawk", "owner_id": null, "name": "Mohawk", "city": "Austin", "capacity": 450 }
+  ],
+  "tracks": [
+    { "id": "t_glasslight", "artist_id": "u_nyla", "title": "Glasslight", "license": "all_rights", "duration_s": 214, "artwork_url": "/art/glasslight.jpg" },
+    { "id": "t_undertow", "artist_id": "u_nyla", "title": "Undertow", "license": "free_use_limited", "duration_s": 198, "artwork_url": "/art/undertow.jpg" },
+    { "id": "t_neon", "artist_id": "u_midnight", "title": "Neon Vellum", "license": "free_use_limited", "duration_s": 241, "artwork_url": "/art/neon.jpg" },
+    { "id": "t_drift", "artist_id": "u_wax", "title": "Drift Coast", "license": "free_use_limited", "duration_s": 187, "artwork_url": "/art/drift.jpg" },
+    { "id": "t_static", "artist_id": "u_cold", "title": "Static Bloom", "license": "all_rights", "duration_s": 176, "artwork_url": "/art/static.jpg" }
+  ],
+  "events": [
+    { "id": "e_nyla_fri", "artist_id": "u_nyla", "venue_id": "v_echoplex", "title": "Nyla — Glasslight Tour", "starts_at": "2026-07-10T03:00:00Z", "city": "Los Angeles", "capacity": 700, "price_cents": 2800, "status": "published", "split": { "artist": 0.45, "venue": 0.20, "platform": 0.25, "promoter_max": 0.10 }, "total_gross_cents": 1148000 },
+    { "id": "e_echo_sat", "artist_id": "u_midnight", "venue_id": "v_baby", "title": "Midnight Echo — Live", "starts_at": "2026-07-12T03:00:00Z", "city": "New York", "capacity": 280, "price_cents": 2200, "status": "published", "split": { "artist": 0.45, "venue": 0.20, "platform": 0.25, "promoter_max": 0.10 }, "total_gross_cents": 396000 },
+    { "id": "e_wax_thu", "artist_id": "u_wax", "venue_id": "v_mohawk", "title": "Wax Tropic — Drift Coast", "starts_at": "2026-07-09T02:00:00Z", "city": "Austin", "capacity": 450, "price_cents": 2500, "status": "live", "split": { "artist": 0.45, "venue": 0.20, "platform": 0.25, "promoter_max": 0.10 }, "total_gross_cents": 562500 }
+  ],
+  "tickets": [
+    { "id": "tk_1", "event_id": "e_nyla_fri", "buyer_id": "u_jess", "referral_code": "caro-nyla-x7k2", "price_cents": 2800, "status": "valid" },
+    { "id": "tk_2", "event_id": "e_nyla_fri", "buyer_id": "u_theo", "referral_code": "caro-nyla-x7k2", "price_cents": 2800, "status": "valid" },
+    { "id": "tk_3", "event_id": "e_echo_sat", "buyer_id": "u_jess", "referral_code": null, "price_cents": 2200, "status": "valid" }
+  ],
+  "referrals": [
+    { "code": "caro-nyla-x7k2", "event_id": "e_nyla_fri", "promoter_id": "u_caro", "gross_driven_cents": 5600, "earned_cents": 27, "status": "accruing" }
+  ],
+  "radio_shows": [
+    { "id": "rs_1", "dj_id": "u_caro", "title": "Late Coast — Ep. 04", "duration_s": 1820, "status": "published", "segments": [
+      { "type": "voice", "clip_url": "/voice/caro-intro-04.webm" },
+      { "type": "sfx", "sfx_id": "sfx_vinyl" },
+      { "type": "track", "track_id": "t_undertow" },
+      { "type": "track", "track_id": "t_neon" },
+      { "type": "voice", "clip_url": "/voice/caro-mid-04.webm" },
+      { "type": "track", "track_id": "t_drift" }
+    ] }
+  ],
+  "crate_items": [
+    { "dj_id": "u_caro", "track_id": "t_undertow" },
+    { "dj_id": "u_caro", "track_id": "t_neon" },
+    { "dj_id": "u_caro", "track_id": "t_drift" }
+  ],
+  "sfx_library": [
+    { "id": "sfx_vinyl", "name": "Vinyl Crackle", "url": "/sfx/vinyl.mp3", "license_source": "freesound CC0", "duration_s": 8 },
+    { "id": "sfx_riser", "name": "Tape Riser", "url": "/sfx/riser.mp3", "license_source": "freesound CC0", "duration_s": 4 },
+    { "id": "sfx_airhorn", "name": "Air Horn", "url": "/sfx/airhorn.mp3", "license_source": "freesound CC0", "duration_s": 2 },
+    { "id": "sfx_applause", "name": "Crowd Applause", "url": "/sfx/applause.mp3", "license_source": "freesound CC0", "duration_s": 6 },
+    { "id": "sfx_swoosh", "name": "Transition Swoosh", "url": "/sfx/swoosh.mp3", "license_source": "freesound CC0", "duration_s": 1 }
+  ]
+}

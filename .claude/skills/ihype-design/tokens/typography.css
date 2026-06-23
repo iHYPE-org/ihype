@@ -1,0 +1,25 @@
+/* iHYPE Typography Tokens */
+:root {
+  /* ── Font Families ── */
+  --font-display: 'Syne', sans-serif;
+  --font-body:    'DM Sans', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+  --font-serif:   'Instrument Serif', serif;
+
+  /* ── Font Sizes ── */
+  --text-xs:   9px;
+  --text-sm:   11px;
+  --text-base: 14px;
+  --text-md:   16px;
+  --text-lg:   20px;
+  --text-xl:   28px;
+  --text-2xl:  38px;
+  --text-3xl:  54px;
+
+  /* ── Letter Spacing ── */
+  --tracking-tight:   -0.02em;
+  --tracking-normal:   0;
+  --tracking-wide:     0.08em;
+  --tracking-wider:    0.14em;
+  --tracking-widest:   0.18em;
+}

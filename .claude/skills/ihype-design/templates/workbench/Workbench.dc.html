@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Workbench" description="Artist/Venue/Promoter back-office dashboard — analytics, shows, seeds, govern with left-rail nav" -->
+<helmet>
+  <script src="./ds-base.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>html,body{margin:0;height:100%;overflow:hidden;background:#0a0805}*{box-sizing:border-box}::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px}</style>
+</helmet>
+
+<div style="width:100vw;height:100vh;display:flex;flex-direction:column;background:#0a0805;color:#f0ebe5;overflow:hidden;font-family:'DM Sans',system-ui,sans-serif">
+
+  <!-- Top bar -->
+  <div style="height:42px;border-bottom:1px solid rgba(255,255,255,.06);background:#100d09;display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0">
+    <div style="font-family:'Syne',sans-serif;font-weight:800;letter-spacing:-.02em;font-size:16px">i<span style="color:#ff5029">HYPE</span></div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;padding:3px 8px;border:1px solid rgba(255,80,41,.4);border-radius:4px;color:#ff5029">ARTIST</div>
+    <div style="flex:1;position:relative">
+      <div style="display:flex;align-items:center;gap:8px;height:26px;padding:0 12px;background:#1a1612;border:1px solid rgba(255,255,255,.06);border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#5a5048;max-width:320px;margin:0 auto">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.6"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        Search artists, shows, venues
+        <span style="margin-left:auto;font-size:9px;color:#3a342e">⌘K</span>
+      </div>
+    </div>
+    <div style="width:26px;height:26px;border-radius:99px;background:#ff5029;color:#0a0805;font-family:'Syne',sans-serif;font-weight:800;font-size:10px;display:flex;align-items:center;justify-content:center">MR</div>
+  </div>
+
+  <!-- Body -->
+  <div style="flex:1;display:flex;min-height:0">
+
+    <!-- Rail -->
+    <div style="width:88px;border-right:1px solid rgba(255,255,255,.06);background:#100d09;padding:12px 0;display:flex;flex-direction:column;gap:1px;flex-shrink:0">
+      <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+        <div onClick="{{ navHome }}" style="padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:#f0ebe5;background:#1a1612;border-left:2px solid #ff5029">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase">Home</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ notHome }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ navHome }}" style="padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:#5a5048;background:transparent;border-left:2px solid transparent">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase">Home</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isSeeds }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ navSeeds }}" style="padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:#f0ebe5;background:#1a1612;border-left:2px solid #ff5029">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-9.5-9.2C.8 8.2 3 4.5 6.5 4.5c2 0 3.5 1 5.5 3 2-2 3.5-3 5.5-3C21 4.5 23.2 8.2 21.5 11.8 19 16.5 12 21 12 21z"/></svg>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase">Seeds</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ notSeeds }}" hint-placeholder-val="{{ true }}">
+        <div onClick="{{ navSeeds }}" style="padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:#5a5048;background:transparent;border-left:2px solid transparent">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-9.5-9.2C.8 8.2 3 4.5 6.5 4.5c2 0 3.5 1 5.5 3 2-2 3.5-3 5.5-3C21 4.5 23.2 8.2 21.5 11.8 19 16.5 12 21 12 21z"/></svg>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase">Seeds</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isShows }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ navShows }}" style="padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:#f0ebe5;background:#1a1612;border-left:2px solid #ff5029">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.6"/></svg>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase">Shows</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ notShows }}" hint-placeholder-val="{{ true }}">
+        <div onClick="{{ navShows }}" style="padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:#5a5048;background:transparent;border-left:2px solid transparent">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.6"/></svg>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase">Shows</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isGovern }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ navGovern }}" style="padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:#f0ebe5;background:#1a1612;border-left:2px solid #ff5029">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 11l4 4 12-12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12v7a2 2 0 01-2 2H6a2 2 0 01-2-2V8" stroke="currentColor" stroke-width="1.6"/></svg>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase">Govern</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ notGovern }}" hint-placeholder-val="{{ true }}">
+        <div onClick="{{ navGovern }}" style="padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:#5a5048;background:transparent;border-left:2px solid transparent">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 11l4 4 12-12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12v7a2 2 0 01-2 2H6a2 2 0 01-2-2V8" stroke="currentColor" stroke-width="1.6"/></svg>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase">Govern</div>
+        </div>
+      </sc-if>
+    </div>
+
+    <!-- Content -->
+    <div style="flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden">
+
+      <!-- HOME -->
+      <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px">
+          <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#ff5029">THIS WEEK</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;letter-spacing:-.02em;color:#f0ebe5;margin-top:5px">Your HYPE report</div></div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+            <div style="padding:14px 16px;border:1px solid rgba(255,255,255,.06);border-radius:10px;background:#100d09"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#5a5048">Total hypes</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:26px;letter-spacing:-.015em;margin-top:8px;color:#f0ebe5">9.8k</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#ff5029;margin-top:5px;letter-spacing:.06em">↑ 12% vs last week</div></div>
+            <div style="padding:14px 16px;border:1px solid rgba(255,255,255,.06);border-radius:10px;background:#100d09"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#5a5048">Unique listeners</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:26px;letter-spacing:-.015em;margin-top:8px;color:#f0ebe5">3.2k</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#22e5d4;margin-top:5px;letter-spacing:.06em">↑ 8% vs last week</div></div>
+            <div style="padding:14px 16px;border:1px solid rgba(255,255,255,.06);border-radius:10px;background:#100d09"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#5a5048">Upcoming shows</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:26px;letter-spacing:-.015em;margin-top:8px;color:#f0ebe5">4</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#b983ff;margin-top:5px;letter-spacing:.06em">Next: Jun 27</div></div>
+            <div style="padding:14px 16px;border:1px solid rgba(255,255,255,.06);border-radius:10px;background:#100d09"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#5a5048">Avg hype / track</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:26px;letter-spacing:-.015em;margin-top:8px;color:#f0ebe5">1.96k</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#ffb84a;margin-top:5px;letter-spacing:.06em">Collision leads</div></div>
+          </div>
+          <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px">
+            <div style="border:1px solid rgba(255,255,255,.06);border-radius:10px;background:#100d09;overflow:hidden">
+              <div style="padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;align-items:center"><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px">Hype activity · 30 days</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:#5a5048">Export CSV</div></div>
+              <div style="padding:14px 16px 10px">
+                <svg width="100%" height="68" viewBox="0 0 120 68" preserveAspectRatio="none"><rect x="0" y="52" width="3" height="16" fill="#ff5029" opacity=".4"/><rect x="4" y="44" width="3" height="24" fill="#ff5029" opacity=".5"/><rect x="8" y="36" width="3" height="32" fill="#ff5029" opacity=".55"/><rect x="12" y="28" width="3" height="40" fill="#ff5029" opacity=".6"/><rect x="16" y="20" width="3" height="48" fill="#ff5029" opacity=".65"/><rect x="20" y="12" width="3" height="56" fill="#ff5029" opacity=".7"/><rect x="24" y="18" width="3" height="50" fill="#ff5029" opacity=".65"/><rect x="28" y="8" width="3" height="60" fill="#ff5029" opacity=".75"/><rect x="32" y="4" width="3" height="64" fill="#ff5029" opacity=".8"/><rect x="36" y="10" width="3" height="58" fill="#ff5029" opacity=".72"/><rect x="40" y="0" width="3" height="68" fill="#ff5029" opacity=".9"/><rect x="44" y="6" width="3" height="62" fill="#ff5029" opacity=".82"/><rect x="48" y="14" width="3" height="54" fill="#ff5029" opacity=".75"/><rect x="52" y="2" width="3" height="66" fill="#ff5029" opacity=".88"/><rect x="56" y="4" width="3" height="64" fill="#ff5029" opacity=".85"/><rect x="60" y="0" width="3" height="68" fill="#ff5029" opacity=".92"/><rect x="64" y="8" width="3" height="60" fill="#ff5029" opacity=".8"/><rect x="68" y="0" width="3" height="68" fill="#ff5029" opacity=".95"/><rect x="72" y="4" width="3" height="64" fill="#ff5029" opacity=".88"/><rect x="76" y="0" width="3" height="68" fill="#ff5029" opacity="1"/></svg>
+                <div style="display:flex;justify-content:space-between;margin-top:6px"><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048;letter-spacing:.1em">MAY 21</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048;letter-spacing:.1em">JUN 19</div></div>
+              </div>
+            </div>
+            <div style="border:1px solid rgba(255,255,255,.06);border-radius:10px;background:#100d09;overflow:hidden">
+              <div style="padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;align-items:center"><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px">Top tracks</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:#5a5048">All tracks</div></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.06)"><div style="width:34px;height:34px;border-radius:6px;background:linear-gradient(135deg,#ff5029,#ff502966 60%,#1a1612);flex-shrink:0"></div><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;color:#f0ebe5">Collision</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#ff5029;letter-spacing:.08em;margin-top:2px">● AT 3:38</div></div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:12px;color:#f0ebe5">9.8k</div></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.06)"><div style="width:34px;height:34px;border-radius:6px;background:linear-gradient(135deg,#b983ff,#b983ff66 60%,#1a1612);flex-shrink:0"></div><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;color:#f0ebe5">Glass Hours</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#b983ff;letter-spacing:.08em;margin-top:2px">● AT 1:52</div></div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:12px;color:#f0ebe5">7.2k</div></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:9px 14px"><div style="width:34px;height:34px;border-radius:6px;background:linear-gradient(135deg,#22e5d4,#22e5d466 60%,#1a1612);flex-shrink:0"></div><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;color:#f0ebe5">Soft Static</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#22e5d4;letter-spacing:.08em;margin-top:2px">● AT 4:01</div></div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:12px;color:#f0ebe5">4.1k</div></div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- SEEDS -->
+      <sc-if value="{{ isSeeds }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px">
+          <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#b983ff">TRACK ANALYTICS</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;letter-spacing:-.02em;color:#f0ebe5;margin-top:5px">Seeds — HYPE by moment</div></div>
+          <div style="border:1px solid rgba(255,255,255,.06);border-radius:10px;background:#100d09;overflow:hidden">
+            <div style="padding:11px 16px;border-bottom:1px solid rgba(255,255,255,.06)"><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px">Your tracks · ranked by HYPE</div></div>
+            <div style="padding:13px 16px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:14px"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:rgba(255,255,255,.2);width:20px">1</div><div style="width:42px;height:42px;border-radius:6px;background:linear-gradient(135deg,#ff5029,#1a1612);flex-shrink:0"></div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">Collision</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048;letter-spacing:.1em;text-transform:uppercase;margin-top:3px">Dusk EP</div></div><div style="text-align:right"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:15px">9.8k</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#ff5029;letter-spacing:.06em;margin-top:2px">● 3:38</div></div></div>
+            <div style="padding:13px 16px;display:flex;align-items:center;gap:14px"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:rgba(255,255,255,.2);width:20px">2</div><div style="width:42px;height:42px;border-radius:6px;background:linear-gradient(135deg,#b983ff,#1a1612);flex-shrink:0"></div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">Glass Hours</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048;letter-spacing:.1em;text-transform:uppercase;margin-top:3px">Dusk EP</div></div><div style="text-align:right"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:15px">7.2k</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#b983ff;letter-spacing:.06em;margin-top:2px">● 1:52</div></div></div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- SHOWS -->
+      <sc-if value="{{ isShows }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-end"><div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#22e5d4">LIVE DATES</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;letter-spacing:-.02em;color:#f0ebe5;margin-top:5px">Shows</div></div><button style="padding:6px 14px;background:#ff5029;color:#0a0805;border:none;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.08em;cursor:pointer">+ Add show</button></div>
+          <div style="border:1px solid rgba(255,255,255,.06);border-radius:10px;background:#100d09;overflow:hidden">
+            <div style="padding:15px 16px;display:flex;gap:18px;align-items:center;border-bottom:1px solid rgba(255,255,255,.06)">
+              <div style="width:48px;flex-shrink:0;text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:#ff5029;line-height:1">27</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048;letter-spacing:.12em;text-transform:uppercase;margin-top:2px">Jun</div></div>
+              <div style="flex:1;min-width:0"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:15px;letter-spacing:-.01em">Empty Bottle</div><div style="font-size:11px;color:#5a5048;margin-top:2px">Chicago, IL</div></div>
+              <div style="display:flex;gap:20px;align-items:center"><div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;color:#ffb84a">280</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048;letter-spacing:.1em;text-transform:uppercase;margin-top:2px">Sold / 300</div></div></div>
+            </div>
+            <div style="padding:15px 16px;display:flex;gap:18px;align-items:center">
+              <div style="width:48px;flex-shrink:0;text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:#ff5029;line-height:1">5</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048;letter-spacing:.12em;text-transform:uppercase;margin-top:2px">Jul</div></div>
+              <div style="flex:1;min-width:0"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:15px;letter-spacing:-.01em">Thalia Hall</div><div style="font-size:11px;color:#5a5048;margin-top:2px">Chicago, IL</div></div>
+              <div style="display:flex;gap:20px;align-items:center"><div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;color:#f0ebe5">190</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048;letter-spacing:.1em;text-transform:uppercase;margin-top:2px">Sold / 600</div></div></div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- GOVERN -->
+      <sc-if value="{{ isGovern }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px">
+          <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#ff3e9a">COMMUNITY GOVERNANCE</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;letter-spacing:-.02em;color:#f0ebe5;margin-top:5px">Govern · One member, one vote</div></div>
+          <div style="border:1px solid rgba(255,255,255,.06);border-radius:10px;background:#100d09;overflow:hidden">
+            <div style="padding:16px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px">
+                <div style="flex:1"><div style="font-size:14px;font-weight:600">Add "Low Season" to all June setlists</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#5a5048;letter-spacing:.12em;text-transform:uppercase;margin-top:6px">ACTIVE · 3D LEFT</div></div>
+                <div style="text-align:right;flex-shrink:0"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:#b983ff">1,420</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048;letter-spacing:.06em">/ 1,500 needed</div></div>
+              </div>
+              <div style="margin-top:12px;height:3px;border-radius:99px;background:#1a1612;overflow:hidden"><div style="width:94%;height:100%;background:#b983ff;border-radius:99px"></div></div>
+            </div>
+          </div>
+          <div style="border:1px solid rgba(255,255,255,.06);border-radius:10px;background:#100d09;overflow:hidden">
+            <div style="padding:16px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px">
+                <div style="flex:1"><div style="font-size:14px;font-weight:600">Open sound check to RSVP fans at Thalia</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#22e5d4;letter-spacing:.12em;text-transform:uppercase;margin-top:6px">● PASSED · 1D LEFT</div></div>
+                <div style="text-align:right;flex-shrink:0"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:#22e5d4">892</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048;letter-spacing:.06em">/ 600 needed</div></div>
+              </div>
+              <div style="margin-top:12px;height:3px;border-radius:99px;background:#1a1612;overflow:hidden"><div style="width:100%;height:100%;background:#22e5d4;border-radius:99px"></div></div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { screen: 'home' };
+  renderVals() {
+    const s = this.state.screen;
+    const is  = n => s === n;
+    const not = n => s !== n;
+    return {
+      isHome:   is('home'),   notHome:   not('home'),
+      isSeeds:  is('seeds'),  notSeeds:  not('seeds'),
+      isShows:  is('shows'),  notShows:  not('shows'),
+      isGovern: is('govern'), notGovern: not('govern'),
+      navHome:   () => this.setState({ screen: 'home' }),
+      navSeeds:  () => this.setState({ screen: 'seeds' }),
+      navShows:  () => this.setState({ screen: 'shows' }),
+      navGovern: () => this.setState({ screen: 'govern' }),
+    };
+  }
+}
+</script>
+</body>
+</html>

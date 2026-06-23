@@ -1,0 +1,417 @@
+<!-- @dsCard group="Website" viewport="1280x900" name="Landing / Waitlist" subtitle="Public marketing site + artist recruiting section" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iHYPE — Artist-owned live music</title>
+<meta name="description" content="Hype the artists you love, buy tickets direct, and earn by promoting shows — 45% of every ticket locked to the artist.">
+<meta property="og:title" content="iHYPE — Artist-owned live music">
+<meta property="og:description" content="45% of every ticket, locked to the artist. Closed beta now open.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg-base); color: var(--ink-1); font-family: 'DM Sans', var(--font-body, sans-serif); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 32px; }
+
+  /* nav */
+  nav { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); background: rgba(10,8,5,.72); border-bottom: 1px solid var(--line, rgba(255,255,255,.08)); }
+  nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.5rem; letter-spacing: -.04em; color: var(--accent, #ff5029); }
+  nav .links { display: flex; gap: 28px; align-items: center; }
+  nav .links a { font-size: .92rem; color: var(--ink-2, #9e9080); transition: color .15s; }
+  nav .links a:hover { color: var(--ink-1, #f0ebe5); }
+  .cta { font-family: 'Syne', sans-serif; font-weight: 800; font-size: .9rem; background: var(--accent, #ff5029); color: #fff; padding: 10px 20px; border-radius: 999px; border: none; cursor: pointer; box-shadow: 0 4px 20px rgba(255,80,41,.3); transition: all .15s; display: inline-block; }
+  .cta:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(255,80,41,.45); }
+  @media (max-width: 680px) { nav .links a:not(.cta) { display: none; } }
+
+  /* hero */
+  .hero { position: relative; overflow: hidden; padding: 120px 0 96px; text-align: center; }
+  .hero::before { content: ''; position: absolute; top: -200px; left: 50%; transform: translateX(-50%); width: 900px; height: 700px; background: radial-gradient(circle, rgba(255,80,41,.18), transparent 60%); pointer-events: none; }
+  .badge { display: inline-flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: .7rem; letter-spacing: .18em; text-transform: uppercase; color: #ffb84a; border: 1px solid rgba(255,184,74,.3); background: rgba(255,184,74,.08); border-radius: 999px; padding: 6px 15px; }
+  .badge .dot { width: 7px; height: 7px; border-radius: 50%; background: #ffb84a; animation: blink 1.4s infinite; flex-shrink: 0; }
+  @keyframes blink { 50% { opacity: .3; } }
+  .hero h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(2.8rem, 7.5vw, 6rem); letter-spacing: -.05em; line-height: .95; margin: 28px auto 0; max-width: 900px; position: relative; }
+  .hero h1 .o { color: var(--accent, #ff5029); }
+  .hero .sub { font-size: clamp(1.05rem, 2vw, 1.35rem); color: var(--ink-2, #9e9080); max-width: 640px; margin: 24px auto 0; line-height: 1.6; position: relative; }
+  .hero .sub b { color: var(--ink-1, #f0ebe5); }
+  .wl-wrap { max-width: 500px; margin: 40px auto 0; position: relative; }
+  .wl-form { display: flex; gap: 10px; }
+  .wl-form input { flex: 1; padding: 15px 20px; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.05); color: var(--ink-1, #f0ebe5); font-family: 'DM Sans', sans-serif; font-size: 1rem; outline: none; transition: border-color .15s; }
+  .wl-form input:focus { border-color: var(--accent, #ff5029); }
+  .wl-note { font-family: 'JetBrains Mono', monospace; font-size: .72rem; color: var(--ink-3, #5a5048); margin-top: 14px; letter-spacing: .04em; text-align: center; }
+  .wl-ok { display: none; padding: 18px 22px; background: rgba(34,229,212,.08); border: 1px solid rgba(34,229,212,.3); border-radius: 14px; margin-top: 16px; }
+  .wl-ok .t { font-family: 'Syne', sans-serif; font-weight: 800; color: #22e5d4; }
+  .wl-ok .s { font-size: .92rem; color: var(--ink-2, #9e9080); margin-top: 6px; line-height: 1.5; }
+
+  /* role selector */
+  .role-seg { display: inline-flex; gap: 6px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 999px; padding: 5px; margin: 22px auto 0; }
+  .role-seg button { font-family: 'JetBrains Mono', monospace; font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; padding: 8px 16px; border-radius: 999px; border: none; background: transparent; color: var(--ink-2, #9e9080); cursor: pointer; transition: all .15s; }
+  .role-seg button.on { color: #0a0805; font-weight: 700; }
+  .role-seg button.on.fan { background: #b983ff; }
+  .role-seg button.on.artist { background: var(--accent, #ff5029); }
+  .role-seg button.on.dj { background: #ff3e9a; }
+  .role-seg button.on.venue { background: #22e5d4; }
+
+  /* stat strip */
+  .strip { border-top: 1px solid rgba(255,255,255,.07); border-bottom: 1px solid rgba(255,255,255,.07); margin-top: 80px; display: flex; }
+  .strip > div { flex: 1; padding: 28px 0; text-align: center; border-right: 1px solid rgba(255,255,255,.07); }
+  .strip > div:last-child { border-right: none; }
+  .strip .n { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 2.2rem; letter-spacing: -.03em; }
+  .strip .l { font-family: 'JetBrains Mono', monospace; font-size: .66rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2, #9e9080); margin-top: 6px; }
+  @media (max-width: 640px) { .strip { flex-wrap: wrap; } .strip > div { min-width: 50%; border-right: none; border-bottom: 1px solid rgba(255,255,255,.07); } }
+
+  /* sections */
+  section { padding: 96px 0; }
+  .stag { font-family: 'JetBrains Mono', monospace; font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; color: var(--accent, #ff5029); }
+  h2 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(2rem, 4.5vw, 3.2rem); letter-spacing: -.03em; line-height: 1.06; margin: 14px 0 0; max-width: 18ch; }
+  .slede { font-size: 1.08rem; color: var(--ink-2, #9e9080); line-height: 1.6; margin-top: 18px; max-width: 52ch; }
+
+  /* how */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 52px; }
+  .step { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07); border-radius: 18px; padding: 28px 26px; }
+  .step .si { font-family: 'JetBrains Mono', monospace; font-size: .78rem; color: var(--accent, #ff5029); letter-spacing: .1em; margin-bottom: 14px; }
+  .step h3 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.3rem; letter-spacing: -.02em; margin-bottom: 10px; }
+  .step p { font-size: .96rem; line-height: 1.55; color: var(--ink-2, #9e9080); }
+  @media (max-width: 780px) { .steps { grid-template-columns: 1fr; } }
+
+  /* split bar */
+  .splitbar { display: flex; height: 80px; border-radius: 14px; overflow: hidden; margin-top: 42px; }
+  .splitbar div { display: flex; flex-direction: column; justify-content: center; padding-left: 20px; color: #0a0805; }
+  .splitbar .sp { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6rem; }
+  .splitbar .sl { font-family: 'JetBrains Mono', monospace; font-size: .62rem; letter-spacing: .08em; }
+  .splitnote { font-size: .96rem; color: var(--ink-2, #9e9080); margin-top: 20px; max-width: 56ch; line-height: 1.55; }
+
+  /* roles */
+  .rolegrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 48px; }
+  .rolecard { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07); border-radius: 16px; padding: 26px 22px; border-top: 4px solid var(--rc); }
+  .rolecard .ic { font-size: 2.2rem; }
+  .rolecard h3 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.3rem; letter-spacing: -.02em; margin: 14px 0 8px; }
+  .rolecard p { font-size: .9rem; line-height: 1.5; color: var(--ink-2, #9e9080); }
+  @media (max-width: 780px) { .rolegrid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 480px) { .rolegrid { grid-template-columns: 1fr; } }
+
+  /* artist band */
+  .aband { background: linear-gradient(160deg, #1f0e07 0%, #0a0805 70%); border: 1px solid rgba(255,80,41,.18); border-radius: 24px; padding: 64px 56px; position: relative; overflow: hidden; }
+  .aband::before { content: ''; position: absolute; top: -150px; right: -100px; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, rgba(255,80,41,.22), transparent 65%); }
+  .aband .inner { max-width: 640px; position: relative; }
+  .aband h2 { max-width: 100%; }
+  .aband p { max-width: 100%; }
+  .perks { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 26px; }
+  .perk { font-family: 'JetBrains Mono', monospace; font-size: .76rem; color: var(--ink-1, #f0ebe5); background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 999px; padding: 8px 16px; }
+  .apply-form { display: flex; gap: 10px; margin-top: 32px; max-width: 480px; }
+  .apply-form input { flex: 1; padding: 14px 18px; border-radius: 12px; border: 1px solid rgba(255,80,41,.3); background: rgba(255,80,41,.06); color: var(--ink-1, #f0ebe5); font-family: 'DM Sans', sans-serif; font-size: .96rem; outline: none; }
+  .apply-form input:focus { border-color: var(--accent, #ff5029); }
+  .apply-form .cta { border-radius: 12px; }
+  .apply-ok { display: none; margin-top: 14px; font-size: .92rem; color: #22e5d4; }
+  @media (max-width: 720px) { .aband { padding: 40px 28px; } }
+
+  /* faq */
+  .faq { max-width: 760px; margin-top: 52px; }
+  details { border-bottom: 1px solid rgba(255,255,255,.07); padding: 20px 0; }
+  summary { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem; letter-spacing: -.01em; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: '+'; color: var(--accent, #ff5029); font-size: 1.4rem; font-weight: 400; }
+  details[open] summary::after { content: '–'; }
+  details p { font-size: .98rem; line-height: 1.6; color: var(--ink-2, #9e9080); margin-top: 14px; }
+
+  /* footer */
+  footer { border-top: 1px solid rgba(255,255,255,.07); padding: 56px 0 64px; }
+  .fgrid { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 40px; }
+  .flogo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.8rem; letter-spacing: -.04em; color: var(--accent, #ff5029); }
+  .ftag { font-family: 'JetBrains Mono', monospace; font-size: .68rem; color: var(--ink-3, #5a5048); margin-top: 8px; letter-spacing: .06em; }
+  .fcol .ft { font-family: 'JetBrains Mono', monospace; font-size: .64rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3, #5a5048); margin-bottom: 10px; }
+  .fcol { display: flex; flex-direction: column; gap: 10px; }
+  .fcol a { font-size: .92rem; color: var(--ink-2, #9e9080); transition: color .15s; }
+  .fcol a:hover { color: var(--ink-1, #f0ebe5); }
+  .fbtm { font-family: 'JetBrains Mono', monospace; font-size: .7rem; color: var(--ink-3, #5a5048); margin-top: 48px; letter-spacing: .04em; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="logo" href="#top">iH·YPE</a>
+    <div class="links">
+      <a href="#how">How it works</a>
+      <a href="#roles">Who it's for</a>
+      <a href="#artists">For artists</a>
+      <a href="#faq">FAQ</a>
+      <a href="#join" class="cta">Join the beta</a>
+    </div>
+  </div>
+</nav>
+
+<a id="top"></a>
+<header class="hero">
+  <div class="wrap">
+    <span class="badge"><span class="dot"></span>Closed beta · invite only</span>
+    <h1>The gate belongs<br>to the <span class="o">artists.</span></h1>
+    <p class="sub">iHYPE is live music built for the people who make it. Hype who you believe in, buy tickets direct, and earn by spreading the word — with <b>45% of every ticket locked to the artist, forever.</b></p>
+
+    <div class="role-seg" id="roleSegs">
+      <button class="on fan" onclick="setRole('fan',this)">Fan</button>
+      <button onclick="setRole('artist',this)">Artist</button>
+      <button onclick="setRole('dj',this)">DJ</button>
+      <button onclick="setRole('venue',this)">Venue</button>
+    </div>
+
+    <div class="wl-wrap">
+      <form class="wl-form" id="joinForm" onsubmit="joinWaitlist(event)">
+        <input type="email" id="wlEmail" placeholder="your@email.com" required aria-label="Email address">
+        <button class="cta" type="submit">Request invite</button>
+      </form>
+      <p class="wl-note">No spam. Small waves. Artists + fans invited first.</p>
+      <div class="wl-ok" id="wlOk">
+        <div class="t">You're on the list 🔥</div>
+        <div class="s">We'll email your invite code when your wave opens. In the meantime, tell an artist you love about iHYPE.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="strip">
+      <div><div class="n" style="color:#ff5029">45%</div><div class="l">To the artist · locked</div></div>
+      <div><div class="n" style="color:#ff3e9a">10%</div><div class="l">Max promoter share</div></div>
+      <div><div class="n" style="color:#22e5d4">$0</div><div class="l">Scalper markup</div></div>
+      <div><div class="n">4</div><div class="l">Roles · one account</div></div>
+    </div>
+  </div>
+</header>
+
+<section id="how">
+  <div class="wrap">
+    <div class="stag">How it works</div>
+    <h2>Discover, hype, buy direct.</h2>
+    <p class="slede">Every step of the iHYPE experience is built to move value from the middlemen back to the artists and the fans who found them first.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="si">01 · HYPE</div>
+        <h3>Back the artists you believe in</h3>
+        <p>A weekly flame budget lets you hype any artist, track, or show. The HYPE chart rises in real time — you shape who gets heard.</p>
+      </div>
+      <div class="step">
+        <div class="si">02 · TICKETS</div>
+        <h3>Buy direct, with a frozen charter</h3>
+        <p>Every event publishes a split that can never change after sale. You see exactly where your money goes — and 45% always goes to the artist.</p>
+      </div>
+      <div class="step">
+        <div class="si">03 · PROMOTE</div>
+        <h3>Spread the word, earn a cut</h3>
+        <p>Share any event with your referral link. For every ticket sold through your link, you earn up to 10% of the gate you drove — drawn from the platform's slice, never the artist's.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="background:rgba(255,80,41,.04);border-top:1px solid rgba(255,80,41,.1);border-bottom:1px solid rgba(255,80,41,.1)">
+  <div class="wrap">
+    <div class="stag">The model</div>
+    <h2>Every ticket, every time.</h2>
+    <p class="slede">The gate split is frozen at publish — a charter sealed into the event record. No renegotiation, no hidden fees, no clawbacks.</p>
+    <div class="splitbar">
+      <div style="width:45%;background:#ff5029"><div class="sp">45%</div><div class="sl">ARTIST</div></div>
+      <div style="width:20%;background:#22e5d4"><div class="sp">20%</div><div class="sl">VENUE</div></div>
+      <div style="width:25%;background:#9e9080"><div class="sp">25%</div><div class="sl">PLATFORM</div></div>
+      <div style="width:10%;background:#ff3e9a"><div class="sp">10%</div><div class="sl">PROMO</div></div>
+    </div>
+    <p class="splitnote">The promoter's up-to-10% comes out of the platform slice — never the artist's 45%. Default venue split is configurable per charter before publish.</p>
+  </div>
+</section>
+
+<section id="roles">
+  <div class="wrap">
+    <div class="stag">Who it's for</div>
+    <h2>Four roles. One account.</h2>
+    <p class="slede">Pick your role in onboarding and switch any time. Most people are two or three — a fan who also DJs, an artist who also promotes.</p>
+    <div class="rolegrid">
+      <div class="rolecard" style="--rc:#ff5029">
+        <div class="ic">🎤</div>
+        <h3>Artist</h3>
+        <p>Upload tracks, host live shows, sell tickets direct. 45% of the gate hits your account automatically — no agent required.</p>
+      </div>
+      <div class="rolecard" style="--rc:#b983ff">
+        <div class="ic">🎧</div>
+        <h3>Fan</h3>
+        <p>Hype the artists you believe in, buy tickets, attend, and earn referral income by spreading shows to your network.</p>
+      </div>
+      <div class="rolecard" style="--rc:#ff3e9a">
+        <div class="ic">🎛️</div>
+        <h3>DJ</h3>
+        <p>Build radio shows from the free-use library with your voice and royalty-free SFX. Grow your audience and earn promoter cuts.</p>
+      </div>
+      <div class="rolecard" style="--rc:#22e5d4">
+        <div class="ic">🏛️</div>
+        <h3>Venue</h3>
+        <p>List events, manage the door, and receive your charter split direct — no more waiting 30 days for a check from a third party.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="artists">
+  <div class="wrap">
+    <div class="aband">
+      <div class="inner">
+        <div class="stag">For artists</div>
+        <h2 style="max-width:100%">Your music. Your gate. Your fans.</h2>
+        <p class="slede" style="max-width:100%;margin-top:16px">iHYPE is built as a nonprofit. We don't take a cut of your creativity — we take a slice of the platform's operational margin. The 45% to you is enshrined in the charter, legally, before a single ticket sells.</p>
+        <div class="perks">
+          <span class="perk">45% split · locked</span>
+          <span class="perk">Direct fan data</span>
+          <span class="perk">Tour creator</span>
+          <span class="perk">Live show hosting</span>
+          <span class="perk">Free-use licensing</span>
+          <span class="perk">Promoter network</span>
+          <span class="perk">No agent needed</span>
+          <span class="perk">Verification badge</span>
+        </div>
+        <form class="apply-form" id="artistForm" onsubmit="applyArtist(event)">
+          <input type="email" id="artistEmail" placeholder="your@email.com" required aria-label="Artist email">
+          <button class="cta" type="submit">Apply as artist →</button>
+        </form>
+        <div class="apply-ok" id="artistOk">✓ Application received — we'll reach out within 48 hours.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <div class="stag">FAQ</div>
+    <h2>Common questions.</h2>
+    <div class="faq">
+      <details open>
+        <summary>What is the 45/20/25/10 split?</summary>
+        <p>Every ticket sold on iHYPE is split: 45% to the artist, 20% to the venue (configurable), 25% to the platform, and up to 10% to the promoter pool — paid to whoever's referral link drove the purchase. The platform's 25% covers infrastructure, support, and the nonprofit mission. The split is frozen at event publish — it cannot change.</p>
+      </details>
+      <details>
+        <summary>How do I earn as a promoter?</summary>
+        <p>Any fan or DJ can grab a referral link for any event. When someone buys through your link, you earn min(10%, 10% × gross-you-drove ÷ event-total). Drive the whole gate, earn the full 10%. Drive a sliver, earn proportionally. Payouts settle the night of the show.</p>
+      </details>
+      <details>
+        <summary>What's the free-use library for DJs?</summary>
+        <p>Artists can upload tracks under a limited free-use license. DJs can crate only those tracks and use them in radio shows — voice + SFX + music, all royalty-clear. Listeners discover the artists; artists gain exposure. It's opt-in for artists and gated for DJs at the platform level.</p>
+      </details>
+      <details>
+        <summary>Is iHYPE a real nonprofit?</summary>
+        <p>Our 501(c) application is pending. We are incorporated as a nonprofit and operate under those principles — no private equity, no ads, no selling fan data. Banking and real payouts go live once the filing clears. Beta payments are simulated.</p>
+      </details>
+      <details>
+        <summary>What platforms is iHYPE on?</summary>
+        <p>The beta runs on desktop web, mobile web, iOS, and Android — all from a single codebase. Native app store submissions are planned after the closed beta closes.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section id="join" style="text-align:center;padding:100px 0">
+  <div class="wrap">
+    <div class="badge" style="display:inline-flex;margin-bottom:30px"><span class="dot"></span>Closed beta · limited spots</div>
+    <h2 style="font-family:'Syne',sans-serif;font-size:clamp(2.4rem,5vw,4rem);letter-spacing:-.04em;margin:0 auto;max-width:100%">Ready to hype?</h2>
+    <p style="font-size:1.1rem;color:var(--ink-2,#9e9080);margin:18px auto 0;max-width:48ch;line-height:1.6">Join the waitlist. We're onboarding in small waves — artists and fans first.</p>
+    <div class="wl-wrap" style="margin:36px auto 0">
+      <form class="wl-form" onsubmit="joinWaitlist(event)">
+        <input type="email" placeholder="your@email.com" required aria-label="Email address">
+        <button class="cta" type="submit">Request invite</button>
+      </form>
+      <p class="wl-note">No spam. Invite codes sent personally.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="fgrid">
+      <div>
+        <div class="flogo">iH·YPE</div>
+        <div class="ftag">Artist-owned live music · 501(c) pending · Jun 2026</div>
+      </div>
+      <div class="fcol">
+        <div class="ft">Product</div>
+        <a href="#how">How it works</a>
+        <a href="#roles">Roles</a>
+        <a href="#artists">For artists</a>
+        <a href="#join">Join beta</a>
+      </div>
+      <div class="fcol">
+        <div class="ft">Company</div>
+        <a href="#">About</a>
+        <a href="#">Mission</a>
+        <a href="#">Press kit</a>
+        <a href="#">Contact</a>
+      </div>
+      <div class="fcol">
+        <div class="ft">Legal</div>
+        <a href="#">Privacy policy</a>
+        <a href="#">Terms of service</a>
+        <a href="#">Beta disclaimer</a>
+      </div>
+    </div>
+    <p class="fbtm">© 2026 iHYPE. All rights reserved. Beta — payments are simulated. No real charge has been or will be made until nonprofit banking is live.</p>
+  </div>
+</footer>
+
+<script>
+  /* lib/api.js loaded below — falls back gracefully if absent */
+  let selectedRole = 'fan';
+  function setRole(role, btn) {
+    selectedRole = role;
+    document.querySelectorAll('.role-seg button').forEach(b => b.className = '');
+    btn.className = 'on ' + role;
+  }
+  async function joinWaitlist(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const input = (e && e.target) ? e.target.querySelector('input[type=email]') : document.getElementById('wlEmail');
+    const email = input ? input.value : '';
+    if (!email) return;
+    try {
+      if (window.IHYPE_API) await window.IHYPE_API.auth.joinWaitlist(email, selectedRole);
+      else window.track && window.track('waitlist_join', { email, role: selectedRole });
+    } catch(err) { console.warn('waitlist:', err); }
+    const ok   = document.getElementById('wlOk');
+    const form = document.getElementById('joinForm');
+    if (form) form.style.display = 'none';
+    if (ok)   ok.style.display = 'block';
+  }
+  async function applyArtist(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const email = document.getElementById('artistEmail')?.value || '';
+    try {
+      if (window.IHYPE_API) await window.IHYPE_API.auth.artistApply({ email, type: 'artist' });
+      else window.track && window.track('artist_apply', { email });
+    } catch(err) { console.warn('artist apply:', err); }
+    const ok   = document.getElementById('artistOk');
+    const form = document.getElementById('artistForm');
+    if (form) form.style.display = 'none';
+    if (ok)   ok.style.display = 'block';
+  }
+</script>
+<script src="../../lib/api.js"></script>
+
+<div id="cookieBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:999;background:#1a1612;border-top:1px solid rgba(255,255,255,.1);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
+  <p style="margin:0;font-family:'DM Sans',sans-serif;font-size:.88rem;color:#9e9080;line-height:1.5;max-width:680px">iHYPE uses essential cookies and local storage to remember your invite code and session. No advertising cookies. <a href="#" style="color:#ff5029;text-decoration:underline">Privacy policy</a></p>
+  <div style="display:flex;gap:10px;flex-shrink:0">
+    <button onclick="dismissCookie(false)" style="padding:8px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.15);background:transparent;color:#9e9080;font-family:'DM Sans',sans-serif;font-size:.84rem;cursor:pointer">Decline optional</button>
+    <button onclick="dismissCookie(true)" style="padding:8px 18px;border-radius:999px;border:none;background:#ff5029;color:#fff;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.84rem;cursor:pointer">Accept</button>
+  </div>
+</div>
+<script>
+  (function(){
+    if (!localStorage.getItem('ihype_cookie_ok')) {
+      var b = document.getElementById('cookieBanner');
+      if (b) b.style.display = 'flex';
+    }
+  })();
+  function dismissCookie(accept) {
+    localStorage.setItem('ihype_cookie_ok', accept ? 'accepted' : 'declined');
+    var b = document.getElementById('cookieBanner');
+    if (b) b.style.display = 'none';
+    window.track && window.track('cookie_consent', { accepted: accept });
+  }
+</script>
+</body>
+</html>

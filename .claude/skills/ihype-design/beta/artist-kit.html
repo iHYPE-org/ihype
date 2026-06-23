@@ -1,0 +1,261 @@
+<!-- @dsCard group="Website" viewport="1120x900" name="Artist Recruiting Kit" subtitle="Dedicated artist onboarding + apply page" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iHYPE — For Artists</title>
+<meta name="description" content="45% of every ticket, locked to you. No agent. No hidden fees. Direct fan data. iHYPE is artist-owned live music.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg-base); color: var(--ink-1); font-family: 'DM Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 32px; }
+
+  nav { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(16px); background: rgba(10,8,5,.75); border-bottom: 1px solid rgba(255,255,255,.08); }
+  nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 62px; }
+  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem; letter-spacing: -.04em; color: #ff5029; }
+  .navcta { font-family: 'Syne', sans-serif; font-weight: 800; font-size: .88rem; background: #ff5029; color: #fff; padding: 9px 18px; border-radius: 999px; border: none; cursor: pointer; transition: all .15s; }
+  .navcta:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(255,80,41,.4); }
+
+  /* hero */
+  .hero { position: relative; overflow: hidden; padding: 100px 0 80px; }
+  .hero::before { content: ''; position: absolute; top: -160px; right: -80px; width: 600px; height: 600px; background: radial-gradient(circle, rgba(255,80,41,.2), transparent 65%); pointer-events: none; }
+  .hero .wrap { display: grid; grid-template-columns: 1fr 420px; gap: 60px; align-items: center; }
+  .eyebrow { font-family: 'JetBrains Mono', monospace; font-size: .7rem; letter-spacing: .2em; text-transform: uppercase; color: #ff5029; margin-bottom: 22px; }
+  h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(2.8rem, 5.5vw, 4.6rem); letter-spacing: -.04em; line-height: .98; }
+  h1 .o { color: #ff5029; }
+  .heroSub { font-size: 1.15rem; line-height: 1.6; color: #9e9080; margin-top: 22px; max-width: 48ch; }
+  .heroSub b { color: #f0ebe5; }
+
+  /* apply card */
+  .acard { background: linear-gradient(160deg, #1f0e07, #0a0805); border: 1px solid rgba(255,80,41,.2); border-radius: 22px; padding: 36px 32px; position: relative; }
+  .acard::before { content: ''; position: absolute; top: -60px; right: -40px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(255,80,41,.15), transparent 70%); border-radius: 50%; }
+  .acard h2 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem; letter-spacing: -.02em; position: relative; }
+  .acard p { font-size: .92rem; color: #9e9080; line-height: 1.6; margin: 10px 0 22px; position: relative; }
+  .field { width: 100%; padding: 13px 16px; border-radius: 12px; border: 1px solid rgba(255,80,41,.25); background: rgba(255,80,41,.05); color: #f0ebe5; font-family: 'DM Sans', sans-serif; font-size: .96rem; outline: none; transition: border-color .15s; margin-bottom: 12px; position: relative; }
+  .field:focus { border-color: #ff5029; }
+  .field::placeholder { color: #5a5048; }
+  select.field { cursor: pointer; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a5048' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
+  select.field option { background: #1a1612; }
+  .submitbtn { width: 100%; padding: 14px; border-radius: 12px; border: none; background: #ff5029; color: #fff; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1rem; cursor: pointer; box-shadow: 0 6px 24px rgba(255,80,41,.3); transition: all .15s; position: relative; }
+  .submitbtn:hover { transform: translateY(-1px); box-shadow: 0 10px 30px rgba(255,80,41,.45); }
+  .submitbtn:active { transform: scale(.98); }
+  .formnote { font-family: 'JetBrains Mono', monospace; font-size: .68rem; color: #5a5048; margin-top: 12px; text-align: center; letter-spacing: .04em; position: relative; }
+  .formok { display: none; text-align: center; padding: 24px 0; }
+  .formok .big { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 2.5rem; color: #ff5029; }
+  .formok p { color: #9e9080; font-size: .96rem; line-height: 1.6; margin-top: 10px; }
+
+  @media (max-width: 820px) { .hero .wrap { grid-template-columns: 1fr; } }
+
+  /* stat row */
+  .stats { display: flex; gap: 0; border-top: 1px solid rgba(255,255,255,.07); border-bottom: 1px solid rgba(255,255,255,.07); margin-top: 64px; }
+  .stat { flex: 1; padding: 26px 0; text-align: center; border-right: 1px solid rgba(255,255,255,.07); }
+  .stat:last-child { border-right: none; }
+  .stat .n { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 2.2rem; letter-spacing: -.03em; color: #ff5029; }
+  .stat .l { font-family: 'JetBrains Mono', monospace; font-size: .64rem; letter-spacing: .12em; text-transform: uppercase; color: #9e9080; margin-top: 6px; }
+  @media (max-width: 560px) { .stats { flex-wrap: wrap; } .stat { min-width: 50%; border-right: none; border-bottom: 1px solid rgba(255,255,255,.07); } }
+
+  /* sections */
+  section { padding: 88px 0; }
+  .stag { font-family: 'JetBrains Mono', monospace; font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; color: #ff5029; }
+  h2.sh { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(2rem, 4vw, 3rem); letter-spacing: -.03em; line-height: 1.06; margin: 14px 0 0; }
+  .slede { font-size: 1.05rem; color: #9e9080; line-height: 1.6; margin-top: 18px; max-width: 52ch; }
+
+  /* how it pays */
+  .splitbar { display: flex; height: 72px; border-radius: 14px; overflow: hidden; margin: 36px 0 18px; }
+  .splitbar div { display: flex; flex-direction: column; justify-content: center; padding-left: 20px; color: #0a0805; }
+  .splitbar .pct { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.5rem; }
+  .splitbar .who { font-family: 'JetBrains Mono', monospace; font-size: .62rem; letter-spacing: .1em; }
+
+  /* features */
+  .feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 44px; }
+  .feat { background: rgba(255,255,255,.025); border: 1px solid rgba(255,255,255,.07); border-radius: 16px; padding: 26px 22px; }
+  .feat .fi { font-size: 1.8rem; margin-bottom: 14px; }
+  .feat h3 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.15rem; letter-spacing: -.01em; margin-bottom: 8px; }
+  .feat p { font-size: .92rem; line-height: 1.55; color: #9e9080; }
+  @media (max-width: 740px) { .feat-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 480px) { .feat-grid { grid-template-columns: 1fr; } }
+
+  /* charter explainer */
+  .charter { background: rgba(255,80,41,.05); border: 1px solid rgba(255,80,41,.18); border-radius: 20px; padding: 44px 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+  .charter .big { font-family: 'Instrument Serif', serif; font-style: italic; font-size: clamp(2rem, 4vw, 3.4rem); line-height: 1.1; }
+  .charter .big span { color: #ff5029; }
+  .charter ul { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+  .charter li { display: flex; align-items: flex-start; gap: 12px; font-size: .96rem; line-height: 1.5; }
+  .charter li::before { content: '✓'; color: #ff5029; font-family: 'Syne', sans-serif; font-weight: 800; flex-shrink: 0; margin-top: 1px; }
+  @media (max-width: 680px) { .charter { grid-template-columns: 1fr; gap: 28px; padding: 32px 24px; } }
+
+  /* testimonial */
+  .quote { border-left: 3px solid #ff5029; padding-left: 28px; margin-top: 52px; max-width: 680px; }
+  .quote blockquote { font-family: 'Instrument Serif', serif; font-style: italic; font-size: 1.5rem; line-height: 1.4; color: #f0ebe5; }
+  .quote cite { font-family: 'JetBrains Mono', monospace; font-size: .76rem; letter-spacing: .1em; text-transform: uppercase; color: #9e9080; margin-top: 14px; display: block; }
+
+  /* steps */
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 44px; }
+  .step { padding: 22px 0; border-top: 3px solid rgba(255,80,41,.3); }
+  .step .sn { font-family: 'JetBrains Mono', monospace; font-size: .8rem; color: #ff5029; margin-bottom: 12px; letter-spacing: .1em; }
+  .step h3 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.1rem; letter-spacing: -.01em; margin-bottom: 8px; }
+  .step p { font-size: .9rem; line-height: 1.5; color: #9e9080; }
+  @media (max-width: 680px) { .steps { grid-template-columns: 1fr 1fr; } }
+
+  footer { border-top: 1px solid rgba(255,255,255,.07); padding: 44px 0 56px; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  .flogo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.5rem; letter-spacing: -.04em; color: #ff5029; }
+  .flinks { display: flex; gap: 22px; }
+  .flinks a { font-size: .9rem; color: #9e9080; transition: color .15s; }
+  .flinks a:hover { color: #f0ebe5; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a href="./landing.html" class="logo">iH·YPE</a>
+    <button class="navcta" onclick="document.getElementById('applySection').scrollIntoView({behavior:'smooth'})">Apply as artist →</button>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <div class="eyebrow">For Artists · Beta 2026</div>
+      <h1>Your music.<br>Your gate.<br><span class="o">Your fans.</span></h1>
+      <p class="heroSub">iHYPE gives you <b>45% of every ticket</b>, your fans' contact info, and tools to run your own shows — no agent, no Ticketmaster, no platform that owns the relationship.</p>
+    </div>
+    <div class="acard" id="applySection">
+      <div id="applyForm">
+        <h2>Apply as an artist</h2>
+        <p>We're onboarding a small founding cohort. Tell us about you and we'll reach out within 48 hours.</p>
+        <input class="field" type="text" id="artistName" placeholder="Your artist name" required>
+        <input class="field" type="email" id="artistEmail" placeholder="Email address" required>
+        <select class="field" id="artistGenre">
+          <option value="" disabled selected>Genre / style</option>
+          <option>Dream-pop</option><option>Shoegaze</option><option>R&B</option>
+          <option>Jazz</option><option>Hip-hop</option><option>Electronic</option>
+          <option>Punk / Indie rock</option><option>Folk</option><option>Other</option>
+        </select>
+        <input class="field" type="text" id="artistCity" placeholder="Home city">
+        <input class="field" type="url" id="artistLink" placeholder="Spotify, Bandcamp, or SoundCloud link">
+        <button class="submitbtn" onclick="submitArtist()">Request artist access →</button>
+        <p class="formnote">No spam. We review every application personally.</p>
+      </div>
+      <div class="formok" id="applyOk">
+        <div class="big">🔥</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;margin-top:12px">Application received.</div>
+        <p>We'll reach out within 48 hours with your invite code and onboarding guide. In the meantime, share this page with other artists you think belong on iHYPE.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="stats">
+      <div class="stat"><div class="n">45%</div><div class="l">Your gate split · locked</div></div>
+      <div class="stat"><div class="n">$0</div><div class="l">Platform fee on your tracks</div></div>
+      <div class="stat"><div class="n">100%</div><div class="l">Fan data ownership</div></div>
+      <div class="stat"><div class="n">24h</div><div class="l">Payout turnaround</div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="stag">The model</div>
+    <h2 class="sh">The gate split is frozen. Permanently.</h2>
+    <p class="slede">When you publish an event, iHYPE locks your split into a charter record. No renegotiating, no clawbacks, no "processing fees" that quietly eat your share.</p>
+    <div class="splitbar">
+      <div style="width:45%;background:#ff5029"><div class="pct">45%</div><div class="who">YOU</div></div>
+      <div style="width:20%;background:#22e5d4"><div class="pct">20%</div><div class="who">VENUE</div></div>
+      <div style="width:25%;background:#9e9080"><div class="pct">25%</div><div class="who">PLATFORM</div></div>
+      <div style="width:10%;background:#ff3e9a"><div class="pct">10%</div><div class="who">PROMO</div></div>
+    </div>
+    <p style="font-size:.96rem;color:#9e9080;line-height:1.6;max-width:60ch">The promoter's 10% comes out of the platform's 25% — never your 45%. Fans and DJs who spread your show earn from the house, not from you.</p>
+  </div>
+</section>
+
+<section style="background:rgba(255,80,41,.03);border-top:1px solid rgba(255,80,41,.08);border-bottom:1px solid rgba(255,80,41,.08)">
+  <div class="wrap">
+    <div class="charter">
+      <div class="big">A charter that can't be <span>unwritten</span> after the first ticket sells.</div>
+      <ul>
+        <li>Set your price and split before publish</li>
+        <li>Once a ticket sells, the split is sealed</li>
+        <li>Your 45% hits your account night of show</li>
+        <li>Full fan email list after every event</li>
+        <li>No agent, no manager needed to list</li>
+        <li>Dispute resolution built in — you're protected</li>
+      </ul>
+    </div>
+    <div class="quote">
+      <blockquote>"The 45% wasn't negotiated. It was built in. That's the difference between a platform that talks about artist rights and one that actually encodes them."</blockquote>
+      <cite>iHYPE founding team</cite>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="stag">What you get</div>
+    <h2 class="sh">Tools built for touring artists.</h2>
+    <p class="slede">Not a feature checklist — a stack designed around how independent artists actually work.</p>
+    <div class="feat-grid">
+      <div class="feat"><div class="fi">🎟️</div><h3>Direct ticketing</h3><p>List a show in minutes. Fans buy direct — no Ticketmaster, no service fees on your end. QR wallets handled for you.</p></div>
+      <div class="feat"><div class="fi">📊</div><h3>Fan data dashboard</h3><p>See who came, who bought first, who's hyping you most. Export your list after every show — it's yours.</p></div>
+      <div class="feat"><div class="fi">🔴</div><h3>Live show hosting</h3><p>Go live directly from iHYPE — listener count, live chat, hype pulse. No separate streaming setup needed.</p></div>
+      <div class="feat"><div class="fi">📻</div><h3>Free-use library</h3><p>Opt your tracks into the DJ free-use pool and reach new audiences through radio shows without losing your rights.</p></div>
+      <div class="feat"><div class="fi">🗺️</div><h3>Tour creator</h3><p>Build a tour, set dates across cities, and manage all your events from one dashboard. Venue-matching coming in beta.</p></div>
+      <div class="feat"><div class="fi">✓</div><h3>Verification badge</h3><p>Apply for a verified artist badge. Once approved, it appears on your profile, events, and all iHYPE surfaces.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="stag">Getting started</div>
+    <h2 class="sh">Four steps to your first show.</h2>
+    <div class="steps">
+      <div class="step"><div class="sn">01</div><h3>Apply</h3><p>Fill out the form above. We review every application and send invite codes within 48 hours.</p></div>
+      <div class="step"><div class="sn">02</div><h3>Create your page</h3><p>Set up your artist profile — bio, photo, genre tags, links. This is your home on iHYPE.</p></div>
+      <div class="step"><div class="sn">03</div><h3>List an event</h3><p>Set your price, confirm your charter split, and publish. The split is locked the moment you go live.</p></div>
+      <div class="step"><div class="sn">04</div><h3>Get paid</h3><p>Night of the show, your 45% is settled automatically. Fan list exports to your inbox the next morning.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;width:100%">
+    <a href="./landing.html" class="flogo">iH·YPE</a>
+    <div class="flinks">
+      <a href="./landing.html">Home</a>
+      <a href="./landing.html#faq">FAQ</a>
+      <a href="./landing.html#join">Waitlist</a>
+      <a href="#">hello@ihype.app</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  async function submitArtist() {
+    const name  = document.getElementById('artistName').value.trim();
+    const email = document.getElementById('artistEmail').value.trim();
+    if (!name || !email) { alert('Please fill in your name and email.'); return; }
+    const fields = {
+      name, email,
+      genre: document.getElementById('artistGenre').value,
+      city:  document.getElementById('artistCity').value,
+      link:  document.getElementById('artistLink').value,
+    };
+    try {
+      if (window.IHYPE_API) await window.IHYPE_API.auth.artistApply(fields);
+      else window.track && window.track('artist_apply', fields);
+    } catch(err) { console.warn('artist apply:', err); }
+    document.getElementById('applyForm').style.display = 'none';
+    document.getElementById('applyOk').style.display = 'block';
+  }
+</script>
+<script src="../../lib/api.js"></script>
+</body>
+</html>

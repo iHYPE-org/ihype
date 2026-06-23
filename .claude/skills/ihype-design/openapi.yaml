@@ -1,0 +1,203 @@
+openapi: 3.1.0
+info:
+  title: iHYPE API
+  version: 0.1.0-beta
+  description: >
+    iHYPE backend contract. Test-mode end-to-end; payout paths gated on nonprofit → banking.
+    See BACKEND_SPEC.md and schema.sql. Auth: bearer JWT from magic-link.
+servers:
+  - url: https://api.ihype.app/v1
+security:
+  - bearerAuth: []
+tags:
+  - name: auth
+  - name: discovery
+  - name: hype
+  - name: ticketing
+  - name: referrals
+  - name: studio
+  - name: live
+  - name: ops
+  - name: payouts  # banking-gated
+
+paths:
+  /auth/magic-link:
+    post:
+      tags: [auth]
+      security: []
+      summary: Send magic-link email
+      requestBody: { content: { application/json: { schema: { type: object, properties: { email: { type: string, format: email } }, required: [email] } } } }
+      responses: { "204": { description: Sent } }
+  /auth/verify:
+    post:
+      tags: [auth]
+      security: []
+      summary: Exchange magic-link token for JWT
+      requestBody: { content: { application/json: { schema: { type: object, properties: { token: { type: string } }, required: [token] } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: object, properties: { jwt: { type: string }, user: { $ref: '#/components/schemas/User' } } } } } } }
+  /auth/beta-redeem:
+    post:
+      tags: [auth]
+      security: []
+      summary: Redeem closed-beta invite code
+      requestBody: { content: { application/json: { schema: { type: object, properties: { code: { type: string } }, required: [code] } } } }
+      responses: { "204": { description: Valid }, "403": { description: Invalid code } }
+
+  /feed/listen:
+    get:
+      tags: [discovery]
+      summary: Taste-filtered listen feed
+      parameters: [ { name: city, in: query, schema: { type: string } }, { name: genres, in: query, schema: { type: string } } ]
+      responses: { "200": { description: OK } }
+  /feed/events:
+    get:
+      tags: [discovery]
+      parameters: [ { name: city, in: query, schema: { type: string } }, { name: scope, in: query, schema: { type: string, enum: [local, foryou] } } ]
+      responses: { "200": { description: OK } }
+  /search:
+    get:
+      tags: [discovery]
+      parameters: [ { name: q, in: query, required: true, schema: { type: string } } ]
+      responses: { "200": { description: "artists, events, tracks, venues" } }
+  /charts/hype:
+    get:
+      tags: [discovery]
+      parameters: [ { name: window, in: query, schema: { type: string, enum: [week], default: week } } ]
+      responses: { "200": { description: Ranked artists } }
+  /seeds:
+    get: { tags: [discovery], summary: Swipe-deck candidates, responses: { "200": { description: OK } } }
+
+  /hype:
+    post:
+      tags: [hype]
+      summary: Hype a target (weekly-budgeted)
+      requestBody: { content: { application/json: { schema: { type: object, properties: { target_type: { type: string, enum: [artist, track, show] }, target_id: { type: string } }, required: [target_type, target_id] } } } }
+      responses: { "200": { description: OK, content: { application/json: { schema: { type: object, properties: { hypes_left: { type: integer } } } } } }, "429": { description: Weekly budget exhausted } }
+  /hype/budget:
+    get: { tags: [hype], responses: { "200": { description: "{ left, resets_at }" } } }
+
+  /events/{id}:
+    get: { tags: [ticketing], parameters: [ { $ref: '#/components/parameters/id' } ], responses: { "200": { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Event' } } } } } }
+  /events:
+    post: { tags: [ticketing], summary: Create event (draft), responses: { "201": { description: Created } } }
+  /events/{id}/publish:
+    post: { tags: [ticketing], summary: Publish — freezes gate split charter, parameters: [ { $ref: '#/components/parameters/id' } ], responses: { "200": { description: Published, split locked } } }
+  /events/{id}/tickets/availability:
+    get: { tags: [ticketing], parameters: [ { $ref: '#/components/parameters/id' } ], responses: { "200": { description: "{ remaining, waitlist }" } } }
+  /tickets:
+    post:
+      tags: [ticketing]
+      summary: Buy a ticket (⚠ real charge banking-gated; test-mode now)
+      requestBody: { content: { application/json: { schema: { type: object, properties: { event_id: { type: string }, referral_code: { type: string, nullable: true } }, required: [event_id] } } } }
+      responses: { "201": { description: Ticket issued }, "402": { description: Payment required } }
+  /me/tickets:
+    get: { tags: [ticketing], summary: Wallet (QR tokens), responses: { "200": { description: OK } } }
+
+  /referrals:
+    post: { tags: [referrals], summary: Mint referral code for an event, responses: { "201": { description: "{ code, share_url }" } } }
+  /me/referrals:
+    get: { tags: [referrals], summary: Promoter earnings (accruing/locked/paid), responses: { "200": { description: OK } } }
+  /referrals/{code}/preview:
+    get: { tags: [referrals], security: [], parameters: [ { name: code, in: path, required: true, schema: { type: string } } ], responses: { "200": { description: Public landing } } }
+
+  /library:
+    get: { tags: [studio], parameters: [ { name: free_use, in: query, schema: { type: boolean } } ], responses: { "200": { description: Crateable tracks } } }
+  /crate:
+    post:
+      tags: [studio]
+      summary: Add track to crate (rejects non-free-use)
+      requestBody: { content: { application/json: { schema: { type: object, properties: { track_id: { type: string } }, required: [track_id] } } } }
+      responses: { "201": { description: Added }, "422": { description: Track not free-use } }
+  /crate/{trackId}:
+    delete: { tags: [studio], parameters: [ { name: trackId, in: path, required: true, schema: { type: string } } ], responses: { "204": { description: Removed } } }
+  /sfx:
+    get: { tags: [studio], summary: Royalty-free SFX seed, responses: { "200": { description: OK } } }
+  /radio-shows:
+    post: { tags: [studio], summary: Save radio show draft, responses: { "201": { description: Draft } } }
+  /radio-shows/{id}/publish:
+    post: { tags: [studio], parameters: [ { $ref: '#/components/parameters/id' } ], responses: { "200": { description: Published } } }
+
+  /events/{id}/go-live:
+    post: { tags: [live], summary: Artist starts live show, parameters: [ { $ref: '#/components/parameters/id' } ], responses: { "200": { description: status=live } } }
+  /live/{eventId}/chat:
+    post: { tags: [live], parameters: [ { name: eventId, in: path, required: true, schema: { type: string } } ], requestBody: { content: { application/json: { schema: { type: object, properties: { text: { type: string } } } } } }, responses: { "201": { description: Posted } } }
+
+  /reports:
+    post: { tags: [ops], summary: Report content, requestBody: { content: { application/json: { schema: { type: object, properties: { target_type: { type: string }, target_id: { type: string }, reason: { type: string } } } } } }, responses: { "201": { description: Filed } } }
+  /ops/verify:
+    post: { tags: [ops], summary: Grant ✓ (operator), responses: { "200": { description: Verified } } }
+  /ops/users/{id}/role:
+    post: { tags: [ops], parameters: [ { $ref: '#/components/parameters/id' } ], responses: { "200": { description: Role updated } } }
+
+  /waitlist:
+    post:
+      tags: [auth]
+      security: []
+      summary: Join public beta waitlist
+      requestBody: { content: { application/json: { schema: { type: object, required: [email], properties: { email: { type: string, format: email }, role: { type: string, enum: [fan, artist, dj, venue], default: fan } } } } } }
+      responses: { "204": { description: Added to waitlist }, "409": { description: Already on waitlist } }
+  /artist-apply:
+    post:
+      tags: [auth]
+      security: []
+      summary: Artist beta application
+      requestBody: { content: { application/json: { schema: { type: object, required: [name, email], properties: { name: { type: string }, email: { type: string, format: email }, genre: { type: string }, city: { type: string }, link: { type: string, format: uri } } } } } }
+      responses: { "204": { description: Application received } }
+  /ops/invite-codes:
+    get:
+      tags: [ops]
+      summary: List all invite codes (operator)
+      responses: { "200": { description: OK } }
+    post:
+      tags: [ops]
+      summary: Create invite code(s) (operator)
+      requestBody: { content: { application/json: { schema: { type: object, properties: { count: { type: integer, default: 1 }, role: { type: string, enum: [fan, artist, dj, venue, any], default: any }, note: { type: string } } } } } }
+      responses: { "201": { description: "{ codes: string[] }" } }
+  /ops/invite-codes/{code}/revoke:
+    post:
+      tags: [ops]
+      summary: Revoke an invite code
+      parameters: [ { name: code, in: path, required: true, schema: { type: string } } ]
+      responses: { "204": { description: Revoked } }
+
+  /events/track:
+    post:
+      tags: [discovery]
+      summary: Telemetry sink (replaces localStorage track() stub)
+      requestBody: { content: { application/json: { schema: { type: object, properties: { event: { type: string }, props: { type: object } }, required: [event] } } } }
+      responses: { "204": { description: Recorded } }
+
+  /payout-accounts/onboard:
+    post: { tags: [payouts], summary: "⚠ Stripe Connect onboarding URL (banking-gated)", responses: { "200": { description: "{ url }" } } }
+  /me/balance:
+    get: { tags: [payouts], summary: "⚠ Available + pending (banking-gated)", responses: { "200": { description: "{ available, pending }" } } }
+  /payouts:
+    post: { tags: [payouts], summary: "⚠ Request payout (banking-gated)", responses: { "202": { description: Requested } } }
+
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  parameters:
+    id: { name: id, in: path, required: true, schema: { type: string } }
+  schemas:
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        handle: { type: string }
+        display_name: { type: string }
+        city: { type: string }
+        genres: { type: array, items: { type: string } }
+        roles: { type: array, items: { type: string, enum: [fan, artist, dj, venue] } }
+        verified: { type: boolean }
+    Event:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        artist_id: { type: string }
+        venue_id: { type: string, nullable: true }
+        starts_at: { type: string, format: date-time }
+        price_cents: { type: integer }
+        status: { type: string, enum: [draft, published, live, ended, cancelled] }
+        split: { type: object, description: Frozen charter at publish }

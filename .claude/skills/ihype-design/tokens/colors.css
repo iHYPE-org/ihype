@@ -1,0 +1,42 @@
+/* iHYPE Color Tokens */
+:root {
+  /* ── Backgrounds ── */
+  --bg-base:    #0a0805;
+  --bg-surface: #100d09;
+  --bg-raised:  #1a1612;
+  --bg-overlay: #221c16;
+
+  /* ── Ink ── */
+  --ink-1: #f0ebe5;
+  --ink-2: #9e9080;
+  --ink-3: #5a5048;
+  --ink-4: #3a342e;
+
+  /* ── Lines ── */
+  --line:   rgba(255, 255, 255, 0.06);
+  --line-2: rgba(255, 255, 255, 0.14);
+
+  /* ── Accent ── */
+  --accent: #ff5029;
+
+  /* ── Role Colors ── */
+  /* Fan | Artist | Venue | DJ — promoters are DJs or Fans using referral links */
+  --role-fan:    #b983ff;
+  --role-venue:  #22e5d4;
+  --role-dj:     #ff3e9a;
+  /* --role-artist maps to --accent (#ff5029) */
+
+  /* ── Utility ── */
+  --warn: #ffb84a;
+  --blue: #7fb3ff;
+
+  /* ── Semantic aliases ── */
+  --color-success:     #22e5d4;
+  --color-success-bg:  rgba(34, 229, 212, 0.1);
+  --color-error:       #ff4545;
+  --color-error-bg:    rgba(255, 69, 69, 0.1);
+  --color-warning:     #ffb84a;
+  --color-warning-bg:  rgba(255, 184, 74, 0.1);
+  --color-info:        #7fb3ff;
+  --color-info-bg:     rgba(127, 179, 255, 0.1);
+}

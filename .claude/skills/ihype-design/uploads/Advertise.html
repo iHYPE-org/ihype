@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>iHYPE · Advertise</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="advertise.css" />
+</head>
+<body>
+
+<!-- ─── NAV ─────────────────────────────────────────────── -->
+<nav class="nav">
+  <div class="wrap nav-in">
+    <a class="wm" href="#top">iH<span class="i">y<span class="dot"></span></span>pe</a>
+    <div class="nav-links">
+      <a href="#">Discover</a>
+      <a href="#">Charts</a>
+      <a href="#">Seeds</a>
+      <a href="#">For Artists</a>
+      <a href="#top" class="on">Advertise</a>
+    </div>
+    <div class="nav-right">
+      <span class="nav-listening"><span class="hdot" style="width:6px;height:6px"></span><span id="nav-live">3,418 listening right now</span></span>
+      <a class="btn ghost sm" href="#build">Buy coverage</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ─── HERO ────────────────────────────────────────────── -->
+<header class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow ac bare"><span class="hdot"></span>&nbsp;Advertise on iHYPE</span>
+      <h1 class="hero-title">Put your music<br>in front of the<br>people who <em>dig deepest.</em></h1>
+      <p class="hero-sub">Buy reach by the spot — <b>local to global</b>, by the day. Every ad is screened by AI before it runs: <b>music only, no copyrighted material, no name-drops.</b> One operator, one rulebook, zero junk in the feed.</p>
+      <div class="hero-cta">
+        <a class="btn solid" href="#build">Build a campaign →</a>
+        <a class="btn ghost" href="#guard">See how vetting works</a>
+      </div>
+      <div class="hero-meta">
+        <div class="m"><div class="v" id="hm-spots">0</div><div class="l">Spots running today</div></div>
+        <div class="m"><div class="v" id="hm-clear">0%</div><div class="l">Auto-cleared in &lt;60s</div></div>
+        <div class="m"><div class="v">100%</div><div class="l">Music-related</div></div>
+      </div>
+    </div>
+
+    <!-- live vetting ticker -->
+    <aside class="ticker" aria-label="Live vetting queue">
+      <div class="ticker-head">
+        <span class="chip" style="border-color:rgba(34,229,212,.4); color:var(--good)"><span class="pulse"></span>Live</span>
+        <span class="t">Vetting queue</span>
+        <span class="r" id="tk-clock">—</span>
+      </div>
+      <div class="ticker-list" id="tk-list"></div>
+      <div class="ticker-foot">
+        <span>Reviewed by <b>HYPE&nbsp;Screen</b> · automated</span>
+        <span id="tk-count"><b>0</b> today</span>
+      </div>
+    </aside>
+  </div>
+</header>
+
+<!-- ─── COVERAGE BUILDER ────────────────────────────────── -->
+<section class="sec" id="build">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow ac">Step 01 · Build</span>
+      <h2 class="sec-h">Pick your <em>reach.</em> Pick your <em>volume.</em></h2>
+      <p class="sec-sub">Coverage scales from your block to the whole platform. Spots are impressions placed across discovery, charts, and seed feeds — priced per day, billed per spot.</p>
+    </div>
+
+    <div class="builder">
+      <!-- LEFT: controls -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="t">Campaign</span>
+          <span class="meta">No contract · cancel anytime</span>
+        </div>
+        <div class="panel-body">
+
+          <div class="field">
+            <div class="field-lbl"><span class="n">A.</span> Coverage area</div>
+            <div class="tiers" id="tiers"></div>
+          </div>
+
+          <div class="field">
+            <div class="field-lbl"><span class="n">B.</span> Spots per day</div>
+            <div class="stepper">
+              <button id="sp-minus" aria-label="fewer spots">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </button>
+              <div class="val" id="sp-val">6</div>
+              <button id="sp-plus" aria-label="more spots">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </button>
+            </div>
+            <div class="spots-note" id="sp-note">≈ one placement every 4 hours across the feed</div>
+          </div>
+
+          <div class="field">
+            <div class="field-lbl"><span class="n">C.</span> Run length</div>
+            <div class="seg" id="dur">
+              <button data-d="7">7 days</button>
+              <button data-d="14" class="on">14 days</button>
+              <button data-d="30">30 days</button>
+              <button data-d="90">90 days</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RIGHT: reach + receipt -->
+      <div class="panel reach-panel">
+        <div class="panel-head">
+          <span class="t" id="reach-title">Regional reach</span>
+          <span class="meta" id="reach-pop">— potential listeners</span>
+        </div>
+        <div class="panel-body">
+          <div class="dotgrid" id="dotgrid"></div>
+          <div class="reach-stats">
+            <div class="rs"><div class="v" id="rs-imp">—</div><div class="l">Daily impressions</div></div>
+            <div class="rs"><div class="v" id="rs-total">—</div><div class="l">Total over run</div></div>
+            <div class="rs"><div class="v" id="rs-cpm">—</div><div class="l">Effective CPM</div></div>
+          </div>
+
+          <div class="placements">
+            <span class="p"><span class="hdot" style="background:var(--fan)"></span>Discover feed</span>
+            <span class="p"><span class="hdot" style="background:var(--venue)"></span>Chart interstitials</span>
+            <span class="p"><span class="hdot" style="background:var(--warn)"></span>Seed swipe cards</span>
+          </div>
+
+          <div class="receipt">
+            <div class="rcp-row"><span class="k" id="rc-area">Regional</span><span class="v" id="rc-base">—</span></div>
+            <div class="rcp-row"><span class="k"><span id="rc-spots">6</span> spots/day × <span id="rc-days">14</span> days</span><span class="v" id="rc-vol">—</span></div>
+            <div class="rcp-row"><span class="k">Co-op handling · 0%</span><span class="v" style="color:var(--good)">$0.00</span></div>
+            <div class="rcp-total">
+              <span class="k">Total</span>
+              <span class="v" id="rc-total">$—<small id="rc-perday">/ —/day</small></span>
+            </div>
+            <p class="rcp-note">Nothing charges until your creative clears the AI screen.<span class="hdot"></span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── AI GUARDRAILS / SCANNER ─────────────────────────── -->
+<section class="sec" id="guard">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow ac">Step 02 · The screen</span>
+      <h2 class="sec-h">Every ad clears <em>three gates</em> before a single listener sees it.</h2>
+      <p class="sec-sub">iHYPE runs on one operator. The bouncer is the machine — it reads every submission, checks who's buying, and rejects anything that isn't clean, music-related, and original.</p>
+    </div>
+
+    <div class="guard">
+      <!-- LEFT: the three checks -->
+      <div class="checks">
+        <div class="check">
+          <span class="num">01</span>
+          <div>
+            <div class="ttl">Buyer vetting</div>
+            <p class="dsc">Accounts are matched against the music ecosystem — artists, venues, promoters, and verified music-adjacent businesses. Anything outside it (crypto, supplements, drop-shippers) is flagged before checkout.</p>
+          </div>
+        </div>
+        <div class="check">
+          <span class="num">02</span>
+          <div>
+            <div class="ttl">Music-only relevance</div>
+            <p class="dsc">The creative itself is read for intent. If the ad isn't about live music, releases, gear, merch, or services that serve musicians, it doesn't run. No general retail, no politics, no off-topic noise.</p>
+          </div>
+        </div>
+        <div class="check">
+          <span class="num">03</span>
+          <div>
+            <div class="ttl">Copyright firewall</div>
+            <p class="dsc">Audio is fingerprinted and copy is scanned for protected song titles, lyrics, and artist name-drops you don't have rights to. Use someone else's catalog or name without clearance and the ad is auto-rejected.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: interactive scanner -->
+      <div class="scanner">
+        <div class="scan-head">
+          <span class="chip" style="border-color:var(--line2); color:var(--ink2)"><span class="pulse" style="color:var(--ac)"></span>HYPE Screen</span>
+          <span class="t">Submission review</span>
+          <span class="meta" id="scan-state">Idle</span>
+        </div>
+        <div class="scan-body">
+          <div class="scan-list" id="scan-list"></div>
+          <div class="scan-stage">
+            <div class="ad-preview" id="ad-preview">
+              <div class="scanline" id="scanline"></div>
+              <div class="ap-tag" id="ap-tag">SUBMITTED CREATIVE</div>
+              <div class="ap-copy" id="ap-copy">—</div>
+              <div class="ap-body" id="ap-body">—</div>
+            </div>
+            <div class="verdicts" id="verdicts"></div>
+            <div class="verdict-final" id="verdict-final" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── TWO PATHS ───────────────────────────────────────── -->
+<section class="sec" id="paths">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow ac">Step 03 · Who's buying</span>
+      <h2 class="sec-h">Two ways in. <em>Same screen</em> for both.</h2>
+      <p class="sec-sub">Whether you're on the platform already or coming from the outside, you buy the same coverage and pass the same gates.</p>
+    </div>
+
+    <div class="paths">
+      <!-- members -->
+      <div class="path">
+        <span class="ribbon" style="color:var(--ac)"><span class="hdot"></span>Members</span>
+        <h3 class="ph">Artists, venues<br>&amp; promoters</h3>
+        <p class="pintro">Already part of iHYPE? Buy coverage straight from your dashboard. Your role is pre-verified, so the buyer-vetting gate clears instantly — you go right to creative review.</p>
+        <div class="role-row">
+          <span class="role-tag" style="border-color:rgba(185,131,255,.4); color:var(--fan)"><span class="hdot" style="background:var(--fan)"></span>Artist</span>
+          <span class="role-tag" style="border-color:rgba(34,229,212,.4); color:var(--venue)"><span class="hdot" style="background:var(--venue)"></span>Venue</span>
+          <span class="role-tag" style="border-color:rgba(255,62,154,.4); color:var(--promoter)"><span class="hdot" style="background:var(--promoter)"></span>Promoter</span>
+        </div>
+        <div class="path-list">
+          <div class="pli"><span class="hdot" style="margin-top:6px;flex-shrink:0"></span><span><span class="b">Instant eligibility.</span> Role verification carries over — no separate application.</span></div>
+          <div class="pli"><span class="hdot" style="margin-top:6px;flex-shrink:0"></span><span><span class="b">Promote your own catalog.</span> Your releases and shows are pre-cleared for copyright.</span></div>
+          <div class="pli"><span class="hdot" style="margin-top:6px;flex-shrink:0"></span><span><span class="b">Referral reach.</span> Fans with a referral link can co-fund coverage for artists they back.</span></div>
+        </div>
+        <div class="refnote"><span class="hdot" style="background:var(--blue)"></span>Referral-funded spots split billing across backers automatically.</div>
+        <div class="path-foot"><a class="btn solid" href="#build">Buy from dashboard →</a></div>
+      </div>
+
+      <!-- 3rd party -->
+      <div class="path">
+        <span class="ribbon" style="color:var(--blue)"><span class="hdot" style="background:var(--blue)"></span>3rd-Party Accounts</span>
+        <h3 class="ph">Music businesses<br>&amp; suppliers</h3>
+        <p class="pintro">Not an artist, but you serve them? Music stores, live-production companies, and merch providers open a 3rd-party account to control their own placements — fully self-serve.</p>
+        <div class="role-row">
+          <span class="role-tag" style="border-color:var(--line2); color:var(--ink2)">Music stores</span>
+          <span class="role-tag" style="border-color:var(--line2); color:var(--ink2)">Live production</span>
+          <span class="role-tag" style="border-color:var(--line2); color:var(--ink2)">Merch &amp; print</span>
+          <span class="role-tag" style="border-color:var(--line2); color:var(--ink2)">Instruments &amp; gear</span>
+        </div>
+        <div class="path-list">
+          <div class="pli"><span class="hdot" style="margin-top:6px;flex-shrink:0;background:var(--blue)"></span><span><span class="b">Self-serve console.</span> Manage budgets, creatives, and schedules from one account.</span></div>
+          <div class="pli"><span class="hdot" style="margin-top:6px;flex-shrink:0;background:var(--blue)"></span><span><span class="b">Business verification.</span> A one-time check confirms you're genuinely music-adjacent.</span></div>
+          <div class="pli"><span class="hdot" style="margin-top:6px;flex-shrink:0;background:var(--blue)"></span><span><span class="b">Same firewall applies.</span> No borrowed songs, no unlicensed artist names — ever.</span></div>
+        </div>
+        <div class="reject-bar">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="9" stroke="var(--bad)" stroke-width="1.6"/><path d="M9 9l6 6M15 9l-6 6" stroke="var(--bad)" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <div>
+            <div class="rt">Auto-rejected</div>
+            <div class="rd">Non-musical goods, dropshipping, financial products, and anything unrelated to music never reach a listener.</div>
+          </div>
+        </div>
+        <div class="path-foot"><a class="btn ghost" href="#build">Open a 3rd-party account →</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── TRANSPARENCY (paper) ────────────────────────────── -->
+<section class="sec paper" id="trust">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">The co-op promise</span>
+      <h2 class="sec-h" style="color:var(--paper-ink)">Ad money feeds the <em>artists</em>, not a feed.</h2>
+    </div>
+    <div class="trans-grid">
+      <p class="trans-claim">iHYPE is run by one director and a lot of automation — so almost every dollar of ad spend <b>goes back into the music</b>, not overhead.</p>
+      <div class="split">
+        <div class="split-row">
+          <span class="lb">To artists &amp; payouts</span>
+          <span class="bar"><i style="width:72%; background:var(--ac)"></i></span>
+          <span class="pct" style="color:var(--ac)">72%</span>
+        </div>
+        <div class="split-row">
+          <span class="lb">Platform &amp; hosting</span>
+          <span class="bar"><i style="width:18%; background:var(--paper-ink)"></i></span>
+          <span class="pct">18%</span>
+        </div>
+        <div class="split-row">
+          <span class="lb">Moderation &amp; AI screen</span>
+          <span class="bar"><i style="width:10%; background:var(--paper-ink2)"></i></span>
+          <span class="pct">10%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FOOTER ──────────────────────────────────────────── -->
+<footer class="foot">
+  <div class="wrap foot-in">
+    <div>
+      <a class="wm mono" href="#top" style="color:var(--ink)">iH<span class="i">y<span class="dot"></span></span>pe</a>
+      <p class="foot-claim">A music co-op where the ads are about music — and a machine makes sure of it.</p>
+    </div>
+    <div class="foot-links">
+      <div class="foot-col">
+        <div class="ch">Advertise</div>
+        <a href="#build">Buy coverage</a>
+        <a href="#guard">How vetting works</a>
+        <a href="#paths">3rd-party accounts</a>
+        <a href="#trust">Where money goes</a>
+      </div>
+      <div class="foot-col">
+        <div class="ch">Platform</div>
+        <a href="#">Discover</a>
+        <a href="#">Charts</a>
+        <a href="#">Seeds</a>
+        <a href="#">For Artists</a>
+      </div>
+    </div>
+  </div>
+  <div class="wrap foot-bar">
+    <span>© 2026 iHYPE Music Co-op · Operated under one roof</span>
+    <span>Ad policy v3.1 · Copyright firewall enabled</span>
+  </div>
+</footer>
+
+<div id="tweaks-root"></div>
+
+<script src="advertise.js"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="advertise/tweaks-panel.jsx"></script>
+<script type="text/babel" src="advertise-tweaks.jsx"></script>
+</body>
+</html>

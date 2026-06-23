@@ -1,0 +1,76 @@
+<!-- @dsCard group="Beta" viewport="820x1100" name="Beta Tester Guide" subtitle="What to test · how to report · what's fake" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iHYPE — Beta Tester Guide</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  * { box-sizing: border-box; }
+  body { background: var(--bg-base); color: var(--ink-1); font-family: var(--font-body); margin: 0; padding: 40px 24px; }
+  .doc { max-width: 720px; margin: 0 auto; }
+  .wm { font-family: var(--font-display); font-weight: 800; font-size: 1.8rem; letter-spacing: -.03em; color: var(--accent); }
+  .kicker { font-family: var(--font-mono); font-size: .68rem; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-2); margin-top: 4px; }
+  h1 { font-family: var(--font-display); font-weight: 800; font-size: 2.1rem; letter-spacing: -.03em; line-height: 1.1; margin: 26px 0 10px; }
+  .lede { font-size: 1.05rem; line-height: 1.6; color: var(--ink-2); margin-bottom: 32px; }
+  h2 { font-family: var(--font-display); font-weight: 800; font-size: 1.15rem; letter-spacing: -.01em; margin: 34px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  .step { display: flex; gap: 14px; margin-bottom: 14px; }
+  .num { flex: none; width: 26px; height: 26px; border-radius: 8px; background: rgba(255,80,41,.14); color: var(--accent); font-family: var(--font-display); font-weight: 800; font-size: .82rem; display: flex; align-items: center; justify-content: center; }
+  .step p { margin: 2px 0 0; font-size: .94rem; line-height: 1.55; color: var(--ink-1); }
+  .step code { font-family: var(--font-mono); font-size: .82rem; background: var(--bg-raised); padding: 2px 7px; border-radius: 5px; color: var(--accent); }
+  ul { padding-left: 0; list-style: none; margin: 0; }
+  li { font-size: .94rem; line-height: 1.5; color: var(--ink-1); padding: 9px 0 9px 26px; position: relative; border-bottom: 1px solid var(--line); }
+  li::before { content: '→'; position: absolute; left: 0; color: var(--accent); }
+  .fake li::before { content: '⚠'; color: var(--warn); }
+  .fake li { color: var(--ink-2); }
+  .card { background: var(--bg-surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; margin: 16px 0; }
+  .pill { display: inline-block; font-family: var(--font-mono); font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; background: rgba(255,184,74,.12); color: var(--warn); border: 1px solid rgba(255,184,74,.25); }
+  .foot { margin-top: 40px; font-family: var(--font-mono); font-size: .7rem; color: var(--ink-3); letter-spacing: .08em; }
+</style>
+</head>
+<body>
+  <div class="doc">
+    <div class="wm">iH·YPE</div>
+    <div class="kicker">Closed Beta · Tester Guide · v0.1.0-beta.5</div>
+
+    <h1>Welcome to the iHYPE beta.</h1>
+    <p class="lede">You're one of a small group testing artist-owned live music before anyone else. Here's how to get in, what to poke at, and how to tell us what breaks.</p>
+
+    <div class="card">
+      <span class="pill">⚠ This is a work in progress</span>
+      <p style="margin:12px 0 0;font-size:.94rem;line-height:1.6;color:var(--ink-2)">Things will be rough, slow, or broken. That's expected — and exactly what we need you to find. No real money moves yet; every purchase is simulated.</p>
+    </div>
+
+    <h2>Getting in</h2>
+    <div class="step"><div class="num">1</div><p>Open the link we sent you on your phone (or desktop browser).</p></div>
+    <div class="step"><div class="num">2</div><p>Enter your invite code — try <code>IHYPE</code> if yours doesn't work, or tap "Use demo code".</p></div>
+    <div class="step"><div class="num">3</div><p>Pick a role and your taste in onboarding — or hit <b>Skip → explore the demo</b> to jump straight in.</p></div>
+
+    <h2>What we'd love you to try</h2>
+    <ul>
+      <li><b>Hype an artist</b> — tap the flame on Listen. You get a weekly budget; watch it count down.</li>
+      <li><b>Swipe Seeds</b> — the discovery deck. Swipe right to hype, left to pass.</li>
+      <li><b>Buy a ticket</b> — pick an event, run checkout end-to-end (it's simulated).</li>
+      <li><b>Share a referral link</b> — as a DJ or Fan, promote an event and watch earnings accrue.</li>
+      <li><b>Build a radio show</b> — DJs: crate some free-use tracks, record a voice intro, drop in SFX.</li>
+      <li><b>Catch a live show</b> — join when an artist goes live; try the chat and hype pulse.</li>
+    </ul>
+
+    <h2>What's fake (don't report these)</h2>
+    <ul class="fake">
+      <li>All payments are simulated — no card is charged, no payout is real.</li>
+      <li>Artists, events, and tracks are seed data, not live bookings.</li>
+      <li>Listener counts and earnings are illustrative.</li>
+      <li>Push notifications may not actually arrive yet.</li>
+    </ul>
+
+    <h2>How to report</h2>
+    <div class="step"><div class="num">1</div><p>Tap the <b>feedback button</b> (bottom-right in the app) the moment something feels off.</p></div>
+    <div class="step"><div class="num">2</div><p>Pick a type — <b>Bug</b>, <b>Idea</b>, or <b>Love</b> — and for bugs, a severity.</p></div>
+    <div class="step"><div class="num">3</div><p>It auto-attaches the screen you were on + the build number. Just describe what you expected vs. what happened.</p></div>
+
+    <div class="foot">Questions? Reply to your invite email. Thank you for shaping iHYPE. 🔥</div>
+  </div>
+</body>
+</html>

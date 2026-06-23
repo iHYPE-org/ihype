@@ -1,0 +1,32 @@
+<!-- @dsCard group="Brand" viewport="700x150" name="Role Colors" subtitle="Fan · Artist · Venue · DJ — promoters are DJs or Fans with referral links" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { margin: 0; padding: 20px 24px; background: var(--bg-base); font-family: var(--font-mono); display: flex; gap: 16px; align-items: center; height: 110px; }
+  .role { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .pill { height: 36px; width: 100%; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 800; font-size: 13px; color: var(--bg-base); letter-spacing: -0.01em; }
+  .sub { font-size: 8px; letter-spacing: .14em; color: var(--ink-3); text-transform: uppercase; text-align: center; line-height: 1.5; }
+</style>
+</head>
+<body>
+  <div class="role">
+    <div class="pill" style="background:var(--role-fan)">Fan</div>
+    <div class="sub">#b983ff<br>listener · hypes tracks</div>
+  </div>
+  <div class="role">
+    <div class="pill" style="background:var(--accent)">Artist</div>
+    <div class="sub">#ff5029<br>uploads · earns hypes</div>
+  </div>
+  <div class="role">
+    <div class="pill" style="background:var(--role-venue)">Venue</div>
+    <div class="sub">#22e5d4<br>hosts shows · sells tickets</div>
+  </div>
+  <div class="role">
+    <div class="pill" style="background:var(--role-dj)">DJ</div>
+    <div class="sub">#ff3e9a<br>plays shows · can promote</div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!-- @dsCard group="Brand" viewport="700x380" name="Accessibility" subtitle="Focus styles · contrast ratios · ARIA patterns · touch targets" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+body{margin:0;padding:22px 24px;background:var(--bg-base);font-family:var(--font-body)}
+.lbl{font-family:var(--font-mono);font-size:9px;letter-spacing:.18em;color:var(--ink-3);text-transform:uppercase;margin-bottom:10px}
+.sec{margin-bottom:22px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.cr-chip{padding:5px 10px;border-radius:6px;font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;display:inline-flex;gap:6px;align-items:center}
+.focus-demo:focus{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
+</style>
+</head>
+<body>
+
+<div class="sec">
+  <div class="lbl">Contrast ratios · WCAG AA</div>
+  <div class="row">
+    <div class="cr-chip" style="background:#ff502920;color:#ff5029"><span>●</span>Accent on base · 5.6:1 ✓</div>
+    <div class="cr-chip" style="background:#f0ebe510;color:#f0ebe5"><span>●</span>Ink-1 on base · 15.2:1 ✓</div>
+    <div class="cr-chip" style="background:#9e908010;color:#9e9080"><span>●</span>Ink-2 on surface · 4.6:1 ✓</div>
+    <div class="cr-chip" style="background:#22e5d420;color:#22e5d4"><span>●</span>Venue on base · 9.1:1 ✓</div>
+    <div class="cr-chip" style="background:#b983ff20;color:#b983ff"><span>●</span>Fan on base · 6.4:1 ✓</div>
+    <div class="cr-chip" style="background:#5a504820;color:#5a5048"><span>●</span>Ink-3 on base · 2.9:1 ✗ use for decoration only</div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="lbl">Focus ring · keyboard nav</div>
+  <div class="row">
+    <button class="focus-demo" style="padding:8px 16px;background:var(--bg-raised);border:1px solid var(--line-2,rgba(255,255,255,.14));border-radius:8px;color:var(--ink-1,#f0ebe5);font-size:13px;cursor:pointer">Tab to focus me</button>
+    <button class="focus-demo" style="padding:8px 16px;background:var(--accent);border:none;border-radius:8px;color:#0a0805;font-size:13px;font-weight:600;cursor:pointer">Solid button</button>
+    <div style="font-family:var(--font-mono);font-size:9px;color:var(--ink-3);letter-spacing:.06em">outline: 2px solid var(--accent); outline-offset: 3px</div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="lbl">Touch targets · min 44×44px</div>
+  <div class="row">
+    <div style="width:44px;height:44px;border:1px dashed rgba(255,184,74,.5);border-radius:8px;display:flex;align-items:center;justify-content:center">
+      <div style="width:20px;height:20px;border-radius:5px;background:#ff5029;opacity:.8"></div>
+    </div>
+    <div style="width:44px;height:44px;border:1px dashed rgba(255,184,74,.5);border-radius:50%;display:flex;align-items:center;justify-content:center">
+      <div style="width:18px;height:18px;border-radius:50%;background:#b983ff;opacity:.8"></div>
+    </div>
+    <div style="font-family:var(--font-mono);font-size:9px;color:var(--ink-3);letter-spacing:.06em">All tappable targets ≥ 44×44px · dashed = hit area</div>
+  </div>
+</div>
+
+<div class="sec" style="margin-bottom:0">
+  <div class="lbl">ARIA patterns</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+    <div style="padding:8px 10px;background:var(--bg-raised,#1a1612);border-radius:8px;font-size:11px;line-height:1.6;color:var(--ink-2,#9e9080)"><span style="color:var(--accent);font-family:var(--font-mono);font-size:9px">role="dialog"</span><br>Dialogs trap focus, return on close. Escape dismisses.</div>
+    <div style="padding:8px 10px;background:var(--bg-raised,#1a1612);border-radius:8px;font-size:11px;line-height:1.6;color:var(--ink-2,#9e9080)"><span style="color:#b983ff;font-family:var(--font-mono);font-size:9px">aria-live="polite"</span><br>Toast notifications read aloud after current speech.</div>
+    <div style="padding:8px 10px;background:var(--bg-raised,#1a1612);border-radius:8px;font-size:11px;line-height:1.6;color:var(--ink-2,#9e9080)"><span style="color:#22e5d4;font-family:var(--font-mono);font-size:9px">aria-label</span><br>Icon-only buttons always carry a text label.</div>
+  </div>
+</div>
+
+</body>
+</html>

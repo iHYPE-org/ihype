@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Beta Launch Deck" description="12-slide iHYPE beta pitch — problem, model, gate split, promoter flywheel, product, status, ask" -->
+<helmet>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  @keyframes ihFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
+  @keyframes ihPulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+</style>
+</helmet>
+<x-import component-from-global-scope="deck-stage" from="./deck-stage.js" width="1920" height="1080" hint-size="100%,100%">
+
+  <section data-label="Title" style="width:100%;height:100%;box-sizing:border-box;background:radial-gradient(circle at 30% 20%,#1f0e07,#0a0805 60%);color:#f0ebe5;font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;justify-content:center;padding:0 130px;position:relative;overflow:hidden">
+    <div style="position:absolute;top:-120px;right:-80px;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(255,80,41,.22),transparent 70%);animation:ihFloat 7s ease-in-out infinite"></div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:22px;letter-spacing:.34em;text-transform:uppercase;color:#9e9080;margin-bottom:30px">Closed Beta · Jun 2026</div>
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:172px;letter-spacing:-.05em;line-height:.9;color:#ff5029">iH·YPE</div>
+    <div style="font-family:'Instrument Serif',serif;font-style:italic;font-size:62px;color:#f0ebe5;margin-top:24px;max-width:1100px">The gate belongs to the artists.</div>
+    <div style="font-family:'DM Sans',sans-serif;font-size:27px;color:#9e9080;margin-top:26px;max-width:880px;line-height:1.5">A live-music platform where fans hype who they love, buy tickets direct, and earn by promoting — with 45% of every ticket locked to the artist.</div>
+  </section>
+
+  <section data-label="Problem" style="width:100%;height:100%;box-sizing:border-box;background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;justify-content:center;padding:0 130px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:22px;letter-spacing:.2em;text-transform:uppercase;color:#ff5029;margin-bottom:34px">The problem</div>
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:78px;letter-spacing:-.03em;line-height:1.08;max-width:1400px">Ticketing giants take 30%+ and own the fan relationship.</div>
+    <div style="display:flex;gap:30px;margin-top:64px">
+      <div style="flex:1;border-top:3px solid #ff5029;padding-top:22px"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:64px;color:#ff5029">30%+</div><div style="font-size:24px;color:#9e9080;margin-top:8px;line-height:1.45">Lost to fees on every ticket</div></div>
+      <div style="flex:1;border-top:3px solid #5a5048;padding-top:22px"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:64px;color:#f0ebe5">$0</div><div style="font-size:24px;color:#9e9080;margin-top:8px;line-height:1.45">Fan data artists ever see</div></div>
+      <div style="flex:1;border-top:3px solid #5a5048;padding-top:22px"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:64px;color:#f0ebe5">Pay</div><div style="font-size:24px;color:#9e9080;margin-top:8px;line-height:1.45">to-play discovery, gamed by budgets</div></div>
+    </div>
+  </section>
+
+  <section data-label="Insight" style="width:100%;height:100%;box-sizing:border-box;background:radial-gradient(circle at 70% 80%,#1a0a14,#0a0805 60%);color:#f0ebe5;font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;justify-content:center;padding:0 130px">
+    <div style="font-family:'Instrument Serif',serif;font-style:italic;font-size:90px;line-height:1.12;max-width:1450px">What if the people who <span style="color:#ff5029">make</span> and <span style="color:#ff3e9a">spread</span> the music kept the value they create?</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:24px;letter-spacing:.16em;text-transform:uppercase;color:#9e9080;margin-top:48px">iHYPE is artist-owned music infrastructure — built as a nonprofit.</div>
+  </section>
+
+  <section data-label="Model" style="width:100%;height:100%;box-sizing:border-box;background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;justify-content:center;padding:0 130px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:22px;letter-spacing:.2em;text-transform:uppercase;color:#ff5029;margin-bottom:30px">The model</div>
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:120px;letter-spacing:-.04em;color:#ff5029;line-height:.95">45%</div>
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:58px;letter-spacing:-.02em;margin-top:8px">of every ticket, locked to the artist.</div>
+    <div style="font-size:27px;color:#9e9080;margin-top:32px;max-width:1150px;line-height:1.55">Every event publishes with a <span style="color:#f0ebe5">frozen charter</span> — a revenue split that can never change after a single ticket is sold. No fine print, no clawback.</div>
+  </section>
+
+  <section data-label="Roles" style="width:100%;height:100%;box-sizing:border-box;background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;justify-content:center;padding:0 130px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:22px;letter-spacing:.2em;text-transform:uppercase;color:#ff5029;margin-bottom:40px">Four roles · one account</div>
+    <div style="display:flex;gap:26px">
+      <div style="flex:1;background:#100d09;border:1px solid rgba(255,255,255,.08);border-top:4px solid #ff5029;border-radius:18px;padding:38px 30px"><div style="font-size:56px">🎤</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:38px;margin-top:18px">Artist</div><div style="font-size:22px;color:#9e9080;margin-top:12px;line-height:1.5">Upload, go live, sell direct. Keeps 45%.</div></div>
+      <div style="flex:1;background:#100d09;border:1px solid rgba(255,255,255,.08);border-top:4px solid #b983ff;border-radius:18px;padding:38px 30px"><div style="font-size:56px">🎧</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:38px;margin-top:18px">Fan</div><div style="font-size:22px;color:#9e9080;margin-top:12px;line-height:1.5">Hype, discover, buy, attend.</div></div>
+      <div style="flex:1;background:#100d09;border:1px solid rgba(255,255,255,.08);border-top:4px solid #ff3e9a;border-radius:18px;padding:38px 30px"><div style="font-size:56px">🎛️</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:38px;margin-top:18px">DJ</div><div style="font-size:22px;color:#9e9080;margin-top:12px;line-height:1.5">Build radio shows from the free-use library.</div></div>
+      <div style="flex:1;background:#100d09;border:1px solid rgba(255,255,255,.08);border-top:4px solid #22e5d4;border-radius:18px;padding:38px 30px"><div style="font-size:56px">🏛️</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:38px;margin-top:18px">Venue</div><div style="font-size:22px;color:#9e9080;margin-top:12px;line-height:1.5">List events, manage door, share the gate.</div></div>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:21px;color:#5a5048;margin-top:38px;letter-spacing:.04em">Promoters aren't a fifth role — any DJ or Fan can promote with a referral link.</div>
+  </section>
+
+  <section data-label="Split" style="width:100%;height:100%;box-sizing:border-box;background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;justify-content:center;padding:0 130px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:22px;letter-spacing:.2em;text-transform:uppercase;color:#ff5029;margin-bottom:40px">The gate split — frozen at publish</div>
+    <div style="display:flex;height:130px;border-radius:16px;overflow:hidden">
+      <div style="width:45%;background:#ff5029;display:flex;flex-direction:column;justify-content:center;padding-left:34px;color:#0a0805"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:52px">45%</div><div style="font-family:'JetBrains Mono',monospace;font-size:20px;letter-spacing:.1em">ARTIST</div></div>
+      <div style="width:20%;background:#22e5d4;display:flex;flex-direction:column;justify-content:center;padding-left:28px;color:#0a0805"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:46px">20%</div><div style="font-family:'JetBrains Mono',monospace;font-size:18px;letter-spacing:.1em">VENUE</div></div>
+      <div style="width:25%;background:#9e9080;display:flex;flex-direction:column;justify-content:center;padding-left:28px;color:#0a0805"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:46px">25%</div><div style="font-family:'JetBrains Mono',monospace;font-size:18px;letter-spacing:.1em">PLATFORM</div></div>
+      <div style="width:10%;background:#ff3e9a;display:flex;flex-direction:column;justify-content:center;padding-left:22px;color:#0a0805"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:40px">10%</div><div style="font-family:'JetBrains Mono',monospace;font-size:15px;letter-spacing:.06em">PROMO</div></div>
+    </div>
+    <div style="font-size:26px;color:#9e9080;margin-top:40px;max-width:1250px;line-height:1.55">The promoter's up-to-10% is drawn from the <span style="color:#f0ebe5">platform slice</span> — never the artist's 45%. Default venue split is configurable per charter.</div>
+  </section>
+
+  <section data-label="Promoter" style="width:100%;height:100%;box-sizing:border-box;background:radial-gradient(circle at 25% 30%,#1a0a14,#0a0805 60%);color:#f0ebe5;font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;justify-content:center;padding:0 130px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:22px;letter-spacing:.2em;text-transform:uppercase;color:#ff3e9a;margin-bottom:30px">The promoter flywheel</div>
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:74px;letter-spacing:-.03em;line-height:1.06;max-width:1400px">Fans become the marketing — and get paid for it.</div>
+    <div style="background:rgba(255,62,154,.08);border:1px solid rgba(255,62,154,.3);border-radius:14px;padding:26px 34px;margin-top:46px;display:inline-block;max-width:1250px"><div style="font-family:'JetBrains Mono',monospace;font-size:30px;color:#ff3e9a;letter-spacing:.02em">share = min(10%, 10% × gross_you_drove ÷ event_total)</div></div>
+    <div style="font-size:25px;color:#9e9080;margin-top:32px;max-width:1200px;line-height:1.55">Drive the whole gate, earn the full 10%. Drive a sliver, earn proportionally. Every referral link is tracked, attributed, and settled after the show.</div>
+  </section>
+
+  <section data-label="Product" style="width:100%;height:100%;box-sizing:border-box;background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;justify-content:center;padding:0 130px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:22px;letter-spacing:.2em;text-transform:uppercase;color:#ff5029;margin-bottom:40px">The app · three tabs</div>
+    <div style="display:flex;gap:30px">
+      <div style="flex:1;background:#100d09;border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:40px 34px"><div style="font-size:50px">▶</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:42px;margin-top:18px">Listen</div><div style="font-size:23px;color:#9e9080;margin-top:14px;line-height:1.5">Hype artists, swipe Seeds to discover, watch the live HYPE chart climb.</div></div>
+      <div style="flex:1;background:#100d09;border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:40px 34px"><div style="font-size:50px">🎟️</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:42px;margin-top:18px">Events</div><div style="font-size:23px;color:#9e9080;margin-top:14px;line-height:1.5">Buy direct, QR wallet, waitlists, and your referral earnings.</div></div>
+      <div style="flex:1;background:#100d09;border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:40px 34px"><div style="font-size:50px">☰</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:42px;margin-top:18px">Pages</div><div style="font-size:23px;color:#9e9080;margin-top:14px;line-height:1.5">Artist, DJ, and venue profiles — your home on iHYPE.</div></div>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:21px;color:#5a5048;margin-top:36px;letter-spacing:.04em">One codebase · Desktop · Mobile web · iOS · Android</div>
+  </section>
+
+  <section data-label="Studio" style="width:100%;height:100%;box-sizing:border-box;background:radial-gradient(circle at 75% 70%,#0a0f1a,#0a0805 60%);color:#f0ebe5;font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;justify-content:center;padding:0 130px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:22px;letter-spacing:.2em;text-transform:uppercase;color:#7fb3ff;margin-bottom:30px">DJ Radio Studio</div>
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:74px;letter-spacing:-.03em;line-height:1.06;max-width:1350px">A whole radio show, built on a phone.</div>
+    <div style="display:flex;gap:18px;align-items:flex-end;height:120px;margin:50px 0 36px">
+      <div style="flex:1;background:linear-gradient(180deg,#ff3e9a,#ff5029);border-radius:6px;height:50%"></div><div style="flex:1;background:linear-gradient(180deg,#ff3e9a,#ff5029);border-radius:6px;height:90%"></div><div style="flex:1;background:linear-gradient(180deg,#ff3e9a,#ff5029);border-radius:6px;height:65%"></div><div style="flex:1;background:linear-gradient(180deg,#ff3e9a,#ff5029);border-radius:6px;height:100%"></div><div style="flex:1;background:linear-gradient(180deg,#ff3e9a,#ff5029);border-radius:6px;height:55%"></div><div style="flex:1;background:linear-gradient(180deg,#ff3e9a,#ff5029);border-radius:6px;height:80%"></div><div style="flex:1;background:linear-gradient(180deg,#ff3e9a,#ff5029);border-radius:6px;height:45%"></div><div style="flex:1;background:linear-gradient(180deg,#ff3e9a,#ff5029);border-radius:6px;height:95%"></div>
+    </div>
+    <div style="font-size:25px;color:#9e9080;max-width:1200px;line-height:1.55">DJs crate <span style="color:#f0ebe5">free-use licensed</span> tracks, record voice intros, and drop in royalty-free SFX — exposing artists to new audiences while every play is properly licensed.</div>
+  </section>
+
+  <section data-label="Status" style="width:100%;height:100%;box-sizing:border-box;background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;justify-content:center;padding:0 130px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:22px;letter-spacing:.2em;text-transform:uppercase;color:#ffb84a;margin-bottom:34px">Where we are</div>
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:78px;letter-spacing:-.03em;line-height:1.06;max-width:1400px">Product is built. Closed beta is live.</div>
+    <div style="display:flex;gap:30px;margin-top:60px">
+      <div style="flex:1"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:58px;color:#ff5029">4</div><div style="font-size:23px;color:#9e9080;margin-top:8px;line-height:1.45">Platforms shipping from one codebase</div></div>
+      <div style="flex:1"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:58px;color:#22e5d4">100%</div><div style="font-size:23px;color:#9e9080;margin-top:8px;line-height:1.45">End-to-end flows in test mode</div></div>
+      <div style="flex:1"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:58px;color:#ffb84a">1</div><div style="font-size:23px;color:#9e9080;margin-top:8px;line-height:1.45">Blocker: nonprofit status → banking</div></div>
+    </div>
+    <div style="font-size:24px;color:#9e9080;margin-top:50px;max-width:1250px;line-height:1.55">Everything builds and demos today. Only real money movement waits on our 501(c) filing and bank account — engineering loses zero time in the meantime.</div>
+  </section>
+
+  <section data-label="Ask" style="width:100%;height:100%;box-sizing:border-box;background:radial-gradient(circle at 50% 50%,#1f0e07,#0a0805 65%);color:#f0ebe5;font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:0 130px;position:relative;overflow:hidden">
+    <div style="position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(255,80,41,.16),transparent 70%);animation:ihPulse 4s ease-in-out infinite"></div>
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:120px;letter-spacing:-.05em;color:#ff5029;z-index:1">iH·YPE</div>
+    <div style="font-family:'Instrument Serif',serif;font-style:italic;font-size:58px;margin-top:24px;z-index:1;max-width:1200px">Help us put live music back in the hands of artists.</div>
+    <div style="display:flex;gap:48px;margin-top:54px;z-index:1">
+      <div style="text-align:center"><div style="font-family:'JetBrains Mono',monospace;font-size:19px;letter-spacing:.16em;text-transform:uppercase;color:#5a5048">Artists &amp; venues</div><div style="font-size:26px;color:#f0ebe5;margin-top:8px">Join the beta cohort</div></div>
+      <div style="text-align:center"><div style="font-family:'JetBrains Mono',monospace;font-size:19px;letter-spacing:.16em;text-transform:uppercase;color:#5a5048">Board &amp; funders</div><div style="font-size:26px;color:#f0ebe5;margin-top:8px">Back the 501(c) push</div></div>
+      <div style="text-align:center"><div style="font-family:'JetBrains Mono',monospace;font-size:19px;letter-spacing:.16em;text-transform:uppercase;color:#5a5048">Everyone</div><div style="font-size:26px;color:#f0ebe5;margin-top:8px">hello@ihype.app</div></div>
+    </div>
+  </section>
+
+</x-import>
+</x-dc>
+</body>
+</html>

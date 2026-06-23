@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Artist Kit" description="Artist recruiting page — hero with apply form, 45% charter explainer, 6-feature grid, 4-step onboarding, footer. Wired to lib/api.js." -->
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<script src="../../lib/api.js"></script>
+<style>
+  *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0805; color: #f0ebe5; font-family: 'DM Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+</style>
+</helmet>
+
+<!-- Nav -->
+<nav style="position:sticky;top:0;z-index:50;backdrop-filter:blur(16px);background:rgba(10,8,5,.75);border-bottom:1px solid rgba(255,255,255,.08)">
+  <div style="max-width:1080px;margin:0 auto;padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:62px">
+    <a href="#" style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;letter-spacing:-.04em;color:#ff5029">iH·YPE</a>
+    <button onclick="document.getElementById('applySection').scrollIntoView({behavior:'smooth'})" style="font-family:'Syne',sans-serif;font-weight:800;font-size:.88rem;background:#ff5029;color:#fff;padding:9px 18px;border-radius:999px;border:none;cursor:pointer;box-shadow:0 4px 18px rgba(255,80,41,.3)">Apply as artist →</button>
+  </div>
+</nav>
+
+<!-- Hero -->
+<header style="padding:100px 0 80px;position:relative;overflow:hidden">
+  <div style="position:absolute;top:-160px;right:-80px;width:600px;height:600px;background:radial-gradient(circle,rgba(255,80,41,.2),transparent 65%);pointer-events:none"></div>
+  <div style="max-width:1080px;margin:0 auto;padding:0 32px;display:grid;grid-template-columns:1fr 420px;gap:60px;align-items:center">
+    <div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:#ff5029;margin-bottom:22px">For Artists · Beta 2026</div>
+      <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2.8rem,5.5vw,4.6rem);letter-spacing:-.04em;line-height:.98">Your music.<br>Your gate.<br><span style="color:#ff5029">Your fans.</span></h1>
+      <p style="font-size:1.15rem;line-height:1.6;color:#9e9080;margin-top:22px;max-width:48ch">iHYPE gives you <strong style="color:#f0ebe5">45% of every ticket</strong>, your fans' contact info, and tools to run your own shows — no agent, no Ticketmaster, no platform that owns the relationship.</p>
+    </div>
+    <!-- Apply card -->
+    <div id="applySection" style="background:linear-gradient(160deg,#1f0e07,#0a0805);border:1px solid rgba(255,80,41,.2);border-radius:22px;padding:36px 32px;position:relative">
+      <div style="position:absolute;top:-60px;right:-40px;width:220px;height:220px;background:radial-gradient(circle,rgba(255,80,41,.15),transparent 70%);border-radius:50%"></div>
+      <div id="applyFormWrap" style="position:relative">
+        <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;letter-spacing:-.02em;margin-bottom:10px">Apply as an artist</h2>
+        <p style="font-size:.92rem;color:#9e9080;line-height:1.6;margin-bottom:22px">We're onboarding a small founding cohort. Tell us about you.</p>
+        <input id="aName" placeholder="Artist name" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,80,41,.25);background:rgba(255,80,41,.05);color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:.96rem;outline:none;margin-bottom:12px">
+        <input id="aEmail" type="email" placeholder="Email address" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,80,41,.25);background:rgba(255,80,41,.05);color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:.96rem;outline:none;margin-bottom:12px">
+        <select id="aGenre" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,80,41,.25);background:rgba(255,80,41,.05);color:#9e9080;font-family:'DM Sans',sans-serif;font-size:.96rem;outline:none;margin-bottom:12px;cursor:pointer;appearance:none">
+          <option value="" disabled selected>Genre / style</option>
+          <option>Dream-pop</option><option>Shoegaze</option><option>R&amp;B</option><option>Jazz</option><option>Hip-hop</option><option>Electronic</option><option>Punk / Indie rock</option><option>Folk</option><option>Other</option>
+        </select>
+        <input id="aCity" placeholder="Home city" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,80,41,.25);background:rgba(255,80,41,.05);color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:.96rem;outline:none;margin-bottom:12px">
+        <input id="aLink" type="url" placeholder="Spotify, Bandcamp, or SoundCloud" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,80,41,.25);background:rgba(255,80,41,.05);color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:.96rem;outline:none;margin-bottom:14px">
+        <button onclick="submitArtist()" style="width:100%;padding:14px;border-radius:12px;border:none;background:#ff5029;color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;cursor:pointer;box-shadow:0 6px 24px rgba(255,80,41,.3)">Request artist access →</button>
+        <p style="font-family:'JetBrains Mono',monospace;font-size:.68rem;color:#5a5048;margin-top:12px;text-align:center;letter-spacing:.04em">No spam. We review every application personally.</p>
+      </div>
+      <div id="applyOk" style="display:none;text-align:center;padding:24px 0;position:relative">
+        <div style="font-size:3rem">🔥</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;margin-top:12px">Application received.</div>
+        <p style="color:#9e9080;font-size:.96rem;line-height:1.6;margin-top:10px">We'll reach out within 48 hours with your invite code and onboarding guide.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div style="max-width:1080px;margin:64px auto 0;padding:0 32px">
+    <div style="border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07);display:flex">
+      <div style="flex:1;padding:24px 0;text-align:center;border-right:1px solid rgba(255,255,255,.07)"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;letter-spacing:-.03em;color:#ff5029">45%</div><div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:#9e9080;margin-top:6px">Your gate · locked</div></div>
+      <div style="flex:1;padding:24px 0;text-align:center;border-right:1px solid rgba(255,255,255,.07)"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;letter-spacing:-.03em;color:#ff5029">$0</div><div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:#9e9080;margin-top:6px">Platform fee on tracks</div></div>
+      <div style="flex:1;padding:24px 0;text-align:center;border-right:1px solid rgba(255,255,255,.07)"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;letter-spacing:-.03em;color:#ff5029">100%</div><div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:#9e9080;margin-top:6px">Fan data ownership</div></div>
+      <div style="flex:1;padding:24px 0;text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;letter-spacing:-.03em;color:#ff5029">24h</div><div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:#9e9080;margin-top:6px">Payout turnaround</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- Charter -->
+<section style="background:rgba(255,80,41,.03);border-top:1px solid rgba(255,80,41,.08);border-bottom:1px solid rgba(255,80,41,.08);padding:80px 0">
+  <div style="max-width:1080px;margin:0 auto;padding:0 32px;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center">
+    <div style="font-family:'Instrument Serif',serif;font-style:italic;font-size:clamp(1.8rem,4vw,3.2rem);line-height:1.12">A charter that can't be <span style="color:#ff5029">unwritten</span> after the first ticket sells.</div>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:14px">
+      <li style="display:flex;align-items:flex-start;gap:12px;font-size:.96rem;line-height:1.5"><span style="color:#ff5029;font-family:'Syne',sans-serif;font-weight:800;flex-shrink:0;margin-top:1px">✓</span>Set your price and split before publish</li>
+      <li style="display:flex;align-items:flex-start;gap:12px;font-size:.96rem;line-height:1.5"><span style="color:#ff5029;font-family:'Syne',sans-serif;font-weight:800;flex-shrink:0;margin-top:1px">✓</span>Once a ticket sells, the split is sealed</li>
+      <li style="display:flex;align-items:flex-start;gap:12px;font-size:.96rem;line-height:1.5"><span style="color:#ff5029;font-family:'Syne',sans-serif;font-weight:800;flex-shrink:0;margin-top:1px">✓</span>Your 45% hits your account night of show</li>
+      <li style="display:flex;align-items:flex-start;gap:12px;font-size:.96rem;line-height:1.5"><span style="color:#ff5029;font-family:'Syne',sans-serif;font-weight:800;flex-shrink:0;margin-top:1px">✓</span>Full fan email list after every event</li>
+      <li style="display:flex;align-items:flex-start;gap:12px;font-size:.96rem;line-height:1.5"><span style="color:#ff5029;font-family:'Syne',sans-serif;font-weight:800;flex-shrink:0;margin-top:1px">✓</span>No agent or manager needed to list</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Features -->
+<section style="padding:88px 0">
+  <div style="max-width:1080px;margin:0 auto;padding:0 32px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:#ff5029">What you get</div>
+    <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2rem,4vw,3rem);letter-spacing:-.03em;line-height:1.06;margin:14px 0 0">Tools built for touring artists.</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px">
+      <div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:26px 22px"><div style="font-size:1.8rem;margin-bottom:14px">🎟️</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.01em;margin-bottom:8px">Direct ticketing</h3><p style="font-size:.92rem;line-height:1.55;color:#9e9080">List a show in minutes. Fans buy direct — no Ticketmaster. QR wallets handled.</p></div>
+      <div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:26px 22px"><div style="font-size:1.8rem;margin-bottom:14px">📊</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.01em;margin-bottom:8px">Fan data dashboard</h3><p style="font-size:.92rem;line-height:1.55;color:#9e9080">See who came, who bought first, who's hyping you. Export your list after every show.</p></div>
+      <div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:26px 22px"><div style="font-size:1.8rem;margin-bottom:14px">🔴</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.01em;margin-bottom:8px">Live show hosting</h3><p style="font-size:.92rem;line-height:1.55;color:#9e9080">Go live directly from iHYPE — listener count, hype pulse, live chat.</p></div>
+      <div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:26px 22px"><div style="font-size:1.8rem;margin-bottom:14px">📻</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.01em;margin-bottom:8px">Free-use library</h3><p style="font-size:.92rem;line-height:1.55;color:#9e9080">Opt your tracks into the DJ pool and reach new audiences without losing rights.</p></div>
+      <div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:26px 22px"><div style="font-size:1.8rem;margin-bottom:14px">🗺️</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.01em;margin-bottom:8px">Tour creator</h3><p style="font-size:.92rem;line-height:1.55;color:#9e9080">Build a tour, set dates across cities, manage all events from one dashboard.</p></div>
+      <div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:26px 22px"><div style="font-size:1.8rem;margin-bottom:14px">✓</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.01em;margin-bottom:8px">Verification badge</h3><p style="font-size:.92rem;line-height:1.55;color:#9e9080">Apply for a verified artist badge. Appears on your profile, events, and all iHYPE surfaces.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer style="border-top:1px solid rgba(255,255,255,.07);padding:44px 0 56px">
+  <div style="max-width:1080px;margin:0 auto;padding:0 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px">
+    <a href="#" style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;letter-spacing:-.04em;color:#ff5029">iH·YPE</a>
+    <div style="display:flex;gap:22px"><a href="#" style="font-size:.9rem;color:#9e9080">Home</a><a href="#" style="font-size:.9rem;color:#9e9080">FAQ</a><a href="#" style="font-size:.9rem;color:#9e9080">hello@ihype.app</a></div>
+  </div>
+</footer>
+
+<script>
+  async function submitArtist() {
+    const name  = document.getElementById('aName').value.trim();
+    const email = document.getElementById('aEmail').value.trim();
+    if (!name || !email) { alert('Please fill in name and email.'); return; }
+    const fields = { name, email, genre: document.getElementById('aGenre').value, city: document.getElementById('aCity').value, link: document.getElementById('aLink').value };
+    try { if (window.IHYPE_API) await window.IHYPE_API.auth.artistApply(fields); } catch {}
+    document.getElementById('applyFormWrap').style.display = 'none';
+    document.getElementById('applyOk').style.display = 'block';
+  }
+</script>
+</x-dc>
+</body>
+</html>
