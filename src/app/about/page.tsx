@@ -52,6 +52,32 @@ export default function AboutPage() {
         </p>
       </section>
 
+      {/* Timeline */}
+      <section className="lp-hype-explainer">
+        <p className="lp-hype-eyebrow">OUR STORY</p>
+        <h2 className="lp-section-head">How we got here</h2>
+        <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', gap: 0 }}>
+          {[
+            { date: 'January 2026', head: 'Founded in Portland, ME', body: 'iHYPE incorporated as a not-for-profit organization in Portland, Maine. The founding charter locked in 0% platform fees and the 45/45/10 revenue split.' },
+            { date: 'February 2026', head: 'Design system & charter published', body: 'The iHYPE design system and community charter were published openly. The revenue split, governance model, and founding principles are locked in the charter.' },
+            { date: 'March 2026', head: 'Platform beta launched', body: 'Beta access opened to artists, venues, and promoters in the Portland area. First shows went live on the platform.' },
+            { date: 'June 2026', head: 'Expanded beta & radio shows', body: 'Fan beta access opened nationally. Audio-only radio shows and live DJ sets went live. iHYPE has never hosted video and never will.' },
+          ].map((item, i, arr) => (
+            <div key={item.date} style={{ display: 'flex', gap: 20, paddingBottom: i < arr.length - 1 ? 28 : 0 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--accent)', marginTop: 4, flexShrink: 0 }} />
+                {i < arr.length - 1 && <div style={{ width: 1, flex: 1, background: 'var(--line-2)', marginTop: 6 }} />}
+              </div>
+              <div style={{ paddingBottom: i < arr.length - 1 ? 0 : 0 }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 4 }}>{item.date}</div>
+                <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.02em', marginBottom: 6 }}>{item.head}</h3>
+                <p style={{ color: 'var(--ink-2)', lineHeight: 1.65, fontSize: '0.95rem' }}>{item.body}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* The team */}
       <section className="lp-hype-explainer">
         <p className="lp-hype-eyebrow">THE TEAM</p>
