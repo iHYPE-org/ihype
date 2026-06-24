@@ -235,6 +235,20 @@ export function StudioDashboard() {
     borderBottom: `2px solid ${tab === t ? 'var(--accent)' : 'transparent'}`,
   });
 
+  async function updateShowStatus(showId: string, newStatus: string) {
+    try {
+      const res = await fetch(`/api/shows/${showId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        const { show: updated } = await res.json();
+        setShows(prev => prev.map(s => s.id === updated.id ? { ...s, status: updated.status } : s));
+      }
+    } catch { /* silent */ }
+  }
+
   function statusBadge(s: ApiShow) {
     const map: Record<string, [string, string]> = {
       LIVE: ['rgba(34,229,212,0.2)', 'var(--venue)'],
@@ -368,8 +382,27 @@ export function StudioDashboard() {
                   </div>
                 )}
               </div>
-              <div style={{ display: 'flex', gap: 8, flexShrink: 0, marginLeft: 16 }}>
-                <a href={`/shows/${show.slug}`} style={{ padding: '8px 12px', background: 'rgba(255,80,41,0.2)', color: 'var(--accent)', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, textDecoration: 'none' }}>View</a>
+              <div style={{ display: 'flex', gap: 8, flexShrink: 0, marginLeft: 16, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                {show.status === 'SCHEDULED' && (
+                  <button
+                    onClick={() => updateShowStatus(show.id, 'LIVE')}
+                    style={{ padding: '8px 12px', background: 'rgba(255,80,41,0.9)', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 700 }}
+                  >
+                    Go Live
+                  </button>
+                )}
+                {show.status === 'LIVE' && (
+                  <button
+                    onClick={() => updateShowStatus(show.id, 'ENDED')}
+                    style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.08)', color: 'rgba(240,235,229,.7)', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}
+                  >
+                    End Show
+                  </button>
+                )}
+                {show.isTicketed && show.status === 'ENDED' && (
+                  <a href={`/payout/${show.slug}`} style={{ padding: '8px 12px', background: 'rgba(34,229,212,0.15)', color: '#22e5d4', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, textDecoration: 'none' }}>Payout →</a>
+                )}
+                <a href={`/shows/${show.slug}`} style={{ padding: '8px 12px', background: 'rgba(255,80,41,0.15)', color: 'var(--accent)', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, textDecoration: 'none' }}>View</a>
               </div>
             </div>
           ))}
@@ -402,7 +435,11 @@ export function StudioDashboard() {
             <div style={cardStyle}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'rgba(240,235,229,0.6)', marginBottom: 8 }}>Paid Out</div>
               <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--accent)' }}>{loadingShows ? '–' : fmt$(artistShareCents)}</div>
-              <div style={{ fontSize: 12, color: 'rgba(240,235,229,0.6)', marginTop: 4 }}>See /payout for details</div>
+              <div style={{ fontSize: 12, color: 'rgba(240,235,229,0.6)', marginTop: 4 }}>
+                {ticketedShows.length > 0
+                  ? <a href={`/payout/${ticketedShows[0].slug}`} style={{ color: '#22e5d4', textDecoration: 'none' }}>View payout breakdown →</a>
+                  : 'See payout when shows end'}
+              </div>
             </div>
           </div>
 
@@ -421,7 +458,10 @@ export function StudioDashboard() {
                     <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 800, marginBottom: 4 }}>{show.title}</h3>
                     <p style={{ fontSize: 13, color: 'rgba(240,235,229,0.7)' }}>{show.startsAt ? fmtDate(show.startsAt) : 'TBA'}</p>
                   </div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--accent)' }}>+{fmt$(artistCut)}</div>
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--accent)' }}>+{fmt$(artistCut)}</div>
+                    <a href={`/payout/${show.slug}`} style={{ fontSize: 11, color: '#22e5d4', textDecoration: 'none', fontFamily: 'var(--font-mono)', letterSpacing: '.06em' }}>BREAKDOWN →</a>
+                  </div>
                 </div>
               );
             })}

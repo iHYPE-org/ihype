@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { auth } from '@/lib/auth';
 import { getDemoCreatorExclusion } from '@/lib/runtime-flags';
 
 export const dynamic = 'force-dynamic';
@@ -53,4 +54,45 @@ export async function GET(
   }
 
   return NextResponse.json({ show });
+}
+
+const VALID_TRANSITIONS: Record<string, string[]> = {
+  DRAFT:      ['SCHEDULED'],
+  SCHEDULED:  ['LIVE', 'DRAFT'],
+  LIVE:       ['ENDED'],
+  ENDED:      [],
+};
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ showId: string }> }
+) {
+  const session = await auth();
+  if (!session?.user?.id) return NextResponse.json({ error: 'Login required' }, { status: 401 });
+
+  const { showId } = await params;
+  let body: { status?: string };
+  try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
+
+  const { status: newStatus } = body;
+  if (!newStatus) return NextResponse.json({ error: 'status is required' }, { status: 400 });
+
+  const show = await db.show.findFirst({
+    where: { OR: [{ id: showId }, { slug: showId }], creatorId: session.user.id },
+    select: { id: true, status: true },
+  });
+  if (!show) return NextResponse.json({ error: 'Show not found' }, { status: 404 });
+
+  const allowed = VALID_TRANSITIONS[show.status] ?? [];
+  if (!allowed.includes(newStatus)) {
+    return NextResponse.json({ error: `Cannot transition from ${show.status} to ${newStatus}` }, { status: 400 });
+  }
+
+  const updated = await db.show.update({
+    where: { id: show.id },
+    data: { status: newStatus as 'DRAFT' | 'SCHEDULED' | 'LIVE' | 'ENDED' },
+    select: { id: true, slug: true, status: true },
+  });
+
+  return NextResponse.json({ show: updated });
 }
