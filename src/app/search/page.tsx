@@ -1,6 +1,5 @@
 'use client';
 
-import type { CSSProperties } from 'react';
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
 
@@ -42,15 +41,6 @@ const TYPE_LABEL: Record<string, string> = {
   FAN: 'Fan',
 };
 
-const inputStyle: CSSProperties = {
-  width: '100%', padding: '14px 18px',
-  border: '1px solid rgba(255,255,255,.12)',
-  borderRadius: 10, background: 'rgba(255,255,255,.04)',
-  color: 'var(--ink, #f0ebe5)', fontSize: 16,
-  fontFamily: 'var(--font-body, "DM Sans", sans-serif)',
-  boxSizing: 'border-box', outline: 'none',
-};
-
 export default function SearchPage() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResponse | null>(null);
@@ -86,9 +76,7 @@ export default function SearchPage() {
     <div style={{ maxWidth: 700, margin: '0 auto', padding: '32px 24px 100px' }}>
 
       <div style={{ marginBottom: 32 }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 8 }}>
-          SEARCH
-        </p>
+        <p className="ihype-eyebrow" style={{ marginBottom: 8 }}>SEARCH</p>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 4vw, 2.4rem)', fontWeight: 800, letterSpacing: '-.03em', margin: '0 0 24px' }}>
           Find artists, venues &amp; shows
         </h1>
@@ -97,7 +85,7 @@ export default function SearchPage() {
           value={query}
           onChange={handleChange}
           placeholder="Search iHYPE…"
-          style={inputStyle}
+          className="ihype-input ihype-input-lg"
         />
       </div>
 
@@ -110,10 +98,10 @@ export default function SearchPage() {
       )}
 
       {!isPending && results && !hasResults && (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: 'rgba(240,235,229,.3)' }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
-          <p style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, color: 'var(--ink)' }}>No results for &ldquo;{query}&rdquo;</p>
-          <p style={{ fontSize: 13, marginTop: 4 }}>Try a different name or city.</p>
+        <div className="ihype-empty-state">
+          <div className="icon">🔍</div>
+          <h3>No results for &ldquo;{query}&rdquo;</h3>
+          <p>Try a different name or city.</p>
         </div>
       )}
 
@@ -128,15 +116,11 @@ export default function SearchPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {results.profiles.map(p => (
                   <Link key={p.id} href={profileRoute(p.type, p.slug)} style={{ textDecoration: 'none' }}>
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: 14,
-                      padding: '14px 16px', border: '1px solid rgba(255,255,255,.07)',
-                      borderRadius: 8, background: 'var(--bg-2, #100d09)',
-                    }}>
+                    <div className="ihype-card" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px' }}>
                       <div style={{
-                        width: 36, height: 36, borderRadius: 18, flexShrink: 0,
+                        width: 38, height: 38, borderRadius: 19, flexShrink: 0,
                         background: `linear-gradient(135deg, ${TYPE_COLOR[p.type] ?? '#ff5029'}, #b983ff)`,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17,
                       }}>
                         {p.type === 'VENUE' ? '🏛️' : '🎤'}
                       </div>
@@ -168,11 +152,7 @@ export default function SearchPage() {
                   const date = new Date(s.startsAt).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
                   return (
                     <Link key={s.id} href={`/shows/${s.slug}`} style={{ textDecoration: 'none' }}>
-                      <div style={{
-                        display: 'flex', alignItems: 'center', gap: 14,
-                        padding: '14px 16px', border: '1px solid rgba(255,255,255,.07)',
-                        borderRadius: 8, background: 'var(--bg-2, #100d09)',
-                      }}>
+                      <div className="ihype-card" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px' }}>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, color: 'var(--ink)' }}>{s.title}</div>
                           <div style={{ fontSize: 11, color: 'rgba(240,235,229,.4)', marginTop: 2 }}>
@@ -202,13 +182,7 @@ export default function SearchPage() {
               { href: '/shows', label: 'Upcoming shows' },
               { href: '/radio', label: 'Radio' },
             ].map(l => (
-              <Link key={l.href} href={l.href} style={{
-                padding: '10px 16px', border: '1px solid rgba(255,255,255,.1)',
-                borderRadius: 8, fontSize: 13, color: 'rgba(240,235,229,.6)',
-                textDecoration: 'none', fontFamily: 'var(--font-mono)',
-              }}>
-                {l.label}
-              </Link>
+              <Link key={l.href} href={l.href} className="ihype-btn-ghost">{l.label}</Link>
             ))}
           </div>
         </div>

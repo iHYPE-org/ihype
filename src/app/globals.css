@@ -6384,3 +6384,108 @@ html.high-contrast p {
   color: var(--profile-design-muted);
   font-family: var(--profile-design-body-font);
 }
+
+/* ── Shared utility cards (used by search, notifications, settings, discover, events) ── */
+.ihype-card {
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 10px;
+  background: var(--bg-2, #100d09);
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+.ihype-card:hover {
+  border-color: rgba(255,255,255,.16);
+  background: var(--bg-3, #1a1612);
+  transform: translateY(-1px);
+}
+a .ihype-card, a.ihype-card {
+  cursor: pointer;
+}
+
+.ihype-input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 8px;
+  background: rgba(255,255,255,.04);
+  color: var(--ink, #f0ebe5);
+  font-size: 14px;
+  font-family: var(--font-body, 'DM Sans', sans-serif);
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.ihype-input:focus {
+  border-color: rgba(255,80,41,.5);
+  box-shadow: 0 0 0 3px rgba(255,80,41,.08);
+}
+.ihype-input-lg {
+  padding: 14px 18px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.12);
+}
+.ihype-input-lg:focus {
+  border-color: rgba(255,80,41,.5);
+  box-shadow: 0 0 0 4px rgba(255,80,41,.07);
+}
+
+.ihype-btn-primary {
+  padding: 13px;
+  background: var(--accent, #ff5029);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+.ihype-btn-primary:hover:not(:disabled) {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+.ihype-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.ihype-btn-ghost {
+  padding: 11px 16px;
+  background: transparent;
+  color: rgba(240,235,229,.6);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  transition: border-color 150ms ease, color 150ms ease;
+  text-decoration: none;
+  display: inline-block;
+}
+.ihype-btn-ghost:hover {
+  border-color: rgba(255,255,255,.25);
+  color: var(--ink, #f0ebe5);
+}
+
+.ihype-eyebrow {
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 11px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--accent, #ff5029);
+}
+
+.ihype-empty-state {
+  text-align: center;
+  padding: 80px 0;
+  color: rgba(240,235,229,.3);
+}
+.ihype-empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+.ihype-empty-state h3 {
+  font-family: var(--font-display, 'Syne', sans-serif);
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--ink, #f0ebe5);
+  margin: 0 0 8px;
+}
+.ihype-empty-state p { font-size: 13px; margin: 0 0 20px; }

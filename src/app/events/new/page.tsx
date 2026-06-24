@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from 'react';
 import { useState } from 'react';
+// CSSProperties used by labelStyle
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -16,14 +17,8 @@ const GENRE_OPTIONS = [
   'Deep House', 'Tech House', 'Ambient', 'Experimental', 'Other',
 ];
 
-const inputStyle: CSSProperties = {
-  width: '100%', padding: '11px 14px',
-  border: '1px solid rgba(255,255,255,.1)',
-  borderRadius: 8, background: 'rgba(255,255,255,.04)',
-  color: 'var(--ink, #f0ebe5)', fontSize: 14,
-  fontFamily: 'var(--font-body, "DM Sans", sans-serif)',
-  boxSizing: 'border-box', outline: 'none',
-};
+// inputs use className="ihype-input" from globals.css
+const inputStyle: CSSProperties = {};
 
 const labelStyle: CSSProperties = {
   display: 'block',
@@ -141,7 +136,7 @@ export default function EventsNewPage() {
             <input
               value={title} onChange={e => setTitle(e.target.value)}
               placeholder="e.g. Late Night Frequencies Vol. 3"
-              style={inputStyle}
+              className="ihype-input"
             />
           </div>
           <div>
@@ -149,7 +144,7 @@ export default function EventsNewPage() {
             <input
               type="datetime-local" value={datetime}
               onChange={e => setDatetime(e.target.value)}
-              style={inputStyle}
+              className="ihype-input"
             />
           </div>
           <div>
@@ -157,12 +152,12 @@ export default function EventsNewPage() {
             <input
               value={city} onChange={e => setCity(e.target.value)}
               placeholder="Portland, ME"
-              style={inputStyle}
+              className="ihype-input"
             />
           </div>
           <div>
             <label style={labelStyle}>Genre</label>
-            <select value={genre} onChange={e => setGenre(e.target.value)} style={inputStyle}>
+            <select value={genre} onChange={e => setGenre(e.target.value)} className="ihype-input">
               <option value="">Select genre…</option>
               {GENRE_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
             </select>
@@ -173,12 +168,13 @@ export default function EventsNewPage() {
               value={description} onChange={e => setDescription(e.target.value)}
               placeholder="Tell fans what to expect…"
               rows={3}
-              style={{ ...inputStyle, resize: 'vertical' }}
+              className="ihype-input" style={{ resize: "vertical" }}
             />
           </div>
           <button
             onClick={() => title.trim() && datetime ? setStep(2) : setError('Title and date are required')}
-            style={{ padding: '13px', background: 'var(--accent, #ff5029)', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
+            className="ihype-btn-primary"
+            style={{ width: '100%' }}
           >
             Continue →
           </button>
@@ -213,7 +209,7 @@ export default function EventsNewPage() {
                 <input
                   type="number" min="1" step="1" value={price}
                   onChange={e => setPrice(e.target.value)}
-                  style={inputStyle}
+                  className="ihype-input"
                 />
               </div>
               <div>
@@ -221,7 +217,7 @@ export default function EventsNewPage() {
                 <input
                   type="number" min="1" step="1" value={capacity}
                   onChange={e => setCapacity(e.target.value)}
-                  style={inputStyle}
+                  className="ihype-input"
                 />
               </div>
 
@@ -244,12 +240,8 @@ export default function EventsNewPage() {
           )}
 
           <div style={{ display: 'flex', gap: 10 }}>
-            <button onClick={() => setStep(1)} style={{ flex: 1, padding: '12px', border: '1px solid rgba(255,255,255,.12)', borderRadius: 8, background: 'transparent', color: 'rgba(240,235,229,.6)', fontSize: 14, cursor: 'pointer' }}>
-              ← Back
-            </button>
-            <button onClick={() => setStep(3)} style={{ flex: 2, padding: '12px', background: 'var(--accent, #ff5029)', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
-              Review →
-            </button>
+            <button onClick={() => setStep(1)} className="ihype-btn-ghost" style={{ flex: 1 }}>← Back</button>
+            <button onClick={() => setStep(3)} className="ihype-btn-primary" style={{ flex: 2 }}>Review →</button>
           </div>
         </div>
       )}
@@ -281,14 +273,8 @@ export default function EventsNewPage() {
           {error && <p style={{ color: '#ff5029', fontSize: 13, margin: 0 }}>{error}</p>}
 
           <div style={{ display: 'flex', gap: 10 }}>
-            <button onClick={() => setStep(2)} style={{ flex: 1, padding: '13px', border: '1px solid rgba(255,255,255,.12)', borderRadius: 8, background: 'transparent', color: 'rgba(240,235,229,.6)', fontSize: 14, cursor: 'pointer' }}>
-              ← Back
-            </button>
-            <button
-              onClick={publish}
-              disabled={submitting}
-              style={{ flex: 2, padding: '13px', background: 'var(--accent, #ff5029)', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 15, cursor: submitting ? 'default' : 'pointer', opacity: submitting ? 0.7 : 1 }}
-            >
+            <button onClick={() => setStep(2)} className="ihype-btn-ghost" style={{ flex: 1 }}>← Back</button>
+            <button onClick={publish} disabled={submitting} className="ihype-btn-primary" style={{ flex: 2 }}>
               {submitting ? 'Publishing…' : 'Publish show →'}
             </button>
           </div>

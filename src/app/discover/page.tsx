@@ -87,11 +87,7 @@ export default async function DiscoverPage() {
               const date = new Date(s.startsAt).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
               return (
                 <Link key={s.id} href={`/shows/${s.slug}`} style={{ textDecoration: 'none' }}>
-                  <div style={{
-                    padding: '16px 18px', border: '1px solid rgba(255,255,255,.07)',
-                    borderRadius: 10, background: 'var(--bg-2, #100d09)',
-                    transition: 'border-color .15s',
-                  }}>
+                  <div className="ihype-card" style={{ padding: '16px 18px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                       {isLive ? (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>
@@ -129,11 +125,7 @@ export default async function DiscoverPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
             {topArtists.map(p => (
               <Link key={p.id} href={profileRoute(p.type, p.slug)} style={{ textDecoration: 'none' }}>
-                <div style={{
-                  padding: '16px', border: '1px solid rgba(255,255,255,.07)',
-                  borderRadius: 10, background: 'var(--bg-2, #100d09)',
-                  display: 'flex', flexDirection: 'column', gap: 8,
-                }}>
+                <div className="ihype-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div style={{
                     width: 44, height: 44, borderRadius: 22,
                     background: `linear-gradient(135deg, ${TYPE_COLOR[p.type] ?? '#ff5029'}, #b983ff)`,
@@ -172,10 +164,7 @@ export default async function DiscoverPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
             {topVenues.map(p => (
               <Link key={p.id} href={`/venues/${p.slug}`} style={{ textDecoration: 'none' }}>
-                <div style={{
-                  padding: '16px 18px', border: '1px solid rgba(255,255,255,.07)',
-                  borderRadius: 10, background: 'var(--bg-2, #100d09)',
-                }}>
+                <div className="ihype-card" style={{ padding: '16px 18px' }}>
                   <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 15, marginBottom: 4, color: '#22e5d4' }}>🏛️ {p.name}</div>
                   {p.city && (
                     <div style={{ fontSize: 12, color: 'rgba(240,235,229,.45)' }}>{p.city}{p.stateRegion ? `, ${p.stateRegion}` : ''}</div>

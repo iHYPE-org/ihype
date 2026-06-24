@@ -47,50 +47,51 @@ export default async function NotificationsPage() {
       </div>
 
       {notifications.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '80px 0', color: 'rgba(240,235,229,.3)' }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🔔</div>
-          <p style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, color: 'var(--ink)', marginBottom: 8 }}>
-            All clear
-          </p>
-          <p style={{ fontSize: 13 }}>You&apos;ll get notified about new shows, milestones, and journal posts.</p>
+        <div className="ihype-empty-state">
+          <div className="icon">🔔</div>
+          <h3>All clear</h3>
+          <p>You&apos;ll get notified about new shows, milestones, and journal posts.</p>
+          <Link href="/discover" className="ihype-btn-primary" style={{ display: 'inline-block', textDecoration: 'none' }}>
+            Discover artists →
+          </Link>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {notifications.map(n => {
             const date = new Date(n.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-            const content = (
-              <div style={{
-                padding: '16px 18px',
-                background: n.read ? 'var(--bg-2, #100d09)' : 'rgba(255,80,41,.06)',
-                borderLeft: `3px solid ${n.read ? 'transparent' : 'var(--accent, #ff5029)'}`,
-                borderRadius: 8,
-                display: 'flex', gap: 14, alignItems: 'flex-start',
-              }}>
+            const inner = (
+              <div
+                className={n.link ? 'ihype-card' : undefined}
+                style={{
+                  padding: '16px 18px',
+                  background: n.read ? 'var(--bg-2, #100d09)' : 'rgba(255,80,41,.06)',
+                  borderLeft: `3px solid ${n.read ? 'transparent' : 'var(--accent, #ff5029)'}`,
+                  borderRadius: 8,
+                  border: n.link ? undefined : '1px solid rgba(255,255,255,.06)',
+                  display: 'flex', gap: 14, alignItems: 'flex-start',
+                }}
+              >
                 <div style={{ flex: 1 }}>
                   <p style={{ margin: '0 0 4px', fontSize: 14, color: 'var(--ink)', lineHeight: 1.5 }}>{n.body}</p>
                   <p style={{ margin: 0, fontSize: 11, color: 'rgba(240,235,229,.35)', fontFamily: 'var(--font-mono)' }}>{date}</p>
                 </div>
                 {!n.read && (
-                  <div style={{ width: 8, height: 8, borderRadius: 4, background: 'var(--accent)', flexShrink: 0, marginTop: 4 }} />
+                  <div style={{ width: 7, height: 7, borderRadius: 4, background: 'var(--accent)', flexShrink: 0, marginTop: 5 }} />
                 )}
               </div>
             );
 
             return n.link ? (
-              <Link key={n.id} href={n.link} style={{ textDecoration: 'none' }}>
-                {content}
-              </Link>
+              <Link key={n.id} href={n.link} style={{ textDecoration: 'none' }}>{inner}</Link>
             ) : (
-              <div key={n.id}>{content}</div>
+              <div key={n.id}>{inner}</div>
             );
           })}
         </div>
       )}
 
       <div style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid rgba(255,255,255,.06)' }}>
-        <Link href="/settings" style={{ fontSize: 12, color: 'rgba(240,235,229,.4)', textDecoration: 'none', fontFamily: 'var(--font-mono)', letterSpacing: '.06em' }}>
-          Notification settings →
-        </Link>
+        <Link href="/settings" className="ihype-btn-ghost">Notification settings →</Link>
       </div>
     </div>
   );
