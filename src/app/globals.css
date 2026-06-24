@@ -251,6 +251,12 @@ body:has(.site-dock) .site-shell {
   border-bottom: 1px solid rgba(255,255,255,0.08);
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.2);
 }
+
+/* ── Mobile bottom nav ── */
+@media (max-width: 768px) {
+  .ihype-mobile-nav { display: flex !important; }
+  body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
+}
 .admin-perspective-shell {
   position: sticky;
   top: 0;

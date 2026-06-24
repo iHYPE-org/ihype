@@ -168,19 +168,19 @@ const shows = await db.event.findMany({
 | # | Page | What Changed | API Calls | Status |
 |---|------|-------------|-----------|--------|
 | 1 | Sitemap.dc.html | New main app hub — Listen/Events/Pages tabs | GET /api/transparency | ⏳ Pending |
-| 2 | Studio.dc.html | Full creator dashboard — event wizard, demand radar, earnings | POST /api/events, GET /api/studio | ⏳ Pending |
-| 3 | Show.dc.html | 45/45/10 split bar added | GET /api/events/:id | ⏳ Pending |
+| 2 | Studio.dc.html | Full creator dashboard — event wizard, demand radar, earnings | POST /api/events, GET /api/studio | ✅ 9063400 |
+| 3 | Show.dc.html | 45/45/10 split bar added | GET /api/events/:id | ✅ ebb8fdd |
 | 4 | All pages | lib/api.js + lib/nav.js injected | — | ⏳ Pending |
-| 5 | Radio.dc.html | Full DJ Studio rewrite — accordion sections (Details/Setup/Deck/Archive), dual deck player, crossfader, FX buttons, live audio, voiceover, recording, auto-save shows | GET /api/radio/shows, POST /api/radio/live, POST /api/radio/record | ⏳ Pending |
-| 6 | WebRadio.dc.html | Live audio player + saved shows + schedule tabs; bookmark per show persists to localStorage; playback position saved per show | GET /api/radio/shows, GET /api/radio/shows/:id/replay | ⏳ Pending |
-| 7 | About.dc.html | Timeline corrected — all dates now 2026 (Portland ME founding), removed pre-founding 2025 dates | — | ⏳ Pending |
-| 8 | All web pages (26) | Global NavShell added — fixed top nav with wordmark, nav links, role pill, skeleton overlay, footer auto-injected. lib/shell.css + lib/NavShell.js | — | ⏳ Pending |
+| 5 | Radio.dc.html | Full DJ Studio rewrite — accordion sections (Details/Setup/Deck/Archive), dual deck player, crossfader, FX buttons, live audio, voiceover, recording, auto-save shows | GET /api/radio/shows, POST /api/radio/live, POST /api/radio/record | ✅ 9063400 |
+| 6 | WebRadio.dc.html | Live audio player + saved shows + schedule tabs; bookmark per show persists to localStorage; playback position saved per show | GET /api/radio/shows, GET /api/radio/shows/:id/replay | ✅ c1f0462 |
+| 7 | About.dc.html | Timeline corrected — all dates now 2026 (Portland ME founding), removed pre-founding 2025 dates | — | ✅ ebb8fdd |
+| 8 | All web pages (26) | Global NavShell added — fixed top nav with wordmark, nav links, role pill, skeleton overlay, footer auto-injected. lib/shell.css + lib/NavShell.js | — | ✅ c1f0462 |
 | 9 | mobile/*.jsx (14 files) | All DS namespace refs updated 0c4241 → 39bcce; hex colors → DS tokens; px values → rem; ResizeObserver suppressed | — | ⏳ Pending |
-| 10 | Charter.dc.html | New standalone charter page at /charter | GET /api/transparency | ⏳ Pending |
-| 11 | Join.dc.html | New 4-step onboarding: role picker → city → genres → confirm | POST /api/auth/register | ⏳ Pending |
-| 12 | NavShell (all pages) | Single nav only — desktop top bar (logo left · Listen\|Events\|Pages center · Log In + Sign Up right), mobile fixed bottom tabs. lib/nav.js is now a no-op. | — | ⏳ Pending |
-| 13 | Join.dc.html | Step 4 submit now routes → Welcome.dc.html (not FanHome). Welcome routes role-aware: Fan→FanHome, Artist→Studio, Venue→Venue, DJ→DJProfile | — | ⏳ Pending |
-| 14 | Offline.dc.html | New 503/offline fallback page. Handles ?code=offline\|503\|500. Auto-retries on window.online event. | — | ⏳ Pending |
+| 10 | Charter.dc.html | New standalone charter page at /charter | GET /api/transparency | ✅ ebb8fdd |
+| 11 | Join.dc.html | New 4-step onboarding: role picker → city → genres → confirm | POST /api/auth/register | ✅ c1f0462 |
+| 12 | NavShell (all pages) | Single nav only — desktop top bar (logo left · Listen\|Events\|Pages center · Log In + Sign Up right), mobile fixed bottom tabs. lib/nav.js is now a no-op. | — | ✅ c1f0462 |
+| 13 | Join.dc.html | Step 4 submit now routes → Welcome.dc.html (not FanHome). Welcome routes role-aware: Fan→FanHome, Artist→Studio, Venue→Venue, DJ→DJProfile | — | ✅ ebb8fdd |
+| 14 | Offline.dc.html | New 503/offline fallback page. Handles ?code=offline\|503\|500. Auto-retries on window.online event. | — | ✅ ebb8fdd |
 
 ---
 

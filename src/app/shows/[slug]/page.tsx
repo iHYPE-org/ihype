@@ -547,6 +547,29 @@ export default async function ShowDetailPage({
         </section>
       ) : null}
 
+      {show.isTicketed && show.venuePayoutPercent !== null && show.artistPayoutPercent !== null ? (
+        <section className="section">
+          <div className="panel" style={{ padding: '1rem 1.25rem', marginBottom: 12 }}>
+            <p className="meta" style={{ marginBottom: 8, fontFamily: 'var(--font-mono)', fontSize: '0.7rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>
+              Revenue split — iHYPE takes 0%
+            </p>
+            <div style={{ display: 'flex', borderRadius: 8, overflow: 'hidden', height: 36 }}>
+              <div style={{ flex: show.artistPayoutPercent, background: 'var(--role-artist, #ff5029)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: '0.72rem', letterSpacing: '0.06em', color: '#0a0805', whiteSpace: 'nowrap', padding: '0 6px' }}>
+                ARTIST {show.artistPayoutPercent}%
+              </div>
+              <div style={{ flex: show.venuePayoutPercent, background: 'var(--role-venue, #22e5d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: '0.72rem', letterSpacing: '0.06em', color: '#0a0805', whiteSpace: 'nowrap', padding: '0 6px' }}>
+                VENUE {show.venuePayoutPercent}%
+              </div>
+              {show.promoterPayoutPercent > 0 && (
+                <div style={{ flex: show.promoterPayoutPercent, background: 'var(--role-promoter, #ffb84a)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: '0.72rem', letterSpacing: '0.06em', color: '#0a0805', whiteSpace: 'nowrap', padding: '0 6px' }}>
+                  PROMO {show.promoterPayoutPercent}%
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       {show.isTicketed && show.venueProfile && show.headlinerProfile && show.venuePayoutPercent !== null && show.artistPayoutPercent !== null ? (
         <section className="section">
           <TicketSaleCard

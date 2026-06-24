@@ -8,6 +8,8 @@ import { PwaInstallPrompt } from '@/components/PwaInstallPrompt';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
 import { NavDrawer } from '@/components/NavDrawer';
 import { SearchBar } from '@/components/SearchBar';
+import { SiteNavTabs } from '@/components/SiteNavTabs';
+import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { MiniPlayer } from '@/components/MiniPlayer';
 
@@ -51,14 +53,19 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <span className="site-background-grid" />
           </div>
           {/* Marketing nav — hidden when .wb-shell is present via CSS */}
-          <header aria-label="Primary site header" className="nav site-nav">
-            <div className="container nav-inner-marketing">
+          <header aria-label="Primary site header" className="nav site-nav" style={{ height: 56 }}>
+            <div className="container" style={{ display: 'flex', alignItems: 'stretch', height: '100%', gap: '1rem' }}>
               <HeaderLogo />
-              <SearchBar />
-              <HeaderAuthLinks />
+              <div style={{ flex: 1, display: 'flex', alignItems: 'stretch' }}>
+                <SiteNavTabs />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                <HeaderAuthLinks />
+              </div>
               <NavDrawer />
             </div>
           </header>
+          <MobileBottomNav />
           <div className="site-shell">
             {children}
           </div>
