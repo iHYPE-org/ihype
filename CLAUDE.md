@@ -1,7 +1,49 @@
 # iHYPE — Claude Code Instructions
 # ──────────────────────────────────────────────────────────
-# DROP THIS FILE into the GitHub repo root as CLAUDE.md
-# Claude Code reads it on every turn — these rules are always active.
+# Claude Code reads this file on every turn — these rules are always active.
+# Sessions start cold with no memory of prior work. This file is the memory.
+
+---
+
+## CRITICAL: Never replace — only update the UI layer
+
+**Every session starts with zero memory of previous work.**
+The backend wiring, auth logic, DB queries, and API calls in each file were
+built across many sessions. They must NEVER be lost.
+
+### Rule: When a .dc.html arrives, do a surgical UI update — not a rewrite
+
+When Claude Design sends a new or updated .dc.html:
+
+1. **Read the existing `.tsx` file first** — understand what backend logic is already there
+2. **Identify only what changed visually** — layout, copy, colors, new components
+3. **Edit only those parts** — use the Edit tool, not Write/overwrite
+4. **Preserve everything else** — API fetches, auth checks, state management, error handling, DB queries
+
+If a page needs a full rewrite because the design is fundamentally different,
+explicitly list every piece of backend logic being preserved before touching anything.
+
+### Files with critical backend wiring — never overwrite blindly
+
+| File | What's wired |
+|---|---|
+| `src/app/studio/page.tsx` | Auth gate → redirects to `/login`, renders `<StudioDashboard>` |
+| `src/components/StudioDashboard.tsx` | `GET /api/shows?mine=1`, event creator posting to `POST /api/shows` with 45/45/10 |
+| `src/components/RadioStudio.tsx` | `GET /api/radio` for free-use crate tracks; deck A/B state; setlist management |
+| `src/app/radio/page.tsx` | `GET /api/shows?radioShows=1`; localStorage position + bookmark persistence |
+| `src/app/api/shows/route.ts` | Full show CRUD; rate limiting; 45/45/10 enforcement; radioShows filter |
+| `src/app/discover/page.tsx` | Live DB queries for artists, venues, upcoming shows |
+| `src/app/pages/page.tsx` | Auth gate; live DB query for user's own profiles |
+| `src/app/payout/[id]/page.tsx` | Auth gate; live show payout breakdown from DB |
+| `src/app/shows/[slug]/page.tsx` | Full show detail; HypeButton; TicketSaleCard; ShowSequencePlayer |
+| `src/app/artists/[slug]/page.tsx` | Artist/DJ profile; media assets; upcoming shows |
+| `src/app/venues/[slug]/page.tsx` | Venue profile; calendar; show listing |
+| `src/app/home/page.tsx` | Workbench shell; WorkbenchData from DB via `getWorkbenchData()` |
+| `middleware.ts` | HTTPS enforcement; www→apex redirect; auth protection for /studio /admin |
+| `src/lib/permissions.ts` | `isAdminSession()` — checks `role === 'ADMIN'` |
+| `src/lib/runtime-flags.ts` | Feature flags: invite codes, demo logins, media storage |
+
+---
 
 ## CRITICAL: UI source of truth
 
@@ -9,12 +51,25 @@
 Claude Code must NOT invent, redesign, or guess any UI.
 
 The workflow is:
-1. Open the .dc.html file listed for the page you're implementing
-2. Translate its HTML/CSS/React exactly into Next.js + Tailwind/CSS Modules
-3. Wire the API endpoints listed in DESIGN_SYNC.md
-4. Push — do not change layout, copy, colors, or components without a new .dc.html version
+1. Read the current `.tsx` file to understand what's already wired
+2. Open the .dc.html file listed for the page
+3. Update only what changed — translate new HTML/CSS/React into the existing `.tsx`
+4. Keep all data fetching, auth, and API wiring intact
+5. Push — do not change layout, copy, colors, or components without a new .dc.html version
 
 If a UI detail is unclear → ask Claude Design to clarify in the .dc.html. Never guess.
+
+---
+
+## Infrastructure (already configured — do not reconfigure)
+
+- **Database:** Supabase Postgres at `db.bjkabtzvgfshsrmjhrkx.supabase.co` — 71 migrations applied, all tables exist
+- **Cloudflare Worker:** `ihype` — deployed, secrets already set
+- **Hyperdrive:** `03f39c51f80a45d3bb6792a9676e292e` — pooled Postgres connection
+- **KV namespace:** `b6330641874a4420b240d3a82760a9aa` — runtime flags
+- **R2 bucket:** `ihype-media` — media storage
+- **Launch seed:** Already ran June 23 — demo accounts exist
+- **Admin account:** `colinatwood@gmail.com` — role = ADMIN
 
 ---
 
@@ -137,6 +192,8 @@ Nav implementation: copy `lib/NavShell.js` + `lib/shell.css` from Claude Design.
 
 | DO | DO NOT |
 |---|---|
+| **Read the existing .tsx before touching it** | **Overwrite a file without reading it first** |
+| Use Edit tool for UI updates | Use Write tool to replace whole files |
 | Translate .dc.html faithfully to .tsx | Invent UI not shown in .dc.html |
 | Use `var(--*)` CSS tokens from design system | Hardcode colors or type sizes |
 | Wire real API to existing mock data shapes | Change data structure without design update |
@@ -144,3 +201,4 @@ Nav implementation: copy `lib/NavShell.js` + `lib/shell.css` from Claude Design.
 | Keep split as 45/45/10 / 0% iHYPE | Change the revenue split in any copy |
 | Use audio-only for radio/live | Add video hosting or live video |
 | Reference `ihype.org` only | Use any other domain |
+| Preserve auth gates and DB queries on UI updates | Remove or replace backend logic during UI syncs |
