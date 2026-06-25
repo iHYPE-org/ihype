@@ -356,6 +356,11 @@ body:has(.site-dock) .site-shell {
 body:has(.wb-shell) .site-nav,
 body:has(.wb-root) .site-nav,
 body:has(.standalone-page) .site-nav { display: none !important; }
+/* Hide top nav on mobile — bottom nav handles navigation there */
+@media (max-width: 768px) {
+  .site-nav { display: none !important; }
+  .site-shell { padding-top: 0; }
+}
 body:has(.standalone-page) .site-shell { padding-top: 0; }
 body:has(.wb-root) .site-shell {
   isolation: auto;
