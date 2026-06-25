@@ -217,6 +217,7 @@ export type WorkbenchData = {
   degraded?: boolean;
   stripeConnectOnboarded?: boolean;
   trending?: WbTrendingProfile[];
+  featuredShows?: WbShow[];
   pageEditor?: WbPageEditor;
 };
 

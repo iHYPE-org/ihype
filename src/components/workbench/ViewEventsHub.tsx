@@ -27,7 +27,7 @@ function SubTabs({ value, options, onChange }: { value: string; options: string[
 // ─── Upcoming (formerly Near Me) ──────────────────────────────
 
 function UpcomingPanel({ data }: { data: WorkbenchData }) {
-  const shows = data.shows.slice(0, 6);
+  const shows = (data.shows.length > 0 ? data.shows : (data.featuredShows ?? [])).slice(0, 6);
   const distances = ['0.4 mi', '1.1 mi', '2.3 mi', '3.0 mi', '4.5 mi', '6.2 mi'];
   const TINTS = ['#ff5029', '#22e5d4', '#b983ff', '#ffb84a', '#ff3e9a', '#5b8cff'];
 
@@ -61,7 +61,12 @@ function UpcomingPanel({ data }: { data: WorkbenchData }) {
 
         {/* Nearby list */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {shows.map((s, i) => {
+          {shows.length === 0 ? (
+            <div style={{ padding: '28px 0', textAlign: 'center', fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-3)' }}>
+              No upcoming shows yet — check back soon or{' '}
+              <a href="/discover" style={{ color: 'var(--accent)', textDecoration: 'none' }}>discover artists</a> to follow.
+            </div>
+          ) : shows.map((s, i) => {
             const tint = TINTS[i % TINTS.length];
             return (
               <div key={s.id} style={{
@@ -76,7 +81,7 @@ function UpcomingPanel({ data }: { data: WorkbenchData }) {
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
-                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', marginTop: 2 }}>{s.venue} · {distances[i]}</div>
+                  <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)', marginTop: 2 }}>{s.venue} · {distances[i] ?? ''}</div>
                 </div>
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
                   <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 15, color: 'var(--ink)' }}>${s.price}</div>
@@ -193,7 +198,7 @@ function FavoritesPanel() {
 // ─── For You Panel ────────────────────────────────────────────
 
 function ForYouPanel({ data }: { data: WorkbenchData }) {
-  const recommended = data.shows.slice(0, 4);
+  const recommended = (data.shows.length > 0 ? data.shows : (data.featuredShows ?? [])).slice(0, 4);
   const TINTS = ['#22e5d4', '#b983ff', '#ffb84a', '#ff3e9a'];
   const reasons = ['Because you hyped similar artists', 'Trending in your city', 'Matches your genre taste', 'Artist you follow'];
 

@@ -96,7 +96,7 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
       hypedToday, listeningNowCount, trendingProfiles,
       mediaUploads, hostedShows, headlinerShows, accountsPayableEntries,
       dbNotifications, weeklyListensCount, totalHypeGivenCount,
-      userBadges, dbCollabPosts, dbAvailabilityDates,
+      userBadges, dbCollabPosts, dbFeaturedShows, dbAvailabilityDates,
     ] = await Promise.all([
       // Fetch user's ticket orders
       db.ticketOrder.findMany({
@@ -305,6 +305,22 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
         take: 20,
         select: { id: true, type: true, role: true, body: true, contact: true, createdAt: true, userId: true },
       }).catch(() => [] as { id: string; type: string; role: string; body: string; contact: string | null; createdAt: Date; userId: string }[]),
+      // Upcoming public shows (for fans / empty state)
+      db.show.findMany({
+        where: { status: { in: ['SCHEDULED', 'LIVE'] }, startsAt: { gte: new Date() } },
+        take: 8,
+        orderBy: { hypeCount: 'desc' },
+        select: {
+          id: true, title: true, startsAt: true, hypeCount: true,
+          ticketsSoldCount: true, ticketCapacity: true, ticketPriceCents: true,
+          venueProfile: { select: { name: true } },
+          headlinerProfile: { select: { name: true } },
+        },
+      }).catch(() => [] as {
+        id: string; title: string; startsAt: Date; hypeCount: number;
+        ticketsSoldCount: number; ticketCapacity: number | null; ticketPriceCents: number;
+        venueProfile: { name: string } | null; headlinerProfile: { name: string } | null;
+      }[]),
       // Upcoming availability dates for creator profiles
       isCreatorProfile && primaryProfile
         ? db.availabilityDate.findMany({
@@ -613,6 +629,29 @@ export async function getWorkbenchData(userId: string): Promise<WorkbenchData> {
         songsPlayed: songsPlayedCount,
         eventsAttended: ticketOrders.filter(o => o.status === 'CAPTURED').length,
       },
+      featuredShows: dbFeaturedShows.map((s) => {
+        const now = new Date();
+        const diff = s.startsAt.getTime() - now.getTime();
+        const sold = s.ticketsSoldCount;
+        const cap = s.ticketCapacity ?? 0;
+        const nearSold = cap > 0 && sold / cap > 0.85;
+        const tonight = diff < 86400000 && diff > 0;
+        const thisWeek = diff < 7 * 86400000 && diff > 0;
+        const status: 'TONIGHT' | 'THIS WEEK' | 'UPCOMING' | 'NEAR SOLD' = nearSold ? 'NEAR SOLD' : tonight ? 'TONIGHT' : thisWeek ? 'THIS WEEK' : 'UPCOMING';
+        return {
+          id: s.id,
+          name: s.headlinerProfile?.name ?? s.title,
+          venue: s.venueProfile?.name ?? 'TBD',
+          date: s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+          time: s.startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+          hype: s.hypeCount,
+          sold,
+          capacity: cap,
+          price: Math.round(s.ticketPriceCents / 100),
+          status,
+          setlistProgress: null,
+        };
+      }),
       trending: trendingProfiles.map((p): WbTrendingProfile => ({
         id: p.id,
         name: p.name,
