@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 interface Prefs {
@@ -43,6 +44,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     fetch('/api/me')
@@ -71,6 +73,7 @@ export default function SettingsPage() {
       } else {
         setSaved(true);
         setTimeout(() => setSaved(false), 2500);
+        router.refresh();
       }
     } catch {
       setError('Network error');

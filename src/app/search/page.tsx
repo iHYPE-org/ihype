@@ -3,58 +3,73 @@
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
 
-interface Result {
-  id: string;
-  slug: string;
-  name: string;
-  type: string;
-  city?: string | null;
-  hypeCount: number;
-}
+type ResultType = 'artist' | 'venue' | 'promoter' | 'song' | 'show' | 'genre';
 
-interface ShowResult {
+interface ResultItem {
+  type: ResultType;
   id: string;
-  slug: string;
-  title: string;
-  startsAt: string;
-  status: string;
-  venueCity?: string | null;
-  headlinerName?: string | null;
+  name: string;
+  subtitle: string;
+  slug?: string;
+  hypeCount?: number;
+  status?: string;
+  isRadioShow?: boolean;
 }
 
 interface SearchResponse {
-  profiles: Result[];
-  shows: ShowResult[];
+  results: ResultItem[];
+  genres: string[];
+  counts?: Record<string, number>;
 }
 
 const TYPE_COLOR: Record<string, string> = {
-  ARTIST: '#ff5029',
-  DJ: '#ff3e9a',
-  VENUE: '#22e5d4',
-  FAN: '#b983ff',
+  artist: '#ff5029',
+  promoter: '#ff3e9a',
+  venue: '#22e5d4',
+  fan: '#b983ff',
+  show: 'rgba(240,235,229,.6)',
+  song: '#b983ff',
 };
 
 const TYPE_LABEL: Record<string, string> = {
-  ARTIST: 'Artist',
-  DJ: 'Promoter',
-  VENUE: 'Venue',
-  FAN: 'Fan',
+  artist: 'Artist',
+  promoter: 'DJ / Promoter',
+  venue: 'Venue',
+  show: 'Show',
+  song: 'Track',
+  genre: 'Genre',
 };
+
+const TYPE_ICON: Record<string, string> = {
+  artist: '🎤',
+  promoter: '🎧',
+  venue: '🏛️',
+  show: '🎟️',
+  song: '🎵',
+  genre: '🎼',
+};
+
+function resultHref(r: ResultItem): string | null {
+  if (r.type === 'venue') return r.slug ? `/venues/${r.slug}` : null;
+  if (r.type === 'artist' || r.type === 'promoter') return r.slug ? `/artists/${r.slug}` : null;
+  if (r.type === 'show') return r.slug ? `/shows/${r.slug}` : null;
+  return null;
+}
 
 export default function SearchPage() {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchResponse | null>(null);
+  const [data, setData] = useState<SearchResponse | null>(null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
   async function doSearch(q: string) {
-    if (!q.trim()) { setResults(null); return; }
+    if (!q.trim()) { setData(null); return; }
     setError(null);
     startTransition(async () => {
       try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
         if (!res.ok) { setError('Search failed'); return; }
-        setResults(await res.json());
+        setData(await res.json());
       } catch {
         setError('Network error');
       }
@@ -67,10 +82,13 @@ export default function SearchPage() {
     doSearch(val);
   }
 
-  const profileRoute = (type: string, slug: string) =>
-    type === 'VENUE' ? `/venues/${slug}` : `/artists/${slug}`;
+  const results = data?.results ?? [];
+  const hasResults = results.length > 0;
 
-  const hasResults = results && (results.profiles.length > 0 || results.shows.length > 0);
+  // Group by type for display
+  const profiles = results.filter(r => ['artist', 'venue', 'promoter'].includes(r.type));
+  const shows = results.filter(r => r.type === 'show');
+  const songs = results.filter(r => r.type === 'song');
 
   return (
     <div style={{ maxWidth: 700, margin: '0 auto', padding: '32px 24px 100px' }}>
@@ -92,12 +110,9 @@ export default function SearchPage() {
       {isPending && (
         <p style={{ color: 'rgba(240,235,229,.35)', fontSize: 13, fontFamily: 'var(--font-mono)' }}>Searching…</p>
       )}
+      {error && <p style={{ color: '#ff5029', fontSize: 13 }}>{error}</p>}
 
-      {error && (
-        <p style={{ color: '#ff5029', fontSize: 13 }}>{error}</p>
-      )}
-
-      {!isPending && results && !hasResults && (
+      {!isPending && data && !hasResults && (
         <div className="ihype-empty-state">
           <div className="icon">🔍</div>
           <h3>No results for &ldquo;{query}&rdquo;</h3>
@@ -108,32 +123,62 @@ export default function SearchPage() {
       {hasResults && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 36 }}>
 
-          {results.profiles.length > 0 && (
+          {profiles.length > 0 && (
             <section>
               <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.4)', marginBottom: 12 }}>
                 Artists &amp; Venues
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {results.profiles.map(p => (
-                  <Link key={p.id} href={profileRoute(p.type, p.slug)} style={{ textDecoration: 'none' }}>
+                {profiles.map(r => {
+                  const href = resultHref(r);
+                  const color = TYPE_COLOR[r.type] ?? '#ff5029';
+                  const card = (
                     <div className="ihype-card" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px' }}>
                       <div style={{
                         width: 38, height: 38, borderRadius: 19, flexShrink: 0,
-                        background: `linear-gradient(135deg, ${TYPE_COLOR[p.type] ?? '#ff5029'}, #b983ff)`,
+                        background: `linear-gradient(135deg, ${color}, #b983ff)`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17,
                       }}>
-                        {p.type === 'VENUE' ? '🏛️' : '🎤'}
+                        {TYPE_ICON[r.type] ?? '🎤'}
                       </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, color: 'var(--ink)' }}>{p.name}</div>
-                        <div style={{ fontSize: 11, color: TYPE_COLOR[p.type] ?? '#ff5029', fontFamily: 'var(--font-mono)', letterSpacing: '.06em', textTransform: 'uppercase', marginTop: 2 }}>
-                          {TYPE_LABEL[p.type] ?? p.type}{p.city ? ` · ${p.city}` : ''}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</div>
+                        <div style={{ fontSize: 11, color, fontFamily: 'var(--font-mono)', letterSpacing: '.06em', textTransform: 'uppercase', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {TYPE_LABEL[r.type]}{r.subtitle ? ` · ${r.subtitle}` : ''}
                         </div>
                       </div>
-                      {p.hypeCount > 0 && (
-                        <span style={{ fontSize: 11, color: 'rgba(240,235,229,.3)', fontFamily: 'var(--font-mono)' }}>
-                          🔥 {p.hypeCount.toLocaleString()}
+                      {(r.hypeCount ?? 0) > 0 && (
+                        <span style={{ fontSize: 11, color: 'rgba(240,235,229,.3)', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>
+                          🔥 {r.hypeCount?.toLocaleString()}
                         </span>
+                      )}
+                    </div>
+                  );
+                  return href ? (
+                    <Link key={r.id} href={href} style={{ textDecoration: 'none' }}>{card}</Link>
+                  ) : (
+                    <div key={r.id}>{card}</div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {shows.length > 0 && (
+            <section>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.4)', marginBottom: 12 }}>
+                Shows
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {shows.map(r => (
+                  <Link key={r.id} href={r.slug ? `/shows/${r.slug}` : '#'} style={{ textDecoration: 'none' }}>
+                    <div className="ihype-card" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, color: 'var(--ink)' }}>{r.name}</div>
+                        <div style={{ fontSize: 11, color: 'rgba(240,235,229,.4)', marginTop: 2 }}>{r.subtitle}</div>
+                      </div>
+                      {r.status === 'LIVE' && (
+                        <span style={{ fontSize: 10, color: 'var(--accent)', fontFamily: 'var(--font-mono)', letterSpacing: '.1em' }}>● LIVE</span>
                       )}
                     </div>
                   </Link>
@@ -142,29 +187,23 @@ export default function SearchPage() {
             </section>
           )}
 
-          {results.shows.length > 0 && (
+          {songs.length > 0 && (
             <section>
               <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.4)', marginBottom: 12 }}>
-                Shows
+                Tracks
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {results.shows.map(s => {
-                  const date = new Date(s.startsAt).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-                  return (
-                    <Link key={s.id} href={`/shows/${s.slug}`} style={{ textDecoration: 'none' }}>
-                      <div className="ihype-card" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px' }}>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, color: 'var(--ink)' }}>{s.title}</div>
-                          <div style={{ fontSize: 11, color: 'rgba(240,235,229,.4)', marginTop: 2 }}>
-                            {s.headlinerName ?? 'iHYPE Radio'}
-                            {s.venueCity ? ` · ${s.venueCity}` : ''}
-                          </div>
-                        </div>
-                        <span style={{ fontSize: 11, color: 'rgba(240,235,229,.3)', fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap' }}>{date}</span>
+                {songs.map(r => (
+                  <Link key={r.id} href={r.slug ? `/artists/${r.slug}` : '#'} style={{ textDecoration: 'none' }}>
+                    <div className="ihype-card" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px' }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(185,131,255,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>🎵</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, color: 'var(--ink)' }}>{r.name}</div>
+                        <div style={{ fontSize: 11, color: 'rgba(240,235,229,.4)', marginTop: 2 }}>{r.subtitle}</div>
                       </div>
-                    </Link>
-                  );
-                })}
+                    </div>
+                  </Link>
+                ))}
               </div>
             </section>
           )}

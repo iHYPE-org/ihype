@@ -25,24 +25,47 @@ const TYPE_LABEL: Record<string, string> = {
   FAN: 'Fan',
 };
 
-export default async function DiscoverPage() {
+export default async function DiscoverPage({ searchParams }: { searchParams?: Promise<{ city?: string; genre?: string }> }) {
   const session = await auth().catch(() => null);
+  const params = searchParams ? await searchParams : {};
+  const cityFilter = params.city?.trim() || null;
+  const genreFilter = params.genre?.trim() || null;
+
+  // Collect distinct cities and genres for filter chips
+  const [allCities, allGenres] = await Promise.all([
+    db.profile.findMany({ where: { type: { in: ['ARTIST', 'DJ', 'VENUE'] }, city: { not: null } }, select: { city: true }, distinct: ['city'], orderBy: { city: 'asc' }, take: 30 }),
+    db.profile.findMany({ where: { type: { in: ['ARTIST', 'DJ'] }, genres: { isEmpty: false } }, select: { genres: true }, take: 200 }),
+  ]);
+  const cities = allCities.map(p => p.city).filter(Boolean) as string[];
+  const genres = [...new Set(allGenres.flatMap(p => p.genres))].sort().slice(0, 20);
 
   const [topArtists, topVenues, upcomingShows] = await Promise.all([
     db.profile.findMany({
-      where: { type: { in: ['ARTIST', 'DJ'] }, ...getDemoOwnerExclusion() },
+      where: {
+        type: { in: ['ARTIST', 'DJ'] },
+        ...getDemoOwnerExclusion(),
+        ...(cityFilter ? { city: { contains: cityFilter, mode: 'insensitive' as const } } : {}),
+        ...(genreFilter ? { genres: { has: genreFilter } } : {}),
+      },
       orderBy: { hypeCount: 'desc' },
       take: 12,
       select: { id: true, slug: true, name: true, type: true, city: true, stateRegion: true, hypeCount: true, avatarImage: true },
     }),
     db.profile.findMany({
-      where: { type: 'VENUE', ...getDemoOwnerExclusion() },
+      where: {
+        type: 'VENUE',
+        ...getDemoOwnerExclusion(),
+        ...(cityFilter ? { city: { contains: cityFilter, mode: 'insensitive' as const } } : {}),
+      },
       orderBy: { hypeCount: 'desc' },
       take: 6,
       select: { id: true, slug: true, name: true, type: true, city: true, stateRegion: true, hypeCount: true },
     }),
     db.show.findMany({
-      where: { status: { in: ['SCHEDULED', 'LIVE'] }, startsAt: { gte: new Date() }, ...getDemoCreatorExclusion() },
+      where: {
+        status: { in: ['SCHEDULED', 'LIVE'] }, startsAt: { gte: new Date() }, ...getDemoCreatorExclusion(),
+        ...(cityFilter ? { venueProfile: { city: { contains: cityFilter, mode: 'insensitive' as const } } } : {}),
+      },
       orderBy: { startsAt: 'asc' },
       take: 8,
       select: {
@@ -57,10 +80,18 @@ export default async function DiscoverPage() {
   const profileRoute = (type: string, slug: string) =>
     type === 'VENUE' ? `/venues/${slug}` : `/artists/${slug}`;
 
+  const buildUrl = (city: string | null, genre: string | null) => {
+    const p = new URLSearchParams();
+    if (city) p.set('city', city);
+    if (genre) p.set('genre', genre);
+    const q = p.toString();
+    return `/discover${q ? `?${q}` : ''}`;
+  };
+
   return (
     <div style={{ maxWidth: 1000, margin: '0 auto', padding: '32px 24px 100px' }}>
 
-      <div style={{ marginBottom: 40 }}>
+      <div style={{ marginBottom: 32 }}>
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 8 }}>
           DISCOVER
         </p>
@@ -71,6 +102,50 @@ export default async function DiscoverPage() {
           Ranked by real fan hypes — no paid promotion.
         </p>
       </div>
+
+      {/* Filters */}
+      {(cities.length > 0 || genres.length > 0) && (
+        <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {cities.length > 0 && (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(240,235,229,.3)', flexShrink: 0 }}>City</span>
+              {cityFilter && (
+                <Link href={buildUrl(null, genreFilter)} style={{ textDecoration: 'none' }}>
+                  <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'var(--font-mono)', background: 'var(--accent)', color: '#fff', cursor: 'pointer' }}>
+                    {cityFilter} ×
+                  </span>
+                </Link>
+              )}
+              {cities.filter(c => c !== cityFilter).map(c => (
+                <Link key={c} href={buildUrl(c, genreFilter)} style={{ textDecoration: 'none' }}>
+                  <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'var(--font-mono)', background: 'rgba(255,255,255,.06)', color: 'rgba(240,235,229,.6)', cursor: 'pointer', border: '1px solid rgba(255,255,255,.08)' }}>
+                    {c}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+          {genres.length > 0 && (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(240,235,229,.3)', flexShrink: 0 }}>Genre</span>
+              {genreFilter && (
+                <Link href={buildUrl(cityFilter, null)} style={{ textDecoration: 'none' }}>
+                  <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'var(--font-mono)', background: '#ff3e9a', color: '#fff', cursor: 'pointer' }}>
+                    {genreFilter} ×
+                  </span>
+                </Link>
+              )}
+              {genres.filter(g => g !== genreFilter).map(g => (
+                <Link key={g} href={buildUrl(cityFilter, g)} style={{ textDecoration: 'none' }}>
+                  <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'var(--font-mono)', background: 'rgba(255,255,255,.06)', color: 'rgba(240,235,229,.6)', cursor: 'pointer', border: '1px solid rgba(255,255,255,.08)' }}>
+                    {g}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Upcoming shows */}
       {upcomingShows.length > 0 && (
