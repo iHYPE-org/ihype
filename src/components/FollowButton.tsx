@@ -48,14 +48,27 @@ export function FollowButton({ profileId }: { profileId: string }) {
 
   return (
     <button
-      className={`button small${following ? ' secondary' : ''}`}
       disabled={busy}
       onClick={toggle}
       type="button"
       aria-pressed={following}
       aria-label={following ? 'Unfollow' : 'Follow'}
+      style={{
+        width: '100%',
+        padding: '7px 10px',
+        border: following ? '1px solid rgba(255,80,41,.4)' : '1px solid rgba(255,255,255,.12)',
+        borderRadius: 7,
+        background: following ? 'rgba(255,80,41,.1)' : 'rgba(255,255,255,.05)',
+        color: following ? 'var(--accent, #ff5029)' : 'rgba(240,235,229,.65)',
+        fontSize: 11,
+        fontFamily: 'var(--font-mono)',
+        letterSpacing: '.06em',
+        cursor: busy ? 'default' : 'pointer',
+        transition: 'all 150ms ease',
+        opacity: busy ? 0.6 : 1,
+      }}
     >
-      {following ? 'Following' : 'Follow'} · {count}
+      {following ? '✓ Following' : '+ Follow'}{count > 0 ? ` · ${count}` : ''}
     </button>
   );
 }
