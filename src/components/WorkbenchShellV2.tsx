@@ -393,7 +393,8 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
       // ── 4 primary hub views ─────────────────────────────────
       case 'listen':
         return <ViewErrorBoundary viewName="Listen">
-          <ViewListen data={liveData} onPickTrack={onPickTrack} currentIdx={currentIdx} />
+          <ViewListen data={liveData} onPickTrack={onPickTrack} currentIdx={currentIdx}
+            seedPlaying={seedPlaying} setSeedPlaying={setSeedPlaying} onSave={onSeedSave} />
         </ViewErrorBoundary>;
       case 'discover':
         return <ViewErrorBoundary viewName="Discover">
@@ -428,7 +429,7 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
       case 'matchmaker':      return <ViewErrorBoundary viewName="Booking Matchmaker"><ViewMatchmaker /></ViewErrorBoundary>;
       case 'cockpit':         return <ViewErrorBoundary viewName="Page Cockpit"><ViewCockpit data={liveData} /></ViewErrorBoundary>;
       case 'leaderboard':     return <ViewErrorBoundary viewName="Leaderboard"><ViewLeaderboard /></ViewErrorBoundary>;
-      default:                return <ViewErrorBoundary viewName="Listen"><ViewListen data={liveData} onPickTrack={onPickTrack} currentIdx={currentIdx} /></ViewErrorBoundary>;
+      default:                return <ViewErrorBoundary viewName="Listen"><ViewListen data={liveData} onPickTrack={onPickTrack} currentIdx={currentIdx} seedPlaying={seedPlaying} setSeedPlaying={setSeedPlaying} onSave={onSeedSave} /></ViewErrorBoundary>;
     }
   })();
 

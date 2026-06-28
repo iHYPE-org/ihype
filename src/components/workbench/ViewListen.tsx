@@ -3,51 +3,37 @@
 import React, { useState, useRef } from 'react';
 import type { WorkbenchData } from '@/types/workbench';
 import { ViewRadio } from './ViewRadio';
+import { ViewSeeds } from './ViewSeeds';
 
-// ─── Accordion ───────────────────────────────────────────────
+// ─── Tabs ─────────────────────────────────────────────────────
 
-type SectionId = 'Search' | 'Playlists' | 'Radio' | 'Charts';
+type TabId = 'seeds' | 'search' | 'radio' | 'charts' | 'playlists';
 
-const SECTIONS: { id: SectionId; icon: React.ReactNode; title: string; sub: string }[] = [
+const LISTEN_TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
   {
-    id: 'Search',
-    icon: (
-      <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-        <circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>
-      </svg>
-    ),
-    title: 'Search',
-    sub: 'Find artists, tracks & playlists',
+    id: 'search',
+    label: 'Search',
+    icon: <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>,
   },
   {
-    id: 'Playlists',
-    icon: (
-      <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-        <circle cx="8" cy="18" r="3"/><circle cx="18" cy="16" r="3"/><path d="M11 18V6l10-2v12"/>
-      </svg>
-    ),
-    title: 'Playlists',
-    sub: 'Collections you keep on repeat',
+    id: 'seeds',
+    label: 'Seeds',
+    icon: <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M12 2c2 3 4 4 4 7a4 4 0 1 1-8 0c0-3 2-4 4-7Z"/><path d="M12 13v6m-3 3h6"/></svg>,
   },
   {
-    id: 'Radio',
-    icon: (
-      <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-        <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M12 2v1.5M12 20.5V22M2 12h1.5M20.5 12H22"/>
-      </svg>
-    ),
-    title: 'Radio',
-    sub: 'Artist-curated, on air now',
+    id: 'radio',
+    label: 'Radio',
+    icon: <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M12 2v1.5M12 20.5V22M2 12h1.5M20.5 12H22"/></svg>,
   },
   {
-    id: 'Charts',
-    icon: (
-      <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-        <path d="M12 2c2 3 4 4 4 7a4 4 0 1 1-8 0c0-3 2-4 4-7Z"/><path d="M12 13v6m-3 3h6"/>
-      </svg>
-    ),
-    title: 'Charts',
-    sub: 'What your city is hyping',
+    id: 'charts',
+    label: 'Charts',
+    icon: <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>,
+  },
+  {
+    id: 'playlists',
+    label: 'Playlists',
+    icon: <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="8" cy="18" r="3"/><circle cx="18" cy="16" r="3"/><path d="M11 18V6l10-2v12"/></svg>,
   },
 ];
 
@@ -229,87 +215,60 @@ function ChartsPanel({ data, onPickTrack }: { data: WorkbenchData; onPickTrack: 
   );
 }
 
-// ─── Accordion Item ───────────────────────────────────────────
-
-function AccordionItem({
-  section,
-  isOpen,
-  onToggle,
-  children,
-}: {
-  section: typeof SECTIONS[0];
-  isOpen: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <button
-        onClick={onToggle}
-        style={{
-          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '14px 22px', background: 'none', border: 'none',
-          borderTop: '1px solid rgba(255,255,255,.06)',
-          textAlign: 'left', cursor: 'pointer',
-        }}
-      >
-        <div>
-          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 15, color: 'var(--ink)', lineHeight: 1 }}>{section.title}</div>
-          <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, color: 'var(--ink-3)', marginTop: 3, letterSpacing: '.04em' }}>{section.sub}</div>
-        </div>
-        <svg
-          width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="2.2" strokeLinecap="round"
-          style={{ flexShrink: 0, transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform .2s' }}
-        >
-          <path d="m9 18 6-6-6-6"/>
-        </svg>
-      </button>
-      {isOpen && (
-        <div style={{ animation: 'accordionFadeIn .18s ease' }}>
-          {children}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ─── Main Component ───────────────────────────────────────────
 
-export function ViewListen({ data, onPickTrack, currentIdx }: { data: WorkbenchData; onPickTrack: (i: number) => void; currentIdx: number }) {
-  const [openSection, setOpenSection] = useState<SectionId>('Search');
+export function ViewListen({
+  data, onPickTrack, currentIdx,
+  seedPlaying, setSeedPlaying, onSave,
+}: {
+  data: WorkbenchData; onPickTrack: (i: number) => void; currentIdx: number;
+  seedPlaying: boolean; setSeedPlaying: (v: boolean) => void; onSave: (idx: number) => void;
+}) {
+  const [tab, setTab] = useState<TabId>('seeds');
 
   return (
     <div>
-      {/* Static header */}
-      <div style={{ padding: '18px 22px 14px', borderBottom: '1px solid rgba(255,255,255,.06)' }}>
+      {/* Header + tab row */}
+      <div style={{ padding: '18px 22px 0', borderBottom: '1px solid rgba(255,255,255,.06)' }}>
         <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.2em', textTransform: 'uppercase', color: 'var(--ink-3)', fontWeight: 700, marginBottom: 6 }}>Listen</div>
-        <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 28, letterSpacing: '-.025em', margin: '0 0 0', lineHeight: 1 }}>Everything you play.</h1>
+        <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 28, letterSpacing: '-.025em', margin: '0 0 14px', lineHeight: 1 }}>Everything you play.</h1>
+        <div style={{ display: 'flex', gap: 2 }}>
+          {LISTEN_TABS.map(t => {
+            const active = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '8px 14px', cursor: 'pointer',
+                  background: 'none', border: 'none',
+                  borderBottom: active ? '2px solid var(--accent)' : '2px solid transparent',
+                  color: active ? 'var(--ink)' : 'var(--ink-3)',
+                  fontFamily: 'var(--f-b)', fontWeight: 600, fontSize: 13,
+                  transition: 'color .15s, border-color .15s',
+                }}
+              >
+                {t.icon}
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Accordion */}
-      <div style={{ padding: '0 0 40px', display: 'flex', flexDirection: 'column' }}>
-        {SECTIONS.map(section => (
-          <AccordionItem
-            key={section.id}
-            section={section}
-            isOpen={openSection === section.id}
-            onToggle={() => setOpenSection(section.id)}
-          >
-            {section.id === 'Search' && <SearchPanel data={data} onPickTrack={onPickTrack} currentIdx={currentIdx} />}
-            {section.id === 'Playlists' && <PlaylistsPanel data={data} onPickTrack={onPickTrack} />}
-            {section.id === 'Radio' && (
-              <div style={{ padding: '0 0 8px' }}>
-                <ViewRadio data={data} onPickTrack={onPickTrack} />
-              </div>
-            )}
-            {section.id === 'Charts' && <ChartsPanel data={data} onPickTrack={onPickTrack} />}
-          </AccordionItem>
-        ))}
+      {/* Active panel */}
+      <div key={tab} style={{ animation: 'listenTabIn .2s ease both' }}>
+        {tab === 'search'    && <SearchPanel data={data} onPickTrack={onPickTrack} currentIdx={currentIdx} />}
+        {tab === 'seeds'     && <ViewSeeds data={data} seedPlaying={seedPlaying} setSeedPlaying={setSeedPlaying} onSave={onSave} />}
+        {tab === 'radio'     && <div style={{ padding: '0 0 8px' }}><ViewRadio data={data} onPickTrack={onPickTrack} /></div>}
+        {tab === 'charts'    && <ChartsPanel data={data} onPickTrack={onPickTrack} />}
+        {tab === 'playlists' && <PlaylistsPanel data={data} onPickTrack={onPickTrack} />}
       </div>
 
       <style>{`
-        @keyframes accordionFadeIn {
-          from { opacity: 0; transform: translateY(-6px); }
+        @keyframes listenTabIn {
+          from { opacity: 0; transform: translateY(6px); }
           to   { opacity: 1; transform: translateY(0); }
         }
       `}</style>
