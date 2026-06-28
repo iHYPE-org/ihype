@@ -84,7 +84,7 @@ export default async function PagesPage() {
           </Link>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="ihype-list" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {profiles.map(p => {
             const color = TYPE_COLOR[p.type] ?? '#ff5029';
             return (

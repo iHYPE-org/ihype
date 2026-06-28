@@ -98,7 +98,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 8 }}>
           DISCOVER
         </p>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', fontWeight: 800, letterSpacing: '-.03em', margin: '0 0 8px' }}>
+        <h1 className="ihype-hero-heading" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', fontWeight: 800, letterSpacing: '-.03em', margin: '0 0 8px' }}>
           Find your next favourite artist
         </h1>
         <p style={{ color: 'rgba(240,235,229,.55)', fontSize: 14, margin: 0 }}>
@@ -159,7 +159,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
               VIEW ALL →
             </Link>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
+          <div className="ihype-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
             {upcomingShows.map(s => {
               const isLive = s.status === 'LIVE';
               const date = new Date(s.startsAt).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
@@ -200,7 +200,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
           <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, margin: '0 0 16px' }}>
             Trending artists &amp; DJs
           </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
+          <div className="ihype-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
             {topArtists.map(p => (
               <div key={p.id} className="ihype-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <Link href={profileRoute(p.type, p.slug)} style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
@@ -255,7 +255,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
           <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, margin: '0 0 16px' }}>
             Venues
           </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+          <div className="ihype-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
             {topVenues.map(p => (
               <Link key={p.id} href={`/venues/${p.slug}`} style={{ textDecoration: 'none' }}>
                 <div className="ihype-card" style={{ padding: '16px 18px' }}>

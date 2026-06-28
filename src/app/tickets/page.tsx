@@ -81,7 +81,7 @@ export default async function MyTicketsPage() {
           </Link>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div className="ihype-list" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {orders.map(order => {
             const show = order.show;
             const date = new Date(show.startsAt).toLocaleDateString('en-US', {
