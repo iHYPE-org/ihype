@@ -131,7 +131,7 @@ export default function SearchPage() {
               <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.4)', marginBottom: 12 }}>
                 Artists &amp; Venues
               </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className="ihype-list" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {profiles.map(r => {
                   const href = resultHref(r);
                   const color = TYPE_COLOR[r.type] ?? '#ff5029';
@@ -177,7 +177,7 @@ export default function SearchPage() {
               <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.4)', marginBottom: 12 }}>
                 Shows
               </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className="ihype-list" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {shows.map(r => (
                   <Link key={r.id} href={r.slug ? `/shows/${r.slug}` : '#'} style={{ textDecoration: 'none' }}>
                     <div className="ihype-card" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px' }}>
