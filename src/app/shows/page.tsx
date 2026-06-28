@@ -58,7 +58,7 @@ export default async function ShowsIndexPage({
     : allShows;
 
   const shows = genreFilter
-    ? locationFiltered.filter((s) => s.headlinerProfile?.genres?.some((g: string) => g.toLowerCase() === genreFilter.toLowerCase()))
+    ? locationFiltered.filter((s) => s.headlinerProfile?.genres?.some((g) => g.toLowerCase() === genreFilter.toLowerCase()))
     : locationFiltered;
 
   // Collect all genres for filter chips

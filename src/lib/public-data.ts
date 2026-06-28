@@ -33,7 +33,8 @@ const publicShowArgs = Prisma.validator<Prisma.ShowDefaultArgs>()({
       select: {
         name: true,
         city: true,
-        country: true
+        country: true,
+        genres: true
       }
     }
   }
