@@ -69,7 +69,7 @@ function WMShowHypersSheet({ showId, onClose }: { showId: string | null; onClose
       }}>
         <div style={{ padding: '12px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.line}`, minHeight: 52 }}>
           <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 15, color: T.ink, lineHeight: 1.2 }}>Who Hyped This · {total.toLocaleString()}</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontSize: 18, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 6, flexShrink: 0 }}>✕</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontSize: 18, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, borderRadius: 8, flexShrink: 0 }}>✕</button>
         </div>
         <div style={{ overflowY: 'auto', padding: '10px 18px 18px' }}>
           {loading && <div style={{ textAlign: 'center', padding: 24, color: T.ink3, fontFamily: T.fm, fontSize: 13 }}>Loading...</div>}
@@ -131,6 +131,7 @@ function WMTrendingStrip({ city }: { city: string }) {
             🔥 {s.title}
           </div>
         ))}
+        <div style={{ flexShrink: 0, width: 1 }} aria-hidden="true" />
       </div>
     </div>
   );
@@ -220,7 +221,7 @@ function WMSetlistVoteSheet({ showId, onClose }: { showId: string | null; onClos
       }}>
         <div style={{ padding: '12px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${T.line}`, minHeight: 52 }}>
           <div style={{ fontFamily: T.fd, fontWeight: 700, fontSize: 15, color: T.ink, lineHeight: 1.2 }}>Vote for Setlist</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontSize: 18, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, borderRadius: 6, flexShrink: 0 }}>✕</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.ink3, fontSize: 18, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, borderRadius: 8, flexShrink: 0 }}>✕</button>
         </div>
         <div style={{ overflowY: 'auto', padding: '10px 18px 18px' }}>
           {loading && <div style={{ textAlign: 'center', padding: 24, color: T.ink3, fontFamily: T.fm, fontSize: 13 }}>Loading...</div>}
@@ -861,6 +862,7 @@ function ScreenMe({ data }: { data: WorkbenchData }) {
               <div style={{ fontFamily: T.fm, fontSize: 12, color: T.ink2, marginTop: 3, letterSpacing: '.04em' }}>{t.d}</div>
             </div>
           ))}
+          <div style={{ flexShrink: 0, width: 1 }} aria-hidden="true" />
         </div>
       </div>
 
@@ -1097,7 +1099,7 @@ function WMFeedbackSheet({ onClose }: { onClose: () => void }) {
         background: T.bg3, borderTop: `1px solid ${T.line2}`,
         borderRadius: '18px 18px 0 0',
         boxShadow: '0 -12px 48px rgba(0,0,0,.7)',
-        padding: '20px 18px 40px',
+        padding: '20px 18px max(40px, calc(24px + env(safe-area-inset-bottom)))',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <div style={{ fontFamily: T.fd, fontWeight: 800, fontSize: 18, letterSpacing: '-.025em' }}>Send feedback</div>
@@ -1466,7 +1468,7 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
         ref={mainScrollRef}
         role="main"
         className="wm-scroll"
-        style={{ flex: 1, overflowY: tab === 'discover' ? 'hidden' : 'auto', overflowX: 'hidden', position: 'relative', scrollbarWidth: 'none' }}
+        style={{ flex: 1, overflowY: tab === 'discover' ? 'hidden' : 'auto', overflowX: 'hidden', position: 'relative', scrollbarWidth: 'none', overscrollBehavior: 'contain', paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
         onTouchStart={handleMainTouchStart}
         onTouchMove={handleMainTouchMove}
         onTouchEnd={handleMainTouchEnd}

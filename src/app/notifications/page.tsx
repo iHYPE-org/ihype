@@ -171,7 +171,8 @@ export default function NotificationsPage() {
                     onClick={(e) => deleteOne(e, n.id)}
                     title="Dismiss"
                     style={{
-                      background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px',
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
                       color: 'rgba(240,235,229,.2)', fontSize: 16, lineHeight: 1,
                       transition: 'color 150ms',
                     }}
