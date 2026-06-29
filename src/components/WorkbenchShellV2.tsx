@@ -435,8 +435,6 @@ export function WorkbenchShell({ data, starterPack = [] }: { data: WorkbenchData
 
   const showXPFooter = ['discover', 'seeds', 'listen', 'events'].includes(view);
 
-  if (!mounted) return null;
-
   return (
     <GamificationProvider>
     <>
