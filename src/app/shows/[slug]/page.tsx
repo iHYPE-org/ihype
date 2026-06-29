@@ -67,6 +67,14 @@ export async function generateMetadata(
   const description = descParts.join(' · ') || 'Live show on iHYPE';
   const image       = show.posterImage ?? undefined;
 
+  const ogParams = new URLSearchParams({
+    title: show.title,
+    subtitle: [venueName, venueCity].filter(Boolean).join(' · ') || description,
+    type: 'show',
+    ...(headliner ? { kicker: `Featuring ${headliner}` } : {}),
+  });
+  const ogImage = `/api/og?${ogParams.toString()}`;
+
   return {
     title,
     description,
@@ -76,13 +84,13 @@ export async function generateMetadata(
       title,
       description,
       url:   `/shows/${slug}`,
-      ...(image ? { images: [{ url: image }] } : {}),
+      images: image ? [{ url: image }] : [{ url: ogImage, width: 1200, height: 630 }],
     },
     twitter: {
       card:        'summary_large_image',
       title,
       description,
-      ...(image ? { images: [image] } : {}),
+      images: image ? [image] : [ogImage],
     },
   };
 }

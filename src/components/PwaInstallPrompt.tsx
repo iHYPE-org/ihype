@@ -75,54 +75,80 @@ export function PwaInstallPrompt() {
       aria-label="Add iHYPE to home screen"
       style={{
         position: 'fixed',
-        left: 12,
-        right: 12,
-        bottom: 12,
+        left: 12, right: 12,
+        bottom: 'calc(12px + env(safe-area-inset-bottom, 0px))',
         zIndex: 60,
         margin: '0 auto',
-        maxWidth: 480,
-        background: 'var(--bg-2, #100d09)',
-        border: '1px solid var(--line-2, rgba(255,255,255,.14))',
-        borderRadius: 12,
-        padding: '12px 14px',
+        maxWidth: 440,
+        background: 'rgba(16,13,9,.96)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255,255,255,.12)',
+        borderRadius: 16,
+        padding: '14px 16px',
         display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        boxShadow: '0 18px 42px rgba(0,0,0,.4)'
+        alignItems: 'flex-start',
+        gap: 13,
+        boxShadow: '0 20px 56px rgba(0,0,0,.6)',
+        animation: 'pwa-slide-up .3s cubic-bezier(.4,0,.2,1) both',
       }}
     >
-      <div style={{ flex: 1, fontSize: 13, color: 'var(--ink, #f0ebe5)' }}>
-        Add <strong>iHYPE</strong> to your home screen for faster access.
+      <style>{`@keyframes pwa-slide-up{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}`}</style>
+
+      {/* App icon */}
+      <div style={{
+        width: 44, height: 44, borderRadius: 11, flexShrink: 0,
+        background: 'linear-gradient(135deg, #ff5029, #ff3e6e)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 22, fontWeight: 900, color: '#fff', fontFamily: 'system-ui',
+        boxShadow: '0 4px 14px rgba(255,80,41,.35)',
+      }}>
+        H
       </div>
-      <button
-        type="button"
-        onClick={install}
-        style={{
-          background: 'var(--accent, #ff5029)',
-          color: '#0a0805',
-          border: 'none',
-          borderRadius: 6,
-          padding: '7px 12px',
-          fontWeight: 700,
-          cursor: 'pointer'
-        }}
-      >
-        Install
-      </button>
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontFamily: 'var(--font-display, system-ui)', fontWeight: 700, fontSize: 14, color: '#f0ebe5', marginBottom: 2 }}>
+          Add iHYPE to your home screen
+        </div>
+        <div style={{ fontFamily: 'var(--font-body, system-ui)', fontSize: 12, color: 'rgba(240,235,229,.45)', lineHeight: 1.4, marginBottom: 12 }}>
+          Instant access to shows, music, and your fans.
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            type="button"
+            onClick={install}
+            style={{
+              padding: '7px 16px', borderRadius: 8, border: 'none', cursor: 'pointer',
+              background: '#ff5029', color: '#fff',
+              fontFamily: 'var(--font-mono, monospace)', fontSize: 11, fontWeight: 700, letterSpacing: '.06em',
+            }}
+          >
+            Add to Home Screen
+          </button>
+          <button
+            type="button"
+            onClick={dismiss}
+            style={{
+              padding: '7px 12px', borderRadius: 8, cursor: 'pointer',
+              background: 'none', border: '1px solid rgba(255,255,255,.1)',
+              fontFamily: 'var(--font-mono, monospace)', fontSize: 11, color: 'rgba(240,235,229,.4)', letterSpacing: '.04em',
+            }}
+          >
+            Not now
+          </button>
+        </div>
+      </div>
+
       <button
         type="button"
         onClick={dismiss}
         aria-label="Dismiss"
         style={{
-          background: 'transparent',
-          color: 'var(--ink-2, #9e9080)',
-          border: '1px solid var(--line-2, rgba(255,255,255,.14))',
-          borderRadius: 6,
-          padding: '7px 10px',
-          cursor: 'pointer'
+          background: 'none', border: 'none', color: 'rgba(240,235,229,.3)',
+          cursor: 'pointer', padding: 4, fontSize: 18, lineHeight: 1, flexShrink: 0,
         }}
       >
-        ✕
+        ×
       </button>
     </div>
   );

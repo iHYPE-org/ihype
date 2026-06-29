@@ -155,7 +155,7 @@ function EventCard({ show, onBuy }: { show: WbShow; onBuy: (s: WbShow) => void }
         {/* buy */}
         {soldOut
           ? <button style={{ padding: '8px 14px', borderRadius: 999, background: 'transparent', color: T.ink3, border: `1px solid ${T.line}`, fontFamily: T.fm, fontSize: 12, cursor: 'pointer', flexShrink: 0 }}>Waitlist</button>
-          : <button onClick={e => { e.stopPropagation(); onBuy(show); }} style={{ padding: '8px 18px', borderRadius: 999, background: T.accent, color: '#fff', border: 'none', fontFamily: T.fd, fontWeight: 800, fontSize: 13, cursor: 'pointer', flexShrink: 0 }}>Get ticket</button>
+          : <button onClick={e => { e.stopPropagation(); navigator.vibrate?.([10, 40, 10]); onBuy(show); }} style={{ padding: '8px 18px', borderRadius: 999, background: T.accent, color: '#fff', border: 'none', fontFamily: T.fd, fontWeight: 800, fontSize: 13, cursor: 'pointer', flexShrink: 0 }}>Get ticket</button>
         }
       </div>
       {/* sold % bar */}
@@ -304,7 +304,7 @@ function ForYouTab({ data, onBuy }: { data: WorkbenchData; onBuy: (s: WbShow) =>
                 </div>
                 <div style={{ padding: '4px 14px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span style={{ fontFamily: T.fm, fontSize: 12, color: T.teal }}>$0 fees</span>
-                  <button onClick={() => onBuy(s)} style={{ padding: '7px 14px', borderRadius: 8, fontFamily: T.fd, fontWeight: 700, fontSize: 13, cursor: 'pointer', border: 'none', color: '#fff', background: `linear-gradient(135deg,${T.accent},${T.pink})` }}>
+                  <button onClick={() => { navigator.vibrate?.([10, 40, 10]); onBuy(s); }} style={{ padding: '7px 14px', borderRadius: 8, fontFamily: T.fd, fontWeight: 700, fontSize: 13, cursor: 'pointer', border: 'none', color: '#fff', background: `linear-gradient(135deg,${T.accent},${T.pink})` }}>
                     ${s.price} · Get tickets
                   </button>
                 </div>

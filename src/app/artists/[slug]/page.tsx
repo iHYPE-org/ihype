@@ -108,6 +108,13 @@ export async function generateMetadata(
     .filter(Boolean)
     .join(' | ');
 
+  const ogParams = new URLSearchParams({
+    title: profile.name,
+    subtitle: [genres, location].filter(Boolean).join(' · ') || 'Artist on iHYPE',
+    type: 'artist',
+  });
+  const ogImage = `/api/og?${ogParams.toString()}`;
+
   return {
     title,
     description,
@@ -117,13 +124,13 @@ export async function generateMetadata(
       title,
       description,
       url: `/artists/${slug}`,
-      ...(profile.avatarImage ? { images: [{ url: profile.avatarImage }] } : {})
+      images: profile.avatarImage ? [{ url: profile.avatarImage }] : [{ url: ogImage, width: 1200, height: 630 }],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      ...(profile.avatarImage ? { images: [profile.avatarImage] } : {})
+      images: profile.avatarImage ? [profile.avatarImage] : [ogImage],
     }
   };
 }
