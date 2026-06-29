@@ -181,6 +181,8 @@ const shows = await db.event.findMany({
 | 12 | NavShell (all pages) | Single nav only — desktop top bar (logo left · Listen\|Events\|Pages center · Log In + Sign Up right), mobile fixed bottom tabs. lib/nav.js is now a no-op. | — | ✅ c1f0462 |
 | 13 | Join.dc.html | Step 4 submit now routes → Welcome.dc.html (not FanHome). Welcome routes role-aware: Fan→FanHome, Artist→Studio, Venue→Venue, DJ→DJProfile | — | ✅ ebb8fdd |
 | 14 | Offline.dc.html | New 503/offline fallback page. Handles ?code=offline\|503\|500. Auto-retries on window.online event. | — | ✅ ebb8fdd |
+| 18 | Index.dc.html | Add "What's a HYPE?" section between Features and Final CTA — eyebrow, H2, lead paragraph, hype-fire chip, 3 steps in 2-col grid | — | ✅ pending commit |
+| 19 | WebRadio.dc.html | Live/Replay pills, 44-bar waveform scrubber (click to seek), hype mechanic at timestamp, DJ identity block (follow/tip), up-next crate queue (live only), schedule rail with notify-me toggle, offline/no-show state | GET /api/shows?radioShows=1 | ✅ pending commit |
 
 ---
 

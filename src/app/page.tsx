@@ -275,6 +275,52 @@ export default async function RootPage() {
         </div>
       </section>
 
+      {/* ── What's a HYPE? ───────────────────────────────────── */}
+      <section style={{ padding: '2rem 0 3rem' }}>
+        <div className="container">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', alignItems: 'start' }}>
+            {/* Left: intro */}
+            <div>
+              <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.2em', color: 'var(--accent)', textTransform: 'uppercase', marginBottom: '0.6rem' }}>
+                THE MECHANIC
+              </p>
+              <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 'clamp(1.8rem, 4vw, 3rem)', letterSpacing: '-0.03em', color: 'var(--ink)', margin: '0 0 1.25rem' }}>
+                What&apos;s a HYPE?
+              </h2>
+              <p style={{ fontFamily: 'var(--f-b)', fontSize: '1.05rem', lineHeight: 1.6, color: 'rgba(240,235,229,.72)', maxWidth: '38ch', margin: '0 0 1.5rem' }}>
+                A HYPE is a vote on a <em style={{ color: 'var(--accent)', fontStyle: 'italic' }}>moment</em>. While a track plays, you fire a hype at the exact second it hits — the drop, the verse, the breakdown. Those timestamps stack into real demand signals that artists and venues use to build setlists and book shows.
+              </p>
+              {/* Hype fire chip */}
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 9999, background: 'rgba(255,80,41,.1)', border: '1px solid rgba(255,80,41,.28)' }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ff5029', boxShadow: '0 0 0 4px rgba(255,80,41,.18)', display: 'inline-block', animation: 'hype-dot-pulse 1.4s ease-in-out infinite' }} />
+                <span style={{ fontFamily: 'var(--f-m)', fontSize: '0.7rem', letterSpacing: '0.18em', color: '#ff5029', textTransform: 'uppercase' }}>HYPE FIRES AT 3:38</span>
+              </div>
+            </div>
+
+            {/* Right: steps */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {[
+                { num: '01', color: '#ff5029', name: 'Hit the moment', desc: 'Tap to hype while a track plays. Your vote lands on the timestamp — not the whole song.' },
+                { num: '02', color: '#b983ff', name: 'One member, one vote', desc: 'Every hype counts the same, regardless of spend. No pay-to-rank, no payola, no algorithm.' },
+                { num: '03', color: '#22e5d4', name: 'It feeds the radar', desc: 'Hypes roll up into the demand radar — telling artists what to play and venues who to book near you.' },
+              ].map(step => (
+                <div key={step.num} style={{ display: 'flex', gap: 16, padding: 18, background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.07)', borderRadius: 10 }}>
+                  <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 18, flexShrink: 0, width: 28, color: step.color }}>{step.num}</div>
+                  <div>
+                    <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 15, color: 'var(--ink)', marginBottom: 4 }}>{step.name}</div>
+                    <p style={{ fontFamily: 'var(--f-b)', fontSize: 13, lineHeight: 1.5, color: 'rgba(240,235,229,.5)', margin: 0 }}>{step.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <style>{`
+          @keyframes hype-dot-pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+          @media (max-width:768px) { .hype-grid-inner { grid-template-columns:1fr!important; gap:2rem!important; } }
+        `}</style>
+      </section>
+
       {/* ── Final CTA ────────────────────────────────────────── */}
       <section style={{ padding: '4rem 0' }}>
         <div className="container">
