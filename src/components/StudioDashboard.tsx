@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 interface ApiShow {
   id: string;
@@ -304,6 +305,23 @@ export function StudioDashboard() {
               <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--accent)' }}>{loadingShows ? '–' : fmt$(artistShareCents)}</div>
               <div style={{ fontSize: 12, color: 'rgba(240,235,229,0.6)', marginTop: 4 }}>Artist / Creator cut</div>
             </div>
+          </div>
+
+          {/* Quick links to growth surfaces */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginTop: 24 }}>
+            {[
+              { href: '/me/wrapped', label: 'My Scene', desc: 'Your month, shareable', color: '#b983ff' },
+              { href: '/me/promote', label: 'Share & Earn', desc: 'Promote shows, earn', color: '#ff3e9a' },
+              { href: '/me/booking', label: 'Book Artists', desc: 'Your demand radar', color: '#22e5d4' },
+              { href: '/radio/station', label: 'Station', desc: 'Always-on radio', color: 'var(--accent)' },
+            ].map(link => (
+              <Link key={link.href} href={link.href} style={{ textDecoration: 'none' }}>
+                <div style={{ padding: '14px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 15, color: link.color }}>{link.label} →</div>
+                  <div style={{ fontSize: 12, color: 'rgba(240,235,229,0.55)', marginTop: 2 }}>{link.desc}</div>
+                </div>
+              </Link>
+            ))}
           </div>
 
           {shows.length > 0 && (

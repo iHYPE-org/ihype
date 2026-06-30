@@ -373,6 +373,11 @@ export default async function ArtistPage({
             </div>
             <ProfileLinkShelf linksJson={profile.links ?? null} />
             <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} initiallyHyped={!!userHype} entityLabel="artist" />
+            {profile.hypeCount > 0 && (
+              <a href={`/artists/${profile.slug}/believers`} style={{ display: 'inline-block', marginTop: 8, fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--accent)', textDecoration: 'none' }}>
+                See early believers →
+              </a>
+            )}
             <FollowButton profileId={profile.id} />
             {profile.contactInfo && secOn(publishedPage?.builderSections ?? null, 'booking') ? (
               <div className="cta-row" style={{ marginTop: 12 }}>

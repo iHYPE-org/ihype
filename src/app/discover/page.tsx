@@ -107,6 +107,17 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
         </p>
       </div>
 
+      {/* This Weekend entry point */}
+      <Link href="/this-weekend" style={{ textDecoration: 'none', display: 'block', marginBottom: 32 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 18px', borderRadius: 16, background: 'rgba(34,229,212,.08)', border: '1px solid rgba(34,229,212,.3)' }}>
+          <div>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: '#22e5d4' }}>THIS WEEKEND</span>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, letterSpacing: '-.02em', color: '#f0ebe5', marginTop: 2 }}>Shows near you →</div>
+          </div>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'rgba(240,235,229,.5)', flexShrink: 0 }}>Get tickets</span>
+        </div>
+      </Link>
+
       {/* Filters */}
       {(cities.length > 0 || genres.length > 0) && (
         <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 10 }}>
