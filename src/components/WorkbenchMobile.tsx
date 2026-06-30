@@ -533,6 +533,29 @@ function WMTopBar({ tab, onTab, listeningNow, userName, initials, onSearch, noti
       {/* Divider */}
       <div style={{ height: 1, background: T.line, margin: '0 20px' }} />
 
+      {/* Discover / growth surfaces */}
+      <div style={{ padding: '8px 0' }}>
+        <div style={{ padding: '8px 20px 6px', fontFamily: T.fm, fontSize: 11, letterSpacing: '.18em', color: T.ink3, textTransform: 'uppercase' }}>Discover</div>
+        {([
+          { icon: '✨', label: 'For You', href: '/for-you' },
+          { icon: '📅', label: 'This Weekend', href: '/this-weekend' },
+          { icon: '📊', label: 'My Scene', href: '/me/wrapped' },
+          { icon: '🔗', label: 'Share & Earn', href: '/me/promote' },
+          { icon: '📻', label: 'Station', href: '/radio/station' },
+        ] as { icon: string; label: string; href: string }[]).map(item => (
+          <a key={item.label} href={item.href} onClick={close} style={{
+            display: 'flex', alignItems: 'center', gap: 14, padding: '13px 20px',
+            textDecoration: 'none', width: '100%', boxSizing: 'border-box',
+          }}>
+            <span style={{ fontSize: 18, width: 24, textAlign: 'center' }}>{item.icon}</span>
+            <span style={{ fontFamily: T.fb, fontSize: 15, color: T.ink }}>{item.label}</span>
+          </a>
+        ))}
+      </div>
+
+      {/* Divider */}
+      <div style={{ height: 1, background: T.line, margin: '0 20px' }} />
+
       {/* Help / info */}
       <div style={{ padding: '8px 0' }}>
         <div style={{ padding: '8px 20px 6px', fontFamily: T.fm, fontSize: 11, letterSpacing: '.18em', color: T.ink3, textTransform: 'uppercase' }}>Help</div>
