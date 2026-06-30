@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { bookingTasteScore as tasteScore, bookingGeoScore as geoScore } from '@/lib/growth-util';
 
 export type BookingCandidate = {
   slug: string;
@@ -28,24 +29,6 @@ type ArtistRow = {
   genres: string[]; city: string | null; stateRegion: string | null;
   hypeCount: number;
 };
-
-/** Genre overlap in [0,1] between a venue's booked genres and an artist's. */
-function tasteScore(venueGenres: string[], artistGenres: string[]): number {
-  if (venueGenres.length === 0 || artistGenres.length === 0) return 0;
-  const set = new Set(venueGenres.map((g) => g.toLowerCase()));
-  const overlap = artistGenres.filter((g) => set.has(g.toLowerCase())).length;
-  return Math.min(1, overlap / Math.min(venueGenres.length, artistGenres.length));
-}
-
-/** Geo proximity tier in [0,1]: same city strongest, then state, then country. */
-function geoScore(
-  vCity: string | null, vState: string | null,
-  aCity: string | null, aState: string | null,
-): number {
-  if (vCity && aCity && vCity.toLowerCase() === aCity.toLowerCase()) return 1;
-  if (vState && aState && vState.toLowerCase() === aState.toLowerCase()) return 0.6;
-  return 0.1;
-}
 
 /**
  * Venue-side recommender: "book these artists." Given a venue owner, surfaces

@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { firstName, initialsOf } from '@/lib/growth-util';
 
 export type Believer = {
   rank: number;
@@ -33,19 +34,6 @@ type HypeRow = {
     profiles: { slug: string; type: string }[];
   } | null;
 };
-
-function firstName(name: string | null, username: string): string {
-  const n = (name ?? '').trim();
-  if (n) return n.split(/\s+/)[0];
-  return username;
-}
-
-function initialsOf(name: string | null, username: string): string {
-  const src = (name ?? username).trim();
-  const parts = src.split(/\s+/).filter(Boolean);
-  const letters = parts.length >= 2 ? parts[0][0] + parts[1][0] : src.slice(0, 2);
-  return letters.toUpperCase();
-}
 
 /**
  * Builds the public "early believers" board for an artist: the first people to

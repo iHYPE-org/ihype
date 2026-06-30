@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import type { RequestLocation } from '@/lib/request-location';
+import { weekendWindow } from '@/lib/growth-util';
 
 export type WeekendShow = {
   slug: string;
@@ -28,19 +29,6 @@ type ShowRow = {
   venueProfile: { name: string; city: string | null } | null;
   _count: { rsvps: number };
 };
-
-/** Start (Friday 00:00) and end (Sunday 23:59:59) of the coming weekend, UTC. */
-function weekendWindow(now: Date): { start: Date; end: Date; label: string } {
-  const day = now.getUTCDay(); // 0 Sun … 6 Sat
-  // Days until the coming Sunday (0 if today is Sunday).
-  const daysToSunday = (7 - day) % 7;
-  const sunday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + daysToSunday, 23, 59, 59));
-  const friday = new Date(Date.UTC(sunday.getUTCFullYear(), sunday.getUTCMonth(), sunday.getUTCDate() - 2, 0, 0, 0));
-  // If we're already inside the weekend, start from now so past slots drop off.
-  const start = now > friday ? now : friday;
-  const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  return { start, end: sunday, label: `${fmt(friday)} – ${fmt(sunday)}` };
-}
 
 /**
  * "This weekend in [city]" — the local-density front door. Public (works

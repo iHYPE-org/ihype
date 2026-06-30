@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { getShowsAttended } from '@/lib/streaks';
+import { tallyTop } from '@/lib/growth-util';
 
 export type SceneWrapped = {
   monthLabel: string;        // e.g. "June"
@@ -128,20 +129,4 @@ export async function getSceneWrapped(userId: string): Promise<SceneWrapped> {
     streak,
     isEmpty: showsAttended === 0 && hypesGiven === 0 && discoveries === 0 && !topArtist,
   };
-}
-
-/** Returns the most frequent string in a list, or null if empty. */
-function tallyTop(items: string[]): string | null {
-  if (items.length === 0) return null;
-  const counts = new Map<string, number>();
-  for (const item of items) counts.set(item, (counts.get(item) ?? 0) + 1);
-  let best: string | null = null;
-  let bestCount = 0;
-  for (const [item, count] of counts) {
-    if (count > bestCount) {
-      best = item;
-      bestCount = count;
-    }
-  }
-  return best;
 }

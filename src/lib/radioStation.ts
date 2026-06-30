@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { getDemoOwnerExclusion } from '@/lib/runtime-flags';
+import { stationPositionAt } from '@/lib/growth-util';
 
 export type StationTrack = {
   hexId: string;
@@ -78,27 +79,18 @@ export async function getStationState(now: Date = new Date()): Promise<StationSt
     };
   }
 
-  // Total loop duration, then find where "now" lands inside the looping rotation.
-  const loopTotal = rotation.reduce((sum, t) => sum + t.durationSecs, 0);
-  const elapsed = Math.floor(now.getTime() / 1000) % loopTotal;
+  const { index, offset } = stationPositionAt(
+    rotation.map((t) => t.durationSecs),
+    Math.floor(now.getTime() / 1000),
+  );
 
-  let cursor = elapsed;
-  let index = 0;
-  for (let i = 0; i < rotation.length; i++) {
-    if (cursor < rotation[i].durationSecs) {
-      index = i;
-      break;
-    }
-    cursor -= rotation[i].durationSecs;
-  }
-
-  const upNext = [1, 2, 3].map((offset) => rotation[(index + offset) % rotation.length]);
+  const upNext = [1, 2, 3].map((n) => rotation[(index + n) % rotation.length]);
 
   return {
     live: !!liveShow,
     liveShow: liveShow ?? null,
     nowPlaying: rotation[index],
-    positionSecs: cursor,
+    positionSecs: offset,
     upNext,
     rotationLength: rotation.length,
   };
