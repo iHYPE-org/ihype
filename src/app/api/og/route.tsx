@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const title    = searchParams.get('title')    ?? 'iHYPE';
   const subtitle = searchParams.get('subtitle') ?? 'Independent music for the scene';
-  const type     = searchParams.get('type')     ?? 'default'; // show | artist | default
+  const type     = searchParams.get('type')     ?? 'default'; // show | artist | wrapped | playlist | journal | default
   const kicker   = searchParams.get('kicker')   ?? '';
 
   const accent = '#ff5029';
@@ -16,8 +16,20 @@ export async function GET(request: NextRequest) {
   const bg     = '#0a0805';
   const bg2    = '#100d09';
 
-  const typeColor = type === 'show' ? teal : type === 'artist' ? purple : accent;
-  const typeLabel = type === 'show' ? 'SHOW' : type === 'artist' ? 'ARTIST' : 'iHYPE';
+  const typeColor =
+    type === 'show' ? teal :
+    type === 'artist' ? purple :
+    type === 'wrapped' ? purple :
+    type === 'playlist' ? teal :
+    type === 'journal' ? accent :
+    accent;
+  const typeLabel =
+    type === 'show' ? 'SHOW' :
+    type === 'artist' ? 'ARTIST' :
+    type === 'wrapped' ? 'MY SCENE' :
+    type === 'playlist' ? 'PLAYLIST' :
+    type === 'journal' ? 'JOURNAL' :
+    'iHYPE';
 
   return new ImageResponse(
     (
