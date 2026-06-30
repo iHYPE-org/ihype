@@ -14,6 +14,7 @@ import { SiteNavTabs } from '@/components/SiteNavTabs';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { MiniPlayer } from '@/components/MiniPlayer';
+import { WebVitals } from '@/components/WebVitals';
 
 
 export const metadata: Metadata = {
@@ -54,6 +55,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" suppressHydrationWarning>
       <body>
         <AppProviders>
+          <WebVitals />
           <OfflineBanner />
           <div aria-hidden="true" className="site-background">
             <span className="site-background-orb site-background-orb-a" />
