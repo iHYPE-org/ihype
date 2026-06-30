@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { notFound } from 'next/navigation';
 import { HypeButton } from '@/components/HypeButton';
+import { ReferralClickTracker } from '@/components/ReferralClickTracker';
+import { ShareButton } from '@/components/ShareButton';
 import { ShowSequencePlayer } from '@/components/ShowSequencePlayer';
 import { TicketSaleCard } from '@/components/TicketSaleCard';
 import { db } from '@/lib/db';
@@ -252,6 +254,7 @@ export default async function ShowDetailPage({
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     <main className="container section">
+      <ReferralClickTracker ref={refHexId} />
       <div className="profile-header">
         <div className="badge">{show.status}</div>
         <h1 className="title" style={{ fontSize: '2.7rem' }}>
@@ -273,7 +276,8 @@ export default async function ShowDetailPage({
         <div style={{ marginTop: 10 }}>
           <a className="button small secondary" href={`/shows/${slug}/poster?download=1`} download style={{ marginBottom: 8, display: 'inline-block' }}>
             Download poster
-          </a>
+          </a>{' '}
+          <ShareButton path={`/shows/${slug}`} title={show.title} className="button small secondary" />
           <ShowEngagement
             showId={show.id}
             canRsvp={Boolean(session?.user?.id)}
@@ -585,6 +589,7 @@ export default async function ShowDetailPage({
             affiliatePromoterProfileId={affiliatePromoter?.id ?? null}
             artistName={show.headlinerProfile.name}
             artistPayoutPercent={show.artistPayoutPercent}
+            showSlug={slug}
             currentFan={
               currentFan?.role === 'FAN'
                 ? {
