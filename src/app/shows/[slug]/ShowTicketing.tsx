@@ -30,6 +30,7 @@ interface CurrentFan {
 interface ShowTicketingProps {
   show: {
     id: string;
+    slug: string;
     title: string;
     status: string;
     isTicketed: boolean;
@@ -86,6 +87,7 @@ export function ShowTicketing({ show, currentFan, affiliatePromoter, viewerLocat
             promoterName={show.promoterProfile?.name ?? null}
             promoterPayoutPercent={show.promoterPayoutPercent}
             showId={show.id}
+            showSlug={show.slug}
             ticketCapacity={show.ticketCapacity}
             ticketPriceCents={show.ticketPriceCents}
             ticketingOpen={show.status === 'LIVE' || Boolean(show.ticketingOpensAt && show.ticketingOpensAt <= new Date())}

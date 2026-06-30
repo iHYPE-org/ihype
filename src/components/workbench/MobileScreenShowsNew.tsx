@@ -101,7 +101,16 @@ function EventCard({ show, onBuy }: { show: WbShow; onBuy: (s: WbShow) => void }
 
   async function handleShare(e: React.MouseEvent) {
     e.stopPropagation();
-    const link = `${window.location.origin}/shows/${show.id}`;
+    const url = new URL(`/shows/${show.id}`, window.location.origin);
+    try {
+      const res = await fetch('/api/referral');
+      if (res.ok) {
+        const data = await res.json() as { referralLink?: string };
+        const ref = data.referralLink ? new URL(data.referralLink).searchParams.get('ref') : null;
+        if (ref) url.searchParams.set('ref', ref);
+      }
+    } catch { /* not signed in or offline — share without a ref code */ }
+    const link = url.toString();
     try {
       if (navigator.share) { await navigator.share({ title: show.name, url: link }); return; }
       await navigator.clipboard.writeText(link);

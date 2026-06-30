@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { ShareButton } from '@/components/ShareButton';
 import {
   calculateTicketOrderFinancials,
   formatCurrencyFromCents,
@@ -11,6 +12,7 @@ import {
 
 type TicketSaleCardProps = {
   showId: string;
+  showSlug: string;
   title: string;
   ticketPriceCents: number;
   ticketCapacity: number | null;
@@ -56,6 +58,7 @@ type IssuedTicket = {
 
 export function TicketSaleCard({
   showId,
+  showSlug,
   title,
   ticketPriceCents,
   ticketCapacity,
@@ -337,6 +340,10 @@ export function TicketSaleCard({
 
       {issuedTickets.length ? (
         <div className="ticket-issued-grid">
+          <div className="cta-row" style={{ marginBottom: 12 }}>
+            <strong className="meta">You&apos;re going!</strong>
+            <ShareButton path={`/shows/${showSlug}`} title={`I'm going to ${title}`} label="Invite friends" />
+          </div>
           {issuedTickets.map((ticket) => (
             <article className="ticket-issued-card" key={ticket.id}>
               <img alt={`${ticket.label} QR`} className="ticket-issued-qr" loading="lazy" src={ticket.qrCodeDataUrl} />
