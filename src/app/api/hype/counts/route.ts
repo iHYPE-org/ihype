@@ -1,10 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, withDbRetry } from '@/lib/db';
+import { consumeRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
+import { readClientAddress } from '@/lib/request-meta';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
+    const ip = readClientAddress(req);
+    const rl = await consumeRateLimit(`hype-counts:ip:${ip}`, { limit: 120, windowMs: 60_000 });
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests.' },
+        { status: 429, headers: rateLimitHeaders(rl) }
+      );
+    }
+
     const { searchParams } = req.nextUrl;
     const trackParam = searchParams.get('trackIds');
     const showParam = searchParams.get('showIds');

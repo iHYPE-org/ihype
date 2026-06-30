@@ -1,10 +1,21 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { consumeRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
+import { readClientAddress } from '@/lib/request-meta';
 
 export const runtime = 'nodejs';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const ip = readClientAddress(request);
+    const rl = await consumeRateLimit(`hype-heatmap:ip:${ip}`, { limit: 60, windowMs: 60_000 });
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests.' },
+        { status: 429, headers: rateLimitHeaders(rl) }
+      );
+    }
+
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
     const events = await db.profileHypeEvent.findMany({
