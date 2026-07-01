@@ -24,8 +24,6 @@ import { WelcomeDialog } from '@/components/workbench/Overlays';
 import { DEFAULT_PREFS, loadPrefs } from '@/components/workbench/types';
 import { T, WMPill, WMChip, WMViewHead, WMCard, WMSkeleton } from '@/components/workbench/MobilePrimitives';
 import { GamificationProvider } from '@/components/workbench/GamificationContext';
-import { XPPopups, ComboDisplay, LevelUpOverlay, XPFooter, DailyQuestBar, GmLevelPill } from '@/components/workbench/GamificationOverlays';
-import { ViewLeaderboard } from '@/components/workbench/ViewLeaderboard';
 
 type MobileTab = 'listen' | 'discover' | 'events' | 'pages';
 
@@ -1193,7 +1191,6 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
   const [matchmakerMode, setMatchmakerMode] = useState(false);
   const [cockpitMode, setCockpitMode] = useState(false);
   const [tourMode, setTourMode] = useState(false);
-  const [leaderboardMode, setLeaderboardMode] = useState(false);
 
   const [pageMode, setPageMode] = useState(false);
   const [advertiseMode, setAdvertiseMode] = useState(false);
@@ -1441,7 +1438,6 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
     { active: settingsMode,    close: () => setSettingsMode(false),    title: 'Settings',           color: T.ink2,   children: <ViewSettings prefs={prefs} setPref={setPref} data={liveData} onBack={() => setSettingsMode(false)} />, scroll: true },
     { active: cockpitMode,     close: () => setCockpitMode(false),     title: 'Page Cockpit',       color: T.purple, children: <ViewCockpitMobile data={liveData} /> },
     { active: tourMode,        close: () => setTourMode(false),        title: 'Tour Builder',       color: T.teal,   children: <ViewTour data={liveData} />, scroll: true },
-    { active: leaderboardMode, close: () => setLeaderboardMode(false), title: 'Leaderboard',        color: '#ffb84a', children: <ViewLeaderboard />, scroll: true },
   ];
   for (const m of overlayModes) {
     if (m.active) return (
@@ -1483,7 +1479,6 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
             </svg>
             Search artists, shows, tracks…
           </button>
-          <GmLevelPill onClick={() => setLeaderboardMode(true)} />
         </div>
       </div>
 
@@ -1524,12 +1519,8 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
             <button onClick={() => { localStorage.setItem('profileNudgeDismissed', '1'); setNudgeDismissed(true); }} style={{ fontFamily: T.fm, fontSize: 16, color: T.ink3, background: 'none', border: 'none', cursor: 'pointer', padding: '0 4px', lineHeight: 1, minHeight: 'unset' }} aria-label="Dismiss">×</button>
           </div>
         )}
-        {(tab === 'discover' || tab === 'listen') && <DailyQuestBar />}
         <div key={tab} style={{ animation: 'wm-tab-in .12s ease-out both' }}><ViewErrorBoundary viewName={tab}>{screenEl}</ViewErrorBoundary></div>
       </div>
-
-      {/* XP Footer */}
-      {(tab === 'discover' || tab === 'listen' || tab === 'events') && <XPFooter visible />}
 
       {/* Mini player sits above tab bar */}
       {track && !expanded && (
@@ -1604,9 +1595,6 @@ export function WorkbenchMobile({ data }: { data: WorkbenchData }) {
           ))}
         </div>
       )}
-      <XPPopups />
-      <ComboDisplay />
-      <LevelUpOverlay />
     </div>
     </GamificationProvider>
   );
