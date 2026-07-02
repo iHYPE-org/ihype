@@ -72,8 +72,8 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
 
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
-        <Link href="/studio" style={{ fontSize: 12, color: 'rgba(240,235,229,.4)', textDecoration: 'none', fontFamily: 'var(--font-mono)', letterSpacing: '.06em' }}>
-          ← BACK TO STUDIO
+        <Link href="/home" style={{ fontSize: 12, color: 'rgba(240,235,229,.4)', textDecoration: 'none', fontFamily: 'var(--font-mono)', letterSpacing: '.06em' }}>
+          ← BACK TO HOME
         </Link>
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--accent)', marginTop: 16, marginBottom: 6 }}>
           PAYOUT BREAKDOWN
@@ -193,13 +193,13 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
         }}>
           View show page
         </Link>
-        <Link href="/studio" style={{
+        <Link href="/home" style={{
           padding: '11px 20px', background: 'rgba(255,80,41,.15)',
           border: '1px solid rgba(255,80,41,.25)',
           borderRadius: 8, fontSize: 13, color: 'var(--accent)',
           textDecoration: 'none', fontFamily: 'var(--font-mono)',
         }}>
-          Back to studio
+          Back to home
         </Link>
       </div>
     </div>

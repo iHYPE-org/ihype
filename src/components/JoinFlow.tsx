@@ -25,13 +25,6 @@ const GENRES = [
 
 const STEPS = ['Role', 'City', 'Music', 'Done'];
 
-const ROLE_REDIRECT: Record<RoleId, string> = {
-  FAN:    '/home',
-  ARTIST: '/studio',
-  VENUE:  '/home',
-  DJ:     '/studio/radio',
-};
-
 function StepDots({ step }: { step: number }) {
   return (
     <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 40 }}>

@@ -193,8 +193,8 @@ export default function EventsNewPage() {
 
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
-        <Link href="/studio" style={{ fontSize: 12, color: 'rgba(240,235,229,.4)', textDecoration: 'none', fontFamily: 'var(--font-mono)', letterSpacing: '.06em' }}>
-          ← STUDIO
+        <Link href="/home" style={{ fontSize: 12, color: 'rgba(240,235,229,.4)', textDecoration: 'none', fontFamily: 'var(--font-mono)', letterSpacing: '.06em' }}>
+          ← HOME
         </Link>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.6rem, 4vw, 2.2rem)', fontWeight: 800, letterSpacing: '-.03em', margin: '12px 0 0' }}>
           New show

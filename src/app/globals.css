@@ -3975,8 +3975,9 @@ body {
   align-items: center;
   gap: 2px;
   color: #fff;
+  font-family: var(--font-display, 'Syne', sans-serif);
   font-size: 17px;
-  font-weight: 950;
+  font-weight: 800;
   letter-spacing: 0.17em;
   line-height: 1;
   text-transform: uppercase;
@@ -3985,9 +3986,16 @@ body {
 
 .nav-logo-word {
   color: #fff;
+  transition: color 150ms;
 }
 
 .nav-logo-dot {
+  color: var(--accent, #ff5029);
+  transition: color 150ms;
+}
+
+.nav-logo:hover .nav-logo-dot,
+.nav-logo:focus-visible .nav-logo-dot {
   background: linear-gradient(90deg, #ff4635, #ff3d87 35%, #7c5cff 68%, #39d8df);
   -webkit-background-clip: text;
   background-clip: text;
@@ -6695,4 +6703,16 @@ a .ihype-card, a.ihype-card {
     width: 100%;
     align-items: center;
   }
+}
+
+@media (max-width: 480px) {
+  .site-footer-rights-suffix { display: none; }
+}
+
+/* Sitewide header font (Forum) — logo intentionally stays on
+   --font-display (Syne) rather than this override. Elements with an
+   inline fontFamily (e.g. the workbench's own h1/h2 usages) take
+   precedence, as normal CSS specificity rules. */
+h1, h2 {
+  font-family: var(--font-forum, 'Forum', serif);
 }

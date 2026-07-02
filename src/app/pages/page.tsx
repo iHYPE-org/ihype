@@ -195,13 +195,13 @@ export default async function PagesPage({
                       }}>
                         View
                       </Link>
-                      <Link href="/studio" style={{
+                      <Link href={`/home?profile=${p.id}`} style={{
                         padding: '8px 14px', background: 'rgba(255,80,41,.15)',
                         border: '1px solid rgba(255,80,41,.25)',
                         borderRadius: 6, fontSize: 12, color: 'var(--accent)',
                         textDecoration: 'none', fontFamily: 'var(--font-mono)',
                       }}>
-                        Studio
+                        Manage
                       </Link>
                     </div>
                   </div>
