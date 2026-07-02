@@ -1,6 +1,7 @@
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { ReactNode } from 'react';
+import { Syne, DM_Sans, JetBrains_Mono, Instrument_Serif, Forum } from 'next/font/google';
 import { AppProviders } from '@/components/AppProviders';
 import { HeaderAuthLinks } from '@/components/HeaderAuthLinks';
 import { HeaderUserMenu } from '@/components/HeaderUserMenu';
@@ -15,7 +16,14 @@ import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { MiniPlayer } from '@/components/MiniPlayer';
 import { WebVitals } from '@/components/WebVitals';
+import { SiteFooter } from '@/components/SiteFooter';
+import { CookieConsent } from '@/components/CookieConsent';
 
+const syne = Syne({ subsets: ['latin'], weight: ['700', '800'], variable: '--font-syne', display: 'swap' });
+const dmSans = DM_Sans({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-dm', display: 'swap' });
+const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], weight: ['400', '500', '700'], variable: '--font-jb', display: 'swap' });
+const instrumentSerif = Instrument_Serif({ subsets: ['latin'], weight: ['400'], style: ['normal', 'italic'], variable: '--font-serif', display: 'swap' });
+const forum = Forum({ subsets: ['latin'], weight: ['400'], variable: '--font-forum', display: 'swap' });
 
 export const metadata: Metadata = {
   title: {
@@ -52,7 +60,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={`${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} ${forum.variable}`}>
       <body>
         <AppProviders>
           <WebVitals />
@@ -79,8 +87,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <MobileBottomNav />
           <div className="site-shell">
             {children}
+            <SiteFooter />
           </div>
           <MiniPlayer />
+          <CookieConsent />
           <PwaInstallPrompt />
           <WebPushPrompt />
           <ServiceWorkerRegister />
