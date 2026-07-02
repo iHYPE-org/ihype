@@ -22,8 +22,8 @@ export function TrustPolicyPage({ badge, title, intro, lastUpdated, sections }: 
           <p style={{ fontSize: 13, opacity: 0.6, marginTop: 8 }}>Last updated: {lastUpdated}</p>
         )}
         <div className="trust-policy-links">
-          <Link className="text-link" href="/privacy">Privacy</Link>
-          <Link className="text-link" href="/terms">Terms</Link>
+          <Link className="text-link" href="/legal?tab=privacy">Privacy</Link>
+          <Link className="text-link" href="/legal?tab=terms">Terms</Link>
           <Link className="text-link" href="/copyright">Copyright</Link>
           <Link className="text-link" href="/ticket-policy">Ticket policy</Link>
           <Link className="text-link" href="/community-rules">Community rules</Link>
