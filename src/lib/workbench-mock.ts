@@ -1,4 +1,4 @@
-import type { WorkbenchData } from '@/components/WorkbenchShellV2';
+import type { WorkbenchData } from '@/types/workbench';
 
 export const MOCK_DATA: WorkbenchData = {
   userName: 'Maya',

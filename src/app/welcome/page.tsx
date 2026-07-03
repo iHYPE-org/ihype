@@ -60,7 +60,7 @@ const PREVIEW: Record<Role, {
     art: 'linear-gradient(135deg,#22e5d4,#5b8cff)',
     icon: <><path d="M3 21h18" /><path d="M5 21V7l8-4v18" /><path d="M19 21V11l-6-4" /><path d="M9 9v.01M9 12v.01M9 15v.01" /></>,
     eyebrow: 'DEMAND NEAR YOU', title: 'Luna Park · Indie', sub2: '312 hypes from fans within 20mi',
-    cta: 'See demand radar', href: '/home',
+    cta: 'See demand radar', href: '/listen',
   },
   DJ: {
     sub: 'Your crate is ready — schedule your first show to start building an audience.',
@@ -115,8 +115,8 @@ export default async function WelcomePage() {
           ))}
         </div>
 
-        <Link className="welcome-cta" href="/home">Go to my home →</Link>
-        <Link className="welcome-skip" href="/home">Explore later</Link>
+        <Link className="welcome-cta" href="/listen">Go to Listen →</Link>
+        <Link className="welcome-skip" href="/listen">Explore later</Link>
       </div>
 
       <style>{`

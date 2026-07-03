@@ -11,6 +11,8 @@ export default function robots(): MetadataRoute.Robots {
         disallow: [
           '/admin',
           '/home',
+          '/listen',
+          '/pages',
           '/workbench',
           '/api/',
           '/auth/',

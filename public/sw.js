@@ -24,6 +24,7 @@ const CORE_PAGES = [
 
 const NETWORK_ONLY_PATHS = [
   '/home',
+  '/listen',
   '/workbench',
   '/dashboard',
   '/login',
@@ -176,14 +177,14 @@ self.addEventListener('push', (event) => {
       body: data.body,
       icon: '/icons/icon-192.png',
       badge: '/icons/icon-192.png',
-      data: { url: data.url || '/home' },
+      data: { url: data.url || '/listen' },
     })
   );
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const url = event.notification.data?.url || '/home';
+  const url = event.notification.data?.url || '/listen';
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       for (const client of clients) {
