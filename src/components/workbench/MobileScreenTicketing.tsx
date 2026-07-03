@@ -55,10 +55,10 @@ export function MobileScreenTicketing({ data, onHypersSheet, onRadioTab }: {
     if (!sellPrice.trim() || isNaN(price) || price <= 0) return;
     setSellState('loading');
     try {
-      const res = await fetch(`/api/tickets/${ticketId}/list-for-sale`, {
+      const res = await fetch(`/api/tickets/${ticketId}/list-resale`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ price }),
+        body: JSON.stringify({ resalePriceCents: Math.round(price * 100) }),
       });
       setSellState(res.ok ? 'done' : 'error');
       if (res.ok) setTimeout(() => { setSellTicketId(null); setSellState('idle'); setSellPrice(''); }, 2000);
@@ -271,7 +271,7 @@ export function MobileScreenTicketing({ data, onHypersSheet, onRadioTab }: {
                       >Cancel</button>
                     </div>
                     <button
-                      onClick={() => handleListForSale(tk.id)}
+                      onClick={() => handleListForSale(tk.code)}
                       disabled={sellState === 'loading' || !sellPrice.trim()}
                       style={{
                         width: '100%', padding: '11px 0', borderRadius: 8, border: 'none',

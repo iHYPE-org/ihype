@@ -11,7 +11,7 @@ export default function ScanPage() {
   async function scan(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true); setResult(null);
-    const showRes = await fetch(`/api/shows/by-slug/${params.slug}`);
+    const showRes = await fetch(`/api/shows/${params.slug}`);
     if (!showRes.ok) { setResult({ error: 'Show not found.' }); setLoading(false); return; }
     const { id } = await showRes.json();
     const r = await fetch(`/api/shows/${id}/scan`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ ticketId }) });
