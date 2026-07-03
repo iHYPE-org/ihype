@@ -629,12 +629,15 @@ export function SitePlayerDock() {
 
   const [panel, setPanel] = useState<DockPanel>(null);
   const [copied, setCopied] = useState(false);
+  const [mobileExpanded, setMobileExpanded] = useState(false);
 
   const progress = duration > 0 ? currentTime / duration : 0;
   const fmt = (s: number) => { const sec = Math.floor(s); return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`; };
 
   const upcomingTracks = queue.slice(currentIndex + 1);
   const rLabel = repeatLabel(repeatMode);
+
+  if (!currentTrack) return null;
 
   function togglePanel(p: DockPanel) {
     setPanel(prev => prev === p ? null : p);
@@ -657,7 +660,7 @@ export function SitePlayerDock() {
   const btnBase: React.CSSProperties = { background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '2px 4px' };
 
   return (
-    <div className="site-dock" role="region" aria-label="Media player" style={{ position: 'relative' }}>
+    <div className={`site-dock${mobileExpanded ? ' site-dock-expanded' : ''}`} role="region" aria-label="Media player">
 
       {/* ── Queue / history popover ───────────────────────────────────────── */}
       <PlayerQueuePanel
@@ -672,8 +675,16 @@ export function SitePlayerDock() {
         queue={queue}
       />
 
-      {/* ── Left: art + meta ─────────────────────────────────────────────── */}
-      <div className="site-dock-l">
+      {/* ── Left: art + meta (tap to expand controls on mobile) ────────────── */}
+      <div
+        className="site-dock-l"
+        onClick={() => setMobileExpanded(v => !v)}
+        role="button"
+        tabIndex={0}
+        aria-expanded={mobileExpanded}
+        aria-label={mobileExpanded ? 'Collapse player controls' : 'Expand player controls'}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setMobileExpanded(v => !v); } }}
+      >
         <div className="site-dock-art" style={{ position: 'relative', background: currentTrack ? 'linear-gradient(135deg,#ff5029,#ff3e9a80)' : '#161310' }}>
           {currentTrack?.artworkUrl && <Image src={currentTrack.artworkUrl} alt={currentTrack.title} fill sizes="42px" style={{ objectFit: 'cover', borderRadius: 5 }} />}
         </div>
@@ -681,7 +692,20 @@ export function SitePlayerDock() {
           <div className="site-dock-title">{currentTrack?.title ?? 'Nothing playing'}</div>
           <div className="site-dock-artist">{currentTrack?.artistName ?? 'Pick a track to start'}</div>
         </div>
+        <svg className="site-dock-expand-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <polyline points="18 15 12 9 6 15" />
+        </svg>
       </div>
+
+      {/* ── Mobile-only play/pause (collapsed-bar shortcut; hidden once expanded or on desktop) ── */}
+      <button
+        className="site-dock-play site-dock-mobile-play"
+        onClick={e => { e.stopPropagation(); togglePlayback(); }}
+        aria-label={isPlaying ? 'Pause' : 'Play'}
+        type="button"
+      >
+        {isPlaying ? <DkPause /> : <DkPlay />}
+      </button>
 
       {/* ── Center: controls + scrubber ──────────────────────────────────── */}
       <div className="site-dock-c">
@@ -713,7 +737,7 @@ export function SitePlayerDock() {
       </div>
 
       {/* ── Right: volume + utility controls ─────────────────────────────── */}
-      <div className="site-dock-r" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+      <div className="site-dock-r" style={{ alignItems: 'center', gap: 4 }}>
 
         {/* Mute + volume */}
         <button className="site-dock-btn" onClick={toggleMute} aria-label={isMuted ? 'Unmute' : 'Mute'} title={isMuted ? 'Unmute (M)' : 'Mute (M)'} type="button"

@@ -5308,7 +5308,40 @@ html.high-contrast p {
 .site-shell { padding-bottom: 64px; }
 @media (max-width: 768px) {
   .site-dock-c { display: none; }
-  .site-dock-l { min-width: unset; }
+  .site-dock-r { display: none; }
+  .site-dock-l { min-width: 0; flex: 1 1 auto; cursor: pointer; }
+  .site-dock-expand-chevron { display: inline-flex !important; }
+  .site-dock-mobile-play { display: flex !important; }
+  .site-dock-expanded {
+    height: auto;
+    flex-wrap: wrap;
+    align-items: stretch;
+    padding-bottom: 14px;
+  }
+  .site-dock-expanded .site-dock-c {
+    display: flex !important;
+    order: 3;
+    width: 100%;
+    max-width: none;
+    margin-top: 12px;
+  }
+  .site-dock-expanded .site-dock-r {
+    display: flex !important;
+    order: 2;
+    min-width: unset;
+  }
+  .site-dock-expanded .site-dock-mobile-play { display: none !important; }
+}
+.site-dock-expand-chevron {
+  display: none;
+  transition: transform .2s;
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+.site-dock-expanded .site-dock-expand-chevron { transform: rotate(180deg); }
+.site-dock-mobile-play {
+  display: none;
+  flex-shrink: 0;
 }
 
 /* ── Mobile-first improvements ──────────────────────────────────── */

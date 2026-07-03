@@ -15,7 +15,7 @@ import { SearchBar } from '@/components/SearchBar';
 import { SiteNavTabs } from '@/components/SiteNavTabs';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { OfflineBanner } from '@/components/OfflineBanner';
-import { MiniPlayer } from '@/components/MiniPlayer';
+import { SitePlayerDock } from '@/components/GlobalMediaPlayer';
 import { WebVitals } from '@/components/WebVitals';
 import { SiteFooter } from '@/components/SiteFooter';
 import { CookieConsent } from '@/components/CookieConsent';
@@ -90,7 +90,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             {children}
             <SiteFooter />
           </div>
-          <MiniPlayer />
+          <SitePlayerDock />
           <CookieConsent />
           <PwaInstallPrompt />
           <WebPushPrompt />

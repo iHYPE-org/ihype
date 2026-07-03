@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getDemoCreatorExclusion, getDemoOwnerExclusion } from '@/lib/runtime-flags';
 import { FollowButton } from '@/components/FollowButton';
+import { CompactHypeButton } from '@/components/CompactHypeButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -205,9 +206,14 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
                       )}
                     </div>
                     <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 15, marginBottom: 4, color: 'var(--ink)' }}>{s.title}</div>
-                    <div style={{ fontSize: 12, color: 'rgba(240,235,229,.45)' }}>
-                      {s.headlinerProfile?.name ?? 'iHYPE Radio'}
-                      {s.venueProfile?.city ? ` · ${s.venueProfile.city}` : ''}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 8 }}>
+                      <div style={{ fontSize: 12, color: 'rgba(240,235,229,.45)' }}>
+                        {s.headlinerProfile?.name ?? 'iHYPE Radio'}
+                        {s.venueProfile?.city ? ` · ${s.venueProfile.city}` : ''}
+                      </div>
+                      <div onClick={e => { e.preventDefault(); e.stopPropagation(); }}>
+                        <CompactHypeButton targetType="show" targetId={s.id} initialCount={s.hypeCount} />
+                      </div>
                     </div>
                   </div>
                 </Link>
@@ -246,17 +252,11 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
                       <div style={{ fontSize: 11, color: 'rgba(240,235,229,.4)', marginTop: 2 }}>{p.city}</div>
                     )}
                   </div>
-                  {p.hypeCount > 0 && (
-                    <div style={{ fontSize: 11, color: 'rgba(240,235,229,.3)', fontFamily: 'var(--font-mono)' }}>
-                      🔥 {p.hypeCount.toLocaleString()} hypes
-                    </div>
-                  )}
                 </Link>
-                {session?.user && (
-                  <div onClick={e => e.stopPropagation()}>
-                    <FollowButton profileId={p.id} />
-                  </div>
-                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} onClick={e => e.stopPropagation()}>
+                  <CompactHypeButton targetType="profile" targetId={p.id} initialCount={p.hypeCount} />
+                  {session?.user && <FollowButton profileId={p.id} />}
+                </div>
               </div>
             ))}
           </div>
@@ -284,7 +284,12 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
             {topVenues.map(p => (
               <Link key={p.id} href={`/venues/${p.slug}`} style={{ textDecoration: 'none' }}>
                 <div className="ihype-card" style={{ padding: '16px 18px' }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 15, marginBottom: 4, color: '#22e5d4' }}>🏛️ {p.name}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 4 }}>
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 15, color: '#22e5d4' }}>🏛️ {p.name}</div>
+                    <div onClick={e => { e.preventDefault(); e.stopPropagation(); }}>
+                      <CompactHypeButton targetType="profile" targetId={p.id} initialCount={p.hypeCount} />
+                    </div>
+                  </div>
                   {p.city && (
                     <div style={{ fontSize: 12, color: 'rgba(240,235,229,.45)' }}>{p.city}{p.stateRegion ? `, ${p.stateRegion}` : ''}</div>
                   )}
