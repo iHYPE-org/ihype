@@ -33,7 +33,7 @@ export async function GET(request: Request) {
     })
   );
 
-  if (!profile || profile.type !== 'ARTIST') {
+  if (!profile || !['ARTIST', 'DJ'].includes(profile.type)) {
     return NextResponse.json({ error: 'Artist profile not found.' }, { status: 404 });
   }
 

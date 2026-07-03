@@ -43,14 +43,39 @@ function buildResolvedSequence(productionPlan: ShowProductionPlan) {
       .map((item) => [`pad-${item.assignedPad}`, item])
   );
 
+  const adClipById = new Map<string, ShowAdClip>(
+    (productionPlan.advertising?.clips ?? []).map((clip) => [clip.clipId, clip])
+  );
   const adClips = productionPlan.advertising?.enabled ? productionPlan.advertising.clips ?? [] : [];
   const frequency = productionPlan.advertising?.frequency ?? 3;
+  // Shows that explicitly place AD cues in their sequence (e.g. the Radio
+  // Show Creator) opt out of the legacy frequency-based auto-injection below
+  // — otherwise ad breaks would play twice.
+  const hasExplicitAds = productionPlan.sequence.some((item) => item.kind === 'AD');
   let mediaCount = 0;
   let adIndex = 0;
 
   const resolved: ResolvedSequenceItem[] = [];
 
   for (const item of productionPlan.sequence) {
+    if (item.kind === 'AD') {
+      const adClip = adClipById.get(item.refId);
+      if (!adClip) {
+        continue;
+      }
+
+      resolved.push({
+        id: item.id,
+        kind: item.kind,
+        label: item.label,
+        url: adClip.url,
+        mediaType: 'audio',
+        notes: adClip.notes,
+        durationSeconds: adClip.durationSeconds
+      });
+      continue;
+    }
+
     if (item.kind === 'MEDIA') {
       const mediaItem = mediaById.get(item.refId);
       if (!mediaItem) {
@@ -68,7 +93,7 @@ function buildResolvedSequence(productionPlan: ShowProductionPlan) {
         previewImageUrl: mediaItem.previewImageUrl
       });
 
-      if (adClips.length && mediaCount % frequency === 0) {
+      if (!hasExplicitAds && adClips.length && mediaCount % frequency === 0) {
         const adClip = adClips[adIndex % adClips.length] as ShowAdClip;
         resolved.push({
           id: `ad-${adClip.clipId}-${mediaCount}`,

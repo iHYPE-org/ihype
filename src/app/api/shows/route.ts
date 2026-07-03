@@ -118,6 +118,50 @@ export async function POST(request: NextRequest) {
     const modCheck = checkContent(`${body.title} ${body.description ?? ''}`);
     const moderationStatus = modCheck.flagged ? 'FLAGGED' : 'APPROVED';
 
+    if (body.isRadioShow && body.productionPlan) {
+      // Rich production-plan path (Radio Show Creator) — an alternate,
+      // additive way to create a radio show alongside the legacy flat
+      // radioTracks path below. Requires an owned DJ promoter profile, same
+      // as the ticketed-show productionPlan rule further down.
+      if (!body.promoterProfileId) {
+        return NextResponse.json({ error: 'A promoter profile is required when saving a production plan' }, { status: 400 });
+      }
+
+      const promoterProfile = await db.profile.findUnique({ where: { id: body.promoterProfileId } });
+      if (!promoterProfile || promoterProfile.type !== 'DJ') {
+        return NextResponse.json({ error: 'Promoter must be a promoter profile' }, { status: 400 });
+      }
+
+      if (!isAdmin && promoterProfile.ownerId !== session.user.id) {
+        return NextResponse.json({ error: 'Only the promoter owner can create radio shows from this promoter page' }, { status: 403 });
+      }
+
+      const baseSlug = slugify(body.title);
+      let slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
+      while (await db.show.findUnique({ where: { slug }, select: { id: true } })) {
+        slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
+      }
+      const status = body.status === 'DRAFT' ? 'DRAFT' : 'SCHEDULED';
+
+      const show = await db.show.create({
+        data: {
+          slug,
+          title: body.title,
+          description: body.description,
+          isRadioShow: true,
+          startsAt: body.startsAt ? new Date(body.startsAt) : new Date(),
+          creatorId: session.user.id,
+          promoterProfileId: body.promoterProfileId,
+          tags: Array.from(new Set([...body.tags, 'radio-show', 'prerecorded-show'])),
+          productionPlan: body.productionPlan,
+          status,
+          moderationStatus
+        }
+      });
+
+      return NextResponse.json(show, { status: 201 });
+    }
+
     if (body.isRadioShow) {
       const tracks = body.radioTracks ?? [];
       if (!tracks.length) {

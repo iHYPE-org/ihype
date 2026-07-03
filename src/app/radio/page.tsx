@@ -175,13 +175,21 @@ export default function RadioPage() {
       `}</style>
 
       {/* Always-on station entry point */}
-      <a href="/radio/station" style={{ textDecoration: 'none', display: 'block', marginBottom: 20 }}>
+      <a href="/radio/station" style={{ textDecoration: 'none', display: 'block', marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 16px', borderRadius: 12, background: 'rgba(255,80,41,.08)', border: '1px solid rgba(255,80,41,.28)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', boxShadow: '0 0 10px var(--accent)', animation: 'ihype-pulse-dot 1.4s infinite' }} />
             <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 15, color: 'var(--ink)' }}>The station never stops →</span>
           </div>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)', flexShrink: 0 }}>Always on</span>
+        </div>
+      </a>
+
+      {/* DJ entry point into Radio Show Creator */}
+      <a href="/radio/studio" style={{ textDecoration: 'none', display: 'block', marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 16px', borderRadius: 12, background: 'rgba(185,131,255,.06)', border: '1px solid rgba(185,131,255,.2)' }}>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, color: 'var(--ink)' }}>DJ? Build a show →</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: '#b983ff', flexShrink: 0 }}>Radio Studio</span>
         </div>
       </a>
 

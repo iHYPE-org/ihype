@@ -26,3 +26,4 @@ tsconfig.tsbuildinfo
 .sync-bundles
 .vercel-sandbox-data
 .claude/worktrees/
+.claude/design-sync-state.json

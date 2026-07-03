@@ -126,3 +126,43 @@ export function parseShowProductionPlan(value: unknown): ShowProductionPlan | nu
   const result = showProductionPlanSchema.safeParse(value);
   return result.success ? result.data : null;
 }
+
+// Placeholder ad-clip catalog, scoped like royaltyFreeSampleClips above —
+// there is no real advertiser marketplace feeding radio ad breaks yet, so
+// these are the only clips buildAutoAdBreak can pull from until one exists.
+export const builtInAdClips: ShowAdClip[] = [
+  { clipId: '0xad10ca1000000001', title: 'Local spot A', url: '/audio/ads/local-a.wav', scope: 'local', mimeType: 'audio/wav', durationSeconds: 20, notes: 'Placeholder local ad clip.' },
+  { clipId: '0xad10ca1000000002', title: 'Local spot B', url: '/audio/ads/local-b.wav', scope: 'local', mimeType: 'audio/wav', durationSeconds: 30, notes: 'Placeholder local ad clip.' },
+  { clipId: '0xad10ca1000000003', title: 'Regional spot A', url: '/audio/ads/regional-a.wav', scope: 'regional', mimeType: 'audio/wav', durationSeconds: 30, notes: 'Placeholder regional ad clip.' },
+  { clipId: '0xad10ca1000000004', title: 'Regional spot B', url: '/audio/ads/regional-b.wav', scope: 'regional', mimeType: 'audio/wav', durationSeconds: 45, notes: 'Placeholder regional ad clip.' },
+  { clipId: '0xad10ca1000000005', title: 'National spot A', url: '/audio/ads/national-a.wav', scope: 'national', mimeType: 'audio/wav', durationSeconds: 30, notes: 'Placeholder national ad clip.' },
+  { clipId: '0xad10ca1000000006', title: 'National spot B', url: '/audio/ads/national-b.wav', scope: 'national', mimeType: 'audio/wav', durationSeconds: 60, notes: 'Placeholder national ad clip.' },
+  { clipId: '0xad10ca1000000007', title: 'Global spot A', url: '/audio/ads/global-a.wav', scope: 'global', mimeType: 'audio/wav', durationSeconds: 30, notes: 'Placeholder global ad clip.' },
+  { clipId: '0xad10ca1000000008', title: 'Global spot B', url: '/audio/ads/global-b.wav', scope: 'global', mimeType: 'audio/wav', durationSeconds: 60, notes: 'Placeholder global ad clip.' }
+];
+
+// Greedy-fills a target ad-break duration from the catalog for a given
+// scope, falling back to the full catalog if nothing matches that scope.
+export function buildAutoAdBreak(scope: AdvertisingScope, targetSeconds = 90): ShowAdClip[] {
+  let pool = builtInAdClips.filter((clip) => clip.scope === scope);
+  if (!pool.length) {
+    pool = builtInAdClips.slice();
+  }
+
+  const sorted = [...pool].sort((a, b) => (b.durationSeconds ?? 0) - (a.durationSeconds ?? 0));
+  const chosen: ShowAdClip[] = [];
+  let remaining = targetSeconds;
+  let guard = 0;
+
+  while (remaining > 0 && guard < 12) {
+    const fit = sorted.find((clip) => (clip.durationSeconds ?? 0) <= remaining && (clip.durationSeconds ?? 0) > 0);
+    if (!fit) break;
+    chosen.push(fit);
+    remaining -= fit.durationSeconds ?? 0;
+    sorted.splice(sorted.indexOf(fit), 1);
+    sorted.push(fit);
+    guard += 1;
+  }
+
+  return chosen;
+}

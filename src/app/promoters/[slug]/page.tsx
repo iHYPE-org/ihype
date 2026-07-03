@@ -116,6 +116,7 @@ export default async function DJProfilePage({
               <Link className="dj-hero-btn" href="/radio">Tune In →</Link>
               {isOwner && (
                 <>
+                  {profile.type === 'DJ' && <Link className="dj-hero-btn" href="/radio/studio">Radio Studio</Link>}
                   <Link className="dj-hero-btn" href="/pages">Customize</Link>
                   <Link className="dj-hero-btn" href="/settings">Settings</Link>
                 </>
@@ -145,7 +146,7 @@ export default async function DJProfilePage({
               <div className="dj-empty"><p>No shows yet.</p></div>
             ) : (
               relevantShows.map((s) => (
-                <Link className="dj-show-card" href={s.isRadioShow ? '/radio' : `/shows/${s.slug}`} key={s.id}>
+                <Link className="dj-show-card" href={`/shows/${s.slug}`} key={s.id}>
                   <div>
                     <div className="dj-show-title">{s.title}</div>
                     <div className="dj-show-meta">
