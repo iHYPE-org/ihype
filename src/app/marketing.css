@@ -278,6 +278,21 @@
   max-width: 680px;
   margin: 0;
 }
+.lp-coming-soon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 4px 10px;
+  border: 1px dashed rgba(255,255,255,.18);
+  border-radius: 999px;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
 
 .lp-footer-cta {
   text-align: center;

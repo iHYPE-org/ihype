@@ -10,7 +10,7 @@ const VALID_CODES = ['IHYPE', 'HYPE2026', 'BETA', 'LISTEN'];
 const S = {
   wrap: { position: 'absolute' as const, inset: 0, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center', padding: '0 28px', textAlign: 'center' as const, background: 'var(--bg-base)' },
   wordmark: { fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: '2.4rem', letterSpacing: '-.04em', color: 'var(--accent)' },
-  eyebrow: { fontFamily: 'var(--font-mono)', fontSize: '.66rem', letterSpacing: '.22em', textTransform: 'uppercase' as const, color: 'var(--warn)', marginTop: 6 },
+  eyebrow: { fontFamily: 'var(--font-mono)', fontSize: '.66rem', letterSpacing: '.22em', textTransform: 'uppercase' as const, color: 'var(--warning)', marginTop: 6 },
   desc: { fontFamily: 'var(--font-body)', fontSize: '.86rem', color: 'var(--ink-2)', marginTop: 18, lineHeight: 1.5, maxWidth: 280 },
 };
 
@@ -62,7 +62,7 @@ export function BetaGate() {
       </button>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: '.66rem', color: 'var(--ink-3)', marginTop: 18 }}>
         No code?{' '}
-        <span style={{ color: 'var(--warn)', cursor: 'pointer' }} onClick={() => setCode('IHYPE')}>
+        <span style={{ color: 'var(--warning)', cursor: 'pointer' }} onClick={() => setCode('IHYPE')}>
           Use demo code
         </span>
       </div>

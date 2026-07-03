@@ -4,6 +4,11 @@
   --bg-2:  #100d09;
   --bg-3:  #1a1612;
   --bg-4:  #221c16;
+  /* Aliases — several components use var(--bg2)/var(--bg3) (no hyphen);
+     without these they silently resolve to nothing and those surfaces
+     render transparent instead of the intended card background. */
+  --bg2: var(--bg-2);
+  --bg3: var(--bg-3);
 
   /* ── Ink (warm off-white → muted taupe) ──────────────────────────── */
   --ink:         #f0ebe5;
@@ -274,7 +279,7 @@ body:has(.site-dock) .site-shell {
 .ihype-sheet-panel {
   background: var(--bg2, #100d09);
   border: 1px solid rgba(255,255,255,.08);
-  border-radius: 12px;
+  border-radius: var(--radius-md, 12px);
   padding: 28px;
   max-width: 420px;
   width: 100%;
@@ -285,7 +290,7 @@ body:has(.site-dock) .site-shell {
   .ihype-sheet-overlay { align-items: flex-end; padding: 0; }
   .ihype-sheet-panel {
     max-width: 100%;
-    border-radius: 20px 20px 0 0;
+    border-radius: var(--radius-xl, 22px) var(--radius-xl, 22px) 0 0;
     padding: 12px 20px calc(24px + env(safe-area-inset-bottom, 0px));
     max-height: calc(100vh - 60px);
     animation: ihype-sheet-up .25s cubic-bezier(.32,.72,0,1) both;
@@ -5241,7 +5246,7 @@ html.high-contrast p {
   background: #090806;
   border-top: 1px solid rgba(255,255,255,.08);
   backdrop-filter: blur(12px);
-  font-family: var(--f-m, 'DM Mono', monospace);
+  font-family: var(--f-m);
 }
 .site-dock-l {
   display: flex;

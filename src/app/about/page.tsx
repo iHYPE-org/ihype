@@ -48,8 +48,8 @@ export default function AboutPage() {
           analytics and promotional tools, and direct donations from fans who believe independent music
           infrastructure should belong to artists. We publish full financial summaries on our{' '}
           <Link href="/transparency" style={{ color: '#22e5d4' }}>transparency page</Link>.
-          [Detailed funding breakdown coming soon.]
         </p>
+        <span className="lp-coming-soon">Detailed funding breakdown coming soon</span>
       </section>
 
       {/* Timeline */}
@@ -85,8 +85,9 @@ export default function AboutPage() {
         <p className="lp-hype-body">
           iHYPE is built by a small team of musicians, developers, and community organizers who got tired of watching
           independent venues close and independent artists lose income to platform fees. We are not venture-backed.
-          We do not have a growth-at-all-costs mandate. [Full team page coming soon.]
+          We do not have a growth-at-all-costs mandate.
         </p>
+        <span className="lp-coming-soon">Full team page coming soon</span>
       </section>
 
       {/* CTA */}

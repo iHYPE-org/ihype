@@ -79,6 +79,36 @@ const emptyStyle: React.CSSProperties = { textAlign: 'center', padding: '60px 24
 const rowTitle: React.CSSProperties = { fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, letterSpacing: '-.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
 const rowSubtitle: React.CSSProperties = { fontSize: 12, color: 'rgba(240,235,229,.55)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
 
+function ListSkeleton({ rows = 4 }: { rows?: number }) {
+  return (
+    <div style={panel}>
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} style={chartRow}>
+          <div className="ihype-skeleton" style={{ width: 5, height: 36, borderRadius: 3, flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0, display: 'grid', gap: 6 }}>
+            <div className="ihype-skeleton" style={{ width: `${55 - i * 6}%`, height: 15, borderRadius: 5 }} />
+            <div className="ihype-skeleton" style={{ width: `${35 - i * 4}%`, height: 11, borderRadius: 4 }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CardSkeleton({ cards = 2 }: { cards?: number }) {
+  return (
+    <div style={{ display: 'grid', gap: 12 }}>
+      {Array.from({ length: cards }).map((_, i) => (
+        <div key={i} style={{ border: '1px solid rgba(255,255,255,.07)', borderRadius: 16, padding: 20, background: 'rgba(255,255,255,.03)', display: 'grid', gap: 10 }}>
+          <div className="ihype-skeleton" style={{ width: 90, height: 11, borderRadius: 4 }} />
+          <div className="ihype-skeleton" style={{ width: '60%', height: 19, borderRadius: 5 }} />
+          <div className="ihype-skeleton" style={{ width: '35%', height: 13, borderRadius: 4 }} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function timeLabel(iso: string | null) {
   if (!iso) return '';
   return new Date(iso).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' });
@@ -421,6 +451,7 @@ export function ListenHome() {
             value={q}
           />
           {!q.trim() && <div style={emptyStyle}><p>Search across tracks, artists, and genres.</p></div>}
+          {q.trim() && searchResults === null && <ListSkeleton rows={5} />}
           {q.trim() && searchResults && searchArtists.length === 0 && searchSongs.length === 0 && (
             <div style={emptyStyle}><p>No results for &ldquo;{q}&rdquo;.</p></div>
           )}
@@ -493,7 +524,7 @@ export function ListenHome() {
       {/* RADIO */}
       {tab === 'radio' && (
         <div>
-          {radio === null && <div style={emptyStyle}><p>Loading radio…</p></div>}
+          {radio === null && <CardSkeleton />}
           {radio !== null && !liveShow && upcomingShows.length === 0 && (
             <div style={emptyStyle}><p>No shows on air or scheduled right now.</p></div>
           )}
@@ -549,7 +580,16 @@ export function ListenHome() {
           </div>
           <div style={panel}>
             <div style={panelHead}>Hype Leaderboard · Last 7 days</div>
-            {charts === null && <div style={{ ...emptyStyle, padding: '32px 20px' }}><p>Loading charts…</p></div>}
+            {charts === null && Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} style={chartRow}>
+                <div className="ihype-skeleton" style={{ width: 26, height: 18, borderRadius: 4, flexShrink: 0 }} />
+                <div className="ihype-skeleton" style={{ width: 5, height: 36, borderRadius: 3, flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0, display: 'grid', gap: 6 }}>
+                  <div className="ihype-skeleton" style={{ width: `${50 - i * 5}%`, height: 15, borderRadius: 5 }} />
+                  <div className="ihype-skeleton" style={{ width: `${30 - i * 3}%`, height: 11, borderRadius: 4 }} />
+                </div>
+              </div>
+            ))}
             {charts !== null && filteredChartRows.length === 0 && <div style={{ ...emptyStyle, padding: '32px 20px' }}><p>No tracks charting here yet.</p></div>}
             {filteredChartRows.map((c, i) => (
               <Link key={c.id} href={`/artists/${c.artistSlug}`} style={{ ...chartRow, textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
@@ -586,7 +626,19 @@ export function ListenHome() {
             </div>
           </div>
 
-          {playlists === null && <div style={{ ...emptyStyle, padding: '40px 20px' }}><p>Loading playlists…</p></div>}
+          {playlists === null && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 12, marginBottom: 12 }}>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} style={panel}>
+                  <div className="ihype-skeleton" style={{ height: 90, borderRadius: 0 }} />
+                  <div style={{ padding: '16px 18px 18px', display: 'grid', gap: 8 }}>
+                    <div className="ihype-skeleton" style={{ width: '70%', height: 16, borderRadius: 5 }} />
+                    <div className="ihype-skeleton" style={{ width: '40%', height: 12, borderRadius: 4 }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
           {playlists !== null && playlists.length === 0 && <div style={{ ...emptyStyle, padding: '40px 20px' }}><p>No playlists yet. Create your first.</p></div>}
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 12 }}>
