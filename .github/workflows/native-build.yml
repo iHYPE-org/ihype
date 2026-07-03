@@ -1,0 +1,188 @@
+name: Native shell build (iOS + Android)
+
+# iHYPE ships as a Capacitor shell around the live site (capacitor.config.ts
+# points server.url at production), so this workflow only needs to run when
+# the native shell itself changes — icons, splash, native config, plugins.
+# Regular feature/content work ships through deploy-production.yml and
+# reaches every platform immediately with no rebuild here.
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'ios/**'
+      - 'android/**'
+      - 'capacitor.config.ts'
+      - 'capacitor-shell/**'
+      - 'package.json'
+  push:
+    branches:
+      - main
+    paths:
+      - 'ios/**'
+      - 'android/**'
+      - 'capacitor.config.ts'
+      - 'capacitor-shell/**'
+      - 'package.json'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  # Debug/simulator builds need no signing, so this runs unconditionally as
+  # a real "does the native shell still compile" check on every change.
+  ios-debug-build:
+    name: iOS — debug build (unsigned)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync Capacitor
+        run: npx cap sync ios
+
+      # Capacitor 8's iOS template uses a local Swift Package (CapApp-SPM)
+      # for plugin dependencies instead of CocoaPods, so there's no Podfile
+      # and no .xcworkspace — xcodebuild resolves the local package itself.
+      - name: Build for iOS Simulator (no signing required)
+        working-directory: ios/App
+        run: |
+          xcodebuild -project App.xcodeproj -scheme App \
+            -destination 'generic/platform=iOS Simulator' \
+            -configuration Debug build CODE_SIGNING_ALLOWED=NO
+
+  android-debug-build:
+    name: Android — debug build (unsigned)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Build debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug
+
+  # Signed release builds need an Apple Developer Program account and a
+  # Google Play Console account — neither exists yet. These jobs are written
+  # and ready, but skip with a clear message until the corresponding secrets
+  # are added, matching the pattern in deploy-production.yml.
+  ios-release-build:
+    name: iOS — signed release build
+    runs-on: macos-15
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Check for signing secrets
+        id: check
+        run: |
+          if [ -n "${{ secrets.IOS_DIST_CERTIFICATE_BASE64 }}" ] && [ -n "${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::iOS release signing secrets not configured yet — skipping signed build. Needs an Apple Developer Program account, a distribution certificate, and a provisioning profile for com.ihype.app."
+          fi
+
+      - name: Install dependencies
+        if: steps.check.outputs.configured == 'true'
+        run: npm ci
+
+      - name: Sync Capacitor
+        if: steps.check.outputs.configured == 'true'
+        run: npx cap sync ios
+
+      # TODO once the Apple Developer account exists: import the distribution
+      # certificate + provisioning profile into a temporary keychain, then
+      # `xcodebuild archive` + `xcodebuild -exportArchive` with a matching
+      # ExportOptions.plist, then upload to TestFlight via
+      # `xcrun altool --upload-app` or Fastlane's `pilot`.
+      - name: Signed archive + TestFlight upload
+        if: steps.check.outputs.configured == 'true'
+        working-directory: ios/App
+        run: |
+          echo "Signing secrets are present but the archive/export/upload steps
+          still need to be filled in against the real Apple Developer Program
+          setup (Team ID, signing identity, provisioning profile name)."
+          exit 1
+
+  android-release-build:
+    name: Android — signed release build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Check for signing secrets
+        id: check
+        run: |
+          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ] && [ -n "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Android release signing secrets not configured yet — skipping signed build. Needs a Google Play Console account and an upload keystore for com.ihype.app."
+          fi
+
+      - name: Install dependencies
+        if: steps.check.outputs.configured == 'true'
+        run: npm ci
+
+      - name: Sync Capacitor
+        if: steps.check.outputs.configured == 'true'
+        run: npx cap sync android
+
+      - name: Decode keystore
+        if: steps.check.outputs.configured == 'true'
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+
+      # TODO once the Play Console account + keystore exist: pass
+      # -Pandroid.injected.signing.store.file / .password /
+      # .key.alias / .key.password to a `bundleRelease` build, then upload the
+      # .aab to the Play Console via the Google Play Developer API (or the
+      # `r0adkll/upload-google-play` action) for internal/production track.
+      - name: Signed bundle + Play Console upload
+        if: steps.check.outputs.configured == 'true'
+        working-directory: android
+        run: |
+          echo "Signing secrets are present but the bundleRelease + upload
+          steps still need to be filled in against the real Play Console
+          setup (service account key, track config)."
+          exit 1

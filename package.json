@@ -26,10 +26,17 @@
     "cf:build": "node scripts/bump-sw-version.mjs && opennextjs-cloudflare build && node scripts/patch-worker-bundle.mjs",
     "cf:preview": "opennextjs-cloudflare preview",
     "cf:dev": "wrangler dev",
-    "cf:deploy": "wrangler deploy worker.js --autoconfig=false"
+    "cf:deploy": "wrangler deploy worker.js --autoconfig=false",
+    "cap:sync": "cap sync",
+    "cap:open:ios": "cap open ios",
+    "cap:open:android": "cap open android"
   },
   "dependencies": {
     "@auth/prisma-adapter": "2.11.2",
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/cli": "^8.4.1",
+    "@capacitor/core": "^8.4.1",
+    "@capacitor/ios": "^8.4.1",
     "@opennextjs/cloudflare": "^1.7.0",
     "@prisma/adapter-pg": "6.19.3",
     "@prisma/client": "^6.19.3",
