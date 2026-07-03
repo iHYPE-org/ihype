@@ -1,6 +1,6 @@
-export const WORKBENCH_PATH = '/home';
+export const WORKBENCH_PATH = '/listen';
 // Generic (no-specific-destination) sign-ins land on Welcome first, which then
-// routes on to WORKBENCH_PATH — matches the Auth → Welcome → Home flow used
+// routes on to WORKBENCH_PATH — matches the Auth → Welcome → Listen flow used
 // for sign-up. A real deep-link callbackUrl (e.g. a show or ticket page the
 // user was trying to reach) is preserved as-is and skips Welcome.
 export const WELCOME_PATH = '/welcome';

@@ -417,6 +417,10 @@ const nextConfig = {
         headers: [{ key: 'Cache-Control', value: 'no-store' }]
       },
       {
+        source: '/listen',
+        headers: [{ key: 'Cache-Control', value: 'no-store' }]
+      },
+      {
         source: '/hype',
         headers: [{ key: 'Cache-Control', value: 'no-cache, must-revalidate' }]
       },

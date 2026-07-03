@@ -29,26 +29,27 @@ function assertMissing(relativePath, reason) {
   }
 }
 
+// /home is retired as a rendered page — the Workbench (WorkbenchShellV2/
+// WorkbenchMobile) has been superseded by the Listen/Events/Pages design.
+// /home now exists only to forward legacy links/bookmarks onward.
 assertIncludes(
   'src/app/home/page.tsx',
-  'WorkbenchShell',
-  '/home is the canonical authenticated workbench and must render the workbench shell.'
+  "redirect('/listen')",
+  '/home is a legacy alias only and must forward to the canonical /listen route.'
 );
-// Auth check temporarily removed while UI is iterated with mock data.
-// Re-add this guard when real auth is wired back up:
-// assertIncludes(
-//   'src/app/home/page.tsx',
-//   "redirect('/login')",
-//   'Unauthenticated workbench visits must not render private UI.'
-// );
+assertIncludes(
+  'src/app/listen/page.tsx',
+  'ListenHome',
+  '/listen is the canonical authenticated Listen destination and must render it.'
+);
 assertMissing(
   'src/app/workbench/page.tsx',
   '/workbench is a legacy alias only; do not recreate it as a second authenticated app.'
 );
 assertIncludes(
   'src/lib/auth-redirects.ts',
-  "WORKBENCH_PATH = '/home'",
-  'All successful auth paths should resolve to the canonical workbench route.'
+  "WORKBENCH_PATH = '/listen'",
+  'All successful auth paths should resolve to the canonical Listen route.'
 );
 assertIncludes(
   'src/components/AuthLogin.tsx',
@@ -136,4 +137,4 @@ assertIncludes(
   'The authenticated workbench should remain noindex via robots.'
 );
 
-console.log('Design guard passed: /home is the canonical authenticated workbench.');
+console.log('Design guard passed: /listen is the canonical authenticated destination.');

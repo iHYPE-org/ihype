@@ -1,5 +1,7 @@
 // ── Workbench shared types ─────────────────────────────────────
-// Single source of truth for all WorkbenchShellV2 data types.
+// Retained for getWorkbenchData.ts, which still backs the real
+// /api/workbench and /api/discover/daily routes even though the
+// Workbench UI itself has been retired in favor of /listen.
 
 export type WbTrack = {
   id: string;

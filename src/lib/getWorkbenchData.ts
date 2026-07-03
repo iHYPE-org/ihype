@@ -1,4 +1,4 @@
-import type { WorkbenchData, WbTrendingProfile } from '@/components/WorkbenchShellV2';
+import type { WorkbenchData, WbTrendingProfile } from '@/types/workbench';
 import { db, withDbRetry } from '@/lib/db';
 import { MOCK_DATA } from '@/lib/workbench-mock';
 import { getArtistUploadStreak } from '@/lib/streaks';
