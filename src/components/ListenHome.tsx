@@ -76,6 +76,8 @@ const panel: React.CSSProperties = { border: '1px solid rgba(255,255,255,.06)', 
 const panelHead: React.CSSProperties = { padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,.06)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)' };
 const chartRow: React.CSSProperties = { display: 'flex', gap: 14, alignItems: 'center', padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,.05)' };
 const emptyStyle: React.CSSProperties = { textAlign: 'center', padding: '60px 24px', color: 'rgba(240,235,229,.5)' };
+const rowTitle: React.CSSProperties = { fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, letterSpacing: '-.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
+const rowSubtitle: React.CSSProperties = { fontSize: 12, color: 'rgba(240,235,229,.55)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
 
 function timeLabel(iso: string | null) {
   if (!iso) return '';
@@ -430,8 +432,8 @@ export function ListenHome() {
                   <Link key={r.id} href={r.type === 'venue' ? `/venues/${r.slug}` : r.type === 'promoter' ? `/promoters/${r.slug}` : `/artists/${r.slug}`} style={{ ...chartRow, textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
                     <div style={{ width: 5, height: 36, borderRadius: 3, flexShrink: 0, background: PALETTE[i % PALETTE.length] }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, letterSpacing: '-.01em' }}>{r.name}</div>
-                      <div style={{ fontSize: 12, color: 'rgba(240,235,229,.55)', marginTop: 2 }}>{r.subtitle}</div>
+                      <div style={rowTitle}>{r.name}</div>
+                      <div style={rowSubtitle}>{r.subtitle}</div>
                     </div>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent)', flexShrink: 0 }}>{r.hypeCount?.toLocaleString() ?? ''}</div>
                   </Link>
@@ -446,8 +448,8 @@ export function ListenHome() {
                 {searchSongs.map((r) => (
                   <div key={r.id} style={chartRow}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, letterSpacing: '-.01em' }}>{r.name}</div>
-                      <div style={{ fontSize: 12, color: 'rgba(240,235,229,.55)', marginTop: 2 }}>{r.subtitle}</div>
+                      <div style={rowTitle}>{r.name}</div>
+                      <div style={rowSubtitle}>{r.subtitle}</div>
                     </div>
                   </div>
                 ))}
@@ -554,8 +556,8 @@ export function ListenHome() {
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, width: 26, color: 'rgba(240,235,229,.2)', flexShrink: 0 }}>{i + 1}</div>
                 <div style={{ width: 5, height: 36, borderRadius: 3, flexShrink: 0, background: c.color }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, letterSpacing: '-.01em' }}>{c.title}</div>
-                  <div style={{ fontSize: 12, color: 'rgba(240,235,229,.55)', marginTop: 2 }}>{c.artistName}{c.city ? ` · ${c.city}` : ''}</div>
+                  <div style={rowTitle}>{c.title}</div>
+                  <div style={rowSubtitle}>{c.artistName}{c.city ? ` · ${c.city}` : ''}</div>
                 </div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.08em', color: 'var(--accent)', flexShrink: 0 }}>{c.hypeCount.toLocaleString()}</div>
               </Link>
@@ -606,11 +608,11 @@ export function ListenHome() {
                 {favorites.map((f) => (
                   f.artistProfileSlug ? (
                     <Link key={f.id} href={`/artists/${f.artistProfileSlug}`} style={{ ...chartRow, textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
-                      <div><div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800 }}>{f.title}</div><div style={{ fontSize: 12, color: 'rgba(240,235,229,.55)', marginTop: 2 }}>{f.artistName}</div></div>
+                      <div style={{ flex: 1, minWidth: 0 }}><div style={rowTitle}>{f.title}</div><div style={rowSubtitle}>{f.artistName}</div></div>
                     </Link>
                   ) : (
                     <div key={f.id} style={chartRow}>
-                      <div><div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800 }}>{f.title}</div><div style={{ fontSize: 12, color: 'rgba(240,235,229,.55)', marginTop: 2 }}>{f.artistName}</div></div>
+                      <div style={{ flex: 1, minWidth: 0 }}><div style={rowTitle}>{f.title}</div><div style={rowSubtitle}>{f.artistName}</div></div>
                     </div>
                   )
                 ))}
@@ -660,8 +662,8 @@ export function ListenHome() {
                   </div>
                   <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 800, width: 22, color: 'rgba(240,235,229,.2)', flexShrink: 0 }}>{i + 1}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 800 }}>{it.title}</div>
-                    <div style={{ fontSize: 11, color: 'rgba(240,235,229,.5)', marginTop: 2 }}>{it.artistName}</div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.title}</div>
+                    <div style={{ fontSize: 11, color: 'rgba(240,235,229,.5)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.artistName}</div>
                   </div>
                   <button onClick={() => removeItem(openPlaylist.id, it.id)} style={{ ...bGhost, padding: '6px 12px', fontSize: 12 }} type="button">Remove</button>
                 </div>

@@ -205,9 +205,9 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
                         </span>
                       )}
                     </div>
-                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 15, marginBottom: 4, color: 'var(--ink)' }}>{s.title}</div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 8 }}>
-                      <div style={{ fontSize: 12, color: 'rgba(240,235,229,.45)' }}>
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 15, marginBottom: 4, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.title}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 8, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, color: 'rgba(240,235,229,.45)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
                         {s.headlinerProfile?.name ?? 'iHYPE Radio'}
                         {s.venueProfile?.city ? ` · ${s.venueProfile.city}` : ''}
                       </div>
@@ -243,13 +243,13 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
                       ? <Image src={p.avatarImage} alt={p.name} fill sizes="44px" style={{ objectFit: 'cover', borderRadius: 22 }} />
                       : (p.type === 'VENUE' ? '🏛️' : '🎤')}
                   </div>
-                  <div>
-                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, marginBottom: 2, color: 'var(--ink)' }}>{p.name}</div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, marginBottom: 2, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
                     <div style={{ fontSize: 11, color: TYPE_COLOR[p.type] ?? '#ff5029', fontFamily: 'var(--font-mono)', letterSpacing: '.06em', textTransform: 'uppercase' }}>
                       {TYPE_LABEL[p.type] ?? p.type}
                     </div>
                     {p.city && (
-                      <div style={{ fontSize: 11, color: 'rgba(240,235,229,.4)', marginTop: 2 }}>{p.city}</div>
+                      <div style={{ fontSize: 11, color: 'rgba(240,235,229,.4)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.city}</div>
                     )}
                   </div>
                 </Link>
@@ -285,8 +285,8 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
               <Link key={p.id} href={`/venues/${p.slug}`} style={{ textDecoration: 'none' }}>
                 <div className="ihype-card" style={{ padding: '16px 18px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 4 }}>
-                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 15, color: '#22e5d4' }}>🏛️ {p.name}</div>
-                    <div onClick={e => { e.preventDefault(); e.stopPropagation(); }}>
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 15, color: '#22e5d4', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>🏛️ {p.name}</div>
+                    <div style={{ flexShrink: 0 }} onClick={e => { e.preventDefault(); e.stopPropagation(); }}>
                       <CompactHypeButton targetType="profile" targetId={p.id} initialCount={p.hypeCount} />
                     </div>
                   </div>
