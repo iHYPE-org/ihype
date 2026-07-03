@@ -1,77 +1,32 @@
 import type { Metadata } from 'next';
-import { parsePublishedPage } from '@/lib/page-builder';
-import Image from 'next/image';
 import Link from 'next/link';
-
-export const revalidate = 60;
 import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { ContentReportControl } from '@/components/ContentReportControl';
 import { HypeButton } from '@/components/HypeButton';
+import { FollowButton } from '@/components/FollowButton';
 import { ShareButton } from '@/components/ShareButton';
-import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
-import { FanRecommendationsPanel } from '@/components/FanRecommendationsPanel';
-import { getSafeBackgroundImageStyle, getSafeImageUrl } from '@/lib/asset-safety';
-import { getSharedDiscoverFeed, isLocalMatch, isRegionalMatch } from '@/lib/discover-feed';
+import { PromoteShareButton } from '@/components/PromoteShareButton';
 import { canManageOwnedResource } from '@/lib/permissions';
-import { getProfileDesignStyleVars, getBuilderDesignStyleVars } from '@/lib/profile-design';
-import { detectRequestLocation, type RequestLocation } from '@/lib/request-location';
-import { calculateFanLevel } from '@/lib/fan-level';
-import { BadgeShelf } from '@/components/BadgeShelf';
-import {
-  getDemoCreatorExclusion,
-  getDemoOwnerExclusion,
-  getDemoProfileRelationExclusion,
-  getDemoShowRelationExclusion,
-  isDemoUser,
-  shouldHideDemoContent
-} from '@/lib/runtime-flags';
+import { getDemoShowRelationExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
+import { getPromoterDashboard } from '@/lib/promoterDashboard';
+import { formatCurrencyFromCents } from '@/lib/ticketing';
+import { getBaseUrl } from '@/lib/utils';
 
-const listenerSections = ['about', 'recommend'] as const;
+export const revalidate = 60;
 
-type ListenerSection = (typeof listenerSections)[number];
-type LocationMatchShape = {
-  postalCode?: string | null;
-  city?: string | null;
-  stateRegion?: string | null;
-  country?: string | null;
-};
+const fanSections = ['taste', 'top5', 'shows', 'referrals'] as const;
+type FanSection = (typeof fanSections)[number];
 
-function getActiveSection(section: string | string[] | undefined): ListenerSection {
-  if (typeof section === 'string' && listenerSections.includes(section as ListenerSection)) {
-    return section as ListenerSection;
-  }
-
-  return 'about';
+function getActiveSection(section: string | string[] | undefined): FanSection {
+  if (typeof section === 'string' && fanSections.includes(section as FanSection)) return section as FanSection;
+  return 'taste';
 }
 
-function getSectionLabel(section: ListenerSection) {
-  return section.charAt(0).toUpperCase() + section.slice(1);
-}
-
-function getInitials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('');
-}
-
-function formatShowDate(value: Date) {
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  }).format(value);
-}
+const SECTION_LABEL: Record<FanSection, string> = { taste: 'Taste', top5: 'Top 5', shows: 'Shows', referrals: 'Referrals' };
 
 function getTopFiveItems(content: string | null) {
-  if (!content) {
-    return [];
-  }
-
+  if (!content) return [];
   return content
     .split(/\r?\n|,/)
     .map((entry) => entry.replace(/^\s*[-*\d.]+\s*/, '').trim())
@@ -79,97 +34,23 @@ function getTopFiveItems(content: string | null) {
     .slice(0, 5);
 }
 
-function getLocationSignalScore(
-  item: LocationMatchShape,
-  viewerLocation: RequestLocation | null
-) {
-  if (isLocalMatch(item, viewerLocation)) {
-    return 2;
-  }
-
-  if (isRegionalMatch(item, viewerLocation)) {
-    return 1;
-  }
-
-  return 0;
-}
-
-function getLocationScopeLabel(
-  item: LocationMatchShape,
-  viewerLocation: RequestLocation | null
-) {
-  const score = getLocationSignalScore(item, viewerLocation);
-  if (score === 2) return 'Local';
-  if (score === 1) return 'Regional';
-  return 'Network';
-}
-
-function sortByLocationSignal<
-  T extends LocationMatchShape & {
-    hypeCount: number;
-    name: string;
-  }
->(items: T[], viewerLocation: RequestLocation | null) {
-  return [...items].sort((left, right) => {
-    const leftScore = getLocationSignalScore(left, viewerLocation);
-    const rightScore = getLocationSignalScore(right, viewerLocation);
-    if (leftScore !== rightScore) {
-      return rightScore - leftScore;
-    }
-
-    if (left.hypeCount !== right.hypeCount) {
-      return right.hypeCount - left.hypeCount;
-    }
-
-    return left.name.localeCompare(right.name);
-  });
-}
-
-export async function generateMetadata(
-  { params }: { params: Promise<{ slug: string }> }
-): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const profile = await db.profile.findUnique({
     where: { slug },
-    select: { name: true, genres: true, city: true, stateRegion: true, hypeCount: true, avatarImage: true }
+    select: { name: true, genres: true, city: true, stateRegion: true, hypeCount: true },
   });
-
   if (!profile) return { title: 'Fan · iHYPE' };
-
-  const loc    = [profile.city, profile.stateRegion].filter(Boolean).join(', ');
-  const genres = profile.genres.slice(0, 3).join(', ');
-  const title  = `${profile.name} · iHYPE`;
-  const description = [
-    'Fan',
-    genres || null,
-    loc || null,
-    profile.hypeCount ? `${profile.hypeCount} HYPE` : null,
-  ].filter(Boolean).join(' · ');
-  const image = profile.avatarImage ?? undefined;
-
+  const loc = [profile.city, profile.stateRegion].filter(Boolean).join(', ');
   return {
-    title,
-    description,
-    openGraph: {
-      type:        'profile',
-      siteName:    'iHYPE',
-      title,
-      description,
-      url:         `/fans/${slug}`,
-      ...(image ? { images: [{ url: image }] } : {}),
-    },
-    twitter: {
-      card:        'summary',
-      title,
-      description,
-      ...(image ? { images: [image] } : {}),
-    },
+    title: `${profile.name} · iHYPE`,
+    description: ['Fan', profile.genres.slice(0, 3).join(', ') || null, loc || null].filter(Boolean).join(' · '),
   };
 }
 
-export default async function ListenerPage({
+export default async function FanProfilePage({
   params,
-  searchParams
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
   searchParams?: Promise<{ section?: string | string[] }>;
@@ -182,591 +63,193 @@ export default async function ListenerPage({
   const profile = await db.profile.findUnique({
     where: { slug },
     include: {
-      owner: {
-        select: {
-          email: true,
-          username: true
-        }
-      },
-      _count: {
-        select: { followers: true }
-      }
-    }
+      owner: { select: { email: true, username: true } },
+      _count: { select: { followers: true } },
+    },
   });
-  // Published page-builder overrides (plain text only; see parsePublishedPage).
-  const published = profile ? parsePublishedPage(profile.pagePublished) : null;
   if (!profile || profile.type !== 'LISTENER') return notFound();
   if (shouldHideDemoContent() && isDemoUser(profile.owner)) return notFound();
-  const viewerLocationPromise = detectRequestLocation();
 
-  const [
-    hypedShows,
-    sentRecommendations,
-    viewerLocation,
-    venues,
-    activeShows,
-    profileHypes,
-    promoterShows,
-    fullSongListenCount,
-    fullShowListenCount,
-    discoverFeed,
-    promoterProfiles
-  ] = await Promise.all([
+  const isOwner = canManageOwnedResource(session, profile.ownerId);
+
+  const [hypedShows, userHype, promoterDashboard] = await Promise.all([
     db.hypeEvent.findMany({
-      where: {
-        userId: profile.ownerId,
-        ...getDemoShowRelationExclusion()
-      },
-      include: {
-        show: {
-          include: {
-            venueProfile: true,
-            headlinerProfile: true,
-            promoterProfile: true
-          }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
+      where: { userId: profile.ownerId, ...getDemoShowRelationExclusion() },
+      include: { show: { include: { venueProfile: true } } },
+      orderBy: { createdAt: 'desc' },
     }),
-    db.venueConnectionRequest.findMany({
-      where: { requesterId: profile.ownerId },
-      orderBy: { createdAt: 'desc' }
-    }),
-    viewerLocationPromise,
-    db.profile.findMany({
-      where: {
-        type: 'VENUE',
-        latitude: { not: null },
-        longitude: { not: null },
-        ...getDemoOwnerExclusion()
-      },
-      orderBy: [{ verified: 'desc' }, { name: 'asc' }],
-      select: {
-        id: true,
-        type: true,
-        slug: true,
-        hexId: true,
-        name: true,
-        addressLine1: true,
-        contactInfo: true,
-        hoursText: true,
-        hometown: true,
-        city: true,
-        stateRegion: true,
-        country: true,
-        postalCode: true,
-        latitude: true,
-        longitude: true,
-        hypeCount: true,
-        bio: true,
-        genres: true,
-        avatarImage: true
-      }
-    }),
-    db.show.findMany({
-      where: {
-        status: { in: ['SCHEDULED', 'LIVE'] },
-        ...getDemoCreatorExclusion()
-      },
-      include: {
-        venueProfile: true,
-        headlinerProfile: true,
-        promoterProfile: true
-      },
-      orderBy: [{ startsAt: 'asc' }, { hypeCount: 'desc' }],
-      take: 16
-    }),
-    db.profileHypeEvent.findMany({
-      where: {
-        userId: profile.ownerId,
-        ...getDemoProfileRelationExclusion()
-      },
-      include: {
-        profile: {
-          select: {
-            id: true,
-            type: true,
-            genres: true
-          }
-        }
-      }
-    }),
-    db.show.findMany({
-      where: {
-        promoterProfileId: { not: null },
-        headlinerProfileId: { not: null },
-        ...getDemoCreatorExclusion()
-      },
-      include: {
-        promoterProfile: true,
-        headlinerProfile: true,
-        venueProfile: true
-      },
-      orderBy: [{ startsAt: 'desc' }, { hypeCount: 'desc' }],
-      take: 24
-    }),
-    db.mediaListen.count({
-      where: {
-        userId: profile.ownerId,
-        completedAt: { not: null }
-      }
-    }),
-    db.showListen.count({
-      where: {
-        userId: profile.ownerId
-      }
-    }),
-    viewerLocationPromise.then((location) => getSharedDiscoverFeed(location)),
-    db.profile.findMany({
-      where: {
-        type: 'DJ',
-        ...getDemoOwnerExclusion()
-      },
-      orderBy: [{ hypeCount: 'desc' }, { createdAt: 'desc' }],
-      take: 24,
-      select: {
-        id: true,
-        type: true,
-        slug: true,
-        hexId: true,
-        name: true,
-        contactInfo: true,
-        addressLine1: true,
-        hoursText: true,
-        hometown: true,
-        city: true,
-        stateRegion: true,
-        country: true,
-        postalCode: true,
-        hypeCount: true,
-        bio: true,
-        genres: true,
-        avatarImage: true
-      }
-    })
+    session?.user?.id
+      ? db.profileHypeEvent.findUnique({ where: { userId_profileId: { userId: session.user.id, profileId: profile.id } }, select: { userId: true } })
+      : null,
+    isOwner ? getPromoterDashboard(profile.ownerId) : Promise.resolve(null),
   ]);
-
-  const badges = await db.badge.findMany({
-    where: { userId: profile.ownerId },
-    select: { type: true, awardedAt: true },
-    orderBy: { awardedAt: 'asc' },
-  });
-
-  // Cross-fan discovery: find fans with overlapping genres or Top 5 terms
-  const fanGenres = profile.genres ?? [];
-  const fanTopFiveTerms = getTopFiveItems(profile.topFiveContent)
-    .map((t) => t.toLowerCase());
-
-  const similarFans = fanGenres.length > 0
-    ? await db.profile.findMany({
-        where: {
-          type: 'LISTENER',
-          id: { not: profile.id },
-          genres: { hasSome: fanGenres }
-        },
-        select: {
-          id: true,
-          slug: true,
-          name: true,
-          city: true,
-          country: true,
-          genres: true,
-          hypeCount: true,
-          avatarImage: true,
-          topFiveContent: true
-        },
-        orderBy: { hypeCount: 'desc' },
-        take: 12
-      })
-    : [];
-
-  // Score by genre overlap + Top 5 term overlap, keep top 5
-  const scoredFans = similarFans
-    .map((fan) => {
-      const genreOverlap = fan.genres.filter((g) =>
-        fanGenres.some((fg) => fg.toLowerCase() === g.toLowerCase())
-      ).length;
-      const fanTerms = getTopFiveItems(fan.topFiveContent).map((t) => t.toLowerCase());
-      const topFiveOverlap = fanTopFiveTerms.filter((term) =>
-        fanTerms.some((ft) => ft.includes(term) || term.includes(ft))
-      ).length;
-      return { ...fan, score: genreOverlap * 2 + topFiveOverlap * 3 };
-    })
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 5);
 
   const now = new Date();
   const shows = hypedShows.map((entry) => entry.show);
   const upcomingShows = shows.filter((show) => show.status === 'LIVE' || show.startsAt >= now);
-  const previousShows = shows.filter((show) => show.status === 'ENDED' || (show.startsAt < now && show.status !== 'LIVE'));
-  const isOwner = canManageOwnedResource(session, profile.ownerId);
-  const likedGenreSet = new Set(
-    profileHypes
-      .filter((entry) => entry.profile.type === 'ARTIST')
-      .flatMap((entry) => entry.profile.genres)
-      .map((genre) => genre.trim().toLowerCase())
-      .filter(Boolean)
-  );
-  const trendingArtists = discoverFeed.hypedNearMe.slice(0, 4);
-  const newArtists = discoverFeed.newArtists.slice(0, 4);
-  const nearbyVenuePool = venues.filter(
-    (venue) => !viewerLocation || isLocalMatch(venue, viewerLocation) || isRegionalMatch(venue, viewerLocation)
-  );
-  const nearbyPromoterPool = promoterProfiles.filter(
-    (promoter) => !viewerLocation || isLocalMatch(promoter, viewerLocation) || isRegionalMatch(promoter, viewerLocation)
-  );
-  const nearbyVenues = sortByLocationSignal(
-    nearbyVenuePool.length ? nearbyVenuePool : venues,
-    viewerLocation
-  )
-    .slice(0, 4)
-    .map((venue) => ({
-      ...venue,
-      scopeLabel: getLocationScopeLabel(venue, viewerLocation)
-    }));
-  const nearbyPromoters = sortByLocationSignal(
-    nearbyPromoterPool.length ? nearbyPromoterPool : promoterProfiles,
-    viewerLocation
-  )
-    .slice(0, 4)
-    .map((promoter) => ({
-      ...promoter,
-      scopeLabel: getLocationScopeLabel(promoter, viewerLocation)
-    }));
-  const promoterGenreMatches = Array.from(
-    promoterShows.reduce(
-      (map, show) => {
-        if (!show.promoterProfile || !show.headlinerProfile || !likedGenreSet.size) {
-          return map;
-        }
-
-        const matchedGenres = show.headlinerProfile.genres.filter((genre) => likedGenreSet.has(genre.trim().toLowerCase()));
-        if (!matchedGenres.length) {
-          return map;
-        }
-
-        const current = map.get(show.promoterProfile.id) ?? {
-          id: show.promoterProfile.id,
-          slug: show.promoterProfile.slug,
-          name: show.promoterProfile.name,
-          city: show.promoterProfile.city,
-          stateRegion: show.promoterProfile.stateRegion,
-          country: show.promoterProfile.country,
-          postalCode: show.promoterProfile.postalCode,
-          hexId: show.promoterProfile.hexId,
-          type: show.promoterProfile.type,
-          contactInfo: show.promoterProfile.contactInfo,
-          addressLine1: show.promoterProfile.addressLine1,
-          hoursText: show.promoterProfile.hoursText,
-          hometown: show.promoterProfile.hometown,
-          hypeCount: show.promoterProfile.hypeCount,
-          bio: show.promoterProfile.bio,
-          genres: show.promoterProfile.genres,
-          avatarImage: show.promoterProfile.avatarImage,
-          matchedArtistNames: new Set<string>(),
-          matchedGenres: new Set<string>(),
-          relatedShowCount: 0
-        };
-
-        current.matchedArtistNames.add(show.headlinerProfile.name);
-        matchedGenres.forEach((genre) => current.matchedGenres.add(genre));
-        current.relatedShowCount += 1;
-        map.set(show.promoterProfile.id, current);
-        return map;
-      },
-      new Map<
-        string,
-        {
-          id: string;
-          type: 'ARTIST' | 'DJ' | 'VENUE' | 'LISTENER';
-          slug: string;
-          hexId: string;
-          name: string;
-          contactInfo: string | null;
-          addressLine1: string | null;
-          hoursText: string | null;
-          hometown: string | null;
-          city: string | null;
-          stateRegion: string | null;
-          country: string | null;
-          postalCode: string | null;
-          hypeCount: number;
-          bio: string | null;
-          genres: string[];
-          avatarImage: string | null;
-          matchedArtistNames: Set<string>;
-          matchedGenres: Set<string>;
-          relatedShowCount: number;
-        }
-      >()
-    ).values()
-  )
-    .map((entry) => ({
-      ...entry,
-      matchedArtistNames: [...entry.matchedArtistNames],
-      matchedGenres: [...entry.matchedGenres],
-      scopeLabel: getLocationScopeLabel(entry, viewerLocation)
-    }))
-    .sort((left, right) => {
-      if (right.relatedShowCount !== left.relatedShowCount) {
-        return right.relatedShowCount - left.relatedShowCount;
-      }
-
-      return right.matchedGenres.length - left.matchedGenres.length;
-    })
-    .slice(0, 4);
-  const bannerStyle = getSafeBackgroundImageStyle(profile.heroImage);
-  const pageDesignStyle = published?.builderPalette
-    ? getBuilderDesignStyleVars(published.builderPalette, published.builderFont, published.builderRadius, published.builderMood)
-    : getProfileDesignStyleVars(profile.themePreset, {
-        accentTone: profile.themeAccentTone,
-        backdropTone: profile.themeBackdropTone,
-        fontPreset: profile.themeFontPreset
-      });
-  const avatarImage = getSafeImageUrl(profile.avatarImage);
-  const fanLevel = calculateFanLevel(fullSongListenCount, fullShowListenCount);
-  const hypePoints = hypedShows.length + profileHypes.length;
-  const pastEventCount = previousShows.length;
-  const upcomingEventCount = upcomingShows.length;
   const topFiveItems = getTopFiveItems(profile.topFiveContent);
-  const compactUpcomingShows = upcomingShows.slice(0, 3);
-  const compactPreviousShows = previousShows.slice(0, 3);
-  const globeRouteStops = previousShows
-    .filter(
-      (show) =>
-        show.venueProfile?.latitude != null &&
-        show.venueProfile.longitude != null
-    )
-    .sort((left, right) => left.startsAt.getTime() - right.startsAt.getTime())
-    .map((show) => ({
-      id: show.id,
-      title: show.title,
-      href: `/shows/${show.slug}`,
-      venueName: show.venueProfile?.name ?? 'Venue',
-      venueSlug: show.venueProfile?.slug ?? null,
-      city: show.venueProfile?.city ?? null,
-      stateRegion: show.venueProfile?.stateRegion ?? null,
-      country: show.venueProfile?.country ?? null,
-      postalCode: show.venueProfile?.postalCode ?? null,
-      latitude: show.venueProfile?.latitude ?? null,
-      longitude: show.venueProfile?.longitude ?? null,
-      startsAtLabel: formatShowDate(show.startsAt),
-      timing: 'past' as const
-    }));
+  const baseUrl = getBaseUrl();
 
   return (
-    <main className="container section profile-design-shell fan-page-shell" style={pageDesignStyle}>
-      <header className="artist-banner panel fan-page-banner" style={bannerStyle}>
-        <div className="profile-banner-row">
-          {avatarImage ? (
-            <div className="profile-avatar profile-avatar-hero" style={{ position: 'relative', overflow: 'hidden' }}>
-              <Image alt={`${profile.name} avatar`} src={avatarImage} fill sizes="140px" style={{ objectFit: 'cover' }} />
-            </div>
-          ) : (
-            <div className="profile-avatar profile-avatar-hero profile-avatar-fallback">{getInitials(profile.name)}</div>
-          )}
-          <div className="artist-banner-copy">
-            <div className="badge">FAN</div>
-            <h1 className="title fan-page-title">{profile.name}</h1>
-            <p className="artist-headline">{published?.headline || profile.headline || 'Capture the shows, artists, and moments you keep coming back to.'}</p>
-            <p className="subtitle">{published?.bio || profile.bio}</p>
-            {published?.builderPalette && profile.hypeCount > 0 ? (
-              <div className="builder-hype-stat builder-stat-live">
-                <span className="builder-hype-num">{profile.hypeCount.toLocaleString()}</span>
-                <span className="builder-hype-label">HYPE</span>
-              </div>
-            ) : null}
-            <p className="meta">{[profile.city, profile.country].filter(Boolean).join(', ')}</p>
-            <p className="meta">Share ID: <Link href={`/profiles/${profile.hexId}`}>{profile.hexId}</Link></p>
-            <p className="meta">FAN Level {fanLevel} | {fullSongListenCount} full songs | {fullShowListenCount} full shows</p>
-            {profile.nowPlaying && (
-              <p className="meta" style={{ fontStyle: 'italic' }}>🎵 Now playing: {profile.nowPlaying}</p>
+    <div className="fan-page">
+      <div className="fan-hero">
+        <div className="fan-hero-row">
+          <div className="fan-avatar">
+            {profile.avatarImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img alt={profile.name} src={profile.avatarImage} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+            ) : (
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 26 }}>{profile.name.charAt(0)}</span>
             )}
-            <BadgeShelf badges={badges} />
-            <div className={published?.builderPalette ? 'builder-badge-block' : 'tag-row'}>
-              {profile.genres.map((genre) => <span key={genre} className={published?.builderPalette ? 'builder-badge' : 'tag'}>{genre}</span>)}
+          </div>
+          <div style={{ flex: 1 }}>
+            <div className="fan-display-name">{profile.name}</div>
+            <div className="fan-handle">{profile.owner?.username ? `@${profile.owner.username}` : profile.hexId}{profile.city ? ` · ${profile.city}` : ''}</div>
+            <div className="fan-hero-badges">
+              <span className="fan-badge" style={{ background: 'rgba(185,131,255,.15)', color: 'var(--role-fan, #b983ff)' }}>Fan</span>
+              {profile.verificationStatus === 'VERIFIED' && <span className="fan-badge" style={{ background: 'rgba(34,229,212,.15)', color: 'var(--role-venue, #22e5d4)' }}>✓ Verified</span>}
             </div>
-            <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} entityLabel="fan page" />
-            <div className="profile-public-actions">
-              <ShareButton path={`/fans/${profile.slug}`} title={`${profile.name} · iHYPE`} />
-              <Link className="button small secondary" href={`/fans/${profile.slug}?section=recommend`}>See recommendations</Link>
-              <Link className="button small secondary" href="/artists">Browse artists</Link>
-              <Link className="button small secondary" href="/register?role=FAN">Join fan lane</Link>
+            <div className="fan-hero-actions">
+              {isOwner ? (
+                <>
+                  <Link className="fan-hero-btn" href="/pages">Edit Profile</Link>
+                  <Link className="fan-hero-btn" href="/settings">Settings</Link>
+                </>
+              ) : (
+                <>
+                  <FollowButton profileId={profile.id} />
+                  <ShareButton label="Share" path={`/fans/${profile.slug}`} title={profile.name} />
+                </>
+              )}
             </div>
           </div>
-          {isOwner ? (
-            <div className="profile-banner-actions">
-              <Link className="button small secondary" href={`/home?profile=${profile.id}&edit=menu`}>
-                Edit Page
-              </Link>
-            </div>
-          ) : null}
         </div>
-      </header>
+        <div className="fan-stats">
+          <div><div className="fan-stat-val">{shows.length}</div><div className="fan-stat-label">Hypes Cast</div></div>
+          <div><div className="fan-stat-val">{upcomingShows.length}</div><div className="fan-stat-label">Shows Attending</div></div>
+          <div><div className="fan-stat-val">{profile._count.followers.toLocaleString()}</div><div className="fan-stat-label">Followers</div></div>
+        </div>
+      </div>
 
-      <section className="section">
-        <nav className="section-tabs" aria-label="Fan page sections">
-          {listenerSections.map((section) => (
-            <Link
-              key={section}
-              className={section === activeSection ? 'section-tab active' : 'section-tab'}
-              href={`/fans/${profile.slug}?section=${section}`}
-            >
-              {getSectionLabel(section)}
+      <div className="fan-content">
+        <div className="fan-tabs">
+          {fanSections.filter((s) => s !== 'referrals' || isOwner).map((section) => (
+            <Link className={section === activeSection ? 'fan-tab active' : 'fan-tab'} href={`/fans/${profile.slug}?section=${section}`} key={section}>
+              {SECTION_LABEL[section]}
             </Link>
           ))}
-        </nav>
-
-        <div className="panel artist-section-panel">
-          {activeSection === 'about' ? (
-            <>
-              <div className="fan-page-about-grid">
-                <section className="fan-page-about-card fan-page-about-copy-card">
-                  <div className="fan-page-section-head">
-                    <h2>About</h2>
-                    <span className="meta">A compact view of this fan profile.</span>
-                  </div>
-                  <div className="artist-copy fan-page-about-copy">
-                    {profile.aboutContent || profile.bio || 'This fan has not filled out the About section yet.'}
-                  </div>
-                </section>
-
-                <section className="fan-page-about-card fan-page-about-stats-card">
-                  <div className="fan-page-section-head">
-                    <h3>Stats</h3>
-                    <span className="meta">Live totals</span>
-                  </div>
-                  <div className="fan-page-stat-grid">
-                    <div className="fan-page-stat-pill"><span>Fan level</span><strong>{fanLevel}</strong></div>
-                    <div className="fan-page-stat-pill"><span>Hype points</span><strong>{hypePoints}</strong></div>
-                    <div className="fan-page-stat-pill"><span>Followers</span><strong>{profile._count.followers}</strong></div>
-                    <div className="fan-page-stat-pill"><span>Songs</span><strong>{fullSongListenCount}</strong></div>
-                    <div className="fan-page-stat-pill"><span>Shows</span><strong>{fullShowListenCount}</strong></div>
-                    <div className="fan-page-stat-pill"><span>Past events</span><strong>{pastEventCount}</strong></div>
-                    <div className="fan-page-stat-pill"><span>Upcoming</span><strong>{upcomingEventCount}</strong></div>
-                  </div>
-                </section>
-
-                <section className="fan-page-about-card fan-page-about-topfive-card">
-                  <div className="fan-page-section-head">
-                    <h3>Top 5</h3>
-                    <span className="meta">Current favorites</span>
-                  </div>
-                  {topFiveItems.length ? (
-                    <ol className="fan-page-topfive-list">
-                      {topFiveItems.map((item) => (
-                        <li key={item}>{item}</li>
-                      ))}
-                    </ol>
-                  ) : (
-                    <div className="empty fan-page-empty-compact">No top 5 list yet.</div>
-                  )}
-                </section>
-
-                {scoredFans.length > 0 && (
-                  <section className="fan-page-about-card fan-page-about-similar-card">
-                    <div className="fan-page-section-head">
-                      <h3>Fans like you</h3>
-                      <span className="meta">Overlapping taste</span>
-                    </div>
-                    <div className="fan-similar-list">
-                      {scoredFans.map((fan) => {
-                        const sharedGenres = fan.genres.filter((g) =>
-                          fanGenres.some((fg) => fg.toLowerCase() === g.toLowerCase())
-                        ).slice(0, 3);
-                        return (
-                          <Link className="fan-similar-row" href={`/fans/${fan.slug}`} key={fan.id}>
-                            <div className="fan-similar-avatar" style={{ position: 'relative' }}>
-                              {fan.avatarImage
-                                ? <Image src={fan.avatarImage} alt={fan.name} fill sizes="36px" style={{ objectFit: 'cover' }} />
-                                : <span>{fan.name.slice(0, 1).toUpperCase()}</span>}
-                            </div>
-                            <div className="fan-similar-info">
-                              <strong>{fan.name}</strong>
-                              <span className="meta">{[fan.city, fan.country].filter(Boolean).join(', ')}</span>
-                              {sharedGenres.length > 0 && (
-                                <div className="fan-similar-genres">
-                                  {sharedGenres.map((g) => (
-                                    <span className="tag" key={g}>{g}</span>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </section>
-                )}
-
-                <section className="fan-page-about-card fan-page-about-events-card">
-                  <div className="fan-page-section-head">
-                    <h3>Events</h3>
-                    <span className="meta">Next and recent shows</span>
-                  </div>
-                  <div className="fan-page-event-columns">
-                    <div className="fan-page-event-column">
-                      <strong>Upcoming</strong>
-                      {compactUpcomingShows.length ? (
-                        <div className="fan-page-event-list">
-                          {compactUpcomingShows.map((show) => (
-                            <Link className="fan-page-event-row" href={`/shows/${show.slug}`} key={show.id}>
-                              <span>{show.title}</span>
-                              <small>{formatShowDate(show.startsAt)}</small>
-                            </Link>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="empty fan-page-empty-compact">No upcoming saved shows yet.</div>
-                      )}
-                    </div>
-
-                    <div className="fan-page-event-column">
-                      <strong>Previous</strong>
-                      {compactPreviousShows.length ? (
-                        <div className="fan-page-event-list">
-                          {compactPreviousShows.map((show) => (
-                            <Link className="fan-page-event-row" href={`/shows/${show.slug}`} key={show.id}>
-                              <span>{show.title}</span>
-                              <small>{formatShowDate(show.startsAt)}</small>
-                            </Link>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="empty fan-page-empty-compact">No previous saved shows yet.</div>
-                      )}
-                    </div>
-                  </div>
-                </section>
-              </div>
-            </>
-          ) : null}
-
-          {activeSection === 'recommend' ? (
-            <>
-              <NetworkEarthGlobe
-                description="Start at the detected ZIP from this request, highlight nearby venues, then zoom out to browse farther scenes and trace the shows this fan has already attended."
-                emptyRouteLabel="No previous attended shows are mapped yet."
-                routeLabel="Attended shows"
-                routeStops={globeRouteStops}
-                title="Earth globe for nearby venues and attended shows"
-                venues={venues}
-                viewerLocation={viewerLocation}
-              />
-              <FanRecommendationsPanel
-                nearbyPromoters={nearbyPromoters}
-                nearbyVenues={nearbyVenues}
-                newArtists={newArtists}
-                promoterGenreMatches={promoterGenreMatches}
-                trendingArtists={trendingArtists}
-                zipLabel={viewerLocation?.postalCode ?? viewerLocation?.city ?? viewerLocation?.stateRegion ?? null}
-              />
-            </>
-          ) : null}
         </div>
-      </section>
 
-      <ContentReportControl targetId={profile.id} targetType="profile" />
-    </main>
+        {activeSection === 'taste' && (
+          profile.genres.length === 0 ? (
+            <div className="fan-empty"><p>No taste data yet.</p></div>
+          ) : (
+            <div className="fan-chip-row">
+              {profile.genres.map((g) => <span className="fan-chip" key={g}>{g}</span>)}
+            </div>
+          )
+        )}
+
+        {activeSection === 'top5' && (
+          topFiveItems.length === 0 ? (
+            <div className="fan-empty"><p>No top 5 list yet.</p></div>
+          ) : (
+            <ol className="fan-top5-list">
+              {topFiveItems.map((item, i) => (
+                <li className="fan-top5-row" key={item}>
+                  <span className="fan-top5-rank">{i + 1}</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ol>
+          )
+        )}
+
+        {activeSection === 'shows' && (
+          upcomingShows.length === 0 ? (
+            <div className="fan-empty"><p>No upcoming shows. <Link href="/shows" style={{ color: 'var(--accent)' }}>Browse events →</Link></p></div>
+          ) : (
+            <div className="fan-show-list">
+              {upcomingShows.map((show) => (
+                <Link className="fan-show-row" href={`/shows/${show.slug}`} key={show.id}>
+                  <div>
+                    <h4>{show.title}</h4>
+                    <p>{show.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}{show.venueProfile?.city ? ` · ${show.venueProfile.city}` : ''}</p>
+                  </div>
+                  <span style={{ fontSize: 12, color: 'var(--role-fan, #b983ff)', fontWeight: 600 }}>Hyped ✓</span>
+                </Link>
+              ))}
+            </div>
+          )
+        )}
+
+        {activeSection === 'referrals' && isOwner && promoterDashboard && (
+          <div>
+            {promoterDashboard.refHexId && (
+              <div className="fan-ref-box">
+                <div className="fan-ref-label">Referral Link</div>
+                <div className="fan-ref-url">{`${baseUrl}/h/${promoterDashboard.refHexId}`}</div>
+                <PromoteShareButton link={`${baseUrl}/h/${promoterDashboard.refHexId}`} slug="referral" title="iHYPE" />
+                <p style={{ fontSize: 12, color: 'rgba(240,235,229,.5)', marginTop: 12 }}>
+                  Earn a proportional share of the 10% promoter pool for every ticket your link drives.
+                </p>
+              </div>
+            )}
+            {promoterDashboard.earnedCents === 0 ? (
+              <div className="fan-empty"><p>No earnings yet — share your link!</p></div>
+            ) : (
+              <div className="fan-payout-list">
+                <div className="fan-payout-row">
+                  <span>Total earned (pending settlement)</span>
+                  <span style={{ fontWeight: 700, color: 'var(--role-fan, #b983ff)' }}>{formatCurrencyFromCents(promoterDashboard.earnedCents)}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div style={{ padding: '0 32px' }}>
+        <HypeButton entityLabel="fan page" initialCount={profile.hypeCount} initiallyHyped={!!userHype} targetId={profile.id} targetType="profile" />
+      </div>
+
+      <style>{`
+        .fan-page { max-width: 900px; margin: 0 auto; padding: 32px 0 100px; }
+        .fan-hero { padding: 40px 32px 32px; }
+        .fan-hero-row { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+        @media (max-width: 600px) { .fan-hero { padding: 24px 20px; } .fan-content { padding: 0 20px; } }
+        .fan-avatar { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg,#b983ff,#ff3e9a); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; overflow: hidden; }
+        .fan-display-name { font-family: var(--font-display); font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 4px; color: var(--ink); }
+        .fan-handle { font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: rgba(240,235,229,.5); margin-bottom: 12px; }
+        .fan-hero-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+        .fan-badge { display: inline-block; padding: 5px 12px; border-radius: 4px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; }
+        .fan-hero-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .fan-hero-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; background: rgba(255,255,255,.06); color: var(--ink); border: 1px solid rgba(255,255,255,.1); }
+        .fan-hero-btn:hover { background: rgba(255,255,255,.1); }
+        .fan-stats { display: flex; gap: 28px; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,.06); }
+        .fan-stat-val { font-size: 22px; font-weight: 700; color: var(--role-fan, #b983ff); font-family: var(--font-display); }
+        .fan-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: rgba(240,235,229,.55); margin-top: 2px; }
+        .fan-content { padding: 0 32px; }
+        .fan-tabs { display: flex; gap: 24px; border-bottom: 1px solid rgba(255,255,255,.06); margin: 28px 0; flex-wrap: wrap; }
+        .fan-tab { padding: 10px 0; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 600; font-size: 14px; color: rgba(240,235,229,.6); text-decoration: none; }
+        .fan-tab.active { color: var(--ink); border-color: var(--role-fan, #b983ff); }
+        .fan-chip-row { display: flex; gap: 10px; flex-wrap: wrap; }
+        .fan-chip { padding: 8px 16px; border-radius: 9999px; background: rgba(185,131,255,.1); border: 1px solid rgba(185,131,255,.25); color: var(--role-fan, #b983ff); font-size: 13px; font-weight: 600; }
+        .fan-top5-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+        .fan-top5-row { display: flex; gap: 16px; align-items: center; padding: 14px 16px; border: 1px solid rgba(255,255,255,.06); border-radius: 8px; background: var(--bg2); color: var(--ink); }
+        .fan-top5-rank { font-family: var(--font-mono); font-size: 11px; color: rgba(240,235,229,.5); width: 20px; text-align: center; flex-shrink: 0; }
+        .fan-show-list { display: flex; flex-direction: column; gap: 12px; }
+        .fan-show-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; border: 1px solid rgba(255,255,255,.06); border-radius: 8px; background: var(--bg2); text-decoration: none; color: inherit; }
+        .fan-show-row:hover { background: var(--bg3); }
+        .fan-show-row h4 { font-family: var(--font-display); font-size: 14px; font-weight: 800; margin-bottom: 2px; color: var(--ink); }
+        .fan-show-row p { font-size: 12px; color: rgba(240,235,229,.55); }
+        .fan-ref-box { background: rgba(185,131,255,.06); border: 1px solid rgba(185,131,255,.2); border-radius: 10px; padding: 24px; margin-bottom: 24px; }
+        .fan-ref-label { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; color: var(--role-fan, #b983ff); margin-bottom: 10px; }
+        .fan-ref-url { font-family: var(--font-mono); font-size: 13px; background: var(--bg); border: 1px solid rgba(255,255,255,.1); border-radius: 6px; padding: 10px 14px; margin-bottom: 12px; word-break: break-all; color: var(--ink); }
+        .fan-payout-list { border: 1px solid rgba(255,255,255,.06); border-radius: 10px; padding: 0 20px; background: var(--bg2); }
+        .fan-payout-row { display: flex; justify-content: space-between; padding: 14px 0; font-size: 14px; }
+        .fan-empty { text-align: center; padding: 48px 24px; color: rgba(240,235,229,.5); }
+      `}</style>
+    </div>
   );
 }

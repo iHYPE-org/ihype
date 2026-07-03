@@ -1,114 +1,45 @@
 import type { Metadata } from 'next';
-import { parsePublishedPage } from '@/lib/page-builder';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { buildArtistMediaCollection } from '@/lib/media';
-import { ContentReportControl } from '@/components/ContentReportControl';
-import { ShowCard } from '@/components/ShowCard';
 import { HypeButton } from '@/components/HypeButton';
-import { NetworkEarthGlobe } from '@/components/NetworkEarthGlobe';
-import { DEFAULT_PROFILE_DESIGN_PRESET, getProfileDesignStyleVars, getBuilderDesignStyleVars } from '@/lib/profile-design';
-import { getSafeBackgroundImageStyle, getSafeImageUrl } from '@/lib/asset-safety';
+import { FollowButton } from '@/components/FollowButton';
+import { ArtistMediaPlaylist } from '@/components/ArtistMediaPlaylist';
+import { getSafeImageUrl } from '@/lib/asset-safety';
 import { canManageOwnedResource } from '@/lib/permissions';
-import { detectRequestLocation } from '@/lib/request-location';
-import { getDemoCreatorExclusion, getDemoOwnerExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
-import { NewsletterSignup } from '@/components/NewsletterSignup';
+import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
 
-// True if this builder section should be visible (default on when builderSections is null)
-function secOn(sections: Array<{id: string; on: boolean}> | null, id: string): boolean {
-  if (!sections) return true;
-  const s = sections.find(x => x.id === id);
-  return s ? s.on : true;
+export const revalidate = 60;
+
+const djSections = ['shows', 'crate', 'earnings'] as const;
+type DjSection = (typeof djSections)[number];
+
+function getActiveSection(section: string | string[] | undefined): DjSection {
+  if (typeof section === 'string' && djSections.includes(section as DjSection)) return section as DjSection;
+  return 'shows';
 }
 
-const promoterSections = ['about', 'shows', 'events'] as const;
+const SECTION_LABEL: Record<DjSection, string> = { shows: 'Shows', crate: 'Crate', earnings: 'Earnings' };
 
-type PromoterSection = (typeof promoterSections)[number];
-
-function getActiveSection(section: string | string[] | undefined): PromoterSection {
-  if (section === 'upcoming' || section === 'previous') {
-    return 'shows';
-  }
-
-  if (section === 'recommend' || section === 'stats') {
-    return 'events';
-  }
-
-  if (typeof section === 'string' && promoterSections.includes(section as PromoterSection)) {
-    return section as PromoterSection;
-  }
-
-  return 'about';
-}
-
-function getSectionLabel(section: PromoterSection) {
-  if (section === 'shows') return 'Radio';
-  if (section === 'events') return 'Ticketing';
-  return section.charAt(0).toUpperCase() + section.slice(1);
-}
-
-function formatRequestStatus(value: 'PENDING' | 'BOOKED' | 'DISMISSED') {
-  if (value === 'BOOKED') return 'Booked';
-  if (value === 'DISMISSED') return 'Dismissed';
-  return 'Pending';
-}
-
-function formatShowDate(value: Date) {
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  }).format(value);
-}
-
-export async function generateMetadata(
-  { params }: { params: Promise<{ slug: string }> }
-): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const profile = await db.profile.findUnique({
     where: { slug },
-    select: { name: true, headline: true, genres: true, city: true, stateRegion: true, hypeCount: true, avatarImage: true }
+    select: { name: true, headline: true, genres: true, city: true, stateRegion: true, hypeCount: true },
   });
-
-  if (!profile) return { title: 'Promoter · iHYPE' };
-
-  const loc    = [profile.city, profile.stateRegion].filter(Boolean).join(', ');
-  const genres = profile.genres.slice(0, 3).join(', ');
-  const title  = `${profile.name} · iHYPE`;
-  const description = [
-    'Promoter',
-    genres || null,
-    loc || null,
-    profile.hypeCount ? `${profile.hypeCount} HYPE` : null,
-    profile.headline || null,
-  ].filter(Boolean).join(' · ');
-  const image = profile.avatarImage ?? undefined;
-
+  if (!profile) return { title: 'DJ · iHYPE' };
+  const loc = [profile.city, profile.stateRegion].filter(Boolean).join(', ');
   return {
-    title,
-    description,
-    openGraph: {
-      type:        'profile',
-      siteName:    'iHYPE',
-      title,
-      description,
-      url:         `/promoters/${slug}`,
-      ...(image ? { images: [{ url: image }] } : {}),
-    },
-    twitter: {
-      card:        'summary',
-      title,
-      description,
-      ...(image ? { images: [image] } : {}),
-    },
+    title: `${profile.name} · iHYPE`,
+    description: ['DJ', profile.genres.slice(0, 3).join(', ') || null, loc || null].filter(Boolean).join(' · '),
   };
 }
 
-export default async function PromoterPage({
+export default async function DJProfilePage({
   params,
-  searchParams
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
   searchParams?: Promise<{ section?: string | string[] }>;
@@ -121,232 +52,184 @@ export default async function PromoterPage({
   const profile = await db.profile.findUnique({
     where: { slug },
     include: {
-      owner: {
-        select: {
-          email: true,
-          username: true
-        }
-      }
-    }
+      owner: { select: { email: true, username: true } },
+      mediaUploads: {
+        where: { freeUseEnabled: true },
+        select: { hexId: true, title: true, notes: true, mimeType: true, fileSizeBytes: true, createdAt: true, freeUseEnabled: true, sortOrder: true },
+        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
+      },
+    },
   });
   if (!profile || profile.type !== 'DJ') return notFound();
   if (shouldHideDemoContent() && isDemoUser(profile.owner)) return notFound();
-  const profileSlug = profile.slug;
-  // Published page-builder overrides (plain text only; see parsePublishedPage).
-  const published = parsePublishedPage(profile.pagePublished);
-  const isOwner = canManageOwnedResource(session, profile.ownerId);
 
-  const [shows, sentRecommendations, viewerLocation, venues, fanHypeCount] = await Promise.all([
+  const isOwner = canManageOwnedResource(session, profile.ownerId);
+  const media = buildArtistMediaCollection(null, profile.mediaUploads);
+  const artworkUrl = getSafeImageUrl(profile.galleryImage || profile.heroImage);
+
+  const [shows, userHype, earningsOrders] = await Promise.all([
     db.show.findMany({
-      where: {
-        promoterProfileId: profile.id,
-        ...getDemoCreatorExclusion()
-      },
-      include: { venueProfile: true, headlinerProfile: true, promoterProfile: true },
-      orderBy: { startsAt: 'asc' }
+      where: { promoterProfileId: profile.id, ...getDemoCreatorExclusion() },
+      orderBy: { startsAt: 'asc' },
     }),
-    db.venueConnectionRequest.findMany({
-      where: { requesterId: profile.ownerId, requesterType: 'PROMOTER' },
-      include: { venueProfile: true, artistProfile: true },
-      orderBy: { createdAt: 'desc' }
-    }),
-    detectRequestLocation(),
-    db.profile.findMany({
-      where: {
-        type: 'VENUE',
-        latitude: { not: null },
-        longitude: { not: null },
-        ...getDemoOwnerExclusion()
-      },
-      orderBy: [{ verified: 'desc' }, { name: 'asc' }],
-      select: {
-        id: true,
-        slug: true,
-        name: true,
-        addressLine1: true,
-        hoursText: true,
-        city: true,
-        stateRegion: true,
-        country: true,
-        postalCode: true,
-        latitude: true,
-        longitude: true
-      }
-    }),
-    db.profileHypeEvent.count({
-      where: {
-        profileId: profile.id,
-        user: {
-          role: 'FAN'
-        }
-      }
-    })
+    session?.user?.id
+      ? db.profileHypeEvent.findUnique({ where: { userId_profileId: { userId: session.user.id, profileId: profile.id } }, select: { userId: true } })
+      : null,
+    isOwner
+      ? db.ticketOrder.findMany({
+          where: { affiliatePromoterProfileId: profile.id, status: { in: ['CAPTURED', 'RESERVED'] } },
+          select: { promoterPayoutCents: true, show: { select: { title: true } } },
+        })
+      : Promise.resolve([]),
   ]);
 
   const now = new Date();
-  const upcomingShows = shows.filter((show) => show.status === 'LIVE' || show.startsAt >= now);
-  const previousShows = shows.filter((show) => show.status === 'ENDED' || (show.startsAt < now && show.status !== 'LIVE'));
-  const recentShows = [...shows].sort((left, right) => right.startsAt.getTime() - left.startsAt.getTime()).slice(0, 6);
-  const canViewCustomPage = isOwner || profile.fanShareEnabled;
-  const sharedThemePreset = canViewCustomPage ? profile.themePreset : DEFAULT_PROFILE_DESIGN_PRESET;
-  const bannerStyle = canViewCustomPage ? getSafeBackgroundImageStyle(profile.heroImage) : undefined;
-  const pageDesignStyle = published?.builderPalette
-    ? getBuilderDesignStyleVars(published.builderPalette, published.builderFont, published.builderRadius, published.builderMood)
-    : getProfileDesignStyleVars(sharedThemePreset, {
-        accentTone: canViewCustomPage ? profile.themeAccentTone : undefined,
-        backdropTone: canViewCustomPage ? profile.themeBackdropTone : undefined,
-        fontPreset: canViewCustomPage ? profile.themeFontPreset : undefined
-      });
-  const logoUrl = canViewCustomPage ? getSafeImageUrl(profile.logoImage || profile.avatarImage) : null;
-  const featureImageUrl = canViewCustomPage ? getSafeImageUrl(profile.galleryImage || profile.heroImage) : null;
-  const globeRouteStops = previousShows
-    .filter(
-      (show) =>
-        show.venueProfile?.latitude != null &&
-        show.venueProfile.longitude != null
-    )
-    .sort((left, right) => left.startsAt.getTime() - right.startsAt.getTime())
-    .map((show) => ({
-      id: show.id,
-      title: show.title,
-      href: `/shows/${show.slug}`,
-      venueName: show.venueProfile?.name ?? 'Venue',
-      venueSlug: show.venueProfile?.slug ?? null,
-      city: show.venueProfile?.city ?? null,
-      stateRegion: show.venueProfile?.stateRegion ?? null,
-      country: show.venueProfile?.country ?? null,
-      postalCode: show.venueProfile?.postalCode ?? null,
-      latitude: show.venueProfile?.latitude ?? null,
-      longitude: show.venueProfile?.longitude ?? null,
-      startsAtLabel: formatShowDate(show.startsAt),
-      timing: 'past' as const
-    }));
-
-  const userHype = session?.user?.id
-    ? await db.profileHypeEvent.findUnique({ where: { userId_profileId: { userId: session.user.id, profileId: profile.id } }, select: { userId: true } })
-    : null;
+  const relevantShows = shows.filter((s) => s.status === 'LIVE' || s.startsAt >= now || (now.getTime() - s.startsAt.getTime()) < 7 * 86400000);
+  const totalEarnedCents = earningsOrders.reduce((sum, o) => sum + o.promoterPayoutCents, 0);
+  const earningsByShow = new Map<string, number>();
+  for (const o of earningsOrders) {
+    const key = o.show.title;
+    earningsByShow.set(key, (earningsByShow.get(key) ?? 0) + o.promoterPayoutCents);
+  }
 
   return (
-    <main className="container section profile-design-shell" style={pageDesignStyle}>
-      <header className="artist-banner panel" style={bannerStyle}>
-        <div className="profile-banner-row">
-          <div className="artist-banner-copy">
-            {logoUrl ? <img alt={`${profile.name} logo`} className="artist-logo-mark" src={logoUrl} /> : null}
-            <div className="badge">PROMOTER</div>
-            <h1 className="title" style={{ fontSize: '2.9rem' }}>{profile.name}</h1>
-            <p className="artist-headline">{published?.headline || profile.headline || 'Set the tone for the nights, talent, and scenes you champion.'}</p>
-            <p className="subtitle">{published?.bio || profile.bio}</p>
-            {published?.builderPalette && profile.hypeCount > 0 ? (
-              <div className="builder-hype-stat builder-stat-live">
-                <span className="builder-hype-num">{profile.hypeCount.toLocaleString()}</span>
-                <span className="builder-hype-label">HYPE</span>
-              </div>
-            ) : null}
-            <p className="meta">{[profile.city, profile.country].filter(Boolean).join(', ')}</p>
-            {profile.contactInfo ? <p className="meta">{profile.contactInfo}</p> : null}
-            <p className="meta">Share ID: <Link href={`/profiles/${profile.hexId}`}>{profile.hexId}</Link></p>
-            {!published?.builderPalette ? <p className="meta">Fan hype: {fanHypeCount}</p> : null}
-            <div className={published?.builderPalette ? 'builder-badge-block' : 'tag-row'}>
-              {profile.genres.map((genre) => <span key={genre} className={published?.builderPalette ? 'builder-badge' : 'tag'}>{genre}</span>)}
+    <div className="dj-page">
+      <div className="dj-hero">
+        <div className="dj-hero-row">
+          <div className="dj-avatar">
+            {profile.avatarImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img alt={profile.name} src={profile.avatarImage} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+            ) : (
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 26 }}>{profile.name.charAt(0)}</span>
+            )}
+          </div>
+          <div style={{ flex: 1 }}>
+            <div className="dj-name">{profile.name}</div>
+            <div className="dj-handle">{profile.owner?.username ? `@${profile.owner.username}` : profile.hexId}{profile.city ? ` · ${profile.city}` : ''}</div>
+            <div className="dj-hero-badges">
+              <span className="dj-badge" style={{ background: 'rgba(255,62,154,.15)', color: '#ff3e9a' }}>DJ</span>
+              {profile.verificationStatus === 'VERIFIED' && <span className="dj-badge" style={{ background: 'rgba(34,229,212,.15)', color: 'var(--role-venue, #22e5d4)' }}>✓ Verified</span>}
             </div>
-            <HypeButton targetType="profile" targetId={profile.id} initialCount={profile.hypeCount} initiallyHyped={!!userHype} entityLabel="promoter" />
-            <div className="profile-public-actions">
-              <Link className="button small secondary" href="/register?role=ARTIST">Submit artist page</Link>
-              <Link className="button small secondary" href={`/promoters/${profile.slug}?section=shows`}>See shows</Link>
-              <Link className="button small secondary" href="/register?role=FAN">Follow as fan</Link>
+            <div className="dj-hero-actions">
+              <FollowButton profileId={profile.id} />
+              <Link className="dj-hero-btn" href="/radio">Tune In →</Link>
+              {isOwner && (
+                <>
+                  <Link className="dj-hero-btn" href="/pages">Customize</Link>
+                  <Link className="dj-hero-btn" href="/settings">Settings</Link>
+                </>
+              )}
             </div>
           </div>
-          {isOwner ? (
-            <div className="profile-banner-actions">
-              <Link className="button small secondary" href={`/home?profile=${profile.id}`}>
-                Edit Page
-              </Link>
-            </div>
-          ) : null}
         </div>
-      </header>
+        <div className="dj-stats">
+          <div><div className="dj-stat-val">{shows.length}</div><div className="dj-stat-label">Shows</div></div>
+          <div><div className="dj-stat-val">{profile.hypeCount.toLocaleString()}</div><div className="dj-stat-label">Hypes</div></div>
+          {isOwner && <div><div className="dj-stat-val">${(totalEarnedCents / 100).toFixed(0)}</div><div className="dj-stat-label">Referral Earned</div></div>}
+        </div>
+      </div>
 
-      <section className="section">
-        <nav className="section-tabs" aria-label="Promoter page sections">
-          {promoterSections.map((section) => (
-            <Link
-              key={section}
-              className={section === activeSection ? 'section-tab active' : 'section-tab'}
-              href={`/promoters/${profileSlug}?section=${section}`}
-            >
-              {getSectionLabel(section)}
+      <div className="dj-content">
+        <div className="dj-tabs">
+          {djSections.filter((s) => s !== 'earnings' || isOwner).map((section) => (
+            <Link className={section === activeSection ? 'dj-tab active' : 'dj-tab'} href={`/promoters/${profile.slug}?section=${section}`} key={section}>
+              {SECTION_LABEL[section]}
             </Link>
           ))}
-        </nav>
-
-        <div className="panel artist-section-panel">
-          {activeSection === 'about' ? (
-            <>
-              <h2>About</h2>
-              <div className="artist-copy">{profile.aboutContent || published?.bio || profile.bio || 'This promoter has not filled out the About section yet.'}</div>
-              {secOn(published?.builderSections ?? null, 'newsletter') && published?.builderSections?.some(s => s.id === 'newsletter' && s.on) ? (
-                <NewsletterSignup profileId={profile.id} />
-              ) : null}
-            </>
-          ) : null}
-
-          {activeSection === 'shows' && secOn(published?.builderSections ?? null, 'shows') ? (
-            <>
-              <h2>Shows</h2>
-              <div className="artist-tour-shows">
-                <h3>Upcoming</h3>
-                <div className="grid grid-2">
-                  {upcomingShows.length ? upcomingShows.map((show) => <ShowCard key={show.id} show={show} />) : <div className="empty">No upcoming shows yet.</div>}
-                </div>
-              </div>
-
-              <div className="artist-tour-shows">
-                <h3>Previous</h3>
-                <div className="grid grid-2">
-                  {previousShows.length ? previousShows.map((show) => <ShowCard key={show.id} show={show} />) : <div className="empty">No previous shows yet.</div>}
-                </div>
-              </div>
-            </>
-          ) : null}
-
-          {activeSection === 'events' ? (
-            <>
-              <h2>Events</h2>
-              <div className="artist-copy">{profile.recommendContent || 'Use this section to explain the rooms, artists, and collaborations you like to champion.'}</div>
-              {featureImageUrl ? (
-                <div className="artist-media-visuals">
-                  <img alt={`${profile.name} featured visual`} className="artist-media-visual-image" src={featureImageUrl} loading="lazy" />
-                </div>
-              ) : null}
-              <NetworkEarthGlobe
-                description="Start from the visitor ZIP, highlight nearby venues, then zoom out to browse outside the current location and trace previous promoted shows."
-                emptyRouteLabel="No previous promoted shows are mapped yet."
-                routeLabel="Promoted history"
-                routeStops={globeRouteStops}
-                title="Earth globe for nearby venues and promoted-show history"
-                venues={venues}
-                viewerLocation={viewerLocation}
-              />
-
-              <div className="grid grid-2">
-                {recentShows.length ? (
-                  recentShows.map((show) => (
-                    <div key={show.id} className="stat">
-                      <strong>{show.title}</strong>
-                      {show.venueProfile?.name ? `${show.venueProfile.name} · ` : ''}
-                      {formatShowDate(show.startsAt)}
-                    </div>
-                  ))
-                ) : (
-                  <div className="empty">No event history yet.</div>
-                )}
-              </div>
-            </>
-          ) : null}
         </div>
-      </section>
 
-      <ContentReportControl targetId={profile.id} targetType="profile" />
-    </main>
+        {activeSection === 'shows' && (
+          <div>
+            {relevantShows.length === 0 ? (
+              <div className="dj-empty"><p>No shows yet.</p></div>
+            ) : (
+              relevantShows.map((s) => (
+                <Link className="dj-show-card" href={s.isRadioShow ? '/radio' : `/shows/${s.slug}`} key={s.id}>
+                  <div>
+                    <div className="dj-show-title">{s.title}</div>
+                    <div className="dj-show-meta">
+                      {s.status === 'LIVE' ? 'Live now' : s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                    </div>
+                  </div>
+                  {s.status === 'LIVE' && <span className="dj-live-pill">Live</span>}
+                </Link>
+              ))
+            )}
+          </div>
+        )}
+
+        {activeSection === 'crate' && (
+          media.entries.length ? (
+            <ArtistMediaPlaylist
+              artistName={profile.name}
+              artistSlug={profile.slug}
+              artworkUrl={artworkUrl}
+              entries={media.entries}
+              isOwner={isOwner}
+              profileId={profile.id}
+            />
+          ) : (
+            <div className="dj-empty"><p>No free-use tracks in the crate yet.</p></div>
+          )
+        )}
+
+        {activeSection === 'earnings' && isOwner && (
+          <div>
+            <p style={{ fontSize: 12, color: 'rgba(240,235,229,.5)', marginBottom: 16 }}>
+              Earnings are a proportional share of the 10% promoter pool per event, based on gate driven.
+            </p>
+            {earningsByShow.size === 0 ? (
+              <div className="dj-empty"><p>No referral earnings yet.</p></div>
+            ) : (
+              <div className="dj-earn-list">
+                {[...earningsByShow.entries()].map(([title, cents]) => (
+                  <div className="dj-earn-row" key={title}>
+                    <span>{title}</span>
+                    <span className="dj-earn-val">+${(cents / 100).toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div style={{ padding: '0 32px' }}>
+        <HypeButton entityLabel="DJ" initialCount={profile.hypeCount} initiallyHyped={!!userHype} targetId={profile.id} targetType="profile" />
+      </div>
+
+      <style>{`
+        .dj-page { max-width: 900px; margin: 0 auto; padding: 32px 0 100px; }
+        .dj-hero { background: linear-gradient(140deg, rgba(255,62,154,.12), rgba(185,131,255,.08)); border-bottom: 1px solid rgba(255,62,154,.18); padding: 40px 32px 32px; }
+        .dj-hero-row { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+        @media (max-width: 600px) { .dj-hero { padding: 24px 20px; } .dj-content { padding: 0 20px; } }
+        .dj-avatar { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg,#ff3e9a,#b983ff); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; overflow: hidden; }
+        .dj-name { font-family: var(--font-display); font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 4px; color: var(--ink); }
+        .dj-handle { font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: rgba(240,235,229,.5); margin-bottom: 12px; }
+        .dj-hero-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+        .dj-badge { display: inline-block; padding: 5px 12px; border-radius: 4px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; }
+        .dj-hero-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .dj-hero-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; background: rgba(255,255,255,.06); color: var(--ink); border: 1px solid rgba(255,255,255,.1); }
+        .dj-hero-btn:hover { background: rgba(255,255,255,.1); }
+        .dj-stats { display: flex; gap: 28px; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,.06); }
+        .dj-stat-val { font-size: 22px; font-weight: 700; color: #ff3e9a; font-family: var(--font-display); }
+        .dj-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: rgba(240,235,229,.55); margin-top: 2px; }
+        .dj-content { padding: 0 32px; }
+        .dj-tabs { display: flex; gap: 24px; border-bottom: 1px solid rgba(255,255,255,.06); margin: 28px 0; }
+        .dj-tab { padding: 10px 0; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 600; font-size: 14px; color: rgba(240,235,229,.6); text-decoration: none; }
+        .dj-tab.active { color: var(--ink); border-color: #ff3e9a; }
+        .dj-show-card { border: 1px solid rgba(255,255,255,.06); border-radius: 10px; padding: 18px 20px; background: var(--bg2); display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; text-decoration: none; color: inherit; }
+        .dj-show-card:hover { background: var(--bg3); }
+        .dj-show-title { font-family: var(--font-display); font-size: 15px; font-weight: 800; margin-bottom: 3px; color: var(--ink); }
+        .dj-show-meta { font-size: 12px; color: rgba(240,235,229,.55); }
+        .dj-live-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 9999px; background: rgba(255,62,154,.15); color: #ff3e9a; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
+        .dj-earn-list { border: 1px solid rgba(255,255,255,.06); border-radius: 10px; padding: 0 20px; background: var(--bg2); }
+        .dj-earn-row { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,.06); font-size: 14px; }
+        .dj-earn-row:last-child { border-bottom: none; }
+        .dj-earn-val { font-weight: 700; color: #ff3e9a; }
+        .dj-empty { text-align: center; padding: 48px 24px; color: rgba(240,235,229,.5); }
+      `}</style>
+    </div>
   );
 }

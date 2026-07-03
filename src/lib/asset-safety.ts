@@ -49,15 +49,3 @@ export function getSafeVideoUrl(value?: string | null) {
   const trimmedValue = value.trim();
   return isAllowedVideoProtocol(trimmedValue) ? trimmedValue : null;
 }
-
-export function getSafeBackgroundImageStyle(value?: string | null) {
-  const safeValue = getSafeImageUrl(value);
-
-  if (!safeValue) {
-    return undefined;
-  }
-
-  return {
-    backgroundImage: `linear-gradient(rgba(7, 11, 20, 0.45), rgba(7, 11, 20, 0.88)), url("${safeValue}")`
-  };
-}
