@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
 import { AdminNav } from '@/components/AdminNav';
+import { FeedbackStatusSelect } from '@/components/admin/FeedbackStatusSelect';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,7 +24,7 @@ export default async function AdminFeedbackPage() {
               <p className="meta" style={{ margin: '4px 0 0' }}>{fr.description}</p>
               <p className="meta">{new Date(fr.createdAt).toLocaleString()}</p>
             </div>
-            <span className="badge">{fr.status}</span>
+            <FeedbackStatusSelect id={fr.id} status={fr.status} />
           </div>
         ))}
       </div>

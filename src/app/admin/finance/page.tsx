@@ -15,7 +15,7 @@ const PAGE_SIZE = 50;
 export default async function AdminFinancePage({
   searchParams,
 }: {
-  searchParams?: Promise<{ tab?: string; from?: string; to?: string; promoStatus?: string; payoutStatus?: string; page?: string }>;
+  searchParams?: Promise<{ tab?: string; from?: string; to?: string; promoStatus?: string; payoutStatus?: string; ticketStatus?: string; page?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
@@ -32,6 +32,7 @@ export default async function AdminFinancePage({
 
   const promoStatus = sp.promoStatus ?? '';
   const payoutStatus = sp.payoutStatus ?? '';
+  const ticketStatus = sp.ticketStatus ?? '';
 
   const payoutWhere: Record<string, unknown> = {};
   if (payoutStatus) payoutWhere.status = payoutStatus;
@@ -40,7 +41,10 @@ export default async function AdminFinancePage({
   if (promoStatus === 'active') promoWhere.OR = [{ expiresAt: null }, { expiresAt: { gt: new Date() } }];
   if (promoStatus === 'expired') promoWhere.expiresAt = { lte: new Date() };
 
-  const [monthlyOrders, payoutEntries, payoutTotal, recentPromos, promoTotal, revenueAgg] = await Promise.all([
+  const ticketWhere: Record<string, unknown> = {};
+  if (ticketStatus) ticketWhere.status = ticketStatus;
+
+  const [monthlyOrders, payoutEntries, payoutTotal, recentPromos, promoTotal, revenueAgg, ticketOrders, ticketOrderTotal] = await Promise.all([
     db.ticketOrder.findMany({
       where: { status: 'CAPTURED', chargedAt: { gte: fromDate, lte: toDate } },
       select: { chargedAt: true, totalChargeCents: true },
@@ -64,6 +68,18 @@ export default async function AdminFinancePage({
       where: { status: 'CAPTURED', chargedAt: { gte: fromDate, lte: toDate } },
       _sum: { totalChargeCents: true },
     }).catch(() => ({ _sum: { totalChargeCents: null } })),
+    db.ticketOrder.findMany({
+      where: ticketWhere,
+      orderBy: { createdAt: 'desc' },
+      take: PAGE_SIZE,
+      skip: (page - 1) * PAGE_SIZE,
+      select: {
+        id: true, confirmationCode: true, buyerName: true, buyerEmail: true, quantity: true,
+        status: true, totalChargeCents: true, createdAt: true, chargedAt: true,
+        show: { select: { title: true, slug: true } },
+      },
+    }).catch(() => []),
+    db.ticketOrder.count({ where: ticketWhere }).catch(() => 0),
   ]);
 
   const monthlyMap: Record<string, number> = {};
@@ -81,10 +97,11 @@ export default async function AdminFinancePage({
 
   const payoutPages = Math.ceil(payoutTotal / PAGE_SIZE);
   const promoPages = Math.ceil(promoTotal / PAGE_SIZE);
+  const ticketPages = Math.ceil(ticketOrderTotal / PAGE_SIZE);
 
   const tabHref = (t: string) => `/admin/finance?tab=${t}`;
   const pageHref = (p: number) => {
-    const params = new URLSearchParams({ tab: activeTab, ...(sp.from ? { from: sp.from } : {}), ...(sp.to ? { to: sp.to } : {}), ...(promoStatus ? { promoStatus } : {}), ...(payoutStatus ? { payoutStatus } : {}), page: String(p) });
+    const params = new URLSearchParams({ tab: activeTab, ...(sp.from ? { from: sp.from } : {}), ...(sp.to ? { to: sp.to } : {}), ...(promoStatus ? { promoStatus } : {}), ...(payoutStatus ? { payoutStatus } : {}), ...(ticketStatus ? { ticketStatus } : {}), page: String(p) });
     return `/admin/finance?${params}`;
   };
 
@@ -183,9 +200,39 @@ export default async function AdminFinancePage({
 
         {activeTab === 'tickets' && (
           <>
-            <h3 style={{ fontSize: 14, marginBottom: 8 }}>Recent Ticket Orders</h3>
-            <Link href="/admin" className="button small secondary" style={{ marginBottom: 12, display: 'inline-block' }}>View all on Overview</Link>
-            <p className="meta">Detailed ticket order list is available on the Overview page.</p>
+            <form method="get" style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'flex-end' }}>
+              <input type="hidden" name="tab" value="tickets" />
+              <select name="ticketStatus" defaultValue={ticketStatus} className="input" style={{ width: 160 }}>
+                <option value="">All statuses</option>
+                <option value="RESERVED">Reserved (unpaid)</option>
+                <option value="CAPTURED">Captured</option>
+                <option value="VOID">Void</option>
+              </select>
+              <input type="hidden" name="page" value="1" />
+              <button className="button small" type="submit">Filter</button>
+            </form>
+            <h3 style={{ fontSize: 14, marginBottom: 8 }}>Ticket Orders ({ticketOrderTotal})</h3>
+            {ticketOrders.length === 0 ? <div className="empty">No ticket orders match this filter.</div> : (
+              <div className="admin-list">
+                {ticketOrders.map(o => (
+                  <div className="admin-list-row" key={o.id}>
+                    <span>{o.show.title}</span>
+                    <small>{o.buyerName} · {o.buyerEmail}</small>
+                    <strong>{o.status}</strong>
+                    <small>{o.quantity} ticket{o.quantity === 1 ? '' : 's'} · ${(o.totalChargeCents / 100).toFixed(2)}</small>
+                    <small>{o.createdAt.toISOString().slice(0, 10)}</small>
+                    <Link className="button small secondary" href={`/shows/${o.show.slug}`}>View show</Link>
+                  </div>
+                ))}
+              </div>
+            )}
+            {ticketPages > 1 && (
+              <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center' }}>
+                {page > 1 && <Link className="button small secondary" href={pageHref(page - 1)}>← Prev</Link>}
+                <span className="meta">Page {page} of {ticketPages}</span>
+                {page < ticketPages && <Link className="button small secondary" href={pageHref(page + 1)}>Next →</Link>}
+              </div>
+            )}
           </>
         )}
 

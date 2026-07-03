@@ -2,7 +2,7 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 
-type AdminSection = 'overview'|'users'|'content'|'finance'|'ads'|'support'|'flagged'|'system'|'growth';
+type AdminSection = 'overview'|'users'|'content'|'finance'|'ads'|'support'|'system'|'growth';
 
 function sectionFromPathname(p: string): AdminSection {
   if (p === '/admin' || p === '/admin/') return 'overview';
@@ -10,7 +10,6 @@ function sectionFromPathname(p: string): AdminSection {
   if (p.startsWith('/admin/review') || p.startsWith('/admin/media')) return 'content';
   if (p.startsWith('/admin/finance')) return 'finance';
   if (p.startsWith('/admin/ads')) return 'ads';
-  if (p.startsWith('/admin/flagged')) return 'flagged';
   if (p.startsWith('/admin/moderation') || p.startsWith('/admin/feedback') || p.startsWith('/admin/dmca')) return 'support';
   if (p.startsWith('/admin/setup') || p.startsWith('/admin/audit') || p.startsWith('/admin/rate-limits') || p.startsWith('/admin/invite') || p.startsWith('/admin/feature')) return 'system';
   if (p.startsWith('/admin/growth') || p.startsWith('/admin/journal') || p.startsWith('/admin/collab')) return 'growth';
@@ -24,7 +23,6 @@ const NAV: Array<{s: AdminSection; label: string; href: string; glyph: string}> 
   {s:'finance',  label:'Finance',  href:'/admin/finance',    glyph:'◈'},
   {s:'ads',      label:'Ads',      href:'/admin/ads',        glyph:'▣'},
   {s:'support',  label:'Support',  href:'/admin/moderation', glyph:'⬟'},
-  {s:'flagged',  label:'Flagged',  href:'/admin/flagged',    glyph:'⚑'},
   {s:'system',   label:'System',   href:'/admin/setup',      glyph:'⚙'},
   {s:'growth',   label:'Growth',   href:'/admin/growth',     glyph:'△'},
 ];
