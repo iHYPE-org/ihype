@@ -38,17 +38,25 @@ export function MiniPlayer() {
 
   return (
     <div
+      className="ihype-mini-player"
       style={{
         position: 'fixed',
         bottom: 'env(safe-area-inset-bottom, 0px)',
         left: 0,
         right: 0,
-        zIndex: 200,
+        zIndex: 901,
         background: 'var(--panel, rgba(16,13,9,.95))',
         borderTop: '1px solid var(--line)',
         backdropFilter: 'blur(16px)',
       }}
     >
+      <style>{`
+        @media (max-width: 768px) {
+          .ihype-mini-player {
+            bottom: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
+          }
+        }
+      `}</style>
       {/* 5. Hidden audio element for iOS background audio unlock */}
       <audio ref={audioRef} playsInline style={{ display: 'none' }} />
       {/* Progress bar */}
