@@ -121,7 +121,6 @@ model User {
   passkeys                Passkey[]
   showComments            ShowComment[]
   showRsvps               ShowRsvp[]
-  artistTips              ArtistTip[]              @relation("ArtistTipFromUser")
   premiumInterests        PremiumInterest[]
   notificationPreference  NotificationPreference?
   follows                 Follow[]                 @relation("FollowerUser")
@@ -134,7 +133,6 @@ model User {
   showAttendees           ShowAttendee[]
   setlistVotes            SetlistVote[]
   sentBookingRequests     BookingRequest[]         @relation("BookingRequestFromUser")
-  collabResponses         CollabResponse[]
   advertisedAds           Ad[]
   userSecurityVersion     Int                      @default(0)
   lastLoginCountry        String?
@@ -224,16 +222,12 @@ model Profile {
   issuedTickets                 Ticket[]                    @relation("VenueIssuedTickets")
   affiliateTicketOrders         TicketOrder[]               @relation("AffiliatePromoterTicketOrders")
   accountsPayableEntries        AccountsPayableEntry[]
-  contentBlocks                 ProfileBlock[]
   journalPosts                  ArtistJournalPost[]
-  receivedTips                  ArtistTip[]              @relation("ArtistTipToProfile")
   followers                     Follow[]                 @relation("FollowedProfile")
   setlistTemplates              SetlistTemplate[]
   nowPlaying                    String?
   availabilityDates             AvailabilityDate[]
   receivedBookingRequests       BookingRequest[]   @relation("BookingRequestToProfile")
-  collabPosts                   CollabPost[]
-  collabResponses               CollabResponse[]
   promoCodes                    PromoCode[]
   fanMailLastSentAt             DateTime?
   newsletterSubscriptions       NewsletterSubscription[]
@@ -329,16 +323,6 @@ model ArtistMediaAsset {
   @@index([publishAt, isPublished])
   @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "ArtistMediaAsset_title_trgm_idx")
   @@index([notes(ops: raw("gin_trgm_ops"))], type: Gin, map: "ArtistMediaAsset_notes_trgm_idx")
-}
-
-model RateLimitBucket {
-  key       String   @id
-  count     Int      @default(0)
-  resetAt   DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([resetAt])
 }
 
 model AuditLog {
@@ -736,20 +720,6 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model ProfileBlock {
-  id          String   @id @default(cuid())
-  profileId   String
-  blockType   String
-  content     String
-  position    Int      @default(0)
-  version     Int      @default(1)
-  updatedAt   DateTime @updatedAt
-  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
-
-  @@unique([profileId, blockType])
-  @@index([profileId])
-}
-
 model RadioShowTrack {
   id           String            @id @default(cuid())
   showId       String
@@ -836,21 +806,6 @@ model ArtistJournalPost {
   @@index([profileId, createdAt])
 }
 
-model ArtistTip {
-  id                    String   @id @default(cuid())
-  fromUserId            String
-  profileId             String
-  amountCents           Int
-  stripePaymentIntentId String?  @unique
-  status                String   @default("PENDING")
-  createdAt             DateTime @default(now())
-  fromUser              User     @relation("ArtistTipFromUser", fields: [fromUserId], references: [id], onDelete: Cascade)
-  profile               Profile  @relation("ArtistTipToProfile", fields: [profileId], references: [id], onDelete: Cascade)
-
-  @@index([profileId, createdAt])
-  @@index([fromUserId, createdAt])
-}
-
 model PremiumInterest {
   id        String   @id @default(cuid())
   userId    String?
@@ -919,19 +874,6 @@ model CommentReaction {
 
   @@unique([commentId, userId, emoji])
   @@index([commentId])
-}
-
-model Report {
-  id         String   @id @default(cuid())
-  reporterId String?
-  entityType String
-  entityId   String
-  reason     String
-  status     String   @default("open")
-  createdAt  DateTime @default(now())
-
-  @@index([status, createdAt])
-  @@index([entityType, entityId])
 }
 
 model MagicLinkToken {
@@ -1064,33 +1006,6 @@ model BookingRequest {
 
   @@index([toProfileId, status])
   @@index([fromUserId, createdAt])
-}
-
-model CollabPost {
-  id          String          @id @default(cuid())
-  profileId   String
-  type        String
-  description String
-  active      Boolean         @default(true)
-  createdAt   DateTime        @default(now())
-  profile     Profile         @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  responses   CollabResponse[]
-
-  @@index([active, createdAt])
-  @@index([profileId])
-}
-
-model CollabResponse {
-  id        String     @id @default(cuid())
-  postId    String
-  profileId String
-  userId    String
-  message   String
-  createdAt DateTime   @default(now())
-  post      CollabPost @relation(fields: [postId], references: [id], onDelete: Cascade)
-  profile   Profile    @relation(fields: [profileId], references: [id])
-  user      User       @relation(fields: [userId], references: [id])
-  @@unique([postId, profileId])
 }
 
 model CollabBoardPost {
