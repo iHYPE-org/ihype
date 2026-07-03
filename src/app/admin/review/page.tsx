@@ -5,7 +5,6 @@ import { auth } from '@/lib/auth';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
-import { AdminNav } from '@/components/AdminNav';
 import { AdminVerificationQueue } from '@/app/admin/verifications/AdminVerificationQueue';
 import type { VerificationProfile } from '@/lib/types/admin';
 import React from 'react';
@@ -158,7 +157,6 @@ export default async function AdminReviewPage({
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px' }}>
-      <AdminNav active="review" />
       <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 28, letterSpacing: '-.02em', color: 'var(--ink)', marginBottom: 8 }}>Review Queue</h1>
 
       <nav style={{ display: 'flex', gap: 8, marginBottom: 24 }}>

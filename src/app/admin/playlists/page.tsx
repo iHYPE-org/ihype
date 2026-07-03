@@ -3,7 +3,6 @@ import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
-import { AdminNav } from '@/components/AdminNav';
 import { PlaylistCreateForm } from '@/components/admin/PlaylistCreateForm';
 import { PlaylistActions } from '@/components/admin/PlaylistActions';
 
@@ -20,7 +19,6 @@ export default async function AdminPlaylistsPage() {
 
   return (
     <main className="container section">
-      <AdminNav active="playlists" />
       <h1 className="title">Curated Playlists</h1>
       <p className="meta" style={{ marginBottom: 16 }}>
         Manage staff-curated playlists. Track lists are edited via <code>PATCH /api/admin/playlists/:id</code> with a <code>tracks</code> array — no in-page track editor yet.

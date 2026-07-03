@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { AdminSignupTestPanel } from '@/components/AdminSignupTestPanel';
 import { redirect } from 'next/navigation';
 import { AdminReportActions, AdminVerificationActions } from '@/components/AdminModerationActions';
-import { AdminNav } from '@/components/AdminNav';
 import { AdminFeatureFlags } from '@/components/AdminFeatureFlags';
 import { FeatureToggle } from '@/components/admin/FeatureToggle';
 import { BulkActions } from '@/components/admin/BulkActions';
@@ -301,7 +300,6 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
 
   return (
     <main className="container section admin-console">
-      <AdminNav active="dashboard" />
       <section className="panel admin-console-hero">
         <div>
           <div className="badge">Admin beta console</div>

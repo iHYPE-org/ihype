@@ -5,7 +5,6 @@ import { auth } from '@/lib/auth';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
-import { AdminNav } from '@/components/AdminNav';
 import { promoteToAdminAction, suspendUserAction } from './actions';
 
 export const metadata: Metadata = {
@@ -50,7 +49,6 @@ export default async function AdminUsersPage({ searchParams }: { searchParams?: 
 
   return (
     <main className="container section admin-console">
-      <AdminNav active="users" />
       <section className="panel admin-console-hero">
         <div>
           <div className="badge">User management</div>

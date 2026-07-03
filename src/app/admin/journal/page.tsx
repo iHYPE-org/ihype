@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { AdminNav } from '@/components/AdminNav';
 import { AdminJournalEditor } from '@/components/AdminJournalEditor';
 import { auth } from '@/lib/auth';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
@@ -49,7 +48,6 @@ export default async function AdminJournalPage() {
 
   return (
     <main className="container section admin-console">
-      <AdminNav active="journal" />
       <section className="panel">
         <h1>Journal editor</h1>
         <p className="meta">Editorial posts are written to AuditLog so we don't need new tables.</p>

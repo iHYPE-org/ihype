@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
-import { AdminNav } from '@/components/AdminNav';
 import { ModerationActions } from '@/components/ModerationActions';
 
 export const dynamic = 'force-dynamic';
@@ -42,7 +41,6 @@ export default async function ModerationPage({ searchParams }: { searchParams?: 
 
   return (
     <div className="container" style={{ paddingTop: 24, paddingBottom: 60 }}>
-      <AdminNav active="moderation" />
       <h1>Content Moderation <span className="meta">({total} {status.toLowerCase()})</span></h1>
 
       <form method="get" style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>

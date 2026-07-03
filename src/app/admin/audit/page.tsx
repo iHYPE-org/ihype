@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { AdminNav } from '@/components/AdminNav';
 import { auth } from '@/lib/auth';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { db } from '@/lib/db';
@@ -57,7 +56,6 @@ export default async function AdminAuditPage({ searchParams }: { searchParams?: 
 
   return (
     <main className="container section admin-console">
-      <AdminNav active="audit" />
       <section className="panel">
         <h1>Audit log <span className="meta">({total.toLocaleString()} events)</span></h1>
         <form method="get" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end', margin: '12px 0' }}>

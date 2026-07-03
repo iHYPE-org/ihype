@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
-import { AdminNav } from '@/components/AdminNav';
 import { AdminAdsClient } from '@/components/AdminAdsClient';
 
 const PAGE_SIZE = 20;
@@ -39,7 +38,6 @@ export default async function AdminAdsPage({
 
   return (
     <main className="container section">
-      <AdminNav active="ads" />
       <h1 className="title">Supporter Submissions <span className="meta">({total})</span></h1>
       <AdminAdsClient ads={ads} status={status} q={q} page={page} total={total} pageSize={PAGE_SIZE} />
     </main>

@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
-import { AdminNav } from '@/components/AdminNav';
 import { FeedbackStatusSelect } from '@/components/admin/FeedbackStatusSelect';
 
 export const dynamic = 'force-dynamic';
@@ -13,7 +12,6 @@ export default async function AdminFeedbackPage() {
   const requests = await db.featureRequest.findMany({ orderBy: [{ votes: 'desc' }, { createdAt: 'desc' }] });
   return (
     <main className="container section">
-      <AdminNav active="feedback" />
       <h1 className="title">Feature Requests</h1>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {requests.map(fr => (
