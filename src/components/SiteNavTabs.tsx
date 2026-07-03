@@ -4,13 +4,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const TABS = [
-  { id: 'listen', label: 'Listen', href: '/home' },
+  { id: 'listen', label: 'Listen', href: '/listen' },
   { id: 'events', label: 'Events', href: '/shows' },
   { id: 'pages',  label: 'Pages',  href: '/pages' },
 ];
 
 function matchTab(pathname: string): string {
-  if (pathname.startsWith('/home') || pathname.startsWith('/discover') || pathname.startsWith('/radio') || pathname === '/') return 'listen';
+  if (pathname.startsWith('/listen') || pathname.startsWith('/discover') || pathname.startsWith('/radio') || pathname === '/') return 'listen';
   if (pathname.startsWith('/shows') || pathname.startsWith('/events')) return 'events';
   if (pathname.startsWith('/pages') || pathname.startsWith('/artists') || pathname.startsWith('/venues') || pathname.startsWith('/fans')) return 'pages';
   return '';

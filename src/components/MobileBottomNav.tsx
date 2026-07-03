@@ -7,7 +7,7 @@ const TABS = [
   {
     id: 'listen',
     label: 'Listen',
-    href: '/home',
+    href: '/listen',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M9 18V5l12-2v13"/>
@@ -43,7 +43,7 @@ const TABS = [
 ];
 
 function matchTab(pathname: string): string {
-  if (pathname.startsWith('/home') || pathname.startsWith('/discover') || pathname.startsWith('/radio') || pathname === '/') return 'listen';
+  if (pathname.startsWith('/listen') || pathname.startsWith('/discover') || pathname.startsWith('/radio') || pathname === '/') return 'listen';
   if (pathname.startsWith('/shows') || pathname.startsWith('/events')) return 'events';
   if (pathname.startsWith('/pages') || pathname.startsWith('/artists') || pathname.startsWith('/venues') || pathname.startsWith('/fans')) return 'pages';
   return '';
