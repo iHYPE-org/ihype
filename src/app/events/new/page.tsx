@@ -205,12 +205,12 @@ export default function EventsNewPage() {
             </div>
             <div className="grid2">
               <div className="field">
-                <label>Date</label>
-                <input onChange={(e) => setDate(e.target.value)} type="date" value={date} />
+                <label htmlFor="event-date">Date</label>
+                <input id="event-date" onChange={(e) => setDate(e.target.value)} type="date" value={date} />
               </div>
               <div className="field">
-                <label>Doors time</label>
-                <input onChange={(e) => setTime(e.target.value)} type="time" value={time} />
+                <label htmlFor="event-time">Doors time</label>
+                <input id="event-time" onChange={(e) => setTime(e.target.value)} type="time" value={time} />
               </div>
             </div>
             <ProfilePicker label="Venue" onChange={setVenueProfile} types={['VENUE']} value={venueProfile} />

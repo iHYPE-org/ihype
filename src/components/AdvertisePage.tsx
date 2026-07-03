@@ -213,9 +213,9 @@ function CoverageBuilder() {
               <span style={{ color: '#ff5029' }}>B.</span> Spots per day
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 0, border: '1px solid rgba(255,255,255,.14)', borderRadius: 10, overflow: 'hidden', width: 'fit-content' }}>
-              <button onClick={() => setSpots(s => Math.max(1, s - 1))} style={{ width: 46, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9e9080', cursor: 'pointer', ...INPUT_S, transition: 'background .15s' }}><MinusIcon /></button>
+              <button aria-label="Decrease spots per day" onClick={() => setSpots(s => Math.max(1, s - 1))} style={{ width: 46, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9e9080', cursor: 'pointer', ...INPUT_S, transition: 'background .15s' }}><MinusIcon /></button>
               <div style={{ minWidth: 64, textAlign: 'center', fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', borderLeft: '1px solid rgba(255,255,255,.07)', borderRight: '1px solid rgba(255,255,255,.07)', height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{spots}</div>
-              <button onClick={() => setSpots(s => Math.min(24, s + 1))} style={{ width: 46, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9e9080', cursor: 'pointer', ...INPUT_S, transition: 'background .15s' }}><PlusIcon /></button>
+              <button aria-label="Increase spots per day" onClick={() => setSpots(s => Math.min(24, s + 1))} style={{ width: 46, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9e9080', cursor: 'pointer', ...INPUT_S, transition: 'background .15s' }}><PlusIcon /></button>
             </div>
             <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: '#5a5048', letterSpacing: '.04em', marginTop: 10 }}>{spotsNote}</div>
           </div>
