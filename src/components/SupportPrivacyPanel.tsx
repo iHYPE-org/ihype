@@ -5,16 +5,10 @@ import Link from 'next/link';
 
 type Kind = 'deletion' | 'detach' | 'hype-wipe';
 
-const OPTIONS: { kind: Kind; title: string; desc: string; danger?: boolean }[] = [
-  { kind: 'deletion', title: 'Request data deletion', desc: 'Permanently erase your account and all data', danger: true },
-  { kind: 'detach', title: 'Detach identity early', desc: 'Delete email verification link now instead of after 30 days' },
-  { kind: 'hype-wipe', title: 'Wipe hype history', desc: 'Clear your past hype votes without deleting your account' },
-];
-
 const DONE_LABEL: Record<Kind, string> = {
   deletion: 'Account deletion requested — we’ll email you to confirm within 24h.',
-  detach: 'Identity detachment requested — our team will confirm shortly.',
-  'hype-wipe': 'Hype history wipe requested — our team will confirm shortly.',
+  detach: 'Identity detached — your email verification link has been deleted.',
+  'hype-wipe': 'Hype history wiped — your past votes have been cleared.',
 };
 
 export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () => void }) {
@@ -73,10 +67,19 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
 
   return (
     <>
-      <div className="quick-card" onClick={() => setOpen(true)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && setOpen(true)}>
-        <div className="quick-icon" aria-hidden="true">🔒</div>
-        <div className="quick-title">Privacy</div>
-        <div className="quick-desc">Report a problem, data deletion, identity detachment</div>
+      <div
+        onClick={() => setOpen(true)}
+        onKeyDown={(e) => e.key === 'Enter' && setOpen(true)}
+        role="button"
+        style={{
+          border: '1px solid rgba(255,255,255,.06)', borderRadius: 10, padding: '18px 20px',
+          background: 'var(--bg-2, #100d09)', cursor: 'pointer',
+        }}
+        tabIndex={0}
+      >
+        <div aria-hidden="true" style={{ fontSize: 24, marginBottom: 8 }}>🔒</div>
+        <div style={{ fontSize: 14, fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 4 }}>Privacy</div>
+        <div style={{ fontSize: 12, color: 'rgba(240,235,229,.55)' }}>Report a problem, data deletion, identity detachment</div>
       </div>
 
       {open && (
@@ -113,27 +116,42 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
                   </span>
                 </button>
 
-                {OPTIONS.map((opt) => (
-                  <button
-                    key={opt.kind}
-                    onClick={() => submitKind(opt.kind)}
-                    disabled={submitting}
-                    className="priv-opt"
-                    style={{ ...privOptStyle, borderColor: opt.danger ? 'rgba(255,80,41,.25)' : privOptStyle.borderColor }}
-                  >
-                    <span style={{ fontSize: 20, flexShrink: 0 }} aria-hidden="true">{opt.kind === 'deletion' ? '🗑️' : opt.kind === 'detach' ? '⛓️' : '🔥'}</span>
-                    <span>
-                      <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 800, marginBottom: 2 }}>{opt.title}</span>
-                      <span style={{ fontSize: 12, color: 'rgba(240,235,229,.5)' }}>{opt.desc}</span>
-                    </span>
-                  </button>
-                ))}
+                <button
+                  onClick={() => submitKind('deletion')}
+                  disabled={submitting}
+                  className="priv-opt"
+                  style={{ ...privOptStyle, borderColor: 'rgba(255,80,41,.25)' }}
+                >
+                  <span style={{ fontSize: 20, flexShrink: 0 }} aria-hidden="true">🗑️</span>
+                  <span>
+                    <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 800, marginBottom: 2 }}>Request data deletion</span>
+                    <span style={{ fontSize: 12, color: 'rgba(240,235,229,.5)' }}>Permanently erase your account and all data</span>
+                  </span>
+                </button>
+
+                <button onClick={() => submitKind('detach')} disabled={submitting} className="priv-opt" style={privOptStyle}>
+                  <span style={{ fontSize: 20, flexShrink: 0 }} aria-hidden="true">⛓️</span>
+                  <span>
+                    <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 800, marginBottom: 2 }}>Detach identity early</span>
+                    <span style={{ fontSize: 12, color: 'rgba(240,235,229,.5)' }}>Delete email verification link now instead of after 30 days</span>
+                  </span>
+                </button>
 
                 <button onClick={downloadExport} disabled={exporting} className="priv-opt" style={privOptStyle}>
-                  <span style={{ fontSize: 20, flexShrink: 0 }} aria-hidden="true">⬇️</span>
+                  <span style={{ fontSize: 20, flexShrink: 0 }} aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                  </span>
                   <span>
                     <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 800, marginBottom: 2 }}>{exporting ? 'Preparing export…' : 'Download my data'}</span>
                     <span style={{ fontSize: 12, color: 'rgba(240,235,229,.5)' }}>Export everything iHYPE holds about you</span>
+                  </span>
+                </button>
+
+                <button onClick={() => submitKind('hype-wipe')} disabled={submitting} className="priv-opt" style={privOptStyle}>
+                  <span style={{ fontSize: 20, flexShrink: 0 }} aria-hidden="true">🣭</span>
+                  <span>
+                    <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 800, marginBottom: 2 }}>Wipe hype history</span>
+                    <span style={{ fontSize: 12, color: 'rgba(240,235,229,.5)' }}>Clear your past hype votes without deleting your account</span>
                   </span>
                 </button>
 

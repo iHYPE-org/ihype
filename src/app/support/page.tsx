@@ -1,33 +1,22 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { SupportPageClient } from '@/components/SupportPageClient';
 
 export const metadata: Metadata = {
-  title: 'Support | iHYPE.org',
-  description: 'Get help with login, MFA, verification, copyright, safety, and ticketing issues on iHYPE.'
+  title: 'Support · iHYPE',
+  description: 'We read every message. Usually reply within 24h.'
 };
 
 export default function SupportPage() {
   return (
-    <main className="container section support-page">
-      <section className="panel trust-policy-hero">
-        <div className="badge">Support</div>
-        <h1>Get help from iHYPE.</h1>
-        <p className="subtitle">
-          Use this page for login trouble, MFA/email issues, takedowns, ticket problems, artist or venue verification,
-          and safety concerns.
-        </p>
-        <div className="trust-policy-links">
-          <Link className="text-link" href="/about">About iHYPE</Link>
-          <Link className="text-link" href="/community-rules">Community Rules</Link>
-          <Link className="text-link" href="/ticket-policy">Ticket Policy</Link>
-          <Link className="text-link" href="/copyright">Copyright</Link>
-        </div>
-      </section>
+    <div style={{ maxWidth: 680, margin: '0 auto', padding: '40px 24px 100px' }}>
+      <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 8, color: 'var(--ink)' }}>
+        Support
+      </h1>
+      <p style={{ fontSize: 14, color: 'rgba(240,235,229,.65)', marginBottom: 40 }}>
+        We read every message. Usually reply within 24h.
+      </p>
 
-      <section className="panel support-form-panel">
-        <SupportPageClient />
-      </section>
-    </main>
+      <SupportPageClient />
+    </div>
   );
 }

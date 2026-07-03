@@ -2,176 +2,148 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import type { ReactElement } from 'react';
 
 export const metadata: Metadata = {
-  title: 'Welcome to iHYPE',
+  title: 'Welcome · iHYPE',
   robots: { index: false, follow: false },
 };
 
-const ROLE_DESTINATIONS: Record<string, { href: string; label: string }> = {
-  FAN: { href: '/home', label: 'Go to your feed' },
-  ARTIST: { href: '/home', label: 'Go to your dashboard' },
-  VENUE: { href: '/home', label: 'Go to your dashboard' },
-  DJ: { href: '/home', label: 'Go to your dashboard' },
-  PROMOTER: { href: '/home', label: 'Go to your dashboard' },
-};
+type Role = 'FAN' | 'ARTIST' | 'VENUE' | 'DJ';
 
-const ROLE_STEPS: Record<string, { title: string; desc: string }[]> = {
+const STEPS: Record<Role, { n: number; title: string; desc: string }[]> = {
   FAN: [
-    { title: 'Discover music', desc: 'Seeds shows you 30-sec previews. Swipe right to hype, left to skip.' },
-    { title: 'Buy tickets', desc: '$0 fees, always. Face value is the only price you pay.' },
-    { title: 'Share & earn', desc: 'Copy your referral link. Earn 10% of every ticket you drive.' },
+    { n: 1, title: 'Discover music', desc: 'Seeds shows you 30-sec previews. Swipe right to hype, left to skip.' },
+    { n: 2, title: 'Buy tickets', desc: '$0 fees, always. Face value is the only price you pay.' },
+    { n: 3, title: 'Share & earn', desc: 'Share your HYPE Link. Earn 10% of every ticket you drive.' },
   ],
   ARTIST: [
-    { title: 'Create your first show', desc: 'Studio → New Show. Set a price, publish, split is locked.' },
-    { title: 'Upload tracks to Seeds', desc: 'Your tracks become swipeable discovery cards for fans.' },
-    { title: 'Watch the demand radar', desc: 'See which cities are hyping your music before you book.' },
+    { n: 1, title: 'Create your first show', desc: 'Events → New Show. Set a price, publish, split is locked.' },
+    { n: 2, title: 'Upload tracks to Seeds', desc: 'Your tracks become swipeable discovery cards for fans.' },
+    { n: 3, title: 'Watch the demand radar', desc: 'See which cities are hyping your music before you book.' },
   ],
   VENUE: [
-    { title: 'Complete your page', desc: 'Add your venue details, capacity, and location.' },
-    { title: 'Book from the radar', desc: 'See which artists have demand in your city.' },
-    { title: 'Host a show', desc: 'Partner with an artist — 45% is yours, automatically.' },
+    { n: 1, title: 'Complete your page', desc: 'Add your venue details, capacity, and location.' },
+    { n: 2, title: 'Book from the radar', desc: 'See which artists have demand in your city.' },
+    { n: 3, title: 'Host a show', desc: 'Partner with an artist — 45% is yours, automatically.' },
   ],
   DJ: [
-    { title: 'Build your crate', desc: 'Browse free-use tracks. Only cleared music in your sets.' },
-    { title: 'Schedule a show', desc: 'Radio Studio → New Show. Go live or schedule ahead.' },
-    { title: 'Share your link', desc: 'Earn 10% of every ticket you drive to shows you promote.' },
+    { n: 1, title: 'Build your crate', desc: 'Browse free-use tracks. Only cleared music in your sets.' },
+    { n: 2, title: 'Schedule a show', desc: 'WebRadio → Schedule. Go live or schedule ahead.' },
+    { n: 3, title: 'Share your link', desc: 'Earn 10% of every ticket you drive to shows you promote.' },
   ],
+};
+
+const PREVIEW: Record<Role, {
+  sub: string; color: string; border: string; bg: string; art: string;
+  icon: ReactElement; eyebrow: string; title: string; sub2: string; cta: string; href: string;
+}> = {
+  FAN: {
+    sub: 'A show near you, and an artist worth following — picked from your genres.',
+    color: '#ff5029', border: 'rgba(255,80,41,.25)', bg: 'rgba(255,80,41,.06)',
+    art: 'linear-gradient(135deg,#ff5029,#b983ff)',
+    icon: <><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></>,
+    eyebrow: 'SUGGESTED FOR YOU', title: 'Alex Rivera · Deep House', sub2: 'Playing The Fillmore, SF · Jul 4',
+    cta: 'View artist', href: '/discover',
+  },
+  ARTIST: {
+    sub: 'Your public artist page is already live — here’s what fans will see.',
+    color: '#ff5029', border: 'rgba(255,80,41,.25)', bg: 'rgba(255,80,41,.06)',
+    art: 'linear-gradient(135deg,#ff5029,#b983ff)',
+    icon: <><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></>,
+    eyebrow: 'YOUR PAGE IS LIVE', title: 'Your Artist Page', sub2: '45% split locked in · 0 tracks uploaded yet',
+    cta: 'Create a show', href: '/events/new',
+  },
+  VENUE: {
+    sub: 'Three artists are already hyping near your room — here’s the top match.',
+    color: '#22e5d4', border: 'rgba(34,229,212,.25)', bg: 'rgba(34,229,212,.06)',
+    art: 'linear-gradient(135deg,#22e5d4,#5b8cff)',
+    icon: <><path d="M3 21h18" /><path d="M5 21V7l8-4v18" /><path d="M19 21V11l-6-4" /><path d="M9 9v.01M9 12v.01M9 15v.01" /></>,
+    eyebrow: 'DEMAND NEAR YOU', title: 'Luna Park · Indie', sub2: '312 hypes from fans within 20mi',
+    cta: 'See demand radar', href: '/home',
+  },
+  DJ: {
+    sub: 'Your crate is ready — schedule your first show to start building an audience.',
+    color: '#ff3e9a', border: 'rgba(255,62,154,.25)', bg: 'rgba(255,62,154,.06)',
+    art: 'linear-gradient(135deg,#ff3e9a,#ffb84a)',
+    icon: <><path d="M4 14a8 8 0 0 1 16 0" /><path d="M4 14v4a2 2 0 0 0 2 2h1v-6H6a2 2 0 0 0-2 2Z" /><path d="M20 14v4a2 2 0 0 1-2 2h-1v-6h1a2 2 0 0 1 2 2Z" /></>,
+    eyebrow: 'YOUR CRATE', title: 'Cleared tracks ready to play', sub2: '0 tracks added · browse the library',
+    cta: 'Go to Radio', href: '/radio',
+  },
 };
 
 export default async function WelcomePage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/register');
 
-  const role = (session.user as { role?: string }).role ?? 'FAN';
-  const dest = ROLE_DESTINATIONS[role] ?? ROLE_DESTINATIONS.FAN;
-  const steps = ROLE_STEPS[role] ?? ROLE_STEPS.FAN;
-  const name = session.user.name ?? 'there';
+  const sessionRole = (session.user as { role?: string }).role;
+  const role: Role = sessionRole === 'ARTIST' || sessionRole === 'VENUE' || sessionRole === 'DJ' ? sessionRole : 'FAN';
+  const steps = STEPS[role];
+  const p = PREVIEW[role];
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'var(--bg, #0a0805)',
-      color: 'var(--ink, #f0ebe5)',
-      fontFamily: "var(--font-body, 'DM Sans', sans-serif)",
-      padding: 24,
-    }}>
-      <div style={{ maxWidth: 420, textAlign: 'center' }}>
-        <div style={{
-          fontFamily: "var(--font-display, 'Syne', sans-serif)",
-          fontWeight: 800,
-          fontSize: '2.8rem',
-          letterSpacing: '-0.04em',
-          color: 'var(--accent, #ff5029)',
-          marginBottom: 24,
-        }}>
-          iH·YPE
+    <div className="welcome-body">
+      <div className="welcome-card">
+        <div className="welcome-wordmark">i<span>HYPE</span></div>
+        <span className="welcome-confetti">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="#ff5029" stroke="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>
+        </span>
+        <h1 className="welcome-h1">You&apos;re <span>in</span>.</h1>
+        <p className="welcome-sub">{p.sub}</p>
+
+        <div className="welcome-preview" style={{ borderColor: p.border, background: p.bg }}>
+          <div className="welcome-preview-art" style={{ background: p.art }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{p.icon}</svg>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="welcome-preview-eyebrow" style={{ color: p.color }}>{p.eyebrow}</div>
+            <div className="welcome-preview-title">{p.title}</div>
+            <div className="welcome-preview-sub">{p.sub2}</div>
+          </div>
+          <Link className="welcome-preview-go" href={p.href} style={{ background: p.color }}>{p.cta} →</Link>
         </div>
 
-        <h1 style={{
-          fontFamily: "var(--font-display, 'Syne', sans-serif)",
-          fontWeight: 800,
-          fontSize: 'clamp(1.8rem, 5vw, 2.4rem)',
-          letterSpacing: '-0.03em',
-          lineHeight: 1.1,
-          margin: '0 0 16px',
-        }}>
-          Welcome, {name}.
-        </h1>
-
-        <p style={{
-          fontSize: '1rem',
-          lineHeight: 1.65,
-          color: 'var(--ink-2, #9e9080)',
-          margin: '0 0 12px',
-        }}>
-          You&apos;re in. iHYPE takes 0% of every ticket sale — 45% goes to the artist, 45% to the venue, 10% to the promoter pool.
-        </p>
-
-        <div style={{ display: 'flex', borderRadius: 8, overflow: 'hidden', height: 32, margin: '20px 0 28px' }}>
-          <div style={{ flex: 45, background: 'var(--role-artist, #ff5029)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)", fontWeight: 600, fontSize: '0.68rem', letterSpacing: '0.06em', color: '#0a0805' }}>
-            ARTIST 45%
-          </div>
-          <div style={{ flex: 45, background: 'var(--role-venue, #22e5d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)", fontWeight: 600, fontSize: '0.68rem', letterSpacing: '0.06em', color: '#0a0805' }}>
-            VENUE 45%
-          </div>
-          <div style={{ flex: 10, background: 'var(--role-promoter, #ffb84a)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)", fontWeight: 600, fontSize: '0.6rem', letterSpacing: '0.04em', color: '#0a0805' }}>
-            10%
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 28, textAlign: 'left' }}>
-          {steps.map((step, i) => (
-            <div
-              key={step.title}
-              style={{
-                display: 'flex',
-                gap: 14,
-                alignItems: 'flex-start',
-                padding: '16px 18px',
-                border: '1px solid rgba(255,255,255,0.06)',
-                borderRadius: 10,
-                background: 'var(--bg2, #100d09)',
-              }}
-            >
-              <div style={{
-                width: 28,
-                height: 28,
-                borderRadius: '50%',
-                background: 'rgba(255,80,41,0.15)',
-                color: 'var(--accent, #ff5029)',
-                fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}>
-                {i + 1}
-              </div>
-              <div>
-                <h3 style={{
-                  fontFamily: "var(--font-display, 'Syne', sans-serif)",
-                  fontSize: '0.92rem',
-                  fontWeight: 800,
-                  marginBottom: 3,
-                }}>
-                  {step.title}
-                </h3>
-                <p style={{ fontSize: '0.8rem', color: 'var(--ink-2, #9e9080)', lineHeight: 1.5 }}>
-                  {step.desc}
-                </p>
+        <div className="welcome-steps">
+          {steps.map((s) => (
+            <div className="welcome-step" key={s.n}>
+              <div className="welcome-step-num">{s.n}</div>
+              <div className="welcome-step-text">
+                <h3>{s.title}</h3>
+                <p>{s.desc}</p>
               </div>
             </div>
           ))}
         </div>
 
-        <Link
-          href={dest.href}
-          style={{
-            display: 'block',
-            background: 'var(--accent, #ff5029)',
-            color: '#fff',
-            borderRadius: 9999,
-            padding: '14px 28px',
-            fontFamily: "var(--font-display, 'Syne', sans-serif)",
-            fontWeight: 800,
-            fontSize: '1rem',
-            textDecoration: 'none',
-            letterSpacing: '-0.01em',
-          }}
-        >
-          {dest.label}
-        </Link>
-
-        <p style={{ marginTop: 16, fontSize: '0.82rem', color: 'var(--ink-3, #5a5048)' }}>
-          Questions? <a href="mailto:admin@ihype.org" style={{ color: 'var(--ink-2)' }}>admin@ihype.org</a>
-        </p>
+        <Link className="welcome-cta" href="/home">Go to my home →</Link>
+        <Link className="welcome-skip" href="/home">Explore later</Link>
       </div>
+
+      <style>{`
+        .welcome-body { background: var(--bg); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+        .welcome-card { max-width: 540px; width: 100%; text-align: center; }
+        .welcome-wordmark { font-family: var(--f-d, 'Syne', sans-serif); font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 48px; color: var(--ink); }
+        .welcome-wordmark span { color: var(--accent); }
+        .welcome-confetti { width: 56px; height: 56px; margin: 0 auto 24px; display: flex; align-items: center; justify-content: center; border-radius: 16px; background: rgba(255,80,41,.12); }
+        .welcome-h1 { font-family: var(--f-d, 'Syne', sans-serif); font-size: 36px; font-weight: 800; letter-spacing: -.02em; line-height: .95; margin-bottom: 16px; color: var(--ink); }
+        .welcome-h1 span { color: var(--accent); }
+        .welcome-sub { font-size: 15px; color: rgba(240,235,229,.7); margin-bottom: 24px; line-height: 1.6; }
+        .welcome-preview { display: flex; align-items: center; gap: 14px; text-align: left; padding: 16px 18px; border-radius: 12px; margin-bottom: 28px; border: 1px solid; }
+        .welcome-preview-art { width: 52px; height: 52px; border-radius: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; }
+        .welcome-preview-eyebrow { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 9px; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 4px; }
+        .welcome-preview-title { font-family: var(--f-d, 'Syne', sans-serif); font-size: 16px; font-weight: 800; letter-spacing: -.01em; margin-bottom: 2px; color: var(--ink); }
+        .welcome-preview-sub { font-size: 12px; color: rgba(240,235,229,.55); }
+        .welcome-preview-go { flex-shrink: 0; font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; font-size: 12px; padding: 9px 14px; border-radius: 8px; color: #0a0805; text-decoration: none; white-space: nowrap; }
+        .welcome-steps { display: flex; flex-direction: column; gap: 16px; margin-bottom: 48px; text-align: left; }
+        .welcome-step { display: flex; gap: 16px; align-items: flex-start; padding: 18px 20px; border: 1px solid rgba(255,255,255,.06); border-radius: 10px; background: var(--bg2); }
+        .welcome-step-num { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,80,41,.15); color: var(--accent); font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .welcome-step-text h3 { font-family: var(--f-d, 'Syne', sans-serif); font-size: 15px; font-weight: 800; margin-bottom: 3px; color: var(--ink); }
+        .welcome-step-text p { font-size: 13px; color: rgba(240,235,229,.6); }
+        .welcome-cta { display: block; width: 100%; padding: 15px; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-family: var(--f-d, 'Syne', sans-serif); font-size: 17px; font-weight: 800; cursor: pointer; transition: opacity 150ms; margin-bottom: 14px; text-decoration: none; }
+        .welcome-cta:hover { opacity: .9; }
+        .welcome-skip { font-size: 13px; color: rgba(240,235,229,.55); cursor: pointer; text-decoration: underline; }
+        .welcome-skip:hover { color: rgba(240,235,229,.7); }
+      `}</style>
     </div>
   );
 }

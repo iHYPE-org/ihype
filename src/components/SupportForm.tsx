@@ -17,28 +17,52 @@ async function postSupportRequest(body: unknown) {
   return payload;
 }
 
-export function SupportForm({ initialType = 'login', initialSubject = '' }: { initialType?: string; initialSubject?: string } = {}) {
-  const [type, setType] = useState(initialType);
-  const [name, setName] = useState('');
+// Design's category labels, mapped to the backend's fixed `type` enum
+// (src/app/api/support/route.ts) since there's no per-category schema change here.
+const CATEGORIES: { label: string; type: string }[] = [
+  { label: 'Ticket issue', type: 'ticketing' },
+  { label: 'Payment / Payout', type: 'general' },
+  { label: 'Account / Login', type: 'login' },
+  { label: 'Verification', type: 'verification' },
+  { label: 'Privacy / Data', type: 'privacy' },
+  { label: 'Bug report', type: 'general' },
+  { label: 'Other', type: 'general' },
+];
+
+const CATEGORY_FOR_TYPE: Record<string, string> = {
+  privacy: 'Privacy / Data',
+  login: 'Account / Login',
+  verification: 'Verification',
+  ticketing: 'Ticket issue',
+  general: 'Other',
+  copyright: 'Other',
+  safety: 'Other',
+};
+
+export function SupportForm({ initialType = 'general', initialSubject = '' }: { initialType?: string; initialSubject?: string } = {}) {
+  const [category, setCategory] = useState(CATEGORY_FOR_TYPE[initialType] ?? '');
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState(initialSubject);
   const [details, setDetails] = useState('');
   const [company, setCompany] = useState('');
-  const [message, setMessage] = useState('');
+  const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setMessage('');
     setError('');
-    setIsSubmitting(true);
 
+    if (!email || !subject || !details) {
+      setError('Please fill in all fields.');
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      await postSupportRequest({ type, name, email, subject, details, company });
-      setMessage('Support request sent. The iHYPE team can now review it in the admin console.');
-      setSubject('');
-      setDetails('');
+      const type = CATEGORIES.find((c) => c.label === category)?.type ?? 'general';
+      await postSupportRequest({ type, email, subject, details, company });
+      setSent(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not send request.');
     } finally {
@@ -46,44 +70,44 @@ export function SupportForm({ initialType = 'login', initialSubject = '' }: { in
     }
   }
 
+  if (sent) {
+    return (
+      <div style={{ textAlign: 'center', padding: '40px 0' }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 800, marginBottom: 8 }}>Message sent</h2>
+        <p style={{ fontSize: 14, color: 'rgba(240,235,229,.65)' }}>We&apos;ll reply to {email} within 24h.</p>
+      </div>
+    );
+  }
+
   return (
     <form className="form support-form" onSubmit={submit}>
       <label className="field">
-        <span>What do you need help with?</span>
-        <select onChange={(event) => setType(event.target.value)} value={type}>
-          <option value="login">Login or MFA</option>
-          <option value="verification">Artist or venue verification</option>
-          <option value="copyright">Copyright or takedown</option>
-          <option value="ticketing">Ticketing problem</option>
-          <option value="safety">Safety or abuse report</option>
-          <option value="privacy">Privacy or data concern</option>
-          <option value="general">General support</option>
+        <span>Category</span>
+        <select onChange={(event) => setCategory(event.target.value)} value={category}>
+          <option value="">Select a topic…</option>
+          {CATEGORIES.map((c) => (
+            <option key={c.label} value={c.label}>{c.label}</option>
+          ))}
         </select>
       </label>
 
-      <div className="auth-field-grid">
-        <label className="field">
-          <span>Name</span>
-          <input onChange={(event) => setName(event.target.value)} type="text" value={name} />
-        </label>
-        <label className="field">
-          <span>Email</span>
-          <input autoComplete="email" onChange={(event) => setEmail(event.target.value)} type="email" value={email} />
-        </label>
-      </div>
-
       <label className="field">
-        <span>Subject</span>
-        <input onChange={(event) => setSubject(event.target.value)} required type="text" value={subject} />
+        <span>Email</span>
+        <input autoComplete="email" onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" type="email" value={email} />
       </label>
 
       <label className="field">
-        <span>Details</span>
+        <span>Subject</span>
+        <input onChange={(event) => setSubject(event.target.value)} placeholder="Brief summary" type="text" value={subject} />
+      </label>
+
+      <label className="field">
+        <span>Message</span>
         <textarea
           maxLength={2500}
           onChange={(event) => setDetails(event.target.value)}
-          placeholder="Tell us what happened and include profile, show, ticket, or email details if relevant."
-          required
+          placeholder="Tell us what's happening…"
           rows={7}
           value={details}
         />
@@ -101,9 +125,8 @@ export function SupportForm({ initialType = 'login', initialSubject = '' }: { in
       </label>
 
       <button className="button" disabled={isSubmitting} type="submit">
-        {isSubmitting ? 'Sending...' : 'Send support request'}
+        {isSubmitting ? 'Sending…' : 'Send Message'}
       </button>
-      {message ? <p className="status-note">{message}</p> : null}
       {error ? <p className="status-note status-note-error">{error}</p> : null}
     </form>
   );
