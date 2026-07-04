@@ -34,7 +34,7 @@ export default async function BelieversPage({ params }: { params: Promise<{ slug
   if (!data) notFound();
 
   return (
-    <main className="believers-page">
+    <div className="believers-page">
       <style>{BELIEVERS_CSS}</style>
 
       <header className="believers-head">
@@ -74,7 +74,7 @@ export default async function BelieversPage({ params }: { params: Promise<{ slug
           </li>
         ))}
       </ol>
-    </main>
+    </div>
   );
 }
 

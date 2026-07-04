@@ -55,7 +55,7 @@ export default async function AdminAuditPage({ searchParams }: { searchParams?: 
   };
 
   return (
-    <main className="container section admin-console">
+    <div className="container section admin-console">
       <section className="panel">
         <h1>Audit log <span className="meta">({total.toLocaleString()} events)</span></h1>
         <form method="get" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end', margin: '12px 0' }}>
@@ -123,6 +123,6 @@ export default async function AdminAuditPage({ searchParams }: { searchParams?: 
           </div>
         )}
       </section>
-    </main>
+    </div>
   );
 }

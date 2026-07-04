@@ -46,20 +46,20 @@ export function VenueRequestForm({ venueProfileId }: { venueProfileId: string })
   return (
     <form className="venue-request-form" onSubmit={submit}>
       <div className="venue-form-group">
-        <label>Artist name or iHYPE handle</label>
-        <input onChange={(e) => setArtistName(e.target.value)} placeholder="@artisthandle or Artist Name" type="text" value={artistName} />
+        <label htmlFor="venue-request-artist">Artist name or iHYPE handle</label>
+        <input id="venue-request-artist" onChange={(e) => setArtistName(e.target.value)} placeholder="@artisthandle or Artist Name" type="text" value={artistName} />
       </div>
       <div className="venue-form-group">
-        <label>Proposed date</label>
-        <input onChange={(e) => setDate(e.target.value)} type="date" value={date} />
+        <label htmlFor="venue-request-date">Proposed date</label>
+        <input id="venue-request-date" onChange={(e) => setDate(e.target.value)} type="date" value={date} />
       </div>
       <div className="venue-form-group">
-        <label>Genre / type of show</label>
-        <input onChange={(e) => setGenre(e.target.value)} placeholder="e.g. Deep House, Indie, DJ Night" type="text" value={genre} />
+        <label htmlFor="venue-request-genre">Genre / type of show</label>
+        <input id="venue-request-genre" onChange={(e) => setGenre(e.target.value)} placeholder="e.g. Deep House, Indie, DJ Night" type="text" value={genre} />
       </div>
       <div className="venue-form-group">
-        <label>Notes</label>
-        <textarea onChange={(e) => setNotes(e.target.value)} placeholder="Anything else we should know…" value={notes} />
+        <label htmlFor="venue-request-notes">Notes</label>
+        <textarea id="venue-request-notes" onChange={(e) => setNotes(e.target.value)} placeholder="Anything else we should know…" value={notes} />
       </div>
       <button className="venue-submit-btn" disabled={pending} type="submit">
         {pending ? 'Submitting…' : 'Submit Request'}

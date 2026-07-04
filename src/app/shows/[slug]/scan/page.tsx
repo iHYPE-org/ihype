@@ -21,7 +21,7 @@ export default function ScanPage() {
   }
 
   return (
-    <main className="container section" style={{ maxWidth: 480 }}>
+    <div className="container section" style={{ maxWidth: 480 }}>
       <h1 className="title">Ticket Scanner</h1>
       <form onSubmit={scan} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <input autoFocus className="input" placeholder="Ticket ID or scan QR" value={ticketId} onChange={e => setTicketId(e.target.value)} required />
@@ -32,6 +32,6 @@ export default function ScanPage() {
           {result.ok ? `✓ Valid — ${result.ticket?.holderName ?? 'Guest'}` : result.error}
         </div>
       )}
-    </main>
+    </div>
   );
 }

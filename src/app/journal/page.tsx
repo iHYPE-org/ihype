@@ -26,7 +26,7 @@ export default async function JournalIndex() {
     .filter((p) => typeof p.meta.slug === 'string' && typeof p.meta.title === 'string');
 
   return (
-    <main className="container section">
+    <div className="container section">
       <h1>Journal</h1>
       <p className="meta">Editorial coverage of the local scene from the iHYPE team.</p>
       {posts.length === 0 ? (
@@ -46,6 +46,6 @@ export default async function JournalIndex() {
           ))}
         </ul>
       )}
-    </main>
+    </div>
   );
 }

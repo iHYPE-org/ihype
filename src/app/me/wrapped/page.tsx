@@ -42,7 +42,7 @@ export default async function WrappedPage() {
   const shareText = buildShareText(w);
 
   return (
-    <main className="wrapped-page">
+    <div className="wrapped-page">
       <style>{WRAPPED_CSS}</style>
 
       <div className="wrapped-card">
@@ -89,7 +89,7 @@ export default async function WrappedPage() {
         <WrappedShareButton shareText={shareText} monthLabel={w.monthLabel} />
         <Link href="/home" className="wrapped-back">Back to workbench</Link>
       </div>
-    </main>
+    </div>
   );
 }
 

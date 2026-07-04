@@ -18,7 +18,7 @@ export default async function AdminPlaylistsPage() {
   });
 
   return (
-    <main className="container section">
+    <div className="container section">
       <h1 className="title">Curated Playlists</h1>
       <p className="meta" style={{ marginBottom: 16 }}>
         Manage staff-curated playlists. Track lists are edited via <code>PATCH /api/admin/playlists/:id</code> with a <code>tracks</code> array — no in-page track editor yet.
@@ -55,6 +55,6 @@ export default async function AdminPlaylistsPage() {
           </tbody>
         </table>
       )}
-    </main>
+    </div>
   );
 }

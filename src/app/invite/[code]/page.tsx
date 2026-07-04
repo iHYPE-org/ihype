@@ -35,7 +35,7 @@ export default async function InviteLandingPage({ params }: Props) {
   const inviterName = profile?.name ?? 'A music fan';
 
   return (
-    <main style={{ maxWidth: 480, margin: '80px auto', padding: '0 24px', textAlign: 'center' }}>
+    <div style={{ maxWidth: 480, margin: '80px auto', padding: '0 24px', textAlign: 'center' }}>
       <p style={{ fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 8 }}>
         You&apos;re invited
       </p>
@@ -62,6 +62,6 @@ export default async function InviteLandingPage({ params }: Props) {
         Already have an account?{' '}
         <Link href="/login" className="text-link">Sign in</Link>
       </p>
-    </main>
+    </div>
   );
 }

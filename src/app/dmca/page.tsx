@@ -33,7 +33,7 @@ export default function DmcaPage() {
   }
 
   return (
-    <main className="container section" style={{ maxWidth: 640 }}>
+    <div className="container section" style={{ maxWidth: 640 }}>
       <div className="badge">DMCA</div>
       <h1 className="title">Copyright Takedown</h1>
       <p className="subtitle">
@@ -112,6 +112,6 @@ export default function DmcaPage() {
           </button>
         </form>
       )}
-    </main>
+    </div>
   );
 }

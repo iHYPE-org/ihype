@@ -45,7 +45,7 @@ export default async function ShowsMapPage() {
   const cities = Array.from(cityMap.entries()).sort((a, b) => b[1].length - a[1].length);
 
   return (
-    <main className="container section" style={{ maxWidth: 960 }}>
+    <div className="container section" style={{ maxWidth: 960 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
         <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 28, margin: 0 }}>Shows near me</h1>
         <Link href="/shows" className="button secondary" style={{ fontSize: 12, padding: '6px 14px' }}>
@@ -114,6 +114,6 @@ export default async function ShowsMapPage() {
           })}
         </div>
       )}
-    </main>
+    </div>
   );
 }

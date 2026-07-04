@@ -28,7 +28,7 @@ export default async function ThisWeekendPage() {
   const feed = await getWeekendShows(session?.user?.id ?? null, location);
 
   return (
-    <main className="weekend-page">
+    <div className="weekend-page">
       <style>{WEEKEND_CSS}</style>
 
       <header className="weekend-head">
@@ -73,7 +73,7 @@ export default async function ThisWeekendPage() {
           <Link href="/register">Sign up</Link> to hype artists and get shows tailored to your taste.
         </p>
       )}
-    </main>
+    </div>
   );
 }
 

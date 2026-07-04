@@ -37,9 +37,9 @@ export default async function AdminAdsPage({
   ]);
 
   return (
-    <main className="container section">
+    <div className="container section">
       <h1 className="title">Supporter Submissions <span className="meta">({total})</span></h1>
       <AdminAdsClient ads={ads} status={status} q={q} page={page} total={total} pageSize={PAGE_SIZE} />
-    </main>
+    </div>
   );
 }

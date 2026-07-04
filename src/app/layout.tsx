@@ -1,7 +1,6 @@
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { ReactNode } from 'react';
-import Script from 'next/script';
 import { Syne, DM_Sans, JetBrains_Mono, Instrument_Serif, Forum } from 'next/font/google';
 import { AppProviders } from '@/components/AppProviders';
 import { HeaderAuthLinks } from '@/components/HeaderAuthLinks';
@@ -19,6 +18,7 @@ import { SitePlayerDock } from '@/components/GlobalMediaPlayer';
 import { WebVitals } from '@/components/WebVitals';
 import { SiteFooter } from '@/components/SiteFooter';
 import { CookieConsent } from '@/components/CookieConsent';
+import { AnalyticsBeacon } from '@/components/AnalyticsBeacon';
 
 const syne = Syne({ subsets: ['latin'], weight: ['700', '800'], variable: '--font-syne', display: 'swap' });
 const dmSans = DM_Sans({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-dm', display: 'swap' });
@@ -64,6 +64,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" suppressHydrationWarning className={`${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} ${forum.variable}`}>
       <body>
         <AppProviders>
+          <a href="#main-content" className="skip-to-content">Skip to main content</a>
           <WebVitals />
           <OfflineBanner />
           <div aria-hidden="true" className="site-background">
@@ -87,7 +88,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           </header>
           <MobileBottomNav />
           <div className="site-shell">
-            {children}
+            <main id="main-content">{children}</main>
             <SiteFooter />
           </div>
           <SitePlayerDock />
@@ -98,11 +99,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
         </AppProviders>
         {process.env.NEXT_PUBLIC_CF_BEACON_TOKEN ? (
-          <Script
-            data-cf-beacon={`{"token": "${process.env.NEXT_PUBLIC_CF_BEACON_TOKEN}"}`}
-            src="https://static.cloudflareinsights.com/beacon.min.js"
-            strategy="afterInteractive"
-          />
+          <AnalyticsBeacon token={process.env.NEXT_PUBLIC_CF_BEACON_TOKEN} />
         ) : null}
       </body>
     </html>

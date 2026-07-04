@@ -47,7 +47,7 @@ export default async function AdminJournalPage() {
   });
 
   return (
-    <main className="container section admin-console">
+    <div className="container section admin-console">
       <section className="panel">
         <h1>Journal editor</h1>
         <p className="meta">Editorial posts are written to AuditLog so we don't need new tables.</p>
@@ -71,6 +71,6 @@ export default async function AdminJournalPage() {
           })}
         </ul>
       </section>
-    </main>
+    </div>
   );
 }

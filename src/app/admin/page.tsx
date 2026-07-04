@@ -299,7 +299,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
   const platformFeeTotal = Math.round((revenueCents * 0.1)); // rough 10% estimate
 
   return (
-    <main className="container section admin-console">
+    <div className="container section admin-console">
       <section className="panel admin-console-hero">
         <div>
           <div className="badge">Admin beta console</div>
@@ -998,6 +998,6 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           Manage via <code>PATCH /api/admin/ads/[adId]</code> with <code>{`{status: "APPROVED"|"REJECTED"}`}</code>.
         </p>
       </section>
-    </main>
+    </div>
   );
 }

@@ -113,7 +113,7 @@ export default async function AdminFinancePage({
   ];
 
   return (
-    <main className="container section admin-console">
+    <div className="container section admin-console">
       <section className="panel admin-console-panel">
         <h1 style={{ fontSize: 20, marginBottom: 16 }}>Finance</h1>
         <div className="admin-export-row" style={{ marginBottom: 20 }}>
@@ -274,6 +274,6 @@ export default async function AdminFinancePage({
           </>
         )}
       </section>
-    </main>
+    </div>
   );
 }

@@ -48,7 +48,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams?: 
   };
 
   return (
-    <main className="container section admin-console">
+    <div className="container section admin-console">
       <section className="panel admin-console-hero">
         <div>
           <div className="badge">User management</div>
@@ -103,6 +103,6 @@ export default async function AdminUsersPage({ searchParams }: { searchParams?: 
           </div>
         )}
       </section>
-    </main>
+    </div>
   );
 }

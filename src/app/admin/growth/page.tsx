@@ -53,7 +53,7 @@ export default async function AdminGrowthPage() {
   ];
 
   return (
-    <main className="container section admin-console">
+    <div className="container section admin-console">
       <section className="panel admin-console-panel">
         <h1 style={{ fontSize: 20, marginBottom: 16 }}>Growth</h1>
 
@@ -114,6 +114,6 @@ export default async function AdminGrowthPage() {
           </div>
         )}
       </section>
-    </main>
+    </div>
   );
 }

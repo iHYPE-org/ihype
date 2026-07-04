@@ -130,8 +130,8 @@ function EventCard({ s, onBuy, idx = 0 }: { s: Show; onBuy: (s: Show) => void; i
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '.7rem', color: '#22e5d4' }}>+ $0 fees</span>
           </div>
         </div>
-        <button onClick={() => setHyped(h => !h)} style={{ width: 34, height: 34, borderRadius: '50%', border: `1px solid ${hyped ? 'var(--accent)' : 'var(--line)'}`, background: hyped ? 'rgba(255,80,41,.12)' : 'transparent', color: hyped ? 'var(--accent)' : 'var(--ink-3)', cursor: 'pointer', fontSize: 16, display: 'grid', placeItems: 'center' }}>{hyped ? '🔥' : '☆'}</button>
-        <button title="Share" style={{ width: 34, height: 34, borderRadius: '50%', border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-3)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+        <button aria-label={hyped ? 'Remove hype' : 'Hype this show'} onClick={() => setHyped(h => !h)} style={{ width: 34, height: 34, borderRadius: '50%', border: `1px solid ${hyped ? 'var(--accent)' : 'var(--line)'}`, background: hyped ? 'rgba(255,80,41,.12)' : 'transparent', color: hyped ? 'var(--accent)' : 'var(--ink-3)', cursor: 'pointer', fontSize: 16, display: 'grid', placeItems: 'center' }}>{hyped ? '🔥' : '☆'}</button>
+        <button aria-label="Share" style={{ width: 34, height: 34, borderRadius: '50%', border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-3)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>
         </button>
         {soldOut

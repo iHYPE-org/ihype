@@ -22,6 +22,7 @@ export function CookieConsent() {
     } catch {
       // best-effort
     }
+    window.dispatchEvent(new CustomEvent('ihype:cookie-consent', { detail: value }));
     setVisible(false);
   }
 

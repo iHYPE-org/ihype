@@ -21,7 +21,7 @@ export default async function BookingPage() {
   const feed = await getVenueBookingRecommendations(session.user.id);
 
   return (
-    <main className="booking-page">
+    <div className="booking-page">
       <style>{BOOKING_CSS}</style>
 
       <header className="booking-head">
@@ -65,7 +65,7 @@ export default async function BookingPage() {
           ))}
         </ul>
       )}
-    </main>
+    </div>
   );
 }
 

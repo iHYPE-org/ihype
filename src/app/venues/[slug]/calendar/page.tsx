@@ -67,7 +67,7 @@ export default async function VenueCalendarPage({ params }: Props) {
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <main className="container section" style={{ maxWidth: 900 }}>
+    <div className="container section" style={{ maxWidth: 900 }}>
       <div style={{ marginBottom: 16 }}>
         <Link href={`/venues/${slug}`} className="text-link" style={{ fontSize: 13 }}>
           ← Back to {profile.name}
@@ -156,6 +156,6 @@ export default async function VenueCalendarPage({ params }: Props) {
           ))}
         </div>
       )}
-    </main>
+    </div>
   );
 }
