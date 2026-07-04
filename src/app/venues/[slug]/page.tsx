@@ -88,7 +88,7 @@ export default async function VenuePage({
         <div className="venue-avatar">
           {profile.avatarImage ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img alt={profile.name} src={profile.avatarImage} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 16 }} />
+            <img alt={profile.name} src={profile.avatarImage} fetchPriority="high" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 16 }} />
           ) : (
             <svg fill="none" height="26" stroke="#fff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" viewBox="0 0 24 24" width="26"><path d="M3 21h18" /><path d="M5 21V7l8-4v18" /><path d="M19 21V11l-6-4" /><path d="M9 9v.01M9 12v.01M9 15v.01" /></svg>
           )}

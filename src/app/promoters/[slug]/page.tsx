@@ -99,7 +99,7 @@ export default async function DJProfilePage({
           <div className="dj-avatar">
             {profile.avatarImage ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img alt={profile.name} src={profile.avatarImage} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+              <img alt={profile.name} src={profile.avatarImage} fetchPriority="high" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
             ) : (
               <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 26 }}>{profile.name.charAt(0)}</span>
             )}
