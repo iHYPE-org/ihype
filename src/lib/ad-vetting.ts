@@ -13,6 +13,28 @@ export interface VettingResult {
   requiresManualReview: boolean;
 }
 
+// Status vocabulary for the AdSubmission pipeline (src/app/api/ads/upload).
+// Exported so callers — including the admin weekly report — reference the
+// same literal type instead of a bare string, so a typo like 'PENDING'
+// (which this pipeline never writes) becomes a compile error, not a silently
+// broken query.
+export type AdSubmissionStatus = 'approved' | 'rejected' | 'manual_review';
+
+export function adSubmissionStatusFromVetting(result: VettingResult): AdSubmissionStatus {
+  if (result.requiresManualReview) return 'manual_review';
+  return result.isApproved ? 'approved' : 'rejected';
+}
+
+// Status vocabulary for the Ad/AdSlot self-serve campaign pipeline
+// (src/app/api/advertise/campaigns). Separate model, separate casing —
+// kept as its own type so the two pipelines can't be confused for each other.
+export type AdCampaignStatus = 'APPROVED' | 'REJECTED' | 'PENDING';
+
+export function adCampaignStatusFromVetting(result: VettingResult): AdCampaignStatus {
+  if (result.requiresManualReview) return 'PENDING';
+  return result.isApproved ? 'APPROVED' : 'REJECTED';
+}
+
 export async function vetAdvertisement(adData: AdData): Promise<VettingResult> {
   const systemPrompt = `You are an automated compliance officer for iHYPE.org, a privacy-first, not-for-profit music discovery platform.
 Your sole task is to strictly vet advertisement (supporter) applications.

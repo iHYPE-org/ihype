@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { vetAdvertisement } from '@/lib/ad-vetting';
+import { vetAdvertisement, adSubmissionStatusFromVetting } from '@/lib/ad-vetting';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { getBaseUrl } from '@/lib/utils';
@@ -87,14 +87,7 @@ export async function POST(request: Request) {
     adTextCopy,
   });
 
-  let status: string;
-  if (vettingResult.requiresManualReview) {
-    status = 'manual_review';
-  } else if (vettingResult.isApproved) {
-    status = 'approved';
-  } else {
-    status = 'rejected';
-  }
+  const status = adSubmissionStatusFromVetting(vettingResult);
 
   const submission = await db.adSubmission.create({
     data: {
