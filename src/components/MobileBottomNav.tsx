@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { NavDrawer } from '@/components/NavDrawer';
 
 const TABS = [
   {
@@ -51,57 +53,72 @@ function matchTab(pathname: string): string {
 
 const AUTH_PATHS = ['/login', '/register', '/welcome', '/verify', '/beta'];
 
+const tabButtonStyle = {
+  display: 'flex',
+  flexDirection: 'column' as const,
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 3,
+  flex: 1,
+  textDecoration: 'none',
+  fontFamily: "var(--font-body, 'DM Sans', sans-serif)",
+  fontSize: '0.65rem',
+  fontWeight: 500,
+  letterSpacing: '0.02em',
+  transition: 'color 0.15s',
+  WebkitTapHighlightColor: 'transparent',
+};
+
 export function MobileBottomNav() {
   const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   if (AUTH_PATHS.some(p => pathname.startsWith(p))) return null;
 
   const active = matchTab(pathname);
 
   return (
-    <nav
-      aria-label="Mobile navigation"
-      className="ihype-mobile-nav"
-      style={{
-        display: 'none',
-        position: 'fixed',
-        bottom: 0, left: 0, right: 0,
-        height: 60,
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        background: 'rgba(13,13,13,0.96)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        borderTop: '1px solid rgba(255,255,255,0.08)',
-        zIndex: 900,
-        alignItems: 'stretch',
-        justifyContent: 'space-around',
-      }}
-    >
-      {TABS.map(t => (
-        <Link
-          key={t.id}
-          href={t.href}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 3,
-            flex: 1,
-            color: active === t.id ? 'var(--accent, #ff5029)' : 'rgba(240,240,240,0.45)',
-            textDecoration: 'none',
-            fontFamily: "var(--font-body, 'DM Sans', sans-serif)",
-            fontSize: '0.65rem',
-            fontWeight: 500,
-            letterSpacing: '0.02em',
-            transition: 'color 0.15s',
-            WebkitTapHighlightColor: 'transparent',
-          }}
+    <>
+      <nav
+        aria-label="Mobile navigation"
+        className="ihype-mobile-nav"
+        style={{
+          display: 'none',
+          position: 'fixed',
+          bottom: 0, left: 0, right: 0,
+          height: 60,
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          background: 'rgba(13,13,13,0.96)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          borderTop: '1px solid rgba(255,255,255,0.08)',
+          zIndex: 900,
+          alignItems: 'stretch',
+          justifyContent: 'space-around',
+        }}
+      >
+        {TABS.map(t => (
+          <Link
+            key={t.id}
+            href={t.href}
+            style={{ ...tabButtonStyle, color: active === t.id ? 'var(--accent, #ff5029)' : 'rgba(240,240,240,0.45)' }}
+          >
+            {t.icon}
+            <span>{t.label}</span>
+          </Link>
+        ))}
+        <button
+          aria-expanded={menuOpen}
+          aria-label="Open menu"
+          onClick={() => setMenuOpen(true)}
+          style={{ ...tabButtonStyle, background: 'none', border: 'none', cursor: 'pointer', color: menuOpen ? 'var(--accent, #ff5029)' : 'rgba(240,240,240,0.45)' }}
+          type="button"
         >
-          {t.icon}
-          <span>{t.label}</span>
-        </Link>
-      ))}
-    </nav>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+          <span>Menu</span>
+        </button>
+      </nav>
+      <NavDrawer onOpenChange={setMenuOpen} open={menuOpen} showTrigger={false} />
+    </>
   );
 }
