@@ -208,7 +208,7 @@ export function PwaInstallPrompt() {
         <div style={{ fontFamily: 'var(--font-display, system-ui)', fontWeight: 700, fontSize: 14, color: '#f0ebe5', marginBottom: 2 }}>
           Add iHYPE to your home screen
         </div>
-        <div style={{ fontFamily: 'var(--font-body, system-ui)', fontSize: 12, color: 'rgba(240,235,229,.45)', lineHeight: 1.4, marginBottom: 12 }}>
+        <div style={{ fontFamily: 'var(--font-body, system-ui)', fontSize: 12, color: 'rgba(240,235,229,.55)', lineHeight: 1.4, marginBottom: 12 }}>
           Instant access to shows, music, and your fans.
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -229,7 +229,7 @@ export function PwaInstallPrompt() {
             style={{
               padding: '7px 12px', borderRadius: 8, cursor: 'pointer',
               background: 'none', border: '1px solid rgba(255,255,255,.1)',
-              fontFamily: 'var(--font-mono, monospace)', fontSize: 11, color: 'rgba(240,235,229,.4)', letterSpacing: '.04em',
+              fontFamily: 'var(--font-mono, monospace)', fontSize: 11, color: 'rgba(240,235,229,.5)', letterSpacing: '.04em',
             }}
           >
             Not now

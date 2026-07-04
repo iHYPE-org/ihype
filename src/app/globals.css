@@ -6168,3 +6168,17 @@ a .ihype-card, a.ihype-card {
 h1, h2 {
   font-family: var(--font-forum, 'Forum', serif);
 }
+
+/* ── Print ───────────────────────────────────────────────────────────────
+   Hides persistent site chrome on every page. Payout and Legal add their
+   own @media print rules on top of this for page-specific readability
+   (light background, card borders, etc). */
+@media print {
+  .site-nav,
+  .ihype-mobile-nav,
+  .ihype-footer,
+  .ihype-cookie-consent,
+  .site-dock-l {
+    display: none !important;
+  }
+}

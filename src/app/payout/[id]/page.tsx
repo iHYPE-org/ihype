@@ -77,7 +77,7 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
     <div style={{ width: '100%', maxWidth: 620, margin: '0 auto', padding: '32px 16px 60px' }}>
 
       {/* Hero */}
-      <div style={{
+      <div className="payout-card" style={{
         borderRadius: 24, padding: '2.5rem',
         background: 'linear-gradient(135deg, rgba(255,80,41,.15), rgba(185,131,255,.06))',
         border: '1px solid rgba(255,255,255,.06)', marginBottom: '1.25rem', position: 'relative', overflow: 'hidden',
@@ -114,7 +114,7 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
       </div>
 
       {/* Split breakdown */}
-      <div style={{ background: 'var(--bg-2, #0e0b08)', border: '1px solid var(--line, rgba(255,255,255,.08))', borderRadius: 18, padding: '1.5rem', marginBottom: '1.25rem' }}>
+      <div className="payout-card" style={{ background: 'var(--bg-2, #0e0b08)', border: '1px solid var(--line, rgba(255,255,255,.08))', borderRadius: 18, padding: '1.5rem', marginBottom: '1.25rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22e5d4" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
           <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: 'var(--ink)' }}>Where the money went.</h2>
@@ -154,13 +154,21 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: '.68rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3, #5a5248)' }}>
           iHYPE takes nothing · locked in the charter
         </p>
-        <PayoutActions title={show.title} />
+        <div className="payout-print-actions">
+          <PayoutActions title={show.title} />
+        </div>
       </div>
 
       <style>{`
         @media print {
-          .site-nav, .ihype-footer { display: none !important; }
+          .payout-print-actions { display: none !important; }
           html, body { background: #fff !important; color: #111 !important; }
+          .payout-card {
+            border-color: #ccc !important;
+            background: #fff !important;
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
         }
       `}</style>
     </div>

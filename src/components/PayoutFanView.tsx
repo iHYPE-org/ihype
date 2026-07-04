@@ -21,7 +21,7 @@ export function PayoutFanView({
   const promoterShare = Math.round(priceCents * promoterPct / 100);
 
   return (
-    <div style={{ background: 'var(--bg-2, #0e0b08)', border: '1px solid var(--line, rgba(255,255,255,.08))', borderRadius: 18, padding: '1.5rem', marginBottom: '1.25rem' }}>
+    <div className="payout-card" style={{ background: 'var(--bg-2, #0e0b08)', border: '1px solid var(--line, rgba(255,255,255,.08))', borderRadius: 18, padding: '1.5rem', marginBottom: '1.25rem' }}>
       <button
         onClick={() => setExpanded((v) => !v)}
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--ink, #f0ebe5)' }}

@@ -121,7 +121,7 @@ export default async function PromotePage() {
         .promo-cta { flex-shrink: 0; font-family: var(--font-body); font-weight: 600; font-size: 14px; padding: 10px 18px; border-radius: 9999px; border: none; cursor: pointer; background: linear-gradient(135deg, #ff5029, #ff3e6e); color: #fff; text-decoration: none; display: inline-block; }
         .promo-empty { text-align: center; padding: 24px; background: var(--bg2); border: 1px solid rgba(255,255,255,.06); border-radius: 10px; }
         .promo-empty p { color: rgba(240,235,229,.6); margin: 0 0 14px; }
-        .promo-foot { font-size: 12px; color: rgba(240,235,229,.4); text-align: center; margin-top: 28px; line-height: 1.6; }
+        .promo-foot { font-size: 12px; color: rgba(240,235,229,.5); text-align: center; margin-top: 28px; line-height: 1.6; }
       `}</style>
     </div>
   );

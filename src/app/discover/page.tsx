@@ -197,7 +197,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
                           Live now
                         </span>
                       ) : (
-                        <span style={{ fontSize: 11, color: 'rgba(240,235,229,.4)', fontFamily: 'var(--font-mono)' }}>{date}</span>
+                        <span style={{ fontSize: 11, color: 'rgba(240,235,229,.5)', fontFamily: 'var(--font-mono)' }}>{date}</span>
                       )}
                       {s.isTicketed && (
                         <span style={{ fontSize: 11, color: '#22e5d4', fontFamily: 'var(--font-mono)' }}>
@@ -207,7 +207,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
                     </div>
                     <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 15, marginBottom: 4, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.title}</div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 8, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, color: 'rgba(240,235,229,.45)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+                      <div style={{ fontSize: 12, color: 'rgba(240,235,229,.55)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
                         {s.headlinerProfile?.name ?? 'iHYPE Radio'}
                         {s.venueProfile?.city ? ` · ${s.venueProfile.city}` : ''}
                       </div>
@@ -249,7 +249,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
                       {TYPE_LABEL[p.type] ?? p.type}
                     </div>
                     {p.city && (
-                      <div style={{ fontSize: 11, color: 'rgba(240,235,229,.4)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.city}</div>
+                      <div style={{ fontSize: 11, color: 'rgba(240,235,229,.5)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.city}</div>
                     )}
                   </div>
                 </Link>
@@ -291,7 +291,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
                     </div>
                   </div>
                   {p.city && (
-                    <div style={{ fontSize: 12, color: 'rgba(240,235,229,.45)' }}>{p.city}{p.stateRegion ? `, ${p.stateRegion}` : ''}</div>
+                    <div style={{ fontSize: 12, color: 'rgba(240,235,229,.55)' }}>{p.city}{p.stateRegion ? `, ${p.stateRegion}` : ''}</div>
                   )}
                 </div>
               </Link>

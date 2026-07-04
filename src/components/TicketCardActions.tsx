@@ -126,7 +126,7 @@ export function TicketCardActions({
                 style={{ borderRadius: 8, background: '#f0ebe5' }}
                 width={120}
               />
-              <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'rgba(240,235,229,.4)', letterSpacing: '.04em' }}>
+              <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'rgba(240,235,229,.5)', letterSpacing: '.04em' }}>
                 {t.serializedId}
               </span>
             </div>

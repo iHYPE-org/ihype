@@ -93,11 +93,11 @@ export function HeaderUserMenu() {
               href="/api/auth/signout"
               style={{
                 display: 'block', padding: '9px 14px',
-                fontSize: 13, color: 'rgba(240,235,229,.4)',
+                fontSize: 13, color: 'rgba(240,235,229,.5)',
                 textDecoration: 'none',
               }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--ink)'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(240,235,229,.4)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(240,235,229,.5)'; }}
             >
               Sign out
             </Link>

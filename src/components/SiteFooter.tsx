@@ -4,6 +4,7 @@ export function SiteFooter() {
   return (
     <footer
       aria-label="Site footer"
+      className="ihype-footer"
       style={{
         display: 'flex',
         flexWrap: 'wrap',

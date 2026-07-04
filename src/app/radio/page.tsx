@@ -259,7 +259,7 @@ export default function RadioPage() {
               );
             })}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(240,235,229,.4)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(240,235,229,.5)' }}>
             <span>{isLive ? '● LIVE' : fmt(elapsed)}</span>
             <span>{isLive ? `${current.listeners} listening` : fmt(current.dur)}</span>
           </div>
@@ -343,7 +343,7 @@ export default function RadioPage() {
                 <div style={{ width: 34, height: 34, borderRadius: 6, flexShrink: 0, background: `linear-gradient(135deg,${t.color},#b983ff)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15 }}>🎵</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.2 }}>{t.title}</div>
-                  <div style={{ fontSize: 11, color: 'rgba(240,235,229,.4)' }}>{t.artist}</div>
+                  <div style={{ fontSize: 11, color: 'rgba(240,235,229,.5)' }}>{t.artist}</div>
                 </div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(240,235,229,.28)', marginLeft: 'auto', flexShrink: 0 }}>{fmt(t.dur)}</div>
               </div>
@@ -395,7 +395,7 @@ export default function RadioPage() {
                   padding: '5px 11px', borderRadius: 6, fontSize: 11, flexShrink: 0,
                   border: notifying[s.id] ? '1px solid rgba(185,131,255,.45)' : '1px solid rgba(255,255,255,.1)',
                   background: notifying[s.id] ? 'rgba(185,131,255,.1)' : 'transparent',
-                  color: notifying[s.id] ? '#b983ff' : 'rgba(240,235,229,.45)',
+                  color: notifying[s.id] ? '#b983ff' : 'rgba(240,235,229,.55)',
                   cursor: 'pointer', transition: 'all 150ms',
                 }}
               >
@@ -420,7 +420,7 @@ export default function RadioPage() {
       )}
 
       {tab === 'saved' && filtered.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '60px', color: 'rgba(240,235,229,.4)' }}>
+        <div style={{ textAlign: 'center', padding: '60px', color: 'rgba(240,235,229,.5)' }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>🔖</div>
           <p>No saved shows yet — tap the bookmark on any show.</p>
         </div>
@@ -458,7 +458,7 @@ export default function RadioPage() {
                   </span>
                 )}
                 {s.status === 'upcoming' && (
-                  <span style={{ padding: '3px 8px', borderRadius: 4, fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.12em', background: 'rgba(255,255,255,.06)', color: 'rgba(240,235,229,.45)' }}>
+                  <span style={{ padding: '3px 8px', borderRadius: 4, fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.12em', background: 'rgba(255,255,255,.06)', color: 'rgba(240,235,229,.55)' }}>
                     Starts {s.scheduledAt}
                   </span>
                 )}
@@ -466,7 +466,7 @@ export default function RadioPage() {
                   <button
                     onClick={e => toggleSave(s.id, e)}
                     title={s.userSaved ? 'Remove from saved' : 'Save for later'}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: s.userSaved ? 'var(--venue)' : 'rgba(240,235,229,.4)', fontSize: 16, padding: 4, transition: 'color 150ms' }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: s.userSaved ? 'var(--venue)' : 'rgba(240,235,229,.5)', fontSize: 16, padding: 4, transition: 'color 150ms' }}
                   >
                     {s.userSaved ? '🔖' : '🏷️'}
                   </button>

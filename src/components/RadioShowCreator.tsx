@@ -642,7 +642,7 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
         .rsc-panel { border: 1px solid rgba(255,255,255,.07); border-radius: 14px; background: var(--bg2); overflow: hidden; }
         .rsc-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,.06); }
         .rsc-panel-title { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: rgba(240,235,229,.6); }
-        .rsc-drag-hint { font-family: var(--font-mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: rgba(240,235,229,.4); }
+        .rsc-drag-hint { font-family: var(--font-mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: rgba(240,235,229,.5); }
         .rsc-panel-body { padding: 12px; }
         .rsc-empty-note { font-size: 12px; color: rgba(240,235,229,.5); padding: 8px 4px; }
         .rsc-crate-item { display: flex; gap: 11px; align-items: center; padding: 9px 10px; border: 1px solid rgba(255,255,255,.06); border-radius: 9px; background: rgba(255,255,255,.02); margin-bottom: 8px; cursor: grab; }
@@ -655,7 +655,7 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
         .rsc-crate-dur { font-family: var(--font-mono); font-size: 10px; color: rgba(240,235,229,.5); flex-shrink: 0; }
         .rsc-crate-add { flex-shrink: 0; width: 26px; height: 26px; border-radius: 7px; border: 1px solid rgba(255,255,255,.14); background: transparent; color: var(--ink); cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .rsc-crate-add:hover { background: rgba(255,62,154,.14); border-color: rgba(255,62,154,.4); color: #ff3e9a; }
-        .rsc-add-label { margin: 14px 2px 8px; font-family: var(--font-mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: rgba(240,235,229,.45); }
+        .rsc-add-label { margin: 14px 2px 8px; font-family: var(--font-mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: rgba(240,235,229,.55); }
         .rsc-upload-btn { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 11px 12px; border: 1px dashed rgba(255,255,255,.16); border-radius: 10px; background: transparent; color: var(--ink); cursor: pointer; margin-bottom: 8px; }
         .rsc-upload-btn:hover { border-color: rgba(185,131,255,.5); background: rgba(185,131,255,.05); }
         .rsc-upload-ico { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -664,18 +664,18 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
         .rsc-recording-card { padding: 12px; border-radius: 10px; background: rgba(255,80,41,.08); border: 1px solid rgba(255,80,41,.25); margin-bottom: 8px; font-size: 13px; }
         .rsc-rec-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-right: 6px; animation: rsc-pulse 1s ease-in-out infinite; }
         @keyframes rsc-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
-        .rsc-fineprint { font-size: 11px; color: rgba(240,235,229,.4); line-height: 1.55; margin: 6px 4px 0; }
+        .rsc-fineprint { font-size: 11px; color: rgba(240,235,229,.5); line-height: 1.55; margin: 6px 4px 0; }
         .rsc-tl-scroll { min-height: 320px; }
         .rsc-tl-item { position: relative; display: flex; gap: 12px; align-items: center; padding: 12px 14px; border: 1px solid rgba(255,255,255,.07); border-radius: 10px; background: rgba(255,255,255,.02); margin-bottom: 9px; cursor: grab; }
         .rsc-tl-item-ad { background: rgba(255,80,41,.05); border-color: rgba(255,80,41,.22); align-items: flex-start; }
-        .rsc-tl-pos { font-family: var(--font-mono); font-size: 10px; color: rgba(240,235,229,.45); width: 42px; flex-shrink: 0; text-align: right; }
+        .rsc-tl-pos { font-family: var(--font-mono); font-size: 10px; color: rgba(240,235,229,.55); width: 42px; flex-shrink: 0; text-align: right; }
         .rsc-tl-type { width: 8px; align-self: stretch; border-radius: 4px; flex-shrink: 0; }
         .rsc-tl-main { flex: 1; min-width: 0; }
         .rsc-tl-main h4 { font-family: var(--font-display); font-weight: 800; font-size: 14px; margin: 0 0 2px; }
         .rsc-tl-sub { font-size: 11px; color: rgba(240,235,229,.55); }
         .rsc-tl-chip { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 8px; text-transform: uppercase; letter-spacing: .12em; padding: 3px 7px; border-radius: 4px; margin-right: 8px; vertical-align: middle; }
         .rsc-tl-dur { font-family: var(--font-mono); font-size: 11px; color: rgba(240,235,229,.6); flex-shrink: 0; }
-        .rsc-tl-rm { flex-shrink: 0; width: 26px; height: 26px; border-radius: 7px; border: none; background: transparent; color: rgba(240,235,229,.4); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .rsc-tl-rm { flex-shrink: 0; width: 26px; height: 26px; border-radius: 7px; border: none; background: transparent; color: rgba(240,235,229,.5); cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .rsc-tl-rm:hover { background: rgba(255,80,41,.14); color: var(--accent); }
         .rsc-drop-line { height: 2px; background: #b983ff; border-radius: 2px; margin: -5px 0 7px; box-shadow: 0 0 8px rgba(255,62,154,.6); }
         .rsc-ad-spots { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
@@ -687,7 +687,7 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
         .rsc-tl-empty-title { font-family: var(--font-display); font-weight: 800; font-size: 16px; color: var(--ink); margin-bottom: 4px; }
         .rsc-ad-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 8px; border: 1px solid rgba(255,80,41,.4); background: rgba(255,80,41,.08); color: var(--accent); font-family: var(--font-display); font-weight: 800; font-size: 12px; cursor: pointer; }
         .rsc-ad-types { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,.06); }
-        .rsc-ad-types-label { font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; letter-spacing: .1em; color: rgba(240,235,229,.45); margin-right: 2px; }
+        .rsc-ad-types-label { font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; letter-spacing: .1em; color: rgba(240,235,229,.55); margin-right: 2px; }
         .rsc-ad-type-chip { font-family: var(--font-mono); font-size: 9px; letter-spacing: .06em; color: #22e5d4; background: rgba(34,229,212,.12); border-radius: 4px; padding: 3px 8px; }
         .rsc-clear-btn { padding: 7px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.12); background: transparent; color: rgba(240,235,229,.6); font-size: 12px; font-weight: 600; cursor: pointer; }
         .rsc-summary { display: flex; gap: 22px; flex-wrap: wrap; padding: 16px 18px; margin-top: 14px; border: 1px solid rgba(255,255,255,.07); border-radius: 12px; background: var(--bg2); }

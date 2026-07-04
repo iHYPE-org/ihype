@@ -39,7 +39,7 @@ export default async function VerifyPage() {
   if (profiles.length === 0) {
     return (
       <div style={{ maxWidth: 480, margin: '40px auto', padding: '0 24px 100px', textAlign: 'center' }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(240,235,229,.4)', marginBottom: 12 }}>Verification</p>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)', marginBottom: 12 }}>Verification</p>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.7rem', fontWeight: 800, marginBottom: 12 }}>Nothing to verify yet.</h1>
         <p style={{ fontSize: 14, color: 'rgba(240,235,229,.6)', marginBottom: 24 }}>
           Fan accounts don&apos;t need verification. Create an Artist, DJ, or Venue page to get started.
@@ -111,7 +111,7 @@ export default async function VerifyPage() {
 
   return (
     <div style={{ maxWidth: 480, margin: '40px auto', padding: '0 24px 100px' }}>
-      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(240,235,229,.4)', marginBottom: 12 }}>Verification</p>
+      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)', marginBottom: 12 }}>Verification</p>
       <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.7rem', fontWeight: 800, marginBottom: 8 }}>Verify your {TYPE_LABEL[profile.type]} page.</h1>
       <p style={{ fontSize: 14, color: 'rgba(240,235,229,.6)', marginBottom: 24, lineHeight: 1.6 }}>
         Fan accounts are instant. Artist, DJ, and Venue accounts require verification — it protects everyone in the 45/45/10 ecosystem.

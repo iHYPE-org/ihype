@@ -31,7 +31,7 @@ explicitly list every piece of backend logic being preserved before touching any
 
 | File | What's wired |
 |---|---|
-| `src/components/RadioStudio.tsx` | `GET /api/radio` for free-use crate tracks; deck A/B state; setlist management |
+| `src/components/RadioShowCreator.tsx` | `GET /api/radio/ad-plan` for AI ad-scope sizing; free-use crate from `initialCrate` prop; `POST`/`PATCH /api/shows` for draft/schedule/go-live |
 | `src/app/radio/page.tsx` | `GET /api/shows?radioShows=1`; localStorage position + bookmark persistence |
 | `src/app/api/shows/route.ts` | Full show CRUD; rate limiting; 45/45/10 enforcement; radioShows filter |
 | `src/app/discover/page.tsx` | Live DB queries for artists, venues, upcoming shows |

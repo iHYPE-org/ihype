@@ -54,19 +54,19 @@ export function PagesReferralTab() {
           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', marginBottom: 5 }}>
             {stats ? money(stats.estimatedCommissionCents) : '—'}
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.4)' }}>Est. earned</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)' }}>Est. earned</div>
         </div>
         <div style={statBox}>
           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', marginBottom: 5 }}>
             {stats?.ticketSales ?? '—'}
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.4)' }}>Tickets driven</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)' }}>Tickets driven</div>
         </div>
         <div style={statBox}>
           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', marginBottom: 5 }}>
             {stats?.clicks ?? '—'}
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.4)' }}>Clicks</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)' }}>Clicks</div>
         </div>
       </div>
       <div style={{ background: 'rgba(185,131,255,.06)', border: '1px solid rgba(185,131,255,.18)', borderRadius: 16, padding: 20 }}>

@@ -127,7 +127,7 @@ export function WebPushPrompt() {
             style={{
               padding: '7px 12px', borderRadius: 8, cursor: 'pointer',
               background: 'none', border: '1px solid rgba(255,255,255,.1)',
-              fontFamily: 'var(--font-mono, monospace)', fontSize: 11, color: 'rgba(240,235,229,.45)', letterSpacing: '.04em',
+              fontFamily: 'var(--font-mono, monospace)', fontSize: 11, color: 'rgba(240,235,229,.55)', letterSpacing: '.04em',
             }}
           >
             Not now
