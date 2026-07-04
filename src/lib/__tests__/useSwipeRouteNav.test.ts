@@ -12,9 +12,9 @@ describe('resolveSwipeTarget', () => {
     expect(resolveSwipeTarget('/pages', 120, 0)).toBe('/shows');
   });
 
-  it('does nothing past either end of the list', () => {
-    expect(resolveSwipeTarget('/listen', 120, 0)).toBeNull();
-    expect(resolveSwipeTarget('/pages', -120, 0)).toBeNull();
+  it('wraps around at either end of the list', () => {
+    expect(resolveSwipeTarget('/listen', 120, 0)).toBe('/pages');
+    expect(resolveSwipeTarget('/pages', -120, 0)).toBe('/listen');
   });
 
   it('ignores swipes below the distance threshold', () => {

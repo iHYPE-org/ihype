@@ -9,15 +9,17 @@ export const SWIPE_ROUTE_ORDER = ['/listen', '/shows', '/pages'];
  * Pure decision logic, split out so it's unit-testable without a DOM —
  * given the current path and a completed swipe's delta, returns the route
  * to navigate to, or null if the swipe shouldn't trigger navigation
- * (too short, more vertical than horizontal, off the end of the list, or
- * not currently on one of the three swipeable pages).
+ * (too short, more vertical than horizontal, or not currently on one of the
+ * three swipeable pages). Wraps around at either end of the list — swiping
+ * left past Pages loops back to Listen, and vice versa — matching the
+ * "endless scrolling" behavior the mobile grid was designed for.
  */
 export function resolveSwipeTarget(pathname: string, dx: number, dy: number): string | null {
   if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return null;
   const idx = SWIPE_ROUTE_ORDER.indexOf(pathname);
   if (idx === -1) return null;
-  const nextIdx = dx < 0 ? idx + 1 : idx - 1;
-  if (nextIdx < 0 || nextIdx >= SWIPE_ROUTE_ORDER.length) return null;
+  const len = SWIPE_ROUTE_ORDER.length;
+  const nextIdx = (idx + (dx < 0 ? 1 : -1) + len) % len;
   return SWIPE_ROUTE_ORDER[nextIdx];
 }
 
