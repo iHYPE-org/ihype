@@ -1,18 +1,20 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { postJson } from '@/lib/api-client';
+import {
+  AD_SCOPES, AD_SCOPE_LABELS, AD_SCOPE_DESCRIPTIONS, AD_RUN_LENGTHS_DAYS,
+  MIN_SPOTS_PER_DAY, MAX_SPOTS_PER_DAY, quoteAdCampaign,
+  type AdScope, type AdCampaignQuote,
+} from '@/lib/ad-pricing';
 
 /* ── Types ───────────────────────────────────────────────── */
-type Tier = { id: string; nm: string; ds: string; pop: number; cps: number };
 type ScanSub = { n: string; k: string; tag: string; copy: string; body: string; gates: [string, string, 'pass' | 'fail'][]; ok: boolean };
 
-/* ── Data ────────────────────────────────────────────────── */
-const TIERS: Tier[] = [
-  { id: 'local',    nm: 'Local',    ds: 'Your city · 1 metro',     pop: 90000,     cps: 0.85 },
-  { id: 'regional', nm: 'Regional', ds: 'Multi-city · your scene', pop: 1200000,   cps: 1.60 },
-  { id: 'national', nm: 'National', ds: 'Country-wide reach',      pop: 18000000,  cps: 3.20 },
-  { id: 'global',   nm: 'Global',   ds: 'Every iHYPE territory',   pop: 140000000, cps: 5.40 },
-];
+export type AdvertisePageStats = {
+  activeCampaigns: number;
+  clearedPct: number | null;
+};
 
 const QUEUE = [
   { name: 'Velvet Room — Fri all-ages show', kind: 'Venue', color: '#22e5d4', ok: true },
@@ -30,16 +32,16 @@ const QUEUE = [
 const SUBS: ScanSub[] = [
   { n: 'Velvet Room — Fri show', k: 'Venue · Local', tag: 'VENUE EVENT', copy: 'All-ages Friday: three local bands, doors 7pm',
     body: 'The Velvet Room · 21 Mercer St · $12 at the door · presented by the venue.',
-    gates: [['Buyer is music-related','Verified venue account','pass'],['Creative is about music','Live event, original copy','pass'],['No protected material','No songs or name-drops','pass']], ok: true },
+    gates: [['Verified buyer','Verified venue account','pass'],['Audio relevance','Live event, original copy','pass'],['Listener safety','No flags — clean for all audiences','pass'],['Copyright firewall','No songs or name-drops','pass'],['Reputation risk','No misleading claims','pass']], ok: true },
   { n: 'NorthBeat Pedals', k: '3rd-party · Gear', tag: 'GEAR · 3RD-PARTY', copy: 'Summer pedal sale — 20% off all overdrive',
     body: 'NorthBeat Pedals · handmade effects for guitarists · ships worldwide.',
-    gates: [['Buyer is music-related','Verified gear retailer','pass'],['Creative is about music','Instruments & gear','pass'],['No protected material','Own product, no names','pass']], ok: true },
+    gates: [['Verified buyer','Verified gear retailer','pass'],['Audio relevance','Instruments & gear','pass'],['Listener safety','No flags — clean for all audiences','pass'],['Copyright firewall','Own product, no names','pass'],['Reputation risk','No misleading claims','pass']], ok: true },
   { n: 'GlowSkin Supplements', k: 'Unverified · retail', tag: 'GENERAL RETAIL', copy: 'Glow from within — 30% off vitamins',
     body: 'GlowSkin · beauty & wellness gummies · use code GLOW30.',
-    gates: [['Buyer is music-related','No music link found','fail'],['Creative is about music','General retail product','fail'],['No protected material','— not evaluated','pass']], ok: false },
+    gates: [['Verified buyer','No music link found','fail'],['Audio relevance','General retail product','fail'],['Listener safety','— not evaluated','pass'],['Copyright firewall','— not evaluated','pass'],['Reputation risk','— not evaluated','pass']], ok: false },
   { n: '"Anthem" promo cut', k: 'Artist · Regional', tag: 'SINGLE PROMO', copy: 'New single — hook from a #1 chart record',
     body: 'Uses a sampled chorus and drops two major-label artist names for clout.',
-    gates: [['Buyer is music-related','Verified artist','pass'],['Creative is about music','Music release','pass'],['No protected material','Sampled hook + name-drops','fail']], ok: false },
+    gates: [['Verified buyer','Verified artist','pass'],['Audio relevance','Music release','pass'],['Listener safety','No flags — clean for all audiences','pass'],['Copyright firewall','Sampled hook + name-drops','fail'],['Reputation risk','— not evaluated','pass']], ok: false },
 ];
 
 /* ── Helpers ─────────────────────────────────────────────── */
@@ -140,18 +142,25 @@ function LiveTicker() {
 }
 
 /* ── Coverage Builder ────────────────────────────────────── */
-function CoverageBuilder() {
-  const [tierId, setTierId] = useState('regional');
-  const [spots, setSpots] = useState(6);
-  const [days, setDays] = useState(14);
+type SubmitState =
+  | { phase: 'idle' }
+  | { phase: 'submitting' }
+  | { phase: 'done'; status: 'APPROVED' | 'REJECTED' | 'PENDING'; reasoning: string; message: string }
+  | { phase: 'error'; error: string };
 
-  const tier = TIERS.find(t => t.id === tierId)!;
-  const perSpot = tier.cps * 10;
-  const dailyCost = perSpot * spots;
-  const total = dailyCost * days;
-  const dailyImp = spots * Math.round(tier.pop * 0.0009);
-  const totalImp = dailyImp * days;
-  const cpm = total / (totalImp / 1000);
+function CoverageBuilder() {
+  const [scope, setScope] = useState<AdScope>('REGIONAL');
+  const [spots, setSpots] = useState(6);
+  const [days, setDays] = useState<(typeof AD_RUN_LENGTHS_DAYS)[number]>(14);
+  const [title, setTitle] = useState('');
+  const [clickUrl, setClickUrl] = useState('');
+  const [submit, setSubmit] = useState<SubmitState>({ phase: 'idle' });
+
+  const quote: AdCampaignQuote = quoteAdCampaign(scope, spots, days);
+  const perSpot = quote.ratePerSpotCents / 100;
+  const dailyCost = quote.dailyCostCents / 100;
+  const total = quote.totalCostCents / 100;
+  const cpm = quote.effectiveCpmCents / 100;
   const everyH = 24 / spots;
   const spotsNote = spots >= 24 ? '≈ hourly placements, all day long'
     : `≈ one placement every ${everyH >= 1 ? everyH.toFixed(everyH % 1 ? 1 : 0) : '<1'} hours across the feed`;
@@ -160,14 +169,31 @@ function CoverageBuilder() {
   const dots = Array.from({ length: 48 }, (_, i) => {
     const c = i % 16, row = Math.floor(i / 16);
     let lit = false;
-    if (tierId === 'local') lit = c >= 6 && c <= 9 && row === 1;
-    if (tierId === 'regional') lit = c >= 4 && c <= 11;
-    if (tierId === 'national') lit = c >= 2 && c <= 13;
-    if (tierId === 'global') lit = true;
+    if (scope === 'LOCAL') lit = c >= 6 && c <= 9 && row === 1;
+    if (scope === 'REGIONAL') lit = c >= 4 && c <= 11;
+    if (scope === 'NATIONAL') lit = c >= 2 && c <= 13;
+    if (scope === 'GLOBAL') lit = true;
     return lit;
   });
 
   const INPUT_S: React.CSSProperties = { fontFamily: 'var(--f-b,DM Sans,sans-serif)', fontSize: 'inherit', color: 'inherit', background: 'none', border: 'none', cursor: 'pointer', padding: 0 };
+  const TEXT_INPUT_S: React.CSSProperties = { width: '100%', fontFamily: 'var(--f-b,DM Sans,sans-serif)', fontSize: 13, color: '#f0ebe5', background: '#1a1612', border: '1px solid rgba(255,255,255,.14)', borderRadius: 9, padding: '11px 13px', outline: 'none' };
+
+  async function handleSubmit() {
+    if (!title.trim()) {
+      setSubmit({ phase: 'error', error: 'Give your campaign a title or ad copy line first.' });
+      return;
+    }
+    setSubmit({ phase: 'submitting' });
+    try {
+      const result = await postJson<{
+        vetting: { status: 'APPROVED' | 'REJECTED' | 'PENDING'; reasoning: string; message: string };
+      }>('/api/advertise/campaigns', { scope, spotsPerDay: spots, runDays: days, title: title.trim(), clickUrl: clickUrl.trim() });
+      setSubmit({ phase: 'done', ...result.vetting });
+    } catch (err) {
+      setSubmit({ phase: 'error', error: err instanceof Error ? err.message : 'Could not submit campaign. Are you logged in?' });
+    }
+  }
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, alignItems: 'stretch' }}>
@@ -184,22 +210,22 @@ function CoverageBuilder() {
               <span style={{ color: '#ff5029' }}>A.</span> Coverage area
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-              {TIERS.map(t => (
-                <button key={t.id} onClick={() => setTierId(t.id)} style={{
+              {AD_SCOPES.map(s => (
+                <button key={s} onClick={() => setScope(s)} style={{
                   display: 'flex', alignItems: 'center', gap: 14, padding: '14px 15px', borderRadius: 11,
-                  border: `1px solid ${t.id === tierId ? '#ff5029' : 'rgba(255,255,255,.07)'}`,
-                  background: t.id === tierId ? 'rgba(255,80,41,.07)' : '#1a1612',
+                  border: `1px solid ${s === scope ? '#ff5029' : 'rgba(255,255,255,.07)'}`,
+                  background: s === scope ? 'rgba(255,80,41,.07)' : '#1a1612',
                   cursor: 'pointer', textAlign: 'left', width: '100%', transition: 'border-color .15s, background .15s',
                 }}>
                   <span style={{ width: 34, height: 34, borderRadius: '50%', flexShrink: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {[0, 6, 12].map(s => <span key={s} style={{ position: 'absolute', inset: s, borderRadius: '50%', border: `1.5px solid ${t.id === tierId ? '#ff5029' : '#3a342e'}` }} />)}
+                    {[0, 6, 12].map(o => <span key={o} style={{ position: 'absolute', inset: o, borderRadius: '50%', border: `1.5px solid ${s === scope ? '#ff5029' : '#3a342e'}` }} />)}
                   </span>
                   <span>
-                    <div style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 700, fontSize: 15, letterSpacing: '-.01em' }}>{t.nm}</div>
-                    <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, color: '#5a5048', letterSpacing: '.04em', marginTop: 3 }}>{t.ds}</div>
+                    <div style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 700, fontSize: 15, letterSpacing: '-.01em' }}>{AD_SCOPE_LABELS[s]}</div>
+                    <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, color: '#5a5048', letterSpacing: '.04em', marginTop: 3 }}>{AD_SCOPE_DESCRIPTIONS[s]}</div>
                   </span>
                   <span style={{ marginLeft: 'auto', textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 700, fontSize: 16, letterSpacing: '-.01em', color: t.id === tierId ? '#ff5029' : 'inherit' }}>{money(t.cps * 10)}</div>
+                    <div style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 700, fontSize: 16, letterSpacing: '-.01em', color: s === scope ? '#ff5029' : 'inherit' }}>{money(quoteAdCampaign(s, 1, 1).ratePerSpotCents / 100)}</div>
                     <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 8.5, color: '#5a5048', letterSpacing: '.06em', marginTop: 2 }}>/ spot · day</div>
                   </span>
                 </button>
@@ -213,20 +239,20 @@ function CoverageBuilder() {
               <span style={{ color: '#ff5029' }}>B.</span> Spots per day
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 0, border: '1px solid rgba(255,255,255,.14)', borderRadius: 10, overflow: 'hidden', width: 'fit-content' }}>
-              <button aria-label="Decrease spots per day" onClick={() => setSpots(s => Math.max(1, s - 1))} style={{ width: 46, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9e9080', cursor: 'pointer', ...INPUT_S, transition: 'background .15s' }}><MinusIcon /></button>
+              <button aria-label="Decrease spots per day" onClick={() => setSpots(s => Math.max(MIN_SPOTS_PER_DAY, s - 1))} style={{ width: 46, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9e9080', cursor: 'pointer', ...INPUT_S, transition: 'background .15s' }}><MinusIcon /></button>
               <div style={{ minWidth: 64, textAlign: 'center', fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', borderLeft: '1px solid rgba(255,255,255,.07)', borderRight: '1px solid rgba(255,255,255,.07)', height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{spots}</div>
-              <button aria-label="Increase spots per day" onClick={() => setSpots(s => Math.min(24, s + 1))} style={{ width: 46, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9e9080', cursor: 'pointer', ...INPUT_S, transition: 'background .15s' }}><PlusIcon /></button>
+              <button aria-label="Increase spots per day" onClick={() => setSpots(s => Math.min(MAX_SPOTS_PER_DAY, s + 1))} style={{ width: 46, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9e9080', cursor: 'pointer', ...INPUT_S, transition: 'background .15s' }}><PlusIcon /></button>
             </div>
             <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: '#5a5048', letterSpacing: '.04em', marginTop: 10 }}>{spotsNote}</div>
           </div>
 
           {/* Run length */}
-          <div>
+          <div style={{ marginBottom: 26 }}>
             <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.16em', textTransform: 'uppercase', color: '#5a5048', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ color: '#ff5029' }}>C.</span> Run length
             </div>
             <div style={{ display: 'flex', gap: 6 }}>
-              {[7, 14, 30, 90].map(d => (
+              {AD_RUN_LENGTHS_DAYS.map(d => (
                 <button key={d} onClick={() => setDays(d)} style={{
                   flex: 1, padding: '11px 8px', borderRadius: 9,
                   border: `1px solid ${days === d ? '#ff5029' : 'rgba(255,255,255,.07)'}`,
@@ -237,14 +263,35 @@ function CoverageBuilder() {
               ))}
             </div>
           </div>
+
+          {/* Campaign details (required for the AI screen) */}
+          <div>
+            <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.16em', textTransform: 'uppercase', color: '#5a5048', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ color: '#ff5029' }}>D.</span> What's the ad
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <input
+                style={TEXT_INPUT_S}
+                placeholder="Campaign title / ad copy — e.g. &quot;Nocturnal — North American tour 2026&quot;"
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                maxLength={280}
+              />
+              <input
+                style={TEXT_INPUT_S}
+                placeholder="Destination link (optional)"
+                value={clickUrl}
+                onChange={e => setClickUrl(e.target.value)}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Reach + Receipt */}
       <div style={{ background: '#100d09', border: '1px solid rgba(255,255,255,.07)', borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '15px 20px', borderBottom: '1px solid rgba(255,255,255,.07)', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 700, fontSize: 14 }}>{tier.nm} reach</span>
-          <span style={{ marginLeft: 'auto', fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, color: '#5a5048', letterSpacing: '.1em', textTransform: 'uppercase' }}>{fmt(tier.pop)} potential listeners</span>
+          <span style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 700, fontSize: 14 }}>{AD_SCOPE_LABELS[scope]} reach</span>
         </div>
         <div style={{ padding: '22px 20px', flex: 1 }}>
           {/* Dot grid */}
@@ -256,7 +303,7 @@ function CoverageBuilder() {
 
           {/* Stats */}
           <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-            {[{ v: fmt(dailyImp), l: 'Daily impressions' }, { v: fmt(totalImp), l: 'Total over run' }, { v: '$' + cpm.toFixed(2), l: 'Effective CPM' }].map(s => (
+            {[{ v: fmt(quote.dailyImpressions), l: 'Daily impressions' }, { v: fmt(quote.totalImpressions), l: 'Total over run' }, { v: '$' + cpm.toFixed(2), l: 'Effective CPM' }].map(s => (
               <div key={s.l} style={{ flex: 1, padding: '13px 14px', border: '1px solid rgba(255,255,255,.07)', borderRadius: 11, background: '#1a1612' }}>
                 <div style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 21, letterSpacing: '-.02em' }}>{s.v}</div>
                 <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 8.5, letterSpacing: '.1em', color: '#5a5048', textTransform: 'uppercase', marginTop: 6 }}>{s.l}</div>
@@ -276,7 +323,7 @@ function CoverageBuilder() {
 
           {/* Receipt */}
           <div style={{ marginTop: 20, borderTop: '1px dashed rgba(255,255,255,.14)', paddingTop: 18 }}>
-            {[{ k: `${tier.nm} base`, v: `${money(perSpot)} / spot` }, { k: `${spots} spots/day × ${days} days`, v: `${money(dailyCost)} / day` }, { k: 'Co-op handling · 0%', v: '$0.00', vc: '#22e5d4' }].map(r => (
+            {[{ k: `${AD_SCOPE_LABELS[scope]} base`, v: `${money(perSpot)} / spot` }, { k: `${spots} spots/day × ${days} days`, v: `${money(dailyCost)} / day` }, { k: 'Co-op handling · 0%', v: '$0.00', vc: '#22e5d4' }].map(r => (
               <div key={r.k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '7px 0', fontFamily: 'var(--f-m,monospace)', fontSize: 12 }}>
                 <span style={{ color: '#5a5048', letterSpacing: '.06em' }}>{r.k}</span>
                 <span style={{ color: r.vc ?? 'inherit' }}>{r.v}</span>
@@ -288,6 +335,34 @@ function CoverageBuilder() {
                 {money(total)}<small style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 11, color: '#5a5048', letterSpacing: '.04em', fontWeight: 400, marginLeft: 4 }}>{money(dailyCost)}/day</small>
               </span>
             </div>
+
+            <button
+              onClick={handleSubmit}
+              disabled={submit.phase === 'submitting'}
+              className="adv-btn-solid"
+              style={{ width: '100%', marginTop: 16, opacity: submit.phase === 'submitting' ? .6 : 1 }}
+            >
+              {submit.phase === 'submitting' ? 'Screening…' : 'Submit campaign →'}
+            </button>
+
+            {submit.phase === 'done' && (
+              <div style={{
+                marginTop: 12, padding: '12px 14px', borderRadius: 10,
+                background: submit.status === 'APPROVED' ? 'rgba(34,229,212,.1)' : submit.status === 'REJECTED' ? 'rgba(255,90,90,.1)' : 'rgba(255,184,74,.1)',
+                border: `1px solid ${submit.status === 'APPROVED' ? 'rgba(34,229,212,.3)' : submit.status === 'REJECTED' ? 'rgba(255,90,90,.3)' : 'rgba(255,184,74,.3)'}`,
+              }}>
+                <div style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 13, color: submit.status === 'APPROVED' ? '#22e5d4' : submit.status === 'REJECTED' ? '#ff5a5a' : '#ffb84a' }}>
+                  {submit.message}
+                </div>
+                <div style={{ fontSize: 11, color: '#9e9080', marginTop: 4, lineHeight: 1.5 }}>{submit.reasoning}</div>
+              </div>
+            )}
+            {submit.phase === 'error' && (
+              <div style={{ marginTop: 12, padding: '12px 14px', borderRadius: 10, background: 'rgba(255,90,90,.1)', border: '1px solid rgba(255,90,90,.3)', fontSize: 12, color: '#ff5a5a' }}>
+                {submit.error}
+              </div>
+            )}
+
             <p style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontSize: 14, color: '#9e9080', marginTop: 14, lineHeight: 1.45 }}>
               Nothing charges until your creative clears the AI screen.
               <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: '#ff5029', marginLeft: 3, verticalAlign: 'middle' }} />
@@ -355,9 +430,11 @@ function AIScanner() {
       {/* Three checks */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {[
-          { n: '01', title: 'Buyer vetting', desc: 'Accounts are matched against the music ecosystem — artists, venues, promoters, and verified music-adjacent businesses. Anything outside it (crypto, supplements, drop-shippers) is flagged before checkout.' },
-          { n: '02', title: 'Music-only relevance', desc: 'The creative itself is read for intent. If the ad isn\'t about live music, releases, gear, merch, or services that serve musicians, it doesn\'t run.' },
-          { n: '03', title: 'Copyright firewall', desc: 'Audio is fingerprinted and copy is scanned for protected song titles, lyrics, and artist name-drops you don\'t have rights to. Auto-rejected on any match.' },
+          { n: '01', title: 'Verified buyers only', desc: 'Only verified artists, venues, DJs, and music-related organizations reach checkout. No verified badge, no buy button.' },
+          { n: '02', title: 'Audio relevance scan', desc: 'The submission is scored against your advertiser profile. If it isn\'t about live music, releases, gear, or merch, it doesn\'t run.' },
+          { n: '03', title: 'Listener safety', desc: 'Hate speech, harassment, explicit content outside rating, scams, and unsafe claims are flagged before a listener ever hears it.' },
+          { n: '04', title: 'Copyright firewall', desc: 'Audio is fingerprinted and copy is scanned for protected song titles, lyrics, and artist name-drops you don\'t have rights to. Auto-rejected on any match.' },
+          { n: '05', title: 'Reputation risk', desc: 'A final pass for misleading pricing, fake scarcity, impersonation, or off-platform resale — anything that would tarnish the scene.' },
         ].map(c => (
           <div key={c.n} style={{ display: 'flex', gap: 14, padding: '18px', border: '1px solid rgba(255,255,255,.07)', borderRadius: 14, background: '#100d09' }}>
             <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: '#ff5029', letterSpacing: '.1em', flexShrink: 0, paddingTop: 3 }}>{c.n}</span>
@@ -458,6 +535,86 @@ function AIScanner() {
   );
 }
 
+/* ── HYPE Screen upload demo (Step 03) ──────────────────────
+   Explicitly an illustrative simulation — matches Advertise.dc.html's own
+   framing ("Simulate a scan"). Not tied to any real submission; the actual
+   AI vetting call happens when a campaign is submitted in CoverageBuilder. */
+const SCAN_GATES = ['Verified buyer', 'Audio relevance', 'Listener safety', 'Copyright', 'Reputation risk'];
+
+function ScanDemo() {
+  const [phase, setPhase] = useState<'idle' | 'scanning' | 'done'>('idle');
+  const [passed, setPassed] = useState<number>(-1);
+  const tokenRef = useRef(0);
+
+  function runDemo() {
+    if (phase === 'scanning') return;
+    const token = ++tokenRef.current;
+    setPhase('scanning');
+    setPassed(-1);
+    SCAN_GATES.forEach((_, i) => {
+      setTimeout(() => { if (token === tokenRef.current) setPassed(i); }, 700 + i * 650);
+    });
+    setTimeout(() => { if (token === tokenRef.current) setPhase('done'); }, 700 + SCAN_GATES.length * 650 + 300);
+  }
+
+  function reset() {
+    tokenRef.current++;
+    setPhase('idle');
+    setPassed(-1);
+  }
+
+  return (
+    <div style={{ maxWidth: 640, margin: '0 auto', background: '#100d09', border: '1px solid rgba(255,255,255,.1)', borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 18px', borderBottom: '1px solid rgba(255,255,255,.07)' }}>
+        <span style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 700, fontSize: 14, flex: 1 }}>HYPE Screen · automated ad review</span>
+        <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase', color: phase === 'done' ? '#22e5d4' : phase === 'scanning' ? '#ff5029' : '#5a5048' }}>
+          {phase === 'done' ? 'Cleared · 5/5' : phase === 'scanning' ? 'Scanning…' : 'Awaiting audio'}
+        </span>
+      </div>
+
+      {phase === 'idle' && (
+        <div onClick={runDemo} style={{ margin: 18, border: '2px dashed rgba(255,255,255,.14)', borderRadius: 12, padding: '34px 20px', textAlign: 'center', cursor: 'pointer' }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9e9080" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 10 }}><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg>
+          <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 5 }}>Drop your ad audio here</div>
+          <div style={{ fontSize: 12, color: '#9e9080' }}>MP3 / WAV / AAC · 15–60s · audio only, no video</div>
+          <div className="adv-btn-solid" style={{ display: 'inline-flex', marginTop: 14 }}>Simulate a scan</div>
+        </div>
+      )}
+
+      {phase !== 'idle' && (
+        <div style={{ padding: '0 18px 18px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {SCAN_GATES.map((g, i) => {
+            const state = passed >= i ? 'pass' : 'wait';
+            return (
+              <div key={g} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, background: state === 'pass' ? 'rgba(34,229,212,.1)' : 'rgba(255,255,255,.03)', border: `1px solid ${state === 'pass' ? 'rgba(34,229,212,.25)' : 'rgba(255,255,255,.08)'}`, transition: 'all .3s' }}>
+                <span style={{ width: 12, height: 12, borderRadius: '50%', flexShrink: 0, background: state === 'pass' ? '#22e5d4' : 'transparent', border: state === 'pass' ? 'none' : '2px solid rgba(255,255,255,.18)' }} />
+                <span style={{ flex: 1, fontSize: 12, color: state === 'pass' ? '#f0ebe5' : '#9e9080' }}>Gate {i + 1} — {g}</span>
+                <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9, letterSpacing: '.08em', textTransform: 'uppercase', color: state === 'pass' ? '#22e5d4' : '#5a5048' }}>{state === 'pass' ? 'PASS' : '…'}</span>
+              </div>
+            );
+          })}
+
+          {phase === 'done' && (
+            <div style={{ marginTop: 6, padding: '13px 16px', borderRadius: 10, background: 'rgba(34,229,212,.1)', border: '1px solid rgba(34,229,212,.3)', textAlign: 'center' }}>
+              <div style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 15, color: '#22e5d4', marginBottom: 3 }}>✓ CLEARED — checkout unlocked</div>
+              <div style={{ fontSize: 12, color: '#9e9080' }}>Verified buyers go straight to payment. Your spot starts running the moment the charge clears.</div>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 12 }}>
+                <a href="#build" className="adv-btn-solid">Buy this campaign →</a>
+                <button onClick={reset} className="adv-btn-ghost" style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 11, color: '#5a5048', textDecoration: 'underline' }}>Run another scan</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 18px', borderTop: '1px solid rgba(255,255,255,.06)', fontFamily: 'var(--f-m,monospace)', fontSize: 9, color: '#5a5048', letterSpacing: '.06em' }}>
+        <span>Median scan time · 41 seconds</span>
+        <span>Fails are refunded automatically</span>
+      </div>
+    </div>
+  );
+}
+
 /* ── Hero meta counter ───────────────────────────────────── */
 function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
   const [val, setVal] = useState(0);
@@ -475,7 +632,7 @@ function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
 }
 
 /* ── Main page ───────────────────────────────────────────── */
-export function AdvertisePage() {
+export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
   const eyebrow = (text: string, accent = true): React.CSSProperties => ({
     fontFamily: 'var(--f-m,monospace)', fontSize: 10, letterSpacing: '.2em', color: accent ? '#ff5029' : '#5a5048',
     textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: 9,
@@ -521,7 +678,11 @@ export function AdvertisePage() {
               <a href="#guard" className="adv-btn-ghost">See how vetting works</a>
             </div>
             <div style={{ display: 'flex', gap: 26, marginTop: 34, paddingTop: 24, borderTop: '1px solid rgba(255,255,255,.07)' }}>
-              {[{ v: <CountUp target={1280} />, l: 'Spots running today' }, { v: <CountUp target={94} suffix="%" />, l: 'Auto-cleared in <60s' }, { v: '100%', l: 'Music-related' }].map(m => (
+              {[
+                { v: <CountUp target={stats.activeCampaigns} />, l: 'Campaigns live now' },
+                { v: stats.clearedPct !== null ? <CountUp target={stats.clearedPct} suffix="%" /> : '—', l: 'Auto-cleared, no review' },
+                { v: '100%', l: 'Music-related' },
+              ].map(m => (
                 <div key={m.l}>
                   <div style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 24, letterSpacing: '-.02em' }}>{m.v}</div>
                   <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.12em', color: '#5a5048', textTransform: 'uppercase', marginTop: 5 }}>{m.l}</div>
@@ -561,10 +722,10 @@ export function AdvertisePage() {
               <span style={{ width: 22, height: 1, background: '#ff5029', opacity: .6 }} />Step 02 · The screen
             </span>
             <h2 style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 38, letterSpacing: '-.03em', lineHeight: 1.02, margin: '14px 0 0' }}>
-              Every ad clears <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: '#ff5029' }}>three gates</em> before a single listener sees it.
+              Every ad clears <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: '#ff5029' }}>five gates</em> before a single listener sees it.
             </h2>
             <p style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontSize: 19, color: '#9e9080', lineHeight: 1.4, marginTop: 14, maxWidth: '58ch' }}>
-              iHYPE runs on one operator. The bouncer is the machine — it reads every submission, checks who's buying, and rejects anything that isn't clean, music-related, and original.
+              No human review queue. iHYPE runs on one operator — HYPE Screen scans the buyer, the copy, and the submission itself. Approval is instant when every gate passes.
             </p>
           </div>
           <div className="adv-guard">
@@ -573,12 +734,33 @@ export function AdvertisePage() {
         </div>
       </section>
 
+      {/* HYPE Screen — upload & scan demo */}
+      <section id="scan" style={{ position: 'relative', padding: '88px 0', borderTop: '1px solid rgba(255,255,255,.07)' }}>
+        <div style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
+          <div style={{ maxWidth: 680, margin: '0 auto 40px', textAlign: 'center' }}>
+            <span style={{ ...eyebrow(''), display: 'inline-flex', alignItems: 'center', gap: 9, justifyContent: 'center' }}>
+              <span style={{ width: 22, height: 1, background: '#ff5029', opacity: .6 }} />Step 03 · Upload &amp; go live
+            </span>
+            <h2 style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 38, letterSpacing: '-.03em', lineHeight: 1.02, margin: '14px 0 0' }}>
+              Drop your audio. <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: '#ff5029' }}>HYPE Screen</em> does the rest.
+            </h2>
+            <p style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontSize: 19, color: '#9e9080', lineHeight: 1.4, marginTop: 14, maxWidth: '58ch', marginLeft: 'auto', marginRight: 'auto' }}>
+              Try the scanner below. When every gate passes, checkout unlocks instantly — no sales call, no review queue.
+            </p>
+          </div>
+          <ScanDemo />
+          <p style={{ maxWidth: 640, margin: '22px auto 0', textAlign: 'center', fontSize: 12, color: '#5a5048', lineHeight: 1.7 }}>
+            Purchasing is available exclusively to verified artists, venues, DJs, and music-related organizations. Rejected spots are never heard by listeners and are refunded in full.
+          </p>
+        </div>
+      </section>
+
       {/* Two paths */}
       <section id="paths" style={{ position: 'relative', padding: '88px 0', borderTop: '1px solid rgba(255,255,255,.07)' }}>
         <div style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
           <div style={{ maxWidth: 680, marginBottom: 40 }}>
             <span style={{ ...eyebrow(''), display: 'inline-flex', alignItems: 'center', gap: 9 }}>
-              <span style={{ width: 22, height: 1, background: '#ff5029', opacity: .6 }} />Step 03 · Who's buying
+              <span style={{ width: 22, height: 1, background: '#ff5029', opacity: .6 }} />Step 04 · Who's buying
             </span>
             <h2 style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 38, letterSpacing: '-.03em', lineHeight: 1.02, margin: '14px 0 0' }}>
               Two ways in. <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: '#ff5029' }}>Same screen</em> for both.

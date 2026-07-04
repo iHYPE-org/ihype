@@ -1096,6 +1096,9 @@ model Ad {
   imageUrl      String?
   clickUrl      String?
   status        String         @default("PENDING")
+  // Coverage tier the campaign was purchased at — LOCAL | REGIONAL | NATIONAL | GLOBAL.
+  // Drives per-spot pricing and reach; separate from slotId (the placement).
+  scope         String         @default("REGIONAL")
   budgetCents   Int            @default(0)
   spentCents    Int            @default(0)
   impressions   Int            @default(0)

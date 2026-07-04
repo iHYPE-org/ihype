@@ -525,6 +525,14 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
                 {blocks.length > 0 && <button className="rsc-clear-btn" onClick={() => setBlocks([])} type="button">Clear</button>}
               </div>
             </div>
+            {adPlan && adPlan.advertiserTypes.length > 0 && (
+              <div className="rsc-ad-types">
+                <span className="rsc-ad-types-label">AI-matched for this show:</span>
+                {adPlan.advertiserTypes.map((t) => (
+                  <span className="rsc-ad-type-chip" key={t}>{t}</span>
+                ))}
+              </div>
+            )}
             <div className="rsc-panel-body rsc-tl-scroll" onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setOverIndex(null); }} onDragOver={onTimelineDragOver} onDrop={onTimelineDrop}>
               {blocks.length === 0 && (
                 <div className="rsc-tl-empty">
@@ -678,6 +686,9 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
         .rsc-tl-empty { text-align: center; padding: 60px 24px; color: rgba(240,235,229,.5); border: 2px dashed rgba(255,255,255,.1); border-radius: 12px; }
         .rsc-tl-empty-title { font-family: var(--font-display); font-weight: 800; font-size: 16px; color: var(--ink); margin-bottom: 4px; }
         .rsc-ad-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 8px; border: 1px solid rgba(255,80,41,.4); background: rgba(255,80,41,.08); color: var(--accent); font-family: var(--font-display); font-weight: 800; font-size: 12px; cursor: pointer; }
+        .rsc-ad-types { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,.06); }
+        .rsc-ad-types-label { font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; letter-spacing: .1em; color: rgba(240,235,229,.45); margin-right: 2px; }
+        .rsc-ad-type-chip { font-family: var(--font-mono); font-size: 9px; letter-spacing: .06em; color: #22e5d4; background: rgba(34,229,212,.12); border-radius: 4px; padding: 3px 8px; }
         .rsc-clear-btn { padding: 7px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.12); background: transparent; color: rgba(240,235,229,.6); font-size: 12px; font-weight: 600; cursor: pointer; }
         .rsc-summary { display: flex; gap: 22px; flex-wrap: wrap; padding: 16px 18px; margin-top: 14px; border: 1px solid rgba(255,255,255,.07); border-radius: 12px; background: var(--bg2); }
         .rsc-s-v { font-family: var(--font-display); font-weight: 800; font-size: 18px; }
