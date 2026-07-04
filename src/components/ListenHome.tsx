@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { MobileQuickGrid, type QuickGridItem } from '@/components/MobileQuickGrid';
 
 const PALETTE = ['#ff5029', '#b983ff', '#22e5d4', '#ff3e9a', '#ffb84a', '#7fb3ff'];
 
@@ -260,6 +261,7 @@ function SeedDeck({ seeds, onAct }: { seeds: Seed[]; onAct: (seed: Seed, action:
 
 export function ListenHome() {
   const [tab, setTab] = useState<'search' | 'seeds' | 'radio' | 'charts' | 'playlists'>('seeds');
+  const [gridMode, setGridMode] = useState(true);
   const [genre, setGenre] = useState('All');
   const [seeds, setSeeds] = useState<Seed[] | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -406,6 +408,25 @@ export function ListenHome() {
 
   const openPlaylist = (playlists ?? []).find((p) => p.id === openPl) ?? null;
 
+  const gridItems: QuickGridItem[] = [
+    {
+      id: 'seeds', label: 'Seeds', color: '#ff5029', sublabel: 'Swipe to explore',
+      icon: <svg fill="none" height="30" stroke="#ff5029" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><rect height="7" rx="1.5" width="7" x="3" y="3" /><rect height="7" rx="1.5" width="7" x="14" y="3" /><rect height="7" rx="1.5" width="7" x="3" y="14" /><rect height="7" rx="1.5" width="7" x="14" y="14" /></svg>,
+    },
+    {
+      id: 'radio', label: 'Radio', color: '#22e5d4', sublabel: liveShow ? 'Live now' : upcomingShows.length > 0 ? 'Coming up' : 'Nothing live',
+      icon: <svg fill="none" height="30" stroke="#22e5d4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><circle cx="12" cy="14" r="4" /><path d="M4 14a8 8 0 0 1 16 0" /><path d="M2 14a10 10 0 0 1 20 0" /></svg>,
+    },
+    {
+      id: 'charts', label: 'Charts', color: '#ff3e9a', sublabel: 'Top this week',
+      icon: <svg fill="none" height="30" stroke="#ff3e9a" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><line x1="6" x2="6" y1="20" y2="12" /><line x1="12" x2="12" y1="20" y2="6" /><line x1="18" x2="18" y1="20" y2="15" /></svg>,
+    },
+    {
+      id: 'playlists', label: 'Playlists', color: '#b983ff', sublabel: `${playlists?.length ?? 0} saved`,
+      icon: <svg fill="none" height="30" stroke="#b983ff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><line x1="8" x2="21" y1="6" y2="6" /><line x1="8" x2="21" y1="12" y2="12" /><line x1="8" x2="21" y1="18" y2="18" /><circle cx="4" cy="6" fill="#b983ff" r="1.5" stroke="none" /><circle cx="4" cy="12" fill="#b983ff" r="1.5" stroke="none" /><circle cx="4" cy="18" fill="#b983ff" r="1.5" stroke="none" /></svg>,
+    },
+  ];
+
   return (
     <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 24px 100px' }}>
       <style>{`@keyframes ihype-blink { 0%,100% { opacity: 1 } 50% { opacity: .25 } }`}</style>
@@ -416,13 +437,27 @@ export function ListenHome() {
         </div>
       )}
 
+      <MobileQuickGrid
+        active={gridMode}
+        items={gridItems}
+        onSearchTap={() => { setGridMode(false); setTab('search'); }}
+        onSelect={(id) => { setGridMode(false); setTab(id as typeof tab); }}
+        searchPlaceholder="Search tracks, artists, genres…"
+      />
+
+      <div className={`mqg-content${gridMode ? ' is-hidden' : ''}`}>
+      <button className="mqg-back" onClick={() => setGridMode(true)} type="button">
+        <svg fill="none" height="18" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="18"><polyline points="15 18 9 12 15 6" /></svg>
+        Listen
+      </button>
+
       <div style={{ marginBottom: 28 }}>
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 8 }}>YOUR SCENE</p>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,5vw,40px)', fontWeight: 800, letterSpacing: '-.03em', lineHeight: 1, margin: '0 0 6px' }}>Listen</h1>
         <p style={{ fontSize: 14, color: 'rgba(240,235,229,.55)', margin: 0 }}>Discovery, radio, and charts — personalized for your taste.</p>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 26 }}>
+      <div className="mqg-tabstrip" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 26 }}>
         {tabs.map((t) => (
           <div
             key={t.id}
@@ -724,6 +759,7 @@ export function ListenHome() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

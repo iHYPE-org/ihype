@@ -5494,14 +5494,14 @@ html.high-contrast p {
 .nav-drawer-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 299;
+  z-index: 949;
   background: rgba(0,0,0,.55);
   backdrop-filter: blur(2px);
 }
 .nav-drawer {
   position: fixed;
   top: 0; right: 0; bottom: 0;
-  z-index: 300;
+  z-index: 950;
   width: 260px;
   background: var(--bg-2);
   border-left: 1px solid var(--line-2);
@@ -5542,13 +5542,17 @@ html.high-contrast p {
   min-height: 44px;
   padding: 0 12px;
   border-radius: 8px;
-  color: var(--ink);
-  font-size: 15px;
-  font-family: var(--f-b);
+  color: var(--ink-2, rgba(240,235,229,.7));
+  font-family: var(--f-m);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  text-decoration: none;
   transition: background .12s;
 }
 .nav-drawer-link:hover { background: var(--bg-3); }
-.nav-drawer-link--primary { font-size: 17px; font-weight: 600; }
+.nav-drawer-link--primary { font-size: 14px; color: var(--ink); }
 .nav-drawer-link--primary.active { color: var(--accent, #ff5029); }
 .nav-drawer-divider { height: 1px; background: var(--line); margin: 8px 0; }
 
@@ -6204,4 +6208,100 @@ h1, h2 {
 }
 .skip-to-content:focus {
   top: 1rem;
+}
+
+/* ── Mobile quick-access grid ─────────────────────────────────────────────
+   Shared by Listen/Events/Pages: on mobile, a full-screen search+grid
+   "home" replaces the old horizontal tab strip. Desktop is untouched —
+   everything here is gated behind the same 768px breakpoint the rest of
+   the mobile shell already uses. */
+.mqg-overlay { display: none; }
+.mqg-back { display: none; }
+@media (max-width: 768px) {
+  .mqg-overlay.is-active {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+    z-index: 40;
+    background: var(--bg);
+    padding: 10px 4px 0;
+  }
+  .mqg-tabstrip { display: none; }
+  .mqg-back {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    margin-bottom: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--ink-2, rgba(240,235,229,.7));
+    font-family: var(--font-display, 'Syne', sans-serif);
+    font-weight: 800;
+    font-size: 15px;
+  }
+  .mqg-content.is-hidden { display: none; }
+}
+
+.mqg-search {
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: 10px;
+  min-height: 50px;
+  padding: 0 16px;
+  margin: 0 4px 8px;
+  border-radius: 16px;
+  background: var(--bg-2, #14100b);
+  border: 1px solid rgba(255,255,255,.16);
+  color: rgba(240,235,229,.5);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-size: 16px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+.mqg-search svg { flex-shrink: 0; opacity: .6; }
+
+.mqg-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 3px;
+  min-height: 0;
+  padding: 0 4px 3px;
+}
+.mqg-btn {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  border-radius: 26px;
+  border: 1px solid rgba(255,255,255,.16);
+  cursor: pointer;
+  text-align: center;
+  padding: 10px;
+  color: var(--ink, #f0ebe5);
+  transition: transform .18s cubic-bezier(.34,1.56,.64,1), opacity .15s ease;
+  animation: mqg-rise-in .5s cubic-bezier(.22,1,.36,1) both;
+}
+.mqg-btn:active { transform: scale(.93); opacity: .82; }
+.mqg-btn.mqg-spacer { visibility: hidden; pointer-events: none; }
+.mqg-btn:nth-child(1) { animation-delay: 70ms; }
+.mqg-btn:nth-child(2) { animation-delay: 120ms; }
+.mqg-btn:nth-child(3) { animation-delay: 170ms; }
+.mqg-btn:nth-child(4) { animation-delay: 220ms; }
+.mqg-icon {
+  width: 60px; height: 60px; border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+}
+.mqg-label { font-family: var(--font-display, 'Syne', sans-serif); font-size: 19px; font-weight: 800; letter-spacing: -.01em; }
+.mqg-sublabel { font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgba(240,235,229,.5); margin-top: -6px; }
+
+@keyframes mqg-rise-in {
+  from { opacity: 0; transform: translateY(16px) scale(.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mqg-btn { animation: none; transition: none; }
 }

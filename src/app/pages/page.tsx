@@ -6,6 +6,7 @@ import type { Metadata } from 'next';
 import { getDemoOwnerExclusion } from '@/lib/runtime-flags';
 import { PagesReferralTab } from '@/components/PagesReferralTab';
 import { FollowButton } from '@/components/FollowButton';
+import { MobileQuickGrid, type QuickGridItem } from '@/components/MobileQuickGrid';
 
 export const dynamic = 'force-dynamic';
 
@@ -108,6 +109,7 @@ export default async function PagesPage({
   }
 
   const resolvedSearchParams = searchParams ? await searchParams : {};
+  const gridMode = resolvedSearchParams.tab === undefined;
   const activeTab: TabId = TABS.some((t) => t.id === resolvedSearchParams.tab)
     ? (resolvedSearchParams.tab as TabId)
     : 'mypage';
@@ -170,10 +172,41 @@ export default async function PagesPage({
 
   const selectedProfile = myProfiles.find((p) => p.id === resolvedSearchParams.page) ?? myProfiles[0] ?? null;
 
-  const tabHref = (tab: TabId) => (tab === 'mypage' ? '/pages' : `/pages?tab=${tab}`);
+  const tabHref = (tab: TabId) => `/pages?tab=${tab}`;
+
+  const gridItems: QuickGridItem[] = [
+    {
+      id: 'mypage', label: 'My Page', color: '#ff5029', sublabel: `${myProfiles.length} page${myProfiles.length === 1 ? '' : 's'}`,
+      href: tabHref('mypage'),
+      icon: <svg fill="none" height="30" stroke="#ff5029" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" /></svg>,
+    },
+    {
+      id: 'network', label: 'Network', color: '#22e5d4', sublabel: `${following.length} following`,
+      href: tabHref('network'),
+      icon: <svg fill="none" height="30" stroke="#22e5d4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><circle cx="8" cy="8" r="3" /><circle cx="17" cy="9" r="2.5" /><path d="M2 20c0-3.3 2.7-6 6-6s6 2.7 6 6" /><path d="M14.5 14.2c2.5.4 4.5 2.6 4.5 5.3" /></svg>,
+    },
+    {
+      id: 'creator', label: 'Creator', color: '#ff3e9a', sublabel: 'Add a page',
+      href: tabHref('creator'),
+      icon: <svg fill="none" height="30" stroke="#ff3e9a" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><line x1="12" x2="12" y1="5" y2="19" /><line x1="5" x2="19" y1="12" y2="12" /></svg>,
+    },
+    {
+      id: 'referral', label: 'HYPE Link', color: '#b983ff', sublabel: '10% share',
+      href: tabHref('referral'),
+      icon: <svg fill="none" height="30" stroke="#b983ff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5" /><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5" /></svg>,
+    },
+  ];
 
   return (
     <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 24px 100px' }}>
+      <MobileQuickGrid active={gridMode} items={gridItems} />
+
+      <div className={`mqg-content${gridMode ? ' is-hidden' : ''}`}>
+      <Link className="mqg-back" href="/pages">
+        <svg fill="none" height="18" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="18"><polyline points="15 18 9 12 15 6" /></svg>
+        Pages
+      </Link>
+
       <div style={{ marginBottom: 28 }}>
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 8 }}>
           YOUR PRESENCE
@@ -186,7 +219,7 @@ export default async function PagesPage({
         </p>
       </div>
 
-      <nav style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 26 }} aria-label="Pages sections">
+      <nav className="mqg-tabstrip" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 26 }} aria-label="Pages sections">
         {TABS.map((tab) => (
           <Link
             key={tab.id}
@@ -487,6 +520,7 @@ export default async function PagesPage({
       )}
 
       {activeTab === 'referral' && <PagesReferralTab />}
+      </div>
     </div>
   );
 }

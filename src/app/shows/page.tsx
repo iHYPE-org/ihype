@@ -7,6 +7,7 @@ import { sortShowsForFeed } from '@/lib/integrity';
 import { detectRequestLocation } from '@/lib/request-location';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { TicketCardActions } from '@/components/TicketCardActions';
+import { MobileQuickGrid, type QuickGridItem } from '@/components/MobileQuickGrid';
 
 export const metadata: Metadata = {
   title: 'Events · iHYPE',
@@ -38,6 +39,7 @@ export default async function ShowsIndexPage({
   searchParams?: Promise<{ tab?: string; q?: string; ticketView?: string }>;
 }) {
   const resolvedParams = searchParams ? await searchParams : {};
+  const gridMode = resolvedParams.tab === undefined;
   const tab: Tab = TABS.some((t) => t.id === resolvedParams.tab) ? (resolvedParams.tab as Tab) : 'local';
   const q = resolvedParams.q?.trim() ?? '';
   const ticketView = resolvedParams.ticketView === 'archive' ? 'archive' : 'active';
@@ -85,6 +87,24 @@ export default async function ShowsIndexPage({
 
   const tabHref = (t: Tab) => `/shows?tab=${t}`;
 
+  const gridItems: QuickGridItem[] = [
+    {
+      id: 'local', label: 'Local', color: '#22e5d4', sublabel: nearCity ? `${nearCity} · ${localShows.length}` : `${localShows.length} shows`,
+      href: tabHref('local'),
+      icon: <svg fill="none" height="30" stroke="#22e5d4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>,
+    },
+    {
+      id: 'foryou', label: 'For You', color: '#ff5029', sublabel: `${forYouShows.length} matched`,
+      href: tabHref('foryou'),
+      icon: <svg fill="none" height="30" stroke="#ff5029" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><path d="M12 21s-7.5-4.6-10-9.3C.5 8.2 2.4 4 6.4 4c2 0 3.6 1 5.6 3 2-2 3.6-3 5.6-3 4 0 5.9 4.2 4.4 7.7C19.5 16.4 12 21 12 21Z" /></svg>,
+    },
+    {
+      id: 'tickets', label: 'Tickets', color: '#b983ff', sublabel: session?.user?.id ? 'View yours' : 'Log in to view',
+      href: tabHref('tickets'),
+      icon: <svg fill="none" height="30" stroke="#b983ff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><path d="M3 9a2 2 0 0 0 2-2V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-2a2 2 0 0 0-2-2Z" /></svg>,
+    },
+  ];
+
   function EventList({ shows, emptyTitle, emptyBody }: { shows: typeof allShows; emptyTitle: string; emptyBody: string }) {
     if (shows.length === 0) {
       return (
@@ -129,13 +149,26 @@ export default async function ShowsIndexPage({
 
   return (
     <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 24px 100px' }}>
+      <MobileQuickGrid
+        active={gridMode}
+        items={gridItems}
+        searchHref={tabHref('search')}
+        searchPlaceholder="Search shows, artists, or venues…"
+      />
+
+      <div className={`mqg-content${gridMode ? ' is-hidden' : ''}`}>
+      <Link className="mqg-back" href="/shows">
+        <svg fill="none" height="18" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="18"><polyline points="15 18 9 12 15 6" /></svg>
+        Events
+      </Link>
+
       <div style={{ marginBottom: 28 }}>
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 8 }}>WHAT&apos;S ON</p>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,5vw,40px)', fontWeight: 800, letterSpacing: '-.03em', lineHeight: 1, margin: '0 0 6px' }}>Events</h1>
         <p style={{ fontSize: 14, color: 'rgba(240,235,229,.55)', margin: 0 }}>Face value, zero fees. Every ticket — 45% artist, 45% venue, 10% promoters.</p>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
+      <div className="mqg-tabstrip" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
         {TABS.map((t) => (
           <Link
             key={t.id}
@@ -259,6 +292,7 @@ export default async function ShowsIndexPage({
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }

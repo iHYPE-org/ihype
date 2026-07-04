@@ -5,14 +5,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
-const primaryLinks = [
+export const primaryLinks = [
   { href: '/home',     label: 'Home' },
   { href: '/discover', label: 'Seeds' },
   { href: '/shows',    label: 'Radio' },
   { href: '/settings', label: 'You' },
 ];
 
-const secondaryLinks = [
+export const secondaryLinks = [
   { href: '/about', label: 'About' },
   { href: '/transparency', label: 'Transparency' },
   { href: '/advertise', label: 'Advertise' },
@@ -25,20 +25,38 @@ const secondaryLinks = [
   { href: '/discover?tab=fans', label: 'Leaderboard' },
 ];
 
-export function NavDrawer() {
-  const [open, setOpen] = useState(false);
+/**
+ * Self-manages its open state (and renders its own ☰ trigger) by default,
+ * for the desktop header. Pass `open`/`onOpenChange` to control it
+ * externally instead — MobileBottomNav does this so its own "Menu" tab can
+ * open the same drawer without a second, redundant trigger button.
+ */
+export function NavDrawer({
+  open: openProp,
+  onOpenChange,
+  showTrigger = true,
+}: {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  showTrigger?: boolean;
+} = {}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = openProp ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const pathname = usePathname();
 
   return (
     <>
-      <button
-        className="nav-drawer-trigger"
-        aria-label="Open menu"
-        aria-expanded={open}
-        onClick={() => setOpen(true)}
-      >
-        ☰
-      </button>
+      {showTrigger && (
+        <button
+          className="nav-drawer-trigger"
+          aria-label="Open menu"
+          aria-expanded={open}
+          onClick={() => setOpen(true)}
+        >
+          ☰
+        </button>
+      )}
       {open && (
         <>
           <div
