@@ -66,7 +66,7 @@ export default async function JournalPost({
   const meta = (found.metadata ?? {}) as EditorialMeta;
 
   return (
-    <main className="container section" style={{ maxWidth: 720 }}>
+    <div className="container section" style={{ maxWidth: 720 }}>
       <Link href="/journal" className="text-link meta">← Journal</Link>
       <h1>{meta.title}</h1>
       <p className="meta">
@@ -77,6 +77,6 @@ export default async function JournalPost({
       ) : (
         <p className="meta">This post has no body.</p>
       )}
-    </main>
+    </div>
   );
 }

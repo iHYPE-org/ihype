@@ -13,6 +13,7 @@ import { ShowSequencePlayer } from '@/components/ShowSequencePlayer';
 import { TicketSaleCard } from '@/components/TicketSaleCard';
 import { db } from '@/lib/db';
 import { getShowVisibilitySignals } from '@/lib/integrity';
+import { toSafeJsonLdString } from '@/lib/safe-json-ld';
 import { isAdminSession } from '@/lib/permissions';
 import { detectRequestLocation } from '@/lib/request-location';
 import { parseShowProductionPlan } from '@/lib/show-composer';
@@ -262,7 +263,7 @@ export default async function ShowDetailPage({
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toSafeJsonLdString(jsonLd) }} />
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 24px 100px' }}>
         <ReferralClickTracker ref={refHexId} />
 

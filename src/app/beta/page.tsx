@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function BetaPage() {
   return (
-    <main className="lp-wrap">
+    <div className="lp-wrap">
       <section className="lp-hero" style={{ textAlign: 'center', alignItems: 'center' }}>
         <p className="lp-hype-eyebrow" style={{ justifyContent: 'center' }}>
           <span className="lp-live-dot" style={{ background: '#ff5029', boxShadow: '0 0 6px #ff5029' }} />
@@ -99,6 +99,6 @@ export default function BetaPage() {
           Portland, ME · Founded 2026 · admin@ihype.org
         </p>
       </section>
-    </main>
+    </div>
   );
 }

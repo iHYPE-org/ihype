@@ -22,7 +22,7 @@ export default function FeedbackPage() {
   }
 
   return (
-    <main className="container section">
+    <div className="container section">
       <h1 className="title">Feature Requests</h1>
       <p className="subtitle">Vote on ideas or suggest your own.</p>
       <form onSubmit={submit} className="panel" style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 32 }}>
@@ -43,6 +43,6 @@ export default function FeedbackPage() {
           </div>
         ))}
       </div>
-    </main>
+    </div>
   );
 }

@@ -40,7 +40,7 @@ export default function AdminDeviceRegisterPage() {
   }, [token, mode, router]);
 
   return (
-    <main style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', fontFamily: 'system-ui', color: '#111' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', fontFamily: 'system-ui', color: '#111' }}>
       {status === 'registering' && <p>Registering this device…</p>}
       {status === 'done' && <p style={{ color: 'green' }}>Device registered. Redirecting to admin…</p>}
       {status === 'error' && (
@@ -49,6 +49,6 @@ export default function AdminDeviceRegisterPage() {
           <p style={{ fontSize: 14, color: '#666' }}>Request a new setup link from admin@ihype.org.</p>
         </>
       )}
-    </main>
+    </div>
   );
 }

@@ -92,21 +92,21 @@ export function VerifyForm({ profileId, type, initialName, initialCity, initialG
         <div style={{ height: 3, background: 'var(--bg-3, #0a0805)', borderRadius: 999, marginBottom: 28, overflow: 'hidden' }}>
           <div style={{ height: '100%', width: '50%', background: '#ff5029', borderRadius: 999, transition: 'width .4s ease' }} />
         </div>
-        <label style={labelStyle}>{type === 'VENUE' ? 'Venue name' : 'Stage / Artist name'}</label>
-        <input style={fieldStyle} value={name} onChange={(e) => setName(e.target.value)} placeholder="Midnight Echo" />
+        <label style={labelStyle} htmlFor="verify-name">{type === 'VENUE' ? 'Venue name' : 'Stage / Artist name'}</label>
+        <input id="verify-name" style={fieldStyle} value={name} onChange={(e) => setName(e.target.value)} placeholder="Midnight Echo" />
 
-        <label style={labelStyle}>City</label>
-        <input style={fieldStyle} value={city} onChange={(e) => setCity(e.target.value)} placeholder="Los Angeles, CA" />
+        <label style={labelStyle} htmlFor="verify-city">City</label>
+        <input id="verify-city" style={fieldStyle} value={city} onChange={(e) => setCity(e.target.value)} placeholder="Los Angeles, CA" />
 
         {type !== 'VENUE' && (
           <>
-            <label style={labelStyle}>Genre (3+ tags)</label>
-            <input style={fieldStyle} value={genres} onChange={(e) => setGenres(e.target.value)} placeholder="dream-pop, shoegaze, lo-fi" />
+            <label style={labelStyle} htmlFor="verify-genres">Genre (3+ tags)</label>
+            <input id="verify-genres" style={fieldStyle} value={genres} onChange={(e) => setGenres(e.target.value)} placeholder="dream-pop, shoegaze, lo-fi" />
           </>
         )}
 
-        <label style={labelStyle}>{LINK_LABEL[type]}</label>
-        <input style={fieldStyle} value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://" type="url" />
+        <label style={labelStyle} htmlFor="verify-link">{LINK_LABEL[type]}</label>
+        <input id="verify-link" style={fieldStyle} value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://" type="url" />
 
         <button onClick={() => setStep(2)} disabled={!name.trim()} className="ihype-btn-primary" style={{ width: '100%' }}>
           Continue →
@@ -143,8 +143,9 @@ export function VerifyForm({ profileId, type, initialName, initialCity, initialG
         </div>
       </label>
 
-      <label style={labelStyle}>Anything else to add?</label>
+      <label style={labelStyle} htmlFor="verify-notes">Anything else to add?</label>
       <textarea
+        id="verify-notes"
         style={{ ...fieldStyle, minHeight: 80, resize: 'vertical' }}
         value={notes}
         onChange={(e) => setNotes(e.target.value)}

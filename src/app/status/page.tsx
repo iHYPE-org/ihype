@@ -85,7 +85,7 @@ export default async function StatusPage() {
   const launchBlockers = health.status === 'ok' ? health.launchReadiness.blockers : ['Health snapshot is degraded.'];
 
   return (
-    <main className="container section" style={{ maxWidth: 560 }}>
+    <div className="container section" style={{ maxWidth: 560 }}>
       <h1 className="title">System Status</h1>
       <p className="meta" style={{ marginBottom: 24 }}>
         {allOk ? '✅ All systems operational' : '⚠️ Some checks failed'}
@@ -176,6 +176,6 @@ export default async function StatusPage() {
           </div>
         </>
       )}
-    </main>
+    </div>
   );
 }

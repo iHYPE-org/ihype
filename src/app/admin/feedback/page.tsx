@@ -11,7 +11,7 @@ export default async function AdminFeedbackPage() {
   if (!isAdminSession(session)) redirect('/');
   const requests = await db.featureRequest.findMany({ orderBy: [{ votes: 'desc' }, { createdAt: 'desc' }] });
   return (
-    <main className="container section">
+    <div className="container section">
       <h1 className="title">Feature Requests</h1>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {requests.map(fr => (
@@ -26,6 +26,6 @@ export default async function AdminFeedbackPage() {
           </div>
         ))}
       </div>
-    </main>
+    </div>
   );
 }

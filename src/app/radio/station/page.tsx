@@ -14,7 +14,7 @@ export default async function StationPage() {
   const state = await getStationState();
 
   return (
-    <main className="station-page">
+    <div className="station-page">
       <style>{STATION_PAGE_CSS}</style>
       <header className="station-page-head">
         <span className="station-page-eyebrow">IHYPE RADIO</span>
@@ -30,7 +30,7 @@ export default async function StationPage() {
       <p className="station-page-foot">
         Want your tracks in rotation? <Link href="/pages">Set up your page</Link> and enable free-use.
       </p>
-    </main>
+    </div>
   );
 }
 

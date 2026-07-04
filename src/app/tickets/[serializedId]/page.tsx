@@ -40,7 +40,7 @@ export default async function TicketPage({
   const qrCodeDataUrl = await buildTicketQrCodeDataUrl(ticket.serializedId);
 
   return (
-    <main className="container section">
+    <div className="container section">
       <section className="panel ticket-verification-panel">
         <div className="ticket-verification-header">
           <div>
@@ -141,6 +141,6 @@ export default async function TicketPage({
           </div>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

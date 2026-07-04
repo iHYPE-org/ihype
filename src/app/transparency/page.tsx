@@ -32,7 +32,7 @@ export default async function TransparencyPage() {
   ];
 
   return (
-    <main className="lp-wrap">
+    <div className="lp-wrap">
       <section className="lp-hero" style={{ paddingBottom: '20px' }}>
         <p className="lp-hype-eyebrow">LIVE STATS · UPDATED IN REAL TIME</p>
         <h1 className="lp-hero-h" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)' }}>Transparency report</h1>
@@ -94,6 +94,6 @@ export default async function TransparencyPage() {
           <Link href="/register" className="lp-btn-ghost">Join free →</Link>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

@@ -30,6 +30,7 @@ function ProfilePicker({
   const [open, setOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputId = `profile-picker-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
 
   useEffect(() => {
     if (query.length < 2) { setResults([]); return; }
@@ -72,8 +73,9 @@ function ProfilePicker({
 
   return (
     <div className="field" ref={containerRef} style={{ position: 'relative' }}>
-      <label>{label}</label>
+      <label htmlFor={inputId}>{label}</label>
       <input
+        id={inputId}
         value={query}
         onChange={e => setQuery(e.target.value)}
         onFocus={() => results.length > 0 && setOpen(true)}
@@ -200,8 +202,8 @@ export default function EventsNewPage() {
             <h1>Create an event.</h1>
             <p className="sub">Fill in the details. The 45/45/10 split is automatic — no configuration needed.</p>
             <div className="field">
-              <label>Event title</label>
-              <input onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Midnight Echo — Live at The Echo" value={title} />
+              <label htmlFor="event-title">Event title</label>
+              <input id="event-title" onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Midnight Echo — Live at The Echo" value={title} />
             </div>
             <div className="grid2">
               <div className="field">
@@ -226,12 +228,12 @@ export default function EventsNewPage() {
             <p className="sub">Set face value and capacity. The split is fixed: 45% artist · 45% venue · 10% promoters · $0 iHYPE.</p>
             <div className="grid2">
               <div className="field">
-                <label>Face value ($)</label>
-                <input max={500} min={0} onChange={(e) => setPrice(e.target.value)} type="number" value={price} />
+                <label htmlFor="event-price">Face value ($)</label>
+                <input id="event-price" max={500} min={0} onChange={(e) => setPrice(e.target.value)} type="number" value={price} />
               </div>
               <div className="field">
-                <label>Capacity</label>
-                <input max={5000} min={1} onChange={(e) => setCapacity(e.target.value)} type="number" value={capacity} />
+                <label htmlFor="event-capacity">Capacity</label>
+                <input id="event-capacity" max={5000} min={1} onChange={(e) => setCapacity(e.target.value)} type="number" value={capacity} />
               </div>
             </div>
             <div className="card">
@@ -292,20 +294,20 @@ export default function EventsNewPage() {
             <h1>Details.</h1>
             <p className="sub">Add a description and any requirements. This appears on the public event page.</p>
             <div className="field">
-              <label>Description</label>
-              <textarea onChange={(e) => setDescription(e.target.value)} placeholder="Tell fans what to expect…" value={description} />
+              <label htmlFor="event-description">Description</label>
+              <textarea id="event-description" onChange={(e) => setDescription(e.target.value)} placeholder="Tell fans what to expect…" value={description} />
             </div>
             <div className="field">
-              <label>Age requirement</label>
-              <select onChange={(e) => setAgeRequirement(e.target.value)} value={ageRequirement}>
+              <label htmlFor="event-age-requirement">Age requirement</label>
+              <select id="event-age-requirement" onChange={(e) => setAgeRequirement(e.target.value)} value={ageRequirement}>
                 <option>All ages</option>
                 <option>18+</option>
                 <option>21+</option>
               </select>
             </div>
             <div className="field">
-              <label>Dress code / notes (optional)</label>
-              <input onChange={(e) => setNotes(e.target.value)} placeholder="e.g. Smart casual, no photography" type="text" value={notes} />
+              <label htmlFor="event-notes">Dress code / notes (optional)</label>
+              <input id="event-notes" onChange={(e) => setNotes(e.target.value)} placeholder="e.g. Smart casual, no photography" type="text" value={notes} />
             </div>
             <button className="btn-primary" onClick={() => setStep(3)} type="button">Continue →</button>
             <button className="btn-ghost" onClick={() => setStep(1)} type="button">Back</button>

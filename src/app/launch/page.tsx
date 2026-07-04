@@ -49,7 +49,7 @@ const sprint = [
 
 export default function LaunchPage() {
   return (
-    <main style={{ paddingBottom: '6rem' }}>
+    <div style={{ paddingBottom: '6rem' }}>
       <section style={{ padding: 'clamp(4rem, 10vw, 8rem) 0 3rem' }}>
         <div className="container">
           <p
@@ -279,6 +279,6 @@ export default function LaunchPage() {
           </div>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

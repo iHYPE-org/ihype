@@ -16,7 +16,7 @@ export default async function AdminBroadcastPage() {
   if (!isAdminSession(session)) redirect(WORKBENCH_PATH);
 
   return (
-    <main className="container section admin-console">
+    <div className="container section admin-console">
       <section className="panel admin-console-hero">
         <div>
           <div className="badge">Broadcast</div>
@@ -27,6 +27,6 @@ export default async function AdminBroadcastPage() {
       <section className="panel admin-console-panel">
         <AdminBroadcastForm />
       </section>
-    </main>
+    </div>
   );
 }

@@ -42,7 +42,7 @@ export default async function EpkPage({ params }: { params: Promise<{ slug: stri
   const location = [profile.city, profile.stateRegion, profile.country].filter(Boolean).join(', ');
 
   return (
-    <main style={{ maxWidth: 720, margin: '0 auto', padding: '40px 24px', fontFamily: 'serif', color: '#111' }}>
+    <div style={{ maxWidth: 720, margin: '0 auto', padding: '40px 24px', fontFamily: 'serif', color: '#111' }}>
       <style>{`@media print { .no-print { display: none !important; } body { background: white; } }`}</style>
       <div className="no-print" style={{ marginBottom: 24 }}>
         <button onClick={() => window.print()} style={{ padding: '8px 18px', cursor: 'pointer' }}>
@@ -123,6 +123,6 @@ export default async function EpkPage({ params }: { params: Promise<{ slug: stri
       <section style={{ marginTop: 32, fontSize: 12, color: '#aaa' }}>
         <p>Generated via iHYPE · ihype.org</p>
       </section>
-    </main>
+    </div>
   );
 }

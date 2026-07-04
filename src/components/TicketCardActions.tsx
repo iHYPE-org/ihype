@@ -150,8 +150,9 @@ export function TicketCardActions({
               </>
             ) : (
               <>
-                <label style={{ display: 'block', fontSize: 12, color: 'rgba(240,235,229,.5)', marginBottom: 6 }}>Recipient&apos;s email</label>
+                <label htmlFor="ticket-transfer-email" style={{ display: 'block', fontSize: 12, color: 'rgba(240,235,229,.5)', marginBottom: 6 }}>Recipient&apos;s email</label>
                 <input
+                  id="ticket-transfer-email"
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="friend@example.com"
                   style={{ width: '100%', marginBottom: 16, padding: '10px 14px', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, background: 'var(--bg)', color: 'var(--ink)' }}

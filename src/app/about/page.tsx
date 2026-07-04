@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <main className="lp-wrap">
+    <div className="lp-wrap">
       <section className="lp-hero" style={{ paddingBottom: '20px' }}>
         <p className="lp-hype-eyebrow">NOT-FOR-PROFIT · BUILT FOR THE SCENE</p>
         <h1 className="lp-hero-h" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)' }}>About iHYPE</h1>
@@ -101,6 +101,6 @@ export default function AboutPage() {
           <Link href="/transparency" className="lp-btn-ghost">Transparency report →</Link>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

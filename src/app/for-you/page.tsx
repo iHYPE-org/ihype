@@ -33,7 +33,7 @@ export default async function ForYouPage() {
   });
 
   return (
-    <main className="foryou-page">
+    <div className="foryou-page">
       <style>{FORYOU_CSS}</style>
 
       <header className="foryou-head">
@@ -78,7 +78,7 @@ export default async function ForYouPage() {
       {!session?.user?.id && profiles.length > 0 && (
         <p className="foryou-foot"><Link href="/register">Sign up</Link> to make these personal.</p>
       )}
-    </main>
+    </div>
   );
 }
 
