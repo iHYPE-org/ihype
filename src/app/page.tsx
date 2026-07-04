@@ -1,13 +1,32 @@
+import type { Metadata } from 'next';
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { PiAdminButton } from '@/components/PiAdminButton';
 import { db } from '@/lib/db';
 import { IndexTabsShowcase } from '@/components/IndexTabsShowcase';
+import { getBaseUrl } from '@/lib/utils';
 
-export const metadata = {
-  title: 'iHYPE — Independent music built for the scene',
-  description: 'Not-for-profit music discovery for artists, promoters, venues, and fans. 0% ticket fees. Free forever.',
+const TITLE = 'iHYPE — Independent music built for the scene';
+const DESCRIPTION = 'iHYPE is a fan-first music platform where artists, DJs, and venues keep 90% of every ticket — 45% artist, 45% venue, 10% promoters, 0% iHYPE. No fees, no video, just live radio shows and shows worth hyping.';
+const SOCIAL_DESCRIPTION = 'A fan-first music platform where artists, DJs, and venues keep 90% of every ticket. No fees. No video. Just the scene.';
+
+export const metadata: Metadata = {
+  title: TITLE,
+  description: DESCRIPTION,
+  alternates: { canonical: getBaseUrl() },
+  openGraph: {
+    type: 'website',
+    siteName: 'iHYPE',
+    title: TITLE,
+    description: SOCIAL_DESCRIPTION,
+    url: getBaseUrl(),
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: TITLE,
+    description: SOCIAL_DESCRIPTION,
+  },
 };
 
 export default async function RootPage() {

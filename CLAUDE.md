@@ -31,8 +31,6 @@ explicitly list every piece of backend logic being preserved before touching any
 
 | File | What's wired |
 |---|---|
-| `src/app/studio/page.tsx` | Auth gate → redirects to `/login`, renders `<StudioDashboard>` |
-| `src/components/StudioDashboard.tsx` | `GET /api/shows?mine=1`, event creator posting to `POST /api/shows` with 45/45/10 |
 | `src/components/RadioStudio.tsx` | `GET /api/radio` for free-use crate tracks; deck A/B state; setlist management |
 | `src/app/radio/page.tsx` | `GET /api/shows?radioShows=1`; localStorage position + bookmark persistence |
 | `src/app/api/shows/route.ts` | Full show CRUD; rate limiting; 45/45/10 enforcement; radioShows filter |
@@ -43,7 +41,7 @@ explicitly list every piece of backend logic being preserved before touching any
 | `src/app/artists/[slug]/page.tsx` | Artist/DJ profile; media assets; upcoming shows |
 | `src/app/venues/[slug]/page.tsx` | Venue profile; calendar; show listing |
 | `src/app/home/page.tsx` | Workbench shell; WorkbenchData from DB via `getWorkbenchData()` |
-| `middleware.ts` | HTTPS enforcement; www→apex redirect; auth protection for /studio /admin |
+| `middleware.ts` | HTTPS enforcement; www→apex redirect; auth protection for /home /dashboard /admin |
 | `src/lib/permissions.ts` | `isAdminSession()` — checks `role === 'ADMIN'` |
 | `src/lib/runtime-flags.ts` | Feature flags: invite codes, demo logins, media storage |
 
@@ -135,10 +133,10 @@ If a UI detail is unclear → ask Claude Design to clarify in the .dc.html. Neve
 |---|---|---|
 | Artist.dc.html | /artists/[slug] | src/app/artists/[slug]/page.tsx |
 | DJProfile.dc.html | /artists/[slug]?role=dj | src/app/artists/[slug]/page.tsx |
-| Studio.dc.html | /studio | src/app/studio/page.tsx |
-| Radio.dc.html | /studio/radio | src/app/studio/radio/page.tsx |
 | WebRadio.dc.html | /radio | src/app/radio/page.tsx |
 | Pages.dc.html | /pages | src/app/pages/page.tsx |
+
+**Retired:** Studio.dc.html (the generic creator workbench) is gone — `/studio` is now a bare `redirect('/home')` with no auth gate, no `StudioDashboard` component, and nothing in the app links to it. Its former responsibilities live on Home (dashboard), EventCreator (event creation), and WebRadio (DJ radio management).
 
 ### Venue & Promoter
 | .dc.html | Route | src/app path |
