@@ -99,7 +99,6 @@ model User {
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   accounts                Account[]
-  mfaChallenges           MfaChallenge[]
   sessions                Session[]
   profiles                Profile[]
   shows                   Show[]                   @relation("CreatedShows")
@@ -127,7 +126,6 @@ model User {
   notifications           Notification[]
   magicLinkTokens         MagicLinkToken[]
   pushSubscriptions       PushSubscription[]
-  mediaQueue              UserMediaQueue[]
   emailBounced            Boolean                  @default(false)
   badges                  Badge[]
   showAttendees           ShowAttendee[]
@@ -618,16 +616,6 @@ model Passkey {
   @@index([userId])
 }
 
-model MfaChallenge {
-  id               String   @id @default(cuid())
-  token            String   @unique
-  userId           String
-  secretCiphertext String?
-  expiresAt        DateTime
-  createdAt        DateTime @default(now())
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
 model HypeEvent {
   id        String   @id @default(cuid())
   userId    String
@@ -912,17 +900,6 @@ model SetlistTemplate {
   profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@index([profileId])
-}
-
-model UserMediaQueue {
-  id       String   @id @default(cuid())
-  userId   String
-  mediaId  String
-  position Int
-  addedAt  DateTime @default(now())
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, position])
 }
 
 model AdSubmission {
