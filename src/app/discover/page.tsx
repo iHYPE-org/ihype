@@ -307,7 +307,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
             No artists yet
           </p>
           <p style={{ fontSize: 14 }}>Be the first to join the beta and claim your page.</p>
-          <Link href="/register" style={{ display: 'inline-block', marginTop: 20, padding: '12px 24px', background: 'var(--accent)', color: '#fff', borderRadius: 8, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
+          <Link href="/register" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: 44, marginTop: 20, padding: '12px 24px', background: 'var(--accent)', color: '#fff', borderRadius: 8, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
             Join iHYPE →
           </Link>
         </div>

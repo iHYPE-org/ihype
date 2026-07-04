@@ -274,7 +274,7 @@ export function TicketSaleCard({
                   type="button"
                   aria-label="Decrease quantity"
                   onClick={() => setQuantity((q) => String(Math.max(1, Number(q || 1) - 1)))}
-                  style={{ padding: '4px 12px', border: '1px solid var(--line, #333)', background: 'transparent', borderRadius: 6, cursor: 'pointer', fontSize: '1.2em', lineHeight: 1 }}
+                  style={{ minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '4px 12px', border: '1px solid var(--line, #333)', background: 'transparent', borderRadius: 6, cursor: 'pointer', fontSize: '1.2em', lineHeight: 1 }}
                 >
                   −
                 </button>
@@ -296,7 +296,7 @@ export function TicketSaleCard({
                     const cap = remainingTickets === null ? 8 : Math.max(remainingTickets, 1);
                     setQuantity((q) => String(Math.min(cap, Number(q || 1) + 1)));
                   }}
-                  style={{ padding: '4px 12px', border: '1px solid var(--line, #333)', background: 'transparent', borderRadius: 6, cursor: 'pointer', fontSize: '1.2em', lineHeight: 1 }}
+                  style={{ minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '4px 12px', border: '1px solid var(--line, #333)', background: 'transparent', borderRadius: 6, cursor: 'pointer', fontSize: '1.2em', lineHeight: 1 }}
                 >
                   +
                 </button>

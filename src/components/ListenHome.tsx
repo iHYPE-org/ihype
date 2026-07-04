@@ -65,9 +65,9 @@ type FavoriteMedia = {
 };
 
 const b: React.CSSProperties = {
-  fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, padding: '9px 16px',
+  fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, padding: '9px 16px', minHeight: 44,
   borderRadius: 9, cursor: 'pointer', border: 'none', transition: 'all 150ms',
-  display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none',
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none',
 };
 const bSolid: React.CSSProperties = { ...b, background: 'var(--accent)', color: '#fff' };
 const bGhost: React.CSSProperties = { ...b, background: 'transparent', color: 'rgba(240,235,229,.6)', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.1)' };

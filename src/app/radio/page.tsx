@@ -283,7 +283,7 @@ export default function RadioPage() {
               setTimeout(() => setHyped(false), 800);
             }}
             style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 44,
               padding: '7px 16px', borderRadius: 9999,
               border: `1px solid ${hyped ? 'rgba(255,80,41,.65)' : 'rgba(255,80,41,.4)'}`,
               background: hyped ? 'rgba(255,80,41,.26)' : 'rgba(255,80,41,.1)',
@@ -315,11 +315,11 @@ export default function RadioPage() {
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
           <button
             onClick={() => setFollowing(f => !f)}
-            style={{ padding: '7px 16px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: '1px solid rgba(185,131,255,.45)', background: following ? 'rgba(185,131,255,.22)' : 'rgba(185,131,255,.12)', color: '#b983ff', transition: 'all 150ms' }}
+            style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '7px 16px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: '1px solid rgba(185,131,255,.45)', background: following ? 'rgba(185,131,255,.22)' : 'rgba(185,131,255,.12)', color: '#b983ff', transition: 'all 150ms' }}
           >
             {following ? '✓ Following' : 'Follow'}
           </button>
-          <button style={{ padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1px solid rgba(255,255,255,.1)', background: 'rgba(255,255,255,.04)', color: 'rgba(240,235,229,.6)', transition: 'all 150ms' }}>
+          <button style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1px solid rgba(255,255,255,.1)', background: 'rgba(255,255,255,.04)', color: 'rgba(240,235,229,.6)', transition: 'all 150ms' }}>
             Tip
           </button>
         </div>
@@ -392,6 +392,7 @@ export default function RadioPage() {
               <button
                 onClick={e => { e.stopPropagation(); setNotifying(n => ({ ...n, [s.id]: !n[s.id] })); }}
                 style={{
+                  minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                   padding: '5px 11px', borderRadius: 6, fontSize: 11, flexShrink: 0,
                   border: notifying[s.id] ? '1px solid rgba(185,131,255,.45)' : '1px solid rgba(255,255,255,.1)',
                   background: notifying[s.id] ? 'rgba(185,131,255,.1)' : 'transparent',
@@ -466,7 +467,7 @@ export default function RadioPage() {
                   <button
                     onClick={e => toggleSave(s.id, e)}
                     title={s.userSaved ? 'Remove from saved' : 'Save for later'}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: s.userSaved ? 'var(--venue)' : 'rgba(240,235,229,.5)', fontSize: 16, padding: 4, transition: 'color 150ms' }}
+                    style={{ minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', color: s.userSaved ? 'var(--venue)' : 'rgba(240,235,229,.5)', fontSize: 16, padding: 4, transition: 'color 150ms' }}
                   >
                     {s.userSaved ? '🔖' : '🏷️'}
                   </button>
@@ -485,7 +486,7 @@ export default function RadioPage() {
 }
 
 const ctrlStyle: React.CSSProperties = {
-  width: 42, height: 42, borderRadius: '50%', border: 'none',
+  width: 44, height: 44, borderRadius: '50%', border: 'none',
   background: 'rgba(255,255,255,.08)', color: 'var(--ink)',
   cursor: 'pointer', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center',
   transition: 'background 150ms',
