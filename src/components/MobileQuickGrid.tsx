@@ -3,7 +3,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { useSwipeRouteNav } from '@/lib/useSwipeRouteNav';
+import { acquireScrollLock } from '@/lib/scrollLock';
 
 export type QuickGridItem = {
   id: string;
@@ -39,7 +39,6 @@ export function MobileQuickGrid({
   onSearchTap?: () => void;
   searchHref?: string;
 }) {
-  const swipeRef = useSwipeRouteNav(active);
   const cells: (QuickGridItem | null)[] = [...items];
   while (cells.length < 4) cells.push(null);
 
@@ -48,18 +47,13 @@ export function MobileQuickGrid({
 
   useEffect(() => {
     if (!active) return;
-    document.documentElement.classList.add('mqg-scroll-lock');
-    document.body.classList.add('mqg-scroll-lock');
-    return () => {
-      document.documentElement.classList.remove('mqg-scroll-lock');
-      document.body.classList.remove('mqg-scroll-lock');
-    };
+    return acquireScrollLock();
   }, [active]);
 
   if (!mounted) return null;
 
   return createPortal(
-    <div className={`mqg-overlay${active ? ' is-active' : ''}`} ref={swipeRef}>
+    <div className={`mqg-overlay${active ? ' is-active' : ''}`}>
       {searchPlaceholder && (searchHref ? (
         <Link className="mqg-search" href={searchHref}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>

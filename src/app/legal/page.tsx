@@ -106,7 +106,10 @@ function LegalTabs() {
       <style>{`
         .legal-wrap { max-width: 760px; margin: 0 auto; padding: 3rem 2rem 6rem; }
         .legal-label { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: .65rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 10px; }
-        .legal-h1 { font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; font-size: 2.2rem; letter-spacing: -.04em; line-height: .95; margin-bottom: .75rem; color: var(--ink); }
+        .legal-h1 { font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; font-size: clamp(1.75rem, 6vw, 2.4rem); letter-spacing: -.04em; line-height: .95; margin-bottom: .75rem; color: var(--ink); }
+        @media (max-width: 480px) {
+          .legal-wrap { padding: 2rem 1.1rem 4rem; }
+        }
         .legal-updated { font-size: .9rem; color: var(--ink-2); line-height: 1.75; margin-bottom: .85rem; }
         .legal-seg { display: flex; gap: 0; border-radius: 12px; border: 1px solid var(--line); max-width: 100%; overflow-x: auto; margin-bottom: 2.5rem; width: fit-content; }
         .legal-seg-btn { padding: 9px 20px; border: none; background: transparent; color: var(--ink-2); font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; font-size: .82rem; cursor: pointer; transition: all .15s; white-space: nowrap; flex-shrink: 0; }

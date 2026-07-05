@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import type { Metadata } from 'next';
 import { ListenHome } from '@/components/ListenHome';
+import { RouteShellSlot } from '@/components/RouteShellSlot';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -18,5 +19,5 @@ export default async function ListenPage() {
     redirect('/login?callbackUrl=/listen');
   }
 
-  return <ListenHome />;
+  return <RouteShellSlot><ListenHome /></RouteShellSlot>;
 }

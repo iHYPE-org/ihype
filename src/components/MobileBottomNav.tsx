@@ -4,6 +4,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { NavDrawer } from '@/components/NavDrawer';
+import { useMobileShell } from '@/lib/MobileShellContext';
+import type { ShellSection } from '@/lib/mobileShell';
+
+const TAB_TO_SECTION: Record<string, ShellSection> = { listen: 'listen', events: 'shows', pages: 'pages' };
 
 const TABS = [
   {
@@ -72,10 +76,16 @@ const tabButtonStyle = {
 export function MobileBottomNav() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const shell = useMobileShell();
 
   if (AUTH_PATHS.some(p => pathname.startsWith(p))) return null;
 
-  const active = matchTab(pathname);
+  // While the shell is active, its own section state is the source of truth
+  // for which tab is "active" — window.history.pushState (used to update the
+  // URL without a real navigation) doesn't necessarily update usePathname().
+  const active = shell?.active
+    ? (shell.section === 'shows' ? 'events' : shell.section)
+    : matchTab(pathname);
 
   return (
     <>
@@ -101,6 +111,11 @@ export function MobileBottomNav() {
           <Link
             key={t.id}
             href={t.href}
+            onClick={(e) => {
+              if (!shell?.active) return;
+              e.preventDefault();
+              shell.setSection(TAB_TO_SECTION[t.id]);
+            }}
             style={{ ...tabButtonStyle, color: active === t.id ? 'var(--accent, #ff5029)' : 'rgba(240,240,240,0.45)' }}
           >
             {t.icon}

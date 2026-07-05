@@ -5630,6 +5630,9 @@ html.high-contrast p {
 /* 4. Larger tap targets */
 @media (max-width: 768px) {
   .button, button, [role="button"] { min-height: 44px; min-width: 44px; }
+  /* .button.small's own min-height (2.15rem/34.4px) has higher specificity
+     than the plain .button rule above, so it needs its own override here. */
+  .button.small { min-height: 44px; }
   input, select, textarea { min-height: 44px; font-size: 16px; }
   .tag, .badge { padding: 6px 12px; }
   nav a, .nav-link { min-height: 44px; display: flex; align-items: center; }
@@ -6319,4 +6322,36 @@ h1, h2 {
 }
 @media (prefers-reduced-motion: reduce) {
   .mqg-btn { animation: none; transition: none; }
+}
+
+/* ── Mobile app shell ──────────────────────────────────────────────────
+   Persistent carousel holding Listen/Events/Pages always-mounted together
+   (MobileAppShell.tsx). Desktop untouched — hidden here, and each route's
+   own page content (RouteShellSlot) renders normally there instead. */
+.mas-root { display: none; }
+@media (max-width: 768px) {
+  .mas-root.is-active {
+    display: block;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+    z-index: 35;
+    overflow: hidden;
+    background: var(--bg);
+  }
+}
+.mas-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  touch-action: pan-y;
+}
+.mas-slot {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  will-change: transform;
 }

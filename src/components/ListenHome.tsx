@@ -259,7 +259,7 @@ function SeedDeck({ seeds, onAct }: { seeds: Seed[]; onAct: (seed: Seed, action:
   );
 }
 
-export function ListenHome() {
+export function ListenHome({ isShellForeground = true }: { isShellForeground?: boolean } = {}) {
   const [tab, setTab] = useState<'search' | 'seeds' | 'radio' | 'charts' | 'playlists'>('seeds');
   const [gridMode, setGridMode] = useState(true);
   const [genre, setGenre] = useState('All');
@@ -438,7 +438,7 @@ export function ListenHome() {
       )}
 
       <MobileQuickGrid
-        active={gridMode}
+        active={gridMode && isShellForeground}
         items={gridItems}
         onSearchTap={() => { setGridMode(false); setTab('search'); }}
         onSelect={(id) => { setGridMode(false); setTab(id as typeof tab); }}

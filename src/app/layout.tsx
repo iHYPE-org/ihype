@@ -18,6 +18,8 @@ import { WebVitals } from '@/components/WebVitals';
 import { SiteFooter } from '@/components/SiteFooter';
 import { CookieConsent } from '@/components/CookieConsent';
 import { AnalyticsBeacon } from '@/components/AnalyticsBeacon';
+import { MobileShellProvider } from '@/lib/MobileShellContext';
+import { MobileAppShellLoader } from '@/components/MobileAppShellLoader';
 
 const syne = Syne({ subsets: ['latin'], weight: ['700', '800'], variable: '--font-syne', display: 'swap' });
 const dmSans = DM_Sans({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-dm', display: 'swap' });
@@ -63,38 +65,40 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" suppressHydrationWarning className={`${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} ${forum.variable}`}>
       <body>
         <AppProviders>
-          <a href="#main-content" className="skip-to-content">Skip to main content</a>
-          <WebVitals />
-          <OfflineBanner />
-          <div aria-hidden="true" className="site-background">
-            <span className="site-background-orb site-background-orb-a" />
-            <span className="site-background-orb site-background-orb-b" />
-            <span className="site-background-grid" />
-          </div>
-          {/* Marketing nav — hidden when .wb-shell is present via CSS */}
-          <header aria-label="Primary site header" className="nav site-nav" style={{ height: 56 }}>
-            <div className="container" style={{ display: 'flex', alignItems: 'stretch', height: '100%', gap: '1rem' }}>
-              <HeaderLogo />
-              <div style={{ flex: 1, display: 'flex', alignItems: 'stretch' }}>
-                <SiteNavTabs />
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                <HeaderAuthLinks />
-                <HeaderUserMenu />
-              </div>
-              <NavDrawer />
+          <MobileShellProvider>
+            <a href="#main-content" className="skip-to-content">Skip to main content</a>
+            <WebVitals />
+            <OfflineBanner />
+            <div aria-hidden="true" className="site-background">
+              <span className="site-background-orb site-background-orb-a" />
+              <span className="site-background-orb site-background-orb-b" />
+              <span className="site-background-grid" />
             </div>
-          </header>
-          <MobileBottomNav />
-          <div className="site-shell">
-            <main id="main-content">{children}</main>
-            <SiteFooter />
-          </div>
-          <SitePlayerDock />
-          <CookieConsent />
-          <WebPushPrompt />
-          <ServiceWorkerRegister />
-
+            {/* Marketing nav — hidden when .wb-shell is present via CSS */}
+            <header aria-label="Primary site header" className="nav site-nav" style={{ height: 56 }}>
+              <div className="container" style={{ display: 'flex', alignItems: 'stretch', height: '100%', gap: '1rem' }}>
+                <HeaderLogo />
+                <div style={{ flex: 1, display: 'flex', alignItems: 'stretch' }}>
+                  <SiteNavTabs />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                  <HeaderAuthLinks />
+                  <HeaderUserMenu />
+                </div>
+                <NavDrawer />
+              </div>
+            </header>
+            <MobileBottomNav />
+            <MobileAppShellLoader />
+            <div className="site-shell">
+              <main id="main-content">{children}</main>
+              <SiteFooter />
+            </div>
+            <SitePlayerDock />
+            <CookieConsent />
+            <WebPushPrompt />
+            <ServiceWorkerRegister />
+          </MobileShellProvider>
         </AppProviders>
         {process.env.NEXT_PUBLIC_CF_BEACON_TOKEN ? (
           <AnalyticsBeacon token={process.env.NEXT_PUBLIC_CF_BEACON_TOKEN} />
