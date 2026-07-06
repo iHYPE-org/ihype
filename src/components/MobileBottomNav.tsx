@@ -49,13 +49,14 @@ const TABS = [
 ];
 
 function matchTab(pathname: string): string {
-  if (pathname.startsWith('/listen') || pathname.startsWith('/discover') || pathname.startsWith('/radio') || pathname === '/') return 'listen';
+  if (pathname.startsWith('/listen') || pathname.startsWith('/discover') || pathname.startsWith('/radio')) return 'listen';
   if (pathname.startsWith('/shows') || pathname.startsWith('/events')) return 'events';
   if (pathname.startsWith('/pages') || pathname.startsWith('/artists') || pathname.startsWith('/venues') || pathname.startsWith('/fans')) return 'pages';
   return '';
 }
 
-const AUTH_PATHS = ['/login', '/register', '/welcome', '/verify', '/beta'];
+// Auth-flow pages, plus /auth/magic and /auth/landing (both under /auth).
+const AUTH_PATHS = ['/login', '/register', '/welcome', '/verify', '/beta', '/auth'];
 
 const tabButtonStyle = {
   display: 'flex',
@@ -78,7 +79,9 @@ export function MobileBottomNav() {
   const [menuOpen, setMenuOpen] = useState(false);
   const shell = useMobileShell();
 
-  if (AUTH_PATHS.some(p => pathname.startsWith(p))) return null;
+  // Index (the marketing/pitch page) and every auth-flow page: no app chrome
+  // before someone's actually signed up.
+  if (pathname === '/' || AUTH_PATHS.some(p => pathname.startsWith(p))) return null;
 
   // While the shell is active, its own section state is the source of truth
   // for which tab is "active" — window.history.pushState (used to update the
