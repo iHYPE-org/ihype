@@ -8,6 +8,7 @@ import { FollowButton } from '@/components/FollowButton';
 import { ShareButton } from '@/components/ShareButton';
 import { PromoteShareButton } from '@/components/PromoteShareButton';
 import { canManageOwnedResource } from '@/lib/permissions';
+import { resolveProfileThemeVars } from '@/lib/profile-design';
 import { getDemoShowRelationExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
 import { getPromoterDashboard } from '@/lib/promoterDashboard';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
@@ -71,6 +72,7 @@ export default async function FanProfilePage({
   if (shouldHideDemoContent() && isDemoUser(profile.owner)) return notFound();
 
   const isOwner = canManageOwnedResource(session, profile.ownerId);
+  const themeVars = resolveProfileThemeVars(profile);
 
   const [hypedShows, userHype, promoterDashboard] = await Promise.all([
     db.hypeEvent.findMany({
@@ -91,7 +93,7 @@ export default async function FanProfilePage({
   const baseUrl = getBaseUrl();
 
   return (
-    <div className="fan-page">
+    <div className="fan-page" style={(themeVars ?? undefined) as React.CSSProperties | undefined}>
       <div className="fan-hero">
         <div className="fan-hero-row">
           <div className="fan-avatar">
@@ -176,7 +178,7 @@ export default async function FanProfilePage({
                     <h4>{show.title}</h4>
                     <p>{show.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}{show.venueProfile?.city ? ` · ${show.venueProfile.city}` : ''}</p>
                   </div>
-                  <span style={{ fontSize: 12, color: 'var(--role-fan, #b983ff)', fontWeight: 600 }}>Hyped ✓</span>
+                  <span style={{ fontSize: 12, color: 'var(--profile-accent, var(--role-fan, #b983ff))', fontWeight: 600 }}>Hyped ✓</span>
                 </Link>
               ))}
             </div>
@@ -201,7 +203,7 @@ export default async function FanProfilePage({
               <div className="fan-payout-list">
                 <div className="fan-payout-row">
                   <span>Total earned (pending settlement)</span>
-                  <span style={{ fontWeight: 700, color: 'var(--role-fan, #b983ff)' }}>{formatCurrencyFromCents(promoterDashboard.earnedCents)}</span>
+                  <span style={{ fontWeight: 700, color: 'var(--profile-accent, var(--role-fan, #b983ff))' }}>{formatCurrencyFromCents(promoterDashboard.earnedCents)}</span>
                 </div>
               </div>
             )}
@@ -215,10 +217,10 @@ export default async function FanProfilePage({
 
       <style>{`
         .fan-page { max-width: 900px; margin: 0 auto; padding: 32px 0 100px; }
-        .fan-hero { padding: 40px 32px 32px; }
+        .fan-hero { padding: 40px 32px 32px; background: var(--profile-hero, transparent); border-bottom: 1px solid var(--profile-border, transparent); }
         .fan-hero-row { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
         @media (max-width: 600px) { .fan-hero { padding: 24px 20px; } .fan-content { padding: 0 20px; } }
-        .fan-avatar { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg,#b983ff,#ff3e9a); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; overflow: hidden; }
+        .fan-avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--profile-hero, linear-gradient(135deg,#b983ff,#ff3e9a)); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; overflow: hidden; }
         .fan-display-name { font-family: var(--font-display); font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 4px; color: var(--ink); }
         .fan-handle { font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: rgba(240,235,229,.5); margin-bottom: 12px; }
         .fan-hero-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
@@ -227,14 +229,14 @@ export default async function FanProfilePage({
         .fan-hero-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; background: rgba(255,255,255,.06); color: var(--ink); border: 1px solid rgba(255,255,255,.1); }
         .fan-hero-btn:hover { background: rgba(255,255,255,.1); }
         .fan-stats { display: flex; gap: 28px; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,.06); }
-        .fan-stat-val { font-size: 22px; font-weight: 700; color: var(--role-fan, #b983ff); font-family: var(--font-display); }
+        .fan-stat-val { font-size: 22px; font-weight: 700; color: var(--profile-accent, var(--role-fan, #b983ff)); font-family: var(--font-display); }
         .fan-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: rgba(240,235,229,.55); margin-top: 2px; }
         .fan-content { padding: 0 32px; }
         .fan-tabs { display: flex; gap: 24px; border-bottom: 1px solid rgba(255,255,255,.06); margin: 28px 0; flex-wrap: wrap; }
         .fan-tab { padding: 10px 0; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 600; font-size: 14px; color: rgba(240,235,229,.6); text-decoration: none; }
-        .fan-tab.active { color: var(--ink); border-color: var(--role-fan, #b983ff); }
+        .fan-tab.active { color: var(--ink); border-color: var(--profile-accent, var(--role-fan, #b983ff)); }
         .fan-chip-row { display: flex; gap: 10px; flex-wrap: wrap; }
-        .fan-chip { padding: 8px 16px; border-radius: 9999px; background: rgba(185,131,255,.1); border: 1px solid rgba(185,131,255,.25); color: var(--role-fan, #b983ff); font-size: 13px; font-weight: 600; }
+        .fan-chip { padding: 8px 16px; border-radius: 9999px; background: rgba(185,131,255,.1); border: 1px solid rgba(185,131,255,.25); color: var(--profile-accent, var(--role-fan, #b983ff)); font-size: 13px; font-weight: 600; }
         .fan-top5-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
         .fan-top5-row { display: flex; gap: 16px; align-items: center; padding: 14px 16px; border: 1px solid rgba(255,255,255,.06); border-radius: 8px; background: var(--bg2); color: var(--ink); }
         .fan-top5-rank { font-family: var(--font-mono); font-size: 11px; color: rgba(240,235,229,.5); width: 20px; text-align: center; flex-shrink: 0; }
@@ -244,7 +246,7 @@ export default async function FanProfilePage({
         .fan-show-row h4 { font-family: var(--font-display); font-size: 14px; font-weight: 800; margin-bottom: 2px; color: var(--ink); }
         .fan-show-row p { font-size: 12px; color: rgba(240,235,229,.55); }
         .fan-ref-box { background: rgba(185,131,255,.06); border: 1px solid rgba(185,131,255,.2); border-radius: 10px; padding: 24px; margin-bottom: 24px; }
-        .fan-ref-label { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; color: var(--role-fan, #b983ff); margin-bottom: 10px; }
+        .fan-ref-label { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; color: var(--profile-accent, var(--role-fan, #b983ff)); margin-bottom: 10px; }
         .fan-ref-url { font-family: var(--font-mono); font-size: 13px; background: var(--bg); border: 1px solid rgba(255,255,255,.1); border-radius: 6px; padding: 10px 14px; margin-bottom: 12px; word-break: break-all; color: var(--ink); }
         .fan-payout-list { border: 1px solid rgba(255,255,255,.06); border-radius: 10px; padding: 0 20px; background: var(--bg2); }
         .fan-payout-row { display: flex; justify-content: space-between; padding: 14px 0; font-size: 14px; }
