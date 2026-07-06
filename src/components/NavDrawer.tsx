@@ -13,10 +13,9 @@ export const menuLinks = [
   { href: '/privacy', label: 'Privacy' },
   { href: '/dmca', label: 'DMCA' },
   { href: '/status', label: 'Status' },
-  { href: '/playlists', label: 'Playlists' },
-  { href: '/collab', label: 'Collab' },
+  { href: '/listen?tab=playlists', label: 'Playlists' },
   { href: '/feedback', label: 'Feedback' },
-  { href: '/discover?tab=fans', label: 'Leaderboard' },
+  { href: '/discover', label: 'Leaderboard' },
 ];
 
 /**

@@ -6,6 +6,15 @@ import { MobileQuickGrid, type QuickGridItem } from '@/components/MobileQuickGri
 
 const PALETTE = ['#ff5029', '#b983ff', '#22e5d4', '#ff3e9a', '#ffb84a', '#7fb3ff'];
 
+const TABS = [
+  { id: 'search', label: 'Search' },
+  { id: 'seeds', label: 'Seeds' },
+  { id: 'radio', label: 'Radio' },
+  { id: 'charts', label: 'Charts' },
+  { id: 'playlists', label: 'Playlists' },
+] as const;
+type ListenTab = (typeof TABS)[number]['id'];
+
 type Seed = {
   id: string;
   title: string;
@@ -259,9 +268,16 @@ function SeedDeck({ seeds, onAct }: { seeds: Seed[]; onAct: (seed: Seed, action:
   );
 }
 
-export function ListenHome({ isShellForeground = true }: { isShellForeground?: boolean } = {}) {
-  const [tab, setTab] = useState<'search' | 'seeds' | 'radio' | 'charts' | 'playlists'>('seeds');
-  const [gridMode, setGridMode] = useState(true);
+export function ListenHome({
+  initialTab,
+  isShellForeground = true,
+}: {
+  initialTab?: string;
+  isShellForeground?: boolean;
+} = {}) {
+  const validInitialTab = TABS.some((t) => t.id === initialTab) ? (initialTab as ListenTab) : null;
+  const [tab, setTab] = useState<ListenTab>(validInitialTab ?? 'seeds');
+  const [gridMode, setGridMode] = useState(!validInitialTab);
   const [genre, setGenre] = useState('All');
   const [seeds, setSeeds] = useState<Seed[] | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -398,14 +414,6 @@ export function ListenHome({ isShellForeground = true }: { isShellForeground?: b
   const searchArtists = (searchResults ?? []).filter((r) => r.type === 'artist' || r.type === 'venue' || r.type === 'promoter');
   const searchSongs = (searchResults ?? []).filter((r) => r.type === 'song');
 
-  const tabs: { id: typeof tab; label: string }[] = [
-    { id: 'search', label: 'Search' },
-    { id: 'seeds', label: 'Seeds' },
-    { id: 'radio', label: 'Radio' },
-    { id: 'charts', label: 'Charts' },
-    { id: 'playlists', label: 'Playlists' },
-  ];
-
   const openPlaylist = (playlists ?? []).find((p) => p.id === openPl) ?? null;
 
   const gridItems: QuickGridItem[] = [
@@ -458,7 +466,7 @@ export function ListenHome({ isShellForeground = true }: { isShellForeground?: b
       </div>
 
       <div className="mqg-tabstrip" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 26 }}>
-        {tabs.map((t) => (
+        {TABS.map((t) => (
           <div
             key={t.id}
             onClick={() => setTab(t.id)}

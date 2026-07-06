@@ -13,11 +13,16 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function ListenPage() {
+export default async function ListenPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ tab?: string }>;
+}) {
   const session = await auth();
   if (!session?.user?.id) {
     redirect('/login?callbackUrl=/listen');
   }
 
-  return <RouteShellSlot><ListenHome /></RouteShellSlot>;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  return <RouteShellSlot><ListenHome initialTab={resolvedSearchParams.tab} /></RouteShellSlot>;
 }

@@ -72,6 +72,7 @@ export function LoginScreen({
 
   return (
     <AuthSignalShell
+      compactOnMobile
       badge={tab === 'passkey' ? 'Passkey sign-in' : 'Magic link sign-in'}
       cardSubtitle={
         tab === 'passkey'

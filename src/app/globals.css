@@ -4975,6 +4975,25 @@ html.high-contrast p {
   }
 }
 
+@media (max-width: 768px) {
+  /* Login's marketing copy (headline, description, 3-tile signal grid) is
+     redundant on mobile — the pitch already happened on Index, and pushing
+     the actual sign-in card below a full hero forces a scroll to use it. */
+  .auth-signal-page-compact .auth-signal-copy {
+    display: none;
+  }
+  .auth-signal-page-compact .auth-signal-shell {
+    grid-template-columns: 1fr;
+  }
+  .auth-signal-page-compact.auth-signal-page {
+    padding: 1.25rem 16px;
+    min-height: 0;
+  }
+  .auth-signal-page-compact .auth-signal-card {
+    padding: 1.35rem;
+  }
+}
+
 /* ─── Home Page ─────────────────────────────────────────────────── */
 
 .home-page {

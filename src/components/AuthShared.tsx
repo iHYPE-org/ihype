@@ -43,6 +43,7 @@ export function AuthSignalShell({
   cardSubtitle,
   signals,
   wide = false,
+  compactOnMobile = false,
   children
 }: {
   eyebrow: string;
@@ -54,10 +55,19 @@ export function AuthSignalShell({
   cardSubtitle: string;
   signals: AuthSignal[];
   wide?: boolean;
+  /** Hides the marketing copy column on mobile so the actual sign-in card
+   * is reachable without scrolling — the pitch already happened on Index. */
+  compactOnMobile?: boolean;
   children: ReactNode;
 }) {
+  const classNames = [
+    'auth-signal-page',
+    wide && 'auth-signal-page-wide',
+    compactOnMobile && 'auth-signal-page-compact',
+  ].filter(Boolean).join(' ');
+
   return (
-    <section className={wide ? 'auth-signal-page auth-signal-page-wide' : 'auth-signal-page'}>
+    <section className={classNames}>
       <div className="auth-signal-shell">
         <div className="auth-signal-copy">
           <p className="auth-signal-eyebrow">{eyebrow}</p>
