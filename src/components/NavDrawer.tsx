@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { AccessibilityControls } from '@/components/AccessibilityControls';
 
 export const menuLinks = [
   { href: '/advertise', label: 'Advertise' },
@@ -81,7 +82,10 @@ export function NavDrawer({
                 );
               })}
             </ul>
-            <div style={{ borderTop: '1px solid var(--line)', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ borderTop: '1px solid var(--line)', padding: '12px 16px' }}>
+              <AccessibilityControls />
+            </div>
+            <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: 13, opacity: 0.5 }}>Theme</span>
               <ThemeToggle />
             </div>
