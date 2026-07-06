@@ -5711,6 +5711,17 @@ html.high-contrast p {
   .artist-banner, .venue-banner { min-height: 200px; background-size: cover; background-position: center top; }
   .profile-avatar-hero { width: 72px; height: 72px; }
 }
+.ptr-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: var(--accent, #ff5029);
+  transition: height .2s ease, opacity .2s ease;
+}
+.pull-to-refresh-spinner {
+  display: inline-flex;
+}
 .pull-to-refresh-spinner.spinning {
   animation: ptr-spin 0.8s linear infinite;
 }

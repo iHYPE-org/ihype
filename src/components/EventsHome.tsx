@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { TicketCardActions } from '@/components/TicketCardActions';
 import { PagesReferralTab } from '@/components/PagesReferralTab';
 import { MobileQuickGrid, type QuickGridItem } from '@/components/MobileQuickGrid';
+import { PullToRefresh } from '@/components/PullToRefresh';
 
 type Tab = 'search' | 'local' | 'foryou' | 'tickets' | 'referral';
 const TABS: { id: Tab; label: string }[] = [
@@ -135,22 +136,38 @@ export function EventsHome({
   const [loggedIn, setLoggedIn] = useState(false);
   const [ticketView, setTicketView] = useState<'active' | 'archive'>(initialTicketView === 'archive' ? 'archive' : 'active');
   const [ticketOrders, setTicketOrders] = useState<TicketOrder[] | null>(null);
+  const contentTopRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch('/api/shows/directory')
+    contentTopRef.current?.scrollIntoView({ block: 'start' });
+  }, [tab]);
+
+  const refreshDirectory = useCallback(() => {
+    return fetch('/api/shows/directory')
       .then((r) => r.json())
       .then((d) => { setShows(d.shows ?? []); setNearCity(d.nearCity ?? null); setUserGenres(d.userGenres ?? []); setLoggedIn(!!d.loggedIn); })
       .catch(() => setShows([]));
   }, []);
 
   useEffect(() => {
-    if (tab !== 'tickets' || !loggedIn) return;
+    refreshDirectory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const refreshTickets = useCallback(() => {
+    if (tab !== 'tickets' || !loggedIn) return Promise.resolve();
     setTicketOrders(null);
-    fetch(`/api/tickets?view=${ticketView}`)
+    return fetch(`/api/tickets?view=${ticketView}`)
       .then((r) => (r.ok ? r.json() : { orders: [] }))
       .then((d) => setTicketOrders(d.orders ?? []))
       .catch(() => setTicketOrders([]));
   }, [tab, loggedIn, ticketView]);
+
+  useEffect(() => {
+    refreshTickets();
+  }, [refreshTickets]);
+
+  const refreshAll = useCallback(() => Promise.all([refreshDirectory(), refreshTickets()]), [refreshDirectory, refreshTickets]);
 
   const allShows = shows ?? [];
   const genresSet = useMemo(() => new Set(userGenres), [userGenres]);
@@ -195,7 +212,9 @@ export function EventsHome({
         searchPlaceholder="Search artists, venues, shows…"
       />
 
+      <PullToRefresh onRefresh={refreshAll}>
       <div className={`mqg-content${gridMode ? ' is-hidden' : ''}`}>
+      <div ref={contentTopRef} />
       <button className="mqg-back" onClick={() => setGridMode(true)} type="button">
         <svg fill="none" height="18" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="18"><polyline points="15 18 9 12 15 6" /></svg>
         Events
@@ -337,6 +356,7 @@ export function EventsHome({
 
       {tab === 'referral' && <PagesReferralTab />}
       </div>
+      </PullToRefresh>
     </div>
   );
 }

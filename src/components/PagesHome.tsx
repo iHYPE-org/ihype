@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { FollowButton } from '@/components/FollowButton';
 import { MobileQuickGrid, type QuickGridItem } from '@/components/MobileQuickGrid';
+import { PullToRefresh } from '@/components/PullToRefresh';
 
 const TYPE_COLOR: Record<string, string> = {
   ARTIST: '#ff5029',
@@ -123,15 +124,25 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
   const [signedOut, setSignedOut] = useState(false);
   const [q, setQ] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[] | null>(null);
+  const contentTopRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch('/api/pages/home')
+    contentTopRef.current?.scrollIntoView({ block: 'start' });
+  }, [tab]);
+
+  const refreshAll = useCallback(() => {
+    return fetch('/api/pages/home')
       .then((r) => {
         if (r.status === 401) { setSignedOut(true); return null; }
         return r.json();
       })
       .then((d) => { if (d) setData(d); })
       .catch(() => setData({ myProfiles: [], following: [], followersCount: 0, suggested: [], mutualCount: 0 }));
+  }, []);
+
+  useEffect(() => {
+    refreshAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -198,7 +209,9 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
         searchPlaceholder="Search artists, venues, shows…"
       />
 
+      <PullToRefresh onRefresh={refreshAll}>
       <div className={`mqg-content${gridMode ? ' is-hidden' : ''}`}>
+      <div ref={contentTopRef} />
       <button className="mqg-back" onClick={() => setGridMode(true)} type="button">
         <svg fill="none" height="18" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="18"><polyline points="15 18 9 12 15 6" /></svg>
         Pages
@@ -547,6 +560,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
         </>
       )}
       </div>
+      </PullToRefresh>
     </div>
   );
 }

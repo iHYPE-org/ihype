@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { MobileQuickGrid, type QuickGridItem } from '@/components/MobileQuickGrid';
+import { PullToRefresh } from '@/components/PullToRefresh';
 
 const PALETTE = ['#ff5029', '#b983ff', '#22e5d4', '#ff3e9a', '#ffb84a', '#7fb3ff'];
 
@@ -302,16 +303,32 @@ export function ListenHome({
   const [newPlName, setNewPlName] = useState('');
   const [dragState, setDragState] = useState<{ index: number; overIndex: number } | null>(null);
   const rowRefsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const contentTopRef = useRef<HTMLDivElement>(null);
+
+  // Switching tabs (including the first grid→tab transition) should always
+  // land at the top of the new tab's content — the scroll container (either
+  // window on desktop, or the shell's own .mas-slot on mobile) otherwise
+  // keeps whatever scrollTop the previous tab left behind.
+  useEffect(() => {
+    contentTopRef.current?.scrollIntoView({ block: 'start' });
+  }, [tab]);
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2200); };
 
+  const refreshAll = useCallback(() => {
+    return Promise.all([
+      fetch('/api/discover/seeds').then((r) => r.json()).then((d) => setSeeds(d.seeds ?? [])).catch(() => setSeeds([])),
+      fetch('/api/shows?radioShows=1').then((r) => (r.ok ? r.json() : [])).then((d) => setRadio(Array.isArray(d) ? d : [])).catch(() => setRadio([])),
+      fetch('/api/charts').then((r) => r.json()).then((d) => setCharts(d)).catch(() => setCharts({ national: [], local: [], forYou: [] })),
+      fetch('/api/fan-playlists').then((r) => (r.ok ? r.json() : null)).then((d) => {
+        if (d) { setPlaylists(d.playlists ?? []); setFavorites(d.favorites ?? []); }
+      }).catch(() => {}),
+    ]);
+  }, []);
+
   useEffect(() => {
-    fetch('/api/discover/seeds').then((r) => r.json()).then((d) => setSeeds(d.seeds ?? [])).catch(() => setSeeds([]));
-    fetch('/api/shows?radioShows=1').then((r) => (r.ok ? r.json() : [])).then((d) => setRadio(Array.isArray(d) ? d : [])).catch(() => setRadio([]));
-    fetch('/api/charts').then((r) => r.json()).then((d) => setCharts(d)).catch(() => setCharts({ national: [], local: [], forYou: [] }));
-    fetch('/api/fan-playlists').then((r) => (r.ok ? r.json() : null)).then((d) => {
-      if (d) { setPlaylists(d.playlists ?? []); setFavorites(d.favorites ?? []); }
-    }).catch(() => {});
+    refreshAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -462,7 +479,9 @@ export function ListenHome({
         searchPlaceholder="Search artists, venues, shows…"
       />
 
+      <PullToRefresh onRefresh={refreshAll}>
       <div className={`mqg-content${gridMode ? ' is-hidden' : ''}`}>
+      <div ref={contentTopRef} />
       <button className="mqg-back" onClick={() => setGridMode(true)} type="button">
         <svg fill="none" height="18" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="18"><polyline points="15 18 9 12 15 6" /></svg>
         Listen
@@ -821,6 +840,7 @@ export function ListenHome({
         </div>
       )}
       </div>
+      </PullToRefresh>
     </div>
   );
 }
