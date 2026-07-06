@@ -5,11 +5,22 @@ import Link from 'next/link';
 import { PiAdminButton } from '@/components/PiAdminButton';
 import { db } from '@/lib/db';
 import { IndexTabsShowcase } from '@/components/IndexTabsShowcase';
+import { IndexStickyCta } from '@/components/IndexStickyCta';
 import { getBaseUrl } from '@/lib/utils';
 
 const TITLE = 'iHYPE — Independent music built for the scene';
 const DESCRIPTION = 'Listen free, forever. iHYPE is a fan-first music platform where artists, DJs, and venues keep 90% of every ticket — 45% artist, 45% venue, 10% promoters, 0% iHYPE. No fees, no video, just live radio shows and shows worth hyping.';
 const SOCIAL_DESCRIPTION = 'Listen free, forever. Artists, DJs, and venues keep 90% of every ticket. No fees. No video. Just the scene.';
+
+const COMPARISON_ROWS: [string, string, string, string][] = [
+  ['Service fees on tickets', '✗ up to 27%', '—', '✓ 0%'],
+  ['Dynamic / surge pricing', '✗ yes', '—', '✓ never'],
+  ['Payola / pay-to-play algorithms', '—', '✗ yes', '✓ never'],
+  ['Takes a cut of artist revenue', '—', '✗ ~70% kept', '✓ 0%'],
+  ['Sells fan data to advertisers', '✗ yes', '✗ yes', '✓ never'],
+  ['Locks artists into exclusivity', '✗ some deals', '✗ some deals', '✓ no lock-in'],
+  ['Charges for platform access', '✗ yes', '✗ yes', '✓ free forever'],
+];
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -46,7 +57,7 @@ export default async function RootPage() {
     <div style={{ paddingBottom: '6rem' }}>
 
       {/* ── Hero ─────────────────────────────────────────────── */}
-      <section style={{ padding: 'clamp(4rem, 10vw, 8rem) 0 3rem', position: 'relative' }}>
+      <section className="idx-hero-section" style={{ padding: 'clamp(4rem, 10vw, 8rem) 0 3rem', position: 'relative' }}>
         <div className="container">
           <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '3rem', alignItems: 'center' }}>
             <div>
@@ -54,14 +65,14 @@ export default async function RootPage() {
                 Listen free, forever.
               </p>
               {/* Live stats bar */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
+              <div className="idx-hero-stats" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
                 {[
                   { value: fmt(artistCount), label: 'artists' },
                   { value: fmt(fanCount), label: 'fans' },
                   { value: fmt(totalHypes), label: 'hypes' },
                   { value: fmt(showCount), label: 'shows live' },
                 ].map((s, i) => (
-                  <div key={i} style={{
+                  <div className="idx-hero-pill" key={i} style={{
                     display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
                     padding: '0.3rem 0.75rem', borderRadius: 999,
                     border: '1px solid rgba(255,255,255,.08)',
@@ -73,7 +84,7 @@ export default async function RootPage() {
                 ))}
               </div>
 
-              <h1 style={{
+              <h1 className="idx-hero-h1" style={{
                 fontFamily: 'var(--f-d)',
                 fontWeight: 800,
                 fontSize: 'clamp(3rem, 8vw, 6.5rem)',
@@ -91,7 +102,7 @@ export default async function RootPage() {
                   backgroundClip: 'text',
                 }}>for the scene.</span>
               </h1>
-              <p style={{
+              <p className="idx-hero-sub" style={{
                 fontFamily: 'var(--f-b)',
                 fontSize: 'clamp(1rem, 2vw, 1.2rem)',
                 color: 'var(--ink-2)',
@@ -102,11 +113,43 @@ export default async function RootPage() {
                 Zero fees. 45% to the artist, 45% to the venue, 10% to whoever
                 brought the fan. iHYPE takes nothing — and that&apos;s locked in.
               </p>
+
+              {/* Mobile-only: the pitch has to convert without a scroll — desktop
+                  relies on the final CTA section further down the page. */}
+              <div className="idx-hero-cta">
+                <Link href="/register" className="idx-hero-cta-primary">Join Beta — it&apos;s free →</Link>
+                <Link href="/login" className="idx-hero-cta-secondary">Already have an account? <u>Sign in</u></Link>
+              </div>
             </div>
 
           </div>
 
         </div>
+        <style>{`
+          .idx-hero-cta { display: none; }
+          @media (max-width: 768px) {
+            .idx-hero-section { padding: 1.5rem 0 1.25rem !important; }
+            .idx-hero-stats { margin-bottom: 0.85rem !important; gap: 0.35rem !important; }
+            .idx-hero-pill { padding: 0.25rem 0.6rem !important; }
+            .idx-hero-h1 { font-size: clamp(2.5rem, 12.5vw, 3.5rem) !important; margin-bottom: 0.75rem !important; }
+            .idx-hero-sub { font-size: 0.95rem !important; margin-bottom: 1.1rem !important; }
+            .idx-hero-cta {
+              display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.25rem;
+            }
+            .idx-hero-cta-primary {
+              display: flex; align-items: center; justify-content: center; gap: 8px;
+              font-family: var(--f-d); font-weight: 800; font-size: 0.95rem;
+              background: var(--accent); color: #fff; border-radius: 14px;
+              padding: 0.9rem; text-decoration: none;
+              box-shadow: 0 10px 30px -8px rgba(255,80,41,.55);
+            }
+            .idx-hero-cta-secondary {
+              display: flex; align-items: center; justify-content: center;
+              font-family: var(--f-b); font-size: 0.8rem; color: var(--ink-3); text-decoration: none;
+            }
+            .idx-hero-cta-secondary u { color: var(--ink-2); }
+          }
+        `}</style>
       </section>
 
       {/* ── Why iHYPE exists ─────────────────────────────────── */}
@@ -222,14 +265,14 @@ export default async function RootPage() {
           <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 'clamp(1.8rem, 4vw, 3rem)', letterSpacing: '-0.03em', color: 'var(--ink)', margin: '0 0 1.5rem' }}>
             Built for everyone in the room.
           </h2>
-          <div className="grid grid-2" style={{ gap: '0.75rem' }}>
+          <div className="grid grid-2 idx-roles-grid" style={{ gap: '0.75rem' }}>
             {[
               { role: 'Fans', color: '#b983ff', icon: '🎶', href: '/register?role=FAN', items: ['Discover new music before it blows up', 'Buy tickets with no fees', 'Earn 10% on tickets you refer', 'Track your scene with hype streaks'] },
               { role: 'Artists', color: '#ff5029', icon: '🎸', href: '/register?role=ARTIST', items: ['45% of every ticket you sell', 'Upload music as swipeable Seeds', 'Build your public page and catalog', 'See who\'s hyping your work'] },
               { role: 'Venues', color: '#22e5d4', icon: '🏟️', href: '/register?role=VENUE', items: ['45% of every show you host', 'Zero ticketing fees for buyers', 'Demand radar shows what\'s trending', 'Connect with artists and promoters'] },
               { role: 'Promoters / DJs', color: '#ffb84a', icon: '📣', href: '/register?role=DJ', items: ['10% referral on every ticket you drive', 'Host radio shows on the platform', 'Build a following and grow your scene', 'Referral links for every event'] },
             ].map(r => (
-              <div key={r.role} style={{
+              <div className="idx-role-card" key={r.role} style={{
                 padding: '1.5rem', borderRadius: 18,
                 border: `1px solid ${r.color}25`,
                 background: `${r.color}08`,
@@ -260,6 +303,18 @@ export default async function RootPage() {
             ))}
           </div>
         </div>
+        <style>{`
+          @media (max-width: 768px) {
+            .idx-roles-grid {
+              display: flex !important; gap: 0.65rem !important;
+              overflow-x: auto; scroll-snap-type: x mandatory;
+              padding: 2px 1.25rem 6px; margin: 0 -1.25rem; -webkit-overflow-scrolling: touch;
+              scrollbar-width: none;
+            }
+            .idx-roles-grid::-webkit-scrollbar { display: none; }
+            .idx-role-card { scroll-snap-align: center; flex: 0 0 84%; }
+          }
+        `}</style>
       </section>
 
       {/* ── The Split ────────────────────────────────────────── */}
@@ -319,8 +374,9 @@ export default async function RootPage() {
             What iHYPE will never do.
           </h2>
 
-          {/* Comparison table */}
-          <div style={{ overflowX: 'auto' }}>
+          {/* Comparison table (desktop) / stacked practice cards (mobile —
+              a table is unreadable on a phone even scrolled horizontally) */}
+          <div className="idx-compare-table" style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--f-b)', fontSize: '0.9rem' }}>
               <thead>
                 <tr>
@@ -331,15 +387,7 @@ export default async function RootPage() {
                 </tr>
               </thead>
               <tbody>
-                {[
-                  ['Service fees on tickets', '✗ up to 27%', '—', '✓ 0%'],
-                  ['Dynamic / surge pricing', '✗ yes', '—', '✓ never'],
-                  ['Payola / pay-to-play algorithms', '—', '✗ yes', '✓ never'],
-                  ['Takes a cut of artist revenue', '—', '✗ ~70% kept', '✓ 0%'],
-                  ['Sells fan data to advertisers', '✗ yes', '✗ yes', '✓ never'],
-                  ['Locks artists into exclusivity', '✗ some deals', '✗ some deals', '✓ no lock-in'],
-                  ['Charges for platform access', '✗ yes', '✗ yes', '✓ free forever'],
-                ].map(([practice, tm, sp, ih]) => (
+                {COMPARISON_ROWS.map(([practice, tm, sp, ih]) => (
                   <tr key={practice} style={{ borderBottom: '1px solid rgba(255,255,255,.04)' }}>
                     <td style={{ padding: '0.85rem 1rem', color: 'var(--ink-2)', lineHeight: 1.4 }}>{practice}</td>
                     <td style={{ padding: '0.85rem 1rem', textAlign: 'center', color: tm.startsWith('✗') ? '#ff5029' : 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '0.8rem' }}>{tm}</td>
@@ -350,7 +398,54 @@ export default async function RootPage() {
               </tbody>
             </table>
           </div>
+
+          <div className="idx-compare-cards">
+            <div className="idx-compare-head">
+              <span>Ticketmaster</span>
+              <span>Spotify</span>
+              <span className="idx-compare-head-ihype">iHYPE</span>
+            </div>
+            {COMPARISON_ROWS.map(([practice, tm, sp, ih]) => (
+              <div className="idx-compare-card" key={practice}>
+                <div className="idx-compare-practice">{practice}</div>
+                <div className="idx-compare-row">
+                  <div className={`idx-compare-cell${tm.startsWith('✗') ? ' bad' : ' neutral'}`}>{tm.replace(/^[✗✓] /, '')}</div>
+                  <div className={`idx-compare-cell${sp.startsWith('✗') ? ' bad' : ' neutral'}`}>{sp.replace(/^[✗✓] /, '')}</div>
+                  <div className="idx-compare-cell good">{ih.replace(/^[✗✓] /, '')}</div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
+        <style>{`
+          .idx-compare-cards { display: none; }
+          @media (max-width: 768px) {
+            .idx-compare-table { display: none; }
+            .idx-compare-cards { display: block; }
+            .idx-compare-head {
+              display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;
+              padding: 0 4px 6px; margin-bottom: 2px;
+            }
+            .idx-compare-head span {
+              font-family: var(--f-m); font-size: 8px; letter-spacing: .06em; text-transform: uppercase;
+              color: var(--ink-3); text-align: center;
+            }
+            .idx-compare-head-ihype { color: #22e5d4 !important; font-weight: 700; }
+            .idx-compare-card {
+              border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 14px 16px; margin-bottom: 8px;
+              display: flex; flex-direction: column; gap: 10px;
+            }
+            .idx-compare-practice { font-family: var(--f-b); font-size: 13px; color: var(--ink); font-weight: 500; line-height: 1.4; }
+            .idx-compare-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+            .idx-compare-cell {
+              border-radius: 8px; padding: 7px 4px; text-align: center;
+              background: rgba(255,255,255,.03); font-family: var(--f-m); font-size: 10.5px; font-weight: 700;
+            }
+            .idx-compare-cell.bad { color: #ff5029; }
+            .idx-compare-cell.good { color: #22e5d4; }
+            .idx-compare-cell.neutral { color: var(--ink-3); font-weight: 400; }
+          }
+        `}</style>
       </section>
 
       {/* ── Final CTA ────────────────────────────────────────── */}
@@ -399,6 +494,7 @@ export default async function RootPage() {
       </section>
 
       <PiAdminButton />
+      <IndexStickyCta heroSelector=".idx-hero-section" />
     </div>
   );
 }
