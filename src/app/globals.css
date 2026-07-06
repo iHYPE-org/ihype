@@ -6226,6 +6226,10 @@ h1, h2 {
    the mobile shell already uses. */
 .mqg-overlay { display: none; }
 .mqg-back { display: none; }
+/* Desktop default for the pill tab strips; the mobile media block below
+   hides them. Must live here (not inline) — an inline display:flex would
+   defeat the media query's display:none, since inline always wins. */
+.mqg-tabstrip { display: flex; }
 @media (max-width: 768px) {
   .mqg-overlay.is-active {
     display: flex;

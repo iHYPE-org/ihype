@@ -457,7 +457,7 @@ export function ListenHome({ isShellForeground = true }: { isShellForeground?: b
         <p style={{ fontSize: 14, color: 'rgba(240,235,229,.55)', margin: 0 }}>Discovery, radio, and charts — personalized for your taste.</p>
       </div>
 
-      <div className="mqg-tabstrip" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 26 }}>
+      <div className="mqg-tabstrip" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 26 }}>
         {tabs.map((t) => (
           <div
             key={t.id}
@@ -547,9 +547,33 @@ export function ListenHome({ isShellForeground = true }: { isShellForeground?: b
           )}
           <p style={{ fontSize: 13, color: 'rgba(240,235,229,.5)', margin: '0 0 18px', textAlign: 'center' }}>Swipe right to save · left to skip</p>
           {seeds === null ? (
-            <div style={emptyStyle}><p>Loading seeds…</p></div>
+            <div style={{ position: 'relative', width: '100%', maxWidth: 440, aspectRatio: '1 / 1', margin: '4px auto 0' }}>
+              <div className="ihype-skeleton" style={{ position: 'absolute', inset: 0, borderRadius: 28 }} />
+            </div>
           ) : filteredSeeds.length === 0 ? (
-            <div style={emptyStyle}><p>No new seeds right now.</p></div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              {/* Same frame the seed deck renders into — the module keeps its design even with nothing to show */}
+              <div style={{
+                position: 'relative', width: '100%', maxWidth: 440, aspectRatio: '1 / 1', margin: '4px auto 0',
+                borderRadius: 28, border: '1px dashed rgba(255,255,255,.16)',
+                background: 'linear-gradient(155deg, rgba(255,80,41,.06), rgba(185,131,255,.05))',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 24, textAlign: 'center',
+              }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.16em', textTransform: 'uppercase', color: 'rgba(240,235,229,.4)', border: '1px solid rgba(255,255,255,.14)', borderRadius: 9999, padding: '5px 11px' }}>No new seeds</span>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 24, letterSpacing: '-.03em', color: 'rgba(240,235,229,.55)', lineHeight: 1 }}>Fresh drops land here</div>
+                <p style={{ fontSize: 13, color: 'rgba(240,235,229,.45)', margin: 0 }}>New seeds appear as artists upload. Check back soon.</p>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 22, marginTop: 24, opacity: 0.35, pointerEvents: 'none' }} aria-hidden="true">
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                  <span style={{ width: 58, height: 58, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,.12)', background: 'rgba(255,255,255,.04)' }}>✕</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)' }}>Skip</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                  <span style={{ width: 58, height: 58, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(34,229,212,.4)', background: 'rgba(34,229,212,.14)' }}>+</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)' }}>Save to library</span>
+                </div>
+              </div>
+            </div>
           ) : (
             <SeedDeck onAct={actOnSeed} seeds={filteredSeeds} />
           )}
@@ -561,7 +585,16 @@ export function ListenHome({ isShellForeground = true }: { isShellForeground?: b
         <div>
           {radio === null && <CardSkeleton />}
           {radio !== null && !liveShow && upcomingShows.length === 0 && (
-            <div style={emptyStyle}><p>No shows on air or scheduled right now.</p></div>
+            <div style={{ border: '1px dashed rgba(255,255,255,.14)', borderRadius: 16, padding: 20, background: 'rgba(255,255,255,.02)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'rgba(240,235,229,.4)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 7 }}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'rgba(240,235,229,.25)' }} /> OFF AIR
+              </div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 4, color: 'rgba(240,235,229,.55)' }}>No shows on air</div>
+              <div style={{ fontSize: 13, color: 'rgba(240,235,229,.45)', marginBottom: 16 }}>DJs go live on audio — scheduled shows appear here.</div>
+              <div style={{ display: 'flex', gap: 8, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,.06)' }}>
+                <Link href="/radio" style={bGhost}>View the station</Link>
+              </div>
+            </div>
           )}
           {liveShow && (
             <div style={{ border: '1px solid rgba(255,255,255,.07)', borderRadius: 16, padding: 20, background: 'rgba(255,255,255,.03)', marginBottom: 12 }}>
@@ -674,7 +707,22 @@ export function ListenHome({ isShellForeground = true }: { isShellForeground?: b
               ))}
             </div>
           )}
-          {playlists !== null && playlists.length === 0 && <div style={{ ...emptyStyle, padding: '40px 20px' }}><p>No playlists yet. Create your first.</p></div>}
+          {playlists !== null && playlists.length === 0 && (
+            <div style={{ marginBottom: 12 }}>
+              <div aria-hidden="true" style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 12 }}>
+                {[0, 1].map((i) => (
+                  <div key={i} style={{ border: '1px dashed rgba(255,255,255,.12)', borderRadius: 16, overflow: 'hidden', background: 'rgba(255,255,255,.015)' }}>
+                    <div style={{ height: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg,${PALETTE[i]}14 0%, transparent 100%)`, borderBottom: '1px solid rgba(255,255,255,.04)', fontSize: 28, opacity: 0.4 }}>🎵</div>
+                    <div style={{ padding: '16px 18px 18px' }}>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 2, color: 'rgba(240,235,229,.3)' }}>{i === 0 ? 'Your first playlist' : 'Room for more'}</div>
+                      <div style={{ fontSize: 13, color: 'rgba(240,235,229,.25)' }}>0 tracks</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p style={{ textAlign: 'center', fontSize: 13, color: 'rgba(240,235,229,.5)', marginTop: 16 }}>No playlists yet — name one above to get started.</p>
+            </div>
+          )}
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 12 }}>
             {(playlists ?? []).map((p, i) => (

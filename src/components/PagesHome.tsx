@@ -180,7 +180,7 @@ export function PagesHome({ initialTab, isShellForeground = true }: { initialTab
         </p>
       </div>
 
-      <nav className="mqg-tabstrip" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 26 }} aria-label="Pages sections">
+      <nav className="mqg-tabstrip" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 26 }} aria-label="Pages sections">
         {TABS.map((t) => (
           <div
             key={t.id}

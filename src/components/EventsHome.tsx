@@ -48,9 +48,27 @@ const emptyStyle = { textAlign: 'center' as const, padding: '60px 24px', color: 
 function EventList({ shows, emptyTitle, emptyBody }: { shows: Show[]; emptyTitle: string; emptyBody: string }) {
   if (shows.length === 0) {
     return (
-      <div style={emptyStyle}>
-        <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, color: 'rgba(240,235,229,.6)', margin: '14px 0 6px' }}>{emptyTitle}</h3>
-        <p>{emptyBody}</p>
+      <div>
+        {/* Ghost event card — the module keeps its designed shape even with nothing to list */}
+        <div aria-hidden="true" style={{ ...eventCard, border: '1px dashed rgba(255,255,255,.12)', background: 'rgba(255,255,255,.015)' }}>
+          <div style={{ width: 110, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: '1px solid rgba(255,255,255,.04)', background: 'linear-gradient(135deg, rgba(255,80,41,.07) 0%, transparent 100%)', fontSize: 30, opacity: 0.35 }}>🎵</div>
+          <div style={{ flex: 1, minWidth: 0, padding: '18px 20px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.25)', marginBottom: 7 }}>Date · Time</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 4, color: 'rgba(240,235,229,.3)' }}>Your next show</div>
+            <div style={{ fontSize: 13, color: 'rgba(240,235,229,.22)' }}>Venue · City</div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', padding: '18px 20px', gap: 8, flexShrink: 0 }}>
+            <div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 800, color: 'rgba(255,80,41,.35)', letterSpacing: '-.02em' }}>—</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(240,235,229,.2)' }}>$0 fees</div>
+            </div>
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 12, padding: '8px 14px', borderRadius: 8, background: 'rgba(255,80,41,.2)', color: 'rgba(255,255,255,.4)' }}>Get ticket</span>
+          </div>
+        </div>
+        <div style={{ ...emptyStyle, padding: '28px 24px' }}>
+          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, color: 'rgba(240,235,229,.6)', margin: '0 0 6px' }}>{emptyTitle}</h3>
+          <p style={{ margin: 0 }}>{emptyBody}</p>
+        </div>
       </div>
     );
   }
@@ -174,7 +192,7 @@ export function EventsHome({
         <p style={{ fontSize: 14, color: 'rgba(240,235,229,.55)', margin: 0 }}>Face value, zero fees. Every ticket — 45% artist, 45% venue, 10% promoters.</p>
       </div>
 
-      <div className="mqg-tabstrip" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
+      <div className="mqg-tabstrip" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
         {TABS.map((t) => (
           <div
             key={t.id}
