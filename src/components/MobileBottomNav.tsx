@@ -117,7 +117,7 @@ export function MobileBottomNav() {
             onClick={(e) => {
               if (!shell?.active) return;
               e.preventDefault();
-              shell.setSection(TAB_TO_SECTION[t.id]);
+              shell.goToSectionHome(TAB_TO_SECTION[t.id]);
             }}
             style={{ ...tabButtonStyle, color: active === t.id ? 'var(--accent, #ff5029)' : 'rgba(240,240,240,0.45)' }}
           >

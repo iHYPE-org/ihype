@@ -9,6 +9,10 @@ type MobileShellValue = {
   active: boolean;
   section: ShellSection;
   setSection: (section: ShellSection) => void;
+  /** Bumped per-section each time goToSectionHome targets that section — each *Home component watches its own entry to reset back to its grid/landing view. */
+  resetTokens: Record<ShellSection, number>;
+  /** Switches to (or stays on) a section AND resets it back to its grid/landing view — used by the bottom nav so tapping a tab always returns to that section's home, even if you're drilled into a sub-tab. */
+  goToSectionHome: (section: ShellSection) => void;
 };
 
 const MobileShellCtx = createContext<MobileShellValue | null>(null);
@@ -24,6 +28,7 @@ export function MobileShellProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [isMobile, setIsMobile] = useState(false);
   const [section, setSectionState] = useState<ShellSection>(() => pathToSection(pathname) ?? 'listen');
+  const [resetTokens, setResetTokens] = useState<Record<ShellSection, number>>({ listen: 0, shows: 0, pages: 0 });
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 768px)');
@@ -48,10 +53,15 @@ export function MobileShellProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const goToSectionHome = useCallback((next: ShellSection) => {
+    setSection(next);
+    setResetTokens((prev) => ({ ...prev, [next]: prev[next] + 1 }));
+  }, [setSection]);
+
   const active = isMobile && pathToSection(pathname) !== null;
 
   return (
-    <MobileShellCtx.Provider value={{ active, section, setSection }}>
+    <MobileShellCtx.Provider value={{ active, section, setSection, resetTokens, goToSectionHome }}>
       {children}
     </MobileShellCtx.Provider>
   );

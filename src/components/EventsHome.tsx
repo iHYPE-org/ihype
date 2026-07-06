@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { TicketCardActions } from '@/components/TicketCardActions';
@@ -111,14 +111,23 @@ export function EventsHome({
   initialTab,
   initialTicketView,
   isShellForeground = true,
+  resetToken,
 }: {
   initialTab?: string;
   initialTicketView?: string;
   isShellForeground?: boolean;
+  resetToken?: number;
 } = {}) {
   const validInitialTab = TABS.some((t) => t.id === initialTab) ? (initialTab as Tab) : null;
   const [tab, setTab] = useState<Tab>(validInitialTab ?? 'local');
   const [gridMode, setGridMode] = useState(!validInitialTab);
+  const prevResetToken = useRef(resetToken);
+  useEffect(() => {
+    if (resetToken !== undefined && resetToken !== prevResetToken.current) {
+      prevResetToken.current = resetToken;
+      setGridMode(true);
+    }
+  }, [resetToken]);
   const [q, setQ] = useState('');
   const [shows, setShows] = useState<Show[] | null>(null);
   const [nearCity, setNearCity] = useState<string | null>(null);
@@ -183,7 +192,7 @@ export function EventsHome({
         items={gridItems}
         onSearchTap={() => { setGridMode(false); setTab('search'); }}
         onSelect={(id) => { setGridMode(false); setTab(id as Tab); }}
-        searchPlaceholder="Search shows, artists, or venues…"
+        searchPlaceholder="Search artists, venues, shows…"
       />
 
       <div className={`mqg-content${gridMode ? ' is-hidden' : ''}`}>
@@ -192,11 +201,7 @@ export function EventsHome({
         Events
       </button>
 
-      <div style={{ marginBottom: 28 }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 8 }}>WHAT&apos;S ON</p>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,5vw,40px)', fontWeight: 800, letterSpacing: '-.03em', lineHeight: 1, margin: '0 0 6px' }}>Events</h1>
-        <p style={{ fontSize: 14, color: 'rgba(240,235,229,.55)', margin: 0 }}>Face value, zero fees. Every ticket — 45% artist, 45% venue, 10% promoters.</p>
-      </div>
+      <h1 className="sr-only">Events</h1>
 
       <div className="mqg-tabstrip" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
         {TABS.map((t) => (
@@ -224,7 +229,7 @@ export function EventsHome({
             <input
               autoFocus
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search shows, artists, or venues…"
+              placeholder="Search artists, venues, shows…"
               style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: '14px 16px 14px 46px', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontSize: 16 }}
               type="text"
               value={q}

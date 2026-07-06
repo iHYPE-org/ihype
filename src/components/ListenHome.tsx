@@ -271,13 +271,22 @@ function SeedDeck({ seeds, onAct }: { seeds: Seed[]; onAct: (seed: Seed, action:
 export function ListenHome({
   initialTab,
   isShellForeground = true,
+  resetToken,
 }: {
   initialTab?: string;
   isShellForeground?: boolean;
+  resetToken?: number;
 } = {}) {
   const validInitialTab = TABS.some((t) => t.id === initialTab) ? (initialTab as ListenTab) : null;
   const [tab, setTab] = useState<ListenTab>(validInitialTab ?? 'seeds');
   const [gridMode, setGridMode] = useState(!validInitialTab);
+  const prevResetToken = useRef(resetToken);
+  useEffect(() => {
+    if (resetToken !== undefined && resetToken !== prevResetToken.current) {
+      prevResetToken.current = resetToken;
+      setGridMode(true);
+    }
+  }, [resetToken]);
   const [genre, setGenre] = useState('All');
   const [seeds, setSeeds] = useState<Seed[] | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -450,7 +459,7 @@ export function ListenHome({
         items={gridItems}
         onSearchTap={() => { setGridMode(false); setTab('search'); }}
         onSelect={(id) => { setGridMode(false); setTab(id as typeof tab); }}
-        searchPlaceholder="Search tracks, artists, genres…"
+        searchPlaceholder="Search artists, venues, shows…"
       />
 
       <div className={`mqg-content${gridMode ? ' is-hidden' : ''}`}>
@@ -459,11 +468,7 @@ export function ListenHome({
         Listen
       </button>
 
-      <div style={{ marginBottom: 28 }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 8 }}>YOUR SCENE</p>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,5vw,40px)', fontWeight: 800, letterSpacing: '-.03em', lineHeight: 1, margin: '0 0 6px' }}>Listen</h1>
-        <p style={{ fontSize: 14, color: 'rgba(240,235,229,.55)', margin: 0 }}>Discovery, radio, and charts — personalized for your taste.</p>
-      </div>
+      <h1 className="sr-only">Listen</h1>
 
       <div className="mqg-tabstrip" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 26 }}>
         {TABS.map((t) => (
@@ -488,7 +493,7 @@ export function ListenHome({
           <input
             autoFocus
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search tracks, artists, genres…"
+            placeholder="Search artists, venues, shows…"
             style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: '14px 16px', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontSize: 15, marginBottom: 24 }}
             type="text"
             value={q}

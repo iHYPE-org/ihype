@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { FollowButton } from '@/components/FollowButton';
 import { MobileQuickGrid, type QuickGridItem } from '@/components/MobileQuickGrid';
@@ -23,12 +23,21 @@ const profileRoute = (type: string, slug: string) =>
   type === 'VENUE' ? `/venues/${slug}` : type === 'DJ' ? `/promoters/${slug}` : `/artists/${slug}`;
 
 const TABS = [
+  { id: 'search', label: 'Search' },
   { id: 'mypage', label: 'My Page' },
   { id: 'network', label: 'Network' },
   { id: 'creator', label: 'Creator' },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
+
+type SearchResult = {
+  type: 'artist' | 'venue' | 'promoter' | 'song' | 'show' | 'genre';
+  id: string;
+  name: string;
+  subtitle: string;
+  slug?: string;
+};
 
 const NET_FILTERS = [
   { id: 'all', label: 'All' },
@@ -97,14 +106,23 @@ type PagesData = {
   mutualCount: number;
 };
 
-export function PagesHome({ initialTab, isShellForeground = true }: { initialTab?: string; isShellForeground?: boolean } = {}) {
+export function PagesHome({ initialTab, isShellForeground = true, resetToken }: { initialTab?: string; isShellForeground?: boolean; resetToken?: number } = {}) {
   const validInitialTab = TABS.some((t) => t.id === initialTab) ? (initialTab as TabId) : null;
   const [tab, setTab] = useState<TabId>(validInitialTab ?? 'mypage');
   const [gridMode, setGridMode] = useState(!validInitialTab);
+  const prevResetToken = useRef(resetToken);
+  useEffect(() => {
+    if (resetToken !== undefined && resetToken !== prevResetToken.current) {
+      prevResetToken.current = resetToken;
+      setGridMode(true);
+    }
+  }, [resetToken]);
   const [netFilter, setNetFilter] = useState<(typeof NET_FILTERS)[number]['id']>('all');
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
   const [data, setData] = useState<PagesData | null>(null);
   const [signedOut, setSignedOut] = useState(false);
+  const [q, setQ] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[] | null>(null);
 
   useEffect(() => {
     fetch('/api/pages/home')
@@ -115,6 +133,15 @@ export function PagesHome({ initialTab, isShellForeground = true }: { initialTab
       .then((d) => { if (d) setData(d); })
       .catch(() => setData({ myProfiles: [], following: [], followersCount: 0, suggested: [], mutualCount: 0 }));
   }, []);
+
+  useEffect(() => {
+    const ql = q.trim();
+    if (!ql) { setSearchResults(null); return; }
+    const handle = setTimeout(() => {
+      fetch(`/api/search?q=${encodeURIComponent(ql)}&type=artist`).then((r) => r.json()).then((d) => setSearchResults(d.results ?? [])).catch(() => setSearchResults([]));
+    }, 250);
+    return () => clearTimeout(handle);
+  }, [q]);
 
   const myProfiles = data?.myProfiles ?? [];
   const following = data?.following ?? [];
@@ -163,7 +190,13 @@ export function PagesHome({ initialTab, isShellForeground = true }: { initialTab
 
   return (
     <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 24px 100px' }}>
-      <MobileQuickGrid active={gridMode && isShellForeground} items={gridItems} onSelect={(id) => { setGridMode(false); setTab(id as TabId); }} />
+      <MobileQuickGrid
+        active={gridMode && isShellForeground}
+        items={gridItems}
+        onSearchTap={() => { setGridMode(false); setTab('search'); }}
+        onSelect={(id) => { setGridMode(false); setTab(id as TabId); }}
+        searchPlaceholder="Search artists, venues, shows…"
+      />
 
       <div className={`mqg-content${gridMode ? ' is-hidden' : ''}`}>
       <button className="mqg-back" onClick={() => setGridMode(true)} type="button">
@@ -171,17 +204,7 @@ export function PagesHome({ initialTab, isShellForeground = true }: { initialTab
         Pages
       </button>
 
-      <div style={{ marginBottom: 28 }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 8 }}>
-          YOUR PRESENCE
-        </p>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.75rem, 5vw, 2.5rem)', fontWeight: 800, letterSpacing: '-.03em', lineHeight: 1, margin: '0 0 6px' }}>
-          Pages
-        </h1>
-        <p style={{ fontSize: 14, color: 'rgba(240,235,229,.55)', margin: 0 }}>
-          Your public page, the creator, and every artist, venue, and DJ on iHYPE.
-        </p>
-      </div>
+      <h1 className="sr-only">Pages</h1>
 
       <nav className="mqg-tabstrip" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 26 }} aria-label="Pages sections">
         {TABS.map((t) => (
@@ -200,6 +223,65 @@ export function PagesHome({ initialTab, isShellForeground = true }: { initialTab
           </div>
         ))}
       </nav>
+
+      {tab === 'search' && (
+        <div>
+          <div style={{ position: 'relative', marginBottom: 22 }}>
+            <svg fill="none" height="16" stroke="rgba(240,235,229,.5)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} viewBox="0 0 24 24" width="16">
+              <circle cx="11" cy="11" r="8" /><line x1="21" x2="16.65" y1="21" y2="16.65" />
+            </svg>
+            <input
+              autoFocus
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search artists, venues, shows…"
+              style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: '14px 16px 14px 46px', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontSize: 16 }}
+              type="text"
+              value={q}
+            />
+          </div>
+          {!q.trim() ? (
+            <div style={{ textAlign: 'center', padding: '80px 0', color: 'rgba(240,235,229,.5)' }}>
+              <p>Find an artist, venue, or DJ page.</p>
+            </div>
+          ) : searchResults === null ? (
+            <div style={{ textAlign: 'center', padding: '80px 0', color: 'rgba(240,235,229,.5)' }}><p>Loading…</p></div>
+          ) : searchResults.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '80px 0', color: 'rgba(240,235,229,.5)' }}><p>No results for &ldquo;{q}&rdquo;.</p></div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {searchResults.map((r) => {
+                const color = r.type === 'venue' ? '#22e5d4' : r.type === 'promoter' ? '#ff3e9a' : '#ff5029';
+                const label = r.type === 'venue' ? 'Venue' : r.type === 'promoter' ? 'Promoter / DJ' : 'Artist';
+                const route = r.type === 'venue' ? `/venues/${r.slug}` : r.type === 'promoter' ? `/promoters/${r.slug}` : `/artists/${r.slug}`;
+                const initials = r.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+                return (
+                  <Link key={r.id} href={route} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', border: '1px solid rgba(255,255,255,.06)', borderRadius: 14, background: 'rgba(255,255,255,.03)', textDecoration: 'none', color: 'inherit' }}>
+                    <div style={{
+                      width: 46, height: 46, borderRadius: 9999, flexShrink: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, color: '#fff',
+                      background: `linear-gradient(135deg, ${color}, ${hexA(color, 0.55)})`,
+                    }}>
+                      {initials}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, letterSpacing: '-.01em', display: 'flex', alignItems: 'center', gap: 7 }}>
+                        {r.name}
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, color, background: hexA(color, 0.14) }}>
+                          {label}
+                        </span>
+                      </div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)', marginTop: 3 }}>
+                        {r.subtitle}
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {tab === 'mypage' && (
         <>

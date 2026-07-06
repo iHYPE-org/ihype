@@ -77,7 +77,7 @@ export function MobileAppShell() {
               }}
             >
               {/* Only the foreground section's own quick-access grid should ever be interactive/visible — see isForeground plumbing in each *Home component. */}
-              <Component isShellForeground={section === shell.section} />
+              <Component isShellForeground={section === shell.section} resetToken={shell.resetTokens[section]} />
             </div>
           );
         })}
