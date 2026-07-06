@@ -34,9 +34,11 @@
   "dependencies": {
     "@auth/prisma-adapter": "2.11.2",
     "@capacitor/android": "^8.4.1",
+    "@capacitor/app": "^8.1.0",
     "@capacitor/cli": "^8.4.1",
     "@capacitor/core": "^8.4.1",
     "@capacitor/ios": "^8.4.1",
+    "@capacitor/push-notifications": "^8.1.1",
     "@opennextjs/cloudflare": "^1.7.0",
     "@prisma/adapter-pg": "6.19.3",
     "@prisma/client": "^6.19.3",

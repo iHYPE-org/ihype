@@ -28,6 +28,14 @@
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+	<!-- Lets a silent/background push wake the app to refresh state. Inert
+	     without the Push Notifications capability + a provisioning profile
+	     (needs a real Apple Developer Program Team ID — see
+	     DESIGN_SYNC.md's native-shell row) but harmless to declare now. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>armv7</string>

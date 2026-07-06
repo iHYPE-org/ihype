@@ -22,6 +22,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- App Links: opens ihype.org links directly in the app instead of
+                 the browser, once /.well-known/assetlinks.json (see the Next.js
+                 route of the same path) is verified against the real signing
+                 cert — inert but harmless until then. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="ihype.org" />
+            </intent-filter>
+
         </activity>
 
         <provider

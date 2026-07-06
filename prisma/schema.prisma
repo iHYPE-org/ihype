@@ -126,6 +126,7 @@ model User {
   notifications           Notification[]
   magicLinkTokens         MagicLinkToken[]
   pushSubscriptions       PushSubscription[]
+  nativeDeviceTokens      NativeDeviceToken[]
   emailBounced            Boolean                  @default(false)
   badges                  Badge[]
   showAttendees           ShowAttendee[]
@@ -887,6 +888,29 @@ model PushSubscription {
   pushCity  String?
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+enum NativeDevicePlatform {
+  IOS
+  ANDROID
+}
+
+// APNs/FCM device tokens for the native iOS/Android shells — distinct from
+// PushSubscription (browser Web Push, endpoint/auth/p256dh) since native
+// tokens are a different shape entirely. Sent to via FCM's unified HTTP v1
+// API (see sendNativePushNotification in src/lib/native-push.ts), which
+// proxies to APNs for iOS tokens once an APNs auth key is uploaded to the
+// Firebase project — no separate raw-APNs implementation needed.
+model NativeDeviceToken {
+  id        String               @id @default(cuid())
+  userId    String
+  platform  NativeDevicePlatform
+  token     String               @unique
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }

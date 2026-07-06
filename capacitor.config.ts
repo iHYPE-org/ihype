@@ -22,6 +22,15 @@ const config: CapacitorConfig = {
   android: {
     backgroundColor: '#0a0805',
   },
+  plugins: {
+    // Shows the OS notification banner/sound/badge while the app is already
+    // open — without this, iOS silently drops foreground pushes. Takes
+    // effect as soon as push notifications work at all; no credentials
+    // needed for this config itself.
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'alert'],
+    },
+  },
 };
 
 export default config;
