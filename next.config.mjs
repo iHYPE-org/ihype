@@ -284,11 +284,6 @@ const nextConfig = {
         permanent: true
       },
       {
-        source: '/settings',
-        destination: '/home',
-        permanent: true
-      },
-      {
         source: '/workbench',
         destination: '/home',
         permanent: true
