@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { PagesReferralTab } from '@/components/PagesReferralTab';
 import { FollowButton } from '@/components/FollowButton';
 import { MobileQuickGrid, type QuickGridItem } from '@/components/MobileQuickGrid';
 
@@ -27,7 +26,6 @@ const TABS = [
   { id: 'mypage', label: 'My Page' },
   { id: 'network', label: 'Network' },
   { id: 'creator', label: 'Creator' },
-  { id: 'referral', label: 'HYPE Link' },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
@@ -144,8 +142,13 @@ export function PagesHome({ initialTab, isShellForeground = true }: { initialTab
       icon: <svg fill="none" height="30" stroke="#ff3e9a" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><line x1="12" x2="12" y1="5" y2="19" /><line x1="5" x2="19" y1="12" y2="12" /></svg>,
     },
     {
-      id: 'referral', label: 'HYPE Link', color: '#b983ff', sublabel: '10% share',
-      icon: <svg fill="none" height="30" stroke="#b983ff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5" /><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5" /></svg>,
+      id: 'settings', label: 'Settings', color: '#b983ff', sublabel: 'Account & privacy', href: '/me/settings',
+      icon: (
+        <svg fill="none" height="30" stroke="#b983ff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+      ),
     },
   ];
 
@@ -308,26 +311,6 @@ export function PagesHome({ initialTab, isShellForeground = true }: { initialTab
             </>
           )}
 
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(240,235,229,.35)', marginBottom: 14, marginTop: 32 }}>
-            ACCOUNT
-          </div>
-          <Link href="/me/settings" style={{
-            display: 'flex', alignItems: 'center', gap: 14,
-            padding: '18px 20px', border: '1px solid rgba(255,255,255,.06)',
-            borderRadius: 14, background: 'rgba(255,255,255,.03)', textDecoration: 'none', color: 'inherit',
-          }}>
-            <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(255,255,255,.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <svg fill="none" height="18" stroke="rgba(240,235,229,.7)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="18">
-                <circle cx="12" cy="12" r="3" />
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-              </svg>
-            </div>
-            <div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800 }}>Settings</div>
-              <div style={{ fontSize: 12, color: 'rgba(240,235,229,.55)', marginTop: 2 }}>Notifications, privacy, MFA, identity detachment, account.</div>
-            </div>
-            <span style={{ marginLeft: 'auto', color: 'rgba(240,235,229,.3)' }}>→</span>
-          </Link>
         </>
       )}
 
@@ -481,8 +464,6 @@ export function PagesHome({ initialTab, isShellForeground = true }: { initialTab
           </div>
         </>
       )}
-
-      {tab === 'referral' && <PagesReferralTab />}
       </div>
     </div>
   );

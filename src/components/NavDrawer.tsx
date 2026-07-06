@@ -5,17 +5,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
-export const primaryLinks = [
-  { href: '/home',     label: 'Home' },
-  { href: '/discover', label: 'Seeds' },
-  { href: '/shows',    label: 'Radio' },
-  { href: '/settings', label: 'You' },
-];
-
-export const secondaryLinks = [
+export const menuLinks = [
+  { href: '/advertise', label: 'Advertise' },
   { href: '/about', label: 'About' },
   { href: '/transparency', label: 'Transparency' },
-  { href: '/advertise', label: 'Advertise' },
+  { href: '/legal', label: 'Legal' },
   { href: '/privacy', label: 'Privacy' },
   { href: '/dmca', label: 'DMCA' },
   { href: '/status', label: 'Status' },
@@ -73,13 +67,13 @@ export function NavDrawer({
               ✕
             </button>
             <ul className="nav-drawer-list">
-              {primaryLinks.map((link) => {
-                const isActive = pathname === link.href || (link.href !== '/home' && pathname.startsWith(link.href));
+              {menuLinks.map((link) => {
+                const isActive = pathname === link.href;
                 return (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className={`nav-drawer-link nav-drawer-link--primary${isActive ? ' active' : ''}`}
+                      className={`nav-drawer-link${isActive ? ' active' : ''}`}
                       onClick={() => setOpen(false)}
                     >
                       {link.label}
@@ -87,18 +81,6 @@ export function NavDrawer({
                   </li>
                 );
               })}
-              <li className="nav-drawer-divider" aria-hidden="true" />
-              {secondaryLinks.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="nav-drawer-link"
-                    onClick={() => setOpen(false)}
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
             </ul>
             <div style={{ borderTop: '1px solid var(--line)', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: 13, opacity: 0.5 }}>Theme</span>

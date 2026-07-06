@@ -5552,9 +5552,7 @@ html.high-contrast p {
   transition: background .12s;
 }
 .nav-drawer-link:hover { background: var(--bg-3); }
-.nav-drawer-link--primary { font-size: 14px; color: var(--ink); }
-.nav-drawer-link--primary.active { color: var(--accent, #ff5029); }
-.nav-drawer-divider { height: 1px; background: var(--line); margin: 8px 0; }
+.nav-drawer-link.active { color: var(--accent, #ff5029); }
 
 @media (max-width: 768px) {
   .nav-drawer-trigger { display: inline-flex; }

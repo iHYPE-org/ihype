@@ -4,14 +4,16 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { TicketCardActions } from '@/components/TicketCardActions';
+import { PagesReferralTab } from '@/components/PagesReferralTab';
 import { MobileQuickGrid, type QuickGridItem } from '@/components/MobileQuickGrid';
 
-type Tab = 'search' | 'local' | 'foryou' | 'tickets';
+type Tab = 'search' | 'local' | 'foryou' | 'tickets' | 'referral';
 const TABS: { id: Tab; label: string }[] = [
   { id: 'search', label: 'Search' },
   { id: 'local', label: 'Local Events' },
   { id: 'foryou', label: 'For You' },
   { id: 'tickets', label: 'My Tickets' },
+  { id: 'referral', label: 'HYPE Link' },
 ];
 
 type Show = {
@@ -168,6 +170,10 @@ export function EventsHome({
       id: 'tickets', label: 'Tickets', color: '#b983ff', sublabel: loggedIn ? 'View yours' : 'Log in to view',
       icon: <svg fill="none" height="30" stroke="#b983ff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><path d="M3 9a2 2 0 0 0 2-2V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-2a2 2 0 0 0-2-2Z" /></svg>,
     },
+    {
+      id: 'referral', label: 'HYPE Link', color: '#ff3e9a', sublabel: '10% share',
+      icon: <svg fill="none" height="30" stroke="#ff3e9a" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5" /><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5" /></svg>,
+    },
   ];
 
   return (
@@ -323,6 +329,8 @@ export function EventsHome({
           )}
         </div>
       )}
+
+      {tab === 'referral' && <PagesReferralTab />}
       </div>
     </div>
   );
