@@ -7,6 +7,7 @@ import { db } from '@/lib/db';
 import { HypeButton } from '@/components/HypeButton';
 import { VenueRequestForm } from '@/components/VenueRequestForm';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
+import { resolveProfileThemeVars } from '@/lib/profile-design';
 
 export const revalidate = 60;
 
@@ -62,6 +63,7 @@ export default async function VenuePage({
   if (shouldHideDemoContent() && isDemoUser(profile.owner)) return notFound();
 
   const isOwner = Boolean(session?.user?.id && session.user.id === profile.ownerId);
+  const themeVars = resolveProfileThemeVars(profile);
 
   const [shows, userHype] = await Promise.all([
     db.show.findMany({
@@ -83,7 +85,7 @@ export default async function VenuePage({
     : 0;
 
   return (
-    <div className="venue-page">
+    <div className="venue-page" style={(themeVars ?? undefined) as React.CSSProperties | undefined}>
       <div className="venue-hero">
         <div className="venue-avatar">
           {profile.avatarImage ? (
@@ -195,8 +197,8 @@ export default async function VenuePage({
 
       <style>{`
         .venue-page { max-width: 960px; margin: 0 auto; padding: 32px 0 100px; }
-        .venue-hero { background: linear-gradient(160deg, rgba(34,229,212,.18), rgba(185,131,255,.1)); border-bottom: 1px solid rgba(34,229,212,.2); padding: 48px 32px 40px; display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; }
-        .venue-avatar { width: 100px; height: 100px; border-radius: 16px; background: linear-gradient(135deg,#22e5d4,#b983ff); flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .venue-hero { background: var(--profile-hero, linear-gradient(160deg, rgba(34,229,212,.18), rgba(185,131,255,.1))); border-bottom: 1px solid var(--profile-border, rgba(34,229,212,.2)); padding: 48px 32px 40px; display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; }
+        .venue-avatar { width: 100px; height: 100px; border-radius: 16px; background: var(--profile-hero, linear-gradient(135deg,#22e5d4,#b983ff)); flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .venue-info h1 { font-family: var(--font-display); font-size: 32px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 6px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .venue-info p { font-size: 14px; color: rgba(240,235,229,.7); margin-bottom: 16px; }
         .venue-badges { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -205,20 +207,20 @@ export default async function VenuePage({
         .venue-badge-verified { background: rgba(255,80,41,.15); color: var(--accent); }
         .venue-stats { display: flex; gap: 32px; margin-top: 20px; }
         .venue-stat { text-align: center; }
-        .venue-stat-val { font-size: 22px; font-weight: 700; color: var(--role-venue, #22e5d4); }
+        .venue-stat-val { font-size: 22px; font-weight: 700; color: var(--profile-accent, var(--role-venue, #22e5d4)); }
         .venue-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: rgba(240,235,229,.5); }
         .venue-capacity-row { margin-top: 22px; max-width: 320px; }
         .venue-capacity-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; }
-        .venue-capacity-label b { font-family: var(--font-display); font-weight: 800; color: var(--role-venue, #22e5d4); }
+        .venue-capacity-label b { font-family: var(--font-display); font-weight: 800; color: var(--profile-accent, var(--role-venue, #22e5d4)); }
         .venue-capacity-track { height: 8px; border-radius: 9999px; background: rgba(255,255,255,.08); overflow: hidden; }
-        .venue-capacity-bar { height: 100%; border-radius: 9999px; background: var(--role-venue, #22e5d4); }
+        .venue-capacity-bar { height: 100%; border-radius: 9999px; background: var(--profile-accent, var(--role-venue, #22e5d4)); }
         .venue-hero-actions { display: flex; gap: 10px; margin-top: 22px; align-items: center; flex-wrap: wrap; }
         .venue-hero-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; background: rgba(255,255,255,.06); color: var(--ink); border: 1px solid rgba(255,255,255,.1); }
         .venue-hero-btn:hover { background: rgba(255,255,255,.1); }
         .venue-content { padding: 0 32px; }
         .venue-tabs { display: flex; gap: 24px; border-bottom: 1px solid rgba(255,255,255,.06); margin: 32px 0 28px; }
         .venue-tab { padding: 10px 0; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 600; font-size: 14px; color: rgba(240,235,229,.6); text-decoration: none; }
-        .venue-tab.active { color: var(--ink); border-color: var(--role-venue, #22e5d4); }
+        .venue-tab.active { color: var(--ink); border-color: var(--profile-accent, var(--role-venue, #22e5d4)); }
         .venue-show-card { border: 1px solid rgba(255,255,255,.06); border-radius: 10px; padding: 20px; background: var(--bg2); display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; text-decoration: none; color: inherit; }
         .venue-show-card:hover { background: var(--bg3); border-color: rgba(255,255,255,.14); }
         .venue-show-info { min-width: 0; }

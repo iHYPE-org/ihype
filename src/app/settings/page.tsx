@@ -291,6 +291,22 @@ export default function SettingsPage() {
         .settings-payout-ic { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,.06); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .settings-split-mini { display: flex; gap: 10px; margin-top: 10px; }
         .settings-split-mini span { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; padding: 3px 8px; border-radius: 6px; background: rgba(255,255,255,.05); }
+
+        @media (max-width: 600px) {
+          .settings-page { padding: 24px 16px 100px; }
+          .settings-page h1 { font-size: 26px; margin-bottom: 28px; }
+          .settings-section { margin-bottom: 28px; }
+          .settings-row { flex-wrap: wrap; padding: 16px; }
+          .settings-row > *:first-child { flex: 1 1 100%; }
+          .settings-row-label { font-size: 15px; }
+          .settings-input-inline { width: 100%; box-sizing: border-box; }
+          .settings-btn { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; }
+          .settings-payout-card { flex-wrap: wrap; }
+          .settings-payout-card > a, .settings-payout-card > button { flex: 1 1 100%; }
+          .settings-toggle { width: 48px; height: 28px; }
+          .settings-toggle-thumb { width: 22px; height: 22px; }
+          .settings-toggle input:checked ~ .settings-toggle-thumb { transform: translateX(20px); }
+        }
       `}</style>
     </div>
   );

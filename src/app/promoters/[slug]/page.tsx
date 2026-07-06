@@ -8,6 +8,7 @@ import { HypeButton } from '@/components/HypeButton';
 import { FollowButton } from '@/components/FollowButton';
 import { ArtistMediaPlaylist } from '@/components/ArtistMediaPlaylist';
 import { getSafeImageUrl } from '@/lib/asset-safety';
+import { resolveProfileThemeVars } from '@/lib/profile-design';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
 
@@ -64,6 +65,7 @@ export default async function DJProfilePage({
   if (shouldHideDemoContent() && isDemoUser(profile.owner)) return notFound();
 
   const isOwner = canManageOwnedResource(session, profile.ownerId);
+  const themeVars = resolveProfileThemeVars(profile);
   const media = buildArtistMediaCollection(null, profile.mediaUploads);
   const artworkUrl = getSafeImageUrl(profile.galleryImage || profile.heroImage);
 
@@ -93,7 +95,7 @@ export default async function DJProfilePage({
   }
 
   return (
-    <div className="dj-page">
+    <div className="dj-page" style={(themeVars ?? undefined) as React.CSSProperties | undefined}>
       <div className="dj-hero">
         <div className="dj-hero-row">
           <div className="dj-avatar">
@@ -202,10 +204,10 @@ export default async function DJProfilePage({
 
       <style>{`
         .dj-page { max-width: 900px; margin: 0 auto; padding: 32px 0 100px; }
-        .dj-hero { background: linear-gradient(140deg, rgba(255,62,154,.12), rgba(185,131,255,.08)); border-bottom: 1px solid rgba(255,62,154,.18); padding: 40px 32px 32px; }
+        .dj-hero { background: var(--profile-hero, linear-gradient(140deg, rgba(255,62,154,.12), rgba(185,131,255,.08))); border-bottom: 1px solid var(--profile-border, rgba(255,62,154,.18)); padding: 40px 32px 32px; }
         .dj-hero-row { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
         @media (max-width: 600px) { .dj-hero { padding: 24px 20px; } .dj-content { padding: 0 20px; } }
-        .dj-avatar { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg,#ff3e9a,#b983ff); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; overflow: hidden; }
+        .dj-avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--profile-hero, linear-gradient(135deg,#ff3e9a,#b983ff)); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; overflow: hidden; }
         .dj-name { font-family: var(--font-display); font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 4px; color: var(--ink); }
         .dj-handle { font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: rgba(240,235,229,.5); margin-bottom: 12px; }
         .dj-hero-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -214,12 +216,12 @@ export default async function DJProfilePage({
         .dj-hero-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; background: rgba(255,255,255,.06); color: var(--ink); border: 1px solid rgba(255,255,255,.1); }
         .dj-hero-btn:hover { background: rgba(255,255,255,.1); }
         .dj-stats { display: flex; gap: 28px; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,.06); }
-        .dj-stat-val { font-size: 22px; font-weight: 700; color: #ff3e9a; font-family: var(--font-display); }
+        .dj-stat-val { font-size: 22px; font-weight: 700; color: var(--profile-accent, #ff3e9a); font-family: var(--font-display); }
         .dj-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: rgba(240,235,229,.55); margin-top: 2px; }
         .dj-content { padding: 0 32px; }
         .dj-tabs { display: flex; gap: 24px; border-bottom: 1px solid rgba(255,255,255,.06); margin: 28px 0; }
         .dj-tab { padding: 10px 0; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 600; font-size: 14px; color: rgba(240,235,229,.6); text-decoration: none; }
-        .dj-tab.active { color: var(--ink); border-color: #ff3e9a; }
+        .dj-tab.active { color: var(--ink); border-color: var(--profile-accent, #ff3e9a); }
         .dj-show-card { border: 1px solid rgba(255,255,255,.06); border-radius: 10px; padding: 18px 20px; background: var(--bg2); display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; text-decoration: none; color: inherit; }
         .dj-show-card:hover { background: var(--bg3); }
         .dj-show-title { font-family: var(--font-display); font-size: 15px; font-weight: 800; margin-bottom: 3px; color: var(--ink); }

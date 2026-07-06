@@ -10,6 +10,7 @@ import { FollowButton } from '@/components/FollowButton';
 import { ShareButton } from '@/components/ShareButton';
 import { ArtistMediaPlaylist } from '@/components/ArtistMediaPlaylist';
 import { getSafeImageUrl } from '@/lib/asset-safety';
+import { resolveProfileThemeVars } from '@/lib/profile-design';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
 import { getBaseUrl } from '@/lib/utils';
@@ -71,6 +72,7 @@ export default async function ArtistPage({
   if (shouldHideDemoContent() && isDemoUser(profile.owner)) return notFound();
 
   const isOwner = canManageOwnedResource(session, profile.ownerId);
+  const themeVars = resolveProfileThemeVars(profile);
   const media = buildArtistMediaCollection(profile.mediaContent, profile.mediaUploads);
   const uploadHexIds = profile.mediaUploads.map((u) => u.hexId);
   const artworkUrl = getSafeImageUrl(profile.galleryImage || profile.heroImage);
@@ -96,7 +98,7 @@ export default async function ArtistPage({
   const upcomingShows = shows.filter((s) => s.status === 'LIVE' || s.startsAt >= now);
 
   return (
-    <div className="artist-page">
+    <div className="artist-page" style={(themeVars ?? undefined) as React.CSSProperties | undefined}>
       <div className="artist-hero">
         <div className="artist-hero-row">
           <div className="artist-avatar">
@@ -213,9 +215,9 @@ export default async function ArtistPage({
 
       <style>{`
         .artist-page { max-width: 960px; margin: 0 auto; padding: 32px 0 100px; }
-        .artist-hero { padding: 40px 32px 32px; border-bottom: 1px solid rgba(255,255,255,.06); }
+        .artist-hero { padding: 40px 32px 32px; border-bottom: 1px solid var(--profile-border, rgba(255,255,255,.06)); background: var(--profile-hero, transparent); }
         .artist-hero-row { display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; }
-        .artist-avatar { width: 96px; height: 96px; border-radius: 50%; background: linear-gradient(135deg,#ff5029,#b983ff); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; overflow: hidden; }
+        .artist-avatar { width: 96px; height: 96px; border-radius: 50%; background: var(--profile-hero, linear-gradient(135deg,#ff5029,#b983ff)); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; overflow: hidden; }
         .artist-name { font-family: var(--font-display); font-size: 32px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 6px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .artist-sub { font-size: 14px; color: rgba(240,235,229,.65); margin-bottom: 14px; }
         .artist-hero-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
@@ -224,12 +226,12 @@ export default async function ArtistPage({
         .artist-hero-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; background: rgba(255,255,255,.06); color: var(--ink); border: 1px solid rgba(255,255,255,.1); }
         .artist-hero-btn:hover { background: rgba(255,255,255,.1); }
         .artist-stats { display: flex; gap: 32px; margin-top: 24px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,.06); flex-wrap: wrap; }
-        .artist-stat-val { font-size: 22px; font-weight: 700; color: var(--accent); font-family: var(--font-display); }
+        .artist-stat-val { font-size: 22px; font-weight: 700; color: var(--profile-accent, var(--accent)); font-family: var(--font-display); }
         .artist-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: rgba(240,235,229,.55); margin-top: 2px; }
         .artist-content { padding: 0 32px; }
         .artist-tabs { display: flex; gap: 24px; border-bottom: 1px solid rgba(255,255,255,.06); margin: 28px 0; }
         .artist-tab { padding: 10px 0; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 600; font-size: 14px; color: rgba(240,235,229,.6); text-decoration: none; }
-        .artist-tab.active { color: var(--ink); border-color: var(--accent); }
+        .artist-tab.active { color: var(--ink); border-color: var(--profile-accent, var(--accent)); }
         .artist-about-text { font-size: 15px; line-height: 1.7; color: rgba(240,235,229,.85); margin-bottom: 24px; white-space: pre-wrap; }
         .artist-split-card { border: 1px solid rgba(255,80,41,.2); border-radius: 10px; padding: 20px; background: rgba(255,80,41,.05); }
         .artist-split-bar { display: flex; border-radius: 8px; overflow: hidden; margin-top: 14px; }

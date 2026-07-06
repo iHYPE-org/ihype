@@ -607,3 +607,41 @@ export function getProfileFontPreset(value?: string | null) {
   return profileFontPresets.find((preset) => preset.id === fontPresetId) ?? profileFontPresets[0];
 }
 
+/**
+ * Resolves a profile's stored theme fields into CSS custom-property
+ * overrides for its public page. Returns `null` for the untouched
+ * Prisma-default combination (themePreset "midnight-neon" + no accent/
+ * backdrop override) — every existing profile in the DB is currently in
+ * this exact state since no UI has ever let anyone actually choose a
+ * theme, and this preset's real colors (cyan accent) don't match the
+ * site's brand orange. Applying it unconditionally would silently reskin
+ * every profile on the site the moment this shipped. Once someone
+ * deliberately saves a theme via the Creator editor, any divergence from
+ * that exact combination (including re-choosing "Midnight Neon" by name,
+ * which reads as a real choice even though the visual result matches the
+ * site default) turns theming on for their page.
+ */
+export function resolveProfileThemeVars(profile: {
+  themePreset?: string | null;
+  themeAccentTone?: string | null;
+  themeBackdropTone?: string | null;
+}): Record<string, string> | null {
+  const untouched =
+    (!profile.themePreset || profile.themePreset === DEFAULT_PROFILE_DESIGN_PRESET) &&
+    !profile.themeAccentTone &&
+    !profile.themeBackdropTone;
+  if (untouched) return null;
+
+  const preset = getProfileDesignPreset(profile.themePreset);
+  const accentTone = getProfileAccentTone(profile.themeAccentTone);
+  const backdropTone = getProfileBackdropTone(profile.themeBackdropTone);
+
+  return {
+    '--profile-accent': accentTone.accent ?? preset.accent,
+    '--profile-accent-soft': accentTone.accentSoft ?? preset.accentSoft,
+    '--profile-hero': backdropTone.hero ?? preset.hero,
+    '--profile-panel': backdropTone.panel ?? preset.panel,
+    '--profile-border': backdropTone.border ?? preset.border,
+  };
+}
+

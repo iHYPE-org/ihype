@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { FollowButton } from '@/components/FollowButton';
 import { MobileQuickGrid, type QuickGridItem } from '@/components/MobileQuickGrid';
+import { PageEditor } from '@/components/PageEditor';
 import { PullToRefresh } from '@/components/PullToRefresh';
 import { useMobileShell } from '@/lib/MobileShellContext';
 
@@ -400,9 +401,9 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                     <Link href={profileRoute(selectedProfile.type, selectedProfile.slug)} style={bGhost}>
                       View
                     </Link>
-                    <Link href={`/home?profile=${selectedProfile.id}`} style={bSolid}>
+                    <button onClick={() => setTab('creator')} style={bSolid} type="button">
                       Edit page
-                    </Link>
+                    </button>
                   </div>
                 </div>
               )}
@@ -538,8 +539,18 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
 
       {tab === 'creator' && (
         <>
+          {selectedProfile && (
+            <>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(240,235,229,.35)', marginBottom: 14 }}>
+                EDITING · {(TYPE_LABEL[selectedProfile.type] ?? selectedProfile.type).toUpperCase()}
+              </div>
+              <PageEditor key={selectedProfile.id} profileId={selectedProfile.id} />
+              <div style={{ borderTop: '1px solid rgba(255,255,255,.07)', margin: '36px 0 22px' }} />
+            </>
+          )}
+
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(240,235,229,.35)', marginBottom: 14 }}>
-            PAGE CREATOR
+            {selectedProfile ? 'ADD ANOTHER PAGE' : 'PAGE CREATOR'}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
             {CREATE_CARDS.map((card) => (
