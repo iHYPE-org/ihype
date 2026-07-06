@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useState } from 'react';
+import { createContext, useContext, useEffect, useId, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 
 type AccessibilitySettings = {
@@ -55,15 +55,27 @@ function applyClass(className: string, enabled: boolean) {
   document.documentElement.classList.toggle(className, enabled);
 }
 
-export function AccessibilityControls({ inline = false }: { inline?: boolean } = {}) {
-  const panelId = useId();
-  const [isOpen, setIsOpen] = useState(inline);
+type AccessibilityContextValue = {
+  settings: AccessibilitySettings;
+  updateSetting: <Key extends keyof AccessibilitySettings>(key: Key, value: AccessibilitySettings[Key]) => void;
+  resetSettings: () => void;
+};
+
+const AccessibilityContext = createContext<AccessibilityContextValue | null>(null);
+
+/**
+ * Mounted once at the app root (AppProviders), independent of whether the
+ * Accessibility panel UI is open — a saved preference (high contrast,
+ * larger text, etc.) needs to re-apply on every fresh page load, not just
+ * while AccessibilityControls itself happens to be mounted (e.g. only while
+ * the nav drawer containing it is open).
+ */
+export function AccessibilityProvider({ children }: { children: ReactNode }) {
   const [hasLoaded, setHasLoaded] = useState(false);
   const [settings, setSettings] = useState<AccessibilitySettings>(defaultSettings);
 
   useEffect(() => {
-    const storedSettings = getStoredSettings();
-    setSettings(storedSettings);
+    setSettings(getStoredSettings());
     setHasLoaded(true);
   }, []);
 
@@ -85,6 +97,33 @@ export function AccessibilityControls({ inline = false }: { inline?: boolean } =
     }
   }, [hasLoaded, settings]);
 
+  function updateSetting<Key extends keyof AccessibilitySettings>(
+    key: Key,
+    value: AccessibilitySettings[Key]
+  ) {
+    setSettings((current) => ({ ...current, [key]: value }));
+  }
+
+  function resetSettings() {
+    setSettings(defaultSettings);
+    window.localStorage.removeItem(STORAGE_KEY);
+  }
+
+  return (
+    <AccessibilityContext.Provider value={{ settings, updateSetting, resetSettings }}>
+      {children}
+    </AccessibilityContext.Provider>
+  );
+}
+
+export function AccessibilityControls({ inline = false }: { inline?: boolean } = {}) {
+  const panelId = useId();
+  const [isOpen, setIsOpen] = useState(inline);
+  const ctx = useContext(AccessibilityContext);
+  const settings = ctx?.settings ?? defaultSettings;
+  const updateSetting = ctx?.updateSetting ?? (() => {});
+  const resetSettings = ctx?.resetSettings ?? (() => {});
+
   useEffect(() => {
     if (!isOpen || inline) {
       return;
@@ -99,18 +138,6 @@ export function AccessibilityControls({ inline = false }: { inline?: boolean } =
     window.addEventListener('keydown', closeOnEscape);
     return () => window.removeEventListener('keydown', closeOnEscape);
   }, [inline, isOpen]);
-
-  function updateSetting<Key extends keyof AccessibilitySettings>(
-    key: Key,
-    value: AccessibilitySettings[Key]
-  ) {
-    setSettings((current) => ({ ...current, [key]: value }));
-  }
-
-  function resetSettings() {
-    setSettings(defaultSettings);
-    window.localStorage.removeItem(STORAGE_KEY);
-  }
 
   const activeCount = [
     settings.highContrast,
