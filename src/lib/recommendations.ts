@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import type { Prisma, ProfileType } from '@prisma/client/wasm';
+import type { Prisma, ProfileType } from '@prisma/client';
 import { getDemoOwnerExclusion } from '@/lib/runtime-flags';
 import type { RequestLocation } from '@/lib/request-location';
 import {

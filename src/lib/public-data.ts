@@ -1,5 +1,5 @@
 import { unstable_cache } from 'next/cache';
-import { Prisma, ProfileType, ShowStatus } from '@prisma/client/wasm';
+import { Prisma, ProfileType, ShowStatus } from '@prisma/client';
 import { db, withDbRetry } from '@/lib/db';
 import { sortShowsForFeed } from '@/lib/integrity';
 import { demoUserEmails, shouldHideDemoContent } from '@/lib/runtime-flags';

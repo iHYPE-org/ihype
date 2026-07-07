@@ -5,7 +5,7 @@
 //   4. Test the full OTP login flow and session persistence after the bump.
 //   5. Update the pinned version in package.json overrides AND the dependency specifier.
 //
-// Edge-safe: this file must not import Node.js-only modules or @prisma/client/wasm.
+// Edge-safe: this file must not import Node.js-only modules or @prisma/client.
 // It is used directly in middleware.ts which runs on the Edge runtime.
 // DB-dependent callbacks (jwt security-version check, session enrichment) live in auth.ts.
 import type { NextAuthConfig } from 'next-auth';

@@ -9,7 +9,6 @@ type AccessibilitySettings = {
   reduceMotion: boolean;
   underlineLinks: boolean;
   readableFont: boolean;
-  language: string;
 };
 
 const STORAGE_KEY = 'ihype-accessibility-settings';
@@ -19,16 +18,8 @@ const defaultSettings: AccessibilitySettings = {
   largeText: false,
   reduceMotion: false,
   underlineLinks: false,
-  readableFont: false,
-  language: 'en'
+  readableFont: false
 };
-
-const languageOptions = [
-  { value: 'en', label: 'English' },
-  { value: 'es', label: 'Espanol' },
-  { value: 'fr', label: 'Francais' },
-  { value: 'pt', label: 'Portugues' }
-];
 
 function getStoredSettings() {
   if (typeof window === 'undefined') {
@@ -89,8 +80,6 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
     applyClass('a11y-reduce-motion', settings.reduceMotion);
     applyClass('a11y-underline-links', settings.underlineLinks);
     applyClass('a11y-readable-font', settings.readableFont);
-    document.documentElement.lang = settings.language;
-    document.documentElement.dataset.accessibilityLanguage = settings.language;
 
     if (hasLoaded) {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
@@ -144,8 +133,7 @@ export function AccessibilityControls({ inline = false }: { inline?: boolean } =
     settings.largeText,
     settings.reduceMotion,
     settings.underlineLinks,
-    settings.readableFont,
-    settings.language !== 'en'
+    settings.readableFont
   ].filter(Boolean).length;
 
   const panel = (
@@ -227,24 +215,6 @@ export function AccessibilityControls({ inline = false }: { inline?: boolean } =
           </span>
         </label>
       </div>
-
-      <label className="a11y-language">
-        <span>Page language for assistive tech</span>
-        <select
-          aria-describedby={`${panelId}-language-help`}
-          onChange={(event) => updateSetting('language', event.target.value)}
-          value={settings.language}
-        >
-          {languageOptions.map((language) => (
-            <option key={language.value} value={language.value}>
-              {language.label}
-            </option>
-          ))}
-        </select>
-        <small id={`${panelId}-language-help`}>
-          Updates the page language metadata for screen readers and browser translation tools.
-        </small>
-      </label>
 
       <div className="a11y-actions">
         <button className="a11y-close" onClick={resetSettings} type="button">

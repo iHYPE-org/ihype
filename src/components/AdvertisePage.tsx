@@ -416,7 +416,7 @@ function AIScanner() {
   const sub = SUBS[active];
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '.86fr 1.14fr', gap: 18, alignItems: 'start' }} ref={wrapperRef}>
+    <div className="adv-guard" style={{ display: 'grid', gridTemplateColumns: '.86fr 1.14fr', gap: 18, alignItems: 'start' }} ref={wrapperRef}>
       {/* Three checks */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {[
@@ -721,9 +721,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
               No human review queue. iHYPE runs on one operator — HYPE Screen scans the buyer, the copy, and the submission itself. Approval is instant when every gate passes.
             </p>
           </div>
-          <div className="adv-guard">
-            <AIScanner />
-          </div>
+          <AIScanner />
         </div>
       </section>
 

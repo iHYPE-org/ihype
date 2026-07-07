@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   if (!stripeKey?.startsWith('sk_') || !webhookSecret) {
     return NextResponse.json({ error: 'Payment not configured.' }, { status: 503 });
   }
-  const stripe = new Stripe(stripeKey, { apiVersion: '2025-02-24.acacia' });
+  const stripe = new Stripe(stripeKey, { apiVersion: '2026-06-24.dahlia' });
 
   const sig = request.headers.get('stripe-signature') ?? '';
   const body = await request.text();

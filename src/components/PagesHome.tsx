@@ -131,6 +131,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
   const [creatingName, setCreatingName] = useState('');
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [justCreatedName, setJustCreatedName] = useState<string | null>(null);
   const contentTopRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -168,10 +169,18 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
         setCreateError(created.error ?? 'Could not create page.');
         return;
       }
-      await refreshAll();
+      setData((prev) =>
+        prev && !prev.myProfiles.some((p) => p.id === created.id)
+          ? { ...prev, myProfiles: [...prev.myProfiles, created] }
+          : prev
+      );
       setSelectedPageId(created.id);
+      void refreshAll();
       setCreatingType(null);
       setCreatingName('');
+      setJustCreatedName(created.name ?? name);
+      contentTopRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      setTimeout(() => setJustCreatedName(null), 6000);
     } catch {
       setCreateError('Network error — try again.');
     } finally {
@@ -570,6 +579,15 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
 
       {tab === 'creator' && (
         <>
+          {justCreatedName && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', marginBottom: 18,
+              borderRadius: 12, border: '1px solid rgba(34,229,212,.3)', background: 'rgba(34,229,212,.08)',
+              color: '#22e5d4', fontSize: 13, fontWeight: 600,
+            }}>
+              ✓ &ldquo;{justCreatedName}&rdquo; page created — saved to your account. Edit it below.
+            </div>
+          )}
           {selectedProfile && (
             <>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(240,235,229,.35)', marginBottom: 14 }}>
