@@ -64,17 +64,6 @@ jobs:
           # previously exported as DIRECT_URL, which Prisma never saw.
           DIRECT_DATABASE_URL: ${{ secrets.DIRECT_URL }}
 
-      - name: Diagnose Turnstile env var (temporary)
-        run: |
-          if [ -n "$NEXT_PUBLIC_TURNSTILE_SITE_KEY" ]; then
-            echo "NEXT_PUBLIC_TURNSTILE_SITE_KEY is SET, length=${#NEXT_PUBLIC_TURNSTILE_SITE_KEY}"
-          else
-            echo "NEXT_PUBLIC_TURNSTILE_SITE_KEY is EMPTY/UNSET"
-          fi
-          node -e "console.log('node sees:', process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ? 'SET len=' + process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY.length : 'UNSET')"
-        env:
-          NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4AAAAAADSF8WNxaeBIRmR7"
-
       - name: Build for Cloudflare Workers
         run: npm run cf:build
         env:
@@ -87,6 +76,18 @@ jobs:
           # Turnstile site key must also be passed here or the widget never
           # renders client-side (silently blocking every real registration).
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4AAAAAADSF8WNxaeBIRmR7"
+
+      - name: Diagnose Turnstile build output (temporary)
+        run: |
+          echo "Searching .open-next/assets for the inlined site key..."
+          if grep -rl "0x4AAAAAADSF8WNxaeBIRmR7" .open-next/assets/_next/static/chunks/*.js 2>/dev/null; then
+            echo "FOUND: site key literal is present in the built client bundle."
+          else
+            echo "NOT FOUND: site key literal is missing from the built client bundle."
+          fi
+          echo "Searching for the unresolved raw property-access pattern instead..."
+          grep -rl "NEXT_PUBLIC_TURNSTILE_SITE_KEY" .open-next/assets/_next/static/chunks/*.js 2>/dev/null || echo "(no raw reference found either)"
+          echo "next --version: $(npx next --version)"
 
       - name: Deploy to Cloudflare Workers
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
