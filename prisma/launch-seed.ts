@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { PrismaClient, ProfileType, Role, ShowStatus } from '@prisma/client';
+import { PrismaClient, ProfileType, Role, ShowStatus } from '../src/generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import bcrypt from 'bcryptjs';
 

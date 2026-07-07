@@ -6,7 +6,7 @@ import {
   ProfileType,
   Role,
   ShowStatus
-} from '@prisma/client';
+} from '../src/generated/prisma/client';
 import bcrypt from 'bcryptjs';
 import { buildArtistMediaCollection } from '../src/lib/media';
 import { isProductionSeedingAllowed } from '../src/lib/runtime-flags';
