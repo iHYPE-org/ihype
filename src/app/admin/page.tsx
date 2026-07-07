@@ -316,6 +316,9 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           <Link className="button" href="/admin/broadcast">
             Broadcast email
           </Link>
+          <Link className="button secondary" href="/admin/community">
+            Community editor
+          </Link>
           <Link className="button secondary" href="/transparency">
             Transparency
           </Link>

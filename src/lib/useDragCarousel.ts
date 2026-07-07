@@ -25,6 +25,19 @@ export function useDragCarousel(enabled: boolean, onCommit: (direction: 'next' |
     let axis: 'x' | 'y' | null = null;
 
     function onTouchStart(e: TouchEvent) {
+      // Only arm the cross-section swipe while a section's quick-access grid
+      // is showing. Once a sub-tab is open (e.g. Listen > Charts), leave
+      // touch handling to that tab's own content — most just scroll, and
+      // Seeds' card deck already owns a horizontal drag gesture of its own
+      // (via Pointer Events + touch-action:none, unaffected by this either
+      // way) that a competing section-swipe would otherwise fight with.
+      const target = e.target as HTMLElement | null;
+      if (target?.closest('.mqg-content:not(.is-hidden)')) {
+        startX = null;
+        startY = null;
+        axis = null;
+        return;
+      }
       startX = e.touches[0].clientX;
       startY = e.touches[0].clientY;
       axis = null;

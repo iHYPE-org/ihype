@@ -83,6 +83,41 @@ test.describe('Mobile app shell', () => {
     await expect(page.locator('.ihype-mobile-nav a[href="/pages"]')).toHaveCSS('color', 'rgb(255, 80, 41)');
   });
 
+  test('swiping inside an open sub-tab does not change section', async ({ page }) => {
+    await page.goto('/shows');
+    await page.locator('.mqg-overlay.is-active .mqg-btn:not(.mqg-spacer)').first().click();
+    const content = page.locator('.mqg-content:not(.is-hidden)');
+    await expect(content).toHaveCount(1);
+
+    const box = await content.boundingBox();
+    if (!box) throw new Error('open sub-tab content bounding box not found');
+
+    // Same horizontal swipe gesture as the grid-overlay test above, but
+    // dispatched on the drilled-in content instead of the grid — this used
+    // to also move between Listen/Events/Pages (MobileAppShell's own
+    // carousel drag listens on the whole track), which fought with any
+    // content that wants to own horizontal drags itself (e.g. Seeds' card
+    // deck) and hijacked ordinary interaction with a sub-tab.
+    const startX = box.x + box.width * 0.85;
+    const endX = box.x + box.width * 0.1;
+    const y = box.y + box.height * 0.3;
+
+    await dispatchTouch(page, '.mqg-content:not(.is-hidden)', 'touchstart', startX, y);
+    await page.waitForTimeout(50);
+    await dispatchTouch(page, '.mqg-content:not(.is-hidden)', 'touchmove', (startX + endX) / 2, y);
+    await page.waitForTimeout(50);
+    await dispatchTouch(page, '.mqg-content:not(.is-hidden)', 'touchend', endX, y);
+    // A regressed version of this fix would react to the swipe asynchronously
+    // (setState -> history.pushState -> re-render) — give that a beat before
+    // asserting, otherwise a `.not.toHaveCSS` check can pass on a stale
+    // pre-update snapshot instead of actually proving nothing changed.
+    await page.waitForTimeout(400);
+
+    // Still on Events (/shows) — the swipe inside the sub-tab had no effect.
+    await expect(page.locator('.ihype-mobile-nav a[href="/shows"]')).toHaveCSS('color', 'rgb(255, 80, 41)');
+    await expect(page.locator('.ihype-mobile-nav a[href="/pages"]')).not.toHaveCSS('color', 'rgb(255, 80, 41)');
+  });
+
   test('pull-to-refresh shows a spinning indicator past the trigger threshold', async ({ page }) => {
     await page.goto('/shows');
     await page.locator('.mqg-overlay.is-active .mqg-btn:not(.mqg-spacer)').first().click();
