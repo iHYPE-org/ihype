@@ -241,3 +241,41 @@
 .ops-step.ops-step-done .ops-step-icon{color:#22e5d4}
 .ops-step.ops-step-active .ops-step-icon{color:#ff5029}
 .ops-spin{display:inline-block;animation:opsSpin .6s linear infinite}
+
+/* ── Admin console content re-theme ──────────────────────
+   Every /admin/* page.tsx still composes the sitewide pre-rebrand
+   .panel/.card/.button/.badge classes for its content (their layout
+   siblings — .container/.section/.meta/.input/.field — already
+   resolve to the current tokens via the --muted/--text aliases, so
+   only these hardcoded-color ones actually look stale). Scoped under
+   .ops-main, the one DOM ancestor every admin page renders inside
+   (AdminShell.tsx), so nothing outside the admin console is touched. */
+.ops-main .panel,
+.ops-main .card {
+  background: var(--bg-2);
+  border-color: var(--line);
+}
+.ops-main .button {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: none;
+}
+.ops-main .button:hover,
+.ops-main .button:focus-visible {
+  box-shadow: 0 10px 24px rgba(255,80,41,.25);
+}
+.ops-main .button.secondary {
+  background: rgba(255,255,255,.05);
+  color: var(--ink);
+  border-color: rgba(255,255,255,.1);
+}
+.ops-main .button.secondary:hover,
+.ops-main .button.secondary:focus-visible {
+  background: rgba(255,255,255,.08);
+  border-color: rgba(255,255,255,.2);
+}
+.ops-main .badge {
+  background: rgba(255,80,41,.1);
+  border-color: rgba(255,80,41,.3);
+  color: #ffd0c2;
+}
