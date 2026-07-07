@@ -14,8 +14,6 @@ export const menuLinks = [
   { href: '/legal', label: 'Legal' },
   { href: '/privacy', label: 'Privacy' },
   { href: '/dmca', label: 'DMCA' },
-  { href: '/feedback', label: 'Feedback' },
-  { href: '/discover', label: 'Leaderboard' },
 ];
 
 /**

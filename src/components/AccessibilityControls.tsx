@@ -247,11 +247,18 @@ export function AccessibilityControls({ inline = false }: { inline?: boolean } =
       </label>
 
       <div className="a11y-actions">
-        <button className="button small secondary" onClick={resetSettings} type="button">
+        <button className="a11y-close" onClick={resetSettings} type="button">
           Reset
         </button>
         {!inline ? (
-          <button className="button small" onClick={() => setIsOpen(false)} type="button">
+          <button
+            onClick={() => setIsOpen(false)}
+            type="button"
+            style={{
+              background: 'var(--accent, #ff5029)', color: '#fff', border: 'none',
+              borderRadius: 999, padding: '8px 16px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer',
+            }}
+          >
             Apply
           </button>
         ) : null}

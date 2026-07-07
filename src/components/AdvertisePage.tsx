@@ -66,16 +66,6 @@ function MinusIcon() {
   return <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>;
 }
 
-function Wordmark() {
-  return (
-    <a href="/" style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, letterSpacing: '-.04em', lineHeight: .85, display: 'inline-flex', alignItems: 'baseline', color: 'inherit', textDecoration: 'none', fontSize: 21 }}>
-      iH<span style={{ position: 'relative', display: 'inline-block', letterSpacing: 0 }}>
-        y<span style={{ display: 'block', width: '.22em', height: '.22em', borderRadius: '50%', background: '#ff5029', position: 'absolute', left: 'calc(50% - .01em)', top: '.03em', transform: 'translateX(-50%)' }} />
-      </span>pe
-    </a>
-  );
-}
-
 /* ── Ticker ──────────────────────────────────────────────── */
 function LiveTicker() {
   const [rows, setRows] = useState(QUEUE.slice(0, 5).map((q, i) => ({ ...q, id: i })));
@@ -656,12 +646,15 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
         @media (max-width:480px) {
           .adv-dot-grid { grid-template-columns:repeat(8, 1fr) !important }
         }
+        @media (max-width:640px) {
+          .adv-shell { padding-left:16px !important; padding-right:16px !important }
+        }
       `}</style>
 
       {/* Hero */}
       <header id="top" style={{ position: 'relative', padding: '40px 0 84px', overflow: 'hidden' }}>
         <div style={{ content: '', position: 'absolute', top: '-30%', left: '50%', transform: 'translateX(-50%)', width: 1100, height: 680, background: 'radial-gradient(ellipse at center, rgba(255,80,41,.10), transparent 62%)', pointerEvents: 'none' }} />
-        <div className="adv-hero-grid" style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px', display: 'grid', gridTemplateColumns: '1.18fr .92fr', gap: 54, alignItems: 'center', position: 'relative' }}>
+        <div className="adv-hero-grid adv-shell" style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px', display: 'grid', gridTemplateColumns: '1.18fr .92fr', gap: 54, alignItems: 'center', position: 'relative' }}>
           <div>
             <span style={{ ...eyebrow(''), display: 'inline-flex', alignItems: 'center', gap: 9 }}>
               <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: '#ff5029' }} />
@@ -696,7 +689,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
 
       {/* Coverage Builder */}
       <section id="build" style={{ position: 'relative', padding: '88px 0', borderTop: '1px solid rgba(255,255,255,.07)' }}>
-        <div style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
+        <div className="adv-shell" style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
           <div style={{ maxWidth: 680, marginBottom: 40 }}>
             <span style={{ ...eyebrow(''), display: 'inline-flex', alignItems: 'center', gap: 9 }}>
               <span style={{ width: 22, height: 1, background: '#ff5029', opacity: .6 }} />Step 01 · Build
@@ -716,7 +709,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
 
       {/* AI Guardrails */}
       <section id="guard" style={{ position: 'relative', padding: '88px 0', borderTop: '1px solid rgba(255,255,255,.07)' }}>
-        <div style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
+        <div className="adv-shell" style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
           <div style={{ maxWidth: 680, marginBottom: 40 }}>
             <span style={{ ...eyebrow(''), display: 'inline-flex', alignItems: 'center', gap: 9 }}>
               <span style={{ width: 22, height: 1, background: '#ff5029', opacity: .6 }} />Step 02 · The screen
@@ -736,7 +729,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
 
       {/* HYPE Screen — upload & scan demo */}
       <section id="scan" style={{ position: 'relative', padding: '88px 0', borderTop: '1px solid rgba(255,255,255,.07)' }}>
-        <div style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
+        <div className="adv-shell" style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
           <div style={{ maxWidth: 680, margin: '0 auto 40px', textAlign: 'center' }}>
             <span style={{ ...eyebrow(''), display: 'inline-flex', alignItems: 'center', gap: 9, justifyContent: 'center' }}>
               <span style={{ width: 22, height: 1, background: '#ff5029', opacity: .6 }} />Step 03 · Upload &amp; go live
@@ -757,7 +750,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
 
       {/* Two paths */}
       <section id="paths" style={{ position: 'relative', padding: '88px 0', borderTop: '1px solid rgba(255,255,255,.07)' }}>
-        <div style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
+        <div className="adv-shell" style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
           <div style={{ maxWidth: 680, marginBottom: 40 }}>
             <span style={{ ...eyebrow(''), display: 'inline-flex', alignItems: 'center', gap: 9 }}>
               <span style={{ width: 22, height: 1, background: '#ff5029', opacity: .6 }} />Step 04 · Who's buying
@@ -838,7 +831,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
 
       {/* Transparency */}
       <section id="trust" style={{ position: 'relative', padding: '88px 0', borderTop: '1px solid rgba(255,255,255,.07)' }}>
-        <div style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
+        <div className="adv-shell" style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
           <div style={{ maxWidth: 680, marginBottom: 8 }}>
             <span style={{ ...eyebrow(''), display: 'inline-flex', alignItems: 'center', gap: 9 }}>
               <span style={{ width: 22, height: 1, background: '#ff5029', opacity: .6 }} />The co-op promise
@@ -865,36 +858,6 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer style={{ borderTop: '1px solid rgba(255,255,255,.07)', padding: '46px 0 40px', background: '#0a0805', color: '#f0ebe5' }}>
-        <div style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px', display: 'flex', alignItems: 'flex-start', gap: 40 }}>
-          <div>
-            <Wordmark />
-            <p style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontSize: 15, color: '#9e9080', marginTop: 14, maxWidth: '34ch', lineHeight: 1.4 }}>
-              A music co-op where the ads are about music — and a machine makes sure of it.
-            </p>
-          </div>
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 60 }}>
-            <div>
-              <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9, letterSpacing: '.16em', textTransform: 'uppercase', color: '#5a5048', marginBottom: 14 }}>Advertise</div>
-              {[['Build a campaign', '#build'], ['How vetting works', '#guard'], ['3rd-party accounts', '#paths'], ['Where money goes', '#trust']].map(([l, h]) => (
-                <a key={l} href={h} style={{ display: 'block', fontSize: 13, color: '#9e9080', padding: '5px 0', textDecoration: 'none', transition: 'color .15s' }}>{l}</a>
-              ))}
-            </div>
-            <div>
-              <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9, letterSpacing: '.16em', textTransform: 'uppercase', color: '#5a5048', marginBottom: 14 }}>Platform</div>
-              {['Discover', 'Charts', 'Seeds', 'For Artists'].map(l => (
-                <a key={l} href="#" style={{ display: 'block', fontSize: 13, color: '#9e9080', padding: '5px 0', textDecoration: 'none' }}>{l}</a>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div style={{ width: '100%', maxWidth: 1180, margin: '28px auto 0', padding: '20px 40px 0', borderTop: '1px solid rgba(255,255,255,.07)', display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: '#3a342e', letterSpacing: '.04em' }}>
-          <span>© 2026 iHYPE Music Co-op · Operated under one roof</span>
-          <span>Ad policy v3.1 · Copyright firewall enabled</span>
-        </div>
-      </footer>
     </>
   );
 }

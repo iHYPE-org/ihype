@@ -3930,26 +3930,24 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid transparent;
+  border: 1px solid rgba(255,255,255,.1);
   border-radius: 999px;
   padding: 0 15px;
-  background: transparent;
-  color: #aeb8d3;
+  background: var(--bg-3);
+  color: var(--ink);
   font-size: 0.86rem;
   font-weight: 750;
   text-decoration: none;
+  cursor: pointer;
   transition:
     border-color 160ms ease,
     background 160ms ease,
     color 160ms ease,
     transform 160ms ease;
 }
-.nav-a11y-button:hover,
-
-.nav-a11y-button{
-  border-color: rgba(255, 255, 255, 0.1);
-  background: rgba(4, 8, 20, 0.64);
-  cursor: pointer;
+.nav-a11y-button:hover {
+  border-color: rgba(255,80,41,.4);
+  background: var(--bg-2);
 }
 
 .nav-a11y-button::before {
@@ -3959,7 +3957,7 @@ body {
   margin-right: 8px;
   border: 1px solid currentColor;
   border-radius: 50%;
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.18);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.1);
 }
 
 .a11y-menu {
@@ -3975,16 +3973,12 @@ body {
   width: min(360px, calc(100vw - 24px));
   display: grid;
   gap: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
   padding: 16px;
-  background:
-    radial-gradient(circle at 100% 0%, rgba(57, 216, 223, 0.13), transparent 32%),
-    radial-gradient(circle at 0% 0%, rgba(255, 61, 135, 0.12), transparent 30%),
-    rgba(5, 8, 20, 0.96);
+  background: var(--bg-2, #100d09);
   box-shadow: 0 24px 72px rgba(0, 0, 0, 0.46);
-  color: #f7f4ff;
-  backdrop-filter: blur(18px);
+  color: var(--ink);
 }
 
 .a11y-panel-inline {
@@ -4006,30 +4000,34 @@ body {
 
 .a11y-panel-head strong {
   display: block;
-  color: #ffffff;
+  color: var(--ink);
+  font-family: var(--font-display, Syne, sans-serif);
   font-size: 1rem;
-  font-weight: 950;
-  letter-spacing: -0.025em;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .a11y-panel .meta,
 .a11y-language small {
   margin: 4px 0 0;
-  color: #aeb8d3;
+  color: rgba(240,235,229,.55);
   font-size: 0.78rem;
-  font-weight: 650;
+  font-weight: 500;
   line-height: 1.4;
 }
 
 .a11y-close {
-  border: 1px solid rgba(255, 255, 255, 0.13);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 999px;
   padding: 7px 10px;
-  background: rgba(255, 255, 255, 0.055);
-  color: #d9e6ff;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--ink);
   cursor: pointer;
   font-size: 0.72rem;
-  font-weight: 850;
+  font-weight: 700;
+}
+.a11y-close:hover {
+  background: rgba(255, 255, 255, 0.09);
 }
 
 .a11y-option-grid {
@@ -4041,10 +4039,10 @@ body {
 .a11y-language {
   display: grid;
   gap: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
   padding: 12px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .a11y-option {
@@ -4057,33 +4055,33 @@ body {
   width: 19px;
   height: 19px;
   margin-top: 2px;
-  accent-color: #39d8df;
+  accent-color: var(--accent, #ff5029);
 }
 
 .a11y-option strong,
 .a11y-language > span {
   display: block;
-  color: #f7f4ff;
+  color: var(--ink);
   font-size: 0.83rem;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .a11y-option small {
   display: block;
   margin-top: 3px;
-  color: #97a7c7;
+  color: rgba(240,235,229,.5);
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 500;
   line-height: 1.4;
 }
 
 .a11y-language select {
   min-height: 42px;
-  border: 1px solid rgba(57, 216, 223, 0.28);
-  border-radius: 13px;
+  border: 1px solid rgba(255,80,41,.28);
+  border-radius: 9px;
   padding: 0 12px;
-  background: rgba(2, 6, 16, 0.84);
-  color: #ffffff;
+  background: var(--bg-3);
+  color: var(--ink);
   font: inherit;
 }
 
