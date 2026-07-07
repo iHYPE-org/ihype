@@ -56,19 +56,19 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@next/bundle-analyzer": "^15.0.0",
-    "@playwright/test": "^1.49.0",
+    "@next/bundle-analyzer": "^16.2.10",
+    "@playwright/test": "^1.61.1",
     "@types/bcryptjs": "^3.0.0",
-    "@types/node": "^22.15.30",
+    "@types/node": "^26.1.0",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.1.5",
-    "@vitest/coverage-v8": "^2.1.9",
-    "dotenv": "^16.4.5",
-    "prisma": "^6.19.3",
-    "tsx": "^4.19.2",
-    "typescript": "^5.8.3",
-    "vitest": "^4.1.9",
-    "wrangler": "^4.93.0"
+    "@vitest/coverage-v8": "^4.1.10",
+    "dotenv": "^17.4.2",
+    "prisma": "^7.8.0",
+    "tsx": "^4.23.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10",
+    "wrangler": "^4.107.0"
   },
   "overrides": {
     "postcss": "^8.5.10",
