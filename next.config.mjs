@@ -185,7 +185,7 @@ const nextConfig = {
       },
       {
         source: '/ihype-search.html',
-        destination: '/home',
+        destination: '/search',
         permanent: false
       },
       {
@@ -200,7 +200,7 @@ const nextConfig = {
       },
       {
         source: '/ihype-beta.html',
-        destination: '/',
+        destination: '/beta',
         permanent: false
       },
       {
@@ -314,11 +314,6 @@ const nextConfig = {
         permanent: false
       },
       {
-        source: '/search',
-        destination: '/home',
-        permanent: false
-      },
-      {
         source: '/governance',
         destination: '/about',
         permanent: false
@@ -326,11 +321,6 @@ const nextConfig = {
       {
         source: '/investor',
         destination: '/about',
-        permanent: false
-      },
-      {
-        source: '/beta',
-        destination: '/',
         permanent: false
       },
       {

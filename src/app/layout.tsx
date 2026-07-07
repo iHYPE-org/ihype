@@ -83,6 +83,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                   <SiteNavTabs />
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                  <SearchBar />
                   <HeaderAuthLinks />
                   <HeaderUserMenu />
                 </div>

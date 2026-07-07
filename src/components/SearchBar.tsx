@@ -2,11 +2,13 @@
 
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 export function SearchBar() {
   const [expanded, setExpanded] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const { data: session, status } = useSession();
 
   function handleIconClick() {
     setExpanded(true);
@@ -17,7 +19,7 @@ export function SearchBar() {
     e.preventDefault();
     const q = inputRef.current?.value.trim();
     if (q) {
-      router.push(`/home?q=${encodeURIComponent(q)}`);
+      router.push(`/search?q=${encodeURIComponent(q)}`);
       setExpanded(false);
     }
   }
@@ -26,11 +28,15 @@ export function SearchBar() {
     setExpanded(false);
   }
 
+  // Search is an app feature, not marketing chrome — matches SiteNavTabs
+  // hiding Listen/Events/Pages for logged-out desktop visitors.
+  if (status === 'loading' || !session?.user) return null;
+
   return (
     <>
       {/* Desktop: always visible inline form */}
       <form
-        action="/home"
+        action="/search"
         method="get"
         className="search-bar-desktop"
       >
