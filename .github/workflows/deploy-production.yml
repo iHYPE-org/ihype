@@ -77,24 +77,21 @@ jobs:
           # renders client-side (silently blocking every real registration).
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4AAAAAADSF8WNxaeBIRmR7"
 
-      - name: Diagnose Turnstile build output (temporary)
-        run: |
-          echo "Searching .open-next/assets for the inlined site key..."
-          if grep -rl "0x4AAAAAADSF8WNxaeBIRmR7" .open-next/assets/_next/static/chunks/*.js 2>/dev/null; then
-            echo "FOUND: site key literal is present in the built client bundle."
-          else
-            echo "NOT FOUND: site key literal is missing from the built client bundle."
-          fi
-          echo "Searching for the unresolved raw property-access pattern instead..."
-          grep -rl "NEXT_PUBLIC_TURNSTILE_SITE_KEY" .open-next/assets/_next/static/chunks/*.js 2>/dev/null || echo "(no raw reference found either)"
-          echo "next --version: $(npx next --version)"
-
       - name: Deploy to Cloudflare Workers
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
         run: npx wrangler deploy worker.js --autoconfig=false
         env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           NEXT_PUBLIC_BASE_URL: https://ihype.org
           NEXT_PUBLIC_APP_URL: https://ihype.org
+          # wrangler.toml's [build] command re-runs `npm run cf:build`
+          # internally before upload (this is why NEXT_PUBLIC_BASE_URL/APP_URL
+          # were already set here) — that hidden rebuild silently overwrote
+          # the correctly-built client bundle from the "Build for Cloudflare
+          # Workers" step above with one missing this var, since it was never
+          # added here when introduced in PR #461. Must stay identical to that
+          # step's env or whichever ran last wins.
+          NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4AAAAAADSF8WNxaeBIRmR7"
 
       - name: Deploy cron Worker
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
