@@ -60,7 +60,7 @@ export default async function RootPage() {
       <section className="idx-hero-section" style={{ padding: 'clamp(4rem, 10vw, 8rem) 0 3rem', position: 'relative' }}>
         <div className="container">
           <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '3rem', alignItems: 'center' }}>
-            <div>
+            <div style={{ minWidth: 0 }}>
               <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.2em', color: 'var(--accent)', textTransform: 'uppercase', margin: '0 0 1rem' }}>
                 Listen free, forever.
               </p>
@@ -92,6 +92,7 @@ export default async function RootPage() {
                 letterSpacing: '-0.04em',
                 margin: '0 0 1.5rem',
                 color: 'var(--ink)',
+                overflowWrap: 'break-word',
               }}>
                 Independent<br />
                 music built<br />
