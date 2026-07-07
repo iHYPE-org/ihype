@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 const TABS = [
   { id: 'listen', label: 'Listen', href: '/listen' },
@@ -19,6 +20,12 @@ function matchTab(pathname: string): string {
 export function SiteNavTabs() {
   const pathname = usePathname();
   const active = matchTab(pathname);
+  const { data: session, status } = useSession();
+
+  // Listen/Events/Pages are the signed-in app shell's own destinations — a
+  // logged-out desktop visitor sees the marketing site (Sign in / Join free,
+  // rendered by HeaderAuthLinks) in their place instead.
+  if (status === 'loading' || !session?.user) return null;
 
   return (
     <nav aria-label="Main navigation tabs" style={{ display: 'flex', alignItems: 'stretch', justifyContent: 'center', height: '100%' }}>

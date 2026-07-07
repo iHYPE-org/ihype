@@ -15,6 +15,7 @@ export const menuLinks = [
   { href: '/dmca', label: 'DMCA' },
   { href: '/status', label: 'Status' },
   { href: '/listen?tab=playlists', label: 'Playlists' },
+  { href: '/community', label: 'Community' },
   { href: '/feedback', label: 'Feedback' },
   { href: '/discover', label: 'Leaderboard' },
 ];
