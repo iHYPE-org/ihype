@@ -75,7 +75,14 @@ jobs:
       # (DESIGN_SYNC rows 171-176). This is the only pre-deploy gate that
       # can catch that class of failure; the post-deploy production smoke
       # is currently blind (Cloudflare edge 403s GitHub runners).
-      - name: Workerd smoke (real Workers runtime)
+      #
+      # Also runs the Lighthouse performance budget against this same
+      # instance (see lighthouse-budget.mjs's header comment): its DB-backed
+      # pages have the identical workerd-only requirement, so it shares this
+      # boot instead of starting a second, Prisma-broken `next start` server.
+      # ubuntu-latest ships google-chrome-stable; chrome-launcher finds it
+      # without any extra install step.
+      - name: Workerd smoke + performance budget (real Workers runtime)
         run: |
           psql "$WORKERD_SMOKE_DATABASE_URL" -c 'CREATE EXTENSION IF NOT EXISTS pg_trgm; CREATE EXTENSION IF NOT EXISTS citext;'
           npx prisma db push --skip-generate --accept-data-loss
@@ -83,33 +90,8 @@ jobs:
         env:
           DATABASE_URL: postgresql://ihype:ihype@localhost:55432/ihype
           WORKERD_SMOKE_DATABASE_URL: postgresql://ihype:ihype@localhost:55432/ihype
-
-      # Perceived speed on the free public pages (marketing, discovery,
-      # sign-in) is a conversion lever for a new visitor deciding whether to
-      # create an account — this catches a regression before it ships.
-      # Reuses the schema already pushed for the workerd smoke above.
-      # ubuntu-latest ships google-chrome-stable; chrome-launcher finds it
-      # without any extra install step.
-      - name: Performance budget (Lighthouse)
-        run: |
-          npm run build
-          npm run start -- -p 3100 &
-          SERVER_PID=$!
-          trap "kill $SERVER_PID 2>/dev/null || true" EXIT
-          for i in $(seq 1 60); do
-            curl -s -o /dev/null http://localhost:3100/ && break
-            sleep 1
-          done
-          node scripts/lighthouse-budget.mjs
-        env:
-          DATABASE_URL: postgresql://ihype:ihype@localhost:55432/ihype
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
-          AUTH_TRUST_HOST: 'true'
-          NEXTAUTH_URL: http://localhost:3100
-          NEXT_PUBLIC_BASE_URL: http://localhost:3100
-          NEXT_PUBLIC_APP_URL: http://localhost:3100
-          LHCI_BASE_URL: http://localhost:3100
 
       - name: Upload Lighthouse report
         if: always()

@@ -8,6 +8,13 @@
  * nothing about it (see DESIGN_SYNC rows 171-176: five green builds
  * shipped a sitewide DB outage that only workerd could surface).
  *
+ * Also runs the Lighthouse performance budget (scripts/lighthouse-budget.mjs)
+ * against this same instance once the functional checks pass — that budget
+ * has the identical workerd-only requirement (its DB-backed pages need a real
+ * Prisma engine), so it shares this boot rather than starting a second,
+ * broken Node server. Set SKIP_LIGHTHOUSE_BUDGET=1 to skip it for a faster
+ * functional-only smoke run.
+ *
  * Prerequisites (CI provides these; see .github/workflows/ci.yml):
  *   - `npm run cf:build` has already produced `.open-next/`
  *   - WORKERD_SMOKE_DATABASE_URL points at a Postgres with the schema
@@ -17,6 +24,7 @@
  */
 import { spawn } from 'node:child_process';
 import { readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { runLighthouseBudget } from './lighthouse-budget.mjs';
 
 const PORT = Number(process.env.WORKERD_SMOKE_PORT || 8787);
 const BASE = `http://127.0.0.1:${PORT}`;
@@ -158,6 +166,18 @@ async function run() {
       notifications.status === 401,
       `status=${notifications.status} body=${notifications.text.slice(0, 200)}`
     );
+
+    // 6. Performance budget — MUST run against this workerd instance, not a
+    // `next start` Node server. The production Prisma config only resolves a
+    // working query engine inside workerd (see lighthouse-budget.mjs's own
+    // header comment); a Node-hosted Lighthouse run would hang every
+    // DB-backed page for 25s per retry attempt and then fail outright.
+    if (process.env.SKIP_LIGHTHOUSE_BUDGET !== '1') {
+      const { anyFailed } = await runLighthouseBudget({ baseUrl: BASE });
+      check('Lighthouse performance budget', !anyFailed, 'see per-page output above');
+    } else {
+      console.log('[workerd-smoke] SKIP_LIGHTHOUSE_BUDGET=1 — skipping performance budget');
+    }
   } finally {
     child.kill('SIGTERM');
     // wrangler spawns workerd children; give the tree a moment, then be sure.
