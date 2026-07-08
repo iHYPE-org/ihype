@@ -18,8 +18,33 @@ const LEVELS: Record<Level, number> = { debug: 10, info: 20, warn: 30, error: 40
 const isProd = process.env.NODE_ENV === 'production';
 const minLevel: Level = (process.env.LOG_LEVEL as Level) ?? (isProd ? 'info' : 'debug');
 
+// Error-level logs also become Sentry events, so degraded states that only
+// used to appear in Worker logs (which nobody tails) can actually alert.
+// A day-long sitewide DB outage once hid behind graceful `.catch(() => [])`
+// fallbacks that logged to stdout and nowhere else. Best-effort: any Sentry
+// failure must never break the code path that was merely trying to log.
+function reportToSentry(prefix: string, meta: Record<string, unknown> | Error | null, message?: string) {
+  if (!process.env.NEXT_PUBLIC_SENTRY_DSN) return;
+  import('@sentry/nextjs')
+    .then((Sentry) => {
+      if (meta instanceof Error) {
+        Sentry.captureException(meta, { tags: { logPrefix: prefix }, extra: { message } });
+      } else {
+        Sentry.captureMessage(`${prefix} ${message ?? ''}`.trim(), {
+          level: 'error',
+          extra: meta ?? undefined
+        });
+      }
+    })
+    .catch(() => {});
+}
+
 function emit(level: Level, prefix: string, meta: Record<string, unknown> | Error | null, message?: string) {
   if (LEVELS[level] < LEVELS[minLevel]) return;
+
+  if (level === 'error' && isProd) {
+    reportToSentry(prefix, meta, message);
+  }
 
   const ts = new Date().toISOString();
 

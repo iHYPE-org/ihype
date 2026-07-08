@@ -118,6 +118,30 @@ test.describe('Mobile app shell', () => {
     await expect(page.locator('.ihype-mobile-nav a[href="/pages"]')).not.toHaveCSS('color', 'rgb(255, 80, 41)');
   });
 
+  test('navigating to a route outside the shell hides the grid overlay and shows the destination', async ({ page }) => {
+    // Regression guard for the "Pages > Settings needs pull-to-refresh" bug:
+    // MobileQuickGrid portals its overlay to document.body, outside .mas-root,
+    // so when a link leaves the 3 shell routes entirely, the overlay's
+    // visibility depends on isShellForeground being gated on shell.active —
+    // without that gate the stale grid stayed rendered on top of the new page.
+    test.slow(); // first-hit route compile in dev can be slow
+    await page.goto('/shows');
+    await expect(page.locator('.mqg-overlay.is-active')).toHaveCount(1);
+    // Warm /about so the dev server's lazy first-compile doesn't eat the
+    // navigation timeout below (no-op against a production build).
+    await page.request.get('/about');
+
+    // Menu drawer -> About: a real client-side navigation off the shell routes.
+    await page.locator('.ihype-mobile-nav button', { hasText: 'Menu' }).click();
+    await page.getByRole('link', { name: 'About', exact: true }).click();
+    await page.waitForURL('**/about');
+
+    // The destination page must actually be visible — no lingering overlay.
+    await expect(page.locator('.mqg-overlay.is-active')).toHaveCount(0);
+    await expect(page.locator('.mas-root.is-active')).toHaveCount(0);
+    await expect(page.locator('#main-content')).toBeVisible();
+  });
+
   test('pull-to-refresh shows a spinning indicator past the trigger threshold', async ({ page }) => {
     await page.goto('/shows');
     await page.locator('.mqg-overlay.is-active .mqg-btn:not(.mqg-spacer)').first().click();

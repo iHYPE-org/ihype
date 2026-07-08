@@ -15,6 +15,9 @@ dev-server.log
 .vercel
 .open-next
 .wrangler
+.wrangler-workerd-smoke.toml
+playwright-report
+test-results
 ihype/
 .env*.local
 dev-server.err.log

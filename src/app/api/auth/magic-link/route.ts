@@ -10,7 +10,7 @@ export async function POST(request: Request) {
   try {
     const clientAddress = readClientAddress(request);
     const rl = await consumeRateLimit(`magic-link:${clientAddress}`, { limit: 5, windowMs: 15 * 60 * 1000 });
-    if (!rl.allowed) return NextResponse.json({ error: "Too many attempts — wait a minute and try again." }, { status: 429 });
+    if (!rl.allowed) return NextResponse.json({ error: "Too many attempts — wait a few minutes and try again." }, { status: 429 });
 
     let email: string;
     try {

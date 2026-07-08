@@ -103,6 +103,9 @@ jobs:
         env:
           SMOKE_BASE_URL: https://ihype.org
           SMOKE_BYPASS_TOKEN: ${{ secrets.SMOKE_BYPASS_TOKEN }}
+          # CRON_SECRET unlocks /api/health's full snapshot (real DB counts)
+          # instead of the minimal public probe. Optional — empty is fine.
+          SMOKE_HEALTH_BEARER: ${{ secrets.CRON_SECRET }}
           SMOKE_ALLOW_EDGE_BLOCK: '1'
 
       - name: Purge Cloudflare cache

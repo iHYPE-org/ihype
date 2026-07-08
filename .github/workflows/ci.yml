@@ -9,6 +9,21 @@ jobs:
   check:
     name: Typecheck and test
     runs-on: ubuntu-latest
+    services:
+      # Scratch Postgres for the workerd smoke stage below.
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ihype
+          POSTGRES_PASSWORD: ihype
+          POSTGRES_DB: ihype
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U ihype"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v5
 
@@ -52,3 +67,19 @@ jobs:
           NEXT_PUBLIC_BASE_URL: https://ihype.org
           NEXT_PUBLIC_APP_URL: https://ihype.org
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4AAAAAADSF8WNxaeBIRmR7"
+
+      # Boot the built worker in the REAL Workers runtime (workerd via
+      # wrangler dev) against the scratch Postgres and exercise the code
+      # paths that only break on workerd — Prisma engine selection passed
+      # every Node-based check while production auth was down for a day
+      # (DESIGN_SYNC rows 171-176). This is the only pre-deploy gate that
+      # can catch that class of failure; the post-deploy production smoke
+      # is currently blind (Cloudflare edge 403s GitHub runners).
+      - name: Workerd smoke (real Workers runtime)
+        run: |
+          psql "$WORKERD_SMOKE_DATABASE_URL" -c 'CREATE EXTENSION IF NOT EXISTS pg_trgm; CREATE EXTENSION IF NOT EXISTS citext;'
+          npx prisma db push --skip-generate --accept-data-loss
+          node scripts/workerd-smoke.mjs
+        env:
+          DATABASE_URL: postgresql://ihype:ihype@localhost:55432/ihype
+          WORKERD_SMOKE_DATABASE_URL: postgresql://ihype:ihype@localhost:55432/ihype
