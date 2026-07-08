@@ -72,8 +72,8 @@ export function MobileAppShell() {
                 transition: dragging ? 'none' : 'transform .32s cubic-bezier(.22,1,.36,1)',
               }}
             >
-              {/* Only the foreground section's own quick-access grid should ever be interactive/visible — see isForeground plumbing in each *Home component. */}
-              <Component isShellForeground={section === shell.section} resetToken={shell.resetTokens[section]} />
+              {/* Only the foreground section's own quick-access grid should ever be interactive/visible — see isForeground plumbing in each *Home component. Gating on shell.active too (not just section match) matters because navigating to a route outside the shell (e.g. a grid tile's href) doesn't reset `section`, so without it the last-foreground section's portaled overlay (MobileQuickGrid renders to document.body, outside .mas-root) would stay visible on top of the new page. */}
+              <Component isShellForeground={shell.active && section === shell.section} resetToken={shell.resetTokens[section]} />
             </div>
           );
         })}
