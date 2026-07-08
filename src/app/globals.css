@@ -6385,6 +6385,19 @@ h1, h2 {
     overflow: hidden;
     background: var(--bg);
   }
+  /* RouteShellSlot returns null on /listen, /shows, /pages once the shell
+     takes over, so #main-content briefly measures zero height in the
+     underlying document flow — the shell/placeholder covers it visually
+     (position: fixed doesn't occupy flow space), but SiteFooter, which
+     sits right after <main> in that same flow, jumps upward to fill the
+     gap regardless of what's painted on top. Reserving a minimum height
+     here keeps the document's own layout stable across that swap, which a
+     fixed-position overlay on top of it structurally cannot do. Confirmed
+     via Lighthouse: this was scored as a footer-node layout shift with
+     CLS ~0.8 on /shows, the same signature as the original shell-flash
+     bug, but from the underlying flow collapsing rather than a hydration
+     timing gap. */
+  #main-content { min-height: 100dvh; }
 }
 .mas-track {
   position: relative;
