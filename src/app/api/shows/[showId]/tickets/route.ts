@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server';
-import { AccountsPayableCategory, Role, TicketOrderStatus } from '@/generated/prisma/client';
+import { AccountsPayableCategory, Role, TicketOrderStatus } from '@prisma/client';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';

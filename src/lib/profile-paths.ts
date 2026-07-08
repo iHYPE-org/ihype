@@ -2,7 +2,7 @@
 // Client-safe (no DB imports) so workbench client components can share it.
 // Server code should keep importing these via '@/lib/account-routing',
 // which re-exports them.
-import type { ProfileType } from '@/generated/prisma/client';
+import type { ProfileType } from '@prisma/client';
 
 export function getProfilePathForType(type: ProfileType | (string & {}), slug: string) {
   if (type === 'DJ') return `/promoters/${slug}`;

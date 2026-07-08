@@ -1,6 +1,5 @@
 node_modules
 .next
-src/generated
 .next-stale-*
 .open-next
 .codex

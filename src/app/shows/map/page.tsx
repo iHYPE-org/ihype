@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { db } from '@/lib/db';
-import type { Show } from '@/generated/prisma/client';
+import type { Show } from '@prisma/client';
 
 type ShowWithVenue = Show & {
   venueProfile: {

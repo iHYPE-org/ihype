@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import type { ProfileType } from '@/generated/prisma/client';
+import type { ProfileType } from '@prisma/client';
 import { auth } from '@/lib/auth';
 import { detectRequestLocation } from '@/lib/request-location';
 import { getRecommendations } from '@/lib/recommendations';

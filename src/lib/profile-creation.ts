@@ -1,4 +1,4 @@
-import { ProfileType } from '@/generated/prisma/client';
+import { ProfileType } from '@prisma/client';
 import { db } from '@/lib/db';
 import { createHexId } from '@/lib/hex-id';
 

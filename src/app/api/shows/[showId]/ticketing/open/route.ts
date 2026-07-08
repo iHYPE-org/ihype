@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { AccountsPayableCategory, AccountsPayableStatus, TicketOrderStatus } from '@/generated/prisma/client';
+import { AccountsPayableCategory, AccountsPayableStatus, TicketOrderStatus } from '@prisma/client';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { sendIssuedTicketEmail } from '@/lib/mailer';

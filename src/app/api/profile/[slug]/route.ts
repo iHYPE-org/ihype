@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import type { ShowStatus } from '@/generated/prisma/client';
+import type { ShowStatus } from '@prisma/client';
 import { db } from '@/lib/db';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
 

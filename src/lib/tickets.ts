@@ -1,4 +1,4 @@
-import { TicketStatus } from '@/generated/prisma/client';
+import { TicketStatus } from '@prisma/client';
 import { renderSVG } from 'uqr';
 import { createHexId } from '@/lib/hex-id';
 import { getBaseUrl } from '@/lib/utils';
