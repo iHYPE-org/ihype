@@ -1,6 +1,7 @@
 import { unstable_cache } from 'next/cache';
 import { Prisma, ProfileType, ShowStatus } from '@prisma/client';
 import { db, withDbRetry } from '@/lib/db';
+import { log } from '@/lib/logger';
 import { sortShowsForFeed } from '@/lib/integrity';
 import { demoUserEmails, shouldHideDemoContent } from '@/lib/runtime-flags';
 import { getTransparencySnapshot } from '@/lib/transparency';
@@ -168,7 +169,7 @@ const getHomePageDataCached = unstable_cache(
         ])
       );
     } catch (error) {
-      console.error('Falling back to empty home page data', error);
+      log.error('[public-data]', error instanceof Error ? error : null, 'Falling back to empty home page data — DB unreachable, page will render empty');
     }
 
     const transparencySnapshot = await getTransparencySnapshot();
@@ -196,7 +197,7 @@ const getDirectoryProfilesCached = unstable_cache(
         ...publicProfileArgs
       })
     ).catch((error) => {
-      console.error(`Falling back to empty directory for ${type}`, error);
+      log.error('[public-data]', error instanceof Error ? error : null, `Falling back to empty ${type} directory — DB unreachable, page will render empty`);
       return [];
     }).then((profiles) => profiles.map(sanitizePublicProfile)),
   ['directory-profiles-v1'],
@@ -214,7 +215,7 @@ const getShowsDirectoryDataCached = unstable_cache(
       })
     ).then((shows) => shows.map(sanitizePublicShow))
     .catch((error) => {
-      console.error('Falling back to empty shows directory', error);
+      log.error('[public-data]', error instanceof Error ? error : null, 'Falling back to empty shows directory — DB unreachable, page will render empty');
       return [];
     }),
   ['shows-directory-v1'],

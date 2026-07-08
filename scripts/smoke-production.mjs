@@ -36,6 +36,11 @@ async function curl(url, json = false) {
   if (smokeBypassToken) {
     args.push('-H', `x-ihype-smoke-test: ${smokeBypassToken}`);
   }
+  // With a CRON_SECRET bearer, /api/health returns the full snapshot (real DB
+  // counts + integration readiness) instead of the minimal public probe.
+  if (json && process.env.SMOKE_HEALTH_BEARER?.trim()) {
+    args.push('-H', `Authorization: Bearer ${process.env.SMOKE_HEALTH_BEARER.trim()}`);
+  }
   args.push(url);
   const { stdout } = await execFileAsync('curl', args, {
     maxBuffer: 5 * 1024 * 1024
@@ -82,7 +87,11 @@ for (const check of checks) {
 if (failed) {
   const allEdgeBlocked = statuses.length === checks.length && statuses.every((status) => status === 403);
   if (process.env.SMOKE_ALLOW_EDGE_BLOCK === '1' && allEdgeBlocked) {
-    const message = '[smoke] GitHub Actions appears blocked by Cloudflare edge security; app smoke was not reachable.';
+    const message =
+      '[smoke] PRODUCTION WAS NOT VALIDATED. Every check returned 403 — Cloudflare edge security blocks this runner, ' +
+      'so this deploy shipped without any post-deploy verification. To fix: create a Cloudflare WAF skip rule matching ' +
+      'the x-ihype-smoke-test header and set the same value as the SMOKE_BYPASS_TOKEN repo secret. ' +
+      'Until then, the pre-deploy workerd smoke stage in CI is the only real gate.';
     if (process.env.GITHUB_ACTIONS === 'true') {
       console.warn(`::warning::${message}`);
     } else {
