@@ -1,8 +1,24 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { pathToSection, sectionToPath, SHELL_SECTIONS, type ShellSection } from '@/lib/mobileShell';
+
+const MOBILE_MEDIA_QUERY = '(max-width: 768px)';
+
+function subscribeToMobileQuery(onChange: () => void) {
+  const mq = window.matchMedia(MOBILE_MEDIA_QUERY);
+  mq.addEventListener('change', onChange);
+  return () => mq.removeEventListener('change', onChange);
+}
+
+function getIsMobileSnapshot() {
+  return window.matchMedia(MOBILE_MEDIA_QUERY).matches;
+}
+
+function getIsMobileServerSnapshot() {
+  return false;
+}
 
 type MobileShellValue = {
   /** True only on mobile viewports while sitting on one of the 3 shell routes — gates both the shell's own visibility and whether each route's own page content should render (it shouldn't, the shell already has a mounted copy). */
@@ -28,17 +44,16 @@ const MobileShellCtx = createContext<MobileShellValue | null>(null);
  */
 export function MobileShellProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [isMobile, setIsMobile] = useState(false);
+  // useSyncExternalStore (not useState+useEffect) matters here: it resolves
+  // to the real client value synchronously during hydration, in the same
+  // commit, before the browser paints. A useEffect-based check would paint
+  // the desktop-shaped page first and only flip to the mobile shell a frame
+  // later — a real, visible layout jump (confirmed via Lighthouse CLS audits
+  // showing the whole page moving from a footer's true position) rather than
+  // just a hydration nuance.
+  const isMobile = useSyncExternalStore(subscribeToMobileQuery, getIsMobileSnapshot, getIsMobileServerSnapshot);
   const [section, setSectionState] = useState<ShellSection>(() => pathToSection(pathname) ?? 'listen');
   const [resetTokens, setResetTokens] = useState<Record<ShellSection, number>>({ listen: 0, shows: 0, pages: 0 });
-
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 768px)');
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
 
   // A real navigation (bottom-nav tap before hydration, a Link elsewhere in
   // the app, browser back/forward) should still move the shell to match.

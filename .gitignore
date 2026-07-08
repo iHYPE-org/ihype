@@ -18,6 +18,7 @@ dev-server.log
 .wrangler-workerd-smoke.toml
 playwright-report
 test-results
+lighthouse-budget-report.json
 ihype/
 .env*.local
 dev-server.err.log
