@@ -10,10 +10,14 @@ import { validateAudioMagicBytes } from '@/lib/validate-upload';
 import { parseAudioDuration } from '@/lib/audio-duration';
 import { vetFreeUseSample } from '@/lib/media-vetting';
 import { recordAuditEvent } from '@/lib/audit';
+import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
+import { readClientAddress } from '@/lib/request-meta';
 
 export const dynamic = 'force-dynamic';
 
 const MAX_AUDIO_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_PROFILE_STORAGE_BYTES = 250 * 1024 * 1024;
+const MAX_PROFILE_TRACKS = 100;
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -23,22 +27,18 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const profileId = searchParams.get('profileId')?.trim() ?? '';
-
-  if (!profileId) {
-    return NextResponse.json({ error: 'profileId is required.' }, { status: 400 });
-  }
+  if (!profileId) return NextResponse.json({ error: 'profileId is required.' }, { status: 400 });
 
   const profile = await withDbRetry(() =>
     db.profile.findUnique({
       where: { id: profileId },
-      select: { id: true, ownerId: true, type: true }
-    })
+      select: { id: true, ownerId: true, type: true },
+    }),
   );
 
   if (!profile || !['ARTIST', 'DJ'].includes(profile.type)) {
     return NextResponse.json({ error: 'Artist profile not found.' }, { status: 404 });
   }
-
   if (!canManageOwnedResource(session, profile.ownerId)) {
     return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
   }
@@ -47,7 +47,7 @@ export async function GET(request: Request) {
     db.artistMediaAsset.findMany({
       where: { profileId },
       orderBy: { createdAt: 'desc' },
-      take: 200,
+      take: MAX_PROFILE_TRACKS,
       select: {
         hexId: true,
         title: true,
@@ -55,9 +55,9 @@ export async function GET(request: Request) {
         mimeType: true,
         fileSizeBytes: true,
         freeUseEnabled: true,
-        createdAt: true
-      }
-    })
+        createdAt: true,
+      },
+    }),
   );
 
   return NextResponse.json({ tracks });
@@ -65,10 +65,7 @@ export async function GET(request: Request) {
 
 function deriveTitleFromFileName(value: string) {
   const trimmed = value.trim();
-  if (!trimmed) {
-    return 'Artist upload';
-  }
-
+  if (!trimmed) return 'Artist upload';
   return trimmed
     .replace(/\.[a-z0-9]+$/i, '')
     .replace(/[-_]+/g, ' ')
@@ -82,6 +79,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Login required' }, { status: 401 });
   }
 
+  const rateLimit = await consumeRateLimit(
+    rateLimitKey('artist-media-upload', session.user.id, readClientAddress(request)),
+    { limit: 20, windowMs: 60 * 60 * 1000 },
+  );
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'Too many uploads. Try again later.' },
+      { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } },
+    );
+  }
+
   try {
     const formData = await request.formData();
     const profileId = String(formData.get('profileId') ?? '').trim();
@@ -93,11 +101,9 @@ export async function POST(request: Request) {
     if (!profileId) {
       return NextResponse.json({ error: 'Artist profile is required.' }, { status: 400 });
     }
-
     if (!(file instanceof File)) {
       return NextResponse.json({ error: 'Choose an audio file to upload.' }, { status: 400 });
     }
-
     if (!file.type.startsWith('audio/')) {
       return NextResponse.json({ error: 'Only audio files are supported.' }, { status: 400 });
     }
@@ -106,12 +112,10 @@ export async function POST(request: Request) {
     if (mediaValidationError) {
       return NextResponse.json({ error: mediaValidationError }, { status: 400 });
     }
-
     if (file.size > MAX_AUDIO_FILE_SIZE_BYTES) {
       return NextResponse.json({ error: 'Audio uploads are limited to 10MB.' }, { status: 400 });
     }
 
-    // Magic byte validation — verify actual file content matches claimed audio type
     const headerBuffer = await file.slice(0, 12).arrayBuffer();
     if (!validateAudioMagicBytes(new Uint8Array(headerBuffer))) {
       return NextResponse.json({ error: 'File content does not match a supported audio format.' }, { status: 400 });
@@ -120,21 +124,35 @@ export async function POST(request: Request) {
     const profile = await withDbRetry(() =>
       db.profile.findUnique({
         where: { id: profileId },
-        select: {
-          id: true,
-          ownerId: true,
-          type: true,
-          name: true
-        }
-      })
+        select: { id: true, ownerId: true, type: true, name: true },
+      }),
     );
 
     if (!profile || profile.type !== 'ARTIST') {
       return NextResponse.json({ error: 'Artist profile not found.' }, { status: 404 });
     }
-
     if (!canManageOwnedResource(session, profile.ownerId)) {
       return NextResponse.json({ error: 'Only the artist who owns this page can upload media.' }, { status: 403 });
+    }
+
+    const usage = await db.artistMediaAsset.aggregate({
+      where: { profileId: profile.id },
+      _count: { _all: true },
+      _sum: { fileSizeBytes: true },
+    });
+    const trackCount = usage._count._all;
+    const usedBytes = usage._sum.fileSizeBytes ?? 0;
+    if (trackCount >= MAX_PROFILE_TRACKS) {
+      return NextResponse.json(
+        { error: `Each artist profile is limited to ${MAX_PROFILE_TRACKS} uploaded tracks.` },
+        { status: 413 },
+      );
+    }
+    if (usedBytes + file.size > MAX_PROFILE_STORAGE_BYTES) {
+      return NextResponse.json(
+        { error: 'This upload would exceed the 250MB storage limit for the artist profile.' },
+        { status: 413 },
+      );
     }
 
     const title = (requestedTitle || deriveTitleFromFileName(file.name)).slice(0, 160);
@@ -145,18 +163,15 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            'Media uploads require object storage before production use. Configure Cloudflare R2 or enable the temporary database storage flag.'
+            'Media uploads require object storage before production use. Configure Cloudflare R2 or enable the temporary database storage flag.',
         },
-        { status: 501 }
+        { status: 501 },
       );
     }
 
     const fileBytes = new Uint8Array(await file.arrayBuffer());
     const durationSecs = parseAudioDuration(fileBytes) ?? null;
 
-    // AI content vetting gates the free-use flag (the shared radio crate).
-    // A flagged track still uploads for the artist's own use — it just isn't
-    // released into the rebroadcastable pool without review.
     let effectiveFreeUse = freeUseEnabled;
     let vetting: Awaited<ReturnType<typeof vetFreeUseSample>> | null = null;
     if (freeUseEnabled) {
@@ -179,9 +194,7 @@ export async function POST(request: Request) {
       db.profile.update({
         where: { id: profile.id },
         data: {
-          songUploadCount: {
-            increment: 1
-          },
+          songUploadCount: { increment: 1 },
           mediaUploads: {
             create: {
               hexId,
@@ -196,8 +209,8 @@ export async function POST(request: Request) {
               storageUrl: storedMedia?.url ?? null,
               freeUseEnabled: effectiveFreeUse,
               durationSecs,
-            }
-          }
+            },
+          },
         },
         select: {
           mediaUploads: {
@@ -209,25 +222,25 @@ export async function POST(request: Request) {
               mimeType: true,
               fileSizeBytes: true,
               freeUseEnabled: true,
-              createdAt: true
-            }
-          }
-        }
-      })
+              createdAt: true,
+            },
+          },
+        },
+      }),
     );
     const asset = updatedProfile.mediaUploads[0];
-
-    if (!asset) {
-      throw new Error('Artist media upload did not return the created asset.');
-    }
+    if (!asset) throw new Error('Artist media upload did not return the created asset.');
 
     if (vetting) {
-      recordAuditEvent({
+      await recordAuditEvent({
         actorUserId: session.user.id,
         action: vetting.cleared ? 'media.free_use.auto_cleared' : 'media.free_use.auto_flagged',
         entityType: 'ArtistMediaAsset',
         entityId: hexId,
-        metadata: { reasoning: vetting.reasoning, requiresManualReview: vetting.requiresManualReview },
+        metadata: {
+          reasoning: vetting.reasoning,
+          requiresManualReview: vetting.requiresManualReview,
+        },
       }).catch(() => {});
     }
 
@@ -235,7 +248,7 @@ export async function POST(request: Request) {
       asset: {
         ...asset,
         url: `/api/media/${asset.hexId}`,
-        shareUrl: `/api/media/${asset.hexId}`
+        shareUrl: `/api/media/${asset.hexId}`,
       },
       ...(vetting && !vetting.cleared
         ? {
@@ -246,7 +259,7 @@ export async function POST(request: Request) {
                 'Uploaded, but automated vetting kept it out of the shared free-use radio crate. It stays available on your own page.',
             },
           }
-        : {})
+        : {}),
     });
   } catch (error) {
     console.error('Artist media upload failed', error);
