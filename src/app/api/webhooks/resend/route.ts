@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { db } from '@/lib/db';
+import { log } from '@/lib/logger';
 import { verifyResendSignature } from '@/lib/resend-webhook';
 
 export async function POST(request: NextRequest) {
@@ -11,7 +13,6 @@ export async function POST(request: NextRequest) {
   const svixId = request.headers.get('svix-id') ?? '';
   const svixTimestamp = request.headers.get('svix-timestamp') ?? '';
   const svixSignature = request.headers.get('svix-signature') ?? '';
-
   const body = await request.text();
 
   if (!verifyResendSignature(body, svixId, svixTimestamp, svixSignature, secret)) {
@@ -26,22 +27,35 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    await db.processedWebhookEvent.create({
-      data: { source: 'resend', eventId: svixId }
+    const duplicate = await db.$transaction(async (tx) => {
+      const existing = await tx.processedWebhookEvent.findUnique({
+        where: { source_eventId: { source: 'resend', eventId: svixId } },
+        select: { id: true },
+      });
+      if (existing) return true;
+
+      if (event.type === 'email.bounced' || event.type === 'email.complained') {
+        const emails = [...new Set(event.data?.to ?? [])];
+        for (const email of emails) {
+          await tx.user.updateMany({
+            where: { email: email.trim().toLowerCase() },
+            data: { emailBounced: true },
+          });
+        }
+      }
+
+      await tx.processedWebhookEvent.create({
+        data: { source: 'resend', eventId: svixId },
+      });
+      return false;
     });
-  } catch {
-    return NextResponse.json({ ok: true, duplicate: true });
-  }
 
-  if (event.type === 'email.bounced' || event.type === 'email.complained') {
-    const emails = event.data?.to ?? [];
-    for (const email of emails) {
-      await db.user.updateMany({
-        where: { email },
-        data: { emailBounced: true },
-      }).catch(() => {});
+    return NextResponse.json({ ok: true, duplicate });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      return NextResponse.json({ ok: true, duplicate: true });
     }
+    log.error('[resend/webhook]', error instanceof Error ? error : null, `Processing failed for ${svixId}`);
+    return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
   }
-
-  return NextResponse.json({ ok: true });
 }
