@@ -4,13 +4,16 @@ on:
   push:
     branches:
       - fix/audit-remediation-2026-07-09
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
 
 jobs:
   apply:
-    if: ${{ !contains(github.event.head_commit.message, '[audit-remediation-applied]') }}
+    if: ${{ github.event_name == 'pull_request' || !contains(github.event.head_commit.message, '[audit-remediation-applied]') }}
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
