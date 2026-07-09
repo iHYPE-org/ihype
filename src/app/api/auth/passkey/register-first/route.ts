@@ -2,98 +2,183 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { buildAuthSessionCookie } from '@/lib/auth-session';
-import { getPasskeyRegistrationOptions, verifyPasskeyRegistration } from '@/lib/passkey';
+import {
+  getPasskeyRegistrationOptions,
+  verifyPasskeyRegistrationResponse,
+} from '@/lib/passkey';
+import {
+  getPasskeyBootstrapCookieName,
+  hashPasskeyBootstrapToken,
+} from '@/lib/passkey-bootstrap';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 
-// Only allow passkey registration for accounts created in the last 10 minutes
-const MAX_AGE_MS = 10 * 60 * 1000;
-const isProduction = process.env.NODE_ENV === 'production';
+class PasskeyAlreadyRegisteredError extends Error {}
 
-// GET — generate registration options for a brand-new user (no session required)
-export async function GET(request: Request) {
-  const clientAddress = readClientAddress(request);
-  const rl = await consumeRateLimit(`pk-reg-first-opt:${clientAddress}`, { limit: 10, windowMs: 5 * 60 * 1000 });
-  if (!rl.allowed) return NextResponse.json({ error: "Too many attempts — wait a minute and try again." }, { status: 429 });
-
-  const { cookies } = await import('next/headers');
-  const jar = await cookies();
-  const userId = jar.get('pk_reg_first_uid')?.value;
-  if (!userId) return NextResponse.json({ error: 'Registration session expired. Please sign up again.' }, { status: 400 });
-
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    select: { id: true, username: true, createdAt: true, _count: { select: { passkeys: true } } },
-  });
-  if (!user) return NextResponse.json({ error: 'User not found.' }, { status: 404 });
-
-  if (user._count.passkeys > 0) {
-    return NextResponse.json({ error: 'Passkey already registered. Please sign in instead.' }, { status: 403 });
-  }
-  if (Date.now() - user.createdAt.getTime() > MAX_AGE_MS) {
-    return NextResponse.json({ error: 'Link expired. Please sign in instead.' }, { status: 403 });
-  }
-
-  const options = await getPasskeyRegistrationOptions(user.id, user.username);
-
-  const resp = NextResponse.json(options);
-  resp.cookies.set('pk_reg_first_challenge', `${userId}:${options.challenge}`, {
-    httpOnly: true,
-    sameSite: 'strict',
-    maxAge: 300,
-    path: '/',
-    secure: isProduction,
-  });
-  return resp;
+function clearBootstrapCookies(response: NextResponse) {
+  response.cookies.delete(getPasskeyBootstrapCookieName());
+  response.cookies.delete('pk_reg_first_uid');
+  response.cookies.delete('pk_reg_first_challenge');
+  return response;
 }
 
-// POST — verify first passkey and issue a session
-export async function POST(request: Request) {
-  const clientAddress = readClientAddress(request);
-  const rl = await consumeRateLimit(`pk-reg-first:${clientAddress}`, { limit: 5, windowMs: 5 * 60 * 1000 });
-  if (!rl.allowed) return NextResponse.json({ error: "Too many attempts — wait a minute and try again." }, { status: 429 });
-
+async function readBootstrapRecord() {
   const { cookies } = await import('next/headers');
   const jar = await cookies();
-  const raw = jar.get('pk_reg_first_challenge')?.value;
-  if (!raw) return NextResponse.json({ error: 'Challenge expired. Try again.' }, { status: 400 });
+  const token = jar.get(getPasskeyBootstrapCookieName())?.value;
+  if (!token) return null;
 
-  const colonIdx = raw.indexOf(':');
-  if (colonIdx <= 0) return NextResponse.json({ error: 'Malformed challenge. Try again.' }, { status: 400 });
-  const userId = raw.slice(0, colonIdx);
-  const challenge = raw.slice(colonIdx + 1);
-
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    select: { id: true, name: true, email: true, image: true, role: true, createdAt: true, emailVerified: true, _count: { select: { passkeys: true } } },
+  return db.passkeyBootstrapToken.findUnique({
+    where: { tokenHash: hashPasskeyBootstrapToken(token) },
+    include: {
+      user: {
+        select: {
+          id: true,
+          username: true,
+          name: true,
+          email: true,
+          image: true,
+          role: true,
+          emailVerified: true,
+          userSecurityVersion: true,
+          _count: { select: { passkeys: true } },
+        },
+      },
+    },
   });
-  if (!user) return NextResponse.json({ error: 'User not found.' }, { status: 404 });
+}
 
-  if (user._count.passkeys > 0) {
-    return NextResponse.json({ error: 'Passkey already registered. Please sign in instead.' }, { status: 403 });
+// Generate registration options for a brand-new user. The browser carries a
+// random capability; the user ID and challenge remain server-side.
+export async function GET(request: Request) {
+  const clientAddress = readClientAddress(request);
+  const rl = await consumeRateLimit(`pk-reg-first-opt:${clientAddress}`, {
+    limit: 10,
+    windowMs: 5 * 60 * 1000,
+  });
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Too many attempts. Wait a minute and try again.' }, { status: 429 });
   }
 
-  if (Date.now() - user.createdAt.getTime() > MAX_AGE_MS) {
-    return NextResponse.json({ error: 'Link expired.' }, { status: 403 });
+  const record = await readBootstrapRecord();
+  const now = new Date();
+  if (!record || record.usedAt || record.expiresAt <= now) {
+    return clearBootstrapCookies(
+      NextResponse.json({ error: 'Registration session expired. Please sign up again.' }, { status: 400 }),
+    );
+  }
+  if (record.user._count.passkeys > 0) {
+    return clearBootstrapCookies(
+      NextResponse.json({ error: 'Passkey already registered. Please sign in instead.' }, { status: 403 }),
+    );
   }
 
-  const body = await request.json();
-  let ok: boolean;
+  const options = await getPasskeyRegistrationOptions(record.user.id, record.user.username);
+  const stored = await db.passkeyBootstrapToken.updateMany({
+    where: { id: record.id, usedAt: null, expiresAt: { gt: now } },
+    data: { challenge: options.challenge },
+  });
+  if (stored.count !== 1) {
+    return clearBootstrapCookies(
+      NextResponse.json({ error: 'Registration session expired. Please sign up again.' }, { status: 400 }),
+    );
+  }
+
+  return NextResponse.json(options);
+}
+
+// Verify the first passkey, atomically consume the capability, and issue a
+// session. A forged user ID cookie is useless because no user ID is trusted
+// from the browser.
+export async function POST(request: Request) {
+  const clientAddress = readClientAddress(request);
+  const rl = await consumeRateLimit(`pk-reg-first:${clientAddress}`, {
+    limit: 5,
+    windowMs: 5 * 60 * 1000,
+  });
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Too many attempts. Wait a minute and try again.' }, { status: 429 });
+  }
+
+  const record = await readBootstrapRecord();
+  const now = new Date();
+  if (!record || record.usedAt || record.expiresAt <= now || !record.challenge) {
+    return clearBootstrapCookies(
+      NextResponse.json({ error: 'Challenge expired. Start registration again.' }, { status: 400 }),
+    );
+  }
+
+  let body: unknown;
   try {
-    ok = await verifyPasskeyRegistration(userId, body, challenge);
-  } catch (err) {
-    console.error('[passkey/register-first] verification threw:', err);
-    ok = false;
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid passkey response.' }, { status: 400 });
   }
 
-  const clearCookie = (resp: NextResponse) => { resp.cookies.delete('pk_reg_first_challenge'); return resp; };
-  if (!ok) return clearCookie(NextResponse.json({ error: 'Passkey registration failed.' }, { status: 400 }));
+  let verified;
+  try {
+    verified = await verifyPasskeyRegistrationResponse(
+      body as Parameters<typeof verifyPasskeyRegistrationResponse>[0],
+      record.challenge,
+    );
+  } catch (error) {
+    console.error('[passkey/register-first] verification threw:', error);
+    verified = null;
+  }
+  if (!verified) {
+    return NextResponse.json({ error: 'Passkey registration failed.' }, { status: 400 });
+  }
 
-  const sessionCookie = await buildAuthSessionCookie(user);
-  if (!sessionCookie) return clearCookie(NextResponse.json({ error: 'Server misconfiguration.' }, { status: 500 }));
+  try {
+    const registered = await db.$transaction(async (tx) => {
+      const claimed = await tx.passkeyBootstrapToken.updateMany({
+        where: {
+          id: record.id,
+          tokenHash: record.tokenHash,
+          challenge: record.challenge,
+          usedAt: null,
+          expiresAt: { gt: now },
+        },
+        data: { usedAt: now, challenge: null },
+      });
+      if (claimed.count !== 1) return false;
 
-  const resp = NextResponse.json({ redirect: WORKBENCH_PATH });
-  resp.cookies.set(sessionCookie);
-  clearCookie(resp);
-  return resp;
+      const existingPasskeys = await tx.passkey.count({ where: { userId: record.user.id } });
+      if (existingPasskeys > 0) throw new PasskeyAlreadyRegisteredError();
+
+      await tx.passkey.create({
+        data: {
+          userId: record.user.id,
+          ...verified,
+          name: null,
+        },
+      });
+      return true;
+    });
+
+    if (!registered) {
+      return clearBootstrapCookies(
+        NextResponse.json({ error: 'Registration session was already used.' }, { status: 409 }),
+      );
+    }
+  } catch (error) {
+    if (error instanceof PasskeyAlreadyRegisteredError) {
+      return clearBootstrapCookies(
+        NextResponse.json({ error: 'Passkey already registered. Please sign in instead.' }, { status: 403 }),
+      );
+    }
+    console.error('[passkey/register-first] persistence failed:', error);
+    return NextResponse.json({ error: 'Could not save this passkey.' }, { status: 500 });
+  }
+
+  const sessionCookie = await buildAuthSessionCookie(record.user);
+  if (!sessionCookie) {
+    return clearBootstrapCookies(
+      NextResponse.json({ error: 'Passkey saved, but the session could not be created. Please sign in.' }, { status: 500 }),
+    );
+  }
+
+  const response = NextResponse.json({ redirect: WORKBENCH_PATH });
+  response.cookies.set(sessionCookie);
+  return clearBootstrapCookies(response);
 }
