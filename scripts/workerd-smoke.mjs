@@ -35,6 +35,7 @@ const AUTH_SECRET =
   process.env.AUTH_SECRET || 'workerd-smoke-auth-secret-0123456789';
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || AUTH_SECRET;
 const BOOT_TIMEOUT_MS = 120_000;
+const SHUTDOWN_TIMEOUT_MS = 5_000;
 const TMP_CONFIG = '.wrangler-workerd-smoke.toml';
 
 if (!DB_URL) {
@@ -109,6 +110,10 @@ function parseJson(text) {
   }
 }
 
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function waitForBoot(child) {
   const deadline = Date.now() + BOOT_TIMEOUT_MS;
   while (Date.now() < deadline) {
@@ -119,10 +124,39 @@ async function waitForBoot(child) {
       await fetch(`${BASE}/api/health`, { signal: AbortSignal.timeout(2000) });
       return;
     } catch {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await delay(2000);
     }
   }
   throw new Error(`wrangler dev did not become reachable within ${BOOT_TIMEOUT_MS}ms`);
+}
+
+function signalProcessTree(child, signal) {
+  if (!child.pid || child.exitCode !== null) return;
+
+  try {
+    // On Unix, the detached child is the leader of a process group containing
+    // npx, Wrangler, Miniflare, and workerd. Signalling the negative PID stops
+    // the entire tree instead of orphaning descendants that keep CI alive.
+    if (process.platform !== 'win32') process.kill(-child.pid, signal);
+    else child.kill(signal);
+  } catch (error) {
+    if (error?.code !== 'ESRCH') throw error;
+  }
+}
+
+async function stopProcessTree(child) {
+  if (child.exitCode !== null) return;
+
+  const exited = new Promise((resolve) => child.once('exit', resolve));
+  signalProcessTree(child, 'SIGTERM');
+  await Promise.race([exited, delay(SHUTDOWN_TIMEOUT_MS)]);
+
+  if (child.exitCode === null) {
+    signalProcessTree(child, 'SIGKILL');
+    await Promise.race([exited, delay(SHUTDOWN_TIMEOUT_MS)]);
+  }
+
+  child.unref();
 }
 
 const failures = [];
@@ -144,6 +178,7 @@ async function run() {
     ['wrangler', 'dev', '--config', TMP_CONFIG, '--port', String(PORT), '--show-interactive-dev-session=false'],
     {
       stdio: ['ignore', 'inherit', 'inherit'],
+      detached: process.platform !== 'win32',
       env: {
         ...process.env,
         // Point the HYPERDRIVE binding at the local scratch Postgres.
@@ -247,14 +282,7 @@ async function run() {
       console.log('[workerd-smoke] SKIP_LIGHTHOUSE_BUDGET=1 — skipping performance budget');
     }
   } finally {
-    child.kill('SIGTERM');
-    // Wrangler spawns workerd children; give the tree a moment, then be sure.
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    try {
-      child.kill('SIGKILL');
-    } catch {
-      // Already gone.
-    }
+    await stopProcessTree(child);
     rmSync(TMP_CONFIG, { force: true });
   }
 
