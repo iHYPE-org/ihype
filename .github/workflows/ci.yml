@@ -97,12 +97,24 @@ jobs:
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4AAAAAADSF8WNxaeBIRmR7"
 
       - name: Workerd smoke + performance budget (real Workers runtime)
-        run: node scripts/workerd-smoke.mjs
+        timeout-minutes: 20
+        run: |
+          set -o pipefail
+          node scripts/workerd-smoke.mjs 2>&1 | tee workerd-smoke.log
         env:
           DATABASE_URL: postgresql://ihype:ihype@localhost:55432/ihype
           WORKERD_SMOKE_DATABASE_URL: postgresql://ihype:ihype@localhost:55432/ihype
+          WORKERD_SMOKE_CRON_SECRET: ci-only-workerd-health-secret-0123456789
           AUTH_SECRET: ci-only-auth-secret-change-me-0123456789
           NEXTAUTH_SECRET: ci-only-auth-secret-change-me-0123456789
+
+      - name: Upload Workerd diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: workerd-smoke-diagnostics
+          path: workerd-smoke.log
+          if-no-files-found: ignore
 
       - name: Upload Lighthouse report
         if: always()
