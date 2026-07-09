@@ -86,4 +86,26 @@ safe_block = """
 
 text = text[:match.start()] + safe_block + text[match.end():]
 path.write_text(text, encoding='utf-8')
-print('Ticket-order page data minimized and type errors corrected.')
+
+lint_path = Path('scripts/lint-source.mjs')
+lint_text = lint_path.read_text(encoding='utf-8')
+old_policy = """const privacyExport = await text('src/app/api/privacy/export/route.ts');
+for (const forbiddenInclude of ['issuedTickets: true', 'followers: true', 'receivedBookingRequests: true']) {
+  if (privacyExport.includes(forbiddenInclude)) {
+    fail('src/app/api/privacy/export/route.ts', `third-party relation must not be exported: ${forbiddenInclude}`);
+  }
+}
+"""
+new_policy = """const privacyExport = await text('src/app/api/privacy/export/route.ts');
+for (const relation of ['issuedTickets', 'followers', 'receivedBookingRequests']) {
+  const broadRelationLoad = new RegExp(`^\\\\s{10}${relation}: true,`, 'm');
+  if (broadRelationLoad.test(privacyExport)) {
+    fail('src/app/api/privacy/export/route.ts', `third-party relation records must not be exported: ${relation}`);
+  }
+}
+"""
+if lint_text.count(old_policy) != 1:
+    raise RuntimeError('privacy export source-policy anchor was not found exactly once')
+lint_path.write_text(lint_text.replace(old_policy, new_policy, 1), encoding='utf-8')
+
+print('Ticket-order page data and privacy source policy corrected.')
