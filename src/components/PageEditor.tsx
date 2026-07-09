@@ -9,6 +9,7 @@ import {
   getProfileAccentTone,
   getProfileBackdropTone,
 } from '@/lib/profile-design';
+import { AI_FIELD_LABELS } from '@/lib/page-refine';
 
 type EditorProfile = {
   id: string;
@@ -52,6 +53,7 @@ const SECTIONS = [
   { id: 'media', label: 'Media' },
   { id: 'details', label: 'Details' },
   { id: 'theme', label: 'Theme' },
+  { id: 'ai', label: 'AI' },
 ] as const;
 type SectionId = (typeof SECTIONS)[number]['id'];
 
@@ -127,6 +129,11 @@ export function PageEditor({ profileId }: { profileId: string }) {
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [uploadingField, setUploadingField] = useState<string | null>(null);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiProposed, setAiProposed] = useState<Record<string, string> | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiApplied, setAiApplied] = useState(false);
 
   useEffect(() => {
     setData(null);
@@ -185,6 +192,42 @@ export function PageEditor({ profileId }: { profileId: string }) {
     } finally {
       setUploadingField(null);
     }
+  }
+
+  async function runAiRefine() {
+    const instruction = aiPrompt.trim();
+    if (!instruction || aiBusy) return;
+    setAiBusy(true);
+    setAiError(null);
+    setAiProposed(null);
+    setAiApplied(false);
+    try {
+      const res = await fetch('/api/page-builder/refine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileId, instruction }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setAiError(d.error ?? 'Something went wrong — try again.');
+      } else if (!d.changes || Object.keys(d.changes).length === 0) {
+        setAiError('The AI engine is warming up — try again in a moment, or rephrase your instruction.');
+      } else {
+        setAiProposed(d.changes as Record<string, string>);
+      }
+    } catch {
+      setAiError('Network error — try again.');
+    } finally {
+      setAiBusy(false);
+    }
+  }
+
+  function applyAiChanges() {
+    if (!aiProposed) return;
+    setData((d) => (d ? { ...d, ...aiProposed } : d));
+    setSavedAt(null);
+    setAiProposed(null);
+    setAiApplied(true);
   }
 
   if (!data) {
@@ -350,6 +393,116 @@ export function PageEditor({ profileId }: { profileId: string }) {
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: preset.muted, marginBottom: 6 }}>Preview</div>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, color: accentTone.accent ?? preset.accent }}>{data.name || 'Your page'}</div>
           </div>
+        </div>
+      )}
+
+      {section === 'ai' && (
+        <div>
+          <div style={{
+            fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase',
+            color: 'rgba(240,235,229,.35)', marginBottom: 14,
+          }}>
+            AI PAGE STUDIO
+          </div>
+          <p style={{ fontSize: 13, color: 'rgba(240,235,229,.6)', margin: '0 0 16px', lineHeight: 1.55 }}>
+            Tell the AI what you want and it reorganizes your page — bio, links, sections, theme. It only works
+            with content you&rsquo;ve already added, and nothing changes until you apply and save.
+          </p>
+
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+            {[
+              'Organize my links by importance',
+              'Tighten my bio',
+              'Write my About section from my bio',
+              ...(isArtistOrDj ? ['Polish my tour and merch sections'] : []),
+              ...(isVenue ? ['Clean up my hours and parking info'] : []),
+              'Give my page a moodier late-night look',
+            ].map((chip) => (
+              <button
+                key={chip}
+                onClick={() => setAiPrompt(chip)}
+                style={{
+                  fontSize: 12, padding: '7px 13px', borderRadius: 9999, cursor: 'pointer',
+                  background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.1)',
+                  color: 'rgba(240,235,229,.65)', fontFamily: 'var(--font-body)',
+                }}
+                type="button"
+              >
+                {chip}
+              </button>
+            ))}
+          </div>
+
+          <TextAreaField
+            maxLength={500}
+            onChange={setAiPrompt}
+            placeholder="e.g. Reorder my links so streaming comes first, and rewrite my bio to sound bigger"
+            rows={3}
+            value={aiPrompt}
+          />
+          <button
+            className="settings-btn settings-btn-accent"
+            disabled={aiBusy || !aiPrompt.trim()}
+            onClick={runAiRefine}
+            style={{ width: '100%', marginTop: 12, padding: '13px', fontSize: 14 }}
+            type="button"
+          >
+            {aiBusy ? 'Thinking…' : 'Customize with AI'}
+          </button>
+
+          {aiError && <p style={{ color: '#ff5029', fontSize: 13, marginTop: 14 }}>{aiError}</p>}
+          {aiApplied && (
+            <p style={{ color: '#22e5d4', fontSize: 13, fontFamily: 'var(--font-mono)', marginTop: 14 }}>
+              ✓ Applied — review the sections, then hit Save changes.
+            </p>
+          )}
+
+          {aiProposed && (
+            <div style={{ marginTop: 20 }}>
+              <div style={{
+                fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase',
+                color: 'rgba(240,235,229,.35)', marginBottom: 12,
+              }}>
+                PROPOSED CHANGES · {Object.keys(aiProposed).length}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {Object.entries(aiProposed).map(([field, value]) => (
+                  <div key={field} style={{
+                    border: '1px solid rgba(255,80,41,.25)', borderRadius: 12, padding: '12px 14px',
+                    background: 'rgba(255,80,41,.05)',
+                  }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', marginBottom: 6 }}>
+                      {AI_FIELD_LABELS[field] ?? field}
+                    </div>
+                    <div style={{
+                      fontSize: 13, color: 'var(--ink)', whiteSpace: 'pre-wrap', lineHeight: 1.5,
+                      maxHeight: 140, overflowY: 'auto',
+                    }}>
+                      {value}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+                <button
+                  className="settings-btn settings-btn-accent"
+                  onClick={applyAiChanges}
+                  style={{ flex: 1, padding: '12px', fontSize: 14 }}
+                  type="button"
+                >
+                  Apply changes
+                </button>
+                <button
+                  className="settings-btn settings-btn-ghost"
+                  onClick={() => setAiProposed(null)}
+                  style={{ padding: '12px 18px', fontSize: 14 }}
+                  type="button"
+                >
+                  Discard
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

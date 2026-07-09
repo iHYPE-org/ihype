@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { FollowButton } from '@/components/FollowButton';
 import { MobileQuickGrid, type QuickGridItem } from '@/components/MobileQuickGrid';
 import { PageEditor } from '@/components/PageEditor';
+import { PageRoleModules } from '@/components/PageRoleModules';
 import { PullToRefresh } from '@/components/PullToRefresh';
 import { useMobileShell } from '@/lib/MobileShellContext';
 
@@ -446,6 +447,14 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                     </button>
                   </div>
                 </div>
+              )}
+
+              {selectedProfile && (
+                <PageRoleModules
+                  key={selectedProfile.id}
+                  color={TYPE_COLOR[selectedProfile.type] ?? '#ff5029'}
+                  profile={selectedProfile}
+                />
               )}
             </>
           )}

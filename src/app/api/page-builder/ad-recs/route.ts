@@ -1,17 +1,21 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { canManageOwnedResource } from '@/lib/permissions';
 import { runAI } from '@/lib/ai';
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Login required' }, { status: 401 });
 
-  const profile = await db.profile.findFirst({
-    where: { ownerId: session.user.id },
-    select: { type: true, name: true, genres: true, city: true, hypeCount: true, bio: true },
-  });
-  if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+  const profileId = new URL(request.url).searchParams.get('profileId');
+  const select = { ownerId: true, type: true, name: true, genres: true, city: true, hypeCount: true, bio: true } as const;
+  const profile = profileId && profileId.length <= 64
+    ? await db.profile.findUnique({ where: { id: profileId }, select })
+    : await db.profile.findFirst({ where: { ownerId: session.user.id }, select });
+  if (!profile || !canManageOwnedResource(session, profile.ownerId)) {
+    return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+  }
 
   const context = [
     profile.name && `Name: ${profile.name}`,
