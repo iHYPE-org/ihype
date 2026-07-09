@@ -9,6 +9,7 @@ import { BulkActions } from '@/components/admin/BulkActions';
 import { SocialPostCopy } from '@/components/admin/SocialPostCopy';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { getBetaMetrics } from '@/lib/beta-metrics';
 import { getHealthSnapshot } from '@/lib/health';
 import { getRateLimitMetrics } from '@/lib/rate-limit';
 import { isBlobMediaStorageConfigured } from '@/lib/media-storage';
@@ -246,6 +247,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
     { key: 'ticket_payment_capture', label: 'Ticket payment capture', enabled: ticketPaymentCaptureEnabled }
   ];
   const rateLimitMetrics = await getRateLimitMetrics(10);
+  const betaMetrics = await getBetaMetrics().catch(() => null);
   const revenueCents = revenueAgg._sum.totalChargeCents ?? 0;
   const revenueLabel = `$${(revenueCents / 100).toFixed(2)}`;
   const healthOperations = health.status === 'ok' ? health.operations : null;
@@ -452,6 +454,60 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           </div>
         </div>
       </section>
+
+      {betaMetrics && (
+        <section className="panel admin-console-panel">
+          <div className="admin-console-panel-head">
+            <div>
+              <h2>Beta metrics</h2>
+              <p className="meta">
+                Real activity only — activation means the user has hyped, RSVP&rsquo;d, or listened at least once.
+                Demo accounts excluded.
+              </p>
+            </div>
+          </div>
+          <div className="admin-health-grid">
+            <div className="admin-health-card">
+              <span>Signups (7d)</span>
+              <strong>{betaMetrics.signups7d}</strong>
+            </div>
+            <div className="admin-health-card">
+              <span>Activation</span>
+              <strong>
+                {Math.round(betaMetrics.activationRate * 100)}%
+                {' '}({betaMetrics.activatedUsers}/{betaMetrics.totalUsers})
+              </strong>
+            </div>
+            <div className="admin-health-card">
+              <span>Weekly active</span>
+              <strong>
+                {Math.round(betaMetrics.weeklyActiveRate * 100)}%
+                {' '}({betaMetrics.weeklyActiveUsers}/{betaMetrics.totalUsers})
+              </strong>
+            </div>
+            <div className="admin-health-card">
+              <span>DJs on radio (30d)</span>
+              <strong>{betaMetrics.recurringDjs30d}/{betaMetrics.radioDjs30d} recurring</strong>
+            </div>
+          </div>
+          <h3 style={{ margin: '1rem 0 .5rem' }}>Invite conversion (30d)</h3>
+          {betaMetrics.inviteChannels.length === 0 ? (
+            <p className="meta">No signups recorded in the last 30 days.</p>
+          ) : (
+            <div className="admin-list">
+              {betaMetrics.inviteChannels.map((channel) => (
+                <div className="admin-list-row" key={channel.code}>
+                  <code style={{ fontFamily: 'monospace', letterSpacing: 1 }}>{channel.code}</code>
+                  <small>
+                    {channel.signups} signup{channel.signups === 1 ? '' : 's'}
+                    {channel.kind !== '—' ? ` | ${channel.kind}` : ''}
+                  </small>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       <section className="panel admin-console-panel">
         <div className="admin-console-panel-head">

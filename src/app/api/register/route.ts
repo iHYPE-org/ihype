@@ -65,6 +65,8 @@ const schema = z.object({
   turnstileToken: z.string().optional(),
 });
 
+class InviteCodeClaimedError extends Error {}
+
 function getVenueProfileOverrides(body: z.infer<typeof schema>) {
   return {
     headline: body.headline || null,
@@ -159,11 +161,28 @@ export async function POST(request: Request) {
     }
 
     const inviteCodeRequired = await isInviteCodeRequiredRuntime();
-    if (inviteCodeRequired && !isValidInviteCode(body.inviteCode, inviteCodeRequired)) {
-      return NextResponse.json(
-        { error: 'A valid beta invite code is required while invite-only signup is enabled.' },
-        { status: 403 },
-      );
+    const submittedInviteCode = body.inviteCode?.trim() || null;
+    // Two invite channels: shared codes from BETA_INVITE_CODES (one per
+    // distribution channel), and single-use codes minted by admins via
+    // /api/admin/invite-codes. The DB code is claimed inside the signup
+    // transaction below so a code can never admit two accounts.
+    let dbInviteCodeId: string | null = null;
+    if (inviteCodeRequired && !isValidInviteCode(submittedInviteCode, inviteCodeRequired)) {
+      if (submittedInviteCode) {
+        const dbCode = await db.inviteCode.findUnique({
+          where: { code: submittedInviteCode.toUpperCase() },
+          select: { id: true, usedByUserId: true, expiresAt: true },
+        }).catch(() => null);
+        if (dbCode && !dbCode.usedByUserId && (!dbCode.expiresAt || dbCode.expiresAt > new Date())) {
+          dbInviteCodeId = dbCode.id;
+        }
+      }
+      if (!dbInviteCodeId) {
+        return NextResponse.json(
+          { error: 'A valid beta invite code is required while invite-only signup is enabled.' },
+          { status: 403 },
+        );
+      }
     }
 
     if (normalizedEmail && isReservedPlatformEmail(normalizedEmail)) {
@@ -250,6 +269,16 @@ export async function POST(request: Request) {
         });
       }
 
+      if (dbInviteCodeId) {
+        const claimed = await tx.inviteCode.updateMany({
+          where: { id: dbInviteCodeId, usedByUserId: null },
+          data: { usedByUserId: createdUser.id, usedAt: new Date() },
+        });
+        if (claimed.count === 0) {
+          throw new InviteCodeClaimedError();
+        }
+      }
+
       return { user: createdUser, profile: createdProfile };
     });
 
@@ -259,7 +288,13 @@ export async function POST(request: Request) {
       entityType: 'user',
       entityId: user.id,
       ipAddress: clientAddress,
-      metadata: { role: user.role, profileType: profile.type, profileId: profile.id },
+      metadata: {
+        role: user.role,
+        profileType: profile.type,
+        profileId: profile.id,
+        inviteCode: submittedInviteCode?.toLowerCase() ?? null,
+        inviteKind: dbInviteCodeId ? 'single-use' : submittedInviteCode ? 'shared' : null,
+      },
     }).catch((error) => {
       log.error('[register]', error instanceof Error ? error : null, 'Registration audit event failed');
     });
@@ -307,6 +342,12 @@ export async function POST(request: Request) {
     }
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       return NextResponse.json({ error: 'Username or email already taken.' }, { status: 409 });
+    }
+    if (error instanceof InviteCodeClaimedError) {
+      return NextResponse.json(
+        { error: 'That invite code was just used by someone else. Ask for a fresh one.' },
+        { status: 403 },
+      );
     }
     log.error('[register]', error instanceof Error ? error : null, 'Registration failed');
     return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });

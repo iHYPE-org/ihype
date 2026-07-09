@@ -18,6 +18,7 @@ import { isAdminSession } from '@/lib/permissions';
 import { detectRequestLocation } from '@/lib/request-location';
 import { parseShowProductionPlan } from '@/lib/show-composer';
 import { canViewerAccessShowMedia, protectShowProductionPlan } from '@/lib/show-media-access';
+import { isPaymentProcessingConfigured } from '@/lib/payments';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { formatShowTime, getBaseUrl } from '@/lib/utils';
 
@@ -708,6 +709,18 @@ export default async function ShowDetailPage({
                 </>
               )}
 
+              {!isPaymentProcessingConfigured() ? (
+                <div style={{ border: '1px solid rgba(34,229,212,.3)', borderRadius: 10, padding: 16, background: 'rgba(34,229,212,.06)' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--venue)', marginBottom: 8 }}>
+                    Paid tickets · Coming soon
+                  </div>
+                  <p style={{ fontSize: 13, lineHeight: 1.6, color: 'rgba(240,235,229,.8)', margin: 0 }}>
+                    Ticket sales haven&apos;t opened on iHYPE yet. RSVP free above to hold your spot —
+                    we&apos;ll remind you before the show, and face-value pricing with the locked
+                    45/45/10 split kicks in the moment sales open.
+                  </p>
+                </div>
+              ) : (
               <TicketSaleCard
                 affiliatePromoterName={affiliatePromoter?.name ?? null}
                 affiliatePromoterProfileId={affiliatePromoter?.id ?? null}
@@ -748,6 +761,7 @@ export default async function ShowDetailPage({
                   postalCode: viewerLocation?.postalCode
                 }}
               />
+              )}
 
               <div style={{ background: 'rgba(255,255,255,.04)', borderRadius: 8, padding: 14, marginTop: 16 }}>
                 <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.1em', color: 'rgba(240,235,229,.5)', marginBottom: 10 }}>vs. Ticketmaster</p>

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { getBetaMetrics } from '@/lib/beta-metrics';
 import { db } from '@/lib/db';
 import { getHealthSnapshot } from '@/lib/health';
 import { isAdminSession } from '@/lib/permissions';
@@ -122,8 +123,10 @@ export async function GET() {
     ]);
 
     const rateLimitMetrics = await getRateLimitMetrics(10);
+    const betaMetrics = await getBetaMetrics().catch(() => null);
 
     return NextResponse.json({
+      betaMetrics,
       metrics: {
         userCount,
         profileCount,
