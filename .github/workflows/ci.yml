@@ -7,7 +7,7 @@ on:
 
 jobs:
   check:
-    name: Typecheck, test, build, and browser smoke
+    name: Typecheck, lint, test, build, and browser smoke
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -48,7 +48,10 @@ jobs:
         run: npx prisma generate
 
       - name: Typecheck
-        run: npx tsc --noEmit
+        run: npm run typecheck
+
+      - name: Source policy lint
+        run: npm run lint
 
       - name: Design guard
         run: npm run guard:design
