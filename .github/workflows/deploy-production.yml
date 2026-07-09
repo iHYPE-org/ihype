@@ -43,14 +43,20 @@ jobs:
       - name: Run tests
         run: npm test
 
+      - name: Build for Cloudflare Workers
+        run: npm run cf:build
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEXT_PUBLIC_BASE_URL: https://ihype.org
+          NEXT_PUBLIC_APP_URL: https://ihype.org
+          NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4AAAAAADSF8WNxaeBIRmR7"
+          FEATURE_ENABLE_TICKET_PAYMENTS: 'false'
+
       - name: Run migrations
-        # Fail closed: `migrate deploy` is idempotent, so always run it and
-        # block the deploy if it can't complete. The old grep on `migrate
-        # status` output failed open — any status error (e.g. a missing env
-        # var) read as "all migrations applied" and the deploy shipped against
-        # a stale schema.
+        # Build first so a compilation failure cannot advance production schema.
+        # Prisma reads DATABASE_URL, so supply the direct/non-pooled secret under
+        # that exact name for migration commands.
         run: |
-          npx prisma migrate status || true
           for i in 1 2 3; do
             npx prisma migrate deploy && exit 0
             echo "Migration attempt $i failed, retrying in 15s..."
@@ -59,23 +65,7 @@ jobs:
           echo "::error::prisma migrate deploy failed; blocking deploy."
           exit 1
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          # schema.prisma reads env("DIRECT_DATABASE_URL") — this was
-          # previously exported as DIRECT_URL, which Prisma never saw.
-          DIRECT_DATABASE_URL: ${{ secrets.DIRECT_URL }}
-
-      - name: Build for Cloudflare Workers
-        run: npm run cf:build
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          NEXT_PUBLIC_BASE_URL: https://ihype.org
-          NEXT_PUBLIC_APP_URL: https://ihype.org
-          # NEXT_PUBLIC_* vars are inlined into the client bundle at `next
-          # build` time — wrangler.toml's [vars] only configures the deployed
-          # Worker's runtime env and is never read by this build step, so the
-          # Turnstile site key must also be passed here or the widget never
-          # renders client-side (silently blocking every real registration).
-          NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4AAAAAADSF8WNxaeBIRmR7"
+          DATABASE_URL: ${{ secrets.DIRECT_URL }}
 
       - name: Deploy to Cloudflare Workers
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
@@ -84,14 +74,8 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           NEXT_PUBLIC_BASE_URL: https://ihype.org
           NEXT_PUBLIC_APP_URL: https://ihype.org
-          # wrangler.toml's [build] command re-runs `npm run cf:build`
-          # internally before upload (this is why NEXT_PUBLIC_BASE_URL/APP_URL
-          # were already set here) — that hidden rebuild silently overwrote
-          # the correctly-built client bundle from the "Build for Cloudflare
-          # Workers" step above with one missing this var, since it was never
-          # added here when introduced in PR #461. Must stay identical to that
-          # step's env or whichever ran last wins.
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4AAAAAADSF8WNxaeBIRmR7"
+          FEATURE_ENABLE_TICKET_PAYMENTS: 'false'
 
       - name: Deploy cron Worker
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
@@ -103,8 +87,6 @@ jobs:
         env:
           SMOKE_BASE_URL: https://ihype.org
           SMOKE_BYPASS_TOKEN: ${{ secrets.SMOKE_BYPASS_TOKEN }}
-          # CRON_SECRET unlocks /api/health's full snapshot (real DB counts)
-          # instead of the minimal public probe. Optional — empty is fine.
           SMOKE_HEALTH_BEARER: ${{ secrets.CRON_SECRET }}
           SMOKE_ALLOW_EDGE_BLOCK: '1'
 
