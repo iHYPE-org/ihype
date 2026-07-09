@@ -23,8 +23,10 @@ const plan: ShowProductionPlan = {
 };
 
 describe('protectShowProductionPlan', () => {
-  it('replaces storage URLs with an entitlement-checking route', () => {
+  it('replaces storage URLs with an entitlement-checking route without mutating the source plan', () => {
     const protectedPlan = protectShowProductionPlan(plan, 'show id');
+    expect(protectedPlan).not.toBe(plan);
+    expect(protectedPlan.mediaItems).not.toBe(plan.mediaItems);
     expect(protectedPlan.mediaItems[0]?.url).toBe('/api/shows/show%20id/media/0xabc123');
     expect(JSON.stringify(protectedPlan)).not.toContain('storage.example');
     expect(plan.mediaItems[0]?.url).toContain('storage.example');
