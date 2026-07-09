@@ -5,39 +5,44 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ hexId: string }> }
+  { params }: { params: Promise<{ hexId: string }> },
 ) {
   const { hexId } = await params;
   const nonce = request.headers.get('x-nonce') ?? '';
 
-  // hexId could be a profile hexId or mediaAsset hexId
   let track: { title: string; artistName: string; audioUrl: string; artworkUrl: string | null } | null = null;
 
-  // First try as ArtistMediaAsset hexId
-  const asset = await db.artistMediaAsset.findUnique({
+  const asset = await db.artistMediaAsset.findFirst({
     where: { hexId, isPublished: true },
-    include: { profile: { select: { name: true } } },
+    select: { hexId: true, title: true, profile: { select: { name: true } } },
   });
 
   if (asset) {
     track = {
       title: asset.title,
       artistName: asset.profile.name,
-      audioUrl: asset.storageUrl ?? '',
+      audioUrl: `/api/public-media/${encodeURIComponent(asset.hexId)}`,
       artworkUrl: null,
     };
   } else {
-    // Try as profile hexId — get latest track
     const profile = await db.profile.findUnique({
       where: { hexId },
-      select: { name: true, mediaUploads: { where: { isPublished: true }, orderBy: { createdAt: 'desc' }, take: 1 } },
+      select: {
+        name: true,
+        mediaUploads: {
+          where: { isPublished: true },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { hexId: true, title: true },
+        },
+      },
     });
-    if (profile?.mediaUploads[0]) {
-      const a = profile.mediaUploads[0];
+    const latest = profile?.mediaUploads[0];
+    if (profile && latest) {
       track = {
-        title: a.title,
+        title: latest.title,
         artistName: profile.name,
-        audioUrl: a.storageUrl ?? '',
+        audioUrl: `/api/public-media/${encodeURIComponent(latest.hexId)}`,
         artworkUrl: null,
       };
     }
@@ -46,7 +51,7 @@ export async function GET(
   if (!track) {
     return new NextResponse('<html><body style="background:#0a0805;color:#666;font-family:monospace;display:flex;align-items:center;justify-content:center;height:80px;margin:0">No track found</body></html>', {
       status: 404,
-      headers: { 'Content-Type': 'text/html' },
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
     });
   }
 
@@ -81,11 +86,11 @@ body{background:#0a0805;color:#f0ebe5;font-family:"DM Sans",system-ui,sans-serif
     <div class="artist">${escHtml(track.artistName)}</div>
   </div>
   <div class="ctrl">
-    <button class="playbtn" id="btn">
+    <button class="playbtn" id="btn" aria-label="Play or pause">
       <svg id="play-icon" viewBox="0 0 16 16"><polygon points="4,2 14,8 4,14"/></svg>
       <svg id="pause-icon" viewBox="0 0 16 16" style="display:none"><rect x="3" y="2" width="4" height="12"/><rect x="9" y="2" width="4" height="12"/></svg>
     </button>
-    <a class="link" href="https://ihype.org" target="_blank">ihype.org ↗</a>
+    <a class="link" href="https://ihype.org" rel="noopener noreferrer" target="_blank">ihype.org ↗</a>
   </div>
 </div>
 <audio id="audio" src="${escHtml(track.audioUrl)}" preload="none"></audio>
@@ -101,12 +106,15 @@ a.onended=function(){pi.style.display='';pa.style.display='none'};
   return new NextResponse(html, {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
-      'X-Frame-Options': 'ALLOWALL',
       'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
     },
   });
 }
 
-function escHtml(s: string) {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+function escHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
