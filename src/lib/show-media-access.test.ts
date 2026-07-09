@@ -1,4 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('@/lib/db', () => ({ db: {} }));
+
 import { protectShowProductionPlan } from '@/lib/show-media-access';
 import type { ShowProductionPlan } from '@/lib/show-composer';
 
