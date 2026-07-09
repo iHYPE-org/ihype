@@ -24,6 +24,8 @@
  */
 import { spawn } from 'node:child_process';
 import { readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { Client } from 'pg';
+import { encode } from 'next-auth/jwt';
 import { runLighthouseBudget } from './lighthouse-budget.mjs';
 
 const PORT = Number(process.env.WORKERD_SMOKE_PORT || 8787);
@@ -37,6 +39,17 @@ const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || AUTH_SECRET;
 const BOOT_TIMEOUT_MS = 120_000;
 const SHUTDOWN_TIMEOUT_MS = 5_000;
 const TMP_CONFIG = '.wrangler-workerd-smoke.toml';
+const FIXTURE = {
+  creatorId: 'workerd-smoke-creator',
+  outsiderId: 'workerd-smoke-outsider',
+  profileId: 'clx0000000000000000000000',
+  showId: 'workerd-smoke-ticketed-show',
+  showSlug: 'workerd-smoke-ticketed-show',
+  mediaHexId: '0xabc123deadbeef',
+  outsiderEmail: 'outsider-private@example.com',
+  privateMessage: 'OUTSIDER_PRIVATE_MESSAGE_DO_NOT_EXPORT',
+  rawStorageMarker: 'https://storage.invalid/RAW_PRIVATE_MEDIA_MARKER.mp3',
+};
 
 if (!DB_URL) {
   console.error('[workerd-smoke] WORKERD_SMOKE_DATABASE_URL is required');
@@ -114,6 +127,84 @@ function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function seedSecurityFixtures() {
+  const client = new Client({ connectionString: DB_URL });
+  await client.connect();
+  const now = new Date();
+  const productionPlan = {
+    mediaItems: [{
+      mediaId: FIXTURE.mediaHexId,
+      title: 'Protected smoke track',
+      url: FIXTURE.rawStorageMarker,
+      artistProfileId: FIXTURE.profileId,
+      artistName: 'Smoke Artist',
+      mediaType: 'audio',
+    }],
+    voiceOvers: [],
+    samplePads: [],
+    sequence: [{ id: 'track-one', kind: 'MEDIA', refId: FIXTURE.mediaHexId, label: 'Protected track' }],
+    advertising: { enabled: false, scope: 'local', frequency: 3, clips: [] },
+  };
+
+  try {
+    await client.query(
+      `INSERT INTO "User" ("id", "name", "email", "username", "role", "isThirteenOrOlder", "emailVerified", "userSecurityVersion", "createdAt", "updatedAt")
+       VALUES ($1, 'Smoke Creator', 'creator-smoke@example.com', 'smokecreator', 'ARTIST'::"Role", true, $3, 0, $3, $3),
+              ($2, 'Smoke Outsider', $4, 'smokeoutsider', 'FAN'::"Role", true, $3, 0, $3, $3)`,
+      [FIXTURE.creatorId, FIXTURE.outsiderId, now, FIXTURE.outsiderEmail],
+    );
+    await client.query(
+      `INSERT INTO "Profile" ("id", "slug", "hexId", "type", "name", "ownerId", "genres", "createdAt", "updatedAt")
+       VALUES ($1, 'smoke-artist', '0xsmokeartist', 'ARTIST'::"ProfileType", 'Smoke Artist', $2, ARRAY['test']::TEXT[], $3, $3)`,
+      [FIXTURE.profileId, FIXTURE.creatorId, now],
+    );
+    await client.query(
+      `INSERT INTO "ArtistMediaAsset" ("id", "hexId", "title", "originalFileName", "mimeType", "fileSizeBytes", "fileDataBase64", "storageProvider", "freeUseEnabled", "sortOrder", "profileId", "isPublished", "createdAt", "updatedAt")
+       VALUES ('workerd-smoke-asset', $1, 'Protected smoke track', 'smoke.mp3', 'audio/mpeg', 10, $2, 'database', false, 0, $3, true, $4, $4)`,
+      [FIXTURE.mediaHexId, Buffer.from('ID3SMOKE').toString('base64'), FIXTURE.profileId, now],
+    );
+    await client.query(
+      `INSERT INTO "Show" ("id", "slug", "title", "status", "startsAt", "creatorId", "isTicketed", "ticketPriceCents", "venuePayoutPercent", "artistPayoutPercent", "ticketsSoldCount", "hypeCount", "tags", "isRadioShow", "promoterPayoutPercent", "productionPlan", "createdAt", "updatedAt")
+       VALUES ($1, $2, 'Protected Workerd Smoke Show', 'SCHEDULED'::"ShowStatus", $3, $4, true, 1000, 50, 45, 0, 0, ARRAY['test']::TEXT[], false, 5, $5::jsonb, $6, $6)`,
+      [FIXTURE.showId, FIXTURE.showSlug, new Date(now.getTime() + 86_400_000), FIXTURE.creatorId, JSON.stringify(productionPlan), now],
+    );
+    await client.query(
+      `INSERT INTO "Follow" ("id", "followerId", "followeeProfileId", "notifyShows", "createdAt")
+       VALUES ('workerd-smoke-follow', $1, $2, true, $3)`,
+      [FIXTURE.outsiderId, FIXTURE.profileId, now],
+    );
+    await client.query(
+      `INSERT INTO "BookingRequest" ("id", "fromUserId", "toProfileId", "message", "status", "createdAt", "updatedAt")
+       VALUES ('workerd-smoke-booking', $1, $2, $3, 'pending', $4, $4)`,
+      [FIXTURE.outsiderId, FIXTURE.profileId, FIXTURE.privateMessage, now],
+    );
+  } finally {
+    await client.end();
+  }
+}
+
+async function buildSmokeSessionCookie({ userId, email, role }) {
+  const cookieName = '__Secure-authjs.session-token';
+  const now = Math.floor(Date.now() / 1000);
+  const value = await encode({
+    token: {
+      sub: userId,
+      name: userId,
+      email,
+      role,
+      emailVerified: new Date().toISOString(),
+      securityVersion: 0,
+      iat: now,
+      exp: now + 3600,
+      jti: `workerd-smoke-${userId}`,
+    },
+    secret: AUTH_SECRET,
+    salt: cookieName,
+    maxAge: 3600,
+  });
+  return `${cookieName}=${value}`;
+}
+
 async function waitForBoot(child) {
   const deadline = Date.now() + BOOT_TIMEOUT_MS;
   while (Date.now() < deadline) {
@@ -172,6 +263,17 @@ function check(name, ok, detail) {
 
 async function run() {
   writeStrippedConfig();
+  await seedSecurityFixtures();
+  const creatorCookie = await buildSmokeSessionCookie({
+    userId: FIXTURE.creatorId,
+    email: 'creator-smoke@example.com',
+    role: 'ARTIST',
+  });
+  const outsiderCookie = await buildSmokeSessionCookie({
+    userId: FIXTURE.outsiderId,
+    email: FIXTURE.outsiderEmail,
+    role: 'FAN',
+  });
 
   const child = spawn(
     'npx',
@@ -272,7 +374,87 @@ async function run() {
       `status=${notifications.status} body=${notifications.text.slice(0, 200)}`,
     );
 
-    // 8. Performance budget. It must run against this workerd instance, not a
+    // 8. Legacy user-ID bootstrap cookies must not authorize passkey setup.
+    const forgedBootstrap = await probe('/api/auth/passkey/register-first', {
+      headers: { cookie: `pk_reg_first_uid=${FIXTURE.creatorId}` },
+    });
+    check(
+      'forged legacy passkey bootstrap cookie is rejected',
+      forgedBootstrap.status === 400,
+      `status=${forgedBootstrap.status} body=${forgedBootstrap.text.slice(0, 200)}`,
+    );
+
+    // 9. Ticketed show plans and raw storage URLs stay out of unauthorized RSC/HTML.
+    const anonymousShow = await probe(`/shows/${FIXTURE.showSlug}`);
+    check(
+      'anonymous ticketed show response contains no protected media plan',
+      anonymousShow.status === 200 &&
+        !anonymousShow.text.includes(FIXTURE.rawStorageMarker) &&
+        !anonymousShow.text.includes(`/api/shows/${FIXTURE.showId}/media/${FIXTURE.mediaHexId}`),
+      `status=${anonymousShow.status}`,
+    );
+    const outsiderShow = await probe(`/shows/${FIXTURE.showSlug}`, {
+      headers: { cookie: outsiderCookie },
+    });
+    check(
+      'authenticated non-buyer receives no protected media plan',
+      outsiderShow.status === 200 &&
+        !outsiderShow.text.includes(FIXTURE.rawStorageMarker) &&
+        !outsiderShow.text.includes(`/api/shows/${FIXTURE.showId}/media/${FIXTURE.mediaHexId}`),
+      `status=${outsiderShow.status}`,
+    );
+    const creatorShow = await probe(`/shows/${FIXTURE.showSlug}`, {
+      headers: { cookie: creatorCookie },
+    });
+    check(
+      'show creator receives only the entitlement-checking media URL',
+      creatorShow.status === 200 &&
+        creatorShow.text.includes(`/api/shows/${FIXTURE.showId}/media/${FIXTURE.mediaHexId}`) &&
+        !creatorShow.text.includes(FIXTURE.rawStorageMarker),
+      `status=${creatorShow.status}`,
+    );
+
+    // 10. The media endpoint independently enforces entitlement.
+    const outsiderMedia = await probe(`/api/shows/${FIXTURE.showId}/media/${FIXTURE.mediaHexId}`, {
+      headers: { cookie: outsiderCookie },
+    });
+    check(
+      'ticketed media rejects an authenticated non-buyer',
+      outsiderMedia.status === 403,
+      `status=${outsiderMedia.status} body=${outsiderMedia.text.slice(0, 200)}`,
+    );
+    const creatorMedia = await probe(`/api/shows/${FIXTURE.showId}/media/${FIXTURE.mediaHexId}`, {
+      headers: { cookie: creatorCookie },
+    });
+    check(
+      'ticketed media streams for the show creator',
+      creatorMedia.status === 200 && creatorMedia.text.includes('ID3SMOKE'),
+      `status=${creatorMedia.status} body=${creatorMedia.text.slice(0, 100)}`,
+    );
+
+    // 11. A user's export must not contain another person's identity or message.
+    const privacyExport = await probe('/api/privacy/export', {
+      headers: { cookie: creatorCookie, accept: 'application/json' },
+    });
+    check(
+      'privacy export excludes third-party personal data',
+      privacyExport.status === 200 &&
+        !privacyExport.text.includes(FIXTURE.outsiderEmail) &&
+        !privacyExport.text.includes(FIXTURE.outsiderId) &&
+        !privacyExport.text.includes(FIXTURE.privateMessage),
+      `status=${privacyExport.status} body=${privacyExport.text.slice(0, 200)}`,
+    );
+
+    // 12. Embed pages deliberately opt into framing without weakening other pages.
+    const embed = await probe('/embed/does-not-exist');
+    const embedCsp = embed.headers.get('content-security-policy') ?? '';
+    check(
+      'embed route permits framing through CSP and omits X-Frame-Options',
+      embedCsp.includes('frame-ancestors *') && !embed.headers.has('x-frame-options'),
+      `status=${embed.status} csp=${embedCsp}`,
+    );
+
+    // 13. Performance budget. It must run against this workerd instance, not a
     // `next start` Node server, because the production Prisma configuration is
     // only representative inside workerd.
     if (process.env.SKIP_LIGHTHOUSE_BUDGET !== '1') {

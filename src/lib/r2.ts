@@ -9,6 +9,7 @@ function sanitizePathSegment(value: string) {
 
 type R2BucketLike = {
   put(key: string, value: ArrayBuffer, opts?: { httpMetadata?: { contentType?: string } }): Promise<void>;
+  delete(key: string): Promise<void>;
 };
 
 async function getR2Binding(): Promise<R2BucketLike | null> {
@@ -40,16 +41,22 @@ export async function uploadToR2({ file, path }: { file: File; path: string }): 
   }
 
   await r2.put(path, await file.arrayBuffer(), {
-    httpMetadata: { contentType: file.type }
+    httpMetadata: { contentType: file.type },
   });
 
   return { provider: 'r2', key: path, url: `${publicBase}/cdn/${path}` };
 }
 
+export async function deleteFromR2(key: string) {
+  const r2 = await getR2Binding();
+  if (!r2) throw new Error('R2 binding is not configured.');
+  await r2.delete(key);
+}
+
 export async function uploadArtistMediaToR2({
   file,
   hexId,
-  profileId
+  profileId,
 }: {
   file: File;
   hexId: string;

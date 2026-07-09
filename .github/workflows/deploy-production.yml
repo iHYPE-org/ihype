@@ -21,12 +21,12 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@e8d4307400f9427dba7cb98e488d6ab85f1cec5f
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@04be95cf3511ea51ebf9f224ddfb99cc7ab87cd4
         with:
           node-version: '24'
-          cache: 'npm'
+          package-manager-cache: false
 
       - name: Install dependencies
         run: npm ci

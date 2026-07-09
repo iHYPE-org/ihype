@@ -20,6 +20,11 @@ import { getUsernameValidationMessage, isValidUsername, normalizeUsername } from
 import { generateUniqueNonwordSlug } from '@/lib/nonword-slug';
 import { log } from '@/lib/logger';
 import { runRegistrationPostProcessing } from '@/lib/registration-post-processing';
+import {
+  createPasskeyBootstrapCapability,
+  getPasskeyBootstrapCookieName,
+  getPasskeyBootstrapCookieOptions,
+} from '@/lib/passkey-bootstrap';
 
 const schema = z.object({
   name: z.preprocess(
@@ -200,6 +205,7 @@ export async function POST(request: Request) {
     const slug = await generateUniqueNonwordSlug(db);
     const profileName = profileType === 'LISTENER' ? hexId : trimmedName;
     const profileCopyName = profileType === 'LISTENER' ? normalizedUsername : trimmedName;
+    const passkeyBootstrap = body.passkeyFlow ? createPasskeyBootstrapCapability() : null;
 
     const { user, profile } = await db.$transaction(async (tx) => {
       const createdUser = await tx.user.create({
@@ -233,6 +239,16 @@ export async function POST(request: Request) {
           ...(profileType === 'VENUE' ? getVenueProfileOverrides(body) : {}),
         },
       });
+
+      if (passkeyBootstrap) {
+        await tx.passkeyBootstrapToken.create({
+          data: {
+            userId: createdUser.id,
+            tokenHash: passkeyBootstrap.tokenHash,
+            expiresAt: passkeyBootstrap.expiresAt,
+          },
+        });
+      }
 
       return { user: createdUser, profile: createdProfile };
     });
@@ -271,14 +287,14 @@ export async function POST(request: Request) {
       profilePath: getDiscoverPathForType(profile.type),
     });
 
-    if (body.passkeyFlow) {
-      response.cookies.set('pk_reg_first_uid', user.id, {
-        httpOnly: true,
-        sameSite: 'strict',
-        maxAge: 600,
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
-      });
+    if (passkeyBootstrap) {
+      response.cookies.set(
+        getPasskeyBootstrapCookieName(),
+        passkeyBootstrap.token,
+        getPasskeyBootstrapCookieOptions(),
+      );
+      response.cookies.delete('pk_reg_first_uid');
+      response.cookies.delete('pk_reg_first_challenge');
     }
 
     return response;

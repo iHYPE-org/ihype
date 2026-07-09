@@ -98,6 +98,37 @@ for (const webhookFile of [
   }
 }
 
+const firstPasskeyRoute = await text('src/app/api/auth/passkey/register-first/route.ts');
+if (firstPasskeyRoute.includes("jar.get('pk_reg_first_uid')")) {
+  fail('src/app/api/auth/passkey/register-first/route.ts', 'raw user-ID cookies must not authorize passkey bootstrap.');
+}
+if (!firstPasskeyRoute.includes('passkeyBootstrapToken.updateMany')) {
+  fail('src/app/api/auth/passkey/register-first/route.ts', 'passkey bootstrap capabilities must be consumed atomically.');
+}
+
+const showPage = await text('src/app/shows/[slug]/page.tsx');
+if (showPage.includes('void canWatch') || !showPage.includes('protectShowProductionPlan')) {
+  fail('src/app/shows/[slug]/page.tsx', 'ticketed production plans must be entitlement-gated and URL-protected.');
+}
+
+const privacyExport = await text('src/app/api/privacy/export/route.ts');
+for (const relation of ['issuedTickets', 'followers', 'receivedBookingRequests']) {
+  const broadRelationLoad = new RegExp(`^\\s{10}${relation}: true,`, 'm');
+  if (broadRelationLoad.test(privacyExport)) {
+    fail('src/app/api/privacy/export/route.ts', `third-party relation records must not be exported: ${relation}`);
+  }
+}
+
+for (const workflowFile of ['.github/workflows/ci.yml', '.github/workflows/deploy-production.yml']) {
+  const workflow = await text(workflowFile);
+  for (const line of workflow.split('\n')) {
+    const match = line.match(/uses:\s+([^@\s]+)@([^#\s]+)/);
+    if (match && !/^[a-f0-9]{40}$/.test(match[2])) {
+      fail(workflowFile, `GitHub Action must be pinned to a full commit SHA: ${line.trim()}`);
+    }
+  }
+}
+
 if (failures.length > 0) {
   console.error('Source policy lint failed:\n');
   for (const failure of failures) console.error(`- ${failure}`);

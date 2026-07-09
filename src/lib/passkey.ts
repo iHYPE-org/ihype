@@ -40,11 +40,9 @@ export async function getPasskeyRegistrationOptions(userId: string, userName: st
   });
 }
 
-export async function verifyPasskeyRegistration(
-  userId: string,
+export async function verifyPasskeyRegistrationResponse(
   response: RegistrationResponseJSON,
   expectedChallenge: string,
-  name?: string,
 ) {
   const { rpID, origin } = getRpInfo();
   const verification = await verifyRegistrationResponse({
@@ -55,18 +53,32 @@ export async function verifyPasskeyRegistration(
     requireUserVerification: true,
   });
 
-  if (!verification.verified || !verification.registrationInfo) return false;
+  if (!verification.verified || !verification.registrationInfo) return null;
 
   const { credential, credentialDeviceType, credentialBackedUp } = verification.registrationInfo;
+  return {
+    credentialId: credential.id,
+    publicKey: Buffer.from(credential.publicKey),
+    counter: BigInt(credential.counter),
+    deviceType: credentialDeviceType,
+    backedUp: credentialBackedUp,
+    transports: (response.response.transports ?? []).join(',') || null,
+  };
+}
+
+export async function verifyPasskeyRegistration(
+  userId: string,
+  response: RegistrationResponseJSON,
+  expectedChallenge: string,
+  name?: string,
+) {
+  const verified = await verifyPasskeyRegistrationResponse(response, expectedChallenge);
+  if (!verified) return false;
+
   await db.passkey.create({
     data: {
       userId,
-      credentialId: credential.id,
-      publicKey: Buffer.from(credential.publicKey),
-      counter: BigInt(credential.counter),
-      deviceType: credentialDeviceType,
-      backedUp: credentialBackedUp,
-      transports: (response.response.transports ?? []).join(','),
+      ...verified,
       name: name?.trim().slice(0, 80) || null,
     },
   });

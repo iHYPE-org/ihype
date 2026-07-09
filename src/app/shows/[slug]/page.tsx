@@ -17,6 +17,7 @@ import { toSafeJsonLdString } from '@/lib/safe-json-ld';
 import { isAdminSession } from '@/lib/permissions';
 import { detectRequestLocation } from '@/lib/request-location';
 import { parseShowProductionPlan } from '@/lib/show-composer';
+import { canViewerAccessShowMedia, protectShowProductionPlan } from '@/lib/show-media-access';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { formatShowTime, getBaseUrl } from '@/lib/utils';
 
@@ -121,11 +122,6 @@ export default async function ShowDetailPage({
         venueProfile: true,
         headlinerProfile: true,
         promoterProfile: true,
-        ticketOrders: {
-          orderBy: { createdAt: 'desc' },
-          take: 6,
-          include: { tickets: { select: { reassignCount: true } } }
-        },
         radioTracks: {
           orderBy: { position: 'asc' },
           select: { id: true, position: true, title: true, artistName: true, externalUrl: true, durationSecs: true, blockLabel: true }
@@ -172,17 +168,18 @@ export default async function ShowDetailPage({
   ]);
 
   const visibility = getShowVisibilitySignals(show);
-  const productionPlan = parseShowProductionPlan(show.productionPlan);
-
-  const hasTicket = session?.user?.id
-    ? await db.ticket.findFirst({
-        where: { showId: show.id, holderEmail: (await db.user.findUnique({ where: { id: session.user.id }, select: { email: true } }))?.email ?? '' },
-        select: { id: true }
-      }).then(Boolean)
-    : false;
-
-  const canWatch = !show.isTicketed || hasTicket || (session?.user?.id === show.creatorId) || isAdminSession(session);
-  void canWatch;
+  const canWatch = await canViewerAccessShowMedia({
+    showId: show.id,
+    isTicketed: show.isTicketed,
+    creatorId: show.creatorId,
+    userId: session?.user?.id,
+    role: currentFan?.role ?? session?.user?.role,
+    email: currentFan?.email ?? session?.user?.email,
+  });
+  const rawProductionPlan = parseShowProductionPlan(show.productionPlan);
+  const productionPlan = canWatch && rawProductionPlan
+    ? protectShowProductionPlan(rawProductionPlan, show.id)
+    : null;
 
   const base = getBaseUrl();
   const jsonLd = show.isRadioShow ? {
@@ -248,6 +245,26 @@ export default async function ShowDetailPage({
     : [];
   const isShowOwner = Boolean(session?.user?.id) && session?.user?.id === show.creatorId;
 
+  const recentTicketOrders = isShowOwner || isAdminSession(session)
+    ? await db.ticketOrder.findMany({
+        where: { showId: show.id },
+        orderBy: { createdAt: 'desc' },
+        take: 6,
+        select: {
+          id: true,
+          status: true,
+          totalTaxCents: true,
+          quantity: true,
+          totalChargeCents: true,
+          subtotalCents: true,
+          venuePayoutCents: true,
+          artistPayoutCents: true,
+          promoterPayoutCents: true,
+          tickets: { select: { reassignCount: true } },
+        },
+      })
+    : [];
+
   const userShowHype = session?.user?.id
     ? await db.hypeEvent.findUnique({ where: { userId_showId: { userId: session.user.id, showId: show.id } }, select: { userId: true } })
     : null;
@@ -279,6 +296,15 @@ export default async function ShowDetailPage({
                 showSlug={show.slug}
                 title={show.title}
               />
+            ) : show.isTicketed && !canWatch ? (
+              <div className="empty" style={{ minHeight: 160, display: 'grid', placeItems: 'center', padding: 24, textAlign: 'center' }}>
+                <div>
+                  <strong>Ticket required for playback</strong>
+                  <p className="meta" style={{ marginTop: 8 }}>
+                    Sign in with the ticket holder account or purchase a ticket to unlock this show.
+                  </p>
+                </div>
+              </div>
             ) : (
               <div style={{ minHeight: 160, position: 'relative', overflow: 'hidden', borderRadius: 12, background: 'rgba(255,255,255,.04)' }}>
                 {show.posterImage
@@ -544,25 +570,23 @@ export default async function ShowDetailPage({
               </div>
             ) : null}
 
-            {show.ticketOrders.length ? (
+            {recentTicketOrders.length ? (
               <div className="panel" style={{ padding: '1.25rem', marginTop: 24 }}>
-                <h2>Recent ticket orders</h2>
+                <h2>Recent ticket order totals</h2>
                 <table className="table">
                   <thead>
                     <tr>
-                      <th>Status</th><th>Tax</th><th>Code</th><th>Buyer</th><th>Qty</th><th>Total</th><th>Venue</th><th>Artist</th><th>Promoter</th>
+                      <th>Status</th><th>Tax</th><th>Qty</th><th>Total</th><th>Venue</th><th>Artist</th><th>Promoter</th>
                       <th title="Total reassignments across all tickets in this order">Passed</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {show.ticketOrders.map((order) => {
-                      const totalPassed = order.tickets.reduce((sum, t) => sum + t.reassignCount, 0);
+                    {recentTicketOrders.map((order) => {
+                      const totalPassed = order.tickets.reduce((sum, ticket) => sum + ticket.reassignCount, 0);
                       return (
                         <tr key={order.id}>
                           <td>{order.status}</td>
                           <td>{formatCurrencyFromCents(order.totalTaxCents)}</td>
-                          <td>{order.confirmationCode}</td>
-                          <td>{order.buyerName}</td>
                           <td>{order.quantity}</td>
                           <td>{formatCurrencyFromCents(order.totalChargeCents || order.subtotalCents)}</td>
                           <td>{formatCurrencyFromCents(order.venuePayoutCents)}</td>
@@ -579,13 +603,14 @@ export default async function ShowDetailPage({
               </div>
             ) : null}
 
-            {show.isTicketed && show.ticketOrders.length > 0 && (
+            {show.isTicketed && canWatch && currentFan?.role === 'FAN' && (
               <div className="panel" style={{ padding: '1.25rem', marginTop: 24 }}>
                 <h2>Transfer your ticket</h2>
-                <p className="subtitle" style={{ marginBottom: '1rem' }}>Can&apos;t make it? You can transfer your ticket to a friend — no fees, just update the holder name.</p>
-                <p className="meta">Find your ticket confirmation email and visit the ticket link to reassign it, or go to <Link href="/home">your dashboard</Link> to manage your orders.</p>
+                <p className="subtitle" style={{ marginBottom: '1rem' }}>Can&apos;t make it? You can transfer your ticket to a friend without a fee.</p>
+                <p className="meta">Use the secure link in your ticket email, or go to <Link href="/home">your dashboard</Link> to manage your orders.</p>
               </div>
             )}
+
 
             {show.isRadioShow && show.radioTracks.length > 0 && (() => {
               const totalSecs = show.radioTracks.reduce((sum, t) => sum + (t.durationSecs ?? 0), 0);

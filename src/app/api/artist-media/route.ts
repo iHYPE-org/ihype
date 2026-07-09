@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { auth } from '@/lib/auth';
 import { db, withDbRetry } from '@/lib/db';
 import { createHexId } from '@/lib/hex-id';
 import { validateArtistMediaUpload } from '@/lib/media-validation';
-import { isBlobMediaStorageAvailable, uploadArtistMediaToBlob } from '@/lib/media-storage';
+import { deleteArtistMediaFromBlob, isBlobMediaStorageAvailable, uploadArtistMediaToBlob } from '@/lib/media-storage';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { areDatabaseMediaUploadsEnabledRuntime } from '@/lib/runtime-flags';
 import { validateAudioMagicBytes } from '@/lib/validate-upload';
@@ -18,6 +19,8 @@ export const dynamic = 'force-dynamic';
 const MAX_AUDIO_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 const MAX_PROFILE_STORAGE_BYTES = 250 * 1024 * 1024;
 const MAX_PROFILE_TRACKS = 100;
+
+class MediaQuotaError extends Error {}
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -135,26 +138,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Only the artist who owns this page can upload media.' }, { status: 403 });
     }
 
-    const usage = await db.artistMediaAsset.aggregate({
-      where: { profileId: profile.id },
-      _count: { _all: true },
-      _sum: { fileSizeBytes: true },
-    });
-    const trackCount = usage._count._all;
-    const usedBytes = usage._sum.fileSizeBytes ?? 0;
-    if (trackCount >= MAX_PROFILE_TRACKS) {
-      return NextResponse.json(
-        { error: `Each artist profile is limited to ${MAX_PROFILE_TRACKS} uploaded tracks.` },
-        { status: 413 },
-      );
-    }
-    if (usedBytes + file.size > MAX_PROFILE_STORAGE_BYTES) {
-      return NextResponse.json(
-        { error: 'This upload would exceed the 250MB storage limit for the artist profile.' },
-        { status: 413 },
-      );
-    }
-
     const title = (requestedTitle || deriveTitleFromFileName(file.name)).slice(0, 160);
     const hexId = createHexId();
     const hasBlobStorage = await isBlobMediaStorageAvailable();
@@ -185,51 +168,113 @@ export async function POST(request: Request) {
       effectiveFreeUse = vetting.cleared;
     }
 
-    const storedMedia = hasBlobStorage
-      ? await uploadArtistMediaToBlob({ file, hexId, profileId: profile.id })
-      : null;
-    const fileDataBase64 = storedMedia ? null : Buffer.from(fileBytes).toString('base64');
+    let reservedAssetId: string | null = null;
+    let storedMedia: Awaited<ReturnType<typeof uploadArtistMediaToBlob>> | null = null;
+    let asset: {
+      hexId: string;
+      title: string;
+      notes: string | null;
+      mimeType: string;
+      fileSizeBytes: number;
+      freeUseEnabled: boolean;
+      createdAt: Date;
+    };
 
-    const updatedProfile = await withDbRetry(() =>
-      db.profile.update({
-        where: { id: profile.id },
-        data: {
-          songUploadCount: { increment: 1 },
-          mediaUploads: {
-            create: {
+    try {
+      const reserved = await withDbRetry(() =>
+        db.$transaction(async (tx) => {
+          await tx.$queryRaw(
+            Prisma.sql`SELECT "id" FROM "Profile" WHERE "id" = ${profile.id} FOR UPDATE`,
+          );
+          const usage = await tx.artistMediaAsset.aggregate({
+            where: { profileId: profile.id },
+            _count: { _all: true },
+            _sum: { fileSizeBytes: true },
+          });
+          if (usage._count._all >= MAX_PROFILE_TRACKS) {
+            throw new MediaQuotaError(
+              `Each artist profile is limited to ${MAX_PROFILE_TRACKS} uploaded tracks.`,
+            );
+          }
+          if ((usage._sum.fileSizeBytes ?? 0) + file.size > MAX_PROFILE_STORAGE_BYTES) {
+            throw new MediaQuotaError(
+              'This upload would exceed the 250MB storage limit for the artist profile.',
+            );
+          }
+
+          await tx.profile.update({
+            where: { id: profile.id },
+            data: { songUploadCount: { increment: 1 } },
+          });
+          return tx.artistMediaAsset.create({
+            data: {
               hexId,
               title,
               notes: notesValue || null,
               originalFileName: file.name || `${hexId}.audio`,
               mimeType: file.type,
               fileSizeBytes: file.size,
-              fileDataBase64,
-              storageProvider: storedMedia?.provider ?? 'database',
-              storageKey: storedMedia?.key ?? null,
-              storageUrl: storedMedia?.url ?? null,
+              storageProvider: 'pending',
               freeUseEnabled: effectiveFreeUse,
               durationSecs,
+              profileId: profile.id,
+              isPublished: false,
             },
+            select: { id: true },
+          });
+        }),
+      );
+      reservedAssetId = reserved.id;
+
+      storedMedia = hasBlobStorage
+        ? await uploadArtistMediaToBlob({ file, hexId, profileId: profile.id })
+        : null;
+      const fileDataBase64 = storedMedia ? null : Buffer.from(fileBytes).toString('base64');
+
+      asset = await withDbRetry(() =>
+        db.artistMediaAsset.update({
+          where: { id: reserved.id },
+          data: {
+            fileDataBase64,
+            storageProvider: storedMedia?.provider ?? 'database',
+            storageKey: storedMedia?.key ?? null,
+            storageUrl: storedMedia?.url ?? null,
+            isPublished: true,
           },
-        },
-        select: {
-          mediaUploads: {
-            where: { hexId },
-            select: {
-              hexId: true,
-              title: true,
-              notes: true,
-              mimeType: true,
-              fileSizeBytes: true,
-              freeUseEnabled: true,
-              createdAt: true,
-            },
+          select: {
+            hexId: true,
+            title: true,
+            notes: true,
+            mimeType: true,
+            fileSizeBytes: true,
+            freeUseEnabled: true,
+            createdAt: true,
           },
-        },
-      }),
-    );
-    const asset = updatedProfile.mediaUploads[0];
-    if (!asset) throw new Error('Artist media upload did not return the created asset.');
+        }),
+      );
+    } catch (error) {
+      if (storedMedia?.key) {
+        await deleteArtistMediaFromBlob(storedMedia.key).catch((cleanupError) => {
+          console.error('[artist-media] failed to remove orphaned R2 object', cleanupError);
+        });
+      }
+      if (reservedAssetId) {
+        await db.$transaction(async (tx) => {
+          const deleted = await tx.artistMediaAsset.deleteMany({
+            where: { id: reservedAssetId!, isPublished: false },
+          });
+          if (deleted.count === 1) {
+            await tx.profile.updateMany({
+              where: { id: profile.id, songUploadCount: { gt: 0 } },
+              data: { songUploadCount: { decrement: 1 } },
+            });
+          }
+        }).catch((cleanupError) => {
+          console.error('[artist-media] failed to release upload reservation', cleanupError);
+        });
+      }
+      throw error;
+    }
 
     if (vetting) {
       await recordAuditEvent({
@@ -262,6 +307,9 @@ export async function POST(request: Request) {
         : {}),
     });
   } catch (error) {
+    if (error instanceof MediaQuotaError) {
+      return NextResponse.json({ error: error.message }, { status: 413 });
+    }
     console.error('Artist media upload failed', error);
     return NextResponse.json({ error: 'Could not upload this media item.' }, { status: 500 });
   }

@@ -1,22 +1,25 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { recordAuditEvent } from '@/lib/audit';
+import {
+  createPasskeyBootstrapCapability,
+  getPasskeyBootstrapCookieName,
+  getPasskeyBootstrapCookieOptions,
+} from '@/lib/passkey-bootstrap';
 import { readClientAddress } from '@/lib/request-meta';
 import { verifyBearerToken } from '@/lib/secret-compare';
 
-const REG_COOKIE_TTL_SECONDS = 10 * 60;
-
 export async function POST(request: Request) {
   try {
-    // Uses bearer token auth (ADMIN_SETUP_SECRET) instead of session auth because
-    // this endpoint is called during bootstrapping, before any admin session exists.
-    // Session-based auth is not available at this stage of setup.
+    // Uses bearer token auth because this endpoint runs before any admin
+    // session exists. The bearer secret gates setup; a separate one-time,
+    // random capability gates the passkey ceremony itself.
     if (process.env.ALLOW_ADMIN_SETUP !== 'true') {
       await recordAuditEvent({
         action: 'admin_setup_blocked',
         entityType: 'admin-setup',
         ipAddress: readClientAddress(request),
-        metadata: { reason: 'setup_disabled' }
+        metadata: { reason: 'setup_disabled' },
       });
       return NextResponse.json({ error: 'Admin setup is disabled.' }, { status: 410 });
     }
@@ -31,64 +34,78 @@ export async function POST(request: Request) {
         action: 'admin_setup_failed',
         entityType: 'admin-setup',
         ipAddress: readClientAddress(request),
-        metadata: { reason: 'invalid_secret' }
+        metadata: { reason: 'invalid_secret' },
       });
       return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
     }
 
-    const isProduction = process.env.NODE_ENV === 'production';
-    const setCookie = (resp: NextResponse, userId: string) => {
-      resp.cookies.set({
-        name: 'pk_reg_first_uid',
-        value: userId,
-        httpOnly: true,
-        sameSite: 'strict',
-        path: '/',
-        secure: isProduction,
-        maxAge: REG_COOKIE_TTL_SECONDS
+    const bootstrap = createPasskeyBootstrapCapability();
+    const result = await db.$transaction(async (tx) => {
+      const existing = await tx.user.findUnique({
+        where: { email: 'admin@ihype.org' },
+        select: { id: true, _count: { select: { passkeys: true } } },
       });
-      return resp;
-    };
 
-    const existing = await db.user.findUnique({
-      where: { email: 'admin@ihype.org' },
-      select: { id: true, _count: { select: { passkeys: true } } }
+      if (existing?._count.passkeys) return { state: 'completed' as const, userId: existing.id };
+
+      const userId = existing
+        ? existing.id
+        : (
+            await tx.user.create({
+              data: {
+                email: 'admin@ihype.org',
+                role: 'ADMIN',
+                isThirteenOrOlder: true,
+                username: 'admin',
+                name: 'iHYPE Admin',
+              },
+              select: { id: true },
+            })
+          ).id;
+
+      await tx.passkeyBootstrapToken.deleteMany({
+        where: { userId, usedAt: null },
+      });
+      await tx.passkeyBootstrapToken.create({
+        data: {
+          userId,
+          tokenHash: bootstrap.tokenHash,
+          expiresAt: bootstrap.expiresAt,
+        },
+      });
+
+      return { state: existing ? ('existing' as const) : ('created' as const), userId };
     });
 
-    if (existing) {
-      // Don't re-issue the passkey bootstrap cookie once passkeys are already registered —
-      // that window should only be open once.
-      if (existing._count.passkeys > 0) {
-        return NextResponse.json({ error: 'Admin setup already completed.' }, { status: 410 });
-      }
-      const resp = NextResponse.json({ exists: true });
-      return setCookie(resp, existing.id);
+    if (result.state === 'completed') {
+      return NextResponse.json({ error: 'Admin setup already completed.' }, { status: 410 });
     }
 
-    const created = await db.user.create({
-      data: {
-        email: 'admin@ihype.org',
-        role: 'ADMIN',
-        isThirteenOrOlder: true,
-        username: 'admin',
-        name: 'iHYPE Admin'
-      },
-      select: { id: true }
-    });
+    if (result.state === 'created') {
+      await recordAuditEvent({
+        actorUserId: result.userId,
+        action: 'admin_account_created',
+        entityType: 'User',
+        entityId: result.userId,
+        ipAddress: readClientAddress(request),
+        metadata: { via: 'admin-setup' },
+      });
+    }
 
-    await recordAuditEvent({
-      actorUserId: created.id,
-      action: 'admin_account_created',
-      entityType: 'User',
-      entityId: created.id,
-      ipAddress: readClientAddress(request),
-      metadata: { via: 'admin-setup' }
+    const response = NextResponse.json({
+      created: result.state === 'created',
+      exists: result.state === 'existing',
     });
-
-    const resp = NextResponse.json({ created: true });
-    return setCookie(resp, created.id);
-  } catch (err) {
-    console.error('[api/admin/setup] error', err);
+    response.cookies.set(
+      getPasskeyBootstrapCookieName(),
+      bootstrap.token,
+      getPasskeyBootstrapCookieOptions(),
+    );
+    response.cookies.delete('pk_reg_first_uid');
+    response.cookies.delete('pk_reg_first_challenge');
+    return response;
+  } catch (error) {
+    console.error('[api/admin/setup] error', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -10,13 +10,13 @@ function isLocalHost(hostname: string) {
   return normalizedHost === 'localhost' || normalizedHost === '127.0.0.1' || normalizedHost.endsWith('.localhost');
 }
 
-function buildContentSecurityPolicy(nonce: string) {
+function buildContentSecurityPolicy(nonce: string, allowEmbedding: boolean) {
   const developmentEval = process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'";
   return [
     "default-src 'self'",
     "base-uri 'self'",
     "form-action 'self'",
-    "frame-ancestors 'none'",
+    allowEmbedding ? 'frame-ancestors *' : "frame-ancestors 'none'",
     "object-src 'none'",
     "img-src 'self' data: blob: https:",
     "media-src 'self' data: blob: https:",
@@ -30,12 +30,14 @@ function buildContentSecurityPolicy(nonce: string) {
 }
 
 function applySecurityHeaders(response: NextResponse, nonce: string, pathname: string) {
+  const allowEmbedding = pathname.startsWith('/embed/');
   response.headers.set('x-pathname', pathname);
-  response.headers.set('X-Frame-Options', 'DENY');
+  if (!allowEmbedding) response.headers.set('X-Frame-Options', 'DENY');
+  else response.headers.delete('X-Frame-Options');
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  response.headers.set('Content-Security-Policy', buildContentSecurityPolicy(nonce));
+  response.headers.set('Content-Security-Policy', buildContentSecurityPolicy(nonce, allowEmbedding));
   return response;
 }
 

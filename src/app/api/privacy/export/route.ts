@@ -32,6 +32,17 @@ const OMITTED_EXPORT_KEYS = new Set([
   'deviceToken',
   'fileDataBase64',
   'storageKey',
+  // Defense in depth for records that can involve another person. The query
+  // below already avoids loading third-party relation rows, but these fields
+  // must never leak if a relation is added later.
+  'holderName',
+  'holderEmail',
+  'buyerName',
+  'buyerEmail',
+  'followerId',
+  'fromUserId',
+  'requesterId',
+  'reporterUserId',
 ]);
 
 function sanitizeForExport(value: unknown): unknown {
@@ -71,41 +82,53 @@ export async function GET() {
       sessions: true,
       profiles: {
         include: {
-          hostedShows: true,
-          headlinerShows: true,
-          promotedShows: true,
           mediaUploads: true,
-          profileHypes: true,
-          venueConnectionRequests: true,
-          recommendedConnectionRequests: true,
-          issuedTickets: true,
-          affiliateTicketOrders: true,
           accountsPayableEntries: true,
           journalPosts: true,
-          followers: true,
           setlistTemplates: true,
           availabilityDates: true,
-          receivedBookingRequests: true,
           promoCodes: true,
-          newsletterSubscriptions: true,
+          _count: {
+            select: {
+              hostedShows: true,
+              headlinerShows: true,
+              promotedShows: true,
+              profileHypes: true,
+              venueConnectionRequests: true,
+              recommendedConnectionRequests: true,
+              issuedTickets: true,
+              affiliateTicketOrders: true,
+              followers: true,
+              receivedBookingRequests: true,
+              newsletterSubscriptions: true,
+            },
+          },
         },
       },
       shows: {
         include: {
           radioTracks: true,
-          comments: true,
-          rsvps: true,
-          attendees: true,
-          setlistVotes: true,
           promoCodes: true,
           advertisingConfig: true,
+          _count: {
+            select: {
+              comments: true,
+              rsvps: true,
+              attendees: true,
+              setlistVotes: true,
+              ticketOrders: true,
+              tickets: true,
+            },
+          },
         },
       },
       ticketOrders: {
         include: {
           tickets: true,
           accountsPayableEntries: true,
-          show: true,
+          show: {
+            select: { id: true, slug: true, title: true, startsAt: true, status: true },
+          },
         },
       },
       hypeEvents: true,
@@ -114,8 +137,34 @@ export async function GET() {
       profileHypeEvents: true,
       passwordResetCodes: true,
       venueConnectionRequests: true,
-      scannedTickets: true,
-      reassignedTickets: true,
+      scannedTickets: {
+        select: {
+          id: true,
+          serializedId: true,
+          showId: true,
+          venueProfileId: true,
+          status: true,
+          scannedAt: true,
+          reassignedAt: true,
+          reassignCount: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+      reassignedTickets: {
+        select: {
+          id: true,
+          serializedId: true,
+          showId: true,
+          venueProfileId: true,
+          status: true,
+          scannedAt: true,
+          reassignedAt: true,
+          reassignCount: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
       fanPlaylists: { include: { items: true } },
       favoriteMedia: true,
       auditLogs: true,
@@ -150,9 +199,9 @@ export async function GET() {
 
   const payload = {
     exportedAt: new Date().toISOString(),
-    formatVersion: 2,
+    formatVersion: 3,
     notice:
-      'Credential secrets, session tokens, payment processor identifiers, push credentials, and raw binary media are intentionally excluded for account security.',
+      'Credential secrets, session tokens, payment processor identifiers, push credentials, raw binary media, and third-party personal details are intentionally excluded. Activity by other people is represented only by aggregate counts.',
     data: sanitizeForExport(userData),
   };
 
