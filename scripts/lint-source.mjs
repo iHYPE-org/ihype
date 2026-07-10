@@ -119,6 +119,24 @@ for (const relation of ['issuedTickets', 'followers', 'receivedBookingRequests']
   }
 }
 
+// Windows cannot create files or directories named after DOS device names
+// (aux, con, nul, ...), so one such path segment makes `git clone` fail to
+// check out the tree on every Windows machine. src/app/aux once did exactly
+// that — it now lives at src/app/aux-queue behind a /aux rewrite.
+const WINDOWS_RESERVED = /^(?:aux|con|prn|nul|com[1-9]|lpt[1-9])(?:\..*)?$/i;
+async function walkAllPaths(directory) {
+  const entries = await readdir(path.join(root, directory), { withFileTypes: true });
+  for (const entry of entries) {
+    if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue;
+    const relative = directory ? path.join(directory, entry.name) : entry.name;
+    if (WINDOWS_RESERVED.test(entry.name) || /[. ]$/.test(entry.name)) {
+      fail(relative, 'path segment is not checkout-safe on Windows (reserved device name or trailing dot/space).');
+    }
+    if (entry.isDirectory()) await walkAllPaths(relative);
+  }
+}
+await walkAllPaths('');
+
 for (const workflowFile of ['.github/workflows/ci.yml', '.github/workflows/deploy-production.yml']) {
   const workflow = await text(workflowFile);
   for (const line of workflow.split('\n')) {

@@ -84,6 +84,20 @@ const nextConfig = {
   experimental: {
     workerThreads: true
   },
+  async rewrites() {
+    return [
+      // Public shared-queue links live at /aux/:slug, but the route directory
+      // is src/app/aux-queue — 'aux' is a reserved device name on Windows
+      // (like con/nul/prn), so a folder named aux makes `git clone` fail to
+      // check out the tree on every Windows machine. Keep the URL, rename the
+      // directory, and never add a path segment named exactly aux/con/nul/
+      // prn/com1-9/lpt1-9 anywhere in the repo.
+      {
+        source: '/aux/:slug',
+        destination: '/aux-queue/:slug'
+      }
+    ];
+  },
   async redirects() {
     return [
       {
