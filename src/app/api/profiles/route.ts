@@ -10,6 +10,7 @@ import {
   getVerificationStatusForType,
 } from '@/lib/profile-creation';
 import { generateUniqueNonwordSlug } from '@/lib/nonword-slug';
+import { isAdminSession } from '@/lib/permissions';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { log } from '@/lib/logger';
@@ -31,21 +32,41 @@ export async function POST(request: Request) {
   }
 
   const clientAddress = readClientAddress(request);
-  const rateLimit = await consumeRateLimit(`add-profile:${session.user.id}`, {
-    limit: 10,
-    windowMs: 15 * 60 * 1000,
-  });
-  if (!rateLimit.allowed) {
-    return NextResponse.json(
-      { error: 'Too many pages created. Please wait a few minutes and try again.' },
-      { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } }
-    );
+  // Admins (the beta operators) test page creation constantly and shouldn't
+  // trip the abuse guard that protects against scripted page spam.
+  if (!isAdminSession(session)) {
+    const rateLimit = await consumeRateLimit(`add-profile:${session.user.id}`, {
+      limit: 10,
+      windowMs: 15 * 60 * 1000,
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'Too many pages created. Please wait a few minutes and try again.' },
+        { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } }
+      );
+    }
   }
 
   try {
     const body = schema.parse(await request.json());
     const trimmedName = body.name.trim();
     const profileType = getProfileType(body.role);
+
+    // Double-submit guard: retrying after a flaky error created duplicate
+    // pages (same owner, same type, same name) in the wild. Treat an exact
+    // repeat as "already done" rather than minting another page.
+    const duplicate = await db.profile.findFirst({
+      where: {
+        ownerId: session.user.id,
+        type: profileType,
+        name: { equals: trimmedName, mode: 'insensitive' },
+      },
+      select: { id: true, slug: true, name: true, type: true, hexId: true },
+    });
+    if (duplicate) {
+      return NextResponse.json(duplicate, { status: 200 });
+    }
+
     const hexId = await generateUniqueProfileHexId();
     const slug = await generateUniqueNonwordSlug(db);
 
@@ -74,6 +95,23 @@ export async function POST(request: Request) {
 
     return NextResponse.json(profile, { status: 201 });
   } catch (error) {
+    // Audit the failure so page-creation problems are diagnosable from the
+    // admin console — a burst of these previously showed up only as an
+    // unexplained rate-limit lockout.
+    await recordAuditEvent({
+      actorUserId: session.user.id,
+      action: 'profile_add_failed',
+      entityType: 'profile',
+      ipAddress: clientAddress,
+      metadata: {
+        reason: error instanceof z.ZodError
+          ? `validation: ${error.issues[0]?.message ?? 'invalid payload'}`
+          : error instanceof Error
+            ? error.message.slice(0, 300)
+            : 'unknown',
+      },
+    }).catch(() => {});
+
     if (error instanceof z.ZodError) {
       const first = error.issues[0];
       return NextResponse.json({ error: first?.message ?? 'Invalid page payload' }, { status: 400 });
