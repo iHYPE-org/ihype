@@ -233,6 +233,8 @@ model Profile {
 
   @@index([name])
   @@index([city, type])
+  // Prunes venue rows for /api/shows/nearby's bounding-box prefilter.
+  @@index([latitude, longitude])
   @@index([ownerId])
   // Trigram indexes for /api/search ILIKE %q% lookups — without these every
   // search keystroke seq-scans the table (BitmapOr needs all OR arms indexed).

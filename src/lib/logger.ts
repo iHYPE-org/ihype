@@ -11,6 +11,8 @@
  *   log.error('[register]', error, 'Unexpected registration failure');
  */
 
+import { deferWork } from '@/lib/defer-work';
+
 type Level = 'debug' | 'info' | 'warn' | 'error';
 
 const LEVELS: Record<Level, number> = { debug: 10, info: 20, warn: 30, error: 40 };
@@ -25,18 +27,21 @@ const minLevel: Level = (process.env.LOG_LEVEL as Level) ?? (isProd ? 'info' : '
 // failure must never break the code path that was merely trying to log.
 function reportToSentry(prefix: string, meta: Record<string, unknown> | Error | null, message?: string) {
   if (!process.env.NEXT_PUBLIC_SENTRY_DSN) return;
-  import('@sentry/nextjs')
-    .then((Sentry) => {
-      if (meta instanceof Error) {
-        Sentry.captureException(meta, { tags: { logPrefix: prefix }, extra: { message } });
-      } else {
-        Sentry.captureMessage(`${prefix} ${message ?? ''}`.trim(), {
-          level: 'error',
-          extra: meta ?? undefined
-        });
-      }
-    })
-    .catch(() => {});
+  deferWork(
+    import('@sentry/nextjs')
+      .then((Sentry) => {
+        if (meta instanceof Error) {
+          Sentry.captureException(meta, { tags: { logPrefix: prefix }, extra: { message } });
+        } else {
+          Sentry.captureMessage(`${prefix} ${message ?? ''}`.trim(), {
+            level: 'error',
+            extra: meta ?? undefined
+          });
+        }
+      })
+      .catch(() => {}),
+    'logger'
+  );
 }
 
 function emit(level: Level, prefix: string, meta: Record<string, unknown> | Error | null, message?: string) {

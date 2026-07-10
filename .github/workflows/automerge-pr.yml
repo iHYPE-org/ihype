@@ -1,5 +1,10 @@
 name: Auto-merge PRs
 
+# SECURITY: pull_request_target runs with write permissions and repo secrets.
+# This workflow is only safe because it NEVER checks out or executes PR code —
+# it just flips the auto-merge bit via the GitHub API. Do not add an
+# actions/checkout step (or anything that runs code from the PR head) here;
+# that would let a malicious PR run with write access to this repository.
 on:
   pull_request_target:
     types: [labeled, reopened, synchronize, ready_for_review]

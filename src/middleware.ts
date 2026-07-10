@@ -10,6 +10,22 @@ function isLocalHost(hostname: string) {
   return normalizedHost === 'localhost' || normalizedHost === '127.0.0.1' || normalizedHost.endsWith('.localhost');
 }
 
+// Client-side Sentry posts events to the DSN's ingest host; without it in
+// connect-src every browser error report is silently blocked by our own CSP.
+// Lazily memoized — env vars are stable for the life of the isolate.
+let cachedSentryOrigin: string | null = null;
+function sentryIngestOrigin() {
+  if (cachedSentryOrigin === null) {
+    const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
+    try {
+      cachedSentryOrigin = dsn ? ` ${new URL(dsn).origin}` : '';
+    } catch {
+      cachedSentryOrigin = '';
+    }
+  }
+  return cachedSentryOrigin;
+}
+
 function buildContentSecurityPolicy(nonce: string, allowEmbedding: boolean) {
   const developmentEval = process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'";
   return [
@@ -18,12 +34,16 @@ function buildContentSecurityPolicy(nonce: string, allowEmbedding: boolean) {
     "form-action 'self'",
     allowEmbedding ? 'frame-ancestors *' : "frame-ancestors 'none'",
     "object-src 'none'",
+    // img-src stays broad: profile avatar/hero images are user-supplied URLs
+    // that may point at any HTTPS host (including Google OAuth avatars).
     "img-src 'self' data: blob: https:",
-    "media-src 'self' data: blob: https:",
+    // Audio only ever reaches the browser through same-origin routes
+    // (/api/media, /api/public-media, /cdn) — R2 is proxied server-side.
+    "media-src 'self' data: blob:",
     "font-src 'self' data: https:",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     `script-src 'self' 'nonce-${nonce}' 'wasm-unsafe-eval' https://challenges.cloudflare.com https://js.stripe.com${developmentEval}`,
-    "connect-src 'self' https://challenges.cloudflare.com https://api.stripe.com",
+    `connect-src 'self' https://challenges.cloudflare.com https://api.stripe.com${sentryIngestOrigin()}`,
     "frame-src 'self' https://challenges.cloudflare.com https://js.stripe.com",
     'upgrade-insecure-requests',
   ].join('; ');

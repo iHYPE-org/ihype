@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
@@ -44,6 +45,32 @@ const schema = z.object({
   productionPlan: showProductionPlanSchema.optional()
 });
 
+function isUniqueSlugViolation(error: unknown) {
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') return false;
+  const target = error.meta?.target;
+  if (Array.isArray(target)) return target.includes('slug');
+  return typeof target === 'string' ? target.includes('slug') : true;
+}
+
+// The pre-check + create is racy: two concurrent creates can both pass the
+// findUnique check and pick the same slug, so the loser's P2002 gets retried
+// with a fresh suffix instead of surfacing as "Invalid show payload".
+async function createShowWithUniqueSlug<T>(title: string, create: (slug: string) => Promise<T>): Promise<T> {
+  const baseSlug = slugify(title);
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
+    if (await db.show.findUnique({ where: { slug }, select: { id: true } })) continue;
+    try {
+      return await create(slug);
+    } catch (error) {
+      if (!isUniqueSlugViolation(error)) throw error;
+      lastError = error;
+    }
+  }
+  throw lastError ?? new Error('Could not allocate a unique show slug');
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const mine = searchParams.get('mine') === '1' || searchParams.get('mine') === 'true';
@@ -59,7 +86,8 @@ export async function GET(request: Request) {
     const shows = await db.show.findMany({
       include: { venueProfile: profileSelect, headlinerProfile: profileSelect, promoterProfile: profileSelect },
       where: { creatorId: session.user.id, ...(radioOnly ? { isRadioShow: true } : {}) },
-      orderBy: [{ createdAt: 'desc' }]
+      orderBy: [{ createdAt: 'desc' }],
+      take: 200
     });
     return NextResponse.json(shows);
   }
@@ -94,6 +122,9 @@ export async function GET(request: Request) {
       status: { in: ['SCHEDULED', 'LIVE', 'ENDED'] },
       ...getDemoCreatorExclusion()
     },
+    // Without an explicit order, Postgres returns an *arbitrary* 200 rows —
+    // recent shows would randomly vanish from the feed as the table grows.
+    orderBy: [{ startsAt: 'desc' }],
     take: 200
   });
   return NextResponse.json(sortShowsForFeed(shows), {
@@ -146,14 +177,9 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Only the promoter owner can create radio shows from this promoter page' }, { status: 403 });
       }
 
-      const baseSlug = slugify(body.title);
-      let slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
-      while (await db.show.findUnique({ where: { slug }, select: { id: true } })) {
-        slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
-      }
       const status = body.status === 'DRAFT' ? 'DRAFT' : 'SCHEDULED';
 
-      const show = await db.show.create({
+      const show = await createShowWithUniqueSlug(body.title, (slug) => db.show.create({
         data: {
           slug,
           title: body.title,
@@ -167,7 +193,7 @@ export async function POST(request: NextRequest) {
           status,
           moderationStatus
         }
-      });
+      }));
 
       return NextResponse.json(show, { status: 201 });
     }
@@ -213,15 +239,10 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const baseSlug = slugify(body.title);
-      let slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
-      while (await db.show.findUnique({ where: { slug }, select: { id: true } })) {
-        slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
-      }
       const status = body.status === 'DRAFT' ? 'DRAFT' : 'SCHEDULED';
       const sortedTracks = [...tracks].sort((left, right) => left.position - right.position);
 
-      const show = await db.show.create({
+      const show = await createShowWithUniqueSlug(body.title, (slug) => db.show.create({
         data: {
           slug,
           title: body.title,
@@ -238,7 +259,7 @@ export async function POST(request: NextRequest) {
           status,
           moderationStatus
         }
-      });
+      }));
 
       return NextResponse.json(show, { status: 201 });
     }
@@ -342,13 +363,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const baseSlug = slugify(body.title);
-    let slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
-    while (await db.show.findUnique({ where: { slug }, select: { id: true } })) {
-      slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
-    }
-
-    const show = await withDbRetry(() => db.show.create({
+    const show = await createShowWithUniqueSlug(body.title, (slug) => withDbRetry(() => db.show.create({
       data: {
         slug,
         title: body.title,
@@ -381,7 +396,7 @@ export async function POST(request: NextRequest) {
           }
         })
       }
-    }));
+    })));
 
     return NextResponse.json(show, { status: 201 });
   } catch (err) {

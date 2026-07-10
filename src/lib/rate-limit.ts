@@ -1,4 +1,6 @@
+import { deferWork } from '@/lib/defer-work';
 import { kvGet, kvIncr, kvList } from '@/lib/kv';
+import { log } from '@/lib/logger';
 
 type RateLimitRecord = {
   count: number;
@@ -56,9 +58,7 @@ async function consumeKvUnsafe(key: string, options: RateLimitOptions): Promise<
   const count = await kvIncr(key, windowSecs);
   const retryAfterSeconds = windowSecs;
   if (count > limit) {
-    try {
-      await kvIncr(`rate-limit-hits:${key}`, 3600);
-    } catch {}
+    deferWork(kvIncr(`rate-limit-hits:${key}`, 3600), 'rate-limit');
     return { allowed: false, remaining: 0, retryAfterSeconds };
   }
   return { allowed: true, remaining: Math.max(0, limit - count), retryAfterSeconds };
@@ -68,7 +68,7 @@ async function consumeKvForDevelopment(key: string, options: RateLimitOptions): 
   try {
     return await withKvTimeout(consumeKvUnsafe(key, options), 'KV rate limit');
   } catch (error) {
-    console.error('[rate-limit] development KV error, falling back to in-memory:', error);
+    log.error('[rate-limit]', error instanceof Error ? error : { error: String(error) }, 'development KV error, falling back to in-memory');
     return consumeMemory(key, options);
   }
 }
@@ -89,7 +89,7 @@ export async function getRateLimitMetrics(limit = 10): Promise<RateLimitMetric[]
       .sort((a, b) => b.hits - a.hits)
       .slice(0, limit);
   } catch (error) {
-    console.error('[rate-limit] getRateLimitMetrics failed:', error);
+    log.error('[rate-limit]', error instanceof Error ? error : { error: String(error) }, 'getRateLimitMetrics failed');
     return [];
   }
 }
@@ -167,13 +167,13 @@ async function consumeDurableObject(key: string, options: RateLimitOptions): Pro
   try {
     const result = await withKvTimeout(stub.consume(options.limit, options.windowMs), 'DO rate limit');
     if (!result.allowed) {
-      try {
-        await kvIncr(`rate-limit-hits:${key}`, 3600);
-      } catch {}
+      deferWork(kvIncr(`rate-limit-hits:${key}`, 3600), 'rate-limit');
     }
     return result;
   } catch (error) {
-    console.error('[rate-limit] atomic backend error:', error);
+    // log.error so a DO outage reaches Sentry — console.error only lands in
+    // Worker logs, which nobody tails.
+    log.error('[rate-limit]', error instanceof Error ? error : { error: String(error) }, 'atomic backend error');
     return null;
   }
 }
@@ -183,12 +183,25 @@ export async function consumeRateLimit(key: string, options: RateLimitOptions): 
   if (atomic) return atomic;
 
   if (process.env.NODE_ENV === 'production') {
-    console.error('[rate-limit] RATE_LIMITER_DO is unavailable in production; denying request.');
-    return {
-      allowed: false,
-      remaining: 0,
-      retryAfterSeconds: Math.max(1, Math.ceil(options.windowMs / 1000))
+    // Degraded mode: a DO hiccup must not become a sitewide write outage.
+    // KV increments aren't atomic (concurrent requests can race the counter),
+    // so run at half the normal limit to keep abuse headroom. Only if KV is
+    // also down do we fail closed.
+    log.error('[rate-limit]', { key }, 'RATE_LIMITER_DO unavailable in production; using KV fallback at half limit');
+    const degraded: RateLimitOptions = {
+      limit: Math.max(1, Math.floor(options.limit / 2)),
+      windowMs: options.windowMs
     };
+    try {
+      return await withKvTimeout(consumeKvUnsafe(key, degraded), 'KV rate limit fallback');
+    } catch (error) {
+      log.error('[rate-limit]', error instanceof Error ? error : { error: String(error) }, 'KV fallback also failed; denying request');
+      return {
+        allowed: false,
+        remaining: 0,
+        retryAfterSeconds: Math.max(1, Math.ceil(options.windowMs / 1000))
+      };
+    }
   }
 
   return consumeKvForDevelopment(key, options);

@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { deferWork } from '@/lib/defer-work';
 import { sendGenericEmail } from '@/lib/mailer';
 import { readClientAddress } from '@/lib/request-meta';
 
@@ -23,7 +24,7 @@ function notifyAdminLogin(user: LoginUser, request: Request) {
   const when = new Date().toISOString();
   const who = user.name?.trim() || user.email || user.id;
 
-  sendGenericEmail({
+  deferWork(sendGenericEmail({
     to: ADMIN_ALERT_EMAIL,
     subject: `Admin login — ${who}`,
     text: [
@@ -48,7 +49,7 @@ function notifyAdminLogin(user: LoginUser, request: Request) {
         <p style="color:#5b657a;font-size:12px;">Automated audit notification — no action needed if this was expected.</p>
       </div>
     `
-  }).catch((e: unknown) => { console.error('[login-security] admin-login alert failed', e); });
+  }).catch((e: unknown) => { console.error('[login-security] admin-login alert failed', e); }), 'login-security');
 }
 
 // Alerts a user by email when a login comes from a different country than
@@ -62,7 +63,7 @@ export async function checkAndRecordLogin(user: LoginUser, request: Request) {
 
   if (currentCountry && user.lastLoginCountry && user.lastLoginCountry !== currentCountry && user.email) {
     const userName = user.name?.trim() || user.email;
-    sendGenericEmail({
+    deferWork(sendGenericEmail({
       to: user.email,
       subject: 'New login from a different country — iHYPE',
       text: [
@@ -85,14 +86,14 @@ export async function checkAndRecordLogin(user: LoginUser, request: Request) {
           <p style="color:#5b657a;font-size:12px;">— iHYPE</p>
         </div>
       `
-    }).catch((e: unknown) => { console.error('[login-security] country-change email failed', e); });
+    }).catch((e: unknown) => { console.error('[login-security] country-change email failed', e); }), 'login-security');
   }
 
-  db.user.update({
+  deferWork(db.user.update({
     where: { id: user.id },
     data: {
       lastLoginCountry: currentCountry ?? undefined,
       lastLoginAt: new Date()
     }
-  }).catch((e: unknown) => { console.error('[login-security] last-login update failed', e); });
+  }).catch((e: unknown) => { console.error('[login-security] last-login update failed', e); }), 'login-security');
 }
