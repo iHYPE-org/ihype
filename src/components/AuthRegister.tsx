@@ -38,6 +38,7 @@ export function RegisterScreen({
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [acceptedAge, setAcceptedAge] = useState(false);
+  const [acceptedAdult, setAcceptedAdult] = useState(false);
   const [acceptedPolicy, setAcceptedPolicy] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState('');
@@ -83,6 +84,7 @@ export function RegisterScreen({
       phone: phone.trim() || undefined,
       role,
       isThirteenOrOlder: acceptedAge,
+      isEighteenOrOlder: acceptedAdult,
       acceptedArtistUploadPolicy: needsUploadPolicy ? acceptedPolicy : true,
       inviteCode: inviteOnly ? inviteCode : undefined,
       company,
@@ -346,6 +348,14 @@ export function RegisterScreen({
             <span>
               I attest that I am 13 years of age or older and I recognize that iHYPE is not responsible for any
               content within.
+            </span>
+          </label>
+
+          <label className="authcard-check-row">
+            <input checked={acceptedAdult} onChange={(event) => setAcceptedAdult(event.target.checked)} type="checkbox" />
+            <span>
+              I am 18 or older <span className="authcard-field-optional">— optional now, but required to buy
+              tickets or share referral links. You can confirm later in Settings.</span>
             </span>
           </label>
 

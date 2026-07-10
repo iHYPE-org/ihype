@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getBaseUrl } from '@/lib/utils';
 import { getCspNonce } from '@/lib/csp-nonce';
+import { parsePressKit } from '@/lib/press-kit';
 import type { Metadata } from 'next';
 
 export async function generateMetadata(
@@ -43,7 +44,7 @@ export default async function PressKitPage({ params }: { params: Promise<{ slug:
   const { slug } = await params;
   const profile = await db.profile.findUnique({
     where: { slug },
-    select: { name: true, slug: true, bio: true, genres: true, headline: true, heroImage: true, avatarImage: true, links: true, verified: true,
+    select: { name: true, slug: true, bio: true, genres: true, headline: true, heroImage: true, avatarImage: true, links: true, verified: true, pressKitContent: true,
       headlinerShows: { where: { startsAt: { gte: new Date() } }, select: { title: true, startsAt: true, venueProfile: { select: { name: true, city: true } } }, take: 5, orderBy: { startsAt: 'asc' } }
     }
   });
@@ -52,6 +53,7 @@ export default async function PressKitPage({ params }: { params: Promise<{ slug:
   const nonce = await getCspNonce();
   const baseUrl = getBaseUrl();
   const profileUrl = `${baseUrl}/artists/${slug}`;
+  const pressKit = parsePressKit(profile.pressKitContent);
 
   return (
     <div className="container" style={{ maxWidth: 700, paddingTop: 40, paddingBottom: 60 }}>
@@ -60,10 +62,35 @@ export default async function PressKitPage({ params }: { params: Promise<{ slug:
         <Link href={`/artists/${slug}`} className="button small secondary">← Back</Link>
       </div>
       {profile.avatarImage && <img src={profile.avatarImage} alt={profile.name} loading="lazy" style={{ width: 120, height: 120, borderRadius: '50%', objectFit: 'cover', marginBottom: 16 }} />}
+      {pressKit.tagline && <p style={{ fontSize: 19, fontStyle: 'italic', opacity: 0.85 }}>{pressKit.tagline}</p>}
       {profile.headline && <p style={{ fontSize: 18, fontWeight: 600 }}>{profile.headline}</p>}
       {profile.bio && <p style={{ lineHeight: 1.7 }}>{profile.bio}</p>}
       <p><strong>Genres:</strong> {(profile.genres as string[]).join(', ')}</p>
       <p><strong>Profile:</strong> <a href={profileUrl}>{profileUrl}</a></p>
+      {pressKit.contactEmail && (
+        <p><strong>Booking / press:</strong> <a href={`mailto:${pressKit.contactEmail}`}>{pressKit.contactEmail}</a></p>
+      )}
+      {pressKit.quotes.length > 0 && (
+        <section style={{ marginTop: 24 }}>
+          <h2>Press</h2>
+          {pressKit.quotes.map((q, i) => (
+            <blockquote key={i} style={{ margin: '0 0 14px', paddingLeft: 16, borderLeft: '3px solid rgba(255,80,41,.5)' }}>
+              <p style={{ margin: 0, fontStyle: 'italic', lineHeight: 1.6 }}>&ldquo;{q.quote}&rdquo;</p>
+              {q.source && <cite style={{ fontSize: 13, opacity: 0.7 }}>— {q.source}</cite>}
+            </blockquote>
+          ))}
+        </section>
+      )}
+      {pressKit.achievements.length > 0 && (
+        <section style={{ marginTop: 24 }}>
+          <h2>Highlights</h2>
+          <ul style={{ margin: 0, paddingLeft: 20, lineHeight: 1.8 }}>
+            {pressKit.achievements.map((a, i) => (
+              <li key={i}>{a}</li>
+            ))}
+          </ul>
+        </section>
+      )}
       {profile.headlinerShows.length > 0 && (
         <section style={{ marginTop: 24 }}>
           <h2>Upcoming Shows</h2>

@@ -40,6 +40,8 @@ export default function SettingsPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('FAN');
+  const [isAdult, setIsAdult] = useState(false);
+  const [attesting, setAttesting] = useState(false);
   const [prefs, setPrefs] = useState<Prefs>({ newShows: true, journalPosts: true, milestones: true, weeklyDigest: true });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -56,6 +58,7 @@ export default function SettingsPage() {
         setName(data.name ?? '');
         setEmail(data.email ?? '');
         setRole(data.role ?? 'FAN');
+        setIsAdult(Boolean(data.isEighteenOrOlder));
         if (data.notificationPreference) setPrefs(data.notificationPreference);
         setLoading(false);
       })
@@ -83,6 +86,29 @@ export default function SettingsPage() {
       setError('Network error');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function attestAdult() {
+    if (!confirm('Confirm that you are 18 years of age or older? This unlocks ticket purchases and referral links and cannot be undone.')) return;
+    setAttesting(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ attestEighteenOrOlder: true }),
+      });
+      if (res.ok) {
+        setIsAdult(true);
+      } else {
+        const d = await res.json().catch(() => ({}));
+        setError(d.error ?? 'Could not save your age confirmation.');
+      }
+    } catch {
+      setError('Network error');
+    } finally {
+      setAttesting(false);
     }
   }
 
@@ -201,6 +227,19 @@ export default function SettingsPage() {
                 action={<Link className="settings-btn settings-btn-ghost" href="/verify">Manage</Link>}
                 detail={role.charAt(0) + role.slice(1).toLowerCase()}
                 label="Role"
+              />
+              <Row
+                action={
+                  isAdult ? (
+                    <span className="settings-row-detail" style={{ color: '#22e5d4' }}>✓ 18+ confirmed</span>
+                  ) : (
+                    <button className="settings-btn settings-btn-ghost" disabled={attesting} onClick={attestAdult} type="button">
+                      {attesting ? 'Saving…' : "I'm 18 or older"}
+                    </button>
+                  )
+                }
+                detail={isAdult ? 'Ticket purchases and referral links are unlocked' : 'Required to buy tickets or share referral links (13+ to listen)'}
+                label="Age verification"
               />
             </div>
           </div>

@@ -10,11 +10,14 @@ import {
   getProfileBackdropTone,
 } from '@/lib/profile-design';
 import { AI_FIELD_LABELS } from '@/lib/page-refine';
+import { parsePressKit, serializePressKit } from '@/lib/press-kit';
 
 type EditorProfile = {
   id: string;
+  slug: string;
   type: string;
   name: string;
+  pressKitContent: string | null;
   headline: string | null;
   bio: string | null;
   aboutContent: string | null;
@@ -52,6 +55,7 @@ const SECTIONS = [
   { id: 'about', label: 'About' },
   { id: 'media', label: 'Media' },
   { id: 'details', label: 'Details' },
+  { id: 'presskit', label: 'Press kit' },
   { id: 'theme', label: 'Theme' },
   { id: 'ai', label: 'AI' },
 ] as const;
@@ -134,18 +138,58 @@ export function PageEditor({ profileId }: { profileId: string }) {
   const [aiProposed, setAiProposed] = useState<Record<string, string> | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiApplied, setAiApplied] = useState(false);
+  const [importUrl, setImportUrl] = useState('');
+  const [importBusy, setImportBusy] = useState(false);
+  // Press kit sub-form: friendly text fields serialized into the single
+  // pressKitContent JSON column on every change.
+  const [kitTagline, setKitTagline] = useState('');
+  const [kitQuotesText, setKitQuotesText] = useState('');
+  const [kitAchievementsText, setKitAchievementsText] = useState('');
+  const [kitContactEmail, setKitContactEmail] = useState('');
 
   useEffect(() => {
     setData(null);
     fetch(`/api/profile-editor?profileId=${profileId}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d) setData(d.profile); })
+      .then((d) => {
+        if (!d) return;
+        setData(d.profile);
+        const kit = parsePressKit(d.profile?.pressKitContent);
+        setKitTagline(kit.tagline);
+        setKitQuotesText(kit.quotes.map((q) => (q.source ? `${q.quote} — ${q.source}` : q.quote)).join('\n'));
+        setKitAchievementsText(kit.achievements.join('\n'));
+        setKitContactEmail(kit.contactEmail);
+      })
       .catch(() => {});
   }, [profileId]);
 
   function set<K extends keyof EditorProfile>(key: K, value: EditorProfile[K]) {
     setData((d) => (d ? { ...d, [key]: value } : d));
     setSavedAt(null);
+  }
+
+  function updatePressKit(next: Partial<{ tagline: string; quotesText: string; achievementsText: string; contactEmail: string }>) {
+    const tagline = next.tagline ?? kitTagline;
+    const quotesText = next.quotesText ?? kitQuotesText;
+    const achievementsText = next.achievementsText ?? kitAchievementsText;
+    const contactEmail = next.contactEmail ?? kitContactEmail;
+    if (next.tagline !== undefined) setKitTagline(next.tagline);
+    if (next.quotesText !== undefined) setKitQuotesText(next.quotesText);
+    if (next.achievementsText !== undefined) setKitAchievementsText(next.achievementsText);
+    if (next.contactEmail !== undefined) setKitContactEmail(next.contactEmail);
+
+    const quotes = quotesText
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const sep = line.lastIndexOf(' — ');
+        return sep > 0
+          ? { quote: line.slice(0, sep).trim(), source: line.slice(sep + 3).trim() }
+          : { quote: line, source: '' };
+      });
+    const achievements = achievementsText.split('\n').map((line) => line.trim()).filter(Boolean);
+    set('pressKitContent', serializePressKit({ tagline, quotes, achievements, contactEmail }));
   }
 
   async function save() {
@@ -222,6 +266,34 @@ export function PageEditor({ profileId }: { profileId: string }) {
     }
   }
 
+  async function runWebsiteImport() {
+    const url = importUrl.trim();
+    if (!url || importBusy) return;
+    setImportBusy(true);
+    setAiError(null);
+    setAiProposed(null);
+    setAiApplied(false);
+    try {
+      const res = await fetch('/api/page-builder/import-website', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileId, url }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setAiError(d.error ?? 'Could not import from that site — try again.');
+      } else if (!d.changes || Object.keys(d.changes).length === 0) {
+        setAiError('Nothing on that page mapped to your iHYPE fields.');
+      } else {
+        setAiProposed(d.changes as Record<string, string>);
+      }
+    } catch {
+      setAiError('Network error — try again.');
+    } finally {
+      setImportBusy(false);
+    }
+  }
+
   function applyAiChanges() {
     if (!aiProposed) return;
     setData((d) => (d ? { ...d, ...aiProposed } : d));
@@ -245,7 +317,7 @@ export function PageEditor({ profileId }: { profileId: string }) {
   return (
     <div>
       <div className="page-editor-tabstrip" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 22 }}>
-        {SECTIONS.filter((s) => s.id !== 'details' || !isFan).map((s) => (
+        {SECTIONS.filter((s) => (s.id !== 'details' || !isFan) && (s.id !== 'presskit' || isArtistOrDj)).map((s) => (
           <div
             key={s.id}
             onClick={() => setSection(s.id)}
@@ -325,6 +397,39 @@ export function PageEditor({ profileId }: { profileId: string }) {
           <Field label="Hours"><TextAreaField maxLength={500} onChange={(v) => set('hoursText', v)} rows={3} value={data.hoursText ?? ''} /></Field>
           <Field label="Parking details"><TextAreaField maxLength={1000} onChange={(v) => set('parkingDetails', v)} rows={3} value={data.parkingDetails ?? ''} /></Field>
           <Field label="Stay recommendations"><TextAreaField maxLength={1000} onChange={(v) => set('stayRecommendations', v)} rows={3} value={data.stayRecommendations ?? ''} /></Field>
+        </div>
+      )}
+
+      {section === 'presskit' && isArtistOrDj && (
+        <div>
+          <p style={{ fontSize: 13, color: 'rgba(240,235,229,.6)', margin: '0 0 16px', lineHeight: 1.55 }}>
+            Your press kit is a shareable one-pager for bookers, venues, and press — it pulls your name, bio,
+            photos, and upcoming shows automatically, plus everything you add here.
+          </p>
+          <Field hint="One punchy line describing your act, shown at the top of your press kit" label="Tagline">
+            <TextField maxLength={200} onChange={(v) => updatePressKit({ tagline: v })} placeholder="e.g. High-voltage synth-punk from Portland, ME" value={kitTagline} />
+          </Field>
+          <Field hint={'One per line, quote first: The best live act in Maine — Portland Phoenix'} label="Press quotes">
+            <TextAreaField maxLength={4000} onChange={(v) => updatePressKit({ quotesText: v })} placeholder={'Their set stole the whole festival — Dispatch Magazine\nA must-see live act — WCYY'} rows={4} value={kitQuotesText} />
+          </Field>
+          <Field hint="One per line — festival slots, chart placements, radio play, notable supports" label="Achievements & highlights">
+            <TextAreaField maxLength={4000} onChange={(v) => updatePressKit({ achievementsText: v })} placeholder={'Opened for [headliner], 2026\n#1 on WMPG local charts'} rows={4} value={kitAchievementsText} />
+          </Field>
+          <Field hint="Where bookers and press should reach you" label="Booking / press contact email">
+            <TextField maxLength={200} onChange={(v) => updatePressKit({ contactEmail: v })} placeholder="booking@yourdomain.com" value={kitContactEmail} />
+          </Field>
+          <a
+            className="settings-btn settings-btn-ghost"
+            href={`/artists/${data.slug}/epk`}
+            rel="noreferrer"
+            style={{ display: 'inline-block' }}
+            target="_blank"
+          >
+            View press kit ↗
+          </a>
+          <p style={{ fontSize: 12, color: 'rgba(240,235,229,.45)', margin: '10px 0 0' }}>
+            Save your changes first — the press kit page prints cleanly to PDF for sharing.
+          </p>
         </div>
       )}
 
@@ -408,6 +513,41 @@ export function PageEditor({ profileId }: { profileId: string }) {
             Tell the AI what you want and it reorganizes your page — bio, links, sections, theme. It only works
             with content you&rsquo;ve already added, and nothing changes until you apply and save.
           </p>
+
+          {!isFan && (
+            <div style={{
+              border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: '14px 16px',
+              background: 'rgba(255,255,255,.02)', marginBottom: 20,
+            }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)', marginBottom: 4 }}>
+                Import from your website
+              </div>
+              <p style={{ fontSize: 12, color: 'rgba(240,235,229,.5)', margin: '0 0 10px', lineHeight: 1.5 }}>
+                Already have a site? Paste the address and the AI pulls your bio, links, and details into your
+                iHYPE page. You review everything before it&rsquo;s applied.
+              </p>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <input
+                  inputMode="url"
+                  onChange={(e) => setImportUrl(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); runWebsiteImport(); } }}
+                  placeholder="https://yourband.com"
+                  style={{ ...inputStyle, flex: '1 1 220px' }}
+                  type="url"
+                  value={importUrl}
+                />
+                <button
+                  className="settings-btn settings-btn-ghost"
+                  disabled={importBusy || !importUrl.trim()}
+                  onClick={runWebsiteImport}
+                  style={{ flexShrink: 0 }}
+                  type="button"
+                >
+                  {importBusy ? 'Importing…' : 'Import'}
+                </button>
+              </div>
+            </div>
+          )}
 
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
             {[

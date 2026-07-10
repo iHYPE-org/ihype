@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import { getSafeImageUrl } from '@/lib/asset-safety';
 import { getCspNonce } from '@/lib/csp-nonce';
+import { parsePressKit } from '@/lib/press-kit';
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
@@ -32,6 +33,7 @@ export default async function EpkPage({ params }: { params: Promise<{ slug: stri
       avatarImage: true,
       galleryImage: true,
       aboutContent: true,
+      pressKitContent: true,
       type: true,
     },
   });
@@ -42,6 +44,7 @@ export default async function EpkPage({ params }: { params: Promise<{ slug: stri
   const avatarUrl = getSafeImageUrl(profile.avatarImage);
   const galleryUrl = getSafeImageUrl(profile.galleryImage);
   const location = [profile.city, profile.stateRegion, profile.country].filter(Boolean).join(', ');
+  const pressKit = parsePressKit(profile.pressKitContent);
 
   return (
     <div style={{ maxWidth: 720, margin: '0 auto', padding: '40px 24px', fontFamily: 'serif', color: '#111' }}>
@@ -74,8 +77,34 @@ export default async function EpkPage({ params }: { params: Promise<{ slug: stri
             </p>
           )}
           {location && <p style={{ margin: '0 0 4px', color: '#555', fontSize: 14 }}>{location}</p>}
+          {pressKit.tagline && (
+            <p style={{ margin: '8px 0 0', fontSize: 16, fontStyle: 'italic', color: '#333' }}>{pressKit.tagline}</p>
+          )}
         </div>
       </div>
+
+      {pressKit.quotes.length > 0 && (
+        <section style={{ marginTop: 32 }}>
+          <h2 style={{ fontSize: 18, borderBottom: '1px solid #ddd', paddingBottom: 6 }}>Press</h2>
+          {pressKit.quotes.map((q, i) => (
+            <blockquote key={i} style={{ margin: '0 0 14px', paddingLeft: 16, borderLeft: '3px solid #ddd' }}>
+              <p style={{ margin: 0, fontStyle: 'italic', lineHeight: 1.6 }}>&ldquo;{q.quote}&rdquo;</p>
+              {q.source && <cite style={{ fontSize: 13, color: '#555' }}>— {q.source}</cite>}
+            </blockquote>
+          ))}
+        </section>
+      )}
+
+      {pressKit.achievements.length > 0 && (
+        <section style={{ marginTop: 32 }}>
+          <h2 style={{ fontSize: 18, borderBottom: '1px solid #ddd', paddingBottom: 6 }}>Highlights</h2>
+          <ul style={{ margin: 0, paddingLeft: 20, lineHeight: 1.8 }}>
+            {pressKit.achievements.map((a, i) => (
+              <li key={i}>{a}</li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {galleryUrl && (
         <section style={{ marginTop: 32 }}>
@@ -119,9 +148,14 @@ export default async function EpkPage({ params }: { params: Promise<{ slug: stri
         );
       })()}
 
-      {(profile.contactInfo || profile.links) && (
+      {(profile.contactInfo || profile.links || pressKit.contactEmail) && (
         <section style={{ marginTop: 32 }}>
           <h2 style={{ fontSize: 18, borderBottom: '1px solid #ddd', paddingBottom: 6 }}>Contact &amp; Links</h2>
+          {pressKit.contactEmail && (
+            <p style={{ margin: '0 0 8px' }}>
+              Booking / press: <a href={`mailto:${pressKit.contactEmail}`}>{pressKit.contactEmail}</a>
+            </p>
+          )}
           {profile.contactInfo && <p style={{ margin: '0 0 8px' }}>{profile.contactInfo}</p>}
           {profile.links && <p style={{ margin: 0, whiteSpace: 'pre-line', fontSize: 14 }}>{profile.links}</p>}
         </section>

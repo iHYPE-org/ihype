@@ -15,9 +15,11 @@ function emptyToNull(value: string | null | undefined) {
 
 const EDITOR_FIELDS = {
   id: true,
+  slug: true,
   type: true,
   ownerId: true,
   name: true,
+  pressKitContent: true,
   headline: true,
   bio: true,
   aboutContent: true,
@@ -127,6 +129,7 @@ export async function PATCH(request: Request) {
     merchContent: emptyToNull(body.merchContent),
     tourContent: emptyToNull(body.tourContent),
     requestContent: emptyToNull(body.requestContent),
+    pressKitContent: emptyToNull(body.pressKitContent),
     upcomingContent: emptyToNull(body.upcomingContent),
     previousShowHighlights: emptyToNull(body.previousShowHighlights),
     addressLine1: emptyToNull(body.addressLine1),

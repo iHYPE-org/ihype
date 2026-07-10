@@ -91,6 +91,7 @@ export async function POST(
           name: true,
           role: true,
           emailVerified: true,
+          isEighteenOrOlder: true,
           storedPaymentTokenRef: true,
           stripeCustomerId: true,
         },
@@ -127,6 +128,15 @@ export async function POST(
     }
     if (!user.emailVerified) {
       return NextResponse.json({ error: 'Verify your email address before purchasing tickets.' }, { status: 403 });
+    }
+    if (!user.isEighteenOrOlder) {
+      return NextResponse.json(
+        {
+          error: 'Ticket purchases require you to be 18 or older. Confirm your age in Settings to buy tickets.',
+          code: 'AGE_18_REQUIRED',
+        },
+        { status: 403 },
+      );
     }
     if (!show) return NextResponse.json({ error: 'Show not found' }, { status: 404 });
 

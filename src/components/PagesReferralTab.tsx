@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 interface ReferralStats {
@@ -27,13 +28,35 @@ export function PagesReferralTab() {
   const [info, setInfo] = useState<ReferralInfo | null>(null);
   const [stats, setStats] = useState<ReferralStats | null>(null);
   const [copied, setCopied] = useState(false);
+  const [ageGated, setAgeGated] = useState(false);
 
   useEffect(() => {
-    fetch('/api/referral').then(r => r.json()).then(setInfo).catch(() => {});
+    fetch('/api/referral')
+      .then(async (r) => {
+        const d = await r.json();
+        if (r.status === 403 && d.code === 'AGE_18_REQUIRED') setAgeGated(true);
+        else if (r.ok) setInfo(d);
+      })
+      .catch(() => {});
     fetch('/api/referrals/stats').then(r => r.json()).then(setStats).catch(() => {});
   }, []);
 
   const link = info?.referralLink ?? '';
+
+  if (ageGated) {
+    return (
+      <div style={{ background: 'rgba(185,131,255,.06)', border: '1px solid rgba(185,131,255,.18)', borderRadius: 16, padding: 24, textAlign: 'center' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: '#b983ff', marginBottom: 10 }}>
+          HYPE Link · 18+
+        </div>
+        <p style={{ fontSize: 14, color: 'rgba(240,235,229,.75)', lineHeight: 1.6, margin: '0 0 16px' }}>
+          Referral links are for members 18 and older. If that&rsquo;s you, confirm your age once in Settings and
+          your HYPE Link unlocks right away.
+        </p>
+        <Link className="ihype-btn-primary" href="/me/settings">Confirm my age in Settings</Link>
+      </div>
+    );
+  }
 
   const copy = () => {
     if (!link) return;

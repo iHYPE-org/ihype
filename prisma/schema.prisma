@@ -85,6 +85,9 @@ model User {
   username                String                   @unique
   passwordHash            String?
   isThirteenOrOlder       Boolean                  @default(true)
+  // 18+ attestation — required to buy tickets or share referral links.
+  // One-way: settable to true via self-attestation, never back to false.
+  isEighteenOrOlder       Boolean                  @default(false)
   emailVerified           DateTime?
   mfaSecret               String?
   mfaEnabledAt            DateTime?
@@ -160,6 +163,9 @@ model Profile {
   merchContent                  String?
   requestContent                String?
   recommendContent              String?
+  // Artist/DJ press kit (JSON: tagline, quotes, achievements, contactEmail)
+  // rendered on /artists/[slug]/epk and /artists/[slug]/presskit.
+  pressKitContent               String?
   topFiveContent                String?
   widgetConfig                  String?
   pageDraft                     String?

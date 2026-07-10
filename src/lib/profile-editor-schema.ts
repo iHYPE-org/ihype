@@ -21,6 +21,7 @@ export const editorSchema = z.object({
   merchContent: text(5000),
   tourContent: text(5000),
   requestContent: text(5000),
+  pressKitContent: text(12000),
   upcomingContent: text(5000),
   previousShowHighlights: text(5000),
   addressLine1: text(240),

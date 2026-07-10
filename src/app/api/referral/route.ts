@@ -12,9 +12,19 @@ export async function GET() {
 
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      select: { username: true, profiles: { select: { hexId: true, type: true }, orderBy: { createdAt: 'asc' } } }
+      select: { username: true, isEighteenOrOlder: true, profiles: { select: { hexId: true, type: true }, orderBy: { createdAt: 'asc' } } }
     });
     if (!user) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+    if (!user.isEighteenOrOlder) {
+      return NextResponse.json(
+        {
+          error: 'Referral links require you to be 18 or older. Confirm your age in Settings to start referring.',
+          code: 'AGE_18_REQUIRED',
+        },
+        { status: 403 },
+      );
+    }
 
     const baseUrl = getBaseUrl();
     const fanProfile = user.profiles.find(p => p.type === 'LISTENER') ?? user.profiles[0];
