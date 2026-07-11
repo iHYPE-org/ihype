@@ -6,7 +6,7 @@ if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
     tracesSampler(ctx) {
       // Always sample requests that produced an error
       if (ctx.parentSampled !== undefined) return ctx.parentSampled;
-      // Sample auth and payment routes at full rate; everything else at 10%
+      // Sample auth, registration, and show routes at 50%; everything else at 5%
       const url = ctx.name ?? '';
       if (url.includes('/api/auth') || url.includes('/api/register') || url.includes('/api/shows')) {
         return 0.5;
