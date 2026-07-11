@@ -255,23 +255,19 @@ export function EventsHome({
 
       <div className="mqg-tabstrip" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
         {TABS.map((t) => (
-          <div
+          <button
             key={t.id}
+            className={tab === t.id ? 'sub-tab active' : 'sub-tab'}
             onClick={() => setTab(t.id)}
-            style={{
-              fontFamily: 'var(--font-body)', fontSize: 14, padding: '9px 18px', borderRadius: 9999, cursor: 'pointer',
-              background: tab === t.id ? 'rgba(255,80,41,.1)' : 'rgba(255,255,255,.03)',
-              border: `1px solid ${tab === t.id ? 'rgba(255,80,41,.35)' : 'rgba(255,255,255,.08)'}`,
-              color: tab === t.id ? 'var(--ink)' : 'rgba(240,235,229,.55)', fontWeight: tab === t.id ? 500 : 400,
-            }}
+            type="button"
           >
             {t.label}
-          </div>
+          </button>
         ))}
       </div>
 
       {tab === 'search' && (
-        <div>
+        <div className="sub-panel">
           <div style={{ position: 'relative', marginBottom: 22 }}>
             <svg fill="none" height="16" stroke="rgba(240,235,229,.5)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} viewBox="0 0 24 24" width="16">
               <circle cx="11" cy="11" r="8" /><line x1="21" x2="16.65" y1="21" y2="16.65" />
@@ -327,7 +323,7 @@ export function EventsHome({
       )}
 
       {tab === 'tickets' && (
-        <div>
+        <div className="sub-panel">
           {!loggedIn ? (
             <div style={emptyStyle}>
               <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, color: 'rgba(240,235,229,.6)', margin: '14px 0 6px' }}>Sign in to see your tickets</h3>

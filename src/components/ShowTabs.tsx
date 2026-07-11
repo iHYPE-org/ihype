@@ -27,13 +27,8 @@ export function ShowTabs({
         {TABS.map((t) => (
           <button
             key={t.id}
+            className={tab === t.id ? 'sub-tab active' : 'sub-tab'}
             onClick={() => setTab(t.id)}
-            style={{
-              fontFamily: 'var(--font-body)', fontSize: 14, padding: '9px 18px', borderRadius: 9999, cursor: 'pointer',
-              background: tab === t.id ? 'rgba(255,80,41,.1)' : 'rgba(255,255,255,.03)',
-              border: `1px solid ${tab === t.id ? 'rgba(255,80,41,.35)' : 'rgba(255,255,255,.08)'}`,
-              color: tab === t.id ? 'var(--ink)' : 'rgba(240,235,229,.55)', fontWeight: tab === t.id ? 500 : 400,
-            }}
             type="button"
           >
             {t.label}

@@ -513,24 +513,20 @@ export function ListenHome({
 
       <div className="mqg-tabstrip" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 26 }}>
         {TABS.map((t) => (
-          <div
+          <button
             key={t.id}
+            className={tab === t.id ? 'sub-tab active' : 'sub-tab'}
             onClick={() => setTab(t.id)}
-            style={{
-              fontFamily: 'var(--font-body)', fontSize: 14, padding: '9px 18px', borderRadius: 9999, cursor: 'pointer',
-              background: tab === t.id ? 'rgba(255,80,41,.1)' : 'rgba(255,255,255,.03)',
-              border: `1px solid ${tab === t.id ? 'rgba(255,80,41,.35)' : 'rgba(255,255,255,.08)'}`,
-              color: tab === t.id ? 'var(--ink)' : 'rgba(240,235,229,.55)', fontWeight: tab === t.id ? 500 : 400,
-            }}
+            type="button"
           >
             {t.label}
-          </div>
+          </button>
         ))}
       </div>
 
       {/* SEARCH */}
       {tab === 'search' && (
-        <div>
+        <div className="sub-panel">
           <input
             autoFocus
             onChange={(e) => setQ(e.target.value)}
@@ -581,7 +577,7 @@ export function ListenHome({
 
       {/* SEEDS */}
       {tab === 'seeds' && (
-        <div>
+        <div className="sub-panel">
           {genres.length > 1 && (
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
               {genres.map((g) => (
@@ -636,7 +632,7 @@ export function ListenHome({
 
       {/* RADIO */}
       {tab === 'radio' && (
-        <div>
+        <div className="sub-panel">
           {radio === null && <CardSkeleton />}
           {radio !== null && !liveShow && upcomingShows.length === 0 && (
             <div style={{ border: '1px dashed rgba(255,255,255,.14)', borderRadius: 16, padding: 20, background: 'rgba(255,255,255,.02)' }}>
@@ -677,7 +673,7 @@ export function ListenHome({
 
       {/* CHARTS */}
       {tab === 'charts' && (
-        <div>
+        <div className="sub-panel">
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
             {[{ id: 'forYou' as const, label: 'For You' }, { id: 'local' as const, label: 'Local' }, { id: 'national' as const, label: 'National' }].map((s) => (
               <div
@@ -730,7 +726,7 @@ export function ListenHome({
 
       {/* PLAYLISTS */}
       {tab === 'playlists' && !openPl && (
-        <div>
+        <div className="sub-panel">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 10, flexWrap: 'wrap' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)' }}>
               Your Playlists · {playlists?.length ?? 0}
@@ -826,7 +822,7 @@ export function ListenHome({
 
       {/* PLAYLIST DETAIL */}
       {tab === 'playlists' && openPl && openPlaylist && (
-        <div>
+        <div className="sub-panel">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
             <button onClick={() => setOpenPl(null)} style={bGhost} type="button">← Back</button>
             <div style={{ flex: 1 }} />

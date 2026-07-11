@@ -7,14 +7,46 @@ import { useSession } from 'next-auth/react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AccessibilityControls } from '@/components/AccessibilityControls';
 
+const ico = {
+  fill: 'none' as const,
+  width: 17,
+  height: 17,
+  viewBox: '0 0 24 24',
+  stroke: 'currentColor',
+  strokeWidth: 1.8,
+  strokeLinecap: 'round' as const,
+  strokeLinejoin: 'round' as const,
+};
+
 export const menuLinks = [
-  { href: '/community', label: 'Community' },
-  { href: '/advertise', label: 'Advertise' },
-  { href: '/about', label: 'About' },
-  { href: '/transparency', label: 'Transparency' },
-  { href: '/legal', label: 'Legal' },
-  { href: '/privacy', label: 'Privacy' },
-  { href: '/dmca', label: 'DMCA' },
+  {
+    href: '/community', label: 'Community',
+    icon: <svg {...ico}><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c0-3.3 2.9-5.5 6.5-5.5s6.5 2.2 6.5 5.5" /><circle cx="17" cy="9" r="2.5" /><path d="M16.5 14.6c2.9.3 5 2.2 5 5.4" /></svg>,
+  },
+  {
+    href: '/advertise', label: 'Advertise',
+    icon: <svg {...ico}><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6l-5 4H4a1 1 0 0 0-1 1Z" /><path d="M15 9.5a4 4 0 0 1 0 5" /><path d="M17.5 7a8 8 0 0 1 0 10" /></svg>,
+  },
+  {
+    href: '/about', label: 'About',
+    icon: <svg {...ico}><circle cx="12" cy="12" r="9" /><path d="M12 11v5" /><path d="M12 8h.01" /></svg>,
+  },
+  {
+    href: '/transparency', label: 'Transparency',
+    icon: <svg {...ico}><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z" /><circle cx="12" cy="12" r="2.5" /></svg>,
+  },
+  {
+    href: '/legal', label: 'Legal',
+    icon: <svg {...ico}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z" /><path d="M14 3v5h5" /><path d="M9 13h6M9 17h6" /></svg>,
+  },
+  {
+    href: '/privacy', label: 'Privacy',
+    icon: <svg {...ico}><rect height="10" rx="2" width="14" x="5" y="11" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>,
+  },
+  {
+    href: '/dmca', label: 'DMCA',
+    icon: <svg {...ico}><path d="M12 3 4 6v6c0 4.4 3.4 8.2 8 9 4.6-.8 8-4.6 8-9V6Z" /></svg>,
+  },
 ];
 
 /**
@@ -66,7 +98,9 @@ export function NavDrawer({
               aria-label="Close menu"
               onClick={() => setOpen(false)}
             >
-              ✕
+              <svg aria-hidden="true" fill="none" height="15" viewBox="0 0 24 24" width="15" stroke="currentColor" strokeLinecap="round" strokeWidth="2">
+                <path d="M6 6l12 12M18 6 6 18" />
+              </svg>
             </button>
             <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--line)' }}>
               {accountName ? (
@@ -119,6 +153,7 @@ export function NavDrawer({
                       className={`nav-drawer-link${isActive ? ' active' : ''}`}
                       onClick={() => setOpen(false)}
                     >
+                      {link.icon}
                       {link.label}
                     </Link>
                   </li>

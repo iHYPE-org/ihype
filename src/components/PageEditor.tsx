@@ -318,23 +318,19 @@ export function PageEditor({ profileId }: { profileId: string }) {
     <div>
       <div className="page-editor-tabstrip" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 22 }}>
         {SECTIONS.filter((s) => (s.id !== 'details' || !isFan) && (s.id !== 'presskit' || isArtistOrDj)).map((s) => (
-          <div
+          <button
             key={s.id}
+            className={section === s.id ? 'sub-tab active' : 'sub-tab'}
             onClick={() => setSection(s.id)}
-            style={{
-              fontFamily: 'var(--font-body)', fontSize: 14, padding: '9px 18px', borderRadius: 9999, cursor: 'pointer',
-              background: section === s.id ? 'rgba(255,80,41,.1)' : 'rgba(255,255,255,.03)',
-              border: `1px solid ${section === s.id ? 'rgba(255,80,41,.35)' : 'rgba(255,255,255,.08)'}`,
-              color: section === s.id ? 'var(--ink)' : 'rgba(240,235,229,.55)', fontWeight: section === s.id ? 500 : 400,
-            }}
+            type="button"
           >
             {s.label}
-          </div>
+          </button>
         ))}
       </div>
 
       {section === 'basics' && (
-        <div>
+        <div className="sub-panel">
           <Field label="Name"><TextField maxLength={120} onChange={(v) => set('name', v)} value={data.name} /></Field>
           <Field hint="A short one-liner shown near your name" label="Headline">
             <TextField maxLength={180} onChange={(v) => set('headline', v ?? '')} placeholder="e.g. Indie rock from Portland" value={data.headline ?? ''} />
@@ -358,7 +354,7 @@ export function PageEditor({ profileId }: { profileId: string }) {
       )}
 
       {section === 'about' && (
-        <div>
+        <div className="sub-panel">
           <Field hint="The main story on your page — as long as you want" label="About">
             <TextAreaField maxLength={5000} onChange={(v) => set('aboutContent', v)} rows={8} value={data.aboutContent ?? ''} />
           </Field>
@@ -370,7 +366,7 @@ export function PageEditor({ profileId }: { profileId: string }) {
       )}
 
       {section === 'media' && (
-        <div>
+        <div className="sub-panel">
           <ImageField label="Avatar" onUpload={(f) => uploadImage('avatarImage', f)} uploading={uploadingField === 'avatarImage'} value={data.avatarImage} />
           <ImageField label="Hero banner" onUpload={(f) => uploadImage('heroImage', f)} uploading={uploadingField === 'heroImage'} value={data.heroImage} />
           <ImageField label="Logo" onUpload={(f) => uploadImage('logoImage', f)} uploading={uploadingField === 'logoImage'} value={data.logoImage} />
@@ -382,7 +378,7 @@ export function PageEditor({ profileId }: { profileId: string }) {
       )}
 
       {section === 'details' && isArtistOrDj && (
-        <div>
+        <div className="sub-panel">
           <Field label="Upcoming"><TextAreaField maxLength={5000} onChange={(v) => set('upcomingContent', v)} rows={4} value={data.upcomingContent ?? ''} /></Field>
           <Field label="Tour dates"><TextAreaField maxLength={5000} onChange={(v) => set('tourContent', v)} rows={4} value={data.tourContent ?? ''} /></Field>
           <Field hint="What fans can request from you" label="Requests"><TextAreaField maxLength={5000} onChange={(v) => set('requestContent', v)} rows={3} value={data.requestContent ?? ''} /></Field>
@@ -393,7 +389,7 @@ export function PageEditor({ profileId }: { profileId: string }) {
       )}
 
       {section === 'details' && isVenue && (
-        <div>
+        <div className="sub-panel">
           <Field label="Hours"><TextAreaField maxLength={500} onChange={(v) => set('hoursText', v)} rows={3} value={data.hoursText ?? ''} /></Field>
           <Field label="Parking details"><TextAreaField maxLength={1000} onChange={(v) => set('parkingDetails', v)} rows={3} value={data.parkingDetails ?? ''} /></Field>
           <Field label="Stay recommendations"><TextAreaField maxLength={1000} onChange={(v) => set('stayRecommendations', v)} rows={3} value={data.stayRecommendations ?? ''} /></Field>
@@ -401,7 +397,7 @@ export function PageEditor({ profileId }: { profileId: string }) {
       )}
 
       {section === 'presskit' && isArtistOrDj && (
-        <div>
+        <div className="sub-panel">
           <p style={{ fontSize: 13, color: 'rgba(240,235,229,.6)', margin: '0 0 16px', lineHeight: 1.55 }}>
             Your press kit is a shareable one-pager for bookers, venues, and press — it pulls your name, bio,
             photos, and upcoming shows automatically, plus everything you add here.
@@ -434,7 +430,7 @@ export function PageEditor({ profileId }: { profileId: string }) {
       )}
 
       {section === 'theme' && (
-        <div>
+        <div className="sub-panel">
           <Field hint="Sets the overall look of your public page" label="Design preset">
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 10 }}>
               {profileDesignPresets.map((p) => (
@@ -502,7 +498,7 @@ export function PageEditor({ profileId }: { profileId: string }) {
       )}
 
       {section === 'ai' && (
-        <div>
+        <div className="sub-panel">
           <div style={{
             fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase',
             color: 'rgba(240,235,229,.35)', marginBottom: 14,
