@@ -105,7 +105,7 @@ export default async function CommunityPage() {
         .community-eyebrow { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; color: var(--accent, #ff5029); letter-spacing: .14em; }
         .community-section-head h2 { font-family: var(--font-display); font-size: 22px; font-weight: 800; letter-spacing: -.01em; color: var(--ink); margin: 6px 0 0; }
         .community-section-copy { font-size: 13px; color: var(--ink-a60); margin: 6px 0 0; line-height: 1.5; }
-        .community-card { border: 1px solid rgba(255,255,255,.07); border-radius: 14px; padding: 22px; background: var(--bg-2, #100d09); }
+        .community-card { border: 1px solid var(--hair-70); border-radius: 14px; padding: 22px; background: var(--bg-2, #100d09); }
         .community-empty { text-align: center; color: var(--ink-a45); font-size: 14px; }
         .community-post-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
         .community-badge { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; padding: 4px 10px; border-radius: 999px; border: 1px solid; }

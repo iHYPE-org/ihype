@@ -114,7 +114,7 @@ export default function LaunchPage() {
                 display: 'inline-block',
                 padding: '0.9rem 1.6rem',
                 borderRadius: 999,
-                border: '1px solid rgba(255,255,255,.16)',
+                border: '1px solid var(--hair-160)',
                 color: 'var(--ink)',
                 fontFamily: 'var(--f-d)',
                 fontWeight: 700,
@@ -136,8 +136,8 @@ export default function LaunchPage() {
                 style={{
                   padding: '1.6rem',
                   borderRadius: 18,
-                  border: '1px solid rgba(255,255,255,.08)',
-                  background: 'rgba(255,255,255,.035)',
+                  border: '1px solid var(--hair-80)',
+                  background: 'var(--hair-35)',
                 }}
               >
                 <p
@@ -217,8 +217,8 @@ export default function LaunchPage() {
                   gap: '1rem',
                   padding: '1rem 1.2rem',
                   borderRadius: 14,
-                  border: '1px solid rgba(255,255,255,.07)',
-                  background: 'rgba(255,255,255,.025)',
+                  border: '1px solid var(--hair-70)',
+                  background: 'var(--hair-25)',
                 }}
               >
                 <strong style={{ fontFamily: 'var(--f-m)', color: 'var(--accent)', fontSize: '0.8rem' }}>{day}</strong>

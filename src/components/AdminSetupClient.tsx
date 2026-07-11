@@ -73,7 +73,7 @@ export function AdminSetupClient() {
         borderRadius: 18,
         padding: 28,
         boxShadow: '0 10px 35px rgba(0,0,0,0.35)',
-        border: '1px solid rgba(255,255,255,0.08)'
+        border: '1px solid var(--hair-80)'
       }}
     >
       <h1 style={{ margin: '0 0 6px', fontSize: 22 }}>Admin setup</h1>
@@ -95,7 +95,7 @@ export function AdminSetupClient() {
               width: '100%',
               padding: '10px 12px',
               borderRadius: 10,
-              border: '1px solid rgba(255,255,255,0.15)',
+              border: '1px solid var(--hair-150)',
               background: 'rgba(0,0,0,0.25)',
               color: 'inherit',
               fontSize: 14

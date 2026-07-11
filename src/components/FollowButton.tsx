@@ -56,9 +56,9 @@ export function FollowButton({ profileId }: { profileId: string }) {
       style={{
         width: '100%',
         padding: '7px 10px',
-        border: following ? '1px solid rgba(255,80,41,.4)' : '1px solid rgba(255,255,255,.12)',
+        border: following ? '1px solid rgba(255,80,41,.4)' : '1px solid var(--hair-120)',
         borderRadius: 7,
-        background: following ? 'rgba(255,80,41,.1)' : 'rgba(255,255,255,.05)',
+        background: following ? 'rgba(255,80,41,.1)' : 'var(--hair-50)',
         color: following ? 'var(--accent, #ff5029)' : 'var(--ink-a65)',
         fontSize: 11,
         fontFamily: 'var(--font-mono)',

@@ -48,8 +48,8 @@ export function AdminReauthPrompt({
         gap: 8,
         padding: '12px 14px',
         borderRadius: 12,
-        border: '1px solid rgba(255,255,255,0.14)',
-        background: 'rgba(255,255,255,0.04)'
+        border: '1px solid var(--line-2)',
+        background: 'var(--hair-40)'
       }}
     >
       <strong style={{ fontSize: 14 }}>Confirm it&apos;s you</strong>

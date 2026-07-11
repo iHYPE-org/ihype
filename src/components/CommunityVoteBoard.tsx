@@ -126,7 +126,7 @@ export function CommunityVoteBoard() {
                 style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                   minWidth: 48, padding: '8px 6px', borderRadius: 9, flexShrink: 0,
-                  border: '1px solid rgba(255,255,255,.1)', background: 'rgba(255,255,255,.04)',
+                  border: '1px solid var(--hair-100)', background: 'var(--hair-40)',
                   color: 'var(--ink)', cursor: 'pointer', fontFamily: 'var(--font-mono)',
                 }}
               >

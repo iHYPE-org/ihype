@@ -39,7 +39,7 @@ export default function DmcaPage() {
       <p className="subtitle">
         To report infringing content, complete the form below. We will review and respond within 5 business days. False claims may result in account suspension.
       </p>
-      <p style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(255,255,255,0.04)', borderRadius: 8, fontSize: 14 }}>
+      <p style={{ marginTop: 12, padding: '10px 14px', background: 'var(--hair-40)', borderRadius: 8, fontSize: 14 }}>
         For DMCA takedown requests, email{' '}
         <a href="mailto:dmca@ihype.org?subject=DMCA%20Takedown%20Request">dmca@ihype.org</a>{' '}
         with subject &ldquo;DMCA Takedown Request&rdquo;. We respond within 5 business days.

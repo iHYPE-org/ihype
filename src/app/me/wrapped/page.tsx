@@ -121,7 +121,7 @@ const WRAPPED_CSS = `
   position: relative; overflow: hidden;
   width: 100%; max-width: 420px;
   background: #100d09;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--hair-80);
   border-radius: 28px;
   padding: 32px 28px;
   box-shadow: 0 0 80px rgba(185,131,255,0.10);
@@ -146,8 +146,8 @@ const WRAPPED_CSS = `
   gap: 12px; margin-bottom: 20px;
 }
 .wrapped-stat {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
+  background: var(--hair-30);
+  border: 1px solid var(--line);
   border-radius: 14px; padding: 18px 16px;
 }
 .wrapped-stat-value {
@@ -162,8 +162,8 @@ const WRAPPED_CSS = `
 .wrapped-hl {
   display: flex; align-items: center; justify-content: space-between;
   padding: 12px 14px; border-radius: 12px;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.05);
+  background: var(--hair-20);
+  border: 1px solid var(--hair-50);
 }
 .wrapped-hl-label {
   font-family: 'JetBrains Mono', monospace; font-size: 10px;
@@ -186,7 +186,7 @@ const WRAPPED_CSS = `
 }
 .wrapped-foot {
   position: relative; display: flex; align-items: center; justify-content: space-between;
-  margin-top: 26px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.06);
+  margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--line);
 }
 .wrapped-foot-brand { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px; color: var(--ink); letter-spacing: -0.03em; }
 .wrapped-foot-meta { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: var(--ink-a40); }

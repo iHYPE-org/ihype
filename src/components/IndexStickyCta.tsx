@@ -47,7 +47,7 @@ export function IndexStickyCta({ heroSelector }: { heroSelector: string }) {
             position: fixed; left: 0; right: 0; bottom: 0; z-index: 200;
             padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px));
             background: rgba(10,8,5,.9); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-            border-top: 1px solid rgba(255,255,255,.08);
+            border-top: 1px solid var(--hair-80);
             display: flex; align-items: center; gap: 12px;
             transform: translateY(120%); transition: transform .3s cubic-bezier(.22,1,.36,1);
           }

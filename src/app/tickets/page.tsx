@@ -115,20 +115,20 @@ export default async function MyTicketsPage() {
         .tickets-header { margin-bottom: 40px; }
         .tickets-header h1 { font-family: var(--font-display); font-size: 32px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; color: var(--ink); }
         .ticket-list { display: grid; gap: 24px; }
-        .ticket-card { border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 12px; padding: 24px; background: linear-gradient(135deg, var(--bg2), var(--bg3)); }
+        .ticket-card { border: 1px solid var(--line); border-radius: 12px; padding: 24px; background: linear-gradient(135deg, var(--bg2), var(--bg3)); }
         .ticket-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
         .ticket-title h3 { font-family: var(--font-display); font-size: 18px; font-weight: 800; margin-bottom: 4px; color: var(--ink); }
         .ticket-meta { font-size: 13px; color: var(--ink-a70); }
         .ticket-status { display: inline-block; padding: 4px 8px; background: rgba(34, 229, 212, 0.15); color: var(--role-venue, #22e5d4); font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; border-radius: 3px; }
-        .ticket-details { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.06); margin-bottom: 16px; }
+        .ticket-details { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding-top: 16px; border-top: 1px solid var(--line); margin-bottom: 16px; }
         @media (max-width: 480px) { .ticket-details { grid-template-columns: 1fr 1fr; } }
         .detail-label { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-a60); margin-bottom: 4px; }
         .detail-value { font-size: 14px; font-weight: 600; color: var(--ink); }
         .ticket-actions { display: flex; gap: 12px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
         .ticket-actions::-webkit-scrollbar { display: none; }
         .ticket-actions > * { flex-shrink: 0; white-space: nowrap; }
-        .btn { padding: 10px 16px; border: 1px solid rgba(255, 255, 255, 0.06); background: transparent; color: var(--ink); border-radius: 6px; cursor: pointer; font-size: 13px; transition: all 150ms; }
-        .btn:hover { background: rgba(255, 255, 255, 0.05); }
+        .btn { padding: 10px 16px; border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 6px; cursor: pointer; font-size: 13px; transition: all 150ms; }
+        .btn:hover { background: var(--hair-50); }
         .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
       `}</style>
     </div>

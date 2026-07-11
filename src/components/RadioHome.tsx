@@ -302,7 +302,7 @@ export function RadioHome() {
       {toast && (
         <div style={{
           position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)',
-          zIndex: 300, background: 'var(--bg3)', border: '1px solid rgba(255,255,255,.12)',
+          zIndex: 300, background: 'var(--bg3)', border: '1px solid var(--hair-120)',
           borderRadius: 8, padding: '10px 18px', fontFamily: 'var(--font-mono)',
           fontSize: '0.75rem', letterSpacing: '0.06em', color: 'var(--ink)', whiteSpace: 'nowrap',
         }}>
@@ -312,7 +312,7 @@ export function RadioHome() {
 
       {/* LOADING SKELETON */}
       {shows === null && (
-        <div style={{ borderRadius: 14, padding: '24px 28px', marginBottom: 24, border: '1px solid var(--line)', background: 'rgba(255,255,255,.02)' }}>
+        <div style={{ borderRadius: 14, padding: '24px 28px', marginBottom: 24, border: '1px solid var(--line)', background: 'var(--hair-20)' }}>
           <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
             <div className="ihype-skeleton" style={{ width: 80, height: 80, borderRadius: 12, flexShrink: 0 }} />
             <div style={{ flex: 1, display: 'grid', gap: 10 }}>
@@ -370,7 +370,7 @@ export function RadioHome() {
           >
             {bars.map((h, i) => {
               const isActiveBar = !isLive && i === playedCount - 1;
-              const bg = isActiveBar ? '#fff' : i < playedCount ? 'var(--accent)' : 'rgba(255,255,255,.11)';
+              const bg = isActiveBar ? '#fff' : i < playedCount ? 'var(--accent)' : 'var(--hair-110)';
               const opacity = isActiveBar ? 1 : i < playedCount ? 0.9 : 1;
               const danceClass = isLive && playing ? 'radio-bar-live' : undefined;
               return (
@@ -439,7 +439,7 @@ export function RadioHome() {
               <FollowButton profileId={current.djProfileId} />
             </div>
           )}
-          <button style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1px solid rgba(255,255,255,.1)', background: 'rgba(255,255,255,.04)', color: 'var(--ink-a60)', transition: 'all 150ms' }}>
+          <button style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1px solid var(--hair-100)', background: 'var(--hair-40)', color: 'var(--ink-a60)', transition: 'all 150ms' }}>
             Tip
           </button>
         </div>
@@ -511,7 +511,7 @@ export function RadioHome() {
               }}>
                 <span style={{
                   padding: '3px 8px', borderRadius: 4, fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: '.14em', flexShrink: 0,
-                  background: chip === 'tonight' ? 'rgba(255,80,41,.14)' : chip === 'tomorrow' ? 'rgba(185,131,255,.12)' : 'rgba(255,255,255,.05)',
+                  background: chip === 'tonight' ? 'rgba(255,80,41,.14)' : chip === 'tomorrow' ? 'rgba(185,131,255,.12)' : 'var(--hair-50)',
                   color: chip === 'tonight' ? 'var(--accent)' : chip === 'tomorrow' ? '#b983ff' : 'var(--ink-a38)',
                 }}>
                   {chip === 'tonight' ? 'Tonight' : chip === 'tomorrow' ? 'Tomorrow' : 'This Week'}
@@ -526,7 +526,7 @@ export function RadioHome() {
                   style={{
                     minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                     padding: '5px 11px', borderRadius: 6, fontSize: 11, flexShrink: 0,
-                    border: notifying[s.id] ? '1px solid rgba(185,131,255,.45)' : '1px solid rgba(255,255,255,.1)',
+                    border: notifying[s.id] ? '1px solid rgba(185,131,255,.45)' : '1px solid var(--hair-100)',
                     background: notifying[s.id] ? 'rgba(185,131,255,.1)' : 'transparent',
                     color: notifying[s.id] ? '#b983ff' : 'var(--ink-a55)',
                     cursor: 'pointer', transition: 'all 150ms',
@@ -543,7 +543,7 @@ export function RadioHome() {
       {/* ON-AIR OFFLINE STATE */}
       {tab === 'on-air' && shows !== null && filtered.length === 0 && (
         <div style={{ textAlign: 'center', padding: '56px 20px' }}>
-          <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'rgba(255,255,255,.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, margin: '0 auto 16px', border: '1px solid rgba(255,255,255,.08)' }}>📻</div>
+          <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'var(--hair-40)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, margin: '0 auto 16px', border: '1px solid var(--hair-80)' }}>📻</div>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, marginBottom: 8 }}>No show on air right now</div>
           <p style={{ fontSize: 13, color: 'var(--ink-a50)', marginBottom: 20 }}>DJs go live on audio — no video. Check back soon or set a reminder.</p>
           {upcoming[0] && (
@@ -622,7 +622,7 @@ export function RadioHome() {
 
 const ctrlStyle: React.CSSProperties = {
   width: 44, height: 44, borderRadius: '50%', border: 'none',
-  background: 'rgba(255,255,255,.08)', color: 'var(--ink)',
+  background: 'var(--hair-80)', color: 'var(--ink)',
   cursor: 'pointer', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center',
   transition: 'background 150ms',
 };

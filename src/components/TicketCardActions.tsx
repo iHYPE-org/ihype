@@ -155,7 +155,7 @@ export function TicketCardActions({
                   id="ticket-transfer-email"
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="friend@example.com"
-                  style={{ width: '100%', marginBottom: 16, padding: '10px 14px', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, background: 'var(--bg)', color: 'var(--ink)' }}
+                  style={{ width: '100%', marginBottom: 16, padding: '10px 14px', border: '1px solid var(--hair-100)', borderRadius: 8, background: 'var(--bg)', color: 'var(--ink)' }}
                   type="email"
                   value={email}
                 />

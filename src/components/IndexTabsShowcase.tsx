@@ -115,8 +115,8 @@ export function IndexTabsShowcase() {
               style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
                 padding: '20px 16px 18px',
-                background: isActive ? 'rgba(255,80,41,.07)' : 'rgba(255,255,255,.03)',
-                border: `1px solid ${isActive ? 'rgba(255,80,41,.3)' : 'rgba(255,255,255,.08)'}`,
+                background: isActive ? 'rgba(255,80,41,.07)' : 'var(--hair-30)',
+                border: `1px solid ${isActive ? 'rgba(255,80,41,.3)' : 'var(--hair-80)'}`,
                 borderRadius: 18,
                 cursor: 'pointer',
                 transition: 'all 180ms cubic-bezier(.2,.7,.3,1)',
@@ -128,7 +128,7 @@ export function IndexTabsShowcase() {
               <div style={{
                 width: 40, height: 40, borderRadius: 12,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: isActive ? 'rgba(255,80,41,.15)' : 'rgba(255,255,255,.05)',
+                background: isActive ? 'rgba(255,80,41,.15)' : 'var(--hair-50)',
                 transition: 'background 180ms', flexShrink: 0,
               }}>
                 {tab.icon}
@@ -143,7 +143,7 @@ export function IndexTabsShowcase() {
       <div className="feat-grid-index">
         {FEATURES[active].map(f => (
           <div key={f.name} style={{
-            padding: 18, background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.07)',
+            padding: 18, background: 'var(--hair-30)', border: '1px solid var(--hair-70)',
             borderRadius: 14, display: 'flex', flexDirection: 'column', gap: 10,
             transition: 'border-color 150ms, transform 150ms cubic-bezier(.2,.7,.3,1)',
           }}>

@@ -104,7 +104,7 @@ export function MobileBottomNav() {
           background: 'rgba(13,13,13,0.96)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
-          borderTop: '1px solid rgba(255,255,255,0.08)',
+          borderTop: '1px solid var(--hair-80)',
           zIndex: 900,
           alignItems: 'stretch',
           justifyContent: 'space-around',

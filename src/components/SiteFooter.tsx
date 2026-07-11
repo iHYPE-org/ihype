@@ -13,7 +13,7 @@ export function SiteFooter() {
         gap: '1rem 1.5rem',
         padding: '1.5rem 1.5rem 2.5rem',
         marginTop: '2rem',
-        borderTop: '1px solid var(--line, rgba(255,255,255,0.06))',
+        borderTop: '1px solid var(--line, var(--line))',
         fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
         fontSize: '0.75rem',
         letterSpacing: '0.04em',

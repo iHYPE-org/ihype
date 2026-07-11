@@ -307,7 +307,7 @@ export default async function ShowDetailPage({
                 </div>
               </div>
             ) : (
-              <div style={{ minHeight: 160, position: 'relative', overflow: 'hidden', borderRadius: 12, background: 'rgba(255,255,255,.04)' }}>
+              <div style={{ minHeight: 160, position: 'relative', overflow: 'hidden', borderRadius: 12, background: 'var(--hair-40)' }}>
                 {show.posterImage
                   ? <Image alt={show.title} src={show.posterImage} fill sizes="(max-width: 768px) 100vw, 50vw" style={{ objectFit: 'cover' }} priority />
                   : <span className="meta" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 160 }}>No audio uploaded yet</span>}
@@ -640,7 +640,7 @@ export default async function ShowDetailPage({
                         )}
                         <ol style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: '0.35rem' }}>
                           {block.tracks.map((track) => (
-                            <li key={track.id} style={{ display: 'grid', gridTemplateColumns: '2rem 1fr auto', gap: '0.75rem', alignItems: 'center', padding: '0.6rem 0.75rem', borderRadius: '10px', background: 'rgba(255,255,255,0.03)' }}>
+                            <li key={track.id} style={{ display: 'grid', gridTemplateColumns: '2rem 1fr auto', gap: '0.75rem', alignItems: 'center', padding: '0.6rem 0.75rem', borderRadius: '10px', background: 'var(--hair-30)' }}>
                               <span className="meta" style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{String(track.position + 1).padStart(2, '0')}</span>
                               <div>
                                 <strong style={{ display: 'block' }}>{track.title}</strong>
@@ -696,13 +696,13 @@ export default async function ShowDetailPage({
 
           {/* TICKET BOX */}
           {show.isTicketed && show.venueProfile && show.headlinerProfile && show.venuePayoutPercent !== null && show.artistPayoutPercent !== null ? (
-            <aside style={{ border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 28, background: 'var(--bg2)', position: 'sticky', top: 80, alignSelf: 'flex-start' }}>
+            <aside style={{ border: '1px solid var(--hair-80)', borderRadius: 12, padding: 28, background: 'var(--bg2)', position: 'sticky', top: 80, alignSelf: 'flex-start' }}>
               <div style={{ fontSize: 36, fontWeight: 800, color: 'var(--accent)', marginBottom: 4, fontFamily: 'var(--font-display)' }}>${price.toFixed(2)}</div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a50)', marginBottom: 20 }}>$0 fees · face value only</div>
 
               {cap !== null && (
                 <>
-                  <div style={{ height: 6, borderRadius: 3, background: 'rgba(255,255,255,.1)', margin: '16px 0', overflow: 'hidden' }}>
+                  <div style={{ height: 6, borderRadius: 3, background: 'var(--hair-100)', margin: '16px 0', overflow: 'hidden' }}>
                     <div style={{ height: '100%', borderRadius: 3, background: 'var(--accent)', width: `${pct}%` }} />
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--ink-a60)', marginBottom: 16 }}>{sold} / {cap} sold · {cap - sold} remaining</div>
@@ -763,7 +763,7 @@ export default async function ShowDetailPage({
               />
               )}
 
-              <div style={{ background: 'rgba(255,255,255,.04)', borderRadius: 8, padding: 14, marginTop: 16 }}>
+              <div style={{ background: 'var(--hair-40)', borderRadius: 8, padding: 14, marginTop: 16 }}>
                 <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a50)', marginBottom: 10 }}>vs. Ticketmaster</p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}><span>Face value</span><span>${price.toFixed(2)}</span></div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6, color: 'var(--ink-a50)' }}><span>Service fees (27%)</span><span>+${tmFees.toFixed(2)}</span></div>

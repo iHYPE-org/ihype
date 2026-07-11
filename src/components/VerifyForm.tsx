@@ -37,7 +37,7 @@ interface Props {
 }
 
 const fieldStyle: React.CSSProperties = {
-  width: '100%', padding: '11px 14px', borderRadius: 10, border: '1px solid var(--line, rgba(255,255,255,.08))',
+  width: '100%', padding: '11px 14px', borderRadius: 10, border: '1px solid var(--line, var(--hair-80))',
   background: 'var(--bg-3, #0a0805)', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontSize: '1rem',
   marginBottom: 14, boxSizing: 'border-box',
 };
@@ -124,7 +124,7 @@ export function VerifyForm({ profileId, type, initialName, initialCity, initialG
       <p style={{ fontSize: '0.88rem', color: 'var(--ink-2, #9e9080)', lineHeight: 1.65, marginBottom: 16 }}>
         We need to confirm you are who you say you are. This is reviewed by the iHYPE team within 48 hours.
       </p>
-      <div style={{ background: 'var(--bg-2, #100d09)', border: '1px solid var(--line, rgba(255,255,255,.08))', borderRadius: 18, padding: '1.5rem', marginBottom: 16 }}>
+      <div style={{ background: 'var(--bg-2, #100d09)', border: '1px solid var(--line, var(--hair-80))', borderRadius: 18, padding: '1.5rem', marginBottom: 16 }}>
         <div style={{ ...labelStyle, color: '#22e5d4', marginBottom: 10 }}>What counts as proof</div>
         {PROOF[type].map((line) => (
           <div key={line} style={{ fontSize: '0.85rem', color: 'var(--ink-2, #9e9080)', lineHeight: 1.8 }}>· {line}</div>
@@ -133,7 +133,7 @@ export function VerifyForm({ profileId, type, initialName, initialCity, initialG
 
       <label
         style={{
-          display: 'block', border: '1.5px dashed var(--line, rgba(255,255,255,.1))', borderRadius: 14,
+          display: 'block', border: '1.5px dashed var(--line, var(--hair-100))', borderRadius: 14,
           padding: 28, textAlign: 'center', cursor: 'pointer', marginBottom: 14,
         }}
       >

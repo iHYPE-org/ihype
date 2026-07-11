@@ -17,7 +17,7 @@ interface ReferralInfo {
 }
 
 const statBox: React.CSSProperties = {
-  background: 'rgba(255,255,255,.03)',
+  background: 'var(--hair-30)',
   border: '1px solid var(--line)',
   borderRadius: 14,
   padding: 16,
@@ -97,7 +97,7 @@ export function PagesReferralTab() {
           Your HYPE Link · your unique fan ID — earn on every ticket you drive
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 14 }}>
-          <div style={{ flex: 1, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 9, padding: '11px 14px', fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-a70)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ flex: 1, background: 'var(--hair-40)', border: '1px solid var(--hair-80)', borderRadius: 9, padding: '11px 14px', fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-a70)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {link || 'Loading…'}
           </div>
           <button onClick={copy} className="ihype-btn-primary" style={{ flexShrink: 0 }}>

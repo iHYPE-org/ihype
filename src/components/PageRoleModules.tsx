@@ -14,8 +14,8 @@ type TourData = {
 type AdRec = { headline: string; body: string; channel: string; cta: string };
 
 const cardBase: React.CSSProperties = {
-  border: '1px solid rgba(255,255,255,.07)', borderRadius: 14,
-  background: 'rgba(255,255,255,.03)', overflow: 'hidden',
+  border: '1px solid var(--hair-70)', borderRadius: 14,
+  background: 'var(--hair-30)', overflow: 'hidden',
 };
 
 const headBase: React.CSSProperties = {
@@ -180,7 +180,7 @@ function AdRecsBody({ profileId }: { profileId: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {recs.map((r, i) => (
-        <div key={i} style={{ border: '1px solid rgba(255,255,255,.07)', borderRadius: 12, padding: '12px 14px', background: 'rgba(255,255,255,.02)' }}>
+        <div key={i} style={{ border: '1px solid var(--hair-70)', borderRadius: 12, padding: '12px 14px', background: 'var(--hair-20)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, color: '#b983ff', background: 'rgba(185,131,255,.14)' }}>
               {r.channel}

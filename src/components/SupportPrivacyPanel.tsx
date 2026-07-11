@@ -175,7 +175,7 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
 
 const privOptStyle: React.CSSProperties = {
   display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left',
-  padding: '14px 16px', border: '1px solid rgba(255,255,255,.08)', borderRadius: 10,
+  padding: '14px 16px', border: '1px solid var(--hair-80)', borderRadius: 10,
   background: 'var(--bg, #0a0805)', color: 'inherit', cursor: 'pointer', marginBottom: 10,
   fontFamily: 'var(--font-body)',
 };

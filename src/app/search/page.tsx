@@ -98,7 +98,7 @@ function SearchPageInner() {
           onChange={(e) => handleSearch(e.target.value)}
           placeholder="Artists, shows, tracks…"
           style={{
-            width: '100%', padding: '14px 16px 14px 46px', border: '1px solid rgba(255,255,255,.12)',
+            width: '100%', padding: '14px 16px 14px 46px', border: '1px solid var(--hair-120)',
             borderRadius: 10, background: 'var(--bg2)', color: 'var(--ink)', fontSize: 16, transition: 'all 150ms',
           }}
         />
@@ -111,8 +111,8 @@ function SearchPageInner() {
             onClick={() => handleFilter(f)}
             style={{
               padding: '8px 16px', borderRadius: 9999,
-              background: filter === f ? 'var(--accent)' : 'rgba(255,255,255,.05)',
-              border: `1px solid ${filter === f ? 'var(--accent)' : 'rgba(255,255,255,.1)'}`,
+              background: filter === f ? 'var(--accent)' : 'var(--hair-50)',
+              border: `1px solid ${filter === f ? 'var(--accent)' : 'var(--hair-100)'}`,
               color: filter === f ? '#fff' : 'var(--ink-a75)',
               fontSize: 13, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms',
             }}

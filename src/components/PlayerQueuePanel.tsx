@@ -38,11 +38,11 @@ export function PlayerQueuePanel({
     <div style={{
       position: 'absolute', bottom: '100%', right: 0, width: 300, maxHeight: 340,
       display: 'flex', flexDirection: 'column',
-      background: 'var(--surface-1, #1a1714)', border: '1px solid rgba(255,255,255,0.1)',
+      background: 'var(--surface-1, #1a1714)', border: '1px solid var(--hair-100)',
       borderRadius: '8px 8px 0 0', zIndex: 10,
     }}>
       {/* Tab bar */}
-      <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--hair-80)' }}>
         {(['queue', 'history'] as DockPanel[]).map(p => (
           <button
             key={p}
@@ -69,7 +69,7 @@ export function PlayerQueuePanel({
             ? <p style={{ fontSize: '0.75rem', opacity: 0.4, margin: '0.5rem 0.25rem' }}>{isAutoplay ? 'Radio will load more when queue ends.' : 'Queue is empty.'}</p>
             : upcomingTracks.map((track, i) => (
               <div key={track.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px', borderRadius: 4 }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--hair-50)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
                 <span style={{ fontSize: '0.6rem', opacity: 0.35, width: 14, textAlign: 'right', flexShrink: 0 }}>{i + 1}</span>
@@ -86,7 +86,7 @@ export function PlayerQueuePanel({
             ? <p style={{ fontSize: '0.75rem', opacity: 0.4, margin: '0.5rem 0.25rem' }}>Nothing played yet this session.</p>
             : history.map((track, i) => (
               <div key={`${track.id}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px', borderRadius: 4 }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--hair-50)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
                 <span style={{ fontSize: '0.6rem', opacity: 0.35, width: 14, textAlign: 'right', flexShrink: 0 }}>{i + 1}</span>
@@ -101,7 +101,7 @@ export function PlayerQueuePanel({
 
       {/* Autoplay toggle footer (queue panel only) */}
       {panel === 'queue' && (
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ borderTop: '1px solid var(--hair-80)', padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: '0.68rem', opacity: 0.6 }}>Autoplay radio</span>
           <button
             onClick={toggleAutoplay}

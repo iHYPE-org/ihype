@@ -37,7 +37,7 @@ export default function NotFound() {
         letterSpacing: '-0.05em',
         lineHeight: 0.85,
         color: 'var(--bg3, #1a1611)',
-        WebkitTextStroke: '2px rgba(255,255,255,0.08)',
+        WebkitTextStroke: '2px var(--hair-80)',
         marginBottom: 16,
       }}>
         404

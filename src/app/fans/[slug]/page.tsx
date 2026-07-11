@@ -226,8 +226,8 @@ export default async function FanProfilePage({
         .fan-hero-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
         .fan-badge { display: inline-block; padding: 5px 12px; border-radius: 4px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; }
         .fan-hero-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-        .fan-hero-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; background: var(--line); color: var(--ink); border: 1px solid rgba(255,255,255,.1); }
-        .fan-hero-btn:hover { background: rgba(255,255,255,.1); }
+        .fan-hero-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; background: var(--line); color: var(--ink); border: 1px solid var(--hair-100); }
+        .fan-hero-btn:hover { background: var(--hair-100); }
         .fan-stats { display: flex; gap: 28px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--line); }
         .fan-stat-val { font-size: 22px; font-weight: 700; color: var(--profile-accent, var(--role-fan, #b983ff)); font-family: var(--font-display); }
         .fan-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a55); margin-top: 2px; }
@@ -247,7 +247,7 @@ export default async function FanProfilePage({
         .fan-show-row p { font-size: 12px; color: var(--ink-a55); }
         .fan-ref-box { background: rgba(185,131,255,.06); border: 1px solid rgba(185,131,255,.2); border-radius: 10px; padding: 24px; margin-bottom: 24px; }
         .fan-ref-label { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; color: var(--profile-accent, var(--role-fan, #b983ff)); margin-bottom: 10px; }
-        .fan-ref-url { font-family: var(--font-mono); font-size: 13px; background: var(--bg); border: 1px solid rgba(255,255,255,.1); border-radius: 6px; padding: 10px 14px; margin-bottom: 12px; word-break: break-all; color: var(--ink); }
+        .fan-ref-url { font-family: var(--font-mono); font-size: 13px; background: var(--bg); border: 1px solid var(--hair-100); border-radius: 6px; padding: 10px 14px; margin-bottom: 12px; word-break: break-all; color: var(--ink); }
         .fan-payout-list { border: 1px solid var(--line); border-radius: 10px; padding: 0 20px; background: var(--bg2); }
         .fan-payout-row { display: flex; justify-content: space-between; padding: 14px 0; font-size: 14px; }
         .fan-empty { text-align: center; padding: 48px 24px; color: var(--ink-a50); }

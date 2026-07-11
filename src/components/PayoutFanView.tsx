@@ -21,7 +21,7 @@ export function PayoutFanView({
   const promoterShare = Math.round(priceCents * promoterPct / 100);
 
   return (
-    <div className="payout-card" style={{ background: 'var(--bg-2, #0e0b08)', border: '1px solid var(--line, rgba(255,255,255,.08))', borderRadius: 18, padding: '1.5rem', marginBottom: '1.25rem' }}>
+    <div className="payout-card" style={{ background: 'var(--bg-2, #0e0b08)', border: '1px solid var(--line, var(--hair-80))', borderRadius: 18, padding: '1.5rem', marginBottom: '1.25rem' }}>
       <button
         onClick={() => setExpanded((v) => !v)}
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--ink)' }}
@@ -34,7 +34,7 @@ export function PayoutFanView({
         <svg style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 150ms' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="1.75" strokeLinecap="round"><polyline points="6 9 12 15 18 9" /></svg>
       </button>
       {expanded && (
-        <div style={{ marginTop: 16, padding: '14px 16px', borderRadius: 12, border: '1px solid var(--line, rgba(255,255,255,.08))', background: 'var(--bg-3, #0a0805)' }}>
+        <div style={{ marginTop: 16, padding: '14px 16px', borderRadius: 12, border: '1px solid var(--line, var(--hair-80))', background: 'var(--bg-3, #0a0805)' }}>
           <p style={{ fontSize: '0.85rem', color: 'var(--ink-2, #9e9080)', lineHeight: 1.6, marginBottom: 10 }}>
             Every fan who bought a ticket sees this same breakdown. Their receipt shows:
           </p>

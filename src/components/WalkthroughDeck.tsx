@@ -67,7 +67,7 @@ function HypeButton({ initialCount = 0, initiallyHyped = false }: { initialCount
         padding: '0.6rem 1.25rem', minHeight: '2.6rem',
         borderRadius: 'var(--radius-pill)',
         border: hyped ? '1px solid transparent' : '1px solid var(--line-2)',
-        background: hyped ? 'var(--accent)' : 'rgba(255,255,255,.05)',
+        background: hyped ? 'var(--accent)' : 'var(--hair-50)',
         color: hyped ? '#fff' : 'var(--ink)',
         fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: '0.9rem',
         cursor: 'pointer',
@@ -87,8 +87,8 @@ function StatTile({ value, label, color = 'var(--accent)' }: { value: string; la
   return (
     <div style={{
       padding: '1rem 1.25rem', borderRadius: 'var(--radius-lg)',
-      border: '1px solid rgba(255,255,255,.1)',
-      background: 'linear-gradient(135deg, rgba(255,255,255,.04), transparent)',
+      border: '1px solid var(--hair-100)',
+      background: 'linear-gradient(135deg, var(--hair-40), transparent)',
       minWidth: 190,
     }}>
       <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '2rem', letterSpacing: '-0.03em', color, lineHeight: 1 }}>{value}</div>
@@ -106,8 +106,8 @@ function ListRow({ icon, iconTint = 'var(--accent)', title, subtitle }: {
     <div style={{
       display: 'flex', alignItems: 'center', gap: 12,
       padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)',
-      border: '1px solid rgba(255,255,255,.1)',
-      background: 'linear-gradient(135deg, rgba(255,255,255,.04), transparent)',
+      border: '1px solid var(--hair-100)',
+      background: 'linear-gradient(135deg, var(--hair-40), transparent)',
     }}>
       {icon && (
         <span style={{
@@ -216,7 +216,7 @@ function QRPass({ artist, detail, admits = 1, serial = 'IH-0000-0000' }: {
         <span style={{ position: 'absolute', left: -10, top: -10, width: 20, height: 20, borderRadius: '50%', background: '#0a0805' }} />
         <span style={{ position: 'absolute', right: -10, top: -10, width: 20, height: 20, borderRadius: '50%', background: '#0a0805' }} />
       </div>
-      <div style={{ padding: '1.75rem 1.5rem 1.5rem', display: 'grid', placeItems: 'center', gap: '1rem', borderTop: '2px dashed rgba(255,255,255,.1)' }}>
+      <div style={{ padding: '1.75rem 1.5rem 1.5rem', display: 'grid', placeItems: 'center', gap: '1rem', borderTop: '2px dashed var(--hair-100)' }}>
         <QRCode value={serial} />
         <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.8rem', letterSpacing: '0.1em', color: '#9e9080' }}>{serial}</div>
         <div style={{ fontFamily: 'var(--f-b)', fontSize: '0.78rem', color: '#7a7060', textAlign: 'center' }}>Scan at the door · transferable · no app required</div>
@@ -243,8 +243,8 @@ function StepCard({ children, style }: { children: React.ReactNode; style?: Reac
   return (
     <div style={{
       borderRadius: 22, padding: 34,
-      background: 'linear-gradient(135deg, rgba(255,255,255,.04), transparent)',
-      border: '1px solid rgba(255,255,255,.1)', ...style,
+      background: 'linear-gradient(135deg, var(--hair-40), transparent)',
+      border: '1px solid var(--hair-100)', ...style,
     }}>
       {children}
     </div>
@@ -525,8 +525,8 @@ export function WalkthroughDeck() {
         #wt-wrap { position: fixed; inset: 0; display: grid; place-items: center; overflow: hidden; z-index: 9999; background: #060504; }
         #wt-stage { width: 1280px; height: 720px; transform-origin: center; flex-shrink: 0; position: relative; }
         #wt-nav { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; z-index: 10000; }
-        #wt-nav button { width: 40px; height: 40px; border-radius: 999px; border: 1px solid rgba(255,255,255,.16); background: var(--line); color: var(--ink); font-size: 16px; cursor: pointer; display: grid; place-items: center; }
-        #wt-nav button:hover { background: rgba(255,255,255,.12); }
+        #wt-nav button { width: 40px; height: 40px; border-radius: 999px; border: 1px solid var(--hair-160); background: var(--line); color: var(--ink); font-size: 16px; cursor: pointer; display: grid; place-items: center; }
+        #wt-nav button:hover { background: var(--hair-120); }
         #wt-count { font-family: var(--f-m); font-size: 13px; letter-spacing: .14em; color: #7a7060; min-width: 64px; text-align: center; }
         @media print {
           @page { size: 1280px 720px; margin: 0; }

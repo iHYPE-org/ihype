@@ -50,7 +50,7 @@ function fmtDate(iso: string) {
   return `${d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase()} · ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
 }
 
-const eventCard = { display: 'flex', alignItems: 'stretch', gap: 0, border: '1px solid rgba(255,255,255,.07)', borderRadius: 16, overflow: 'hidden', background: 'rgba(255,255,255,.03)', textDecoration: 'none', color: 'inherit' } as const;
+const eventCard = { display: 'flex', alignItems: 'stretch', gap: 0, border: '1px solid var(--hair-70)', borderRadius: 16, overflow: 'hidden', background: 'var(--hair-30)', textDecoration: 'none', color: 'inherit' } as const;
 const emptyStyle = { textAlign: 'center' as const, padding: '60px 24px', color: 'var(--ink-a50)' };
 
 function EventList({ shows, emptyTitle, emptyBody }: { shows: Show[]; emptyTitle: string; emptyBody: string }) {
@@ -58,8 +58,8 @@ function EventList({ shows, emptyTitle, emptyBody }: { shows: Show[]; emptyTitle
     return (
       <div>
         {/* Ghost event card — the module keeps its designed shape even with nothing to list */}
-        <div aria-hidden="true" className="ev-card" style={{ ...eventCard, border: '1px dashed rgba(255,255,255,.12)', background: 'rgba(255,255,255,.015)' }}>
-          <div className="ev-art" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: '1px solid rgba(255,255,255,.04)', background: 'linear-gradient(135deg, rgba(255,80,41,.07) 0%, transparent 100%)', opacity: 0.35 }}>🎵</div>
+        <div aria-hidden="true" className="ev-card" style={{ ...eventCard, border: '1px dashed var(--hair-120)', background: 'var(--hair-15)' }}>
+          <div className="ev-art" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: '1px solid var(--hair-40)', background: 'linear-gradient(135deg, rgba(255,80,41,.07) 0%, transparent 100%)', opacity: 0.35 }}>🎵</div>
           <div className="ev-main" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a25)', marginBottom: 7 }}>Date · Time</div>
             <div className="ev-title" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-.02em', marginBottom: 4, color: 'var(--ink-a30)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Your next show</div>
@@ -86,7 +86,7 @@ function EventList({ shows, emptyTitle, emptyBody }: { shows: Show[]; emptyTitle
         const demandLabel = show.hypeCount >= 50 ? `+${Math.min(99, Math.round(show.hypeCount / 5))}% this week` : null;
         return (
           <Link className="ev-card" href={`/shows/${show.slug}`} key={show.id} style={eventCard}>
-            <div className="ev-art" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: '1px solid rgba(255,255,255,.05)', background: 'linear-gradient(135deg, rgba(255,80,41,.15) 0%, transparent 100%)' }}>🎵</div>
+            <div className="ev-art" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: '1px solid var(--hair-50)', background: 'linear-gradient(135deg, rgba(255,80,41,.15) 0%, transparent 100%)' }}>🎵</div>
             <div className="ev-main" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 7, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 {show.status === 'LIVE'
@@ -276,7 +276,7 @@ export function EventsHome({
               autoFocus
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search artists, venues, shows…"
-              style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: '14px 16px 14px 46px', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontSize: 16 }}
+              style={{ width: '100%', boxSizing: 'border-box', background: 'var(--hair-30)', border: '1px solid var(--hair-80)', borderRadius: 12, padding: '14px 16px 14px 46px', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontSize: 16 }}
               type="text"
               value={q}
             />
@@ -338,7 +338,7 @@ export function EventsHome({
                     onClick={() => setTicketView(v)}
                     style={{
                       flex: 1, textAlign: 'center', padding: 12, borderRadius: 10, cursor: 'pointer',
-                      border: `1px solid ${ticketView === v ? 'var(--accent)' : 'rgba(255,255,255,.12)'}`,
+                      border: `1px solid ${ticketView === v ? 'var(--accent)' : 'var(--hair-120)'}`,
                       background: ticketView === v ? 'rgba(255,80,41,.08)' : 'transparent',
                       fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 800, color: 'var(--ink)',
                     }}
@@ -368,7 +368,7 @@ export function EventsHome({
                     const timeStr = startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
                     const unitPriceCents = order.quantity > 0 ? Math.round((order.totalChargeCents || order.subtotalCents) / order.quantity) : (order.totalChargeCents || order.subtotalCents);
                     return (
-                      <div key={order.id} style={{ border: '1px solid rgba(255,255,255,.08)', borderRadius: 16, padding: 20, background: 'rgba(255,255,255,.03)', opacity: ticketView === 'archive' ? 0.6 : 1 }}>
+                      <div key={order.id} style={{ border: '1px solid var(--hair-80)', borderRadius: 16, padding: 20, background: 'var(--hair-30)', opacity: ticketView === 'archive' ? 0.6 : 1 }}>
                         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.14em', textTransform: 'uppercase', color: order.status === 'VOID' ? 'var(--accent)' : '#22e5d4', marginBottom: 6 }}>
                           ● {order.status === 'VOID' ? 'CANCELLED' : ticketView === 'archive' ? 'USED' : 'VALID'} · {formatCurrencyFromCents(unitPriceCents)} FACE VALUE
                         </div>

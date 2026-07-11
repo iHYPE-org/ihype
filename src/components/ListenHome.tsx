@@ -95,11 +95,11 @@ const b: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none',
 };
 const bSolid: React.CSSProperties = { ...b, background: 'var(--accent)', color: '#fff' };
-const bGhost: React.CSSProperties = { ...b, background: 'transparent', color: 'var(--ink-a60)', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.1)' };
+const bGhost: React.CSSProperties = { ...b, background: 'transparent', color: 'var(--ink-a60)', boxShadow: 'inset 0 0 0 1px var(--hair-100)' };
 
-const panel: React.CSSProperties = { border: '1px solid var(--line)', borderRadius: 16, background: 'rgba(255,255,255,.03)', overflow: 'hidden' };
+const panel: React.CSSProperties = { border: '1px solid var(--line)', borderRadius: 16, background: 'var(--hair-30)', overflow: 'hidden' };
 const panelHead: React.CSSProperties = { padding: '16px 20px', borderBottom: '1px solid var(--line)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-a50)' };
-const chartRow: React.CSSProperties = { display: 'flex', gap: 14, alignItems: 'center', padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,.05)' };
+const chartRow: React.CSSProperties = { display: 'flex', gap: 14, alignItems: 'center', padding: '14px 20px', borderBottom: '1px solid var(--hair-50)' };
 const emptyStyle: React.CSSProperties = { textAlign: 'center', padding: '60px 24px', color: 'var(--ink-a50)' };
 const rowTitle: React.CSSProperties = { fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, letterSpacing: '-.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
 const rowSubtitle: React.CSSProperties = { fontSize: 12, color: 'var(--ink-a55)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
@@ -124,7 +124,7 @@ function CardSkeleton({ cards = 2 }: { cards?: number }) {
   return (
     <div style={{ display: 'grid', gap: 12 }}>
       {Array.from({ length: cards }).map((_, i) => (
-        <div key={i} style={{ border: '1px solid rgba(255,255,255,.07)', borderRadius: 16, padding: 20, background: 'rgba(255,255,255,.03)', display: 'grid', gap: 10 }}>
+        <div key={i} style={{ border: '1px solid var(--hair-70)', borderRadius: 16, padding: 20, background: 'var(--hair-30)', display: 'grid', gap: 10 }}>
           <div className="ihype-skeleton" style={{ width: 90, height: 11, borderRadius: 4 }} />
           <div className="ihype-skeleton" style={{ width: '60%', height: 19, borderRadius: 5 }} />
           <div className="ihype-skeleton" style={{ width: '35%', height: 13, borderRadius: 4 }} />
@@ -206,7 +206,7 @@ function SeedDeck({ seeds, onAct }: { seeds: Seed[]; onAct: (seed: Seed, action:
       <div style={{ position: 'relative', width: '100%', maxWidth: 440, aspectRatio: '1 / 1', margin: '4px auto 0', touchAction: 'none' }}>
         {next && (
           <div style={{
-            position: 'absolute', inset: 0, borderRadius: 28, overflow: 'hidden', border: '1px solid rgba(255,255,255,.12)',
+            position: 'absolute', inset: 0, borderRadius: 28, overflow: 'hidden', border: '1px solid var(--hair-120)',
             background: `linear-gradient(155deg, ${nextColor}, ${nextG2})`,
             transform: `scale(${Math.min(1, 0.94 + Math.abs(drag.x) / 2600)}) translateY(${Math.max(0, 10 - Math.abs(drag.x) / 26)}px)`,
             opacity: Math.min(0.78, 0.55 + Math.abs(drag.x) / 900),
@@ -220,7 +220,7 @@ function SeedDeck({ seeds, onAct }: { seeds: Seed[]; onAct: (seed: Seed, action:
           onPointerMove={onMove}
           onPointerUp={onUp}
           style={{
-            position: 'absolute', inset: 0, borderRadius: 28, overflow: 'hidden', border: '1px solid rgba(255,255,255,.12)',
+            position: 'absolute', inset: 0, borderRadius: 28, overflow: 'hidden', border: '1px solid var(--hair-120)',
             boxShadow: `0 ${24 + lift * 30}px ${70 + lift * 60}px rgba(0,0,0,${0.6 + lift * 0.15})`,
             background: `linear-gradient(155deg, ${color}, ${g2})`,
             display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', userSelect: 'none', cursor: 'grab',
@@ -233,7 +233,7 @@ function SeedDeck({ seeds, onAct }: { seeds: Seed[]; onAct: (seed: Seed, action:
           <div style={{
             position: 'absolute', top: 16, left: 16, display: 'flex', alignItems: 'center', gap: 7,
             fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,.92)',
-            background: 'rgba(0,0,0,.28)', border: '1px solid rgba(255,255,255,.22)', padding: '5px 11px', borderRadius: 9999,
+            background: 'rgba(0,0,0,.28)', border: '1px solid var(--hair-220)', padding: '5px 11px', borderRadius: 9999,
           }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', display: 'inline-block' }} /> New seed
           </div>
@@ -242,7 +242,7 @@ function SeedDeck({ seeds, onAct }: { seeds: Seed[]; onAct: (seed: Seed, action:
             style={{
               position: 'absolute', top: 16, right: 16, display: 'flex', alignItems: 'center', gap: 5,
               fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 12, color: '#fff', cursor: 'pointer',
-              background: 'rgba(0,0,0,.3)', border: '1px solid rgba(255,255,255,.2)', padding: '5px 11px', borderRadius: 9999,
+              background: 'rgba(0,0,0,.3)', border: '1px solid var(--hair-200)', padding: '5px 11px', borderRadius: 9999,
             }}
             type="button"
           >
@@ -259,7 +259,7 @@ function SeedDeck({ seeds, onAct }: { seeds: Seed[]; onAct: (seed: Seed, action:
           <div style={{ position: 'relative', zIndex: 3, padding: 22 }}>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 11 }}>
               {card.genres.slice(0, 3).map((t) => (
-                <span key={t} style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase', color: '#fff', background: 'var(--line-2)', border: '1px solid rgba(255,255,255,.28)', borderRadius: 9999, padding: '3px 10px' }}>{t}</span>
+                <span key={t} style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase', color: '#fff', background: 'var(--line-2)', border: '1px solid var(--hair-280)', borderRadius: 9999, padding: '3px 10px' }}>{t}</span>
               ))}
             </div>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 32, letterSpacing: '-.035em', color: '#fff', lineHeight: 0.98, textShadow: '0 2px 18px rgba(0,0,0,.4)' }}>{card.title}</div>
@@ -270,7 +270,7 @@ function SeedDeck({ seeds, onAct }: { seeds: Seed[]; onAct: (seed: Seed, action:
 
       <div style={{ display: 'flex', justifyContent: 'center', gap: 22, marginTop: 24 }}>
         <button onClick={() => commit('skip')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer' }} type="button">
-          <span style={{ width: 58, height: 58, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,.12)', background: 'rgba(255,255,255,.04)' }}>✕</span>
+          <span style={{ width: 58, height: 58, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--hair-120)', background: 'var(--hair-40)' }}>✕</span>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Skip</span>
         </button>
         <button onClick={() => commit('add')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer' }} type="button">
@@ -531,7 +531,7 @@ export function ListenHome({
             autoFocus
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search artists, venues, shows…"
-            style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: '14px 16px', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontSize: 15, marginBottom: 24 }}
+            style={{ width: '100%', boxSizing: 'border-box', background: 'var(--hair-30)', border: '1px solid var(--hair-80)', borderRadius: 12, padding: '14px 16px', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontSize: 15, marginBottom: 24 }}
             type="text"
             value={q}
           />
@@ -586,7 +586,7 @@ export function ListenHome({
                   onClick={() => setGenre(g)}
                   style={{
                     fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', padding: '7px 14px', borderRadius: 9999, cursor: 'pointer',
-                    background: genre === g ? 'var(--ink)' : 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)',
+                    background: genre === g ? 'var(--ink)' : 'var(--hair-30)', border: '1px solid var(--hair-80)',
                     color: genre === g ? 'var(--bg)' : 'var(--ink-a50)',
                   }}
                 >
@@ -605,7 +605,7 @@ export function ListenHome({
               {/* Same frame the seed deck renders into — the module keeps its design even with nothing to show */}
               <div style={{
                 position: 'relative', width: '100%', maxWidth: 440, aspectRatio: '1 / 1', margin: '4px auto 0',
-                borderRadius: 28, border: '1px dashed rgba(255,255,255,.16)',
+                borderRadius: 28, border: '1px dashed var(--hair-160)',
                 background: 'linear-gradient(155deg, rgba(255,80,41,.06), rgba(185,131,255,.05))',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 24, textAlign: 'center',
               }}>
@@ -615,7 +615,7 @@ export function ListenHome({
               </div>
               <div style={{ display: 'flex', justifyContent: 'center', gap: 22, marginTop: 24, opacity: 0.35, pointerEvents: 'none' }} aria-hidden="true">
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                  <span style={{ width: 58, height: 58, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,.12)', background: 'rgba(255,255,255,.04)' }}>✕</span>
+                  <span style={{ width: 58, height: 58, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--hair-120)', background: 'var(--hair-40)' }}>✕</span>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Skip</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
@@ -635,7 +635,7 @@ export function ListenHome({
         <div className="sub-panel">
           {radio === null && <CardSkeleton />}
           {radio !== null && !liveShow && upcomingShows.length === 0 && (
-            <div style={{ border: '1px dashed var(--line-2)', borderRadius: 16, padding: 20, background: 'rgba(255,255,255,.02)' }}>
+            <div style={{ border: '1px dashed var(--line-2)', borderRadius: 16, padding: 20, background: 'var(--hair-20)' }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a40)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 7 }}>
                 <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--ink-a25)' }} /> OFF AIR
               </div>
@@ -647,7 +647,7 @@ export function ListenHome({
             </div>
           )}
           {liveShow && (
-            <div style={{ border: '1px solid rgba(255,255,255,.07)', borderRadius: 16, padding: 20, background: 'rgba(255,255,255,.03)', marginBottom: 12 }}>
+            <div style={{ border: '1px solid var(--hair-70)', borderRadius: 16, padding: 20, background: 'var(--hair-30)', marginBottom: 12 }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a50)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 7 }}>
                 <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)', animation: 'ihype-blink 1.2s ease-in-out infinite' }} /> LIVE NOW
               </div>
@@ -659,7 +659,7 @@ export function ListenHome({
             </div>
           )}
           {upcomingShows.map((s) => (
-            <div key={s.id} style={{ border: '1px solid rgba(255,255,255,.07)', borderRadius: 16, padding: 20, background: 'rgba(255,255,255,.03)', marginBottom: 12 }}>
+            <div key={s.id} style={{ border: '1px solid var(--hair-70)', borderRadius: 16, padding: 20, background: 'var(--hair-30)', marginBottom: 12 }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a50)', marginBottom: 10 }}>{timeLabel(s.startsAt)}</div>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 4 }}>{s.title}</div>
               <div style={{ fontSize: 13, color: 'var(--ink-a60)', marginBottom: 16 }}>{s.headlinerProfile?.name ?? 'iHYPE Radio'}</div>
@@ -679,7 +679,7 @@ export function ListenHome({
               <div
                 key={s.id}
                 onClick={() => setChartScope(s.id)}
-                style={{ fontSize: 12, padding: '7px 14px', borderRadius: 9999, cursor: 'pointer', border: `1px solid ${chartScope === s.id ? 'rgba(255,80,41,.4)' : 'rgba(255,255,255,.1)'}`, background: chartScope === s.id ? 'rgba(255,80,41,.12)' : 'rgba(255,255,255,.03)', color: chartScope === s.id ? 'var(--ink)' : 'var(--ink-a60)' }}
+                style={{ fontSize: 12, padding: '7px 14px', borderRadius: 9999, cursor: 'pointer', border: `1px solid ${chartScope === s.id ? 'rgba(255,80,41,.4)' : 'var(--hair-100)'}`, background: chartScope === s.id ? 'rgba(255,80,41,.12)' : 'var(--hair-30)', color: chartScope === s.id ? 'var(--ink)' : 'var(--ink-a60)' }}
               >
                 {s.label}
               </div>
@@ -690,7 +690,7 @@ export function ListenHome({
               <div
                 key={g}
                 onClick={() => setChartGenre(g)}
-                style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', padding: '6px 11px', borderRadius: 6, cursor: 'pointer', border: `1px solid ${chartGenre === g ? 'rgba(255,255,255,.28)' : 'rgba(255,255,255,.08)'}`, color: chartGenre === g ? 'var(--ink)' : 'var(--ink-a55)' }}
+                style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', padding: '6px 11px', borderRadius: 6, cursor: 'pointer', border: `1px solid ${chartGenre === g ? 'var(--hair-280)' : 'var(--hair-80)'}`, color: chartGenre === g ? 'var(--ink)' : 'var(--ink-a55)' }}
               >
                 {g}
               </div>
@@ -736,7 +736,7 @@ export function ListenHome({
                 onChange={(e) => setNewPlName(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') createPlaylist(); }}
                 placeholder="New playlist name"
-                style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,.1)', background: 'rgba(255,255,255,.03)', color: 'var(--ink)', fontSize: 13, fontFamily: 'var(--font-body)' }}
+                style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--hair-100)', background: 'var(--hair-30)', color: 'var(--ink)', fontSize: 13, fontFamily: 'var(--font-body)' }}
                 type="text"
                 value={newPlName}
               />
@@ -761,8 +761,8 @@ export function ListenHome({
             <div style={{ marginBottom: 12 }}>
               <div aria-hidden="true" style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 12 }}>
                 {[0, 1].map((i) => (
-                  <div key={i} style={{ border: '1px dashed rgba(255,255,255,.12)', borderRadius: 16, overflow: 'hidden', background: 'rgba(255,255,255,.015)' }}>
-                    <div style={{ height: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg,${PALETTE[i]}14 0%, transparent 100%)`, borderBottom: '1px solid rgba(255,255,255,.04)', fontSize: 28, opacity: 0.4 }}>🎵</div>
+                  <div key={i} style={{ border: '1px dashed var(--hair-120)', borderRadius: 16, overflow: 'hidden', background: 'var(--hair-15)' }}>
+                    <div style={{ height: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg,${PALETTE[i]}14 0%, transparent 100%)`, borderBottom: '1px solid var(--hair-40)', fontSize: 28, opacity: 0.4 }}>🎵</div>
                     <div style={{ padding: '16px 18px 18px' }}>
                       <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 2, color: 'var(--ink-a30)' }}>{i === 0 ? 'Your first playlist' : 'Room for more'}</div>
                       <div style={{ fontSize: 13, color: 'var(--ink-a25)' }}>0 tracks</div>
@@ -777,7 +777,7 @@ export function ListenHome({
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 12 }}>
             {(playlists ?? []).map((p, i) => (
               <div key={p.id} onClick={() => setOpenPl(p.id)} style={{ ...panel, cursor: 'pointer' }}>
-                <div style={{ height: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg,${PALETTE[i % PALETTE.length]}33 0%, transparent 100%)`, borderBottom: '1px solid rgba(255,255,255,.05)', fontSize: 28 }}>🎵</div>
+                <div style={{ height: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg,${PALETTE[i % PALETTE.length]}33 0%, transparent 100%)`, borderBottom: '1px solid var(--hair-50)', fontSize: 28 }}>🎵</div>
                 <div style={{ padding: '16px 18px 18px' }}>
                   <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 2 }}>{p.name}</div>
                   <div style={{ fontSize: 13, color: 'var(--ink-a50)' }}>{p.items.length} track{p.items.length === 1 ? '' : 's'}</div>

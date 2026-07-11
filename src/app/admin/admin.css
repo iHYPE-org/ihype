@@ -215,15 +215,15 @@
 @keyframes opsFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @keyframes opsSpin{to{transform:rotate(360deg)}}
 .ops-gate{position:fixed;inset:0;background:#0a0805;display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px}
-.ops-login-card,.ops-provisioning-card{width:100%;max-width:360px;background:#100d09;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:28px;display:flex;flex-direction:column;gap:20px;animation:opsFade .3s ease}
+.ops-login-card,.ops-provisioning-card{width:100%;max-width:360px;background:#100d09;border:1px solid var(--hair-80);border-radius:12px;padding:28px;display:flex;flex-direction:column;gap:20px;animation:opsFade .3s ease}
 .ops-login-top{display:flex;align-items:center;justify-content:space-between}
-.ops-identity{display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:8px}
+.ops-identity{display:flex;align-items:center;gap:12px;padding:14px;background:var(--hair-30);border:1px solid var(--line);border-radius:8px}
 .ops-avatar{width:40px;height:40px;border-radius:50%;background:rgba(255,80,41,.12);border:1px solid rgba(255,80,41,.25);display:flex;align-items:center;justify-content:center;font-family:var(--f-m,monospace);font-weight:700;font-size:13px;color:#ff5029;flex-shrink:0}
 .ops-identity-text{display:flex;flex-direction:column;gap:2px;min-width:0}
 .ops-identity-text strong{font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ops-identity-text span{font-size:11px;color:#5a5048;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ops-trust-facts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.ops-trust-fact{display:flex;flex-direction:column;gap:3px;padding:10px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);border-radius:6px}
+.ops-trust-fact{display:flex;flex-direction:column;gap:3px;padding:10px;background:var(--hair-20);border:1px solid var(--hair-50);border-radius:6px}
 .ops-trust-label{font-family:var(--f-m,monospace);font-size:9px;color:#5a5048;letter-spacing:.1em;text-transform:uppercase}
 .ops-trust-value{font-size:12px;font-weight:600;color:#9e9080}
 .ops-trust-ok{color:#22e5d4}
@@ -265,14 +265,14 @@
   box-shadow: 0 10px 24px rgba(255,80,41,.25);
 }
 .ops-main .button.secondary {
-  background: rgba(255,255,255,.05);
+  background: var(--hair-50);
   color: var(--ink);
-  border-color: rgba(255,255,255,.1);
+  border-color: var(--hair-100);
 }
 .ops-main .button.secondary:hover,
 .ops-main .button.secondary:focus-visible {
-  background: rgba(255,255,255,.08);
-  border-color: rgba(255,255,255,.2);
+  background: var(--hair-80);
+  border-color: var(--hair-200);
 }
 .ops-main .badge {
   background: rgba(255,80,41,.1);

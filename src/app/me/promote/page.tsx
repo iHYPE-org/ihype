@@ -111,7 +111,7 @@ export default async function PromotePage() {
         .promo-stat-sub { font-size: 12px; color: var(--ink-a50); margin-top: 4px; }
         .promo-referral-box { border: 1px solid rgba(255,62,154,.3); border-radius: 12px; padding: 28px; background: rgba(255,62,154,.06); margin-bottom: 32px; }
         .promo-referral-label { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; color: var(--role-promoter, #ff3e9a); margin-bottom: 12px; }
-        .promo-referral-url { font-family: var(--font-mono); font-size: 14px; color: var(--ink); background: var(--bg); border: 1px solid rgba(255,255,255,.1); border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; word-break: break-all; }
+        .promo-referral-url { font-family: var(--font-mono); font-size: 14px; color: var(--ink); background: var(--bg); border: 1px solid var(--hair-100); border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; word-break: break-all; }
         .promo-split-explainer { font-size: 13px; color: var(--ink-a60); margin-top: 12px; line-height: 1.6; }
         .promo-section { margin-bottom: 32px; }
         .promo-section-title { font-family: var(--font-display); font-size: 20px; font-weight: 800; margin-bottom: 20px; color: var(--ink); }

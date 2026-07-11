@@ -18,7 +18,7 @@ export function PiAdminButton() {
         cursor: 'pointer',
         fontFamily: 'var(--f-m)',
         fontSize: 11,
-        color: 'var(--ink-4, rgba(255,255,255,.18))',
+        color: 'var(--ink-4, var(--hair-180))',
         opacity: 0.18,
         letterSpacing: '-.01em',
         padding: '4px 6px',

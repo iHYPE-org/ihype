@@ -145,7 +145,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
               )}
               {cities.filter(c => c !== cityFilter).map(c => (
                 <Link key={c} href={buildUrl(c, genreFilter)} style={{ textDecoration: 'none' }}>
-                  <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'var(--font-mono)', background: 'var(--line)', color: 'var(--ink-a60)', cursor: 'pointer', border: '1px solid rgba(255,255,255,.08)' }}>
+                  <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'var(--font-mono)', background: 'var(--line)', color: 'var(--ink-a60)', cursor: 'pointer', border: '1px solid var(--hair-80)' }}>
                     {c}
                   </span>
                 </Link>
@@ -164,7 +164,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
               )}
               {genres.filter(g => g !== genreFilter).map(g => (
                 <Link key={g} href={buildUrl(cityFilter, g)} style={{ textDecoration: 'none' }}>
-                  <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'var(--font-mono)', background: 'var(--line)', color: 'var(--ink-a60)', cursor: 'pointer', border: '1px solid rgba(255,255,255,.08)' }}>
+                  <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'var(--font-mono)', background: 'var(--line)', color: 'var(--ink-a60)', cursor: 'pointer', border: '1px solid var(--hair-80)' }}>
                     {g}
                   </span>
                 </Link>
@@ -273,7 +273,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <Link
             href={buildUrl(cityFilter, genreFilter) + (buildUrl(cityFilter, genreFilter).includes('?') ? `&page=${page + 1}` : `?page=${page + 1}`)}
-            style={{ display: 'inline-block', padding: '10px 24px', background: 'var(--line)', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, fontSize: 13, fontFamily: 'var(--font-mono)', color: 'var(--ink-a70)', textDecoration: 'none', letterSpacing: '.04em' }}
+            style={{ display: 'inline-block', padding: '10px 24px', background: 'var(--line)', border: '1px solid var(--hair-100)', borderRadius: 8, fontSize: 13, fontFamily: 'var(--font-mono)', color: 'var(--ink-a70)', textDecoration: 'none', letterSpacing: '.04em' }}
           >
             Load more artists →
           </Link>

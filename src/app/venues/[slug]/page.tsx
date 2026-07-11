@@ -219,11 +219,11 @@ export default async function VenuePage({
         .venue-capacity-row { margin-top: 22px; max-width: 320px; }
         .venue-capacity-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; }
         .venue-capacity-label b { font-family: var(--font-display); font-weight: 800; color: var(--profile-accent, var(--role-venue, #22e5d4)); }
-        .venue-capacity-track { height: 8px; border-radius: 9999px; background: rgba(255,255,255,.08); overflow: hidden; }
+        .venue-capacity-track { height: 8px; border-radius: 9999px; background: var(--hair-80); overflow: hidden; }
         .venue-capacity-bar { height: 100%; border-radius: 9999px; background: var(--profile-accent, var(--role-venue, #22e5d4)); }
         .venue-hero-actions { display: flex; gap: 10px; margin-top: 22px; align-items: center; flex-wrap: wrap; }
-        .venue-hero-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; background: var(--line); color: var(--ink); border: 1px solid rgba(255,255,255,.1); }
-        .venue-hero-btn:hover { background: rgba(255,255,255,.1); }
+        .venue-hero-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; background: var(--line); color: var(--ink); border: 1px solid var(--hair-100); }
+        .venue-hero-btn:hover { background: var(--hair-100); }
         .venue-content { padding: 0 32px; }
         .venue-tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--line); margin: 32px 0 28px; }
         .venue-tab { padding: 10px 0; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--ink-a60); text-decoration: none; }

@@ -75,8 +75,8 @@ export default async function RootPage() {
                   <div className="idx-hero-pill" key={i} style={{
                     display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
                     padding: '0.3rem 0.75rem', borderRadius: 999,
-                    border: '1px solid rgba(255,255,255,.08)',
-                    background: 'rgba(255,255,255,.04)',
+                    border: '1px solid var(--hair-80)',
+                    background: 'var(--hair-40)',
                   }}>
                     <span style={{ fontFamily: 'var(--f-m)', fontWeight: 700, fontSize: '0.85rem', color: 'var(--accent)' }}>{s.value}</span>
                     <span style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', color: 'var(--ink-3)', letterSpacing: '.04em' }}>{s.label}</span>
@@ -181,7 +181,7 @@ export default async function RootPage() {
                 { color: '#ff3e9a', name: 'You get a vote', desc: 'Users are stakeholders. Real changes to the platform go to the people who use it.' },
                 { color: '#22e5d4', name: 'Funded like radio, not like Big Tech', desc: 'Advertising only, restricted to music sources, forever — never your data.' },
               ].map(item => (
-                <div key={item.name} style={{ display: 'flex', gap: 14, padding: 16, background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.07)', borderRadius: 10 }}>
+                <div key={item.name} style={{ display: 'flex', gap: 14, padding: 16, background: 'var(--hair-30)', border: '1px solid var(--hair-70)', borderRadius: 10 }}>
                   <span style={{ width: 8, height: 8, borderRadius: '50%', background: item.color, marginTop: 6, flexShrink: 0 }} />
                   <div>
                     <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 15, color: 'var(--ink)', marginBottom: 4 }}>{item.name}</div>
@@ -243,7 +243,7 @@ export default async function RootPage() {
                 { num: '02', color: '#b983ff', name: 'One member, one vote', desc: 'Every hype counts the same, regardless of spend. No pay-to-rank, no payola, no algorithm.' },
                 { num: '03', color: '#22e5d4', name: 'It feeds the radar', desc: 'Hypes roll up into the demand radar — telling artists what to play and venues who to book near you.' },
               ].map(step => (
-                <div key={step.num} style={{ display: 'flex', gap: 16, padding: 18, background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.07)', borderRadius: 10 }}>
+                <div key={step.num} style={{ display: 'flex', gap: 16, padding: 18, background: 'var(--hair-30)', border: '1px solid var(--hair-70)', borderRadius: 10 }}>
                   <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 18, flexShrink: 0, width: 28, color: step.color }}>{step.num}</div>
                   <div>
                     <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 15, color: 'var(--ink)', marginBottom: 4 }}>{step.name}</div>
@@ -357,7 +357,7 @@ export default async function RootPage() {
             ))}
           </div>
 
-          <div style={{ marginTop: '1rem', padding: '1rem 1.5rem', borderRadius: 14, border: '1px solid var(--line)', background: 'rgba(255,255,255,.025)', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <div style={{ marginTop: '1rem', padding: '1rem 1.5rem', borderRadius: 14, border: '1px solid var(--line)', background: 'var(--hair-25)', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <span style={{ fontFamily: 'var(--f-m)', fontSize: '0.8rem', color: 'var(--ink-3)', letterSpacing: '.06em' }}>
               iHYPE → 0% · this is locked in our charter · <a href="/transparency" style={{ color: 'var(--ink-2)' }}>read our transparency page →</a>
             </span>
@@ -381,15 +381,15 @@ export default async function RootPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--f-b)', fontSize: '0.9rem' }}>
               <thead>
                 <tr>
-                  <th style={{ padding: '0.75rem 1rem', textAlign: 'left', color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.1em', fontWeight: 400, borderBottom: '1px solid rgba(255,255,255,.08)' }}>PRACTICE</th>
-                  <th style={{ padding: '0.75rem 1rem', textAlign: 'center', color: '#ff5029', fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.1em', fontWeight: 700, borderBottom: '1px solid rgba(255,255,255,.08)' }}>Ticketmaster</th>
-                  <th style={{ padding: '0.75rem 1rem', textAlign: 'center', color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.1em', fontWeight: 400, borderBottom: '1px solid rgba(255,255,255,.08)' }}>Spotify</th>
-                  <th style={{ padding: '0.75rem 1rem', textAlign: 'center', color: '#22e5d4', fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.1em', fontWeight: 700, borderBottom: '1px solid rgba(255,255,255,.08)' }}>iHYPE</th>
+                  <th style={{ padding: '0.75rem 1rem', textAlign: 'left', color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.1em', fontWeight: 400, borderBottom: '1px solid var(--hair-80)' }}>PRACTICE</th>
+                  <th style={{ padding: '0.75rem 1rem', textAlign: 'center', color: '#ff5029', fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.1em', fontWeight: 700, borderBottom: '1px solid var(--hair-80)' }}>Ticketmaster</th>
+                  <th style={{ padding: '0.75rem 1rem', textAlign: 'center', color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.1em', fontWeight: 400, borderBottom: '1px solid var(--hair-80)' }}>Spotify</th>
+                  <th style={{ padding: '0.75rem 1rem', textAlign: 'center', color: '#22e5d4', fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.1em', fontWeight: 700, borderBottom: '1px solid var(--hair-80)' }}>iHYPE</th>
                 </tr>
               </thead>
               <tbody>
                 {COMPARISON_ROWS.map(([practice, tm, sp, ih]) => (
-                  <tr key={practice} style={{ borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+                  <tr key={practice} style={{ borderBottom: '1px solid var(--hair-40)' }}>
                     <td style={{ padding: '0.85rem 1rem', color: 'var(--ink-2)', lineHeight: 1.4 }}>{practice}</td>
                     <td style={{ padding: '0.85rem 1rem', textAlign: 'center', color: tm.startsWith('✗') ? '#ff5029' : 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '0.8rem' }}>{tm}</td>
                     <td style={{ padding: '0.85rem 1rem', textAlign: 'center', color: sp.startsWith('✗') ? '#ff5029' : 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '0.8rem' }}>{sp}</td>
@@ -433,14 +433,14 @@ export default async function RootPage() {
             }
             .idx-compare-head-ihype { color: #22e5d4 !important; font-weight: 700; }
             .idx-compare-card {
-              border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 14px 16px; margin-bottom: 8px;
+              border: 1px solid var(--hair-80); border-radius: 14px; padding: 14px 16px; margin-bottom: 8px;
               display: flex; flex-direction: column; gap: 10px;
             }
             .idx-compare-practice { font-family: var(--f-b); font-size: 13px; color: var(--ink); font-weight: 500; line-height: 1.4; }
             .idx-compare-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
             .idx-compare-cell {
               border-radius: 8px; padding: 7px 4px; text-align: center;
-              background: rgba(255,255,255,.03); font-family: var(--f-m); font-size: 10.5px; font-weight: 700;
+              background: var(--hair-30); font-family: var(--f-m); font-size: 10.5px; font-weight: 700;
             }
             .idx-compare-cell.bad { color: #ff5029; }
             .idx-compare-cell.good { color: #22e5d4; }

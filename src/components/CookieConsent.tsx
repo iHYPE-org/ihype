@@ -47,7 +47,7 @@ export function CookieConsent() {
         padding: '1rem 1.25rem',
         borderRadius: 16,
         background: 'var(--bg-3, #1a1612)',
-        border: '1px solid var(--line-2, rgba(255,255,255,0.14))',
+        border: '1px solid var(--line-2, var(--line-2))',
         boxShadow: '0 12px 40px rgba(0,0,0,0.4)',
         fontFamily: "var(--font-body, 'DM Sans', sans-serif)",
       }}

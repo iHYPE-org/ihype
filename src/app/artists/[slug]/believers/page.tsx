@@ -90,7 +90,7 @@ const BELIEVERS_CSS = `
 .believers-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 32px; line-height: 1.05; letter-spacing: -0.03em; color: var(--ink); margin: 10px 0 10px; }
 .believers-artist-link { color: #ff5029; text-decoration: none; }
 .believers-sub { font-family: 'DM Sans', sans-serif; font-size: 14px; line-height: 1.5; color: var(--ink-a55); margin: 0 0 24px; }
-.believers-you, .believers-cta-card { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 16px; background: #100d09; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 22px; }
+.believers-you, .believers-cta-card { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 16px; background: #100d09; border: 1px solid var(--hair-80); margin-bottom: 22px; }
 .believers-you-early { border-color: rgba(255,80,41,0.5); box-shadow: 0 0 50px rgba(255,80,41,0.10); }
 .believers-you-rank { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 30px; color: #ff5029; letter-spacing: -0.03em; }
 .believers-you-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }

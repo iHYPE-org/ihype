@@ -124,7 +124,7 @@ export function AlwaysOnStation({ initial }: { initial: StationState }) {
 }
 
 const STATION_CSS = `
-.station { background: #100d09; border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 22px; max-width: 460px; }
+.station { background: #100d09; border: 1px solid var(--hair-80); border-radius: 20px; padding: 22px; max-width: 460px; }
 .station-head { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; }
 .station-dot { width: 8px; height: 8px; border-radius: 50%; background: #ff5029; box-shadow: 0 0 10px #ff5029; }
 .station-status { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.16em; color: #ff5029; }
@@ -135,7 +135,7 @@ const STATION_CSS = `
 .station-artist { font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink-a60); text-decoration: none; }
 .station-artist:hover { color: #ff5029; }
 .station-toggle { flex-shrink: 0; width: 48px; height: 48px; border-radius: 50%; border: none; cursor: pointer; background: linear-gradient(135deg, #ff5029, #ff3e6e); color: #fff; font-size: 16px; display: flex; align-items: center; justify-content: center; }
-.station-next { display: flex; flex-direction: column; gap: 4px; margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06); }
+.station-next { display: flex; flex-direction: column; gap: 4px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
 .station-next-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.14em; color: var(--ink-a40); margin-bottom: 2px; }
 .station-next-item { font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--ink-a55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .station-live-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; color: var(--ink); margin: 0 0 12px; }

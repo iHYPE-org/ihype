@@ -114,7 +114,7 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
       </div>
 
       {/* Split breakdown */}
-      <div className="payout-card" style={{ background: 'var(--bg-2, #0e0b08)', border: '1px solid var(--line, rgba(255,255,255,.08))', borderRadius: 18, padding: '1.5rem', marginBottom: '1.25rem' }}>
+      <div className="payout-card" style={{ background: 'var(--bg-2, #0e0b08)', border: '1px solid var(--line, var(--hair-80))', borderRadius: 18, padding: '1.5rem', marginBottom: '1.25rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22e5d4" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
           <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: 'var(--ink)' }}>Where the money went.</h2>

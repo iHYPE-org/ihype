@@ -310,18 +310,18 @@ export default function SettingsPage() {
         .settings-row-detail { font-size: 12px; color: var(--ink-a50); margin-top: 3px; }
         .settings-toggle { position: relative; width: 44px; height: 26px; flex-shrink: 0; display: block; }
         .settings-toggle input { opacity: 0; width: 0; height: 0; }
-        .settings-toggle-track { position: absolute; inset: 0; border-radius: 13px; background: rgba(255,255,255,.12); cursor: pointer; transition: background 200ms; }
+        .settings-toggle-track { position: absolute; inset: 0; border-radius: 13px; background: var(--hair-120); cursor: pointer; transition: background 200ms; }
         .settings-toggle input:checked + .settings-toggle-track { background: var(--accent); }
         .settings-toggle-thumb { position: absolute; width: 20px; height: 20px; top: 3px; left: 3px; border-radius: 50%; background: #fff; transition: transform 200ms cubic-bezier(.2,.7,.3,1); pointer-events: none; }
         .settings-toggle input:checked ~ .settings-toggle-thumb { transform: translateX(18px); }
         .settings-btn { padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 150ms; border: none; text-decoration: none; display: inline-block; }
         .settings-btn-ghost { background: var(--line); color: var(--ink); }
-        .settings-btn-ghost:hover { background: rgba(255,255,255,.1); }
+        .settings-btn-ghost:hover { background: var(--hair-100); }
         .settings-btn-danger { background: rgba(239,68,68,.12); color: #ef4444; }
         .settings-btn-danger:hover { background: rgba(239,68,68,.22); }
         .settings-btn-accent { background: var(--accent); color: #fff; }
         .settings-btn-accent:hover { opacity: .9; }
-        .settings-input-inline { padding: 8px 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: var(--bg); color: var(--ink); font-size: 14px; }
+        .settings-input-inline { padding: 8px 12px; border: 1px solid var(--hair-100); border-radius: 8px; background: var(--bg); color: var(--ink); font-size: 14px; }
         .settings-input-inline:focus { outline: none; border-color: var(--accent); }
         .settings-danger-zone { border: 1px solid rgba(239,68,68,.2); }
         .settings-danger-zone .settings-row { border-color: rgba(239,68,68,.1); }
@@ -329,7 +329,7 @@ export default function SettingsPage() {
         .settings-payout-card { align-items: center; gap: 14px; }
         .settings-payout-ic { width: 40px; height: 40px; border-radius: 10px; background: var(--line); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .settings-split-mini { display: flex; gap: 10px; margin-top: 10px; }
-        .settings-split-mini span { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; padding: 3px 8px; border-radius: 6px; background: rgba(255,255,255,.05); }
+        .settings-split-mini span { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; padding: 3px 8px; border-radius: 6px; background: var(--hair-50); }
 
         @media (max-width: 600px) {
           .settings-page { padding: 24px 16px 100px; }

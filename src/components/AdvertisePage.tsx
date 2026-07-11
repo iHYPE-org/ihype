@@ -94,8 +94,8 @@ function LiveTicker() {
   }, []);
 
   return (
-    <aside style={{ background: '#100d09', border: '1px solid rgba(255,255,255,.07)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 30px 70px -20px rgba(0,0,0,.7)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', borderBottom: '1px solid rgba(255,255,255,.07)' }}>
+    <aside style={{ background: '#100d09', border: '1px solid var(--hair-70)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 30px 70px -20px rgba(0,0,0,.7)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', borderBottom: '1px solid var(--hair-70)' }}>
         <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.12em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 99, display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid rgba(34,229,212,.4)', color: '#22e5d4' }}>
           <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'currentColor', animation: 'adv-pulse 2.4s ease-out infinite', flexShrink: 0 }} />
           Live
@@ -124,7 +124,7 @@ function LiveTicker() {
           </div>
         ))}
       </div>
-      <div style={{ padding: '11px 18px', borderTop: '1px solid rgba(255,255,255,.07)', fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, color: '#5a5048', letterSpacing: '.06em', display: 'flex', justifyContent: 'space-between' }}>
+      <div style={{ padding: '11px 18px', borderTop: '1px solid var(--hair-70)', fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, color: '#5a5048', letterSpacing: '.06em', display: 'flex', justifyContent: 'space-between' }}>
         <span>Reviewed by <b style={{ color: '#9e9080' }}>HYPE Screen</b> · automated</span>
         <span><b style={{ color: '#9e9080' }}>{count.toLocaleString()}</b> today</span>
       </div>
@@ -189,8 +189,8 @@ function CoverageBuilder() {
   return (
     <div className="adv-builder" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, alignItems: 'stretch' }}>
       {/* Controls */}
-      <div style={{ background: '#100d09', border: '1px solid rgba(255,255,255,.07)', borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '15px 20px', borderBottom: '1px solid rgba(255,255,255,.07)', display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ background: '#100d09', border: '1px solid var(--hair-70)', borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '15px 20px', borderBottom: '1px solid var(--hair-70)', display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 700, fontSize: 14, letterSpacing: '-.01em' }}>Campaign</span>
           <span style={{ marginLeft: 'auto', fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, color: '#5a5048', letterSpacing: '.1em', textTransform: 'uppercase' }}>No contract · cancel anytime</span>
         </div>
@@ -204,7 +204,7 @@ function CoverageBuilder() {
               {AD_SCOPES.map(s => (
                 <button key={s} onClick={() => setScope(s)} style={{
                   display: 'flex', alignItems: 'center', gap: 14, padding: '14px 15px', borderRadius: 11,
-                  border: `1px solid ${s === scope ? '#ff5029' : 'rgba(255,255,255,.07)'}`,
+                  border: `1px solid ${s === scope ? '#ff5029' : 'var(--hair-70)'}`,
                   background: s === scope ? 'rgba(255,80,41,.07)' : '#1a1612',
                   cursor: 'pointer', textAlign: 'left', width: '100%', transition: 'border-color .15s, background .15s',
                 }}>
@@ -231,7 +231,7 @@ function CoverageBuilder() {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 0, border: '1px solid var(--line-2)', borderRadius: 10, overflow: 'hidden', width: 'fit-content' }}>
               <button aria-label="Decrease spots per day" onClick={() => setSpots(s => Math.max(MIN_SPOTS_PER_DAY, s - 1))} style={{ width: 46, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9e9080', cursor: 'pointer', ...INPUT_S, transition: 'background .15s' }}><MinusIcon /></button>
-              <div style={{ minWidth: 64, textAlign: 'center', fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', borderLeft: '1px solid rgba(255,255,255,.07)', borderRight: '1px solid rgba(255,255,255,.07)', height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{spots}</div>
+              <div style={{ minWidth: 64, textAlign: 'center', fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', borderLeft: '1px solid var(--hair-70)', borderRight: '1px solid var(--hair-70)', height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{spots}</div>
               <button aria-label="Increase spots per day" onClick={() => setSpots(s => Math.min(MAX_SPOTS_PER_DAY, s + 1))} style={{ width: 46, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9e9080', cursor: 'pointer', ...INPUT_S, transition: 'background .15s' }}><PlusIcon /></button>
             </div>
             <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: '#5a5048', letterSpacing: '.04em', marginTop: 10 }}>{spotsNote}</div>
@@ -246,7 +246,7 @@ function CoverageBuilder() {
               {AD_RUN_LENGTHS_DAYS.map(d => (
                 <button key={d} onClick={() => setDays(d)} style={{
                   flex: 1, padding: '11px 8px', borderRadius: 9,
-                  border: `1px solid ${days === d ? '#ff5029' : 'rgba(255,255,255,.07)'}`,
+                  border: `1px solid ${days === d ? '#ff5029' : 'var(--hair-70)'}`,
                   background: days === d ? 'rgba(255,80,41,.07)' : '#1a1612',
                   fontFamily: 'var(--f-m,monospace)', fontSize: 11, letterSpacing: '.04em',
                   color: days === d ? '#ff5029' : '#9e9080', cursor: 'pointer', transition: 'all .15s',
@@ -280,8 +280,8 @@ function CoverageBuilder() {
       </div>
 
       {/* Reach + Receipt */}
-      <div style={{ background: '#100d09', border: '1px solid rgba(255,255,255,.07)', borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '15px 20px', borderBottom: '1px solid rgba(255,255,255,.07)', display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ background: '#100d09', border: '1px solid var(--hair-70)', borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '15px 20px', borderBottom: '1px solid var(--hair-70)', display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 700, fontSize: 14 }}>{AD_SCOPE_LABELS[scope]} reach</span>
         </div>
         <div style={{ padding: '22px 20px', flex: 1 }}>
@@ -295,7 +295,7 @@ function CoverageBuilder() {
           {/* Stats */}
           <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
             {[{ v: fmt(quote.dailyImpressions), l: 'Daily impressions' }, { v: fmt(quote.totalImpressions), l: 'Total over run' }, { v: '$' + cpm.toFixed(2), l: 'Effective CPM' }].map(s => (
-              <div key={s.l} style={{ flex: 1, padding: '13px 14px', border: '1px solid rgba(255,255,255,.07)', borderRadius: 11, background: '#1a1612' }}>
+              <div key={s.l} style={{ flex: 1, padding: '13px 14px', border: '1px solid var(--hair-70)', borderRadius: 11, background: '#1a1612' }}>
                 <div style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 21, letterSpacing: '-.02em' }}>{s.v}</div>
                 <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 8.5, letterSpacing: '.1em', color: '#5a5048', textTransform: 'uppercase', marginTop: 6 }}>{s.l}</div>
               </div>
@@ -305,7 +305,7 @@ function CoverageBuilder() {
           {/* Placement chips */}
           <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
             {[{ color: '#b983ff', label: 'Discover feed' }, { color: '#22e5d4', label: 'Chart interstitials' }, { color: '#ffb84a', label: 'Seed swipe cards' }].map(p => (
-              <span key={p.label} style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.06em', color: '#9e9080', padding: '6px 11px', borderRadius: 99, border: '1px solid rgba(255,255,255,.07)', display: 'flex', alignItems: 'center', gap: 7 }}>
+              <span key={p.label} style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.06em', color: '#9e9080', padding: '6px 11px', borderRadius: 99, border: '1px solid var(--hair-70)', display: 'flex', alignItems: 'center', gap: 7 }}>
                 <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: p.color }} />
                 {p.label}
               </span>
@@ -320,7 +320,7 @@ function CoverageBuilder() {
                 <span style={{ color: r.vc ?? 'inherit' }}>{r.v}</span>
               </div>
             ))}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 12, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,.07)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 12, paddingTop: 14, borderTop: '1px solid var(--hair-70)' }}>
               <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: '#9e9080' }}>Total</span>
               <span style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 34, letterSpacing: '-.03em', color: '#ff5029' }}>
                 {money(total)}<small style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 11, color: '#5a5048', letterSpacing: '.04em', fontWeight: 400, marginLeft: 4 }}>{money(dailyCost)}/day</small>
@@ -430,7 +430,7 @@ function AIScanner() {
           { n: '04', title: 'Copyright firewall', desc: 'Audio is fingerprinted and copy is scanned for protected song titles, lyrics, and artist name-drops you don\'t have rights to. Auto-rejected on any match.' },
           { n: '05', title: 'Reputation risk', desc: 'A final pass for misleading pricing, fake scarcity, impersonation, or off-platform resale — anything that would tarnish the scene.' },
         ].map(c => (
-          <div key={c.n} style={{ display: 'flex', gap: 14, padding: '18px', border: '1px solid rgba(255,255,255,.07)', borderRadius: 14, background: '#100d09' }}>
+          <div key={c.n} style={{ display: 'flex', gap: 14, padding: '18px', border: '1px solid var(--hair-70)', borderRadius: 14, background: '#100d09' }}>
             <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: '#ff5029', letterSpacing: '.1em', flexShrink: 0, paddingTop: 3 }}>{c.n}</span>
             <div>
               <div style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 700, fontSize: 15, letterSpacing: '-.01em' }}>{c.title}</div>
@@ -441,8 +441,8 @@ function AIScanner() {
       </div>
 
       {/* Interactive scanner */}
-      <div style={{ background: '#100d09', border: '1px solid rgba(255,255,255,.07)', borderRadius: 16, overflow: 'hidden' }}>
-        <div style={{ padding: '15px 18px', borderBottom: '1px solid rgba(255,255,255,.07)', display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ background: '#100d09', border: '1px solid var(--hair-70)', borderRadius: 16, overflow: 'hidden' }}>
+        <div style={{ padding: '15px 18px', borderBottom: '1px solid var(--hair-70)', display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.12em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 99, display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid var(--line-2)', color: '#9e9080' }}>
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ff5029', animation: 'adv-pulse 2.4s ease-out infinite', flexShrink: 0 }} />
             HYPE Screen
@@ -454,11 +454,11 @@ function AIScanner() {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '188px 1fr', minHeight: 330 }}>
           {/* Submission list */}
-          <div style={{ borderRight: '1px solid rgba(255,255,255,.07)', padding: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ borderRight: '1px solid var(--hair-70)', padding: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
             {SUBS.map((s, i) => (
               <button key={i} onClick={() => runScan(i)} style={{
                 padding: '11px 12px', borderRadius: 9, textAlign: 'left',
-                border: `1px solid ${i === active ? 'rgba(255,255,255,.35)' : 'rgba(255,255,255,.07)'}`,
+                border: `1px solid ${i === active ? 'rgba(255,255,255,.35)' : 'var(--hair-70)'}`,
                 background: i === active ? '#221c16' : '#1a1612',
                 cursor: 'pointer', transition: 'border-color .15s',
               }}>
@@ -471,7 +471,7 @@ function AIScanner() {
           {/* Scan stage */}
           <div style={{ padding: '18px 20px', position: 'relative', display: 'flex', flexDirection: 'column' }}>
             {/* Ad preview */}
-            <div style={{ border: '1px solid rgba(255,255,255,.07)', borderRadius: 11, padding: '14px 16px', background: '#1a1612', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ border: '1px solid var(--hair-70)', borderRadius: 11, padding: '14px 16px', background: '#1a1612', position: 'relative', overflow: 'hidden' }}>
               {scanning && (
                 <div style={{ position: 'absolute', left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, #ff5029, transparent)', boxShadow: '0 0 14px #ff5029', animation: 'adv-scan 1.25s ease-in-out' }} />
               )}
@@ -487,7 +487,7 @@ function AIScanner() {
                 return (
                   <div key={i} style={{
                     display: 'flex', alignItems: 'center', gap: 12, padding: '11px 13px', borderRadius: 10,
-                    border: `1px solid ${state === 'pass' ? 'rgba(34,229,212,.25)' : state === 'fail' ? 'rgba(255,90,90,.25)' : 'rgba(255,255,255,.07)'}`,
+                    border: `1px solid ${state === 'pass' ? 'rgba(34,229,212,.25)' : state === 'fail' ? 'rgba(255,90,90,.25)' : 'var(--hair-70)'}`,
                     background: '#1a1612', opacity: state === 'idle' ? .4 : 1, transition: 'opacity .3s, border-color .3s',
                   }}>
                     <span style={{
@@ -558,8 +558,8 @@ function ScanDemo() {
   }
 
   return (
-    <div style={{ maxWidth: 640, margin: '0 auto', background: '#100d09', border: '1px solid rgba(255,255,255,.1)', borderRadius: 14, overflow: 'hidden' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 18px', borderBottom: '1px solid rgba(255,255,255,.07)' }}>
+    <div style={{ maxWidth: 640, margin: '0 auto', background: '#100d09', border: '1px solid var(--hair-100)', borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 18px', borderBottom: '1px solid var(--hair-70)' }}>
         <span style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 700, fontSize: 14, flex: 1 }}>HYPE Screen · automated ad review</span>
         <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase', color: phase === 'done' ? '#22e5d4' : phase === 'scanning' ? '#ff5029' : '#5a5048' }}>
           {phase === 'done' ? 'Cleared · 5/5' : phase === 'scanning' ? 'Scanning…' : 'Awaiting audio'}
@@ -580,8 +580,8 @@ function ScanDemo() {
           {SCAN_GATES.map((g, i) => {
             const state = passed >= i ? 'pass' : 'wait';
             return (
-              <div key={g} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, background: state === 'pass' ? 'rgba(34,229,212,.1)' : 'rgba(255,255,255,.03)', border: `1px solid ${state === 'pass' ? 'rgba(34,229,212,.25)' : 'rgba(255,255,255,.08)'}`, transition: 'all .3s' }}>
-                <span style={{ width: 12, height: 12, borderRadius: '50%', flexShrink: 0, background: state === 'pass' ? '#22e5d4' : 'transparent', border: state === 'pass' ? 'none' : '2px solid rgba(255,255,255,.18)' }} />
+              <div key={g} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, background: state === 'pass' ? 'rgba(34,229,212,.1)' : 'var(--hair-30)', border: `1px solid ${state === 'pass' ? 'rgba(34,229,212,.25)' : 'var(--hair-80)'}`, transition: 'all .3s' }}>
+                <span style={{ width: 12, height: 12, borderRadius: '50%', flexShrink: 0, background: state === 'pass' ? '#22e5d4' : 'transparent', border: state === 'pass' ? 'none' : '2px solid var(--hair-180)' }} />
                 <span style={{ flex: 1, fontSize: 12, color: state === 'pass' ? 'var(--ink)' : '#9e9080' }}>Gate {i + 1} — {g}</span>
                 <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9, letterSpacing: '.08em', textTransform: 'uppercase', color: state === 'pass' ? '#22e5d4' : '#5a5048' }}>{state === 'pass' ? 'PASS' : '…'}</span>
               </div>
@@ -641,7 +641,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
         .adv-btn-solid { background:#ff5029; color:#0a0805; display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:var(--f-m,monospace); font-weight:600; font-size:11.5px; letter-spacing:.06em; padding:13px 22px; border-radius:9px; cursor:pointer; transition:filter .15s; text-decoration:none; border:none; white-space:nowrap }
         .adv-btn-solid:hover { filter:brightness(1.08) }
         .adv-btn-ghost { border:1px solid var(--line-2); color:var(--ink); display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:var(--f-m,monospace); font-weight:600; font-size:11.5px; letter-spacing:.06em; padding:13px 22px; border-radius:9px; cursor:pointer; transition:background .15s, border-color .15s; text-decoration:none; white-space:nowrap; background:none }
-        .adv-btn-ghost:hover { background:rgba(255,255,255,.05); border-color:#9e9080 }
+        .adv-btn-ghost:hover { background:var(--hair-50); border-color:#9e9080 }
         .adv-btn-sm { padding:9px 15px !important; font-size:10.5px !important }
         @media (max-width:1040px) {
           .adv-hero-grid, .adv-builder, .adv-guard, .adv-paths, .adv-trans { grid-template-columns:1fr !important }
@@ -674,7 +674,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
               <a href="#build" className="adv-btn-solid">Build a campaign →</a>
               <a href="#guard" className="adv-btn-ghost">See how vetting works</a>
             </div>
-            <div style={{ display: 'flex', gap: 26, marginTop: 34, paddingTop: 24, borderTop: '1px solid rgba(255,255,255,.07)' }}>
+            <div style={{ display: 'flex', gap: 26, marginTop: 34, paddingTop: 24, borderTop: '1px solid var(--hair-70)' }}>
               {[
                 { v: <CountUp target={stats.activeCampaigns} />, l: 'Campaigns live now' },
                 { v: stats.clearedPct !== null ? <CountUp target={stats.clearedPct} suffix="%" /> : '—', l: 'Auto-cleared, no review' },
@@ -692,7 +692,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
       </header>
 
       {/* Coverage Builder */}
-      <section id="build" style={{ position: 'relative', padding: '88px 0', borderTop: '1px solid rgba(255,255,255,.07)' }}>
+      <section id="build" style={{ position: 'relative', padding: '88px 0', borderTop: '1px solid var(--hair-70)' }}>
         <div className="adv-shell" style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
           <div style={{ maxWidth: 680, marginBottom: 40 }}>
             <span style={{ ...eyebrow(''), display: 'inline-flex', alignItems: 'center', gap: 9 }}>
@@ -712,7 +712,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
       </section>
 
       {/* AI Guardrails */}
-      <section id="guard" style={{ position: 'relative', padding: '88px 0', borderTop: '1px solid rgba(255,255,255,.07)' }}>
+      <section id="guard" style={{ position: 'relative', padding: '88px 0', borderTop: '1px solid var(--hair-70)' }}>
         <div className="adv-shell" style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
           <div style={{ maxWidth: 680, marginBottom: 40 }}>
             <span style={{ ...eyebrow(''), display: 'inline-flex', alignItems: 'center', gap: 9 }}>
@@ -730,7 +730,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
       </section>
 
       {/* HYPE Screen — upload & scan demo */}
-      <section id="scan" style={{ position: 'relative', padding: '88px 0', borderTop: '1px solid rgba(255,255,255,.07)' }}>
+      <section id="scan" style={{ position: 'relative', padding: '88px 0', borderTop: '1px solid var(--hair-70)' }}>
         <div className="adv-shell" style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
           <div style={{ maxWidth: 680, margin: '0 auto 40px', textAlign: 'center' }}>
             <span style={{ ...eyebrow(''), display: 'inline-flex', alignItems: 'center', gap: 9, justifyContent: 'center' }}>
@@ -751,7 +751,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
       </section>
 
       {/* Two paths */}
-      <section id="paths" style={{ position: 'relative', padding: '88px 0', borderTop: '1px solid rgba(255,255,255,.07)' }}>
+      <section id="paths" style={{ position: 'relative', padding: '88px 0', borderTop: '1px solid var(--hair-70)' }}>
         <div className="adv-shell" style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
           <div style={{ maxWidth: 680, marginBottom: 40 }}>
             <span style={{ ...eyebrow(''), display: 'inline-flex', alignItems: 'center', gap: 9 }}>
@@ -766,7 +766,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
           </div>
           <div className="adv-paths" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
             {/* Members */}
-            <div style={{ border: '1px solid rgba(255,255,255,.07)', borderRadius: 16, background: '#100d09', padding: '28px 28px 26px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ border: '1px solid var(--hair-70)', borderRadius: 16, background: '#100d09', padding: '28px 28px 26px', display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.14em', textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: 8, color: '#ff5029' }}>
                 <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: '#ff5029' }} />Members
               </span>
@@ -797,7 +797,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
             </div>
 
             {/* 3rd party */}
-            <div style={{ border: '1px solid rgba(255,255,255,.07)', borderRadius: 16, background: '#100d09', padding: '28px 28px 26px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ border: '1px solid var(--hair-70)', borderRadius: 16, background: '#100d09', padding: '28px 28px 26px', display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.14em', textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: 8, color: '#7fb3ff' }}>
                 <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: '#7fb3ff' }} />3rd-Party Accounts
               </span>
@@ -832,7 +832,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
       </section>
 
       {/* Transparency */}
-      <section id="trust" style={{ position: 'relative', padding: '88px 0', borderTop: '1px solid rgba(255,255,255,.07)' }}>
+      <section id="trust" style={{ position: 'relative', padding: '88px 0', borderTop: '1px solid var(--hair-70)' }}>
         <div className="adv-shell" style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
           <div style={{ maxWidth: 680, marginBottom: 8 }}>
             <span style={{ ...eyebrow(''), display: 'inline-flex', alignItems: 'center', gap: 9 }}>
@@ -846,11 +846,11 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
             <p style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontSize: 26, lineHeight: 1.35, color: '#9e9080', maxWidth: '22ch' }}>
               iHYPE is run by one director and a lot of automation — so almost every dollar of ad spend <b style={{ fontFamily: 'DM Sans,sans-serif', fontStyle: 'normal', fontWeight: 600, color: '#ff5029' }}>goes back into the music</b>, not overhead.
             </p>
-            <div style={{ borderTop: '1px solid rgba(255,255,255,.07)' }}>
+            <div style={{ borderTop: '1px solid var(--hair-70)' }}>
               {[{ lb: 'To artists & payouts', w: '72%', color: '#ff5029', pct: '72%' }, { lb: 'Platform & hosting', w: '18%', color: 'var(--ink)', pct: '18%' }, { lb: 'Moderation & AI screen', w: '10%', color: '#9e9080', pct: '10%' }].map(r => (
-                <div key={r.lb} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 0', borderBottom: '1px solid rgba(255,255,255,.07)' }}>
+                <div key={r.lb} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--hair-70)' }}>
                   <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#5a5048', width: 150 }}>{r.lb}</span>
-                  <span style={{ flex: 1, height: 9, borderRadius: 99, background: 'rgba(255,255,255,.07)', overflow: 'hidden' }}>
+                  <span style={{ flex: 1, height: 9, borderRadius: 99, background: 'var(--hair-70)', overflow: 'hidden' }}>
                     <i style={{ display: 'block', height: '100%', width: r.w, background: r.color, borderRadius: 99 }} />
                   </span>
                   <span style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 19, letterSpacing: '-.02em', width: 54, textAlign: 'right', color: r.color }}>{r.pct}</span>

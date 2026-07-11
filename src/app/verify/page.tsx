@@ -94,7 +94,7 @@ export default async function VerifyPage() {
             Verified {TYPE_LABEL[profile.type]} · Pending
           </span>
         </div>
-        <div style={{ textAlign: 'left', background: 'var(--bg-2, #0e0b08)', border: '1px solid var(--line, rgba(255,255,255,.08))', borderRadius: 18, padding: '1.5rem', marginBottom: 24 }}>
+        <div style={{ textAlign: 'left', background: 'var(--bg-2, #0e0b08)', border: '1px solid var(--line, var(--hair-80))', borderRadius: 18, padding: '1.5rem', marginBottom: 24 }}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '.14em', textTransform: 'uppercase', color: badge.text, marginBottom: 8 }}>While you wait</div>
           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.05rem', marginBottom: 6 }}>{nextStep.title}</div>
           <p style={{ fontSize: '0.85rem', color: 'var(--ink-2, #9e9080)', lineHeight: 1.6, marginBottom: 14 }}>{nextStep.body}</p>

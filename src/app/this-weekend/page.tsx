@@ -82,7 +82,7 @@ const WEEKEND_CSS = `
 .weekend-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.16em; color: #22e5d4; }
 .weekend-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 36px; line-height: 1.0; letter-spacing: -0.03em; color: var(--ink); margin: 10px 0 24px; }
 .weekend-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-.weekend-card { background: #100d09; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; overflow: hidden; }
+.weekend-card { background: #100d09; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
 .weekend-card-hyped { border-color: rgba(255,80,41,0.45); box-shadow: 0 0 40px rgba(255,80,41,0.08); }
 .weekend-card-link { display: flex; align-items: center; gap: 14px; padding: 14px 16px; text-decoration: none; }
 .weekend-card-when { flex-shrink: 0; width: 64px; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.04em; color: #22e5d4; text-transform: uppercase; line-height: 1.4; }
@@ -90,11 +90,11 @@ const WEEKEND_CSS = `
 .weekend-card-title { font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 16px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .weekend-card-meta { font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--ink-a50); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .weekend-card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.weekend-tag { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-a55); background: rgba(255,255,255,0.04); border-radius: 4px; padding: 3px 7px; }
+.weekend-tag { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-a55); background: var(--hair-40); border-radius: 4px; padding: 3px 7px; }
 .weekend-tag-hyped { color: #ff5029; background: rgba(255,80,41,0.12); }
 .weekend-tag-local { color: #22e5d4; background: rgba(34,229,212,0.12); }
 .weekend-card-cta { flex-shrink: 0; font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 13px; color: #fff; background: linear-gradient(135deg, #ff5029, #ff3e6e); border-radius: 9999px; padding: 9px 16px; }
-.weekend-empty { text-align: center; padding: 32px; background: #100d09; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; }
+.weekend-empty { text-align: center; padding: 32px; background: #100d09; border: 1px solid var(--line); border-radius: 16px; }
 .weekend-empty p { font-family: 'DM Sans', sans-serif; color: var(--ink-a60); margin: 0 0 14px; }
 .weekend-cta { display: inline-block; font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 15px; padding: 12px 22px; border-radius: 9999px; background: linear-gradient(135deg, #ff5029, #ff3e6e); color: #fff; text-decoration: none; }
 .weekend-foot { font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink-a50); text-align: center; margin-top: 24px; }

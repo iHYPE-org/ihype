@@ -218,8 +218,8 @@ export default async function DJProfilePage({
         .dj-hero-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
         .dj-badge { display: inline-block; padding: 5px 12px; border-radius: 4px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; }
         .dj-hero-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-        .dj-hero-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; background: var(--line); color: var(--ink); border: 1px solid rgba(255,255,255,.1); }
-        .dj-hero-btn:hover { background: rgba(255,255,255,.1); }
+        .dj-hero-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; background: var(--line); color: var(--ink); border: 1px solid var(--hair-100); }
+        .dj-hero-btn:hover { background: var(--hair-100); }
         .dj-stats { display: flex; gap: 28px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--line); }
         .dj-stat-val { font-size: 22px; font-weight: 700; color: var(--profile-accent, #ff3e9a); font-family: var(--font-display); }
         .dj-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a55); margin-top: 2px; }

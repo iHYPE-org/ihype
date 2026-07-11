@@ -84,7 +84,7 @@ function ProfilePicker({
       {open && results.length > 0 && (
         <div style={{
           position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, marginTop: -10,
-          background: '#1a1510', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8,
+          background: '#1a1510', border: '1px solid var(--hair-100)', borderRadius: 8,
           overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,.5)',
         }}>
           {results.map(p => (
@@ -94,7 +94,7 @@ function ProfilePicker({
               style={{
                 display: 'block', width: '100%', padding: '10px 14px', background: 'none',
                 border: 'none', cursor: 'pointer', textAlign: 'left',
-                borderBottom: '1px solid rgba(255,255,255,.05)',
+                borderBottom: '1px solid var(--hair-50)',
               }}
               type="button"
             >
@@ -376,7 +376,7 @@ export default function EventsNewPage() {
         .progress-fill { height: 100%; background: #ff5029; border-radius: 999px; transition: width .4s ease; }
         .field { margin-bottom: 14px; }
         .field label { display: block; font-family: var(--font-mono); font-size: .65rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 6px; }
-        .field input, .field select, .field textarea { width: 100%; padding: 11px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,.08); background: var(--bg3, #0a0805); color: var(--ink); font-size: .9rem; outline: none; transition: border-color .15s; box-sizing: border-box; }
+        .field input, .field select, .field textarea { width: 100%; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--hair-80); background: var(--bg3, #0a0805); color: var(--ink); font-size: .9rem; outline: none; transition: border-color .15s; box-sizing: border-box; }
         .field input:focus, .field select:focus, .field textarea:focus { border-color: rgba(255,80,41,.4); }
         .field textarea { resize: vertical; min-height: 70px; }
         .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -384,12 +384,12 @@ export default function EventsNewPage() {
         .btn-primary { width: 100%; padding: 13px; border-radius: 999px; background: #ff5029; color: #fff; border: none; font-family: var(--font-display); font-weight: 800; font-size: .95rem; cursor: pointer; box-shadow: 0 4px 20px rgba(255,80,41,.25); margin-top: 4px; text-align: center; text-decoration: none; display: block; }
         .btn-primary:disabled { background: var(--bg3); color: var(--ink-3); box-shadow: none; cursor: default; }
         .btn-ghost { width: 100%; padding: 11px; border-radius: 999px; background: transparent; color: var(--ink-2); border: none; font-family: var(--font-display); font-weight: 700; font-size: .88rem; cursor: pointer; margin-top: 8px; text-align: center; text-decoration: none; display: block; }
-        .card { background: var(--bg2, #0e0b08); border: 1px solid var(--line, rgba(255,255,255,.08)); border-radius: 16px; padding: 1.25rem; margin-bottom: 12px; }
+        .card { background: var(--bg2, #0e0b08); border: 1px solid var(--line, var(--hair-80)); border-radius: 16px; padding: 1.25rem; margin-bottom: 12px; }
         .split-bar { display: flex; height: 8px; border-radius: 999px; overflow: hidden; gap: 2px; }
-        .ticket-type-btn { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line, rgba(255,255,255,.08)); cursor: pointer; margin-bottom: 8px; transition: all .15s; background: var(--bg2, #0e0b08); }
+        .ticket-type-btn { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line, var(--hair-80)); cursor: pointer; margin-bottom: 8px; transition: all .15s; background: var(--bg2, #0e0b08); }
         .ticket-type-btn:hover { border-color: rgba(255,80,41,.3); }
         .ticket-type-btn.selected { border-color: #ff5029; background: rgba(255,80,41,.06); }
-        .cover-slot { width: 100%; height: 140px; margin-bottom: 20px; border-radius: 12px; background: var(--bg2, #0e0b08); border: 1px dashed rgba(255,255,255,.1); display: flex; align-items: center; justify-content: center; color: var(--ink-3); font-family: var(--font-mono); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; }
+        .cover-slot { width: 100%; height: 140px; margin-bottom: 20px; border-radius: 12px; background: var(--bg2, #0e0b08); border: 1px dashed var(--hair-100); display: flex; align-items: center; justify-content: center; color: var(--ink-3); font-family: var(--font-mono); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; }
       `}</style>
     </div>
   );

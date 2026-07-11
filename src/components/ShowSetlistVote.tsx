@@ -90,7 +90,7 @@ export function ShowSetlistVote({
                   gap: '0.75rem',
                   padding: '0.6rem 0.75rem',
                   borderRadius: '10px',
-                  background: 'rgba(255,255,255,0.03)'
+                  background: 'var(--hair-30)'
                 }}
               >
                 <strong>{track.title}</strong>

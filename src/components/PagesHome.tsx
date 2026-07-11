@@ -287,7 +287,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
               autoFocus
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search artists, venues, shows…"
-              style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: '14px 16px 14px 46px', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontSize: 16 }}
+              style={{ width: '100%', boxSizing: 'border-box', background: 'var(--hair-30)', border: '1px solid var(--hair-80)', borderRadius: 12, padding: '14px 16px 14px 46px', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontSize: 16 }}
               type="text"
               value={q}
             />
@@ -308,7 +308,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                 const route = r.type === 'venue' ? `/venues/${r.slug}` : r.type === 'promoter' ? `/promoters/${r.slug}` : `/artists/${r.slug}`;
                 const initials = r.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
                 return (
-                  <Link key={r.id} href={route} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 14, background: 'rgba(255,255,255,.03)', textDecoration: 'none', color: 'inherit' }}>
+                  <Link key={r.id} href={route} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 14, background: 'var(--hair-30)', textDecoration: 'none', color: 'inherit' }}>
                     <div style={{
                       width: 46, height: 46, borderRadius: 9999, flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -369,8 +369,8 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                       style={{
                         display: 'flex', alignItems: 'center', gap: 10, padding: '11px 15px 11px 12px',
                         borderRadius: 12, cursor: 'pointer',
-                        background: selected ? hexA(color, 0.1) : 'rgba(255,255,255,.03)',
-                        border: `1px solid ${selected ? color : 'rgba(255,255,255,.1)'}`,
+                        background: selected ? hexA(color, 0.1) : 'var(--hair-30)',
+                        border: `1px solid ${selected ? color : 'var(--hair-100)'}`,
                         boxShadow: selected ? `0 0 0 1px ${color} inset` : 'none',
                       }}
                     >
@@ -395,7 +395,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                   onClick={() => setTab('creator')}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 7, padding: '11px 16px', borderRadius: 12,
-                    background: 'transparent', border: '1px dashed rgba(255,255,255,.18)', cursor: 'pointer',
+                    background: 'transparent', border: '1px dashed var(--hair-180)', cursor: 'pointer',
                     color: 'var(--ink-a55)', fontSize: 13, fontWeight: 600,
                   }}
                   type="button"
@@ -463,19 +463,19 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
             YOUR NETWORK
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 18 }}>
-            <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid var(--line)', borderRadius: 14, padding: 16, textAlign: 'center' }}>
+            <div style={{ background: 'var(--hair-30)', border: '1px solid var(--line)', borderRadius: 14, padding: 16, textAlign: 'center' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', marginBottom: 5 }}>
                 {String(following.length).padStart(2, '0')}
               </div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Following</div>
             </div>
-            <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid var(--line)', borderRadius: 14, padding: 16, textAlign: 'center' }}>
+            <div style={{ background: 'var(--hair-30)', border: '1px solid var(--line)', borderRadius: 14, padding: 16, textAlign: 'center' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', marginBottom: 5 }}>
                 {String(followersCount).padStart(2, '0')}
               </div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Followers</div>
             </div>
-            <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid var(--line)', borderRadius: 14, padding: 16, textAlign: 'center' }}>
+            <div style={{ background: 'var(--hair-30)', border: '1px solid var(--line)', borderRadius: 14, padding: 16, textAlign: 'center' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', marginBottom: 5 }}>
                 {String(mutualCount).padStart(2, '0')}
               </div>
@@ -490,8 +490,8 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                 onClick={() => setNetFilter(f.id)}
                 style={{
                   fontSize: 12, padding: '7px 14px', borderRadius: 9999, cursor: 'pointer',
-                  background: netFilter === f.id ? 'rgba(255,80,41,.12)' : 'rgba(255,255,255,.03)',
-                  border: `1px solid ${netFilter === f.id ? 'rgba(255,80,41,.4)' : 'rgba(255,255,255,.1)'}`,
+                  background: netFilter === f.id ? 'rgba(255,80,41,.12)' : 'var(--hair-30)',
+                  border: `1px solid ${netFilter === f.id ? 'rgba(255,80,41,.4)' : 'var(--hair-100)'}`,
                   color: netFilter === f.id ? 'var(--ink)' : 'var(--ink-a60)',
                 }}
               >
@@ -508,7 +508,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                 const color = TYPE_COLOR[p.type] ?? '#ff5029';
                 const initials = p.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
                 return (
-                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 14, background: 'rgba(255,255,255,.03)' }}>
+                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 14, background: 'var(--hair-30)' }}>
                     <Link href={profileRoute(p.type, p.slug)} style={{
                       width: 46, height: 46, borderRadius: 9999, flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -550,7 +550,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                 const color = TYPE_COLOR[p.type] ?? '#ff5029';
                 const initials = p.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
                 return (
-                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 14, background: 'rgba(255,255,255,.03)' }}>
+                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 14, background: 'var(--hair-30)' }}>
                     <Link href={profileRoute(p.type, p.slug)} style={{
                       width: 46, height: 46, borderRadius: 9999, flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -598,7 +598,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                 EDITING · {(TYPE_LABEL[selectedProfile.type] ?? selectedProfile.type).toUpperCase()}
               </div>
               <PageEditor key={selectedProfile.id} profileId={selectedProfile.id} />
-              <div style={{ borderTop: '1px solid rgba(255,255,255,.07)', margin: '36px 0 22px' }} />
+              <div style={{ borderTop: '1px solid var(--hair-70)', margin: '36px 0 22px' }} />
             </>
           )}
 
@@ -626,7 +626,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                       onChange={(e) => setCreatingName(e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter') addProfile(card.type); }}
                       placeholder={`${card.name} name`}
-                      style={{ boxSizing: 'border-box', width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,.1)', background: 'rgba(255,255,255,.04)', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontSize: 14 }}
+                      style={{ boxSizing: 'border-box', width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--hair-100)', background: 'var(--hair-40)', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontSize: 14 }}
                       type="text"
                       value={creatingName}
                     />
@@ -643,7 +643,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                       <button
                         disabled={creating}
                         onClick={() => { setCreatingType(null); setCreatingName(''); setCreateError(null); }}
-                        style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,.1)', background: 'transparent', color: 'var(--ink-a70)', fontSize: 13, cursor: 'pointer' }}
+                        style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid var(--hair-100)', background: 'transparent', color: 'var(--ink-a70)', fontSize: 13, cursor: 'pointer' }}
                         type="button"
                       >
                         Cancel
@@ -657,8 +657,8 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                   key={card.type}
                   onClick={() => { setCreatingType(card.type); setCreatingName(''); setCreateError(null); }}
                   style={{
-                    border: '1px solid rgba(255,255,255,.07)', borderRadius: 14, padding: 20,
-                    background: 'rgba(255,255,255,.03)', textAlign: 'left', color: 'inherit', cursor: 'pointer',
+                    border: '1px solid var(--hair-70)', borderRadius: 14, padding: 20,
+                    background: 'var(--hair-30)', textAlign: 'left', color: 'inherit', cursor: 'pointer',
                     display: 'flex', flexDirection: 'column', gap: 12, font: 'inherit',
                   }}
                   type="button"

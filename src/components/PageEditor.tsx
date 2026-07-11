@@ -63,7 +63,7 @@ type SectionId = (typeof SECTIONS)[number]['id'];
 
 const inputStyle: React.CSSProperties = {
   width: '100%', boxSizing: 'border-box', padding: '12px 14px', borderRadius: 10,
-  border: '1px solid rgba(255,255,255,.1)', background: 'rgba(255,255,255,.03)',
+  border: '1px solid var(--hair-100)', background: 'var(--hair-30)',
   color: 'var(--ink)', fontFamily: 'var(--font-body)', fontSize: 15,
 };
 
@@ -93,8 +93,8 @@ function ImageField({ label, value, onUpload, uploading }: { label: string; valu
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
         <div style={{
           width: 64, height: 64, borderRadius: 12, flexShrink: 0, overflow: 'hidden',
-          background: value ? `url(${value}) center/cover` : 'rgba(255,255,255,.05)',
-          border: '1px solid rgba(255,255,255,.1)',
+          background: value ? `url(${value}) center/cover` : 'var(--hair-50)',
+          border: '1px solid var(--hair-100)',
         }} />
         <div style={{ flex: 1 }}>
           <button
@@ -439,7 +439,7 @@ export function PageEditor({ profileId }: { profileId: string }) {
                   onClick={() => set('themePreset', p.id)}
                   style={{
                     padding: 12, borderRadius: 12, cursor: 'pointer', textAlign: 'left',
-                    border: `2px solid ${data.themePreset === p.id ? p.accent : 'rgba(255,255,255,.08)'}`,
+                    border: `2px solid ${data.themePreset === p.id ? p.accent : 'var(--hair-80)'}`,
                     background: p.panel,
                   }}
                   type="button"
@@ -459,8 +459,8 @@ export function PageEditor({ profileId }: { profileId: string }) {
                   onClick={() => set('themeAccentTone', t.id)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 9999, cursor: 'pointer',
-                    border: `1px solid ${data.themeAccentTone === t.id || (!data.themeAccentTone && t.id === 'preset') ? (t.accent ?? preset.accent) : 'rgba(255,255,255,.08)'}`,
-                    background: 'rgba(255,255,255,.03)', color: 'var(--ink)', fontSize: 12,
+                    border: `1px solid ${data.themeAccentTone === t.id || (!data.themeAccentTone && t.id === 'preset') ? (t.accent ?? preset.accent) : 'var(--hair-80)'}`,
+                    background: 'var(--hair-30)', color: 'var(--ink)', fontSize: 12,
                   }}
                   type="button"
                 >
@@ -479,7 +479,7 @@ export function PageEditor({ profileId }: { profileId: string }) {
                   onClick={() => set('themeBackdropTone', t.id)}
                   style={{
                     padding: '8px 14px', borderRadius: 9999, cursor: 'pointer', fontSize: 12, color: 'var(--ink)',
-                    border: `1px solid ${data.themeBackdropTone === t.id || (!data.themeBackdropTone && t.id === 'preset') ? (t.border ?? preset.border) : 'rgba(255,255,255,.08)'}`,
+                    border: `1px solid ${data.themeBackdropTone === t.id || (!data.themeBackdropTone && t.id === 'preset') ? (t.border ?? preset.border) : 'var(--hair-80)'}`,
                     background: t.panel ?? preset.panel,
                   }}
                   type="button"
@@ -512,8 +512,8 @@ export function PageEditor({ profileId }: { profileId: string }) {
 
           {!isFan && (
             <div style={{
-              border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: '14px 16px',
-              background: 'rgba(255,255,255,.02)', marginBottom: 20,
+              border: '1px solid var(--hair-80)', borderRadius: 12, padding: '14px 16px',
+              background: 'var(--hair-20)', marginBottom: 20,
             }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)', marginBottom: 4 }}>
                 Import from your website
@@ -559,7 +559,7 @@ export function PageEditor({ profileId }: { profileId: string }) {
                 onClick={() => setAiPrompt(chip)}
                 style={{
                   fontSize: 12, padding: '7px 13px', borderRadius: 9999, cursor: 'pointer',
-                  background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.1)',
+                  background: 'var(--hair-30)', border: '1px solid var(--hair-100)',
                   color: 'var(--ink-a65)', fontFamily: 'var(--font-body)',
                 }}
                 type="button"

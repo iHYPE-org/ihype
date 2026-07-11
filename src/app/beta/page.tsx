@@ -40,8 +40,8 @@ export default function BetaPage() {
         <div style={{
           display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
           gap: 1, borderRadius: 12, overflow: 'hidden',
-          background: 'rgba(255,255,255,.07)',
-          border: '1px solid rgba(255,255,255,.07)',
+          background: 'var(--hair-70)',
+          border: '1px solid var(--hair-70)',
         }}>
           {[
             { pct: '45%', role: 'Artist', color: '#ff5029' },
@@ -51,7 +51,7 @@ export default function BetaPage() {
           ].map(s => (
             <div key={s.role} style={{
               padding: '24px 20px',
-              background: 'rgba(255,255,255,.025)',
+              background: 'var(--hair-25)',
               display: 'flex', flexDirection: 'column', gap: 6,
             }}>
               <span style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-.02em', color: s.color }}>{s.pct}</span>
@@ -75,7 +75,7 @@ export default function BetaPage() {
             { icon: '📍', title: 'Local discovery', body: 'Shows near you, ranked by community activity — not paid promotion.', color: '#22e5d4' },
           ].map(f => (
             <div key={f.title} style={{
-              padding: '20px 22px', border: '1px solid rgba(255,255,255,.07)',
+              padding: '20px 22px', border: '1px solid var(--hair-70)',
               borderRadius: 10, background: 'var(--bg-2, #100d09)',
             }}>
               <div style={{ fontSize: 28, marginBottom: 10 }}>{f.icon}</div>
