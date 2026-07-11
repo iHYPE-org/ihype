@@ -76,7 +76,7 @@ export function HeaderAuthLinks() {
             style={{
               fontSize: 12,
               fontWeight: 600,
-              color: 'var(--ink, #f0ebe5)',
+              color: 'var(--ink)',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',

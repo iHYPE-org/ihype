@@ -50,7 +50,7 @@ export default async function MyTicketsPage() {
     <div className="tickets-container">
       <div className="tickets-header">
         <h1>My Tickets</h1>
-        <p style={{ fontSize: 14, color: 'rgba(240, 235, 229, 0.7)' }}>Your upcoming shows</p>
+        <p style={{ fontSize: 14, color: 'var(--ink-a70)' }}>Your upcoming shows</p>
       </div>
 
       {orders.length === 0 ? (
@@ -118,11 +118,11 @@ export default async function MyTicketsPage() {
         .ticket-card { border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 12px; padding: 24px; background: linear-gradient(135deg, var(--bg2), var(--bg3)); }
         .ticket-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
         .ticket-title h3 { font-family: var(--font-display); font-size: 18px; font-weight: 800; margin-bottom: 4px; color: var(--ink); }
-        .ticket-meta { font-size: 13px; color: rgba(240, 235, 229, 0.7); }
+        .ticket-meta { font-size: 13px; color: var(--ink-a70); }
         .ticket-status { display: inline-block; padding: 4px 8px; background: rgba(34, 229, 212, 0.15); color: var(--role-venue, #22e5d4); font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; border-radius: 3px; }
         .ticket-details { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.06); margin-bottom: 16px; }
         @media (max-width: 480px) { .ticket-details { grid-template-columns: 1fr 1fr; } }
-        .detail-label { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(240, 235, 229, 0.6); margin-bottom: 4px; }
+        .detail-label { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-a60); margin-bottom: 4px; }
         .detail-value { font-size: 14px; font-weight: 600; color: var(--ink); }
         .ticket-actions { display: flex; gap: 12px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
         .ticket-actions::-webkit-scrollbar { display: none; }

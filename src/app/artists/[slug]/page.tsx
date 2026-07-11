@@ -150,7 +150,7 @@ export default async function ArtistPage({
           <div>
             <p className="artist-about-text">{profile.aboutContent || profile.bio || 'This artist has not filled out the About section yet.'}</p>
             <div className="artist-split-card">
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)' }}>Charter Split · Every ticket</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Charter Split · Every ticket</div>
               <div className="artist-split-bar">
                 <div className="artist-split-seg" style={{ background: 'rgba(255,80,41,.15)' }}>
                   <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent)' }}>45%</div>
@@ -165,7 +165,7 @@ export default async function ArtistPage({
                   <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: '#ff3e9a', marginTop: 4 }}>Promoters</div>
                 </div>
               </div>
-              <p style={{ fontSize: 12, color: 'rgba(240,235,229,.55)', marginTop: 12 }}>iHYPE takes 0% · locked in the charter</p>
+              <p style={{ fontSize: 12, color: 'var(--ink-a55)', marginTop: 12 }}>iHYPE takes 0% · locked in the charter</p>
             </div>
           </div>
         )}
@@ -183,7 +183,7 @@ export default async function ArtistPage({
             />
           ) : (
             <div className="artist-empty">
-              <svg fill="none" height="34" stroke="rgba(240,235,229,.3)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="34"><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg>
+              <svg fill="none" height="34" stroke="var(--ink-a30)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="34"><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg>
               <p>No tracks yet.</p>
             </div>
           )
@@ -204,7 +204,7 @@ export default async function ArtistPage({
                     </div>
                     <div style={{ flexShrink: 0 }}>
                       <div className="artist-show-price">{show.isTicketed && show.ticketPriceCents ? `$${(show.ticketPriceCents / 100).toFixed(0)}` : 'Free'}</div>
-                      <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: 'rgba(240,235,229,.5)', textAlign: 'right' }}>$0 fees</div>
+                      <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: 'var(--ink-a50)', textAlign: 'right' }}>$0 fees</div>
                     </div>
                   </Link>
                 );
@@ -220,32 +220,32 @@ export default async function ArtistPage({
 
       <style>{`
         .artist-page { max-width: 640px; margin: 0 auto; padding: 32px 0 100px; }
-        .artist-hero { padding: 40px 32px 32px; border-bottom: 1px solid var(--profile-border, rgba(255,255,255,.06)); background: var(--profile-hero, transparent); }
+        .artist-hero { padding: 40px 32px 32px; border-bottom: 1px solid var(--profile-border, var(--line)); background: var(--profile-hero, transparent); }
         .artist-hero-row { display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; }
         .artist-avatar { width: 96px; height: 96px; border-radius: 50%; background: var(--profile-hero, linear-gradient(135deg,#ff5029,#b983ff)); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; overflow: hidden; }
         .artist-name { font-family: var(--font-display); font-size: 32px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 6px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .artist-sub { font-size: 14px; color: rgba(240,235,229,.65); margin-bottom: 14px; }
+        .artist-sub { font-size: 14px; color: var(--ink-a65); margin-bottom: 14px; }
         .artist-hero-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
         .artist-badge { display: inline-block; padding: 5px 12px; border-radius: 4px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; }
         .artist-hero-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-        .artist-hero-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; background: rgba(255,255,255,.06); color: var(--ink); border: 1px solid rgba(255,255,255,.1); }
+        .artist-hero-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; background: var(--line); color: var(--ink); border: 1px solid rgba(255,255,255,.1); }
         .artist-hero-btn:hover { background: rgba(255,255,255,.1); }
-        .artist-stats { display: flex; gap: 32px; margin-top: 24px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,.06); flex-wrap: wrap; }
+        .artist-stats { display: flex; gap: 32px; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--line); flex-wrap: wrap; }
         .artist-stat-val { font-size: 22px; font-weight: 700; color: var(--profile-accent, var(--accent)); font-family: var(--font-display); }
-        .artist-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: rgba(240,235,229,.55); margin-top: 2px; }
+        .artist-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a55); margin-top: 2px; }
         .artist-content { padding: 0 32px; }
-        .artist-tabs { display: flex; gap: 24px; border-bottom: 1px solid rgba(255,255,255,.06); margin: 28px 0; }
-        .artist-tab { padding: 10px 0; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 600; font-size: 14px; color: rgba(240,235,229,.6); text-decoration: none; }
+        .artist-tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--line); margin: 28px 0; }
+        .artist-tab { padding: 10px 0; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--ink-a60); text-decoration: none; }
         .artist-tab.active { color: var(--ink); border-color: var(--profile-accent, var(--accent)); }
-        .artist-about-text { font-size: 15px; line-height: 1.7; color: rgba(240,235,229,.85); margin-bottom: 24px; white-space: pre-wrap; }
+        .artist-about-text { font-size: 15px; line-height: 1.7; color: var(--ink-a85); margin-bottom: 24px; white-space: pre-wrap; }
         .artist-split-card { border: 1px solid rgba(255,80,41,.2); border-radius: 10px; padding: 20px; background: rgba(255,80,41,.05); }
         .artist-split-bar { display: flex; border-radius: 8px; overflow: hidden; margin-top: 14px; }
         .artist-split-seg { flex: 1; padding: 12px; text-align: center; }
-        .artist-empty { text-align: center; padding: 48px 24px; color: rgba(240,235,229,.5); }
-        .artist-show-card { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 18px; border: 1px solid rgba(255,255,255,.06); border-radius: 8px; background: var(--bg2); margin-bottom: 10px; text-decoration: none; color: inherit; }
+        .artist-empty { text-align: center; padding: 48px 24px; color: var(--ink-a50); }
+        .artist-show-card { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg2); margin-bottom: 10px; text-decoration: none; color: inherit; }
         .artist-show-card:hover { background: var(--bg3); }
         .artist-show-title { font-family: var(--font-display); font-size: 15px; font-weight: 800; margin-bottom: 3px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .artist-show-meta { font-size: 12px; color: rgba(240,235,229,.55); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .artist-show-meta { font-size: 12px; color: var(--ink-a55); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .artist-show-price { font-size: 18px; font-weight: 700; color: var(--accent); text-align: right; flex-shrink: 0; }
 
         @media (max-width: 600px) {

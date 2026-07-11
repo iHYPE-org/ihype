@@ -113,7 +113,7 @@ function SearchPageInner() {
               padding: '8px 16px', borderRadius: 9999,
               background: filter === f ? 'var(--accent)' : 'rgba(255,255,255,.05)',
               border: `1px solid ${filter === f ? 'var(--accent)' : 'rgba(255,255,255,.1)'}`,
-              color: filter === f ? '#fff' : 'rgba(240,235,229,.75)',
+              color: filter === f ? '#fff' : 'var(--ink-a75)',
               fontSize: 13, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms',
             }}
           >
@@ -123,18 +123,18 @@ function SearchPageInner() {
       </div>
 
       {isPending && (
-        <p style={{ color: 'rgba(240,235,229,.35)', fontSize: 13, fontFamily: 'var(--font-mono)' }}>Searching…</p>
+        <p style={{ color: 'var(--ink-a35)', fontSize: 13, fontFamily: 'var(--font-mono)' }}>Searching…</p>
       )}
 
       {!q && (
         <div>
-          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'rgba(240,235,229,.55)', marginBottom: 14, marginTop: 32 }}>Trending</p>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginBottom: 14, marginTop: 32 }}>Trending</p>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {TRENDING.map((t) => (
               <div
                 key={t}
                 onClick={() => handleSearch(t)}
-                style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--bg2)', border: '1px solid rgba(255,255,255,.06)', fontSize: 13, color: 'rgba(240,235,229,.75)', cursor: 'pointer', transition: 'all 150ms' }}
+                style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--bg2)', border: '1px solid var(--line)', fontSize: 13, color: 'var(--ink-a75)', cursor: 'pointer', transition: 'all 150ms' }}
               >
                 {t}
               </div>
@@ -144,9 +144,9 @@ function SearchPageInner() {
       )}
 
       {q && !isPending && !hasResults && (
-        <div style={{ textAlign: 'center', padding: 60, color: 'rgba(240,235,229,.5)' }}>
+        <div style={{ textAlign: 'center', padding: 60, color: 'var(--ink-a50)' }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(240,235,229,.3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--ink-a30)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
           </div>
           <p>No results for &quot;{q}&quot;</p>
         </div>
@@ -156,17 +156,17 @@ function SearchPageInner() {
         <div>
           {show('artists') && artists.length > 0 && (
             <div>
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'rgba(240,235,229,.55)', marginBottom: 14, marginTop: 32 }}>Artists</p>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginBottom: 14, marginTop: 32 }}>Artists</p>
               {artists.map((r) => {
                 const c = resultColor(r);
                 return (
-                  <Link key={r.id} href={resultHref(r)} style={{ display: 'flex', gap: 16, alignItems: 'center', padding: '14px 16px', border: '1px solid rgba(255,255,255,.06)', borderRadius: 8, background: 'var(--bg2)', marginBottom: 10, textDecoration: 'none', color: 'inherit' }}>
+                  <Link key={r.id} href={resultHref(r)} style={{ display: 'flex', gap: 16, alignItems: 'center', padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 8, background: 'var(--bg2)', marginBottom: 10, textDecoration: 'none', color: 'inherit' }}>
                     <div style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg,${c}40,transparent)` }}>
                       <NoteIcon c={c} />
                     </div>
                     <div>
                       <h4 style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, marginBottom: 2, color: 'var(--ink)' }}>{r.name}</h4>
-                      <p style={{ fontSize: 12, color: 'rgba(240,235,229,.55)' }}>{r.subtitle}</p>
+                      <p style={{ fontSize: 12, color: 'var(--ink-a55)' }}>{r.subtitle}</p>
                     </div>
                   </Link>
                 );
@@ -176,17 +176,17 @@ function SearchPageInner() {
 
           {show('shows') && shows.length > 0 && (
             <div>
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'rgba(240,235,229,.55)', marginBottom: 14, marginTop: 32 }}>Shows</p>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginBottom: 14, marginTop: 32 }}>Shows</p>
               {shows.map((r) => {
                 const c = resultColor(r);
                 return (
-                  <Link key={r.id} href={resultHref(r)} style={{ display: 'flex', gap: 16, alignItems: 'center', padding: '14px 16px', border: '1px solid rgba(255,255,255,.06)', borderRadius: 8, background: 'var(--bg2)', marginBottom: 10, textDecoration: 'none', color: 'inherit' }}>
+                  <Link key={r.id} href={resultHref(r)} style={{ display: 'flex', gap: 16, alignItems: 'center', padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 8, background: 'var(--bg2)', marginBottom: 10, textDecoration: 'none', color: 'inherit' }}>
                     <div style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg,${c}40,transparent)` }}>
                       <TicketIcon c={c} />
                     </div>
                     <div>
                       <h4 style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, marginBottom: 2, color: 'var(--ink)' }}>{r.name}</h4>
-                      <p style={{ fontSize: 12, color: 'rgba(240,235,229,.55)' }}>{r.subtitle}</p>
+                      <p style={{ fontSize: 12, color: 'var(--ink-a55)' }}>{r.subtitle}</p>
                     </div>
                   </Link>
                 );
@@ -196,17 +196,17 @@ function SearchPageInner() {
 
           {show('tracks') && tracks.length > 0 && (
             <div>
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'rgba(240,235,229,.55)', marginBottom: 14, marginTop: 32 }}>Tracks</p>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginBottom: 14, marginTop: 32 }}>Tracks</p>
               {tracks.map((r) => {
                 const c = resultColor(r);
                 return (
-                  <Link key={r.id} href={resultHref(r)} style={{ display: 'flex', gap: 16, alignItems: 'center', padding: '14px 16px', border: '1px solid rgba(255,255,255,.06)', borderRadius: 8, background: 'var(--bg2)', marginBottom: 10, textDecoration: 'none', color: 'inherit' }}>
+                  <Link key={r.id} href={resultHref(r)} style={{ display: 'flex', gap: 16, alignItems: 'center', padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 8, background: 'var(--bg2)', marginBottom: 10, textDecoration: 'none', color: 'inherit' }}>
                     <div style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg,${c}40,transparent)` }}>
                       <NoteIcon c={c} />
                     </div>
                     <div>
                       <h4 style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, marginBottom: 2, color: 'var(--ink)' }}>{r.name}</h4>
-                      <p style={{ fontSize: 12, color: 'rgba(240,235,229,.55)' }}>{r.subtitle}</p>
+                      <p style={{ fontSize: 12, color: 'var(--ink-a55)' }}>{r.subtitle}</p>
                     </div>
                   </Link>
                 );

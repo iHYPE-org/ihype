@@ -20,13 +20,13 @@ type ChartDay = { date: string; count: number };
 
 const rowStyle: React.CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,.06)',
+  padding: '8px 0', borderBottom: '1px solid var(--line)',
 };
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)', marginBottom: 12 }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 12 }}>
         {title}
       </div>
       {children}
@@ -35,14 +35,14 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 function EmptyNote({ text }: { text: string }) {
-  return <p style={{ fontSize: 13, color: 'rgba(240,235,229,.45)', margin: 0 }}>{text}</p>;
+  return <p style={{ fontSize: 13, color: 'var(--ink-a45)', margin: 0 }}>{text}</p>;
 }
 
 function Stat({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div>
       <div style={{ fontSize: 22, fontWeight: 700, color, fontFamily: 'var(--font-display)' }}>{value.toLocaleString()}</div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'rgba(240,235,229,.55)', marginTop: 2 }}>{label}</div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginTop: 2 }}>{label}</div>
     </div>
   );
 }
@@ -51,7 +51,7 @@ function PercentStat({ label, value, color }: { label: string; value: number; co
   return (
     <div>
       <div style={{ fontSize: 22, fontWeight: 700, color, fontFamily: 'var(--font-display)' }}>{Math.round(value * 100)}%</div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'rgba(240,235,229,.55)', marginTop: 2 }}>{label}</div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginTop: 2 }}>{label}</div>
     </div>
   );
 }
@@ -136,7 +136,7 @@ export function ProfileInsights({ profileId, profileType }: { profileId: string;
               {data.topTracks.map((t) => (
                 <div key={t.title} style={rowStyle}>
                   <span style={{ fontSize: 14, color: 'var(--ink)' }}>{t.title}</span>
-                  <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: 'rgba(240,235,229,.55)' }}>
+                  <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: 'var(--ink-a55)' }}>
                     {t.plays} listener{t.plays === 1 ? '' : 's'}
                   </span>
                 </div>
@@ -164,12 +164,12 @@ export function ProfileInsights({ profileId, profileType }: { profileId: string;
                   />
                 ))}
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, fontFamily: 'var(--font-mono)', color: 'rgba(240,235,229,.4)', marginTop: 6 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--ink-a40)', marginTop: 6 }}>
                 <span>Show start</span>
                 <span>Show end</span>
               </div>
               {timeline.untracked > 0 && (
-                <p style={{ fontSize: 11, color: 'rgba(240,235,229,.4)', marginTop: 12 }}>
+                <p style={{ fontSize: 11, color: 'var(--ink-a40)', marginTop: 12 }}>
                   +{timeline.untracked} more hype{timeline.untracked === 1 ? '' : 's'} fired without an active player open (position unknown).
                 </p>
               )}
@@ -187,7 +187,7 @@ export function ProfileInsights({ profileId, profileType }: { profileId: string;
               {data.topCities.map((c) => (
                 <div key={c.city} style={rowStyle}>
                   <span style={{ fontSize: 14, color: 'var(--ink)' }}>{c.city}</span>
-                  <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: 'rgba(240,235,229,.55)' }}>{c.count}</span>
+                  <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: 'var(--ink-a55)' }}>{c.count}</span>
                 </div>
               ))}
             </div>
@@ -201,7 +201,7 @@ export function ProfileInsights({ profileId, profileType }: { profileId: string;
         <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
           <Stat label="Pending" value={data.bookingRequests.pending} color="#ff5029" />
           <Stat label="Accepted" value={data.bookingRequests.accepted} color="#22e5d4" />
-          <Stat label="Declined" value={data.bookingRequests.declined} color="rgba(240,235,229,.5)" />
+          <Stat label="Declined" value={data.bookingRequests.declined} color="var(--ink-a50)" />
         </div>
       </Section>
     </div>

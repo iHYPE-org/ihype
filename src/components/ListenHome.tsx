@@ -95,14 +95,14 @@ const b: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none',
 };
 const bSolid: React.CSSProperties = { ...b, background: 'var(--accent)', color: '#fff' };
-const bGhost: React.CSSProperties = { ...b, background: 'transparent', color: 'rgba(240,235,229,.6)', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.1)' };
+const bGhost: React.CSSProperties = { ...b, background: 'transparent', color: 'var(--ink-a60)', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.1)' };
 
-const panel: React.CSSProperties = { border: '1px solid rgba(255,255,255,.06)', borderRadius: 16, background: 'rgba(255,255,255,.03)', overflow: 'hidden' };
-const panelHead: React.CSSProperties = { padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,.06)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)' };
+const panel: React.CSSProperties = { border: '1px solid var(--line)', borderRadius: 16, background: 'rgba(255,255,255,.03)', overflow: 'hidden' };
+const panelHead: React.CSSProperties = { padding: '16px 20px', borderBottom: '1px solid var(--line)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-a50)' };
 const chartRow: React.CSSProperties = { display: 'flex', gap: 14, alignItems: 'center', padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,.05)' };
-const emptyStyle: React.CSSProperties = { textAlign: 'center', padding: '60px 24px', color: 'rgba(240,235,229,.5)' };
+const emptyStyle: React.CSSProperties = { textAlign: 'center', padding: '60px 24px', color: 'var(--ink-a50)' };
 const rowTitle: React.CSSProperties = { fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, letterSpacing: '-.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
-const rowSubtitle: React.CSSProperties = { fontSize: 12, color: 'rgba(240,235,229,.55)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
+const rowSubtitle: React.CSSProperties = { fontSize: 12, color: 'var(--ink-a55)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
 
 function ListSkeleton({ rows = 4 }: { rows?: number }) {
   return (
@@ -151,8 +151,8 @@ function SeedDeck({ seeds, onAct }: { seeds: Seed[]; onAct: (seed: Seed, action:
   if (!card) {
     return (
       <div style={{ textAlign: 'center', padding: '50px 24px' }}>
-        <p style={{ marginTop: 14, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, color: 'rgba(240,235,229,.6)' }}>You&apos;re all caught up.</p>
-        <p style={{ marginTop: 6, fontSize: 13, color: 'rgba(240,235,229,.5)' }}>New seeds drop as artists upload. Check back soon.</p>
+        <p style={{ marginTop: 14, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, color: 'var(--ink-a60)' }}>You&apos;re all caught up.</p>
+        <p style={{ marginTop: 6, fontSize: 13, color: 'var(--ink-a50)' }}>New seeds drop as artists upload. Check back soon.</p>
         <button style={{ ...bGhost, marginTop: 18 }} onClick={() => setIdx(0)} type="button">Start over</button>
       </div>
     );
@@ -259,7 +259,7 @@ function SeedDeck({ seeds, onAct }: { seeds: Seed[]; onAct: (seed: Seed, action:
           <div style={{ position: 'relative', zIndex: 3, padding: 22 }}>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 11 }}>
               {card.genres.slice(0, 3).map((t) => (
-                <span key={t} style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase', color: '#fff', background: 'rgba(255,255,255,.14)', border: '1px solid rgba(255,255,255,.28)', borderRadius: 9999, padding: '3px 10px' }}>{t}</span>
+                <span key={t} style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase', color: '#fff', background: 'var(--line-2)', border: '1px solid rgba(255,255,255,.28)', borderRadius: 9999, padding: '3px 10px' }}>{t}</span>
               ))}
             </div>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 32, letterSpacing: '-.035em', color: '#fff', lineHeight: 0.98, textShadow: '0 2px 18px rgba(0,0,0,.4)' }}>{card.title}</div>
@@ -271,14 +271,14 @@ function SeedDeck({ seeds, onAct }: { seeds: Seed[]; onAct: (seed: Seed, action:
       <div style={{ display: 'flex', justifyContent: 'center', gap: 22, marginTop: 24 }}>
         <button onClick={() => commit('skip')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer' }} type="button">
           <span style={{ width: 58, height: 58, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,.12)', background: 'rgba(255,255,255,.04)' }}>✕</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)' }}>Skip</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Skip</span>
         </button>
         <button onClick={() => commit('add')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer' }} type="button">
           <span style={{ width: 58, height: 58, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(34,229,212,.4)', background: 'rgba(34,229,212,.14)' }}>+</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)' }}>Save to library</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Save to library</span>
         </button>
       </div>
-      <div style={{ marginTop: 16, fontFamily: 'var(--font-mono)', fontSize: 11, color: 'rgba(240,235,229,.5)' }}>{idx + 1} / {seeds.length}</div>
+      <div style={{ marginTop: 16, fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-a50)' }}>{idx + 1} / {seeds.length}</div>
     </div>
   );
 }
@@ -542,7 +542,7 @@ export function ListenHome({
           )}
           {searchArtists.length > 0 && (
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)', marginBottom: 12 }}>Artists</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 12 }}>Artists</div>
               <div style={panel}>
                 {searchArtists.map((r, i) => (
                   <Link key={r.id} href={r.type === 'venue' ? `/venues/${r.slug}` : r.type === 'promoter' ? `/promoters/${r.slug}` : `/artists/${r.slug}`} style={{ ...chartRow, textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
@@ -559,7 +559,7 @@ export function ListenHome({
           )}
           {searchSongs.length > 0 && (
             <div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)', marginBottom: 12 }}>Tracks</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 12 }}>Tracks</div>
               <div style={panel}>
                 {searchSongs.map((r) => (
                   <div key={r.id} style={chartRow}>
@@ -587,7 +587,7 @@ export function ListenHome({
                   style={{
                     fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', padding: '7px 14px', borderRadius: 9999, cursor: 'pointer',
                     background: genre === g ? 'var(--ink)' : 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.08)',
-                    color: genre === g ? 'var(--bg)' : 'rgba(240,235,229,.5)',
+                    color: genre === g ? 'var(--bg)' : 'var(--ink-a50)',
                   }}
                 >
                   {g}
@@ -595,7 +595,7 @@ export function ListenHome({
               ))}
             </div>
           )}
-          <p style={{ fontSize: 13, color: 'rgba(240,235,229,.5)', margin: '0 0 18px', textAlign: 'center' }}>Swipe right to save · left to skip</p>
+          <p style={{ fontSize: 13, color: 'var(--ink-a50)', margin: '0 0 18px', textAlign: 'center' }}>Swipe right to save · left to skip</p>
           {seeds === null ? (
             <div style={{ position: 'relative', width: '100%', maxWidth: 440, aspectRatio: '1 / 1', margin: '4px auto 0' }}>
               <div className="ihype-skeleton" style={{ position: 'absolute', inset: 0, borderRadius: 28 }} />
@@ -609,18 +609,18 @@ export function ListenHome({
                 background: 'linear-gradient(155deg, rgba(255,80,41,.06), rgba(185,131,255,.05))',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 24, textAlign: 'center',
               }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.16em', textTransform: 'uppercase', color: 'rgba(240,235,229,.4)', border: '1px solid rgba(255,255,255,.14)', borderRadius: 9999, padding: '5px 11px' }}>No new seeds</span>
-                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 24, letterSpacing: '-.03em', color: 'rgba(240,235,229,.55)', lineHeight: 1 }}>Fresh drops land here</div>
-                <p style={{ fontSize: 13, color: 'rgba(240,235,229,.45)', margin: 0 }}>New seeds appear as artists upload. Check back soon.</p>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-a40)', border: '1px solid var(--line-2)', borderRadius: 9999, padding: '5px 11px' }}>No new seeds</span>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 24, letterSpacing: '-.03em', color: 'var(--ink-a55)', lineHeight: 1 }}>Fresh drops land here</div>
+                <p style={{ fontSize: 13, color: 'var(--ink-a45)', margin: 0 }}>New seeds appear as artists upload. Check back soon.</p>
               </div>
               <div style={{ display: 'flex', justifyContent: 'center', gap: 22, marginTop: 24, opacity: 0.35, pointerEvents: 'none' }} aria-hidden="true">
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
                   <span style={{ width: 58, height: 58, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,.12)', background: 'rgba(255,255,255,.04)' }}>✕</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)' }}>Skip</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Skip</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
                   <span style={{ width: 58, height: 58, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(34,229,212,.4)', background: 'rgba(34,229,212,.14)' }}>+</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)' }}>Save to library</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Save to library</span>
                 </div>
               </div>
             </div>
@@ -635,35 +635,35 @@ export function ListenHome({
         <div className="sub-panel">
           {radio === null && <CardSkeleton />}
           {radio !== null && !liveShow && upcomingShows.length === 0 && (
-            <div style={{ border: '1px dashed rgba(255,255,255,.14)', borderRadius: 16, padding: 20, background: 'rgba(255,255,255,.02)' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'rgba(240,235,229,.4)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 7 }}>
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'rgba(240,235,229,.25)' }} /> OFF AIR
+            <div style={{ border: '1px dashed var(--line-2)', borderRadius: 16, padding: 20, background: 'rgba(255,255,255,.02)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a40)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 7 }}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--ink-a25)' }} /> OFF AIR
               </div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 4, color: 'rgba(240,235,229,.55)' }}>No shows on air</div>
-              <div style={{ fontSize: 13, color: 'rgba(240,235,229,.45)', marginBottom: 16 }}>DJs go live on audio — scheduled shows appear here.</div>
-              <div style={{ display: 'flex', gap: 8, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,.06)' }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 4, color: 'var(--ink-a55)' }}>No shows on air</div>
+              <div style={{ fontSize: 13, color: 'var(--ink-a45)', marginBottom: 16 }}>DJs go live on audio — scheduled shows appear here.</div>
+              <div style={{ display: 'flex', gap: 8, paddingTop: 16, borderTop: '1px solid var(--line)' }}>
                 <Link href="/radio" style={bGhost}>View the station</Link>
               </div>
             </div>
           )}
           {liveShow && (
             <div style={{ border: '1px solid rgba(255,255,255,.07)', borderRadius: 16, padding: 20, background: 'rgba(255,255,255,.03)', marginBottom: 12 }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'rgba(240,235,229,.5)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 7 }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a50)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 7 }}>
                 <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)', animation: 'ihype-blink 1.2s ease-in-out infinite' }} /> LIVE NOW
               </div>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 4 }}>{liveShow.title}</div>
-              <div style={{ fontSize: 13, color: 'rgba(240,235,229,.6)', marginBottom: 16 }}>{liveShow.headlinerProfile?.name ?? 'iHYPE Radio'}</div>
-              <div style={{ display: 'flex', gap: 8, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,.06)' }}>
+              <div style={{ fontSize: 13, color: 'var(--ink-a60)', marginBottom: 16 }}>{liveShow.headlinerProfile?.name ?? 'iHYPE Radio'}</div>
+              <div style={{ display: 'flex', gap: 8, paddingTop: 16, borderTop: '1px solid var(--line)' }}>
                 <Link href="/radio" style={bSolid}>Tune In</Link>
               </div>
             </div>
           )}
           {upcomingShows.map((s) => (
             <div key={s.id} style={{ border: '1px solid rgba(255,255,255,.07)', borderRadius: 16, padding: 20, background: 'rgba(255,255,255,.03)', marginBottom: 12 }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'rgba(240,235,229,.5)', marginBottom: 10 }}>{timeLabel(s.startsAt)}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a50)', marginBottom: 10 }}>{timeLabel(s.startsAt)}</div>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 4 }}>{s.title}</div>
-              <div style={{ fontSize: 13, color: 'rgba(240,235,229,.6)', marginBottom: 16 }}>{s.headlinerProfile?.name ?? 'iHYPE Radio'}</div>
-              <div style={{ display: 'flex', gap: 8, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,.06)' }}>
+              <div style={{ fontSize: 13, color: 'var(--ink-a60)', marginBottom: 16 }}>{s.headlinerProfile?.name ?? 'iHYPE Radio'}</div>
+              <div style={{ display: 'flex', gap: 8, paddingTop: 16, borderTop: '1px solid var(--line)' }}>
                 <Link href="/radio" style={bGhost}>View schedule</Link>
               </div>
             </div>
@@ -679,7 +679,7 @@ export function ListenHome({
               <div
                 key={s.id}
                 onClick={() => setChartScope(s.id)}
-                style={{ fontSize: 12, padding: '7px 14px', borderRadius: 9999, cursor: 'pointer', border: `1px solid ${chartScope === s.id ? 'rgba(255,80,41,.4)' : 'rgba(255,255,255,.1)'}`, background: chartScope === s.id ? 'rgba(255,80,41,.12)' : 'rgba(255,255,255,.03)', color: chartScope === s.id ? 'var(--ink)' : 'rgba(240,235,229,.6)' }}
+                style={{ fontSize: 12, padding: '7px 14px', borderRadius: 9999, cursor: 'pointer', border: `1px solid ${chartScope === s.id ? 'rgba(255,80,41,.4)' : 'rgba(255,255,255,.1)'}`, background: chartScope === s.id ? 'rgba(255,80,41,.12)' : 'rgba(255,255,255,.03)', color: chartScope === s.id ? 'var(--ink)' : 'var(--ink-a60)' }}
               >
                 {s.label}
               </div>
@@ -690,7 +690,7 @@ export function ListenHome({
               <div
                 key={g}
                 onClick={() => setChartGenre(g)}
-                style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', padding: '6px 11px', borderRadius: 6, cursor: 'pointer', border: `1px solid ${chartGenre === g ? 'rgba(255,255,255,.28)' : 'rgba(255,255,255,.08)'}`, color: chartGenre === g ? 'var(--ink)' : 'rgba(240,235,229,.55)' }}
+                style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', padding: '6px 11px', borderRadius: 6, cursor: 'pointer', border: `1px solid ${chartGenre === g ? 'rgba(255,255,255,.28)' : 'rgba(255,255,255,.08)'}`, color: chartGenre === g ? 'var(--ink)' : 'var(--ink-a55)' }}
               >
                 {g}
               </div>
@@ -711,7 +711,7 @@ export function ListenHome({
             {charts !== null && filteredChartRows.length === 0 && <div style={{ ...emptyStyle, padding: '32px 20px' }}><p>No tracks charting here yet.</p></div>}
             {filteredChartRows.map((c, i) => (
               <Link key={c.id} href={`/artists/${c.artistSlug}`} style={{ ...chartRow, textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, width: 26, color: 'rgba(240,235,229,.2)', flexShrink: 0 }}>{i + 1}</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, width: 26, color: 'var(--ink-a20)', flexShrink: 0 }}>{i + 1}</div>
                 <div style={{ width: 5, height: 36, borderRadius: 3, flexShrink: 0, background: c.color }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={rowTitle}>{c.title}</div>
@@ -728,7 +728,7 @@ export function ListenHome({
       {tab === 'playlists' && !openPl && (
         <div className="sub-panel">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 10, flexWrap: 'wrap' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>
               Your Playlists · {playlists?.length ?? 0}
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -764,13 +764,13 @@ export function ListenHome({
                   <div key={i} style={{ border: '1px dashed rgba(255,255,255,.12)', borderRadius: 16, overflow: 'hidden', background: 'rgba(255,255,255,.015)' }}>
                     <div style={{ height: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg,${PALETTE[i]}14 0%, transparent 100%)`, borderBottom: '1px solid rgba(255,255,255,.04)', fontSize: 28, opacity: 0.4 }}>🎵</div>
                     <div style={{ padding: '16px 18px 18px' }}>
-                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 2, color: 'rgba(240,235,229,.3)' }}>{i === 0 ? 'Your first playlist' : 'Room for more'}</div>
-                      <div style={{ fontSize: 13, color: 'rgba(240,235,229,.25)' }}>0 tracks</div>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 2, color: 'var(--ink-a30)' }}>{i === 0 ? 'Your first playlist' : 'Room for more'}</div>
+                      <div style={{ fontSize: 13, color: 'var(--ink-a25)' }}>0 tracks</div>
                     </div>
                   </div>
                 ))}
               </div>
-              <p style={{ textAlign: 'center', fontSize: 13, color: 'rgba(240,235,229,.5)', marginTop: 16 }}>No playlists yet — name one above to get started.</p>
+              <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--ink-a50)', marginTop: 16 }}>No playlists yet — name one above to get started.</p>
             </div>
           )}
 
@@ -780,7 +780,7 @@ export function ListenHome({
                 <div style={{ height: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg,${PALETTE[i % PALETTE.length]}33 0%, transparent 100%)`, borderBottom: '1px solid rgba(255,255,255,.05)', fontSize: 28 }}>🎵</div>
                 <div style={{ padding: '16px 18px 18px' }}>
                   <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 2 }}>{p.name}</div>
-                  <div style={{ fontSize: 13, color: 'rgba(240,235,229,.5)' }}>{p.items.length} track{p.items.length === 1 ? '' : 's'}</div>
+                  <div style={{ fontSize: 13, color: 'var(--ink-a50)' }}>{p.items.length} track{p.items.length === 1 ? '' : 's'}</div>
                 </div>
               </div>
             ))}
@@ -788,7 +788,7 @@ export function ListenHome({
 
           {savedSeeds.length > 0 && (
             <div style={{ marginTop: 32 }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)', marginBottom: 12 }}>Discover · saved from Seeds</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 12 }}>Discover · saved from Seeds</div>
               <div style={panel}>
                 {savedSeeds.map((s) => (
                   <Link key={s.id} href={profileHref(s.artistProfileType, s.artistProfileSlug)} style={{ ...chartRow, textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
@@ -801,7 +801,7 @@ export function ListenHome({
 
           {favorites.length > 0 && (
             <div style={{ marginTop: 32 }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)', marginBottom: 12 }}>Favorites</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 12 }}>Favorites</div>
               <div style={panel}>
                 {favorites.map((f) => (
                   f.artistProfileSlug ? (
@@ -829,10 +829,10 @@ export function ListenHome({
             <button onClick={() => shareLink(openPlaylist.id)} style={bGhost} type="button">Share</button>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
-            <div style={{ width: 72, height: 72, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, rgba(255,80,41,.3) 0%, transparent 100%)', border: '1px solid rgba(255,255,255,.06)', fontSize: 28 }}>🎵</div>
+            <div style={{ width: 72, height: 72, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, rgba(255,80,41,.3) 0%, transparent 100%)', border: '1px solid var(--line)', fontSize: 28 }}>🎵</div>
             <div>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 24, letterSpacing: '-.02em' }}>{openPlaylist.name}</div>
-              <div style={{ fontSize: 12, color: 'rgba(240,235,229,.5)', marginTop: 2 }}>{openPlaylist.items.length} track{openPlaylist.items.length === 1 ? '' : 's'}</div>
+              <div style={{ fontSize: 12, color: 'var(--ink-a50)', marginTop: 2 }}>{openPlaylist.items.length} track{openPlaylist.items.length === 1 ? '' : 's'}</div>
             </div>
           </div>
           <div style={panel}>
@@ -853,15 +853,15 @@ export function ListenHome({
                 >
                   <div
                     onPointerDown={(e) => onGripPointerDown(openPlaylist.id, i, e)}
-                    style={{ cursor: 'grab', touchAction: 'none', color: 'rgba(240,235,229,.3)', flexShrink: 0 }}
+                    style={{ cursor: 'grab', touchAction: 'none', color: 'var(--ink-a30)', flexShrink: 0 }}
                     title="Drag to reorder"
                   >
                     <svg fill="currentColor" height="14" viewBox="0 0 24 24" width="14"><circle cx="8" cy="6" r="1.6" /><circle cx="16" cy="6" r="1.6" /><circle cx="8" cy="12" r="1.6" /><circle cx="16" cy="12" r="1.6" /><circle cx="8" cy="18" r="1.6" /><circle cx="16" cy="18" r="1.6" /></svg>
                   </div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 800, width: 22, color: 'rgba(240,235,229,.2)', flexShrink: 0 }}>{i + 1}</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 800, width: 22, color: 'var(--ink-a20)', flexShrink: 0 }}>{i + 1}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.title}</div>
-                    <div style={{ fontSize: 11, color: 'rgba(240,235,229,.5)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.artistName}</div>
+                    <div style={{ fontSize: 11, color: 'var(--ink-a50)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.artistName}</div>
                   </div>
                   <button onClick={() => removeItem(openPlaylist.id, it.id)} style={{ ...bGhost, padding: '6px 12px', fontSize: 12 }} type="button">Remove</button>
                 </div>

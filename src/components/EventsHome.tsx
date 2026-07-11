@@ -51,7 +51,7 @@ function fmtDate(iso: string) {
 }
 
 const eventCard = { display: 'flex', alignItems: 'stretch', gap: 0, border: '1px solid rgba(255,255,255,.07)', borderRadius: 16, overflow: 'hidden', background: 'rgba(255,255,255,.03)', textDecoration: 'none', color: 'inherit' } as const;
-const emptyStyle = { textAlign: 'center' as const, padding: '60px 24px', color: 'rgba(240,235,229,.5)' };
+const emptyStyle = { textAlign: 'center' as const, padding: '60px 24px', color: 'var(--ink-a50)' };
 
 function EventList({ shows, emptyTitle, emptyBody }: { shows: Show[]; emptyTitle: string; emptyBody: string }) {
   if (shows.length === 0) {
@@ -61,20 +61,20 @@ function EventList({ shows, emptyTitle, emptyBody }: { shows: Show[]; emptyTitle
         <div aria-hidden="true" className="ev-card" style={{ ...eventCard, border: '1px dashed rgba(255,255,255,.12)', background: 'rgba(255,255,255,.015)' }}>
           <div className="ev-art" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: '1px solid rgba(255,255,255,.04)', background: 'linear-gradient(135deg, rgba(255,80,41,.07) 0%, transparent 100%)', opacity: 0.35 }}>🎵</div>
           <div className="ev-main" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.25)', marginBottom: 7 }}>Date · Time</div>
-            <div className="ev-title" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-.02em', marginBottom: 4, color: 'rgba(240,235,229,.3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Your next show</div>
-            <div style={{ fontSize: 13, color: 'rgba(240,235,229,.22)' }}>Venue · City</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a25)', marginBottom: 7 }}>Date · Time</div>
+            <div className="ev-title" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-.02em', marginBottom: 4, color: 'var(--ink-a30)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Your next show</div>
+            <div style={{ fontSize: 13, color: 'var(--ink-a22)' }}>Venue · City</div>
           </div>
           <div className="ev-cta" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, flexShrink: 0 }}>
             <div>
               <div className="ev-price" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, color: 'rgba(255,80,41,.35)', letterSpacing: '-.02em' }}>—</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(240,235,229,.2)' }}>$0 fees</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a20)' }}>$0 fees</div>
             </div>
             <span className="ev-pill" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, borderRadius: 8, background: 'rgba(255,80,41,.2)', color: 'rgba(255,255,255,.4)', whiteSpace: 'nowrap' }}>Get ticket</span>
           </div>
         </div>
         <div style={{ ...emptyStyle, padding: '28px 24px' }}>
-          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, color: 'rgba(240,235,229,.6)', margin: '0 0 6px' }}>{emptyTitle}</h3>
+          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, color: 'var(--ink-a60)', margin: '0 0 6px' }}>{emptyTitle}</h3>
           <p style={{ margin: 0 }}>{emptyBody}</p>
         </div>
       </div>
@@ -88,7 +88,7 @@ function EventList({ shows, emptyTitle, emptyBody }: { shows: Show[]; emptyTitle
           <Link className="ev-card" href={`/shows/${show.slug}`} key={show.id} style={eventCard}>
             <div className="ev-art" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: '1px solid rgba(255,255,255,.05)', background: 'linear-gradient(135deg, rgba(255,80,41,.15) 0%, transparent 100%)' }}>🎵</div>
             <div className="ev-main" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)', marginBottom: 7, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 7, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 {show.status === 'LIVE'
                   ? <span style={{ color: 'var(--accent)' }}>● LIVE NOW</span>
                   : <span>{fmtDate(show.startsAt)}</span>}
@@ -97,7 +97,7 @@ function EventList({ shows, emptyTitle, emptyBody }: { shows: Show[]; emptyTitle
               <div className="ev-title" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-.02em', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {show.headlinerProfile ? `${show.headlinerProfile.name} @ ${show.venueProfile?.name ?? show.title}` : show.title}
               </div>
-              <div style={{ fontSize: 13, color: 'rgba(240,235,229,.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ fontSize: 13, color: 'var(--ink-a50)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {show.venueProfile?.name ?? ''}{show.venueProfile?.city ? ` · ${show.venueProfile.city}` : ''}
                 {show.isRegional && <span style={{ color: '#22e5d4' }}> · Regional</span>}
               </div>
@@ -110,7 +110,7 @@ function EventList({ shows, emptyTitle, emptyBody }: { shows: Show[]; emptyTitle
                 <div className="ev-price" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, color: 'var(--accent)', letterSpacing: '-.02em' }}>
                   {show.isTicketed ? formatCurrencyFromCents(show.ticketPriceCents) : 'Free'}
                 </div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(240,235,229,.35)' }}>$0 fees</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a35)' }}>$0 fees</div>
               </div>
               <span className="ev-pill" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, borderRadius: 8, background: 'var(--accent)', color: '#fff', whiteSpace: 'nowrap' }}>Get ticket</span>
             </div>
@@ -269,7 +269,7 @@ export function EventsHome({
       {tab === 'search' && (
         <div className="sub-panel">
           <div style={{ position: 'relative', marginBottom: 22 }}>
-            <svg fill="none" height="16" stroke="rgba(240,235,229,.5)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} viewBox="0 0 24 24" width="16">
+            <svg fill="none" height="16" stroke="var(--ink-a50)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} viewBox="0 0 24 24" width="16">
               <circle cx="11" cy="11" r="8" /><line x1="21" x2="16.65" y1="21" y2="16.65" />
             </svg>
             <input
@@ -283,7 +283,7 @@ export function EventsHome({
           </div>
           {!q.trim() ? (
             <div style={emptyStyle}>
-              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, color: 'rgba(240,235,229,.6)', margin: '14px 0 6px' }}>Search events</h3>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, color: 'var(--ink-a60)', margin: '14px 0 6px' }}>Search events</h3>
               <p>Find shows by artist, venue, or city.</p>
             </div>
           ) : (
@@ -296,12 +296,12 @@ export function EventsHome({
         shows === null ? <div style={emptyStyle}><p>Loading events…</p></div> : (
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.45)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a45)' }}>
                 {nearCity || nearRegion
                   ? `NEAR ${(nearCity ?? nearRegion)!.toUpperCase()}`
                   : 'ALL CITIES — SET YOUR HOMETOWN IN SETTINGS TO LOCALIZE'}
               </div>
-              <Link href="/shows/map" style={{ fontSize: 12.5, color: 'rgba(240,235,229,.6)', flexShrink: 0 }}>View on map →</Link>
+              <Link href="/shows/map" style={{ fontSize: 12.5, color: 'var(--ink-a60)', flexShrink: 0 }}>View on map →</Link>
             </div>
             <EventList
               emptyBody="No shows in your city or region right now — check For You or Search instead."
@@ -326,7 +326,7 @@ export function EventsHome({
         <div className="sub-panel">
           {!loggedIn ? (
             <div style={emptyStyle}>
-              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, color: 'rgba(240,235,229,.6)', margin: '14px 0 6px' }}>Sign in to see your tickets</h3>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, color: 'var(--ink-a60)', margin: '14px 0 6px' }}>Sign in to see your tickets</h3>
               <Link href="/login?callbackUrl=/shows" style={{ display: 'inline-block', marginTop: 16, padding: '11px 20px', fontSize: 13, background: 'var(--accent)', color: '#fff', borderRadius: 8, textDecoration: 'none', fontWeight: 700 }}>Log in</Link>
             </div>
           ) : (
@@ -352,7 +352,7 @@ export function EventsHome({
                 <div style={emptyStyle}><p>Loading tickets…</p></div>
               ) : ticketOrders.length === 0 ? (
                 <div style={emptyStyle}>
-                  <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, color: 'rgba(240,235,229,.6)', margin: '14px 0 6px' }}>
+                  <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, color: 'var(--ink-a60)', margin: '14px 0 6px' }}>
                     {ticketView === 'archive' ? 'No past tickets yet' : 'No tickets yet'}
                   </h3>
                   <p>{ticketView === 'archive' ? "Shows you've attended or cancelled tickets land here." : 'Tickets you buy show up here with a QR for entry.'}</p>
@@ -375,7 +375,7 @@ export function EventsHome({
                         <Link href={`/shows/${order.show.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                           <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 800, letterSpacing: '-.01em', marginBottom: 3 }}>{order.show.title}</div>
                         </Link>
-                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)', marginBottom: 14 }}>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 14 }}>
                           {dateStr} · {timeStr}
                         </div>
                         {ticketView === 'active' && order.status !== 'VOID' && (

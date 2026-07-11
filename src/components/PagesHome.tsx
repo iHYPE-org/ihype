@@ -92,7 +92,7 @@ const b: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap',
 };
 const bSolid: React.CSSProperties = { ...b, background: 'var(--accent)', color: '#fff' };
-const bGhost: React.CSSProperties = { ...b, background: 'transparent', color: 'rgba(240,235,229,.7)', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.14)' };
+const bGhost: React.CSSProperties = { ...b, background: 'transparent', color: 'var(--ink-a70)', boxShadow: 'inset 0 0 0 1px var(--line-2)' };
 
 function hexA(hex: string, a: number) {
   const n = parseInt(hex.slice(1), 16);
@@ -280,7 +280,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
       {tab === 'search' && (
         <div className="sub-panel">
           <div style={{ position: 'relative', marginBottom: 22 }}>
-            <svg fill="none" height="16" stroke="rgba(240,235,229,.5)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} viewBox="0 0 24 24" width="16">
+            <svg fill="none" height="16" stroke="var(--ink-a50)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} viewBox="0 0 24 24" width="16">
               <circle cx="11" cy="11" r="8" /><line x1="21" x2="16.65" y1="21" y2="16.65" />
             </svg>
             <input
@@ -293,13 +293,13 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
             />
           </div>
           {!q.trim() ? (
-            <div style={{ textAlign: 'center', padding: '80px 0', color: 'rgba(240,235,229,.5)' }}>
+            <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--ink-a50)' }}>
               <p>Find an artist, venue, or DJ page.</p>
             </div>
           ) : searchResults === null ? (
-            <div style={{ textAlign: 'center', padding: '80px 0', color: 'rgba(240,235,229,.5)' }}><p>Loading…</p></div>
+            <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--ink-a50)' }}><p>Loading…</p></div>
           ) : searchResults.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '80px 0', color: 'rgba(240,235,229,.5)' }}><p>No results for &ldquo;{q}&rdquo;.</p></div>
+            <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--ink-a50)' }}><p>No results for &ldquo;{q}&rdquo;.</p></div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {searchResults.map((r) => {
@@ -308,7 +308,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                 const route = r.type === 'venue' ? `/venues/${r.slug}` : r.type === 'promoter' ? `/promoters/${r.slug}` : `/artists/${r.slug}`;
                 const initials = r.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
                 return (
-                  <Link key={r.id} href={route} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', border: '1px solid rgba(255,255,255,.06)', borderRadius: 14, background: 'rgba(255,255,255,.03)', textDecoration: 'none', color: 'inherit' }}>
+                  <Link key={r.id} href={route} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 14, background: 'rgba(255,255,255,.03)', textDecoration: 'none', color: 'inherit' }}>
                     <div style={{
                       width: 46, height: 46, borderRadius: 9999, flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -324,7 +324,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                           {label}
                         </span>
                       </div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {r.subtitle}
                       </div>
                     </div>
@@ -338,18 +338,18 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
 
       {tab === 'mypage' && (
         <div className="sub-panel">
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(240,235,229,.35)', marginBottom: 14 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a35)', marginBottom: 14 }}>
             YOUR PAGES
           </div>
 
           {data === null ? (
-            <div style={{ textAlign: 'center', padding: '80px 0', color: 'rgba(240,235,229,.5)' }}><p>Loading your pages…</p></div>
+            <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--ink-a50)' }}><p>Loading your pages…</p></div>
           ) : myProfiles.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '80px 0' }}>
               <p style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 20, marginBottom: 8, color: 'var(--ink)' }}>
                 No pages yet
               </p>
-              <p style={{ fontSize: 14, color: 'rgba(240,235,229,.5)', marginBottom: 24 }}>
+              <p style={{ fontSize: 14, color: 'var(--ink-a50)', marginBottom: 24 }}>
                 Create an artist, venue, or promoter page to get started.
               </p>
               <button onClick={() => setTab('creator')} style={{ display: 'inline-block', padding: '12px 24px', background: 'var(--accent)', color: '#fff', borderRadius: 8, fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer' }} type="button">
@@ -396,7 +396,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                   style={{
                     display: 'flex', alignItems: 'center', gap: 7, padding: '11px 16px', borderRadius: 12,
                     background: 'transparent', border: '1px dashed rgba(255,255,255,.18)', cursor: 'pointer',
-                    color: 'rgba(240,235,229,.55)', fontSize: 13, fontWeight: 600,
+                    color: 'var(--ink-a55)', fontSize: 13, fontWeight: 600,
                   }}
                   type="button"
                 >
@@ -429,7 +429,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                     <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 3 }}>
                       {selectedProfile.name}
                     </div>
-                    <div style={{ fontSize: 13, color: 'rgba(240,235,229,.5)' }}>
+                    <div style={{ fontSize: 13, color: 'var(--ink-a50)' }}>
                       @{selectedProfile.owner?.username ?? selectedProfile.hexId} · iHYPE
                     </div>
                   </div>
@@ -459,27 +459,27 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
 
       {tab === 'network' && (
         <div className="sub-panel">
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(240,235,229,.35)', marginBottom: 14 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a35)', marginBottom: 14 }}>
             YOUR NETWORK
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 18 }}>
-            <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.06)', borderRadius: 14, padding: 16, textAlign: 'center' }}>
+            <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid var(--line)', borderRadius: 14, padding: 16, textAlign: 'center' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', marginBottom: 5 }}>
                 {String(following.length).padStart(2, '0')}
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)' }}>Following</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Following</div>
             </div>
-            <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.06)', borderRadius: 14, padding: 16, textAlign: 'center' }}>
+            <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid var(--line)', borderRadius: 14, padding: 16, textAlign: 'center' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', marginBottom: 5 }}>
                 {String(followersCount).padStart(2, '0')}
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)' }}>Followers</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Followers</div>
             </div>
-            <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.06)', borderRadius: 14, padding: 16, textAlign: 'center' }}>
+            <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid var(--line)', borderRadius: 14, padding: 16, textAlign: 'center' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', marginBottom: 5 }}>
                 {String(mutualCount).padStart(2, '0')}
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)' }}>Mutuals</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Mutuals</div>
             </div>
           </div>
 
@@ -492,7 +492,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                   fontSize: 12, padding: '7px 14px', borderRadius: 9999, cursor: 'pointer',
                   background: netFilter === f.id ? 'rgba(255,80,41,.12)' : 'rgba(255,255,255,.03)',
                   border: `1px solid ${netFilter === f.id ? 'rgba(255,80,41,.4)' : 'rgba(255,255,255,.1)'}`,
-                  color: netFilter === f.id ? 'var(--ink)' : 'rgba(240,235,229,.6)',
+                  color: netFilter === f.id ? 'var(--ink)' : 'var(--ink-a60)',
                 }}
               >
                 {f.label}
@@ -502,13 +502,13 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 32 }}>
             {netListShown.length === 0 ? (
-              <div style={{ color: 'rgba(240,235,229,.5)', fontSize: 13, padding: '10px 2px' }}>No connections match.</div>
+              <div style={{ color: 'var(--ink-a50)', fontSize: 13, padding: '10px 2px' }}>No connections match.</div>
             ) : (
               netListShown.map((p) => {
                 const color = TYPE_COLOR[p.type] ?? '#ff5029';
                 const initials = p.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
                 return (
-                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', border: '1px solid rgba(255,255,255,.06)', borderRadius: 14, background: 'rgba(255,255,255,.03)' }}>
+                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 14, background: 'rgba(255,255,255,.03)' }}>
                     <Link href={profileRoute(p.type, p.slug)} style={{
                       width: 46, height: 46, borderRadius: 9999, flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -524,7 +524,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                           {TYPE_LABEL[p.type] ?? p.type}
                         </span>
                       </div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {p.genres[0] ? `${p.genres[0]} · ` : ''}{p.city ?? ''}
                       </div>
                     </Link>
@@ -538,19 +538,19 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '8px 0 12px' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(240,235,229,.35)' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a35)' }}>
               SUGGESTED FOR YOU
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 32 }}>
             {netSuggestShown.length === 0 ? (
-              <div style={{ color: 'rgba(240,235,229,.5)', fontSize: 13, padding: '10px 2px' }}>No suggestions match.</div>
+              <div style={{ color: 'var(--ink-a50)', fontSize: 13, padding: '10px 2px' }}>No suggestions match.</div>
             ) : (
               netSuggestShown.map((p) => {
                 const color = TYPE_COLOR[p.type] ?? '#ff5029';
                 const initials = p.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
                 return (
-                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', border: '1px solid rgba(255,255,255,.06)', borderRadius: 14, background: 'rgba(255,255,255,.03)' }}>
+                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 14, background: 'rgba(255,255,255,.03)' }}>
                     <Link href={profileRoute(p.type, p.slug)} style={{
                       width: 46, height: 46, borderRadius: 9999, flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -566,7 +566,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                           {TYPE_LABEL[p.type] ?? p.type}
                         </span>
                       </div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {p.genres[0] ? `${p.genres[0]} · ` : ''}{p.city ?? ''}
                       </div>
                     </Link>
@@ -594,7 +594,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
           )}
           {selectedProfile && (
             <>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(240,235,229,.35)', marginBottom: 14 }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a35)', marginBottom: 14 }}>
                 EDITING · {(TYPE_LABEL[selectedProfile.type] ?? selectedProfile.type).toUpperCase()}
               </div>
               <PageEditor key={selectedProfile.id} profileId={selectedProfile.id} />
@@ -602,7 +602,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
             </>
           )}
 
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(240,235,229,.35)', marginBottom: 14 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a35)', marginBottom: 14 }}>
             {selectedProfile ? 'ADD ANOTHER PAGE' : 'PAGE CREATOR'}
           </div>
           <div className="pages-create-grid">
@@ -643,7 +643,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                       <button
                         disabled={creating}
                         onClick={() => { setCreatingType(null); setCreatingName(''); setCreateError(null); }}
-                        style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,.1)', background: 'transparent', color: 'rgba(240,235,229,.7)', fontSize: 13, cursor: 'pointer' }}
+                        style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,.1)', background: 'transparent', color: 'var(--ink-a70)', fontSize: 13, cursor: 'pointer' }}
                         type="button"
                       >
                         Cancel
@@ -670,7 +670,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                     <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 800, letterSpacing: '-.01em', marginBottom: 3, color: card.color }}>
                       {card.name}
                     </div>
-                    <div style={{ fontSize: 12, color: 'rgba(240,235,229,.55)', lineHeight: 1.5 }}>{card.desc}</div>
+                    <div style={{ fontSize: 12, color: 'var(--ink-a55)', lineHeight: 1.5 }}>{card.desc}</div>
                   </div>
                 </button>
               );

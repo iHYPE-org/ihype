@@ -9,7 +9,7 @@ export default function NotFound() {
       alignItems: 'center',
       justifyContent: 'center',
       background: 'var(--bg, #0a0805)',
-      color: 'var(--ink, #f0ebe5)',
+      color: 'var(--ink)',
       fontFamily: "var(--font-body, 'DM Sans', sans-serif)",
       textAlign: 'center',
       padding: '2rem',

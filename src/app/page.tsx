@@ -164,10 +164,10 @@ export default async function RootPage() {
               <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 'clamp(1.8rem, 4vw, 3rem)', letterSpacing: '-0.03em', color: 'var(--ink)', margin: '0 0 1.25rem', lineHeight: 1.02 }}>
                 Pay-to-play was never the deal.
               </h2>
-              <p style={{ fontFamily: 'var(--f-b)', fontSize: '1.05rem', lineHeight: 1.65, color: 'rgba(240,235,229,.72)', maxWidth: '42ch', margin: '0 0 1rem' }}>
+              <p style={{ fontFamily: 'var(--f-b)', fontSize: '1.05rem', lineHeight: 1.65, color: 'var(--ink-a72)', maxWidth: '42ch', margin: '0 0 1rem' }}>
                 Venues book artists people will actually show up for — but have no way to know that on their own, so they lean on promoters chasing their own cut, and ticket platforms tack on fees on top of that. What&apos;s left barely covers the room.
               </p>
-              <p style={{ fontFamily: 'var(--f-b)', fontSize: '1.05rem', lineHeight: 1.65, color: 'rgba(240,235,229,.72)', maxWidth: '42ch', margin: 0 }}>
+              <p style={{ fontFamily: 'var(--f-b)', fontSize: '1.05rem', lineHeight: 1.65, color: 'var(--ink-a72)', maxWidth: '42ch', margin: 0 }}>
                 Fans never hear the new stuff. Artists can&apos;t afford to keep making it. Venues stop booking. iHYPE exists to break that cycle — by taking nothing out of it.
               </p>
             </div>
@@ -185,7 +185,7 @@ export default async function RootPage() {
                   <span style={{ width: 8, height: 8, borderRadius: '50%', background: item.color, marginTop: 6, flexShrink: 0 }} />
                   <div>
                     <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 15, color: 'var(--ink)', marginBottom: 4 }}>{item.name}</div>
-                    <p style={{ fontFamily: 'var(--f-b)', fontSize: 13, lineHeight: 1.5, color: 'rgba(240,235,229,.5)', margin: 0 }}>{item.desc}</p>
+                    <p style={{ fontFamily: 'var(--f-b)', fontSize: 13, lineHeight: 1.5, color: 'var(--ink-a50)', margin: 0 }}>{item.desc}</p>
                   </div>
                 </div>
               ))}
@@ -226,7 +226,7 @@ export default async function RootPage() {
               <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 'clamp(1.8rem, 4vw, 3rem)', letterSpacing: '-0.03em', color: 'var(--ink)', margin: '0 0 1.25rem' }}>
                 What&apos;s a HYPE?
               </h2>
-              <p style={{ fontFamily: 'var(--f-b)', fontSize: '1.05rem', lineHeight: 1.6, color: 'rgba(240,235,229,.72)', maxWidth: '38ch', margin: '0 0 1.5rem' }}>
+              <p style={{ fontFamily: 'var(--f-b)', fontSize: '1.05rem', lineHeight: 1.6, color: 'var(--ink-a72)', maxWidth: '38ch', margin: '0 0 1.5rem' }}>
                 A HYPE is a vote on a <em style={{ color: 'var(--accent)', fontStyle: 'italic' }}>moment</em>. While a track plays, you fire a hype at the exact second it hits — the drop, the verse, the breakdown. Those timestamps stack into real demand signals that artists and venues use to build setlists and book shows.
               </p>
               {/* Hype fire chip */}
@@ -247,7 +247,7 @@ export default async function RootPage() {
                   <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 18, flexShrink: 0, width: 28, color: step.color }}>{step.num}</div>
                   <div>
                     <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 15, color: 'var(--ink)', marginBottom: 4 }}>{step.name}</div>
-                    <p style={{ fontFamily: 'var(--f-b)', fontSize: 13, lineHeight: 1.5, color: 'rgba(240,235,229,.5)', margin: 0 }}>{step.desc}</p>
+                    <p style={{ fontFamily: 'var(--f-b)', fontSize: 13, lineHeight: 1.5, color: 'var(--ink-a50)', margin: 0 }}>{step.desc}</p>
                   </div>
                 </div>
               ))}
@@ -357,7 +357,7 @@ export default async function RootPage() {
             ))}
           </div>
 
-          <div style={{ marginTop: '1rem', padding: '1rem 1.5rem', borderRadius: 14, border: '1px solid rgba(255,255,255,.06)', background: 'rgba(255,255,255,.025)', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <div style={{ marginTop: '1rem', padding: '1rem 1.5rem', borderRadius: 14, border: '1px solid var(--line)', background: 'rgba(255,255,255,.025)', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <span style={{ fontFamily: 'var(--f-m)', fontSize: '0.8rem', color: 'var(--ink-3)', letterSpacing: '.06em' }}>
               iHYPE → 0% · this is locked in our charter · <a href="/transparency" style={{ color: 'var(--ink-2)' }}>read our transparency page →</a>
             </span>

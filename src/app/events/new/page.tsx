@@ -63,9 +63,9 @@ function ProfilePicker({
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(255,80,41,.07)', border: '1px solid rgba(255,80,41,.2)', borderRadius: 10 }}>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}>{value.name}</div>
-            <div style={{ fontSize: 11, color: 'rgba(240,235,229,.5)', fontFamily: 'var(--font-mono)' }}>{value.type}</div>
+            <div style={{ fontSize: 11, color: 'var(--ink-a50)', fontFamily: 'var(--font-mono)' }}>{value.type}</div>
           </div>
-          <button onClick={() => onChange(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(240,235,229,.5)', fontSize: 18, lineHeight: 1, padding: '0 4px' }} type="button">×</button>
+          <button onClick={() => onChange(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-a50)', fontSize: 18, lineHeight: 1, padding: '0 4px' }} type="button">×</button>
         </div>
       </div>
     );
@@ -99,7 +99,7 @@ function ProfilePicker({
               type="button"
             >
               <div style={{ fontSize: 13, color: 'var(--ink)', fontWeight: 600 }}>{p.name}</div>
-              <div style={{ fontSize: 11, color: 'rgba(240,235,229,.5)', fontFamily: 'var(--font-mono)' }}>{p.type}</div>
+              <div style={{ fontSize: 11, color: 'var(--ink-a50)', fontFamily: 'var(--font-mono)' }}>{p.type}</div>
             </button>
           ))}
         </div>

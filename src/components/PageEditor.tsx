@@ -71,7 +71,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   return (
     <div style={{ marginBottom: 20 }}>
       <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--ink)', marginBottom: 6 }}>{label}</label>
-      {hint && <p style={{ fontSize: 12, color: 'rgba(240,235,229,.5)', margin: '0 0 8px' }}>{hint}</p>}
+      {hint && <p style={{ fontSize: 12, color: 'var(--ink-a50)', margin: '0 0 8px' }}>{hint}</p>}
       {children}
     </div>
   );
@@ -303,7 +303,7 @@ export function PageEditor({ profileId }: { profileId: string }) {
   }
 
   if (!data) {
-    return <div style={{ textAlign: 'center', padding: '48px 0', color: 'rgba(240,235,229,.5)' }}>Loading your page…</div>;
+    return <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--ink-a50)' }}>Loading your page…</div>;
   }
 
   const isVenue = data.type === 'VENUE';
@@ -398,7 +398,7 @@ export function PageEditor({ profileId }: { profileId: string }) {
 
       {section === 'presskit' && isArtistOrDj && (
         <div className="sub-panel">
-          <p style={{ fontSize: 13, color: 'rgba(240,235,229,.6)', margin: '0 0 16px', lineHeight: 1.55 }}>
+          <p style={{ fontSize: 13, color: 'var(--ink-a60)', margin: '0 0 16px', lineHeight: 1.55 }}>
             Your press kit is a shareable one-pager for bookers, venues, and press — it pulls your name, bio,
             photos, and upcoming shows automatically, plus everything you add here.
           </p>
@@ -423,7 +423,7 @@ export function PageEditor({ profileId }: { profileId: string }) {
           >
             View press kit ↗
           </a>
-          <p style={{ fontSize: 12, color: 'rgba(240,235,229,.45)', margin: '10px 0 0' }}>
+          <p style={{ fontSize: 12, color: 'var(--ink-a45)', margin: '10px 0 0' }}>
             Save your changes first — the press kit page prints cleanly to PDF for sharing.
           </p>
         </div>
@@ -501,11 +501,11 @@ export function PageEditor({ profileId }: { profileId: string }) {
         <div className="sub-panel">
           <div style={{
             fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase',
-            color: 'rgba(240,235,229,.35)', marginBottom: 14,
+            color: 'var(--ink-a35)', marginBottom: 14,
           }}>
             AI PAGE STUDIO
           </div>
-          <p style={{ fontSize: 13, color: 'rgba(240,235,229,.6)', margin: '0 0 16px', lineHeight: 1.55 }}>
+          <p style={{ fontSize: 13, color: 'var(--ink-a60)', margin: '0 0 16px', lineHeight: 1.55 }}>
             Tell the AI what you want and it reorganizes your page — bio, links, sections, theme. It only works
             with content you&rsquo;ve already added, and nothing changes until you apply and save.
           </p>
@@ -518,7 +518,7 @@ export function PageEditor({ profileId }: { profileId: string }) {
               <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)', marginBottom: 4 }}>
                 Import from your website
               </div>
-              <p style={{ fontSize: 12, color: 'rgba(240,235,229,.5)', margin: '0 0 10px', lineHeight: 1.5 }}>
+              <p style={{ fontSize: 12, color: 'var(--ink-a50)', margin: '0 0 10px', lineHeight: 1.5 }}>
                 Already have a site? Paste the address and the AI pulls your bio, links, and details into your
                 iHYPE page. You review everything before it&rsquo;s applied.
               </p>
@@ -560,7 +560,7 @@ export function PageEditor({ profileId }: { profileId: string }) {
                 style={{
                   fontSize: 12, padding: '7px 13px', borderRadius: 9999, cursor: 'pointer',
                   background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.1)',
-                  color: 'rgba(240,235,229,.65)', fontFamily: 'var(--font-body)',
+                  color: 'var(--ink-a65)', fontFamily: 'var(--font-body)',
                 }}
                 type="button"
               >
@@ -597,7 +597,7 @@ export function PageEditor({ profileId }: { profileId: string }) {
             <div style={{ marginTop: 20 }}>
               <div style={{
                 fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase',
-                color: 'rgba(240,235,229,.35)', marginBottom: 12,
+                color: 'var(--ink-a35)', marginBottom: 12,
               }}>
                 PROPOSED CHANGES · {Object.keys(aiProposed).length}
               </div>

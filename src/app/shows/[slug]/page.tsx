@@ -317,7 +317,7 @@ export default async function ShowDetailPage({
 
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 12 }}>{show.title}</h1>
 
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center', marginBottom: 20, fontSize: 14, color: 'rgba(240,235,229,.75)' }}>
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center', marginBottom: 20, fontSize: 14, color: 'var(--ink-a75)' }}>
             <span className="badge">{show.status}</span>
             {show.venueProfile && <span className="badge" style={{ color: 'var(--venue)' }}>Venue</span>}
             {show.headlinerProfile && <span className="badge" style={{ color: 'var(--accent)' }}>Artist</span>}
@@ -403,10 +403,10 @@ export default async function ShowDetailPage({
           <ShowTabs
             venueTab={
               <div>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.1em', color: 'rgba(240,235,229,.35)', marginBottom: 8 }}>Venue</p>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a35)', marginBottom: 8 }}>Venue</p>
                 <p style={{ fontSize: 18, fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 8 }}>{show.venueProfile?.name ?? 'TBA'}</p>
                 {show.venueProfile && (
-                  <p style={{ fontSize: 14, color: 'rgba(240,235,229,.7)' }}>
+                  <p style={{ fontSize: 14, color: 'var(--ink-a70)' }}>
                     Capacity: {(show.ticketCapacity ?? 'Open').toLocaleString?.() ?? show.ticketCapacity ?? 'Open'} · {show.venueProfile.city}
                   </p>
                 )}
@@ -419,15 +419,15 @@ export default async function ShowDetailPage({
             }
             lineupTab={
               <div>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.1em', color: 'rgba(240,235,229,.35)', marginBottom: 8 }}>Headliner</p>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a35)', marginBottom: 8 }}>Headliner</p>
                 <p style={{ fontSize: 18, fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 16 }}>{show.headlinerProfile?.name ?? 'TBA'}</p>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.1em', color: 'rgba(240,235,229,.35)', marginBottom: 8 }}>Promoter</p>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a35)', marginBottom: 8 }}>Promoter</p>
                 <p style={{ fontSize: 14 }}>{show.promoterProfile?.name ?? 'Promoter pool unassigned'}</p>
               </div>
             }
           >
             {/* ABOUT tab content */}
-            <p style={{ fontSize: 15, lineHeight: 1.7, color: 'rgba(240,235,229,.85)' }}>
+            <p style={{ fontSize: 15, lineHeight: 1.7, color: 'var(--ink-a85)' }}>
               {show.description || `Presented through iHYPE — face value pricing, zero fees, and every split locked by charter before a single ticket is sold.`}
             </p>
 
@@ -698,14 +698,14 @@ export default async function ShowDetailPage({
           {show.isTicketed && show.venueProfile && show.headlinerProfile && show.venuePayoutPercent !== null && show.artistPayoutPercent !== null ? (
             <aside style={{ border: '1px solid rgba(255,255,255,.08)', borderRadius: 12, padding: 28, background: 'var(--bg2)', position: 'sticky', top: 80, alignSelf: 'flex-start' }}>
               <div style={{ fontSize: 36, fontWeight: 800, color: 'var(--accent)', marginBottom: 4, fontFamily: 'var(--font-display)' }}>${price.toFixed(2)}</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'rgba(240,235,229,.5)', marginBottom: 20 }}>$0 fees · face value only</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a50)', marginBottom: 20 }}>$0 fees · face value only</div>
 
               {cap !== null && (
                 <>
                   <div style={{ height: 6, borderRadius: 3, background: 'rgba(255,255,255,.1)', margin: '16px 0', overflow: 'hidden' }}>
                     <div style={{ height: '100%', borderRadius: 3, background: 'var(--accent)', width: `${pct}%` }} />
                   </div>
-                  <div style={{ fontSize: 12, color: 'rgba(240,235,229,.6)', marginBottom: 16 }}>{sold} / {cap} sold · {cap - sold} remaining</div>
+                  <div style={{ fontSize: 12, color: 'var(--ink-a60)', marginBottom: 16 }}>{sold} / {cap} sold · {cap - sold} remaining</div>
                 </>
               )}
 
@@ -714,7 +714,7 @@ export default async function ShowDetailPage({
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--venue)', marginBottom: 8 }}>
                     Paid tickets · Coming soon
                   </div>
-                  <p style={{ fontSize: 13, lineHeight: 1.6, color: 'rgba(240,235,229,.8)', margin: 0 }}>
+                  <p style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--ink-a80)', margin: 0 }}>
                     Ticket sales haven&apos;t opened on iHYPE yet. RSVP free above to hold your spot —
                     we&apos;ll remind you before the show, and face-value pricing with the locked
                     45/45/10 split kicks in the moment sales open.
@@ -764,14 +764,14 @@ export default async function ShowDetailPage({
               )}
 
               <div style={{ background: 'rgba(255,255,255,.04)', borderRadius: 8, padding: 14, marginTop: 16 }}>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.1em', color: 'rgba(240,235,229,.5)', marginBottom: 10 }}>vs. Ticketmaster</p>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a50)', marginBottom: 10 }}>vs. Ticketmaster</p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}><span>Face value</span><span>${price.toFixed(2)}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6, color: 'rgba(240,235,229,.5)' }}><span>Service fees (27%)</span><span>+${tmFees.toFixed(2)}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6, color: 'rgba(240,235,229,.5)' }}><span>TM total</span><span>${tmTotal.toFixed(2)}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6, color: 'var(--ink-a50)' }}><span>Service fees (27%)</span><span>+${tmFees.toFixed(2)}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6, color: 'var(--ink-a50)' }}><span>TM total</span><span>${tmTotal.toFixed(2)}</span></div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, color: 'var(--venue)' }}><span>iHYPE total</span><span>${price.toFixed(2)}</span></div>
               </div>
 
-              <div style={{ marginTop: 16, fontSize: 11, color: 'rgba(240,235,229,.5)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', lineHeight: 1.5 }}>
+              <div style={{ marginTop: 16, fontSize: 11, color: 'var(--ink-a50)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', lineHeight: 1.5 }}>
                 Split locked by charter · iHYPE takes 0%
               </div>
             </aside>

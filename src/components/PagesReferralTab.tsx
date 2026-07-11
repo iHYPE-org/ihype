@@ -18,7 +18,7 @@ interface ReferralInfo {
 
 const statBox: React.CSSProperties = {
   background: 'rgba(255,255,255,.03)',
-  border: '1px solid rgba(255,255,255,.06)',
+  border: '1px solid var(--line)',
   borderRadius: 14,
   padding: 16,
   textAlign: 'center',
@@ -49,7 +49,7 @@ export function PagesReferralTab() {
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: '#b983ff', marginBottom: 10 }}>
           HYPE Link · 18+
         </div>
-        <p style={{ fontSize: 14, color: 'rgba(240,235,229,.75)', lineHeight: 1.6, margin: '0 0 16px' }}>
+        <p style={{ fontSize: 14, color: 'var(--ink-a75)', lineHeight: 1.6, margin: '0 0 16px' }}>
           Referral links are for members 18 and older. If that&rsquo;s you, confirm your age once in Settings and
           your HYPE Link unlocks right away.
         </p>
@@ -69,7 +69,7 @@ export function PagesReferralTab() {
 
   return (
     <div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(240,235,229,.35)', marginBottom: 14 }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a35)', marginBottom: 14 }}>
         HYPE LINK
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 12 }}>
@@ -77,19 +77,19 @@ export function PagesReferralTab() {
           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', marginBottom: 5 }}>
             {stats ? money(stats.estimatedCommissionCents) : '—'}
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)' }}>Est. earned</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Est. earned</div>
         </div>
         <div style={statBox}>
           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', marginBottom: 5 }}>
             {stats?.ticketSales ?? '—'}
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)' }}>Tickets driven</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Tickets driven</div>
         </div>
         <div style={statBox}>
           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', marginBottom: 5 }}>
             {stats?.clicks ?? '—'}
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)' }}>Clicks</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Clicks</div>
         </div>
       </div>
       <div style={{ background: 'rgba(185,131,255,.06)', border: '1px solid rgba(185,131,255,.18)', borderRadius: 16, padding: 20 }}>
@@ -97,7 +97,7 @@ export function PagesReferralTab() {
           Your HYPE Link · your unique fan ID — earn on every ticket you drive
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 14 }}>
-          <div style={{ flex: 1, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 9, padding: '11px 14px', fontFamily: 'var(--font-mono)', fontSize: 12, color: 'rgba(240,235,229,.7)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ flex: 1, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 9, padding: '11px 14px', fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-a70)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {link || 'Loading…'}
           </div>
           <button onClick={copy} className="ihype-btn-primary" style={{ flexShrink: 0 }}>

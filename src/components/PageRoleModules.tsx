@@ -40,9 +40,9 @@ function ModuleHead({ icon, color, title, sub, trailing }: {
         <div style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 800, letterSpacing: '-.01em', color: 'var(--ink)', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
           {title}
         </div>
-        <div style={{ fontSize: 12, color: 'rgba(240,235,229,.5)', marginTop: 2, overflowWrap: 'break-word', wordBreak: 'break-word' }}>{sub}</div>
+        <div style={{ fontSize: 12, color: 'var(--ink-a50)', marginTop: 2, overflowWrap: 'break-word', wordBreak: 'break-word' }}>{sub}</div>
       </div>
-      <div style={{ flexShrink: 0, color: 'rgba(240,235,229,.45)', display: 'flex', alignItems: 'center' }}>{trailing}</div>
+      <div style={{ flexShrink: 0, color: 'var(--ink-a45)', display: 'flex', alignItems: 'center' }}>{trailing}</div>
     </>
   );
 }
@@ -88,7 +88,7 @@ function LinkModule({ icon, color, title, sub, href }: {
 }
 
 function LoadNote({ text }: { text: string }) {
-  return <p style={{ fontSize: 13, color: 'rgba(240,235,229,.45)', margin: '8px 0 0' }}>{text}</p>;
+  return <p style={{ fontSize: 13, color: 'var(--ink-a45)', margin: '8px 0 0' }}>{text}</p>;
 }
 
 /**
@@ -118,7 +118,7 @@ function TourRecsBody() {
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.14em', textTransform: 'uppercase', color: '#ff5029', marginBottom: 6 }}>
             AI ROUTE
           </div>
-          <p style={{ fontSize: 13, color: 'rgba(240,235,229,.75)', margin: '0 0 10px', lineHeight: 1.5 }}>{data.aiPlan.summary}</p>
+          <p style={{ fontSize: 13, color: 'var(--ink-a75)', margin: '0 0 10px', lineHeight: 1.5 }}>{data.aiPlan.summary}</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {data.aiPlan.route.map((r) => (
               <div key={`${r.order}-${r.city}`} style={{ display: 'flex', gap: 10 }}>
@@ -127,9 +127,9 @@ function TourRecsBody() {
                 </span>
                 <div style={{ minWidth: 0 }}>
                   <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)' }}>
-                    {r.city}{r.targetVenue ? <span style={{ fontWeight: 400, color: 'rgba(240,235,229,.55)' }}> · {r.targetVenue}</span> : null}
+                    {r.city}{r.targetVenue ? <span style={{ fontWeight: 400, color: 'var(--ink-a55)' }}> · {r.targetVenue}</span> : null}
                   </span>
-                  {r.why && <div style={{ fontSize: 12, color: 'rgba(240,235,229,.5)', marginTop: 2, lineHeight: 1.45 }}>{r.why}</div>}
+                  {r.why && <div style={{ fontSize: 12, color: 'var(--ink-a50)', marginTop: 2, lineHeight: 1.45 }}>{r.why}</div>}
                 </div>
               </div>
             ))}
@@ -137,17 +137,17 @@ function TourRecsBody() {
         </div>
       )}
       <div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(240,235,229,.4)', marginBottom: 8 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a40)', marginBottom: 8 }}>
           DEMAND-RANKED CITIES
         </div>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {data.stops.slice(0, 6).map((s) => (
-            <div key={s.city} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,.06)' }}>
+            <div key={s.city} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--line)' }}>
               <div style={{ minWidth: 0 }}>
                 <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}>{s.city}</span>
-                {s.venues[0] && <span style={{ fontSize: 12, color: 'rgba(240,235,229,.5)' }}> · {s.venues.map((v) => v.name).slice(0, 2).join(', ')}</span>}
+                {s.venues[0] && <span style={{ fontSize: 12, color: 'var(--ink-a50)' }}> · {s.venues.map((v) => v.name).slice(0, 2).join(', ')}</span>}
               </div>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'rgba(240,235,229,.55)', flexShrink: 0 }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-a55)', flexShrink: 0 }}>
                 {s.score} · {s.reach} reach
               </span>
             </div>
@@ -187,11 +187,11 @@ function AdRecsBody({ profileId }: { profileId: string }) {
             </span>
           </div>
           <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)', marginBottom: 3 }}>{r.headline}</div>
-          <div style={{ fontSize: 12, color: 'rgba(240,235,229,.55)', lineHeight: 1.5 }}>{r.body}</div>
+          <div style={{ fontSize: 12, color: 'var(--ink-a55)', lineHeight: 1.5 }}>{r.body}</div>
           <div style={{ fontSize: 12, fontWeight: 600, color: '#b983ff', marginTop: 6 }}>{r.cta}</div>
         </div>
       ))}
-      <Link href="/advertise" style={{ fontSize: 12, color: 'rgba(240,235,229,.55)', textDecoration: 'underline', textUnderlineOffset: 3 }}>
+      <Link href="/advertise" style={{ fontSize: 12, color: 'var(--ink-a55)', textDecoration: 'underline', textUnderlineOffset: 3 }}>
         Run a campaign on iHYPE →
       </Link>
     </div>
@@ -240,7 +240,7 @@ export function PageRoleModules({ profile, color }: { profile: ModuleProfile; co
 
   return (
     <div style={{ marginBottom: 36 }}>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(240,235,229,.35)', marginBottom: 14 }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a35)', marginBottom: 14 }}>
         PAGE TOOLKIT
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

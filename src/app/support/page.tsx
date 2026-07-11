@@ -12,7 +12,7 @@ export default function SupportPage() {
       <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 8, color: 'var(--ink)' }}>
         Support
       </h1>
-      <p style={{ fontSize: 14, color: 'rgba(240,235,229,.65)', marginBottom: 40 }}>
+      <p style={{ fontSize: 14, color: 'var(--ink-a65)', marginBottom: 40 }}>
         We read every message. Usually reply within 24h.
       </p>
 

@@ -179,21 +179,21 @@
 }
 
 /* ── iH/OPS Operator Console ─────────────────────────── */
-.ops-shell{position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden;background:#0a0805;color:#f0ebe5;font-family:var(--f-b)}
-.ops-topbar{height:42px;flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 14px;border-bottom:1px solid rgba(255,255,255,.06);background:#0a0805}
-.ops-wordmark{font-family:var(--f-d,'Syne',sans-serif);font-weight:800;font-size:17px;letter-spacing:-.02em;color:#f0ebe5;line-height:1}
+.ops-shell{position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden;background:#0a0805;color:var(--ink);font-family:var(--f-b)}
+.ops-topbar{height:42px;flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 14px;border-bottom:1px solid var(--line);background:#0a0805}
+.ops-wordmark{font-family:var(--f-d,'Syne',sans-serif);font-weight:800;font-size:17px;letter-spacing:-.02em;color:var(--ink);line-height:1}
 .ops-dot{color:#ff5029;margin:0 1px}
 .ops-ops{font-family:var(--f-m,'JetBrains Mono',monospace);font-weight:500;font-size:11px;color:#9e9080;letter-spacing:.12em;margin-left:3px}
 .ops-topbar-mid{flex:1;display:flex;justify-content:center}
-.ops-search-hint{display:flex;align-items:center;gap:6px;font-size:12px;color:#5a5048;cursor:pointer;padding:4px 10px;border:1px solid rgba(255,255,255,.06);border-radius:6px;transition:border-color .15s}
-.ops-search-hint:hover{border-color:rgba(255,255,255,.14)}
-.ops-search-hint kbd{font-family:var(--f-m,monospace);font-size:10px;background:rgba(255,255,255,.06);border-radius:3px;padding:1px 4px}
+.ops-search-hint{display:flex;align-items:center;gap:6px;font-size:12px;color:#5a5048;cursor:pointer;padding:4px 10px;border:1px solid var(--line);border-radius:6px;transition:border-color .15s}
+.ops-search-hint:hover{border-color:var(--line-2)}
+.ops-search-hint kbd{font-family:var(--f-m,monospace);font-size:10px;background:var(--line);border-radius:3px;padding:1px 4px}
 .ops-topbar-right{display:flex;align-items:center;gap:8px}
 .ops-chip{display:inline-flex;align-items:center;font-family:var(--f-m,monospace);font-size:9px;font-weight:600;letter-spacing:.12em;padding:2px 6px;border-radius:3px;background:rgba(255,80,41,.12);color:#ff5029;border:1px solid rgba(255,80,41,.25)}
 .ops-chip-sm{font-size:8px;padding:2px 5px}
 .ops-topbar-avatar{width:26px;height:26px;border-radius:50%;background:rgba(255,80,41,.15);border:1px solid rgba(255,80,41,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;font-family:var(--f-m,monospace);color:#ff5029;letter-spacing:.04em}
 .ops-body{flex:1;display:flex;overflow:hidden;min-height:0}
-.ops-rail{width:56px;flex-shrink:0;border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;align-items:center;padding:8px 0;gap:2px;overflow-y:auto}
+.ops-rail{width:56px;flex-shrink:0;border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:8px 0;gap:2px;overflow-y:auto}
 .ops-rail-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0;width:100%;text-decoration:none;color:#5a5048;font-size:9px;font-family:var(--f-m,monospace);letter-spacing:.04em;transition:color .15s;position:relative}
 .ops-rail-item:hover{color:#9e9080}
 .ops-rail-item.ops-rail-active{color:#ff5029}
@@ -204,7 +204,7 @@
 .ops-bottom-bar{display:none}
 @media(max-width:700px){
   .ops-rail{display:none}
-  .ops-bottom-bar{display:flex;position:fixed;bottom:0;left:0;right:0;background:#0a0805;border-top:1px solid rgba(255,255,255,.06);z-index:100}
+  .ops-bottom-bar{display:flex;position:fixed;bottom:0;left:0;right:0;background:#0a0805;border-top:1px solid var(--line);z-index:100}
   .ops-bottom-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 0;font-size:8px;color:#5a5048;text-decoration:none;gap:3px;font-family:var(--f-m,monospace)}
   .ops-bottom-tab.ops-rail-active{color:#ff5029}
   .ops-main{padding-bottom:60px}
@@ -217,10 +217,10 @@
 .ops-gate{position:fixed;inset:0;background:#0a0805;display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px}
 .ops-login-card,.ops-provisioning-card{width:100%;max-width:360px;background:#100d09;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:28px;display:flex;flex-direction:column;gap:20px;animation:opsFade .3s ease}
 .ops-login-top{display:flex;align-items:center;justify-content:space-between}
-.ops-identity{display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px}
+.ops-identity{display:flex;align-items:center;gap:12px;padding:14px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:8px}
 .ops-avatar{width:40px;height:40px;border-radius:50%;background:rgba(255,80,41,.12);border:1px solid rgba(255,80,41,.25);display:flex;align-items:center;justify-content:center;font-family:var(--f-m,monospace);font-weight:700;font-size:13px;color:#ff5029;flex-shrink:0}
 .ops-identity-text{display:flex;flex-direction:column;gap:2px;min-width:0}
-.ops-identity-text strong{font-size:14px;font-weight:600;color:#f0ebe5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ops-identity-text strong{font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ops-identity-text span{font-size:11px;color:#5a5048;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ops-trust-facts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .ops-trust-fact{display:flex;flex-direction:column;gap:3px;padding:10px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);border-radius:6px}
@@ -236,7 +236,7 @@
 .ops-steps{display:flex;flex-direction:column;gap:10px}
 .ops-step{display:flex;align-items:center;gap:10px;font-size:13px;color:#3a342e;transition:color .2s}
 .ops-step.ops-step-done{color:#9e9080}
-.ops-step.ops-step-active{color:#f0ebe5}
+.ops-step.ops-step-active{color:var(--ink)}
 .ops-step-icon{width:18px;text-align:center;font-family:var(--f-m,monospace);font-size:12px;color:#5a5048;flex-shrink:0}
 .ops-step.ops-step-done .ops-step-icon{color:#22e5d4}
 .ops-step.ops-step-active .ops-step-icon{color:#ff5029}

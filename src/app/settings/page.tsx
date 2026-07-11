@@ -172,7 +172,7 @@ export default function SettingsPage() {
       <h1>Settings</h1>
 
       {loading ? (
-        <p style={{ color: 'rgba(240,235,229,.3)', fontFamily: 'var(--font-mono)', fontSize: 12 }}>Loading…</p>
+        <p style={{ color: 'var(--ink-a30)', fontFamily: 'var(--font-mono)', fontSize: 12 }}>Loading…</p>
       ) : (
         <>
           {/* Payout / Payment (role-aware) */}
@@ -190,8 +190,8 @@ export default function SettingsPage() {
                       <div className="settings-row-detail">Payouts land within 2 business days of a show closing</div>
                       <div className="settings-split-mini">
                         <span style={{ color: roleColor }}>45% you</span>
-                        <span style={{ color: 'rgba(240,235,229,.5)' }}>45% {role === 'VENUE' ? 'artist' : 'venue'}</span>
-                        <span style={{ color: 'rgba(240,235,229,.5)' }}>10% promoters</span>
+                        <span style={{ color: 'var(--ink-a50)' }}>45% {role === 'VENUE' ? 'artist' : 'venue'}</span>
+                        <span style={{ color: 'var(--ink-a50)' }}>10% promoters</span>
                       </div>
                     </div>
                     <Link className="settings-btn settings-btn-ghost" href="/me/promote">Connect</Link>
@@ -302,12 +302,12 @@ export default function SettingsPage() {
         .settings-page { max-width: 720px; margin: 0 auto; padding: 32px 24px 100px; }
         .settings-page h1 { font-family: var(--font-display); font-size: 32px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 40px; color: var(--ink); }
         .settings-section { margin-bottom: 40px; }
-        .settings-section-title { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; color: rgba(240,235,229,.5); margin-bottom: 16px; }
-        .settings-group { border: 1px solid rgba(255,255,255,.06); border-radius: 12px; overflow: hidden; background: var(--bg2); }
-        .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,.06); gap: 16px; }
+        .settings-section-title { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a50); margin-bottom: 16px; }
+        .settings-group { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--bg2); }
+        .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 18px 20px; border-bottom: 1px solid var(--line); gap: 16px; }
         .settings-row:last-child { border-bottom: none; }
         .settings-row-label { font-size: 14px; font-weight: 500; color: var(--ink); }
-        .settings-row-detail { font-size: 12px; color: rgba(240,235,229,.5); margin-top: 3px; }
+        .settings-row-detail { font-size: 12px; color: var(--ink-a50); margin-top: 3px; }
         .settings-toggle { position: relative; width: 44px; height: 26px; flex-shrink: 0; display: block; }
         .settings-toggle input { opacity: 0; width: 0; height: 0; }
         .settings-toggle-track { position: absolute; inset: 0; border-radius: 13px; background: rgba(255,255,255,.12); cursor: pointer; transition: background 200ms; }
@@ -315,7 +315,7 @@ export default function SettingsPage() {
         .settings-toggle-thumb { position: absolute; width: 20px; height: 20px; top: 3px; left: 3px; border-radius: 50%; background: #fff; transition: transform 200ms cubic-bezier(.2,.7,.3,1); pointer-events: none; }
         .settings-toggle input:checked ~ .settings-toggle-thumb { transform: translateX(18px); }
         .settings-btn { padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 150ms; border: none; text-decoration: none; display: inline-block; }
-        .settings-btn-ghost { background: rgba(255,255,255,.06); color: var(--ink); }
+        .settings-btn-ghost { background: var(--line); color: var(--ink); }
         .settings-btn-ghost:hover { background: rgba(255,255,255,.1); }
         .settings-btn-danger { background: rgba(239,68,68,.12); color: #ef4444; }
         .settings-btn-danger:hover { background: rgba(239,68,68,.22); }
@@ -327,7 +327,7 @@ export default function SettingsPage() {
         .settings-danger-zone .settings-row { border-color: rgba(239,68,68,.1); }
         .settings-passkeys { padding: 18px 20px; }
         .settings-payout-card { align-items: center; gap: 14px; }
-        .settings-payout-ic { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,.06); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .settings-payout-ic { width: 40px; height: 40px; border-radius: 10px; background: var(--line); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .settings-split-mini { display: flex; gap: 10px; margin-top: 10px; }
         .settings-split-mini span { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; padding: 3px 8px; border-radius: 6px; background: rgba(255,255,255,.05); }
 

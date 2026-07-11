@@ -18,7 +18,7 @@ const REASON_COLOR: Record<string, string> = {
   comparable: '#b983ff',
   geo: '#22e5d4',
   momentum: '#ff3e9a',
-  social: 'rgba(240,235,229,.55)',
+  social: 'var(--ink-a55)',
 };
 
 export default async function ForYouPage() {
@@ -85,21 +85,21 @@ export default async function ForYouPage() {
 const FORYOU_CSS = `
 .foryou-page { max-width: 720px; margin: 0 auto; padding: 32px 16px 64px; }
 .foryou-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.16em; color: #ff5029; }
-.foryou-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 34px; line-height: 1.0; letter-spacing: -0.03em; color: #f0ebe5; margin: 10px 0 10px; }
-.foryou-sub { font-family: 'DM Sans', sans-serif; font-size: 15px; line-height: 1.6; color: rgba(240,235,229,0.6); max-width: 54ch; margin: 0 0 24px; }
+.foryou-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 34px; line-height: 1.0; letter-spacing: -0.03em; color: var(--ink); margin: 10px 0 10px; }
+.foryou-sub { font-family: 'DM Sans', sans-serif; font-size: 15px; line-height: 1.6; color: var(--ink-a60); max-width: 54ch; margin: 0 0 24px; }
 .foryou-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .foryou-card { background: #100d09; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; }
 .foryou-card-link { display: flex; align-items: center; gap: 14px; padding: 14px 16px; text-decoration: none; }
 .foryou-avatar { flex-shrink: 0; width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #ff5029, #b983ff); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: #fff; }
 .foryou-body { flex: 1; min-width: 0; }
-.foryou-name { font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 16px; color: #f0ebe5; display: flex; align-items: center; gap: 6px; }
+.foryou-name { font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 16px; color: var(--ink); display: flex; align-items: center; gap: 6px; }
 .foryou-verified { color: #22e5d4; font-size: 12px; }
-.foryou-meta { font-family: 'DM Sans', sans-serif; font-size: 13px; color: rgba(240,235,229,0.5); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.foryou-meta { font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--ink-a50); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .foryou-reason { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 6px; }
-.foryou-hype { flex-shrink: 0; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.06em; color: rgba(240,235,229,0.5); }
+.foryou-hype { flex-shrink: 0; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.06em; color: var(--ink-a50); }
 .foryou-empty { text-align: center; padding: 32px; background: #100d09; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; }
-.foryou-empty p { font-family: 'DM Sans', sans-serif; color: rgba(240,235,229,0.6); margin: 0 0 14px; }
+.foryou-empty p { font-family: 'DM Sans', sans-serif; color: var(--ink-a60); margin: 0 0 14px; }
 .foryou-cta { display: inline-block; font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 15px; padding: 12px 22px; border-radius: 9999px; background: linear-gradient(135deg, #ff5029, #ff3e6e); color: #fff; text-decoration: none; }
-.foryou-foot { font-family: 'DM Sans', sans-serif; font-size: 14px; color: rgba(240,235,229,0.5); text-align: center; margin-top: 24px; }
+.foryou-foot { font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink-a50); text-align: center; margin-top: 24px; }
 .foryou-foot a { color: #ff5029; }
 `;

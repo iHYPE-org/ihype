@@ -99,24 +99,24 @@ export default async function CommunityPage() {
         .community-page { max-width: 720px; margin: 0 auto; padding: 32px 0 100px; }
         .community-hero { padding: 0 20px; margin-bottom: 32px; }
         .community-hero h1 { font-family: var(--font-display); font-size: clamp(2rem, 6vw, 2.6rem); font-weight: 800; letter-spacing: -.02em; color: var(--ink); margin: 0 0 10px; }
-        .community-lede { font-size: 15px; line-height: 1.6; color: rgba(240,235,229,.7); margin: 0; max-width: 56ch; }
+        .community-lede { font-size: 15px; line-height: 1.6; color: var(--ink-a70); margin: 0; max-width: 56ch; }
         .community-content { padding: 0 20px; display: flex; flex-direction: column; gap: 44px; }
         .community-section-head { margin-bottom: 16px; }
         .community-eyebrow { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; color: var(--accent, #ff5029); letter-spacing: .14em; }
         .community-section-head h2 { font-family: var(--font-display); font-size: 22px; font-weight: 800; letter-spacing: -.01em; color: var(--ink); margin: 6px 0 0; }
-        .community-section-copy { font-size: 13px; color: rgba(240,235,229,.6); margin: 6px 0 0; line-height: 1.5; }
+        .community-section-copy { font-size: 13px; color: var(--ink-a60); margin: 6px 0 0; line-height: 1.5; }
         .community-card { border: 1px solid rgba(255,255,255,.07); border-radius: 14px; padding: 22px; background: var(--bg-2, #100d09); }
-        .community-empty { text-align: center; color: rgba(240,235,229,.45); font-size: 14px; }
+        .community-empty { text-align: center; color: var(--ink-a45); font-size: 14px; }
         .community-post-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
         .community-badge { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; padding: 4px 10px; border-radius: 999px; border: 1px solid; }
-        .community-post-date { font-family: var(--font-mono); font-size: 11px; color: rgba(240,235,229,.45); }
+        .community-post-date { font-family: var(--font-mono); font-size: 11px; color: var(--ink-a45); }
         .community-card h3 { font-family: var(--font-display); font-size: 17px; font-weight: 800; color: var(--ink); margin: 0 0 6px; }
-        .community-post-summary { font-size: 13px; color: rgba(240,235,229,.65); margin: 0 0 8px; line-height: 1.5; }
-        .community-post-body { font-size: 14px; color: rgba(240,235,229,.85); white-space: pre-wrap; margin: 0 0 10px; line-height: 1.6; }
-        .community-post-author { font-family: var(--font-mono); font-size: 11px; color: rgba(240,235,229,.4); margin: 0; }
+        .community-post-summary { font-size: 13px; color: var(--ink-a65); margin: 0 0 8px; line-height: 1.5; }
+        .community-post-body { font-size: 14px; color: var(--ink-a85); white-space: pre-wrap; margin: 0 0 10px; line-height: 1.6; }
+        .community-post-author { font-family: var(--font-mono); font-size: 11px; color: var(--ink-a40); margin: 0; }
         .community-cta { border: 1px solid rgba(255,80,41,.2); border-radius: 16px; padding: 28px 24px; background: rgba(255,80,41,.05); display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
         .community-cta h2 { font-family: var(--font-display); font-size: 19px; font-weight: 800; color: var(--ink); margin: 0 0 8px; letter-spacing: -.01em; }
-        .community-cta p { font-size: 13px; color: rgba(240,235,229,.65); margin: 0; max-width: 46ch; line-height: 1.5; }
+        .community-cta p { font-size: 13px; color: var(--ink-a65); margin: 0; max-width: 46ch; line-height: 1.5; }
 
         @media (max-width: 600px) {
           .community-cta { flex-direction: column; align-items: flex-start; }

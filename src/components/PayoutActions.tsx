@@ -15,7 +15,7 @@ export function PayoutActions({ title }: { title: string }) {
     <div style={{ display: 'flex', gap: 10 }}>
       <button
         onClick={() => window.print()}
-        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, border: '1px solid var(--line, rgba(255,255,255,.1))', borderRadius: 999, cursor: 'pointer', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.8rem', background: 'transparent', color: 'var(--ink, #f0ebe5)', padding: '9px 18px' }}
+        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, border: '1px solid var(--line, rgba(255,255,255,.1))', borderRadius: 999, cursor: 'pointer', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.8rem', background: 'transparent', color: 'var(--ink)', padding: '9px 18px' }}
         type="button"
       >
         Download PDF

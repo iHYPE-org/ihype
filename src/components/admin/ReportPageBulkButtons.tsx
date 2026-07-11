@@ -57,7 +57,7 @@ export function ReportPageBulkButtons({ ids }: { ids: string[] }) {
         disabled={loading !== null}
         onClick={() => void run('dismiss_reports')}
         type="button"
-        style={{ background: 'rgba(255,255,255,.06)', color: 'var(--ink-2)', border: '1px solid var(--line)', borderRadius: 6, padding: '5px 14px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--f-m)' }}
+        style={{ background: 'var(--line)', color: 'var(--ink-2)', border: '1px solid var(--line)', borderRadius: 6, padding: '5px 14px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--f-m)' }}
       >
         {loading === 'dismiss_reports' ? 'Dismissing…' : 'Dismiss all on page'}
       </button>

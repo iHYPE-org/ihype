@@ -97,7 +97,7 @@ export function SiteNavTabs() {
                 fontSize: 14,
                 fontWeight: 800,
                 letterSpacing: '-0.01em',
-                color: isActive ? 'var(--ink, #f0ebe5)' : 'rgba(240,235,229,0.75)',
+                color: isActive ? 'var(--ink)' : 'var(--ink-a75)',
               }}
             >
               {t.label}
@@ -149,7 +149,7 @@ export function SiteNavTabs() {
             fontSize: 14,
             fontWeight: 800,
             letterSpacing: '-0.01em',
-            color: menuOpen ? 'var(--ink, #f0ebe5)' : 'rgba(240,235,229,0.75)',
+            color: menuOpen ? 'var(--ink)' : 'var(--ink-a75)',
           }}
         >
           Menu

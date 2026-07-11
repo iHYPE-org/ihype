@@ -75,7 +75,7 @@ export function PasskeyManager() {
 
   const ghostButton: React.CSSProperties = {
     padding: '10px 18px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer',
-    border: 'none', background: 'rgba(255,255,255,.06)', color: 'var(--ink)',
+    border: 'none', background: 'var(--line)', color: 'var(--ink)',
   };
 
   return (
@@ -88,12 +88,12 @@ export function PasskeyManager() {
 
       {!loadingList && passkeys && passkeys.length > 0 ? (
         <div style={{ marginTop: 20 }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.08em', color: 'rgba(240,235,229,.5)', marginBottom: 10 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--ink-a50)', marginBottom: 10 }}>
             Registered passkeys
           </div>
-          <div style={{ border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
             {passkeys.map((pk, i) => (
-              <div key={pk.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderBottom: i === passkeys.length - 1 ? 'none' : '1px solid rgba(255,255,255,.06)' }}>
+              <div key={pk.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderBottom: i === passkeys.length - 1 ? 'none' : '1px solid var(--line)' }}>
                 <span style={{ flex: 1, fontSize: 13, color: 'var(--ink)' }}>
                   <span style={{ textTransform: 'capitalize' }}>{pk.deviceType.replace(/-/g, ' ')}</span>
                   {pk.backedUp ? ' · synced' : ' · single device'}

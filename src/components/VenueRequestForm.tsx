@@ -67,7 +67,7 @@ export function VenueRequestForm({ venueProfileId }: { venueProfileId: string })
       {message && <p style={{ marginTop: 12, fontSize: 13, color: '#22e5d4' }}>{message}</p>}
 
       <style>{`
-        .venue-request-form { border: 1px solid rgba(255,255,255,.06); border-radius: 10px; padding: 28px; background: var(--bg2); }
+        .venue-request-form { border: 1px solid var(--line); border-radius: 10px; padding: 28px; background: var(--bg2); }
         .venue-form-group { margin-bottom: 20px; }
         .venue-form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--ink); }
         .venue-form-group input, .venue-form-group textarea { width: 100%; padding: 10px 14px; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: var(--bg); color: var(--ink); font-size: 14px; font-family: var(--font-body); box-sizing: border-box; }

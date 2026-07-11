@@ -75,7 +75,7 @@ export function SupportForm({ initialType = 'general', initialSubject = '' }: { 
       <div style={{ textAlign: 'center', padding: '40px 0' }}>
         <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
         <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 800, marginBottom: 8 }}>Message sent</h2>
-        <p style={{ fontSize: 14, color: 'rgba(240,235,229,.65)' }}>We&apos;ll reply to {email} within 24h.</p>
+        <p style={{ fontSize: 14, color: 'var(--ink-a65)' }}>We&apos;ll reply to {email} within 24h.</p>
       </div>
     );
   }

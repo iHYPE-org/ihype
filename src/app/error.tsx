@@ -22,11 +22,11 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
       <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 5vw, 40px)', fontWeight: 800, letterSpacing: '-.03em', lineHeight: .95, margin: '0 0 16px', color: 'var(--ink)' }}>
         Something broke.
       </h1>
-      <p style={{ fontSize: 15, color: 'rgba(240,235,229,.6)', maxWidth: 380, lineHeight: 1.6, margin: '0 0 24px' }}>
+      <p style={{ fontSize: 15, color: 'var(--ink-a60)', maxWidth: 380, lineHeight: 1.6, margin: '0 0 24px' }}>
         An unexpected error occurred. If it keeps happening, email admin@ihype.org.
       </p>
       {error.digest && (
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(240,235,229,.3)', marginBottom: 24 }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a30)', marginBottom: 24 }}>
           Error ID: {error.digest}
         </p>
       )}

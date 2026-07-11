@@ -103,25 +103,25 @@ export default async function PromotePage() {
         .promo-page { max-width: 1000px; margin: 0 auto; padding: 32px 24px 100px; }
         .promo-page-header { margin-bottom: 40px; }
         .promo-page-header h1 { font-family: var(--font-display); font-size: 32px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 6px; color: var(--ink); }
-        .promo-page-header p { font-size: 14px; color: rgba(240,235,229,.7); }
+        .promo-page-header p { font-size: 14px; color: var(--ink-a70); }
         .promo-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 20px; margin-bottom: 40px; }
-        .promo-stat-card { border: 1px solid rgba(255,255,255,.06); border-radius: 10px; padding: 24px; background: var(--bg2); }
-        .promo-stat-label { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; color: rgba(240,235,229,.55); margin-bottom: 8px; }
+        .promo-stat-card { border: 1px solid var(--line); border-radius: 10px; padding: 24px; background: var(--bg2); }
+        .promo-stat-label { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a55); margin-bottom: 8px; }
         .promo-stat-value { font-family: var(--font-display); font-size: 28px; font-weight: 700; color: var(--role-promoter, #ff3e9a); }
-        .promo-stat-sub { font-size: 12px; color: rgba(240,235,229,.5); margin-top: 4px; }
+        .promo-stat-sub { font-size: 12px; color: var(--ink-a50); margin-top: 4px; }
         .promo-referral-box { border: 1px solid rgba(255,62,154,.3); border-radius: 12px; padding: 28px; background: rgba(255,62,154,.06); margin-bottom: 32px; }
         .promo-referral-label { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; color: var(--role-promoter, #ff3e9a); margin-bottom: 12px; }
         .promo-referral-url { font-family: var(--font-mono); font-size: 14px; color: var(--ink); background: var(--bg); border: 1px solid rgba(255,255,255,.1); border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; word-break: break-all; }
-        .promo-split-explainer { font-size: 13px; color: rgba(240,235,229,.6); margin-top: 12px; line-height: 1.6; }
+        .promo-split-explainer { font-size: 13px; color: var(--ink-a60); margin-top: 12px; line-height: 1.6; }
         .promo-section { margin-bottom: 32px; }
         .promo-section-title { font-family: var(--font-display); font-size: 20px; font-weight: 800; margin-bottom: 20px; color: var(--ink); }
-        .promo-event-row { border: 1px solid rgba(255,255,255,.06); border-radius: 10px; padding: 20px; background: var(--bg2); display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-bottom: 12px; flex-wrap: wrap; }
+        .promo-event-row { border: 1px solid var(--line); border-radius: 10px; padding: 20px; background: var(--bg2); display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-bottom: 12px; flex-wrap: wrap; }
         .promo-event-row h3 { font-family: var(--font-display); font-size: 15px; font-weight: 800; margin-bottom: 4px; color: var(--ink); }
-        .promo-event-row p { font-size: 12px; color: rgba(240,235,229,.6); }
+        .promo-event-row p { font-size: 12px; color: var(--ink-a60); }
         .promo-cta { flex-shrink: 0; font-family: var(--font-body); font-weight: 600; font-size: 14px; padding: 10px 18px; border-radius: 9999px; border: none; cursor: pointer; background: linear-gradient(135deg, #ff5029, #ff3e6e); color: #fff; text-decoration: none; display: inline-block; }
-        .promo-empty { text-align: center; padding: 24px; background: var(--bg2); border: 1px solid rgba(255,255,255,.06); border-radius: 10px; }
-        .promo-empty p { color: rgba(240,235,229,.6); margin: 0 0 14px; }
-        .promo-foot { font-size: 12px; color: rgba(240,235,229,.5); text-align: center; margin-top: 28px; line-height: 1.6; }
+        .promo-empty { text-align: center; padding: 24px; background: var(--bg2); border: 1px solid var(--line); border-radius: 10px; }
+        .promo-empty p { color: var(--ink-a60); margin: 0 0 14px; }
+        .promo-foot { font-size: 12px; color: var(--ink-a50); text-align: center; margin-top: 28px; line-height: 1.6; }
       `}</style>
     </div>
   );

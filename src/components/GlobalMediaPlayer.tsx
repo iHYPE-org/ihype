@@ -757,7 +757,7 @@ export function SitePlayerDock() {
                 className="site-dock-wave-bar"
                 style={{
                   height: `${h * 100}%`,
-                  background: i / waveform.length <= progress ? 'var(--accent, #ff5029)' : 'rgba(255,255,255,.14)',
+                  background: i / waveform.length <= progress ? 'var(--accent, #ff5029)' : 'var(--line-2)',
                 }}
               />
             ))}

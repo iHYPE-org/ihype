@@ -120,7 +120,7 @@ export function IndexTabsShowcase() {
                 borderRadius: 18,
                 cursor: 'pointer',
                 transition: 'all 180ms cubic-bezier(.2,.7,.3,1)',
-                color: isActive ? 'var(--ink)' : 'rgba(240,235,229,.55)',
+                color: isActive ? 'var(--ink)' : 'var(--ink-a55)',
                 position: 'relative',
                 overflow: 'hidden',
               }}
@@ -134,7 +134,7 @@ export function IndexTabsShowcase() {
                 {tab.icon}
               </div>
               <div style={{ fontFamily: 'var(--f-d)', fontSize: 'clamp(16px, 2.5vw, 22px)', fontWeight: 800, letterSpacing: '-.02em', lineHeight: 1 }}>{tab.label}</div>
-              <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, letterSpacing: '.14em', textTransform: 'uppercase', color: isActive ? 'rgba(255,80,41,.7)' : 'rgba(240,235,229,.35)', transition: 'color 180ms' }}>{tab.sub}</div>
+              <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, letterSpacing: '.14em', textTransform: 'uppercase', color: isActive ? 'rgba(255,80,41,.7)' : 'var(--ink-a35)', transition: 'color 180ms' }}>{tab.sub}</div>
             </button>
           );
         })}
@@ -152,7 +152,7 @@ export function IndexTabsShowcase() {
             </div>
             <div>
               <div style={{ fontFamily: 'var(--f-d)', fontSize: 15, fontWeight: 800, letterSpacing: '-.01em', marginBottom: 2, color: 'var(--ink)' }}>{f.name}</div>
-              <p style={{ fontSize: 12, color: 'rgba(240,235,229,.55)', lineHeight: 1.55, margin: 0 }}>{f.desc}</p>
+              <p style={{ fontSize: 12, color: 'var(--ink-a55)', lineHeight: 1.55, margin: 0 }}>{f.desc}</p>
             </div>
           </div>
         ))}

@@ -1,4 +1,7 @@
 :root {
+  /* Match native controls (scrollbars, selects, date pickers) to the dark
+     UI. Flipped to `light` under [data-theme="light"] below. */
+  color-scheme: dark;
   /* ── Surfaces (warm near-black, low → high elevation) ─────────────── */
   --bg:    #0a0805;
   --bg-2:  #100d09;
@@ -16,6 +19,31 @@
   --ink-3:       #7a7060;
   --ink-4:       #3a342e;
   --ink-on-tint: #b3a899;
+  /* Alpha-ink scale — foreground ink at fixed opacities, theme-aware so
+     translucent text/hairlines stay legible in light mode. Dark values are
+     byte-identical to the rgba(240,235,229,·) literals they replace, so the
+     canonical dark UI is unchanged. Overridden per-opacity under
+     [data-theme="light"]. */
+  --ink-a20: rgba(240,235,229,.2);
+  --ink-a22: rgba(240,235,229,.22);
+  --ink-a25: rgba(240,235,229,.25);
+  --ink-a28: rgba(240,235,229,.28);
+  --ink-a30: rgba(240,235,229,.3);
+  --ink-a32: rgba(240,235,229,.32);
+  --ink-a35: rgba(240,235,229,.35);
+  --ink-a38: rgba(240,235,229,.38);
+  --ink-a40: rgba(240,235,229,.4);
+  --ink-a42: rgba(240,235,229,.42);
+  --ink-a45: rgba(240,235,229,.45);
+  --ink-a50: rgba(240,235,229,.5);
+  --ink-a55: rgba(240,235,229,.55);
+  --ink-a60: rgba(240,235,229,.6);
+  --ink-a65: rgba(240,235,229,.65);
+  --ink-a70: rgba(240,235,229,.7);
+  --ink-a72: rgba(240,235,229,.72);
+  --ink-a75: rgba(240,235,229,.75);
+  --ink-a80: rgba(240,235,229,.8);
+  --ink-a85: rgba(240,235,229,.85);
 
   /* ── Hairlines ───────────────────────────────────────────────────── */
   --line:   rgba(255,255,255,.06);
@@ -147,6 +175,7 @@
 
 /* Opt-in light theme. Dark is canonical. */
 [data-theme="light"] {
+  color-scheme: light;
   --bg:    #f5f2ed;
   --bg-2:  #ede9e2;
   --bg-3:  #e4dfd6;
@@ -157,6 +186,52 @@
   --ink-4: #b0a898;
   --line:   rgba(0,0,0,.08);
   --line-2: rgba(0,0,0,.16);
+  /* Light-mode alpha-ink: dark ink (#1a1410 → 26,20,16) at the same
+     opacities, so translucent text/hairlines that were near-white in dark
+     become the analogous muted dark tone here instead of vanishing. */
+  --ink-a20: rgba(26,20,16,.2);
+  --ink-a22: rgba(26,20,16,.22);
+  --ink-a25: rgba(26,20,16,.25);
+  --ink-a28: rgba(26,20,16,.28);
+  --ink-a30: rgba(26,20,16,.3);
+  --ink-a32: rgba(26,20,16,.32);
+  --ink-a35: rgba(26,20,16,.35);
+  --ink-a38: rgba(26,20,16,.38);
+  --ink-a40: rgba(26,20,16,.4);
+  --ink-a42: rgba(26,20,16,.42);
+  --ink-a45: rgba(26,20,16,.45);
+  --ink-a50: rgba(26,20,16,.5);
+  --ink-a55: rgba(26,20,16,.55);
+  --ink-a60: rgba(26,20,16,.6);
+  --ink-a65: rgba(26,20,16,.65);
+  --ink-a70: rgba(26,20,16,.7);
+  --ink-a72: rgba(26,20,16,.72);
+  --ink-a75: rgba(26,20,16,.75);
+  --ink-a80: rgba(26,20,16,.8);
+  --ink-a85: rgba(26,20,16,.85);
+}
+
+/* The default `body` rule hardcodes a dark gradient (see far below), which
+   otherwise overrides the light --bg token and leaves light mode rendering
+   dark-on-light. Mirror that rule's structure — two soft brand-tinted
+   radials over a vertical base — in warm light tones so the shipped theme
+   toggle actually works. Dark mode is untouched. */
+[data-theme="light"] body {
+  background:
+    radial-gradient(circle at top, rgba(255, 80, 41, 0.06), transparent 24%),
+    radial-gradient(circle at 82% 18%, rgba(185, 131, 255, 0.05), transparent 20%),
+    linear-gradient(180deg, #f7f4ef 0%, #f2ede6 42%, #ece6dd 100%);
+  /* A later `body` rule hardcodes near-white text; restore dark ink so
+     default/inherited copy is readable on the light background. */
+  color: var(--ink);
+}
+/* The decorative background grid draws near-white lines for the dark UI;
+   swap to faint dark lines so the texture survives in light mode. */
+[data-theme="light"] .site-background {
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  background-size: 52px 52px;
 }
 
 /* Reduced-motion: neutralize all animation so vestibular users aren't affected. */
@@ -177,7 +252,7 @@ html {
   scroll-behavior: smooth;
 }
 html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: var(--f-b, 'DM Sans', 'Segoe UI', sans-serif); }
-::selection { background: rgba(255,80,41,.22); color: #f0ebe5; }
+::selection { background: rgba(255,80,41,.22); color: var(--ink); }
 a { color: inherit; text-decoration: none; }
 img { max-width: 100%; display: block; }
 button, input, select, textarea { font: inherit; }
@@ -4154,7 +4229,7 @@ body {
 
 .a11y-panel .meta {
   margin: 4px 0 0;
-  color: rgba(240,235,229,.55);
+  color: var(--ink-a55);
   font-size: 0.78rem;
   font-weight: 500;
   line-height: 1.4;
@@ -4208,7 +4283,7 @@ body {
 .a11y-option small {
   display: block;
   margin-top: 3px;
-  color: rgba(240,235,229,.5);
+  color: var(--ink-a50);
   font-size: 0.75rem;
   font-weight: 500;
   line-height: 1.4;
@@ -5126,7 +5201,7 @@ html.high-contrast p {
   position: relative;
   cursor: pointer;
 }
-.site-dock-track:hover { background: rgba(255,255,255,.14); }
+.site-dock-track:hover { background: var(--line-2); }
 .site-dock-waveform {
   height: 24px;
   background: none;
@@ -5340,7 +5415,7 @@ html.high-contrast p {
   min-height: 44px;
   padding: 0 12px;
   border-radius: 10px;
-  color: var(--ink-2, rgba(240,235,229,.7));
+  color: var(--ink-2, var(--ink-a70));
   font-family: var(--font-body);
   font-size: 14px;
   font-weight: 500;
@@ -5376,7 +5451,7 @@ html.high-contrast p {
   cursor: pointer;
   background: rgba(255,255,255,.03);
   border: 1px solid rgba(255,255,255,.08);
-  color: rgba(240,235,229,.55);
+  color: var(--ink-a55);
   transition:
     background .18s cubic-bezier(.2,.7,.3,1),
     border-color .18s cubic-bezier(.2,.7,.3,1),
@@ -5736,7 +5811,7 @@ a .ihype-card, a.ihype-card {
   border: 1px solid rgba(255,255,255,.1);
   border-radius: 8px;
   background: rgba(255,255,255,.04);
-  color: var(--ink, #f0ebe5);
+  color: var(--ink);
   font-size: 14px;
   font-family: var(--font-body, 'DM Sans', sans-serif);
   box-sizing: border-box;
@@ -5781,7 +5856,7 @@ a .ihype-card, a.ihype-card {
 .ihype-btn-ghost {
   padding: 11px 16px;
   background: transparent;
-  color: rgba(240,235,229,.6);
+  color: var(--ink-a60);
   border: 1px solid rgba(255,255,255,.12);
   border-radius: 8px;
   font-size: 13px;
@@ -5793,7 +5868,7 @@ a .ihype-card, a.ihype-card {
 }
 .ihype-btn-ghost:hover {
   border-color: rgba(255,255,255,.25);
-  color: var(--ink, #f0ebe5);
+  color: var(--ink);
 }
 
 .ihype-eyebrow {
@@ -5807,14 +5882,14 @@ a .ihype-card, a.ihype-card {
 .ihype-empty-state {
   text-align: center;
   padding: 80px 0;
-  color: rgba(240,235,229,.3);
+  color: var(--ink-a30);
 }
 .ihype-empty-state .icon { font-size: 48px; margin-bottom: 16px; }
 .ihype-empty-state h3 {
   font-family: var(--font-display, 'Syne', sans-serif);
   font-weight: 800;
   font-size: 18px;
-  color: var(--ink, #f0ebe5);
+  color: var(--ink);
   margin: 0 0 8px;
 }
 .ihype-empty-state p { font-size: 13px; margin: 0 0 20px; }
@@ -6152,7 +6227,7 @@ h1, h2 {
     background: none;
     border: none;
     cursor: pointer;
-    color: var(--ink-2, rgba(240,235,229,.7));
+    color: var(--ink-2, var(--ink-a70));
     font-family: var(--font-display, 'Syne', sans-serif);
     font-weight: 800;
     font-size: 15px;
@@ -6169,7 +6244,7 @@ h1, h2 {
   border-radius: 16px;
   background: var(--bg-2, #14100b);
   border: 1px solid rgba(255,255,255,.16);
-  color: rgba(240,235,229,.5);
+  color: var(--ink-a50);
   font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 16px;
   font-weight: 500;
@@ -6195,7 +6270,7 @@ h1, h2 {
   cursor: pointer;
   text-align: center;
   padding: 10px;
-  color: var(--ink, #f0ebe5);
+  color: var(--ink);
   transition: transform .18s cubic-bezier(.34,1.56,.64,1), opacity .15s ease;
   animation: mqg-rise-in .5s cubic-bezier(.22,1,.36,1) both;
 }
@@ -6210,7 +6285,7 @@ h1, h2 {
   display: flex; align-items: center; justify-content: center;
 }
 .mqg-label { font-family: var(--font-display, 'Syne', sans-serif); font-size: 19px; font-weight: 800; letter-spacing: -.01em; }
-.mqg-sublabel { font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgba(240,235,229,.5); margin-top: -6px; }
+.mqg-sublabel { font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a50); margin-top: -6px; }
 
 @keyframes mqg-rise-in {
   from { opacity: 0; transform: translateY(16px) scale(.95); }

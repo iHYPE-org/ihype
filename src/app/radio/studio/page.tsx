@@ -25,7 +25,7 @@ export default async function RadioStudioPage() {
     return (
       <div style={{ maxWidth: 560, margin: '80px auto', padding: '0 24px', textAlign: 'center' }}>
         <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 24, marginBottom: 12 }}>You need a DJ page first</h1>
-        <p style={{ color: 'rgba(240,235,229,0.6)', marginBottom: 20 }}>
+        <p style={{ color: 'var(--ink-a60)', marginBottom: 20 }}>
           Radio Show Creator builds shows from a DJ profile&apos;s free-use crate. Set up your DJ page to get started.
         </p>
         <Link href="/pages" style={{ display: 'inline-block', padding: '10px 20px', borderRadius: 8, background: 'var(--accent)', color: '#fff', fontWeight: 700, textDecoration: 'none' }}>

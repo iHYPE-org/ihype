@@ -127,22 +127,22 @@ export default async function WelcomePage() {
         .welcome-confetti { width: 56px; height: 56px; margin: 0 auto 24px; display: flex; align-items: center; justify-content: center; border-radius: 16px; background: rgba(255,80,41,.12); }
         .welcome-h1 { font-family: var(--f-d, 'Syne', sans-serif); font-size: 36px; font-weight: 800; letter-spacing: -.02em; line-height: .95; margin-bottom: 16px; color: var(--ink); }
         .welcome-h1 span { color: var(--accent); }
-        .welcome-sub { font-size: 15px; color: rgba(240,235,229,.7); margin-bottom: 24px; line-height: 1.6; }
+        .welcome-sub { font-size: 15px; color: var(--ink-a70); margin-bottom: 24px; line-height: 1.6; }
         .welcome-preview { display: flex; align-items: center; gap: 14px; text-align: left; padding: 16px 18px; border-radius: 12px; margin-bottom: 28px; border: 1px solid; }
         .welcome-preview-art { width: 52px; height: 52px; border-radius: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; }
         .welcome-preview-eyebrow { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 9px; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 4px; }
         .welcome-preview-title { font-family: var(--f-d, 'Syne', sans-serif); font-size: 16px; font-weight: 800; letter-spacing: -.01em; margin-bottom: 2px; color: var(--ink); }
-        .welcome-preview-sub { font-size: 12px; color: rgba(240,235,229,.55); }
+        .welcome-preview-sub { font-size: 12px; color: var(--ink-a55); }
         .welcome-preview-go { flex-shrink: 0; font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; font-size: 12px; padding: 9px 14px; border-radius: 8px; color: #0a0805; text-decoration: none; white-space: nowrap; }
         .welcome-steps { display: flex; flex-direction: column; gap: 16px; margin-bottom: 48px; text-align: left; }
-        .welcome-step { display: flex; gap: 16px; align-items: flex-start; padding: 18px 20px; border: 1px solid rgba(255,255,255,.06); border-radius: 10px; background: var(--bg2); }
+        .welcome-step { display: flex; gap: 16px; align-items: flex-start; padding: 18px 20px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg2); }
         .welcome-step-num { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,80,41,.15); color: var(--accent); font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .welcome-step-text h3 { font-family: var(--f-d, 'Syne', sans-serif); font-size: 15px; font-weight: 800; margin-bottom: 3px; color: var(--ink); }
-        .welcome-step-text p { font-size: 13px; color: rgba(240,235,229,.6); }
+        .welcome-step-text p { font-size: 13px; color: var(--ink-a60); }
         .welcome-cta { display: block; width: 100%; padding: 15px; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-family: var(--f-d, 'Syne', sans-serif); font-size: 17px; font-weight: 800; cursor: pointer; transition: opacity 150ms; margin-bottom: 14px; text-decoration: none; }
         .welcome-cta:hover { opacity: .9; }
-        .welcome-skip { font-size: 13px; color: rgba(240,235,229,.55); cursor: pointer; text-decoration: underline; }
-        .welcome-skip:hover { color: rgba(240,235,229,.7); }
+        .welcome-skip { font-size: 13px; color: var(--ink-a55); cursor: pointer; text-decoration: underline; }
+        .welcome-skip:hover { color: var(--ink-a70); }
       `}</style>
     </div>
   );

@@ -80,7 +80,7 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
       <div className="payout-card" style={{
         borderRadius: 24, padding: '2.5rem',
         background: 'linear-gradient(135deg, rgba(255,80,41,.15), rgba(185,131,255,.06))',
-        border: '1px solid rgba(255,255,255,.06)', marginBottom: '1.25rem', position: 'relative', overflow: 'hidden',
+        border: '1px solid var(--line)', marginBottom: '1.25rem', position: 'relative', overflow: 'hidden',
       }}>
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: '.68rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3, #5a5248)', marginBottom: 16 }}>
           Post-event payout · {dateStr}

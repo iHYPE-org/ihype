@@ -123,10 +123,10 @@ export function TicketCardActions({
                 alt={`QR code for ticket ${t.serializedId}`}
                 height={120}
                 src={`/api/tickets/${t.serializedId}/qr`}
-                style={{ borderRadius: 8, background: '#f0ebe5' }}
+                style={{ borderRadius: 8, background: 'var(--ink)' }}
                 width={120}
               />
-              <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'rgba(240,235,229,.5)', letterSpacing: '.04em' }}>
+              <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--ink-a50)', letterSpacing: '.04em' }}>
                 {t.serializedId}
               </span>
             </div>
@@ -150,7 +150,7 @@ export function TicketCardActions({
               </>
             ) : (
               <>
-                <label htmlFor="ticket-transfer-email" style={{ display: 'block', fontSize: 12, color: 'rgba(240,235,229,.5)', marginBottom: 6 }}>Recipient&apos;s email</label>
+                <label htmlFor="ticket-transfer-email" style={{ display: 'block', fontSize: 12, color: 'var(--ink-a50)', marginBottom: 6 }}>Recipient&apos;s email</label>
                 <input
                   id="ticket-transfer-email"
                   onChange={(e) => setEmail(e.target.value)}
@@ -198,7 +198,7 @@ export function TicketCardActions({
               </>
             ) : (
               <>
-                <p style={{ fontSize: 13, color: 'rgba(240,235,229,.6)', marginBottom: 16 }}>
+                <p style={{ fontSize: 13, color: 'var(--ink-a60)', marginBottom: 16 }}>
                   We&apos;ll route this to our support team to process your refund. Cancellation is allowed up to 48 hours before the event.
                 </p>
                 {cancelError && <p style={{ color: '#ff5029', fontSize: 12, marginBottom: 12 }}>{cancelError}</p>}

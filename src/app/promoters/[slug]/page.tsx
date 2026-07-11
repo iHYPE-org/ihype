@@ -180,7 +180,7 @@ export default async function DJProfilePage({
 
         {activeSection === 'earnings' && isOwner && (
           <div>
-            <p style={{ fontSize: 12, color: 'rgba(240,235,229,.5)', marginBottom: 16 }}>
+            <p style={{ fontSize: 12, color: 'var(--ink-a50)', marginBottom: 16 }}>
               Earnings are a proportional share of the 10% promoter pool per event, based on gate driven.
             </p>
             {earningsByShow.size === 0 ? (
@@ -214,29 +214,29 @@ export default async function DJProfilePage({
         @media (max-width: 600px) { .dj-hero { padding: 24px 20px; } .dj-content { padding: 0 20px; } }
         .dj-avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--profile-hero, linear-gradient(135deg,#ff3e9a,#b983ff)); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; overflow: hidden; }
         .dj-name { font-family: var(--font-display); font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 4px; color: var(--ink); }
-        .dj-handle { font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: rgba(240,235,229,.5); margin-bottom: 12px; }
+        .dj-handle { font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a50); margin-bottom: 12px; }
         .dj-hero-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
         .dj-badge { display: inline-block; padding: 5px 12px; border-radius: 4px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; }
         .dj-hero-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-        .dj-hero-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; background: rgba(255,255,255,.06); color: var(--ink); border: 1px solid rgba(255,255,255,.1); }
+        .dj-hero-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; background: var(--line); color: var(--ink); border: 1px solid rgba(255,255,255,.1); }
         .dj-hero-btn:hover { background: rgba(255,255,255,.1); }
-        .dj-stats { display: flex; gap: 28px; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,.06); }
+        .dj-stats { display: flex; gap: 28px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--line); }
         .dj-stat-val { font-size: 22px; font-weight: 700; color: var(--profile-accent, #ff3e9a); font-family: var(--font-display); }
-        .dj-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: rgba(240,235,229,.55); margin-top: 2px; }
+        .dj-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a55); margin-top: 2px; }
         .dj-content { padding: 0 32px; }
-        .dj-tabs { display: flex; gap: 24px; border-bottom: 1px solid rgba(255,255,255,.06); margin: 28px 0; }
-        .dj-tab { padding: 10px 0; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 600; font-size: 14px; color: rgba(240,235,229,.6); text-decoration: none; }
+        .dj-tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--line); margin: 28px 0; }
+        .dj-tab { padding: 10px 0; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--ink-a60); text-decoration: none; }
         .dj-tab.active { color: var(--ink); border-color: var(--profile-accent, #ff3e9a); }
-        .dj-show-card { border: 1px solid rgba(255,255,255,.06); border-radius: 10px; padding: 18px 20px; background: var(--bg2); display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; text-decoration: none; color: inherit; }
+        .dj-show-card { border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; background: var(--bg2); display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; text-decoration: none; color: inherit; }
         .dj-show-card:hover { background: var(--bg3); }
         .dj-show-title { font-family: var(--font-display); font-size: 15px; font-weight: 800; margin-bottom: 3px; color: var(--ink); }
-        .dj-show-meta { font-size: 12px; color: rgba(240,235,229,.55); }
+        .dj-show-meta { font-size: 12px; color: var(--ink-a55); }
         .dj-live-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 9999px; background: rgba(255,62,154,.15); color: #ff3e9a; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
-        .dj-earn-list { border: 1px solid rgba(255,255,255,.06); border-radius: 10px; padding: 0 20px; background: var(--bg2); }
-        .dj-earn-row { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,.06); font-size: 14px; }
+        .dj-earn-list { border: 1px solid var(--line); border-radius: 10px; padding: 0 20px; background: var(--bg2); }
+        .dj-earn-row { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
         .dj-earn-row:last-child { border-bottom: none; }
         .dj-earn-val { font-weight: 700; color: #ff3e9a; }
-        .dj-empty { text-align: center; padding: 48px 24px; color: rgba(240,235,229,.5); }
+        .dj-empty { text-align: center; padding: 48px 24px; color: var(--ink-a50); }
       `}</style>
     </div>
   );

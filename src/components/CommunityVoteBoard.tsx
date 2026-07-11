@@ -13,7 +13,7 @@ type FeatureRequest = {
 
 const rowStyle: React.CSSProperties = {
   display: 'flex', gap: 14, alignItems: 'flex-start',
-  padding: '16px 0', borderBottom: '1px solid rgba(255,255,255,.06)',
+  padding: '16px 0', borderBottom: '1px solid var(--line)',
 };
 
 const inputStyle: React.CSSProperties = {
@@ -26,7 +26,7 @@ const STATUS_COLOR: Record<string, string> = {
   planned: '#22e5d4',
   in_progress: '#b983ff',
   shipped: '#22e5d4',
-  declined: 'rgba(240,235,229,.4)',
+  declined: 'var(--ink-a40)',
 };
 
 /**
@@ -113,9 +113,9 @@ export function CommunityVoteBoard() {
       </form>
 
       {loading ? (
-        <p style={{ fontSize: 13, color: 'rgba(240,235,229,.45)' }}>Loading…</p>
+        <p style={{ fontSize: 13, color: 'var(--ink-a45)' }}>Loading…</p>
       ) : requests.length === 0 ? (
-        <p style={{ fontSize: 13, color: 'rgba(240,235,229,.45)' }}>No feature requests yet — be the first to suggest one.</p>
+        <p style={{ fontSize: 13, color: 'var(--ink-a45)' }}>No feature requests yet — be the first to suggest one.</p>
       ) : (
         <div>
           {requests.map((fr) => (
@@ -135,15 +135,15 @@ export function CommunityVoteBoard() {
               </button>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>{fr.title}</div>
-                <p style={{ fontSize: 13, color: 'rgba(240,235,229,.6)', margin: '4px 0 0', lineHeight: 1.5 }}>{fr.description}</p>
+                <p style={{ fontSize: 13, color: 'var(--ink-a60)', margin: '4px 0 0', lineHeight: 1.5 }}>{fr.description}</p>
               </div>
               {fr.status !== 'open' && (
                 <span
                   style={{
                     flexShrink: 0, fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase',
                     letterSpacing: '.08em', padding: '4px 9px', borderRadius: 999,
-                    border: `1px solid ${STATUS_COLOR[fr.status] ?? 'rgba(255,255,255,.14)'}`,
-                    color: STATUS_COLOR[fr.status] ?? 'rgba(240,235,229,.6)',
+                    border: `1px solid ${STATUS_COLOR[fr.status] ?? 'var(--line-2)'}`,
+                    color: STATUS_COLOR[fr.status] ?? 'var(--ink-a60)',
                   }}
                 >
                   {fr.status.replace(/_/g, ' ')}

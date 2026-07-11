@@ -39,9 +39,9 @@ export default async function VerifyPage() {
   if (profiles.length === 0) {
     return (
       <div style={{ maxWidth: 480, margin: '40px auto', padding: '0 24px 100px', textAlign: 'center' }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)', marginBottom: 12 }}>Verification</p>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 12 }}>Verification</p>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.7rem', fontWeight: 800, marginBottom: 12 }}>Nothing to verify yet.</h1>
-        <p style={{ fontSize: 14, color: 'rgba(240,235,229,.6)', marginBottom: 24 }}>
+        <p style={{ fontSize: 14, color: 'var(--ink-a60)', marginBottom: 24 }}>
           Fan accounts don&apos;t need verification. Create an Artist, DJ, or Venue page to get started.
         </p>
         <Link href="/pages?tab=creator" className="ihype-btn-primary" style={{ display: 'inline-block', textDecoration: 'none' }}>
@@ -64,7 +64,7 @@ export default async function VerifyPage() {
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#22e5d4" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
         </div>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.7rem', fontWeight: 800, marginBottom: 8 }}>You&apos;re verified.</h1>
-        <p style={{ fontSize: 14, color: 'rgba(240,235,229,.6)' }}>{profile.name} is a verified {TYPE_LABEL[profile.type]} on iHYPE.</p>
+        <p style={{ fontSize: 14, color: 'var(--ink-a60)' }}>{profile.name} is a verified {TYPE_LABEL[profile.type]} on iHYPE.</p>
       </div>
     );
   }
@@ -82,7 +82,7 @@ export default async function VerifyPage() {
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#22e5d4" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
         </div>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.7rem', fontWeight: 800, marginBottom: 8 }}>Submitted.</h1>
-        <p style={{ fontSize: 14, color: 'rgba(240,235,229,.6)', maxWidth: '34ch', margin: '0 auto 24px', lineHeight: 1.65 }}>
+        <p style={{ fontSize: 14, color: 'var(--ink-a60)', maxWidth: '34ch', margin: '0 auto 24px', lineHeight: 1.65 }}>
           We&apos;ll review your application within 48 hours and email you at the address on your account. While you wait, you can use iHYPE as a Fan.
         </p>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginBottom: 24 }}>
@@ -111,9 +111,9 @@ export default async function VerifyPage() {
 
   return (
     <div style={{ maxWidth: 480, margin: '40px auto', padding: '0 24px 100px' }}>
-      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)', marginBottom: 12 }}>Verification</p>
+      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 12 }}>Verification</p>
       <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.7rem', fontWeight: 800, marginBottom: 8 }}>Verify your {TYPE_LABEL[profile.type]} page.</h1>
-      <p style={{ fontSize: 14, color: 'rgba(240,235,229,.6)', marginBottom: 24, lineHeight: 1.6 }}>
+      <p style={{ fontSize: 14, color: 'var(--ink-a60)', marginBottom: 24, lineHeight: 1.6 }}>
         Fan accounts are instant. Artist, DJ, and Venue accounts require verification — it protects everyone in the 45/45/10 ecosystem.
       </p>
       <VerifyForm

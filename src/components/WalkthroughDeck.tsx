@@ -119,7 +119,7 @@ function ListRow({ icon, iconTint = 'var(--accent)', title, subtitle }: {
         </span>
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: 'var(--f-b)', fontWeight: 700, fontSize: '0.9rem', color: '#f0ebe5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</div>
+        <div style={{ fontFamily: 'var(--f-b)', fontWeight: 700, fontSize: '0.9rem', color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</div>
         {subtitle && <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.72rem', color: '#7a7060', marginTop: 2 }}>{subtitle}</div>}
       </div>
     </div>
@@ -148,7 +148,7 @@ function SplitBar({ total }: { total?: number }) {
           <span key={s.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--f-m)', fontSize: 13, color: '#9e9080' }}>
             <span style={{ width: 8, height: 8, borderRadius: 2, background: s.color, display: 'inline-block' }} />
             {s.label}
-            <b style={{ color: '#f0ebe5', fontWeight: 700 }}>{total != null ? money(s.pct) : `${s.pct}%`}</b>
+            <b style={{ color: 'var(--ink)', fontWeight: 700 }}>{total != null ? money(s.pct) : `${s.pct}%`}</b>
           </span>
         ))}
       </div>
@@ -201,7 +201,7 @@ function QRPass({ artist, detail, admits = 1, serial = 'IH-0000-0000' }: {
   return (
     <div style={{
       borderRadius: 'var(--radius-2xl)', overflow: 'hidden',
-      border: '1px solid rgba(255,255,255,.14)',
+      border: '1px solid var(--line-2)',
       background: '#1a1612', maxWidth: 340, width: '100%',
       boxShadow: '0 32px 80px rgba(0,0,0,.5)',
     }}>
@@ -232,7 +232,7 @@ function Kick({ children }: { children: React.ReactNode }) {
 }
 
 function H({ children, size = 64, style }: { children: React.ReactNode; size?: number; style?: React.CSSProperties }) {
-  return <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, letterSpacing: '-.04em', color: '#f0ebe5', lineHeight: .95, margin: 0, fontSize: size, ...style }}>{children}</h2>;
+  return <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, letterSpacing: '-.04em', color: 'var(--ink)', lineHeight: .95, margin: 0, fontSize: size, ...style }}>{children}</h2>;
 }
 
 function Body({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
@@ -272,7 +272,7 @@ function Slide01Cover() {
       <div style={{ position: 'relative' }}><Logo size="lg" /></div>
       <div style={{ position: 'relative' }}>
         <Kick>Product walkthrough</Kick>
-        <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, letterSpacing: '-.04em', color: '#f0ebe5', lineHeight: .95, margin: '22px 0 0', fontSize: 92 }}>One loop.<br />Four roles.<br />Zero fees.</h1>
+        <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, letterSpacing: '-.04em', color: 'var(--ink)', lineHeight: .95, margin: '22px 0 0', fontSize: 92 }}>One loop.<br />Four roles.<br />Zero fees.</h1>
         <Body style={{ fontSize: 23, maxWidth: '60ch', marginTop: 26 }}>
           How a single hype turns into a booked show, a sold ticket, a paid artist, and a fan who got in early — with iHYPE taking nothing.
         </Body>
@@ -309,7 +309,7 @@ function Slide03Loop() {
     { label: 'Fan hypes', color: '#b983ff' },
     { label: 'Venue sees demand', color: '#22e5d4' },
     { label: 'Artist accepts', color: '#ff5029' },
-    { label: 'Fan buys', color: '#f0ebe5' },
+    { label: 'Fan buys', color: 'var(--ink)' },
     { label: 'Promoter earns', color: '#ffb84a' },
     { label: 'Everyone paid', color: '#22e5d4' },
   ];
@@ -446,7 +446,7 @@ function Slide10Surfaces() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 18 }}>
         {surfaces.map(s => (
           <StepCard key={s.title} style={{ padding: 26 }}>
-            <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 22, letterSpacing: '-.04em', color: '#f0ebe5', lineHeight: .95 }}>{s.title}</div>
+            <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 22, letterSpacing: '-.04em', color: 'var(--ink)', lineHeight: .95 }}>{s.title}</div>
             <Body style={{ fontSize: 16, marginTop: 8 }}>{s.body}</Body>
           </StepCard>
         ))}
@@ -473,7 +473,7 @@ function Slide12Close() {
     <section style={{ ...SLIDE_STYLE, background: '#0a0805', padding: 88, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg,#ff5029,#ff3e9a,#b983ff)' }} />
       <Logo size="lg" gradient />
-      <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, letterSpacing: '-.04em', color: '#f0ebe5', lineHeight: .95, margin: '32px 0 0', fontSize: 80 }}>
+      <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, letterSpacing: '-.04em', color: 'var(--ink)', lineHeight: .95, margin: '32px 0 0', fontSize: 80 }}>
         For the scene,<br />not the algorithm.
       </h2>
       <Body style={{ fontSize: 22, marginTop: 24 }}>ihype.org</Body>
@@ -525,7 +525,7 @@ export function WalkthroughDeck() {
         #wt-wrap { position: fixed; inset: 0; display: grid; place-items: center; overflow: hidden; z-index: 9999; background: #060504; }
         #wt-stage { width: 1280px; height: 720px; transform-origin: center; flex-shrink: 0; position: relative; }
         #wt-nav { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; z-index: 10000; }
-        #wt-nav button { width: 40px; height: 40px; border-radius: 999px; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.06); color: #f0ebe5; font-size: 16px; cursor: pointer; display: grid; place-items: center; }
+        #wt-nav button { width: 40px; height: 40px; border-radius: 999px; border: 1px solid rgba(255,255,255,.16); background: var(--line); color: var(--ink); font-size: 16px; cursor: pointer; display: grid; place-items: center; }
         #wt-nav button:hover { background: rgba(255,255,255,.12); }
         #wt-count { font-family: var(--f-m); font-size: 13px; letter-spacing: .14em; color: #7a7060; min-width: 64px; text-align: center; }
         @media print {

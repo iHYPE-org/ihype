@@ -287,7 +287,7 @@ export function RadioHome() {
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', boxShadow: '0 0 10px var(--accent)', animation: 'ihype-pulse-dot 1.4s infinite' }} />
             <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 15, color: 'var(--ink)' }}>The station never stops →</span>
           </div>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(240,235,229,.5)', flexShrink: 0 }}>Always on</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a50)', flexShrink: 0 }}>Always on</span>
         </div>
       </a>
 
@@ -312,7 +312,7 @@ export function RadioHome() {
 
       {/* LOADING SKELETON */}
       {shows === null && (
-        <div style={{ borderRadius: 14, padding: '24px 28px', marginBottom: 24, border: '1px solid rgba(255,255,255,.06)', background: 'rgba(255,255,255,.02)' }}>
+        <div style={{ borderRadius: 14, padding: '24px 28px', marginBottom: 24, border: '1px solid var(--line)', background: 'rgba(255,255,255,.02)' }}>
           <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
             <div className="ihype-skeleton" style={{ width: 80, height: 80, borderRadius: 12, flexShrink: 0 }} />
             <div style={{ flex: 1, display: 'grid', gap: 10 }}>
@@ -353,7 +353,7 @@ export function RadioHome() {
               )}
             </div>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 4 }}>{current.title}</div>
-            <div style={{ fontSize: 13, color: 'rgba(240,235,229,.65)' }}>{current.dj} · {current.genre}</div>
+            <div style={{ fontSize: 13, color: 'var(--ink-a65)' }}>{current.dj} · {current.genre}</div>
           </div>
         </div>
 
@@ -382,7 +382,7 @@ export function RadioHome() {
               );
             })}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(240,235,229,.5)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-a50)' }}>
             <span>{isLive ? '● LIVE' : fmt(elapsed)}</span>
             <span>{isLive ? (listeners !== null ? `${listeners} listening` : 'On air') : fmt(current.dur)}</span>
           </div>
@@ -398,7 +398,7 @@ export function RadioHome() {
         </div>
 
         {/* Hype mechanic */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,.06)', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--line)', flexWrap: 'wrap' }}>
           <button
             onClick={hypeShow}
             style={{
@@ -414,7 +414,7 @@ export function RadioHome() {
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)', display: 'inline-block' }} />
             {hyped ? 'Hyped!' : 'Hype this'}
           </button>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(240,235,229,.32)', letterSpacing: '.08em' }}>● at {fmt(elapsed)}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-a32)', letterSpacing: '.08em' }}>● at {fmt(elapsed)}</span>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(255,80,41,.55)', marginLeft: 'auto' }}>{currentHypes.toLocaleString()} hypes this show</span>
         </div>
       </div>
@@ -430,7 +430,7 @@ export function RadioHome() {
         <div style={{ width: 52, height: 52, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, border: '2px solid rgba(185,131,255,.3)', background: `linear-gradient(135deg,${current.color},#b983ff)` }}>🎛️</div>
         <div style={{ flex: 1, minWidth: 160 }}>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 800, letterSpacing: '-.01em', marginBottom: 1 }}>{current.dj}</div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'rgba(240,235,229,.35)', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 5 }}>{djHandle}</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--ink-a35)', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 5 }}>{djHandle}</div>
           <div style={{ fontSize: 11, color: 'rgba(185,131,255,.65)' }}>Earns promoter cuts on every ticket sold — locked in our charter.</div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'center' }}>
@@ -439,7 +439,7 @@ export function RadioHome() {
               <FollowButton profileId={current.djProfileId} />
             </div>
           )}
-          <button style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1px solid rgba(255,255,255,.1)', background: 'rgba(255,255,255,.04)', color: 'rgba(240,235,229,.6)', transition: 'all 150ms' }}>
+          <button style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1px solid rgba(255,255,255,.1)', background: 'rgba(255,255,255,.04)', color: 'var(--ink-a60)', transition: 'all 150ms' }}>
             Tip
           </button>
         </div>
@@ -450,14 +450,14 @@ export function RadioHome() {
       {current && isLive && current.tracks.length > 0 && (
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.16em', color: 'rgba(240,235,229,.32)' }}>Up Next in Crate</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.16em', color: 'var(--ink-a32)' }}>Up Next in Crate</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {current.tracks.map((t, i) => {
               const isNext = i === 0;
               return (
                 <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 12px', borderRadius: 8, cursor: 'pointer', background: isNext ? 'rgba(255,80,41,.05)' : undefined, border: isNext ? '1px solid rgba(255,80,41,.1)' : '1px solid transparent', transition: 'background 120ms' }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(240,235,229,.22)', width: 16, flexShrink: 0, textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-a22)', width: 16, flexShrink: 0, textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {isNext
                       ? <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', display: 'inline-block', animation: 'ihype-pulse 1.4s ease-in-out infinite' }} />
                       : i + 1
@@ -466,9 +466,9 @@ export function RadioHome() {
                   <div style={{ width: 34, height: 34, borderRadius: 6, flexShrink: 0, background: `linear-gradient(135deg,${PALETTE[i % PALETTE.length]},#b983ff)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15 }}>🎵</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.2 }}>{t.title}</div>
-                    <div style={{ fontSize: 11, color: 'rgba(240,235,229,.5)' }}>{t.artistName}</div>
+                    <div style={{ fontSize: 11, color: 'var(--ink-a50)' }}>{t.artistName}</div>
                   </div>
-                  {t.dur > 0 && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(240,235,229,.28)', marginLeft: 'auto', flexShrink: 0 }}>{fmt(t.dur)}</div>}
+                  {t.dur > 0 && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-a28)', marginLeft: 'auto', flexShrink: 0 }}>{fmt(t.dur)}</div>}
                 </div>
               );
             })}
@@ -482,7 +482,7 @@ export function RadioHome() {
           <button key={t.id} onClick={() => setTab(t.id)} style={{
             padding: '10px 20px', background: 'none', border: 'none',
             borderBottom: tab === t.id ? '2px solid var(--accent)' : '2px solid transparent',
-            color: tab === t.id ? 'var(--ink)' : 'rgba(240,235,229,.5)',
+            color: tab === t.id ? 'var(--ink)' : 'var(--ink-a50)',
             fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.9rem',
             cursor: 'pointer', transition: 'all 150ms', marginBottom: -1,
           }}>
@@ -495,7 +495,7 @@ export function RadioHome() {
       {tab === 'upcoming' && (
         <div>
           {upcoming.length === 0 && shows !== null && (
-            <div style={{ textAlign: 'center', padding: '60px', color: 'rgba(240,235,229,.5)' }}>
+            <div style={{ textAlign: 'center', padding: '60px', color: 'var(--ink-a50)' }}>
               <div style={{ fontSize: 40, marginBottom: 12 }}>🗓️</div>
               <p>Nothing scheduled yet — DJs post new shows all the time.</p>
             </div>
@@ -505,22 +505,22 @@ export function RadioHome() {
             return (
               <div key={s.id} style={{
                 display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
-                borderRadius: 10, border: chip === 'tonight' ? '1px solid rgba(255,80,41,.22)' : '1px solid rgba(255,255,255,.06)',
+                borderRadius: 10, border: chip === 'tonight' ? '1px solid rgba(255,80,41,.22)' : '1px solid var(--line)',
                 background: chip === 'tonight' ? 'rgba(255,80,41,.04)' : 'var(--bg2)',
                 marginBottom: 8, cursor: 'pointer', transition: 'background 150ms',
               }}>
                 <span style={{
                   padding: '3px 8px', borderRadius: 4, fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: '.14em', flexShrink: 0,
                   background: chip === 'tonight' ? 'rgba(255,80,41,.14)' : chip === 'tomorrow' ? 'rgba(185,131,255,.12)' : 'rgba(255,255,255,.05)',
-                  color: chip === 'tonight' ? 'var(--accent)' : chip === 'tomorrow' ? '#b983ff' : 'rgba(240,235,229,.38)',
+                  color: chip === 'tonight' ? 'var(--accent)' : chip === 'tomorrow' ? '#b983ff' : 'var(--ink-a38)',
                 }}>
                   {chip === 'tonight' ? 'Tonight' : chip === 'tomorrow' ? 'Tomorrow' : 'This Week'}
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>{s.title}</div>
-                  <div style={{ fontSize: 11, color: 'rgba(240,235,229,.42)' }}>{s.dj} · {s.genre}</div>
+                  <div style={{ fontSize: 11, color: 'var(--ink-a42)' }}>{s.dj} · {s.genre}</div>
                 </div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'rgba(240,235,229,.32)', flexShrink: 0 }}>{s.startsAt ? scheduleTime(s.startsAt) : ''}</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-a32)', flexShrink: 0 }}>{s.startsAt ? scheduleTime(s.startsAt) : ''}</div>
                 <button
                   onClick={e => toggleNotify(s.id, e)}
                   style={{
@@ -528,7 +528,7 @@ export function RadioHome() {
                     padding: '5px 11px', borderRadius: 6, fontSize: 11, flexShrink: 0,
                     border: notifying[s.id] ? '1px solid rgba(185,131,255,.45)' : '1px solid rgba(255,255,255,.1)',
                     background: notifying[s.id] ? 'rgba(185,131,255,.1)' : 'transparent',
-                    color: notifying[s.id] ? '#b983ff' : 'rgba(240,235,229,.55)',
+                    color: notifying[s.id] ? '#b983ff' : 'var(--ink-a55)',
                     cursor: 'pointer', transition: 'all 150ms',
                   }}
                 >
@@ -545,7 +545,7 @@ export function RadioHome() {
         <div style={{ textAlign: 'center', padding: '56px 20px' }}>
           <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'rgba(255,255,255,.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, margin: '0 auto 16px', border: '1px solid rgba(255,255,255,.08)' }}>📻</div>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, marginBottom: 8 }}>No show on air right now</div>
-          <p style={{ fontSize: 13, color: 'rgba(240,235,229,.5)', marginBottom: 20 }}>DJs go live on audio — no video. Check back soon or set a reminder.</p>
+          <p style={{ fontSize: 13, color: 'var(--ink-a50)', marginBottom: 20 }}>DJs go live on audio — no video. Check back soon or set a reminder.</p>
           {upcoming[0] && (
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 9999, background: 'rgba(185,131,255,.09)', border: '1px solid rgba(185,131,255,.22)', fontSize: 13, color: '#b983ff', marginBottom: 18 }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#b983ff', display: 'inline-block' }} />
@@ -556,7 +556,7 @@ export function RadioHome() {
       )}
 
       {tab === 'saved' && filtered.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '60px', color: 'rgba(240,235,229,.5)' }}>
+        <div style={{ textAlign: 'center', padding: '60px', color: 'var(--ink-a50)' }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>🔖</div>
           <p>No saved shows yet — tap the bookmark on any show.</p>
         </div>
@@ -570,7 +570,7 @@ export function RadioHome() {
               key={s.id}
               onClick={() => play(s)}
               style={{
-                border: `1px solid ${current?.id === s.id ? 'rgba(255,80,41,.35)' : 'rgba(255,255,255,.06)'}`,
+                border: `1px solid ${current?.id === s.id ? 'rgba(255,80,41,.35)' : 'var(--line)'}`,
                 borderRadius: 10, padding: '18px 20px',
                 background: current?.id === s.id ? 'rgba(255,80,41,.06)' : 'var(--bg2)',
                 opacity: s.status === 'upcoming' ? 0.5 : 1,
@@ -580,7 +580,7 @@ export function RadioHome() {
             >
               <div style={{ width: 44, height: 44, borderRadius: 8, marginBottom: 12, background: `linear-gradient(135deg,${s.color},#b983ff)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>🎵</div>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, marginBottom: 3 }}>{s.title}</div>
-              <div style={{ fontSize: 12, color: 'rgba(240,235,229,.55)', marginBottom: 8 }}>{s.dj} · {s.genre}</div>
+              <div style={{ fontSize: 12, color: 'var(--ink-a55)', marginBottom: 8 }}>{s.dj} · {s.genre}</div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 {s.status === 'live' && (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 8px', borderRadius: 4, fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.12em', background: 'rgba(255,80,41,.15)', color: 'var(--accent)' }}>
@@ -594,7 +594,7 @@ export function RadioHome() {
                   </span>
                 )}
                 {s.status === 'upcoming' && (
-                  <span style={{ padding: '3px 8px', borderRadius: 4, fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.12em', background: 'rgba(255,255,255,.06)', color: 'rgba(240,235,229,.55)' }}>
+                  <span style={{ padding: '3px 8px', borderRadius: 4, fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.12em', background: 'var(--line)', color: 'var(--ink-a55)' }}>
                     Starts {s.startsAt ? nextUpLabel(s).split('· ')[1] ?? '' : 'soon'}
                   </span>
                 )}
@@ -602,7 +602,7 @@ export function RadioHome() {
                   <button
                     onClick={e => toggleSave(s.id, e)}
                     title={s.userSaved ? 'Remove from saved' : 'Save for later'}
-                    style={{ minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', color: s.userSaved ? 'var(--venue)' : 'rgba(240,235,229,.5)', fontSize: 16, padding: 4, transition: 'color 150ms' }}
+                    style={{ minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', color: s.userSaved ? 'var(--venue)' : 'var(--ink-a50)', fontSize: 16, padding: 4, transition: 'color 150ms' }}
                   >
                     {s.userSaved ? '🔖' : '🏷️'}
                   </button>
@@ -613,7 +613,7 @@ export function RadioHome() {
         </div>
       )}
 
-      <p style={{ marginTop: 32, fontSize: 11, color: 'rgba(240,235,229,.3)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em' }}>
+      <p style={{ marginTop: 32, fontSize: 11, color: 'var(--ink-a30)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em' }}>
         iHYPE Radio · Audio only · No video · Saved shows available anytime
       </p>
     </div>

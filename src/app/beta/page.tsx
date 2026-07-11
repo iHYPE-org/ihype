@@ -47,7 +47,7 @@ export default function BetaPage() {
             { pct: '45%', role: 'Artist', color: '#ff5029' },
             { pct: '45%', role: 'Venue', color: '#22e5d4' },
             { pct: '10%', role: 'Promoter', color: '#ff3e9a' },
-            { pct: '0%', role: 'iHYPE', color: 'rgba(240,235,229,.3)' },
+            { pct: '0%', role: 'iHYPE', color: 'var(--ink-a30)' },
           ].map(s => (
             <div key={s.role} style={{
               padding: '24px 20px',
@@ -55,11 +55,11 @@ export default function BetaPage() {
               display: 'flex', flexDirection: 'column', gap: 6,
             }}>
               <span style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-.02em', color: s.color }}>{s.pct}</span>
-              <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.08em', color: 'rgba(240,235,229,.5)' }}>{s.role}</span>
+              <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--ink-a50)' }}>{s.role}</span>
             </div>
           ))}
         </div>
-        <p style={{ marginTop: 12, fontSize: 12, color: 'rgba(240,235,229,.35)', fontFamily: 'var(--font-mono)' }}>
+        <p style={{ marginTop: 12, fontSize: 12, color: 'var(--ink-a35)', fontFamily: 'var(--font-mono)' }}>
           Platform fee: $0.00 · Split enforced on every transaction, forever.
         </p>
       </section>
@@ -80,7 +80,7 @@ export default function BetaPage() {
             }}>
               <div style={{ fontSize: 28, marginBottom: 10 }}>{f.icon}</div>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, marginBottom: 6, color: f.color }}>{f.title}</div>
-              <p style={{ fontSize: 13, color: 'rgba(240,235,229,.55)', lineHeight: 1.6, margin: 0 }}>{f.body}</p>
+              <p style={{ fontSize: 13, color: 'var(--ink-a55)', lineHeight: 1.6, margin: 0 }}>{f.body}</p>
             </div>
           ))}
         </div>
@@ -95,7 +95,7 @@ export default function BetaPage() {
         <Link href="/register" className="lp-btn-primary" style={{ fontSize: 15, padding: '14px 32px' }}>
           Create your account →
         </Link>
-        <p style={{ fontSize: 12, color: 'rgba(240,235,229,.3)', fontFamily: 'var(--font-mono)' }}>
+        <p style={{ fontSize: 12, color: 'var(--ink-a30)', fontFamily: 'var(--font-mono)' }}>
           Portland, ME · Founded 2026 · admin@ihype.org
         </p>
       </section>

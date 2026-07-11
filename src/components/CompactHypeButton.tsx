@@ -81,7 +81,7 @@ export function CompactHypeButton({ targetType, targetId, initialCount, initiall
         borderRadius: 20,
         border: `1px solid ${hyped ? 'var(--accent, #ff5029)' : 'rgba(255,255,255,.1)'}`,
         background: hyped ? 'rgba(255,80,41,.12)' : 'rgba(255,255,255,.04)',
-        color: hyped ? 'var(--accent, #ff5029)' : 'rgba(240,235,229,.5)',
+        color: hyped ? 'var(--accent, #ff5029)' : 'var(--ink-a50)',
         fontFamily: 'var(--font-mono)',
         fontSize: 11,
         fontWeight: 600,

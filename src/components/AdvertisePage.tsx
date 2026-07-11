@@ -168,7 +168,7 @@ function CoverageBuilder() {
   });
 
   const INPUT_S: React.CSSProperties = { fontFamily: 'var(--f-b,DM Sans,sans-serif)', fontSize: 'inherit', color: 'inherit', background: 'none', border: 'none', cursor: 'pointer', padding: 0 };
-  const TEXT_INPUT_S: React.CSSProperties = { width: '100%', fontFamily: 'var(--f-b,DM Sans,sans-serif)', fontSize: 13, color: '#f0ebe5', background: '#1a1612', border: '1px solid rgba(255,255,255,.14)', borderRadius: 9, padding: '11px 13px', outline: 'none' };
+  const TEXT_INPUT_S: React.CSSProperties = { width: '100%', fontFamily: 'var(--f-b,DM Sans,sans-serif)', fontSize: 13, color: 'var(--ink)', background: '#1a1612', border: '1px solid var(--line-2)', borderRadius: 9, padding: '11px 13px', outline: 'none' };
 
   async function handleSubmit() {
     if (!title.trim()) {
@@ -229,7 +229,7 @@ function CoverageBuilder() {
             <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.16em', textTransform: 'uppercase', color: '#5a5048', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ color: '#ff5029' }}>B.</span> Spots per day
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 0, border: '1px solid rgba(255,255,255,.14)', borderRadius: 10, overflow: 'hidden', width: 'fit-content' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 0, border: '1px solid var(--line-2)', borderRadius: 10, overflow: 'hidden', width: 'fit-content' }}>
               <button aria-label="Decrease spots per day" onClick={() => setSpots(s => Math.max(MIN_SPOTS_PER_DAY, s - 1))} style={{ width: 46, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9e9080', cursor: 'pointer', ...INPUT_S, transition: 'background .15s' }}><MinusIcon /></button>
               <div style={{ minWidth: 64, textAlign: 'center', fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', borderLeft: '1px solid rgba(255,255,255,.07)', borderRight: '1px solid rgba(255,255,255,.07)', height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{spots}</div>
               <button aria-label="Increase spots per day" onClick={() => setSpots(s => Math.min(MAX_SPOTS_PER_DAY, s + 1))} style={{ width: 46, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9e9080', cursor: 'pointer', ...INPUT_S, transition: 'background .15s' }}><PlusIcon /></button>
@@ -313,7 +313,7 @@ function CoverageBuilder() {
           </div>
 
           {/* Receipt */}
-          <div style={{ marginTop: 20, borderTop: '1px dashed rgba(255,255,255,.14)', paddingTop: 18 }}>
+          <div style={{ marginTop: 20, borderTop: '1px dashed var(--line-2)', paddingTop: 18 }}>
             {[{ k: `${AD_SCOPE_LABELS[scope]} base`, v: `${money(perSpot)} / spot` }, { k: `${spots} spots/day × ${days} days`, v: `${money(dailyCost)} / day` }, { k: 'Co-op handling · 0%', v: '$0.00', vc: '#22e5d4' }].map(r => (
               <div key={r.k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '7px 0', fontFamily: 'var(--f-m,monospace)', fontSize: 12 }}>
                 <span style={{ color: '#5a5048', letterSpacing: '.06em' }}>{r.k}</span>
@@ -346,7 +346,7 @@ function CoverageBuilder() {
                   {submit.message}
                 </div>
                 <div style={{ fontSize: 11, color: '#9e9080', marginTop: 4, lineHeight: 1.5 }}>{submit.reasoning}</div>
-                <Link href="/advertise/dashboard" style={{ display: 'inline-block', marginTop: 8, fontSize: 11, color: '#f0ebe5', textDecoration: 'underline' }}>
+                <Link href="/advertise/dashboard" style={{ display: 'inline-block', marginTop: 8, fontSize: 11, color: 'var(--ink)', textDecoration: 'underline' }}>
                   View my campaigns →
                 </Link>
               </div>
@@ -443,7 +443,7 @@ function AIScanner() {
       {/* Interactive scanner */}
       <div style={{ background: '#100d09', border: '1px solid rgba(255,255,255,.07)', borderRadius: 16, overflow: 'hidden' }}>
         <div style={{ padding: '15px 18px', borderBottom: '1px solid rgba(255,255,255,.07)', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.12em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 99, display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid rgba(255,255,255,.14)', color: '#9e9080' }}>
+          <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.12em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 99, display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid var(--line-2)', color: '#9e9080' }}>
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ff5029', animation: 'adv-pulse 2.4s ease-out infinite', flexShrink: 0 }} />
             HYPE Screen
           </span>
@@ -492,7 +492,7 @@ function AIScanner() {
                   }}>
                     <span style={{
                       width: 24, height: 24, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                      border: `1px solid ${state === 'pass' ? '#22e5d4' : state === 'fail' ? '#ff5a5a' : 'rgba(255,255,255,.14)'}`,
+                      border: `1px solid ${state === 'pass' ? '#22e5d4' : state === 'fail' ? '#ff5a5a' : 'var(--line-2)'}`,
                       color: state === 'pass' ? '#22e5d4' : state === 'fail' ? '#ff5a5a' : '#5a5048',
                     }}>
                       {state === 'pass' ? <CheckIcon /> : state === 'fail' ? <CrossIcon /> : null}
@@ -567,7 +567,7 @@ function ScanDemo() {
       </div>
 
       {phase === 'idle' && (
-        <div onClick={runDemo} style={{ margin: 18, border: '2px dashed rgba(255,255,255,.14)', borderRadius: 12, padding: '34px 20px', textAlign: 'center', cursor: 'pointer' }}>
+        <div onClick={runDemo} style={{ margin: 18, border: '2px dashed var(--line-2)', borderRadius: 12, padding: '34px 20px', textAlign: 'center', cursor: 'pointer' }}>
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9e9080" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 10 }}><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg>
           <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 5 }}>Drop your ad audio here</div>
           <div style={{ fontSize: 12, color: '#9e9080' }}>MP3 / WAV / AAC · 15–60s · audio only, no video</div>
@@ -582,7 +582,7 @@ function ScanDemo() {
             return (
               <div key={g} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, background: state === 'pass' ? 'rgba(34,229,212,.1)' : 'rgba(255,255,255,.03)', border: `1px solid ${state === 'pass' ? 'rgba(34,229,212,.25)' : 'rgba(255,255,255,.08)'}`, transition: 'all .3s' }}>
                 <span style={{ width: 12, height: 12, borderRadius: '50%', flexShrink: 0, background: state === 'pass' ? '#22e5d4' : 'transparent', border: state === 'pass' ? 'none' : '2px solid rgba(255,255,255,.18)' }} />
-                <span style={{ flex: 1, fontSize: 12, color: state === 'pass' ? '#f0ebe5' : '#9e9080' }}>Gate {i + 1} — {g}</span>
+                <span style={{ flex: 1, fontSize: 12, color: state === 'pass' ? 'var(--ink)' : '#9e9080' }}>Gate {i + 1} — {g}</span>
                 <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9, letterSpacing: '.08em', textTransform: 'uppercase', color: state === 'pass' ? '#22e5d4' : '#5a5048' }}>{state === 'pass' ? 'PASS' : '…'}</span>
               </div>
             );
@@ -601,7 +601,7 @@ function ScanDemo() {
         </div>
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 18px', borderTop: '1px solid rgba(255,255,255,.06)', fontFamily: 'var(--f-m,monospace)', fontSize: 9, color: '#5a5048', letterSpacing: '.06em' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 18px', borderTop: '1px solid var(--line)', fontFamily: 'var(--f-m,monospace)', fontSize: 9, color: '#5a5048', letterSpacing: '.06em' }}>
         <span>Median scan time · 41 seconds</span>
         <span>Fails are refunded automatically</span>
       </div>
@@ -640,7 +640,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
         @keyframes adv-scan { 0%{ opacity:1; top:0 } 100%{ opacity:1; top:100% } }
         .adv-btn-solid { background:#ff5029; color:#0a0805; display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:var(--f-m,monospace); font-weight:600; font-size:11.5px; letter-spacing:.06em; padding:13px 22px; border-radius:9px; cursor:pointer; transition:filter .15s; text-decoration:none; border:none; white-space:nowrap }
         .adv-btn-solid:hover { filter:brightness(1.08) }
-        .adv-btn-ghost { border:1px solid rgba(255,255,255,.14); color:#f0ebe5; display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:var(--f-m,monospace); font-weight:600; font-size:11.5px; letter-spacing:.06em; padding:13px 22px; border-radius:9px; cursor:pointer; transition:background .15s, border-color .15s; text-decoration:none; white-space:nowrap; background:none }
+        .adv-btn-ghost { border:1px solid var(--line-2); color:var(--ink); display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:var(--f-m,monospace); font-weight:600; font-size:11.5px; letter-spacing:.06em; padding:13px 22px; border-radius:9px; cursor:pointer; transition:background .15s, border-color .15s; text-decoration:none; white-space:nowrap; background:none }
         .adv-btn-ghost:hover { background:rgba(255,255,255,.05); border-color:#9e9080 }
         .adv-btn-sm { padding:9px 15px !important; font-size:10.5px !important }
         @media (max-width:1040px) {
@@ -668,7 +668,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
               Put your music<br />in front of the<br />people who <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: '#9e9080', letterSpacing: '-.01em' }}>dig deepest.</em>
             </h1>
             <p style={{ fontSize: 16, color: '#9e9080', lineHeight: 1.6, maxWidth: '46ch', marginTop: 22 }}>
-              Buy reach by the spot — <b style={{ color: '#f0ebe5', fontWeight: 600 }}>local to global</b>, by the day. Every ad is screened by AI before it runs: <b style={{ color: '#f0ebe5', fontWeight: 600 }}>music only, no copyrighted material, no name-drops.</b> One operator, one rulebook, zero junk in the feed.
+              Buy reach by the spot — <b style={{ color: 'var(--ink)', fontWeight: 600 }}>local to global</b>, by the day. Every ad is screened by AI before it runs: <b style={{ color: 'var(--ink)', fontWeight: 600 }}>music only, no copyrighted material, no name-drops.</b> One operator, one rulebook, zero junk in the feed.
             </p>
             <div style={{ display: 'flex', gap: 12, marginTop: 30, flexWrap: 'wrap' }}>
               <a href="#build" className="adv-btn-solid">Build a campaign →</a>
@@ -783,7 +783,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
                 {[['Instant eligibility.', 'Role verification carries over — no separate application.'], ['Promote your own catalog.', "Your releases and shows are pre-cleared for copyright."], ['Referral reach.', 'Fans with a referral link can co-fund coverage for artists they back.']].map(([b, t]) => (
                   <div key={b} style={{ display: 'flex', gap: 11, fontSize: 12.5, color: '#9e9080', lineHeight: 1.45 }}>
                     <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: '#ff5029', marginTop: 6, flexShrink: 0 }} />
-                    <span><span style={{ color: '#f0ebe5', fontWeight: 600 }}>{b}</span> {t}</span>
+                    <span><span style={{ color: 'var(--ink)', fontWeight: 600 }}>{b}</span> {t}</span>
                   </div>
                 ))}
               </div>
@@ -805,14 +805,14 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
               <p style={{ fontSize: 13.5, color: '#9e9080', lineHeight: 1.55, marginTop: 12 }}>Not an artist, but you serve them? Music stores, live-production companies, and merch providers open a 3rd-party account to control their own placements — fully self-serve.</p>
               <div style={{ display: 'flex', gap: 8, marginTop: 18, flexWrap: 'wrap' }}>
                 {['Music stores', 'Live production', 'Merch & print', 'Instruments & gear'].map(l => (
-                  <span key={l} style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, letterSpacing: '.06em', padding: '7px 12px', borderRadius: 99, border: '1px solid rgba(255,255,255,.14)', color: '#9e9080' }}>{l}</span>
+                  <span key={l} style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, letterSpacing: '.06em', padding: '7px 12px', borderRadius: 99, border: '1px solid var(--line-2)', color: '#9e9080' }}>{l}</span>
                 ))}
               </div>
               <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 11 }}>
                 {[['Self-serve console.', 'Manage budgets, creatives, and schedules from one account.', '#7fb3ff'], ['Business verification.', "A one-time check confirms you're genuinely music-adjacent.", '#7fb3ff'], ['Same firewall applies.', 'No borrowed songs, no unlicensed artist names — ever.', '#7fb3ff']].map(([b, t, c]) => (
                   <div key={b} style={{ display: 'flex', gap: 11, fontSize: 12.5, color: '#9e9080', lineHeight: 1.45 }}>
                     <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: c, marginTop: 6, flexShrink: 0 }} />
-                    <span><span style={{ color: '#f0ebe5', fontWeight: 600 }}>{b}</span> {t}</span>
+                    <span><span style={{ color: 'var(--ink)', fontWeight: 600 }}>{b}</span> {t}</span>
                   </div>
                 ))}
               </div>
@@ -847,7 +847,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
               iHYPE is run by one director and a lot of automation — so almost every dollar of ad spend <b style={{ fontFamily: 'DM Sans,sans-serif', fontStyle: 'normal', fontWeight: 600, color: '#ff5029' }}>goes back into the music</b>, not overhead.
             </p>
             <div style={{ borderTop: '1px solid rgba(255,255,255,.07)' }}>
-              {[{ lb: 'To artists & payouts', w: '72%', color: '#ff5029', pct: '72%' }, { lb: 'Platform & hosting', w: '18%', color: '#f0ebe5', pct: '18%' }, { lb: 'Moderation & AI screen', w: '10%', color: '#9e9080', pct: '10%' }].map(r => (
+              {[{ lb: 'To artists & payouts', w: '72%', color: '#ff5029', pct: '72%' }, { lb: 'Platform & hosting', w: '18%', color: 'var(--ink)', pct: '18%' }, { lb: 'Moderation & AI screen', w: '10%', color: '#9e9080', pct: '10%' }].map(r => (
                 <div key={r.lb} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 0', borderBottom: '1px solid rgba(255,255,255,.07)' }}>
                   <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#5a5048', width: 150 }}>{r.lb}</span>
                   <span style={{ flex: 1, height: 9, borderRadius: 99, background: 'rgba(255,255,255,.07)', overflow: 'hidden' }}>
