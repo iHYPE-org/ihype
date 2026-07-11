@@ -5278,67 +5278,132 @@ html.high-contrast p {
   position: fixed;
   inset: 0;
   z-index: 949;
-  background: rgba(0,0,0,.55);
-  backdrop-filter: blur(2px);
+  background: rgba(0,0,0,.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: drawer-backdrop-in .25s ease;
+}
+@keyframes drawer-backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 .nav-drawer {
   position: fixed;
   top: 0; right: 0; bottom: 0;
   z-index: 950;
-  width: 260px;
+  width: min(300px, 86vw);
   background: var(--bg-2);
   border-left: 1px solid var(--line-2);
-  padding: 20px 16px;
+  border-radius: 18px 0 0 18px;
+  box-shadow: -24px 0 60px rgba(0,0,0,.35);
+  padding: 14px 14px 18px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  animation: drawer-slide-in .22s ease;
+  gap: 6px;
+  animation: drawer-slide-in .28s cubic-bezier(.32,.72,.24,1);
 }
 @keyframes drawer-slide-in {
-  from { transform: translateX(100%); }
-  to   { transform: translateX(0); }
+  from { transform: translateX(40px); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
 }
 .nav-drawer-close {
-  background: none;
-  border: none;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 9999px;
   color: var(--ink-2);
-  font-size: 18px;
+  font-size: 15px;
   cursor: pointer;
   align-self: flex-end;
-  min-width: 44px;
-  min-height: 44px;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  min-height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background .18s ease, color .18s ease, transform .18s ease;
 }
+.nav-drawer-close:hover { background: rgba(255,255,255,.09); color: var(--ink); }
+.nav-drawer-close:active { transform: scale(.94); }
 .nav-drawer-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 .nav-drawer-link {
   display: flex;
   align-items: center;
+  gap: 12px;
   min-height: 44px;
   padding: 0 12px;
-  border-radius: 8px;
+  border-radius: 10px;
   color: var(--ink-2, rgba(240,235,229,.7));
-  font-family: var(--f-m);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
   text-decoration: none;
-  transition: background .12s;
+  transition: background .18s ease, color .18s ease, padding-left .18s ease;
 }
-.nav-drawer-link:hover { background: var(--bg-3); }
-.nav-drawer-link.active { color: var(--accent, #ff5029); }
+.nav-drawer-link svg { flex-shrink: 0; opacity: .55; transition: opacity .18s ease, color .18s ease; }
+.nav-drawer-link:hover { background: var(--bg-3); color: var(--ink); padding-left: 16px; }
+.nav-drawer-link:hover svg { opacity: .9; }
+.nav-drawer-link.active { color: var(--accent, #ff5029); background: rgba(255,80,41,.07); }
+.nav-drawer-link.active svg { opacity: 1; }
 
 @media (max-width: 768px) {
   .nav-drawer-trigger { display: inline-flex; }
+  /* Keep the 44px touch-target rule on mobile */
+  .nav-drawer-close { width: 44px; height: 44px; min-width: 44px; min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-drawer, .nav-drawer-backdrop { animation: none; }
+  .nav-drawer-link, .nav-drawer-close { transition: none; }
+}
+
+/* Shared pill sub-tab — the sub-menu strips on Listen / Events / Pages /
+   Show / the page editor all use this instead of per-file inline styles,
+   so hover, focus, press, and active states animate consistently. */
+.sub-tab {
+  appearance: none;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  padding: 9px 18px;
+  border-radius: 9999px;
+  cursor: pointer;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.08);
+  color: rgba(240,235,229,.55);
+  transition:
+    background .18s cubic-bezier(.2,.7,.3,1),
+    border-color .18s cubic-bezier(.2,.7,.3,1),
+    color .18s cubic-bezier(.2,.7,.3,1),
+    transform .12s cubic-bezier(.2,.7,.3,1);
+}
+.sub-tab:hover { background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.16); color: var(--ink); }
+.sub-tab:active { transform: scale(.96); }
+.sub-tab:focus-visible { outline: 2px solid rgba(255,80,41,.55); outline-offset: 2px; }
+.sub-tab.active {
+  background: rgba(255,80,41,.1);
+  border-color: rgba(255,80,41,.35);
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* Sub-menu panels ease in instead of popping. Opacity only — transforms
+   here would briefly break position:fixed children (toasts, docks). */
+.sub-panel { animation: sub-panel-in .22s ease; }
+@keyframes sub-panel-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sub-tab { transition: none; }
+  .sub-tab:active { transform: none; }
+  .sub-panel { animation: none; }
 }
 
 /* 3. Search bar mobile/desktop */
