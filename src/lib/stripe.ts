@@ -134,6 +134,19 @@ export async function cancelTicketPaymentIntent(paymentIntentId: string): Promis
   await stripe.paymentIntents.cancel(paymentIntentId, {}, { idempotencyKey: `cancel:${paymentIntentId}` });
 }
 
+/**
+ * Deletes a Stripe Connect Express account, ending its ability to receive
+ * future payouts. Called on account erasure (privacy-actions.ts) so an
+ * erased identity can't keep collecting money after "deletion." Stripe
+ * refuses deletion while a balance or pending payout exists — that's
+ * surfaced to the caller rather than swallowed, since it means a human
+ * needs to resolve the balance before the account can actually be closed.
+ */
+export async function deauthorizeStripeConnectAccount(connectAccountId: string): Promise<void> {
+  const stripe = getStripe();
+  await stripe.accounts.del(connectAccountId);
+}
+
 export function constructWebhookEvent(payload: string, signature: string): Stripe.Event {
   const stripe = getStripe();
   const secret = process.env.STRIPE_WEBHOOK_SECRET;

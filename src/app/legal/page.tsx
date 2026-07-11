@@ -52,6 +52,8 @@ function LegalTabs() {
         <p>Essential cookies keep you signed in and remember your preferences — these can&apos;t be turned off without breaking the app. Optional analytics cookies help us understand usage in aggregate; you can decline these from the consent banner or reset your choice by clearing site data. We do not use third-party advertising or tracking cookies.</p>
         <h2>Security</h2>
         <p>Data in transit is encrypted (TLS). Data at rest, including payout routing details, is encrypted. Access to user data is limited to the systems and staff that need it to operate the platform. We do not use your data to train AI models.</p>
+        <h2>Subprocessors</h2>
+        <p>We use a small number of vendors to run iHYPE, each bound by its own data protection terms: <strong>Stripe</strong> (payment processing and artist/venue payouts — holds card and bank details, iHYPE never does), <strong>Supabase</strong> (database hosting), <strong>Cloudflare</strong> (application hosting, media storage, and bot protection), <strong>Resend</strong> (delivering account and notification emails), and <strong>Sentry</strong> (error monitoring, configured to exclude personal data from reports). None of these vendors may use your data for their own purposes.</p>
         <h2>Contact</h2>
         <p>Privacy questions: <a href="mailto:admin@ihype.org">admin@ihype.org</a></p>
       </div>

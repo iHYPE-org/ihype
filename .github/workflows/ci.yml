@@ -48,6 +48,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Production dependency audit
+        # Dev-only advisories (currently @opentelemetry/core, transitively
+        # pinned by @sentry/nextjs and lighthouse) don't block merges — only
+        # vulnerabilities reachable from what actually ships to production do.
+        run: npm audit --omit=dev --audit-level=high
+
       - name: Generate Prisma client
         run: npx prisma generate
 

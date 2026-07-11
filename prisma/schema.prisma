@@ -1183,11 +1183,17 @@ model ABTest {
 }
 
 model NewsletterSubscription {
-  id        String   @id @default(cuid())
-  email     String
-  profileId String
-  createdAt DateTime @default(now())
-  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  id                     String    @id @default(cuid())
+  email                  String
+  profileId              String
+  // Double opt-in: row is written on subscribe but only actioned once
+  // confirmedAt is set via the emailed confirm link. confirmToken is
+  // single-use and time-boxed; both are cleared once confirmed.
+  confirmedAt            DateTime?
+  confirmToken           String?   @unique
+  confirmTokenExpiresAt  DateTime?
+  createdAt              DateTime  @default(now())
+  profile                Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@unique([email, profileId])
   @@index([profileId])

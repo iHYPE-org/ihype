@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { recordAuditEvent } from '@/lib/audit';
 import { deleteMediaFile } from '@/lib/object-storage';
+import { deauthorizeStripeConnectAccount, isStripeConfigured } from '@/lib/stripe';
 import { log } from '@/lib/logger';
 
 // Implements the privacy promises published on /legal and in the Support →
@@ -153,6 +154,12 @@ export type AccountErasureSummary = {
   mediaAssetsDeleted: number;
   ticketOrdersScrubbed: number;
   ticketsScrubbed: number;
+  stripeConnectDeauthorized: number;
+  // hexIds of profiles whose Connect account Stripe refused to delete
+  // (typically a pending balance) — needs a human to resolve in Stripe,
+  // then either retry deletion or leave it, since the profile is already
+  // otherwise anonymized.
+  stripeConnectNeedsManualReview: string[];
 };
 
 /**
@@ -255,14 +262,31 @@ export async function executeAccountErasure(
   }
 
   // 5. Anonymize owned profiles in place. Shows they hosted/headlined keep
-  // running (profile refs are optional); Stripe Connect + payable entries
-  // stay for financial audit; the public page becomes an empty husk.
+  // running (profile refs are optional); AccountsPayableEntry rows stay for
+  // financial audit; the public page becomes an empty husk. The Stripe
+  // Connect account itself is deauthorized below so an erased identity can't
+  // keep collecting future payouts.
   const profiles = await db.profile.findMany({
     where: { ownerId: userId },
-    select: { id: true, hexId: true },
+    select: { id: true, hexId: true, stripeConnectAccountId: true },
   });
   let mediaAssetsDeleted = 0;
+  let stripeConnectDeauthorized = 0;
+  const stripeConnectNeedsManualReview: string[] = [];
   for (const profile of profiles) {
+    let connectAccountCleared = false;
+    if (profile.stripeConnectAccountId && isStripeConfigured()) {
+      try {
+        await deauthorizeStripeConnectAccount(profile.stripeConnectAccountId);
+        stripeConnectDeauthorized += 1;
+        connectAccountCleared = true;
+      } catch (err) {
+        // Stripe refuses deletion with an outstanding balance/pending payout
+        // — surface for manual review rather than silently retrying forever.
+        log.error('[privacy-actions]', err instanceof Error ? err : { err: String(err) }, 'Stripe Connect deauthorization failed');
+        stripeConnectNeedsManualReview.push(profile.hexId);
+      }
+    }
     const assets = await db.artistMediaAsset.findMany({
       where: { profileId: profile.id },
       select: { id: true, storageKey: true },
@@ -327,6 +351,9 @@ export async function executeAccountErasure(
         upcomingContent: null,
         previousShowHighlights: null,
         fanShareEnabled: false,
+        ...(connectAccountCleared
+          ? { stripeConnectAccountId: null, stripeConnectOnboarded: false }
+          : {}),
       },
     });
   }
@@ -369,6 +396,8 @@ export async function executeAccountErasure(
       mediaAssetsDeleted,
       ticketOrdersScrubbed: orders.count,
       ticketsScrubbed,
+      stripeConnectDeauthorized,
+      stripeConnectNeedsManualReview,
     },
   });
 
@@ -377,5 +406,7 @@ export async function executeAccountErasure(
     mediaAssetsDeleted,
     ticketOrdersScrubbed: orders.count,
     ticketsScrubbed,
+    stripeConnectDeauthorized,
+    stripeConnectNeedsManualReview,
   };
 }

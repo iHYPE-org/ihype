@@ -57,7 +57,13 @@ export function AdminPrivacyRequestActions({
     setError('');
 
     try {
-      await patchJson(`/api/admin/privacy-requests/${requestId}`, { action });
+      const result = await patchJson(`/api/admin/privacy-requests/${requestId}`, { action });
+      const needsReview: string[] | undefined = result?.summary?.stripeConnectNeedsManualReview;
+      if (needsReview?.length) {
+        alert(
+          `Erasure completed, but Stripe would not deauthorize ${needsReview.length} Connect account(s) (${needsReview.join(', ')}) — likely a pending balance. Resolve manually in the Stripe dashboard.`
+        );
+      }
       router.refresh();
     } catch (err) {
       if (err instanceof ReauthRequiredError) {

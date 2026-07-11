@@ -29,9 +29,14 @@ vi.mock('@/lib/db', () => {
 vi.mock('@/lib/audit', () => ({ recordAuditEvent: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('@/lib/object-storage', () => ({ deleteMediaFile: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() } }));
+vi.mock('@/lib/stripe', () => ({
+  deauthorizeStripeConnectAccount: vi.fn().mockResolvedValue(undefined),
+  isStripeConfigured: vi.fn().mockReturnValue(true),
+}));
 
 import { db } from '@/lib/db';
 import { recordAuditEvent } from '@/lib/audit';
+import { deauthorizeStripeConnectAccount, isStripeConfigured } from '@/lib/stripe';
 import {
   executeAccountErasure,
   executeHypeWipe,
@@ -166,5 +171,72 @@ describe('executeAccountErasure', () => {
     expect(profileUpdate.data.pressKitContent).toBeNull();
     // Never a profile.delete — shows and payout records must survive.
     expect(mockDb.profile).not.toHaveProperty('delete');
+  });
+
+  it('deauthorizes a Stripe Connect account and clears it from the profile on success', async () => {
+    mockDb.user.findUnique.mockResolvedValueOnce({ id: 'u9', email: null, role: 'ARTIST' });
+    mockDb.profile.findMany.mockResolvedValueOnce([
+      { id: 'p1', hexId: 'ABC123', stripeConnectAccountId: 'acct_123' },
+    ]);
+
+    const summary = await executeAccountErasure('u9', 'admin-1');
+
+    expect(deauthorizeStripeConnectAccount).toHaveBeenCalledWith('acct_123');
+    expect(summary.stripeConnectDeauthorized).toBe(1);
+    expect(summary.stripeConnectNeedsManualReview).toEqual([]);
+
+    const profileUpdate = mockDb.profile.update.mock.calls.find(
+      (call) => call[0].where.id === 'p1',
+    )?.[0];
+    expect(profileUpdate.data.stripeConnectAccountId).toBeNull();
+    expect(profileUpdate.data.stripeConnectOnboarded).toBe(false);
+  });
+
+  it('flags for manual review and leaves the account untouched when Stripe refuses deletion', async () => {
+    mockDb.user.findUnique.mockResolvedValueOnce({ id: 'u9', email: null, role: 'ARTIST' });
+    mockDb.profile.findMany.mockResolvedValueOnce([
+      { id: 'p1', hexId: 'ABC123', stripeConnectAccountId: 'acct_123' },
+    ]);
+    vi.mocked(deauthorizeStripeConnectAccount).mockRejectedValueOnce(new Error('balance_insufficient'));
+
+    const summary = await executeAccountErasure('u9', 'admin-1');
+
+    expect(summary.stripeConnectDeauthorized).toBe(0);
+    expect(summary.stripeConnectNeedsManualReview).toEqual(['ABC123']);
+
+    const profileUpdate = mockDb.profile.update.mock.calls.find(
+      (call) => call[0].where.id === 'p1',
+    )?.[0];
+    // Deletion failed, so the Connect fields must not be cleared — the
+    // profile still points at the (still-live) account for manual follow-up.
+    expect(profileUpdate.data).not.toHaveProperty('stripeConnectAccountId');
+    expect(profileUpdate.data).not.toHaveProperty('stripeConnectOnboarded');
+    // The rest of the erasure still proceeds despite the Stripe failure.
+    expect(profileUpdate.data.name).toBe('Deleted account');
+  });
+
+  it('skips Stripe entirely when the profile has no Connect account', async () => {
+    mockDb.user.findUnique.mockResolvedValueOnce({ id: 'u9', email: null, role: 'ARTIST' });
+    mockDb.profile.findMany.mockResolvedValueOnce([
+      { id: 'p1', hexId: 'ABC123', stripeConnectAccountId: null },
+    ]);
+
+    const summary = await executeAccountErasure('u9', 'admin-1');
+
+    expect(deauthorizeStripeConnectAccount).not.toHaveBeenCalled();
+    expect(summary.stripeConnectDeauthorized).toBe(0);
+    expect(summary.stripeConnectNeedsManualReview).toEqual([]);
+  });
+
+  it('skips Stripe entirely when Stripe is not configured', async () => {
+    vi.mocked(isStripeConfigured).mockReturnValueOnce(false);
+    mockDb.user.findUnique.mockResolvedValueOnce({ id: 'u9', email: null, role: 'ARTIST' });
+    mockDb.profile.findMany.mockResolvedValueOnce([
+      { id: 'p1', hexId: 'ABC123', stripeConnectAccountId: 'acct_123' },
+    ]);
+
+    await executeAccountErasure('u9', 'admin-1');
+
+    expect(deauthorizeStripeConnectAccount).not.toHaveBeenCalled();
   });
 });

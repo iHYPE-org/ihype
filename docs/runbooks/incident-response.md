@@ -15,7 +15,7 @@ Severity:
 ## 2. Contain (same day)
 In rough order of blast-radius reduction; do only what the incident needs:
 - **Kill sessions for affected users:** bump `userSecurityVersion` (admin console → Users → Suspend, or SQL `UPDATE "User" SET "userSecurityVersion" = "userSecurityVersion" + 1 WHERE id = '…'`). All JWTs for that user die on next request.
-- **Rotate secrets:** `wrangler secret put <NAME>` for CRON_SECRET / AUTH_SECRET / STRIPE_SECRET_KEY / RESEND_API_KEY etc. (AUTH_SECRET rotation signs out everyone — acceptable in a P1). Rotate Supabase DB password from its dashboard; update DATABASE_URL secret.
+- **Rotate secrets:** `wrangler secret put <NAME>` for CRON_SECRET / AUTH_SECRET / STRIPE_SECRET_KEY / RESEND_API_KEY / ADMIN_SETUP_SECRET etc. (AUTH_SECRET rotation signs out everyone — acceptable in a P1). Rotate Supabase DB password from its dashboard; update DATABASE_URL secret.
 - **Stripe:** roll the API key in the Stripe dashboard; check Payments → Disputes/Radar for anomalies.
 - **Admin account:** remove unknown passkeys (Settings), re-run device binding (`/admin/device-register` flow), verify `role='ADMIN'` rows: `SELECT id,email FROM "User" WHERE role='ADMIN'`.
 - **Cloudflare:** check Worker deployment history for deploys you didn't make; roll back via the dashboard if needed.
@@ -42,6 +42,12 @@ Preserve before it ages out: AuditLog rotates at 90 days, IP scrub at 30 — exp
 - Fix root cause via a normal PR (CI + CodeQL gate it) — do not hot-patch the Worker outside git.
 - Confirm recovery: `backup-verify` clean, Sentry quiet, health endpoint ok.
 - Within a week, append a short post-mortem to this file's directory (`incidents/YYYY-MM-DD.md`): timeline, root cause, blast radius, notifications sent, control changes. These write-ups are the SOC 2 / ISO evidence trail.
+
+## Standing secret hygiene (not incident-triggered)
+Most secrets here (`CRON_SECRET`, `STRIPE_WEBHOOK_SECRET`, `AUTH_SECRET`, `RESEND_API_KEY`) are long-lived by design and only need rotation *after* an incident (§2). One is different: **`ADMIN_SETUP_SECRET`** gates `/api/admin/setup` and `/api/admin/device-setup`, the bootstrap flow for granting the first admin account and registering new admin devices. The bootstrap tokens it issues expire in 20 minutes, but the shared bearer secret itself never expires or rotates on its own — it's as durable as any static credential sitting in Cloudflare's secret store.
+- **Rotate it** (`wrangler secret put ADMIN_SETUP_SECRET`) after every use — treat it as single-use in practice even though the code doesn't enforce that.
+- **Rotate it** on a standing cadence regardless of use (quarterly is reasonable at this scale) — put a reminder wherever you track the monthly restore drill and annual PCI check.
+- Confirm `ALLOW_ADMIN_SETUP` is unset/false in production between bootstraps — the endpoints check it in addition to the secret, so leaving it off is a second fail-closed layer for a secret that otherwise doesn't expire.
 
 ## Vendor contacts
 - Supabase support: dashboard → Support (project `bjkabtzvgfshsrmjhrkx`)

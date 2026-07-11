@@ -1,6 +1,6 @@
 # iHYPE — Security & Compliance Review
 
-**Reviewed:** 2026-07-11, updated 2026-07-11 (remediation pass closing G-1, G-2, G-3, G-5, G-6, G-7 on branch `claude/security-compliance-review-c9n0x0`)
+**Reviewed:** 2026-07-11, updated 2026-07-11 (remediation pass closing G-1, G-2, G-3, G-5, G-6, G-7), updated again 2026-07-11 (hardening follow-ups: newsletter double opt-in, subprocessor disclosure, CI dependency gate, admin-secret rotation guidance, Stripe Connect deauthorization on erasure) on branch `claude/security-compliance-review-c9n0x0`
 **Frameworks assessed:** ISO/IEC 27002:2022, SOC 2 (Trust Services Criteria), NIST CSF 2.0, PCI DSS v4, CIS Controls v8, GDPR, ISO/IEC 27701
 
 Every "Implemented" claim below was verified against the code on this date, with file
@@ -63,7 +63,7 @@ controls below are in place.
 | Error monitoring via Sentry (server + client), with DO/rate-limit failures explicitly routed there | `sentry.*.config.ts`, `src/lib/rate-limit.ts` |
 | Scheduled ops jobs: anomaly detection, daily backup check (row counts, migration parity, write-freshness, monthly restore-drill reminder), capacity alerts, DMCA enforcement, health endpoint | `src/app/api/cron/*`, `src/lib/anomaly-detect.ts`, `src/lib/health.ts` |
 | Rate-limit abuse metrics retained for review | `src/lib/rate-limit.ts` (`rate-limit-hits:*`) |
-| Written incident-response runbook (detect/contain/72h GDPR clock/evidence sources/vendor contacts/user-notification template) | `docs/runbooks/incident-response.md` |
+| Written incident-response runbook (detect/contain/72h GDPR clock/evidence sources/vendor contacts/user-notification template/`ADMIN_SETUP_SECRET` rotation cadence) | `docs/runbooks/incident-response.md` |
 | Written monthly restore-drill runbook (Supabase PITR restore to a fork, verify, teardown, record) | `docs/runbooks/backup-restore-drill.md` |
 | Written annual PCI SAQ A attestation checklist | `docs/runbooks/pci-saq-a.md` |
 
@@ -75,6 +75,7 @@ controls below are in place.
 | Dependabot enabled; CodeQL scanning active at the GitHub level (alerts triaged — e.g. #32 SSRF dismissed as by-design with an in-code guard) | `.github/dependabot.yml`, DESIGN_SYNC row 189 |
 | Fail-closed migration deploy pipeline (deploy verified against `_prisma_migrations`) | DESIGN_SYNC rows 188–189, `DEPLOY.md` |
 | Production dependency audit: **0 vulnerabilities** (`npm audit --omit=dev`, 2026-07-11); 17 moderate advisories remain but are transitively pinned by dev-only `@sentry/nextjs`/`lighthouse` packages with no non-breaking fix available (`npm audit fix --dry-run` confirmed) | `package.json` |
+| **CI dependency gate**: `npm audit --omit=dev --audit-level=high` now runs on every PR and fails the build on a high/critical production vulnerability, instead of relying on someone remembering to check | `.github/workflows/ci.yml` |
 
 ### Privacy (GDPR / ISO 27701 technical measures)
 | Control | Evidence |
@@ -89,6 +90,9 @@ controls below are in place.
 | Age gates: 13+ attestation at signup; 18+ one-way attestation (audit-logged) required for ticket purchase, resale, and referral earnings | `src/app/api/register/route.ts`, `src/app/api/me/route.ts`, `src/app/api/shows/[showId]/tickets/route.ts` |
 | Email unsubscribe + granular notification preferences | `src/lib/unsubscribe.ts`, `src/app/api/notification-preferences` |
 | Permissive anonymous-insert RLS policy on newsletter table removed (Supabase advisor finding) | `prisma/migrations/20260710230000_drop_permissive_newsletter_policy` |
+| **Newsletter double opt-in**: a subscribe request writes an unconfirmed row and emails a time-boxed confirm link; the subscription is not treated as consented (`confirmedAt` stays null) until the recipient clicks it — evidence of freely-given consent, not just a captured address | `prisma/migrations/20260711050000_newsletter_double_optin`, `src/app/api/newsletter/subscribe/route.ts`, `src/app/api/newsletter/confirm/route.ts` |
+| **Published subprocessor list**: names every vendor that touches user data (Stripe, Supabase, Cloudflare, Resend, Sentry) and what each holds | `src/app/legal/page.tsx` ("Subprocessors" section) |
+| **Stripe Connect deauthorization on account erasure**: `executeAccountErasure` now actively deletes a creator's Stripe Connect account (not just the local reference) so an erased identity can't keep collecting future payouts; if Stripe refuses (pending balance), the account is left intact and flagged `stripeConnectNeedsManualReview` in the audit trail and surfaced to the executing admin, rather than silently failing | `src/lib/stripe.ts` (`deauthorizeStripeConnectAccount`), `src/lib/privacy-actions.ts`, `src/components/AdminPrivacyRequestActions.tsx` |
 | Data minimization: passwordless (no password hashes at rest for new accounts); Stripe holds payment/KYC data; export deny-list doubles as an inventory of sensitive fields | see above |
 
 ---
@@ -158,6 +162,14 @@ Legend: ✅ technical controls in place · 🟡 partial / gap noted · 🏢 requ
 | G-7 (process half) | PCI SAQ A self-assessment must still be **completed and submitted** in the Stripe dashboard annually — the checklist (`docs/runbooks/pci-saq-a.md`) cannot do this step for you. | Medium | process | Open — action required outside this repo |
 | G-8 | Organizational program for any certification path (SOC 2 / ISO 27001 / 27701): written policies, risk register, DPAs & subprocessor list, access-review cadence, external pentest. Sequencing recommendation stands: PCI SAQ (G-7) → unified SOC2/NIST/CIS program → ISO certification only if contractually required. | — | organization | Open |
 
+### Hardening follow-ups (2026-07-11, second pass — not gap-register items, proactive suggestions)
+- ✅ **Newsletter double opt-in.** `NewsletterSubscription` gained `confirmedAt`/`confirmToken`/`confirmTokenExpiresAt` (`prisma/migrations/20260711050000_newsletter_double_optin`). Subscribing now emails a 24h confirm link instead of writing an immediately-active row; `GET /api/newsletter/confirm` marks it consented. Single opt-in was legally workable but weak evidence of "freely given" consent under GDPR Recital 32 — this closes that gap before it became one.
+- ✅ **Subprocessor disclosure.** `/legal` now names Stripe, Supabase, Cloudflare, Resend, and Sentry with what each holds, addressing GDPR Art. 13(1)(e)/28 transparency expectations that the prior privacy notice described in the abstract ("systems and staff that need it") without naming vendors.
+- ✅ **CI dependency gate.** `npm audit --omit=dev --audit-level=high` is now a required CI step — a future high/critical production vulnerability fails the build automatically instead of depending on someone rerunning `npm audit` manually.
+- ✅ **`ADMIN_SETUP_SECRET` rotation guidance.** This bearer secret (gates admin bootstrap/device-setup) has no built-in expiry, unlike the 20-minute bootstrap tokens it issues. `docs/runbooks/incident-response.md` now has a "Standing secret hygiene" section: rotate after every use, rotate quarterly regardless, and confirm `ALLOW_ADMIN_SETUP` stays off between bootstraps.
+- ✅ **Stripe Connect deauthorization on erasure.** Previously `executeAccountErasure` left a creator's `stripeConnectAccountId` untouched "for financial audit" — correct for `AccountsPayableEntry` history, but it meant an erased identity's Connect account stayed live and could in principle keep receiving transfers. Erasure now calls `stripe.accounts.del()` on it; on success the local reference is cleared, on failure (Stripe blocks deletion with a pending balance) the account is left alone, flagged in `stripeConnectNeedsManualReview`, and surfaced as a browser alert to the admin who ran the erasure so it doesn't silently fall through. 5 new unit tests.
+- All five verified: 250/250 tests passing (10 in `privacy-actions.test.ts`), tsc/lint/design-guard clean.
+
 ### Closed in this review (2026-07-11, remediation pass)
 - ✅ **G-1 — identity detachment.** Added `scrubAgedAuditLogIps()` + the `identity-detach` daily cron (`src/lib/privacy-actions.ts`, `src/app/api/cron/route.ts`, scheduled in `workers/cron.ts` and `wrangler.cron.toml`) so the published 30-day default is real. `executeIdentityDetach()` makes self-serve "detach now" run immediately instead of only filing a ticket. Corrected copy in `src/app/settings/page.tsx` and `src/components/SupportPrivacyPanel.tsx` that falsely claimed the mechanism was "deleting your email verification link" — it's an IP/location scrub of the activity log.
 - ✅ **G-3 — admin execution tooling.** `src/lib/privacy-actions.ts` adds `executeHypeWipe()` (deletes hype events, decrements the exact matching `hypeCount` on each affected show/profile, clamps against drift) and `executeAccountErasure()` (anonymization-based: deletes purely-personal rows, scrubs PII embedded in retained financial/ticket records, anonymizes owned profiles in place rather than cascading their deletion — which would have destroyed other people's ticket/payout history — reduces the User row to an inert shell, kills all sessions via `userSecurityVersion`; refuses to run on ADMIN accounts). Wired to a new admin-only route (`src/app/api/admin/privacy-requests/[id]/route.ts`, passkey-reauth gated) and a console action (`src/components/AdminPrivacyRequestActions.tsx`) surfaced on the existing support-requests panel. detach/hype-wipe requests now auto-execute at submission and land in the queue already `DONE`; only deletion stays `OPEN` for a human to trigger. 6 unit tests added (`src/lib/__tests__/privacy-actions.test.ts`) covering the ADMIN-account refusal, counter-decrement math, embedded-PII scrubbing, and in-place profile anonymization.
@@ -181,3 +193,6 @@ Legend: ✅ technical controls in place · 🟡 partial / gap noted · 🏢 requ
 6. Keep `security.txt` `Expires:` current (annual refresh).
 7. Account/profile deletion must always go through `executeAccountErasure()` (anonymize in place) — never add a `db.user.delete()` or `db.profile.delete()` path; cascades would destroy other people's ticket, payout, and show history.
 8. Run the monthly restore drill (`docs/runbooks/backup-restore-drill.md`) and the annual PCI SAQ A checklist (`docs/runbooks/pci-saq-a.md`) on schedule — the crons remind you, but the actions themselves are manual.
+9. New third-party vendors that touch user data (even indirectly, e.g. a new analytics or email tool) must be added to the "Subprocessors" list on `/legal` in the same PR that wires them in.
+10. Any new "own money/identity/resource in a third-party system" pattern (like Stripe Connect accounts) needs an explicit deauthorization step in `executeAccountErasure()`, mirroring `deauthorizeStripeConnectAccount()` — don't let erasure leave live external resources attached to a "deleted" identity.
+11. If `npm audit --omit=dev --audit-level=high` starts failing CI, do not add `--force` or downgrade `audit-level` to make it pass — fix or pin the actual vulnerable dependency.
