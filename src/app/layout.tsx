@@ -31,17 +31,17 @@ export const metadata: Metadata = {
     default: 'iHYPE.org',
     template: '%s · iHYPE'
   },
-  description: 'Listen free, forever. Not-for-profit music discovery for artists, promoters, venues, and fans. 0% ticket fees.',
+  description: 'Completely free. Not-for-profit music discovery for artists, promoters, venues, and fans. 0% ticket fees.',
   openGraph: {
     siteName: 'iHYPE',
     type: 'website',
     title: 'iHYPE — Independent music built for the scene',
-    description: 'Listen free, forever. Not-for-profit music discovery for artists, promoters, venues, and fans. 0% ticket fees.',
+    description: 'Completely free. Not-for-profit music discovery for artists, promoters, venues, and fans. 0% ticket fees.',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'iHYPE — Independent music built for the scene',
-    description: 'Listen free, forever. Not-for-profit music discovery for artists, promoters, venues, and fans. 0% ticket fees.',
+    description: 'Completely free. Not-for-profit music discovery for artists, promoters, venues, and fans. 0% ticket fees.',
   },
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_BASE_URL || 'https://ihype.org'

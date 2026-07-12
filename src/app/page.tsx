@@ -8,9 +8,9 @@ import { IndexTabsShowcase } from '@/components/IndexTabsShowcase';
 import { IndexStickyCta } from '@/components/IndexStickyCta';
 import { getBaseUrl } from '@/lib/utils';
 
-const TITLE = 'iHYPE — Independent music built for the scene';
-const DESCRIPTION = 'Listen free, forever. iHYPE is a fan-first music platform where artists, DJs, and venues keep 90% of every ticket — 45% artist, 45% venue, 10% promoters, 0% iHYPE. No fees, no video, just live radio shows and shows worth hyping.';
-const SOCIAL_DESCRIPTION = 'Listen free, forever. Artists, DJs, and venues keep 90% of every ticket. No fees. No video. Just the scene.';
+const TITLE = 'iHYPE — Your local music scene, completely free';
+const DESCRIPTION = 'iHYPE is your local music scene in one app. Discover the artists, DJs, and live shows happening near you, hype the moments you love, and grab tickets with zero fees. Completely free — no subscription, no catch.';
+const SOCIAL_DESCRIPTION = 'Your local music scene in one app. Discover artists and live shows near you, hype the moments you love, and get tickets with zero fees. Completely free.';
 
 const COMPARISON_ROWS: [string, string, string, string][] = [
   ['Service fees on tickets', '✗ up to 27%', '—', '✓ 0%'],
@@ -19,7 +19,7 @@ const COMPARISON_ROWS: [string, string, string, string][] = [
   ['Takes a cut of artist revenue', '—', '✗ ~70% kept', '✓ 0%'],
   ['Sells fan data to advertisers', '✗ yes', '✗ yes', '✓ never'],
   ['Locks artists into exclusivity', '✗ some deals', '✗ some deals', '✓ no lock-in'],
-  ['Charges for platform access', '✗ yes', '✗ yes', '✓ free forever'],
+  ['Charges for platform access', '✗ yes', '✗ yes', '✓ completely free'],
 ];
 
 export const metadata: Metadata = {
@@ -62,7 +62,7 @@ export default async function RootPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '3rem', alignItems: 'center' }}>
             <div style={{ minWidth: 0 }}>
               <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.2em', color: 'var(--accent)', textTransform: 'uppercase', margin: '0 0 1rem' }}>
-                Listen free, forever.
+                Completely free · your local scene
               </p>
               {/* Live stats bar */}
               <div className="idx-hero-stats" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
@@ -94,14 +94,14 @@ export default async function RootPage() {
                 color: 'var(--ink)',
                 overflowWrap: 'break-word',
               }}>
-                Independent<br />
-                music built<br />
+                The whole<br />
+                local scene.<br />
                 <span style={{
                   background: 'linear-gradient(90deg, var(--accent), #ff3e9a)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
-                }}>for the scene.</span>
+                }}>Completely free.</span>
               </h1>
               <p className="idx-hero-sub" style={{
                 fontFamily: 'var(--f-b)',
@@ -111,8 +111,9 @@ export default async function RootPage() {
                 lineHeight: 1.65,
                 margin: '0 0 2rem',
               }}>
-                Zero fees. 45% to the artist, 45% to the venue, 10% to whoever
-                brought the fan. iHYPE takes nothing — and that&apos;s locked in.
+                Find the artists, DJs, and live shows happening around you.
+                Listen, hype the moments that move you, and grab tickets with
+                zero fees — all in one app that costs you nothing.
               </p>
 
               {/* Mobile-only: the pitch has to convert without a scroll — desktop
@@ -174,12 +175,12 @@ export default async function RootPage() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {[
-                { color: '#ff5029', name: 'Free. Forever.', desc: 'No ticket fees, no cost to host an artist, DJ, or venue page — for anyone, always.' },
+                { color: '#ff5029', name: 'Completely free', desc: 'No ticket fees, no subscription, no cost to host an artist, DJ, or venue page — for anyone.' },
                 { color: '#b983ff', name: 'Anyone can get paid to promote', desc: 'Real word-of-mouth income for whoever brings the fan — not payola, not an algorithm.' },
                 { color: '#22e5d4', name: 'Open for public audit', desc: 'Our code and our heuristics are published. Anyone can check that the split does what we say.' },
                 { color: '#ffb84a', name: 'Your data is never for sale', desc: 'No aggregating it, no selling it, no exceptions — not now, not after an acquisition.' },
                 { color: '#ff3e9a', name: 'You get a vote', desc: 'Users are stakeholders. Real changes to the platform go to the people who use it.' },
-                { color: '#22e5d4', name: 'Funded like radio, not like Big Tech', desc: 'Advertising only, restricted to music sources, forever — never your data.' },
+                { color: '#22e5d4', name: 'Funded like radio, not like Big Tech', desc: 'Advertising only, restricted to music sources — never your data.' },
               ].map(item => (
                 <div key={item.name} style={{ display: 'flex', gap: 14, padding: 16, background: 'var(--hair-30)', border: '1px solid var(--hair-70)', borderRadius: 10 }}>
                   <span style={{ width: 8, height: 8, borderRadius: '50%', background: item.color, marginTop: 6, flexShrink: 0 }} />
@@ -464,10 +465,10 @@ export default async function RootPage() {
           }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, var(--accent), #ff3e9a, #b983ff)' }} />
             <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.2em', color: 'var(--accent)', textTransform: 'uppercase', margin: '0 0 0.75rem' }}>
-              Listen free, forever.
+              Completely free
             </p>
             <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 'clamp(2rem, 5vw, 4rem)', letterSpacing: '-0.04em', color: 'var(--ink)', margin: '0 0 1rem', lineHeight: 1 }}>
-              Join the scene.
+              Join your scene.
             </h2>
             <p style={{ fontFamily: 'var(--f-b)', fontSize: '1rem', color: 'var(--ink-2)', margin: '0 0 2rem', maxWidth: '44ch', marginInline: 'auto', lineHeight: 1.65 }}>
               No subscription. No fees. Just music, community, and a platform that&apos;s actually on your side.

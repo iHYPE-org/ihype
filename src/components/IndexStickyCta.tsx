@@ -37,7 +37,7 @@ export function IndexStickyCta({ heroSelector }: { heroSelector: string }) {
     <div className={`idx-sticky-cta${show ? ' is-visible' : ''}`}>
       <div className="idx-sticky-cta-text">
         <b>Join the scene</b>
-        <span>Free forever · no fees</span>
+        <span>Completely free · no fees</span>
       </div>
       <Link href="/register">Join Beta →</Link>
       <style>{`

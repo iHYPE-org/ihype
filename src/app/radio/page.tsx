@@ -4,11 +4,11 @@ import { RadioHome } from '@/components/RadioHome';
 
 export const metadata: Metadata = {
   title: 'Web Radio · iHYPE',
-  description: 'Live audio-only DJ radio shows — tune in live, or replay any show anytime. Free forever, no video, no fees.',
+  description: 'Live audio-only DJ radio shows — tune in live, or replay any show anytime. Completely free, no video, no fees.',
   alternates: { canonical: '/radio' },
   openGraph: {
     title: 'iHYPE Web Radio — live DJ shows, audio only',
-    description: 'Live audio-only DJ radio shows — tune in live, or replay any show anytime. Free forever.',
+    description: 'Live audio-only DJ radio shows — tune in live, or replay any show anytime. Completely free.',
     url: '/radio',
     type: 'website',
   },

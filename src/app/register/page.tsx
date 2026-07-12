@@ -3,8 +3,8 @@ import { isInviteCodeRequiredRuntime } from '@/lib/runtime-flags';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Join iHYPE — listen free, forever',
-  description: 'Listen free, forever. Join iHYPE — 0% ticket fees, 45% artist / 45% venue / 10% promoters.',
+  title: 'Join iHYPE — your local music scene, completely free',
+  description: 'Completely free. Join iHYPE — 0% ticket fees, 45% artist / 45% venue / 10% promoters.',
   robots: { index: false, follow: false },
 };
 
