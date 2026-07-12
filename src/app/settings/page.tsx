@@ -284,7 +284,9 @@ export default function SettingsPage() {
           <div className="settings-section">
             <div className="settings-section-title">Danger Zone</div>
             <div className="settings-group settings-danger-zone">
-              <Row action={<Link className="settings-btn settings-btn-danger" href="/api/auth/signout">Sign out</Link>} detail="Sign out of iHYPE on this device" label="Sign out" />
+              {/* Plain <a>, not <Link>: /api/auth/signout is an API route, so it
+                  needs a real navigation — a soft client-side nav won't hit it. */}
+              <Row action={<a className="settings-btn settings-btn-danger" href="/api/auth/signout">Sign out</a>} detail="Sign out of iHYPE on this device" label="Sign out" />
               <Row action={<button className="settings-btn settings-btn-danger" onClick={deleteAccount} type="button">Delete</button>} detail="Permanent. All data removed within 30 days." label="Delete account" />
             </div>
           </div>
