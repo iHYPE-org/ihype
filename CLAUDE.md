@@ -117,10 +117,10 @@ If a UI detail is unclear → ask Claude Design to clarify in the .dc.html. Neve
 | FanHome.dc.html | /listen | src/app/listen/page.tsx (renders `ListenHome.tsx`) |
 | Discover.dc.html | /discover | src/app/discover/page.tsx |
 | Search.dc.html | /search | src/app/search/page.tsx |
-| Notifications.dc.html | /me/notifications | src/app/notifications/page.tsx |
+| Notifications.dc.html | — | **No live page exists.** Only the backend is built (`GET`/`POST /api/me/notifications`) — the UI was never translated from the design. Real gap, not a mapping error. |
 | FanProfile.dc.html | /fans/[slug] | src/app/fans/[slug]/page.tsx |
-| Tickets.dc.html | /me/tickets | src/app/tickets/page.tsx |
-| Settings.dc.html | /me/settings | src/app/settings/page.tsx |
+| Tickets.dc.html | /tickets | src/app/tickets/page.tsx (`/me/tickets` is a thin redirect alias to this) |
+| Settings.dc.html | /settings | src/app/settings/page.tsx (`/me/settings` is a thin redirect alias to this) |
 
 ### Events
 | .dc.html | Route | src/app path |
@@ -160,6 +160,30 @@ If a UI detail is unclear → ask Claude Design to clarify in the .dc.html. Neve
 |---|---|---|
 | 404.dc.html | * (not found) | src/app/not-found.tsx |
 | Offline.dc.html | /offline | src/app/offline/page.tsx |
+
+### Additional live routes (no `.dc.html` source — built ahead of/without design, per the explicit-user-request precedent)
+| Route | src/app path | What it is |
+|---|---|---|
+| /this-weekend | src/app/this-weekend/page.tsx | Shows happening near you this weekend |
+| /for-you | src/app/for-you/page.tsx | Personalized artist recommendations with "why" reasons |
+| /journal | src/app/journal/page.tsx (+ /journal/[slug]) | Editorial/blog content |
+| /community | src/app/community/page.tsx | Platform updates, announcements, roadmap voting |
+| /community-rules | src/app/community-rules/page.tsx | Community guidelines |
+| /status | src/app/status/page.tsx | System status page |
+| /launch | src/app/launch/page.tsx | Founding-cohort recruitment landing page |
+| /walkthrough | src/app/walkthrough/page.tsx | "How a hype becomes a paid show" explainer |
+| /copyright | src/app/copyright/page.tsx | Copyright policy |
+| /dmca | src/app/dmca/page.tsx | DMCA takedown process |
+| /ticket-policy | src/app/ticket-policy/page.tsx | Ticket refund/transfer policy |
+| /aux-queue/[slug] | src/app/aux-queue/[slug]/page.tsx | Shared crowd-queue for a show/venue |
+| /h/[code] | src/app/h/[code]/page.tsx | Short HYPE Link redirect — records the click, hands off to `/register?ref=` |
+| /invite/[code] | src/app/invite/[code]/page.tsx | Invite-code landing page |
+| /embed/[hexId] | src/app/embed/[hexId]/route.ts | Embeddable audio-track widget (iframe) |
+| /playlist/[slug] | src/app/playlist/[slug]/page.tsx | Public playlist page |
+| /djs/[slug] | src/app/djs/[slug]/page.tsx | Redirect alias → `/promoters/[slug]` (DJ profiles live there — see below) |
+| /promoters/[slug] | src/app/promoters/[slug]/page.tsx | DJ/promoter profile hero — despite the route name, this is the live DJ profile page (`dj-hero-actions`, radio tie-in) |
+| /me/booking | src/app/me/booking/page.tsx | Venue's "demand radar" — artist booking recommendations |
+| /me/wrapped | src/app/me/wrapped/page.tsx | "My Scene" — Spotify-Wrapped-style yearly recap |
 
 ### Marketing assets (design-only, no Next.js route needed)
 - Deck.dc.html — stakeholder pitch deck
