@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-export function FollowButton({ profileId }: { profileId: string }) {
+export function FollowButton({ profileId, variant = 'chip' }: { profileId: string; variant?: 'chip' | 'hero' }) {
   const [following, setFollowing] = useState(false);
   const [count, setCount] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -46,6 +46,29 @@ export function FollowButton({ profileId }: { profileId: string }) {
     }
   }
 
+  // 'hero' matches the *-hero-btn CSS class every profile hero row already
+  // uses for its Link buttons (Customize/Settings/etc.) — same padding,
+  // radius, and font-size so Follow doesn't wrap or mis-size next to them.
+  const heroStyle = {
+    display: 'inline-flex' as const,
+    alignItems: 'center' as const,
+    gap: 7,
+    padding: '10px 18px',
+    borderRadius: 9,
+    fontSize: 13,
+    fontWeight: 700,
+    whiteSpace: 'nowrap' as const,
+    flexShrink: 0,
+  };
+  const chipStyle = {
+    width: '100%',
+    padding: '7px 10px',
+    borderRadius: 7,
+    fontSize: 11,
+    fontFamily: 'var(--font-mono)',
+    letterSpacing: '.06em',
+  };
+
   return (
     <button
       disabled={busy}
@@ -54,15 +77,10 @@ export function FollowButton({ profileId }: { profileId: string }) {
       aria-pressed={following}
       aria-label={following ? 'Unfollow' : 'Follow'}
       style={{
-        width: '100%',
-        padding: '7px 10px',
-        border: following ? '1px solid rgba(255,80,41,.4)' : '1px solid var(--hair-120)',
-        borderRadius: 7,
-        background: following ? 'rgba(255,80,41,.1)' : 'var(--hair-50)',
-        color: following ? 'var(--accent, #ff5029)' : 'var(--ink-a65)',
-        fontSize: 11,
-        fontFamily: 'var(--font-mono)',
-        letterSpacing: '.06em',
+        ...(variant === 'hero' ? heroStyle : chipStyle),
+        border: following ? '1px solid rgba(255,80,41,.4)' : variant === 'hero' ? '1px solid var(--hair-100)' : '1px solid var(--hair-120)',
+        background: following ? 'rgba(255,80,41,.1)' : variant === 'hero' ? 'var(--line)' : 'var(--hair-50)',
+        color: following ? 'var(--accent, #ff5029)' : variant === 'hero' ? 'var(--ink)' : 'var(--ink-a65)',
         cursor: busy ? 'default' : 'pointer',
         transition: 'all 150ms ease',
         opacity: busy ? 0.6 : 1,

@@ -115,7 +115,7 @@ export default async function DJProfilePage({
               {profile.verificationStatus === 'VERIFIED' && <span className="dj-badge" style={{ background: 'rgba(34,229,212,.15)', color: 'var(--role-venue, #22e5d4)' }}>✓ Verified</span>}
             </div>
             <div className="dj-hero-actions">
-              <FollowButton profileId={profile.id} />
+              <FollowButton profileId={profile.id} variant="hero" />
               <Link className="dj-hero-btn" href="/radio">Tune In →</Link>
               {isOwner && (
                 <>

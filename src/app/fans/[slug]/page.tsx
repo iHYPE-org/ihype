@@ -119,8 +119,8 @@ export default async function FanProfilePage({
                 </>
               ) : (
                 <>
-                  <FollowButton profileId={profile.id} />
-                  <ShareButton label="Share" path={`/fans/${profile.slug}`} title={profile.name} />
+                  <FollowButton profileId={profile.id} variant="hero" />
+                  <ShareButton className="fan-hero-btn" label="Share" path={`/fans/${profile.slug}`} title={profile.name} />
                 </>
               )}
             </div>

@@ -253,8 +253,9 @@ export default async function VenuePage({
           .venue-badges { justify-content: center; }
           .venue-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
           .venue-capacity-row { max-width: 100%; }
-          .venue-hero-actions { width: 100%; justify-content: center; }
-          .venue-hero-actions > * { flex: 1; min-width: 0; }
+          .venue-hero-actions { width: 100%; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; justify-content: flex-start; }
+          .venue-hero-actions::-webkit-scrollbar { display: none; }
+          .venue-hero-actions > * { flex-shrink: 0; white-space: nowrap; min-height: 44px; }
           .venue-content { padding: 0 20px; }
           .venue-tabs { gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
           .venue-tabs::-webkit-scrollbar { display: none; }

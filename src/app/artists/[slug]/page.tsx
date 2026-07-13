@@ -118,8 +118,8 @@ export default async function ArtistPage({
               {profile.verificationStatus === 'VERIFIED' && <span className="artist-badge" style={{ background: 'rgba(34,229,212,.15)', color: 'var(--role-venue, #22e5d4)' }}>✓ Verified</span>}
             </div>
             <div className="artist-hero-actions">
-              <FollowButton profileId={profile.id} />
-              <ShareButton label="Share" path={`/artists/${profile.slug}`} title={profile.name} />
+              <FollowButton profileId={profile.id} variant="hero" />
+              <ShareButton className="artist-hero-btn" label="Share" path={`/artists/${profile.slug}`} title={profile.name} />
               {isOwner && (
                 <>
                   <Link className="artist-hero-btn" href="/pages">Customize</Link>
@@ -253,9 +253,10 @@ export default async function ArtistPage({
           .artist-hero-row { flex-direction: column; align-items: center; text-align: center; gap: 16px; }
           .artist-avatar { width: 88px; height: 88px; }
           .artist-hero-info { width: 100%; }
-          .artist-hero-badges, .artist-hero-actions { justify-content: center; }
-          .artist-hero-actions { width: 100%; }
-          .artist-hero-actions > * { flex: 1; min-width: 0; }
+          .artist-hero-badges { justify-content: center; }
+          .artist-hero-actions { width: 100%; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; justify-content: flex-start; }
+          .artist-hero-actions::-webkit-scrollbar { display: none; }
+          .artist-hero-actions > * { flex-shrink: 0; white-space: nowrap; min-height: 44px; }
           .artist-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center; width: 100%; }
           .artist-content { padding: 0 20px; }
           .artist-tabs { gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
