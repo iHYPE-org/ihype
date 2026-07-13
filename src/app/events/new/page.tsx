@@ -229,11 +229,11 @@ export default function EventsNewPage() {
             <div className="grid2">
               <div className="field">
                 <label htmlFor="event-price">Face value ($)</label>
-                <input id="event-price" max={500} min={0} onChange={(e) => setPrice(e.target.value)} type="number" value={price} />
+                <input id="event-price" max={500} min={5} onChange={(e) => setPrice(e.target.value)} type="number" value={price} />
               </div>
               <div className="field">
                 <label htmlFor="event-capacity">Capacity</label>
-                <input id="event-capacity" max={5000} min={1} onChange={(e) => setCapacity(e.target.value)} type="number" value={capacity} />
+                <input id="event-capacity" max={5000} min={10} onChange={(e) => setCapacity(e.target.value)} type="number" value={capacity} />
               </div>
             </div>
             <div className="card">
