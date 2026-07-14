@@ -31,7 +31,11 @@ explicitly list every piece of backend logic being preserved before touching any
 
 | File | What's wired |
 |---|---|
-| `src/components/RadioShowCreator.tsx` | `GET /api/radio/ad-plan` for AI ad-scope sizing; free-use crate from `initialCrate` prop; `POST`/`PATCH /api/shows` for draft/schedule/go-live |
+| `src/components/RadioShowCreator.tsx` | `GET /api/radio/ad-plan` for AI ad-scope sizing; free-use crate from `initialCrate` prop; `POST`/`PATCH /api/shows` for draft/schedule/go-live; `openAdPreview()` now calls `GET /api/radio/ad-clips` for real, purchased marketplace ads first, falling back to the `builtInAdClips` placeholder catalog only when none exist for that scope |
+| `src/lib/show-composer.ts` | `buildResolvedSequence()` is the real ad-interjection engine — resolves a `Show.productionPlan` into a playable sequence, auto-injecting AD breaks every `advertising.frequency` tracks. `ResolvedSequenceItem.adClipId` (added this pass) carries the underlying `ShowAdClip.clipId` through so a player can tell a real marketplace ad (`mkt_<Ad.id>`) apart from a placeholder (`0x...`, from `builtInAdClips`) |
+| `src/app/api/radio/ad-clips/route.ts` | Real `Ad` marketplace rows (self-serve Coverage Builder campaigns, `status: APPROVED`, scope-matched, budget not exhausted, `audioUrl` set) mapped into `ShowAdClip` shape with `clipId: mkt_<Ad.id>` — feeds `RadioShowCreator`'s ad-break picker |
+| `src/app/api/advertise/audio-upload/route.ts` | Uploads the audio spot for a self-serve ad campaign (magic-byte validated, server-computed duration via `src/lib/audio-duration.ts`, no AI content vetting — known gap, documented not silent) — returns a URL the campaign create call persists as `Ad.audioUrl`/`Ad.audioDurationSecs` |
+| `src/components/ShowSequencePlayer.tsx` | Real playback for a DJ show's resolved sequence. When an AD item's `adClipId` starts with `mkt_` and playback is not a preview, fires `POST /api/ads/impression` once per play — this is what actually spends an advertiser's budget and increments `Ad.impressions`, closing the gap flagged in DESIGN_SYNC row 212 (self-serve campaigns were never actually served anywhere) |
 | `src/app/radio/page.tsx` | `GET /api/shows?radioShows=1`; localStorage position + bookmark persistence |
 | `src/app/api/shows/route.ts` | Full show CRUD; rate limiting; 45/45/10 enforcement; radioShows filter |
 | `src/app/discover/page.tsx` | Live DB queries for artists, venues, upcoming shows |

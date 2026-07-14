@@ -146,6 +146,27 @@ function CoverageBuilder() {
   const [title, setTitle] = useState('');
   const [clickUrl, setClickUrl] = useState('');
   const [submit, setSubmit] = useState<SubmitState>({ phase: 'idle' });
+  const [audio, setAudio] = useState<{ phase: 'idle' | 'uploading' | 'done' | 'error'; url?: string; durationSecs?: number | null; fileName?: string; error?: string }>({ phase: 'idle' });
+
+  async function handleAudioChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setAudio({ phase: 'uploading', fileName: file.name });
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/advertise/audio-upload', { method: 'POST', body: fd });
+      const data = await res.json() as { url?: string; durationSecs?: number | null; error?: string };
+      if (!res.ok || !data.url) {
+        setAudio({ phase: 'error', fileName: file.name, error: data.error ?? 'Upload failed.' });
+        return;
+      }
+      setAudio({ phase: 'done', url: data.url, durationSecs: data.durationSecs, fileName: file.name });
+    } catch {
+      setAudio({ phase: 'error', fileName: file.name, error: 'Upload failed. Are you logged in?' });
+    }
+  }
 
   const quote: AdCampaignQuote = quoteAdCampaign(scope, spots, days);
   const perSpot = quote.ratePerSpotCents / 100;
@@ -175,11 +196,18 @@ function CoverageBuilder() {
       setSubmit({ phase: 'error', error: 'Give your campaign a title or ad copy line first.' });
       return;
     }
+    if (audio.phase === 'uploading') {
+      setSubmit({ phase: 'error', error: 'Wait for the ad audio to finish uploading first.' });
+      return;
+    }
     setSubmit({ phase: 'submitting' });
     try {
       const result = await postJson<{
         vetting: { status: 'APPROVED' | 'REJECTED' | 'PENDING'; reasoning: string; message: string };
-      }>('/api/advertise/campaigns', { scope, spotsPerDay: spots, runDays: days, title: title.trim(), clickUrl: clickUrl.trim() });
+      }>('/api/advertise/campaigns', {
+        scope, spotsPerDay: spots, runDays: days, title: title.trim(), clickUrl: clickUrl.trim(),
+        ...(audio.phase === 'done' ? { audioUrl: audio.url, audioDurationSecs: audio.durationSecs ?? undefined } : {}),
+      });
       setSubmit({ phase: 'done', ...result.vetting });
     } catch (err) {
       setSubmit({ phase: 'error', error: err instanceof Error ? err.message : 'Could not submit campaign. Are you logged in?' });
@@ -274,6 +302,23 @@ function CoverageBuilder() {
                 value={clickUrl}
                 onChange={e => setClickUrl(e.target.value)}
               />
+              <div>
+                <label className="adv-btn-ghost adv-btn-sm" style={{ display: 'inline-flex', cursor: 'pointer' }}>
+                  {audio.phase === 'uploading' ? 'Uploading…' : audio.phase === 'done' ? 'Replace ad audio' : 'Upload ad audio (optional)'}
+                  <input accept="audio/*" onChange={handleAudioChange} style={{ display: 'none' }} type="file" />
+                </label>
+                {audio.phase === 'done' && (
+                  <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: '#22e5d4', marginTop: 8 }}>
+                    ✓ {audio.fileName}{typeof audio.durationSecs === 'number' ? ` · :${audio.durationSecs}` : ''} — will play in DJ radio-show ad breaks
+                  </div>
+                )}
+                {audio.phase === 'error' && (
+                  <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: '#ff5a5a', marginTop: 8 }}>{audio.error}</div>
+                )}
+                <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, color: '#5a5048', marginTop: 6 }}>
+                  No audio uploaded? Your campaign still runs as a text/image placement — audio just isn&apos;t eligible for radio ad breaks.
+                </div>
+              </div>
             </div>
           </div>
         </div>
