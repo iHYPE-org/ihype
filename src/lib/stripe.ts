@@ -175,6 +175,22 @@ export async function cancelTicketPaymentIntent(paymentIntentId: string): Promis
 }
 
 /**
+ * Full refund of a captured ticket order. Safe to call against the
+ * PaymentIntent directly (rather than needing to reverse a transfer) as
+ * long as no payout has happened yet — true by construction here, since
+ * `triggerShowPayouts` only ever transfers money for ENDED shows, and this
+ * is only ever called for orders more than 48h before their show starts.
+ */
+export async function refundTicketPaymentIntent(paymentIntentId: string): Promise<string> {
+  const stripe = getStripe();
+  const refund = await stripe.refunds.create(
+    { payment_intent: paymentIntentId },
+    { idempotencyKey: `refund:${paymentIntentId}` }
+  );
+  return refund.id;
+}
+
+/**
  * Deletes a Stripe Connect Express account, ending its ability to receive
  * future payouts. Called on account erasure (privacy-actions.ts) so an
  * erased identity can't keep collecting money after "deletion." Stripe

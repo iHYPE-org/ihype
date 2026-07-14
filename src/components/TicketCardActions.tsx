@@ -44,7 +44,7 @@ export function TicketCardActions({
         setCancelError(data.error ?? 'Could not submit cancellation request.');
         return;
       }
-      setCancelDone('Cancellation requested. Our support team will process your refund shortly.');
+      setCancelDone('Cancelled — your refund has been issued and should appear in a few business days.');
       router.refresh();
     } catch {
       setCancelError('Network error');
@@ -199,7 +199,7 @@ export function TicketCardActions({
             ) : (
               <>
                 <p style={{ fontSize: 13, color: 'var(--ink-a60)', marginBottom: 16 }}>
-                  We&apos;ll route this to our support team to process your refund. Cancellation is allowed up to 48 hours before the event.
+                  Your card will be refunded immediately. Cancellation is allowed up to 48 hours before the event.
                 </p>
                 {cancelError && <p style={{ color: '#ff5029', fontSize: 12, marginBottom: 12 }}>{cancelError}</p>}
                 <div style={{ display: 'flex', gap: 10 }}>

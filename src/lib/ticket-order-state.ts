@@ -116,6 +116,55 @@ export async function finalizeCapturedTicketOrder(
   return { order: { ...order, status: TicketOrderStatus.CAPTURED, chargedAt }, tickets, changed: true };
 }
 
+/**
+ * DB-side effects of a real refund, called only after Stripe has already
+ * confirmed the refund succeeded (the route calling this is the source of
+ * truth ordering — money moves first, then these records catch up, never
+ * the other way around). Reuses VOID for "refunded" the same way it's
+ * already used for "cancelled before capture" — everywhere else in the app
+ * (`/tickets` list, etc.) already treats VOID as "no longer a live ticket."
+ *
+ * Also voids any still-PENDING AccountsPayableEntry rows for this order so
+ * the payout cron can never pay out a refunded order. This is always safe
+ * because payouts only ever run for ENDED shows (src/lib/show-payouts.ts),
+ * and a refund is only allowed more than 48h before the show starts — so a
+ * refundable order's payable entries are guaranteed to still be PENDING,
+ * never RELEASED, at refund time.
+ */
+export async function refundCapturedTicketOrder(tx: Tx, orderId: string) {
+  const order = await tx.ticketOrder.findUnique({
+    where: { id: orderId },
+    select: { id: true, showId: true, quantity: true, status: true },
+  });
+  if (!order || order.status !== TicketOrderStatus.CAPTURED) return false;
+
+  const transitioned = await tx.ticketOrder.updateMany({
+    where: { id: order.id, status: TicketOrderStatus.CAPTURED },
+    data: { status: TicketOrderStatus.VOID },
+  });
+  if (transitioned.count !== 1) return false;
+
+  await tx.ticket.updateMany({
+    where: { ticketOrderId: order.id, status: 'VALID' },
+    data: { status: 'VOID' },
+  });
+
+  const released = await tx.show.updateMany({
+    where: { id: order.showId, ticketsSoldCount: { gte: order.quantity } },
+    data: { ticketsSoldCount: { decrement: order.quantity } },
+  });
+  if (released.count !== 1) {
+    throw new Error(`Ticket order ${order.id} was refunded without releasing sold capacity.`);
+  }
+
+  await tx.accountsPayableEntry.updateMany({
+    where: { ticketOrderId: order.id, status: AccountsPayableStatus.PENDING },
+    data: { status: AccountsPayableStatus.VOID },
+  });
+
+  return true;
+}
+
 export async function voidReservedTicketOrder(tx: Tx, orderId: string) {
   const order = await tx.ticketOrder.findUnique({
     where: { id: orderId },

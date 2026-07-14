@@ -502,6 +502,8 @@ model TicketOrder {
   locationCountry            String?
   locationPostalCode         String?
   chargedAt                  DateTime?
+  refundedAt                 DateTime?
+  stripeRefundId             String?
   transferredAt              DateTime?
   transferredToEmail         String?
   createdAt                  DateTime               @default(now())
