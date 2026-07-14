@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
+import { notifyAdvertiser } from '@/lib/ad-campaign-notify';
 
 export async function GET(request: Request) {
   try {
@@ -37,7 +38,10 @@ export async function PATCH(request: Request) {
     const ad = await db.ad.update({
       where: { id },
       data: { status },
+      include: { advertiser: { select: { id: true, email: true } } },
     });
+
+    notifyAdvertiser(ad.advertiser.id, ad.advertiser.email, ad.title, status as 'APPROVED' | 'REJECTED', 'Reviewed by an iHYPE admin.');
 
     return NextResponse.json({ ad });
   } catch (err) {

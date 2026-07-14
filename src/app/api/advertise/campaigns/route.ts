@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { vetAdvertisement, vetAdAudioContent, adCampaignStatusFromVetting } from '@/lib/ad-vetting';
 import { isTrustedStorageUrl } from '@/lib/object-storage';
 import { recordAuditEvent } from '@/lib/audit';
+import { notifyAdvertiser } from '@/lib/ad-campaign-notify';
 import {
   isAdScope, isAdRunLengthDays, quoteAdCampaign,
   AD_SCOPE_LABELS, MIN_SPOTS_PER_DAY, MAX_SPOTS_PER_DAY,
@@ -142,6 +143,10 @@ export async function POST(request: NextRequest) {
     }).catch(() => {});
   }
 
+  // status can only be APPROVED/REJECTED/PENDING here — CANCELLED is set
+  // exclusively by the self-serve PATCH handler below, never by vetting.
+  notifyAdvertiser(session.user.id, session.user.email, title, status as 'APPROVED' | 'REJECTED' | 'PENDING', reasoning);
+
   return NextResponse.json({
     ad,
     quote,
@@ -154,4 +159,36 @@ export async function POST(request: NextRequest) {
         : 'Campaign is queued for manual review (within 48 hours).',
     },
   }, { status: 201 });
+}
+
+export async function PATCH(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+
+  let body: { id?: unknown; action?: unknown };
+  try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON.' }, { status: 400 }); }
+
+  const id = typeof body.id === 'string' ? body.id : '';
+  if (!id || body.action !== 'cancel') {
+    return NextResponse.json({ error: 'id and action: "cancel" are required.' }, { status: 400 });
+  }
+
+  const ad = await db.ad.findUnique({ where: { id }, select: { advertiserId: true, status: true } });
+  if (!ad || ad.advertiserId !== session.user.id) {
+    return NextResponse.json({ error: 'Campaign not found.' }, { status: 404 });
+  }
+  if (ad.status === 'CANCELLED') {
+    return NextResponse.json({ error: 'Campaign is already cancelled.' }, { status: 400 });
+  }
+
+  const updated = await db.ad.update({ where: { id }, data: { status: 'CANCELLED' } });
+
+  recordAuditEvent({
+    actorUserId: session.user.id,
+    action: 'ad.campaign.cancelled',
+    entityType: 'Ad',
+    entityId: id,
+  }).catch(() => {});
+
+  return NextResponse.json({ ad: updated });
 }

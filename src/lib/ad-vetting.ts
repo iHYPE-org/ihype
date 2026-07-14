@@ -16,7 +16,9 @@ export interface VettingResult {
 // Status vocabulary for the Ad/AdSlot self-serve campaign pipeline
 // (src/app/api/advertise/campaigns). Separate model, separate casing —
 // kept as its own type so the two pipelines can't be confused for each other.
-export type AdCampaignStatus = 'APPROVED' | 'REJECTED' | 'PENDING';
+// CANCELLED is set only by the advertiser's own self-serve cancel action
+// (PATCH /api/advertise/campaigns), never by vetting.
+export type AdCampaignStatus = 'APPROVED' | 'REJECTED' | 'PENDING' | 'CANCELLED';
 
 export function adCampaignStatusFromVetting(result: VettingResult): AdCampaignStatus {
   if (result.requiresManualReview) return 'PENDING';
