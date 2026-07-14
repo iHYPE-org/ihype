@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 import Link from 'next/link';
+import { CampaignCancelButton } from '@/components/CampaignCancelButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +18,6 @@ export default async function AdvertiserDashboard() {
   });
 
   const totalImpressions = campaigns.reduce((s, c) => s + c.impressions, 0);
-  const totalClicks = campaigns.reduce((s, c) => s + c.clicks, 0);
 
   // Day-by-day breakdown, last 14 days, aggregated across all the
   // advertiser's campaigns. AdImpression rows have no per-day rollup
@@ -59,16 +59,6 @@ export default async function AdvertiserDashboard() {
             <div style={{ fontWeight: 700, fontSize: 24 }}>{totalImpressions.toLocaleString()}</div>
             <div className="meta">Total impressions</div>
           </div>
-          <div className="panel" style={{ padding: '14px 20px', flex: 1, textAlign: 'center' }}>
-            <div style={{ fontWeight: 700, fontSize: 24 }}>{totalClicks.toLocaleString()}</div>
-            <div className="meta">Total clicks</div>
-          </div>
-          <div className="panel" style={{ padding: '14px 20px', flex: 1, textAlign: 'center' }}>
-            <div style={{ fontWeight: 700, fontSize: 24 }}>
-              {totalImpressions > 0 ? `${((totalClicks / totalImpressions) * 100).toFixed(2)}%` : '—'}
-            </div>
-            <div className="meta">CTR</div>
-          </div>
         </div>
       )}
 
@@ -106,19 +96,12 @@ export default async function AdvertiserDashboard() {
                   </div>
                 )}
               </div>
-              <span className={`badge ${campaign.status === 'APPROVED' ? 'success' : campaign.status === 'PENDING' ? 'warning' : ''}`}>
+              <span className={`badge ${campaign.status === 'APPROVED' ? 'success' : campaign.status === 'PENDING' ? 'warning' : campaign.status === 'REJECTED' ? 'error' : ''}`}>
                 {campaign.status}
               </span>
             </div>
             <div style={{ display: 'flex', gap: 24 }}>
               <div><div style={{ fontWeight: 700 }}>{campaign.impressions.toLocaleString()}</div><div className="meta">Impressions</div></div>
-              <div><div style={{ fontWeight: 700 }}>{campaign.clicks.toLocaleString()}</div><div className="meta">Clicks</div></div>
-              <div>
-                <div style={{ fontWeight: 700 }}>
-                  {campaign.impressions > 0 ? `${((campaign.clicks / campaign.impressions) * 100).toFixed(2)}%` : '—'}
-                </div>
-                <div className="meta">CTR</div>
-              </div>
               <div>
                 <div style={{ fontWeight: 700 }}>${((campaign.budgetCents - campaign.spentCents) / 100).toFixed(2)}</div>
                 <div className="meta">Budget remaining</div>
@@ -129,6 +112,11 @@ export default async function AdvertiserDashboard() {
                 {campaign.startsAt && `Starts: ${new Date(campaign.startsAt).toLocaleDateString()}`}
                 {campaign.startsAt && campaign.endsAt && ' · '}
                 {campaign.endsAt && `Ends: ${new Date(campaign.endsAt).toLocaleDateString()}`}
+              </div>
+            )}
+            {(campaign.status === 'APPROVED' || campaign.status === 'PENDING') && (
+              <div style={{ marginTop: 12 }}>
+                <CampaignCancelButton campaignId={campaign.id} />
               </div>
             )}
           </div>
