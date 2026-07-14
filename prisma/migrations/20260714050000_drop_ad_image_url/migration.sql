@@ -1,0 +1,21 @@
+-- ============================================================================
+-- DESTRUCTIVE — DO NOT APPLY BLIND.
+--
+-- Drops Ad.imageUrl. iHYPE only ever runs radio-style audio ad spots — no
+-- visual placements (see DESIGN_SYNC.md row 214) — and POST
+-- /api/advertise/campaigns has stopped accepting/persisting this field.
+-- But before that change, the original version of this route DID accept a
+-- client-submitted imageUrl, so real historical Ad rows may have a value
+-- here.
+--
+-- Before running this migration against production:
+--   1. Confirm no rows actually have it set:
+--        SELECT count(*) FROM "Ad" WHERE "imageUrl" IS NOT NULL;
+--   2. If non-zero, confirm with the business owner that losing that data
+--      is acceptable (it was never displayed anywhere in the app — grepped
+--      confirmed zero read sites — so it's very unlikely anyone depends on
+--      it, but this sandbox cannot verify the live table's actual contents).
+--   3. Only then apply.
+-- ============================================================================
+
+ALTER TABLE "Ad" DROP COLUMN "imageUrl";

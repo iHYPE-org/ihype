@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
 import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
+import { createSerializedTicketId } from '@/lib/tickets';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,20 +53,45 @@ export async function POST(
     return NextResponse.json({ error: 'Only captured orders can be transferred' }, { status: 400 });
   }
 
+  // Reissue every ticket in the order with a fresh serializedId rather than
+  // just emailing the recipient the existing one. Every ticket surface
+  // (the QR page, the scan endpoints) looks tickets up by serializedId with
+  // no other ownership check, so the original buyer — who may have already
+  // opened/screenshotted/printed the QR before initiating this transfer —
+  // would otherwise still hold a fully valid, scannable copy after
+  // "transferring" it; whoever scanned first would win. Rotating the id
+  // makes the old QR 404 immediately, and only the freshly emailed one
+  // works. holderName falls back to the recipient's email since a transfer
+  // doesn't collect a real name.
+  const recipientName = toEmail.split('@')[0];
+  const reissued = await db.$transaction(
+    order.tickets.map((t) =>
+      db.ticket.update({
+        where: { serializedId: t.serializedId },
+        data: {
+          serializedId: createSerializedTicketId(),
+          holderName: recipientName,
+          holderEmail: toEmail,
+          reassignCount: { increment: 1 },
+          reassignedAt: new Date(),
+        },
+        select: { serializedId: true },
+      })
+    )
+  );
+
   await db.ticketOrder.update({
     where: { id: serializedId },
     data: { transferredAt: new Date(), transferredToEmail: toEmail },
   });
 
-  const ticketList = order.tickets
-    .map((t) => `• ${t.holderName} — #${t.serializedId}`)
-    .join('\n');
+  const ticketList = reissued.map((t) => `• #${t.serializedId}`).join('\n');
 
   await sendGenericEmail({
     to: toEmail,
     subject: `Ticket transfer: ${order.show.title}`,
     text: `You've received tickets for ${order.show.title}!\n\n${ticketList}\n\nOriginal confirmation: ${order.confirmationCode}`,
-    html: `<p>You've received tickets for <strong>${order.show.title}</strong>!</p><ul>${order.tickets.map((t) => `<li>${t.holderName} — #${t.serializedId}</li>`).join('')}</ul><p>Confirmation: <strong>${order.confirmationCode}</strong></p>`,
+    html: `<p>You've received tickets for <strong>${order.show.title}</strong>!</p><ul>${reissued.map((t) => `<li>#${t.serializedId}</li>`).join('')}</ul><p>Confirmation: <strong>${order.confirmationCode}</strong></p>`,
   }).catch(() => {});
 
   return NextResponse.json({ transferred: true });

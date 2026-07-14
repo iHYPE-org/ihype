@@ -284,8 +284,6 @@ export async function POST(
       paymentMethodId,
       showId: show.id,
       ticketOrderConfirmationCode: order.confirmationCode,
-      venueConnectAccountId: show.venueProfile?.stripeConnectAccountId,
-      artistConnectAccountId: show.headlinerProfile?.stripeConnectAccountId,
       venuePayoutCents: financials.venuePayoutCents,
       artistPayoutCents: financials.artistPayoutCents,
     });

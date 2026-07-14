@@ -169,11 +169,12 @@ export async function PATCH(request: NextRequest) {
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON.' }, { status: 400 }); }
 
   const id = typeof body.id === 'string' ? body.id : '';
-  if (!id || body.action !== 'cancel') {
-    return NextResponse.json({ error: 'id and action: "cancel" are required.' }, { status: 400 });
+  const action = body.action;
+  if (!id || (action !== 'cancel' && action !== 'pause' && action !== 'resume')) {
+    return NextResponse.json({ error: 'id and action: "cancel" | "pause" | "resume" are required.' }, { status: 400 });
   }
 
-  const ad = await db.ad.findUnique({ where: { id }, select: { advertiserId: true, status: true } });
+  const ad = await db.ad.findUnique({ where: { id }, select: { advertiserId: true, status: true, endsAt: true, pausedAt: true } });
   if (!ad || ad.advertiserId !== session.user.id) {
     return NextResponse.json({ error: 'Campaign not found.' }, { status: 404 });
   }
@@ -181,11 +182,32 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'Campaign is already cancelled.' }, { status: 400 });
   }
 
-  const updated = await db.ad.update({ where: { id }, data: { status: 'CANCELLED' } });
+  let updated;
+  if (action === 'cancel') {
+    updated = await db.ad.update({ where: { id }, data: { status: 'CANCELLED', pausedAt: null } });
+  } else if (action === 'pause') {
+    if (ad.status !== 'APPROVED') {
+      return NextResponse.json({ error: 'Only a live campaign can be paused.' }, { status: 400 });
+    }
+    updated = await db.ad.update({ where: { id }, data: { status: 'PAUSED', pausedAt: new Date() } });
+  } else {
+    if (ad.status !== 'PAUSED') {
+      return NextResponse.json({ error: 'Only a paused campaign can be resumed.' }, { status: 400 });
+    }
+    // Shift endsAt forward by exactly how long it was paused, so the
+    // advertiser gets the full run length they paid for rather than losing
+    // days to the pause.
+    const pausedForMs = ad.pausedAt ? Date.now() - ad.pausedAt.getTime() : 0;
+    const newEndsAt = ad.endsAt ? new Date(ad.endsAt.getTime() + pausedForMs) : undefined;
+    updated = await db.ad.update({
+      where: { id },
+      data: { status: 'APPROVED', pausedAt: null, ...(newEndsAt ? { endsAt: newEndsAt } : {}) },
+    });
+  }
 
   recordAuditEvent({
     actorUserId: session.user.id,
-    action: 'ad.campaign.cancelled',
+    action: `ad.campaign.${action}d`,
     entityType: 'Ad',
     entityId: id,
   }).catch(() => {});

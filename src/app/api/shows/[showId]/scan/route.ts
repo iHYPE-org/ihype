@@ -35,17 +35,22 @@ export async function POST(
   if (!ticket) {
     return NextResponse.json({ error: 'Ticket not found for this show.', valid: false }, { status: 404 });
   }
-  if (ticket.status === 'SCANNED' || ticket.scannedAt) {
-    return NextResponse.json({ error: 'Ticket already scanned.', valid: false, scannedAt: ticket.scannedAt }, { status: 409 });
-  }
   if (ticket.status === 'VOID') {
     return NextResponse.json({ error: 'Ticket is void.', valid: false }, { status: 410 });
   }
 
-  const updated = await db.ticket.update({
-    where: { id: ticket.id },
-    data: { status: 'SCANNED', scannedAt: new Date(), scannedByUserId: session.user.id }
+  // Atomic check-and-set — the find above is only for the 404/VOID error
+  // messages above; the actual VALID→SCANNED transition is guarded here so
+  // two concurrent scans of the same ticket can't both succeed (only one
+  // updateMany can ever match status: 'VALID' and flip it first).
+  const scannedAt = new Date();
+  const result = await db.ticket.updateMany({
+    where: { id: ticket.id, status: 'VALID' },
+    data: { status: 'SCANNED', scannedAt, scannedByUserId: session.user.id }
   });
+  if (result.count !== 1) {
+    return NextResponse.json({ error: 'Ticket already scanned.', valid: false, scannedAt: ticket.scannedAt }, { status: 409 });
+  }
 
-  return NextResponse.json({ ok: true, valid: true, ticket: { id: updated.id, holderName: updated.holderName, scannedAt: updated.scannedAt } });
+  return NextResponse.json({ ok: true, valid: true, ticket: { id: ticket.id, holderName: ticket.holderName, scannedAt } });
 }

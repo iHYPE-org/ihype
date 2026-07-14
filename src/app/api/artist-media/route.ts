@@ -9,7 +9,7 @@ import { canManageOwnedResource } from '@/lib/permissions';
 import { areDatabaseMediaUploadsEnabledRuntime } from '@/lib/runtime-flags';
 import { validateAudioMagicBytes } from '@/lib/validate-upload';
 import { parseAudioDuration } from '@/lib/audio-duration';
-import { vetFreeUseSample } from '@/lib/media-vetting';
+import { vetFreeUseSample, vetTrackAudioContent } from '@/lib/media-vetting';
 import { recordAuditEvent } from '@/lib/audit';
 import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
@@ -163,13 +163,23 @@ export async function POST(request: Request) {
     // (fail-open, same as before) but now also raises a ContentReport into
     // the existing admin moderation queue for a human to look at, instead of
     // silently doing nothing.
-    const vetting = await vetFreeUseSample({
+    const metadataVetting = await vetFreeUseSample({
       title,
       notes: notesValue || null,
       fileName: file.name || '',
       artistName: profile.name,
       durationSecs,
     });
+    // Real audio-content check too — metadata can simply lie about the
+    // title. Transcribes vocals/lyrics and checks for a known-song match
+    // (src/lib/media-vetting.ts's vetTrackAudioContent). Instrumental
+    // tracks pass through untouched.
+    const audioVetting = await vetTrackAudioContent(fileBytes, title, profile.name);
+    const vetting = (!metadataVetting.cleared || metadataVetting.requiresManualReview)
+      ? metadataVetting
+      : (!audioVetting.cleared || audioVetting.requiresManualReview)
+        ? { cleared: audioVetting.cleared, requiresManualReview: audioVetting.requiresManualReview, reasoning: `${metadataVetting.reasoning} Audio content: ${audioVetting.reasoning}` }
+        : metadataVetting;
     const effectiveFreeUse = freeUseEnabled && vetting.cleared;
 
     let reservedAssetId: string | null = null;

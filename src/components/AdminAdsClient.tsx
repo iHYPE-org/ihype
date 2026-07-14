@@ -24,6 +24,7 @@ const STATUS_COLORS: Record<string, string> = {
   APPROVED: 'success',
   REJECTED: 'error',
   PENDING: 'warning',
+  PAUSED: 'warning',
   CANCELLED: '',
 };
 
@@ -81,6 +82,7 @@ export function AdminAdsClient({ ads: initial, status, q, page, total, pageSize 
           <option value="PENDING">Pending review</option>
           <option value="APPROVED">Approved</option>
           <option value="REJECTED">Rejected</option>
+          <option value="PAUSED">Paused</option>
           <option value="CANCELLED">Cancelled</option>
         </select>
       </div>

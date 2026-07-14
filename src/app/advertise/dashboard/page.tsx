@@ -96,7 +96,7 @@ export default async function AdvertiserDashboard() {
                   </div>
                 )}
               </div>
-              <span className={`badge ${campaign.status === 'APPROVED' ? 'success' : campaign.status === 'PENDING' ? 'warning' : campaign.status === 'REJECTED' ? 'error' : ''}`}>
+              <span className={`badge ${campaign.status === 'APPROVED' ? 'success' : campaign.status === 'PENDING' || campaign.status === 'PAUSED' ? 'warning' : campaign.status === 'REJECTED' ? 'error' : ''}`}>
                 {campaign.status}
               </span>
             </div>
@@ -114,9 +114,9 @@ export default async function AdvertiserDashboard() {
                 {campaign.endsAt && `Ends: ${new Date(campaign.endsAt).toLocaleDateString()}`}
               </div>
             )}
-            {(campaign.status === 'APPROVED' || campaign.status === 'PENDING') && (
+            {(campaign.status === 'APPROVED' || campaign.status === 'PENDING' || campaign.status === 'PAUSED') && (
               <div style={{ marginTop: 12 }}>
-                <CampaignCancelButton campaignId={campaign.id} />
+                <CampaignCancelButton campaignId={campaign.id} status={campaign.status} />
               </div>
             )}
           </div>
