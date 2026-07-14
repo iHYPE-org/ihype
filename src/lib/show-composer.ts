@@ -51,7 +51,9 @@ export const showSequenceItemSchema = z.object({
 });
 
 export const showAdClipSchema = z.object({
-  clipId: z.string().regex(/^0x[a-f0-9]+$/i),
+  // `0x...` = the built-in placeholder catalog (builtInAdClips); `mkt_...` =
+  // a real, purchased marketplace ad (Ad.id, prefixed by GET /api/radio/ad-clips).
+  clipId: z.string().regex(/^(0x[a-f0-9]+|mkt_[a-zA-Z0-9]+)$/i),
   title: z.string().min(1),
   url: z.string().min(1),
   scope: advertisingScopeSchema,
@@ -141,6 +143,10 @@ export type ResolvedSequenceItem = {
   notes?: string | null;
   durationSeconds?: number;
   previewImageUrl?: string | null;
+  // Only set for kind === 'AD' — the underlying ShowAdClip.clipId, so a
+  // player can tell a real marketplace ad ("mkt_...") apart from a
+  // placeholder ("0x...") and report a real impression only for the former.
+  adClipId?: string;
 };
 
 // Expands a production plan's sequence (a list of refs) into the actual
@@ -189,7 +195,8 @@ export function buildResolvedSequence(productionPlan: ShowProductionPlan): Resol
         url: adClip.url,
         mediaType: 'audio',
         notes: adClip.notes,
-        durationSeconds: adClip.durationSeconds
+        durationSeconds: adClip.durationSeconds,
+        adClipId: adClip.clipId
       });
       continue;
     }
@@ -221,7 +228,8 @@ export function buildResolvedSequence(productionPlan: ShowProductionPlan): Resol
           url: adClip.url,
           mediaType: 'audio',
           notes: adClip.notes,
-          durationSeconds: adClip.durationSeconds
+          durationSeconds: adClip.durationSeconds,
+          adClipId: adClip.clipId
         });
         adIndex += 1;
       }

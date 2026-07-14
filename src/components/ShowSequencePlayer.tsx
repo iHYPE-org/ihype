@@ -23,6 +23,7 @@ export function ShowSequencePlayer({
   const mediaRef = useRef<HTMLMediaElement | null>(null);
   const autoAdvanceTimerRef = useRef<number | null>(null);
   const hasRecordedListenRef = useRef(false);
+  const pingedAdClipIdsRef = useRef<Set<string>>(new Set());
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const resolvedSequence = useMemo(() => buildResolvedSequence(productionPlan), [productionPlan]);
@@ -90,6 +91,24 @@ export function ShowSequencePlayer({
       media.pause();
     }
   }, [activeItem, isPlaying]);
+
+  // Real marketplace ads (adClipId prefixed "mkt_" — see show-composer.ts)
+  // get a real impression + spend recorded the first time each one starts
+  // playing in an actual broadcast. Preview mode (the DJ auditioning their
+  // own show before it's live) never charges advertisers.
+  useEffect(() => {
+    if (isPreview || !isPlaying) return;
+    const clipId = activeItem?.kind === 'AD' ? activeItem.adClipId : undefined;
+    if (!clipId?.startsWith('mkt_') || pingedAdClipIdsRef.current.has(clipId)) return;
+    pingedAdClipIdsRef.current.add(clipId);
+    void fetch('/api/ads/impression', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adId: clipId.slice(4) })
+    }).catch(() => {
+      // Keep playback resilient if impression tracking fails.
+    });
+  }, [activeItem, isPlaying, isPreview]);
 
   function moveToIndex(nextIndex: number) {
     const boundedIndex = Math.max(0, Math.min(nextIndex, resolvedSequence.length - 1));

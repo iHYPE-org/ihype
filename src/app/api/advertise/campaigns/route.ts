@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
   let body: {
     scope?: unknown; spotsPerDay?: unknown; runDays?: unknown;
-    title?: unknown; audioUrl?: unknown; imageUrl?: unknown; clickUrl?: unknown;
+    title?: unknown; audioUrl?: unknown; audioDurationSecs?: unknown; imageUrl?: unknown; clickUrl?: unknown;
   };
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON.' }, { status: 400 }); }
 
@@ -76,6 +76,9 @@ export async function POST(request: NextRequest) {
       title,
       scope: body.scope,
       audioUrl: typeof body.audioUrl === 'string' ? body.audioUrl : undefined,
+      audioDurationSecs: typeof body.audioDurationSecs === 'number' && Number.isFinite(body.audioDurationSecs)
+        ? Math.max(0, Math.round(body.audioDurationSecs))
+        : undefined,
       imageUrl: typeof body.imageUrl === 'string' ? body.imageUrl : undefined,
       clickUrl: typeof body.clickUrl === 'string' ? body.clickUrl : undefined,
       budgetCents: quote.totalCostCents,

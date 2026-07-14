@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildResolvedSequence, sumProductionPlanDurationSecs, type ShowProductionPlan } from '@/lib/show-composer';
+import { buildResolvedSequence, sumProductionPlanDurationSecs, showAdClipSchema, type ShowProductionPlan } from '@/lib/show-composer';
 
 function basePlan(overrides: Partial<ShowProductionPlan> = {}): ShowProductionPlan {
   return {
@@ -67,6 +67,42 @@ describe('buildResolvedSequence', () => {
 
     const resolved = buildResolvedSequence(plan);
     expect(resolved.map((r) => r.kind)).toEqual(['MEDIA', 'MEDIA', 'AD']);
+  });
+
+  it('accepts a real marketplace ad clip id (mkt_ prefix) alongside the placeholder 0x format', () => {
+    expect(showAdClipSchema.safeParse({
+      clipId: 'mkt_clx1a2b3c4d5e6f7g8h9', title: 'Real ad', url: '/audio/real.mp3', scope: 'local', mimeType: 'audio/mpeg', durationSeconds: 20
+    }).success).toBe(true);
+    expect(showAdClipSchema.safeParse({
+      clipId: 'not-a-valid-id', title: 'Bad ad', url: '/audio/bad.mp3', scope: 'local'
+    }).success).toBe(false);
+  });
+
+  it('carries the ad clip id through so a player can tell a real marketplace ad apart from a placeholder', () => {
+    const plan = basePlan({
+      mediaItems: [{ mediaId: '0xt1', title: 'T1', url: '/1', artistProfileId: 'cabc123456', artistName: 'A', mediaType: 'audio' }],
+      advertising: { enabled: true, scope: 'local', frequency: 1, clips: [{ clipId: 'mkt_realad1', title: 'Real ad', url: '/audio/real.mp3', scope: 'local', mimeType: 'audio/mpeg', durationSeconds: 20 }] },
+      sequence: [
+        { id: 's1', kind: 'MEDIA', refId: '0xt1', label: 'T1' },
+        { id: 's2', kind: 'AD', refId: 'mkt_realad1', label: 'Ad break' }
+      ]
+    });
+
+    const resolved = buildResolvedSequence(plan);
+    const adItem = resolved.find((r) => r.kind === 'AD');
+    expect(adItem?.adClipId).toBe('mkt_realad1');
+  });
+
+  it('carries the ad clip id through auto-injected ad breaks too', () => {
+    const plan = basePlan({
+      mediaItems: [{ mediaId: '0xt1', title: 'T1', url: '/1', artistProfileId: 'cabc123456', artistName: 'A', mediaType: 'audio' }],
+      advertising: { enabled: true, scope: 'local', frequency: 1, clips: [{ clipId: 'mkt_realad2', title: 'Real ad', url: '/audio/real.mp3', scope: 'local', mimeType: 'audio/mpeg', durationSeconds: 20 }] },
+      sequence: [{ id: 's1', kind: 'MEDIA', refId: '0xt1', label: 'T1' }]
+    });
+
+    const resolved = buildResolvedSequence(plan);
+    const adItem = resolved.find((r) => r.kind === 'AD');
+    expect(adItem?.adClipId).toBe('mkt_realad2');
   });
 
   it('does not double-inject ad breaks when the DJ already placed explicit AD cues', () => {

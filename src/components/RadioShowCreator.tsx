@@ -81,6 +81,7 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
   const [recorder, setRecorder] = useState<RecorderState>({ phase: 'idle' });
   const [samplePicker, setSamplePicker] = useState(false);
   const [adPreviewClips, setAdPreviewClips] = useState<ShowAdClip[] | null>(null);
+  const [adPreviewIsMarketplace, setAdPreviewIsMarketplace] = useState(false);
   const [adPlan, setAdPlan] = useState<DjAdPlan | null>(null);
   const scopeTouchedRef = useRef(false);
 
@@ -188,16 +189,33 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
     showToast(`Added “${sample.title}” sample`);
   }
 
-  function openAdPreview() {
+  async function openAdPreview() {
+    // Real, purchased marketplace ads (Coverage Builder campaigns) take
+    // priority over the placeholder catalog — the whole point of the
+    // interjection module is to actually pay out to real advertisers once
+    // any exist for this scope.
+    try {
+      const data = await apiFetch<{ clips?: ShowAdClip[] }>(`/api/radio/ad-clips?scope=${scope}`);
+      if (data?.clips?.length) {
+        setAdPreviewIsMarketplace(true);
+        setAdPreviewClips(data.clips);
+        return;
+      }
+    } catch {
+      // Fall through to the placeholder catalog below.
+    }
+
     const clips = buildAutoAdBreak(scope, adPlan?.breakDurationSecs ?? 90);
     if (!clips.length) {
       showToast('No ad clips available for this scope yet');
       return;
     }
+    setAdPreviewIsMarketplace(false);
     setAdPreviewClips(clips);
   }
   function closeAdPreview() {
     setAdPreviewClips(null);
+    setAdPreviewIsMarketplace(false);
     stopPreview();
   }
   function confirmAdBreak() {
@@ -727,7 +745,9 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
             </div>
             <div className="rsc-modal-body">
               <p className="rsc-fineprint" style={{ margin: '0 4px 4px' }}>
-                Auto-picked from the placeholder ad catalog for &quot;{scope}&quot; reach — preview each spot, then add the break to your timeline.
+                {adPreviewIsMarketplace
+                  ? <>Real advertiser campaigns purchased for &quot;{scope}&quot; reach — preview each spot, then add the break to your timeline. You&apos;ll be credited an impression each time one plays.</>
+                  : <>No purchased ads for &quot;{scope}&quot; reach yet — auto-picked from the placeholder ad catalog instead. Preview each spot, then add the break to your timeline.</>}
               </p>
               {adPreviewClips.map((clip) => (
                 <div className="rsc-sample-row" key={clip.clipId}>
