@@ -1,4 +1,8 @@
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
+import { auth } from '@/lib/auth';
+import { WORKBENCH_PATH } from '@/lib/auth-redirects';
+import { isAdminSession } from '@/lib/permissions';
 import { db } from '@/lib/db';
 import { getHealthSnapshot } from '@/lib/health';
 import { kvPut } from '@/lib/kv';
@@ -62,6 +66,10 @@ function StatusDot({ ok }: { ok: boolean }) {
 }
 
 export default async function StatusPage() {
+  const session = await auth();
+  if (!session?.user?.id) redirect('/login');
+  if (!isAdminSession(session)) redirect(WORKBENCH_PATH);
+
   const [dbOk, resendResult, kvResult, rateLimitMetrics, health] = await Promise.all([
     checkDb(),
     checkResend(),

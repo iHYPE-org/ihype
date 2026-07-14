@@ -40,13 +40,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'File content does not match declared type' }, { status: 400 });
   }
 
-  const vetting = await vetImageUpload(new Uint8Array(buffer), field && ALLOWED_FIELDS.has(field) ? field : 'profile image');
+  const knownField = field && ALLOWED_FIELDS.has(field) ? field : null;
+  const vetting = await vetImageUpload(new Uint8Array(buffer), knownField ?? 'profile image');
   if (!vetting.cleared) {
+    // Field name is folded into `reason` (rather than a schema change) so the
+    // moderation "approve" action knows exactly which Profile column to
+    // clear — see enforceRemoval() in the moderation PATCH route.
     await db.contentReport.create({
       data: {
         targetType: 'profile-image',
         targetId: profile.id,
-        reason: 'auto_flag_image',
+        reason: knownField ? `auto_flag_image:${knownField}` : 'auto_flag_image',
         details: vetting.reasoning,
       },
     }).catch(() => {});
