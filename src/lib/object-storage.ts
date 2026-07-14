@@ -128,6 +128,40 @@ export function isObjectStorageConfigured(): boolean {
   );
 }
 
+/**
+ * True only for URLs this app itself generated via storeMediaFile() — the
+ * R2 public base (or the default R2 endpoint) or an inline `data:` URL.
+ * Used to gate any server-side fetch() of a client-submitted "url" field
+ * (e.g. re-fetching an uploaded ad's audio for content vetting) so a client
+ * can never point the server at an arbitrary internal/external URL (SSRF).
+ */
+export function isTrustedStorageUrl(url: string): boolean {
+  if (url.startsWith('data:')) return true;
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+  if (parsed.protocol !== 'https:') return false;
+
+  const accountId = process.env.R2_ACCOUNT_ID;
+  const bucket = process.env.R2_BUCKET_NAME;
+  const candidates = [
+    process.env.R2_PUBLIC_URL,
+    accountId && bucket ? `https://${accountId}.r2.cloudflarestorage.com/${bucket}` : undefined,
+  ].filter((v): v is string => Boolean(v));
+
+  return candidates.some((base) => {
+    try {
+      const baseUrl = new URL(base);
+      return parsed.origin === baseUrl.origin && parsed.pathname.startsWith(baseUrl.pathname);
+    } catch {
+      return false;
+    }
+  });
+}
+
 export async function storeMediaFile(
   key: string,
   dataUrl: string,

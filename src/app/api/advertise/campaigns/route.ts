@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { vetAdvertisement, vetAdAudioContent, adCampaignStatusFromVetting } from '@/lib/ad-vetting';
+import { isTrustedStorageUrl } from '@/lib/object-storage';
 import { recordAuditEvent } from '@/lib/audit';
 import {
   isAdScope, isAdRunLengthDays, quoteAdCampaign,
@@ -41,6 +42,11 @@ export async function POST(request: NextRequest) {
   // POST /api/advertise/audio-upload first.
   const audioUrl = typeof body.audioUrl === 'string' ? body.audioUrl.trim() : '';
   if (!audioUrl) return NextResponse.json({ error: 'audioUrl is required — upload your ad audio first.' }, { status: 400 });
+  // Must be a URL this app itself generated (POST /api/advertise/audio-upload)
+  // — never fetch an arbitrary client-submitted URL server-side (SSRF).
+  if (!isTrustedStorageUrl(audioUrl)) {
+    return NextResponse.json({ error: 'audioUrl must come from /api/advertise/audio-upload.' }, { status: 400 });
+  }
 
   if (!isAdScope(body.scope)) {
     return NextResponse.json({ error: 'scope must be one of LOCAL, REGIONAL, NATIONAL, GLOBAL.' }, { status: 400 });
@@ -78,9 +84,11 @@ export async function POST(request: NextRequest) {
 
   // Also screen what's actually said in the spot — vetAdvertisement above
   // only judges the declared title, never the audio content itself.
-  // Best-effort: a fetch failure (e.g. the inline data: URL fallback used
-  // when object storage isn't configured) fails open, same as every other
-  // vetting call in this codebase.
+  // audioUrl is already confirmed trusted-storage-only above (SSRF guard),
+  // so fetching it back is safe. Best-effort beyond that: a fetch failure
+  // (e.g. the inline data: URL fallback used when object storage isn't
+  // configured) fails open, same as every other vetting call in this
+  // codebase.
   let audioVetting: { isApproved: boolean; reasoning: string; requiresManualReview: boolean } | null = null;
   try {
     const audioRes = await fetch(audioUrl);
