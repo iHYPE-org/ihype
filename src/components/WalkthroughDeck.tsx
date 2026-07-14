@@ -422,8 +422,8 @@ function Slide09Payout() {
         Payouts hit automatically — artist and fan see the same receipt. On the night, show-night mode checks fans in, counts live crowd hype, and surfaces the QR at the door.
       </Body>
       <div style={{ display: 'flex', gap: 16, marginTop: 40 }}>
-        <StatTile value="$1,872" label="Artist 45%" color="var(--role-artist)" />
-        <StatTile value="$1,872" label="Venue 45%" color="var(--role-venue)" />
+        <StatTile value="$2,912" label="Artist 70%" color="var(--role-artist)" />
+        <StatTile value="$832" label="Venue 20%" color="var(--role-venue)" />
         <StatTile value="$0" label="iHYPE fee" color="var(--success)" />
       </div>
     </section>

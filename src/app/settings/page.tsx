@@ -189,14 +189,14 @@ export default function SettingsPage() {
                       <div className="settings-row-label">No payout destination connected yet</div>
                       <div className="settings-row-detail">Payouts land within 2 business days of a show closing</div>
                       <div className="settings-split-mini">
-                        <span style={{ color: roleColor }}>45% you</span>
-                        <span style={{ color: 'var(--ink-a50)' }}>45% {role === 'VENUE' ? 'artist' : 'venue'}</span>
+                        <span style={{ color: roleColor }}>{role === 'VENUE' ? '20% you' : '70% you'}</span>
+                        <span style={{ color: 'var(--ink-a50)' }}>{role === 'VENUE' ? '70% artist' : '20% venue'}</span>
                         <span style={{ color: 'var(--ink-a50)' }}>10% promoters</span>
                       </div>
                     </div>
                     <Link className="settings-btn settings-btn-ghost" href="/me/promote">Connect</Link>
                   </div>
-                  <Row action={<Link className="settings-btn settings-btn-ghost" href="/me/promote">View</Link>} detail="Every payout receipt, itemized 70/20/10" label="Payout history" />
+                  <Row action={<Link className="settings-btn settings-btn-ghost" href="/me/payouts">View</Link>} detail="Every payout receipt, itemized 70/20/10" label="Payout history" />
                 </>
               ) : (
                 <div className="settings-row settings-payout-card">
