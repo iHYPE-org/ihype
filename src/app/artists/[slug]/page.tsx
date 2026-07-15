@@ -9,6 +9,7 @@ import { HypeButton } from '@/components/HypeButton';
 import { FollowButton } from '@/components/FollowButton';
 import { ShareButton } from '@/components/ShareButton';
 import { ArtistMediaPlaylist } from '@/components/ArtistMediaPlaylist';
+import { TrackUploadPanel } from '@/components/TrackUploadPanel';
 import { ProfileInsights } from '@/components/ProfileInsights';
 import { getPinnedStatValues } from '@/lib/profile-stats';
 import { PinnedStatTiles } from '@/components/PinnedStatTiles';
@@ -175,22 +176,25 @@ export default async function ArtistPage({
         )}
 
         {activeSection === 'tracks' && (
-          media.entries.length ? (
-            <ArtistMediaPlaylist
-              artistName={profile.name}
-              artistSlug={profile.slug}
-              artworkUrl={artworkUrl}
-              entries={media.entries}
-              isOwner={isOwner}
-              playCountMap={Object.fromEntries(playCountMap)}
-              profileId={profile.id}
-            />
-          ) : (
-            <div className="artist-empty">
-              <svg fill="none" height="34" stroke="var(--ink-a30)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="34"><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg>
-              <p>No tracks yet.</p>
-            </div>
-          )
+          <>
+            {isOwner && <TrackUploadPanel profileId={profile.id} profileType="ARTIST" />}
+            {media.entries.length ? (
+              <ArtistMediaPlaylist
+                artistName={profile.name}
+                artistSlug={profile.slug}
+                artworkUrl={artworkUrl}
+                entries={media.entries}
+                isOwner={isOwner}
+                playCountMap={Object.fromEntries(playCountMap)}
+                profileId={profile.id}
+              />
+            ) : (
+              <div className="artist-empty">
+                <svg fill="none" height="34" stroke="var(--ink-a30)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="34"><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg>
+                <p>No tracks yet.</p>
+              </div>
+            )}
+          </>
         )}
 
         {activeSection === 'shows' && (

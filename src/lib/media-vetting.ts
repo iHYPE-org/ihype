@@ -1,4 +1,6 @@
 import { runAIJson, runTranscription } from '@/lib/ai';
+import { parseId3Tags } from '@/lib/id3-tags';
+import { runAcousticFingerprintScan, runMelodicFeatureMatch } from '@/lib/audio-fingerprint';
 
 export interface SampleUploadData {
   title: string;
@@ -67,6 +69,51 @@ JSON shape: {"cleared": boolean, "requiresManualReview": boolean, "reasoning": "
   };
 }
 
+function normalize(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+/**
+ * Layer 0 of the scan pipeline — checks the track's actual embedded ID3v2
+ * metadata (src/lib/id3-tags.ts) against the uploader's declared artist
+ * name. This is a real binary-parse of the file, not an AI judgment call,
+ * and catches a specific real-world case the form-field checks above
+ * cannot: a ripped MP3 whose embedded TPE1/TCOP frames still name the
+ * original commercial artist/label even though the uploader typed a
+ * different name into the web form.
+ *
+ * WAV/FLAC files and MP3s with no ID3v2 tag simply have nothing to check
+ * here (`parseId3Tags` returns null) — that's treated as cleared, not
+ * flagged, since the absence of embedded metadata is not itself suspicious.
+ */
+export function vetId3Metadata(fileBytes: Uint8Array, declaredArtistName: string): SampleVettingResult {
+  const tags = parseId3Tags(fileBytes);
+  if (!tags) {
+    return { cleared: true, requiresManualReview: false, reasoning: 'No embedded ID3 metadata found.' };
+  }
+
+  const declared = normalize(declaredArtistName);
+  const embeddedArtist = tags.artist ? normalize(tags.artist) : '';
+  const embeddedCopyright = tags.copyright ? normalize(tags.copyright) : '';
+
+  const artistMismatch = embeddedArtist && declared && !embeddedArtist.includes(declared) && !declared.includes(embeddedArtist);
+  const copyrightMismatch = embeddedCopyright && declared && !embeddedCopyright.includes(declared);
+
+  if (artistMismatch || copyrightMismatch) {
+    const parts = [
+      tags.artist ? `embedded artist tag reads "${tags.artist}"` : null,
+      tags.copyright ? `embedded copyright tag reads "${tags.copyright}"` : null,
+    ].filter(Boolean).join('; ');
+    return {
+      cleared: false,
+      requiresManualReview: true,
+      reasoning: `Uploader declared artist "${declaredArtistName}" but ${parts} — does not match the declared uploader.`,
+    };
+  }
+
+  return { cleared: true, requiresManualReview: false, reasoning: 'Embedded ID3 metadata (if any) is consistent with the declared uploader.' };
+}
+
 /**
  * Real audio-content check, not just metadata — vetFreeUseSample above can
  * only judge the declared title/filename, which a re-upload can simply lie
@@ -110,5 +157,66 @@ JSON shape: {"cleared": boolean, "requiresManualReview": boolean, "reasoning": "
     reasoning: typeof result.reasoning === 'string' && result.reasoning
       ? result.reasoning.slice(0, 300)
       : 'No reasoning provided.',
+  };
+}
+
+export interface TrackScanLayer {
+  layer: 0 | 1 | 2 | 3;
+  name: string;
+  configured: boolean;
+  cleared: boolean;
+  requiresManualReview: boolean;
+  reasoning: string;
+}
+
+export interface TrackScanResult {
+  layers: TrackScanLayer[];
+  cleared: boolean;
+  requiresManualReview: boolean;
+  reasoning: string;
+}
+
+/**
+ * The 4-layer upload scan pipeline (Artist "Upload track" and DJ "Add to
+ * crate" both call this — see CLAUDE.md's wiring table and DESIGN_SYNC.md
+ * rows 80/81/83): (0) ID3 tag check, (1) acoustic fingerprinting (ACR),
+ * (2) melodic/chord feature matching, (3) vocal/synth AI analysis.
+ *
+ * Layers 1 & 2 are honestly unconfigured (see src/lib/audio-fingerprint.ts)
+ * — they never block an upload or count toward `requiresManualReview`,
+ * they're surfaced in `layers` purely so the UI can show "not configured"
+ * rather than silently omitting them. Only layers 0 and 3, which do real
+ * work, can flag a track.
+ *
+ * Fail-open by design, same as every vetting function in this codebase: a
+ * flagged track still gets uploaded, just kept out of the free-use crate
+ * and/or raised into the moderation queue by the caller.
+ */
+export async function runTrackScanPipeline(
+  fileBytes: Uint8Array,
+  data: SampleUploadData,
+): Promise<TrackScanResult> {
+  const id3 = vetId3Metadata(fileBytes, data.artistName);
+  const acr = await runAcousticFingerprintScan(fileBytes);
+  const feature = await runMelodicFeatureMatch(fileBytes);
+  const vocal = await vetTrackAudioContent(fileBytes, data.title, data.artistName);
+
+  const layers: TrackScanLayer[] = [
+    { layer: 0, name: 'ID3 tag check', configured: true, ...id3 },
+    { layer: 1, name: 'Acoustic fingerprinting (ACR)', ...acr },
+    { layer: 2, name: 'Feature & motif matching', ...feature },
+    { layer: 3, name: 'Vocal & synth AI analysis', configured: true, ...vocal },
+  ];
+
+  const blocking = layers.filter((l) => l.configured);
+  const flagged = blocking.find((l) => !l.cleared || l.requiresManualReview);
+
+  return {
+    layers,
+    cleared: !flagged,
+    requiresManualReview: !!flagged?.requiresManualReview,
+    reasoning: flagged
+      ? `Layer "${flagged.name}": ${flagged.reasoning}`
+      : 'All configured layers cleared.',
   };
 }

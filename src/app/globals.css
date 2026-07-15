@@ -2842,6 +2842,56 @@ fieldset.authcard-field { border: 0; padding: 0; }
   justify-content: flex-end;
   flex-shrink: 0;
 }
+.track-scan-gate {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+  padding: 0.9rem 1rem;
+  border-radius: 16px;
+  border: 1px solid var(--hair-80);
+  background: var(--hair-20);
+}
+.track-scan-layer {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  opacity: 0.35;
+  transition: opacity 0.25s ease;
+}
+.track-scan-layer-checking,
+.track-scan-layer-done {
+  opacity: 1;
+}
+.track-scan-layer-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--line);
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.track-scan-layer-done .track-scan-layer-icon {
+  background: rgba(35,208,216,0.18);
+  color: #23d0d8;
+}
+.track-scan-layer-name {
+  flex-shrink: 0;
+}
+.track-scan-layer-note {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.track-scan-layer-note-flag {
+  color: #ff9d5c;
+}
+.track-scan-final {
+  margin-top: 0.4rem;
+  font-weight: 600;
+}
 .composer-plan-panel{
   padding: 1.5rem;
   margin-top: 1.5rem;

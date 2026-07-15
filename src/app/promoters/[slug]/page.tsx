@@ -7,6 +7,7 @@ import { buildArtistMediaCollection } from '@/lib/media';
 import { HypeButton } from '@/components/HypeButton';
 import { FollowButton } from '@/components/FollowButton';
 import { ArtistMediaPlaylist } from '@/components/ArtistMediaPlaylist';
+import { TrackUploadPanel } from '@/components/TrackUploadPanel';
 import { ProfileInsights } from '@/components/ProfileInsights';
 import { getPinnedStatValues } from '@/lib/profile-stats';
 import { PinnedStatTiles } from '@/components/PinnedStatTiles';
@@ -168,18 +169,21 @@ export default async function DJProfilePage({
         )}
 
         {activeSection === 'crate' && (
-          media.entries.length ? (
-            <ArtistMediaPlaylist
-              artistName={profile.name}
-              artistSlug={profile.slug}
-              artworkUrl={artworkUrl}
-              entries={media.entries}
-              isOwner={isOwner}
-              profileId={profile.id}
-            />
-          ) : (
-            <div className="dj-empty"><p>No free-use tracks in the crate yet.</p></div>
-          )
+          <>
+            {isOwner && <TrackUploadPanel profileId={profile.id} profileType="DJ" />}
+            {media.entries.length ? (
+              <ArtistMediaPlaylist
+                artistName={profile.name}
+                artistSlug={profile.slug}
+                artworkUrl={artworkUrl}
+                entries={media.entries}
+                isOwner={isOwner}
+                profileId={profile.id}
+              />
+            ) : (
+              <div className="dj-empty"><p>No free-use tracks in the crate yet.</p></div>
+            )}
+          </>
         )}
 
         {activeSection === 'earnings' && isOwner && (

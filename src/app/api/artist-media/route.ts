@@ -9,7 +9,7 @@ import { canManageOwnedResource } from '@/lib/permissions';
 import { areDatabaseMediaUploadsEnabledRuntime } from '@/lib/runtime-flags';
 import { validateAudioMagicBytes } from '@/lib/validate-upload';
 import { parseAudioDuration } from '@/lib/audio-duration';
-import { vetFreeUseSample, vetTrackAudioContent } from '@/lib/media-vetting';
+import { runTrackScanPipeline } from '@/lib/media-vetting';
 import { recordAuditEvent } from '@/lib/audit';
 import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
@@ -131,11 +131,11 @@ export async function POST(request: Request) {
       }),
     );
 
-    if (!profile || profile.type !== 'ARTIST') {
-      return NextResponse.json({ error: 'Artist profile not found.' }, { status: 404 });
+    if (!profile || !['ARTIST', 'DJ'].includes(profile.type)) {
+      return NextResponse.json({ error: 'Artist or DJ profile not found.' }, { status: 404 });
     }
     if (!canManageOwnedResource(session, profile.ownerId)) {
-      return NextResponse.json({ error: 'Only the artist who owns this page can upload media.' }, { status: 403 });
+      return NextResponse.json({ error: 'Only the profile owner can upload media.' }, { status: 403 });
     }
 
     const title = (requestedTitle || deriveTitleFromFileName(file.name)).slice(0, 160);
@@ -155,31 +155,23 @@ export async function POST(request: Request) {
     const fileBytes = new Uint8Array(await file.arrayBuffer());
     const durationSecs = parseAudioDuration(fileBytes) ?? null;
 
-    // Every upload gets the same metadata vetting the shared free-use crate
-    // has always required — previously this only ran for freeUseEnabled
-    // uploads, so the large majority of tracks (kept on the artist's own
-    // page, never opted into the shared pool) had zero automated content
-    // screening at all. A flagged non-free-use track still goes live
-    // (fail-open, same as before) but now also raises a ContentReport into
-    // the existing admin moderation queue for a human to look at, instead of
-    // silently doing nothing.
-    const metadataVetting = await vetFreeUseSample({
+    // Every upload runs the full 4-layer scan pipeline (ID3 tag check,
+    // acoustic fingerprinting, feature/motif matching, vocal/synth AI
+    // analysis — see src/lib/media-vetting.ts's runTrackScanPipeline).
+    // Previously only metadata + lyric checks ran, and only for
+    // freeUseEnabled uploads; now every upload (Artist or DJ) is scanned.
+    // Layers 1 & 2 are honestly unconfigured (no fingerprinting service
+    // exists in this codebase) and never block a track — only layers 0
+    // and 3 can. Fail-open, same as before: a flagged track still goes
+    // live but raises a ContentReport into /admin/moderation.
+    const scan = await runTrackScanPipeline(fileBytes, {
       title,
       notes: notesValue || null,
       fileName: file.name || '',
       artistName: profile.name,
       durationSecs,
     });
-    // Real audio-content check too — metadata can simply lie about the
-    // title. Transcribes vocals/lyrics and checks for a known-song match
-    // (src/lib/media-vetting.ts's vetTrackAudioContent). Instrumental
-    // tracks pass through untouched.
-    const audioVetting = await vetTrackAudioContent(fileBytes, title, profile.name);
-    const vetting = (!metadataVetting.cleared || metadataVetting.requiresManualReview)
-      ? metadataVetting
-      : (!audioVetting.cleared || audioVetting.requiresManualReview)
-        ? { cleared: audioVetting.cleared, requiresManualReview: audioVetting.requiresManualReview, reasoning: `${metadataVetting.reasoning} Audio content: ${audioVetting.reasoning}` }
-        : metadataVetting;
+    const vetting = { cleared: scan.cleared, requiresManualReview: scan.requiresManualReview, reasoning: scan.reasoning };
     const effectiveFreeUse = freeUseEnabled && vetting.cleared;
 
     let reservedAssetId: string | null = null;
@@ -325,6 +317,7 @@ export async function POST(request: Request) {
         url: `/api/media/${asset.hexId}`,
         shareUrl: `/api/media/${asset.hexId}`,
       },
+      scan: scan.layers,
       ...(!vetting.cleared
         ? {
             vetting: {
