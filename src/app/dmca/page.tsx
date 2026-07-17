@@ -39,21 +39,18 @@ export default function DmcaPage() {
       <p className="subtitle">
         To report infringing content, complete the form below. We will review and respond within 5 business days. False claims may result in account suspension.
       </p>
+      <section className="panel" style={{ marginTop: 24, padding: '1.5rem' }}>
+        <h2 style={{ marginBottom: 8 }}>How the process works</h2>
+        <p style={{ color: 'var(--muted)', lineHeight: 1.65 }}>
+          Submit the form with your contact details, the infringing URL, and a description of your original work. We acknowledge within 48 hours. Valid claims are removed within 5 business days. The content owner is notified and may file a counter-notice.
+        </p>
+      </section>
+
       <p style={{ marginTop: 12, padding: '10px 14px', background: 'var(--hair-40)', borderRadius: 8, fontSize: 14 }}>
         For DMCA takedown requests, email{' '}
         <a href="mailto:dmca@ihype.org?subject=DMCA%20Takedown%20Request">dmca@ihype.org</a>{' '}
         with subject &ldquo;DMCA Takedown Request&rdquo;. We respond within 5 business days.
       </p>
-
-      <section className="panel" style={{ marginTop: 24, padding: '1.5rem' }}>
-        <h2 style={{ marginBottom: 8 }}>How the process works</h2>
-        <ol style={{ paddingLeft: 20, lineHeight: 1.8 }}>
-          <li>Submit the form below with your contact details, the infringing URL, and a description of your original work.</li>
-          <li>We will acknowledge your request by email within 48 hours.</li>
-          <li>If the claim is valid, the content will be removed within 5 business days.</li>
-          <li>The content owner will be notified and may file a counter-notice.</li>
-        </ol>
-      </section>
 
       {status === 'done' ? (
         <div className="panel" style={{ marginTop: 24, padding: '1.5rem' }}>

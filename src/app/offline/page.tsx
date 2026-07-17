@@ -5,8 +5,8 @@ import { useSearchParams } from 'next/navigation';
 
 const MESSAGES: Record<string, { title: string; subtitle: string; code: string }> = {
   offline: {
-    title: 'No connection.',
-    subtitle: "Can't reach ihype.org. Check your connection and we'll retry automatically.",
+    title: "You're offline.",
+    subtitle: "No connection — common at venues. Your tickets, hypes, and crate are safe; we'll sync the moment you're back.",
     code: 'ERR · OFFLINE',
   },
   '503': {

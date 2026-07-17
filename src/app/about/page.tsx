@@ -27,7 +27,7 @@ export default function AboutPage() {
           {[
             { icon: '◐', head: '0% ticket fee', body: 'Face value is face value. Every cent from a ticket sale goes directly to the artist or venue — no platform deduction, ever.' },
             { icon: '♡', head: 'No streaming cuts', body: 'iHYPE does not take royalties. Hypes are a demand signal, not a revenue share mechanism.' },
-            { icon: '◇', head: 'No ads', body: 'The platform is funded by the community, not by advertisers. Your listening habits are never sold.' },
+            { icon: '◇', head: 'No data for sale', body: 'iHYPE runs music-only ads to stay funded, but your listening habits are never sold or shared with advertisers.' },
             { icon: '◉', head: 'Open to all', body: 'Any independent artist, venue, or promoter can join for free. There is no gated tier, no premium listing, no pay-to-surface.' },
           ].map((r) => (
             <div key={r.icon} className="lp-reason-card">
@@ -44,10 +44,11 @@ export default function AboutPage() {
         <p className="lp-hype-eyebrow">FUNDING</p>
         <h2 className="lp-section-head">How it&apos;s funded</h2>
         <p className="lp-hype-body">
-          iHYPE is sustained by a mix of community grants, optional artist memberships that unlock extra
-          analytics and promotional tools, and direct donations from fans who believe independent music
-          infrastructure should belong to artists. We publish full financial summaries on our{' '}
-          <Link href="/transparency" style={{ color: '#22e5d4' }}>transparency page</Link>.
+          iHYPE is funded entirely by advertising, the same way terrestrial radio has always worked — and those
+          ads are restricted to music-related sources only, forever. No user-data resale funds this platform,
+          and no ticket revenue is ever touched. The only fee anywhere in the ticketing flow is the card
+          processor&apos;s own cost — 2.9% + $0.30 per transaction (3.5% + $0.30 for Amex) — passed through
+          at cost, on top of the 70/20/10 split.
         </p>
         <span className="lp-coming-soon">Detailed funding breakdown coming soon</span>
       </section>
@@ -58,18 +59,18 @@ export default function AboutPage() {
         <h2 className="lp-section-head">How we got here</h2>
         <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', gap: 0 }}>
           {[
-            { date: 'January 2026', head: 'Founded in Portland, ME', body: 'iHYPE incorporated as a not-for-profit organization in Portland, Maine. The founding charter locked in 0% platform fees and the 70/20/10 revenue split.' },
-            { date: 'February 2026', head: 'Design system & charter published', body: 'The iHYPE design system and community charter were published openly. The revenue split, governance model, and founding principles are locked in the charter.' },
-            { date: 'March 2026', head: 'Platform beta launched', body: 'Beta access opened to artists, venues, and promoters in the Portland area. First shows went live on the platform.' },
-            { date: 'June 2026', head: 'Expanded beta & radio shows', body: 'Fan beta access opened nationally. Audio-only radio shows and live DJ sets went live. iHYPE has never hosted video and never will.' },
+            { date: 'January 2026', head: 'Founded in Portland, ME', body: 'iHYPE incorporated as a not-for-profit organization in Portland, Maine. The founding charter locked in 0% platform fees and the 70/20/10 revenue split.', color: 'var(--accent)' },
+            { date: 'February 2026', head: 'Design system & charter published', body: 'The iHYPE design system and community charter were published openly. The revenue split, governance model, and founding principles are locked in the charter.', color: 'var(--accent-2)' },
+            { date: 'March 2026', head: 'Platform beta launched', body: 'Beta access opened to artists, venues, and promoters in the Portland area. First shows went live on the platform.', color: 'var(--role-venue)' },
+            { date: 'June 2026', head: 'Expanded beta & radio shows', body: 'Fan beta access opened nationally. Audio-only radio shows and live DJ sets went live. iHYPE has never hosted video and never will.', color: 'var(--role-fan)' },
           ].map((item, i, arr) => (
             <div key={item.date} style={{ display: 'flex', gap: 20, paddingBottom: i < arr.length - 1 ? 28 : 0 }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
-                <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--accent)', marginTop: 4, flexShrink: 0 }} />
+                <div style={{ width: 10, height: 10, borderRadius: '50%', background: item.color, marginTop: 4, flexShrink: 0 }} />
                 {i < arr.length - 1 && <div style={{ width: 1, flex: 1, background: 'var(--line-2)', marginTop: 6 }} />}
               </div>
               <div style={{ paddingBottom: i < arr.length - 1 ? 0 : 0 }}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 4 }}>{item.date}</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: item.color, marginBottom: 4 }}>{item.date}</div>
                 <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.02em', marginBottom: 6 }}>{item.head}</h3>
                 <p style={{ color: 'var(--ink-2)', lineHeight: 1.65, fontSize: '0.95rem' }}>{item.body}</p>
               </div>

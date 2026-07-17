@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Site Pages" description="Utility pages — Community, Support, 404, Offline. Pick via `page` tweak." -->
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}body{background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}a{color:inherit;text-decoration:none}
+@keyframes spGlitch{0%,92%,100%{transform:translate(0)}93%{transform:translate(-2px,1px)}95%{transform:translate(2px,-1px)}97%{transform:translate(-1px,0)}}</style>
+</helmet>
+
+<div style="max-width:640px;margin:0 auto;padding:70px 28px 100px">
+  <sc-if value="{{ isCenter }}" hint-placeholder-val="{{ false }}">
+    <div style="min-height:60vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:3rem;letter-spacing:-.05em;color:#ff5029;animation:spGlitch 2.4s infinite">{{ centerGlyph }}</div>
+      <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;letter-spacing:-.02em;margin:20px 0 10px">{{ centerTitle }}</h1>
+      <p style="font-size:.94rem;color:#9e9080;line-height:1.65;max-width:40ch;margin-bottom:26px">{{ centerBody }}</p>
+      <a href="#" style="font-family:'Syne',sans-serif;font-weight:800;font-size:.92rem;background:#ff5029;color:#fff;padding:13px 28px;border-radius:999px;box-shadow:0 6px 24px rgba(255,80,41,.32)">{{ centerCta }}</a>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isCommunity }}" hint-placeholder-val="{{ true }}">
+    <span style="display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:#ff5029;border:1px solid rgba(255,80,41,.3);background:rgba(255,80,41,.07);border-radius:999px;padding:5px 13px">Community</span>
+    <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.8rem,5vw,2.6rem);letter-spacing:-.03em;line-height:1.05;margin:18px 0 12px">The scene runs this place.</h1>
+    <p style="font-size:1rem;color:#9e9080;line-height:1.7;margin-bottom:32px">Users of iHYPE are stakeholders, not just customers. Meaningful changes — the split, moderation rules, new fees of any kind — are put to the people who use it.</p>
+    <sc-for list="{{ channels }}" as="c" hint-placeholder-count="4">
+      <div style="display:flex;gap:16px;align-items:flex-start;background:#100d09;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:20px 22px;margin-bottom:12px">
+        <div style="font-size:1.5rem;flex-shrink:0">{{ c.icon }}</div>
+        <div><h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.02rem;margin-bottom:6px">{{ c.title }}</h2><p style="font-size:.88rem;color:#9e9080;line-height:1.6">{{ c.body }}</p></div>
+      </div>
+    </sc-for>
+  </sc-if>
+
+  <sc-if value="{{ isSupport }}" hint-placeholder-val="{{ false }}">
+    <span style="display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:#22e5d4;border:1px solid rgba(34,229,212,.3);background:rgba(34,229,212,.07);border-radius:999px;padding:5px 13px">Support</span>
+    <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.8rem,5vw,2.6rem);letter-spacing:-.03em;line-height:1.05;margin:18px 0 12px">How can we help?</h1>
+    <p style="font-size:1rem;color:#9e9080;line-height:1.7;margin-bottom:32px">Two people run iHYPE (plus a lot of automation) — we read everything, in order.</p>
+    <sc-for list="{{ topics }}" as="t" hint-placeholder-count="5">
+      <a href="#" style="display:flex;justify-content:space-between;align-items:center;gap:12px;background:#100d09;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:18px 22px;margin-bottom:10px">
+        <div><h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:.98rem;margin-bottom:4px">{{ t.title }}</h2><p style="font-size:.82rem;color:#9e9080">{{ t.body }}</p></div>
+        <span style="color:#ff5029;flex-shrink:0">→</span>
+      </a>
+    </sc-for>
+    <div style="margin-top:24px;padding:18px 22px;background:rgba(255,255,255,.04);border-radius:14px;font-size:.86rem;color:#9e9080;line-height:1.65">Everything else: <a href="mailto:admin@ihype.org" style="color:#ff5029">admin@ihype.org</a> · DMCA: <a href="mailto:dmca@ihype.org" style="color:#ff5029">dmca@ihype.org</a>. We respond within 2 business days.</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;720px&quot;,&quot;height&quot;:&quot;760px&quot;},&quot;page&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;community&quot;,&quot;tsType&quot;:&quot;'community'|'support'|'404'|'offline'&quot;,&quot;options&quot;:[&quot;community&quot;,&quot;support&quot;,&quot;404&quot;,&quot;offline&quot;],&quot;section&quot;:&quot;Page&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const page = this.props.page ?? 'community';
+    const CENTER = {
+      '404': { centerGlyph: '4·0·4', centerTitle: "This page skipped soundcheck.", centerBody: "The page you're looking for doesn't exist, moved, or was never booked in the first place.", centerCta: 'Back to the scene →' },
+      offline: { centerGlyph: 'iHYPE', centerTitle: "You're offline.", centerBody: 'No connection — common at venues. Your tickets, hypes, and crate are safe; we\u2019ll sync the moment you\u2019re back.', centerCta: 'Try again' },
+    }[page];
+    return {
+      isCenter: !!CENTER, ...(CENTER || {}),
+      isCommunity: page === 'community',
+      isSupport: page === 'support',
+      channels: [
+        { icon: '🗳️', title: 'You get a vote', body: 'Platform changes ship with a feedback window. The split and moderation heuristics are published for public audit — check our work.' },
+        { icon: '📻', title: 'Radio shows', body: 'Every DJ and promoter gets the same hosting tools, free. No tier unlocks anything — the scene decides what gets heard.' },
+        { icon: '🔥', title: 'Hype honestly', body: 'No bots, no paid manipulation, no hidden incentives. Hype is the demand signal venues book from — keep it real.' },
+        { icon: '🛡️', title: 'Look out for each other', body: 'Report unsafe content, fraud, or impersonation. Every report is tracked to a resolution in the public trust & safety report.' },
+      ],
+      topics: [
+        { title: 'Tickets & refunds', body: 'QR passes, cancelled shows, resale at face value' },
+        { title: 'Payouts', body: 'Settlement timing, Stripe accounts, promoter pool math' },
+        { title: 'Verification', body: 'Artist, DJ, and venue review — usually ~48h' },
+        { title: 'Privacy & data', body: 'Download your data, request deletion, GDPR/CCPA rights' },
+        { title: 'Report a problem', body: 'Unsafe content, fraud, impersonation, rights concerns' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

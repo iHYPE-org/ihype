@@ -26,20 +26,49 @@ export default async function JournalIndex() {
     .filter((p) => typeof p.meta.slug === 'string' && typeof p.meta.title === 'string');
 
   return (
-    <div className="container section">
-      <h1>Journal</h1>
-      <p className="meta">Editorial coverage of the local scene from the iHYPE team.</p>
+    <div className="container section" style={{ maxWidth: 680 }}>
+      <h1
+        style={{
+          fontFamily: 'var(--f-d)',
+          fontWeight: 800,
+          fontSize: 'clamp(2rem, 6vw, 3rem)',
+          letterSpacing: '-.04em'
+        }}
+      >
+        Journal
+      </h1>
+      <p
+        className="meta"
+        style={{ fontFamily: 'var(--f-m)', fontSize: '.72rem', letterSpacing: '.1em', margin: '10px 0 36px' }}
+      >
+        Editorial coverage of the local scene from the iHYPE team.
+      </p>
       {posts.length === 0 ? (
         <p className="meta">No journal posts yet.</p>
       ) : (
         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 12 }}>
           {posts.map((p) => (
-            <li key={p.id} className="panel" style={{ padding: '1rem 1.25rem' }}>
+            <li key={p.id} className="panel" style={{ padding: '22px 26px', borderRadius: 14 }}>
               <Link href={`/journal/${p.meta.slug}`} className="text-link">
-                <h2 style={{ marginTop: 0 }}>{p.meta.title}</h2>
+                <h2
+                  style={{
+                    marginTop: 0,
+                    fontFamily: 'var(--f-d)',
+                    fontWeight: 800,
+                    fontSize: '1.2rem',
+                    letterSpacing: '-.02em',
+                    color: 'var(--accent)'
+                  }}
+                >
+                  {p.meta.title}
+                </h2>
               </Link>
-              {p.meta.excerpt ? <p>{p.meta.excerpt}</p> : null}
-              <p className="meta">
+              {p.meta.excerpt ? (
+                <p style={{ fontSize: '.9rem', color: 'var(--ink-2)', lineHeight: 1.6, margin: '8px 0 10px' }}>
+                  {p.meta.excerpt}
+                </p>
+              ) : null}
+              <p className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '.66rem' }}>
                 {p.meta.author ?? 'iHYPE'} · {p.createdAt.toLocaleDateString()}
               </p>
             </li>

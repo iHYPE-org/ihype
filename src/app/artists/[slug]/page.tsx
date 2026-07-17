@@ -157,15 +157,15 @@ export default async function ArtistPage({
             <div className="artist-split-card">
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Charter Split · Every ticket</div>
               <div className="artist-split-bar">
-                <div className="artist-split-seg" style={{ background: 'rgba(255,80,41,.15)' }}>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent)' }}>45%</div>
+                <div className="artist-split-seg" style={{ flex: 7, background: 'rgba(255,80,41,.15)' }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent)' }}>70%</div>
                   <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: 'var(--accent)', marginTop: 4 }}>Artist</div>
                 </div>
-                <div className="artist-split-seg" style={{ background: 'rgba(34,229,212,.15)' }}>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--role-venue, #22e5d4)' }}>45%</div>
+                <div className="artist-split-seg" style={{ flex: 2, background: 'rgba(34,229,212,.15)' }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--role-venue, #22e5d4)' }}>20%</div>
                   <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: 'var(--role-venue, #22e5d4)', marginTop: 4 }}>Venue</div>
                 </div>
-                <div className="artist-split-seg" style={{ background: 'rgba(255,62,154,.15)' }}>
+                <div className="artist-split-seg" style={{ flex: 1, background: 'rgba(255,62,154,.15)' }}>
                   <div style={{ fontSize: 18, fontWeight: 700, color: '#ff3e9a' }}>10%</div>
                   <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: '#ff3e9a', marginTop: 4 }}>Promoters</div>
                 </div>

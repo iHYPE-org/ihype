@@ -58,8 +58,7 @@ export function LoginScreen({
     }
   }
 
-  async function sendMagicLink(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function submitMagicLink() {
     setError('');
     setIsSubmitting(true);
     try {
@@ -71,6 +70,11 @@ export function LoginScreen({
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  async function sendMagicLink(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    await submitMagicLink();
   }
 
   return (
@@ -99,7 +103,14 @@ export function LoginScreen({
           </button>
         </>
       ) : mlSent ? (
-        <p className="authcard-status">Check your inbox for a sign-in link (expires in 15 min). You can close this tab.</p>
+        <div className="authcard-magic-sent">
+          <div aria-hidden="true" className="authcard-icon-badge authcard-icon-badge-teal">✉️</div>
+          <h2 className="authcard-magic-heading">Check your email</h2>
+          <p className="authcard-magic-body">We sent a sign-in link to <b>{mlEmail}</b>. It works once and expires in 15 minutes.</p>
+          <button className="authcard-resend-btn" disabled={isSubmitting} onClick={submitMagicLink} type="button">
+            {isSubmitting ? 'Resending…' : 'Resend link'}
+          </button>
+        </div>
       ) : (
         <>
           <form onSubmit={sendMagicLink}>

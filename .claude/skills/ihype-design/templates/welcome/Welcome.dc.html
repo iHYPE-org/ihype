@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Welcome" description="Post-signup 'You're in' page — role-based next steps + profile preview. Pick role via tweak. Grounded in src/app/welcome/page.tsx (stale 45% copy corrected to 70/20)." -->
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}body{background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}a{color:inherit;text-decoration:none}
+@keyframes wUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+@keyframes wPop{from{transform:scale(0) rotate(-30deg)}60%{transform:scale(1.25)}to{transform:scale(1)}}</style>
+</helmet>
+
+<div style="max-width:560px;margin:0 auto;padding:80px 28px 100px;text-align:center">
+  <div style="width:64px;height:64px;border-radius:50%;background:rgba(34,229,212,.12);border:1px solid rgba(34,229,212,.35);display:grid;place-items:center;margin:0 auto 22px;font-size:1.6rem;color:#22e5d4;animation:wPop .6s cubic-bezier(.34,1.56,.64,1) both .15s">✓</div>
+  <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2rem,7vw,3rem);letter-spacing:-.04em;line-height:1;animation:wUp .7s cubic-bezier(.16,1,.3,1) both .1s">You're in.</h1>
+  <p style="font-size:1rem;color:#9e9080;line-height:1.65;margin:14px 0 36px;animation:wUp .7s cubic-bezier(.16,1,.3,1) both .2s">{{ sub }}</p>
+
+  <div style="text-align:left;background:#100d09;border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:26px 26px 18px;animation:wUp .7s cubic-bezier(.16,1,.3,1) both .3s">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid rgba(255,255,255,.08)">
+      <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,{{ tint }},#b983ff);display:grid;place-items:center;color:#fff;font-family:'Syne',sans-serif;font-weight:800">{{ initial }}</div>
+      <div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1rem">{{ name }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:{{ tint }};margin-top:2px">{{ roleLabel }}{{ pendingNote }}</div></div>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;color:#5a5048;margin-bottom:14px">Next steps</div>
+    <sc-for list="{{ steps }}" as="s" hint-placeholder-count="3">
+      <div style="display:flex;gap:14px;align-items:flex-start;padding:11px 0">
+        <span style="flex-shrink:0;width:24px;height:24px;border-radius:7px;background:rgba(255,80,41,.12);color:#ff5029;font-family:'Syne',sans-serif;font-weight:800;font-size:.76rem;display:grid;place-items:center">{{ s.n }}</span>
+        <div><div style="font-weight:700;font-size:.9rem">{{ s.head }}</div><div style="font-size:.82rem;color:#9e9080;line-height:1.55;margin-top:2px">{{ s.body }}</div></div>
+      </div>
+    </sc-for>
+  </div>
+
+  <a href="#" style="display:inline-block;margin-top:28px;font-family:'Syne',sans-serif;font-weight:800;font-size:.95rem;background:#ff5029;color:#fff;padding:14px 34px;border-radius:999px;box-shadow:0 6px 24px rgba(255,80,41,.35);animation:wUp .7s cubic-bezier(.16,1,.3,1) both .4s">{{ cta }}</a>
+  <div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;color:#5a5048;margin-top:16px;letter-spacing:.06em">70% artist · 20% venue · 10% promoters · 0% iHYPE</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;640px&quot;,&quot;height&quot;:&quot;820px&quot;},&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;fan&quot;,&quot;tsType&quot;:&quot;'fan'|'artist'|'dj'|'venue'&quot;,&quot;options&quot;:[&quot;fan&quot;,&quot;artist&quot;,&quot;dj&quot;,&quot;venue&quot;],&quot;section&quot;:&quot;Role&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const role = this.props.role ?? 'fan';
+    const R = {
+      fan: { name: 'Jess R.', roleLabel: 'Fan', tint: '#b983ff', pendingNote: ' · Active now',
+        sub: 'Your account is live. Start hyping the artists you believe in — your listens and hypes shape who gets discovered.',
+        cta: 'Start listening →',
+        steps: [
+          { head: 'Hype your first artist', body: 'Listen to a track all the way through or tap the flame — every hype is a demand signal venues can see.' },
+          { head: 'Follow your scene', body: 'Pick your city and genres so Local shows and For You surface the right nights out.' },
+          { head: 'Share a referral link', body: 'Promote any show you love and earn from the dedicated 10% promoter pool.' },
+        ]},
+      artist: { name: 'Nyla', roleLabel: 'Artist', tint: '#ff5029', pendingNote: ' · Verification pending (~48h)',
+        sub: 'Welcome to the platform where 70% of every ticket is yours — locked by charter, before a single ticket sells.',
+        cta: 'Set up your page →',
+        steps: [
+          { head: 'Complete verification', body: 'Link your catalog and confirm identity — the 70% split activates the moment you\u2019re verified.' },
+          { head: 'Upload your first track', body: 'Choose all-rights or free-use licensing per track; free-use tracks can be crated by DJs for radio shows.' },
+          { head: 'Publish a show', body: 'Set face-value pricing and lock your 70/20 charter. Fans buy direct — $0 platform fees.' },
+        ]},
+      dj: { name: 'DJ Caro', roleLabel: 'DJ', tint: '#ff3e9a', pendingNote: ' · Verification pending (~48h)',
+        sub: 'Your studio is waiting. Build radio shows from the free-use library and get paid to promote the shows you play.',
+        cta: 'Open the studio →',
+        steps: [
+          { head: 'Crate some tracks', body: 'Browse the free-use library and add tracks to your crate — they\u2019re licensed for your radio shows.' },
+          { head: 'Record your first show', body: 'Mix crated tracks with your voice and royalty-free SFX, right from your phone.' },
+          { head: 'Promote and earn', body: 'Share referral links for shows you play — you earn from the 10% promoter pool.' },
+        ]},
+      venue: { name: 'Port City Music Hall', roleLabel: 'Venue', tint: '#22e5d4', pendingNote: ' · Verification pending (~48h)',
+        sub: 'A guaranteed 20% of every gate, by charter — plus real demand data on who fans actually want to see.',
+        cta: 'List your room →',
+        steps: [
+          { head: 'Verify your room', body: 'Confirm capacity and address so events can go live with serialized, QR-verified tickets.' },
+          { head: 'Check the demand radar', body: 'See which artists your city is hyping before you book — no promoter guesswork.' },
+          { head: 'Publish your first event', body: 'Your 20% is locked in the charter at publish. Settlement goes direct after the show.' },
+        ]},
+    }[role];
+    return { ...R, initial: R.name.charAt(0), steps: R.steps.map((s, i) => ({ ...s, n: i + 1 })) };
+  }
+}
+</script>
+</body>
+</html>

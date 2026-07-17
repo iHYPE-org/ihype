@@ -72,7 +72,7 @@ export function AuthCardShell({
           </Link>
         </div>
 
-        {children}
+        <div className="authcard-box">{children}</div>
 
         <p className="authcard-charter">iHYPE takes nothing · locked in the charter</p>
       </div>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Status" description="Admin status page — env checks (DB/Resend/KV/Stripe dots), launch-readiness blockers panel, rate-limit table. Grounded in src/app/status/page.tsx." -->
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}body{background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}
+@keyframes stPulse{0%,100%{opacity:1}50%{opacity:.35}}</style>
+</helmet>
+
+<div style="max-width:760px;margin:0 auto;padding:60px 28px 100px">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px">
+    <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.7rem,5vw,2.4rem);letter-spacing:-.03em">System status</h1>
+    <span style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:#5a5048">Admin only · refreshed on load</span>
+  </div>
+  <div style="display:inline-flex;align-items:center;gap:9px;margin:16px 0 36px;font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:{{ overallColor }};border:1px solid {{ overallBorder }};background:{{ overallBg }};border-radius:999px;padding:7px 16px"><span style="width:8px;height:8px;border-radius:50%;background:{{ overallColor }};animation:stPulse 1.4s infinite"></span>{{ overallLabel }}</div>
+
+  <h2 style="font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:#9e9080;margin-bottom:14px">Environment checks</h2>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:44px">
+    <sc-for list="{{ checks }}" as="c" hint-placeholder-count="6">
+      <div style="display:flex;align-items:center;gap:14px;background:#100d09;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px 18px">
+        <span style="width:10px;height:10px;border-radius:50%;background:{{ c.dot }};flex-shrink:0;box-shadow:0 0 10px {{ c.dot }}"></span>
+        <div style="flex:1"><div style="font-weight:700;font-size:.9rem">{{ c.name }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:.66rem;color:#5a5048;margin-top:2px">{{ c.detail }}</div></div>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:{{ c.dot }}">{{ c.status }}</span>
+      </div>
+    </sc-for>
+  </div>
+
+  <h2 style="font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:#ffb84a;margin-bottom:14px">Launch readiness</h2>
+  <div style="background:rgba(255,184,74,.05);border:1px solid rgba(255,184,74,.22);border-radius:14px;padding:20px 22px;margin-bottom:44px">
+    <sc-for list="{{ blockers }}" as="b" hint-placeholder-count="3">
+      <div style="display:flex;gap:12px;align-items:flex-start;padding:9px 0">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:.8rem;color:{{ b.c }};flex-shrink:0;margin-top:1px">{{ b.icon }}</span>
+        <div><div style="font-weight:700;font-size:.88rem">{{ b.name }}</div><div style="font-size:.8rem;color:#9e9080;margin-top:2px;line-height:1.5">{{ b.detail }}</div></div>
+      </div>
+    </sc-for>
+  </div>
+
+  <h2 style="font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:#9e9080;margin-bottom:14px">Rate limits</h2>
+  <div style="background:#100d09;border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden">
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr;padding:12px 18px;border-bottom:1px solid rgba(255,255,255,.08);font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:#5a5048"><span>Endpoint</span><span>Window</span><span style="text-align:right">Limit</span></div>
+    <sc-for list="{{ limits }}" as="l" hint-placeholder-count="6">
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr;padding:12px 18px;border-bottom:1px solid rgba(255,255,255,.05);font-size:.84rem"><span style="font-family:'JetBrains Mono',monospace;color:#f0ebe5">{{ l.path }}</span><span style="color:#9e9080">{{ l.window }}</span><span style="text-align:right;color:#9e9080">{{ l.limit }}</span></div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;820px&quot;,&quot;height&quot;:&quot;900px&quot;},&quot;allOk&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;State&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const allOk = this.props.allOk ?? false;
+    return {
+      overallLabel: allOk ? 'All systems operational' : 'Degraded — 1 check failing',
+      overallColor: allOk ? '#22e5d4' : '#ffb84a',
+      overallBorder: allOk ? 'rgba(34,229,212,.35)' : 'rgba(255,184,74,.35)',
+      overallBg: allOk ? 'rgba(34,229,212,.07)' : 'rgba(255,184,74,.07)',
+      checks: [
+        { name: 'Database', detail: 'DATABASE_URL · Supabase Postgres', status: 'OK', dot: '#22e5d4' },
+        { name: 'Email', detail: 'RESEND_API_KEY · Resend', status: 'OK', dot: '#22e5d4' },
+        { name: 'KV / rate limiting', detail: 'KV_REST_API_URL · Upstash', status: 'OK', dot: '#22e5d4' },
+        { name: 'Payments', detail: 'STRIPE_SECRET_KEY · Stripe live mode', status: allOk ? 'OK' : 'TEST MODE', dot: allOk ? '#22e5d4' : '#ffb84a' },
+        { name: 'Media storage', detail: 'R2 bucket · Cloudflare', status: 'OK', dot: '#22e5d4' },
+        { name: 'AI screening', detail: 'Upload vetting · fail-open', status: 'OK', dot: '#22e5d4' },
+      ],
+      blockers: allOk ? [
+        { icon: '✓', c: '#22e5d4', name: 'All launch checks passing', detail: 'No blockers. Ship it.' },
+      ] : [
+        { icon: '⚠', c: '#ffb84a', name: 'Stripe in test mode', detail: 'Live keys pending bank account verification. All money flows run end-to-end in test mode.' },
+        { icon: '✓', c: '#22e5d4', name: 'Legal pages published', detail: 'Privacy, Terms, Charter, DMCA, ticket policy, community rules all live.' },
+        { icon: '✓', c: '#22e5d4', name: 'AI screening active', detail: 'Uploads and ad campaigns vetted before publish; fail-open on outage.' },
+      ],
+      limits: [
+        { path: 'POST /api/auth/magic-link', window: '1 min', limit: '3 / IP' },
+        { path: 'POST /api/tickets', window: '1 min', limit: '10 / user' },
+        { path: 'POST /api/hype', window: '1 week', limit: 'budget cap' },
+        { path: 'POST /api/reports', window: '1 hour', limit: '20 / user' },
+        { path: 'POST /api/dmca', window: '1 hour', limit: '5 / IP' },
+        { path: 'POST /api/waitlist', window: '1 min', limit: '3 / IP' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

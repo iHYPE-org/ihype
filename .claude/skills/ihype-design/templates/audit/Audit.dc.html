@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Trust & Safety Report" description="Audit page — enforcement stats, report categories (k-anonymity folded), radio-ad vetting, verification counts, 'full picture' explainer. Grounded in src/app/audit/page.tsx." -->
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}body{background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}a{color:inherit;text-decoration:none}
+@keyframes auUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+@keyframes auPulse{0%,100%{opacity:1}50%{opacity:.35}}</style>
+</helmet>
+
+<div style="max-width:900px;margin:0 auto;padding:80px 32px 100px">
+  <div style="text-align:center;padding-bottom:20px;animation:auUp .7s cubic-bezier(.16,1,.3,1) both">
+    <p style="font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;color:#ffb84a"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#ffb84a;margin-right:8px;animation:auPulse 1.4s infinite"></span>Live stats · Updated in real time</p>
+    <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2rem,5vw,3.5rem);letter-spacing:-.03em;margin:16px 0 12px">Trust &amp; safety report</h1>
+    <p style="font-size:1.05rem;color:#9e9080;line-height:1.6;max-width:56ch;margin:0 auto">Every upload is screened by AI before it goes live, and every user report is tracked to a resolution. Here are the aggregate numbers — no usernames, no content IDs, nothing that could identify anyone involved.</p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:36px 0">
+    <sc-for list="{{ enforcement }}" as="s" hint-placeholder-count="4">
+      <div style="background:#100d09;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:24px 18px;text-align:center;animation:auUp .7s cubic-bezier(.16,1,.3,1) both;animation-delay:{{ s.delay }}">
+        <span style="display:block;font-family:'Syne',sans-serif;font-weight:800;font-size:1.9rem;letter-spacing:-.03em;color:{{ s.c }}">{{ s.val }}</span>
+        <span style="display:block;font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:#9e9080;margin-top:8px">{{ s.label }}</span>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="margin-top:48px">
+    <p style="font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:#ff5029">By category</p>
+    <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.5rem,4vw,2.2rem);letter-spacing:-.03em;margin:12px 0 20px">What gets reported</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+      <sc-for list="{{ categories }}" as="c" hint-placeholder-count="6">
+        <div style="background:#100d09;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:22px 20px">
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;letter-spacing:-.02em">{{ c.count }}</div>
+          <div style="font-size:.84rem;color:#9e9080;margin-top:6px;line-height:1.5">{{ c.label }}</div>
+        </div>
+      </sc-for>
+    </div>
+    <p style="font-family:'JetBrains Mono',monospace;font-size:.68rem;color:#5a5048;margin-top:14px;line-height:1.7">Categories with fewer than 5 reports are folded into "Other" — a small count can never identify a specific user or piece of content.</p>
+  </div>
+
+  <div style="margin-top:56px">
+    <p style="font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:#ff3e9a">Radio ads</p>
+    <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.5rem,4vw,2.2rem);letter-spacing:-.03em;margin:12px 0 8px">Ad vetting</h2>
+    <p style="font-size:.95rem;color:#9e9080;line-height:1.6;margin-bottom:20px">iHYPE only ever runs radio-style audio ad spots — no banners, no visual placements. Every campaign is screened by AI before it can run.</p>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+      <sc-for list="{{ adStats }}" as="s" hint-placeholder-count="4">
+        <div style="background:#100d09;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:24px 18px;text-align:center">
+          <span style="display:block;font-family:'Syne',sans-serif;font-weight:800;font-size:1.9rem;letter-spacing:-.03em;color:{{ s.c }}">{{ s.val }}</span>
+          <span style="display:block;font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:#9e9080;margin-top:8px">{{ s.label }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="margin-top:56px">
+    <p style="font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:#22e5d4">Ownership verification</p>
+    <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.5rem,4vw,2.2rem);letter-spacing:-.03em;margin:12px 0 20px">Verified profiles</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div style="background:#100d09;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:22px 20px"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem">318</div><div style="font-size:.84rem;color:#9e9080;margin-top:6px">Profiles verified as the real artist, DJ, or venue</div></div>
+      <div style="background:#100d09;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:22px 20px"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem">402</div><div style="font-size:.84rem;color:#9e9080;margin-top:6px">Verification requests reviewed by a human</div></div>
+    </div>
+  </div>
+
+  <div style="margin-top:56px">
+    <p style="font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:#ff5029">How it works</p>
+    <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.5rem,4vw,2.2rem);letter-spacing:-.03em;margin:12px 0 20px">The full picture</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <sc-for list="{{ reasons }}" as="r" hint-placeholder-count="4">
+        <div style="background:#100d09;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:24px 22px">
+          <div style="font-size:1.6rem;color:{{ r.c }};font-family:'Syne',sans-serif">{{ r.icon }}</div>
+          <h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;margin:12px 0 8px">{{ r.head }}</h3>
+          <p style="font-size:.88rem;color:#9e9080;line-height:1.6">{{ r.body }}</p>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px;justify-content:center;margin-top:60px">
+    <a href="#" style="font-family:'Syne',sans-serif;font-weight:800;font-size:.94rem;background:#ff5029;color:#fff;padding:13px 28px;border-radius:999px;box-shadow:0 6px 24px rgba(255,80,41,.35)">Financial transparency →</a>
+    <a href="#" style="font-family:'Syne',sans-serif;font-weight:700;font-size:.94rem;background:transparent;color:#f0ebe5;border:1px solid rgba(255,255,255,.14);padding:13px 26px;border-radius:999px">Community rules</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      enforcement: [
+        { label: 'Reports received (all time)', val: '1,204', c: '#ff5029' },
+        { label: 'Open, awaiting review', val: '17', c: '#b983ff' },
+        { label: 'Actioned', val: '486', c: '#22e5d4' },
+        { label: 'Dismissed', val: '701', c: '#ff3e9a' },
+      ].map((s, i) => ({ ...s, delay: (i * 0.08 + 0.1).toFixed(2) + 's' })),
+      categories: [
+        { count: '412', label: 'Track uploads' },
+        { count: '288', label: 'Profiles' },
+        { count: '203', label: 'Comments' },
+        { count: '146', label: 'Shows' },
+        { count: '98', label: 'Profile images' },
+        { count: '57', label: 'Other (categories too small to break out individually)' },
+      ],
+      adStats: [
+        { label: 'Radio ad campaigns vetted', val: '96', c: '#ff5029' },
+        { label: 'Approved', val: '71', c: '#22e5d4' },
+        { label: 'Sent to manual review', val: '14', c: '#b983ff' },
+        { label: 'Rejected', val: '11', c: '#ff3e9a' },
+      ],
+      reasons: [
+        { icon: '◈', c: '#ff5029', head: 'AI screening on upload', body: "Every track, avatar, hero, and gallery image is screened automatically the moment it's uploaded, and every radio ad campaign's copy and audio (transcribed, then screened) are AI-vetted against our music-industry-only policy — before any of it can go live." },
+        { icon: '⬟', c: '#b983ff', head: 'Human review queue', body: 'Anything the AI flags, or that a user reports, lands in a queue an admin reviews by hand. Nothing is auto-removed without a report existing.' },
+        { icon: '◎', c: '#22e5d4', head: 'No content, no PII', body: 'This page shows counts only. Categories with fewer than five reports are folded into "Other" so a small number can never identify a specific user or piece of content.' },
+        { icon: '⚙', c: '#ff3e9a', head: 'Fail-open by design', body: 'If the AI screening service is ever unavailable, uploads still go through — they just skip the automated check. Nothing on iHYPE is blocked by an AI outage.' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

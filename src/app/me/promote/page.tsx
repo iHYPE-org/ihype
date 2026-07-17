@@ -118,7 +118,8 @@ export default async function PromotePage() {
         .promo-event-row { border: 1px solid var(--line); border-radius: 10px; padding: 20px; background: var(--bg2); display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-bottom: 12px; flex-wrap: wrap; }
         .promo-event-row h3 { font-family: var(--font-display); font-size: 15px; font-weight: 800; margin-bottom: 4px; color: var(--ink); }
         .promo-event-row p { font-size: 12px; color: var(--ink-a60); }
-        .promo-cta { flex-shrink: 0; font-family: var(--font-body); font-weight: 600; font-size: 14px; padding: 10px 18px; border-radius: 9999px; border: none; cursor: pointer; background: linear-gradient(135deg, #ff5029, #ff3e6e); color: #fff; text-decoration: none; display: inline-block; }
+        .promo-cta, .promote-share-btn { flex-shrink: 0; font-family: var(--font-body); font-weight: 600; font-size: 14px; padding: 10px 18px; border-radius: 9999px; border: none; cursor: pointer; background: linear-gradient(135deg, #ff5029, #ff3e6e); color: #fff; text-decoration: none; display: inline-block; }
+        .promote-share-btn:hover { opacity: .92; }
         .promo-empty { text-align: center; padding: 24px; background: var(--bg2); border: 1px solid var(--line); border-radius: 10px; }
         .promo-empty p { color: var(--ink-a60); margin: 0 0 14px; }
         .promo-foot { font-size: 12px; color: var(--ink-a50); text-align: center; margin-top: 28px; line-height: 1.6; }

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Journal" description="Journal (blog) index + open post view — editorial coverage of the local scene. Grounded in src/app/journal/page.tsx." -->
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}body{background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}a{color:inherit;text-decoration:none}</style>
+</helmet>
+
+<div style="max-width:680px;margin:0 auto;padding:70px 28px 100px">
+  <sc-if value="{{ isIndex }}" hint-placeholder-val="{{ true }}">
+    <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2rem,6vw,3rem);letter-spacing:-.04em">Journal</h1>
+    <p style="font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.1em;color:#9e9080;margin:10px 0 36px">Editorial coverage of the local scene from the iHYPE team.</p>
+    <div style="display:grid;gap:12px">
+      <sc-for list="{{ posts }}" as="p" hint-placeholder-count="4">
+        <div onClick="{{ p.open }}" style="background:#100d09;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:22px 26px;cursor:pointer" style-hover="border-color:rgba(255,80,41,.35)">
+          <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.2rem;letter-spacing:-.02em;color:#ff5029">{{ p.title }}</h2>
+          <p style="font-size:.9rem;color:#9e9080;line-height:1.6;margin:8px 0 10px">{{ p.excerpt }}</p>
+          <p style="font-family:'JetBrains Mono',monospace;font-size:.66rem;color:#5a5048">{{ p.byline }}</p>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isPost }}" hint-placeholder-val="{{ false }}">
+    <button onClick="{{ back }}" style="font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;background:transparent;border:none;color:#9e9080;cursor:pointer;margin-bottom:26px">← Journal</button>
+    <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.8rem,5vw,2.6rem);letter-spacing:-.03em;line-height:1.08">{{ post.title }}</h1>
+    <p style="font-family:'JetBrains Mono',monospace;font-size:.68rem;color:#5a5048;margin:14px 0 30px">{{ post.byline }}</p>
+    <div style="font-family:'Instrument Serif',serif;font-size:1.28rem;font-style:italic;color:#f0ebe5;line-height:1.55;border-left:3px solid #ff5029;padding-left:20px;margin-bottom:26px">{{ post.excerpt }}</div>
+    <sc-for list="{{ post.paras }}" as="pp" hint-placeholder-count="4">
+      <p style="font-size:1rem;color:#c9beb1;line-height:1.85;margin-bottom:20px">{{ pp }}</p>
+    </sc-for>
+    <div style="margin-top:40px;padding:20px 24px;background:rgba(255,80,41,.06);border:1px solid rgba(255,80,41,.2);border-radius:14px;font-size:.88rem;color:#9e9080;line-height:1.6">Every show covered in the Journal splits 70/20/10 — and iHYPE takes 0%. <a href="#" style="color:#ff5029">See the charter →</a></div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { open: null };
+  renderVals() {
+    const POSTS = [
+      { title: 'The rooms that raised us: Portland\u2019s all-ages problem', excerpt: 'Half the city\u2019s musicians got their start in rooms that no longer exist. What it takes to keep all-ages venues alive.', byline: 'iHYPE Editorial \u00b7 Jul 12, 2026', paras: [
+        'Ask any working musician in Portland where they played their first show and you\u2019ll hear the same three or four room names — most of them gone now. The all-ages room is the farm system of a local scene, and it\u2019s been quietly starved for a decade.',
+        'The economics are brutal: no bar revenue, insurance premiums that treat teenagers like a liability, and ticket platforms that skim the door. A 200-cap all-ages show grossing $2,400 could lose a third of it to fees before the room or the band saw a cent.',
+        'That last part is the piece we can actually fix. When the gate splits 70/20/10 with zero platform fee, an all-ages matinee stops being charity and starts being a business the venue can justify.',
+        'Three Portland rooms are piloting all-ages matinees on iHYPE this summer. We\u2019ll publish the numbers — all of them — when the season wraps.' ] },
+      { title: 'How the 10% promoter pool actually pays out', excerpt: 'A walkthrough of settlement night: who earned what on a sold-out 550-cap show, with real math.', byline: 'iHYPE Editorial \u00b7 Jul 3, 2026', paras: [
+        'A sold-out show at a 550-cap room, $28 face value: $15,400 gross. The charter locks the split at publish — $10,780 to the artist, $3,080 to the venue, $1,540 to the promoter pool.',
+        'Fourteen people shared referral links that drove sales. The pool splits proportionally: the fan who drove 61 tickets takes $170.80; the one who drove 3 takes $8.40. Nobody negotiated anything — the math is the same for everyone.',
+        'iHYPE\u2019s cut of that $15,400: zero. The only charge above face value is card processing, passed through at cost.' ] },
+      { title: 'Field notes: a radio show built entirely on a phone', excerpt: 'DJ Caro walks through Late Coast Ep. 04 — crated tracks, a voice memo, and two sound effects.', byline: 'iHYPE Editorial \u00b7 Jun 24, 2026', paras: [
+        'Late Coast Ep. 04 is thirty minutes long and was assembled in a parked car: six free-use tracks from the library, two voice breaks recorded on the phone mic, a vinyl-crackle bed, and one air horn (used responsibly).',
+        'Every track in the crate is licensed limited-free-use by the artist who uploaded it — which is why the show can exist at all. The artists get reach; the DJ gets material; nobody\u2019s lawyer gets a phone call.',
+        'Caro\u2019s referral link for the Wax Tropic show she played on-air drove nine ticket sales that week. The promoter pool paid her $11.20. Radio that pays the DJ — imagine that.' ] },
+      { title: 'Why we publish our moderation numbers', excerpt: 'The trust & safety report is live: every report count, every ad we rejected, k-anonymity floor and all.', byline: 'iHYPE Editorial \u00b7 Jun 15, 2026', paras: [
+        'Most platforms publish transparency reports once a year, lawyered into mush. Ours is a live page that reads straight from the database: reports received, actioned, dismissed; ads approved and rejected; profiles verified.',
+        'Categories with fewer than five reports fold into \u201cOther\u201d so a small count can never identify anyone. That\u2019s the only editing we do.',
+        'If the numbers ever look bad, they stay up anyway. That\u2019s the point.' ] },
+    ];
+    const { open } = this.state;
+    return {
+      isIndex: open === null,
+      isPost: open !== null,
+      posts: POSTS.map((p, i) => ({ ...p, open: () => this.setState({ open: i }) })),
+      post: open !== null ? POSTS[open] : POSTS[0],
+      back: () => this.setState({ open: null }),
+    };
+  }
+}
+</script>
+</body>
+</html>

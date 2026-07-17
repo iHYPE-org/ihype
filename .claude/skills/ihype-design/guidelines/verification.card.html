@@ -1,0 +1,36 @@
+<!-- @dsCard group="Website" viewport="700x360" name="Verification Flow" subtitle="Role verification states — instant fan, verified artist/DJ/venue" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg-base); color: var(--ink-1); font-family: var(--font-body); padding: 24px 28px; }
+  .note { font-family: var(--font-mono); font-size: .68rem; color: var(--ink-2); line-height: 1.6; margin-bottom: 18px; max-width: 560px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .vc { border-radius: 16px; border: 1px solid var(--line); background: var(--bg-surface); padding: 18px 18px 16px; position: relative; overflow: hidden; opacity: 0; animation: up .6s cubic-bezier(.16,1,.3,1) forwards; }
+  @keyframes up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  .vc:nth-child(2) { animation-delay: .1s; } .vc:nth-child(3) { animation-delay: .2s; } .vc:nth-child(4) { animation-delay: .3s; }
+  .role { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 800; font-size: 1rem; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; }
+  .st { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: .6rem; letter-spacing: .1em; text-transform: uppercase; border-radius: 999px; padding: 4px 10px; margin-top: 10px; }
+  .instant { background: rgba(34,229,212,.1); color: var(--color-success); }
+  .review { background: rgba(255,184,74,.1); color: var(--warn); }
+  .review .spin { width: 8px; height: 8px; border: 1.5px solid rgba(255,184,74,.35); border-top-color: var(--warn); border-radius: 50%; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .d { font-size: .76rem; color: var(--ink-2); line-height: 1.5; margin-top: 9px; }
+  .badge { position: absolute; top: 14px; right: 14px; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); display: grid; place-items: center; color: #fff; font-size: .62rem; font-weight: 800; animation: bpop .5s cubic-bezier(.34,1.56,.64,1) both .6s; }
+  @keyframes bpop { from { transform: scale(0) rotate(-40deg); } }
+</style>
+</head>
+<body>
+  <div class="note">Fan accounts are instant. Artist, DJ, and Venue accounts require verification — it protects everyone in the 70/20/10 ecosystem.</div>
+  <div class="grid">
+    <div class="vc"><div class="role"><span class="dot" style="background:var(--role-fan)"></span>Fan</div><span class="st instant">✓ Instant</span><div class="d">Sign up and start hyping immediately. No review needed.</div></div>
+    <div class="vc"><div class="badge">✓</div><div class="role"><span class="dot" style="background:var(--accent)"></span>Artist</div><span class="st review"><span class="spin"></span>Verified · ~48h</span><div class="d">Catalog link + identity check before the 70% split activates.</div></div>
+    <div class="vc"><div class="role"><span class="dot" style="background:var(--role-dj)"></span>DJ</div><span class="st review"><span class="spin"></span>Verified · ~48h</span><div class="d">Review before free-use library and radio publishing unlock.</div></div>
+    <div class="vc"><div class="role"><span class="dot" style="background:var(--role-venue)"></span>Venue</div><span class="st review"><span class="spin"></span>Verified · ~48h</span><div class="d">Room + capacity confirmation before events can be listed.</div></div>
+  </div>
+</body>
+</html>

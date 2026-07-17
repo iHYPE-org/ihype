@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Trust Policy" description="Trust/policy pages — Ticket Policy, Community Rules, Copyright, DMCA (with takedown form). Pick via `policy` tweak. Copy verbatim from src/app/{ticket-policy,community-rules,copyright,dmca}/page.tsx." -->
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}body{background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}a{color:#ff5029;text-decoration:none}</style>
+</helmet>
+
+<div style="max-width:640px;margin:0 auto;padding:70px 28px 100px">
+  <span style="display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:#ff5029;border:1px solid rgba(255,80,41,.3);background:rgba(255,80,41,.07);border-radius:999px;padding:5px 13px">{{ badge }}</span>
+  <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.8rem,5vw,2.6rem);letter-spacing:-.03em;line-height:1.05;margin:18px 0 12px">{{ title }}</h1>
+  <p style="font-size:1rem;color:#9e9080;line-height:1.7;margin-bottom:36px">{{ intro }}</p>
+
+  <sc-for list="{{ sections }}" as="s" hint-placeholder-count="4">
+    <div style="background:#100d09;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:22px 24px;margin-bottom:12px">
+      <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;letter-spacing:-.01em;margin-bottom:8px">{{ s.title }}</h2>
+      <p style="font-size:.9rem;color:#9e9080;line-height:1.65">{{ s.body }}</p>
+    </div>
+  </sc-for>
+
+  <sc-if value="{{ isDmca }}" hint-placeholder-val="{{ false }}">
+    <div style="margin-top:10px;padding:12px 16px;background:rgba(255,255,255,.05);border-radius:8px;font-size:.86rem;color:#9e9080;line-height:1.6">For DMCA takedown requests, email <a href="mailto:dmca@ihype.org">dmca@ihype.org</a> with subject "DMCA Takedown Request". We respond within 5 business days.</div>
+    <sc-if value="{{ submitted }}" hint-placeholder-val="{{ false }}">
+      <div style="margin-top:24px;padding:22px 24px;background:rgba(34,229,212,.08);border:1px solid rgba(34,229,212,.3);border-radius:14px;color:#22e5d4;font-size:.92rem">Your DMCA request has been submitted. We will contact you at the email address provided.</div>
+    </sc-if>
+    <sc-if value="{{ notSubmitted }}" hint-placeholder-val="{{ true }}">
+      <div style="margin-top:24px;display:flex;flex-direction:column;gap:14px">
+        <label style="font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:#9e9080">Your name<input placeholder="Full legal name" style="display:block;width:100%;margin-top:7px;background:#100d09;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:12px 14px;color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:.92rem;outline:none"></input></label>
+        <label style="font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:#9e9080">Your email<input placeholder="you@example.com" type="email" style="display:block;width:100%;margin-top:7px;background:#100d09;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:12px 14px;color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:.92rem;outline:none"></input></label>
+        <label style="font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:#9e9080">Infringing URL<input placeholder="https://ihype.org/..." type="url" style="display:block;width:100%;margin-top:7px;background:#100d09;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:12px 14px;color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:.92rem;outline:none"></input></label>
+        <label style="font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:#9e9080">Description of infringement<textarea rows="6" placeholder="Describe the original work you own and how it is being infringed." style="display:block;width:100%;margin-top:7px;background:#100d09;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:12px 14px;color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:.92rem;outline:none;resize:vertical"></textarea></label>
+        <button onClick="{{ submit }}" style="font-family:'Syne',sans-serif;font-weight:800;font-size:.94rem;background:#ff5029;color:#fff;border:none;padding:14px;border-radius:999px;cursor:pointer;box-shadow:0 6px 24px rgba(255,80,41,.3)">Submit DMCA request</button>
+      </div>
+    </sc-if>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;720px&quot;,&quot;height&quot;:&quot;860px&quot;},&quot;policy&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;ticket-policy&quot;,&quot;tsType&quot;:&quot;'ticket-policy'|'community-rules'|'copyright'|'dmca'&quot;,&quot;options&quot;:[&quot;ticket-policy&quot;,&quot;community-rules&quot;,&quot;copyright&quot;,&quot;dmca&quot;],&quot;section&quot;:&quot;Page&quot;}}">
+class Component extends DCLogic {
+  state = { submitted: false };
+  renderVals() {
+    const policy = this.props.policy ?? 'ticket-policy';
+    const P = {
+      'ticket-policy': { badge: 'Ticket policy', title: 'Verified tickets, clear event rules', intro: 'The ticket hub should prioritize transparent pricing, serialized tickets, venue verification, and fraud prevention.', sections: [
+        { title: 'Serialized tickets', body: 'Each ticket should carry a unique ID and QR verification path so venues can validate entry once.' },
+        { title: 'Pricing and payouts', body: 'Ticket creation should show ticket cost, capacity, tax estimates, and artist/venue/promoter payout assumptions before opening sales.' },
+        { title: 'Refunds and changes', body: 'Venues and event organizers are responsible for clear event-change, cancellation, refund, and reissue instructions.' },
+        { title: 'Resale', body: 'Ticket resale should be limited to face value and require venue-assisted reassignment so the valid token owner is clear.' },
+      ]},
+      'community-rules': { badge: 'Community', title: 'Keep the scene safe enough to grow', intro: 'iHYPE should be useful, human, and fair. That means no harassment, fraud, manipulation, or unsafe content.', sections: [
+        { title: 'Respect people', body: 'No harassment, threats, hate, doxxing, impersonation, or targeted abuse of fans, artists, venues, promoters, staff, or volunteers.' },
+        { title: 'Respect the signal', body: 'Do not use bots, fake accounts, paid manipulation, or hidden incentives to distort hype, rankings, playlists, or recommendations.' },
+        { title: 'Respect venues and fans', body: 'Event, ticket, safety, accessibility, and venue information should be accurate and corrected quickly when it changes.' },
+        { title: 'Report problems', body: 'Users should report unsafe content, rights concerns, fraud, impersonation, or ticket issues so admins can review them in the beta console.' },
+      ]},
+      'copyright': { badge: 'Copyright', title: 'Copyright and media rights', intro: 'iHYPE is built for independent music, which means rights handling needs to be clear and serious.', sections: [
+        { title: 'Upload authority', body: 'Do not upload songs, videos, artwork, samples, or logos unless you own them or have permission to use them on iHYPE.' },
+        { title: 'Reports', body: 'Rights holders should report unauthorized media through the content report flow or support channel with enough detail to identify the asset.' },
+        { title: 'Review', body: 'Reported media can be hidden, removed, or restricted while iHYPE reviews ownership, license, and safety concerns.' },
+        { title: 'Repeat issues', body: 'Accounts that repeatedly upload unauthorized content may lose upload privileges or account access.' },
+      ]},
+      'dmca': { badge: 'DMCA', title: 'Copyright Takedown', intro: 'To report infringing content, complete the form below. We will review and respond within 5 business days. False claims may result in account suspension.', sections: [
+        { title: 'How the process works', body: 'Submit the form with your contact details, the infringing URL, and a description of your original work. We acknowledge within 48 hours. Valid claims are removed within 5 business days. The content owner is notified and may file a counter-notice.' },
+      ]},
+    }[policy];
+    return {
+      ...P,
+      isDmca: policy === 'dmca',
+      submitted: this.state.submitted,
+      notSubmitted: !this.state.submitted,
+      submit: () => this.setState({ submitted: true }),
+    };
+  }
+}
+</script>
+</body>
+</html>

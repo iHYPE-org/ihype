@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Show Detail" description="shows/[slug] page — hero with poster + hype, 70/20/10 dollar split bar, About/Lineup/Venue tabs, show-details table, sticky ticket box with vs-Ticketmaster comparison. Grounded in src/app/shows/[slug]/page.tsx." -->
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0805; color: #f0ebe5; font-family: 'DM Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+  @keyframes sdPulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+  @keyframes sdGrow { from { width: 0; } }
+</style>
+</helmet>
+
+<div style="max-width:960px;margin:0 auto;padding:32px 24px 100px">
+
+  <!-- HERO -->
+  <div style="background:linear-gradient(140deg,rgba(255,80,41,.15),rgba(34,229,212,.08));border:1px solid rgba(255,80,41,.2);border-radius:16px;padding:36px;margin-bottom:40px">
+    <div style="margin-bottom:22px;border-radius:12px;overflow:hidden;min-height:160px;background:rgba(255,255,255,.06);display:grid;place-items:center;position:relative">
+      <div style="position:absolute;inset:0;background:linear-gradient(135deg,#2a120a,#1a0a14)"></div>
+      <div style="position:relative;display:flex;align-items:center;gap:14px">
+        <div style="width:52px;height:52px;border-radius:50%;background:#ff5029;display:grid;place-items:center;font-size:1.3rem;cursor:pointer;box-shadow:0 6px 24px rgba(255,80,41,.4)">▶</div>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(240,235,229,.6)">Play show audio</span>
+      </div>
+    </div>
+    <h1 style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;letter-spacing:-.02em;margin-bottom:12px">Nyla — Glasslight Tour</h1>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:20px;font-size:14px;color:rgba(240,235,229,.75)">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;border:1px solid rgba(255,80,41,.4);color:#ff5029;border-radius:999px;padding:4px 12px"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#ff5029;margin-right:6px;animation:sdPulse 1.4s infinite"></span>LIVE</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;border:1px solid rgba(34,229,212,.35);color:#22e5d4;border-radius:999px;padding:4px 12px">Venue</span>
+      <span>📅 Friday, July 10, 2026 · 8:00 PM</span>
+      <span>📍 Portland, ME</span>
+      <span>412 tickets sold</span>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+      <button style="font-family:'DM Sans',sans-serif;font-weight:600;font-size:.82rem;background:transparent;color:#f0ebe5;border:1px solid rgba(255,255,255,.16);padding:9px 18px;border-radius:999px;cursor:pointer">Download poster</button>
+      <button style="font-family:'DM Sans',sans-serif;font-weight:600;font-size:.82rem;background:transparent;color:#f0ebe5;border:1px solid rgba(255,255,255,.16);padding:9px 18px;border-radius:999px;cursor:pointer">Share</button>
+      <button onClick="{{ toggleRsvp }}" style="font-family:'DM Sans',sans-serif;font-weight:600;font-size:.82rem;background:{{ rsvpBg }};color:{{ rsvpColor }};border:1px solid rgba(34,229,212,.35);padding:9px 18px;border-radius:999px;cursor:pointer">{{ rsvpLabel }}</button>
+    </div>
+    <button onClick="{{ toggleHype }}" style="font-family:'Syne',sans-serif;font-weight:800;font-size:.95rem;background:{{ hypeBg }};color:{{ hypeColor }};border:none;padding:13px 28px;border-radius:999px;cursor:pointer;box-shadow:0 6px 24px rgba(255,80,41,.3)">🔥 {{ hypeLabel }} · {{ hypeCount }}</button>
+
+    <!-- Split bar with dollar amounts -->
+    <div style="display:flex;gap:0;border-radius:10px;overflow:hidden;margin-top:24px">
+      <div style="flex:7;padding:16px;text-align:center;background:rgba(255,80,41,.15)"><div style="font-size:20px;font-weight:700;color:#ff5029">$19.60</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.14em;margin-top:4px;color:#ff5029">Artist · 70%</div></div>
+      <div style="flex:2;padding:16px;text-align:center;background:rgba(34,229,212,.15)"><div style="font-size:20px;font-weight:700;color:#22e5d4">$5.60</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.14em;margin-top:4px;color:#22e5d4">Venue · 20%</div></div>
+      <div style="flex:1;padding:16px;text-align:center;background:rgba(255,62,154,.15)"><div style="font-size:20px;font-weight:700;color:#ff3e9a">$2.80</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.14em;margin-top:4px;color:#ff3e9a">Promoters · 10%</div></div>
+    </div>
+  </div>
+
+  <!-- LIVE setlist banner -->
+  <a href="#setlist" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 20px;margin:0 0 24px;border:1px solid #ff5029;border-radius:12px;background:rgba(255,80,41,.12)">
+    <span style="display:flex;align-items:center;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.1em;color:#ff5029">● LIVE</span><strong style="font-size:.92rem">The show is live — vote on the setlist and shape what plays next.</strong></span>
+    <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:.82rem;background:#ff5029;color:#fff;padding:8px 18px;border-radius:999px">Vote on the setlist</span>
+  </a>
+
+  <!-- LAYOUT: tabs + sticky ticket box -->
+  <div style="display:grid;grid-template-columns:1fr 300px;gap:40px">
+    <div>
+      <!-- Tabs -->
+      <div style="display:flex;gap:6px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:22px">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+          <button onClick="{{ t.select }}" style="font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;background:transparent;border:none;border-bottom:2px solid {{ t.border }};color:{{ t.color }};padding:10px 18px;cursor:pointer">{{ t.label }}</button>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{ isAbout }}" hint-placeholder-val="{{ true }}">
+        <p style="font-size:15px;line-height:1.7;color:rgba(240,235,229,.85)">Presented through iHYPE — face value pricing, zero fees, and every split locked by charter before a single ticket is sold. Nyla brings the Glasslight Tour home to Portland with a full live band, opening support from the local scene, and a setlist shaped by fan votes.</p>
+        <div style="border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:20px;margin-top:24px;background:#100d09">
+          <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;margin-bottom:12px">Show details</h2>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:.62rem;background:rgba(255,255,255,.06);border-radius:999px;padding:4px 12px;color:rgba(240,235,229,.7)">dream-pop</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:.62rem;background:rgba(255,255,255,.06);border-radius:999px;padding:4px 12px;color:rgba(240,235,229,.7)">live-band</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:.62rem;background:rgba(255,255,255,.06);border-radius:999px;padding:4px 12px;color:rgba(240,235,229,.7)">all-ages</span>
+          </div>
+          <sc-for list="{{ detailRows }}" as="r" hint-placeholder-count="8">
+            <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:.86rem"><span style="color:rgba(240,235,229,.5)">{{ r.k }}</span><span style="color:{{ r.color }}">{{ r.v }}</span></div>
+          </sc-for>
+        </div>
+        <div id="setlist" style="border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:20px;margin-top:24px;background:#100d09">
+          <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;margin-bottom:6px">Setlist vote</h2>
+          <p style="font-size:.82rem;color:rgba(240,235,229,.55);margin-bottom:14px">The crowd picks what plays next. One vote per track.</p>
+          <sc-for list="{{ setlist }}" as="s" hint-placeholder-count="4">
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.04);margin-bottom:8px">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:.72rem;color:rgba(240,235,229,.4);width:22px;text-align:right">{{ s.pos }}</span>
+              <div style="flex:1"><strong style="display:block;font-size:.9rem">{{ s.title }}</strong><span style="font-size:.72rem;color:rgba(240,235,229,.5);font-family:'JetBrains Mono',monospace">{{ s.votes }} votes</span></div>
+              <button onClick="{{ s.vote }}" style="font-family:'Syne',sans-serif;font-weight:700;font-size:.76rem;background:{{ s.voteBg }};color:{{ s.voteColor }};border:1px solid rgba(255,80,41,.35);padding:7px 16px;border-radius:999px;cursor:pointer">{{ s.voteLabel }}</button>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isLineup }}" hint-placeholder-val="{{ false }}">
+        <p style="font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:rgba(240,235,229,.35);margin-bottom:8px">Headliner</p>
+        <p style="font-size:18px;font-family:'Syne',sans-serif;font-weight:800;margin-bottom:16px">Nyla</p>
+        <p style="font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:rgba(240,235,229,.35);margin-bottom:8px">Promoter</p>
+        <p style="font-size:14px">DJ Caro</p>
+      </sc-if>
+      <sc-if value="{{ isVenue }}" hint-placeholder-val="{{ false }}">
+        <p style="font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:rgba(240,235,229,.35);margin-bottom:8px">Venue</p>
+        <p style="font-size:18px;font-family:'Syne',sans-serif;font-weight:800;margin-bottom:8px">Port City Music Hall</p>
+        <p style="font-size:14px;color:rgba(240,235,229,.7)">Capacity: 550 · Portland, ME</p>
+        <a href="#" style="display:inline-block;margin-top:16px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.82rem;border:1px solid rgba(255,255,255,.16);padding:9px 18px;border-radius:999px">View Venue Page →</a>
+      </sc-if>
+    </div>
+
+    <!-- STICKY TICKET BOX -->
+    <aside style="border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:28px;background:#100d09;position:sticky;top:80px;align-self:flex-start">
+      <div style="font-size:36px;font-weight:800;color:#ff5029;margin-bottom:4px;font-family:'Syne',sans-serif">$28.00</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:rgba(240,235,229,.5);margin-bottom:20px">$0 fees · face value only</div>
+      <div style="height:6px;border-radius:3px;background:rgba(255,255,255,.1);margin:16px 0;overflow:hidden"><div style="height:100%;border-radius:3px;background:#ff5029;width:75%;animation:sdGrow 1.2s ease-out"></div></div>
+      <div style="font-size:12px;color:rgba(240,235,229,.6);margin-bottom:16px">412 / 550 sold · 138 remaining</div>
+      <button onClick="{{ buyTicket }}" style="width:100%;font-family:'Syne',sans-serif;font-weight:800;font-size:.95rem;background:#ff5029;color:#fff;border:none;padding:14px;border-radius:999px;cursor:pointer;box-shadow:0 6px 24px rgba(255,80,41,.3)">{{ buyLabel }}</button>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:rgba(240,235,229,.4);margin-top:10px;text-align:center;letter-spacing:.04em">+ card processing at cost (2.9% + $0.30)</div>
+      <div style="background:rgba(255,255,255,.05);border-radius:8px;padding:14px;margin-top:16px">
+        <p style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:rgba(240,235,229,.5);margin-bottom:10px">vs. Ticketmaster</p>
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span>Face value</span><span>$28.00</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;color:rgba(240,235,229,.5)"><span>Service fees (27%)</span><span>+$7.56</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;color:rgba(240,235,229,.5)"><span>TM total</span><span>$35.56</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:#22e5d4"><span>iHYPE total</span><span>$28.00</span></div>
+      </div>
+      <div style="margin-top:16px;font-size:11px;color:rgba(240,235,229,.5);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.12em;line-height:1.5">Split locked by charter · iHYPE takes 0%</div>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { tab: 'about', hyped: false, hypes: 1977, rsvp: false, bought: false, votes: { 0: 214, 1: 188, 2: 121, 3: 96 }, voted: null };
+  renderVals() {
+    const { tab, hyped, hypes, rsvp, bought, votes, voted } = this.state;
+    const TITLES = ['Glasslight', 'Undertow', 'Half-Moon Motel', 'Static Bloom (cover)'];
+    return {
+      tabs: ['about', 'lineup', 'venue'].map(id => ({
+        label: id, border: tab === id ? '#ff5029' : 'transparent',
+        color: tab === id ? '#f0ebe5' : 'rgba(240,235,229,.45)',
+        select: () => this.setState({ tab: id }),
+      })),
+      isAbout: tab === 'about', isLineup: tab === 'lineup', isVenue: tab === 'venue',
+      hypeLabel: hyped ? 'HYPED' : 'HYPE this show', hypeCount: hypes.toLocaleString(),
+      hypeBg: hyped ? 'rgba(255,80,41,.15)' : '#ff5029', hypeColor: hyped ? '#ff5029' : '#fff',
+      toggleHype: () => this.setState(s => ({ hyped: !s.hyped, hypes: s.hypes + (s.hyped ? -1 : 1) })),
+      rsvpLabel: rsvp ? '✓ Going · 89' : 'RSVP free · 88', rsvpBg: rsvp ? 'rgba(34,229,212,.15)' : 'transparent', rsvpColor: rsvp ? '#22e5d4' : '#f0ebe5',
+      toggleRsvp: () => this.setState(s => ({ rsvp: !s.rsvp })),
+      buyLabel: bought ? '✓ Ticket in wallet' : 'Get ticket — $28.00',
+      buyTicket: () => this.setState({ bought: true }),
+      detailRows: [
+        { k: 'Status', v: 'LIVE', color: '#ff5029' }, { k: 'Venue', v: 'Port City Music Hall', color: '#f0ebe5' },
+        { k: 'Headliner', v: 'Nyla', color: '#f0ebe5' }, { k: 'Promoter', v: 'DJ Caro', color: '#f0ebe5' },
+        { k: 'Ticket price', v: '$28.00', color: '#f0ebe5' }, { k: 'Tickets sold', v: '412', color: '#f0ebe5' },
+        { k: 'Capacity', v: '550', color: '#f0ebe5' }, { k: 'Gross sales', v: '$11,536.00', color: '#f0ebe5' },
+        { k: 'Artist split', v: '70%', color: '#ff5029' }, { k: 'Venue split', v: '20%', color: '#22e5d4' },
+        { k: 'Promoter pool', v: '10%', color: '#ff3e9a' }, { k: 'Hype', v: hypes.toLocaleString(), color: '#f0ebe5' },
+      ],
+      setlist: TITLES.map((title, i) => ({
+        pos: String(i + 1).padStart(2, '0'), title, votes: votes[i] + (voted === i ? 1 : 0),
+        voteLabel: voted === i ? '✓ Voted' : 'Vote', voteBg: voted === i ? 'rgba(255,80,41,.18)' : 'transparent',
+        voteColor: voted === i ? '#ff5029' : '#f0ebe5',
+        vote: () => this.setState({ voted: i }),
+      })),
+    };
+  }
+}
+</script>
+</body>
+</html>

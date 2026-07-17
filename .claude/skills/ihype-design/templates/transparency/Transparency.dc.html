@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Transparency" description="Transparency report — live stat grid ($0 platform fee), 'The full picture' explainer (Tickets/Hype/Radio/Data). Grounded in src/app/transparency/page.tsx." -->
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}body{background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}a{color:inherit;text-decoration:none}
+@keyframes trUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+@keyframes trPulse{0%,100%{opacity:1}50%{opacity:.35}}</style>
+</helmet>
+
+<div style="max-width:900px;margin:0 auto;padding:80px 32px 100px">
+  <div style="text-align:center;padding-bottom:20px;animation:trUp .7s cubic-bezier(.16,1,.3,1) both">
+    <p style="font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;color:#ffb84a"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#ffb84a;margin-right:8px;animation:trPulse 1.4s infinite"></span>Live stats · Updated in real time</p>
+    <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2rem,5vw,3.5rem);letter-spacing:-.03em;margin:16px 0 12px">Transparency report</h1>
+    <p style="font-size:1.05rem;color:#9e9080;line-height:1.6;max-width:52ch;margin:0 auto">Every dollar of ticket revenue goes directly to artists and venues. Here's the proof.</p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin:40px 0">
+    <sc-for list="{{ stats }}" as="s" hint-placeholder-count="6">
+      <div style="background:#100d09;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:26px 22px;text-align:center;animation:trUp .7s cubic-bezier(.16,1,.3,1) both;animation-delay:{{ s.delay }}">
+        <span style="display:block;font-family:'Syne',sans-serif;font-weight:800;font-size:2.1rem;letter-spacing:-.03em;color:{{ s.c }}">{{ s.val }}</span>
+        <span style="display:block;font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:#9e9080;margin-top:8px">{{ s.label }}</span>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="margin-top:60px">
+    <p style="font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:#ff5029">How it works</p>
+    <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.6rem,4vw,2.4rem);letter-spacing:-.03em;margin:12px 0 20px">The full picture</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <sc-for list="{{ reasons }}" as="r" hint-placeholder-count="4">
+        <div style="background:#100d09;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:26px 24px">
+          <div style="font-size:1.7rem;color:{{ r.c }};font-family:'Syne',sans-serif">{{ r.icon }}</div>
+          <h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;margin:14px 0 8px">{{ r.head }}</h3>
+          <p style="font-size:.9rem;color:#9e9080;line-height:1.6">{{ r.body }}</p>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px;justify-content:center;margin-top:64px">
+    <a href="#" style="font-family:'Syne',sans-serif;font-weight:800;font-size:.94rem;background:#ff5029;color:#fff;padding:13px 28px;border-radius:999px;box-shadow:0 6px 24px rgba(255,80,41,.35)">About iHYPE</a>
+    <a href="#" style="font-family:'Syne',sans-serif;font-weight:700;font-size:.94rem;background:transparent;color:#f0ebe5;border:1px solid rgba(255,255,255,.14);padding:13px 26px;border-radius:999px">Join free →</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      stats: [
+        { label: 'Artists on platform', val: '1,247', c: '#ff5029' },
+        { label: 'Shows listed', val: '312', c: '#22e5d4' },
+        { label: 'Tracks uploaded', val: '4,861', c: '#b983ff' },
+        { label: 'Tickets sold', val: '14,208', c: '#ff3e9a' },
+        { label: 'Paid out to artists/venues', val: '$389,412', c: '#22e5d4' },
+        { label: 'Platform fee taken', val: '$0', c: '#ff5029' },
+      ].map((s, i) => ({ ...s, delay: (i * 0.08 + 0.1).toFixed(2) + 's' })),
+      reasons: [
+        { icon: '◇', c: '#ff5029', head: 'Tickets', body: 'Tickets are sold at face value set by the artist or venue. iHYPE charges 0% on every transaction. Settlement goes directly to the organiser — only the card-processing fee (2.9% + $0.30, at cost) sits above face value.' },
+        { icon: '◐', c: '#ff3e9a', head: 'Hype', body: 'Listening to a track all the way through, or manually hyping an artist, registers a Hype. It is a demand signal — no money changes hands and iHYPE earns nothing from it.' },
+        { icon: '◉', c: '#22e5d4', head: 'Radio', body: 'Live and recorded radio shows are free for all hosts on the platform. There is no tier that unlocks hosting; every DJ and promoter gets the same tools.' },
+        { icon: '♡', c: '#b983ff', head: 'Data', body: 'iHYPE does not sell, license, or monetise listener data. Analytics are visible only to the artist or venue they belong to.' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

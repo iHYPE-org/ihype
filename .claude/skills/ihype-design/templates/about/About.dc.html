@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE About" description="About page — mission, promise cards, funding, animated founding timeline (Portland ME 2026). Copy grounded in ihype.org/about." -->
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: #0a0805; color: #f0ebe5; font-family: 'DM Sans', sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  a { color: inherit; text-decoration: none; }
+  @keyframes abRise { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+  @keyframes abDot { 0% { transform: scale(0); } 60% { transform: scale(1.5); } 100% { transform: scale(1); } }
+  @keyframes abLine { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+  @keyframes abFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-18px); } }
+  @keyframes abPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,80,41,.4); } 50% { box-shadow: 0 0 0 12px rgba(255,80,41,0); } }
+  .ab-reveal { opacity: 0; }
+  .ab-reveal.on { animation: abRise .8s cubic-bezier(.16,1,.3,1) forwards; }
+  .ab-card { transition: transform .3s cubic-bezier(.16,1,.3,1), border-color .3s; }
+  .ab-card:hover { transform: translateY(-4px); border-color: rgba(255,80,41,.35) !important; }
+  .tl-dot.on { animation: abDot .6s cubic-bezier(.34,1.56,.64,1) both; }
+  .tl-line.on { animation: abLine .7s cubic-bezier(.16,1,.3,1) both; transform-origin: top; }
+</style>
+</helmet>
+
+<div style="max-width:760px;margin:0 auto;padding:90px 32px 110px;position:relative">
+  <div style="position:fixed;top:-220px;right:-180px;width:640px;height:640px;background:radial-gradient(circle,rgba(255,80,41,.12),transparent 62%);pointer-events:none;animation:abFloat 8s ease-in-out infinite"></div>
+
+  <div class="ab-reveal on" style="font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;color:#ffb84a;position:relative">Not-for-profit · Built for the scene</div>
+  <h1 class="ab-reveal on" style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2.6rem,7vw,4.4rem);letter-spacing:-.04em;line-height:.98;margin:18px 0 16px;position:relative;animation-delay:.1s">About iHYPE</h1>
+  <p class="ab-reveal on" style="font-size:1.1rem;color:#9e9080;line-height:1.7;max-width:56ch;margin-bottom:72px;position:relative;animation-delay:.2s">iHYPE exists to give independent artists, venues, and promoters a platform that doesn't take a cut. No platform fee on tickets. No streaming royalty deductions. No algorithmic pay-to-play. Built and governed by the community it serves.</p>
+
+  <!-- Promise -->
+  <div class="ab-reveal" style="font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:#ff5029;position:relative">Our promise</div>
+  <h2 class="ab-reveal" style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.7rem,4vw,2.5rem);letter-spacing:-.03em;margin:12px 0 28px;position:relative">What we will never do</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:80px">
+    <div class="ab-reveal ab-card" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:26px 24px;position:relative"><div style="font-size:1.8rem;color:#ff5029;font-family:'Syne',sans-serif">◐</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;margin:14px 0 8px">0% ticket fee</h3><p style="font-size:.9rem;color:#9e9080;line-height:1.6">Face value is face value. Every cent from a ticket sale goes directly to the artist or venue — no platform deduction, ever.</p></div>
+    <div class="ab-reveal ab-card" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:26px 24px;position:relative;animation-delay:.1s"><div style="font-size:1.8rem;color:#ff3e9a;font-family:'Syne',sans-serif">♡</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;margin:14px 0 8px">No streaming cuts</h3><p style="font-size:.9rem;color:#9e9080;line-height:1.6">iHYPE does not take royalties. Hypes are a demand signal, not a revenue share mechanism.</p></div>
+    <div class="ab-reveal ab-card" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:26px 24px;position:relative;animation-delay:.15s"><div style="font-size:1.8rem;color:#22e5d4;font-family:'Syne',sans-serif">◇</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;margin:14px 0 8px">No ads</h3><p style="font-size:.9rem;color:#9e9080;line-height:1.6">The platform is funded by the community, not by advertisers. Your listening habits are never sold.</p></div>
+    <div class="ab-reveal ab-card" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:26px 24px;position:relative;animation-delay:.2s"><div style="font-size:1.8rem;color:#b983ff;font-family:'Syne',sans-serif">◉</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;margin:14px 0 8px">Open to all</h3><p style="font-size:.9rem;color:#9e9080;line-height:1.6">Any independent artist, venue, or promoter can join for free. There is no gated tier, no premium listing, no pay-to-surface.</p></div>
+  </div>
+
+  <!-- Funding -->
+  <div class="ab-reveal" style="font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:#22e5d4;position:relative">Funding</div>
+  <h2 class="ab-reveal" style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.7rem,4vw,2.5rem);letter-spacing:-.03em;margin:12px 0 16px;position:relative">How it's funded</h2>
+  <p class="ab-reveal" style="font-size:1rem;color:#9e9080;line-height:1.75;max-width:60ch;margin-bottom:14px;position:relative">iHYPE is funded entirely by advertising, the same way terrestrial radio has always worked — and those ads are restricted to music-related sources only, forever. No user-data resale funds this platform, and no ticket revenue is ever touched.</p>
+  <span class="ab-reveal" style="display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:#ffb84a;border:1px solid rgba(255,184,74,.28);background:rgba(255,184,74,.07);border-radius:999px;padding:6px 14px;margin-bottom:80px;position:relative">Detailed funding breakdown coming soon</span>
+
+  <!-- Timeline -->
+  <div class="ab-reveal" style="font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:#ff5029;position:relative">Our story</div>
+  <h2 class="ab-reveal" style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.7rem,4vw,2.5rem);letter-spacing:-.03em;margin:12px 0 34px;position:relative">How we got here</h2>
+  <div style="display:flex;flex-direction:column;margin-bottom:80px">
+    <div style="display:flex;gap:22px;padding-bottom:34px">
+      <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0"><div class="tl-dot" style="width:12px;height:12px;border-radius:50%;background:#ff5029;margin-top:4px;animation-name:abPulse;animation-duration:2.4s;animation-iteration-count:infinite"></div><div class="tl-line" style="width:2px;flex:1;background:linear-gradient(180deg,#ff5029,rgba(255,255,255,.08));margin-top:8px;transform:scaleY(0)"></div></div>
+      <div class="ab-reveal" style="position:relative"><div style="font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:#ff5029;margin-bottom:5px">January 2026</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.02em;margin-bottom:7px">Founded in Portland, ME</h3><p style="color:#9e9080;line-height:1.65;font-size:.95rem">iHYPE incorporated as a not-for-profit organization in Portland, Maine. The founding charter locked in 0% platform fees and the 70/20/10 revenue split.</p></div>
+    </div>
+    <div style="display:flex;gap:22px;padding-bottom:34px">
+      <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0"><div class="tl-dot" style="width:12px;height:12px;border-radius:50%;background:#ff3e9a;margin-top:4px"></div><div class="tl-line" style="width:2px;flex:1;background:rgba(255,255,255,.1);margin-top:8px;transform:scaleY(0)"></div></div>
+      <div class="ab-reveal" style="position:relative"><div style="font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:#ff3e9a;margin-bottom:5px">February 2026</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.02em;margin-bottom:7px">Design system &amp; charter published</h3><p style="color:#9e9080;line-height:1.65;font-size:.95rem">The iHYPE design system and community charter were published openly. The revenue split, governance model, and founding principles are locked in the charter.</p></div>
+    </div>
+    <div style="display:flex;gap:22px;padding-bottom:34px">
+      <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0"><div class="tl-dot" style="width:12px;height:12px;border-radius:50%;background:#22e5d4;margin-top:4px"></div><div class="tl-line" style="width:2px;flex:1;background:rgba(255,255,255,.1);margin-top:8px;transform:scaleY(0)"></div></div>
+      <div class="ab-reveal" style="position:relative"><div style="font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:#22e5d4;margin-bottom:5px">March 2026</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.02em;margin-bottom:7px">Platform beta launched</h3><p style="color:#9e9080;line-height:1.65;font-size:.95rem">Beta access opened to artists, venues, and promoters in the Portland area. First shows went live on the platform.</p></div>
+    </div>
+    <div style="display:flex;gap:22px">
+      <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0"><div class="tl-dot" style="width:12px;height:12px;border-radius:50%;background:#b983ff;margin-top:4px"></div></div>
+      <div class="ab-reveal" style="position:relative"><div style="font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:#b983ff;margin-bottom:5px">June 2026</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.02em;margin-bottom:7px">Expanded beta &amp; radio shows</h3><p style="color:#9e9080;line-height:1.65;font-size:.95rem">Fan beta access opened nationally. Audio-only radio shows and live DJ sets went live. iHYPE has never hosted video and never will.</p></div>
+    </div>
+  </div>
+
+  <!-- Team -->
+  <div class="ab-reveal" style="font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:#b983ff;position:relative">The team</div>
+  <h2 class="ab-reveal" style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.7rem,4vw,2.5rem);letter-spacing:-.03em;margin:12px 0 16px;position:relative">Who builds iHYPE</h2>
+  <p class="ab-reveal" style="font-size:1rem;color:#9e9080;line-height:1.75;max-width:60ch;margin-bottom:64px;position:relative">iHYPE is built by a small team of musicians, developers, and community organizers who got tired of watching independent venues close and independent artists lose income to platform fees. We are not venture-backed. We do not have a growth-at-all-costs mandate.</p>
+
+  <!-- CTA -->
+  <div class="ab-reveal" style="text-align:center;background:linear-gradient(160deg,#1f0e07,#0a0805);border:1px solid rgba(255,80,41,.2);border-radius:24px;padding:52px 32px;position:relative;overflow:hidden">
+    <div style="position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:400px;height:300px;background:radial-gradient(circle,rgba(255,80,41,.18),transparent 65%)"></div>
+    <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.6rem,4vw,2.3rem);letter-spacing:-.03em;position:relative">Join the scene</h2>
+    <p style="color:#9e9080;margin:10px 0 26px;font-size:1rem;position:relative">Ready to be part of a platform that puts artists first?</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;position:relative">
+      <a href="#" style="font-family:'Syne',sans-serif;font-weight:800;font-size:.94rem;background:#ff5029;color:#fff;padding:13px 28px;border-radius:999px;box-shadow:0 6px 24px rgba(255,80,41,.35)">Get started free</a>
+      <a href="#" style="font-family:'Syne',sans-serif;font-weight:700;font-size:.94rem;background:transparent;color:#f0ebe5;border:1px solid rgba(255,255,255,.14);padding:13px 26px;border-radius:999px">Transparency report →</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() {
+    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('on'); io.unobserve(e.target); } }), { threshold: .12 });
+    document.querySelectorAll('.ab-reveal:not(.on), .tl-dot, .tl-line').forEach(el => io.observe(el));
+  }
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

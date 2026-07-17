@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Event Create" description="events/new — 3-step publish flow: Details → Tickets (price/capacity + live payout preview) → Review & lock charter. Per ticket-policy: cost, capacity, tax estimate, and payout assumptions shown before sales open." -->
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}body{background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}
+.ec-input{display:block;width:100%;margin-top:7px;background:#0a0805;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:13px 14px;color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:.92rem;outline:none}
+.ec-label{display:block;font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:#9e9080;margin-bottom:16px}</style>
+</helmet>
+
+<div style="max-width:620px;margin:0 auto;padding:50px 24px 100px">
+  <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.6rem,5vw,2.2rem);letter-spacing:-.03em;margin-bottom:6px">Publish a show</h1>
+  <p style="font-size:.9rem;color:#9e9080;margin-bottom:28px">Your 70/20/10 charter locks the moment tickets go on sale.</p>
+
+  <div style="display:flex;gap:8px;margin-bottom:32px">
+    <sc-for list="{{ steps }}" as="st" hint-placeholder-count="3">
+      <div onClick="{{ st.go }}" style="flex:1;cursor:pointer">
+        <div style="height:4px;border-radius:999px;background:{{ st.bar }};margin-bottom:8px"></div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:{{ st.color }}">{{ st.label }}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="background:#100d09;border:1px solid rgba(255,255,255,.09);border-radius:18px;padding:28px">
+    <sc-if value="{{ is1 }}" hint-placeholder-val="{{ true }}">
+      <label class="ec-label">Show title<input class="ec-input" placeholder="Nyla — Glasslight Tour"></input></label>
+      <label class="ec-label">Venue<input class="ec-input" placeholder="Search verified venues…"></input></label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <label class="ec-label">Date<input class="ec-input" type="date"></input></label>
+        <label class="ec-label">Doors<input class="ec-input" type="time"></input></label>
+      </div>
+      <label class="ec-label">Description<textarea class="ec-input" rows="3" placeholder="What should fans expect?"></textarea></label>
+      <button onClick="{{ next }}" style="width:100%;font-family:'Syne',sans-serif;font-weight:800;font-size:.94rem;background:#ff5029;color:#fff;border:none;padding:14px;border-radius:999px;cursor:pointer">Next: Tickets →</button>
+    </sc-if>
+
+    <sc-if value="{{ is2 }}" hint-placeholder-val="{{ false }}">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <label class="ec-label">Face value ($)<input class="ec-input" type="number" value="{{ price }}" onChange="{{ setPrice }}"></input></label>
+        <label class="ec-label">Capacity<input class="ec-input" type="number" value="{{ capacity }}" onChange="{{ setCapacity }}"></input></label>
+      </div>
+      <div style="background:rgba(255,80,41,.05);border:1px solid rgba(255,80,41,.2);border-radius:12px;padding:18px 20px;margin-bottom:18px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:#9e9080;margin-bottom:12px">Payout preview · per ticket</div>
+        <div style="display:flex;justify-content:space-between;font-size:.88rem;padding:6px 0"><span style="color:#ff5029">Artist · 70%</span><b>{{ artistCut }}</b></div>
+        <div style="display:flex;justify-content:space-between;font-size:.88rem;padding:6px 0"><span style="color:#22e5d4">Venue · 20%</span><b>{{ venueCut }}</b></div>
+        <div style="display:flex;justify-content:space-between;font-size:.88rem;padding:6px 0"><span style="color:#ff3e9a">Promoter pool · 10%</span><b>{{ promoCut }}</b></div>
+        <div style="display:flex;justify-content:space-between;font-size:.88rem;padding:6px 0;border-top:1px solid rgba(255,255,255,.08);margin-top:4px"><span style="color:#5a5048">iHYPE · 0%</span><b style="color:#5a5048">$0.00</b></div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:#5a5048;margin-top:10px;line-height:1.6">Buyer pays face value + card processing at cost (2.9% + $0.30; AMEX 3.5% + $0.30). Tax estimate shown at checkout. Sell-out gross: {{ gross }}.</div>
+      </div>
+      <button onClick="{{ next }}" style="width:100%;font-family:'Syne',sans-serif;font-weight:800;font-size:.94rem;background:#ff5029;color:#fff;border:none;padding:14px;border-radius:999px;cursor:pointer">Next: Review →</button>
+    </sc-if>
+
+    <sc-if value="{{ is3 }}" hint-placeholder-val="{{ false }}">
+      <sc-if value="{{ notPublished }}" hint-placeholder-val="{{ true }}">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:#ffb84a;margin-bottom:14px">⚠ Review before you lock</div>
+        <p style="font-size:.9rem;color:#c9beb1;line-height:1.7;margin-bottom:18px">Publishing freezes the charter: <b style="color:#f0ebe5">70% artist · 20% venue · 10% promoters · 0% iHYPE</b> at <b style="color:#f0ebe5">{{ priceLabel }}</b> face value, {{ capacity }} serialized QR tickets. The split can never change after the first sale. Refunds only on cancellation. Resale limited to face value.</p>
+        <button onClick="{{ publish }}" style="width:100%;font-family:'Syne',sans-serif;font-weight:800;font-size:.94rem;background:#ff5029;color:#fff;border:none;padding:14px;border-radius:999px;cursor:pointer;box-shadow:0 6px 24px rgba(255,80,41,.3)">Publish &amp; lock charter 🔒</button>
+      </sc-if>
+      <sc-if value="{{ published }}" hint-placeholder-val="{{ false }}">
+        <div style="text-align:center;padding:20px 0">
+          <div style="width:56px;height:56px;border-radius:50%;background:rgba(34,229,212,.12);border:1px solid rgba(34,229,212,.35);display:grid;place-items:center;margin:0 auto 16px;font-size:1.4rem;color:#22e5d4">🔒</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:-.02em">Charter locked. Tickets are live.</div>
+          <p style="font-size:.88rem;color:#9e9080;margin-top:8px;line-height:1.6">Share your show link — every fan who promotes it earns from the 10% pool.</p>
+        </div>
+      </sc-if>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { step: 1, price: 28, capacity: 550, published: false };
+  fmt(n) { return '$' + n.toFixed(2); }
+  renderVals() {
+    const { step, price, capacity, published } = this.state;
+    return {
+      steps: [['Details', 1], ['Tickets', 2], ['Review', 3]].map(([label, n]) => ({
+        label, bar: step >= n ? '#ff5029' : 'rgba(255,255,255,.1)',
+        color: step >= n ? '#f0ebe5' : '#5a5048',
+        go: () => this.setState({ step: n }),
+      })),
+      is1: step === 1, is2: step === 2, is3: step === 3,
+      next: () => this.setState({ step: step + 1 }),
+      price, capacity,
+      priceLabel: this.fmt(price),
+      setPrice: (e) => this.setState({ price: +e.target.value || 0 }),
+      setCapacity: (e) => this.setState({ capacity: +e.target.value || 0 }),
+      artistCut: this.fmt(price * .7), venueCut: this.fmt(price * .2), promoCut: this.fmt(price * .1),
+      gross: '$' + (price * capacity).toLocaleString(),
+      published, notPublished: !published,
+      publish: () => this.setState({ published: true }),
+    };
+  }
+}
+</script>
+</body>
+</html>

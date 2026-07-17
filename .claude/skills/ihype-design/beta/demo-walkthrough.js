@@ -31,7 +31,7 @@
     {
       label: 'Welcome',
       title: 'iHYPE in 90 seconds',
-      body: 'Artist-owned live music. Fans hype who they love, buy tickets direct, and earn by promoting — with 45% of every ticket locked to the artist. Let’s walk the app.',
+      body: 'Artist-owned live music. Fans hype who they love, buy tickets direct, and earn by promoting — with 70% of every ticket locked to the artist. Let’s walk the app.',
       dur: 6500,
       run() { call('closeIHYPESheets'); call('setIHYPETab', 'listen'); },
     },
@@ -57,7 +57,7 @@
     {
       label: 'Events',
       title: 'Tickets, direct from the artist',
-      body: 'No scalper markup, no 30% fees. Every event ships with a frozen charter — 45% to the artist, locked the moment tickets go on sale.',
+      body: 'No scalper markup, no 30% fees. Every event ships with a frozen charter — 70% to the artist, locked the moment tickets go on sale.',
       dur: 7000,
       run() { call('closeIHYPESheets'); call('setIHYPETab', 'events'); },
     },
@@ -76,7 +76,7 @@
     {
       label: 'Earn',
       title: 'Promote a show, earn a cut',
-      body: 'Any fan or DJ can share a referral link and earn up to 10% of the gate they drive — paid out of the platform slice, never the artist’s 45%.',
+      body: 'Any fan or DJ can share a referral link and earn up to 10% of the gate they drive — paid from its own dedicated 10% slice — iHYPE takes 0%.',
       dur: 7500,
       run() { call('closeIHYPESheets'); call('setIHYPETab', 'events'); call('openIHYPEEarnings'); },
     },
@@ -90,7 +90,7 @@
     {
       label: 'Join the beta',
       title: 'That’s iHYPE.',
-      body: 'Built for desktop, mobile web, iOS, and Android from one codebase. Closed beta is live — join at hello@ihype.app. Replay the tour anytime.',
+      body: 'Built for desktop, mobile web, iOS, and Android from one codebase. Closed beta is live — join at admin@ihype.org. Replay the tour anytime.',
       dur: 99999,
       run() { call('closeIHYPESheets'); call('setIHYPETab', 'listen'); },
       last: true,

@@ -94,14 +94,14 @@ export default async function RootPage() {
                 color: 'var(--ink)',
                 overflowWrap: 'break-word',
               }}>
-                The whole<br />
-                local scene.<br />
+                The gate<br />
+                belongs to<br />
                 <span style={{
                   background: 'linear-gradient(90deg, var(--accent), #ff3e9a)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
-                }}>Completely free.</span>
+                }}>the artists.</span>
               </h1>
               <p className="idx-hero-sub" style={{
                 fontFamily: 'var(--f-b)',
@@ -111,9 +111,10 @@ export default async function RootPage() {
                 lineHeight: 1.65,
                 margin: '0 0 2rem',
               }}>
-                Find the artists, DJs, and live shows happening around you.
-                Listen, hype the moments that move you, and grab tickets with
-                zero fees — all in one app that costs you nothing.
+                iHYPE is your local scene built for the people who make it.
+                Hype who you believe in, grab tickets with zero fees, and earn
+                by spreading the word — with 70% of every ticket locked to the
+                artist, forever.
               </p>
 
               {/* Mobile-only: the pitch has to convert without a scroll — desktop
@@ -269,14 +270,17 @@ export default async function RootPage() {
           </h2>
           <div className="grid grid-2 idx-roles-grid" style={{ gap: '0.75rem' }}>
             {[
-              { role: 'Fans', color: '#b983ff', icon: '🎶', href: '/register?role=FAN', items: ['Discover new music before it blows up', 'Buy tickets with no fees', 'Earn 10% on tickets you refer', 'Track your scene with hype streaks'] },
-              { role: 'Artists', color: '#ff5029', icon: '🎸', href: '/register?role=ARTIST', items: ['70% of every ticket you sell', 'Upload music as swipeable Seeds', 'Build your public page and catalog', 'See who\'s hyping your work'] },
-              { role: 'Venues', color: '#22e5d4', icon: '🏟️', href: '/register?role=VENUE', items: ['20% of every show you host', 'Zero ticketing fees for buyers', 'Demand radar shows what\'s trending', 'Connect with artists and promoters'] },
-              { role: 'Promoters / DJs', color: '#ffb84a', icon: '📣', href: '/register?role=DJ', items: ['10% referral on every ticket you drive', 'Host radio shows on the platform', 'Build a following and grow your scene', 'Referral links for every event'] },
+              { role: 'Artists', color: '#ff5029', icon: '🎤', href: '/register?role=ARTIST', items: ['70% of every ticket you sell', 'Upload music as swipeable Seeds', 'Build your public page and catalog', 'See who\'s hyping your work'] },
+              { role: 'Fans', color: '#b983ff', icon: '🎧', href: '/register?role=FAN', items: ['Discover new music before it blows up', 'Buy tickets with no fees', 'Earn 10% on tickets you refer', 'Track your scene with hype streaks'] },
+              { role: 'Promoters / DJs', color: '#ffb84a', icon: '🎛️', href: '/register?role=DJ', items: ['10% referral on every ticket you drive', 'Host radio shows on the platform', 'Build a following and grow your scene', 'Referral links for every event'] },
+              { role: 'Venues', color: '#22e5d4', icon: '🏛️', href: '/register?role=VENUE', items: ['20% of every show you host', 'Zero ticketing fees for buyers', 'Demand radar shows what\'s trending', 'Connect with artists and promoters'] },
             ].map(r => (
               <div className="idx-role-card" key={r.role} style={{
                 padding: '1.5rem', borderRadius: 18,
-                border: `1px solid ${r.color}25`,
+                borderLeft: `1px solid ${r.color}25`,
+                borderRight: `1px solid ${r.color}25`,
+                borderBottom: `1px solid ${r.color}25`,
+                borderTop: `4px solid ${r.color}`,
                 background: `${r.color}08`,
                 display: 'flex', flexDirection: 'column', gap: '1rem',
               }}>
@@ -319,48 +323,82 @@ export default async function RootPage() {
         `}</style>
       </section>
 
+      {/* ── For artists ──────────────────────────────────────── */}
+      <section style={{ padding: '2rem 0 3rem' }}>
+        <div className="container">
+          <div style={{
+            background: 'linear-gradient(160deg, rgba(255,80,41,.08), transparent)',
+            border: '1px solid rgba(255,80,41,.18)',
+            borderRadius: 24,
+            padding: 'clamp(2rem, 5vw, 3.5rem)',
+            position: 'relative',
+            overflow: 'hidden',
+          }}>
+            <div style={{ maxWidth: '42ch', position: 'relative' }}>
+              <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.2em', color: 'var(--accent)', textTransform: 'uppercase', margin: '0 0 0.6rem' }}>
+                For artists
+              </p>
+              <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 'clamp(1.8rem, 4vw, 3rem)', letterSpacing: '-0.03em', color: 'var(--ink)', margin: '0 0 1rem', lineHeight: 1.06 }}>
+                Your music. Your gate. Your fans.
+              </h2>
+              <p style={{ fontFamily: 'var(--f-b)', fontSize: '1.05rem', color: 'var(--ink-2)', lineHeight: 1.6, margin: '0 0 1.5rem' }}>
+                The 70% split to you is locked into our charter, before a single ticket sells. No agent required.
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.55rem', marginBottom: '1.5rem' }}>
+                {['70% split · locked', 'Direct fan data', 'Zero ticket fees', 'Live show hosting', 'No agent needed'].map(chip => (
+                  <span key={chip} style={{ fontFamily: 'var(--f-m)', fontSize: '0.76rem', color: 'var(--ink)', background: 'var(--hair-40)', border: '1px solid var(--hair-80)', borderRadius: 999, padding: '0.4rem 0.85rem' }}>
+                    {chip}
+                  </span>
+                ))}
+              </div>
+              <Link
+                href="/register?role=ARTIST"
+                style={{
+                  display: 'inline-block',
+                  padding: '0.75rem 1.75rem', borderRadius: 12,
+                  background: 'var(--accent)', color: '#fff',
+                  fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '0.9rem',
+                  textDecoration: 'none',
+                }}
+              >
+                Join as an artist →
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── The Split ────────────────────────────────────────── */}
       <section style={{ padding: '3rem 0' }}>
         <div className="container">
           <div style={{ marginBottom: '2rem' }}>
             <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.2em', color: 'var(--accent)', textTransform: 'uppercase', marginBottom: '0.6rem' }}>
-              The 70/20/10 promise
+              The model
             </p>
             <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 'clamp(1.8rem, 4vw, 3rem)', letterSpacing: '-0.03em', color: 'var(--ink)', margin: 0 }}>
-              Every ticket sale. Every time.
+              Every ticket, every time.
             </h2>
-            <p style={{ fontFamily: 'var(--f-b)', fontSize: '1rem', color: 'var(--ink-2)', marginTop: '0.75rem', maxWidth: '56ch', lineHeight: 1.6 }}>
-              Ticketmaster charges up to 27% on top of face value. We charge zero.
-              Our code is open, our split is fixed, and we never change it.
-            </p>
           </div>
 
-          <div className="grid grid-3" style={{ gap: '1rem' }}>
-            {[
-              { pct: '70%', role: 'Artist', color: '#ff5029', desc: 'Per ticket sold at your show. No deductions, no hidden processing cuts. Paid out automatically.', icon: '🎸' },
-              { pct: '20%', role: 'Venue', color: '#22e5d4', desc: 'Per ticket for hosting the show. The room makes money too — not just the act on stage.', icon: '🏟️' },
-              { pct: '10%', role: 'Promoter', color: '#b983ff', desc: 'To whoever brought the fan — DJ, promoter, or friend with a referral link. Grow the scene, get paid.', icon: '📣' },
-            ].map(c => (
-              <div key={c.role} style={{
-                padding: '1.75rem', borderRadius: 20,
-                border: `1px solid ${c.color}30`,
-                background: `linear-gradient(135deg, ${c.color}10, transparent)`,
-                boxShadow: `0 4px 24px ${c.color}12`,
-                display: 'grid', gap: '0.75rem',
-              }}>
-                <div style={{ fontSize: '2rem', lineHeight: 1 }}>{c.icon}</div>
-                <div>
-                  <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '3rem', letterSpacing: '-0.03em', color: c.color, lineHeight: 1 }}>{c.pct}</div>
-                  <div style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: '1.1rem', color: 'var(--ink)', marginTop: '0.25rem' }}>{c.role}</div>
-                </div>
-                <p style={{ fontFamily: 'var(--f-b)', fontSize: '0.9rem', color: 'var(--ink-2)', lineHeight: 1.6, margin: 0 }}>{c.desc}</p>
-              </div>
-            ))}
+          {/* Split bar — 70% artist / 20% venue / 10% promoter / 0% iHYPE */}
+          <div className="idx-split-bar" style={{ display: 'flex', height: 80, borderRadius: 14, overflow: 'hidden' }}>
+            <div style={{ width: '70%', background: '#ff5029', display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: 20, color: '#0a0805' }}>
+              <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.6rem' }}>70%</div>
+              <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.62rem', letterSpacing: '.08em' }}>ARTIST</div>
+            </div>
+            <div style={{ width: '20%', background: '#22e5d4', display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: 18, color: '#0a0805' }}>
+              <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.5rem' }}>20%</div>
+              <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.62rem', letterSpacing: '.08em' }}>VENUE</div>
+            </div>
+            <div style={{ width: '10%', background: '#b983ff', display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: 14, color: '#0a0805' }}>
+              <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.3rem' }}>10%</div>
+              <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.58rem', letterSpacing: '.06em' }}>PROMO</div>
+            </div>
           </div>
 
           <div style={{ marginTop: '1rem', padding: '1rem 1.5rem', borderRadius: 14, border: '1px solid var(--line)', background: 'var(--hair-25)', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: 'var(--f-m)', fontSize: '0.8rem', color: 'var(--ink-3)', letterSpacing: '.06em' }}>
-              iHYPE → 0% · this is locked in our charter · <a href="/transparency" style={{ color: 'var(--ink-2)' }}>read our transparency page →</a>
+            <span style={{ fontFamily: 'var(--f-m)', fontSize: '0.8rem', color: 'var(--ink-3)', letterSpacing: '.06em', lineHeight: 1.6 }}>
+              iHYPE → 0% · this is locked in our charter. Ticketmaster charges up to 27% on top of face value — the only charge here above face value is the card-processing fee, passed through at cost. <a href="/transparency" style={{ color: 'var(--ink-2)' }}>Read our transparency page →</a>
             </span>
           </div>
         </div>

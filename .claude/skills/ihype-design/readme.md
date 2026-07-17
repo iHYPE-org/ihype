@@ -9,8 +9,8 @@ The platform serves four distinct user roles — **Fan**, **Artist**, **Venue**,
 ### User Roles
 iHYPE has four distinct user types, each with tailored UI, copy, notifications, and analytics:
 - **Fan** — discovers music, hypes artists, earns from referral links (10% promoter pool share)
-- **Artist** — sells tickets direct, keeps 45%, uses Tour Creator and demand radar
-- **Venue** — books from the demand radar, keeps 45% of every ticket sold in their room
+- **Artist** — sells tickets direct, keeps 70%, uses Tour Creator and demand radar
+- **Venue** — books from the demand radar, keeps 70% of every ticket sold in their room
 - **DJ** — hosts radio shows, builds a crate, earns promoter cuts; also acts as a Promoter
 
 **Promoters** are Fans or DJs who share a referral link — when a ticket buyer uses that link, the promoter earns a proportional share of the 10% promoter pool based on how much of the total gate their promotion drove.
@@ -167,7 +167,7 @@ ui_kits/
     EventsTab.jsx                     ← My Tickets · Local · For You · Search + checkout flow
     PagesTab.jsx                      ← My Page (Fan/DJ/Artist/Venue) · Browse · Create
     Sheets.jsx                        ← All modal overlays: Tour Creator, Live Event, Post-Purchase
-                                        45/45/10 reveal, Notif Primer, Post-Show Rating, Ticket
+                                        70/20/10 reveal, Notif Primer, Post-Show Rating, Ticket
                                         Transfer, Artist Profile, Seed Match, Invite, Help/FAQ,
                                         Changelog, Settings, Feedback Widget
     Shell.jsx                         ← Onboarding (role→city→genres), Media Player bar,
@@ -200,6 +200,24 @@ templates/
 ```
 ---
 
+## PRODUCT SYNC (ihype.org · github.com/iHYPE-org/ihype)
+
+Reconciled July 2026 against the shipped product. Canonical facts:
+- **Split: 70/20/10 · 0% iHYPE** — 70% artist, 20% venue, 10% promoter pool. A condition of incorporation ("the charter") — frozen at event publish, calculated per-event at settlement. iHYPE earns via optional creator tools, promoted discovery, and radio distribution — never the ticket split.
+- **Payments**: Stripe direct (Zeffy retired). The card-processing fee — 2.9% + $0.30/transaction (AMEX 3.5% + $0.30) — is the ONLY charge above ticket face value, passed through at cost. iHYPE takes $0.
+- **Backend seam**: the fan app is backend-ready. `lib/api.js` (mock/real client, mirrors `openapi.yaml`) + `lib/db.js` (IndexedDB) + `lib/hydrate.js` (maps live API rows into the `window.IHYPE_DATA` shape the UI reads, re-renders on `ihype:data`). To go live: set `window.IHYPE_API_BASE = 'https://api.ihype.app/v1'` before the scripts load — no component changes needed. Write paths: `IHYPE_SEND_HYPE(type,id)` and `IHYPE_PURCHASE(eventId, referralCode)`.
+- **Funding**: entirely by advertising, restricted to music-related sources only, forever (like terrestrial radio). Not grants/memberships/donations. Run by two people + AI automation.
+- **Org**: iHYPE Inc., not-for-profit, founded Portland, ME, January 2026. Contact: **admin@ihype.org** (never hello@).
+- **Wordmark**: "iHYPE" — no interpunct (old `iH·YPE` spelling is retired).
+- **Audio-only**: iHYPE has never hosted video and never will.
+- **Verification copy pattern**: "Fan accounts are instant. Artist, DJ, and Venue accounts require verification — it protects everyone in the 70/20/10 ecosystem." (~48h review; see `guidelines/verification.card.html`)
+- **Promise copy pattern** (About page): 0% ticket fee · No streaming cuts · No ads · Open to all.
+- New surfaces grounded in product code: `templates/charter/` (We take nothing.), `templates/about/` (timeline), Believers leaderboard + Wrapped cards in `guidelines/`.
+- 2026 brand assets: `assets/brand/logo-sticker-2026.png`, `icon-512.png`, `icon-192.png`.
+- ⚠ Known app-side bug (filed upstream, not ours): `src/app/artists/[slug]/page.tsx:161` in the product repo still renders a stale "45%" artist stat.
+
+---
+
 ## CHANGELOG
 
 ### v4 — June 21, 2026
@@ -210,7 +228,7 @@ templates/
   - Hype Budget: 🔥🔥🔥/week pill depletes on hype, persists via localStorage, resets Monday
   - Artist Profile Sheet: tap any artist → full profile (bio, tracks, upcoming shows, follow/hype)
   - Seed Match Sheet: after hyping a seed with a nearby show, "Playing near you" fires
-  - Post-Purchase 45/45/10 reveal: animated payout breakdown after every ticket purchase
+  - Post-Purchase 70/20/10 reveal: animated payout breakdown after every ticket purchase
   - Notification center: role-aware (Fan/Artist/Venue/DJ/Promoter)
   - Checkout flow with Ticketmaster price comparison and Apple Pay
   - All sheets wired: Live Event overlay, Ticket Transfer, Tour Creator, Radio Scheduler, Analytics, Help/FAQ, Changelog, Feedback widget, Invite

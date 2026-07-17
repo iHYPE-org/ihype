@@ -12,6 +12,10 @@ function fmt$(dollars: number) {
   return `$${Math.round(dollars).toLocaleString()}`;
 }
 
+function fmtCents(dollars: number) {
+  return `$${dollars.toFixed(2)}`;
+}
+
 type ProfileHit = { id: string; name: string; slug: string; type: string };
 
 function ProfilePicker({
@@ -262,6 +266,24 @@ export default function EventsNewPage() {
                 </div>
               </div>
             </div>
+            <div className="card">
+              <div className="label" style={{ marginBottom: 12 }}>Payout preview · per ticket</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.88rem', padding: '6px 0' }}>
+                <span style={{ color: '#ff5029' }}>Artist · 70%</span><b>{fmtCents(priceDollars * .7)}</b>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.88rem', padding: '6px 0' }}>
+                <span style={{ color: '#22e5d4' }}>Venue · 20%</span><b>{fmtCents(priceDollars * .2)}</b>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.88rem', padding: '6px 0' }}>
+                <span style={{ color: '#b983ff' }}>Promoter pool · 10%</span><b>{fmtCents(priceDollars * .1)}</b>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.88rem', padding: '6px 0', borderTop: '1px solid var(--hair-50)', marginTop: 4 }}>
+                <span style={{ color: 'var(--ink-3)' }}>iHYPE · 0%</span><b style={{ color: 'var(--ink-3)' }}>$0.00</b>
+              </div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '.62rem', color: 'var(--ink-3)', marginTop: 10, lineHeight: 1.6 }}>
+                Buyer pays face value + card processing at cost (2.9% + $0.30; AMEX 3.5% + $0.30). Tax estimate shown at checkout. Sell-out gross: {fmt$(gross)}.
+              </div>
+            </div>
             <div className="field"><label>Ticket types</label></div>
             <div
               className={`ticket-type-btn${ticketType === 'ga' ? ' selected' : ''}`}
@@ -333,6 +355,14 @@ export default function EventsNewPage() {
                 {fmt$(gross * .7)} artist · {fmt$(gross * .2)} venue · {fmt$(gross * .1)} promoters · $0 iHYPE
               </div>
             </div>
+            <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(255,184,74,.25)', background: 'rgba(255,184,74,.06)', marginBottom: 14 }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '.68rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--warning)', marginBottom: 8 }}>
+                ⚠ Review before you lock
+              </div>
+              <div style={{ fontSize: '.85rem', color: 'var(--ink-2)', lineHeight: 1.6 }}>
+                Publishing freezes the charter: <b style={{ color: 'var(--ink)' }}>70% artist · 20% venue · 10% promoters · 0% iHYPE</b> at <b style={{ color: 'var(--ink)' }}>${priceDollars || 0}</b> face value, {cap || 0} serialized QR tickets. The split can never change after the first sale. Resale is limited to face value — see the <Link href="/ticket-policy" style={{ color: '#ff5029' }}>ticket policy</Link> for refund and transfer terms.
+              </div>
+            </div>
             <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(34,229,212,.2)', background: 'rgba(34,229,212,.04)', marginBottom: 14 }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '.72rem', color: '#22e5d4', lineHeight: 1.5 }}>
                 iHYPE takes $0 · 70/20/10 split locked in charter · tickets go on sale immediately
@@ -340,7 +370,7 @@ export default function EventsNewPage() {
             </div>
             {error && <p style={{ color: '#ff5029', fontSize: 13, marginBottom: 12 }}>{error}</p>}
             <button className="btn-primary" disabled={submitting} onClick={publish} type="button">
-              {submitting ? 'Publishing…' : 'Publish event →'}
+              {submitting ? 'Publishing…' : 'Publish event & lock charter 🔒'}
             </button>
             <button className="btn-ghost" onClick={() => setStep(2)} type="button">Back</button>
           </>

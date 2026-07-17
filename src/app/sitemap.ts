@@ -8,12 +8,28 @@ export const revalidate = 3600; // rebuild hourly
 const base = getBaseUrl();
 
 const STATIC: MetadataRoute.Sitemap = [
-  { url: `${base}/`,          changeFrequency: 'weekly',  priority: 1.0 },
-  { url: `${base}/about`,     changeFrequency: 'monthly', priority: 0.6 },
-  { url: `${base}/artists`,   changeFrequency: 'daily',   priority: 0.8 },
-  { url: `${base}/shows`,     changeFrequency: 'hourly',  priority: 0.9 },
-  { url: `${base}/register`,  changeFrequency: 'monthly', priority: 0.7 },
-  { url: `${base}/login`,     changeFrequency: 'monthly', priority: 0.5 },
+  { url: `${base}/`,               changeFrequency: 'weekly',  priority: 1.0 },
+  { url: `${base}/about`,          changeFrequency: 'monthly', priority: 0.6 },
+  { url: `${base}/shows`,          changeFrequency: 'hourly',  priority: 0.9 },
+  { url: `${base}/discover`,       changeFrequency: 'hourly',  priority: 0.8 },
+  { url: `${base}/radio`,          changeFrequency: 'daily',   priority: 0.7 },
+  { url: `${base}/this-weekend`,   changeFrequency: 'daily',   priority: 0.7 },
+  { url: `${base}/for-you`,        changeFrequency: 'daily',   priority: 0.6 },
+  { url: `${base}/journal`,        changeFrequency: 'weekly',  priority: 0.6 },
+  { url: `${base}/community`,      changeFrequency: 'weekly',  priority: 0.5 },
+  { url: `${base}/community-rules`, changeFrequency: 'monthly', priority: 0.3 },
+  { url: `${base}/charter`,        changeFrequency: 'monthly', priority: 0.6 },
+  { url: `${base}/transparency`,   changeFrequency: 'monthly', priority: 0.5 },
+  { url: `${base}/audit`,          changeFrequency: 'monthly', priority: 0.4 },
+  { url: `${base}/walkthrough`,    changeFrequency: 'monthly', priority: 0.4 },
+  { url: `${base}/advertise`,      changeFrequency: 'monthly', priority: 0.5 },
+  { url: `${base}/support`,        changeFrequency: 'monthly', priority: 0.4 },
+  { url: `${base}/launch`,         changeFrequency: 'monthly', priority: 0.4 },
+  { url: `${base}/ticket-policy`,  changeFrequency: 'monthly', priority: 0.3 },
+  { url: `${base}/copyright`,      changeFrequency: 'monthly', priority: 0.3 },
+  { url: `${base}/dmca`,           changeFrequency: 'monthly', priority: 0.3 },
+  { url: `${base}/register`,       changeFrequency: 'monthly', priority: 0.7 },
+  { url: `${base}/login`,          changeFrequency: 'monthly', priority: 0.5 },
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

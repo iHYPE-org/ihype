@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Legal" description="Legal page — Privacy / Terms / Charter segmented tabs, print-friendly. Copy verbatim from src/app/legal/page.tsx." -->
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}body{background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}
+.legal-doc h2{font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.02em;margin:2.5rem 0 .6rem;color:#f0ebe5}
+.legal-doc p{font-size:.9rem;color:#9e9080;line-height:1.75;margin-bottom:.85rem}
+.legal-doc a{color:#ff5029}
+@media print{html,body{background:#fff!important;color:#111!important}.legal-doc h2{color:#111!important}.legal-doc p{color:#333!important}}</style>
+</helmet>
+
+<div style="max-width:760px;margin:0 auto;padding:3rem 2rem 6rem">
+  <div style="font-family:'JetBrains Mono',monospace;font-size:.65rem;letter-spacing:.16em;text-transform:uppercase;color:#5a5048;margin-bottom:10px">Legal</div>
+  <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.75rem,6vw,2.4rem);letter-spacing:-.04em;line-height:.95;margin-bottom:.75rem">Policies &amp; terms.</h1>
+  <p style="font-size:.9rem;color:#9e9080;line-height:1.75;margin-bottom:.85rem">Last updated: June 20, 2026 · iHYPE · Portland, ME</p>
+
+  <div style="display:flex;border-radius:12px;border:1px solid rgba(255,255,255,.1);width:fit-content;margin-bottom:2.5rem;overflow:hidden">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+      <button onClick="{{ t.select }}" style="padding:9px 20px;border:none;background:{{ t.bg }};color:{{ t.color }};font-family:'Syne',sans-serif;font-weight:800;font-size:.82rem;cursor:pointer;white-space:nowrap">{{ t.label }}</button>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{ isPrivacy }}" hint-placeholder-val="{{ true }}"><div class="legal-doc">
+    <h2>What we collect</h2><p>iHYPE collects the minimum data necessary to operate: your email address, display name, role (fan/artist/venue/DJ), city, genre preferences, and ticket purchase history. We do not sell this data. We do not share it with advertisers. We do not use it to train AI models.</p>
+    <h2>Payment data</h2><p>Payments are processed by Apple Pay and Stripe. iHYPE never stores card numbers or bank account details. Payout routing information for artists and venues is encrypted at rest and visible only to you and our payments processor.</p>
+    <h2>Analytics</h2><p>We collect anonymous, aggregated usage data to understand how the app is used and improve it. This data cannot be used to identify you. You can opt out in Settings → Privacy.</p>
+    <h2>Referral links</h2><p>When you share a referral link, we track click-throughs and purchases associated with that link to calculate your promoter pool share. This data is visible to you in your Pages dashboard.</p>
+    <h2>Data rights (GDPR &amp; CCPA)</h2><p>If you're in the EU/EEA/UK, you have rights under GDPR: access, rectification, erasure, portability, restriction, and objection to processing. California residents have equivalent rights under CCPA, including opting out of data sales (we don't sell data, but the right still applies). Our lawful basis for processing is contract performance (running your account, tickets, and payouts) and legitimate interest (product analytics, fraud prevention). Exercise any of these rights instantly in <a href="#">Support → Privacy</a> (report a concern, request deletion, detach identity early, download your data) or email <a href="mailto:admin@ihype.org">admin@ihype.org</a>. We respond within 30 days.</p>
+    <h2>Cookies</h2><p>Essential cookies keep you signed in and remember your preferences — these can't be turned off without breaking the app. Optional analytics cookies help us understand usage in aggregate; you can decline these from the consent banner or reset your choice by clearing site data. We do not use third-party advertising or tracking cookies.</p>
+    <h2>Security</h2><p>Data in transit is encrypted (TLS). Data at rest, including payout routing details, is encrypted. Access to user data is limited to the systems and staff that need it to operate the platform. We do not use your data to train AI models.</p>
+    <h2>Subprocessors</h2><p>We use a small number of vendors to run iHYPE, each bound by its own data protection terms: <strong>Stripe</strong> (payment processing and artist/venue payouts — holds card and bank details, iHYPE never does), <strong>Supabase</strong> (database hosting), <strong>Cloudflare</strong> (application hosting, media storage, and bot protection), <strong>Resend</strong> (delivering account and notification emails), and <strong>Sentry</strong> (error monitoring, configured to exclude personal data from reports). None of these vendors may use your data for their own purposes.</p>
+    <h2>Contact</h2><p>Privacy questions: <a href="mailto:admin@ihype.org">admin@ihype.org</a></p>
+  </div></sc-if>
+
+  <sc-if value="{{ isTerms }}" hint-placeholder-val="{{ false }}"><div class="legal-doc">
+    <h2>Who can use iHYPE</h2><p>You must be 13 or older to use iHYPE. To purchase tickets, you must be 18 or the age of majority in your jurisdiction. By creating an account you agree to these terms.</p>
+    <h2>Tickets</h2><p>All tickets are sold at face value. iHYPE charges $0 in platform fees — this is locked in our charter and cannot be changed. Ticket purchases are final. Refunds are issued only if an event is cancelled by the organizer.</p>
+    <h2>The 70/20/10 split</h2><p>Every ticket sold through iHYPE splits as follows: 70% to the artist, 20% to the venue, 10% to the promoter pool (distributed proportionally among referrers). iHYPE receives 0%. This is a founding constraint, not a policy — it cannot be altered by management, the board, or investors.</p>
+    <h2>Promoter referrals</h2><p>Any user may share a referral link to any event. If a ticket is purchased through your link, you receive your proportional share of the 10% promoter pool. Manipulating referral tracking (e.g. purchasing through your own link) is prohibited and will result in account termination.</p>
+    <h2>Content</h2><p>You are responsible for content you post (artist pages, radio shows, event listings). You grant iHYPE a non-exclusive license to display this content within the platform. iHYPE does not claim ownership of your music, images, or likeness.</p>
+    <h2>Refunds</h2><p>Ticket prices are final. Refunds are issued only if a show is cancelled by the organizer; refund requests for cancelled shows must be made within 14 days. There are no refunds for personal reasons.</p>
+    <h2>Limitation of liability</h2><p>iHYPE provides the platform "as is." We are not liable for lost data, service interruptions, or shows cancelled or altered by venues or artists.</p>
+    <h2>Changes to these terms</h2><p>We may update these terms. Material changes will be announced at least 30 days in advance. Continued use after a change means you accept it.</p>
+    <h2>Termination</h2><p>We may suspend or delete your account if you violate these terms. You can delete your account at any time from Settings.</p>
+    <h2>Contact</h2><p>Legal questions: <a href="mailto:admin@ihype.org">admin@ihype.org</a></p>
+  </div></sc-if>
+
+  <sc-if value="{{ isCharter }}" hint-placeholder-val="{{ false }}"><div class="legal-doc">
+    <h2>The problem we built this to fix</h2><p>Pay-to-play has quietly broken live music. Venues need to book artists people will actually pay to see — but have no way to know that themselves, so they lean on promoters chasing their own cut, and ticket platforms tack fees on top of that. What's left barely covers the room, or loses money outright. Fans never hear about new artists. Artists can't afford to keep making music. Venues stop booking altogether. iHYPE exists to break that cycle.</p>
+    <h2>The founding constraint</h2><p>iHYPE was incorporated with a single non-negotiable structural commitment: the platform takes nothing from ticket sales. This commitment is embedded in the company's founding documents and cannot be amended by management, board resolution, investor pressure, or acquisition.</p>
+    <h2>The split</h2><p style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;letter-spacing:-.03em;color:#f0ebe5;line-height:1.3;margin:1rem 0">70% artist · 20% venue · 10% promoters · 0% iHYPE.</p>
+    <p>This is not a pricing strategy. It is a constraint. We built the business model around it, not the other way around. Anyone can get paid to promote a show through their own referral link — real word-of-mouth income, not payola.</p>
+    <h2>Open by design</h2><p>Our code and our moderation heuristics are published for public audit. Nothing about how the split is calculated, how uploads are screened, or how the platform ranks anything is a secret — anyone can check that it does exactly what we say.</p>
+    <h2>Your data is never for sale</h2><p>iHYPE does not aggregate user data for resale and never sells it to advertisers or anyone else — not now, not after an acquisition. This is a charter commitment, not a policy that can be quietly reversed.</p>
+    <h2>You get a vote</h2><p>Users of iHYPE are treated as stakeholders, not just customers. Meaningful changes to the platform — the split, moderation rules, new fees of any kind — are put to the people who use it, with feedback built into every release.</p>
+    <h2>Funded like radio, not like Big Tech</h2><p>iHYPE is funded entirely by advertising, the same way terrestrial radio has always worked — and those ads are restricted to music-related sources only, forever. No user-data resale funds this platform, and no other category of advertiser will ever be let in to change that.</p>
+    <h2>Why so few people run this</h2><p>iHYPE is run by two people, leaning on AI automation to keep operating costs at the absolute minimum. That's deliberate: a lean operation is a sustainable operation, and there's no boardroom of investors around to talk us into breaking any of the above.</p>
+    <h2>Why lock it in?</h2><p>Because every platform that started with good intentions eventually faced a board meeting where fees made sense. We wanted to make that conversation impossible. The charter is the answer to "what if the company needs revenue?" — the answer is: find another way. Not this.</p>
+    <h2>What "locked in" means</h2><p>The 70/20/10 split is a condition of incorporation. Changing it would require dissolving the company and re-incorporating under a different structure. No board vote, no shareholder approval, no acquisition clause overrides it.</p>
+  </div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { tab: 'privacy' };
+  renderVals() {
+    const { tab } = this.state;
+    return {
+      tabs: [['privacy','Privacy Policy'],['terms','Terms of Service'],['charter','The Charter']].map(([id,label]) => ({
+        label, bg: tab === id ? 'rgba(255,80,41,.1)' : 'transparent', color: tab === id ? '#ff5029' : '#9e9080',
+        select: () => this.setState({ tab: id }),
+      })),
+      isPrivacy: tab === 'privacy', isTerms: tab === 'terms', isCharter: tab === 'charter',
+    };
+  }
+}
+</script>
+</body>
+</html>

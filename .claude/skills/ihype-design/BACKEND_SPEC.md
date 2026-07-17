@@ -13,7 +13,7 @@ Four user types. A single account can hold **multiple roles**.
 | Role | Core ability |
 |------|-------------|
 | **Fan** | Listen, hype, buy tickets, attend |
-| **Artist** | Upload tracks, host live shows, sell tickets (receives 45% gate) |
+| **Artist** | Upload tracks, host live shows, sell tickets (receives 70% gate) |
 | **DJ** | Build radio shows from free-use library + voice + SFX; can promote |
 | **Venue** | List events, manage door, receive gate split |
 
@@ -24,13 +24,13 @@ A promoter shares a **referral link** for an event. When a buyer purchases throu
 promoter_share_pct = min(0.10, 0.10 × (referred_gross_by_promoter / event_total_gross))
 ```
 
-So a promoter who drove 100% of sales gets the full 10%; one who drove a sliver gets proportionally less. Cut comes out of the **platform/operator slice**, never the artist's 45%.
+So a promoter who drove 100% of sales gets the full 10%; one who drove a sliver gets proportionally less. Cut comes out of the **platform/operator slice**, never the artist's 70%.
 
 **Gate split (locked per-event in the "charter" at publish time):**
-- Artist: 45%
+- Artist: 70%
 - Venue: configurable (default 20%)
-- Platform/operator: remainder, *minus* any promoter shares earned
-- Promoter pool: up to 10%, drawn from the platform slice
+- Platform/operator: 0% — iHYPE takes nothing; card-processing fees (Stripe 2.9% + $0.30; AMEX 3.5% + $0.30) are charged to the buyer above face value, passed through at cost
+- Promoter pool: up to 10%, its own dedicated 10% slice
 
 > ⚠️ Splits are **immutable once an event publishes** ("locked in charter"). Store the split snapshot on the event row, not by reference.
 
@@ -86,7 +86,7 @@ So a promoter who drove 100% of sales gets the full 10%; one who drove a sliver 
 | capacity | int | drives sold-out/waitlist |
 | price_cents | int | |
 | status | enum | `draft\|published\|live\|ended\|cancelled` |
-| **split** | jsonb | **frozen charter snapshot** `{artist:0.45, venue:0.20, platform:..., promoter_max:0.10}` |
+| **split** | jsonb | **frozen charter snapshot** `{artist:0.70, venue:0.20, platform:0, promoter_max:0.10}` |
 | total_gross_cents | bigint | denormalized; source of promoter math |
 
 ### tickets
@@ -236,7 +236,7 @@ Hype is high-write. Don't `UPDATE artists SET hype_total = hype_total+1` under l
 Runs when an event hits `ended`:
 1. Freeze `event.total_gross_cents`.
 2. For each referral: `earned = ticket_gross_via_code × min(0.10, 0.10 × gross_driven/total_gross)`. Set `status=locked`.
-3. Compute artist 45%, venue split, platform remainder **minus** sum(referral earnings).
+3. Compute artist 70%, venue 20%; promoter earnings come from the dedicated 10% pool. Unclaimed promoter pool rolls to the artist.
 4. Create ledger entries → Stripe Connect transfers once accounts are `verified`.
 5. Flip referral + payout rows to `paid` on transfer success.
 
@@ -260,7 +260,7 @@ Not supported in beta. A ticket is either `valid`, `used`, or `refunded` (full).
 1. Stripe notifies via webhook `charge.dispute.created`.
 2. Reverse the ledger entry: `debit platform, credit chargeback_reserve`.
 3. If dispute loses: deduct from artist's `pending` balance proportionally to their split.
-4. Cap artist chargeback exposure at their 45% of the disputed ticket — platform absorbs the rest.
+4. Cap artist chargeback exposure at their 70% of the disputed ticket — the remainder is absorbed proportionally by the venue and promoter slices.
 5. Flag buyer `users.chargeback_count++`; at 3 → suspend account pending review.
 
 ### Waitlist → ticket upgrade
@@ -308,7 +308,7 @@ If `total_gross_cents = 0` (free event): skip settlement; no promoter payout.
 ## 6. Recommended stack (nonprofit-friendly)
 - **Postgres** (Supabase or RDS) — relational integrity for the ledger is non-negotiable.
 - **Redis** — hype counters, budgets, live presence.
-- **Stripe Connect** — built for exactly this split/marketplace model; nonprofit discounts available.
+- **Stripe (direct)** — Zeffy retired. Processing fee 2.9% + $0.30/txn (AMEX 3.5% + $0.30) charged to buyer above face value at cost; the 70/20/10 split applies to face value.
 - **Object storage** (S3/R2) — audio, voice clips, artwork.
 - **WebSocket** layer (Ably/Pusher or self-hosted) — live shows.
 - Start test-mode end-to-end; the *only* thing the EIN unblocks is real money movement.

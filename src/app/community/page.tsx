@@ -17,6 +17,13 @@ type CommunityMeta = {
 const CATEGORY_LABEL: Record<string, string> = { update: 'Update', announcement: 'Announcement' };
 const CATEGORY_COLOR: Record<string, string> = { update: '#ff5029', announcement: '#b983ff' };
 
+const COMMUNITY_CHANNELS = [
+  { icon: '🗳️', title: 'You get a vote', body: 'Platform changes ship with a feedback window. The split and moderation heuristics are published for public audit — check our work.' },
+  { icon: '📻', title: 'Radio shows', body: 'Every DJ and promoter gets the same hosting tools, free. No tier unlocks anything — the scene decides what gets heard.' },
+  { icon: '🔥', title: 'Hype honestly', body: 'No bots, no paid manipulation, no hidden incentives. Hype is the demand signal venues book from — keep it real.' },
+  { icon: '🛡️', title: 'Look out for each other', body: 'Report unsafe content, fraud, or impersonation. Every report is tracked to a resolution in the public trust & safety report.' },
+];
+
 export default async function CommunityPage() {
   const rows = await db.auditLog.findMany({
     where: { action: 'community_update' },
@@ -32,13 +39,26 @@ export default async function CommunityPage() {
   return (
     <div className="community-page">
       <div className="community-hero">
-        <h1>Community</h1>
+        <span className="community-page-badge">Community</span>
+        <h1>The scene runs this place.</h1>
         <p className="community-lede">
-          Communications and changes from the iHYPE team, plus a real vote on what we build next.
+          Users of iHYPE are stakeholders, not just customers. Meaningful changes — the split, moderation rules, new fees of any kind — are put to the people who use it.
         </p>
       </div>
 
       <div className="community-content">
+        <section className="community-section community-channels">
+          {COMMUNITY_CHANNELS.map((c) => (
+            <div className="community-channel-card" key={c.title}>
+              <div className="community-channel-icon">{c.icon}</div>
+              <div>
+                <h2>{c.title}</h2>
+                <p>{c.body}</p>
+              </div>
+            </div>
+          ))}
+        </section>
+
         <section className="community-section">
           <div className="community-section-head">
             <span className="community-eyebrow">Vote &amp; suggest</span>
@@ -98,9 +118,15 @@ export default async function CommunityPage() {
       <style>{`
         .community-page { max-width: 720px; margin: 0 auto; padding: 32px 0 100px; }
         .community-hero { padding: 0 20px; margin-bottom: 32px; }
+        .community-page-badge { display: inline-block; font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent, #ff5029); border: 1px solid rgba(255,80,41,.3); background: rgba(255,80,41,.07); border-radius: 999px; padding: 5px 13px; margin-bottom: 14px; }
         .community-hero h1 { font-family: var(--font-display); font-size: clamp(2rem, 6vw, 2.6rem); font-weight: 800; letter-spacing: -.02em; color: var(--ink); margin: 0 0 10px; }
         .community-lede { font-size: 15px; line-height: 1.6; color: var(--ink-a70); margin: 0; max-width: 56ch; }
         .community-content { padding: 0 20px; display: flex; flex-direction: column; gap: 44px; }
+        .community-channels { display: flex; flex-direction: column; gap: 12px; }
+        .community-channel-card { display: flex; gap: 16px; align-items: flex-start; background: var(--bg-2, #100d09); border: 1px solid var(--hair-70); border-radius: 14px; padding: 20px 22px; }
+        .community-channel-icon { font-size: 1.5rem; flex-shrink: 0; }
+        .community-channel-card h2 { font-family: var(--font-display); font-weight: 800; font-size: 1.02rem; color: var(--ink); margin: 0 0 6px; }
+        .community-channel-card p { font-size: .88rem; color: var(--ink-a70); line-height: 1.6; margin: 0; }
         .community-section-head { margin-bottom: 16px; }
         .community-eyebrow { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; color: var(--accent, #ff5029); letter-spacing: .14em; }
         .community-section-head h2 { font-family: var(--font-display); font-size: 22px; font-weight: 800; letter-spacing: -.01em; color: var(--ink); margin: 6px 0 0; }

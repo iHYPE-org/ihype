@@ -34,7 +34,19 @@ export default async function TransparencyPage() {
   return (
     <div className="lp-wrap">
       <section className="lp-hero" style={{ paddingBottom: '20px' }}>
-        <p className="lp-hype-eyebrow">LIVE STATS · UPDATED IN REAL TIME</p>
+        <p className="lp-hype-eyebrow" style={{ color: '#ffb84a' }}>
+          <span
+            style={{
+              display: 'inline-block',
+              width: 7,
+              height: 7,
+              borderRadius: '50%',
+              background: '#ffb84a',
+              marginRight: 8,
+            }}
+          />
+          LIVE STATS · UPDATED IN REAL TIME
+        </p>
         <h1 className="lp-hero-h" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)' }}>Transparency report</h1>
         <p className="lp-hero-sub">
           Every dollar of ticket revenue goes directly to artists and venues. Here&apos;s the proof.
@@ -53,33 +65,37 @@ export default async function TransparencyPage() {
 
       {/* How this works */}
       <section className="lp-hype-explainer">
-        <p className="lp-hype-eyebrow">HOW IT WORKS</p>
+        <p className="lp-hype-eyebrow" style={{ color: '#ff5029' }}>HOW IT WORKS</p>
         <h2 className="lp-section-head">The full picture</h2>
         <div className="lp-reason-grid" style={{ marginTop: '20px' }}>
           {[
             {
               icon: '◇',
+              c: '#ff5029',
               head: 'Tickets',
-              body: 'Tickets are sold at face value set by the artist or venue. iHYPE charges 0% on every transaction. Settlement goes directly to the organiser.',
+              body: 'Tickets are sold at face value set by the artist or venue. iHYPE charges 0% on every transaction. Settlement goes directly to the organiser — only the card-processing fee (2.9% + $0.30, at cost) sits above face value.',
             },
             {
               icon: '◐',
+              c: '#ff3e9a',
               head: 'Hype',
               body: 'Listening to a track all the way through, or manually hyping an artist, registers a Hype. It is a demand signal — no money changes hands and iHYPE earns nothing from it.',
             },
             {
               icon: '◉',
+              c: '#22e5d4',
               head: 'Radio',
               body: 'Live and recorded radio shows are free for all hosts on the platform. There is no tier that unlocks hosting; every DJ and promoter gets the same tools.',
             },
             {
               icon: '♡',
+              c: '#b983ff',
               head: 'Data',
               body: 'iHYPE does not sell, license, or monetise listener data. Analytics are visible only to the artist or venue they belong to.',
             },
           ].map((r) => (
             <div key={r.icon} className="lp-reason-card">
-              <div className="lp-reason-icon">{r.icon}</div>
+              <div className="lp-reason-icon" style={{ color: r.c }}>{r.icon}</div>
               <h3 className="lp-reason-head">{r.head}</h3>
               <p className="lp-reason-body">{r.body}</p>
             </div>

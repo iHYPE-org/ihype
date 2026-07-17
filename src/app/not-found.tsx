@@ -33,14 +33,14 @@ export default function NotFound() {
       <div style={{
         fontFamily: "var(--font-display, 'Syne', sans-serif)",
         fontWeight: 800,
-        fontSize: '5rem',
+        fontSize: '3rem',
         letterSpacing: '-0.05em',
         lineHeight: 0.85,
-        color: 'var(--bg3, #1a1611)',
-        WebkitTextStroke: '2px var(--hair-80)',
-        marginBottom: 16,
+        color: 'var(--accent, #ff5029)',
+        marginBottom: 20,
+        animation: 'notFoundGlitch 2.4s infinite',
       }}>
-        404
+        4·0·4
       </div>
       <h1 style={{
         fontFamily: "var(--font-display, 'Syne', sans-serif)",
@@ -50,10 +50,10 @@ export default function NotFound() {
         lineHeight: 1.1,
         margin: '0 0 12px',
       }}>
-        This page doesn&apos;t exist.
+        This page skipped soundcheck.
       </h1>
       <p style={{ color: 'var(--ink-2, #9e9080)', marginBottom: 24, maxWidth: 400, lineHeight: 1.7, fontSize: '0.9rem' }}>
-        The link may be broken or the page may have moved. iHYPE still takes nothing, though.
+        The page you&apos;re looking for doesn&apos;t exist, moved, or was never booked in the first place.
       </p>
       <Link href="/" style={{
         background: 'var(--accent, #ff5029)',
@@ -67,8 +67,16 @@ export default function NotFound() {
         letterSpacing: '-0.01em',
         boxShadow: '0 4px 20px rgba(255,80,41,0.3)',
       }}>
-        Back to home →
+        Back to the scene →
       </Link>
+      <style>{`
+        @keyframes notFoundGlitch {
+          0%, 92%, 100% { transform: translate(0); }
+          93% { transform: translate(-2px, 1px); }
+          95% { transform: translate(2px, -1px); }
+          97% { transform: translate(-1px, 0); }
+        }
+      `}</style>
       <div style={{
         height: 3,
         width: 160,

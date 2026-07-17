@@ -1,4 +1,4 @@
-/* @ds-bundle: {"format":3,"namespace":"IHYPEDesignSystem_39bcce","components":[{"name":"Avatar","sourcePath":"components/core/Avatar.jsx"},{"name":"Badge","sourcePath":"components/core/Badge.jsx"},{"name":"Button","sourcePath":"components/core/Button.jsx"},{"name":"Card","sourcePath":"components/core/Card.jsx"},{"name":"Checkbox","sourcePath":"components/core/Checkbox.jsx"},{"name":"Chip","sourcePath":"components/core/Chip.jsx"},{"name":"Dialog","sourcePath":"components/core/Dialog.jsx"},{"name":"Eyebrow","sourcePath":"components/core/Eyebrow.jsx"},{"name":"Icon","sourcePath":"components/core/Icon.jsx"},{"name":"Input","sourcePath":"components/core/Input.jsx"},{"name":"ProgressBar","sourcePath":"components/core/ProgressBar.jsx"},{"name":"Radio","sourcePath":"components/core/Radio.jsx"},{"name":"Select","sourcePath":"components/core/Select.jsx"},{"name":"Skeleton","sourcePath":"components/core/Skeleton.jsx"},{"name":"SkeletonText","sourcePath":"components/core/Skeleton.jsx"},{"name":"Tabs","sourcePath":"components/core/Tabs.jsx"},{"name":"Toast","sourcePath":"components/core/Toast.jsx"},{"name":"Toggle","sourcePath":"components/core/Toggle.jsx"}],"sourceHashes":{"beta/demo-walkthrough.js":"1cbac949e61b","components/core/Avatar.jsx":"9114ab49e476","components/core/Badge.jsx":"8ac3a93994c0","components/core/Button.jsx":"c0c559dc8c3f","components/core/Card.jsx":"5c24339f964a","components/core/Checkbox.jsx":"397dd07298da","components/core/Chip.jsx":"62b091127312","components/core/Dialog.jsx":"897b10b716e0","components/core/Eyebrow.jsx":"5b899d64163f","components/core/Icon.jsx":"f1e354f0e36d","components/core/Input.jsx":"4175b7acb4cf","components/core/ProgressBar.jsx":"b76d9c275901","components/core/Radio.jsx":"421158deaeeb","components/core/Select.jsx":"4f1ab6a7f9d1","components/core/Skeleton.jsx":"6aaed5c0fac3","components/core/Tabs.jsx":"c40de05261d4","components/core/Toast.jsx":"adb69bdb19cf","components/core/Toggle.jsx":"2f0b6b45dfb9","engineering/sw.js":"89c7c520112f","lib/api.js":"f5aaa06abe55","lib/db.js":"b5df8464df06","sw.js":"89c7c520112f","ui_kits/fan-app/EventsTab.jsx":"b43fa16eb54a","ui_kits/fan-app/ListenTab.jsx":"15827f85351a","ui_kits/fan-app/MoreSheets.jsx":"0031eb761eb8","ui_kits/fan-app/PagesTab.jsx":"03fdf2710b80","ui_kits/fan-app/RadioShowCreator.jsx":"2858932604a6","ui_kits/fan-app/Seeds.jsx":"ef62befd6988","ui_kits/fan-app/Sheets.jsx":"ceda54ed26a0","ui_kits/fan-app/Shell.jsx":"f2565a216f86","ui_kits/fan-app/data.js":"1d3abf807044","ui_kits/ops/ops.jsx":"959d989edde3"},"inlinedExternals":[],"unexposedExports":[]} */
+/* @ds-bundle: {"format":4,"namespace":"IHYPEDesignSystem_39bcce","components":[{"name":"Avatar","sourcePath":"components/core/Avatar.jsx"},{"name":"Badge","sourcePath":"components/core/Badge.jsx"},{"name":"Button","sourcePath":"components/core/Button.jsx"},{"name":"Card","sourcePath":"components/core/Card.jsx"},{"name":"Checkbox","sourcePath":"components/core/Checkbox.jsx"},{"name":"Chip","sourcePath":"components/core/Chip.jsx"},{"name":"Dialog","sourcePath":"components/core/Dialog.jsx"},{"name":"Eyebrow","sourcePath":"components/core/Eyebrow.jsx"},{"name":"Icon","sourcePath":"components/core/Icon.jsx"},{"name":"Input","sourcePath":"components/core/Input.jsx"},{"name":"ProgressBar","sourcePath":"components/core/ProgressBar.jsx"},{"name":"Radio","sourcePath":"components/core/Radio.jsx"},{"name":"Select","sourcePath":"components/core/Select.jsx"},{"name":"Skeleton","sourcePath":"components/core/Skeleton.jsx"},{"name":"SkeletonText","sourcePath":"components/core/Skeleton.jsx"},{"name":"Tabs","sourcePath":"components/core/Tabs.jsx"},{"name":"Toast","sourcePath":"components/core/Toast.jsx"},{"name":"Toggle","sourcePath":"components/core/Toggle.jsx"}],"sourceHashes":{"beta/demo-walkthrough.js":"9ece8039b673","components/core/Avatar.jsx":"9114ab49e476","components/core/Badge.jsx":"8ac3a93994c0","components/core/Button.jsx":"c0c559dc8c3f","components/core/Card.jsx":"5c24339f964a","components/core/Checkbox.jsx":"397dd07298da","components/core/Chip.jsx":"62b091127312","components/core/Dialog.jsx":"897b10b716e0","components/core/Eyebrow.jsx":"5b899d64163f","components/core/Icon.jsx":"f1e354f0e36d","components/core/Input.jsx":"4175b7acb4cf","components/core/ProgressBar.jsx":"b76d9c275901","components/core/Radio.jsx":"421158deaeeb","components/core/Select.jsx":"4f1ab6a7f9d1","components/core/Skeleton.jsx":"6aaed5c0fac3","components/core/Tabs.jsx":"c40de05261d4","components/core/Toast.jsx":"adb69bdb19cf","components/core/Toggle.jsx":"2f0b6b45dfb9","engineering/sw.js":"89c7c520112f","lib/api.js":"f5aaa06abe55","lib/db.js":"b5df8464df06","lib/hydrate.js":"d51e0f23ce1f","sw.js":"89c7c520112f","ui_kits/fan-app/EventsTab.jsx":"fb76c9d12f41","ui_kits/fan-app/ListenTab.jsx":"15827f85351a","ui_kits/fan-app/MoreSheets.jsx":"0031eb761eb8","ui_kits/fan-app/PagesTab.jsx":"447b7d406195","ui_kits/fan-app/RadioShowCreator.jsx":"2858932604a6","ui_kits/fan-app/Seeds.jsx":"ef62befd6988","ui_kits/fan-app/Sheets.jsx":"2f4ea6a088ce","ui_kits/fan-app/Shell.jsx":"ef73835b875e","ui_kits/fan-app/data.js":"67b419eeab91","ui_kits/ops/ops.jsx":"959d989edde3"},"inlinedExternals":[],"unexposedExports":[]} */
 
 (() => {
 
@@ -56,7 +56,7 @@ try { (() => {
   const STEPS = [{
     label: 'Welcome',
     title: 'iHYPE in 90 seconds',
-    body: 'Artist-owned live music. Fans hype who they love, buy tickets direct, and earn by promoting — with 45% of every ticket locked to the artist. Let’s walk the app.',
+    body: 'Artist-owned live music. Fans hype who they love, buy tickets direct, and earn by promoting — with 70% of every ticket locked to the artist. Let’s walk the app.',
     dur: 6500,
     run() {
       call('closeIHYPESheets');
@@ -85,7 +85,7 @@ try { (() => {
   }, {
     label: 'Events',
     title: 'Tickets, direct from the artist',
-    body: 'No scalper markup, no 30% fees. Every event ships with a frozen charter — 45% to the artist, locked the moment tickets go on sale.',
+    body: 'No scalper markup, no 30% fees. Every event ships with a frozen charter — 70% to the artist, locked the moment tickets go on sale.',
     dur: 7000,
     run() {
       call('closeIHYPESheets');
@@ -105,7 +105,7 @@ try { (() => {
   }, {
     label: 'Earn',
     title: 'Promote a show, earn a cut',
-    body: 'Any fan or DJ can share a referral link and earn up to 10% of the gate they drive — paid out of the platform slice, never the artist’s 45%.',
+    body: 'Any fan or DJ can share a referral link and earn up to 10% of the gate they drive — paid from its own dedicated 10% slice — iHYPE takes 0%.',
     dur: 7500,
     run() {
       call('closeIHYPESheets');
@@ -124,7 +124,7 @@ try { (() => {
   }, {
     label: 'Join the beta',
     title: 'That’s iHYPE.',
-    body: 'Built for desktop, mobile web, iOS, and Android from one codebase. Closed beta is live — join at hello@ihype.app. Replay the tour anytime.',
+    body: 'Built for desktop, mobile web, iOS, and Android from one codebase. Closed beta is live — join at admin@ihype.org. Replay the tour anytime.',
     dur: 99999,
     run() {
       call('closeIHYPESheets');
@@ -2422,6 +2422,120 @@ try { (() => {
 })();
 })(); } catch (e) { __ds_ns.__errors.push({ path: "lib/db.js", error: String((e && e.message) || e) }); }
 
+// lib/hydrate.js
+try { (() => {
+/**
+ * iHYPE Hydration Layer — lib/hydrate.js
+ * Load AFTER lib/api.js and data.js.
+ *
+ * MOCK mode (default): does nothing — window.IHYPE_DATA from data.js stands.
+ * REAL mode (window.IHYPE_API_BASE set): fetches live data via IHYPE_API,
+ * maps API rows into the IHYPE_DATA shape the UI reads, then dispatches
+ * 'ihype:data' so the shell re-renders. Components stay untouched.
+ *
+ * Also bridges WRITES: hype sends, ticket purchases, referral mints go
+ * through IHYPE_API in real mode (fire-and-forget with optimistic UI).
+ */
+(function () {
+  'use strict';
+
+  const REAL = () => !!window.IHYPE_API_BASE;
+
+  /* ── row mappers: API schema → IHYPE_DATA shape ─────────────────── */
+  const mapEvent = e => ({
+    id: e.id,
+    artist: e.artist_name || e.artist_id,
+    title: e.title,
+    venue: e.venue_name || '',
+    city: e.city,
+    date: e.starts_at ? new Date(e.starts_at).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    }) : '',
+    price: Math.round((e.price_cents || 0) / 100),
+    status: e.status === 'live' ? 'LIVE' : (e.status || '').toUpperCase(),
+    tint: e.tint || '#ff5029'
+  });
+  const mapTrack = t => ({
+    id: t.id,
+    artist: t.artist_name || t.artist_id,
+    track: t.title,
+    dur: t.duration_s,
+    tint: t.tint || '#ff3e9a',
+    freeUse: !!t.free_use
+  });
+  async function hydrate() {
+    if (!REAL()) return;
+    const api = window.IHYPE_API;
+    if (!api) return console.error('hydrate.js: IHYPE_API missing — load lib/api.js first');
+    const D = window.IHYPE_DATA = window.IHYPE_DATA || {};
+    const prefs = window.IHYPE_USER_PREFS || {};
+    const results = await Promise.allSettled([api.feed.events({
+      city: prefs.city,
+      scope: 'local'
+    }), api.feed.listen({
+      city: prefs.city,
+      genres: (prefs.genres || []).join(',')
+    }), api.feed.hypeChart({
+      window: 'week'
+    }), api.studio.library({
+      free_use: true
+    }), api.ticketing.myTickets(), api.referrals.myEarnings()]);
+    const [events, listen, chart, lib, tickets, refs] = results.map(r => r.status === 'fulfilled' ? r.value : null);
+    if (events) D.shows = (events.events || events).map(mapEvent);
+    if (listen) {
+      if (listen.seeds) D.seeds = listen.seeds.map(mapTrack);
+      if (listen.tracks) D.tracks = listen.tracks.map(mapTrack);
+    }
+    if (chart) D.demand = (chart.artists || chart).map(a => ({
+      artist: a.display_name || a.handle,
+      trend: a.trend || '+0%'
+    }));
+    if (lib) D.freeUseLibrary = (lib.tracks || lib).map(mapTrack);
+    if (tickets) D.myTickets = tickets.tickets || tickets;
+    if (refs) D.myReferrals = refs.referrals || refs;
+    window.dispatchEvent(new CustomEvent('ihype:data'));
+  }
+
+  /* ── write bridges (optimistic; API call in real mode) ──────────── */
+  const orig = {};
+  function bridge(name, fn) {
+    Object.defineProperty(window, name, {
+      configurable: true,
+      get() {
+        return orig[name] ? wrap : undefined;
+      },
+      set(v) {
+        orig[name] = v;
+      }
+    });
+    const wrap = function () {
+      const r = orig[name] && orig[name].apply(this, arguments);
+      if (REAL()) {
+        try {
+          fn.apply(null, arguments);
+        } catch (e) {
+          console.warn('hydrate bridge', name, e);
+        }
+      }
+      return r;
+    };
+  }
+  // hype: components call window.IHYPE_SEND_HYPE(targetType, targetId) if defined
+  window.IHYPE_SEND_HYPE = function (type, id) {
+    if (REAL()) window.IHYPE_API.hype.send(type, id).catch(e => console.warn('hype sync failed', e));else window.IHYPE_API && window.IHYPE_API.hype.send(type, id).catch(() => {});
+  };
+  // purchase: components call window.IHYPE_PURCHASE(eventId, referralCode) if defined
+  window.IHYPE_PURCHASE = function (eventId, code) {
+    return window.IHYPE_API.ticketing.buyTicket(eventId, code);
+  };
+  void bridge; // reserved for wrapping legacy window.* handlers if needed
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hydrate);else hydrate();
+  window.IHYPE_HYDRATE = hydrate; // manual refresh: await IHYPE_HYDRATE()
+})();
+})(); } catch (e) { __ds_ns.__errors.push({ path: "lib/hydrate.js", error: String((e && e.message) || e) }); }
+
 // sw.js
 try { (() => {
 /**
@@ -2762,7 +2876,7 @@ function CheckoutSheet({
       textAlign: 'center',
       marginTop: 8
     }
-  }, "+ $0.00 fees \xB7 45% to artist \xB7 locked in charter"), /*#__PURE__*/React.createElement("p", {
+  }, "+ $0.00 fees \xB7 70% to artist \xB7 locked in charter"), /*#__PURE__*/React.createElement("p", {
     style: {
       fontFamily: 'var(--f-m)',
       fontSize: '.62rem',
@@ -6515,7 +6629,7 @@ function ArtistPage({
       color: '#ff5029'
     }, {
       label: 'Artist split',
-      v: '$1,766',
+      v: '$2,747',
       color: '#ff5029'
     }]
   }), /*#__PURE__*/React.createElement("div", {
@@ -6535,7 +6649,7 @@ function ArtistPage({
       color: 'var(--accent)',
       lineHeight: 1
     }
-  }, "45%"), /*#__PURE__*/React.createElement("div", {
+  }, "70%"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: 'var(--f-m)',
       fontSize: '.78rem',
@@ -6640,7 +6754,7 @@ function VenuePage({
       color: '#22e5d4',
       lineHeight: 1
     }
-  }, "45%"), /*#__PURE__*/React.createElement("div", {
+  }, "20%"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: 'var(--f-m)',
       fontSize: '.78rem',
@@ -6776,7 +6890,7 @@ function CreatePageFlow({
     id: 'Artist',
     icon: '🎤',
     tint: '#ff5029',
-    desc: '45% of every ticket, Tour Creator, media.'
+    desc: '70% of every ticket, Tour Creator, media.'
   }, {
     id: 'Venue',
     icon: '🏛️',
@@ -7011,7 +7125,7 @@ function CreatePageFlow({
       color: rf.tint,
       lineHeight: 1
     }
-  }, "45%"), /*#__PURE__*/React.createElement("div", {
+  }, role === 'Artist' ? '70%' : '20%'), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: 'var(--f-m)',
       fontSize: '.74rem',
@@ -7045,7 +7159,10 @@ function CreatePageFlow({
     }
   }, "Beta: this is a simulated publish. Real pages go live after verification.")));
 }
-function BrowsePages() {
+function DJPublicProfile({
+  dj,
+  onBack
+}) {
   const shows = [{
     id: 'rs1',
     title: 'Late Coast — Ep. 04',
@@ -7434,7 +7551,7 @@ function RoleSwitcherSheet({
     id: 'Artist',
     icon: '🎤',
     color: '#ff5029',
-    desc: '45% split + tour creator'
+    desc: '70% split + tour creator'
   }, {
     id: 'Venue',
     icon: '🏛️',
@@ -9625,7 +9742,7 @@ function TourCreatorSheet({
       color: 'var(--ink-3)',
       marginBottom: 18
     }
-  }, "Add shows. Each becomes an event with 45% split \u2014 automatic."), shows.map((sh, i) => /*#__PURE__*/React.createElement("div", {
+  }, "Add shows. Each becomes an event with 70% split \u2014 automatic."), shows.map((sh, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       padding: '1rem',
@@ -9713,7 +9830,7 @@ function TourCreatorSheet({
       fontSize: '.72rem',
       color: '#22e5d4'
     }
-  }, "\u2192 $", (sh.price * .45).toFixed(2), " artist")))), /*#__PURE__*/React.createElement("button", {
+  }, "\u2192 $", (sh.price * .70).toFixed(2), " artist")))), /*#__PURE__*/React.createElement("button", {
     onClick: add,
     style: {
       width: '100%',
@@ -10139,14 +10256,14 @@ function PostPurchaseMoment({
   })));
   if (!show) return null;
   const cells = [{
-    amt: '$8.10',
-    pct: '45%',
+    amt: '$12.60',
+    pct: '70%',
     who: 'Artist',
     color: '#ff5029',
     show: step >= 1
   }, {
-    amt: '$8.10',
-    pct: '45%',
+    amt: '$3.60',
+    pct: '20%',
     who: 'Venue',
     color: '#22e5d4',
     show: step >= 2
@@ -10161,6 +10278,12 @@ function PostPurchaseMoment({
     pct: '0%',
     who: 'iHYPE',
     color: '#22e5d4',
+    show: step >= 3
+  }, {
+    amt: '+$0.82',
+    pct: 'card fee',
+    who: 'Stripe (at cost)',
+    color: '#5a5048',
     show: step >= 3
   }];
   return /*#__PURE__*/React.createElement("div", {
@@ -11171,8 +11294,8 @@ const FAQ = [{
   q: 'Why is iHYPE free?',
   a: "Our founding charter prohibits iHYPE from taking a cut of ticket sales. It's structural — not a marketing choice."
 }, {
-  q: 'How does the 45/45/10 split work?',
-  a: "Every ticket: 45% to the artist, 45% to the venue, 10% to the promoter pool — split among everyone whose referral link drove a purchase."
+  q: 'How does the 70/20/10 split work?',
+  a: "Every ticket: 70% to the artist, 20% to the venue, 10% to the promoter pool — split among everyone whose referral link drove a purchase. iHYPE takes 0% — the only extra charge is the unavoidable card-processing fee (2.9% + $0.30; AMEX 3.5% + $0.30), passed through at cost."
 }, {
   q: 'How do I earn from referrals?',
   a: "Share any event link via the share button on an event card. When someone buys through your link, you earn your proportional share of the 10% promoter pool."
@@ -11296,7 +11419,7 @@ function ChangelogSheet({
   }, {
     v: '0.1.0-beta.4',
     d: 'Jun 20, 2026',
-    items: ['3-tab architecture: Listen · Events · Pages', 'Seeds swipe deck with gesture hint', 'Checkout with TM price comparison', 'Post-purchase 45/45/10 payout reveal', 'Notification primer after first ticket purchase']
+    items: ['3-tab architecture: Listen · Events · Pages', 'Seeds swipe deck with gesture hint', 'Checkout with TM price comparison', 'Post-purchase 70/20/10 payout reveal', 'Notification primer after first ticket purchase']
   }, {
     v: '0.1.0-beta.3',
     d: 'Jun 13, 2026',
@@ -13164,12 +13287,12 @@ const OB_ROLES = [{
   id: 'artist',
   label: 'Artist',
   icon: '🎸',
-  desc: 'Sell tickets direct. Keep 45%. No agents, no fees.'
+  desc: 'Sell tickets direct. Keep 70%. No agents, no fees.'
 }, {
   id: 'venue',
   label: 'Venue',
   icon: '🏟',
-  desc: 'Book from the demand radar. 45% guaranteed.'
+  desc: 'Book from the demand radar. 20% guaranteed.'
 }];
 function getPrefs() {
   try {
@@ -16247,7 +16370,7 @@ window.IHYPE_DATA = {
       icon: 'dollar',
       tone: '#22e5d4',
       title: 'Payout sent · $1,872',
-      body: 'Your 45% from The Echo cleared.',
+      body: 'Your 70% from The Echo cleared.',
       when: '3d',
       unread: false
     }],
@@ -16272,7 +16395,7 @@ window.IHYPE_DATA = {
       icon: 'dollar',
       tone: '#22e5d4',
       title: 'Payout sent · $1,872',
-      body: 'Your 45% from the Jun 20 show cleared.',
+      body: 'Your 70% from the Jun 20 show cleared.',
       when: '3d',
       unread: false
     }],

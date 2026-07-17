@@ -361,16 +361,16 @@ export default async function ShowDetailPage({
 
           {show.isTicketed && show.venuePayoutPercent !== null && show.artistPayoutPercent !== null && (
             <div style={{ display: 'flex', gap: 0, borderRadius: 10, overflow: 'hidden', marginTop: 24 }}>
-              <div style={{ flex: 1, padding: 16, textAlign: 'center', background: 'rgba(255,80,41,.15)' }}>
+              <div style={{ flex: Math.max(show.artistPayoutPercent, 1), padding: 16, textAlign: 'center', background: 'rgba(255,80,41,.15)' }}>
                 <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent)' }}>${(price * (show.artistPayoutPercent / 100)).toFixed(2)}</div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--accent)' }}>Artist · {show.artistPayoutPercent}%</div>
               </div>
-              <div style={{ flex: 1, padding: 16, textAlign: 'center', background: 'rgba(34,229,212,.15)' }}>
+              <div style={{ flex: Math.max(show.venuePayoutPercent, 1), padding: 16, textAlign: 'center', background: 'rgba(34,229,212,.15)' }}>
                 <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--venue)' }}>${(price * (show.venuePayoutPercent / 100)).toFixed(2)}</div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--venue)' }}>Venue · {show.venuePayoutPercent}%</div>
               </div>
               {show.promoterPayoutPercent > 0 && (
-                <div style={{ flex: 1, padding: 16, textAlign: 'center', background: 'rgba(255,62,154,.15)' }}>
+                <div style={{ flex: Math.max(show.promoterPayoutPercent, 1), padding: 16, textAlign: 'center', background: 'rgba(255,62,154,.15)' }}>
                   <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--promoter)' }}>${(price * (show.promoterPayoutPercent / 100)).toFixed(2)}</div>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--promoter)' }}>Promoters · {show.promoterPayoutPercent}%</div>
                 </div>
@@ -448,8 +448,8 @@ export default async function ShowDetailPage({
                       <tr><th>Tickets sold</th><td>{show.ticketsSoldCount}</td></tr>
                       <tr><th>Capacity</th><td>{show.ticketCapacity ?? 'Open'}</td></tr>
                       <tr><th>Gross sales</th><td>{formatCurrencyFromCents(show.ticketPriceCents * show.ticketsSoldCount)}</td></tr>
-                      <tr><th>Venue split</th><td>{show.venuePayoutPercent ?? 0}%</td></tr>
                       <tr><th>Artist split</th><td>{show.artistPayoutPercent ?? 0}%</td></tr>
+                      <tr><th>Venue split</th><td>{show.venuePayoutPercent ?? 0}%</td></tr>
                       <tr><th>Promoter pool</th><td>{show.promoterPayoutPercent}%</td></tr>
                       <tr><th>Event officially opens</th><td>{show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt) : 'Venue-controlled'}</td></tr>
                     </>

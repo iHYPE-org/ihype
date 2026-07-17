@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Charter" description="The charter page — 'We take nothing.' Animated 70/20/10 split bar, count-up numbers, scroll-reveal sections. Copy grounded in ihype.org/charter." -->
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: #0a0805; color: #f0ebe5; font-family: 'DM Sans', sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  a { color: inherit; text-decoration: none; }
+  @keyframes chGrow { from { flex-grow: 0.001; } }
+  @keyframes chRise { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+  @keyframes chGlow { 0%,100% { opacity: .5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.12); } }
+  @keyframes chShimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+  @keyframes chPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,80,41,.35); } 50% { box-shadow: 0 0 0 14px rgba(255,80,41,0); } }
+  .ch-reveal { opacity: 0; }
+  .ch-reveal.on { animation: chRise .8s cubic-bezier(.16,1,.3,1) forwards; }
+  .ch-seg { animation: chGrow 1.4s cubic-bezier(.16,1,.3,1) both; }
+</style>
+</helmet>
+
+<div style="max-width:680px;margin:0 auto;padding:90px 32px 120px;position:relative">
+  <div style="position:fixed;top:-250px;left:50%;transform:translateX(-50%);width:800px;height:600px;background:radial-gradient(circle,rgba(255,80,41,.13),transparent 60%);pointer-events:none;animation:chGlow 6s ease-in-out infinite"></div>
+
+  <div class="ch-reveal on" style="font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;color:#5a5048;position:relative">The iHYPE Charter</div>
+  <h1 class="ch-reveal on" style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(3rem,9vw,5.4rem);letter-spacing:-.045em;line-height:.95;margin:20px 0 14px;position:relative;animation-delay:.1s">We take<br><span style="background:linear-gradient(110deg,#ff5029 30%,#ff3e9a 50%,#ff5029 70%);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:chShimmer 4s linear infinite">nothing.</span></h1>
+  <p class="ch-reveal on" style="font-size:1.08rem;color:#9e9080;line-height:1.7;margin-bottom:56px;position:relative;animation-delay:.2s">iHYPE was incorporated with a single non-negotiable structural commitment: the platform takes nothing from ticket sales. Not a policy. A constraint. Changing it would require dissolving the company.</p>
+
+  <!-- Animated split bar -->
+  <div class="ch-reveal on" style="display:flex;height:14px;border-radius:999px;overflow:hidden;gap:4px;margin:0 0 26px;position:relative;animation-delay:.35s">
+    <div class="ch-seg" style="flex:70;background:linear-gradient(90deg,#ff5029,#ff6b47);border-radius:999px;animation-delay:.5s;animation-duration:1.6s"></div>
+    <div class="ch-seg" style="flex:20;background:#22e5d4;border-radius:999px;animation-delay:.9s"></div>
+    <div class="ch-seg" style="flex:10;background:#b983ff;border-radius:999px;animation-delay:1.2s"></div>
+  </div>
+  <p class="ch-reveal on" style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.5rem,4vw,2rem);letter-spacing:-.03em;line-height:1.25;margin-bottom:56px;position:relative;animation-delay:.5s">
+    <span data-count="70" style="color:#ff5029">0%</span> artist ·
+    <span data-count="20" style="color:#22e5d4">0%</span> venue ·
+    <span data-count="10" style="color:#b983ff">0%</span> promoters ·
+    <span style="color:#5a5048">0% iHYPE.</span>
+  </p>
+
+  <div class="ch-reveal" style="background:rgba(255,80,41,.06);border:1px solid rgba(255,80,41,.18);border-radius:16px;padding:24px 28px;margin-bottom:52px;position:relative">
+    <p style="font-family:'Instrument Serif',serif;font-style:italic;font-size:1.25rem;line-height:1.55;color:#f0ebe5">This is not a pricing strategy. It is a constraint. We built the business model around it, not the other way around.</p>
+  </div>
+
+  <div class="ch-reveal" style="position:relative">
+    <h2 style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.2rem;letter-spacing:-.02em;margin:0 0 12px;display:flex;align-items:center;gap:10px"><span style="width:8px;height:8px;border-radius:50%;background:#ff5029;animation:chPulse 2.4s infinite"></span>Why lock it in?</h2>
+    <p style="font-size:.98rem;color:#9e9080;line-height:1.8;margin-bottom:40px">Because every platform that started with good intentions eventually faced a board meeting where fees made sense. We wanted to make that conversation impossible. The charter is the answer to "what if the company needs revenue?" — the answer is: find another way. Not this.</p>
+  </div>
+
+  <div class="ch-reveal" style="position:relative">
+    <h2 style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.2rem;letter-spacing:-.02em;margin:0 0 12px;display:flex;align-items:center;gap:10px"><span style="width:8px;height:8px;border-radius:50%;background:#22e5d4"></span>What "locked in" means</h2>
+    <p style="font-size:.98rem;color:#9e9080;line-height:1.8;margin-bottom:40px">The 70/20/10 split is a condition of incorporation. Changing it would require dissolving the company and re-incorporating under a different structure. No board vote, no shareholder approval, no acquisition clause overrides it.</p>
+  </div>
+
+  <div class="ch-reveal" style="position:relative">
+    <h2 style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.2rem;letter-spacing:-.02em;margin:0 0 12px;display:flex;align-items:center;gap:10px"><span style="width:8px;height:8px;border-radius:50%;background:#ffb84a"></span>How iHYPE makes money</h2>
+    <p style="font-size:.98rem;color:#9e9080;line-height:1.8;margin-bottom:40px">iHYPE is funded entirely by advertising, the same way terrestrial radio has always worked — and those ads are restricted to music-related sources only, forever. None of it touches the ticket split. Tickets are processed directly through Stripe; the card-processing fee (2.9% + $0.30; AMEX 3.5% + $0.30) is the only charge above face value, passed through at cost.</p>
+  </div>
+
+  <div class="ch-reveal" style="position:relative">
+    <h2 style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.2rem;letter-spacing:-.02em;margin:0 0 12px;display:flex;align-items:center;gap:10px"><span style="width:8px;height:8px;border-radius:50%;background:#b983ff"></span>Promoters and the 10%</h2>
+    <p style="font-size:.98rem;color:#9e9080;line-height:1.8;margin-bottom:40px">The 10% promoter pool is distributed to everyone who shared a referral link that contributed to ticket sales for an event. Fans, DJs, artists — anyone can be a promoter. The split is calculated per-event at settlement.</p>
+  </div>
+
+  <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:48px 0">
+  <p class="ch-reveal" style="font-family:'JetBrains Mono',monospace;font-size:.74rem;color:#5a5048;line-height:1.9;position:relative">Questions about the charter: <a href="mailto:admin@ihype.org" style="color:#9e9080;border-bottom:1px solid rgba(158,144,128,.3)">admin@ihype.org</a><br>iHYPE Inc. · Founded Portland, ME · 2026 · <a href="https://ihype.org" style="color:#9e9080;border-bottom:1px solid rgba(158,144,128,.3)">ihype.org</a></p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() {
+    // Scroll reveals
+    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('on'); io.unobserve(e.target); } }), { threshold: .15 });
+    document.querySelectorAll('.ch-reveal:not(.on)').forEach(el => io.observe(el));
+    // Count-up split numbers
+    const t0 = performance.now();
+    const els = [...document.querySelectorAll('[data-count]')];
+    const dur = 1600, delay = 500;
+    const tick = (now) => {
+      const p = Math.min(1, Math.max(0, (now - t0 - delay) / dur));
+      const e = 1 - Math.pow(1 - p, 3);
+      els.forEach(el => { el.textContent = Math.round(e * (+el.dataset.count)) + '%'; });
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

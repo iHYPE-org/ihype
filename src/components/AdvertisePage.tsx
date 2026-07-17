@@ -896,7 +896,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
               iHYPE is run by one director and a lot of automation — so almost every dollar of ad spend <b style={{ fontFamily: 'DM Sans,sans-serif', fontStyle: 'normal', fontWeight: 600, color: '#ff5029' }}>goes back into the music</b>, not overhead.
             </p>
             <div style={{ borderTop: '1px solid var(--hair-70)' }}>
-              {[{ lb: 'To artists & payouts', w: '72%', color: '#ff5029', pct: '72%' }, { lb: 'Platform & hosting', w: '18%', color: 'var(--ink)', pct: '18%' }, { lb: 'Moderation & AI screen', w: '10%', color: '#9e9080', pct: '10%' }].map(r => (
+              {[{ lb: 'To artists & payouts', w: '72%', color: '#ff5029', pct: '72%' }, { lb: 'Platform & hosting', w: '18%', color: 'var(--ink)', pct: '18%' }, { lb: 'Moderation & AI', w: '10%', color: '#9e9080', pct: '10%' }].map(r => (
                 <div key={r.lb} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--hair-70)' }}>
                   <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#5a5048', width: 150 }}>{r.lb}</span>
                   <span style={{ flex: 1, height: 9, borderRadius: 99, background: 'var(--hair-70)', overflow: 'hidden' }}>

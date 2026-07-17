@@ -1025,6 +1025,13 @@ body:has(.standalone-page) .site-shell { padding-top: 0; }
   margin-bottom: 32px;
 }
 
+.authcard-box {
+  background: var(--bg2);
+  border: 1px solid var(--hair-90);
+  border-radius: 18px;
+  padding: 30px 28px;
+}
+
 .authcard-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1185,13 +1192,14 @@ fieldset.authcard-field { border: 0; padding: 0; }
   border: none;
   background: var(--accent);
   color: #fff;
-  border-radius: 10px;
+  border-radius: 999px;
   font-family: var(--font-display);
   font-weight: 800;
   font-size: 15px;
   cursor: pointer;
   transition: opacity 150ms;
   margin-top: 8px;
+  box-shadow: var(--shadow-glow);
 }
 .authcard-btn-primary:hover { opacity: .9; }
 .authcard-btn-primary:disabled { opacity: .6; cursor: default; }
@@ -1266,6 +1274,47 @@ fieldset.authcard-field { border: 0; padding: 0; }
   border-color: rgba(255,80,41,.3);
   background: rgba(255,80,41,.08);
 }
+
+.authcard-magic-sent { text-align: center; }
+.authcard-icon-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 16px;
+  font-size: 1.3rem;
+}
+.authcard-icon-badge-teal {
+  background: rgba(34,229,212,.1);
+  border: 1px solid rgba(34,229,212,.35);
+}
+.authcard-magic-heading {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.3rem;
+  letter-spacing: -.02em;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+.authcard-magic-body {
+  font-size: .88rem;
+  color: var(--ink-3);
+  line-height: 1.6;
+}
+.authcard-magic-body b { color: var(--ink); }
+.authcard-resend-btn {
+  margin-top: 20px;
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  letter-spacing: .08em;
+  background: transparent;
+  border: none;
+  color: var(--ink-3);
+  cursor: pointer;
+  text-decoration: underline;
+}
+.authcard-resend-btn:disabled { opacity: .6; cursor: default; }
 
 .authcard-passkey-pending {
   display: grid;

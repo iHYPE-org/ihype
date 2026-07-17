@@ -274,7 +274,14 @@ export function RegisterScreen({
           <p className="meta">You can add a passkey later from Settings after signing in.</p>
         </div>
       ) : step === 'magic-link-sent' ? (
-        <p className="authcard-status">Check your inbox for a sign-in link (expires in 15 min). You can close this tab.</p>
+        <div className="authcard-magic-sent">
+          <div aria-hidden="true" className="authcard-icon-badge authcard-icon-badge-teal">✉️</div>
+          <h2 className="authcard-magic-heading">Check your email</h2>
+          <p className="authcard-magic-body">We sent a sign-in link to <b>{email.trim()}</b>. It works once and expires in 15 minutes.</p>
+          <button className="authcard-resend-btn" disabled={isSubmitting} onClick={useMagicLinkInstead} type="button">
+            {isSubmitting ? 'Resending…' : 'Resend link'}
+          </button>
+        </div>
       ) : (
         <form onSubmit={createAccount}>
           <fieldset className="authcard-field">
@@ -441,6 +448,8 @@ export function RegisterScreen({
 
       {status ? <p className="authcard-status">{status}</p> : null}
       {error ? <p className="authcard-status authcard-status-error">{error}</p> : null}
+
+      <p className="authcard-fine">Already have an account? <Link href="/login">Sign in</Link></p>
     </AuthCardShell>
   );
 }

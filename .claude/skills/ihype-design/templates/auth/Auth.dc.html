@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Auth" description="Auth screens — Sign in, Register, Magic-link sent, Invite landing. Pick via `mode` tweak. Grounded in src/components/AuthScreens.tsx usage." -->
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}body{background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh}a{color:#ff5029;text-decoration:none}
+@keyframes auIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes auPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}</style>
+</helmet>
+
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 24px;background:radial-gradient(circle at 50% 0%,#1f0e07,#0a0805 60%)">
+  <div style="width:100%;max-width:400px;animation:auIn .6s cubic-bezier(.16,1,.3,1) both">
+    <div style="text-align:center;margin-bottom:30px">
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2rem;letter-spacing:-.05em;color:#ff5029">iHYPE</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:#5a5048;margin-top:6px">Artist-owned live music</div>
+    </div>
+
+    <div style="background:#100d09;border:1px solid rgba(255,255,255,.09);border-radius:18px;padding:30px 28px">
+      <sc-if value="{{ isInvite }}" hint-placeholder-val="{{ false }}">
+        <div style="text-align:center;margin-bottom:22px">
+          <div style="width:52px;height:52px;border-radius:50%;background:rgba(255,80,41,.12);border:1px solid rgba(255,80,41,.35);display:grid;place-items:center;margin:0 auto 14px;font-size:1.3rem;animation:auPulse 2.4s infinite">🎟️</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.25rem;letter-spacing:-.02em">Nyla invited you</div>
+          <div style="font-size:.86rem;color:#9e9080;margin-top:6px;line-height:1.55">You've been invited to the iHYPE closed beta with code <span style="font-family:'JetBrains Mono',monospace;color:#ffb84a">GLASSLIGHT</span></div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isMagic }}" hint-placeholder-val="{{ false }}">
+        <div style="text-align:center">
+          <div style="width:52px;height:52px;border-radius:50%;background:rgba(34,229,212,.1);border:1px solid rgba(34,229,212,.35);display:grid;place-items:center;margin:0 auto 16px;font-size:1.3rem">✉️</div>
+          <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:-.02em;margin-bottom:8px">Check your email</h1>
+          <p style="font-size:.88rem;color:#9e9080;line-height:1.6">We sent a sign-in link to <b style="color:#f0ebe5">jess@example.com</b>. It works once and expires in 15 minutes.</p>
+          <button style="margin-top:20px;font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.08em;background:transparent;border:none;color:#9e9080;cursor:pointer;text-decoration:underline">Resend link</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ showForm }}" hint-placeholder-val="{{ true }}">
+        <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:-.02em;margin-bottom:4px">{{ heading }}</h1>
+        <p style="font-size:.86rem;color:#9e9080;margin-bottom:22px;line-height:1.55">{{ subheading }}</p>
+        <sc-if value="{{ isRegister }}" hint-placeholder-val="{{ false }}">
+          <label style="display:block;font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:#9e9080;margin-bottom:14px">Display name<input placeholder="How the scene knows you" style="display:block;width:100%;margin-top:7px;background:#0a0805;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:13px 14px;color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:.92rem;outline:none"></input></label>
+        </sc-if>
+        <label style="display:block;font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:#9e9080;margin-bottom:18px">Email<input placeholder="you@example.com" type="email" style="display:block;width:100%;margin-top:7px;background:#0a0805;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:13px 14px;color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:.92rem;outline:none"></input></label>
+        <button onClick="{{ submit }}" style="width:100%;font-family:'Syne',sans-serif;font-weight:800;font-size:.94rem;background:#ff5029;color:#fff;border:none;padding:14px;border-radius:999px;cursor:pointer;box-shadow:0 6px 24px rgba(255,80,41,.3)">{{ cta }}</button>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:.62rem;color:#5a5048;text-align:center;margin-top:14px;line-height:1.7">No passwords — we email you a one-time sign-in link.</div>
+      </sc-if>
+    </div>
+
+    <div style="text-align:center;margin-top:20px;font-size:.84rem;color:#9e9080">{{ footerText }} <a href="#" onClick="{{ toggleMode }}">{{ footerLink }}</a></div>
+    <div style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:.6rem;color:#3a342e;margin-top:24px;letter-spacing:.08em">70/20/10 · 0% platform fees · <a href="#" style="color:#5a5048">The charter</a></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;480px&quot;,&quot;height&quot;:&quot;640px&quot;},&quot;mode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;login&quot;,&quot;tsType&quot;:&quot;'login'|'register'|'magic'|'invite'&quot;,&quot;options&quot;:[&quot;login&quot;,&quot;register&quot;,&quot;magic&quot;,&quot;invite&quot;],&quot;section&quot;:&quot;Screen&quot;}}">
+class Component extends DCLogic {
+  state = { mode: null };
+  renderVals() {
+    const mode = this.state.mode ?? this.props.mode ?? 'login';
+    const isRegister = mode === 'register' || mode === 'invite';
+    return {
+      isInvite: mode === 'invite',
+      isMagic: mode === 'magic',
+      showForm: mode !== 'magic',
+      isRegister,
+      heading: mode === 'invite' ? 'Claim your spot' : isRegister ? 'Join iHYPE' : 'Sign in',
+      subheading: mode === 'invite' ? 'Create your account to accept the invite — free, no card required.' : isRegister ? 'Free for fans, artists, DJs, and venues. Verification unlocks the 70% split.' : 'Welcome back to the scene.',
+      cta: isRegister ? 'Create account →' : 'Email me a sign-in link →',
+      submit: () => this.setState({ mode: 'magic' }),
+      footerText: isRegister ? 'Already have an account?' : 'New to iHYPE?',
+      footerLink: isRegister ? 'Sign in' : 'Join free',
+      toggleMode: (e) => { e.preventDefault(); this.setState({ mode: isRegister ? 'login' : 'register' }); },
+    };
+  }
+}
+</script>
+</body>
+</html>

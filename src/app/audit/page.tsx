@@ -75,8 +75,15 @@ export default async function AuditPage() {
 
   return (
     <div className="lp-wrap">
+      <style>{`
+        @keyframes auditPulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+        .audit-pulse-dot {
+          display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+          background: #ffb84a; margin-right: 8px; animation: auditPulse 1.4s infinite;
+        }
+      `}</style>
       <section className="lp-hero" style={{ paddingBottom: '20px' }}>
-        <p className="lp-hype-eyebrow">LIVE STATS · UPDATED IN REAL TIME</p>
+        <p className="lp-hype-eyebrow" style={{ color: '#ffb84a' }}><span className="audit-pulse-dot" />LIVE STATS · UPDATED IN REAL TIME</p>
         <h1 className="lp-hero-h" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)' }}>Trust &amp; safety report</h1>
         <p className="lp-hero-sub">
           Every upload is screened by AI before it goes live, and every user report is tracked to a resolution.
@@ -95,9 +102,9 @@ export default async function AuditPage() {
 
       {categoryRows.length > 0 && (
         <section className="lp-hype-explainer">
-          <p className="lp-hype-eyebrow">BY CATEGORY</p>
+          <p className="lp-hype-eyebrow" style={{ color: '#ff5029' }}>BY CATEGORY</p>
           <h2 className="lp-section-head">What gets reported</h2>
-          <div className="lp-reason-grid" style={{ marginTop: '20px' }}>
+          <div className="lp-reason-grid" style={{ marginTop: '20px', gridTemplateColumns: 'repeat(3, 1fr)' }}>
             {categoryRows.map((r) => (
               <div key={r.label} className="lp-reason-card">
                 <h3 className="lp-reason-head">{r.count.toLocaleString()}</h3>
@@ -111,11 +118,14 @@ export default async function AuditPage() {
               </div>
             )}
           </div>
+          <p style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: '11px', color: '#5a5048', marginTop: '14px', lineHeight: 1.7 }}>
+            Categories with fewer than 5 reports are folded into &quot;Other&quot; — a small count can never identify a specific user or piece of content.
+          </p>
         </section>
       )}
 
       <section className="lp-hype-explainer">
-        <p className="lp-hype-eyebrow">RADIO ADS</p>
+        <p className="lp-hype-eyebrow" style={{ color: '#ff3e9a' }}>RADIO ADS</p>
         <h2 className="lp-section-head">Ad vetting</h2>
         <p className="lp-hero-sub" style={{ margin: '8px 0 20px' }}>
           iHYPE only ever runs radio-style audio ad spots — no banners, no visual placements. Every campaign is screened by AI before it can run.
@@ -131,7 +141,7 @@ export default async function AuditPage() {
       </section>
 
       <section className="lp-hype-explainer">
-        <p className="lp-hype-eyebrow">OWNERSHIP VERIFICATION</p>
+        <p className="lp-hype-eyebrow" style={{ color: '#22e5d4' }}>OWNERSHIP VERIFICATION</p>
         <h2 className="lp-section-head">Verified profiles</h2>
         <div className="lp-reason-grid" style={{ marginTop: '20px' }}>
           <div className="lp-reason-card">
@@ -147,33 +157,37 @@ export default async function AuditPage() {
 
       {/* How this works */}
       <section className="lp-hype-explainer">
-        <p className="lp-hype-eyebrow">HOW IT WORKS</p>
+        <p className="lp-hype-eyebrow" style={{ color: '#ff5029' }}>HOW IT WORKS</p>
         <h2 className="lp-section-head">The full picture</h2>
         <div className="lp-reason-grid" style={{ marginTop: '20px' }}>
           {[
             {
               icon: '◈',
+              c: '#ff5029',
               head: 'AI screening on upload',
               body: 'Every track, avatar, hero, and gallery image is screened automatically the moment it\'s uploaded, and every radio ad campaign\'s copy and audio (transcribed, then screened) are AI-vetted against our music-industry-only policy — before any of it can go live.',
             },
             {
               icon: '⬟',
+              c: '#b983ff',
               head: 'Human review queue',
               body: 'Anything the AI flags, or that a user reports, lands in a queue an admin reviews by hand. Nothing is auto-removed without a report existing.',
             },
             {
               icon: '◎',
+              c: '#22e5d4',
               head: 'No content, no PII',
               body: 'This page shows counts only. Categories with fewer than five reports are folded into "Other" so a small number can never identify a specific user or piece of content.',
             },
             {
               icon: '⚙',
+              c: '#ff3e9a',
               head: 'Fail-open by design',
               body: 'If the AI screening service is ever unavailable, uploads still go through — they just skip the automated check. Nothing on iHYPE is blocked by an AI outage.',
             },
           ].map((r) => (
             <div key={r.icon} className="lp-reason-card">
-              <div className="lp-reason-icon">{r.icon}</div>
+              <div className="lp-reason-icon" style={{ color: r.c }}>{r.icon}</div>
               <h3 className="lp-reason-head">{r.head}</h3>
               <p className="lp-reason-body">{r.body}</p>
             </div>
