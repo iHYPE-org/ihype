@@ -14,14 +14,25 @@ interface Prefs {
 
 const ROLE_COLOR: Record<string, string> = { ARTIST: '#ff5029', DJ: '#ff3e9a', VENUE: '#22e5d4' };
 
-function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
   return (
-    <label className="settings-toggle">
-      <input checked={checked} onChange={(e) => onChange(e.target.checked)} type="checkbox" />
+    <label className="settings-toggle" style={disabled ? { opacity: 0.5, pointerEvents: 'none' } : undefined}>
+      <input checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} type="checkbox" />
       <div className="settings-toggle-track" />
       <div className="settings-toggle-thumb" />
     </label>
   );
+}
+
+// Converts a URL-safe base64 VAPID public key into the Uint8Array shape
+// PushManager.subscribe's applicationServerKey expects.
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
 }
 
 function Row({ label, detail, action }: { label: string; detail: string; action?: React.ReactNode }) {
@@ -50,6 +61,10 @@ export default function SettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [detaching, setDetaching] = useState(false);
+  const [pushSupported, setPushSupported] = useState(false);
+  const [pushSubscribed, setPushSubscribed] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushError, setPushError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -66,6 +81,65 @@ export default function SettingsPage() {
       })
       .catch(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    setPushSupported(true);
+    navigator.serviceWorker.ready
+      .then((reg) => reg.pushManager.getSubscription())
+      .then((sub) => setPushSubscribed(Boolean(sub)))
+      .catch(() => {});
+  }, []);
+
+  async function togglePush(next: boolean) {
+    setPushBusy(true);
+    setPushError(null);
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      if (next) {
+        if (Notification.permission === 'denied') {
+          throw new Error('Notifications are blocked for this site in your browser settings.');
+        }
+        const permission = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+        if (permission !== 'granted') throw new Error('Permission was not granted.');
+
+        const keyRes = await fetch('/api/push/vapid-key');
+        const { key } = await keyRes.json();
+        if (!key) throw new Error('Push notifications are not configured yet.');
+
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(key) as BufferSource,
+        });
+        const json = sub.toJSON() as { endpoint: string; keys?: { p256dh?: string; auth?: string } };
+        if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) throw new Error('Subscription was incomplete.');
+
+        const res = await fetch('/api/push/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: json.endpoint, keys: { p256dh: json.keys.p256dh, auth: json.keys.auth } }),
+        });
+        if (!res.ok) throw new Error('Could not save your subscription.');
+        setPushSubscribed(true);
+      } else {
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) {
+          const endpoint = sub.endpoint;
+          await sub.unsubscribe();
+          await fetch('/api/push/unsubscribe', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ endpoint }),
+          });
+        }
+        setPushSubscribed(false);
+      }
+    } catch (err) {
+      setPushError(err instanceof Error ? err.message : 'Something went wrong.');
+    } finally {
+      setPushBusy(false);
+    }
+  }
 
   async function save() {
     setSaving(true);
@@ -260,6 +334,18 @@ export default function SettingsPage() {
               <Row action={<Toggle checked={prefs.milestones} onChange={(v) => setPrefs((p) => ({ ...p, milestones: v }))} />} detail="When your tracks hit hype thresholds" label="Hype milestones" />
               <Row action={<Toggle checked={prefs.journalPosts} onChange={(v) => setPrefs((p) => ({ ...p, journalPosts: v }))} />} detail="New posts from creators you follow" label="Journal posts" />
               <Row action={<Toggle checked={prefs.weeklyDigest} onChange={(v) => setPrefs((p) => ({ ...p, weeklyDigest: v }))} />} detail="A weekly summary of upcoming shows and activity" label="Weekly digest" />
+              <Row
+                action={<Toggle checked={pushSubscribed} disabled={!pushSupported || pushBusy} onChange={(v) => void togglePush(v)} />}
+                detail={
+                  !pushSupported
+                    ? 'Not supported in this browser'
+                    : pushSubscribed
+                    ? 'Enabled on this device — separate from the app toggles above'
+                    : 'Get instant browser alerts on this device, even when iHYPE is closed'
+                }
+                label="Push notifications (this browser)"
+              />
+              {pushError && <p style={{ color: '#ff5029', fontSize: 12, padding: '0 20px 14px' }}>{pushError}</p>}
             </div>
           </div>
 

@@ -20,6 +20,18 @@ import {
 type CrateTrack = { hexId: string; title: string; artistName: string; durationSecs: number };
 type DjProfile = { id: string; name: string; slug: string };
 
+// A free-use track from ANY profile on the platform (GET /api/artist-media/free-use),
+// as opposed to CrateTrack which is only the signed-in DJ's own uploads.
+type LibraryTrack = {
+  hexId: string;
+  title: string;
+  notes: string | null;
+  mimeType: string | null;
+  durationSecs: number | null;
+  streamUrl: string;
+  artist: { profileId: string; name: string; slug: string; avatarImage: string | null; genres: string[]; location: string };
+};
+
 type Block =
   | { uid: string; kind: 'MEDIA'; label: string; sub: string; dur: number; color: string; mediaItem: ShowMediaItem }
   | { uid: string; kind: 'VOICE_OVER'; label: string; sub: string; dur: number; color: string; voiceOver: VoiceOverCue }
@@ -80,6 +92,13 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
   const [saving, setSaving] = useState<'draft' | 'schedule' | 'live' | null>(null);
   const [recorder, setRecorder] = useState<RecorderState>({ phase: 'idle' });
   const [samplePicker, setSamplePicker] = useState(false);
+  const [libraryPicker, setLibraryPicker] = useState(false);
+  const [libraryQuery, setLibraryQuery] = useState('');
+  const [libraryTracks, setLibraryTracks] = useState<LibraryTrack[]>([]);
+  const [libraryLoading, setLibraryLoading] = useState(false);
+  const [libraryError, setLibraryError] = useState('');
+  const librarySearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const libraryRequestId = useRef(0);
   const [adPreviewClips, setAdPreviewClips] = useState<ShowAdClip[] | null>(null);
   const [adPreviewIsMarketplace, setAdPreviewIsMarketplace] = useState(false);
   const [adPlan, setAdPlan] = useState<DjAdPlan | null>(null);
@@ -150,6 +169,74 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
       { uid: uid(), kind: 'MEDIA', label: t.title, sub: t.artistName, dur: t.durationSecs, color: TYPE_META.MEDIA.color, mediaItem: crateTrackToMediaItem(t) },
     ]);
     showToast(`Added “${t.title}” to the show`);
+  }
+
+  function libraryTrackToMediaItem(t: LibraryTrack): ShowMediaItem {
+    return {
+      mediaId: t.hexId,
+      title: t.title,
+      url: t.streamUrl,
+      artistProfileId: t.artist.profileId,
+      artistName: t.artist.name,
+      notes: t.notes,
+      mimeType: t.mimeType,
+      mediaType: 'audio',
+      durationSeconds: t.durationSecs ?? 180,
+    };
+  }
+
+  function addLibraryTrack(t: LibraryTrack) {
+    setBlocks((b) => [
+      ...b,
+      {
+        uid: uid(),
+        kind: 'MEDIA',
+        label: t.title,
+        sub: t.artist.name,
+        dur: t.durationSecs ?? 180,
+        color: TYPE_META.MEDIA.color,
+        mediaItem: libraryTrackToMediaItem(t),
+      },
+    ]);
+    showToast(`Added “${t.title}” by ${t.artist.name} to the show`);
+  }
+
+  // Platform-wide free-use library search (GET /api/artist-media/free-use) —
+  // debounced so typing doesn't fire a request per keystroke. Runs once with
+  // an empty query the moment the picker opens, to show recent tracks first.
+  function runLibrarySearch(q: string) {
+    const requestId = ++libraryRequestId.current;
+    setLibraryLoading(true);
+    setLibraryError('');
+    apiFetch<{ tracks?: LibraryTrack[] }>(`/api/artist-media/free-use?q=${encodeURIComponent(q)}`)
+      .then((data) => {
+        if (requestId !== libraryRequestId.current) return;
+        setLibraryTracks(data?.tracks ?? []);
+      })
+      .catch(() => {
+        if (requestId !== libraryRequestId.current) return;
+        setLibraryError('Could not load the free-use library. Try again.');
+      })
+      .finally(() => {
+        if (requestId !== libraryRequestId.current) return;
+        setLibraryLoading(false);
+      });
+  }
+
+  function openLibraryPicker() {
+    setLibraryPicker(true);
+    runLibrarySearch(libraryQuery);
+  }
+
+  function closeLibraryPicker() {
+    setLibraryPicker(false);
+    stopPreview();
+  }
+
+  function onLibraryQueryChange(value: string) {
+    setLibraryQuery(value);
+    if (librarySearchTimer.current) clearTimeout(librarySearchTimer.current);
+    librarySearchTimer.current = setTimeout(() => runLibrarySearch(value), 320);
   }
 
   // Preview: a single shared <audio> element auditions whichever sample or
@@ -613,7 +700,14 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
               </span>
               <div><div className="rsc-upload-t">Add sample</div><div className="rsc-upload-s">Royalty-free · already cleared</div></div>
             </button>
-            <p className="rsc-fineprint">Voiceovers are your own recording, private to this show. Samples come from a pre-cleared royalty-free catalogue — nothing here needs a copyright check.</p>
+
+            <button className="rsc-upload-btn" onClick={openLibraryPicker} type="button">
+              <span className="rsc-upload-ico" style={{ background: 'rgba(255,62,154,.14)' }}>
+                <svg fill="none" height="17" stroke="#ff3e9a" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="17"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+              </span>
+              <div><div className="rsc-upload-t">Browse free-use library</div><div className="rsc-upload-s">Search cleared tracks from every artist on iHYPE</div></div>
+            </button>
+            <p className="rsc-fineprint">Voiceovers are your own recording, private to this show. Samples come from a pre-cleared royalty-free catalogue — nothing here needs a copyright check. The free-use library pulls in tracks other artists have opted into sharing platform-wide.</p>
           </div>
         </div>
 
@@ -729,6 +823,60 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
                     <div style={{ fontSize: 11, color: 'var(--ink-a50)' }}>{sample.category ?? 'fx'} · {sample.notes}</div>
                   </div>
                   <button className="rsc-sample-add" onClick={() => addSample(sample)} title="Add to show" type="button">
+                    <svg fill="none" height="14" stroke="currentColor" strokeLinecap="round" strokeWidth="2.2" viewBox="0 0 24 24" width="14"><path d="M12 5v14M5 12h14" /></svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {libraryPicker && (
+        <div className="rsc-modal-wrap" onClick={(e) => { if (e.target === e.currentTarget) closeLibraryPicker(); }}>
+          <div className="rsc-modal rsc-modal-lg">
+            <div className="rsc-modal-head">
+              <span>Browse free-use library</span>
+              <span onClick={closeLibraryPicker} style={{ cursor: 'pointer' }}>×</span>
+            </div>
+            <div style={{ padding: '10px 14px 0' }}>
+              <input
+                autoFocus
+                className="rsc-select"
+                onChange={(e) => onLibraryQueryChange(e.target.value)}
+                placeholder="Search by track title or artist name…"
+                style={{ width: '100%' }}
+                type="text"
+                value={libraryQuery}
+              />
+            </div>
+            <div className="rsc-modal-body">
+              {libraryLoading && <p className="rsc-empty-note">Searching…</p>}
+              {!libraryLoading && libraryError && <p className="rsc-empty-note">{libraryError}</p>}
+              {!libraryLoading && !libraryError && libraryTracks.length === 0 && (
+                <p className="rsc-empty-note">
+                  {libraryQuery ? `No free-use tracks match “${libraryQuery}”.` : 'No free-use tracks are available platform-wide yet.'}
+                </p>
+              )}
+              {!libraryLoading && !libraryError && libraryTracks.map((t) => (
+                <div className="rsc-sample-row" key={t.hexId}>
+                  <button
+                    className="rsc-sample-preview"
+                    onClick={() => togglePreview(t.hexId, t.streamUrl)}
+                    title={previewingId === t.hexId ? 'Pause preview' : 'Preview track'}
+                    type="button"
+                  >
+                    <PreviewIcon playing={previewingId === t.hexId} />
+                  </button>
+                  <div className="rsc-crate-art" style={{ background: 'linear-gradient(135deg,#ff3e9a,#b983ff)' }} />
+                  <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                    <div style={{ fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</div>
+                    <div style={{ fontSize: 11, color: 'var(--ink-a50)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {t.artist.name}{t.artist.location ? ` · ${t.artist.location}` : ''}
+                    </div>
+                  </div>
+                  <span className="rsc-crate-dur">{fmt(t.durationSecs ?? 180)}</span>
+                  <button className="rsc-sample-add" onClick={() => addLibraryTrack(t)} title="Add to show" type="button">
                     <svg fill="none" height="14" stroke="currentColor" strokeLinecap="round" strokeWidth="2.2" viewBox="0 0 24 24" width="14"><path d="M12 5v14M5 12h14" /></svg>
                   </button>
                 </div>
@@ -872,6 +1020,7 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
         .rsc-s-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; }
         .rsc-modal-wrap { position: fixed; inset: 0; background: rgba(0,0,0,.65); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
         .rsc-modal { width: 100%; max-width: 420px; background: var(--bg2); border: 1px solid var(--hair-100); border-radius: 16px; overflow: hidden; max-height: 80vh; overflow-y: auto; }
+        .rsc-modal-lg { max-width: 520px; }
         .rsc-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--line); font-family: var(--font-display); font-weight: 800; font-size: 15px; }
         .rsc-modal-body { padding: 10px; display: flex; flex-direction: column; gap: 6px; }
         .rsc-sample-row { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 9px; border: 1px solid var(--line); background: var(--hair-20); }

@@ -8,9 +8,14 @@ import { buildArtistMediaCollection } from '@/lib/media';
 import { HypeButton } from '@/components/HypeButton';
 import { FollowButton } from '@/components/FollowButton';
 import { ShareButton } from '@/components/ShareButton';
+import { ReportButton } from '@/components/ReportButton';
+import { FanMailButton } from '@/components/FanMailButton';
 import { ArtistMediaPlaylist } from '@/components/ArtistMediaPlaylist';
 import { TrackUploadPanel } from '@/components/TrackUploadPanel';
 import { ProfileInsights } from '@/components/ProfileInsights';
+import { BookingRequestInbox } from '@/components/BookingRequestInbox';
+import { SimilarArtistsRow } from '@/components/SimilarArtistsRow';
+import { getSimilarArtists } from '@/lib/sounds-like';
 import { getPinnedStatValues } from '@/lib/profile-stats';
 import { PinnedStatTiles } from '@/components/PinnedStatTiles';
 import { getSafeImageUrl } from '@/lib/asset-safety';
@@ -82,7 +87,7 @@ export default async function ArtistPage({
   const uploadHexIds = profile.mediaUploads.map((u) => u.hexId);
   const artworkUrl = getSafeImageUrl(profile.galleryImage || profile.heroImage);
 
-  const [shows, userHype, playCounts] = await Promise.all([
+  const [shows, userHype, playCounts, similarArtists] = await Promise.all([
     db.show.findMany({
       where: { headlinerProfileId: profile.id, ...getDemoCreatorExclusion() },
       include: { venueProfile: true },
@@ -94,6 +99,7 @@ export default async function ArtistPage({
     uploadHexIds.length > 0
       ? db.mediaListen.groupBy({ by: ['mediaId'], where: { mediaId: { in: uploadHexIds } }, _count: { _all: true } })
       : Promise.resolve([]),
+    getSimilarArtists(profile.slug),
   ]);
 
   const playCountMap = new Map(playCounts.map((r) => [r.mediaId, r._count._all]));
@@ -125,8 +131,12 @@ export default async function ArtistPage({
             <div className="artist-hero-actions">
               <FollowButton profileId={profile.id} variant="hero" />
               <ShareButton className="artist-hero-btn" label="Share" path={`/artists/${profile.slug}`} title={profile.name} />
+              {!isOwner && session?.user?.id && (
+                <ReportButton className="artist-hero-btn" entityLabel="profile" targetId={profile.id} targetType="profile" />
+              )}
               {isOwner && (
                 <>
+                  <FanMailButton profileId={profile.id} triggerClassName="artist-hero-btn" />
                   <Link className="artist-hero-btn" href="/pages">Customize</Link>
                   <Link className="artist-hero-btn" href="/settings">Settings</Link>
                 </>
@@ -173,6 +183,7 @@ export default async function ArtistPage({
               </div>
               <p style={{ fontSize: 12, color: 'var(--ink-a55)', marginTop: 12 }}>iHYPE takes 0% · locked in the charter</p>
             </div>
+            <SimilarArtistsRow accent="var(--profile-hero, linear-gradient(135deg,#ff5029,#b983ff))" artists={similarArtists} />
           </div>
         )}
 
@@ -229,6 +240,7 @@ export default async function ArtistPage({
               connected={profile.stripeConnectOnboarded}
               hasStarted={Boolean(profile.stripeConnectAccountId)}
             />
+            <BookingRequestInbox profileId={profile.id} />
             <ProfileInsights profileId={profile.id} profileType={profile.type} />
           </>
         )}

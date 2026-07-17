@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { db } from '@/lib/db';
 import { CommunityVoteBoard } from '@/components/CommunityVoteBoard';
+import { NewsletterSignup } from '@/components/NewsletterSignup';
 
 export const metadata = { title: 'Community · iHYPE', description: 'Platform updates, announcements, and a vote on what we build next.' };
 export const dynamic = 'force-dynamic';
@@ -74,6 +75,24 @@ export default async function CommunityPage() {
 
         <section className="community-section">
           <div className="community-section-head">
+            <span className="community-eyebrow">Collab board</span>
+            <h2>Find your people</h2>
+            <p className="community-section-copy">
+              Musician classifieds — post what you&apos;re looking for, or what you have to offer, and browse what the rest of the scene has posted.
+            </p>
+          </div>
+          <div className="community-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-a70)', maxWidth: '48ch' }}>
+              Drummers, vocalists, producers, venues, DJs — post a listing or browse what&apos;s open.
+            </p>
+            <Link className="ihype-btn-primary" href="/collab-board" style={{ flexShrink: 0, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+              Open the collab board →
+            </Link>
+          </div>
+        </section>
+
+        <section className="community-section">
+          <div className="community-section-head">
             <span className="community-eyebrow">Updates</span>
             <h2>What&apos;s changed</h2>
           </div>
@@ -102,6 +121,19 @@ export default async function CommunityPage() {
               ))}
             </div>
           )}
+        </section>
+
+        <section className="community-section">
+          <div className="community-section-head">
+            <span className="community-eyebrow">Stay in the loop</span>
+            <h2>Get updates from the scene</h2>
+            <p className="community-section-copy">
+              Follow a specific artist, venue, or DJ by email — we send a one-click confirm link, and only that profile&apos;s updates land in your inbox.
+            </p>
+          </div>
+          <div className="community-card">
+            <NewsletterSignup />
+          </div>
         </section>
 
         <section className="community-cta">

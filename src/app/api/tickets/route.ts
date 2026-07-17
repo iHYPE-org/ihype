@@ -32,7 +32,7 @@ export async function GET(request: Request) {
       subtotalCents: true,
       totalChargeCents: true,
       show: { select: { slug: true, title: true, startsAt: true } },
-      tickets: { select: { id: true, serializedId: true } },
+      tickets: { select: { id: true, serializedId: true, status: true } },
     },
   });
 

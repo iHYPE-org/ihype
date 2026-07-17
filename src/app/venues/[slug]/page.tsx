@@ -5,8 +5,12 @@ import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { HypeButton } from '@/components/HypeButton';
+import { ReportButton } from '@/components/ReportButton';
+import { FanMailButton } from '@/components/FanMailButton';
 import { VenueRequestForm } from '@/components/VenueRequestForm';
+import { VenueRequestInbox } from '@/components/VenueRequestInbox';
 import { ProfileInsights } from '@/components/ProfileInsights';
+import { BookingRequestInbox } from '@/components/BookingRequestInbox';
 import { getPinnedStatValues } from '@/lib/profile-stats';
 import { PinnedStatTiles } from '@/components/PinnedStatTiles';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
@@ -111,7 +115,7 @@ export default async function VenuePage({
           <div className="venue-stats">
             <div className="venue-stat"><div className="venue-stat-val">{shows.length}</div><div className="venue-stat-label">Shows hosted</div></div>
             <div className="venue-stat"><div className="venue-stat-val">{totalTicketsSold.toLocaleString()}</div><div className="venue-stat-label">Tickets sold</div></div>
-            <div className="venue-stat"><div className="venue-stat-val">45%</div><div className="venue-stat-label">Your cut, always</div></div>
+            <div className="venue-stat"><div className="venue-stat-val">20%</div><div className="venue-stat-label">Your cut, always</div></div>
           </div>
           {shows.length > 0 && (
             <div className="venue-capacity-row">
@@ -121,8 +125,12 @@ export default async function VenuePage({
           )}
           <div className="venue-hero-actions">
             <HypeButton entityLabel="venue" initialCount={profile.hypeCount} initiallyHyped={!!userHype} targetId={profile.id} targetType="profile" />
+            {!isOwner && session?.user?.id && (
+              <ReportButton className="venue-hero-btn" entityLabel="profile" targetId={profile.id} targetType="profile" />
+            )}
             {isOwner && (
               <>
+                <FanMailButton profileId={profile.id} triggerClassName="venue-hero-btn" />
                 <Link className="venue-hero-btn" href="/me/booking">Book artists</Link>
                 <Link className="venue-hero-btn" href="/pages">Customize</Link>
                 <Link className="venue-hero-btn" href="/settings">Settings</Link>
@@ -155,9 +163,9 @@ export default async function VenuePage({
             <div className="venue-split-card">
               <div className="venue-split-title">How every ticket is split here</div>
               <div className="venue-split-bar">
-                <div className="venue-split-seg venue-artist-seg"><div className="venue-seg-pct" style={{ color: '#ff5029' }}>45%</div><div className="venue-seg-label" style={{ color: '#ff5029' }}>Artist</div></div>
-                <div className="venue-split-seg venue-venue-seg"><div className="venue-seg-pct" style={{ color: 'var(--role-venue)' }}>45%</div><div className="venue-seg-label" style={{ color: 'var(--role-venue)' }}>{profile.name}</div></div>
-                <div className="venue-split-seg venue-promoter-seg"><div className="venue-seg-pct" style={{ color: '#ff3e9a' }}>10%</div><div className="venue-seg-label" style={{ color: '#ff3e9a' }}>Promoters</div></div>
+                <div className="venue-split-seg venue-artist-seg" style={{ flex: 70 }}><div className="venue-seg-pct" style={{ color: '#ff5029' }}>70%</div><div className="venue-seg-label" style={{ color: '#ff5029' }}>Artist</div></div>
+                <div className="venue-split-seg venue-venue-seg" style={{ flex: 20 }}><div className="venue-seg-pct" style={{ color: 'var(--role-venue)' }}>20%</div><div className="venue-seg-label" style={{ color: 'var(--role-venue)' }}>{profile.name}</div></div>
+                <div className="venue-split-seg venue-promoter-seg" style={{ flex: 10 }}><div className="venue-seg-pct" style={{ color: '#ff3e9a' }}>10%</div><div className="venue-seg-label" style={{ color: '#ff3e9a' }}>Promoters</div></div>
               </div>
               <p style={{ fontSize: 12, color: 'var(--ink-a50)', marginTop: 12 }}>$0 fees for ticket buyers. iHYPE takes nothing — locked in the charter.</p>
             </div>
@@ -196,13 +204,24 @@ export default async function VenuePage({
 
         {activeSection === 'request' && (
           <div>
-            <p style={{ fontSize: 14, color: 'var(--ink-a70)', marginBottom: 24 }}>
-              We use the iHYPE demand radar to book artists. Fill this out and we&apos;ll reach out if there&apos;s a fit.
-            </p>
-            {session?.user ? (
-              <VenueRequestForm venueProfileId={profile.id} />
+            {isOwner ? (
+              <>
+                <p style={{ fontSize: 14, color: 'var(--ink-a70)', marginBottom: 24 }}>
+                  Pending artist booking recommendations from fans and promoters. Approving marks the request booked; denying dismisses it.
+                </p>
+                <VenueRequestInbox />
+              </>
             ) : (
-              <p style={{ color: 'var(--ink-a50)' }}>Log in to recommend booking an artist for this venue.</p>
+              <>
+                <p style={{ fontSize: 14, color: 'var(--ink-a70)', marginBottom: 24 }}>
+                  We use the iHYPE demand radar to book artists. Fill this out and we&apos;ll reach out if there&apos;s a fit.
+                </p>
+                {session?.user ? (
+                  <VenueRequestForm venueProfileId={profile.id} />
+                ) : (
+                  <p style={{ color: 'var(--ink-a50)' }}>Log in to recommend booking an artist for this venue.</p>
+                )}
+              </>
             )}
           </div>
         )}
@@ -214,6 +233,7 @@ export default async function VenuePage({
               connected={profile.stripeConnectOnboarded}
               hasStarted={Boolean(profile.stripeConnectAccountId)}
             />
+            <BookingRequestInbox profileId={profile.id} />
             <ProfileInsights profileId={profile.id} profileType={profile.type} />
           </>
         )}

@@ -8,6 +8,7 @@ import { auth } from '@/lib/auth';
 import { notFound } from 'next/navigation';
 import { HypeButton } from '@/components/HypeButton';
 import { ReferralClickTracker } from '@/components/ReferralClickTracker';
+import { ReportButton } from '@/components/ReportButton';
 import { ShareButton } from '@/components/ShareButton';
 import { ShowSequencePlayer } from '@/components/ShowSequencePlayer';
 import { TicketSaleCard } from '@/components/TicketSaleCard';
@@ -27,6 +28,7 @@ import { ShowSetlistVote } from '@/components/ShowSetlistVote';
 import { ShowSetlistEditor } from '@/components/ShowSetlistEditor';
 import { ShowRecapForm } from '@/components/ShowRecapForm';
 import { ShowTabs } from '@/components/ShowTabs';
+import { ShowComments } from '@/components/ShowComments';
 
 const getShowMeta = cache((slug: string) =>
   db.show.findUnique({
@@ -340,6 +342,9 @@ export default async function ShowDetailPage({
               Download poster
             </a>{' '}
             <ShareButton className="button small secondary" path={`/shows/${slug}`} title={show.title} />
+            {session?.user?.id ? (
+              <ReportButton entityLabel="show" targetId={show.id} targetType="show" />
+            ) : null}
             <ShowEngagement
               canRemind={Boolean(session?.user?.id)}
               canRsvp={Boolean(session?.user?.id)}
@@ -570,7 +575,7 @@ export default async function ShowDetailPage({
               </div>
             ) : null}
 
-            {recentTicketOrders.length ? (
+            {isShowOwner || isAdminSession(session) ? (
               <div className="panel" style={{ padding: '1.25rem', marginTop: 24 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                   <h2 style={{ margin: 0 }}>Recent ticket order totals</h2>
@@ -579,35 +584,60 @@ export default async function ShowDetailPage({
                     <Link href={`/shows/${show.slug}/scan`} className="meta">Scan tickets at the door →</Link>
                   </div>
                 </div>
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Status</th><th>Tax</th><th>Qty</th><th>Total</th><th>Venue</th><th>Artist</th><th>Promoter</th>
-                      <th title="Total reassignments across all tickets in this order">Passed</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentTicketOrders.map((order) => {
-                      const totalPassed = order.tickets.reduce((sum, ticket) => sum + ticket.reassignCount, 0);
-                      return (
-                        <tr key={order.id}>
-                          <td>{order.status}</td>
-                          <td>{formatCurrencyFromCents(order.totalTaxCents)}</td>
-                          <td>{order.quantity}</td>
-                          <td>{formatCurrencyFromCents(order.totalChargeCents || order.subtotalCents)}</td>
-                          <td>{formatCurrencyFromCents(order.venuePayoutCents)}</td>
-                          <td>{formatCurrencyFromCents(order.artistPayoutCents)}</td>
-                          <td>{formatCurrencyFromCents(order.promoterPayoutCents)}</td>
-                          <td style={totalPassed > 0 ? { color: 'var(--accent-3)', fontWeight: 600 } : { color: 'var(--muted)' }}>
-                            {totalPassed > 0 ? `${totalPassed}×` : '—'}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                {recentTicketOrders.length ? (
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Status</th><th>Tax</th><th>Qty</th><th>Total</th><th>Venue</th><th>Artist</th><th>Promoter</th>
+                        <th title="Total reassignments across all tickets in this order">Passed</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentTicketOrders.map((order) => {
+                        const totalPassed = order.tickets.reduce((sum, ticket) => sum + ticket.reassignCount, 0);
+                        return (
+                          <tr key={order.id}>
+                            <td>{order.status}</td>
+                            <td>{formatCurrencyFromCents(order.totalTaxCents)}</td>
+                            <td>{order.quantity}</td>
+                            <td>{formatCurrencyFromCents(order.totalChargeCents || order.subtotalCents)}</td>
+                            <td>{formatCurrencyFromCents(order.venuePayoutCents)}</td>
+                            <td>{formatCurrencyFromCents(order.artistPayoutCents)}</td>
+                            <td>{formatCurrencyFromCents(order.promoterPayoutCents)}</td>
+                            <td style={totalPassed > 0 ? { color: 'var(--accent-3)', fontWeight: 600 } : { color: 'var(--muted)' }}>
+                              {totalPassed > 0 ? `${totalPassed}×` : '—'}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                ) : (
+                  <p className="meta">No ticket orders yet.</p>
+                )}
+
+                <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--hair-80)', display: 'flex', gap: 20, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <img
+                    alt="Door check-in QR code for this show"
+                    src={`/api/shows/${show.id}/qr`}
+                    style={{ width: 96, height: 96, background: '#fff', borderRadius: 8, padding: 6 }}
+                  />
+                  <div>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a50)', marginBottom: 4 }}>
+                      Show door QR
+                    </p>
+                    <p className="meta" style={{ margin: 0, marginBottom: 8 }}>
+                      Scan or print for door staff — links straight to this show&apos;s public page.
+                    </p>
+                    <a className="button small secondary" download href={`/api/shows/${show.id}/qr`}>
+                      Download QR (SVG)
+                    </a>
+                  </div>
+                </div>
               </div>
             ) : null}
+
+            <ShowComments canComment={Boolean(session?.user?.id)} showId={show.id} />
 
             {show.isTicketed && canWatch && currentFan?.role === 'FAN' && (
               <div className="panel" style={{ padding: '1.25rem', marginTop: 24 }}>

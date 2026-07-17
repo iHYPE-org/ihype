@@ -42,7 +42,7 @@ type TicketOrder = {
   subtotalCents: number;
   totalChargeCents: number;
   show: { slug: string; title: string; startsAt: string };
-  tickets: { id: string; serializedId: string }[];
+  tickets: { id: string; serializedId: string; status?: string }[];
 };
 
 function fmtDate(iso: string) {
@@ -379,7 +379,7 @@ export function EventsHome({
                           {dateStr} · {timeStr}
                         </div>
                         {ticketView === 'active' && order.status !== 'VOID' && (
-                          <TicketCardActions orderId={order.id} showCancel showsAt={order.show.startsAt} tickets={order.tickets} />
+                          <TicketCardActions orderId={order.id} orderStatus={order.status} showCancel showsAt={order.show.startsAt} tickets={order.tickets} />
                         )}
                       </div>
                     );

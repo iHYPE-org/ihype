@@ -54,7 +54,7 @@ const NET_FILTERS = [
 const CREATE_CARDS: { type: string; color: string; bg: string; name: string; desc: string; icon: React.ReactNode }[] = [
   {
     type: 'ARTIST', color: '#ff5029', bg: 'rgba(255,80,41,.12)', name: 'Artist Page',
-    desc: 'Upload tracks, list shows, sell tickets. Keep 45%.',
+    desc: 'Upload tracks, list shows, sell tickets. Keep 70%.',
     icon: (
       <svg fill="none" height="20" stroke="#ff5029" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="20">
         <path d="M9 18V5l12-2v13" />
@@ -65,7 +65,7 @@ const CREATE_CARDS: { type: string; color: string; bg: string; name: string; des
   },
   {
     type: 'VENUE', color: '#22e5d4', bg: 'rgba(34,229,212,.1)', name: 'Venue Page',
-    desc: 'Book from the demand radar. Keep 45% of every room.',
+    desc: 'Book from the demand radar. Keep 20% of every room.',
     icon: (
       <svg fill="none" height="20" stroke="#22e5d4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="20">
         <path d="M3 21h18" />

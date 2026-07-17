@@ -12,6 +12,10 @@ import {
 import { AI_FIELD_LABELS } from '@/lib/page-refine';
 import { parsePressKit, serializePressKit } from '@/lib/press-kit';
 import { statOptionsForRole, type StatKey } from '@/lib/profile-stats-catalog';
+import { MUSIC_GENRES } from '@/lib/genres';
+
+type AvailabilityEntry = { id: string; date: string; note: string | null };
+type RecentHyper = { id: string; name: string; image: string | null; at: string };
 
 type EditorProfile = {
   id: string;
@@ -149,6 +153,22 @@ export function PageEditor({ profileId }: { profileId: string }) {
   const [kitQuotesText, setKitQuotesText] = useState('');
   const [kitAchievementsText, setKitAchievementsText] = useState('');
   const [kitContactEmail, setKitContactEmail] = useState('');
+  // Genre tags — a separate endpoint (/api/profile/genre) from the batch
+  // profile-editor save, so it gets its own save button/state below.
+  const [genresText, setGenresText] = useState('');
+  const [genresSaving, setGenresSaving] = useState(false);
+  const [genresSavedAt, setGenresSavedAt] = useState<number | null>(null);
+  const [genresError, setGenresError] = useState<string | null>(null);
+  // Booking availability — /api/profile/availability manages its own list
+  // of dates independently (add/remove), not part of the batch save either.
+  const [availDates, setAvailDates] = useState<AvailabilityEntry[]>([]);
+  const [availDateInput, setAvailDateInput] = useState('');
+  const [availNoteInput, setAvailNoteInput] = useState('');
+  const [availSaving, setAvailSaving] = useState(false);
+  const [availError, setAvailError] = useState<string | null>(null);
+  // Recent activity — read-only feed from /api/profile/activity (who hyped
+  // this profile recently); there's nothing to edit, just to show.
+  const [hypers, setHypers] = useState<RecentHyper[] | null>(null);
 
   useEffect(() => {
     setData(null);
@@ -162,9 +182,100 @@ export function PageEditor({ profileId }: { profileId: string }) {
         setKitQuotesText(kit.quotes.map((q) => (q.source ? `${q.quote} — ${q.source}` : q.quote)).join('\n'));
         setKitAchievementsText(kit.achievements.join('\n'));
         setKitContactEmail(kit.contactEmail);
+        // Genre isn't part of EDITOR_FIELDS, so pull the current value from
+        // the public profile route (already cached/wired) to prefill the field.
+        if (d.profile?.slug) {
+          fetch(`/api/profile/${d.profile.slug}`)
+            .then((r) => (r.ok ? r.json() : null))
+            .then((pd) => {
+              const genres = pd?.profile?.genres;
+              if (Array.isArray(genres)) setGenresText(genres.join(', '));
+            })
+            .catch(() => {});
+        }
       })
       .catch(() => {});
   }, [profileId]);
+
+  useEffect(() => {
+    fetch(`/api/profile/availability?profileId=${profileId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.dates) setAvailDates(d.dates); })
+      .catch(() => {});
+  }, [profileId]);
+
+  useEffect(() => {
+    fetch('/api/profile/activity')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.hypers) setHypers(d.hypers); })
+      .catch(() => {});
+  }, [profileId]);
+
+  async function saveGenres() {
+    setGenresSaving(true);
+    setGenresError(null);
+    try {
+      const genres = genresText.split(',').map((g) => g.trim()).filter(Boolean).slice(0, 10);
+      const res = await fetch('/api/profile/genre', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileId, genre: genresText.trim().slice(0, 50), genres }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setGenresError(d.error ?? 'Failed to save genres.');
+      } else {
+        setGenresSavedAt(Date.now());
+      }
+    } catch {
+      setGenresError('Network error — try again.');
+    } finally {
+      setGenresSaving(false);
+    }
+  }
+
+  async function addAvailabilityDate() {
+    if (!availDateInput || availSaving) return;
+    setAvailSaving(true);
+    setAvailError(null);
+    try {
+      const res = await fetch('/api/profile/availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          profileId,
+          date: new Date(availDateInput).toISOString(),
+          note: availNoteInput.trim() || undefined,
+        }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setAvailError(d.error ?? 'Could not add that date.');
+      } else {
+        setAvailDates((prev) => [...prev, d.date].sort((a, b) => a.date.localeCompare(b.date)));
+        setAvailDateInput('');
+        setAvailNoteInput('');
+      }
+    } catch {
+      setAvailError('Network error — try again.');
+    } finally {
+      setAvailSaving(false);
+    }
+  }
+
+  async function removeAvailabilityDate(id: string) {
+    setAvailError(null);
+    try {
+      const res = await fetch('/api/profile/availability', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      if (res.ok) setAvailDates((prev) => prev.filter((d) => d.id !== id));
+    } catch {
+      setAvailError('Network error — try again.');
+    }
+  }
 
   function set<K extends keyof EditorProfile>(key: K, value: EditorProfile[K]) {
     setData((d) => (d ? { ...d, [key]: value } : d));
@@ -342,6 +453,33 @@ export function PageEditor({ profileId }: { profileId: string }) {
           <Field label="Links" hint="One per line — socials, streaming, anything">
             <TextAreaField maxLength={5000} onChange={(v) => set('links', v)} rows={3} value={data.links ?? ''} />
           </Field>
+          {isArtistOrDj && (
+            <Field hint="Comma-separated — shown on your public page and used for discovery" label="Genres">
+              <input
+                list="ihype-editor-genre-suggestions"
+                onChange={(e) => { setGenresText(e.target.value); setGenresSavedAt(null); }}
+                placeholder="dream-pop, shoegaze, lo-fi"
+                style={inputStyle}
+                type="text"
+                value={genresText}
+              />
+              <datalist id="ihype-editor-genre-suggestions">
+                {MUSIC_GENRES.map((g) => <option key={g} value={g} />)}
+              </datalist>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
+                <button
+                  className="settings-btn settings-btn-ghost"
+                  disabled={genresSaving}
+                  onClick={saveGenres}
+                  type="button"
+                >
+                  {genresSaving ? 'Saving…' : 'Save genres'}
+                </button>
+                {genresError && <span style={{ color: '#ff5029', fontSize: 12 }}>{genresError}</span>}
+                {genresSavedAt && !genresError && <span style={{ color: '#22e5d4', fontSize: 12, fontFamily: 'var(--font-mono)' }}>✓ Saved</span>}
+              </div>
+            </Field>
+          )}
           {isVenue && (
             <>
               <Field label="Address"><TextField maxLength={240} onChange={(v) => set('addressLine1', v)} value={data.addressLine1 ?? ''} /></Field>
@@ -388,6 +526,66 @@ export function PageEditor({ profileId }: { profileId: string }) {
           <Field label="Previous show highlights"><TextAreaField maxLength={5000} onChange={(v) => set('previousShowHighlights', v)} rows={4} value={data.previousShowHighlights ?? ''} /></Field>
           <Field label="Merch link"><TextField onChange={(v) => set('merchUrl', v)} placeholder="https://…" value={data.merchUrl ?? ''} /></Field>
           <Field label="Merch details"><TextAreaField maxLength={5000} onChange={(v) => set('merchContent', v)} rows={3} value={data.merchContent ?? ''} /></Field>
+
+          <Field hint="Dates you're open for booking — venues and promoters can see these on your public page" label="Booking availability">
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+              <input
+                onChange={(e) => setAvailDateInput(e.target.value)}
+                style={{ ...inputStyle, flex: '1 1 160px' }}
+                type="date"
+                value={availDateInput}
+              />
+              <input
+                maxLength={200}
+                onChange={(e) => setAvailNoteInput(e.target.value)}
+                placeholder="Note (optional)"
+                style={{ ...inputStyle, flex: '2 1 200px' }}
+                type="text"
+                value={availNoteInput}
+              />
+              <button
+                className="settings-btn settings-btn-ghost"
+                disabled={availSaving || !availDateInput}
+                onClick={addAvailabilityDate}
+                style={{ flexShrink: 0 }}
+                type="button"
+              >
+                {availSaving ? 'Adding…' : 'Add date'}
+              </button>
+            </div>
+            {availError && <p style={{ color: '#ff5029', fontSize: 12, margin: '0 0 10px' }}>{availError}</p>}
+            {availDates.length === 0 ? (
+              <p style={{ fontSize: 12, color: 'var(--ink-a50)', margin: 0 }}>No dates added yet.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {availDates.map((d) => (
+                  <div
+                    key={d.id}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+                      padding: '10px 12px', borderRadius: 10, border: '1px solid var(--hair-100)',
+                      background: 'var(--hair-30)',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: 13, color: 'var(--ink)', fontWeight: 600 }}>
+                        {new Date(d.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                      </div>
+                      {d.note && <div style={{ fontSize: 12, color: 'var(--ink-a50)' }}>{d.note}</div>}
+                    </div>
+                    <button
+                      className="settings-btn settings-btn-ghost"
+                      onClick={() => removeAvailabilityDate(d.id)}
+                      style={{ padding: '6px 12px', fontSize: 12 }}
+                      type="button"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Field>
         </div>
       )}
 
@@ -476,6 +674,36 @@ export function PageEditor({ profileId }: { profileId: string }) {
               4 selected — uncheck one to swap it for another.
             </p>
           )}
+
+          <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid var(--hair-100)' }}>
+            <div style={{
+              fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase',
+              color: 'var(--ink-a35)', marginBottom: 12,
+            }}>
+              RECENT ACTIVITY
+            </div>
+            {hypers === null ? (
+              <p style={{ fontSize: 12, color: 'var(--ink-a50)', margin: 0 }}>Loading…</p>
+            ) : hypers.length === 0 ? (
+              <p style={{ fontSize: 12, color: 'var(--ink-a50)', margin: 0 }}>No hypes yet — once fans hype your page, they&rsquo;ll show up here.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {hypers.map((h) => (
+                  <div key={h.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{
+                      width: 28, height: 28, borderRadius: '50%', flexShrink: 0, overflow: 'hidden',
+                      background: h.image ? `url(${h.image}) center/cover` : 'var(--hair-50)',
+                      border: '1px solid var(--hair-100)',
+                    }} />
+                    <span style={{ fontSize: 13, color: 'var(--ink)' }}>{h.name}</span>
+                    <span style={{ fontSize: 12, color: 'var(--ink-a45)', marginLeft: 'auto' }}>
+                      {new Date(h.at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

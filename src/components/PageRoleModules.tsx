@@ -258,7 +258,7 @@ export function PageRoleModules({ profile, color }: { profile: ModuleProfile; co
             color={color}
             href="/events/new"
             icon={icons.event(color)}
-            sub={isVenue ? 'Book your room — keep 45%' : 'Sell tickets direct — keep 45%'}
+            sub={isVenue ? 'Book your room — keep 20%' : 'Sell tickets direct — keep 70%'}
             title="Event creator"
           />
         )}

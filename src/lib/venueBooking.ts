@@ -3,6 +3,7 @@ import { bookingTasteScore as tasteScore, bookingGeoScore as geoScore } from '@/
 import { runAIJson } from '@/lib/ai';
 
 export type BookingCandidate = {
+  profileId: string;
   slug: string;
   name: string;
   avatarUrl: string | null;
@@ -83,6 +84,7 @@ export async function getVenueBookingRecommendations(userId: string): Promise<Ve
     .slice(0, RESULT_SIZE);
 
   const candidates: BookingCandidate[] = scored.map(({ r, taste, local }) => ({
+    profileId: r.id,
     slug: r.slug,
     name: r.name,
     avatarUrl: r.avatarImage ?? null,

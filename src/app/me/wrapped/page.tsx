@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { getSceneWrapped, type SceneWrapped } from '@/lib/sceneWrapped';
 import { WrappedShareButton } from '@/components/WrappedShareButton';
+import { MyStatsPanel } from '@/components/MyStatsPanel';
 import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
@@ -84,6 +85,8 @@ export default async function WrappedPage() {
           <span className="wrapped-foot-meta">0% fees · 70/20/10</span>
         </footer>
       </div>
+
+      <MyStatsPanel />
 
       <div className="wrapped-actions">
         <WrappedShareButton shareText={shareText} monthLabel={w.monthLabel} />
@@ -193,4 +196,58 @@ const WRAPPED_CSS = `
 .wrapped-actions { display: flex; flex-direction: column; align-items: center; gap: 14px; }
 .wrapped-back { font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--ink-a55); text-decoration: none; }
 .wrapped-back:hover { color: var(--ink); }
+
+.mystats-section {
+  width: 100%; max-width: 420px;
+  background: #100d09;
+  border: 1px solid var(--hair-80);
+  border-radius: 28px;
+  padding: 28px 28px 24px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+.mystats-eyebrow {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-a50);
+}
+.mystats-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.mystats-tile {
+  background: var(--hair-30);
+  border: 1px solid var(--line);
+  border-radius: 14px; padding: 16px 14px;
+}
+.mystats-tile-value {
+  font-family: 'Syne', sans-serif; font-weight: 800;
+  font-size: 30px; line-height: 1; letter-spacing: -0.03em;
+}
+.mystats-tile-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-a55);
+  margin-top: 6px;
+}
+.mystats-listening { display: flex; flex-direction: column; gap: 10px; }
+.mystats-subhead {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-a50);
+}
+.mystats-track-list { display: flex; flex-direction: column; }
+.mystats-track-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 0; border-bottom: 1px solid var(--line);
+}
+.mystats-track-row:last-child { border-bottom: none; }
+.mystats-track-info { display: flex; flex-direction: column; min-width: 0; }
+.mystats-track-title {
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mystats-track-artist {
+  font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--ink-a55);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mystats-track-time {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink-a45); flex-shrink: 0;
+}
+.mystats-empty { font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--ink-a50); margin: 0; }
 `;

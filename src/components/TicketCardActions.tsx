@@ -6,15 +6,18 @@ import { useRouter } from 'next/navigation';
 interface TicketRef {
   id: string;
   serializedId: string;
+  status?: string;
 }
 
 export function TicketCardActions({
   orderId,
+  orderStatus,
   tickets,
   showsAt,
   showCancel,
 }: {
   orderId: string;
+  orderStatus?: string;
   tickets: TicketRef[];
   showsAt?: string;
   showCancel?: boolean;
@@ -29,7 +32,23 @@ export function TicketCardActions({
   const [cancelSubmitting, setCancelSubmitting] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [cancelDone, setCancelDone] = useState<string | null>(null);
+  const [resaleOpen, setResaleOpen] = useState(false);
+  const [resalePrice, setResalePrice] = useState('');
+  const [resaleSubmitting, setResaleSubmitting] = useState(false);
+  const [resaleError, setResaleError] = useState<string | null>(null);
+  const [resaleDone, setResaleDone] = useState<string | null>(null);
+  const [resendSubmitting, setResendSubmitting] = useState(false);
+  const [resendError, setResendError] = useState<string | null>(null);
+  const [resendDone, setResendDone] = useState<string | null>(null);
   const router = useRouter();
+
+  // list-resale acts on a single ticket (not the whole order) — mirror the
+  // existing share() precedent of treating the first ticket as the
+  // representative one. A ticket that's already been scanned for entry is
+  // not eligible (the API 400s on this), so pick the first VALID one and
+  // hide/redirect the flow when none exists, the same way the cancel modal
+  // swaps to an explanatory message instead of a form when it's too late.
+  const resaleTicket = tickets.find((t) => t.status === 'VALID') ?? (tickets.some((t) => t.status) ? undefined : tickets[0]);
 
   const hoursUntilShow = showsAt ? (new Date(showsAt).getTime() - Date.now()) / 3_600_000 : null;
   const tooLateToCancel = hoursUntilShow !== null && hoursUntilShow < 48;
@@ -101,6 +120,57 @@ export function TicketCardActions({
     setDone(null);
   }
 
+  async function listForResale() {
+    if (!resaleTicket) return;
+    setResaleSubmitting(true);
+    setResaleError(null);
+    try {
+      const priceCents = Math.round(parseFloat(resalePrice) * 100);
+      const res = await fetch(`/api/tickets/${resaleTicket.serializedId}/list-resale`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resalePriceCents: priceCents }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setResaleError(data.error ?? 'Could not list ticket for resale.');
+        return;
+      }
+      setResaleDone(data.message ?? 'Ticket listed for resale.');
+      router.refresh();
+    } catch {
+      setResaleError('Network error');
+    } finally {
+      setResaleSubmitting(false);
+    }
+  }
+
+  function closeResale() {
+    setResaleOpen(false);
+    setResalePrice('');
+    setResaleError(null);
+    setResaleDone(null);
+  }
+
+  async function resendConfirmation() {
+    setResendSubmitting(true);
+    setResendError(null);
+    setResendDone(null);
+    try {
+      const res = await fetch('/api/tickets/resend-confirmation', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) {
+        setResendError(data.error ?? 'Could not resend confirmation email.');
+        return;
+      }
+      setResendDone('Confirmation email sent.');
+    } catch {
+      setResendError('Network error');
+    } finally {
+      setResendSubmitting(false);
+    }
+  }
+
   return (
     <>
       <div className="ticket-actions">
@@ -109,10 +179,21 @@ export function TicketCardActions({
         </button>
         <button className="btn" onClick={() => setTransferOpen(true)} type="button">Transfer</button>
         <button className="btn" onClick={share} type="button">Share</button>
+        {resaleTicket && (
+          <button className="btn" onClick={() => setResaleOpen(true)} type="button">List for resale</button>
+        )}
+        {(orderStatus === undefined || orderStatus === 'CAPTURED') && (
+          <button className="btn" disabled={resendSubmitting} onClick={resendConfirmation} type="button">
+            {resendSubmitting ? 'Sending…' : 'Resend confirmation'}
+          </button>
+        )}
         {showCancel && (
           <button className="btn" onClick={() => setCancelOpen(true)} style={{ color: '#ff5029' }} type="button">Cancel ticket</button>
         )}
       </div>
+      {(resendDone || resendError) && (
+        <p style={{ fontSize: 12, marginTop: 8, color: resendError ? '#ff5029' : '#22e5d4' }}>{resendError ?? resendDone}</p>
+      )}
 
       {showQr && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 16 }}>
@@ -164,6 +245,46 @@ export function TicketCardActions({
                   <button className="btn" onClick={closeTransfer} style={{ flex: 1 }} type="button">Cancel</button>
                   <button className="btn btn-primary" disabled={submitting || !email} onClick={transfer} style={{ flex: 1 }} type="button">
                     {submitting ? 'Transferring…' : 'Transfer'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {resaleOpen && resaleTicket && (
+        <div
+          aria-modal="true"
+          className="ihype-sheet-overlay"
+          onClick={(e) => e.target === e.currentTarget && closeResale()}
+          role="dialog"
+        >
+          <div className="ihype-sheet-panel">
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, marginBottom: 16 }}>List for resale</h3>
+            {resaleDone ? (
+              <>
+                <p style={{ fontSize: 13, color: '#22e5d4', marginBottom: 16 }}>{resaleDone}</p>
+                <button className="btn btn-primary" onClick={closeResale} style={{ width: '100%' }} type="button">Close</button>
+              </>
+            ) : (
+              <>
+                <label htmlFor="ticket-resale-price" style={{ display: 'block', fontSize: 12, color: 'var(--ink-a50)', marginBottom: 6 }}>Resale price (max 110% of face value)</label>
+                <input
+                  id="ticket-resale-price"
+                  min="0"
+                  onChange={(e) => setResalePrice(e.target.value)}
+                  placeholder="0.00"
+                  step="0.01"
+                  style={{ width: '100%', marginBottom: 16, padding: '10px 14px', border: '1px solid var(--hair-100)', borderRadius: 8, background: 'var(--bg)', color: 'var(--ink)' }}
+                  type="number"
+                  value={resalePrice}
+                />
+                {resaleError && <p style={{ color: '#ff5029', fontSize: 12, marginBottom: 12 }}>{resaleError}</p>}
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button className="btn" onClick={closeResale} style={{ flex: 1 }} type="button">Cancel</button>
+                  <button className="btn btn-primary" disabled={resaleSubmitting || !resalePrice} onClick={listForResale} style={{ flex: 1 }} type="button">
+                    {resaleSubmitting ? 'Listing…' : 'List for resale'}
                   </button>
                 </div>
               </>

@@ -41,7 +41,7 @@ export default async function MyTicketsPage() {
         },
       },
       tickets: {
-        select: { id: true, serializedId: true },
+        select: { id: true, serializedId: true, status: true },
       },
     },
   });
@@ -103,7 +103,7 @@ export default async function MyTicketsPage() {
                   </div>
                 </div>
 
-                <TicketCardActions orderId={order.id} tickets={order.tickets} />
+                <TicketCardActions orderId={order.id} orderStatus={order.status} tickets={order.tickets} />
               </div>
             );
           })}

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { detectRequestLocation } from '@/lib/request-location';
 import { getWeekendShows } from '@/lib/weekendShows';
+import { NearbyShowsWidget } from '@/components/NearbyShowsWidget';
 import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
@@ -37,6 +38,8 @@ export default async function ThisWeekendPage() {
           {feed.cityLabel ? <>What&apos;s on in<br />{feed.cityLabel}</> : <>What&apos;s on<br />this weekend</>}
         </h1>
       </header>
+
+      <NearbyShowsWidget />
 
       {feed.shows.length === 0 ? (
         <div className="weekend-empty">

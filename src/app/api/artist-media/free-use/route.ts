@@ -34,9 +34,11 @@ export async function GET(request: Request) {
         notes: true,
         mimeType: true,
         fileSizeBytes: true,
+        durationSecs: true,
         createdAt: true,
         profile: {
           select: {
+            id: true,
             slug: true,
             name: true,
             avatarImage: true,
@@ -59,9 +61,11 @@ export async function GET(request: Request) {
         notes: track.notes,
         mimeType: track.mimeType,
         fileSizeBytes: track.fileSizeBytes,
+        durationSecs: track.durationSecs,
         streamUrl: `/api/media/${track.hexId}`,
         createdAt: track.createdAt,
         artist: {
+          profileId: track.profile.id,
           name: track.profile.name,
           slug: track.profile.slug,
           avatarImage: track.profile.avatarImage,

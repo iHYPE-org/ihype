@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { getVenueBookingRecommendations } from '@/lib/venueBooking';
+import { SendBookingRequestButton } from '@/components/SendBookingRequestButton';
 import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
@@ -59,6 +60,10 @@ export default async function BookingPage() {
                   <span className="booking-reason">{c.reason}</span>
                   {c.hypeCount > 0 && <span className="booking-hype">{c.hypeCount} HYPE</span>}
                 </div>
+                <SendBookingRequestButton
+                  toProfileId={c.profileId}
+                  defaultMessage={`Hi ${c.name}, we'd love to have you play a show at ${feed.venueName ?? 'our venue'}${feed.venueCity ? ` in ${feed.venueCity}` : ''}. ${c.reason} — let us know if you're interested!`}
+                />
               </div>
               <Link href={`/artists/${c.slug}`} className="booking-card-cta">View</Link>
             </li>

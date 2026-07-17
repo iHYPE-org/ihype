@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { SupportForm } from '@/components/SupportForm';
 import { SupportPrivacyPanel } from '@/components/SupportPrivacyPanel';
+import { BugReportPanel } from '@/components/BugReportPanel';
 
 const quickCardStyle: React.CSSProperties = {
   border: '1px solid var(--line)', borderRadius: 10, padding: '18px 20px',
@@ -47,6 +48,7 @@ export function SupportPageClient() {
           <div style={{ fontSize: 14, fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 4 }}>Payouts</div>
           <div style={{ fontSize: 12, color: 'var(--ink-a55)' }}>Settlement, earnings, referrals</div>
         </Link>
+        <BugReportPanel />
       </div>
 
       <div

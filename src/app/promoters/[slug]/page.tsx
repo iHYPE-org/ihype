@@ -6,9 +6,14 @@ import { db } from '@/lib/db';
 import { buildArtistMediaCollection } from '@/lib/media';
 import { HypeButton } from '@/components/HypeButton';
 import { FollowButton } from '@/components/FollowButton';
+import { ReportButton } from '@/components/ReportButton';
+import { FanMailButton } from '@/components/FanMailButton';
 import { ArtistMediaPlaylist } from '@/components/ArtistMediaPlaylist';
 import { TrackUploadPanel } from '@/components/TrackUploadPanel';
 import { ProfileInsights } from '@/components/ProfileInsights';
+import { BookingRequestInbox } from '@/components/BookingRequestInbox';
+import { SimilarArtistsRow } from '@/components/SimilarArtistsRow';
+import { getSimilarArtists } from '@/lib/sounds-like';
 import { getPinnedStatValues } from '@/lib/profile-stats';
 import { PinnedStatTiles } from '@/components/PinnedStatTiles';
 import { getSafeImageUrl } from '@/lib/asset-safety';
@@ -74,7 +79,7 @@ export default async function DJProfilePage({
   const media = buildArtistMediaCollection(null, profile.mediaUploads);
   const artworkUrl = getSafeImageUrl(profile.galleryImage || profile.heroImage);
 
-  const [shows, userHype, earningsOrders] = await Promise.all([
+  const [shows, userHype, earningsOrders, similarArtists] = await Promise.all([
     db.show.findMany({
       where: { promoterProfileId: profile.id, ...getDemoCreatorExclusion() },
       orderBy: { startsAt: 'asc' },
@@ -88,6 +93,7 @@ export default async function DJProfilePage({
           select: { promoterPayoutCents: true, show: { select: { title: true } } },
         })
       : Promise.resolve([]),
+    getSimilarArtists(profile.slug),
   ]);
 
   const now = new Date();
@@ -122,9 +128,13 @@ export default async function DJProfilePage({
             <div className="dj-hero-actions">
               <FollowButton profileId={profile.id} variant="hero" />
               <Link className="dj-hero-btn" href="/radio">Tune In →</Link>
+              {!isOwner && session?.user?.id && (
+                <ReportButton className="dj-hero-btn" entityLabel="profile" targetId={profile.id} targetType="profile" />
+              )}
               {isOwner && (
                 <>
                   {profile.type === 'DJ' && <Link className="dj-hero-btn" href="/radio/studio">Radio Studio</Link>}
+                  <FanMailButton profileId={profile.id} triggerClassName="dj-hero-btn" />
                   <Link className="dj-hero-btn" href="/pages">Customize</Link>
                   <Link className="dj-hero-btn" href="/settings">Settings</Link>
                 </>
@@ -166,6 +176,7 @@ export default async function DJProfilePage({
                 </Link>
               ))
             )}
+            <SimilarArtistsRow accent="var(--profile-hero, linear-gradient(135deg,#ff3e9a,#b983ff))" artists={similarArtists} heading="Similar DJs & Artists" />
           </div>
         )}
 
@@ -214,6 +225,7 @@ export default async function DJProfilePage({
               connected={profile.stripeConnectOnboarded}
               hasStarted={Boolean(profile.stripeConnectAccountId)}
             />
+            <BookingRequestInbox profileId={profile.id} />
             <ProfileInsights profileId={profile.id} profileType={profile.type} />
           </>
         )}
