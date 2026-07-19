@@ -42,5 +42,7 @@ export const editorSchema = z.object({
   themeBackdropTone: text(80),
   fanShareEnabled: z.boolean().optional(),
   discoverable: z.boolean().optional(),
+  capacity: z.number().int().min(0).max(200000).optional(),
+  roomType: text(40),
   pinnedStats: z.array(z.string()).max(4).optional()
 });

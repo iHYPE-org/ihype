@@ -52,6 +52,8 @@ const EDITOR_FIELDS = {
   themeBackdropTone: true,
   fanShareEnabled: true,
   discoverable: true,
+  capacity: true,
+  roomType: true,
   pinnedStats: true,
 } as const;
 
@@ -153,6 +155,8 @@ export async function PATCH(request: Request) {
     themeBackdropTone: emptyToNull(body.themeBackdropTone),
     fanShareEnabled: body.fanShareEnabled,
     discoverable: body.discoverable,
+    capacity: body.capacity,
+    roomType: emptyToNull(body.roomType),
     // Re-validated against the profile's actual type here (not just the
     // catalog) so a stale client can't pin a stat that doesn't apply to
     // this role — e.g. a Venue can't pin "Tickets Bought" (a fan-only stat).

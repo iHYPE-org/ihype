@@ -219,6 +219,11 @@ model Profile {
   // Settings' "Show me in discovery" / "Show me in demand radar" toggle —
   // honored by /discover, search, and the venue booking demand radar.
   discoverable                  Boolean                     @default(true)
+  // Venue onboarding's "Room details" step (DESIGN_SYNC row 225) — shown on
+  // the venue's own page/dashboard, distinct from a Show's own
+  // ticketCapacity (a venue's max room size vs. one event's cap for that night).
+  capacity                      Int?
+  roomType                      String?
   ownerId                       String
   owner                         User                        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   createdAt                     DateTime                    @default(now())
