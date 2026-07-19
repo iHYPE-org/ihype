@@ -5,6 +5,8 @@ import { vetAdvertisement, vetAdAudioContent, adCampaignStatusFromVetting } from
 import { isTrustedStorageUrl } from '@/lib/object-storage';
 import { recordAuditEvent } from '@/lib/audit';
 import { notifyAdvertiser } from '@/lib/ad-campaign-notify';
+import { createAdCampaignCheckoutSession, settleAdCampaignAuthorization } from '@/lib/stripe';
+import { log } from '@/lib/logger';
 import {
   isAdScope, isAdRunLengthDays, quoteAdCampaign,
   AD_SCOPE_LABELS, MIN_SPOTS_PER_DAY, MAX_SPOTS_PER_DAY,
@@ -65,11 +67,14 @@ export async function POST(request: NextRequest) {
   const slot = await db.adSlot.findFirst({ where: { name: AD_SCOPE_LABELS[body.scope], active: true } });
   if (!slot) return NextResponse.json({ error: 'Ad slot not found for this coverage tier.' }, { status: 404 });
 
-  // Budget and dates are computed server-side from scope/spots/days —
-  // never trust a client-submitted price for what it's about to be charged.
+  // Budget is computed server-side from scope/spots/days — never trust a
+  // client-submitted price for what it's about to be charged. startsAt/
+  // endsAt are NOT resolved here — pre-auth-then-capture billing means a
+  // campaign doesn't actually start its purchased run until payment is
+  // authorized (see the AWAITING_PAYMENT handling below and the webhook),
+  // so a campaign stuck in manual review or awaiting checkout never loses
+  // run length to the wait.
   const quote = quoteAdCampaign(body.scope, spotsPerDay, body.runDays);
-  const startsAt = new Date();
-  const endsAt = new Date(startsAt.getTime() + quote.runDays * 24 * 60 * 60 * 1000);
 
   // AI vetting (music-industry-only policy). Approvals go live without an
   // admin touch; only borderline submissions land in the manual queue.
@@ -105,7 +110,16 @@ export async function POST(request: NextRequest) {
     reasoning = `${reasoning} Audio spot flagged: ${audioVetting.reasoning}`;
   }
 
-  const ad = await db.ad.create({
+  // A vetting APPROVED doesn't mean live yet under pre-auth-then-capture
+  // billing — it means "ready to authorize payment." Only the webhook
+  // (on successful authorization) ever sets the stored status to APPROVED.
+  // adCampaignStatusFromVetting only ever returns APPROVED/REJECTED/PENDING
+  // in practice; narrow explicitly since its declared return type is the
+  // full AdCampaignStatus union (which also covers CANCELLED/PAUSED, set
+  // only by the PATCH handler below, never by vetting).
+  const storedStatus = (status === 'APPROVED' ? 'AWAITING_PAYMENT' : status) as 'AWAITING_PAYMENT' | 'REJECTED' | 'PENDING';
+
+  let ad = await db.ad.create({
     data: {
       slotId: slot.id,
       advertiserId: session.user.id,
@@ -117,12 +131,35 @@ export async function POST(request: NextRequest) {
         : undefined,
       clickUrl: typeof body.clickUrl === 'string' ? body.clickUrl : undefined,
       budgetCents: quote.totalCostCents,
-      startsAt,
-      endsAt,
-      status,
+      runDays: quote.runDays,
+      status: storedStatus,
     },
     include: { slot: { select: { name: true } } },
   });
+
+  let checkoutUrl: string | null = null;
+  if (storedStatus === 'AWAITING_PAYMENT') {
+    try {
+      const checkout = await createAdCampaignCheckoutSession({
+        adId: ad.id,
+        amountCents: quote.totalCostCents,
+        title,
+        advertiserEmail: session.user.email ?? null,
+      });
+      ad = await db.ad.update({
+        where: { id: ad.id },
+        data: { stripePaymentIntentId: checkout.paymentIntentId },
+        include: { slot: { select: { name: true } } },
+      });
+      checkoutUrl = checkout.checkoutUrl;
+    } catch (error) {
+      log.error('[advertise/campaigns]', error instanceof Error ? error : null, 'Checkout session creation failed');
+      // The Ad row stays AWAITING_PAYMENT with no stripePaymentIntentId —
+      // the advertiser sees "authorize payment" fail rather than a
+      // silently-live unpaid campaign. They can retry via the dashboard
+      // (a future "Pay now" action) rather than losing the submission.
+    }
+  }
 
   recordAuditEvent({
     actorUserId: session.user.id,
@@ -143,19 +180,28 @@ export async function POST(request: NextRequest) {
     }).catch(() => {});
   }
 
-  // status can only be APPROVED/REJECTED/PENDING here — CANCELLED is set
-  // exclusively by the self-serve PATCH handler below, never by vetting.
-  notifyAdvertiser(session.user.id, session.user.email, title, status as 'APPROVED' | 'REJECTED' | 'PENDING', reasoning);
+  notifyAdvertiser(
+    session.user.id,
+    session.user.email,
+    title,
+    storedStatus,
+    reasoning,
+    checkoutUrl ?? undefined,
+  );
 
   return NextResponse.json({
     ad,
     quote,
+    checkoutUrl,
     vetting: {
-      status,
+      status: storedStatus,
       reasoning,
       message:
-        status === 'APPROVED' ? 'Campaign passed automated vetting and is live.'
-        : status === 'REJECTED' ? 'Campaign did not meet the music-industry supporter policy.'
+        storedStatus === 'AWAITING_PAYMENT'
+          ? (checkoutUrl
+              ? 'Campaign passed automated vetting — authorize payment to go live.'
+              : 'Campaign passed vetting, but starting checkout failed. Try again from your dashboard.')
+        : storedStatus === 'REJECTED' ? 'Campaign did not meet the music-industry supporter policy.'
         : 'Campaign is queued for manual review (within 48 hours).',
     },
   }, { status: 201 });
@@ -170,11 +216,17 @@ export async function PATCH(request: NextRequest) {
 
   const id = typeof body.id === 'string' ? body.id : '';
   const action = body.action;
-  if (!id || (action !== 'cancel' && action !== 'pause' && action !== 'resume')) {
-    return NextResponse.json({ error: 'id and action: "cancel" | "pause" | "resume" are required.' }, { status: 400 });
+  if (!id || (action !== 'cancel' && action !== 'pause' && action !== 'resume' && action !== 'retry-checkout')) {
+    return NextResponse.json({ error: 'id and action: "cancel" | "pause" | "resume" | "retry-checkout" are required.' }, { status: 400 });
   }
 
-  const ad = await db.ad.findUnique({ where: { id }, select: { advertiserId: true, status: true, endsAt: true, pausedAt: true } });
+  const ad = await db.ad.findUnique({
+    where: { id },
+    select: {
+      advertiserId: true, status: true, endsAt: true, pausedAt: true, title: true,
+      budgetCents: true, spentCents: true, stripePaymentIntentId: true, settledAt: true,
+    },
+  });
   if (!ad || ad.advertiserId !== session.user.id) {
     return NextResponse.json({ error: 'Campaign not found.' }, { status: 404 });
   }
@@ -183,8 +235,44 @@ export async function PATCH(request: NextRequest) {
   }
 
   let updated;
-  if (action === 'cancel') {
-    updated = await db.ad.update({ where: { id }, data: { status: 'CANCELLED', pausedAt: null } });
+  if (action === 'retry-checkout') {
+    if (ad.status !== 'AWAITING_PAYMENT') {
+      return NextResponse.json({ error: 'Only a campaign awaiting payment can retry checkout.' }, { status: 400 });
+    }
+    // Always issues a fresh Checkout Session — the advertiser may be
+    // retrying because they abandoned the first one, not just because
+    // creation failed, so this must not be deduped against an earlier,
+    // possibly-expired session with the same idempotency key.
+    const checkout = await createAdCampaignCheckoutSession({
+      adId: id,
+      amountCents: ad.budgetCents,
+      title: ad.title,
+      advertiserEmail: session.user.email ?? null,
+      idempotencyKey: `ad-checkout:${id}:${Date.now()}`,
+    });
+    updated = await db.ad.update({ where: { id }, data: { stripePaymentIntentId: checkout.paymentIntentId } });
+    recordAuditEvent({
+      actorUserId: session.user.id,
+      action: 'ad.campaign.checkout_retried',
+      entityType: 'Ad',
+      entityId: id,
+    }).catch(() => {});
+    return NextResponse.json({ ad: updated, checkoutUrl: checkout.checkoutUrl });
+  } else if (action === 'cancel') {
+    // Pre-auth-then-capture: cancelling early is a settlement, not just a
+    // status flip — capture whatever actually aired (never the full hold),
+    // or release the hold outright if nothing did.
+    if (ad.stripePaymentIntentId && !ad.settledAt) {
+      // Never capture more than what was actually authorized — spentCents
+      // can drift slightly over budgetCents (see ad-settlement.ts).
+      await settleAdCampaignAuthorization(ad.stripePaymentIntentId, Math.min(ad.spentCents, ad.budgetCents));
+      updated = await db.ad.update({
+        where: { id },
+        data: { status: 'CANCELLED', pausedAt: null, settledAt: new Date() },
+      });
+    } else {
+      updated = await db.ad.update({ where: { id }, data: { status: 'CANCELLED', pausedAt: null } });
+    }
   } else if (action === 'pause') {
     if (ad.status !== 'APPROVED') {
       return NextResponse.json({ error: 'Only a live campaign can be paused.' }, { status: 400 });

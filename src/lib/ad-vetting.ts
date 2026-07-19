@@ -18,7 +18,12 @@ export interface VettingResult {
 // kept as its own type so the two pipelines can't be confused for each other.
 // CANCELLED and PAUSED are set only by the advertiser's own self-serve
 // actions (PATCH /api/advertise/campaigns), never by vetting.
-export type AdCampaignStatus = 'APPROVED' | 'REJECTED' | 'PENDING' | 'CANCELLED' | 'PAUSED';
+// AWAITING_PAYMENT is a real Ad.status value (set by the campaign route
+// right after vetting clears, before APPROVED means "authorized and live")
+// but is never returned by adCampaignStatusFromVetting itself — vetting
+// only ever produces APPROVED/REJECTED/PENDING; the route translates a
+// vetting APPROVED into the stored AWAITING_PAYMENT status.
+export type AdCampaignStatus = 'APPROVED' | 'REJECTED' | 'PENDING' | 'CANCELLED' | 'PAUSED' | 'AWAITING_PAYMENT';
 
 export function adCampaignStatusFromVetting(result: VettingResult): AdCampaignStatus {
   if (result.requiresManualReview) return 'PENDING';

@@ -24,6 +24,7 @@ const STATUS_COLORS: Record<string, string> = {
   APPROVED: 'success',
   REJECTED: 'error',
   PENDING: 'warning',
+  AWAITING_PAYMENT: 'warning',
   PAUSED: 'warning',
   CANCELLED: '',
 };

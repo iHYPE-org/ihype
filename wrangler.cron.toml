@@ -24,7 +24,7 @@ crons = [
   "0 10 * * *",   # new-to-scene
   "0 11 * * *",   # artist-onboarding
   "0 12 * * *",   # show-reminders
-  "0 13 * * *",   # show-payouts
+  "0 13 * * *",   # show-payouts, ad-settlement
   "0 14 * * *",   # onboarding
   "0 15 * * *",   # welcome-sequence
   "0 5 * * *",    # backup-verify

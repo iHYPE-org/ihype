@@ -136,7 +136,8 @@ function LiveTicker() {
 type SubmitState =
   | { phase: 'idle' }
   | { phase: 'submitting' }
-  | { phase: 'done'; status: 'APPROVED' | 'REJECTED' | 'PENDING'; reasoning: string; message: string }
+  | { phase: 'redirecting' }
+  | { phase: 'done'; status: 'AWAITING_PAYMENT' | 'REJECTED' | 'PENDING'; reasoning: string; message: string }
   | { phase: 'error'; error: string };
 
 function CoverageBuilder() {
@@ -207,11 +208,17 @@ function CoverageBuilder() {
     setSubmit({ phase: 'submitting' });
     try {
       const result = await postJson<{
-        vetting: { status: 'APPROVED' | 'REJECTED' | 'PENDING'; reasoning: string; message: string };
+        checkoutUrl: string | null;
+        vetting: { status: 'AWAITING_PAYMENT' | 'REJECTED' | 'PENDING'; reasoning: string; message: string };
       }>('/api/advertise/campaigns', {
         scope, spotsPerDay: spots, runDays: days, title: title.trim(), clickUrl: clickUrl.trim(),
         audioUrl: audio.url, audioDurationSecs: audio.durationSecs ?? undefined,
       });
+      if (result.vetting.status === 'AWAITING_PAYMENT' && result.checkoutUrl) {
+        setSubmit({ phase: 'redirecting' });
+        window.location.href = result.checkoutUrl;
+        return;
+      }
       setSubmit({ phase: 'done', ...result.vetting });
     } catch (err) {
       setSubmit({ phase: 'error', error: err instanceof Error ? err.message : 'Could not submit campaign. Are you logged in?' });
@@ -378,20 +385,20 @@ function CoverageBuilder() {
 
             <button
               onClick={handleSubmit}
-              disabled={submit.phase === 'submitting'}
+              disabled={submit.phase === 'submitting' || submit.phase === 'redirecting'}
               className="adv-btn-solid"
-              style={{ width: '100%', marginTop: 16, opacity: submit.phase === 'submitting' ? .6 : 1 }}
+              style={{ width: '100%', marginTop: 16, opacity: submit.phase === 'submitting' || submit.phase === 'redirecting' ? .6 : 1 }}
             >
-              {submit.phase === 'submitting' ? 'Screening…' : 'Submit campaign →'}
+              {submit.phase === 'submitting' ? 'Screening…' : submit.phase === 'redirecting' ? 'Redirecting to payment…' : 'Submit campaign →'}
             </button>
 
             {submit.phase === 'done' && (
               <div style={{
                 marginTop: 12, padding: '12px 14px', borderRadius: 10,
-                background: submit.status === 'APPROVED' ? 'rgba(34,229,212,.1)' : submit.status === 'REJECTED' ? 'rgba(255,90,90,.1)' : 'rgba(255,184,74,.1)',
-                border: `1px solid ${submit.status === 'APPROVED' ? 'rgba(34,229,212,.3)' : submit.status === 'REJECTED' ? 'rgba(255,90,90,.3)' : 'rgba(255,184,74,.3)'}`,
+                background: submit.status === 'AWAITING_PAYMENT' ? 'rgba(34,229,212,.1)' : submit.status === 'REJECTED' ? 'rgba(255,90,90,.1)' : 'rgba(255,184,74,.1)',
+                border: `1px solid ${submit.status === 'AWAITING_PAYMENT' ? 'rgba(34,229,212,.3)' : submit.status === 'REJECTED' ? 'rgba(255,90,90,.3)' : 'rgba(255,184,74,.3)'}`,
               }}>
-                <div style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 13, color: submit.status === 'APPROVED' ? '#22e5d4' : submit.status === 'REJECTED' ? '#ff5a5a' : '#ffb84a' }}>
+                <div style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 13, color: submit.status === 'AWAITING_PAYMENT' ? '#22e5d4' : submit.status === 'REJECTED' ? '#ff5a5a' : '#ffb84a' }}>
                   {submit.message}
                 </div>
                 <div style={{ fontSize: 11, color: '#9e9080', marginTop: 4, lineHeight: 1.5 }}>{submit.reasoning}</div>

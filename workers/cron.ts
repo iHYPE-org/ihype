@@ -58,6 +58,7 @@ const JOBS: CronJob[] = [
   { path: '/api/cron?job=close-stale-bookings',  schedule: '0 1 * * *'   },
   { path: '/api/cron?job=artist-onboarding',     schedule: '0 11 * * *'  },
   { path: '/api/cron?job=show-payouts',          schedule: '0 13 * * *'  },
+  { path: '/api/cron?job=ad-settlement',         schedule: '0 13 * * *'  },
   { path: '/api/cron?job=stripe-connect-health', schedule: '0 */6 * * *' },
 
   // Operator tools

@@ -6,6 +6,7 @@ import { log } from '@/lib/logger';
 import { finalizeCapturedTicketOrder, voidReservedTicketOrder } from '@/lib/ticket-order-state';
 import { sendIssuedTicketEmail } from '@/lib/mailer';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
+import { notifyAdvertiser } from '@/lib/ad-campaign-notify';
 import {
   buildTicketQrCodeDataUrl,
   buildTicketVerificationUrl,
@@ -36,6 +37,8 @@ export async function POST(request: NextRequest) {
   }
 
   let finalizedOrderId: string | null = null;
+  let authorizedAdId: string | null = null;
+  let cancelledAdId: string | null = null;
   let duplicate = false;
 
   try {
@@ -44,13 +47,45 @@ export async function POST(request: NextRequest) {
         where: { source_eventId: { source: 'stripe', eventId: event.id } },
         select: { id: true },
       });
-      if (existing) return { duplicate: true, finalizedOrderId: null as string | null };
+      if (existing) {
+        return {
+          duplicate: true,
+          finalizedOrderId: null as string | null,
+          authorizedAdId: null as string | null,
+          cancelledAdId: null as string | null,
+        };
+      }
 
       let capturedOrderId: string | null = null;
+      let authorizedAdId: string | null = null;
+      let cancelledAdId: string | null = null;
 
       switch (event.type) {
-        case 'payment_intent.amount_capturable_updated':
+        case 'payment_intent.amount_capturable_updated': {
+          // Fires when a manual-capture PaymentIntent's amount_capturable
+          // changes — including the moment it first becomes capturable,
+          // i.e. successful authorization. Ticket orders react to
+          // `payment_intent.succeeded` (explicit capture) instead; ad
+          // campaigns react HERE, since capture only ever happens much
+          // later at campaign settlement (see the ad-settlement cron) —
+          // the campaign needs to go live the moment the hold succeeds,
+          // not when it's eventually captured.
+          const paymentIntent = event.data.object;
+          const ad = await tx.ad.findUnique({
+            where: { stripePaymentIntentId: paymentIntent.id },
+            select: { id: true, status: true, runDays: true },
+          });
+          if (ad && ad.status === 'AWAITING_PAYMENT') {
+            const startsAt = new Date(event.created * 1000);
+            const endsAt = new Date(startsAt.getTime() + (ad.runDays ?? 7) * 24 * 60 * 60 * 1000);
+            await tx.ad.update({
+              where: { id: ad.id },
+              data: { status: 'APPROVED', authorizedAt: startsAt, startsAt, endsAt },
+            });
+            authorizedAdId = ad.id;
+          }
           break;
+        }
 
         case 'payment_intent.payment_failed':
         case 'payment_intent.canceled': {
@@ -60,6 +95,15 @@ export async function POST(request: NextRequest) {
             select: { id: true },
           });
           for (const order of orders) await voidReservedTicketOrder(tx, order.id);
+
+          const ad = await tx.ad.findUnique({
+            where: { stripePaymentIntentId: paymentIntent.id },
+            select: { id: true, status: true },
+          });
+          if (ad && ad.status === 'AWAITING_PAYMENT') {
+            await tx.ad.update({ where: { id: ad.id }, data: { status: 'CANCELLED' } });
+            cancelledAdId = ad.id;
+          }
           break;
         }
 
@@ -92,11 +136,13 @@ export async function POST(request: NextRequest) {
       await tx.processedWebhookEvent.create({
         data: { source: 'stripe', eventId: event.id },
       });
-      return { duplicate: false, finalizedOrderId: capturedOrderId };
+      return { duplicate: false, finalizedOrderId: capturedOrderId, authorizedAdId, cancelledAdId };
     });
 
     duplicate = result.duplicate;
     finalizedOrderId = result.finalizedOrderId;
+    authorizedAdId = result.authorizedAdId;
+    cancelledAdId = result.cancelledAdId;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       duplicate = true;
@@ -145,6 +191,26 @@ export async function POST(request: NextRequest) {
       }
     } catch (error) {
       log.error('[stripe/webhook]', error instanceof Error ? error : null, `Ticket email failed for ${finalizedOrderId}`);
+    }
+  }
+
+  if (authorizedAdId || cancelledAdId) {
+    try {
+      const ad = await db.ad.findUnique({
+        where: { id: (authorizedAdId ?? cancelledAdId)! },
+        select: { title: true, advertiserId: true, advertiser: { select: { email: true } } },
+      });
+      if (ad) {
+        notifyAdvertiser(
+          ad.advertiserId,
+          ad.advertiser.email,
+          ad.title,
+          authorizedAdId ? 'APPROVED' : 'PAYMENT_FAILED',
+          authorizedAdId ? 'Payment authorized.' : 'The card was declined or the checkout was abandoned.',
+        );
+      }
+    } catch (error) {
+      log.error('[stripe/webhook]', error instanceof Error ? error : null, `Advertiser notification failed for ad ${authorizedAdId ?? cancelledAdId}`);
     }
   }
 

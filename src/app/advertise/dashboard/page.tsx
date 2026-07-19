@@ -138,8 +138,8 @@ export default async function AdvertiserDashboard() {
                   </div>
                 )}
               </div>
-              <span className={`badge ${campaign.status === 'APPROVED' ? 'success' : campaign.status === 'PENDING' || campaign.status === 'PAUSED' ? 'warning' : campaign.status === 'REJECTED' ? 'error' : ''}`}>
-                {campaign.status}
+              <span className={`badge ${campaign.status === 'APPROVED' ? 'success' : campaign.status === 'PENDING' || campaign.status === 'PAUSED' || campaign.status === 'AWAITING_PAYMENT' ? 'warning' : campaign.status === 'REJECTED' ? 'error' : ''}`}>
+                {campaign.status === 'AWAITING_PAYMENT' ? 'AWAITING PAYMENT' : campaign.status}
               </span>
             </div>
             <div style={{ display: 'flex', gap: 24 }}>
@@ -156,7 +156,7 @@ export default async function AdvertiserDashboard() {
                 {campaign.endsAt && `Ends: ${new Date(campaign.endsAt).toLocaleDateString()}`}
               </div>
             )}
-            {(campaign.status === 'APPROVED' || campaign.status === 'PENDING' || campaign.status === 'PAUSED') && (
+            {(campaign.status === 'APPROVED' || campaign.status === 'PENDING' || campaign.status === 'PAUSED' || campaign.status === 'AWAITING_PAYMENT') && (
               <div style={{ marginTop: 12 }}>
                 <CampaignCancelButton campaignId={campaign.id} status={campaign.status} />
               </div>

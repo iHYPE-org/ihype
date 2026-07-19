@@ -191,6 +191,90 @@ export async function refundTicketPaymentIntent(paymentIntentId: string): Promis
 }
 
 /**
+ * Pre-auth-then-capture ad campaign billing (DESIGN_SYNC row 234). A
+ * Checkout Session in `mode: 'payment'` needs no client-side Stripe.js/
+ * Elements integration (the advertiser is redirected to Stripe's own
+ * hosted page) — a good fit for a self-serve B2B flow with no existing
+ * card-collection UI in this codebase. `payment_intent_data.capture_method:
+ * 'manual'` means the session's underlying PaymentIntent only ever
+ * authorizes the full quoted budget; Stripe creates that PaymentIntent
+ * synchronously, so its id is available immediately, before the advertiser
+ * ever completes checkout — same as `createTicketPaymentIntent`, just via
+ * the Checkout Session wrapper instead of a directly-confirmed PaymentIntent.
+ */
+export async function createAdCampaignCheckoutSession({
+  adId,
+  amountCents,
+  title,
+  advertiserEmail,
+  idempotencyKey,
+}: {
+  adId: string;
+  amountCents: number;
+  title: string;
+  advertiserEmail: string | null;
+  /** Defaults to one session per ad. Pass a fresh value (e.g. a timestamp)
+   *  when the advertiser explicitly asks to retry — otherwise Stripe dedupes
+   *  against the first (possibly abandoned/expired) session. */
+  idempotencyKey?: string;
+}): Promise<{ paymentIntentId: string; checkoutUrl: string }> {
+  const stripe = getStripe();
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://ihype.org';
+
+  const session = await stripe.checkout.sessions.create(
+    {
+      mode: 'payment',
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            unit_amount: amountCents,
+            product_data: { name: `iHYPE ad campaign — ${title}` },
+          },
+          quantity: 1,
+        },
+      ],
+      customer_email: advertiserEmail ?? undefined,
+      payment_intent_data: {
+        capture_method: 'manual',
+        metadata: { adId },
+      },
+      metadata: { adId },
+      success_url: `${baseUrl}/advertise/dashboard?checkout=success`,
+      cancel_url: `${baseUrl}/advertise/dashboard?checkout=cancelled`,
+    },
+    { idempotencyKey: idempotencyKey ?? `ad-checkout:${adId}` },
+  );
+
+  if (typeof session.payment_intent !== 'string') {
+    throw new Error('Checkout session did not return a payment intent id.');
+  }
+
+  return { paymentIntentId: session.payment_intent, checkoutUrl: session.url ?? '' };
+}
+
+/**
+ * Captures only the actual delivered spend, never the full authorized
+ * budget — the point of pre-auth-then-capture. Called at campaign end (the
+ * settlement cron) or on early self-serve cancellation, in both cases with
+ * whatever `spentCents` really is at that moment. Stripe rejects a capture
+ * of 0, so a campaign that ran without ever serving an impression is
+ * cancelled (releasing the hold) instead of captured.
+ */
+export async function settleAdCampaignAuthorization(paymentIntentId: string, spentCents: number): Promise<void> {
+  const stripe = getStripe();
+  if (spentCents <= 0) {
+    await stripe.paymentIntents.cancel(paymentIntentId, {}, { idempotencyKey: `ad-settle-cancel:${paymentIntentId}` });
+    return;
+  }
+  await stripe.paymentIntents.capture(
+    paymentIntentId,
+    { amount_to_capture: spentCents },
+    { idempotencyKey: `ad-settle-capture:${paymentIntentId}` },
+  );
+}
+
+/**
  * Deletes a Stripe Connect Express account, ending its ability to receive
  * future payouts. Called on account erasure (privacy-actions.ts) so an
  * erased identity can't keep collecting money after "deletion." Stripe

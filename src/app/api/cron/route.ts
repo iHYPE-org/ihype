@@ -224,6 +224,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ ok: true, ...result });
     }
 
+    case 'ad-settlement': {
+      const { settleEndedAdCampaigns } = await import('@/lib/ad-settlement');
+      const result = await settleEndedAdCampaigns();
+      await pingCronAlive('ad-settlement');
+      return NextResponse.json({ ok: true, ...result });
+    }
+
     case 'artist-onboarding': {
       const { sendArtistOnboardingNudges } = await import('@/lib/artist-onboarding');
       const result = await sendArtistOnboardingNudges();
