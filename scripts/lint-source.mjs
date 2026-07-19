@@ -42,9 +42,18 @@ if (!/FEATURE_ENABLE_TICKET_PAYMENTS="false"/.test(environmentExample)) {
   fail('.env.example', 'paid ticketing must default to disabled.');
 }
 
+// Paid ticketing went live 2026-07-19: 501c3 status confirmed and a live
+// Stripe account is attached to the org's bank account (explicit,
+// unambiguous product/business confirmation — this line is a deliberate,
+// reviewed edit, not a default someone forgot to flip back). Actual
+// charging still additionally requires live STRIPE_SECRET_KEY/
+// STRIPE_WEBHOOK_SECRET Cloudflare Worker secrets (never touched by this
+// repo or its CI — see src/lib/payments.ts's getPaymentProcessingReadiness,
+// which fails closed if either is missing or STRIPE_SECRET_KEY is a
+// sk_test_ key in production).
 const wranglerConfig = await text('wrangler.toml');
-if (!/FEATURE_ENABLE_TICKET_PAYMENTS\s*=\s*"false"/.test(wranglerConfig)) {
-  fail('wrangler.toml', 'the deployed Workers runtime must pin paid ticketing to disabled.');
+if (!/FEATURE_ENABLE_TICKET_PAYMENTS\s*=\s*"true"/.test(wranglerConfig)) {
+  fail('wrangler.toml', 'paid ticketing launch flag was reverted — confirm this is intentional before changing it back.');
 }
 
 const payments = await text('src/lib/payments.ts');

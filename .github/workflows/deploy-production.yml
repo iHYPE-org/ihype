@@ -53,7 +53,7 @@ jobs:
           NEXT_PUBLIC_BASE_URL: https://ihype.org
           NEXT_PUBLIC_APP_URL: https://ihype.org
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4AAAAAADSF8WNxaeBIRmR7"
-          FEATURE_ENABLE_TICKET_PAYMENTS: 'false'
+          FEATURE_ENABLE_TICKET_PAYMENTS: 'true'
 
       - name: Run migrations
         # Build first so a compilation failure cannot advance production schema.
@@ -78,7 +78,7 @@ jobs:
           NEXT_PUBLIC_BASE_URL: https://ihype.org
           NEXT_PUBLIC_APP_URL: https://ihype.org
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4AAAAAADSF8WNxaeBIRmR7"
-          FEATURE_ENABLE_TICKET_PAYMENTS: 'false'
+          FEATURE_ENABLE_TICKET_PAYMENTS: 'true'
 
       - name: Deploy cron Worker
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''

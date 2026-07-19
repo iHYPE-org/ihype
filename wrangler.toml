@@ -37,7 +37,7 @@ NEXT_PUBLIC_BASE_URL = "https://ihype.org"
 R2_PUBLIC_BASE_URL = "https://ihype.org"
 NEXT_PUBLIC_TURNSTILE_SITE_KEY = "0x4AAAAAADSF8WNxaeBIRmR7"
 # Paid ticketing must remain an explicit configuration change, not dashboard residue.
-FEATURE_ENABLE_TICKET_PAYMENTS = "false"
+FEATURE_ENABLE_TICKET_PAYMENTS = "true"
 
 [[kv_namespaces]]
 binding = "KV"

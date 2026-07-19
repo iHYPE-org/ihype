@@ -54,7 +54,7 @@ The seed creates local development accounts for fan, artist, promoter, venue, an
 
 ## Paid ticketing launch gate
 
-Paid ticketing is disabled by default:
+Paid ticketing is disabled by default for local/new environments:
 
 ```dotenv
 FEATURE_ENABLE_TICKET_PAYMENTS=false
@@ -69,6 +69,8 @@ Stripe credentials alone do not enable charges. Paid ticketing becomes available
 3. `STRIPE_WEBHOOK_SECRET` contains a valid webhook signing secret
 
 Keep the feature switch false until payment-provider onboarding, refund policy, tax handling, accounting, and production reconciliation procedures are approved. While disabled, paid purchase and capture endpoints fail closed and do not create payment reservations, captured orders, tickets, or payout liabilities.
+
+**Production status (2026-07-19):** `FEATURE_ENABLE_TICKET_PAYMENTS=true` in `wrangler.toml` — 501c3 status and a live Stripe account attached to the org's bank account have been confirmed. This flag alone does not move money: `STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET` are Cloudflare Worker secrets, set out-of-band (never touched by this repo or its CI), and `getPaymentProcessingReadiness()` (`src/lib/payments.ts`) still fails closed if either is missing or `STRIPE_SECRET_KEY` is a `sk_test_` key in production.
 
 ## Closed-beta invite codes
 
