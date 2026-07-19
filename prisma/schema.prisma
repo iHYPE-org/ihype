@@ -14,6 +14,7 @@ enum Role {
   DJ
   VENUE
   ADMIN
+  ADVERTISER
 }
 
 enum ShowStatus {
@@ -152,6 +153,25 @@ model User {
   adminDeviceTokenHash    String?
   adminDeviceSetAt        DateTime?
   earningsSummarySentAt   DateTime?
+  advertiserAccount       AdvertiserAccount?
+}
+
+// A private, non-public account for a non-"app-user" advertiser (e.g. a gear
+// shop, merch printer, or live-production company — the "3rd-Party Accounts"
+// path already described in Advertise.dc.html's copy but never actually
+// buildable before this). Deliberately separate from Profile: advertisers
+// have no public-facing page, so none of Profile's public-profile fields
+// (bio, avatar, verification, etc.) apply. Ad.advertiserId still points at
+// User directly and is untouched by this model's existence.
+model AdvertiserAccount {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName String
+  contactName String?
+  website     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Profile {

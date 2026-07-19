@@ -723,6 +723,9 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
               <a href="#build" className="adv-btn-solid">Build a campaign →</a>
               <a href="#guard" className="adv-btn-ghost">See how vetting works</a>
             </div>
+            <div style={{ marginTop: 16, fontFamily: 'var(--f-m,monospace)', fontSize: 11, color: '#5a5048', letterSpacing: '.04em' }}>
+              Already advertising? <Link href="/advertise/dashboard" style={{ color: '#9e9080', textDecoration: 'underline' }}>Go to your dashboard →</Link>
+            </div>
             <div style={{ display: 'flex', gap: 26, marginTop: 34, paddingTop: 24, borderTop: '1px solid var(--hair-70)' }}>
               {[
                 { v: <CountUp target={stats.activeCampaigns} />, l: 'Campaigns live now' },
@@ -873,7 +876,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
                 </div>
               </div>
               <div style={{ marginTop: 'auto', paddingTop: 22 }}>
-                <a href="#build" className="adv-btn-ghost">Open a 3rd-party account →</a>
+                <Link className="adv-btn-ghost" href="/advertise/register">Open a 3rd-party account →</Link>
               </div>
             </div>
           </div>

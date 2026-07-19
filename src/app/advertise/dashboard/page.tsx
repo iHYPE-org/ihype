@@ -8,14 +8,20 @@ export const dynamic = 'force-dynamic';
 
 export default async function AdvertiserDashboard() {
   const session = await auth();
-  if (!session?.user?.id) redirect('/login');
+  if (!session?.user?.id) redirect('/login?callbackUrl=/advertise/dashboard');
 
   // Show the user's own campaigns using the new Ad model
-  const campaigns = await db.ad.findMany({
-    where: { advertiserId: session.user.id },
-    include: { slot: { select: { name: true } } },
-    orderBy: { createdAt: 'desc' },
-  });
+  const [campaigns, advertiserAccount] = await Promise.all([
+    db.ad.findMany({
+      where: { advertiserId: session.user.id },
+      include: { slot: { select: { name: true } } },
+      orderBy: { createdAt: 'desc' },
+    }),
+    db.advertiserAccount.findUnique({
+      where: { userId: session.user.id },
+      select: { companyName: true, website: true },
+    }),
+  ]);
 
   const totalImpressions = campaigns.reduce((s, c) => s + c.impressions, 0);
   const totalSpentCents = campaigns.reduce((s, c) => s + c.spentCents, 0);
@@ -56,7 +62,20 @@ export default async function AdvertiserDashboard() {
   return (
     <div className="container ad-dash" style={{ paddingTop: 24, paddingBottom: 60 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h1>My Ad Campaigns</h1>
+        <div>
+          <h1>My Ad Campaigns</h1>
+          {advertiserAccount && (
+            <p className="meta" style={{ marginTop: 4 }}>
+              {advertiserAccount.companyName}
+              {advertiserAccount.website && (
+                <>
+                  {' · '}
+                  <a href={advertiserAccount.website} rel="noreferrer noopener" target="_blank">{advertiserAccount.website}</a>
+                </>
+              )}
+            </p>
+          )}
+        </div>
         <Link href="/advertise" className="button small">+ New Campaign</Link>
       </div>
 
