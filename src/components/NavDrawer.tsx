@@ -151,6 +151,16 @@ export function NavDrawer({
               <ul className="nav-drawer-list">
                 <li>
                   <Link
+                    href="/me/dashboard"
+                    className={`nav-drawer-link${pathname === '/me/dashboard' ? ' active' : ''}`}
+                    onClick={() => setOpen(false)}
+                  >
+                    <svg {...ico}><rect height="8" rx="1.5" width="8" x="3" y="3" /><rect height="4" rx="1.5" width="8" x="13" y="3" /><rect height="4" rx="1.5" width="8" x="13" y="11" /><rect height="8" rx="1.5" width="8" x="3" y="13" /></svg>
+                    My Dashboard
+                  </Link>
+                </li>
+                <li>
+                  <Link
                     href="/me/notifications"
                     className={`nav-drawer-link${pathname === '/me/notifications' ? ' active' : ''}`}
                     onClick={() => setOpen(false)}

@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { ProfileInsights } from '@/components/ProfileInsights';
 
-type ModuleProfile = { id: string; type: string; name: string };
+type ModuleProfile = { id: string; type: string; name: string; slug: string };
 
 type TourData = {
   stops: { city: string; score: number; reach: string; showCount: number; venues: { id: string; name: string }[] }[];
@@ -224,6 +224,19 @@ const icons = {
       <path d="M3 11l18-5v12L3 13v-2z" /><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" />
     </svg>
   ),
+  dashboard: (color: string) => (
+    <svg fill="none" height="18" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="18">
+      <rect height="8" rx="1.5" width="8" x="3" y="3" /><rect height="4" rx="1.5" width="8" x="13" y="3" />
+      <rect height="4" rx="1.5" width="8" x="13" y="11" /><rect height="8" rx="1.5" width="8" x="3" y="13" />
+    </svg>
+  ),
+};
+
+const dashboardHref = (profile: ModuleProfile): string | null => {
+  if (profile.type === 'ARTIST') return `/artists/${profile.slug}/dashboard`;
+  if (profile.type === 'DJ') return `/promoters/${profile.slug}/dashboard`;
+  if (profile.type === 'VENUE') return `/venues/${profile.slug}/dashboard`;
+  return null;
 };
 
 /**
@@ -237,6 +250,7 @@ export function PageRoleModules({ profile, color }: { profile: ModuleProfile; co
   const isArtist = profile.type === 'ARTIST';
   const isVenue = profile.type === 'VENUE';
   const isDj = profile.type === 'DJ';
+  const dashHref = dashboardHref(profile);
 
   return (
     <div style={{ marginBottom: 36 }}>
@@ -244,6 +258,16 @@ export function PageRoleModules({ profile, color }: { profile: ModuleProfile; co
         PAGE TOOLKIT
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {dashHref && (
+          <LinkModule
+            color={color}
+            href={dashHref}
+            icon={icons.dashboard(color)}
+            sub="Earnings, activity & quick actions"
+            title="Dashboard"
+          />
+        )}
+
         <ExpandModule
           color={color}
           icon={icons.stats(color)}
