@@ -49,11 +49,6 @@ binding = "R2"
 bucket_name = "ihype-media"
 preview_bucket_name = "ihype-media-preview"
 
-[[d1_databases]]
-binding = "D1"
-database_name = "ihype-cron"
-database_id = "72feb348-a07a-4bd5-a6ee-5b27b751999d"
-
 # Pooled Postgres access — read by src/lib/db.ts, which falls back to
 # DATABASE_URL when the binding is absent (local dev, build, scripts).
 [[hyperdrive]]

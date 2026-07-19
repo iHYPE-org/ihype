@@ -73,10 +73,22 @@ export default async function DJDashboardPage({ params }: { params: Promise<{ sl
     db.show.count({ where: { promoterProfileId: profile.id, status: 'ENDED', startsAt: { gte: monthStart } } }),
     db.artistMediaAsset.count({ where: { profileId: profile.id, freeUseEnabled: true } }),
     db.show.findMany({
-      where: { promoterProfileId: profile.id, status: { in: ['LIVE', 'SCHEDULED'] } },
+      where: {
+        status: { in: ['LIVE', 'SCHEDULED', 'DRAFT'] },
+        OR: [
+          { promoterProfileId: profile.id },
+          // Booked as a lineup act on someone else's venue-booked show (see
+          // the Lineup & Split Agreement) — previously invisible here even
+          // though the DJ gets a real notification when this happens.
+          { lineupSlots: { some: { profileId: profile.id } } },
+        ],
+      },
       orderBy: { startsAt: 'asc' },
       take: 8,
-      select: { slug: true, title: true, startsAt: true, status: true },
+      select: {
+        slug: true, title: true, startsAt: true, status: true, promoterProfileId: true,
+        lineupSlots: { where: { profileId: profile.id }, select: { status: true } },
+      },
     }),
     db.show.findMany({
       where: { promoterProfileId: profile.id },
@@ -189,19 +201,33 @@ export default async function DJDashboardPage({ params }: { params: Promise<{ sl
             <div className="djd-empty"><p>No shows scheduled — create one to get started.</p></div>
           ) : (
             <div className="djd-show-list">
-              {upcomingShows.map((s) => (
-                <Link className="djd-show-row" href={`/shows/${s.slug}`} key={s.slug}>
-                  <div>
-                    <div className="djd-show-title">{s.title}</div>
-                    <div className="djd-show-meta">{formatShowMeta(s.startsAt, s.status)}</div>
-                  </div>
-                  {s.status === 'LIVE' ? (
-                    <span className="djd-live-pill"><span className="djd-live-dot" />Live</span>
-                  ) : (
-                    <span className="djd-scheduled-pill">Scheduled</span>
-                  )}
-                </Link>
-              ))}
+              {upcomingShows.map((s) => {
+                const isLineupBooking = s.promoterProfileId !== profile.id;
+                const myLineupStatus = s.lineupSlots[0]?.status;
+                return (
+                  <Link
+                    className="djd-show-row"
+                    href={s.status === 'DRAFT' ? `/shows/${s.slug}/lineup` : `/shows/${s.slug}`}
+                    key={s.slug}
+                  >
+                    <div>
+                      <div className="djd-show-title">{s.title}</div>
+                      <div className="djd-show-meta">
+                        {formatShowMeta(s.startsAt, s.status)}
+                        {isLineupBooking && myLineupStatus === 'PENDING' && ' · Lineup invite — review split'}
+                        {isLineupBooking && myLineupStatus === 'ACCEPTED' && ' · Booked as lineup act'}
+                      </div>
+                    </div>
+                    {s.status === 'LIVE' ? (
+                      <span className="djd-live-pill"><span className="djd-live-dot" />Live</span>
+                    ) : s.status === 'DRAFT' ? (
+                      <span className="djd-scheduled-pill">Draft</span>
+                    ) : (
+                      <span className="djd-scheduled-pill">Scheduled</span>
+                    )}
+                  </Link>
+                );
+              })}
             </div>
           )}
 
