@@ -472,6 +472,10 @@ model Show {
   capacityAlertSentAt    DateTime?
   dmcaDeadline           DateTime?
   dmcaStatus             String?
+  // Organizer-initiated cancellation (Event Cancellation Flow) — distinct
+  // from the admin-moderation CANCELED path, which has no reason recorded.
+  cancellationReason     String?
+  canceledAt             DateTime?
 
   @@index([startsAt, status])
   @@index([status])
