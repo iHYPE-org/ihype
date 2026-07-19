@@ -9,11 +9,39 @@ import { createSerializedTicketId } from '@/lib/tickets';
 type DbClient = typeof import('@/lib/db').db;
 type Tx = Pick<
   DbClient,
-  'ticketOrder' | 'ticket' | 'accountsPayableEntry' | 'show'
+  'ticketOrder' | 'ticket' | 'accountsPayableEntry' | 'show' | 'showLineupSlot'
 >;
 
+/**
+ * Lineup & Split Agreement (DESIGN_SYNC row 226) — when a show has more than
+ * one billed act, its artist share is split across ACCEPTED
+ * ShowLineupSlot rows (each act's splitPercent, siblings summing to
+ * Show.artistPayoutPercent) instead of paying 100% to headlinerProfileId.
+ * The last slot absorbs the rounding remainder so the sum of per-act
+ * payouts always equals order.artistPayoutCents exactly — no cent ever
+ * goes unaccounted for or gets double-paid.
+ */
+function splitArtistPayoutAcrossLineup(
+  artistPayoutCents: number,
+  artistPayoutPercent: number | null,
+  lineupSlots: { profileId: string; splitPercent: number }[],
+): { profileId: string; amountCents: number }[] {
+  const totalPercent = artistPayoutPercent ?? lineupSlots.reduce((sum, s) => sum + s.splitPercent, 0);
+  if (totalPercent <= 0) return [];
+
+  let allocated = 0;
+  return lineupSlots.map((slot, i) => {
+    const isLast = i === lineupSlots.length - 1;
+    const amountCents = isLast
+      ? artistPayoutCents - allocated
+      : Math.round(artistPayoutCents * (slot.splitPercent / totalPercent));
+    allocated += amountCents;
+    return { profileId: slot.profileId, amountCents };
+  });
+}
+
 function buildPayableEntries(
-  show: { id: string; venueProfileId: string | null; headlinerProfileId: string | null },
+  show: { id: string; venueProfileId: string | null; headlinerProfileId: string | null; artistPayoutPercent: number | null },
   order: {
     id: string;
     affiliatePromoterProfileId: string | null;
@@ -25,6 +53,7 @@ function buildPayableEntries(
     artistPayoutCents: number;
     promoterPayoutCents: number;
   },
+  acceptedLineupSlots: { profileId: string; splitPercent: number }[],
 ) {
   const entries: Prisma.AccountsPayableEntryCreateManyInput[] = [];
   const push = (
@@ -52,7 +81,15 @@ function buildPayableEntries(
   push(order.taxCountryCents, 'TAX_COUNTRY', 'Country tax payable', 'Captured ticket order tax.');
   push(order.taxInternationalCents, 'TAX_INTERNATIONAL', 'International tax payable', 'Captured ticket order tax.');
   push(order.venuePayoutCents, 'VENUE_PAYOUT', 'Venue payout', 'Venue payout from captured ticket order.', show.venueProfileId);
-  push(order.artistPayoutCents, 'ARTIST_PAYOUT', 'Artist payout', 'Artist payout from captured ticket order.', show.headlinerProfileId);
+
+  if (acceptedLineupSlots.length > 0) {
+    const perActShares = splitArtistPayoutAcrossLineup(order.artistPayoutCents, show.artistPayoutPercent, acceptedLineupSlots);
+    for (const share of perActShares) {
+      push(share.amountCents, 'ARTIST_PAYOUT', 'Artist payout (lineup split)', 'Artist payout (lineup split) from captured ticket order.', share.profileId);
+    }
+  } else {
+    push(order.artistPayoutCents, 'ARTIST_PAYOUT', 'Artist payout', 'Artist payout from captured ticket order.', show.headlinerProfileId);
+  }
   push(
     order.promoterPayoutCents,
     'PROMOTER_AFFILIATE',
@@ -72,7 +109,7 @@ export async function finalizeCapturedTicketOrder(
   const order = await tx.ticketOrder.findUnique({
     where: { id: orderId },
     include: {
-      show: { select: { id: true, venueProfileId: true, headlinerProfileId: true } },
+      show: { select: { id: true, venueProfileId: true, headlinerProfileId: true, artistPayoutPercent: true } },
       tickets: true,
     },
   });
@@ -110,7 +147,15 @@ export async function finalizeCapturedTicketOrder(
     ),
   );
 
-  const payableEntries = buildPayableEntries(order.show, order);
+  // Only ACCEPTED slots are ever paid — a show can't reach SCHEDULED with a
+  // pending/declined slot in the first place (see the lineup-response
+  // route), but this stays defensive rather than trusting that invariant.
+  const acceptedLineupSlots = await tx.showLineupSlot.findMany({
+    where: { showId: order.showId, status: 'ACCEPTED' },
+    select: { profileId: true, splitPercent: true },
+  });
+
+  const payableEntries = buildPayableEntries(order.show, order, acceptedLineupSlots);
   if (payableEntries.length) await tx.accountsPayableEntry.createMany({ data: payableEntries });
 
   return { order: { ...order, status: TicketOrderStatus.CAPTURED, chargedAt }, tickets, changed: true };

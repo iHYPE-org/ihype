@@ -128,16 +128,20 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
           ) : (
             <div className="ad-events-list">
               {upcomingShows.map((show) => (
-                <Link className="ad-event-row" href={`/shows/${show.slug}`} key={show.slug}>
+                <Link className="ad-event-row" href={show.status === 'DRAFT' ? `/shows/${show.slug}/lineup` : `/shows/${show.slug}`} key={show.slug}>
                   <div style={{ minWidth: 0 }}>
                     <div className="ad-event-title">{show.title}</div>
                     <div className="ad-event-meta">
                       {fmtDate(show.startsAt)}
                       {show.venueProfile?.name ? ` · ${show.venueProfile.name}` : ''}
-                      {show.isTicketed && show.ticketCapacity ? ` · ${(show.ticketsSoldCount ?? 0).toLocaleString()} / ${show.ticketCapacity.toLocaleString()} sold` : ''}
+                      {show.status === 'DRAFT'
+                        ? ' · Draft — review lineup split'
+                        : show.isTicketed && show.ticketCapacity
+                          ? ` · ${(show.ticketsSoldCount ?? 0).toLocaleString()} / ${show.ticketCapacity.toLocaleString()} sold`
+                          : ''}
                     </div>
                   </div>
-                  <span className="ad-pill">{show.status === 'LIVE' ? 'Live' : 'On sale'}</span>
+                  <span className="ad-pill">{show.status === 'LIVE' ? 'Live' : show.status === 'DRAFT' ? 'Draft' : 'On sale'}</span>
                 </Link>
               ))}
             </div>

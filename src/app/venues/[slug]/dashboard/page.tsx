@@ -96,12 +96,14 @@ export default async function VenueDashboardPage({ params }: { params: Promise<{
                   ? `${show.ticketsSoldCount.toLocaleString()} / ${show.ticketCapacity.toLocaleString()} sold`
                   : `${show.ticketsSoldCount.toLocaleString()} sold`;
                 return (
-                  <Link className="vdash-show-row" href={`/shows/${show.slug}`} key={show.id}>
+                  <Link className="vdash-show-row" href={show.status === 'DRAFT' ? `/shows/${show.slug}/lineup` : `/shows/${show.slug}`} key={show.id}>
                     <div>
                       <div className="vdash-show-title">{show.title}</div>
-                      <div className="vdash-show-meta">{date} · {soldLabel}</div>
+                      <div className="vdash-show-meta">
+                        {date} · {show.status === 'DRAFT' ? 'Draft — manage lineup' : soldLabel}
+                      </div>
                     </div>
-                    <span className="vdash-pill">{show.status === 'LIVE' ? 'Live' : 'On sale'}</span>
+                    <span className="vdash-pill">{show.status === 'LIVE' ? 'Live' : show.status === 'DRAFT' ? 'Draft' : 'On sale'}</span>
                   </Link>
                 );
               })}
