@@ -582,6 +582,9 @@ export default async function ShowDetailPage({
                   <div style={{ display: 'flex', gap: 16 }}>
                     <Link href={`/payout/${show.slug}`} className="meta">Full payout breakdown →</Link>
                     <Link href={`/shows/${show.slug}/scan`} className="meta">Scan tickets at the door →</Link>
+                    {(show.status === 'DRAFT' || show.status === 'SCHEDULED') && (
+                      <Link href={`/shows/${show.slug}/cancel`} className="meta" style={{ color: 'var(--accent, #ff5029)' }}>Cancel event →</Link>
+                    )}
                   </div>
                 </div>
                 {recentTicketOrders.length ? (

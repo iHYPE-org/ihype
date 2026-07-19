@@ -55,9 +55,12 @@ if (!payments.includes("NODE_ENV === 'production'") || !payments.includes("start
   fail('src/lib/payments.ts', 'production payment readiness must reject Stripe test credentials.');
 }
 
-const magicLinkRequest = await text('src/app/api/auth/magic-link/route.ts');
-if (!magicLinkRequest.includes('token: tokenHash')) {
-  fail('src/app/api/auth/magic-link/route.ts', 'magic-link bearer tokens must be hashed at rest.');
+// The token-issuing logic lives in src/lib/magic-link.ts (shared by
+// /api/auth/magic-link and /api/advertise/register) rather than duplicated
+// inline in the route — check the shared helper for the hashing invariant.
+const magicLinkIssue = await text('src/lib/magic-link.ts');
+if (!magicLinkIssue.includes('token: tokenHash')) {
+  fail('src/lib/magic-link.ts', 'magic-link bearer tokens must be hashed at rest.');
 }
 
 const magicLinkConsume = await text('src/app/api/auth/magic/route.ts');

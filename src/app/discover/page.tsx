@@ -47,6 +47,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
     db.profile.findMany({
       where: {
         type: { in: ['ARTIST', 'DJ'] },
+        discoverable: true,
         ...getDemoOwnerExclusion(),
         ...(cityFilter ? { city: { contains: cityFilter, mode: 'insensitive' as const } } : {}),
         ...(genreFilter ? { genres: { has: genreFilter } } : {}),
@@ -59,6 +60,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
     db.profile.findMany({
       where: {
         type: 'VENUE',
+        discoverable: true,
         ...getDemoOwnerExclusion(),
         ...(cityFilter ? { city: { contains: cityFilter, mode: 'insensitive' as const } } : {}),
       },

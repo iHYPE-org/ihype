@@ -44,7 +44,7 @@ export default async function VenueDashboardPage({ params }: { params: Promise<{
           <h1>{profile.name}</h1>
         </div>
         <div className="vdash-head-actions">
-          <Link className="vdash-btn vdash-btn-outline" href="/me/booking">Booking Inbox</Link>
+          <Link className="vdash-btn vdash-btn-outline" href={`/venues/${profile.slug}/booking-inbox`}>Booking Inbox</Link>
           <Link className="vdash-btn vdash-btn-solid" href="/events/new">+ Create Event</Link>
         </div>
       </header>
@@ -96,12 +96,14 @@ export default async function VenueDashboardPage({ params }: { params: Promise<{
                   ? `${show.ticketsSoldCount.toLocaleString()} / ${show.ticketCapacity.toLocaleString()} sold`
                   : `${show.ticketsSoldCount.toLocaleString()} sold`;
                 return (
-                  <Link className="vdash-show-row" href={`/shows/${show.slug}`} key={show.id}>
+                  <Link className="vdash-show-row" href={show.status === 'DRAFT' ? `/shows/${show.slug}/lineup` : `/shows/${show.slug}`} key={show.id}>
                     <div>
                       <div className="vdash-show-title">{show.title}</div>
-                      <div className="vdash-show-meta">{date} · {soldLabel}</div>
+                      <div className="vdash-show-meta">
+                        {date} · {show.status === 'DRAFT' ? 'Draft — manage lineup' : soldLabel}
+                      </div>
                     </div>
-                    <span className="vdash-pill">{show.status === 'LIVE' ? 'Live' : 'On sale'}</span>
+                    <span className="vdash-pill">{show.status === 'LIVE' ? 'Live' : show.status === 'DRAFT' ? 'Draft' : 'On sale'}</span>
                   </Link>
                 );
               })}
@@ -128,12 +130,12 @@ export default async function VenueDashboardPage({ params }: { params: Promise<{
         <div>
           <div className="vdash-eyebrow-sm">Quick Actions</div>
           <div className="vdash-actions">
-            <Link className="vdash-action" href="/me/booking">Review booking requests</Link>
+            <Link className="vdash-action" href={`/venues/${profile.slug}/booking-inbox`}>Review booking requests</Link>
             <Link className="vdash-action" href={`/venues/${profile.slug}/calendar`}>View calendar</Link>
             {data.nextScannableShowSlug && (
               <Link className="vdash-action" href={`/shows/${data.nextScannableShowSlug}/scan`}>Door check-in scanner</Link>
             )}
-            <Link className="vdash-action" href={`/venues/${profile.slug}`}>View analytics</Link>
+            <Link className="vdash-action" href={`/venues/${profile.slug}/analytics`}>View analytics</Link>
             <Link className="vdash-action" href={`/venues/${profile.slug}`}>Edit my page</Link>
           </div>
         </div>

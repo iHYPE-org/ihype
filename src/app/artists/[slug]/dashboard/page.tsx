@@ -96,7 +96,7 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
       </div>
 
       <div className="ad-stats-grid">
-        <Link className="ad-stat-card" href={`/artists/${profile.slug}?section=insights`}>
+        <Link className="ad-stat-card" href={`/artists/${profile.slug}/analytics`}>
           <div className="ad-stat-label">This Month</div>
           <div className="ad-stat-val" style={{ color: 'var(--accent)' }}>{formatCurrencyFromCents(dashStats.monthEarningsCents)}</div>
           <div className="ad-stat-sub">Your 70% share · $0 iHYPE fee</div>
@@ -128,16 +128,20 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
           ) : (
             <div className="ad-events-list">
               {upcomingShows.map((show) => (
-                <Link className="ad-event-row" href={`/shows/${show.slug}`} key={show.slug}>
+                <Link className="ad-event-row" href={show.status === 'DRAFT' ? `/shows/${show.slug}/lineup` : `/shows/${show.slug}`} key={show.slug}>
                   <div style={{ minWidth: 0 }}>
                     <div className="ad-event-title">{show.title}</div>
                     <div className="ad-event-meta">
                       {fmtDate(show.startsAt)}
                       {show.venueProfile?.name ? ` · ${show.venueProfile.name}` : ''}
-                      {show.isTicketed && show.ticketCapacity ? ` · ${(show.ticketsSoldCount ?? 0).toLocaleString()} / ${show.ticketCapacity.toLocaleString()} sold` : ''}
+                      {show.status === 'DRAFT'
+                        ? ' · Draft — review lineup split'
+                        : show.isTicketed && show.ticketCapacity
+                          ? ` · ${(show.ticketsSoldCount ?? 0).toLocaleString()} / ${show.ticketCapacity.toLocaleString()} sold`
+                          : ''}
                     </div>
                   </div>
-                  <span className="ad-pill">{show.status === 'LIVE' ? 'Live' : 'On sale'}</span>
+                  <span className="ad-pill">{show.status === 'LIVE' ? 'Live' : show.status === 'DRAFT' ? 'Draft' : 'On sale'}</span>
                 </Link>
               ))}
             </div>
@@ -164,7 +168,7 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
           <div className="ad-section-head"><span className="ad-eyebrow-sm">Quick Actions</span></div>
           <div className="ad-actions-list">
             <Link className="ad-btn ad-btn-outline ad-btn-full" href={`/artists/${profile.slug}?section=tracks`}>Upload a track</Link>
-            <Link className="ad-btn ad-btn-outline ad-btn-full" href={`/artists/${profile.slug}?section=insights`}>View analytics</Link>
+            <Link className="ad-btn ad-btn-outline ad-btn-full" href={`/artists/${profile.slug}/analytics`}>View analytics</Link>
             <Link className="ad-btn ad-btn-outline ad-btn-full" href={`/artists/${profile.slug}`}>Edit my page</Link>
           </div>
         </div>

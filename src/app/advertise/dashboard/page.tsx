@@ -8,16 +8,29 @@ export const dynamic = 'force-dynamic';
 
 export default async function AdvertiserDashboard() {
   const session = await auth();
-  if (!session?.user?.id) redirect('/login');
+  if (!session?.user?.id) redirect('/login?callbackUrl=/advertise/dashboard');
 
   // Show the user's own campaigns using the new Ad model
-  const campaigns = await db.ad.findMany({
-    where: { advertiserId: session.user.id },
-    include: { slot: { select: { name: true } } },
-    orderBy: { createdAt: 'desc' },
-  });
+  const [campaigns, advertiserAccount] = await Promise.all([
+    db.ad.findMany({
+      where: { advertiserId: session.user.id },
+      include: { slot: { select: { name: true } } },
+      orderBy: { createdAt: 'desc' },
+    }),
+    db.advertiserAccount.findUnique({
+      where: { userId: session.user.id },
+      select: { companyName: true, website: true },
+    }),
+  ]);
 
   const totalImpressions = campaigns.reduce((s, c) => s + c.impressions, 0);
+  const totalSpentCents = campaigns.reduce((s, c) => s + c.spentCents, 0);
+  const totalBudgetCents = campaigns.reduce((s, c) => s + c.budgetCents, 0);
+  // Effective CPM — real cost-per-1000-impressions derived from actual spend,
+  // not a fabricated rate. Undefined (rendered as "—") until there's at least
+  // one impression to divide by.
+  const effectiveCpmCents = totalImpressions > 0 ? (totalSpentCents / totalImpressions) * 1000 : null;
+  const activeCampaigns = campaigns.filter((c) => c.status === 'APPROVED').length;
 
   // Day-by-day breakdown, last 14 days, aggregated across all the
   // advertiser's campaigns. AdImpression rows have no per-day rollup
@@ -47,17 +60,46 @@ export default async function AdvertiserDashboard() {
   const maxDaily = Math.max(1, ...dailyRows.map(([, n]) => n));
 
   return (
-    <div className="container" style={{ paddingTop: 24, paddingBottom: 60 }}>
+    <div className="container ad-dash" style={{ paddingTop: 24, paddingBottom: 60 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h1>My Ad Campaigns</h1>
-        <Link href="/advertise" className="button small">Submit new ad</Link>
+        <div>
+          <h1>My Ad Campaigns</h1>
+          {advertiserAccount && (
+            <p className="meta" style={{ marginTop: 4 }}>
+              {advertiserAccount.companyName}
+              {advertiserAccount.website && (
+                <>
+                  {' · '}
+                  <a href={advertiserAccount.website} rel="noreferrer noopener" target="_blank">{advertiserAccount.website}</a>
+                </>
+              )}
+            </p>
+          )}
+        </div>
+        <Link href="/advertise" className="button small">+ New Campaign</Link>
       </div>
 
       {campaigns.length > 0 && (
-        <div style={{ display: 'flex', gap: 24, marginBottom: 24 }}>
-          <div className="panel" style={{ padding: '14px 20px', flex: 1, textAlign: 'center' }}>
-            <div style={{ fontWeight: 700, fontSize: 24 }}>{totalImpressions.toLocaleString()}</div>
-            <div className="meta">Total impressions</div>
+        <div className="ad-dash-stats">
+          <div className="ad-dash-stat-card">
+            <div className="ad-dash-stat-label">Spend</div>
+            <div className="ad-dash-stat-val" style={{ color: 'var(--accent, #ff5029)' }}>${(totalSpentCents / 100).toFixed(2)}</div>
+            <div className="ad-dash-stat-sub">Across {campaigns.length} campaign{campaigns.length === 1 ? '' : 's'}</div>
+          </div>
+          <div className="ad-dash-stat-card">
+            <div className="ad-dash-stat-label">Impressions</div>
+            <div className="ad-dash-stat-val">{totalImpressions.toLocaleString()}</div>
+            <div className="ad-dash-stat-sub">Lifetime</div>
+          </div>
+          <div className="ad-dash-stat-card">
+            <div className="ad-dash-stat-label">Effective CPM</div>
+            <div className="ad-dash-stat-val">{effectiveCpmCents !== null ? `$${(effectiveCpmCents / 100).toFixed(2)}` : '—'}</div>
+            <div className="ad-dash-stat-sub">Real spend ÷ impressions</div>
+          </div>
+          <div className="ad-dash-stat-card">
+            <div className="ad-dash-stat-label">Active Campaigns</div>
+            <div className="ad-dash-stat-val">{activeCampaigns}</div>
+            <div className="ad-dash-stat-sub">${(totalBudgetCents / 100 - totalSpentCents / 100).toFixed(2)} budget remaining</div>
           </div>
         </div>
       )}
@@ -122,6 +164,14 @@ export default async function AdvertiserDashboard() {
           </div>
         ))}
       </div>
+
+      <style>{`
+        .ad-dash-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .ad-dash-stat-card { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg2); padding: 16px 18px; }
+        .ad-dash-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a50); margin-bottom: 6px; }
+        .ad-dash-stat-val { font-family: var(--font-display); font-weight: 800; font-size: 22px; color: var(--ink); }
+        .ad-dash-stat-sub { font-size: 11.5px; color: var(--ink-a50); margin-top: 2px; }
+      `}</style>
     </div>
   );
 }

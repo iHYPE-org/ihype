@@ -47,6 +47,7 @@ export async function GET(request: NextRequest) {
       ? db.profile.findMany({
           where: {
             type: { in: ['ARTIST', 'DJ', 'VENUE'] },
+            discoverable: true,
             OR: [
               { name:        { contains: q, mode: 'insensitive' } },
               { headline:    { contains: q, mode: 'insensitive' } },

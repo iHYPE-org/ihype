@@ -32,8 +32,13 @@ export default async function PromotePage() {
   return (
     <div className="promo-page">
       <div className="promo-page-header">
-        <h1>Promoter Dashboard</h1>
-        <p>Your HYPE Link, click stats, and 10% pool earnings</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
+          <div>
+            <h1>Promoter Dashboard</h1>
+            <p>Your HYPE Link, click stats, and 10% pool earnings</p>
+          </div>
+          <Link href="/me/promote/analytics" className="promo-analytics-link">View analytics →</Link>
+        </div>
       </div>
 
       <div className="promo-stats-grid">
@@ -104,6 +109,8 @@ export default async function PromotePage() {
         .promo-page-header { margin-bottom: 40px; }
         .promo-page-header h1 { font-family: var(--font-display); font-size: 32px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 6px; color: var(--ink); }
         .promo-page-header p { font-size: 14px; color: var(--ink-a70); }
+        .promo-analytics-link { font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-a60); text-decoration: none; white-space: nowrap; padding-top: 4px; }
+        .promo-analytics-link:hover { color: var(--ink); text-decoration: underline; }
         .promo-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 20px; margin-bottom: 40px; }
         .promo-stat-card { border: 1px solid var(--line); border-radius: 10px; padding: 24px; background: var(--bg2); }
         .promo-stat-label { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a55); margin-bottom: 8px; }

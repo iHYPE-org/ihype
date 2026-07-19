@@ -10,6 +10,9 @@ interface Prefs {
   journalPosts: boolean;
   milestones: boolean;
   weeklyDigest: boolean;
+  radioLive: boolean;
+  crateUploads: boolean;
+  bookingRequests: boolean;
 }
 
 const ROLE_COLOR: Record<string, string> = { ARTIST: '#ff5029', DJ: '#ff3e9a', VENUE: '#22e5d4' };
@@ -54,7 +57,12 @@ export default function SettingsPage() {
   const [role, setRole] = useState('FAN');
   const [isAdult, setIsAdult] = useState(false);
   const [attesting, setAttesting] = useState(false);
-  const [prefs, setPrefs] = useState<Prefs>({ newShows: true, journalPosts: true, milestones: true, weeklyDigest: true });
+  const [prefs, setPrefs] = useState<Prefs>({
+    newShows: true, journalPosts: true, milestones: true, weeklyDigest: true,
+    radioLive: true, crateUploads: true, bookingRequests: true,
+  });
+  const [discoverable, setDiscoverable] = useState(true);
+  const [savingDiscoverable, setSavingDiscoverable] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -76,7 +84,8 @@ export default function SettingsPage() {
         setEmailVerified(Boolean(data.emailVerified));
         setRole(data.role ?? 'FAN');
         setIsAdult(Boolean(data.isEighteenOrOlder));
-        if (data.notificationPreference) setPrefs(data.notificationPreference);
+        if (data.notificationPreference) setPrefs((p) => ({ ...p, ...data.notificationPreference }));
+        if (data.creatorProfile) setDiscoverable(Boolean(data.creatorProfile.discoverable));
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -162,6 +171,24 @@ export default function SettingsPage() {
       setError('Network error');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function toggleDiscoverable(next: boolean) {
+    const prev = discoverable;
+    setDiscoverable(next);
+    setSavingDiscoverable(true);
+    try {
+      const res = await fetch('/api/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ discoverable: next }),
+      });
+      if (!res.ok) setDiscoverable(prev);
+    } catch {
+      setDiscoverable(prev);
+    } finally {
+      setSavingDiscoverable(false);
     }
   }
 
@@ -334,6 +361,13 @@ export default function SettingsPage() {
               <Row action={<Toggle checked={prefs.milestones} onChange={(v) => setPrefs((p) => ({ ...p, milestones: v }))} />} detail="When your tracks hit hype thresholds" label="Hype milestones" />
               <Row action={<Toggle checked={prefs.journalPosts} onChange={(v) => setPrefs((p) => ({ ...p, journalPosts: v }))} />} detail="New posts from creators you follow" label="Journal posts" />
               <Row action={<Toggle checked={prefs.weeklyDigest} onChange={(v) => setPrefs((p) => ({ ...p, weeklyDigest: v }))} />} detail="A weekly summary of upcoming shows and activity" label="Weekly digest" />
+              <Row action={<Toggle checked={prefs.radioLive} onChange={(v) => setPrefs((p) => ({ ...p, radioLive: v }))} />} detail="When DJs you follow go live" label="Radio shows" />
+              {(role === 'ARTIST' || role === 'DJ') && (
+                <Row action={<Toggle checked={prefs.crateUploads} onChange={(v) => setPrefs((p) => ({ ...p, crateUploads: v }))} />} detail="When your upload clears screening" label={role === 'DJ' ? 'Crate uploads' : 'Track uploads'} />
+              )}
+              {role === 'VENUE' && (
+                <Row action={<Toggle checked={prefs.bookingRequests} onChange={(v) => setPrefs((p) => ({ ...p, bookingRequests: v }))} />} detail="When an artist or DJ requests a slot" label="Booking requests" />
+              )}
               <Row
                 action={<Toggle checked={pushSubscribed} disabled={!pushSupported || pushBusy} onChange={(v) => void togglePush(v)} />}
                 detail={
@@ -361,6 +395,13 @@ export default function SettingsPage() {
           <div className="settings-section">
             <div className="settings-section-title">Privacy</div>
             <div className="settings-group">
+              {isCreator && (
+                <Row
+                  action={<Toggle checked={discoverable} disabled={savingDiscoverable} onChange={toggleDiscoverable} />}
+                  detail={role === 'VENUE' ? 'Artists can see your room in the demand radar and request a slot' : 'Fans can find your profile in Discover and search'}
+                  label={role === 'VENUE' ? 'Show me in demand radar' : 'Show me in discovery'}
+                />
+              )}
               <Row
                 action={<button className="settings-btn settings-btn-ghost" disabled={detaching} onClick={detachIdentity} type="button">{detaching ? 'Detaching…' : 'Detach now'}</button>}
                 detail="Remove IP & location from your activity log now (automatic after 30 days)"

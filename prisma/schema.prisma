@@ -14,6 +14,7 @@ enum Role {
   DJ
   VENUE
   ADMIN
+  ADVERTISER
 }
 
 enum ShowStatus {
@@ -69,6 +70,12 @@ enum AccountsPayableCategory {
   VENUE_PAYOUT
   ARTIST_PAYOUT
   PROMOTER_AFFILIATE
+}
+
+enum LineupSlotStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
 }
 
 enum AccountsPayableStatus {
@@ -146,6 +153,25 @@ model User {
   adminDeviceTokenHash    String?
   adminDeviceSetAt        DateTime?
   earningsSummarySentAt   DateTime?
+  advertiserAccount       AdvertiserAccount?
+}
+
+// A private, non-public account for a non-"app-user" advertiser (e.g. a gear
+// shop, merch printer, or live-production company — the "3rd-Party Accounts"
+// path already described in Advertise.dc.html's copy but never actually
+// buildable before this). Deliberately separate from Profile: advertisers
+// have no public-facing page, so none of Profile's public-profile fields
+// (bio, avatar, verification, etc.) apply. Ad.advertiserId still points at
+// User directly and is untouched by this model's existence.
+model AdvertiserAccount {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName String
+  contactName String?
+  website     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Profile {
@@ -216,6 +242,14 @@ model Profile {
   verificationRequested         Boolean                     @default(false)
   verificationProofUrl          String?
   hypeCount                     Int                         @default(0)
+  // Settings' "Show me in discovery" / "Show me in demand radar" toggle —
+  // honored by /discover, search, and the venue booking demand radar.
+  discoverable                  Boolean                     @default(true)
+  // Venue onboarding's "Room details" step (DESIGN_SYNC row 225) — shown on
+  // the venue's own page/dashboard, distinct from a Show's own
+  // ticketCapacity (a venue's max room size vs. one event's cap for that night).
+  capacity                      Int?
+  roomType                      String?
   ownerId                       String
   owner                         User                        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   createdAt                     DateTime                    @default(now())
@@ -223,6 +257,7 @@ model Profile {
   hostedShows                   Show[]                      @relation("VenueShows")
   headlinerShows                Show[]                      @relation("HeadlinerShows")
   promotedShows                 Show[]                      @relation("PromotedShows")
+  lineupSlots                   ShowLineupSlot[]
   mediaUploads                  ArtistMediaAsset[]
   profileHypes                  ProfileHypeEvent[]
   venueConnectionRequests       VenueConnectionRequest[]    @relation("VenueConnectionRequests")
@@ -445,6 +480,7 @@ model Show {
   accountsPayableEntries AccountsPayableEntry[]
   radioTracks            RadioShowTrack[]
   advertisingConfig      ShowAdvertisingConfig?
+  lineupSlots            ShowLineupSlot[]
   comments               ShowComment[]
   rsvps                  ShowRsvp[]
   attendees              ShowAttendee[]
@@ -456,6 +492,10 @@ model Show {
   capacityAlertSentAt    DateTime?
   dmcaDeadline           DateTime?
   dmcaStatus             String?
+  // Organizer-initiated cancellation (Event Cancellation Flow) — distinct
+  // from the admin-moderation CANCELED path, which has no reason recorded.
+  cancellationReason     String?
+  canceledAt             DateTime?
 
   @@index([startsAt, status])
   @@index([status])
@@ -463,6 +503,30 @@ model Show {
   @@index([creatorId])
   @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "Show_title_trgm_idx")
   @@index([description(ops: raw("gin_trgm_ops"))], type: Gin, map: "Show_description_trgm_idx")
+}
+
+// Lineup & Split Agreement (DESIGN_SYNC row 226) — only relevant when a Show
+// has more than one billed act. A show with zero rows here pays its entire
+// artistPayoutPercent to Show.headlinerProfileId exactly as before (no
+// behavior change for the common single-act case). When rows exist, each
+// act's splitPercent is that act's share of the ticket price (siblings sum
+// to Show.artistPayoutPercent, matching how venue/artist/promoter already
+// sum to 100%) — the venue proposes the lineup + splits, every named act
+// must ACCEPT before the show can leave DRAFT and go on sale.
+model ShowLineupSlot {
+  id           String           @id @default(cuid())
+  showId       String
+  show         Show             @relation(fields: [showId], references: [id], onDelete: Cascade)
+  profileId    String
+  profile      Profile          @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  isHeadliner  Boolean          @default(false)
+  splitPercent Int
+  status       LineupSlotStatus @default(PENDING)
+  proposedAt   DateTime         @default(now())
+  respondedAt  DateTime?
+
+  @@unique([showId, profileId])
+  @@index([profileId, status])
 }
 
 model ShowAdvertisingConfig {
@@ -843,14 +907,21 @@ model PremiumInterest {
 }
 
 model NotificationPreference {
-  id           String   @id @default(cuid())
-  userId       String   @unique
-  newShows     Boolean  @default(true)
-  journalPosts Boolean  @default(true)
-  milestones   Boolean  @default(true)
-  weeklyDigest Boolean  @default(true)
-  updatedAt    DateTime @updatedAt
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  newShows       Boolean  @default(true)
+  journalPosts   Boolean  @default(true)
+  milestones     Boolean  @default(true)
+  weeklyDigest   Boolean  @default(true)
+  // Added for the per-role settings pages (Artist/DJ/Venue/Fan/Promoter
+  // Settings.dc.html templates) — categories with no honest match among the
+  // 4 fields above. Everything else in those templates reuses the fields
+  // above with role-contextual copy rather than growing this table further.
+  radioLive      Boolean  @default(true) // a followed DJ goes live
+  crateUploads   Boolean  @default(true) // your own track/crate upload clears vetting
+  bookingRequests Boolean @default(true) // a venue receives a new booking request
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ProcessedWebhookEvent {

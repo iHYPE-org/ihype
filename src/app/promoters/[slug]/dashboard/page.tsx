@@ -226,7 +226,7 @@ export default async function DJDashboardPage({ params }: { params: Promise<{ sl
           <div className="djd-actions-list">
             <Link className="djd-action-btn" href={`/promoters/${profile.slug}?section=crate`}>Add to crate</Link>
             <Link className="djd-action-btn" href="/radio">Show archive</Link>
-            <Link className="djd-action-btn" href={`/promoters/${profile.slug}?section=insights`}>View insights</Link>
+            <Link className="djd-action-btn" href={`/promoters/${profile.slug}/analytics`}>View insights</Link>
             <Link className="djd-action-btn" href={`/promoters/${profile.slug}`}>Edit my page</Link>
             <Link className="djd-action-btn" href="/radio/studio">Radio Show Creator</Link>
           </div>

@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
-import { createMagicLinkToken } from '@/lib/magic-link-token';
-import { sendGenericEmail } from '@/lib/mailer';
+import { sendMagicLinkEmail } from '@/lib/magic-link';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 
@@ -33,30 +32,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true });
     }
 
-    const { token, tokenHash } = createMagicLinkToken();
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
-
-    await db.magicLinkToken.create({ data: { token: tokenHash, userId: user.id, expiresAt } });
-
-    const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL ??
-      process.env.AUTH_URL ??
-      process.env.NEXTAUTH_URL ??
-      'https://ihype.org';
-    const link = `${baseUrl.replace(/\/$/, '')}/api/auth/magic?token=${token}`;
-
-    try {
-      await sendGenericEmail({
-        to: email,
-        subject: 'Your iHYPE sign-in link',
-        text: `Click this link to sign in to iHYPE (expires in 15 minutes):\n\n${link}\n\nIf you did not request this, ignore this email.`,
-        html: `<p>Click the link below to sign in to iHYPE. It expires in 15 minutes.</p><p><a href="${link}">${link}</a></p><p>If you did not request this, ignore this email.</p>`,
-      });
-    } catch (error) {
-      // Do not leave a live bearer token behind when delivery failed.
-      await db.magicLinkToken.delete({ where: { token: tokenHash } }).catch(() => {});
-      throw error;
-    }
+    await sendMagicLinkEmail(user.id, email);
 
     return NextResponse.json({ ok: true });
   } catch (error) {

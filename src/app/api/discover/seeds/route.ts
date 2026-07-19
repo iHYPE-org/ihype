@@ -67,7 +67,8 @@ export async function GET(request: NextRequest) {
             cfMedia = await db.artistMediaAsset.findMany({
               where: {
                 profileId: { in: rankedProfileIds },
-                id: { notIn: [...actionedIds] }
+                id: { notIn: [...actionedIds] },
+                profile: { discoverable: true }
               },
               take: 20,
               orderBy: { createdAt: 'desc' },
@@ -87,9 +88,7 @@ export async function GET(request: NextRequest) {
       : await db.artistMediaAsset.findMany({
           where: {
             id: { notIn: [...actionedIds] },
-            ...(genres.length > 0
-              ? { profile: { genres: { hasSome: genres } } }
-              : {})
+            profile: genres.length > 0 ? { genres: { hasSome: genres }, discoverable: true } : { discoverable: true }
           },
           take: 20,
           orderBy: { createdAt: 'desc' },

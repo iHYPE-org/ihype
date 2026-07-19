@@ -59,7 +59,7 @@ export async function getVenueBookingRecommendations(userId: string): Promise<Ve
   );
 
   const rows: ArtistRow[] = await db.profile.findMany({
-    where: { type: { in: ['ARTIST', 'DJ'] } },
+    where: { type: { in: ['ARTIST', 'DJ'] }, discoverable: true },
     orderBy: { hypeCount: 'desc' },
     take: CANDIDATE_POOL,
     select: {

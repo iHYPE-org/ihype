@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
   void checkAndRecordLogin(user, request);
 
   const rawCallback = searchParams.get('callbackUrl');
-  const defaultDest = user.role === 'ADMIN' ? '/admin' : undefined;
+  const defaultDest = user.role === 'ADMIN' ? '/admin' : user.role === 'ADVERTISER' ? '/advertise/dashboard' : undefined;
   const dest = resolvePostAuthRedirect(rawCallback ?? defaultDest);
 
   const response = NextResponse.redirect(new URL(dest, request.url));

@@ -28,6 +28,7 @@ export async function GET() {
     const profiles = await db.profile.findMany({
       where: {
         id: { notIn: excludeIds.length > 0 ? excludeIds : undefined },
+        discoverable: true,
       },
       orderBy: { hypeCount: 'desc' },
       take: 60,

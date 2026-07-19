@@ -21,7 +21,14 @@ export async function GET() {
       take: 30,
       select: {
         id: true, message: true, status: true, createdAt: true,
-        fromUser: { select: { name: true, username: true } },
+        fromUser: {
+          select: {
+            name: true, username: true,
+            // The requester's own performer profile, if they have one —
+            // lets the inbox link to "View profile" without exposing email.
+            profiles: { where: { type: { in: ['ARTIST', 'DJ'] } }, select: { slug: true, type: true, genres: true, city: true }, take: 1 },
+          },
+        },
         toProfile: { select: { name: true, type: true } },
       },
     }),

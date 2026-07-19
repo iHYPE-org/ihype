@@ -230,12 +230,24 @@ const icons = {
       <rect height="4" rx="1.5" width="8" x="13" y="11" /><rect height="8" rx="1.5" width="8" x="3" y="13" />
     </svg>
   ),
+  analytics: (color: string) => (
+    <svg fill="none" height="18" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="18">
+      <polyline points="3 17 9 11 13 15 21 6" /><polyline points="15 6 21 6 21 12" />
+    </svg>
+  ),
 };
 
 const dashboardHref = (profile: ModuleProfile): string | null => {
   if (profile.type === 'ARTIST') return `/artists/${profile.slug}/dashboard`;
   if (profile.type === 'DJ') return `/promoters/${profile.slug}/dashboard`;
   if (profile.type === 'VENUE') return `/venues/${profile.slug}/dashboard`;
+  return null;
+};
+
+const analyticsHref = (profile: ModuleProfile): string | null => {
+  if (profile.type === 'ARTIST') return `/artists/${profile.slug}/analytics`;
+  if (profile.type === 'DJ') return `/promoters/${profile.slug}/analytics`;
+  if (profile.type === 'VENUE') return `/venues/${profile.slug}/analytics`;
   return null;
 };
 
@@ -251,6 +263,7 @@ export function PageRoleModules({ profile, color }: { profile: ModuleProfile; co
   const isVenue = profile.type === 'VENUE';
   const isDj = profile.type === 'DJ';
   const dashHref = dashboardHref(profile);
+  const analyticsUrl = analyticsHref(profile);
 
   return (
     <div style={{ marginBottom: 36 }}>
@@ -265,6 +278,16 @@ export function PageRoleModules({ profile, color }: { profile: ModuleProfile; co
             icon={icons.dashboard(color)}
             sub="Earnings, activity & quick actions"
             title="Dashboard"
+          />
+        )}
+
+        {analyticsUrl && (
+          <LinkModule
+            color={color}
+            href={analyticsUrl}
+            icon={icons.analytics(color)}
+            sub="Listeners, sales & hype trends over time"
+            title="Analytics"
           />
         )}
 
@@ -284,6 +307,16 @@ export function PageRoleModules({ profile, color }: { profile: ModuleProfile; co
             icon={icons.event(color)}
             sub={isVenue ? 'Book your room — keep 20%' : 'Sell tickets direct — keep 70%'}
             title="Event creator"
+          />
+        )}
+
+        {isVenue && (
+          <LinkModule
+            color={color}
+            href={`/venues/${profile.slug}/booking-inbox`}
+            icon={icons.event(color)}
+            sub="Accept or decline artist & DJ requests"
+            title="Booking inbox"
           />
         )}
 
