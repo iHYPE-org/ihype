@@ -87,9 +87,12 @@ jobs:
         run: ./gradlew assembleDebug
 
   # Signed release builds need an Apple Developer Program account and a
-  # Google Play Console account — neither exists yet. These jobs are written
-  # and ready, but skip with a clear message until the corresponding secrets
-  # are added, matching the pattern in deploy-production.yml.
+  # Google Play Console account. The steps below are real — not placeholders
+  # — but have never run against a real account/credential set (neither
+  # existed at the time this was written), so double-check the exact secret
+  # names/formats against each console's current UI before the first real run.
+  # Both jobs skip with a clear message until their secrets exist, matching
+  # the pattern in deploy-production.yml.
   ios-release-build:
     name: iOS — signed release build
     runs-on: macos-15
@@ -102,14 +105,33 @@ jobs:
           node-version: '24'
           cache: 'npm'
 
+      # Required secrets:
+      #   IOS_DIST_CERTIFICATE_BASE64      - `base64 -i Distribution.p12` of the
+      #                                       Apple Distribution certificate + key
+      #   IOS_DIST_CERTIFICATE_PASSWORD    - the .p12 export password
+      #   IOS_PROVISIONING_PROFILE_BASE64  - `base64 -i profile.mobileprovision`,
+      #                                       an App Store profile for com.ihype.app
+      #   IOS_TEAM_ID                      - Apple Developer Team ID (App Store
+      #                                       Connect → Membership)
+      #   APP_STORE_CONNECT_KEY_ID         - App Store Connect API key ID
+      #   APP_STORE_CONNECT_ISSUER_ID      - App Store Connect API issuer ID
+      #   APP_STORE_CONNECT_API_KEY_BASE64 - `base64 -i AuthKey_<KEY_ID>.p8`
+      # (Users and Access → Integrations → App Store Connect API, in App
+      # Store Connect — create a key with the App Manager role.)
       - name: Check for signing secrets
         id: check
         run: |
-          if [ -n "${{ secrets.IOS_DIST_CERTIFICATE_BASE64 }}" ] && [ -n "${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}" ]; then
+          if [ -n "${{ secrets.IOS_DIST_CERTIFICATE_BASE64 }}" ] && \
+             [ -n "${{ secrets.IOS_DIST_CERTIFICATE_PASSWORD }}" ] && \
+             [ -n "${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}" ] && \
+             [ -n "${{ secrets.IOS_TEAM_ID }}" ] && \
+             [ -n "${{ secrets.APP_STORE_CONNECT_KEY_ID }}" ] && \
+             [ -n "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" ] && \
+             [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}" ]; then
             echo "configured=true" >> "$GITHUB_OUTPUT"
           else
             echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::iOS release signing secrets not configured yet — skipping signed build. Needs an Apple Developer Program account, a distribution certificate, and a provisioning profile for com.ihype.app."
+            echo "::notice::iOS release signing secrets not fully configured yet — skipping signed build. Needs an Apple Developer Program account, a distribution certificate + provisioning profile for com.ihype.app, and an App Store Connect API key."
           fi
 
       - name: Install dependencies
@@ -120,19 +142,110 @@ jobs:
         if: steps.check.outputs.configured == 'true'
         run: npx cap sync ios
 
-      # TODO once the Apple Developer account exists: import the distribution
-      # certificate + provisioning profile into a temporary keychain, then
-      # `xcodebuild archive` + `xcodebuild -exportArchive` with a matching
-      # ExportOptions.plist, then upload to TestFlight via
-      # `xcrun altool --upload-app` or Fastlane's `pilot`.
-      - name: Signed archive + TestFlight upload
+      # Imports the distribution cert + provisioning profile into a
+      # throwaway keychain scoped to this job only (the runner VM is
+      # destroyed after the job, so a random password is fine — nothing
+      # persists it).
+      - name: Import signing certificate and provisioning profile
+        if: steps.check.outputs.configured == 'true'
+        env:
+          IOS_DIST_CERTIFICATE_BASE64: ${{ secrets.IOS_DIST_CERTIFICATE_BASE64 }}
+          IOS_DIST_CERTIFICATE_PASSWORD: ${{ secrets.IOS_DIST_CERTIFICATE_PASSWORD }}
+          IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          set -euo pipefail
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+          KEYCHAIN_PATH="$RUNNER_TEMP/ios-signing.keychain-db"
+          CERT_PATH="$RUNNER_TEMP/dist_certificate.p12"
+          PROFILE_PATH="$RUNNER_TEMP/profile.mobileprovision"
+
+          echo -n "$IOS_DIST_CERTIFICATE_BASE64" | base64 --decode -o "$CERT_PATH"
+          echo -n "$IOS_PROVISIONING_PROFILE_BASE64" | base64 --decode -o "$PROFILE_PATH"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$IOS_DIST_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH" "$(security list-keychains -d user | sed 's/"//g' | tr -d '\n ')"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          mkdir -p ~/Library/MobileDevice/"Provisioning Profiles"
+          cp "$PROFILE_PATH" ~/Library/MobileDevice/"Provisioning Profiles"/ihype-appstore.mobileprovision
+
+          security cms -D -i "$PROFILE_PATH" > "$RUNNER_TEMP/profile.plist"
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" "$RUNNER_TEMP/profile.plist")
+
+          echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
+          echo "PROFILE_UUID=$PROFILE_UUID" >> "$GITHUB_ENV"
+
+      - name: Archive
         if: steps.check.outputs.configured == 'true'
         working-directory: ios/App
+        env:
+          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
         run: |
-          echo "Signing secrets are present but the archive/export/upload steps
-          still need to be filled in against the real Apple Developer Program
-          setup (Team ID, signing identity, provisioning profile name)."
-          exit 1
+          xcodebuild -project App.xcodeproj -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            PROVISIONING_PROFILE="$PROFILE_UUID" \
+            DEVELOPMENT_TEAM="$IOS_TEAM_ID" \
+            archive
+
+      - name: Export .ipa
+        if: steps.check.outputs.configured == 'true'
+        env:
+          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store-connect</string>
+            <key>teamID</key>
+            <string>$IOS_TEAM_ID</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.ihype.app</key>
+              <string>$PROFILE_UUID</string>
+            </dict>
+          </dict>
+          </plist>
+          PLIST
+
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"
+
+      - name: Upload to TestFlight
+        if: steps.check.outputs.configured == 'true'
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/private_keys
+          echo -n "$APP_STORE_CONNECT_API_KEY_BASE64" | base64 --decode \
+            -o ~/private_keys/AuthKey_"$APP_STORE_CONNECT_KEY_ID".p8
+
+          IPA_PATH=$(find "$RUNNER_TEMP/export" -maxdepth 1 -name '*.ipa' | head -n1)
+          if [ -z "$IPA_PATH" ]; then
+            echo "::error::No .ipa found in export directory"
+            exit 1
+          fi
+
+          xcrun altool --upload-app \
+            -f "$IPA_PATH" -t ios \
+            --apiKey "$APP_STORE_CONNECT_KEY_ID" \
+            --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID"
 
   android-release-build:
     name: Android — signed release build
@@ -151,14 +264,29 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+      # Required secrets:
+      #   ANDROID_KEYSTORE_BASE64          - `base64 -i upload-keystore.jks` of
+      #                                       the Play Console upload keystore
+      #   ANDROID_KEYSTORE_PASSWORD        - keystore password
+      #   ANDROID_KEY_ALIAS                - key alias within the keystore
+      #   ANDROID_KEY_PASSWORD             - that key's password (often the
+      #                                       same as the keystore password)
+      #   GOOGLE_PLAY_SERVICE_ACCOUNT_JSON - a Play Console service-account
+      #                                       JSON key with Release Manager
+      #                                       access (Play Console → Users and
+      #                                       permissions → API access)
       - name: Check for signing secrets
         id: check
         run: |
-          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ] && [ -n "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" ]; then
+          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ] && \
+             [ -n "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" ] && \
+             [ -n "${{ secrets.ANDROID_KEY_ALIAS }}" ] && \
+             [ -n "${{ secrets.ANDROID_KEY_PASSWORD }}" ] && \
+             [ -n "${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}" ]; then
             echo "configured=true" >> "$GITHUB_OUTPUT"
           else
             echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Android release signing secrets not configured yet — skipping signed build. Needs a Google Play Console account and an upload keystore for com.ihype.app."
+            echo "::notice::Android release signing secrets not fully configured yet — skipping signed build. Needs a Google Play Console account, an upload keystore for com.ihype.app, and a Play Console API service account."
           fi
 
       - name: Install dependencies
@@ -171,18 +299,32 @@ jobs:
 
       - name: Decode keystore
         if: steps.check.outputs.configured == 'true'
-        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/release.keystore"
 
-      # TODO once the Play Console account + keystore exist: pass
-      # -Pandroid.injected.signing.store.file / .password /
-      # .key.alias / .key.password to a `bundleRelease` build, then upload the
-      # .aab to the Play Console via the Google Play Developer API (or the
-      # `r0adkll/upload-google-play` action) for internal/production track.
-      - name: Signed bundle + Play Console upload
+      # Signing properties are passed on the command line (Android Gradle
+      # Plugin's built-in android.injected.signing.* mechanism) rather than
+      # committing a signingConfig to build.gradle, so no keystore path or
+      # password ever needs to exist in the repo itself.
+      - name: Build signed release bundle
         if: steps.check.outputs.configured == 'true'
         working-directory: android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          echo "Signing secrets are present but the bundleRelease + upload
-          steps still need to be filled in against the real Play Console
-          setup (service account key, track config)."
-          exit 1
+          ./gradlew bundleRelease \
+            -Pandroid.injected.signing.store.file="$RUNNER_TEMP/release.keystore" \
+            -Pandroid.injected.signing.store.password="$ANDROID_KEYSTORE_PASSWORD" \
+            -Pandroid.injected.signing.key.alias="$ANDROID_KEY_ALIAS" \
+            -Pandroid.injected.signing.key.password="$ANDROID_KEY_PASSWORD"
+
+      - name: Upload to Play Console
+        if: steps.check.outputs.configured == 'true'
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.ihype.app
+          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+          track: internal
+          status: draft
