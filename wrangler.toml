@@ -36,6 +36,14 @@ NEXT_PUBLIC_APP_URL = "https://ihype.org"
 NEXT_PUBLIC_BASE_URL = "https://ihype.org"
 R2_PUBLIC_BASE_URL = "https://ihype.org"
 NEXT_PUBLIC_TURNSTILE_SITE_KEY = "0x4AAAAAADSF8WNxaeBIRmR7"
+# Not NEXT_PUBLIC_-prefixed on purpose — this is read at runtime via the
+# Workers `env` binding by worker.js's Sentry.withSentry() wrap and by
+# src/lib/logger.ts's server-side capture, never inlined into client JS.
+# A Sentry DSN isn't a secret (safe to be public/client-embeddable), so a
+# plain var is correct here too. See worker.js for why @sentry/cloudflare
+# is used instead of @sentry/nextjs's server config (which crashed the
+# Worker — an unresolved upstream AsyncLocalStorage cross-request bug).
+SENTRY_DSN = "https://6fcca4160df1fe7b0d5e3aa4b7a73f44@o4511334761103360.ingest.us.sentry.io/4511334762741760"
 # Paid ticketing must remain an explicit configuration change, not dashboard residue.
 FEATURE_ENABLE_TICKET_PAYMENTS = "true"
 

@@ -26,9 +26,11 @@ const minLevel: Level = (process.env.LOG_LEVEL as Level) ?? (isProd ? 'info' : '
 // fallbacks that logged to stdout and nowhere else. Best-effort: any Sentry
 // failure must never break the code path that was merely trying to log.
 function reportToSentry(prefix: string, meta: Record<string, unknown> | Error | null, message?: string) {
-  if (!process.env.NEXT_PUBLIC_SENTRY_DSN) return;
+  if (!process.env.SENTRY_DSN) return;
   deferWork(
-    import('@sentry/nextjs')
+    // @sentry/cloudflare, not @sentry/nextjs — worker.js's withSentry() wrap
+    // is the actual init; this only needs the shared capture functions.
+    import('@sentry/cloudflare')
       .then((Sentry) => {
         if (meta instanceof Error) {
           Sentry.captureException(meta, { tags: { logPrefix: prefix }, extra: { message } });

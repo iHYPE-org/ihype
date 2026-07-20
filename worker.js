@@ -1,4 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
+import * as Sentry from '@sentry/cloudflare';
 import openNextWorker from './.open-next/worker.js';
 
 export { BucketCachePurge, DOQueueHandler, DOShardedTagCache } from './.open-next/worker.js';
@@ -35,7 +36,7 @@ export class RateLimiterDO extends DurableObject {
   }
 }
 
-export default {
+const handler = {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.hostname === 'www.ihype.org') {
@@ -59,3 +60,29 @@ export default {
     return openNextWorker.scheduled?.(event, env, ctx);
   }
 };
+
+// Sentry's Cloudflare-native SDK — NOT @sentry/nextjs's server config, which
+// crashes the Worker via an unresolved AsyncLocalStorage cross-request bug
+// (@sentry/nextjs's Node-oriented instrumentation.ts init assumes Node server
+// request-scoping semantics that don't hold on Workers; see
+// https://github.com/getsentry/sentry-javascript/issues/18842). withSentry()
+// wraps `fetch` using Cloudflare's own request-context primitives instead.
+export default Sentry.withSentry(
+  (env) => env.SENTRY_DSN ? {
+    dsn: env.SENTRY_DSN,
+    environment: env.NODE_ENV,
+    tracesSampler(ctx) {
+      if (ctx.parentSampled !== undefined) return ctx.parentSampled;
+      const name = ctx.name ?? '';
+      if (name.includes('/api/auth') || name.includes('/api/register') || name.includes('/api/shows')) {
+        return 0.5;
+      }
+      return 0.05;
+    },
+    ignoreErrors: [
+      'Non-Error promise rejection captured',
+      'AbortError',
+    ],
+  } : undefined,
+  handler,
+);

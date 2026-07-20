@@ -1,28 +1,7 @@
-export async function register() {
-  if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
-    const Sentry = await import('@sentry/nextjs');
-    Sentry.init({
-      dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-      environment: process.env.NODE_ENV,
-      integrations(defaults) {
-        // ContextLines (readline) and LocalVariables (child_process) are Node.js-only.
-        // Cloudflare Workers doesn't support these even with nodejs_compat.
-        return defaults.filter(
-          i => i.name !== 'ContextLines' && i.name !== 'LocalVariables'
-        );
-      },
-      tracesSampler(ctx) {
-        if (ctx.parentSampled !== undefined) return ctx.parentSampled;
-        const url = ctx.name ?? '';
-        if (url.includes('/api/auth') || url.includes('/api/register') || url.includes('/api/shows')) {
-          return 0.5;
-        }
-        return 0.05;
-      },
-      ignoreErrors: [
-        'Non-Error promise rejection captured',
-        'AbortError',
-      ],
-    });
-  }
-}
+// Server-side Sentry init is NOT done here — @sentry/nextjs's Node-oriented
+// instrumentation crashes the Cloudflare Worker via an unresolved upstream
+// AsyncLocalStorage cross-request bug (getsentry/sentry-javascript#18842).
+// worker.js wraps the actual Workers fetch handler with @sentry/cloudflare's
+// withSentry() instead, which uses Cloudflare's own request-context
+// primitives rather than assuming Node server request-scoping semantics.
+export async function register() {}

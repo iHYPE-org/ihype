@@ -44,6 +44,7 @@
     "@opennextjs/cloudflare": "^1.20.1",
     "@prisma/adapter-pg": "6.19.3",
     "@prisma/client": "^6.19.3",
+    "@sentry/cloudflare": "10.63.0",
     "@sentry/nextjs": "^10.63.0",
     "@simplewebauthn/browser": "^13.0.0",
     "@simplewebauthn/server": "^13.3.2",
