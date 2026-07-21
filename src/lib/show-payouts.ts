@@ -1,4 +1,4 @@
-import { AccountsPayableCategory, AccountsPayableStatus } from '@prisma/client';
+import { AccountsPayableCategory, AccountsPayableStatus } from '@prisma/client/edge';
 import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
 import { ADMIN_EMAIL } from '@/lib/env';

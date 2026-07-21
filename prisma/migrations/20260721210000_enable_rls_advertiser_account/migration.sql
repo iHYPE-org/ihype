@@ -1,0 +1,12 @@
+-- Supabase security advisor (2026-07-21): AdvertiserAccount was added in
+-- migration 20260719120000_add_advertiser_role_and_account without RLS,
+-- leaving it readable through PostgREST's anon/authenticated roles. Same
+-- fix and reasoning as 20260709210000_enable_rls_native_device_and_passkey_bootstrap:
+-- the app itself is unaffected (Prisma connects as the table owner, which
+-- bypasses RLS, same as every other table) and AdvertiserAccount has no
+-- PostgREST-facing access pattern at all — it's a private account row
+-- (company/contact info for a non-public advertiser signup, see
+-- src/app/api/advertise/register/route.ts), never queried via the public
+-- API layer. Enabling RLS with no policies = default-deny for the
+-- PostgREST API roles, matching every other table in this schema.
+ALTER TABLE "AdvertiserAccount" ENABLE ROW LEVEL SECURITY;

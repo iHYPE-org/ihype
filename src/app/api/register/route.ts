@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client/edge';
 import { getDiscoverPathForType, getProfilePathForType } from '@/lib/account-routing';
 import { recordAuditEvent } from '@/lib/audit';
 import { db } from '@/lib/db';

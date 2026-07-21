@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client/edge';
 import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
 import { verifyResendSignature } from '@/lib/resend-webhook';

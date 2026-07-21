@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client/edge';
 import { db } from '@/lib/db';
 import { constructWebhookEvent, isStripeConfigured } from '@/lib/stripe';
 import { log } from '@/lib/logger';

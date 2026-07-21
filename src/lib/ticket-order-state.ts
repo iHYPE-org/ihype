@@ -3,7 +3,7 @@ import {
   AccountsPayableStatus,
   Prisma,
   TicketOrderStatus,
-} from '@prisma/client';
+} from '@prisma/client/edge';
 import { createSerializedTicketId } from '@/lib/tickets';
 
 type DbClient = typeof import('@/lib/db').db;

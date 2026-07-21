@@ -1,4 +1,4 @@
-import { TicketOrderStatus, TicketStatus } from '@prisma/client';
+import { TicketOrderStatus, TicketStatus } from '@prisma/client/edge';
 import { db } from '@/lib/db';
 import type { ShowProductionPlan } from '@/lib/show-composer';
 

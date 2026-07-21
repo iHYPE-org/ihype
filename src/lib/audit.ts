@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client/edge';
 import { db } from '@/lib/db';
 
 type AuditInput = {

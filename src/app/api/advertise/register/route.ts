@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client/edge';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { log } from '@/lib/logger';

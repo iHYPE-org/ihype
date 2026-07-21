@@ -1,4 +1,4 @@
-import { Profile, Show } from '@prisma/client';
+import { Profile, Show } from '@prisma/client/edge';
 import { formatShowTime } from '@/lib/utils';
 
 export const FEED_HEURISTICS_VERSION = '1.2.0';
