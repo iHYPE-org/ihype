@@ -1,7 +1,14 @@
-// The /wasm entrypoint is required on Cloudflare Workers: the default
-// '@prisma/client' entry loads the native/library query engine, which
-// cannot exist in workerd ("could not locate the Query Engine").
-import { Prisma, PrismaClient } from '@prisma/client/wasm';
+// Prisma 7 removed the '/wasm' entrypoint this file used to import. The
+// plain '@prisma/client' entry is NOT a safe replacement: its conditional
+// exports list the "node" condition before "workerd", and OpenNext's
+// bundler activates both simultaneously, so plain '@prisma/client' silently
+// resolves to the Node-only query engine in a Workers build (no `path`
+// module, no native engine) — this exact class of bug caused the outage
+// documented in src/lib/__tests__/prisma-workerd-config.test.ts, one
+// directory level up from where it originally happened. '/edge' is the new
+// explicit, unconditional subpath that always resolves to the wasm/workerd
+// build regardless of condition ordering.
+import { Prisma, PrismaClient } from '@prisma/client/edge';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { log } from '@/lib/logger';
 

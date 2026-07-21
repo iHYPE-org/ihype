@@ -74,7 +74,7 @@ jobs:
       - name: Prepare Workerd smoke scratch database
         run: |
           psql "postgresql://ihype:ihype@localhost:55432/ihype" -c 'CREATE EXTENSION IF NOT EXISTS pg_trgm; CREATE EXTENSION IF NOT EXISTS citext;'
-          npx prisma db push --skip-generate --accept-data-loss
+          npx prisma db push --accept-data-loss
         env:
           DATABASE_URL: postgresql://ihype:ihype@localhost:55432/ihype
 

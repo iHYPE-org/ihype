@@ -82,7 +82,7 @@ jobs:
       - name: Prepare scratch database
         run: |
           psql "$DATABASE_URL" -c 'CREATE EXTENSION IF NOT EXISTS pg_trgm; CREATE EXTENSION IF NOT EXISTS citext;'
-          npx prisma db push --skip-generate --accept-data-loss
+          npx prisma db push --accept-data-loss
 
       - name: Install Playwright browser
         run: npx playwright install chromium --with-deps
