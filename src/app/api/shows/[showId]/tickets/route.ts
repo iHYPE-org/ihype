@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import { NextResponse } from 'next/server';
-import { Role, TicketOrderStatus } from '@prisma/client';
+import { Role, TicketOrderStatus } from '@prisma/client/edge';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';

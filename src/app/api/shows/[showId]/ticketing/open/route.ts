@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { TicketOrderStatus } from '@prisma/client';
+import { TicketOrderStatus } from '@prisma/client/edge';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
