@@ -12,7 +12,7 @@
  *
  * MUST run against a server that can actually execute Prisma queries — i.e.
  * workerd (via `wrangler dev`/`cf:preview`), not plain `next start`. The
- * production Prisma config imports from '@prisma/client/wasm' (see
+ * production Prisma config imports from '@prisma/client/edge' (see
  * src/lib/db.ts and src/lib/__tests__/prisma-workerd-config.test.ts for why),
  * and that entrypoint only resolves a working query engine inside workerd —
  * under plain Node it hangs retrying for 25s per attempt and then throws

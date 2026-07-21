@@ -71,6 +71,17 @@ jobs:
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4AAAAAADSF8WNxaeBIRmR7"
           FEATURE_ENABLE_TICKET_PAYMENTS: 'true'
 
+      # Safety net for the 2026-07-21 incident (see scripts/worker-size-budget.mjs):
+      # this same check runs in ci.yml on every PR, but branch protection
+      # doesn't yet block merges on that check passing, so this catches it
+      # here too, before spending time on the smoke test/migrations that
+      # would otherwise precede a doomed deploy.
+      - name: Worker bundle size budget
+        run: node scripts/worker-size-budget.mjs
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Prepare Workerd smoke scratch database
         run: |
           psql "postgresql://ihype:ihype@localhost:55432/ihype" -c 'CREATE EXTENSION IF NOT EXISTS pg_trgm; CREATE EXTENSION IF NOT EXISTS citext;'
