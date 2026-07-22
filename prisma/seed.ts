@@ -7,13 +7,24 @@ import {
   Role,
   ShowStatus
 } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 import bcrypt from 'bcryptjs';
 import { buildArtistMediaCollection } from '../src/lib/media';
 import { isProductionSeedingAllowed } from '../src/lib/runtime-flags';
 import { createSerializedTicketId } from '../src/lib/tickets';
 import { calculateTicketOrderPayouts, DEFAULT_PROMOTER_AFFILIATE_PERCENT } from '../src/lib/ticketing';
 
-const prisma = new PrismaClient();
+// Prisma 7 requires a driver adapter — a bare `new PrismaClient()` throws at
+// construction ("PrismaClient failed to initialize ... provide adapter").
+// Mirrors prisma/launch-seed.ts, which was already updated for this.
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error('DATABASE_URL is required.');
+}
+
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({ connectionString })
+});
 const profileHexIds = {
   neonHarbor: '0x8f19c2a47d3b55e1d0aa41b7f32c9d6e',
   djEcho: '0x1ae44d83f0c297b5e6d24a09c3b7156f',
@@ -151,8 +162,6 @@ async function main() {
     'artist@ihype.org',
     'venue@ihype.org'
   ];
-
-  await prisma.mfaChallenge.deleteMany();
 
   await upsertDemoUser({
     email: 'admin@ihype.org',
