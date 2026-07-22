@@ -6,10 +6,25 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 10
     groups:
+      # 2026-07-21 incident: a single grouped PR bumped @prisma/client and
+      # @prisma/adapter-pg (6.19.3 -> 7.9.0) and typescript (6.0.3 -> 7.0.2)
+      # -- three major-version jumps in one routine-looking PR -- and merged
+      # with CI fully red, breaking prisma generate, the Cloudflare Worker
+      # bundle, and Next's TypeScript detection simultaneously. Restricting
+      # these groups to minor/patch means a major bump can no longer hide
+      # inside an otherwise-routine grouped PR: dependabot opens it as its
+      # own individual, clearly major-labeled PR instead, so it gets the
+      # scrutiny (and can't slip past on autopilot) a major version deserves.
       production-dependencies:
         dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
       development-dependencies:
         dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
 
   - package-ecosystem: "github-actions"
     directory: "/"
