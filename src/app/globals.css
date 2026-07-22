@@ -1036,6 +1036,34 @@ body:has(.standalone-page) .site-shell { padding-top: 0; }
   margin-bottom: 20px;
 }
 
+.authcard-gate {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.authcard-gate .authcard-alpha-banner {
+  margin-bottom: 0;
+}
+
+.authcard-gate-confirmed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(34, 229, 212, .08);
+  border: 1px solid rgba(34, 229, 212, .3);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: .82rem;
+  color: var(--ink-2);
+  margin-bottom: 20px;
+}
+
+.authcard-gate-confirmed span {
+  color: var(--venue, #22e5d4);
+  font-weight: 700;
+}
+
 .authcard-box {
   background: var(--bg2);
   border: 1px solid var(--hair-90);

@@ -49,7 +49,9 @@ export function RegisterScreen({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [company, setCompany] = useState('');
   const [turnstileToken, setTurnstileToken] = useState('');
-  const [step, setStep] = useState<RegisterStep>('form');
+  const [step, setStep] = useState<RegisterStep>(inviteOnly ? 'gate' : 'form');
+  const [gateChecking, setGateChecking] = useState(false);
+  const [gateError, setGateError] = useState('');
   const [createdAccountId, setCreatedAccountId] = useState('');
   const turnstileRef = useRef<TurnstileWidgetHandle>(null);
   // Holds a pre-fetched WebAuthn challenge so the "Try passkey again" tap can
@@ -145,6 +147,30 @@ export function RegisterScreen({
     const verifyRes = await postJson<{ redirect?: string }>('/api/auth/passkey/register-first', credential);
     trackSignupFunnel('passkey_success', { role, method: 'passkey', step: 'register', variant: signupVariant, ...getPasskeyDiagnostics() });
     window.location.href = resolvePostAuthRedirect(verifyRes.redirect);
+  }
+
+  async function submitGate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setGateError('');
+    const code = inviteCode.trim();
+    if (!code) {
+      setGateError('Enter a HYPE referral code to continue.');
+      return;
+    }
+    setGateChecking(true);
+    try {
+      const result = await postJson<{ valid: boolean; error?: string }>('/api/referral/validate', { code });
+      if (result.valid) {
+        trackSignupFunnel('invite_gate_passed', { role, method: authMethod, step: 'gate', variant: signupVariant });
+        setStep('form');
+      } else {
+        setGateError(result.error ?? 'That code isn’t recognized. Ask an existing member for their HYPE code.');
+      }
+    } catch (err) {
+      setGateError(getErrorMessage(err, 'Could not check that code. Please try again.'));
+    } finally {
+      setGateChecking(false);
+    }
   }
 
   async function createAccount(event: FormEvent<HTMLFormElement>) {
@@ -252,7 +278,9 @@ export function RegisterScreen({
       eyebrow="JOIN THE SCENE"
       mode="signup"
       subtitle={
-        step === 'passkey'
+        step === 'gate'
+          ? 'iHYPE is in private alpha. Enter a HYPE referral code from an existing member to continue.'
+          : step === 'passkey'
           ? 'Retry the device prompt or finish with a magic link. Your account is not stranded.'
           : step === 'magic-link-sent'
           ? 'Check your inbox for a one-tap link to finish signing in. You can add a passkey later from Settings.'
@@ -260,7 +288,38 @@ export function RegisterScreen({
       }
       title="Create account."
     >
-      {step === 'passkey' ? (
+      {step === 'gate' ? (
+        <div className="authcard-gate">
+          <div className="authcard-alpha-banner">
+            <strong>iHYPE is currently in private alpha.</strong> To keep the beta small and well-tested, new
+            accounts need a HYPE code from an existing member. Enter one below to continue, or request access and
+            we&apos;ll reach out for the official launch.
+          </div>
+          <form onSubmit={submitGate}>
+            <div className="authcard-field">
+              <label htmlFor="authcard-gate-code">HYPE referral code</label>
+              <input
+                id="authcard-gate-code"
+                autoComplete="off"
+                autoFocus
+                onChange={(event) => {
+                  setInviteCode(event.target.value);
+                  if (gateError) setGateError('');
+                }}
+                placeholder="A member's code or @username"
+                required
+                type="text"
+                value={inviteCode}
+              />
+            </div>
+            <button className="authcard-btn-primary" disabled={gateChecking} type="submit">
+              {gateChecking ? 'Checking…' : 'Continue'}
+            </button>
+          </form>
+          {gateError ? <p className="authcard-status authcard-status-error">{gateError}</p> : null}
+          <RequestBetaAccessForm role={role} />
+        </div>
+      ) : step === 'passkey' ? (
         <div className="authcard-passkey-pending">
           <p>Waiting for your device passkey prompt.</p>
           <p className="meta">Use Face ID, Touch ID, or your device PIN when prompted.</p>
@@ -286,10 +345,8 @@ export function RegisterScreen({
       ) : (
         <form onSubmit={createAccount}>
           {inviteOnly ? (
-            <div className="authcard-alpha-banner">
-              <strong>iHYPE is currently in private alpha.</strong> New accounts need a HYPE code from an existing
-              member — ask someone already on iHYPE to share theirs, or request access below and we&apos;ll reach out
-              for the official launch.
+            <div className="authcard-gate-confirmed">
+              <span aria-hidden="true">✓</span> HYPE code accepted — finish creating your account below.
             </div>
           ) : null}
           <fieldset className="authcard-field">
@@ -384,23 +441,6 @@ export function RegisterScreen({
               value={phone}
             />
           </div>
-
-          {inviteOnly ? (
-            <>
-              <div className="authcard-field">
-                <label>Hype code</label>
-                <input
-                  autoComplete="off"
-                  onChange={(event) => setInviteCode(event.target.value)}
-                  placeholder="A member's code or @username"
-                  required
-                  type="text"
-                  value={inviteCode}
-                />
-              </div>
-              <RequestBetaAccessForm role={role} />
-            </>
-          ) : null}
 
           <label className="authcard-check-row">
             <input checked={acceptedAge} onChange={(event) => setAcceptedAge(event.target.checked)} required type="checkbox" />
