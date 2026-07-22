@@ -96,7 +96,11 @@ jobs:
   ios-release-build:
     name: iOS — signed release build
     runs-on: macos-15
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Same trigger as the Android release job — a push to main or a manual
+    # "Run workflow" click. Skips cleanly until the iOS signing secrets exist.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
     steps:
       - uses: actions/checkout@v5
 
@@ -250,7 +254,12 @@ jobs:
   android-release-build:
     name: Android — signed release build
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Runs on a push to main that touches the native shell, AND on a manual
+    # "Run workflow" click (workflow_dispatch) — the latter is the one-click
+    # release button: Actions → "Native shell build" → Run workflow.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
     steps:
       - uses: actions/checkout@v5
 
@@ -305,6 +314,14 @@ jobs:
       # Plugin's built-in android.injected.signing.* mechanism) rather than
       # committing a signingConfig to build.gradle, so no keystore path or
       # password ever needs to exist in the repo itself.
+      # versionCode must strictly increase on every Play upload — the value
+      # committed in build.gradle (1) would be rejected on the 2nd release.
+      # github.run_number is monotonic per workflow, so injecting it as the
+      # versionCode (via AGP's built-in android.injected.version.code) makes
+      # every one-click release upload a fresh, higher code with no manual
+      # edit. versionName (the human "1.0" users see) stays as-is in
+      # build.gradle — bump that by hand only when you want a new marketing
+      # version.
       - name: Build signed release bundle
         if: steps.check.outputs.configured == 'true'
         working-directory: android
@@ -314,11 +331,23 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           ./gradlew bundleRelease \
+            -Pandroid.injected.version.code=${{ github.run_number }} \
             -Pandroid.injected.signing.store.file="$RUNNER_TEMP/release.keystore" \
             -Pandroid.injected.signing.store.password="$ANDROID_KEYSTORE_PASSWORD" \
             -Pandroid.injected.signing.key.alias="$ANDROID_KEY_ALIAS" \
             -Pandroid.injected.signing.key.password="$ANDROID_KEY_PASSWORD"
 
+      # Uploads to the Play *internal testing* track and releases it to your
+      # internal testers immediately (status: completed) — that's the one-click
+      # payoff. Internal testing only reaches the testers you explicitly list
+      # in Play Console, so a bad build never reaches the public. Promoting
+      # internal → production is a separate, deliberate click in the Play
+      # Console UI.
+      # First-time caveat: the very first upload for a brand-new app usually
+      # has to be done through the Play Console UI (to complete the store
+      # listing, content rating, and data-safety form) before the API will
+      # accept uploads. After that first manual upload, this button works for
+      # every subsequent release.
       - name: Upload to Play Console
         if: steps.check.outputs.configured == 'true'
         uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
@@ -327,4 +356,4 @@ jobs:
           packageName: com.ihype.app
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
           track: internal
-          status: draft
+          status: completed
