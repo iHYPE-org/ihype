@@ -1,6 +1,8 @@
 // Cloudflare Workers AI wrapper. Accesses the `AI` binding at runtime;
 // returns null in local dev so callers fall through to their error paths.
 
+import { log } from '@/lib/logger';
+
 const MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 const VISION_MODEL = '@cf/llava-hf/llava-1.5-7b-hf';
 const WHISPER_MODEL = '@cf/openai/whisper';
@@ -28,11 +30,22 @@ export async function runAI(
   maxTokens = 256
 ): Promise<string | null> {
   const ai = getAiBinding();
-  if (!ai) return null;
+  if (!ai) {
+    // In production the `AI` binding is declared in wrangler.toml, so a null
+    // here is a real misconfiguration (not local dev) worth surfacing.
+    log.warn('[ai] Workers AI binding unavailable — text generation skipped');
+    return null;
+  }
   try {
     const result = await ai.run(MODEL, { messages, max_tokens: maxTokens });
-    return typeof result.response === 'string' ? result.response : null;
-  } catch {
+    if (typeof result.response === 'string') return result.response;
+    log.warn(`[ai] Workers AI returned no text response (keys: ${Object.keys(result).join(',')})`);
+    return null;
+  } catch (error) {
+    // Previously swallowed silently, which made every downstream "AI engine
+    // is warming up" impossible to diagnose. Log the real cause (quota,
+    // model error, timeout) while preserving the fail-open null return.
+    log.error('[ai]', error instanceof Error ? error : null, 'Workers AI text call failed');
     return null;
   }
 }
@@ -123,5 +136,13 @@ export async function runAIJson<T>(opts: {
     ],
     opts.maxTokens ?? 512
   );
-  return parseAiJson<T>(raw);
+  if (raw === null) return null;
+  const parsed = parseAiJson<T>(raw);
+  if (parsed === null) {
+    // The model responded but not with parseable JSON — a distinct failure
+    // from "AI unavailable". Log a bounded preview so it's diagnosable
+    // without dumping a full response into logs.
+    log.warn(`[ai] Workers AI response was not parseable JSON: ${raw.slice(0, 200)}`);
+  }
+  return parsed;
 }

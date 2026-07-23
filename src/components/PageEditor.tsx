@@ -369,7 +369,15 @@ export function PageEditor({ profileId }: { profileId: string }) {
       if (!res.ok) {
         setAiError(d.error ?? 'Something went wrong — try again.');
       } else if (!d.changes || Object.keys(d.changes).length === 0) {
-        setAiError('The AI engine is warming up — try again in a moment, or rephrase your instruction.');
+        // Distinguish an engine outage from the AI running fine but having
+        // nothing to work with (e.g. "write my About from my bio" with an
+        // empty bio) — the old catch-all "warming up" was misleading in the
+        // latter, far more common, case.
+        setAiError(
+          d.reason === 'engine'
+            ? 'The AI engine is temporarily unavailable — please try again in a moment.'
+            : 'The AI couldn’t find enough to work with. Fill in the fields your instruction refers to (like your bio), or rephrase it.'
+        );
       } else {
         setAiProposed(d.changes as Record<string, string>);
       }

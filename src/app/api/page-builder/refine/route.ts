@@ -5,6 +5,7 @@ import { canManageOwnedResource } from '@/lib/permissions';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { runAIJson } from '@/lib/ai';
 import { aiTextFieldLimits, sanitizeAiChanges, themeFieldValues } from '@/lib/page-refine';
+import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -98,12 +99,20 @@ export async function POST(request: Request) {
   });
 
   if (!raw) {
-    return NextResponse.json({ aiAvailable: false });
+    // The Workers AI call itself failed or was unavailable (already logged in
+    // src/lib/ai.ts with the real cause). Surface a distinct reason so the
+    // client can tell the owner the engine is down vs. their content is thin.
+    log.warn(`[page-refine] AI unavailable for profile ${profile.id as string}`);
+    return NextResponse.json({ aiAvailable: false, reason: 'engine' });
   }
 
   const changes = sanitizeAiChanges(profileType, raw);
   if (Object.keys(changes).length === 0) {
-    return NextResponse.json({ aiAvailable: false });
+    // The AI ran but returned nothing applicable — most often because the
+    // source fields the instruction refers to are empty (e.g. "write my About
+    // from my bio" with an empty bio). Not an engine failure.
+    log.info(`[page-refine] AI produced no applicable changes for profile ${profile.id as string} (instruction: ${instruction.slice(0, 120)})`);
+    return NextResponse.json({ aiAvailable: true, changes: {}, reason: 'no-op' });
   }
 
   return NextResponse.json({ changes });
