@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 import { getDemoCreatorExclusion, getDemoOwnerExclusion } from '@/lib/runtime-flags';
 import { FollowButton } from '@/components/FollowButton';
 import { CompactHypeButton } from '@/components/CompactHypeButton';
+import { getHypeHeatmap } from '@/lib/hype-heatmap';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,9 +37,13 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
   const page = Math.max(0, parseInt(params.page ?? '0', 10) || 0);
 
   // Collect distinct cities and genres for filter chips
-  const [allCities, allGenres] = await Promise.all([
+  const [allCities, allGenres, topCities] = await Promise.all([
     db.profile.findMany({ where: { type: { in: ['ARTIST', 'DJ', 'VENUE'] }, city: { not: null } }, select: { city: true }, distinct: ['city'], orderBy: { city: 'asc' }, take: 30 }),
     db.profile.findMany({ where: { type: { in: ['ARTIST', 'DJ'] }, genres: { isEmpty: false } }, select: { genres: true }, take: 200 }),
+    // Real "trending cities" signal (last 30 days of HYPE activity) — only
+    // worth showing on the unfiltered view; a city filter already narrows
+    // the page to one place.
+    cityFilter ? Promise.resolve([]) : getHypeHeatmap(6),
   ]);
   const cities = allCities.map(p => p.city).filter(Boolean) as string[];
   const genres = [...new Set(allGenres.flatMap(p => p.genres))].sort().slice(0, 20);
@@ -131,6 +136,31 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-a50)', flexShrink: 0 }}>Get tickets</span>
         </div>
       </Link>
+
+      {/* Trending cities — real HYPE-activity ranking, last 30 days */}
+      {topCities.length > 0 && (
+        <div style={{ marginBottom: 32 }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a30)', display: 'block', marginBottom: 10 }}>
+            Trending cities
+          </span>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {topCities.map((c) => (
+              <Link
+                key={c.city}
+                href={buildUrl(c.city, genreFilter)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 999,
+                  border: '1px solid var(--line)', background: 'var(--bg2)', textDecoration: 'none',
+                  fontSize: 13, color: 'var(--ink-a75)',
+                }}
+              >
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent)' }}>#{c.rank}</span>
+                {c.city}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       {(cities.length > 0 || genres.length > 0) && (

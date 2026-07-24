@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getProfileInsights } from '@/lib/profile-insights';
+import { getRecentHypers } from '@/lib/hype-recent';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 
 export const metadata: Metadata = {
@@ -63,6 +64,7 @@ export default async function DJDashboardPage({ params }: { params: Promise<{ sl
     recentShowsForActivity,
     recentTracks,
     recentTicketOrders,
+    recentHypers,
   ] = await Promise.all([
     getProfileInsights(profile.id, 'DJ'),
     db.ticketOrder.findMany({
@@ -106,6 +108,7 @@ export default async function DJDashboardPage({ params }: { params: Promise<{ sl
       where: { affiliatePromoterProfileId: profile.id, status: 'CAPTURED', createdAt: { gte: thirtyDaysAgo } },
       select: { quantity: true, createdAt: true },
     }),
+    getRecentHypers(profile.id, 5),
   ]);
 
   const earningsThisMonthCents = earningsAllOrders
@@ -248,6 +251,20 @@ export default async function DJDashboardPage({ params }: { params: Promise<{ sl
         </div>
 
         <div>
+          {recentHypers.length > 0 && (
+            <>
+              <div className="djd-section-eyebrow">Recent Hype</div>
+              <div className="djd-activity-list" style={{ marginBottom: 24 }}>
+                {recentHypers.map((h, i) => (
+                  <div className="djd-activity-row" key={i}>
+                    <div className="djd-activity-dot" style={{ background: '#ff3e9a' }} />
+                    <div className="djd-activity-text">{h.hexId} hyped you</div>
+                    <div className="djd-activity-time">{timeAgo(h.createdAt)}</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
           <div className="djd-section-eyebrow">Quick Actions</div>
           <div className="djd-actions-list">
             <Link className="djd-action-btn" href={`/promoters/${profile.slug}?section=crate`}>Add to crate</Link>

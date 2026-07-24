@@ -45,5 +45,9 @@ export const editorSchema = z.object({
   capacity: z.number().int().min(0).max(200000).optional(),
   roomType: text(40),
   radioSchedule: text(20),
+  // Previously only ever writable via POST /api/verify (a verification
+  // submission) — meaning a Fan (LISTENER profile, no verification flow)
+  // had no way to ever set genres at all. Real, general editing support now.
+  genres: z.array(z.string().trim().max(40)).max(10).optional(),
   pinnedStats: z.array(z.string()).max(4).optional()
 });

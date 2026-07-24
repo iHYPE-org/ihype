@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getProfileInsights } from '@/lib/profile-insights';
 import { getArtistDashboardStats } from '@/lib/artist-dashboard';
+import { getRecentHypers, formatHypeAgo } from '@/lib/hype-recent';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { getDemoCreatorExclusion } from '@/lib/runtime-flags';
 
@@ -41,7 +42,7 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
   const isOwner = canManageOwnedResource(session, profile.ownerId);
   if (!isOwner) return notFound();
 
-  const [insights, dashStats, shows] = await Promise.all([
+  const [insights, dashStats, shows, recentHypers] = await Promise.all([
     getProfileInsights(profile.id, profile.type),
     getArtistDashboardStats(profile.id),
     db.show.findMany({
@@ -53,6 +54,7 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
       },
       orderBy: { startsAt: 'asc' },
     }),
+    getRecentHypers(profile.id, 5),
   ]);
 
   const now = new Date();
@@ -165,6 +167,19 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
         </div>
 
         <div>
+          {recentHypers.length > 0 && (
+            <>
+              <div className="ad-section-head"><span className="ad-eyebrow-sm">Recent Hype</span></div>
+              <div className="ad-activity-list" style={{ marginBottom: 24 }}>
+                {recentHypers.map((h, i) => (
+                  <div className="ad-activity-row" key={i}>
+                    <span className="ad-activity-dot" style={{ background: 'var(--accent)' }} />
+                    <div className="ad-activity-text">{h.hexId} hyped you · {formatHypeAgo(h.createdAt)}</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
           <div className="ad-section-head"><span className="ad-eyebrow-sm">Quick Actions</span></div>
           <div className="ad-actions-list">
             <Link className="ad-btn ad-btn-outline ad-btn-full" href={`/artists/${profile.slug}?section=tracks`}>Upload a track</Link>

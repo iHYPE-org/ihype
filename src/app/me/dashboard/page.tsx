@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getPromoterDashboard } from '@/lib/promoterDashboard';
+import { getHypeStreak } from '@/lib/hype-streak';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 
 export const dynamic = 'force-dynamic';
@@ -27,10 +28,13 @@ export default async function FanDashboardPage() {
   const userId = session.user.id;
   const now = new Date();
 
-  const [user, hypeCastCount, recentHypes, upcomingOrders, ownFanProfile, promoterDashboard] = await Promise.all([
+  const [user, hypeCastCount, hypeStreak, recentHypes, upcomingOrders, ownFanProfile, promoterDashboard] = await Promise.all([
     db.user.findUnique({ where: { id: userId }, select: { username: true, name: true } }),
     // Real count of Hype rows cast by this user (HypeEvent.userId) — "Hype Cast" stat.
     db.hypeEvent.count({ where: { userId } }),
+    // Real consecutive-days streak from AuditLog `hype_*` actions — same
+    // logic GET /api/hype-streak uses, shared via src/lib/hype-streak.ts.
+    getHypeStreak(userId),
     db.hypeEvent.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
@@ -132,6 +136,11 @@ export default async function FanDashboardPage() {
           <div className="fan-dash-stat-value">{hypeCastCount}</div>
           <div className="fan-dash-stat-sub">Shows you&apos;ve hyped</div>
         </Link>
+        <div className="fan-dash-stat-card">
+          <div className="fan-dash-stat-label">Hype Streak</div>
+          <div className="fan-dash-stat-value" style={{ color: 'var(--role-fan, #b983ff)' }}>{hypeStreak.streak}d</div>
+          <div className="fan-dash-stat-sub">{hypeStreak.streak > 0 ? 'Consecutive days hyping' : 'Hype something today to start one'}</div>
+        </div>
         <div className="fan-dash-stat-card">
           <div className="fan-dash-stat-label">Referral Earned</div>
           <div className="fan-dash-stat-value" style={{ color: 'var(--role-fan, #b983ff)' }}>

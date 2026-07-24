@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { getRecentHypers } from '@/lib/hype-recent';
 
 export async function GET(req: NextRequest) {
   try {
@@ -24,26 +25,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
-    const events = await db.profileHypeEvent.findMany({
-      where: { profileId },
-      orderBy: { createdAt: 'desc' },
-      take: 10,
-      include: {
-        user: {
-          include: {
-            profiles: {
-              take: 1,
-              select: { hexId: true },
-            },
-          },
-        },
-      },
-    });
-
-    const result = events.map((e) => ({
-      hexId: e.user.profiles[0]?.hexId ?? e.userId.slice(0, 8),
-      createdAt: e.createdAt.toISOString(),
-    }));
+    const events = await getRecentHypers(profileId, 10);
+    const result = events.map((e) => ({ hexId: e.hexId, createdAt: e.createdAt.toISOString() }));
 
     return NextResponse.json(result);
   } catch (err) {

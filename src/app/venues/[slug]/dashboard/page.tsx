@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getVenueDashboardData } from '@/lib/venue-dashboard';
+import { getRecentHypers, formatHypeAgo } from '@/lib/hype-recent';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 
 export const dynamic = 'force-dynamic';
@@ -34,7 +35,10 @@ export default async function VenueDashboardPage({ params }: { params: Promise<{
   const isOwner = canManageOwnedResource(session, profile.ownerId);
   if (!isOwner) return notFound();
 
-  const data = await getVenueDashboardData(profile.id);
+  const [data, recentHypers] = await Promise.all([
+    getVenueDashboardData(profile.id),
+    getRecentHypers(profile.id, 5),
+  ]);
 
   return (
     <div className="vdash">
@@ -128,6 +132,19 @@ export default async function VenueDashboardPage({ params }: { params: Promise<{
         </div>
 
         <div>
+          {recentHypers.length > 0 && (
+            <>
+              <div className="vdash-eyebrow-sm">Recent Hype</div>
+              <div className="vdash-activity" style={{ marginBottom: 24 }}>
+                {recentHypers.map((h, i) => (
+                  <div className="vdash-activity-row" key={i}>
+                    <span className="vdash-activity-dot" style={{ background: 'var(--role-venue, #22e5d4)' }} />
+                    <span>{h.hexId} hyped you · {formatHypeAgo(h.createdAt)}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
           <div className="vdash-eyebrow-sm">Quick Actions</div>
           <div className="vdash-actions">
             <Link className="vdash-action" href={`/venues/${profile.slug}/booking-inbox`}>Review booking requests</Link>

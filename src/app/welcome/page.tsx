@@ -1,5 +1,8 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
+import { db } from '@/lib/db';
+import { getProfileType } from '@/lib/profile-creation';
+import { FanTasteCapture } from '@/components/FanTasteCapture';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 
@@ -11,12 +14,12 @@ export const metadata: Metadata = {
 type Role = 'FAN' | 'ARTIST' | 'VENUE' | 'DJ';
 
 const CONFIG: Record<Role, {
-  name: string; roleLabel: string; tint: string; pendingNote: string;
+  roleLabel: string; tint: string;
   sub: string; cta: string; ctaHref: string;
   steps: { title: string; desc: string }[];
 }> = {
   FAN: {
-    name: 'Jess R.', roleLabel: 'Fan', tint: '#b983ff', pendingNote: ' · Active now',
+    roleLabel: 'Fan', tint: '#b983ff',
     sub: 'Your account is live. Start hyping the artists you believe in — your listens and hypes shape who gets discovered.',
     cta: 'Start listening →', ctaHref: '/listen',
     steps: [
@@ -26,7 +29,7 @@ const CONFIG: Record<Role, {
     ],
   },
   ARTIST: {
-    name: 'Nyla', roleLabel: 'Artist', tint: '#ff5029', pendingNote: ' · Verification pending (~48h)',
+    roleLabel: 'Artist', tint: '#ff5029',
     sub: 'Welcome to the platform where 70% of every ticket is yours — locked by charter, before a single ticket sells.',
     cta: 'Set up your page →', ctaHref: '/pages',
     steps: [
@@ -36,7 +39,7 @@ const CONFIG: Record<Role, {
     ],
   },
   VENUE: {
-    name: 'Port City Music Hall', roleLabel: 'Venue', tint: '#22e5d4', pendingNote: ' · Verification pending (~48h)',
+    roleLabel: 'Venue', tint: '#22e5d4',
     sub: 'A guaranteed 20% of every gate, by charter — plus real demand data on who fans actually want to see.',
     cta: 'List your room →', ctaHref: '/pages',
     steps: [
@@ -46,7 +49,7 @@ const CONFIG: Record<Role, {
     ],
   },
   DJ: {
-    name: 'DJ Caro', roleLabel: 'DJ', tint: '#ff3e9a', pendingNote: ' · Verification pending (~48h)',
+    roleLabel: 'DJ', tint: '#ff3e9a',
     sub: 'Your studio is waiting. Build radio shows from the free-use library and get paid to promote the shows you play.',
     cta: 'Open the studio →', ctaHref: '/radio',
     steps: [
@@ -57,6 +60,12 @@ const CONFIG: Record<Role, {
   },
 };
 
+function verificationNote(status: string | undefined) {
+  if (status === 'VERIFIED') return ' · Verified';
+  if (status === 'PENDING') return ' · Verification pending (~48h)';
+  return ' · Verification needed';
+}
+
 export default async function WelcomePage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/register');
@@ -64,7 +73,23 @@ export default async function WelcomePage() {
   const sessionRole = (session.user as { role?: string }).role;
   const role: Role = sessionRole === 'ARTIST' || sessionRole === 'VENUE' || sessionRole === 'DJ' ? sessionRole : 'FAN';
   const c = CONFIG[role];
-  const initial = c.name.charAt(0);
+
+  // Real signed-in identity — this used to be a hardcoded example name
+  // ("Jess R." / "Nyla" / "DJ Caro" / "Port City Music Hall") shown to
+  // every single user regardless of who actually signed up.
+  const [dbUser, ownProfile] = await Promise.all([
+    db.user.findUnique({ where: { id: session.user.id }, select: { name: true, username: true } }),
+    db.profile.findFirst({
+      where: { ownerId: session.user.id, type: getProfileType(role) },
+      select: { id: true, name: true, city: true, genres: true, verificationStatus: true },
+    }),
+  ]);
+
+  const displayName = role === 'FAN'
+    ? (dbUser?.name || dbUser?.username || 'there')
+    : (ownProfile?.name || dbUser?.name || 'there');
+  const initial = displayName.charAt(0).toUpperCase();
+  const pendingNote = role === 'FAN' ? ' · Active now' : verificationNote(ownProfile?.verificationStatus);
 
   return (
     <div className="welcome-body">
@@ -77,8 +102,8 @@ export default async function WelcomePage() {
           <div className="welcome-identity">
             <div className="welcome-avatar" style={{ background: `linear-gradient(135deg, ${c.tint}, #b983ff)` }}>{initial}</div>
             <div>
-              <div className="welcome-name">{c.name}</div>
-              <div className="welcome-role" style={{ color: c.tint }}>{c.roleLabel}{c.pendingNote}</div>
+              <div className="welcome-name">{displayName}</div>
+              <div className="welcome-role" style={{ color: c.tint }}>{c.roleLabel}{pendingNote}</div>
             </div>
           </div>
           <div className="welcome-steps-label">Next steps</div>
@@ -89,6 +114,13 @@ export default async function WelcomePage() {
                 <div className="welcome-step-text">
                   <div className="welcome-step-title">{s.title}</div>
                   <div className="welcome-step-desc">{s.desc}</div>
+                  {role === 'FAN' && i === 1 && ownProfile && (
+                    <FanTasteCapture
+                      profileId={ownProfile.id}
+                      initialCity={ownProfile.city ?? ''}
+                      initialGenres={ownProfile.genres ?? []}
+                    />
+                  )}
                 </div>
               </div>
             ))}
