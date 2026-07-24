@@ -9,20 +9,31 @@ export async function GET(
 ) {
   const { showId: id } = await params;
 
-  const attendees = await db.showAttendee.findMany({
-    where: { showId: id, optedIn: true },
-    include: {
-      user: { select: { name: true, image: true } },
-    },
-    orderBy: { createdAt: 'asc' },
-  });
+  // This endpoint is public and unauthenticated, and a popular show can have
+  // thousands of opted-in attendees. The UI only renders an avatar preview
+  // (ShowEngagement.tsx slices to the first 8) and shows the total separately,
+  // so cap the joined rows we return and get the true total from a cheap
+  // count() — otherwise every anonymous request streams the entire attendee
+  // list with a user join.
+  const ATTENDEE_PREVIEW_LIMIT = 24;
+  const [attendees, count] = await Promise.all([
+    db.showAttendee.findMany({
+      where: { showId: id, optedIn: true },
+      include: {
+        user: { select: { name: true, image: true } },
+      },
+      orderBy: { createdAt: 'asc' },
+      take: ATTENDEE_PREVIEW_LIMIT,
+    }),
+    db.showAttendee.count({ where: { showId: id, optedIn: true } }),
+  ]);
 
   return NextResponse.json({
     attendees: attendees.map((a) => ({
       name: a.user.name,
       avatar: a.user.image,
     })),
-    count: attendees.length,
+    count,
   });
 }
 
