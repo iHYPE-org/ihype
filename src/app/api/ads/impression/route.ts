@@ -32,9 +32,27 @@ export async function POST(request: NextRequest) {
     if (existing) return NextResponse.json({ ok: true, skipped: true });
   }
 
-  // Budget enforcement (0 = unlimited)
-  const ad = await db.ad.findUnique({ where: { id: adId }, select: { budgetCents: true, spentCents: true } });
-  if (ad && ad.budgetCents > 0 && ad.spentCents >= ad.budgetCents) {
+  // Only a genuinely servable ad may spend budget. Mirror the serve-side
+  // gate in ad-clip-selection.ts exactly (status APPROVED, inside the run
+  // window, budget not exhausted) so a paused/cancelled/expired campaign —
+  // or a stale/forged client still firing impressions — can never be
+  // charged. An unknown adId is skipped rather than falling through to
+  // db.ad.update, which would throw P2025 (record not found) and 500.
+  const ad = await db.ad.findUnique({
+    where: { id: adId },
+    select: { status: true, startsAt: true, endsAt: true, budgetCents: true, spentCents: true },
+  });
+  if (!ad) {
+    return NextResponse.json({ ok: true, skipped: true, reason: 'unknown_ad' });
+  }
+  const now = new Date();
+  const notActive = ad.status !== 'APPROVED';
+  const beforeWindow = ad.startsAt !== null && ad.startsAt > now;
+  const afterWindow = ad.endsAt !== null && ad.endsAt < now;
+  if (notActive || beforeWindow || afterWindow) {
+    return NextResponse.json({ ok: true, skipped: true, reason: 'not_active' });
+  }
+  if (ad.budgetCents > 0 && ad.spentCents >= ad.budgetCents) {
     return NextResponse.json({ ok: true, skipped: true, reason: 'budget_exhausted' });
   }
 
