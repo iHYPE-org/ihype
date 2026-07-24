@@ -273,10 +273,10 @@ export default async function RootPage() {
           </h2>
           <div className="grid grid-2 idx-roles-grid" style={{ gap: '0.75rem' }}>
             {[
-              { role: 'Artists', color: '#ff5029', icon: '🎤', href: '/register?role=ARTIST', items: ['70% of every ticket you sell', 'Upload music as swipeable Seeds', 'Build your public page and catalog', 'See who\'s hyping your work'] },
-              { role: 'Fans', color: '#b983ff', icon: '🎧', href: '/register?role=FAN', items: ['Discover new music before it blows up', 'Buy tickets with no fees', 'Earn 10% on tickets you refer', 'Track your scene with hype streaks'] },
-              { role: 'Promoters / DJs', color: '#ffb84a', icon: '🎛️', href: '/register?role=DJ', items: ['10% referral on every ticket you drive', 'Host radio shows on the platform', 'Build a following and grow your scene', 'Referral links for every event'] },
-              { role: 'Venues', color: '#22e5d4', icon: '🏛️', href: '/register?role=VENUE', items: ['20% of every show you host', 'Zero ticketing fees for buyers', 'Demand radar shows what\'s trending', 'Connect with artists and promoters'] },
+              { role: 'Artists', color: '#ff5029', icon: '🎤', href: '/register?role=ARTIST', kitHref: '/artists', items: ['70% of every ticket you sell', 'Upload music as swipeable Seeds', 'Build your public page and catalog', 'See who\'s hyping your work'] },
+              { role: 'Fans', color: '#b983ff', icon: '🎧', href: '/register?role=FAN', kitHref: '/fans', items: ['Discover new music before it blows up', 'Buy tickets with no fees', 'Earn 10% on tickets you refer', 'Track your scene with hype streaks'] },
+              { role: 'Promoters / DJs', color: '#ffb84a', icon: '🎛️', href: '/register?role=DJ', kitHref: '/djs', items: ['10% referral on every ticket you drive', 'Host radio shows on the platform', 'Build a following and grow your scene', 'Referral links for every event'] },
+              { role: 'Venues', color: '#22e5d4', icon: '🏛️', href: '/register?role=VENUE', kitHref: '/venues', items: ['20% of every show you host', 'Zero ticketing fees for buyers', 'Demand radar shows what\'s trending', 'Connect with artists and promoters'] },
             ].map(r => (
               <div className="idx-role-card" key={r.role} style={{
                 padding: '1.5rem', borderRadius: 18,
@@ -308,6 +308,9 @@ export default async function RootPage() {
                     </li>
                   ))}
                 </ul>
+                <Link href={r.kitHref} style={{ fontFamily: 'var(--f-m)', fontSize: '0.72rem', color: 'var(--ink-3)', textDecoration: 'underline', alignSelf: 'flex-start' }}>
+                  Learn more →
+                </Link>
               </div>
             ))}
           </div>
@@ -354,18 +357,23 @@ export default async function RootPage() {
                   </span>
                 ))}
               </div>
-              <Link
-                href="/register?role=ARTIST"
-                style={{
-                  display: 'inline-block',
-                  padding: '0.75rem 1.75rem', borderRadius: 12,
-                  background: 'var(--accent)', color: '#fff',
-                  fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '0.9rem',
-                  textDecoration: 'none',
-                }}
-              >
-                Join as an artist →
-              </Link>
+              <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <Link
+                  href="/register?role=ARTIST"
+                  style={{
+                    display: 'inline-block',
+                    padding: '0.75rem 1.75rem', borderRadius: 12,
+                    background: 'var(--accent)', color: '#fff',
+                    fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '0.9rem',
+                    textDecoration: 'none',
+                  }}
+                >
+                  Join as an artist →
+                </Link>
+                <Link href="/artists" style={{ fontFamily: 'var(--f-m)', fontSize: '0.8rem', color: 'var(--ink-2)', textDecoration: 'underline' }}>
+                  Learn more →
+                </Link>
+              </div>
             </div>
           </div>
         </div>

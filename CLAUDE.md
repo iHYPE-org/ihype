@@ -136,6 +136,16 @@ If a UI detail is unclear → ask Claude Design to clarify in the .dc.html. Neve
 | Welcome.dc.html | /welcome | src/app/welcome/page.tsx |
 | Verification.dc.html | /verify | src/app/verify/page.tsx |
 
+### Role recruiting pages (2026-07-24)
+| .dc.html | Route | src/app path |
+|---|---|---|
+| ArtistKit.dc.html (`templates/artist-kit/`) | /artists | src/app/artists/page.tsx (coexists with the dynamic `/artists/[slug]` profile route) |
+| DJKit.dc.html (`templates/dj-kit/`) | /djs | src/app/djs/page.tsx (coexists with `/djs/[slug]`, the redirect alias to `/promoters/[slug]`) |
+| VenueKit.dc.html (`templates/venue-kit/`) | /venues | src/app/venues/page.tsx (coexists with the dynamic `/venues/[slug]` profile route) |
+| FanKit.dc.html (`templates/fan-kit/`) | /fans | src/app/fans/page.tsx (coexists with the dynamic `/fans/[slug]` profile route) |
+
+Pre-signup per-role recruiting pages — not profile pages. Each renders a hero, a 4-stat row, the charter pitch for that role, and a 6-feature grid, then either the real `RequestBetaAccessForm`-style flow (`POST /api/beta-access-request`, gated on `isInviteCodeRequiredRuntime()`) or, once invite-gating lifts, a direct `Join as an X →` link to `/register?role=X` — no new backend invented, both paths reuse existing real endpoints (see `src/components/KitApplyForm.tsx`). Linked from the landing page's role-card grid ("Learn more →") and its standalone "For artists" section.
+
 ### Fan product
 | .dc.html | Route | src/app path |
 |---|---|---|
