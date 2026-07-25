@@ -3,6 +3,16 @@
     "supabase": {
       "type": "http",
       "url": "https://mcp.supabase.com/mcp?project_ref=bjkabtzvgfshsrmjhrkx"
+    },
+    "acrcloud-music-recognition": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@vinkius-labs/mcp-acrcloud",
+        "--host=${ACRCLOUD_HOST}",
+        "--access-key=${ACRCLOUD_ACCESS_KEY}",
+        "--access-secret=${ACRCLOUD_ACCESS_SECRET}"
+      ]
     }
   }
 }
