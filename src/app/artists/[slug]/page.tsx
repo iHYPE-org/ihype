@@ -251,7 +251,7 @@ export default async function ArtistPage({
         .artist-hero { padding: 40px 32px 32px; border-bottom: 1px solid var(--profile-border, var(--line)); background: var(--profile-hero, transparent); }
         .artist-hero-row { display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; }
         .artist-avatar { width: 96px; height: 96px; border-radius: 50%; background: var(--profile-hero, linear-gradient(135deg,#ff5029,#b983ff)); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; overflow: hidden; }
-        .artist-name { font-family: var(--font-display); font-size: 32px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 6px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .artist-name { font-family: var(--profile-font-display, var(--font-display)); font-size: 32px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 6px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .artist-sub { font-size: 14px; color: var(--ink-a65); margin-bottom: 14px; }
         .artist-hero-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
         .artist-badge { display: inline-block; padding: 5px 12px; border-radius: 4px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; }
@@ -259,7 +259,7 @@ export default async function ArtistPage({
         .artist-hero-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; background: var(--line); color: var(--ink); border: 1px solid var(--hair-100); }
         .artist-hero-btn:hover { background: var(--hair-100); }
         .artist-stats { display: flex; gap: 32px; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--line); flex-wrap: wrap; }
-        .artist-stat-val { font-size: 22px; font-weight: 700; color: var(--profile-accent, var(--accent)); font-family: var(--font-display); }
+        .artist-stat-val { font-size: 22px; font-weight: 700; color: var(--profile-accent, var(--accent)); font-family: var(--profile-font-display, var(--font-display)); }
         .artist-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a55); margin-top: 2px; }
         .artist-content { padding: 0 32px; }
         .artist-tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--line); margin: 28px 0; }
@@ -272,7 +272,7 @@ export default async function ArtistPage({
         .artist-empty { text-align: center; padding: 48px 24px; color: var(--ink-a50); }
         .artist-show-card { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg2); margin-bottom: 10px; text-decoration: none; color: inherit; }
         .artist-show-card:hover { background: var(--bg3); }
-        .artist-show-title { font-family: var(--font-display); font-size: 15px; font-weight: 800; margin-bottom: 3px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .artist-show-title { font-family: var(--profile-font-display, var(--font-display)); font-size: 15px; font-weight: 800; margin-bottom: 3px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .artist-show-meta { font-size: 12px; color: var(--ink-a55); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .artist-show-price { font-size: 18px; font-weight: 700; color: var(--accent); text-align: right; flex-shrink: 0; }
 

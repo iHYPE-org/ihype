@@ -5,6 +5,7 @@ import {
   profileDesignPresets,
   profileAccentTones,
   profileBackdropTones,
+  profileFontPresets,
   getProfileDesignPreset,
   getProfileAccentTone,
   getProfileBackdropTone,
@@ -52,6 +53,7 @@ type EditorProfile = {
   themePreset: string | null;
   themeAccentTone: string | null;
   themeBackdropTone: string | null;
+  themeFontPreset: string | null;
   fanShareEnabled: boolean | null;
   pinnedStats: string[];
 };
@@ -147,6 +149,13 @@ export function PageEditor({ profileId }: { profileId: string }) {
   const [aiApplied, setAiApplied] = useState(false);
   const [importUrl, setImportUrl] = useState('');
   const [importBusy, setImportBusy] = useState(false);
+  // One-shot "Generate my page" intake — a thin front door onto the same
+  // runAiRefine()/refine endpoint below, for an owner with an empty page who
+  // hasn't written anything yet to reorganize.
+  const [genBio, setGenBio] = useState('');
+  const [genGenre, setGenGenre] = useState<string | null>(null);
+  const [genBusy, setGenBusy] = useState(false);
+  const [genStep, setGenStep] = useState(0);
   // Press kit sub-form: friendly text fields serialized into the single
   // pressKitContent JSON column on every change.
   const [kitTagline, setKitTagline] = useState('');
@@ -413,6 +422,62 @@ export function PageEditor({ profileId }: { profileId: string }) {
       setAiError('Network error — try again.');
     } finally {
       setImportBusy(false);
+    }
+  }
+
+  const genStepLabels = ['Reading your bio…', 'Drafting page copy…', 'Laying out your sections…'];
+
+  async function generatePage() {
+    const bio = genBio.trim();
+    if (!bio || genBusy) return;
+    setGenBusy(true);
+    setGenStep(0);
+    setAiError(null);
+    setAiProposed(null);
+    setAiApplied(false);
+    const stepTimers = genStepLabels.map((_, i) => setTimeout(() => setGenStep(i), i * 700));
+    try {
+      // The refine engine below reads the profile's saved fields, not local
+      // state, so the pasted bio has to land in the DB before we ask it to
+      // draft the rest of the page from it.
+      if (!data?.bio) {
+        setData((d) => (d ? { ...d, bio } : d));
+        const saveRes = await fetch('/api/profile-editor', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ profileId, ...data, bio }),
+        });
+        if (!saveRes.ok) {
+          const d = await saveRes.json().catch(() => ({}));
+          setAiError(d.error ?? 'Failed to save your bio.');
+          return;
+        }
+      }
+      const instruction = genGenre
+        ? `Draft my whole page from my bio: write a punchy headline, tighten the bio to 1-3 sentences, and write an About section expanding on it. My genre is ${genGenre} — pick a theme preset and accent tone that fits that mood.`
+        : 'Draft my whole page from my bio: write a punchy headline, tighten the bio to 1-3 sentences, and write an About section expanding on it.';
+      const res = await fetch('/api/page-builder/refine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileId, instruction }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setAiError(d.error ?? 'Something went wrong — try again.');
+      } else if (!d.changes || Object.keys(d.changes).length === 0) {
+        setAiError(
+          d.reason === 'engine'
+            ? 'The AI engine is temporarily unavailable — please try again in a moment.'
+            : 'Saved your bio, but the AI couldn’t draft more from it yet — try Customize with AI below.'
+        );
+      } else {
+        setAiProposed(d.changes as Record<string, string>);
+      }
+    } catch {
+      setAiError('Network error — try again.');
+    } finally {
+      stepTimers.forEach(clearTimeout);
+      setGenBusy(false);
     }
   }
 
@@ -776,9 +841,45 @@ export function PageEditor({ profileId }: { profileId: string }) {
             </div>
           </Field>
 
+          <Field hint="Swaps the headline/body typefaces on your public page — leave unset to keep the site's default fonts" label="Font pairing">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              <button
+                onClick={() => set('themeFontPreset', '')}
+                style={{
+                  padding: '8px 14px', borderRadius: 9999, cursor: 'pointer', fontSize: 12, color: 'var(--ink)',
+                  border: `1px solid ${!data.themeFontPreset ? (accentTone.accent ?? preset.accent) : 'var(--hair-80)'}`,
+                  background: 'var(--hair-30)',
+                }}
+                type="button"
+              >
+                Site default
+              </button>
+              {profileFontPresets.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => set('themeFontPreset', f.id)}
+                  style={{
+                    padding: '8px 14px', borderRadius: 9999, cursor: 'pointer', fontSize: 12, color: 'var(--ink)',
+                    border: `1px solid ${data.themeFontPreset === f.id ? (accentTone.accent ?? preset.accent) : 'var(--hair-80)'}`,
+                    background: 'var(--hair-30)', fontFamily: f.displayFamily,
+                  }}
+                  title={f.description}
+                  type="button"
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </Field>
+
           <div style={{ marginTop: 8, padding: 20, borderRadius: 16, background: backdropTone.hero ?? preset.hero, border: `1px solid ${backdropTone.border ?? preset.border}` }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: preset.muted, marginBottom: 6 }}>Preview</div>
-            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, color: accentTone.accent ?? preset.accent }}>{data.name || 'Your page'}</div>
+            <div style={{
+              fontFamily: data.themeFontPreset
+                ? (profileFontPresets.find((f) => f.id === data.themeFontPreset)?.displayFamily ?? 'var(--font-display)')
+                : 'var(--font-display)',
+              fontWeight: 800, fontSize: 18, color: accentTone.accent ?? preset.accent,
+            }}>{data.name || 'Your page'}</div>
           </div>
         </div>
       )}
@@ -795,6 +896,56 @@ export function PageEditor({ profileId }: { profileId: string }) {
             Tell the AI what you want and it reorganizes your page — bio, links, sections, theme. It only works
             with content you&rsquo;ve already added, and nothing changes until you apply and save.
           </p>
+
+          {!data.bio && !data.aboutContent && (
+            <div style={{
+              border: '1px solid rgba(255,80,41,.25)', borderRadius: 14,
+              background: 'rgba(255,80,41,.05)', padding: '18px 18px 16px', marginBottom: 20,
+            }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 15, marginBottom: 6 }}>
+                Give us what you&rsquo;ve got. We&rsquo;ll build the rest.
+              </div>
+              <p style={{ fontSize: 12.5, color: 'var(--ink-a60)', margin: '0 0 14px', lineHeight: 1.5 }}>
+                Paste a bio, an Instagram caption, a press quote — anything. One generation drafts a headline,
+                tightens the bio, writes an About section, and picks a fitting theme.
+              </p>
+              <TextAreaField
+                maxLength={2000}
+                onChange={setGenBio}
+                placeholder="e.g. Dream-pop from the Maine coast. New EP Glasslight out now — @nylamusic"
+                rows={4}
+                value={genBio}
+              />
+              {!isFan && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '12px 0 0' }}>
+                  {MUSIC_GENRES.slice(0, 8).map((g) => (
+                    <button
+                      key={g}
+                      onClick={() => setGenGenre((cur) => (cur === g ? null : g))}
+                      style={{
+                        fontSize: 12, padding: '6px 12px', borderRadius: 9999, cursor: 'pointer',
+                        border: `1px solid ${genGenre === g ? 'var(--accent)' : 'var(--hair-100)'}`,
+                        background: genGenre === g ? 'rgba(255,80,41,.15)' : 'var(--hair-30)',
+                        color: genGenre === g ? 'var(--accent)' : 'var(--ink-a65)', fontFamily: 'var(--font-body)',
+                      }}
+                      type="button"
+                    >
+                      {g}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <button
+                className="settings-btn settings-btn-accent"
+                disabled={genBusy || !genBio.trim()}
+                onClick={generatePage}
+                style={{ width: '100%', marginTop: 14, padding: '13px', fontSize: 14 }}
+                type="button"
+              >
+                {genBusy ? genStepLabels[genStep] : '✦ Generate my page'}
+              </button>
+            </div>
+          )}
 
           {!isFan && (
             <div style={{

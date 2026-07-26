@@ -40,6 +40,7 @@ export const editorSchema = z.object({
   themePreset: text(80),
   themeAccentTone: text(80),
   themeBackdropTone: text(80),
+  themeFontPreset: text(80),
   fanShareEnabled: z.boolean().optional(),
   discoverable: z.boolean().optional(),
   capacity: z.number().int().min(0).max(200000).optional(),
