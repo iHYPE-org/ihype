@@ -42,12 +42,20 @@ export default function CharterPage() {
 
       <Reveal>
         <h2 className="charter-h2"><span className="charter-dot" style={{ background: 'var(--role-promoter)' }} />How iHYPE makes money</h2>
-        <p className="charter-p">iHYPE is funded entirely by advertising, the same way terrestrial radio has always worked — and those ads are restricted to music-related sources only, forever. None of it touches the ticket split. Tickets are processed directly through Stripe; the card-processing fee (2.9% + $0.30; AMEX 3.5% + $0.30) is the only charge above face value, passed through at cost.</p>
+        <p className="charter-p charter-p-tight">iHYPE is funded entirely by advertising, the same way terrestrial radio has always worked — and those ads are restricted to music-related sources only, forever. None of it touches the ticket split. Tickets are processed directly through Stripe; the card-processing fee (2.9% + $0.30; AMEX 3.5% + $0.30) is the only charge above face value, passed through at cost.</p>
+        <Link href="/advertise" className="charter-inline-link" style={{ color: '#ffb84a', borderBottomColor: 'rgba(255,184,74,.35)' }}>See how advertising works →</Link>
       </Reveal>
 
       <Reveal>
         <h2 className="charter-h2"><span className="charter-dot" style={{ background: 'var(--role-fan)' }} />Promoters and the 10%</h2>
-        <p className="charter-p">The 10% promoter pool is distributed to everyone who shared a referral link that contributed to ticket sales for an event. Fans, DJs, artists — anyone can be a promoter. The split is calculated per-event at settlement.</p>
+        <p className="charter-p charter-p-tight">The 10% promoter pool is distributed to everyone who shared a referral link that contributed to ticket sales for an event. There&apos;s no separate promoter account — any Fan, Artist, DJ, or Venue earns from the links they already share.</p>
+        <Link href="/me/promote" className="charter-inline-link" style={{ color: 'var(--role-fan)', borderBottomColor: 'rgba(185,131,255,.35)' }}>See a promoting dashboard →</Link>
+      </Reveal>
+
+      <Reveal>
+        <h2 className="charter-h2"><span className="charter-dot charter-dot-pulse" style={{ background: 'var(--role-fan)' }} />What actually makes this real</h2>
+        <p className="charter-p charter-p-tight">A charter is just a promise on paper until a fan buys a ticket. Every dollar that hits this split exists because someone hyped an artist, showed up, and paid face value instead of going through a scalper. Artists write the songs, venues open the doors — but fans are the ones who make the 70/20/10 mean anything at all.</p>
+        <Link href="/transparency" className="charter-inline-link" style={{ color: 'var(--role-venue)', borderBottomColor: 'rgba(34,229,212,.35)' }}>See it in the live numbers →</Link>
       </Reveal>
 
       <hr className="charter-hr" />
@@ -79,6 +87,8 @@ export default function CharterPage() {
         .charter-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
         .charter-dot-pulse { animation: charterPulse 2.4s infinite; }
         .charter-p { font-size: .98rem; color: var(--ink-2); line-height: 1.8; margin-bottom: 2.5rem; }
+        .charter-p-tight { margin-bottom: .75rem; }
+        .charter-inline-link { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: .72rem; letter-spacing: .04em; border-bottom: 1px solid; display: inline-block; margin-bottom: 2.5rem; }
         .charter-callout { background: rgba(255,80,41,.06); border: 1px solid rgba(255,80,41,.15); border-radius: 16px; padding: 24px 28px; margin: 0 0 3.25rem; }
         .charter-callout p { margin: 0; color: var(--ink); font-family: var(--f-s, 'Instrument Serif', serif); font-style: italic; font-size: 1.25rem; line-height: 1.55; }
         .charter-hr { border: none; border-top: 1px solid var(--line); margin: 2.5rem 0; }

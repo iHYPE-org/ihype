@@ -129,6 +129,7 @@ export default async function ArtistPage({
               {profile.verificationStatus === 'VERIFIED' && <span className="artist-badge" style={{ background: 'rgba(34,229,212,.15)', color: 'var(--role-venue, #22e5d4)' }}>✓ Verified</span>}
             </div>
             <div className="artist-hero-actions">
+              <HypeButton entityLabel="artist" initialCount={profile.hypeCount} initiallyHyped={!!userHype} targetId={profile.id} targetType="profile" />
               <FollowButton profileId={profile.id} variant="hero" />
               <ShareButton className="artist-hero-btn" label="Share" path={`/artists/${profile.slug}`} title={profile.name} />
               {!isOwner && session?.user?.id && (

@@ -4,12 +4,13 @@ import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-type TabId = 'privacy' | 'terms' | 'charter';
+type TabId = 'privacy' | 'terms' | 'charter' | 'dmca';
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'privacy', label: 'Privacy Policy' },
   { id: 'terms', label: 'Terms of Service' },
   { id: 'charter', label: 'The Charter' },
+  { id: 'dmca', label: 'DMCA' },
 ];
 
 function LegalTabs() {
@@ -21,7 +22,10 @@ function LegalTabs() {
     <div className="legal-wrap">
       <div className="legal-label">Legal</div>
       <h1 className="legal-h1">Policies &amp; terms.</h1>
-      <p className="legal-updated">Last updated: June 20, 2026 · iHYPE · Portland, ME</p>
+      <div className="legal-updated-row">
+        <p className="legal-updated">Last updated: June 20, 2026 · iHYPE · Portland, ME</p>
+        <button className="legal-print-btn" onClick={() => window.print()} type="button">Print / Save as PDF</button>
+      </div>
 
       <div className="legal-seg">
         {TABS.map((t) => (
@@ -105,6 +109,17 @@ function LegalTabs() {
         <p>The 70/20/10 split is a condition of incorporation. Changing it would require dissolving the company and re-incorporating under a different structure. No board vote, no shareholder approval, no acquisition clause overrides it.</p>
       </div>
 
+      <div className={`legal-doc${tab === 'dmca' ? ' active' : ''}`}>
+        <h2>DMCA &amp; copyright takedown</h2>
+        <p>iHYPE is built for independent music, so rights handling is clear and serious. Do not upload songs, artwork, samples, or logos unless you own them or have permission to use them on iHYPE. Uploads are screened by AI on submission, and rights holders can report unauthorized media at any time.</p>
+        <h2>How to file a takedown</h2>
+        <p>To report infringing content, email <a href="mailto:admin@ihype.org">admin@ihype.org</a> with your contact details, the infringing URL (e.g. <em>ihype.org/tracks/…</em>), a description of your original work, and a good-faith statement that you are the rights holder or authorized to act for them. We acknowledge every valid request within 48 hours and remove confirmed infringing content within 5 business days.</p>
+        <h2>Counter-notice &amp; repeat infringers</h2>
+        <p>If your content was removed and you believe it was in error, you may submit a counter-notice to the same address. Accounts that repeatedly upload unauthorized content lose upload privileges and may be terminated. Knowingly false claims may carry legal liability.</p>
+        <h2>Contact</h2>
+        <p>DMCA agent: <a href="mailto:admin@ihype.org">admin@ihype.org</a> · iHYPE Inc., Portland, ME</p>
+      </div>
+
       <style>{`
         .legal-wrap { max-width: 760px; margin: 0 auto; padding: 3rem 2rem 6rem; }
         .legal-label { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: .65rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 10px; }
@@ -112,7 +127,10 @@ function LegalTabs() {
         @media (max-width: 480px) {
           .legal-wrap { padding: 2rem 1.1rem 4rem; }
         }
-        .legal-updated { font-size: .9rem; color: var(--ink-2); line-height: 1.75; margin-bottom: .85rem; }
+        .legal-updated { font-size: .9rem; color: var(--ink-2); line-height: 1.75; margin-bottom: 0; }
+        .legal-updated-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: .85rem; }
+        .legal-print-btn { flex-shrink: 0; font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; background: transparent; border: 1px solid var(--line); color: var(--ink-2); padding: 8px 14px; border-radius: 999px; cursor: pointer; }
+        .legal-print-btn:hover { color: var(--ink); border-color: var(--ink-2); }
         .legal-seg { display: flex; gap: 0; border-radius: 12px; border: 1px solid var(--line); max-width: 100%; overflow-x: auto; margin-bottom: 2.5rem; width: fit-content; }
         .legal-seg-btn { padding: 9px 20px; border: none; background: transparent; color: var(--ink-2); font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; font-size: .82rem; cursor: pointer; transition: all .15s; white-space: nowrap; flex-shrink: 0; }
         @media (max-width: 480px) {
@@ -128,6 +146,7 @@ function LegalTabs() {
         .legal-split-display { font-family: var(--f-d, 'Syne', sans-serif) !important; font-weight: 800; font-size: 1.5rem; letter-spacing: -.03em; color: var(--ink) !important; line-height: 1.3; margin: 1rem 0 !important; }
         @media print {
           .legal-seg { display: none !important; }
+          .legal-print-btn { display: none !important; }
           html, body { background: #fff !important; color: #111 !important; }
           .legal-wrap { max-width: 100% !important; padding: 1.5rem !important; }
           .legal-h1, .legal-doc h2 { color: #111 !important; }

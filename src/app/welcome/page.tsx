@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { WelcomeStepsChecklist } from '@/components/WelcomeStepsChecklist';
 
 export const metadata: Metadata = {
   title: 'Welcome · iHYPE',
@@ -81,18 +82,7 @@ export default async function WelcomePage() {
               <div className="welcome-role" style={{ color: c.tint }}>{c.roleLabel}{c.pendingNote}</div>
             </div>
           </div>
-          <div className="welcome-steps-label">Next steps</div>
-          <div className="welcome-steps">
-            {c.steps.map((s, i) => (
-              <div className="welcome-step" key={s.title}>
-                <span className="welcome-step-num">{i + 1}</span>
-                <div className="welcome-step-text">
-                  <div className="welcome-step-title">{s.title}</div>
-                  <div className="welcome-step-desc">{s.desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <WelcomeStepsChecklist steps={c.steps} tint={c.tint} />
         </div>
 
         <Link className="welcome-cta" href={c.ctaHref}>{c.cta}</Link>
@@ -110,11 +100,16 @@ export default async function WelcomePage() {
         .welcome-avatar { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; }
         .welcome-name { font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; font-size: 16px; color: var(--ink); }
         .welcome-role { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; margin-top: 2px; }
-        .welcome-steps-label { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-a55); margin-bottom: 14px; }
+        .welcome-steps-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+        .welcome-steps-label { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-a55); }
+        .welcome-ring { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .welcome-ring span { width: 24px; height: 24px; border-radius: 50%; background: var(--bg); display: flex; align-items: center; justify-content: center; font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 8.5px; color: var(--ink-a70); }
         .welcome-steps { display: flex; flex-direction: column; }
-        .welcome-step { display: flex; gap: 14px; align-items: flex-start; padding: 11px 0; }
+        .welcome-step { display: flex; gap: 14px; align-items: flex-start; padding: 11px 0; width: 100%; background: none; border: none; cursor: pointer; text-align: left; font: inherit; }
         .welcome-step-num { flex-shrink: 0; width: 24px; height: 24px; border-radius: 7px; background: rgba(255,80,41,.12); color: var(--accent); font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+        .welcome-step.done .welcome-step-num { background: rgba(34,229,212,.15); color: var(--role-venue, #22e5d4); }
         .welcome-step-title { font-weight: 700; font-size: 14px; color: var(--ink); }
+        .welcome-step.done .welcome-step-title { color: var(--ink-a70); text-decoration: line-through; }
         .welcome-step-desc { font-size: 13px; color: var(--ink-a70); line-height: 1.55; margin-top: 2px; }
         .welcome-cta { display: inline-block; margin-top: 28px; font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; font-size: 15px; background: var(--accent); color: #fff; padding: 14px 34px; border-radius: 999px; box-shadow: 0 6px 24px rgba(255,80,41,.35); text-decoration: none; transition: opacity 150ms; }
         .welcome-cta:hover { opacity: .9; }
