@@ -291,7 +291,7 @@ export function RegisterScreen({
       {step === 'gate' ? (
         <div className="authcard-gate">
           <div className="authcard-alpha-banner">
-            <strong>iHYPE is currently in private alpha.</strong> To keep the beta small and well-tested, new
+            <strong>iHYPE is currently in private alpha.</strong> To keep the alpha small and well-tested, new
             accounts need a HYPE code from an existing member. Enter one below to continue, or request access and
             we&apos;ll reach out for the official launch.
           </div>

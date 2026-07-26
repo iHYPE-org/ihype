@@ -451,7 +451,7 @@ export default function SettingsPage() {
                   label="Your invite link"
                 />
                 <p className="settings-invite-note">
-                  Anyone who joins through your link skips the beta invite code — no separate code needed.
+                  Anyone who joins through your link skips the alpha invite code — no separate code needed.
                 </p>
               </div>
             </div>
