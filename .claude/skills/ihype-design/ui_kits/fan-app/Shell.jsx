@@ -111,7 +111,7 @@ function Onboarding({ onDone }) {
           <button onClick={finish} disabled={genres.length < 3} style={{ marginTop: 16, width: '100%', padding: '13px', borderRadius: 999, background: genres.length >= 3 ? 'var(--accent)' : 'var(--bg-3)', color: genres.length >= 3 ? '#fff' : 'var(--ink-3)', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.95rem', border: 'none', cursor: genres.length >= 3 ? 'pointer' : 'default' }}>
             {genres.length < 3 ? `Pick ${3 - genres.length} more` : "Let's go →"}
           </button>
-          <p style={{ textAlign:'center', fontFamily:'var(--f-m)', fontSize:'.62rem', color:'var(--ink-3)', lineHeight:1.6, marginTop:10 }}>By continuing you agree to our <a href="https://ihype.app/terms" target="_blank" style={{color:'var(--ink-2)'}}>Terms</a> &amp; <a href="https://ihype.app/privacy" target="_blank" style={{color:'var(--ink-2)'}}>Privacy Policy</a>.</p>
+          <p style={{ textAlign:'center', fontFamily:'var(--f-m)', fontSize:'.62rem', color:'var(--ink-3)', lineHeight:1.6, marginTop:10 }}>By continuing you agree to our <a href="https://ihype.org/terms" target="_blank" style={{color:'var(--ink-2)'}}>Terms</a> &amp; <a href="https://ihype.org/privacy" target="_blank" style={{color:'var(--ink-2)'}}>Privacy Policy</a>.</p>
         </div>
       )}
     </div>

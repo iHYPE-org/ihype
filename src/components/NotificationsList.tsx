@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { timeAgo } from '@/lib/utils';
 
 type Notification = {
   id: string;
@@ -46,18 +47,6 @@ function colorForType(type: string) {
   if (t.includes('RADIO') || t.includes('LIVE')) return '#b983ff';
   if (t.includes('SHOW') || t.includes('RSVP') || t.includes('TICKET') || t.includes('POST-SHOW')) return '#22e5d4';
   return 'var(--ink-a65)';
-}
-
-function timeAgo(iso: string) {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diffMs / 60000);
-  if (mins < 1) return 'Just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  return `${Math.floor(days / 7)}w ago`;
 }
 
 export function NotificationsList({ initialNotifications }: { initialNotifications: Notification[] }) {
