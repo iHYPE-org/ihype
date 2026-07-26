@@ -1,0 +1,466 @@
+<!-- @dsCard group="Website" viewport="1280x900" name="Advertise" subtitle="Self-serve campaign builder · AI vetting demo · pricing calculator" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>iHYPE · Advertise</title>
+<link rel="icon" type="image/svg+xml" href="../../assets/logo/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0805;--bg2:#100d09;--bg3:#1a1612;--ink:#f0ebe5;--ink2:#9e9080;--ink3:#5a5048;--line:rgba(255,255,255,.06);--line2:rgba(255,255,255,.14);--ac:#ff5029;--fan:#b983ff;--venue:#22e5d4;--dj:#ff3e9a;--blue:#7fb3ff;--warn:#ffb84a;--good:#22e5d4;--bad:#ff4545;--paper:#f0ead6;--paper-ink:#1c1510;--paper-ink2:#5a4a3a;}
+*,*::before,*::after{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'DM Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}a{color:inherit;text-decoration:none}
+.wrap{max-width:1100px;margin:0 auto;padding:0 40px}
+.nav{position:fixed;top:0;width:100%;z-index:100;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.nav-in{display:flex;align-items:center;gap:28px;height:54px}
+.nav-links{display:flex;gap:22px;flex:1}.nav-links a{font-size:13px;color:var(--ink3);transition:color 120ms}.nav-links a:hover,.nav-links a.on{color:var(--ink)}
+.nav-right{display:flex;align-items:center;gap:16px}
+.nav-listening{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--ink3);display:flex;align-items:center;gap:6px}
+.wm{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;letter-spacing:-.02em}.wm .i{font-style:italic}.wm .dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--ac);vertical-align:super;font-size:0;margin-left:1px}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink3);display:flex;align-items:center;gap:6px}.eyebrow.ac,.eyebrow.bare.ac{color:var(--ac)}.eyebrow.bare{display:inline-flex}
+.hdot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ac);flex-shrink:0}
+.pulse{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--good);flex-shrink:0;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.75)}}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;border:1px solid}
+.btn{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 20px;border-radius:12px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:14px;border:none;cursor:pointer;transition:opacity 120ms;white-space:nowrap}.btn:hover{opacity:.85}.btn.solid{background:var(--ac);color:var(--bg)}.btn.ghost{background:var(--bg3);color:var(--ink);border:1px solid var(--line2)}.btn.sm{height:34px;padding:0 14px;font-size:12px;border-radius:8px}
+.hero{padding:130px 0 80px}
+.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start}
+.hero-title{font-family:'Syne',sans-serif;font-weight:800;font-size:50px;letter-spacing:-.025em;line-height:1.06;margin:12px 0 20px}.hero-title em{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400}
+.hero-sub{font-size:15px;color:var(--ink2);line-height:1.75;max-width:480px}
+.hero-cta{display:flex;gap:12px;margin-top:28px;flex-wrap:wrap}
+.hero-meta{display:flex;gap:32px;margin-top:36px;padding-top:28px;border-top:1px solid var(--line)}.hero-meta .m .v{font-family:'Syne',sans-serif;font-weight:800;font-size:28px}.hero-meta .m .l{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-top:4px}
+.ticker{background:var(--bg2);border:1px solid var(--line2);border-radius:14px;overflow:hidden}
+.ticker-head{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--line)}.ticker-head .t{font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;flex:1}.ticker-head .r{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink3);letter-spacing:.08em}
+.ticker-list{min-height:220px;max-height:260px;overflow-y:auto}
+.ticker-foot{display:flex;justify-content:space-between;padding:9px 16px;border-top:1px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink3);letter-spacing:.06em}.ticker-foot b{color:var(--ink)}
+.sec{padding:88px 0;border-top:1px solid var(--line)}
+.sec-head{max-width:640px;margin:0 auto 56px;text-align:center}
+.sec-h{font-family:'Syne',sans-serif;font-weight:800;font-size:40px;letter-spacing:-.02em;margin:10px 0 16px;line-height:1.1}.sec-h em{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400}
+.sec-sub{font-size:15px;color:var(--ink2);line-height:1.7;margin:0}
+.builder{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.panel{background:var(--bg2);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.panel-head{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--line)}.panel-head .t{font-family:'Syne',sans-serif;font-weight:700;font-size:15px}.panel-head .meta{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--ink3);text-transform:uppercase}
+.panel-body{padding:20px;display:flex;flex-direction:column;gap:22px}
+.field-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);margin-bottom:10px}.field-lbl .n{color:var(--ac);margin-right:3px}
+.tiers{display:flex;gap:8px}.tier-btn{flex:1;background:var(--bg3);border:1px solid var(--line2);border-radius:10px;padding:12px 6px;cursor:pointer;text-align:center;color:var(--ink);transition:border-color 120ms,background 120ms}.tier-btn.on{border-color:var(--ac);background:rgba(255,80,41,.08)}.tier-btn .tl{font-family:'Syne',sans-serif;font-weight:700;font-size:14px}.tier-btn .ts{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--ink3);letter-spacing:.1em;text-transform:uppercase;margin-top:4px}.tier-btn .tp{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ac);margin-top:5px}
+.stepper{display:flex;align-items:center;background:var(--bg3);border:1px solid var(--line2);border-radius:10px;overflow:hidden;width:fit-content}.stepper button{width:42px;height:42px;background:transparent;border:none;color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center}.stepper button:hover{background:var(--line)}.stepper .val{min-width:52px;text-align:center;font-family:'Syne',sans-serif;font-weight:800;font-size:20px}
+.spots-note{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink3);letter-spacing:.06em;margin-top:8px}
+.seg{display:flex;background:var(--bg3);border:1px solid var(--line2);border-radius:10px;overflow:hidden}.seg button{flex:1;padding:10px 0;background:transparent;border:none;color:var(--ink3);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;cursor:pointer;transition:background 120ms,color 120ms}.seg button.on{background:var(--ac);color:var(--bg)}
+.dotgrid{margin-bottom:14px}
+.reach-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}.rs .v{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;letter-spacing:-.01em}.rs .l{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-top:4px}
+.placements{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}.p{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink3);display:flex;align-items:center;gap:5px;letter-spacing:.08em;text-transform:uppercase}
+.receipt{background:var(--bg3);border:1px solid var(--line);border-radius:10px;padding:14px}.rcp-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink3);border-bottom:1px solid var(--line)}.rcp-row .k{letter-spacing:.06em}.rcp-row .v{color:var(--ink);font-weight:600}
+.rcp-total{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0 4px}.rcp-total .k{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}.rcp-total .v{font-family:'Syne',sans-serif;font-weight:800;font-size:24px;color:var(--ac)}.rcp-total .v small{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink3);font-weight:400;margin-left:6px}
+.rcp-note{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--ink3);letter-spacing:.06em;margin-top:8px;display:flex;align-items:center;gap:6px}
+.guard{display:grid;grid-template-columns:1fr 1fr;gap:48px}
+.checks{display:flex;flex-direction:column;gap:32px}.check{display:flex;gap:20px}.check .num{font-family:'Syne',sans-serif;font-weight:800;font-size:32px;color:var(--line2);flex-shrink:0;min-width:36px}.check .ttl{font-family:'DM Sans',sans-serif;font-weight:600;font-size:16px;margin-bottom:8px}.check .dsc{font-size:14px;color:var(--ink2);line-height:1.7;margin:0}
+.scanner{background:var(--bg2);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.scan-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}.scan-head .t{font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;flex:1}.scan-head .meta{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--ink3);text-transform:uppercase}
+.scan-body{display:grid;grid-template-columns:1fr 1fr;min-height:300px}
+.scan-list{border-right:1px solid var(--line);overflow-y:auto;max-height:340px}
+.sli{padding:10px 14px;border-bottom:1px solid var(--line);cursor:pointer;transition:background 120ms}.sli:hover,.sli.on{background:var(--bg3)}.sli .sc{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sli .st{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--ink3);margin-top:3px;letter-spacing:.08em;text-transform:uppercase}
+.scan-stage{padding:16px;display:flex;flex-direction:column;gap:10px}
+.ad-preview{background:var(--bg3);border:1px solid var(--line2);border-radius:10px;padding:14px;position:relative;overflow:hidden;min-height:90px}
+.scanline{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--ac),transparent);top:0;animation:scanline 1.8s linear infinite}
+@keyframes scanline{0%{top:0;opacity:0}10%{opacity:1}90%{opacity:1}100%{top:100%;opacity:0}}
+.ap-tag{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.14em;color:var(--ink3);text-transform:uppercase;margin-bottom:6px}.ap-copy{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;letter-spacing:-.01em;margin-bottom:4px}.ap-body{font-size:12px;color:var(--ink2);line-height:1.5}
+.verdicts{display:flex;flex-direction:column;gap:6px}.verdict-item{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase}.verdict-final{padding:10px 14px;border-radius:10px;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;text-align:center}
+.paths{display:grid;grid-template-columns:1fr 1fr;gap:24px}.path{background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:28px}
+.ribbon{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;display:flex;align-items:center;gap:6px;margin-bottom:16px}
+.ph{font-family:'Syne',sans-serif;font-weight:800;font-size:24px;letter-spacing:-.015em;margin:0 0 12px;line-height:1.2}.pintro{font-size:13px;color:var(--ink2);line-height:1.7;margin:0 0 16px}
+.role-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}.role-tag{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;padding:4px 10px;border-radius:99px;border:1px solid var(--line2);display:flex;align-items:center;gap:5px}
+.path-list{display:flex;flex-direction:column;gap:12px;margin-bottom:20px}.pli{display:flex;gap:10px;font-size:13px;color:var(--ink2);line-height:1.6}.pli .b{color:var(--ink);font-weight:600}
+.refnote{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink3);background:rgba(127,179,255,.06);border:1px solid rgba(127,179,255,.15);border-radius:8px;padding:10px 12px;display:flex;gap:8px;margin-bottom:20px;letter-spacing:.04em}
+.reject-bar{background:rgba(255,69,69,.06);border:1px solid rgba(255,69,69,.2);border-radius:8px;padding:10px 12px;display:flex;gap:10px;margin-bottom:20px;align-items:flex-start}.reject-bar .rt{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--bad)}.reject-bar .rd{font-size:11px;color:var(--ink2);margin-top:3px;line-height:1.5}
+.paper{background:var(--paper)}.paper .sec-h{color:var(--paper-ink)}.paper .eyebrow{color:var(--paper-ink2)}
+.trans-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:56px;align-items:start}.trans-claim{font-size:17px;color:var(--paper-ink2);line-height:1.75;margin:0}.trans-claim b{color:var(--paper-ink)}
+.split{display:flex;flex-direction:column;gap:14px}.split-row{display:flex;align-items:center;gap:14px}.lb{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--paper-ink2);width:160px;flex-shrink:0}.bar{flex:1;height:6px;background:rgba(0,0,0,.12);border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;border-radius:99px}.pct{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:var(--paper-ink);width:44px;text-align:right}
+.foot{background:var(--bg2);border-top:1px solid var(--line);padding:48px 0 24px}.foot-in{display:flex;gap:56px;padding-bottom:32px;border-bottom:1px solid var(--line)}.foot-in>div:first-child{flex:1}.foot-claim{font-size:13px;color:var(--ink3);margin-top:8px;max-width:280px;line-height:1.6}
+.foot-links{display:flex;gap:48px}.foot-col{display:flex;flex-direction:column;gap:8px}.foot-col .ch{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);margin-bottom:4px}.foot-col a{font-size:13px;color:var(--ink3)}.foot-col a:hover{color:var(--ink)}
+.foot-bar{display:flex;justify-content:space-between;align-items:center;padding-top:20px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink3);letter-spacing:.06em}
+@media(max-width:900px){.hero-grid{grid-template-columns:1fr}.wrap{padding:0 20px}.trans-grid{grid-template-columns:1fr}.audience-grid{grid-template-columns:1fr 1fr}.path-row{flex-direction:column}.foot-in{flex-direction:column;gap:28px}.foot-links{flex-direction:column;gap:24px}}
+@media(max-width:600px){.audience-grid{grid-template-columns:1fr}.hero-title{font-size:34px}.sec-h{font-size:28px}.hero-meta{flex-wrap:wrap;gap:20px}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<a href="../../index.html" style="position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:99px;background:#100d09;color:#9e9080;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;border:1px solid rgba(255,255,255,.12);text-decoration:none">← DS</a>
+<nav class="nav">
+  <div class="wrap nav-in">
+    <a class="wm" href="#top">iH<span class="i">y<span class="dot"></span></span>pe</a>
+    <div class="nav-links">
+      <a href="#">Discover</a>
+      <a href="#">Charts</a>
+      <a href="#">Seeds</a>
+      <a href="#">For Artists</a>
+      <a href="#top" class="on">Advertise</a>
+    </div>
+    <div class="nav-right">
+      <span class="nav-listening"><span class="hdot" style="width:6px;height:6px"></span><span id="nav-live">3,418 listening right now</span></span>
+      <a class="btn ghost sm" href="#build">Buy coverage</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow ac bare"><span class="hdot"></span>&nbsp;Advertise on iHYPE</span>
+      <h1 class="hero-title">Put your music<br>in front of the<br>people who <em>dig deepest.</em></h1>
+      <p class="hero-sub">Buy reach by the spot — <b>local to global</b>, by the day. Every ad is screened by AI before it runs: <b>music only, no copyrighted material, no name-drops.</b> One operator, one rulebook, zero junk in the feed.</p>
+      <div class="hero-cta">
+        <a class="btn solid" href="#build">Build a campaign →</a>
+        <a class="btn ghost" href="#guard">See how vetting works</a>
+        <a class="btn ghost" href="../android_app/index.html">Join free as a fan →</a>
+      </div>
+      <div class="hero-meta">
+        <div class="m"><div class="v" id="hm-spots">0</div><div class="l">Spots running today</div></div>
+        <div class="m"><div class="v" id="hm-clear">0%</div><div class="l">Auto-cleared in &lt;60s</div></div>
+        <div class="m"><div class="v">100%</div><div class="l">Music-related</div></div>
+      </div>
+    </div>
+    <aside class="ticker" aria-label="Live vetting queue">
+      <div class="ticker-head">
+        <span class="chip" style="border-color:rgba(34,229,212,.4);color:var(--good)"><span class="pulse"></span>Live</span>
+        <span class="t">Vetting queue</span>
+        <span class="r" id="tk-clock">—</span>
+      </div>
+      <div class="ticker-list" id="tk-list"></div>
+      <div class="ticker-foot">
+        <span>Reviewed by <b>HYPE&nbsp;Screen</b> · automated</span>
+        <span id="tk-count"><b>0</b> today</span>
+      </div>
+    </aside>
+  </div>
+</header>
+
+<section class="sec" id="build">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow ac">Step 01 · Build</span>
+      <h2 class="sec-h">Pick your <em>reach.</em> Pick your <em>volume.</em></h2>
+      <p class="sec-sub">Coverage scales from your block to the whole platform. Spots are impressions placed across discovery, charts, and seed feeds — priced per day, billed per spot.</p>
+    </div>
+    <div class="builder">
+      <div class="panel">
+        <div class="panel-head"><span class="t">Campaign</span><span class="meta">No contract · cancel anytime</span></div>
+        <div class="panel-body">
+          <div class="field">
+            <div class="field-lbl"><span class="n">A.</span> Coverage area</div>
+            <div class="tiers" id="tiers"></div>
+          </div>
+          <div class="field">
+            <div class="field-lbl"><span class="n">B.</span> Spots per day</div>
+            <div class="stepper">
+              <button id="sp-minus" aria-label="fewer spots"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+              <div class="val" id="sp-val">6</div>
+              <button id="sp-plus" aria-label="more spots"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+            </div>
+            <div class="spots-note" id="sp-note">≈ one placement every 4 hours across the feed</div>
+          </div>
+          <div class="field">
+            <div class="field-lbl"><span class="n">C.</span> Run length</div>
+            <div class="seg" id="dur">
+              <button data-d="7">7 days</button>
+              <button data-d="14" class="on">14 days</button>
+              <button data-d="30">30 days</button>
+              <button data-d="90">90 days</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel reach-panel">
+        <div class="panel-head"><span class="t" id="reach-title">Regional reach</span><span class="meta" id="reach-pop">— potential listeners</span></div>
+        <div class="panel-body">
+          <div class="dotgrid" id="dotgrid"></div>
+          <div class="reach-stats">
+            <div class="rs"><div class="v" id="rs-imp">—</div><div class="l">Daily impressions</div></div>
+            <div class="rs"><div class="v" id="rs-total">—</div><div class="l">Total over run</div></div>
+            <div class="rs"><div class="v" id="rs-cpm">—</div><div class="l">Effective CPM</div></div>
+          </div>
+          <div class="placements">
+            <span class="p"><span class="hdot" style="background:var(--fan)"></span>Discover feed</span>
+            <span class="p"><span class="hdot" style="background:var(--venue)"></span>Chart interstitials</span>
+            <span class="p"><span class="hdot" style="background:var(--warn)"></span>Seed swipe cards</span>
+          </div>
+          <div class="receipt">
+            <div class="rcp-row"><span class="k" id="rc-area">Regional</span><span class="v" id="rc-base">—</span></div>
+            <div class="rcp-row"><span class="k"><span id="rc-spots">6</span> spots/day × <span id="rc-days">14</span> days</span><span class="v" id="rc-vol">—</span></div>
+            <div class="rcp-row"><span class="k">Co-op handling · 0%</span><span class="v" style="color:var(--good)">$0.00</span></div>
+            <div class="rcp-total"><span class="k">Total</span><span class="v" id="rc-total">$—<small id="rc-perday">/ —/day</small></span></div>
+            <p class="rcp-note">Nothing charges until your creative clears the AI screen.<span class="hdot"></span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="guard">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow ac">Step 02 · The screen</span>
+      <h2 class="sec-h">Every ad clears <em>three gates</em> before a single listener sees it.</h2>
+      <p class="sec-sub">iHYPE runs on one operator. The bouncer is the machine — it reads every submission, checks who's buying, and rejects anything that isn't clean, music-related, and original.</p>
+    </div>
+    <div class="guard">
+      <div class="checks">
+        <div class="check"><span class="num">01</span><div><div class="ttl">Buyer vetting</div><p class="dsc">Accounts are matched against the music ecosystem — artists, venues, DJs, and verified music-adjacent businesses. Anything outside it is flagged before checkout.</p></div></div>
+        <div class="check"><span class="num">02</span><div><div class="ttl">Music-only relevance</div><p class="dsc">The creative itself is read for intent. If the ad isn't about live music, releases, gear, merch, or services that serve musicians, it doesn't run.</p></div></div>
+        <div class="check"><span class="num">03</span><div><div class="ttl">Copyright firewall</div><p class="dsc">Audio is fingerprinted and copy is scanned for protected song titles, lyrics, and artist name-drops you don't have rights to. Auto-rejected.</p></div></div>
+      </div>
+      <div class="scanner">
+        <div class="scan-head">
+          <span class="chip" style="border-color:var(--line2);color:var(--ink2)"><span class="pulse" style="background:var(--ac)"></span>HYPE Screen</span>
+          <span class="t">Submission review</span>
+          <span class="meta" id="scan-state">Idle</span>
+        </div>
+        <div class="scan-body">
+          <div class="scan-list" id="scan-list"></div>
+          <div class="scan-stage">
+            <div class="ad-preview" id="ad-preview">
+              <div class="scanline" id="scanline"></div>
+              <div class="ap-tag" id="ap-tag">SUBMITTED CREATIVE</div>
+              <div class="ap-copy" id="ap-copy">—</div>
+              <div class="ap-body" id="ap-body">—</div>
+            </div>
+            <div class="verdicts" id="verdicts"></div>
+            <div class="verdict-final" id="verdict-final" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="paths">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow ac">Step 03 · Who's buying</span>
+      <h2 class="sec-h">Two ways in. <em>Same screen</em> for both.</h2>
+      <p class="sec-sub">Whether you're on the platform already or coming from the outside, you buy the same coverage and pass the same gates.</p>
+    </div>
+    <div class="paths">
+      <div class="path">
+        <span class="ribbon" style="color:var(--ac)"><span class="hdot"></span>Members</span>
+        <h3 class="ph">Artists, venues<br>&amp; DJs</h3>
+        <p class="pintro">Already part of iHYPE? Buy coverage straight from your dashboard. Your role is pre-verified, so the buyer-vetting gate clears instantly — you go right to creative review.</p>
+        <div class="role-row">
+          <span class="role-tag" style="border-color:rgba(185,131,255,.4);color:var(--fan)"><span class="hdot" style="background:var(--fan)"></span>Artist</span>
+          <span class="role-tag" style="border-color:rgba(34,229,212,.4);color:var(--venue)"><span class="hdot" style="background:var(--venue)"></span>Venue</span>
+          <span class="role-tag" style="border-color:rgba(255,62,154,.4);color:var(--dj)"><span class="hdot" style="background:var(--dj)"></span>DJ</span>
+        </div>
+        <div class="path-list">
+          <div class="pli"><span class="hdot" style="margin-top:6px;flex-shrink:0"></span><span><span class="b">Instant eligibility.</span> Role verification carries over — no separate application.</span></div>
+          <div class="pli"><span class="hdot" style="margin-top:6px;flex-shrink:0"></span><span><span class="b">Promote your own catalog.</span> Your releases and shows are pre-cleared for copyright.</span></div>
+          <div class="pli"><span class="hdot" style="margin-top:6px;flex-shrink:0"></span><span><span class="b">Referral reach.</span> Fans with a referral link can co-fund coverage for artists they back.</span></div>
+        </div>
+        <div class="refnote"><span class="hdot" style="background:var(--blue);flex-shrink:0;margin-top:1px"></span>Referral-funded spots split billing across backers automatically.</div>
+        <div class="path-foot"><a class="btn solid" href="#build">Buy from dashboard →</a></div>
+      </div>
+      <div class="path">
+        <span class="ribbon" style="color:var(--blue)"><span class="hdot" style="background:var(--blue)"></span>3rd-Party Accounts</span>
+        <h3 class="ph">Music businesses<br>&amp; suppliers</h3>
+        <p class="pintro">Not an artist, but you serve them? Music stores, live-production companies, and merch providers open a 3rd-party account to control their own placements — fully self-serve.</p>
+        <div class="role-row">
+          <span class="role-tag" style="border-color:var(--line2);color:var(--ink2)">Music stores</span>
+          <span class="role-tag" style="border-color:var(--line2);color:var(--ink2)">Live production</span>
+          <span class="role-tag" style="border-color:var(--line2);color:var(--ink2)">Merch &amp; print</span>
+          <span class="role-tag" style="border-color:var(--line2);color:var(--ink2)">Instruments &amp; gear</span>
+        </div>
+        <div class="path-list">
+          <div class="pli"><span class="hdot" style="margin-top:6px;flex-shrink:0;background:var(--blue)"></span><span><span class="b">Self-serve console.</span> Manage budgets, creatives, and schedules from one account.</span></div>
+          <div class="pli"><span class="hdot" style="margin-top:6px;flex-shrink:0;background:var(--blue)"></span><span><span class="b">Business verification.</span> A one-time check confirms you're genuinely music-adjacent.</span></div>
+          <div class="pli"><span class="hdot" style="margin-top:6px;flex-shrink:0;background:var(--blue)"></span><span><span class="b">Same firewall applies.</span> No borrowed songs, no unlicensed artist names — ever.</span></div>
+        </div>
+        <div class="reject-bar">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="9" stroke="var(--bad)" stroke-width="1.6"/><path d="M9 9l6 6M15 9l-6 6" stroke="var(--bad)" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <div><div class="rt">Auto-rejected</div><div class="rd">Non-musical goods, dropshipping, financial products, and anything unrelated to music never reach a listener.</div></div>
+        </div>
+        <div class="path-foot"><a class="btn ghost" href="#build">Open a 3rd-party account →</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec paper" id="trust">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">The co-op promise</span>
+      <h2 class="sec-h" style="color:var(--paper-ink)">Ad money feeds the <em>artists</em>, not a feed.</h2>
+    </div>
+    <div class="trans-grid">
+      <p class="trans-claim">iHYPE is run by one director and a lot of automation — so almost every dollar of ad spend <b>goes back into the music</b>, not overhead.</p>
+      <div class="split">
+        <div class="split-row"><span class="lb">To artists &amp; payouts</span><span class="bar"><i style="width:72%;background:var(--ac)"></i></span><span class="pct" style="color:var(--ac)">72%</span></div>
+        <div class="split-row"><span class="lb">Platform &amp; hosting</span><span class="bar"><i style="width:18%;background:var(--paper-ink)"></i></span><span class="pct">18%</span></div>
+        <div class="split-row"><span class="lb">Moderation &amp; AI screen</span><span class="bar"><i style="width:10%;background:var(--paper-ink2)"></i></span><span class="pct">10%</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <div>
+      <a class="wm" href="#top">iH<span class="i">y<span class="dot"></span></span>pe</a>
+      <p class="foot-claim">A music co-op where the ads are about music — and a machine makes sure of it.</p>
+    </div>
+    <div class="foot-links">
+      <div class="foot-col"><div class="ch">Advertise</div><a href="#build">Buy coverage</a><a href="#guard">How vetting works</a><a href="#paths">3rd-party accounts</a><a href="#trust">Where money goes</a></div>
+      <div class="foot-col"><div class="ch">Platform</div><a href="#">Discover</a><a href="#">Charts</a><a href="#">Seeds</a><a href="#">For Artists</a></div>
+    </div>
+  </div>
+  <div class="wrap foot-bar">
+    <span>© 2026 iHYPE Music Co-op · Operated under one roof</span>
+    <span>Ad policy v3.1 · Copyright firewall enabled</span>
+  </div>
+</footer>
+
+<script>
+const TIERS=[
+  {id:'local',    label:'Local',    sub:'Your city',     rate:.15, pop:'50k',  imp:400},
+  {id:'regional', label:'Regional', sub:'State / metro', rate:.35, pop:'500k', imp:3000},
+  {id:'national', label:'National', sub:'US-wide',       rate:.80, pop:'5M',   imp:22000},
+  {id:'global',   label:'Global',   sub:'Worldwide',     rate:1.50,pop:'50M+', imp:120000},
+];
+const TICK=[
+  {tag:'Artist',      name:'The Midnight',   copy:'"Nocturnal EP" — out everywhere',     ok:true},
+  {tag:'Venue',       name:'Empty Bottle',   copy:'New show · Jun 27 · Chicago',         ok:true},
+  {tag:'Merch',       name:'Printful',       copy:'Custom merch for touring artists',    ok:true},
+  {tag:'Artist',      name:'Hovvdy',         copy:'"World of Doubt" — stream now',       ok:true},
+  {tag:'3rd-Party',   name:'CryptoWave',     copy:'Music-themed NFTs · 0.01 ETH each',  ok:false},
+  {tag:'DJ',          name:'Jam Productions',copy:'Summer Fest · 4 stages · 3 days',    ok:true},
+  {tag:'3rd-Party',   name:'SportsBet.io',   copy:"Bet on tonight's headliner — 3:1",   ok:false},
+  {tag:'Music Store', name:'Reverb.com',     copy:'Buy & sell vintage gear online',      ok:true},
+  {tag:'3rd-Party',   name:'VitaBoost',      copy:'Energy supplements for musicians',   ok:false},
+  {tag:'Venue',       name:'Thalia Hall',    copy:'Reserved seating now available',      ok:true},
+];
+const SCANS=[
+  {tag:'New submission',copy:'"Collision" live at Empty Bottle',  body:'Wristbands at the door · June 27 · Chicago',  g:['pass','pass','pass']},
+  {tag:'New submission',copy:'"Follow for exclusive tour content"',body:'Artist account · 18k followers',             g:['pass','fail','pass']},
+  {tag:'New submission',copy:'Gear sale — 40% off Fender Strats', body:'Weekend only · limited stock',                g:['pass','pass','pass']},
+  {tag:'New submission',copy:'"Love Story" acoustic cover series', body:'Uses copyrighted material',                   g:['pass','pass','fail']},
+  {tag:'New submission',copy:'Crypto fan tokens for your fav artist',body:'Buy $BAND tokens now',                     g:['fail','fail','pass']},
+];
+const GATE_L=['Buyer vetting','Music-only relevance','Copyright firewall'];
+const TC={Artist:'#ff5029',Venue:'#22e5d4',DJ:'#ff3e9a','3rd-Party':'#7fb3ff','Music Store':'#ffb84a',Merch:'#b983ff'};
+
+let tier=1,spots=6,dur=14,scanI=0,tkCount=312,tkI=0;
+
+window.addEventListener('DOMContentLoaded',()=>{
+  animCount(document.getElementById('hm-spots'),0,1247,1200,v=>v.toLocaleString());
+  animCount(document.getElementById('hm-clear'),0,94,1400,v=>v+'%');
+  initTiers(); initBuilder(); initTicker(); initScanner();
+});
+
+function animCount(el,from,to,ms,fmt){
+  const s=performance.now();
+  const t=now=>{const p=Math.min((now-s)/ms,1),e=1-Math.pow(1-p,3);el.textContent=fmt(Math.round(from+(to-from)*e));if(p<1)requestAnimationFrame(t);};
+  requestAnimationFrame(t);
+}
+function fmt(n){if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(0)+'k';return n;}
+
+function initTiers(){
+  document.getElementById('tiers').innerHTML=TIERS.map((t,i)=>
+    `<button class="tier-btn${i===tier?' on':''}" onclick="setTier(${i})"><div class="tl">${t.label}</div><div class="ts">${t.sub}</div><div class="tp">$${t.rate.toFixed(2)}/spot</div></button>`
+  ).join('');
+}
+window.setTier=function(i){tier=i;document.querySelectorAll('.tier-btn').forEach((b,j)=>b.classList.toggle('on',j===i));updateReceipt();};
+
+function initBuilder(){
+  document.getElementById('sp-minus').onclick=()=>{if(spots>1){spots--;upSpots();}};
+  document.getElementById('sp-plus').onclick=()=>{if(spots<50){spots++;upSpots();}};
+  document.querySelectorAll('#dur button').forEach(b=>b.onclick=()=>{
+    dur=+b.dataset.d;
+    document.querySelectorAll('#dur button').forEach(x=>x.classList.toggle('on',x===b));
+    updateReceipt();
+  });
+  updateReceipt();
+}
+function upSpots(){
+  document.getElementById('sp-val').textContent=spots;
+  document.getElementById('sp-note').textContent=spots>=12?'≈ 1–2 placements per hour':spots>=6?'≈ one placement every 4 hours':'≈ one placement every 8+ hours';
+  updateReceipt();
+}
+function updateReceipt(){
+  const t=TIERS[tier];
+  const daily=t.rate*spots,total=daily*dur,dailyImp=t.imp*spots,totalImp=dailyImp*dur,cpm=total/(totalImp/1000);
+  document.getElementById('reach-title').textContent=t.label+' reach';
+  document.getElementById('reach-pop').textContent=t.pop+' potential listeners';
+  document.getElementById('rs-imp').textContent=fmt(dailyImp);
+  document.getElementById('rs-total').textContent=fmt(totalImp);
+  document.getElementById('rs-cpm').textContent='$'+cpm.toFixed(2);
+  document.getElementById('rc-area').textContent=t.label;
+  document.getElementById('rc-base').textContent='$'+t.rate.toFixed(2)+'/spot';
+  document.getElementById('rc-spots').textContent=spots;
+  document.getElementById('rc-days').textContent=dur;
+  document.getElementById('rc-vol').textContent='$'+daily.toFixed(2)+'/day';
+  document.getElementById('rc-total').innerHTML='$'+total.toFixed(2)+'<small> / $'+daily.toFixed(2)+'/day</small>';
+  const pct={local:.04,regional:.18,national:.56,global:1}[t.id];
+  const N=80,filled=Math.round(pct*N);
+  document.getElementById('dotgrid').innerHTML=`<svg width="100%" viewBox="0 0 ${N*8} 22" style="display:block">${Array.from({length:N},(_,i)=>`<circle cx="${i*8+4}" cy="11" r="3" fill="${i<filled?'var(--ac)':'var(--bg3)'}" opacity="${i<filled?1:.5}"/>`).join('')}</svg>`;
+}
+
+function initTicker(){
+  const upClock=()=>document.getElementById('tk-clock').textContent=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  upClock();setInterval(upClock,1000);
+  addTick();setInterval(addTick,3200);
+  document.getElementById('tk-count').innerHTML=`<b>${tkCount}</b> today`;
+}
+function addTick(){
+  const ad=TICK[tkI++%TICK.length];tkCount++;
+  document.getElementById('tk-count').innerHTML=`<b>${tkCount}</b> today`;
+  const c=TC[ad.tag]||'#5a5048',ok=ad.ok;
+  const div=document.createElement('div');
+  div.style.cssText='display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);animation:fadeIn .3s ease';
+  div.innerHTML=`<div style="width:20px;height:20px;border-radius:4px;background:${c}1a;border:1px solid ${c}40;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">${ok?`<svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 7" stroke="${c}" stroke-width="2.5" stroke-linecap="round"/></svg>`:`<svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="#ff4545" stroke-width="2.5" stroke-linecap="round"/></svg>`}</div><div style="flex:1;min-width:0"><div style="font-family:'DM Sans',sans-serif;font-size:12px;color:var(--ink);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ad.copy}</div><div style="display:flex;gap:8px;margin-top:3px"><span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:${c};background:${c}18;padding:2px 6px;border-radius:4px">${ad.tag}</span><span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--ink3)">${ad.name}</span></div></div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:${ok?'var(--good)':'#ff4545'};letter-spacing:.1em;text-transform:uppercase;flex-shrink:0;margin-top:1px">${ok?'CLEARED':'REJECTED'}</div>`;
+  const list=document.getElementById('tk-list');
+  list.insertBefore(div,list.firstChild);
+  while(list.children.length>12)list.removeChild(list.lastChild);
+}
+
+function initScanner(){renderScanList();runScan(0);}
+function renderScanList(){
+  document.getElementById('scan-list').innerHTML=SCANS.map((a,i)=>
+    `<div class="sli${i===scanI?' on':''}" onclick="selScan(${i})"><div class="sc">${a.copy}</div><div class="st">${a.tag}</div></div>`
+  ).join('');
+}
+window.selScan=function(i){scanI=i;renderScanList();runScan(i);};
+function runScan(i){
+  const a=SCANS[i];
+  document.getElementById('ap-tag').textContent=a.tag;
+  document.getElementById('ap-copy').textContent=a.copy;
+  document.getElementById('ap-body').textContent=a.body;
+  document.getElementById('scan-state').textContent='Scanning…';
+  document.getElementById('verdicts').innerHTML='';
+  document.getElementById('verdict-final').style.display='none';
+  const GC={pass:'var(--good)',fail:'#ff4545'};
+  a.g.forEach((r,g)=>{
+    setTimeout(()=>{
+      const c=GC[r],icon=r==='pass'
+        ?`<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4L19 7" stroke="${c}" stroke-width="2.5" stroke-linecap="round"/></svg>`
+        :`<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="${c}" stroke-width="2.5" stroke-linecap="round"/></svg>`;
+      const div=document.createElement('div');
+      div.className='verdict-item';
+      div.style.cssText=`background:${c}18;border:1px solid ${c}30;color:${c}`;
+      div.innerHTML=`${icon}<span style="flex:1">Gate ${g+1} — ${GATE_L[g]}</span><span>${r.toUpperCase()}</span>`;
+      document.getElementById('verdicts').appendChild(div);
+      if(g===a.g.length-1){
+        setTimeout(()=>{
+          const pass=a.g.every(x=>x==='pass');
+          const fin=document.getElementById('verdict-final');
+          fin.style.cssText=`display:block;padding:10px 14px;border-radius:10px;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;text-align:center;background:${pass?'var(--good)':'#ff4545'}18;border:1px solid ${pass?'var(--good)':'#ff4545'}40;color:${pass?'var(--good)':'#ff4545'}`;
+          fin.textContent=pass?'✓ CLEARED — Ad approved to run':'✗ REJECTED — Does not meet guidelines';
+          document.getElementById('scan-state').textContent=pass?'Cleared':'Rejected';
+        },400);
+      }
+    },600+g*900);
+  });
+}
+</script>
+</body>
+</html>

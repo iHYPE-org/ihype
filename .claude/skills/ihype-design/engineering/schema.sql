@@ -1,5 +1,5 @@
--- iHYPE — Postgres schema (beta)
--- Maps BACKEND_SPEC.md → DDL. Test-mode ready; payout tables inert until banking.
+-- iHYPE — Postgres schema
+-- Maps BACKEND_SPEC.md → DDL. Live: payments and Stripe Connect payouts run for real.
 -- Run order matters (FK deps). Requires: citext, pgcrypto, uuid-ossp.
 
 CREATE EXTENSION IF NOT EXISTS citext;
@@ -165,7 +165,7 @@ CREATE TABLE ledger (
   created_at      timestamptz NOT NULL DEFAULT now()
 );
 
--- ── payout_accounts ⛔ banking-gated (table exists; inert until live) ─
+-- ── payout_accounts — live: Stripe Connect Express, real transfers ──
 CREATE TABLE payout_accounts (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id     uuid NOT NULL REFERENCES users(id),

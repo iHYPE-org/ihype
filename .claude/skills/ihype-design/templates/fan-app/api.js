@@ -1,8 +1,9 @@
 /**
  * iHYPE API Client — lib/api.js
  * Works in two modes:
- *   MOCK  — no backend needed; uses window.IHYPE_DATA + localStorage (default in beta)
- *   REAL  — set window.IHYPE_API_BASE = 'https://api.ihype.app/v1' before loading
+ *   MOCK  — no backend needed; uses window.IHYPE_DATA + localStorage (default in this design system)
+ *   REAL  — set window.IHYPE_API_BASE = 'https://api.ihype.app/v1' before loading. Production is LIVE:
+ *           real Stripe charges, real Connect transfers, real payouts.
  *
  * Usage (after loading this script):
  *   const api = window.IHYPE_API;
@@ -247,7 +248,7 @@
       return GET(`/events/${eventId}/tickets/availability`);
     },
 
-    /** Buy ticket — MOCK: creates a local record (simulated). Real: banking-gated. */
+    /** Buy ticket — MOCK: creates a local record (simulated). Real: live Stripe payment intent. */
     async buyTicket(event_id, referral_code = null) {
       if (MOCK()) {
         await DELAY(400);
@@ -384,15 +385,22 @@
   };
 
   /* ══════════════════════════════════════════════════════════════════
-     PAYOUTS  (banking-gated — all mock until nonprofit status clears)
+     PAYOUTS  (live — real Stripe Connect; payouts release automatically
+     via the settlement cron when a show ends, so requestPayout is rarely
+     called directly by the UI)
   ══════════════════════════════════════════════════════════════════ */
   const payouts = {
     async balance() {
-      if (MOCK()) { await DELAY(); return { available: 0, pending: 351, _banking_gated: true }; }
+      if (MOCK()) { await DELAY(); return { available: 249, pending: 102 }; }
       return GET('/me/balance');
     },
+    async onboard() {
+      if (MOCK()) { await DELAY(150); return { url: '#stripe-connect-onboarding' }; }
+      return POST('/payout-accounts/onboard');
+    },
     async requestPayout(amount_cents) {
-      throw { status: 503, message: '⚠ Payouts are banking-gated — live once nonprofit status clears.', _banking_gated: true };
+      if (MOCK()) { await DELAY(200); return { status: 'requested', amount_cents }; }
+      return POST('/payouts', { amount_cents });
     },
   };
 

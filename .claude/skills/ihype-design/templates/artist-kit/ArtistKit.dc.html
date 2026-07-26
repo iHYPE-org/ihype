@@ -9,21 +9,25 @@
 <x-dc>
 <!-- @template name="iHYPE Artist Kit" description="Artist recruiting page — hero with apply form, 70% charter explainer, 6-feature grid, 4-step onboarding, footer. Wired to lib/api.js." -->
 <helmet>
+<script src="./ds-base.js"></script>
+<script src="../../lib/theme.js"></script>
+<script src="../../lib/theme-toggle.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<script src="../../lib/i18n.js"></script>
 <script src="../../lib/api.js"></script>
 <style>
-  *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #0a0805; color: #f0ebe5; font-family: 'DM Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+  *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+  body { background: radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),var(--bg-base); color: var(--ink-1); font-family: 'DM Sans', sans-serif; -webkit-font-smoothing: antialiased; }
   a { color: inherit; text-decoration: none; }
 </style>
 </helmet>
 
 <!-- Nav -->
-<nav style="position:sticky;top:0;z-index:50;backdrop-filter:blur(16px);background:rgba(10,8,5,.75);border-bottom:1px solid rgba(255,255,255,.08)">
+<nav style="position:sticky;top:0;z-index:50;backdrop-filter:blur(16px);background:rgba(var(--bg-base-rgb),.75);border-bottom:1px solid rgba(var(--surface-tint-rgb),.15)">
   <div style="max-width:1080px;margin:0 auto;padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:62px">
-    <a href="#" style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;letter-spacing:-.04em;color:#ff5029">iHYPE</a>
-    <button onclick="document.getElementById('applySection').scrollIntoView({behavior:'smooth'})" style="font-family:'Syne',sans-serif;font-weight:800;font-size:.88rem;background:#ff5029;color:#fff;padding:9px 18px;border-radius:999px;border:none;cursor:pointer;box-shadow:0 4px 18px rgba(255,80,41,.3)">Apply as artist →</button>
+    <a href="../landing/Landing.dc.html" style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;letter-spacing:-.04em;color:var(--accent)">iHYPE</a>
+    <button onclick="document.getElementById('applySection').scrollIntoView({behavior:'smooth'})" data-i18n="akApply" style="font-family:'Syne',sans-serif;font-weight:800;font-size:.88rem;background:var(--accent);color:#fff;padding:9px 18px;border-radius:999px;border:none;cursor:pointer;box-shadow:0 4px 18px rgba(255,80,41,.3)">Apply as artist →</button>
   </div>
 </nav>
 
@@ -32,42 +36,51 @@
   <div style="position:absolute;top:-160px;right:-80px;width:600px;height:600px;background:radial-gradient(circle,rgba(255,80,41,.2),transparent 65%);pointer-events:none"></div>
   <div style="max-width:1080px;margin:0 auto;padding:0 32px;display:grid;grid-template-columns:1fr 420px;gap:60px;align-items:center">
     <div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:#ff5029;margin-bottom:22px">For Artists · Beta 2026</div>
-      <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2.8rem,5.5vw,4.6rem);letter-spacing:-.04em;line-height:.98">Your music.<br>Your gate.<br><span style="color:#ff5029">Your fans.</span></h1>
-      <p style="font-size:1.15rem;line-height:1.6;color:#9e9080;margin-top:22px;max-width:48ch">iHYPE gives you <strong style="color:#f0ebe5">70% of every ticket</strong>, your fans' contact info, and tools to run your own shows — no agent, no Ticketmaster, no platform that owns the relationship.</p>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:22px" data-i18n="akEyebrow">For Artists · Live 2026</div>
+      <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2.8rem,5.5vw,4.6rem);letter-spacing:-.04em;line-height:.98">Your music.<br>Your gate.<br><span style="color:var(--accent)">Your fans.</span></h1>
+      <p style="font-size:1.15rem;line-height:1.6;color:var(--ink-2);margin-top:22px;max-width:48ch" data-i18n="akHeroBody" data-i18n-arg-pct="70%">iHYPE gives you <strong style="color:var(--ink-1)">70% of every ticket</strong>, your fans' contact info, and tools to run your own shows — no agent, no Ticketmaster, no platform that owns the relationship.</p>
     </div>
     <!-- Apply card -->
-    <div id="applySection" style="background:linear-gradient(160deg,#1f0e07,#0a0805);border:1px solid rgba(255,80,41,.2);border-radius:22px;padding:36px 32px;position:relative">
+    <div id="applySection" style="background:linear-gradient(160deg,var(--bg-overlay),var(--bg-base));border:1px solid rgba(255,80,41,.2);border-radius:22px;padding:36px 32px;position:relative">
       <div style="position:absolute;top:-60px;right:-40px;width:220px;height:220px;background:radial-gradient(circle,rgba(255,80,41,.15),transparent 70%);border-radius:50%"></div>
       <div id="applyFormWrap" style="position:relative">
-        <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;letter-spacing:-.02em;margin-bottom:10px">Apply as an artist</h2>
-        <p style="font-size:.92rem;color:#9e9080;line-height:1.6;margin-bottom:22px">We're onboarding a small founding cohort. Tell us about you.</p>
-        <input id="aName" placeholder="Artist name" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,80,41,.25);background:rgba(255,80,41,.05);color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:.96rem;outline:none;margin-bottom:12px">
-        <input id="aEmail" type="email" placeholder="Email address" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,80,41,.25);background:rgba(255,80,41,.05);color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:.96rem;outline:none;margin-bottom:12px">
-        <select id="aGenre" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,80,41,.25);background:rgba(255,80,41,.05);color:#9e9080;font-family:'DM Sans',sans-serif;font-size:.96rem;outline:none;margin-bottom:12px;cursor:pointer;appearance:none">
+        <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;letter-spacing:-.02em;margin-bottom:10px" data-i18n="akApplyHeading">Apply as an artist</h2>
+        <p style="font-size:.92rem;color:var(--ink-2);line-height:1.6;margin-bottom:22px" data-i18n="akApplySub">We're onboarding a small founding cohort. Tell us about you.</p>
+        <input id="aName" placeholder="Artist name" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,80,41,.25);background:rgba(255,80,41,.05);color:var(--ink-1);font-family:'DM Sans',sans-serif;font-size:.96rem;outline:none;margin-bottom:12px">
+        <input id="aEmail" type="email" placeholder="Email address" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,80,41,.25);background:rgba(255,80,41,.05);color:var(--ink-1);font-family:'DM Sans',sans-serif;font-size:.96rem;outline:none;margin-bottom:12px">
+        <select id="aGenre" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,80,41,.25);background:rgba(255,80,41,.05);color:var(--ink-2);font-family:'DM Sans',sans-serif;font-size:.96rem;outline:none;margin-bottom:12px;cursor:pointer;appearance:none">
           <option value="" disabled selected>Genre / style</option>
           <option>Dream-pop</option><option>Shoegaze</option><option>R&amp;B</option><option>Jazz</option><option>Hip-hop</option><option>Electronic</option><option>Punk / Indie rock</option><option>Folk</option><option>Other</option>
         </select>
-        <input id="aCity" placeholder="Home city" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,80,41,.25);background:rgba(255,80,41,.05);color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:.96rem;outline:none;margin-bottom:12px">
-        <input id="aLink" type="url" placeholder="Spotify, Bandcamp, or SoundCloud" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,80,41,.25);background:rgba(255,80,41,.05);color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:.96rem;outline:none;margin-bottom:14px">
-        <button onclick="submitArtist()" style="width:100%;padding:14px;border-radius:12px;border:none;background:#ff5029;color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;cursor:pointer;box-shadow:0 6px 24px rgba(255,80,41,.3)">Request artist access →</button>
-        <p style="font-family:'JetBrains Mono',monospace;font-size:.68rem;color:#5a5048;margin-top:12px;text-align:center;letter-spacing:.04em">No spam. We review every application personally.</p>
+        <input id="aCity" placeholder="Home city" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,80,41,.25);background:rgba(255,80,41,.05);color:var(--ink-1);font-family:'DM Sans',sans-serif;font-size:.96rem;outline:none;margin-bottom:12px">
+        <input id="aLink" type="url" placeholder="Spotify, Bandcamp, or SoundCloud" style="width:100%;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,80,41,.25);background:rgba(255,80,41,.05);color:var(--ink-1);font-family:'DM Sans',sans-serif;font-size:.96rem;outline:none;margin-bottom:14px">
+        <button onclick="submitArtist()" data-i18n="akRequestAccess" style="width:100%;padding:14px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;cursor:pointer;box-shadow:0 6px 24px rgba(255,80,41,.3)">Request artist access →</button>
+        <p style="font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--ink-3);margin-top:12px;text-align:center;letter-spacing:.04em" data-i18n="akNoSpam">No spam. We review every application personally.</p>
       </div>
       <div id="applyOk" style="display:none;text-align:center;padding:24px 0;position:relative">
         <div style="font-size:3rem">🔥</div>
-        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;margin-top:12px">Application received.</div>
-        <p style="color:#9e9080;font-size:.96rem;line-height:1.6;margin-top:10px">We'll reach out within 48 hours with your invite code and onboarding guide.</p>
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;margin-top:12px" data-i18n="akReceived">Application received.</div>
+        <p style="color:var(--ink-2);font-size:.96rem;line-height:1.6;margin-top:10px" data-i18n="akReceivedBody">We'll reach out within 48 hours with your invite code and onboarding guide.</p>
+        <a href="../role-onboarding/RoleOnboarding.dc.html" data-i18n="akPreviewOnboarding" style="display:inline-block;margin-top:18px;font-family:'Syne',sans-serif;font-weight:800;font-size:.9rem;background:var(--accent);color:#fff;padding:12px 26px;border-radius:999px;text-decoration:none">Preview onboarding →</a>
       </div>
     </div>
   </div>
 
   <!-- Stats -->
   <div style="max-width:1080px;margin:64px auto 0;padding:0 32px">
-    <div style="border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07);display:flex">
-      <div style="flex:1;padding:24px 0;text-align:center;border-right:1px solid rgba(255,255,255,.07)"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;letter-spacing:-.03em;color:#ff5029">70%</div><div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:#9e9080;margin-top:6px">Your gate · locked</div></div>
-      <div style="flex:1;padding:24px 0;text-align:center;border-right:1px solid rgba(255,255,255,.07)"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;letter-spacing:-.03em;color:#ff5029">$0</div><div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:#9e9080;margin-top:6px">Platform fee on tracks</div></div>
-      <div style="flex:1;padding:24px 0;text-align:center;border-right:1px solid rgba(255,255,255,.07)"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;letter-spacing:-.03em;color:#ff5029">100%</div><div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:#9e9080;margin-top:6px">Fan data ownership</div></div>
-      <div style="flex:1;padding:24px 0;text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;letter-spacing:-.03em;color:#ff5029">24h</div><div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:#9e9080;margin-top:6px">Payout turnaround</div></div>
+    <div style="border-top:1px solid rgba(var(--surface-tint-rgb),.07);border-bottom:1px solid rgba(var(--surface-tint-rgb),.07);display:flex">
+      <div style="flex:1;padding:24px 0;text-align:center;border-right:1px solid rgba(var(--surface-tint-rgb),.07)"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;letter-spacing:-.03em;color:var(--accent)">70%</div><div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);margin-top:6px" data-i18n="akGateLocked">Your gate · locked</div></div>
+      <div style="flex:1;padding:24px 0;text-align:center;border-right:1px solid rgba(var(--surface-tint-rgb),.07)"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;letter-spacing:-.03em;color:var(--accent)">$0</div><div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);margin-top:6px" data-i18n="akFeeOnTracks">Platform fee on tracks</div></div>
+      <div style="flex:1;padding:24px 0;text-align:center;border-right:1px solid rgba(var(--surface-tint-rgb),.07)"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;letter-spacing:-.03em;color:var(--accent)">100%</div><div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);margin-top:6px" data-i18n="akFanDataOwnership">Fan data ownership</div></div>
+      <div style="flex:1;padding:24px 0;text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2.2rem;letter-spacing:-.03em;color:var(--accent)">24h</div><div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);margin-top:6px" data-i18n="akPayoutTurnaround">Payout turnaround</div></div>
+    </div>
+    <div style="padding:28px 0;border-bottom:1px solid rgba(var(--surface-tint-rgb),.07)">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:14px" data-i18n="akDemandHottest">Where fan demand is hottest right now</div>
+      <div style="display:flex;flex-direction:column;gap:9px;max-width:420px">
+        <div style="display:flex;align-items:center;gap:10px"><span style="width:96px;flex-shrink:0;font-size:.82rem;color:var(--ink-2)">Portland, ME</span><div style="flex:1;height:6px;border-radius:3px;background:rgba(var(--surface-tint-rgb),.07);overflow:hidden" role="img" aria-label="Portland, ME: highest demand"><div style="width:100%;height:100%;background:var(--heat-fire,#ff1f3d)"></div></div></div>
+        <div style="display:flex;align-items:center;gap:10px"><span style="width:96px;flex-shrink:0;font-size:.82rem;color:var(--ink-2)">New York, NY</span><div style="flex:1;height:6px;border-radius:3px;background:rgba(var(--surface-tint-rgb),.07);overflow:hidden" role="img" aria-label="New York, NY: high demand"><div style="width:70%;height:100%;background:var(--heat-hot,var(--accent))"></div></div></div>
+        <div style="display:flex;align-items:center;gap:10px"><span style="width:96px;flex-shrink:0;font-size:.82rem;color:var(--ink-2)">Austin, TX</span><div style="flex:1;height:6px;border-radius:3px;background:rgba(var(--surface-tint-rgb),.07);overflow:hidden" role="img" aria-label="Austin, TX: moderate demand"><div style="width:45%;height:100%;background:var(--heat-warm,#ffb84a)"></div></div></div>
+      </div>
     </div>
   </div>
 </header>
@@ -75,38 +88,39 @@
 <!-- Charter -->
 <section style="background:rgba(255,80,41,.03);border-top:1px solid rgba(255,80,41,.08);border-bottom:1px solid rgba(255,80,41,.08);padding:80px 0">
   <div style="max-width:1080px;margin:0 auto;padding:0 32px;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center">
-    <div style="font-family:'Instrument Serif',serif;font-style:italic;font-size:clamp(1.8rem,4vw,3.2rem);line-height:1.12">A charter that can't be <span style="color:#ff5029">unwritten</span> after the first ticket sells.</div>
+    <div style="font-family:'Instrument Serif',serif;font-style:italic;font-size:clamp(1.8rem,4vw,3.2rem);line-height:1.12" data-i18n="akCharterQuote">A charter that can't be <span style="color:var(--accent)">unwritten</span> after the first ticket sells.</div>
     <ul style="list-style:none;display:flex;flex-direction:column;gap:14px">
-      <li style="display:flex;align-items:flex-start;gap:12px;font-size:.96rem;line-height:1.5"><span style="color:#ff5029;font-family:'Syne',sans-serif;font-weight:800;flex-shrink:0;margin-top:1px">✓</span>Set your price and split before publish</li>
-      <li style="display:flex;align-items:flex-start;gap:12px;font-size:.96rem;line-height:1.5"><span style="color:#ff5029;font-family:'Syne',sans-serif;font-weight:800;flex-shrink:0;margin-top:1px">✓</span>Once a ticket sells, the split is sealed</li>
-      <li style="display:flex;align-items:flex-start;gap:12px;font-size:.96rem;line-height:1.5"><span style="color:#ff5029;font-family:'Syne',sans-serif;font-weight:800;flex-shrink:0;margin-top:1px">✓</span>Your 70% hits your account night of show</li>
-      <li style="display:flex;align-items:flex-start;gap:12px;font-size:.96rem;line-height:1.5"><span style="color:#ff5029;font-family:'Syne',sans-serif;font-weight:800;flex-shrink:0;margin-top:1px">✓</span>Full fan email list after every event</li>
-      <li style="display:flex;align-items:flex-start;gap:12px;font-size:.96rem;line-height:1.5"><span style="color:#ff5029;font-family:'Syne',sans-serif;font-weight:800;flex-shrink:0;margin-top:1px">✓</span>No agent or manager needed to list</li>
+      <li style="display:flex;align-items:flex-start;gap:12px;font-size:.96rem;line-height:1.5"><span style="color:var(--accent);font-family:'Syne',sans-serif;font-weight:800;flex-shrink:0;margin-top:1px">✓</span><span data-i18n="akCharter1">Set your price and split before publish</span></li>
+      <li style="display:flex;align-items:flex-start;gap:12px;font-size:.96rem;line-height:1.5"><span style="color:var(--accent);font-family:'Syne',sans-serif;font-weight:800;flex-shrink:0;margin-top:1px">✓</span><span data-i18n="akCharter2">Once a ticket sells, the split is sealed</span></li>
+      <li style="display:flex;align-items:flex-start;gap:12px;font-size:.96rem;line-height:1.5"><span style="color:var(--accent);font-family:'Syne',sans-serif;font-weight:800;flex-shrink:0;margin-top:1px">✓</span><span data-i18n="akCharter3">Your 70% hits your account night of show</span></li>
+      <li style="display:flex;align-items:flex-start;gap:12px;font-size:.96rem;line-height:1.5"><span style="color:var(--accent);font-family:'Syne',sans-serif;font-weight:800;flex-shrink:0;margin-top:1px">✓</span><span data-i18n="akCharter4">Full fan email list after every event</span></li>
+      <li style="display:flex;align-items:flex-start;gap:12px;font-size:.96rem;line-height:1.5"><span style="color:var(--accent);font-family:'Syne',sans-serif;font-weight:800;flex-shrink:0;margin-top:1px">✓</span><span data-i18n="akCharter5">No agent or manager needed to list</span></li>
     </ul>
   </div>
+  <p style="max-width:1080px;margin:40px auto 0;padding:0 32px;text-align:center;font-size:1rem;color:var(--ink-2);line-height:1.6"><span data-i18n="akFanFitBody">None of this works without fans in the room. iHYPE's whole job is getting the ones who already believe in you to hype, buy, and bring a friend —</span> <a href="../fan-kit/FanKit.dc.html" data-i18n="akSeeFans" style="color:var(--accent);text-decoration:underline">see how fans fit in →</a></p>
 </section>
 
 <!-- Features -->
 <section style="padding:88px 0">
   <div style="max-width:1080px;margin:0 auto;padding:0 32px">
-    <div style="font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:#ff5029">What you get</div>
-    <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2rem,4vw,3rem);letter-spacing:-.03em;line-height:1.06;margin:14px 0 0">Tools built for touring artists.</h2>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)" data-i18n="akWhatYouGet">What you get</div>
+    <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2rem,4vw,3rem);letter-spacing:-.03em;line-height:1.06;margin:14px 0 0" data-i18n="akToolsHeadline">Tools built for touring artists.</h2>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px">
-      <div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:26px 22px"><div style="font-size:1.8rem;margin-bottom:14px">🎟️</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.01em;margin-bottom:8px">Direct ticketing</h3><p style="font-size:.92rem;line-height:1.55;color:#9e9080">List a show in minutes. Fans buy direct — no Ticketmaster. QR wallets handled.</p></div>
-      <div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:26px 22px"><div style="font-size:1.8rem;margin-bottom:14px">📊</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.01em;margin-bottom:8px">Fan data dashboard</h3><p style="font-size:.92rem;line-height:1.55;color:#9e9080">See who came, who bought first, who's hyping you. Export your list after every show.</p></div>
-      <div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:26px 22px"><div style="font-size:1.8rem;margin-bottom:14px">🔴</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.01em;margin-bottom:8px">Live show hosting</h3><p style="font-size:.92rem;line-height:1.55;color:#9e9080">Go live directly from iHYPE — listener count, hype pulse, live chat.</p></div>
-      <div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:26px 22px"><div style="font-size:1.8rem;margin-bottom:14px">📻</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.01em;margin-bottom:8px">Free-use library</h3><p style="font-size:.92rem;line-height:1.55;color:#9e9080">Opt your tracks into the DJ pool and reach new audiences without losing rights.</p></div>
-      <div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:26px 22px"><div style="font-size:1.8rem;margin-bottom:14px">🗺️</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.01em;margin-bottom:8px">Tour creator</h3><p style="font-size:.92rem;line-height:1.55;color:#9e9080">Build a tour, set dates across cities, manage all events from one dashboard.</p></div>
-      <div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:26px 22px"><div style="font-size:1.8rem;margin-bottom:14px">✓</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.01em;margin-bottom:8px">Verification badge</h3><p style="font-size:.92rem;line-height:1.55;color:#9e9080">Apply for a verified artist badge. Appears on your profile, events, and all iHYPE surfaces.</p></div>
+      <div style="background:rgba(var(--surface-tint-rgb),.025);border:1px solid rgba(var(--surface-tint-rgb),.07);border-radius:16px;padding:26px 22px"><div style="font-size:1.8rem;margin-bottom:14px">🎟️</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.01em;margin-bottom:8px" data-i18n="akDirectTicketing">Direct ticketing</h3><p style="font-size:.92rem;line-height:1.55;color:var(--ink-2)" data-i18n="akDirectTicketingBody">List a show in minutes. Fans buy direct — no Ticketmaster. QR wallets handled.</p></div>
+      <div style="background:rgba(var(--surface-tint-rgb),.025);border:1px solid rgba(var(--surface-tint-rgb),.07);border-radius:16px;padding:26px 22px"><div style="font-size:1.8rem;margin-bottom:14px">📊</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.01em;margin-bottom:8px" data-i18n="akFanDashboard">Fan data dashboard</h3><p style="font-size:.92rem;line-height:1.55;color:var(--ink-2)" data-i18n="akFanDashboardBody">See who came, who bought first, who's hyping you. Export your list after every show.</p></div>
+      <div style="background:rgba(var(--surface-tint-rgb),.025);border:1px solid rgba(var(--surface-tint-rgb),.07);border-radius:16px;padding:26px 22px"><div style="font-size:1.8rem;margin-bottom:14px">🔴</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.01em;margin-bottom:8px" data-i18n="akLiveHosting">Live show hosting</h3><p style="font-size:.92rem;line-height:1.55;color:var(--ink-2)" data-i18n="akLiveHostingBody">Go live directly from iHYPE — listener count, hype pulse, live chat.</p></div>
+      <div style="background:rgba(var(--surface-tint-rgb),.025);border:1px solid rgba(var(--surface-tint-rgb),.07);border-radius:16px;padding:26px 22px"><div style="font-size:1.8rem;margin-bottom:14px">📻</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.01em;margin-bottom:8px" data-i18n="akRadioEligible">Radio-eligible tracks</h3><p style="font-size:.92rem;line-height:1.55;color:var(--ink-2)" data-i18n="akRadioEligibleBody">Opt each track into the DJ crate pool at upload to reach new listeners through radio shows — or opt out if you're not ready. Once a show airs, its tracks stay archived in it; you're only choosing what's eligible going forward.</p></div>
+      <div style="background:rgba(var(--surface-tint-rgb),.025);border:1px solid rgba(var(--surface-tint-rgb),.07);border-radius:16px;padding:26px 22px"><div style="font-size:1.8rem;margin-bottom:14px">🗺️</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.01em;margin-bottom:8px" data-i18n="akTourCreator">Tour creator</h3><p style="font-size:.92rem;line-height:1.55;color:var(--ink-2)" data-i18n="akTourCreatorBody">Build a tour, set dates across cities, manage all events from one dashboard.</p></div>
+      <div style="background:rgba(var(--surface-tint-rgb),.025);border:1px solid rgba(var(--surface-tint-rgb),.07);border-radius:16px;padding:26px 22px"><div style="font-size:1.8rem;margin-bottom:14px">✓</div><h3 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.15rem;letter-spacing:-.01em;margin-bottom:8px" data-i18n="akVerifBadge">Verification badge</h3><p style="font-size:.92rem;line-height:1.55;color:var(--ink-2)" data-i18n="akVerifBadgeBody">Apply for a verified artist badge. Appears on your profile, events, and all iHYPE surfaces.</p></div>
     </div>
   </div>
 </section>
 
 <!-- Footer -->
-<footer style="border-top:1px solid rgba(255,255,255,.07);padding:44px 0 56px">
+<footer style="border-top:1px solid rgba(var(--surface-tint-rgb),.07);padding:44px 0 56px">
   <div style="max-width:1080px;margin:0 auto;padding:0 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px">
-    <a href="#" style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;letter-spacing:-.04em;color:#ff5029">iHYPE</a>
-    <div style="display:flex;gap:22px"><a href="#" style="font-size:.9rem;color:#9e9080">Home</a><a href="#" style="font-size:.9rem;color:#9e9080">FAQ</a><a href="#" style="font-size:.9rem;color:#9e9080">admin@ihype.org</a></div>
+    <a href="../landing/Landing.dc.html" style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;letter-spacing:-.04em;color:var(--accent)">iHYPE</a>
+    <div style="display:flex;gap:22px"><a href="../advertise/Advertise.dc.html" style="font-size:.9rem;color:var(--ink-2)">Advertise</a><a href="../about/About.dc.html" style="font-size:.9rem;color:var(--ink-2)">About</a><a href="../site-pages/SitePages.dc.html" style="font-size:.9rem;color:var(--ink-2)">Support</a></div>
   </div>
 </footer>
 
@@ -120,6 +134,21 @@
     document.getElementById('applyFormWrap').style.display = 'none';
     document.getElementById('applyOk').style.display = 'block';
   }
+  function applyI18n() {
+    if (!window.ihypeT) return;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      let val = window.ihypeT(key);
+      const pctArg = el.getAttribute('data-i18n-arg-pct');
+      if (pctArg) val = val.replace('{pct}', pctArg);
+      if (key === 'akHeroBody') { el.innerHTML = val.replace(pctArg || '70%', `<strong style="color:var(--ink-1)">${pctArg || '70%'}</strong>`); }
+      else if (val.includes('⟦')) { el.innerHTML = val.replace(/⟦([^⟧]*)⟧/, '<span style="color:var(--accent)">$1</span>'); }
+      else el.textContent = val;
+    });
+  }
+  document.addEventListener('DOMContentLoaded', applyI18n);
+  window.addEventListener('ihype-i18n-change', applyI18n);
+  if (window.ihypeT) applyI18n();
 </script>
 </x-dc>
 </body>

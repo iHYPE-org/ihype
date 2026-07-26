@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<!-- @template name="iHYPE Sitemap" description="Internal navigation hub — every real route grouped by section, for QA/testers to find any page fast." -->
+<helmet>
+  <script src="./ds-base.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}body{background:radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}a{color:inherit;text-decoration:none}</style>
+</helmet>
+
+<div style="max-width:1040px;margin:0 auto;padding:56px 28px 100px">
+  <p style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;color:#5a5048;margin-bottom:10px">Internal · QA use only</p>
+  <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.8rem,5vw,2.4rem);letter-spacing:-.03em;margin-bottom:8px">Sitemap</h1>
+  <p style="font-size:.9rem;color:#9e9080;margin-bottom:36px">Every live route on ihype.org, grouped by section.</p>
+
+  <sc-for list="{{ groups }}" as="g" hint-placeholder-count="7">
+    <div style="margin-bottom:32px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#ff5029;margin-bottom:14px">{{ g.label }}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">
+        <sc-for list="{{ g.routes }}" as="r" hint-placeholder-count="4">
+          <a href="#" style="display:block;padding:14px 16px;border:1px solid rgba(255,255,255,.15);border-radius:10px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px)">
+            <div style="font-weight:700;font-size:.88rem;margin-bottom:3px">{{ r.name }}</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#5a5048">{{ r.path }}</div>
+          </a>
+        </sc-for>
+      </div>
+    </div>
+  </sc-for>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      groups: [
+        { label: 'Marketing / Public', routes: [
+          ['Home', '/'], ['About', '/about'], ['Charter', '/charter'],
+          ['Journal', '/journal'], ['Community', '/community'], ['Launch', '/launch'], ['Advertise', '/advertise'],
+        ]},
+        { label: 'About (tabbed section)', routes: [
+          ['About', '/about'], ['Transparency', '/about?tab=transparency'],
+          ['Trust & Safety', '/about?tab=trust'], ['Legal', '/about?tab=legal'],
+        ]},
+        { label: 'Legal (tabbed section)', routes: [
+          ['Privacy', '/legal?tab=privacy'], ['Terms', '/legal?tab=terms'],
+          ['Charter', '/legal?tab=charter'], ['DMCA', '/legal?tab=dmca'],
+        ]},
+        { label: 'Auth & Onboarding', routes: [
+          ['Sign in', '/login'], ['Register', '/register'], ['Welcome', '/welcome'],
+          ['Verify', '/verify'], ['Invite landing', '/invite/[code]'],
+        ]},
+        { label: 'Fan product', routes: [
+          ['Listen', '/listen'], ['Discover', '/discover'], ['Search', '/search'],
+          ['My Dashboard (+ Notifications tab)', '/me/dashboard'], ['Tickets', '/tickets'], ['Settings', '/settings'],
+        ]},
+        { label: 'Events', routes: [
+          ['Shows', '/shows'], ['Show detail', '/shows/[slug]'], ['This weekend', '/this-weekend'],
+          ['Publish a show', '/events/new'], ['Payouts', '/me/payouts'], ['Lineup & split', '/shows/[slug]/lineup'],
+        ]},
+        { label: 'Creator / Artist / DJ', routes: [
+          ['Artist profile', '/artists/[slug]'], ['Artist dashboard', '/artists/[slug]/dashboard'],
+          ['Artist analytics', '/artists/[slug]/analytics'], ['Artist onboarding', '/artists/[slug]/onboarding'],
+          ['DJ profile', '/promoters/[slug]'], ['DJ dashboard', '/promoters/[slug]/dashboard'],
+          ['Track detail', '/tracks/[hexId]'], ['Radio', '/radio'], ['Pages', '/pages'],
+        ]},
+        { label: 'Venue & Promoter', routes: [
+          ['Venue profile', '/venues/[slug]'], ['Venue dashboard', '/venues/[slug]/dashboard'],
+          ['Booking inbox', '/venues/[slug]/booking-inbox'], ['Promoter home', '/me/promote'],
+          ['Payouts (History · Settings · This show)', '/me/payouts'],
+        ]},
+        { label: 'Support & Admin', routes: [
+          ['Support', '/support'], ['My tickets', '/support/tickets'], ['Status', '/status'],
+          ['Admin', '/admin'], ['Advertiser signup', '/advertise/register'],
+        ]},
+      ].map(g => ({ label: g.label, routes: g.routes.map(([name, path]) => ({ name, path })) })),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

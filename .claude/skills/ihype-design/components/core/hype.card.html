@@ -1,0 +1,29 @@
+<!-- @dsCard group="Components" viewport="700x160" name="HypeButton" subtitle="The namesake mechanic — flame toggle, live count, pop + ring animation" -->
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0;background:#0a0805;font-family:'DM Sans',sans-serif;padding:18px}.row{display:flex;gap:12px;align-items:center;margin-bottom:12px}.lbl{color:#5a5048;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;width:90px;flex-shrink:0}</style>
+</head><body>
+<div id="root"></div>
+<script type="text/babel">
+const { HypeButton } = window.IHYPEDesignSystem_99d6e8;
+function Demo() {
+  const [a1, setA1] = React.useState(false);
+  const [c1, setC1] = React.useState(4821);
+  const [a2, setA2] = React.useState(true);
+  const [c2, setC2] = React.useState(198);
+  return <div>
+    <div className="row"><span className="lbl">Inactive</span><HypeButton active={a1} count={c1.toLocaleString()} onToggle={() => { setA1(v=>!v); setC1(c=>c+(a1?-1:1)); }} /></div>
+    <div className="row"><span className="lbl">Active</span><HypeButton active={a2} count={c2.toLocaleString()} onToggle={() => { setA2(v=>!v); setC2(c=>c+(a2?-1:1)); }} /></div>
+    <div className="row"><span className="lbl">Sizes</span><HypeButton size="sm" active count="47" onToggle={()=>{}} /><HypeButton size="md" active count="1,204" onToggle={()=>{}} /><HypeButton size="lg" active count="9,834" onToggle={()=>{}} /></div>
+    <div className="row"><span className="lbl">Momentum</span><HypeButton active count="1,977" trend="▲ 340/hr" onToggle={()=>{}} /></div>
+    <div className="row"><span className="lbl">Disabled</span><HypeButton active={false} count="640" disabled disabledReason="0 hypes left — resets Monday" onToggle={()=>{}} /></div>
+    <div className="row"><span className="lbl">Role color</span><HypeButton active count="88" roleColor="#22e5d4" onToggle={()=>{}} /></div>
+  </div>;
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script>
+</body></html>

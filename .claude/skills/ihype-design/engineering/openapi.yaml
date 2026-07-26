@@ -3,7 +3,7 @@ info:
   title: iHYPE API
   version: 0.1.0-beta
   description: >
-    iHYPE backend contract. Test-mode end-to-end; payout paths gated on nonprofit → banking.
+    iHYPE backend contract. LIVE — 501(c)(3) certified, real Stripe charges and Connect payouts.
     See BACKEND_SPEC.md and schema.sql. Auth: bearer JWT from magic-link.
 servers:
   - url: https://api.ihype.app/v1
@@ -18,7 +18,7 @@ tags:
   - name: studio
   - name: live
   - name: ops
-  - name: payouts  # banking-gated
+  - name: payouts
 
 paths:
   /auth/magic-link:
@@ -87,7 +87,7 @@ paths:
   /tickets:
     post:
       tags: [ticketing]
-      summary: Buy a ticket (⚠ real charge banking-gated; test-mode now)
+      summary: Buy a ticket — real Stripe charge, live
       requestBody: { content: { application/json: { schema: { type: object, properties: { event_id: { type: string }, referral_code: { type: string, nullable: true } }, required: [event_id] } } } }
       responses: { "201": { description: Ticket issued }, "402": { description: Payment required } }
   /me/tickets:
@@ -168,11 +168,11 @@ paths:
       responses: { "204": { description: Recorded } }
 
   /payout-accounts/onboard:
-    post: { tags: [payouts], summary: "⚠ Stripe Connect onboarding URL (banking-gated)", responses: { "200": { description: "{ url }" } } }
+    post: { tags: [payouts], summary: "Stripe Connect Express onboarding URL — live", responses: { "200": { description: "{ url }" } } }
   /me/balance:
-    get: { tags: [payouts], summary: "⚠ Available + pending (banking-gated)", responses: { "200": { description: "{ available, pending }" } } }
+    get: { tags: [payouts], summary: "Available + pending", responses: { "200": { description: "{ available, pending }" } } }
   /payouts:
-    post: { tags: [payouts], summary: "⚠ Request payout (banking-gated)", responses: { "202": { description: Requested } } }
+    post: { tags: [payouts], summary: "Manual payout trigger (admin) — normal payouts release automatically via the settlement cron on show-end", responses: { "202": { description: Requested } } }
 
 components:
   securitySchemes:

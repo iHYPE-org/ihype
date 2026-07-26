@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<!-- @template name="iHYPE Verification" description="/verify — applicant proof-of-identity submission for Artist/DJ/Venue accounts. Distinct from admin review queue." -->
+<helmet>
+  <script src="./ds-base.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}body{background:radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}a{color:inherit;text-decoration:none}
+  .vf-input{display:block;width:100%;margin-top:7px;background:#0a0805;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:13px 14px;color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:.92rem;outline:none}
+  .vf-label{display:block;font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:#9e9080;margin-bottom:16px}
+  .vf-drop{border:1.5px dashed rgba(255,255,255,.16);border-radius:12px;padding:22px;text-align:center;color:#9e9080;font-size:.84rem;cursor:pointer}</style>
+</helmet>
+
+<div style="max-width:560px;margin:0 auto;padding:50px 24px 100px">
+  <div style="display:flex;align-items:center;gap:6px;margin-bottom:36px">
+    <sc-if value="{{ n1done }}"><div style="width:34px;height:34px;border-radius:50%;background:#22e5d4;color:#0a0805;display:grid;place-items:center;font-weight:800;flex-shrink:0">✓</div></sc-if>
+    <sc-if value="{{ n1active }}"><div style="width:34px;height:34px;border-radius:50%;background:#ff5029;color:#fff;display:grid;place-items:center;font-family:'Syne',sans-serif;font-weight:800;flex-shrink:0;box-shadow:0 0 0 4px rgba(255,80,41,.18)">1</div></sc-if>
+    <div style="flex:1;height:2px;background:rgba(255,255,255,.12)"></div>
+    <sc-if value="{{ n2done }}"><div style="width:34px;height:34px;border-radius:50%;background:#22e5d4;color:#0a0805;display:grid;place-items:center;font-weight:800;flex-shrink:0">✓</div></sc-if>
+    <sc-if value="{{ n2active }}"><div style="width:34px;height:34px;border-radius:50%;background:#ffb84a;color:#0a0805;display:grid;place-items:center;font-family:'Syne',sans-serif;font-weight:800;flex-shrink:0;box-shadow:0 0 0 4px rgba(255,184,74,.18)">2</div></sc-if>
+    <sc-if value="{{ n2idle }}"><div style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.06);color:#5a5048;display:grid;place-items:center;font-family:'Syne',sans-serif;font-weight:800;flex-shrink:0">2</div></sc-if>
+    <div style="flex:1;height:2px;background:rgba(255,255,255,.12)"></div>
+    <sc-if value="{{ n3active }}"><div style="width:34px;height:34px;border-radius:50%;background:#22e5d4;color:#0a0805;display:grid;place-items:center;font-weight:800;flex-shrink:0;box-shadow:0 0 0 4px rgba(34,229,212,.18)">✓</div></sc-if>
+    <sc-if value="{{ n3idle }}"><div style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.06);color:#5a5048;display:grid;place-items:center;font-family:'Syne',sans-serif;font-weight:800;flex-shrink:0">3</div></sc-if>
+  </div>
+  <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:#5a5048;margin:-28px 0 34px"><span>Submit</span><span>Review · ~48h</span><span>Verified</span></div>
+
+  <sc-if value="{{ isForm }}" hint-placeholder-val="{{ true }}">
+    <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.7rem,5vw,2.2rem);letter-spacing:-.03em;margin-bottom:8px">Confirm it's really you.</h1>
+    <p style="font-size:.9rem;color:#9e9080;line-height:1.7;margin-bottom:24px">Fan accounts are instant — Artist, DJ, and Venue accounts get a quick human review that protects the 70/20/10 ecosystem.</p>
+
+    <div style="display:flex;gap:8px;margin-bottom:24px">
+      <sc-if value="{{ isArtist }}"><span style="padding:6px 14px;border-radius:999px;background:rgba(255,80,41,.15);color:#ff5029;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em">Artist</span></sc-if>
+      <sc-if value="{{ isDj }}"><span style="padding:6px 14px;border-radius:999px;background:rgba(255,62,154,.15);color:#ff3e9a;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em">DJ</span></sc-if>
+      <sc-if value="{{ isVenue }}"><span style="padding:6px 14px;border-radius:999px;background:rgba(34,229,212,.15);color:#22e5d4;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em">Venue</span></sc-if>
+    </div>
+
+    <div style="background:rgba(255,255,255,.04);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.16);border-radius:18px;padding:28px">
+      <label class="vf-label">Legal name<input class="vf-input" placeholder="As it appears on your ID"></input></label>
+      <label class="vf-label">Link to your catalog or venue page<input class="vf-input" placeholder="Spotify, Bandcamp, Instagram, venue website…"></input></label>
+      <div class="vf-label">Proof of identity</div>
+      <div class="vf-drop" style="margin-bottom:16px">📎 Drop a government ID or business license here, or tap to upload</div>
+      <label class="vf-label">Anything else we should know?<textarea class="vf-input" placeholder="Optional — press kit, prior show history, label contact…" rows="3"></textarea></label>
+      <p style="font-size:.78rem;color:#5a5048;line-height:1.6;margin-bottom:16px">Your document is reviewed by a human, used only to confirm identity, and never shown publicly. This form does not affect your listening or ticket-buying access.</p>
+      <button onClick="{{ submit }}" style="width:100%;font-family:'Syne',sans-serif;font-weight:800;font-size:.94rem;background:#ff5029;color:#fff;border:none;padding:14px;border-radius:999px;cursor:pointer">Submit for review →</button>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isPending }}" hint-placeholder-val="{{ false }}">
+    <div style="text-align:center;padding:60px 0">
+      <div style="width:64px;height:64px;border-radius:50%;background:rgba(255,184,74,.12);border:1px solid rgba(255,184,74,.35);display:grid;place-items:center;margin:0 auto 20px;font-size:1.5rem;color:#ffb84a">⏳</div>
+      <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;letter-spacing:-.02em;margin-bottom:10px">Submitted — under review</h1>
+      <p style="font-size:.9rem;color:#9e9080;line-height:1.7;max-width:40ch;margin:0 auto">A human reviews every request. This usually takes under 48 hours — we'll email you the moment it's decided. Your account works normally in the meantime, just without the verified badge.</p>
+      <button onClick="{{ reset }}" style="margin-top:24px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.85rem;background:transparent;color:#9e9080;border:1px solid rgba(255,255,255,.14);padding:10px 20px;border-radius:999px;cursor:pointer">Edit submission</button>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isApproved }}" hint-placeholder-val="{{ false }}">
+    <div style="text-align:center;padding:60px 0">
+      <div style="width:64px;height:64px;border-radius:50%;background:rgba(34,229,212,.12);border:1px solid rgba(34,229,212,.35);display:grid;place-items:center;margin:0 auto 20px;font-size:1.5rem;color:#22e5d4">✓</div>
+      <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;letter-spacing:-.02em;margin-bottom:10px">You're verified.</h1>
+      <p style="font-size:.9rem;color:#9e9080;line-height:1.7;max-width:40ch;margin:0 auto">Your profile now shows the ✓ Verified badge. Publish a show any time — your charter split activates the moment tickets go on sale.</p>
+      <a href="#" style="display:inline-block;margin-top:24px;font-family:'Syne',sans-serif;font-weight:800;font-size:.9rem;background:#ff5029;color:#fff;padding:12px 26px;border-radius:999px">Go to your page →</a>
+    </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;640px&quot;,&quot;height&quot;:&quot;780px&quot;},&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;artist&quot;,&quot;tsType&quot;:&quot;'artist'|'dj'|'venue'&quot;,&quot;options&quot;:[&quot;artist&quot;,&quot;dj&quot;,&quot;venue&quot;],&quot;section&quot;:&quot;Role&quot;}}">
+class Component extends DCLogic {
+  state = { status: 'form' };
+  renderVals() {
+    const role = this.props.role ?? 'artist';
+    const { status } = this.state;
+    return {
+      isArtist: role === 'artist', isDj: role === 'dj', isVenue: role === 'venue',
+      isForm: status === 'form', isPending: status === 'pending', isApproved: status === 'approved',
+      n1done: status !== 'form', n1active: status === 'form',
+      n2done: status === 'approved', n2active: status === 'pending', n2idle: status === 'form',
+      n3active: status === 'approved', n3idle: status !== 'approved',
+      submit: () => this.setState({ status: 'pending' }),
+      reset: () => this.setState({ status: 'form' }),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

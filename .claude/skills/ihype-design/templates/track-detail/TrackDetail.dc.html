@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<!-- @template name="iHYPE Track Detail" description="Public track detail page — /tracks/[hexId], play, hype, credits" -->
+<helmet>
+  <script src="./ds-base.js"></script>
+<script src="../../lib/i18n.js"></script>
+<script src="../../lib/theme.js"></script>
+<script src="../../lib/theme-toggle.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>html,body{margin:0;background:radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),var(--bg-base)}*{box-sizing:border-box}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--bg-base);color:var(--ink-1);font-family:'DM Sans',sans-serif;padding:44px 24px 100px;max-width:640px;margin:0 auto">
+  <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:18px">iH/{{ hexId }}</div>
+  <div style="border-radius:24px;overflow:hidden;aspect-ratio:1;background:linear-gradient(135deg,var(--accent),var(--accent)55 55%,#1a1612);position:relative;margin-bottom:22px">
+    <div style="position:absolute;inset:0;background:radial-gradient(circle at 30% 25%,rgba(var(--surface-tint-rgb),.2),transparent 55%)"></div>
+    <div style="position:absolute;left:24px;bottom:24px;font-family:'Syne',sans-serif;font-weight:800;font-size:32px;color:rgba(var(--surface-tint-rgb),.95);text-shadow:0 2px 12px rgba(0,0,0,.5)">{{ title }}</div>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+    <div><h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;letter-spacing:-.02em;margin:0">{{ title }}</h1><div style="font-size:14px;color:var(--ink-2);margin-top:5px">{{ artist }} · {{ releaseDate }}</div></div>
+<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.HypeButton" active="{{ hyped }}" count="{{ hypeCount }}" trend="{{ hypeTrend }}" on-toggle="{{ toggleHype }}" size="lg" hint-size="90,44"></x-import>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:16px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:16px;padding:16px 18px;margin-bottom:24px">
+    <button onClick="{{ togglePlay }}" style="width:52px;height:52px;border-radius:50%;background:var(--ink-1);color:var(--bg-base);border:none;flex-shrink:0;font-size:18px;cursor:pointer">{{ playIcon }}</button>
+    <div style="flex:1">
+      <div style="height:5px;border-radius:3px;background:rgba(var(--surface-tint-rgb),.1)"><div style="width:42%;height:100%;background:var(--accent);border-radius:3px"></div></div>
+      <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-3);margin-top:8px"><span>{{ elapsed }}</span><span>{{ duration }}</span></div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px;margin-bottom:28px">
+    <div style="flex:1;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:12px;padding:14px;text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:var(--role-venue)">{{ plays }}</div><div data-i18n="tdPlaysLabel" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);margin-top:4px">Plays</div></div>
+    <div style="flex:1;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:12px;padding:14px;text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:var(--role-fan)">{{ chartRank }}</div><div data-i18n="tdChartsRank" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);margin-top:4px">Charts rank</div></div>
+    <div style="flex:1;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:12px;padding:14px;text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:var(--role-dj)">{{ genre }}</div><div data-i18n="tdGenreLabel" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);margin-top:4px">Genre</div></div>
+  </div>
+
+  <div style="background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:12px;padding:16px 18px;margin-bottom:28px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+      <span data-i18n="tdPlayHeatLabel" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)">Play heat — last 7 days</span>
+      <span data-i18n="tdCharting" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#ff1f3d">🔥 Charting</span>
+    </div>
+    <div style="display:flex;align-items:flex-end;gap:4px;height:28px" role="img" aria-label="Play activity over the last 7 days, trending up">
+      <sc-for list="{{ playHeat }}" as="bar" hint-placeholder-count="7">
+        <sc-if value="{{ bar.isCold }}"><div style="flex:1;height:25%;border-radius:2px;background:var(--heat-cold,#3a4a5a)"></div></sc-if>
+        <sc-if value="{{ bar.isWarm }}"><div style="flex:1;height:45%;border-radius:2px;background:var(--heat-warm,#ffb84a)"></div></sc-if>
+        <sc-if value="{{ bar.isHot }}"><div style="flex:1;height:70%;border-radius:2px;background:var(--heat-hot,var(--accent))"></div></sc-if>
+        <sc-if value="{{ bar.isFire }}"><div style="flex:1;height:100%;border-radius:2px;background:var(--heat-fire,#ff1f3d)"></div></sc-if>
+      </sc-for>
+    </div>
+  </div>
+
+  <h2 data-i18n="tdCredits" style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;margin:0 0 12px">Credits</h2>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:28px">
+    <sc-for list="{{ credits }}" as="c" hint-placeholder-count="4">
+      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(var(--surface-tint-rgb),.13);font-size:13px"><span style="color:var(--ink-2)">{{ c.role }}</span><span style="color:var(--ink-1)">{{ c.name }}</span></div>
+    </sc-for>
+  </div>
+
+  <div style="border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:12px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);padding:14px 16px">
+    <sc-if value="{{ radioEligible }}" hint-placeholder-val="{{ true }}">
+      <div data-i18n="tdRadioEligible" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:4px">Radio-eligible</div>
+      <p data-i18n="tdRadioEligibleBody" style="font-size:12.5px;color:var(--ink-2);line-height:1.6;margin:0">The artist opted this track into DJ crates and radio play. No sync licensing required for on-platform spins.</p>
+    </sc-if>
+    <sc-if value="{{ notRadioEligible }}" hint-placeholder-val="{{ false }}">
+      <div data-i18n="tdNotRadioEligible" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#ffb84a;margin-bottom:4px">Not in radio shows</div>
+      <p data-i18n="tdNotRadioEligibleBody" style="font-size:12.5px;color:var(--ink-2);line-height:1.6;margin:0">The artist has opted this track out of DJ crates and radio play for now. It won't appear in any show's crate.</p>
+    </sc-if>
+  </div>
+</div>
+<script>function tdApplyI18n(){if(!window.ihypeT)return;document.querySelectorAll('[data-i18n]').forEach(function(el){el.innerHTML=window.ihypeT(el.getAttribute('data-i18n'))})}document.addEventListener('DOMContentLoaded',tdApplyI18n);window.addEventListener('ihype-i18n-change',tdApplyI18n);if(window.ihypeT)tdApplyI18n();</script>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { hyped: false, playing: false };
+  renderVals() {
+    const { hyped, playing } = this.state;
+    return {
+      hexId: 'A82F91', title: 'Sundown', artist: 'Nyla', releaseDate: 'Jun 2026',
+      radioEligible: true, notRadioEligible: false,
+      hyped, notHyped: !hyped,
+      hypeCount: (9834 + (hyped ? 1 : 0)).toLocaleString(),
+      hypeTrend: '▲ 214/hr',
+      toggleHype: () => this.setState(s => ({ hyped: !s.hyped })),
+      playIcon: playing ? '❚❚' : '▶',
+      togglePlay: () => this.setState(s => ({ playing: !s.playing })),
+      elapsed: '1:32', duration: '3:38',
+      plays: '48.2k', chartRank: '#1', genre: 'Dream-pop',
+      playHeat: [3, 4, 5, 6, 7, 8, 9].map(v => ({
+        isCold: v < 3, isWarm: v >= 3 && v < 6, isHot: v >= 6 && v < 8, isFire: v >= 8,
+      })),
+      credits: [
+        { role: 'Artist', name: 'Nyla' },
+        { role: 'Producer', name: 'Reina Solís' },
+        { role: 'Mixed by', name: 'Verb Collective' },
+        { role: 'Label', name: 'Independent' },
+      ],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

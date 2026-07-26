@@ -19,7 +19,7 @@ function SheetHead({ title, sub, onClose }) {
         <div style={{ fontFamily:'var(--f-d)', fontWeight:800, fontSize:'1.1rem' }}>{title}</div>
         {sub && <div style={{ fontFamily:'var(--f-m)', fontSize:'.72rem', color:'var(--ink-3)', marginTop:2 }}>{sub}</div>}
       </div>
-      <button onClick={onClose} style={{ background:'none', border:'none', color:'var(--ink-3)', cursor:'pointer', fontSize:22, lineHeight:1, padding:'0 2px' }}>×</button>
+      <button onClick={onClose} aria-label="Close" style={{ background:'none', border:'none', color:'var(--ink-3)', cursor:'pointer', fontSize:22, lineHeight:1, padding:'0 2px' }}>×</button>
     </div>
   );
 }
@@ -67,7 +67,7 @@ function LiveShowOverlay({ event, onClose }) {
         <div style={{ flex:1 }} />
         <div style={{ display:'flex', alignItems:'center', gap:6, padding:'5px 12px', borderRadius:999, background:'rgba(255,80,41,.12)', border:'1px solid rgba(255,80,41,.3)' }}>
           <span style={{ width:7, height:7, borderRadius:'50%', background:'#ff5029', display:'inline-block', boxShadow:'0 0 8px #ff5029', animation:'blink 1s step-end infinite' }} />
-          <span style={{ fontFamily:'var(--f-m)', fontSize:'.68rem', letterSpacing:'.12em', textTransform:'uppercase', color:'#ff5029' }}>Live</span>
+          <span style={{ fontFamily:'var(--f-m)', fontSize:'.68rem', letterSpacing:'.12em', textTransform:'uppercase', color:'#ff5029' }}>{window.ihypeT ? window.ihypeT('liveNowLabel') : "Live"}</span>
         </div>
       </div>
 
@@ -81,7 +81,7 @@ function LiveShowOverlay({ event, onClose }) {
         {/* Listener count */}
         <div style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 14px', borderRadius:999, background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.1)' }}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          <span style={{ fontFamily:'var(--f-m)', fontSize:'.78rem', color:'var(--ink-2)' }}>{count.toLocaleString()} listening</span>
+          <span style={{ fontFamily:'var(--f-m)', fontSize:'.78rem', color:'var(--ink-2)' }}>{count.toLocaleString()} {window.ihypeT ? window.ihypeT('listeningCount') : "listening"}</span>
         </div>
       </div>
 
@@ -95,7 +95,7 @@ function LiveShowOverlay({ event, onClose }) {
       {/* Hype button */}
       <div style={{ padding:'0 1.5rem 2rem', flexShrink:0 }}>
         <button onClick={doHype} style={{ width:'100%', padding:'16px', borderRadius:999, background:hyped?'rgba(255,80,41,.15)':'linear-gradient(90deg,#ff5029,#ff3e9a)', color:hyped?'#ff5029':'#fff', border:hyped?'1px solid rgba(255,80,41,.35)':'none', fontFamily:'var(--f-d)', fontWeight:800, fontSize:'1.1rem', cursor:'pointer', letterSpacing:'.02em', boxShadow:hyped?'none':'0 4px 28px rgba(255,80,41,.4)', transition:'all .3s' }}>
-          {hyped ? '🔥 Hyped!' : '🔥 Hype Now'}
+          {hyped ? (window.ihypeT ? window.ihypeT('hypedBtn') : '🔥 Hyped!') : (window.ihypeT ? window.ihypeT('hypeNowBtn') : '🔥 Hype Now')}
         </button>
       </div>
 
@@ -132,8 +132,8 @@ function GlobalSearch({ open, onClose }) {
         <button onClick={onClose} style={{ background:'none', border:'none', color:'var(--ink-3)', cursor:'pointer', fontSize:22, padding:0, lineHeight:1 }}>←</button>
         <div style={{ flex:1, display:'flex', alignItems:'center', gap:8, background:'rgba(255,255,255,.07)', borderRadius:12, padding:'9px 12px', border:'1px solid var(--line)' }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input autoFocus value={q} onChange={e=>setQ(e.target.value)} placeholder="Artists, events, tracks…" style={{ flex:1, background:'none', border:'none', outline:'none', color:'var(--ink)', fontFamily:'var(--f-b)', fontSize:'.9rem' }} />
-          {q && <button onClick={()=>setQ('')} style={{ background:'none', border:'none', color:'var(--ink-3)', cursor:'pointer', fontSize:16, padding:0, lineHeight:1 }}>×</button>}
+          <input autoFocus value={q} onChange={e=>setQ(e.target.value)} placeholder={window.ihypeT ? window.ihypeT('searchPlaceholder2') : 'Artists, events, tracks…'} style={{ flex:1, background:'none', border:'none', outline:'none', color:'var(--ink)', fontFamily:'var(--f-b)', fontSize:'.9rem' }} />
+          {q && <button onClick={()=>setQ('')} aria-label="Clear search" style={{ background:'none', border:'none', color:'var(--ink-3)', cursor:'pointer', fontSize:16, padding:0, lineHeight:1 }}>×</button>}
         </div>
       </div>
 
@@ -142,8 +142,8 @@ function GlobalSearch({ open, onClose }) {
         {!q && history.length > 0 && (
           <div style={{ marginBottom:20 }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
-              <div style={{ fontFamily:'var(--f-m)', fontSize:'.65rem', letterSpacing:'.1em', textTransform:'uppercase', color:'var(--ink-3)' }}>Recent</div>
-              <button onClick={clear} style={{ background:'none', border:'none', color:'rgba(255,80,41,.5)', fontFamily:'var(--f-m)', fontSize:'.7rem', cursor:'pointer' }}>Clear</button>
+              <div style={{ fontFamily:'var(--f-m)', fontSize:'.65rem', letterSpacing:'.1em', textTransform:'uppercase', color:'var(--ink-3)' }}>{window.ihypeT ? window.ihypeT('recent') : "Recent"}</div>
+              <button onClick={clear} style={{ background:'none', border:'none', color:'rgba(255,80,41,.5)', fontFamily:'var(--f-m)', fontSize:'.7rem', cursor:'pointer' }}>{window.ihypeT ? window.ihypeT('clear') : "Clear"}</button>
             </div>
             {history.map(h => (
               <button key={h} onClick={()=>setQ(h)} style={{ display:'flex', alignItems:'center', gap:10, width:'100%', padding:'8px 0', background:'none', border:'none', borderBottom:'1px solid var(--line)', color:'var(--ink)', cursor:'pointer', textAlign:'left' }}>
@@ -157,7 +157,7 @@ function GlobalSearch({ open, onClose }) {
         {/* Trending (shown when no query) */}
         {!q && (
           <div>
-            <div style={{ fontFamily:'var(--f-m)', fontSize:'.65rem', letterSpacing:'.1em', textTransform:'uppercase', color:'var(--ink-3)', marginBottom:10 }}>Trending</div>
+            <div style={{ fontFamily:'var(--f-m)', fontSize:'.65rem', letterSpacing:'.1em', textTransform:'uppercase', color:'var(--ink-3)', marginBottom:10 }}>{window.ihypeT ? window.ihypeT('trending') : "Trending"}</div>
             <div style={{ display:'flex', flexWrap:'wrap', gap:7 }}>
               {['dream-pop','lo-fi','midnight echo','shoegaze','dj caro','electronic'].map(t => (
                 <button key={t} onClick={()=>setQ(t)} style={{ padding:'6px 13px', borderRadius:999, border:'1px solid var(--line)', background:'var(--bg-3)', color:'var(--ink-2)', fontFamily:'var(--f-m)', fontSize:'.78rem', cursor:'pointer' }}>{t}</button>
@@ -198,11 +198,11 @@ function EarningsSheet({ open, onClose, onPayout }) {
   const pending = EARNING_EVENTS.filter(e=>e.status==='pending').reduce((a,e)=>a+e.sold*e.price*e.cut,0);
   return (
     <Sheet open={open} onClose={onClose} maxH="90%">
-      <SheetHead title="Promoter Earnings" sub="Your referral payout history" onClose={onClose} />
+      <SheetHead title={window.ihypeT ? window.ihypeT('promoterEarnings') : 'Promoter Earnings'} sub={window.ihypeT ? window.ihypeT('referralHistory') : 'Your referral payout history'} onClose={onClose} />
       <div style={{ padding:'14px 18px 28px', display:'flex', flexDirection:'column', gap:14 }}>
         {/* Summary cards */}
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
-          {[['$'+cleared.toFixed(2),'Available','#22e5d4'],['$'+pending.toFixed(2),'Pending','#ffb84a']].map(([v,l,c])=>(
+          {[['$'+cleared.toFixed(2),(window.ihypeT ? window.ihypeT('available') : 'Available'),'#22e5d4'],['$'+pending.toFixed(2),(window.ihypeT ? window.ihypeT('pending') : 'Pending'),'#ffb84a']].map(([v,l,c])=>(
             <div key={l} style={{ padding:'14px', borderRadius:16, background:`${c}11`, border:`1px solid ${c}33`, textAlign:'center' }}>
               <div style={{ fontFamily:'var(--f-d)', fontWeight:900, fontSize:'1.5rem', color:c }}>{v}</div>
               <div style={{ fontFamily:'var(--f-m)', fontSize:'.65rem', letterSpacing:'.1em', textTransform:'uppercase', color:c, marginTop:4, opacity:.8 }}>{l}</div>
@@ -211,10 +211,10 @@ function EarningsSheet({ open, onClose, onPayout }) {
         </div>
         {/* Referral rate info */}
         <div style={{ padding:'10px 14px', borderRadius:12, background:'rgba(185,131,255,.07)', border:'1px solid rgba(185,131,255,.15)', fontFamily:'var(--f-b)', fontSize:'.78rem', color:'rgba(185,131,255,.85)', lineHeight:1.6 }}>
-          Earn up to <strong style={{ color:'#b983ff' }}>10% per ticket</strong> you refer. Rate scales with your share of the total gate — the more you drive, the more you earn.
+          {window.ihypeT ? window.ihypeT('earnUpTo') : "Earn up to"} <strong style={{ color:'#b983ff' }}>10%</strong> {window.ihypeT ? window.ihypeT('perTicketReferred') : "per ticket you refer. Rate scales with your share of the total gate — the more you drive, the more you earn."}
         </div>
         {/* Per-event breakdown */}
-        <div style={{ fontFamily:'var(--f-m)', fontSize:'.65rem', letterSpacing:'.1em', textTransform:'uppercase', color:'var(--ink-3)' }}>Breakdown</div>
+        <div style={{ fontFamily:'var(--f-m)', fontSize:'.65rem', letterSpacing:'.1em', textTransform:'uppercase', color:'var(--ink-3)' }}>{window.ihypeT ? window.ihypeT('breakdown') : "Breakdown"}</div>
         {EARNING_EVENTS.map((e,i)=>{
           const amt = (e.sold*e.price*e.cut).toFixed(2);
           const pct = Math.round(e.cut*100);
@@ -232,7 +232,7 @@ function EarningsSheet({ open, onClose, onPayout }) {
           );
         })}
         <button onClick={onPayout} disabled={cleared<1} style={{ width:'100%', padding:'13px', borderRadius:999, background:cleared>=1?'linear-gradient(90deg,#22e5d4,#5b8cff)':'var(--bg-3)', color:cleared>=1?'#000':'var(--ink-3)', border:'none', fontFamily:'var(--f-d)', fontWeight:800, fontSize:'.95rem', cursor:cleared>=1?'pointer':'default' }}>
-          Request Payout → ${cleared.toFixed(2)}
+          {window.ihypeT ? window.ihypeT('requestPayoutAmt') : 'Request Payout →'} ${cleared.toFixed(2)}
         </button>
       </div>
     </Sheet>
@@ -251,11 +251,11 @@ function PayoutSheet({ open, onClose, amount, onToast }) {
   const reset = () => { setStep(0); setMethod(null); onClose(); };
   return (
     <Sheet open={open} onClose={reset} maxH="75%">
-      <SheetHead title={step===2?'Payout Sent!':'Request Payout'} sub={step===2?undefined:`$${(amount||0).toFixed(2)} available`} onClose={reset} />
+      <SheetHead title={step===2?(window.ihypeT ? window.ihypeT('payoutSent') : 'Payout Sent!'):(window.ihypeT ? window.ihypeT('requestPayout') : 'Request Payout')} sub={step===2?undefined:`$${(amount||0).toFixed(2)} ${window.ihypeT ? window.ihypeT('availableAmt') : 'available'}`} onClose={reset} />
       <div style={{ padding:'14px 18px 32px' }}>
         {step===0 && (
           <>
-            <div style={{ fontFamily:'var(--f-m)', fontSize:'.72rem', color:'var(--ink-3)', marginBottom:14 }}>Choose payout method</div>
+            <div style={{ fontFamily:'var(--f-m)', fontSize:'.72rem', color:'var(--ink-3)', marginBottom:14 }}>{window.ihypeT ? window.ihypeT('chooseMethodSub') : "Choose payout method"}</div>
             {methods.map(m=>(
               <button key={m.id} onClick={()=>{ setMethod(m); setStep(1); }} style={{ display:'flex', alignItems:'center', gap:12, width:'100%', padding:'12px', borderRadius:14, border:`1px solid ${method?.id===m.id?'var(--accent)':'var(--line)'}`, background:'var(--bg-3)', marginBottom:8, cursor:'pointer', textAlign:'left' }}>
                 <span style={{ fontSize:24, flexShrink:0 }}>{m.icon}</span>
@@ -275,16 +275,16 @@ function PayoutSheet({ open, onClose, amount, onToast }) {
               <div style={{ fontFamily:'var(--f-m)', fontSize:'.78rem', color:'var(--ink-3)' }}>via {method.label} · {method.time}</div>
             </div>
             <button onClick={()=>{ setStep(2); onToast && onToast('Payout requested ✓'); navigator.vibrate && navigator.vibrate([20,10,20]); setTimeout(reset, 2200); }} style={{ width:'100%', padding:'13px', borderRadius:999, background:'linear-gradient(90deg,#22e5d4,#5b8cff)', color:'#000', border:'none', fontFamily:'var(--f-d)', fontWeight:800, fontSize:'.95rem', cursor:'pointer' }}>
-              Confirm Payout
+              {window.ihypeT ? window.ihypeT('confirmPayout') : "Confirm Payout"}
             </button>
-            <button onClick={()=>setStep(0)} style={{ width:'100%', padding:'10px', borderRadius:999, border:'1px solid var(--line)', background:'transparent', color:'var(--ink-3)', fontFamily:'var(--f-m)', fontSize:'.82rem', cursor:'pointer' }}>← Back</button>
+            <button onClick={()=>setStep(0)} style={{ width:'100%', padding:'10px', borderRadius:999, border:'1px solid var(--line)', background:'transparent', color:'var(--ink-3)', fontFamily:'var(--f-m)', fontSize:'.82rem', cursor:'pointer' }}>{window.ihypeT ? window.ihypeT('backWord') : "← Back"}</button>
           </div>
         )}
         {step===2 && (
           <div style={{ textAlign:'center', padding:'2rem 0' }}>
             <div style={{ fontSize:56, marginBottom:12 }}>✅</div>
-            <div style={{ fontFamily:'var(--f-d)', fontWeight:800, fontSize:'1.1rem', marginBottom:6 }}>Payout requested!</div>
-            <div style={{ fontFamily:'var(--f-b)', fontSize:'.82rem', color:'var(--ink-3)', lineHeight:1.6 }}>Arrives {method?.time?.toLowerCase()} via {method?.label}.</div>
+            <div style={{ fontFamily:'var(--f-d)', fontWeight:800, fontSize:'1.1rem', marginBottom:6 }}>{window.ihypeT ? window.ihypeT('payoutRequested') : 'Payout requested!'}</div>
+            <div style={{ fontFamily:'var(--f-b)', fontSize:'.82rem', color:'var(--ink-3)', lineHeight:1.6 }}>{(window.ihypeT ? window.ihypeT('arrivesVia') : 'Arrives {time} via {method}.').replace('{time}', method?.time?.toLowerCase()).replace('{method}', method?.label)}</div>
           </div>
         )}
       </div>

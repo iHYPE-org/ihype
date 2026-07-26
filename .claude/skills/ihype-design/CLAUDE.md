@@ -1,0 +1,5 @@
+# iHYPE — persistent facts
+
+- **Payments: Stripe only.** Zeffy is dropped. Every ticket purchase incurs a Stripe processing fee — 2.9% + $0.30/transaction (3.5% + $0.30 for Amex). This is charged by Stripe, not by iHYPE.
+- **iHYPE's own fee stays $0.** The 70/20/10 charter split is unaffected — iHYPE still takes nothing from the ticket price itself. Always distinguish "iHYPE fees ($0, locked in charter)" from "payment processing (Stripe, separate)" in any copy or UI that shows fees — never merge them into one number, and never imply iHYPE charges a processing fee.
+- **"Promoter" is not a separate account role.** There is no Promoter signup, verification, or account type — any Fan, Artist, Venue, or DJ can promote just by sharing their HYPE Link/code; when someone buys a ticket through it, the referrer earns a share of the 10% promoter pool. Never add "Promoter" as an option in a role picker (Auth, onboarding flows) or imply it needs verification. Promoter dashboards/settings/analytics screens are views of a fan's built-in promoter activity, not a distinct account.

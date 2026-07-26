@@ -1,0 +1,12 @@
+/* iHYPE Design System — Global Entry Point
+   Import this single file to consume all tokens and base styles.
+   Do NOT add inline rules here — keep this as @import lines only.
+*/
+
+@import './tokens/fonts.css';
+@import './tokens/colors.css';
+@import './tokens/typography.css';
+@import './tokens/spacing.css';
+@import './tokens/base.css';
+@import './tokens/motion.css';
+@import './tokens/breakpoints.css';
