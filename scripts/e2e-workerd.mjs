@@ -1,0 +1,203 @@
+/**
+ * Runs the authenticated Playwright e2e suite (auth.spec.ts, passkey.spec.ts,
+ * etc.) against the REAL Workers runtime (workerd) instead of `next dev`.
+ *
+ * Why this exists: src/lib/db.ts intentionally imports the wasm/workerd-only
+ * Prisma query engine (see the comment at the top of that file — plain
+ * '@prisma/client' silently picks the wrong engine in a real Workers build,
+ * which caused a documented production outage). That engine cannot load
+ * under plain `next dev`. auth()'s jwt callback does a DB read on every
+ * request (not just sign-in), so under `next dev` every authenticated
+ * request 401s — no authenticated e2e test can ever pass there, regardless
+ * of secrets. playwright.config.ts's default webServer (`npm run dev`) is
+ * fine for the always-on public-smoke suite (no auth, no DB reads on the
+ * paths it hits) but cannot support this suite.
+ *
+ * Boot/teardown here deliberately mirrors scripts/workerd-smoke.mjs's
+ * proven approach (stripped wrangler config, WRANGLER_HYPERDRIVE_LOCAL_
+ * CONNECTION_STRING_HYPERDRIVE for local Postgres, boot-then-poll,
+ * SIGTERM-then-SIGKILL process-tree teardown) rather than reinventing it,
+ * since that script already solves the same "boot a real workerd instance
+ * in CI" problem for a different purpose.
+ *
+ * Prerequisites (CI provides these; see .github/workflows/ci.yml):
+ *   - `npm run cf:build` has already produced `.open-next/`, built with
+ *     NEXT_PUBLIC_BASE_URL/NEXT_PUBLIC_APP_URL matching E2E_WORKERD_PORT
+ *     below — NEXT_PUBLIC_* values are inlined into the bundle at build
+ *     time, so a mismatch here breaks anything origin-sensitive (WebAuthn
+ *     registration/auth checks the request origin against this value).
+ *   - E2E_WORKERD_DATABASE_URL points at a Postgres with the schema applied
+ *     (prisma db push) and pg_trgm/citext extensions created.
+ *
+ * Usage: node scripts/e2e-workerd.mjs
+ */
+import { spawn } from 'node:child_process';
+import { readFileSync, writeFileSync, rmSync } from 'node:fs';
+
+const PORT = Number(process.env.E2E_WORKERD_PORT || 8787);
+// Must be 'localhost', not '127.0.0.1': WebAuthn RP IDs (derived from this
+// URL's hostname in src/lib/passkey.ts's getRpInfo()) cannot be raw IP
+// addresses — browsers reject registration with "invalid domain". 'localhost'
+// is the one hostname browsers specifically carve out an exception for.
+const BASE = `http://localhost:${PORT}`;
+const DB_URL = process.env.E2E_WORKERD_DATABASE_URL;
+const AUTH_SECRET = process.env.AUTH_SECRET || 'e2e-workerd-auth-secret-0123456789';
+const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || AUTH_SECRET;
+const BOOT_TIMEOUT_MS = 120_000;
+const SHUTDOWN_TIMEOUT_MS = 5_000;
+const TMP_CONFIG = '.wrangler-e2e-workerd.toml';
+
+if (!DB_URL) {
+  console.error('[e2e-workerd] E2E_WORKERD_DATABASE_URL is required');
+  process.exit(1);
+}
+
+function tomlString(value) {
+  return value.replaceAll('\\', '\\\\').replaceAll('"', '\\"');
+}
+
+function upsertTomlVariable(varsSection, name, value) {
+  const assignment = `${name} = "${tomlString(value)}"`;
+  const pattern = new RegExp(`^${name}\\s*=.*$`, 'm');
+  if (pattern.test(varsSection)) return varsSection.replace(pattern, assignment);
+  return varsSection.replace(/\[vars\]\r?\n/, (m) => `${m}${assignment}\n`);
+}
+
+// Derived from the real wrangler.toml at runtime, same rationale as
+// workerd-smoke.mjs's writeStrippedConfig(): bindings can't drift between
+// two hand-maintained files, minus [build] (would redundantly rerun cf:build
+// on `wrangler dev` startup) and [ai] (remote-only, refuses to start
+// without CLOUDFLARE_API_TOKEN; app call sites already degrade without it).
+function writeStrippedConfig() {
+  const source = readFileSync('wrangler.toml', 'utf8');
+  let stripped = source;
+  for (const section of ['build', 'ai']) {
+    stripped = stripped.replace(new RegExp(`\\r?\\n\\[${section}\\][\\s\\S]*?(?=\\r?\\n\\[|$)`), '\n');
+  }
+
+  const varsPattern = /\r?\n\[vars\]\r?\n[\s\S]*?(?=\r?\n\[|$)/;
+  let varsSection = stripped.match(varsPattern)?.[0];
+  if (!varsSection) {
+    throw new Error('wrangler.toml must contain a [vars] section for e2e-workerd configuration');
+  }
+
+  for (const [name, value] of Object.entries({
+    DATABASE_URL: DB_URL,
+    AUTH_SECRET,
+    NEXTAUTH_SECRET,
+    AUTH_URL: BASE,
+    NEXT_PUBLIC_APP_URL: BASE,
+    NEXT_PUBLIC_BASE_URL: BASE,
+  })) {
+    varsSection = upsertTomlVariable(varsSection, name, value);
+  }
+  stripped = stripped.replace(varsPattern, varsSection);
+
+  writeFileSync(TMP_CONFIG, stripped);
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForBoot(child) {
+  const deadline = Date.now() + BOOT_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    if (child.exitCode !== null) {
+      throw new Error(`wrangler dev exited early with code ${child.exitCode}`);
+    }
+    try {
+      await fetch(`${BASE}/api/health`, { signal: AbortSignal.timeout(2000) });
+      return;
+    } catch {
+      await delay(2000);
+    }
+  }
+  throw new Error(`wrangler dev did not become reachable within ${BOOT_TIMEOUT_MS}ms`);
+}
+
+function signalProcessTree(child, signal) {
+  if (!child.pid || child.exitCode !== null) return;
+  try {
+    if (process.platform !== 'win32') process.kill(-child.pid, signal);
+    else child.kill(signal);
+  } catch (error) {
+    if (error?.code !== 'ESRCH') throw error;
+  }
+}
+
+async function stopProcessTree(child) {
+  if (child.exitCode !== null) return;
+  const exited = new Promise((resolve) => child.once('exit', resolve));
+  signalProcessTree(child, 'SIGTERM');
+  await Promise.race([exited, delay(SHUTDOWN_TIMEOUT_MS)]);
+  if (child.exitCode === null) {
+    signalProcessTree(child, 'SIGKILL');
+    await Promise.race([exited, delay(SHUTDOWN_TIMEOUT_MS)]);
+  }
+  child.unref();
+}
+
+function runPlaywright() {
+  return new Promise((resolve) => {
+    // Runs the whole e2e/ suite (not just the auth-dependent specs) so this
+    // one real-runtime pass also re-covers public-smoke/mobile-shell/
+    // accessibility — cheap, since the instance is already booted, and it
+    // means new specs don't require updating this file to be included.
+    const child = spawn(
+      'npx',
+      ['playwright', 'test', '--project=chromium'],
+      {
+        stdio: 'inherit',
+        env: {
+          ...process.env,
+          PLAYWRIGHT_BASE_URL: BASE,
+          // The built worker always runs with production semantics
+          // (useSecureAuthCookies() in src/lib/auth-cookie.ts checks
+          // NODE_ENV === 'production'), so the session cookie NextAuth
+          // reads/writes is __Secure-authjs.session-token here, unlike the
+          // plain authjs.session-token that `next dev` uses.
+          PLAYWRIGHT_AUTH_COOKIE_SECURE: 'true',
+        },
+      },
+    );
+    child.on('exit', (code) => resolve(code ?? 1));
+  });
+}
+
+async function run() {
+  writeStrippedConfig();
+
+  const child = spawn(
+    'npx.cmd',
+    ['wrangler', 'dev', '--config', TMP_CONFIG, '--port', String(PORT), '--show-interactive-dev-session=false'],
+    {
+      stdio: ['ignore', 'inherit', 'inherit'],
+      detached: process.platform !== 'win32',
+      env: {
+        ...process.env,
+        // See workerd-smoke.mjs for why this specific (deprecated-but-working)
+        // variable name is used instead of the documented CLOUDFLARE_ prefix.
+        WRANGLER_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE: DB_URL,
+        CI: 'true',
+      },
+    },
+  );
+
+  let exitCode = 1;
+  try {
+    await waitForBoot(child);
+    console.log(`[e2e-workerd] Ready on ${BASE}, running authenticated e2e suite...`);
+    exitCode = await runPlaywright();
+  } catch (error) {
+    console.error('[e2e-workerd]', error);
+    exitCode = 1;
+  } finally {
+    await stopProcessTree(child);
+    rmSync(TMP_CONFIG, { force: true });
+  }
+
+  process.exit(exitCode);
+}
+
+run();

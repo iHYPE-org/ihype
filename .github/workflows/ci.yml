@@ -90,12 +90,37 @@ jobs:
       - name: Mandatory public browser smoke
         run: npx playwright test e2e/public-smoke.spec.ts --project=chromium
 
-      - name: Extended authenticated E2E suite
+      - name: Extended authenticated E2E suite (Workerd)
+        # Runs against a real `wrangler dev` (workerd) instance, not `next
+        # dev` — src/lib/db.ts intentionally imports the wasm/workerd-only
+        # Prisma engine (see the comment at the top of that file), which
+        # can't load under plain `next dev`. Any DB read inside auth()'s jwt
+        # callback (which runs on every request, not just sign-in) throws
+        # there, so no authenticated e2e test can ever pass against `npm run
+        # dev` regardless of secrets. See the environment note at the top of
+        # e2e/auth.spec.ts and scripts/e2e-workerd.mjs for the full story —
+        # verified working end to end (real Postgres, real WebAuthn ceremony
+        # via Chromium's CDP virtual authenticator) before this was wired in.
         if: vars.E2E_ENABLED == 'true'
-        run: npm run test:e2e -- --project=chromium
+        timeout-minutes: 15
+        run: |
+          npm run cf:build
+          node scripts/e2e-workerd.mjs
         env:
+          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+          E2E_WORKERD_DATABASE_URL: postgresql://ihype:ihype@localhost:55432/ihype
+          AUTH_SECRET: ci-only-e2e-workerd-secret-0123456789
+          NEXTAUTH_SECRET: ci-only-e2e-workerd-secret-0123456789
+          # Must match scripts/e2e-workerd.mjs's BASE (localhost:8787,
+          # E2E_WORKERD_PORT default) exactly: NEXT_PUBLIC_* values are
+          # inlined into the bundle at `next build` time, not read at
+          # runtime, so a mismatch here breaks anything origin-sensitive —
+          # WebAuthn registration/auth checks the request origin against
+          # this value and rejects a mismatch outright.
+          NEXT_PUBLIC_BASE_URL: http://localhost:8787
+          NEXT_PUBLIC_APP_URL: http://localhost:8787
+          NEXT_PUBLIC_TURNSTILE_SITE_KEY: "1x00000000000000000000AA"
           TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
-          TEST_USER_OTP: ${{ secrets.TEST_USER_OTP }}
           TEST_SESSION_COOKIE: ${{ secrets.TEST_SESSION_COOKIE }}
 
       - name: Cloudflare build

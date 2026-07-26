@@ -19,17 +19,15 @@ import { test, expect } from '@playwright/test';
 // loudly rather than silently passing.
 //
 // Verified: the actual register+sign-in flow this test exercises works
-// correctly end to end against a real `wrangler dev` (workerd) instance.
-// It cannot currently pass against this repo's default `npm run dev`
-// webServer (playwright.config.ts) even with TEST_SESSION_COOKIE supplied —
-// see the environment note at the top of auth.spec.ts (src/lib/db.ts's
-// wasm/workerd-only Prisma engine can't load under plain `next dev`, so
-// auth()'s per-request security-version DB check throws and every
-// authenticated request 401s). That's this test infra's environment gap,
-// not a defect in passkey registration/sign-in itself. Sign-in may land on
-// /welcome instead of /listen for a freshly-registered-passkey account
-// (onboarding-incomplete redirect) — this test only asserts the user is no
-// longer on the login screen, not a specific destination.
+// correctly end to end against a real `wrangler dev` (workerd) instance,
+// including a real WebAuthn ceremony via Chromium's CDP virtual
+// authenticator. Run via `node scripts/e2e-workerd.mjs` (see the
+// environment note at the top of auth.spec.ts) — it cannot pass against
+// this repo's default `npm run dev` webServer, same wasm-engine limitation.
+// Sign-in may land on /welcome instead of /listen for a
+// freshly-registered-passkey account (onboarding-incomplete redirect) —
+// this test only asserts the user is no longer on the login screen, not a
+// specific destination.
 test.describe('Passkey registration and sign-in', () => {
   test('register a passkey in Settings, then sign in with it', async ({ page, context }) => {
     const sessionCookie = process.env.TEST_SESSION_COOKIE;
@@ -52,10 +50,11 @@ test.describe('Passkey registration and sign-in', () => {
     });
 
     await context.addCookies([{
-      name: 'authjs.session-token',
+      name: process.env.PLAYWRIGHT_AUTH_COOKIE_SECURE === 'true' ? '__Secure-authjs.session-token' : 'authjs.session-token',
       value: sessionCookie,
       domain: new URL(process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000').hostname,
       path: '/',
+      secure: process.env.PLAYWRIGHT_AUTH_COOKIE_SECURE === 'true',
     }]);
 
     // 1. Register a new passkey from Settings.
