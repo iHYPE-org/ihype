@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<!-- @template name="iHYPE iOS App" description="Fan-facing iOS prototype — Dynamic Island + SF Pro chrome, Home/Charts/Shows/You tabs with working nav, DJ referral" -->
+<helmet>
+  <script src="./ds-base.js"></script>
+<script src="../../lib/theme.js"></script>
+<script src="../../lib/theme-toggle.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;600&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
+  <style>html,body{margin:0;background:radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),var(--bg-base)}*{box-sizing:border-box}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}</style>
+</helmet>
+
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--bg-base)">
+  <div style="width:390px;height:844px;border-radius:56px;overflow:hidden;background:var(--bg-base);color:var(--ink-1);border:8px solid rgba(116,119,117,0.5);box-shadow:0 30px 80px rgba(0,0,0,0.5),inset 0 0 0 1px rgba(var(--surface-tint-rgb),0.06);display:flex;flex-direction:column;font-family:-apple-system,'SF Pro Text',system-ui,sans-serif;position:relative">
+
+    <div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;flex-shrink:0;position:relative">
+      <span style="font-size:15px;font-weight:600">9:41</span>
+      <div style="position:absolute;left:50%;top:10px;transform:translateX(-50%);width:100px;height:30px;border-radius:20px;background:#000"></div>
+      <div style="display:flex;align-items:center;gap:5px">
+        <svg fill="var(--ink-1)" height="11" viewBox="0 0 15 11" width="15"><rect height="7" rx="1" width="2.5" x="0" y="4"></rect><rect height="8.5" rx="1" width="2.5" x="3.5" y="2.5"></rect><rect height="11" rx="1" width="2.5" x="7" y="0"></rect><rect height="9.5" rx="1" width="2.5" x="10.5" y="1.5"></rect></svg>
+        <svg fill="none" height="11" viewBox="0 0 16 11" width="16"><rect height="10" rx="2.5" stroke="var(--ink-1)" stroke-opacity=".35" width="13" x=".5" y=".5"></rect><rect fill="var(--ink-1)" fill-opacity=".4" height="4" rx=".75" width="1.5" x="14" y="3.5"></rect><rect fill="var(--ink-1)" height="7" rx="1.5" width="9" x="2" y="2"></rect></svg>
+      </div>
+    </div>
+
+    <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+      <div style="flex:1;overflow-y:auto;overflow-x:hidden">
+        <div style="padding:6px 24px 0;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)">From</div>
+            <div style="font-weight:500;font-size:14px;margin-top:2px">Tonight's queue</div>
+          </div>
+          <button style="width:48px;height:48px;border-radius:50%;background:transparent;color:var(--ink-1);border:none;font-size:20px;cursor:pointer">⋯</button>
+        </div>
+        <div style="margin:10px 20px 0;border-radius:28px;overflow:hidden;aspect-ratio:1;position:relative;background:linear-gradient(135deg,var(--accent),var(--accent)77 50%,#1a1612);box-shadow:0 30px 80px rgba(255,80,41,0.27)">
+          <div style="position:absolute;inset:0;background:radial-gradient(circle at 30% 25%,rgba(var(--surface-tint-rgb),.22),transparent 55%)"></div>
+          <div style="position:absolute;inset:0;background:radial-gradient(circle at 75% 80%,rgba(0,0,0,.4),transparent 60%)"></div>
+          <div style="position:absolute;left:20px;bottom:20px;font-family:'Syne',sans-serif;font-weight:800;font-size:36px;color:rgba(var(--surface-tint-rgb),.95);text-shadow:0 2px 12px rgba(0,0,0,.5);letter-spacing:-.02em;line-height:1">SUNDOWN</div>
+        </div>
+        <div style="padding:18px 24px 0;display:flex;align-items:flex-start;gap:12px">
+          <div style="flex:1;min-width:0">
+            <h1 style="font-size:26px;font-weight:600;margin:0;line-height:1;letter-spacing:-.01em">Sundown</h1>
+            <div style="font-size:15px;color:var(--ink-2);margin-top:5px">Maya Reyes</div>
+          </div>
+          <button style="width:48px;height:48px;border-radius:14px;background:rgba(255,80,41,0.22);color:var(--accent);border:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer">
+            <svg fill="var(--accent)" height="22" viewBox="0 0 24 24" width="22"><path d="M12 21s-7-4.5-9.5-9.2C.8 8.2 3 4.5 6.5 4.5c2 0 3.5 1 5.5 3 2-2 3.5-3 5.5-3C21 4.5 23.2 8.2 21.5 11.8 19 16.5 12 21 12 21z"></path></svg>
+          </button>
+        </div>
+        <div style="padding:18px 24px 0">
+          <div style="height:5px;background:rgba(var(--surface-tint-rgb),0.1);border-radius:3px;position:relative">
+            <div style="width:42%;height:100%;background:var(--ink-1);border-radius:3px;position:relative">
+              <div style="position:absolute;right:-7px;top:-5px;width:15px;height:15px;border-radius:50%;background:var(--ink-1);box-shadow:0 0 0 5px rgba(var(--ink-1-rgb),0.18)"></div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-3);margin-top:9px">
+            <span>1:32</span><span style="color:var(--accent);font-weight:600">● HYPE FIRES AT 3:38</span><span>-2:08</span>
+          </div>
+        </div>
+        <div style="padding:16px 24px 0;display:flex;align-items:center;justify-content:space-between">
+          <button style="background:transparent;border:none;color:var(--ink-2);width:48px;height:48px;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M6 18l8.5-6L6 6v12zm9.5 0V6h2v12h-2z"></path></svg></button>
+          <button style="background:transparent;border:none;color:var(--ink-1);width:54px;height:54px;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg fill="currentColor" height="32" viewBox="0 0 24 24" width="32"><path d="M6 4l14 8L6 20z"></path></svg></button>
+          <button style="width:82px;height:82px;border-radius:28px;background:var(--ink-1);color:var(--bg-base);border:none;display:flex;align-items:center;justify-content:center;box-shadow:0 14px 36px rgba(0,0,0,.5);cursor:pointer"><svg fill="currentColor" height="32" viewBox="0 0 24 24" width="32"><rect height="14" rx="1.5" width="4" x="6" y="5"></rect><rect height="14" rx="1.5" width="4" x="14" y="5"></rect></svg></button>
+          <button style="background:transparent;border:none;color:var(--ink-1);width:54px;height:54px;display:flex;align-items:center;justify-content:center;cursor:pointer;transform:scaleX(-1)"><svg fill="currentColor" height="32" viewBox="0 0 24 24" width="32"><path d="M6 4l14 8L6 20z"></path></svg></button>
+          <button style="background:transparent;border:none;color:var(--ink-2);width:48px;height:48px;display:flex;align-items:center;justify-content:center;cursor:pointer;transform:scaleX(-1)"><svg fill="currentColor" height="24" viewBox="0 0 24 24" width="24"><path d="M6 18l8.5-6L6 6v12zm9.5 0V6h2v12h-2z"></path></svg></button>
+        </div>
+        <div style="padding:20px 24px 20px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);margin-bottom:4px">Up Next</div>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(var(--surface-tint-rgb),.13)">
+            <div style="width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,var(--role-fan),#6a3fbf);flex-shrink:0"></div>
+            <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:500">Neon District</div><div style="font-size:11px;color:var(--ink-3);margin-top:2px">Reina Solís · <span style="color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em">● @2:14</span></div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 0">
+            <div style="width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,var(--role-venue),#0a8a7a);flex-shrink:0"></div>
+            <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:500">Dusk Protocol</div><div style="font-size:11px;color:var(--ink-3);margin-top:2px">Verb Collective</div></div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isCharts }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;overflow-y:auto;padding:14px 20px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:4px">HYPE CHARTS</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;letter-spacing:-.02em;margin-bottom:16px">Top tracks · This week</div>
+        <sc-for list="{{ chart }}" as="t" hint-placeholder-count="5">
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(var(--surface-tint-rgb),.13)">
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:rgba(var(--surface-tint-rgb),.18);width:22px;text-align:center">{{ t.rank }}</div>
+            <div style="width:40px;height:40px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,var(--accent),#1a1612)"></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ t.title }}</div>
+              <div style="font-size:11px;color:var(--ink-2);margin-top:2px">{{ t.artist }}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:13px">{{ t.hk }}</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--accent);margin-top:2px">● {{ t.moment }}</div>
+            </div>
+          </div>
+        </sc-for>
+        <div style="margin-top:20px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:10px">HEAT MAP · TOP CITIES</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:8px"><span style="width:78px;flex-shrink:0;font-size:11px;color:var(--ink-2)">Chicago</span><div style="flex:1;height:6px;border-radius:3px;background:rgba(var(--surface-tint-rgb),.07);overflow:hidden" role="img" aria-label="Chicago: highest activity"><div style="width:100%;height:100%;background:var(--heat-fire,#ff1f3d)"></div></div></div>
+          <div style="display:flex;align-items:center;gap:8px"><span style="width:78px;flex-shrink:0;font-size:11px;color:var(--ink-2)">Portland, ME</span><div style="flex:1;height:6px;border-radius:3px;background:rgba(var(--surface-tint-rgb),.07);overflow:hidden" role="img" aria-label="Portland, ME: high activity"><div style="width:70%;height:100%;background:var(--heat-hot,var(--accent))"></div></div></div>
+          <div style="display:flex;align-items:center;gap:8px"><span style="width:78px;flex-shrink:0;font-size:11px;color:var(--ink-2)">Austin</span><div style="flex:1;height:6px;border-radius:3px;background:rgba(var(--surface-tint-rgb),.07);overflow:hidden" role="img" aria-label="Austin: moderate activity"><div style="width:45%;height:100%;background:var(--heat-warm,#ffb84a)"></div></div></div>
+        </div>
+        <div style="margin-top:20px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--role-fan);margin-bottom:10px">DISCOVER · SEEDS</div>
+        <div style="border-radius:20px;overflow:hidden;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.17)">
+          <div style="height:120px;background:linear-gradient(135deg,var(--role-fan),#6a3fbf 60%,#1a1612);position:relative">
+            <div style="position:absolute;bottom:14px;left:16px"><div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.14em;color:rgba(var(--surface-tint-rgb),.6);text-transform:uppercase">NEW SEED</div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;margin-top:3px;line-height:1">Glass Hours</div></div>
+          </div>
+          <div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center">
+            <div><div style="font-size:14px;font-weight:600">Glass Hours</div><div style="font-size:12px;color:var(--ink-2);margin-top:2px">Maya Reyes · 342 HYPEs</div></div>
+            <div style="display:flex;gap:8px">
+              <button style="height:38px;padding:0 14px;border-radius:12px;background:rgba(var(--surface-tint-rgb),.06);color:var(--ink-2);border:1px solid rgba(var(--surface-tint-rgb),.12);font-size:12px;font-weight:600;cursor:pointer">Skip</button>
+              <button style="height:38px;padding:0 14px;border-radius:12px;background:var(--role-fan);color:var(--bg-base);border:none;font-size:12px;font-weight:600;cursor:pointer">HYPE</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isShows }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;overflow-y:auto">
+        <div style="padding:16px 20px 12px;border-bottom:1px solid rgba(var(--surface-tint-rgb),.13)">
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:26px">Shows</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);margin-top:4px">Chicago · This week</div>
+        </div>
+        <div style="margin:12px 16px 0;border-radius:20px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.13);overflow:hidden">
+          <div style="height:110px;background:linear-gradient(135deg,var(--accent),var(--accent)55 60%,#1a1612);display:flex;align-items:flex-end;padding:14px 16px">
+            <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--role-venue);font-weight:600;text-transform:uppercase">Tonight · Empty Bottle</div><div style="font-size:20px;font-weight:500;margin-top:4px">Maya Reyes</div></div>
+          </div>
+          <div style="padding:14px 16px 16px">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--ink-3);text-transform:uppercase">Sat Jun 21 · 9:00 PM · Doors 8:30</div>
+            <div style="display:flex;gap:10px;margin-top:14px">
+              <button style="flex:1;height:42px;border-radius:12px;background:var(--role-venue);color:var(--bg-base);border:none;font-size:13px;font-weight:600;cursor:pointer">Get ticket</button>
+              <button style="flex:1;height:42px;border-radius:12px;background:transparent;color:var(--ink-1);border:1px solid rgba(var(--surface-tint-rgb),.14);font-size:13px;font-weight:600;cursor:pointer">RSVP free</button>
+            </div>
+          </div>
+        </div>
+        <div style="margin:12px 16px 20px;border-radius:20px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.13);overflow:hidden">
+          <div style="height:110px;background:linear-gradient(135deg,var(--role-fan),var(--role-fan)44 60%,#1a1612);display:flex;align-items:flex-end;padding:14px 16px">
+            <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--role-fan);font-weight:600;text-transform:uppercase">Sun Jun 22 · Schuba's</div><div style="font-size:20px;font-weight:500;margin-top:4px">Reina Solís</div></div>
+          </div>
+          <div style="padding:14px 16px 16px">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--ink-3);text-transform:uppercase">Sun Jun 22 · 8:00 PM · 18+</div>
+            <div style="display:flex;gap:10px;margin-top:14px">
+              <button style="flex:1;height:42px;border-radius:12px;background:var(--role-fan);color:var(--bg-base);border:none;font-size:13px;font-weight:600;cursor:pointer">Get ticket</button>
+              <button style="flex:1;height:42px;border-radius:12px;background:transparent;color:var(--ink-1);border:1px solid rgba(var(--surface-tint-rgb),.14);font-size:13px;font-weight:600;cursor:pointer">RSVP free</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isYou }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;overflow-y:auto">
+        <div style="padding:14px 20px 16px;display:flex;align-items:center;gap:16px">
+          <div style="width:72px;height:72px;border-radius:24px;background:linear-gradient(135deg,var(--role-fan),var(--accent));color:var(--bg-base);font-family:'Syne',sans-serif;font-weight:800;font-size:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0">J</div>
+          <div>
+            <div style="font-size:24px;font-weight:600">Jordan Lee</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-3);margin-top:4px">iH/J4N7 · Joined Mar 2026</div>
+            <div style="display:flex;gap:6px;margin-top:8px">
+              <span style="padding:3px 9px;border-radius:99px;background:rgba(185,131,255,.15);color:var(--role-fan);font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em">FAN</span>
+              <span style="padding:3px 9px;border-radius:99px;background:rgba(255,62,154,.12);color:var(--role-dj);font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em">DJ</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;padding:0 16px 16px">
+          <div style="flex:1;padding:14px;background:rgba(255,80,41,.12);border-radius:20px"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:26px;color:var(--accent)">127</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-3);margin-top:6px;letter-spacing:.12em">HYPES</div></div>
+          <div style="flex:1;padding:14px;background:rgba(34,229,212,.12);border-radius:20px"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:26px;color:var(--role-venue)">14</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-3);margin-top:6px;letter-spacing:.12em">SHOWS</div></div>
+          <div style="flex:1;padding:14px;background:rgba(255,62,154,.12);border-radius:20px"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;color:var(--role-dj)">$4.20</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-3);margin-top:6px;letter-spacing:.1em">EARNED</div></div>
+        </div>
+        <div style="margin:0 16px 16px;padding:16px;background:rgba(255,62,154,.08);border:1px solid rgba(255,62,154,.25);border-radius:20px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--role-dj);display:flex;align-items:center;gap:5px"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--role-dj)"></span>DJ REFERRAL LINK</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)">3 tickets sold</div>
+          </div>
+          <div style="background:var(--bg-base);border:1px solid rgba(255,62,154,.2);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <div style="flex:1;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">ihype.fm/ref/J4N7</div>
+            <button style="padding:5px 10px;background:var(--role-dj);color:var(--bg-base);border:none;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;cursor:pointer;font-weight:600">COPY</button>
+          </div>
+          <div style="font-size:11px;color:var(--ink-2);line-height:1.5">You promoted <strong style="color:var(--ink-1)">3 of 36 tickets</strong> at Empty Bottle. Your gate share: <strong style="color:var(--role-dj)">8.4% → up to 10% payout</strong>.</div>
+        </div>
+        <div style="margin:0 16px 16px;padding:18px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border-radius:24px">
+          <div style="font-size:15px;font-weight:600;margin-bottom:12px">Your taste map</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <span style="padding:7px 13px;border-radius:99px;background:rgba(255,80,41,.22);color:var(--accent);font-size:13px;font-weight:600">Bedroom Pop 42%</span>
+            <span style="padding:7px 13px;border-radius:99px;background:rgba(255,80,41,.15);color:var(--accent);font-size:13px;font-weight:500">Indie 38%</span>
+            <span style="padding:5px 10px;border-radius:99px;background:rgba(185,131,255,.12);color:var(--role-fan);font-size:11px">Shoegaze 18%</span>
+            <span style="padding:5px 10px;border-radius:99px;background:rgba(185,131,255,.1);color:var(--role-fan);font-size:11px">House 14%</span>
+            <span style="padding:4px 8px;border-radius:99px;background:rgba(34,229,212,.08);color:var(--role-venue);font-size:10px">Folk 9%</span>
+            <span style="padding:4px 8px;border-radius:99px;background:rgba(255,184,74,.08);color:#ffb84a;font-size:10px">Punk 6%</span>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <div style="height:80px;border-top:0.5px solid rgba(var(--surface-tint-rgb),0.08);display:flex;align-items:flex-start;padding-top:6px;flex-shrink:0;background:rgba(16,13,9,.92);backdrop-filter:blur(20px)">
+      <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{ navHome }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;cursor:pointer;border:none;background:transparent;color:var(--accent)">
+          <svg fill="none" height="22" viewBox="0 0 24 24" width="22"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" stroke="currentColor" stroke-linejoin="round" stroke-width="1.6"></path></svg>
+          <span style="font-family:-apple-system,sans-serif;font-size:10px;font-weight:500">Home</span>
+        </button>
+      </sc-if>
+      <sc-if value="{{ notHome }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ navHome }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;cursor:pointer;border:none;background:transparent;color:var(--ink-3)">
+          <svg fill="none" height="22" viewBox="0 0 24 24" width="22"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" stroke="currentColor" stroke-linejoin="round" stroke-width="1.6"></path></svg>
+          <span style="font-family:-apple-system,sans-serif;font-size:10px;font-weight:500">Home</span>
+        </button>
+      </sc-if>
+      <sc-if value="{{ isCharts }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ navCharts }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;cursor:pointer;border:none;background:transparent;color:var(--accent)">
+          <svg fill="none" height="22" viewBox="0 0 24 24" width="22"><path d="M3 17l6-6 4 4 8-9" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path></svg>
+          <span style="font-family:-apple-system,sans-serif;font-size:10px;font-weight:500">Charts</span>
+        </button>
+      </sc-if>
+      <sc-if value="{{ notCharts }}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{ navCharts }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;cursor:pointer;border:none;background:transparent;color:var(--ink-3)">
+          <svg fill="none" height="22" viewBox="0 0 24 24" width="22"><path d="M3 17l6-6 4 4 8-9" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path></svg>
+          <span style="font-family:-apple-system,sans-serif;font-size:10px;font-weight:500">Charts</span>
+        </button>
+      </sc-if>
+      <sc-if value="{{ isShows }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ navShows }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;cursor:pointer;border:none;background:transparent;color:var(--accent)">
+          <svg fill="none" height="22" viewBox="0 0 24 24" width="22"><rect height="16" rx="2" stroke="currentColor" stroke-width="1.6" width="18" x="3" y="5"></rect><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.6"></path></svg>
+          <span style="font-family:-apple-system,sans-serif;font-size:10px;font-weight:500">Shows</span>
+        </button>
+      </sc-if>
+      <sc-if value="{{ notShows }}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{ navShows }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;cursor:pointer;border:none;background:transparent;color:var(--ink-3)">
+          <svg fill="none" height="22" viewBox="0 0 24 24" width="22"><rect height="16" rx="2" stroke="currentColor" stroke-width="1.6" width="18" x="3" y="5"></rect><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.6"></path></svg>
+          <span style="font-family:-apple-system,sans-serif;font-size:10px;font-weight:500">Shows</span>
+        </button>
+      </sc-if>
+      <sc-if value="{{ isYou }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ navYou }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;cursor:pointer;border:none;background:transparent;color:var(--accent)">
+          <svg fill="none" height="22" viewBox="0 0 24 24" width="22"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.6"></circle><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" stroke-linecap="round" stroke-width="1.6"></path></svg>
+          <span style="font-family:-apple-system,sans-serif;font-size:10px;font-weight:500">You</span>
+        </button>
+      </sc-if>
+      <sc-if value="{{ notYou }}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{ navYou }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;cursor:pointer;border:none;background:transparent;color:var(--ink-3)">
+          <svg fill="none" height="22" viewBox="0 0 24 24" width="22"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.6"></circle><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" stroke-linecap="round" stroke-width="1.6"></path></svg>
+          <span style="font-family:-apple-system,sans-serif;font-size:10px;font-weight:500">You</span>
+        </button>
+      </sc-if>
+    </div>
+
+    <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:var(--ink-1)"></div>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { screen: 'home' };
+  renderVals() {
+    const s = this.state.screen;
+    const is  = n => s === n;
+    const not = n => s !== n;
+    const chart = [
+      { rank:1, title:'Sundown',       artist:'Maya Reyes',      hk:'9.8k', moment:'3:38' },
+      { rank:2, title:'Neon District', artist:'Reina Solís',     hk:'7.2k', moment:'2:14' },
+      { rank:3, title:'Glass Hours',   artist:'Maya Reyes',      hk:'6.9k', moment:'1:52' },
+      { rank:4, title:'Pacific Sun',   artist:'Lola Bay',        hk:'5.2k', moment:'4:01' },
+      { rank:5, title:'Dusk Protocol', artist:'Verb Collective', hk:'4.1k', moment:'3:17' },
+    ];
+    return {
+      chart,
+      isHome:   is('home'),   notHome:   not('home'),
+      isCharts: is('charts'), notCharts: not('charts'),
+      isShows:  is('shows'),  notShows:  not('shows'),
+      isYou:    is('you'),    notYou:    not('you'),
+      navHome:   () => this.setState({ screen: 'home' }),
+      navCharts: () => this.setState({ screen: 'charts' }),
+      navShows:  () => this.setState({ screen: 'shows' }),
+      navYou:    () => this.setState({ screen: 'you' }),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

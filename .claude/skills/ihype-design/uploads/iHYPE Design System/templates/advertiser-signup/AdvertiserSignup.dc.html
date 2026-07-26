@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<!-- @template name="iHYPE Advertiser Signup" description="/advertise/register — advertiser profile signup, music-industry-only policy gate" -->
+<helmet>
+  <script src="./ds-base.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>html,body{margin:0;background:radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),#0a0805}*{box-sizing:border-box}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}</style>
+</helmet>
+<div style="min-height:100vh;background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;padding:44px 24px 100px;max-width:520px;margin:0 auto">
+  <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#ffb84a;margin-bottom:8px">Radio ad campaigns</div>
+  <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px;letter-spacing:-.02em;margin:0 0 8px">Advertise on iHYPE radio</h1>
+  <p style="font-size:14px;color:rgba(240,235,229,.6);margin:0 0 24px;line-height:1.6">Reach listeners during live and recorded DJ sets. Every campaign is AI-screened, then human-reviewed if flagged.</p>
+
+  <div style="border:1px solid rgba(255,184,74,.25);background:rgba(255,184,74,.06);border-radius:12px;padding:14px 16px;margin-bottom:28px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#ffb84a;margin-bottom:4px">Music-industry only</div>
+    <p style="font-size:12.5px;color:#9e9080;line-height:1.6;margin:0">iHYPE only accepts advertisers in music, live events, or related creator services — labels, venues, gear, ticketing, merch, tour support. Everything else is rejected at screening.</p>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:24px">
+    <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#5a5048;margin-bottom:6px">Company / brand name</div>
+      <input placeholder="e.g. Analog Gear Co." style="width:100%;height:44px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.14);border-radius:9px;padding:0 14px;color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:14px;box-sizing:border-box"></div>
+    <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#5a5048;margin-bottom:6px">Contact email</div>
+      <input placeholder="you@company.com" style="width:100%;height:44px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.14);border-radius:9px;padding:0 14px;color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:14px;box-sizing:border-box"></div>
+    <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#5a5048;margin-bottom:6px">Category</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <sc-for list="{{ categories }}" as="c" hint-placeholder-count="6">
+          <sc-if value="{{ c.active }}"><button onClick="{{ c.pick }}" style="padding:8px 14px;border-radius:999px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;border:1px solid #ffb84a;background:rgba(255,184,74,.13);color:#ffb84a">{{ c.label }}</button></sc-if>
+          <sc-if value="{{ c.inactive }}"><button onClick="{{ c.pick }}" style="padding:8px 14px;border-radius:999px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;border:1px solid rgba(255,255,255,.14);background:transparent;color:#9e9080">{{ c.label }}</button></sc-if>
+        </sc-for>
+      </div>
+    </div>
+    <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#5a5048;margin-bottom:6px">Tell us about your campaign</div>
+      <textarea rows="4" placeholder="What are you advertising, and to whom?" style="width:100%;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.14);border-radius:9px;padding:10px 14px;color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:14px;box-sizing:border-box;resize:vertical"></textarea></div>
+  </div>
+
+  <button style="width:100%;height:48px;border-radius:12px;border:none;background:#ffb84a;color:#0a0805;font-family:'DM Sans',sans-serif;font-weight:700;font-size:14px;cursor:pointer">Submit for review</button>
+  <div style="font-size:11.5px;color:#5a5048;margin-top:12px;text-align:center;line-height:1.6">Most campaigns are reviewed within 48 hours. You'll get an email either way.</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { category: 'gear' };
+  renderVals() {
+    const cur = this.state.category;
+    const CATS = [['label','Record label'],['venue','Venue/promoter'],['gear','Gear & instruments'],['ticketing','Ticketing'],['merch','Merch'],['tour','Tour support']];
+    return { categories: CATS.map(([id, label]) => ({ label, active: cur === id, inactive: cur !== id, pick: () => this.setState({ category: id }) })) };
+  }
+}
+
+</script>
+</body>
+</html>

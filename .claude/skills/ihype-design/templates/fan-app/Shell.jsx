@@ -6,7 +6,7 @@ const OB_GENRES = ['dream-pop', 'shoegaze', 'lo-fi', 'r&b', 'jazz', 'hip-hop', '
 const OB_ROLES = [
   { id: 'fan', label: 'Fan', icon: '🎶', desc: 'Discover events, hype artists, earn on referrals.' },
   { id: 'dj', label: 'DJ', icon: '📻', desc: 'Build your crate, host radio shows, earn promoter cuts.' },
-  { id: 'artist', label: 'Artist', icon: '🎸', desc: 'Sell tickets direct. Keep 70%. No agents, no fees.' },
+  { id: 'artist', label: 'Artist', icon: '🎸', desc: 'Sell tickets direct. Keep 70%. No agents, no platform cut.' },
   { id: 'venue', label: 'Venue', icon: '🏟', desc: 'Book from the demand radar. 20% guaranteed.' },
 ];
 
@@ -23,7 +23,7 @@ function BetaGate({ onPass }) {
   return (
     <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 28px', textAlign: 'center', background: 'var(--bg)' }}>
       <div style={{ fontFamily: 'var(--f-d)', fontWeight: 900, fontSize: '2.4rem', letterSpacing: '-.04em', color: 'var(--accent)' }}>iHYPE</div>
-      <div style={{ fontFamily: 'var(--f-m)', fontSize: '.66rem', letterSpacing: '.22em', textTransform: 'uppercase', color: '#ffb84a', marginTop: 6 }}>Closed Beta · Invite Only</div>
+      <div style={{ fontFamily: 'var(--f-m)', fontSize: '.66rem', letterSpacing: '.22em', textTransform: 'uppercase', color: '#ffb84a', marginTop: 6 }}>Early Access · Invite Only</div>
       <p style={{ fontFamily: 'var(--f-b)', fontSize: '.86rem', color: 'var(--ink-2)', marginTop: 18, lineHeight: 1.5, maxWidth: 280 }}>Enter your invite code to get early access to live shows, ticketing, and the radio studio.</p>
       <input value={code} onChange={e => setCode(e.target.value)} onKeyDown={e => e.key === 'Enter' && submit()} placeholder="INVITE CODE" style={{ marginTop: 22, width: '100%', maxWidth: 260, padding: '13px 16px', borderRadius: 12, border: `1px solid ${err ? '#ff5029' : 'var(--line)'}`, background: 'var(--bg-3)', color: 'var(--ink)', fontFamily: 'var(--f-m)', fontSize: '.95rem', letterSpacing: '.14em', textAlign: 'center', textTransform: 'uppercase', outline: 'none', boxSizing: 'border-box' }} />
       {err && <div style={{ fontFamily: 'var(--f-m)', fontSize: '.72rem', color: '#ff5029', marginTop: 8 }}>Invalid code — try IHYPE</div>}
@@ -38,10 +38,12 @@ function MeshBlob({ x, y, color, size, dur }) {
 }
 
 function Onboarding({ onDone }) {
+  const t = window.useIhypeI18n ? window.useIhypeI18n() : window.ihypeT;
   const [step, setStep] = React.useState(0);
   const [role, setRole] = React.useState(null);
   const [city, setCity] = React.useState('');
   const [genres, setGenres] = React.useState([]);
+  const [scale, setScale] = React.useState(() => window.ihypeGetScale ? window.ihypeGetScale() : 1);
   const next = () => setStep(s => s + 1);
   const quickStart = () => {
     const data = { role: 'fan', city: 'Los Angeles', genres: ['dream-pop', 'lo-fi', 'electronic'] };
@@ -56,7 +58,8 @@ function Onboarding({ onDone }) {
     window.IHYPE_USER_PREFS = data;
     onDone();
   };
-  const prog = [0.25, 0.5, 0.75, 1][step];
+  const [lang, setLang] = React.useState(() => window.ihypeGetLang ? window.ihypeGetLang() : 'en');
+  const prog = [0.2, 0.4, 0.6, 0.8, 1][step];
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg)', padding: '1.5rem 1.25rem 1.25rem', position:'relative', overflow:'hidden' }}>
       <style>{'@keyframes meshMove{0%{transform:translate(0,0) scale(1)}100%{transform:translate(30px,20px) scale(1.15)}}'}</style>
@@ -68,8 +71,22 @@ function Onboarding({ onDone }) {
       </div>
       {step === 0 && (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '-.03em', marginBottom: 6 }}>Who are you?</div>
-          <p style={{ fontFamily: 'var(--f-b)', fontSize: '.85rem', color: 'var(--ink-2)', lineHeight: 1.6, marginBottom: 20 }}>Pick your role. You can add more later.</p>
+          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '-.03em', marginBottom: 6 }}>{t('language')}</div>
+          <p style={{ fontFamily: 'var(--f-b)', fontSize: '.85rem', color: 'var(--ink-2)', lineHeight: 1.6, marginBottom: 20 }}>{t('obWhoSub')}</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, overflowY: 'auto' }}>
+            {Object.entries(window.IHYPE_LANG_NAMES || { en: 'English' }).map(([code, name]) => {
+              const on = lang === code;
+              return <button key={code} onClick={() => { setLang(code); window.ihypeSetLang && window.ihypeSetLang(code); }} style={{ padding: '13px 16px', borderRadius: 14, border: `1px solid ${on ? 'var(--accent)' : 'var(--line)'}`, background: on ? 'rgba(255,80,41,.08)' : 'var(--bg-2)', color: on ? 'var(--accent)' : 'var(--ink)', fontFamily: 'var(--f-b)', fontWeight: on ? 700 : 500, fontSize: '.9rem', cursor: 'pointer', textAlign: 'left' }}>{name}</button>;
+            })}
+          </div>
+          {window.ihypeIsRTL && window.ihypeIsRTL() && <div dir="rtl" style={{ marginTop: 12, padding: '12px 14px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--bg-2)', fontFamily: 'var(--f-b)', fontSize: '.85rem', color: 'var(--ink-2)', textAlign: 'right' }}>{t('obPreviewBody')}</div>}
+          <button onClick={next} style={{ marginTop: 20, width: '100%', padding: '13px', borderRadius: 999, background: 'var(--accent)', color: '#fff', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.95rem', border: 'none', cursor: 'pointer' }}>{t('obContinue')}</button>
+        </div>
+      )}
+      {step === 1 && (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '-.03em', marginBottom: 6 }}>{t('obWho')}</div>
+          <p style={{ fontFamily: 'var(--f-b)', fontSize: '.85rem', color: 'var(--ink-2)', lineHeight: 1.6, marginBottom: 20 }}>{t('obWhoSub')}</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
             {OB_ROLES.map(r => {
               const on = role === r.id;
@@ -82,26 +99,26 @@ function Onboarding({ onDone }) {
               );
             })}
           </div>
-          <button onClick={next} disabled={!role} style={{ marginTop: 20, width: '100%', padding: '13px', borderRadius: 999, background: role ? 'var(--accent)' : 'var(--bg-3)', color: role ? '#fff' : 'var(--ink-3)', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.95rem', border: 'none', cursor: role ? 'pointer' : 'default' }}>Continue →</button>
-          <button onClick={quickStart} style={{ marginTop: 10, width: '100%', padding: '9px', borderRadius: 999, background: 'transparent', color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '.78rem', border: 'none', cursor: 'pointer', letterSpacing: '.04em' }}>Skip — explore the demo →</button>
+          <button onClick={next} disabled={!role} style={{ marginTop: 20, width: '100%', padding: '13px', borderRadius: 999, background: role ? 'var(--accent)' : 'var(--bg-3)', color: role ? '#fff' : 'var(--ink-3)', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.95rem', border: 'none', cursor: role ? 'pointer' : 'default' }}>{t('obContinue')}</button>
+          <button onClick={quickStart} style={{ marginTop: 10, width: '100%', padding: '9px', borderRadius: 999, background: 'transparent', color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '.78rem', border: 'none', cursor: 'pointer', letterSpacing: '.04em' }}>{t('obSkip')}</button>
         </div>
       )}
-      {step === 1 && (
+      {step === 2 && (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '-.03em', marginBottom: 16 }}>Your scene?</div>
+          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '-.03em', marginBottom: 16 }}>{t('obScene')}</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, flex: 1, alignContent: 'start' }}>
             {OB_CITIES.map(c => {
               const on = city === c;
               return <button key={c} onClick={() => setCity(c)} style={{ padding: '11px 10px', borderRadius: 12, border: `1px solid ${on ? 'var(--accent)' : 'var(--line)'}`, background: on ? 'rgba(255,80,41,.08)' : 'var(--bg-2)', color: on ? 'var(--accent)' : 'var(--ink)', fontFamily: 'var(--f-b)', fontWeight: on ? 700 : 500, fontSize: '.85rem', cursor: 'pointer', textAlign: 'left' }}>{c}</button>;
             })}
           </div>
-          <button onClick={next} disabled={!city} style={{ marginTop: 16, width: '100%', padding: '13px', borderRadius: 999, background: city ? 'var(--accent)' : 'var(--bg-3)', color: city ? '#fff' : 'var(--ink-3)', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.95rem', border: 'none', cursor: city ? 'pointer' : 'default' }}>Continue →</button>
+          <button onClick={next} disabled={!city} style={{ marginTop: 16, width: '100%', padding: '13px', borderRadius: 999, background: city ? 'var(--accent)' : 'var(--bg-3)', color: city ? '#fff' : 'var(--ink-3)', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.95rem', border: 'none', cursor: city ? 'pointer' : 'default' }}>{t('obContinue')}</button>
         </div>
       )}
-      {step === 2 && (
+      {step === 3 && (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '-.03em', marginBottom: 6 }}>What moves you?</div>
-          <p style={{ fontFamily: 'var(--f-b)', fontSize: '.85rem', color: 'var(--ink-2)', lineHeight: 1.6, marginBottom: 16 }}>Pick 3+ to personalize Seeds and events.</p>
+          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '-.03em', marginBottom: 6 }}>{t('obMoves')}</div>
+          <p style={{ fontFamily: 'var(--f-b)', fontSize: '.85rem', color: 'var(--ink-2)', lineHeight: 1.6, marginBottom: 16 }}>{t('obMovesSub')}</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, flex: 1, alignContent: 'start' }}>
             {OB_GENRES.map(g => {
               const on = genres.includes(g);
@@ -109,9 +126,24 @@ function Onboarding({ onDone }) {
             })}
           </div>
           <button onClick={finish} disabled={genres.length < 3} style={{ marginTop: 16, width: '100%', padding: '13px', borderRadius: 999, background: genres.length >= 3 ? 'var(--accent)' : 'var(--bg-3)', color: genres.length >= 3 ? '#fff' : 'var(--ink-3)', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.95rem', border: 'none', cursor: genres.length >= 3 ? 'pointer' : 'default' }}>
-            {genres.length < 3 ? `Pick ${3 - genres.length} more` : "Let's go →"}
+            {genres.length < 3 ? t('obPickMore').replace('{n}', 3 - genres.length) : t('obNext')}
           </button>
-          <p style={{ textAlign:'center', fontFamily:'var(--f-m)', fontSize:'.62rem', color:'var(--ink-3)', lineHeight:1.6, marginTop:10 }}>By continuing you agree to our <a href="https://ihype.app/terms" target="_blank" style={{color:'var(--ink-2)'}}>Terms</a> &amp; <a href="https://ihype.app/privacy" target="_blank" style={{color:'var(--ink-2)'}}>Privacy Policy</a>.</p>
+        </div>
+      )}
+      {step === 4 && (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '-.03em', marginBottom: 6 }}>{t('obComfortable')}</div>
+          <p style={{ fontFamily: 'var(--f-b)', fontSize: '.85rem', color: 'var(--ink-2)', lineHeight: 1.6, marginBottom: 20 }}>{t('obComfortableSub')}</p>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+            {(window.IHYPE_SCALES || [0.9,1,1.15,1.3]).map((s, i) => (
+              <button key={s} onClick={() => { setScale(s); window.ihypeSetScale && window.ihypeSetScale(s); }} aria-label={'Text size ' + (i+1) + ' of 4'} style={{ flex: 1, padding: '14px 0', borderRadius: 12, border: scale === s ? '1px solid var(--accent)' : '1px solid var(--line)', background: scale === s ? 'rgba(255,80,41,.1)' : 'var(--bg-3)', color: scale === s ? 'var(--accent)' : 'var(--ink-2)', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 13 + i * 3, cursor: 'pointer' }}>A</button>
+            ))}
+          </div>
+          <div style={{ padding: '18px 16px', borderRadius: 16, border: '1px solid var(--line)', background: 'var(--bg-2)', marginBottom: 'auto' }}>
+            <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.95rem', marginBottom: 6 }}>Nyla · Sundown</div>
+            <div style={{ fontFamily: 'var(--f-b)', fontSize: '.85rem', color: 'var(--ink-2)', lineHeight: 1.6 }}>{t('obPreviewBody')}</div>
+          </div>
+          <button onClick={finish} style={{ marginTop: 20, width: '100%', padding: '13px', borderRadius: 999, background: 'var(--accent)', color: '#fff', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.95rem', border: 'none', cursor: 'pointer' }}>{t('obLetsGo')}</button>
         </div>
       )}
     </div>
@@ -121,14 +153,14 @@ function Onboarding({ onDone }) {
 function NotifCenter({ open, onClose, role }) {
   if (!open) return null;
   const D = window.IHYPE_DATA;
-  const notifs = (D.notifications[role] || D.notifications.fan);
+  const notifs = (D.notifications[role] || D.notifications.fan).map(n => window.ihypeNotif ? window.ihypeNotif(n) : n);
   return (
     <div style={{ position: 'absolute', inset: 0, zIndex: 60, background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(6px)' }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: 0, left: 0, right: 0, background: 'var(--bg-2)', borderRadius: '0 0 24px 24px', padding: '1rem 1.15rem 1.25rem', boxShadow: '0 20px 40px rgba(0,0,0,.5)' }}>
         <div style={{ width: 36, height: 4, borderRadius: 999, background: 'var(--line)', margin: '0 auto 16px' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.1rem' }}>Notifications</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--ink-3)', cursor: 'pointer', fontSize: 20, padding: 0, lineHeight: 1 }}>×</button>
+          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.1rem' }}>{window.ihypeT ? window.ihypeT('notifCenter') : 'Notifications'}</div>
+          <button onClick={onClose} aria-label="Close notifications" style={{ background: 'none', border: 'none', color: 'var(--ink-3)', cursor: 'pointer', fontSize: 20, padding: 0, lineHeight: 1 }}>×</button>
         </div>
         {notifs.map(n => (
           <div key={n.id} style={{ display: 'flex', gap: 12, padding: '.85rem 0', borderBottom: '1px solid var(--line-2)' }}>
@@ -240,14 +272,14 @@ function BetaBanner() {
       <div style={{ borderRadius: 12, background: 'rgba(255,184,74,.08)', border: '1px solid rgba(255,184,74,.22)', overflow: 'hidden' }}>
         <div onClick={() => setExpanded(e => !e)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', cursor: 'pointer' }}>
           <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ffb84a', flexShrink: 0, boxShadow: '0 0 6px #ffb84a' }} />
-          <span style={{ fontFamily: 'var(--f-m)', fontSize: '.65rem', letterSpacing: '.1em', textTransform: 'uppercase', color: '#ffb84a', flex: 1 }}>Beta 0.1.0-beta.5 · Work in progress</span>
+          <span style={{ fontFamily: 'var(--f-m)', fontSize: '.65rem', letterSpacing: '.1em', textTransform: 'uppercase', color: '#ffb84a', flex: 1 }}>Beta 1.1.0 · {window.ihypeT ? window.ihypeT('betaTag').split('· ')[1] || 'Work in progress' : 'Work in progress'}</span>
           <span style={{ fontFamily: 'var(--f-m)', fontSize: '.7rem', color: 'rgba(255,184,74,.5)', marginRight: 4 }}>{expanded ? '▲' : '▼'}</span>
-          <button onClick={e => { e.stopPropagation(); localStorage.setItem(BETA_KEY, '1'); setDismissed(true); }} style={{ background: 'none', border: 'none', color: 'rgba(255,184,74,.5)', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 2px' }}>×</button>
+          <button onClick={e => { e.stopPropagation(); localStorage.setItem(BETA_KEY, '1'); setDismissed(true); }} aria-label="Dismiss beta banner" style={{ background: 'none', border: 'none', color: 'rgba(255,184,74,.5)', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: '0 2px' }}>×</button>
         </div>
         {expanded && (
           <div style={{ padding: '0 10px 10px', borderTop: '1px solid rgba(255,184,74,.12)' }}>
             <p style={{ fontFamily: 'var(--f-b)', fontSize: '.78rem', color: 'rgba(240,235,229,.65)', lineHeight: 1.6, margin: '8px 0 10px' }}>
-              This is a beta build. Features may be incomplete or change. Ticket purchases are simulated — no real money moves.
+              This is a beta build. Features may be incomplete or change. Ticket purchases are real — cards are charged.
             </p>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => window.openIHYPEChangelog && window.openIHYPEChangelog()} style={{ flex: 1, padding: '6px', borderRadius: 8, border: '1px solid rgba(255,184,74,.2)', background: 'transparent', color: '#ffb84a', fontFamily: 'var(--f-m)', fontSize: '.68rem', cursor: 'pointer', letterSpacing: '.06em' }}>What's new</button>
@@ -281,10 +313,11 @@ ErrorBoundary.getDerivedStateFromError = e => ({ err: e });
 
 function BottomTabs({ active, onTab, playing }) {
   const [pressed, setPressed] = React.useState(null);
+  const t = window.useIhypeI18n ? window.useIhypeI18n() : window.ihypeT;
   const tabs = [
-    { id: 'listen', label: 'Listen', icon: (c, sz) => <svg width={sz} height={sz} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.75" strokeLinecap="round"><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg> },
-    { id: 'events', label: 'Events', icon: (c, sz) => <svg width={sz} height={sz} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.75" strokeLinecap="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z" /></svg> },
-    { id: 'pages', label: 'Pages', icon: (c, sz) => <svg width={sz} height={sz} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.75" strokeLinecap="round"><circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" /></svg> },
+    { id: 'listen', label: t('listen'), icon: (c, sz) => <svg width={sz} height={sz} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.75" strokeLinecap="round"><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg> },
+    { id: 'events', label: t('events'), icon: (c, sz) => <svg width={sz} height={sz} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.75" strokeLinecap="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z" /></svg> },
+    { id: 'pages', label: t('pages'), icon: (c, sz) => <svg width={sz} height={sz} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.75" strokeLinecap="round"><circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" /></svg> },
   ];
   return (
     <div style={{ display: 'flex', borderTop: '1px solid var(--line)', background: 'var(--bg-2)', paddingBottom: 22, paddingTop: 6, flexShrink: 0 }}>
@@ -573,9 +606,10 @@ function DesktopShell() {
   const PCS = window.PlaylistCreateSheet; const FAS = window.FriendActivitySheet;
   const LT = window.ListenTab; const ET = window.EventsTab; const PT = window.PagesTab;
 
+  const t = window.useIhypeI18n ? window.useIhypeI18n() : window.ihypeT;
   const navItems = [
-    { id: 'listen', label: 'Listen', svg: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg> },
-    { id: 'events', label: 'Events', svg: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z" /></svg> },
+    { id: 'listen', label: t('listen'), svg: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg> },
+    { id: 'events', label: t('events'), svg: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z" /></svg> },
     { id: 'pages', label: 'Pages', svg: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" /></svg> },
   ];
 

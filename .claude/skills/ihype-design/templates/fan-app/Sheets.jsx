@@ -9,15 +9,15 @@ function TourCreatorSheet({ open, onClose }) {
     <div style={{ position: 'absolute', inset: 0, zIndex: 80, background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(6px)' }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'var(--bg-2)', borderRadius: '22px 22px 0 0', padding: '1.25rem 1.25rem 2.5rem', maxHeight: '85%', overflowY: 'auto' }}>
         <div style={{ width: 36, height: 4, borderRadius: 999, background: 'var(--line)', margin: '0 auto 16px' }} />
-        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.1rem', marginBottom: 4 }}>Tour Creator</div>
-        <div style={{ fontFamily: 'var(--f-m)', fontSize: '.78rem', color: 'var(--ink-3)', marginBottom: 18 }}>Add shows. Each becomes an event with 70% split — automatic.</div>
+        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.1rem', marginBottom: 4 }}>{window.ihypeT ? window.ihypeT('tourCreatorTitle') : 'Tour Creator'}</div>
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: '.78rem', color: 'var(--ink-3)', marginBottom: 18 }}>{window.ihypeT ? window.ihypeT('tourCreatorSub') : 'Add shows. Each becomes an event with 70% split — automatic.'}</div>
         {shows.map((sh, i) => (
           <div key={i} style={{ padding: '1rem', borderRadius: 14, border: '1px solid var(--line)', background: 'var(--bg-3)', marginBottom: 10 }}>
-            <div style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 8 }}>Show {i + 1}</div>
-            <input value={sh.venue} onChange={e => update(i, 'venue', e.target.value)} placeholder="Venue name" style={{ width: '100%', padding: '9px 12px', borderRadius: 9, border: '1px solid var(--line)', background: 'var(--bg-2)', color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: '.85rem', outline: 'none', boxSizing: 'border-box', marginBottom: 8 }} />
-            <input value={sh.date} onChange={e => update(i, 'date', e.target.value)} placeholder="Date (e.g. Fri Jun 28)" style={{ width: '100%', padding: '9px 12px', borderRadius: 9, border: '1px solid var(--line)', background: 'var(--bg-2)', color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: '.85rem', outline: 'none', boxSizing: 'border-box', marginBottom: 8 }} />
+            <div style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 8 }}>{window.ihypeT ? window.ihypeT('showLabel') : "Show"} {i + 1}</div>
+            <input value={sh.venue} onChange={e => update(i, 'venue', e.target.value)} placeholder={window.ihypeT ? window.ihypeT('venueNamePh') : 'Venue name'} style={{ width: '100%', padding: '9px 12px', borderRadius: 9, border: '1px solid var(--line)', background: 'var(--bg-2)', color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: '.85rem', outline: 'none', boxSizing: 'border-box', marginBottom: 8 }} />
+            <input value={sh.date} onChange={e => update(i, 'date', e.target.value)} placeholder={window.ihypeT ? window.ihypeT('datePh') : 'Date (e.g. Fri Jun 28)'} style={{ width: '100%', padding: '9px 12px', borderRadius: 9, border: '1px solid var(--line)', background: 'var(--bg-2)', color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: '.85rem', outline: 'none', boxSizing: 'border-box', marginBottom: 8 }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontFamily: 'var(--f-m)', fontSize: '.78rem', color: 'var(--ink-3)' }}>Price $</span>
+              <span style={{ fontFamily: 'var(--f-m)', fontSize: '.78rem', color: 'var(--ink-3)' }}>{window.ihypeT ? window.ihypeT('priceLabel') : "Price $"}</span>
               <input type="number" value={sh.price} onChange={e => update(i, 'price', +e.target.value)} min={5} max={200} style={{ width: 70, padding: '9px 12px', borderRadius: 9, border: '1px solid var(--line)', background: 'var(--bg-2)', color: 'var(--ink)', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.88rem', outline: 'none' }} />
               <span style={{ fontFamily: 'var(--f-m)', fontSize: '.72rem', color: '#22e5d4' }}>→ ${(sh.price * .70).toFixed(2)} artist</span>
             </div>
@@ -41,17 +41,17 @@ function RadioSchedulerSheet({ open, onClose }) {
     <div style={{ position: 'absolute', inset: 0, zIndex: 80, background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(6px)' }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'var(--bg-2)', borderRadius: '22px 22px 0 0', padding: '1.25rem 1.25rem 2.5rem' }}>
         <div style={{ width: 36, height: 4, borderRadius: 999, background: 'var(--line)', margin: '0 auto 16px' }} />
-        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.1rem', marginBottom: 4 }}>Schedule a show</div>
-        <div style={{ fontFamily: 'var(--f-m)', fontSize: '.78rem', color: 'var(--ink-3)', marginBottom: 16 }}>Set a recurring slot. Listeners get notified before each broadcast.</div>
+        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.1rem', marginBottom: 4 }}>{window.ihypeT ? window.ihypeT('scheduleShow') : 'Schedule a show'}</div>
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: '.78rem', color: 'var(--ink-3)', marginBottom: 16 }}>{window.ihypeT ? window.ihypeT('scheduleShowSub') : 'Set a recurring slot. Listeners get notified before each broadcast.'}</div>
         <div style={{ marginBottom: 12 }}>
-          <div style={{ fontFamily: 'var(--f-m)', fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 6 }}>Show name</div>
-          <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Late Night Frequencies" style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--bg-3)', color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: '.88rem', outline: 'none', boxSizing: 'border-box' }} />
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 6 }}>{window.ihypeT ? window.ihypeT('showNameLabel') : "Show name"}</div>
+          <input value={name} onChange={e => setName(e.target.value)} placeholder={window.ihypeT ? window.ihypeT('showNamePh') : 'e.g. Late Night Frequencies'} style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--line)', background: 'var(--bg-3)', color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: '.88rem', outline: 'none', boxSizing: 'border-box' }} />
         </div>
-        <div style={{ fontFamily: 'var(--f-m)', fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 8 }}>Day</div>
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 8 }}>{window.ihypeT ? window.ihypeT('dayLabel') : "Day"}</div>
         <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
           {DAYS.map(d => { const on = day === d; return <button key={d} onClick={() => setDay(d)} style={{ flex: 1, padding: '6px 2px', borderRadius: 8, border: `1px solid ${on ? 'var(--accent)' : 'var(--line)'}`, background: on ? 'rgba(255,80,41,.1)' : 'transparent', color: on ? 'var(--accent)' : 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '.7rem', cursor: 'pointer', fontWeight: on ? 700 : 500 }}>{d}</button>; })}
         </div>
-        <div style={{ fontFamily: 'var(--f-m)', fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 8 }}>Genre</div>
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 8 }}>{window.ihypeT ? window.ihypeT('genreLabel') : "Genre"}</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
           {GENRES.map(g => { const on = genre === g; return <button key={g} onClick={() => setGenre(g)} style={{ padding: '5px 12px', borderRadius: 999, border: `1px solid ${on ? 'var(--accent)' : 'var(--line)'}`, background: on ? 'rgba(255,80,41,.1)' : 'transparent', color: on ? 'var(--accent)' : 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '.72rem', cursor: 'pointer', fontWeight: on ? 700 : 500 }}>{g}</button>; })}
         </div>
@@ -77,31 +77,31 @@ function LiveEventOverlay({ event, onClose }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ff3c3c', display: 'inline-block' }} />
-          <span style={{ fontFamily: 'var(--f-m)', fontSize: '.72rem', letterSpacing: '.1em', textTransform: 'uppercase', color: '#ff3c3c' }}>Live now</span>
+          <span style={{ fontFamily: 'var(--f-m)', fontSize: '.72rem', letterSpacing: '.1em', textTransform: 'uppercase', color: '#ff3c3c' }}>{window.ihypeT ? window.ihypeT('liveNowLabel') : "Live now"}</span>
         </div>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--ink-3)', cursor: 'pointer', fontSize: 22, padding: 0, lineHeight: 1 }}>×</button>
+        <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', color: 'var(--ink-3)', cursor: 'pointer', fontSize: 22, padding: 0, lineHeight: 1 }}>×</button>
       </div>
       <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.8rem', letterSpacing: '-.04em', lineHeight: .95, marginBottom: 6 }}>{event.artist}</div>
-      <div style={{ fontFamily: 'var(--f-m)', fontSize: '.82rem', color: 'var(--ink-3)', marginBottom: 20 }}>{event.venue} · doors open</div>
+      <div style={{ fontFamily: 'var(--f-m)', fontSize: '.82rem', color: 'var(--ink-3)', marginBottom: 20 }}>{event.venue} · {window.ihypeT ? window.ihypeT('doorsOpen') : "doors open"}</div>
       <div style={{ display: 'flex', gap: 16, marginBottom: 24 }}>
         <div style={{ flex: 1, padding: '1rem', borderRadius: 14, border: '1px solid rgba(255,60,60,.2)', background: 'rgba(255,60,60,.06)', textAlign: 'center' }}>
           <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.5rem', color: '#ff3c3c' }}>{pulse.toLocaleString()}</div>
-          <div style={{ fontFamily: 'var(--f-m)', fontSize: '.65rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginTop: 3 }}>Live hypes</div>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: '.65rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginTop: 3 }}>{window.ihypeT ? window.ihypeT('liveHypesLabel') : "Live hypes"}</div>
         </div>
         <div style={{ flex: 1, padding: '1rem', borderRadius: 14, border: '1px solid var(--line)', background: 'var(--bg-2)', textAlign: 'center' }}>
           <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.5rem', color: 'var(--accent)' }}>218</div>
-          <div style={{ fontFamily: 'var(--f-m)', fontSize: '.65rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginTop: 3 }}>Tickets</div>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: '.65rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginTop: 3 }}>{window.ihypeT ? window.ihypeT('ticketsLabel') : "Tickets"}</div>
         </div>
       </div>
       <div style={{ flex: 1, overflow: 'hidden', borderRadius: 14, border: '1px solid var(--line)', background: 'var(--bg-2)', padding: '10px 12px' }}>
-        <div style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 8 }}>Live hype feed</div>
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 8 }}>{window.ihypeT ? window.ihypeT('liveHypeFeed') : "Live hype feed"}</div>
         {['@robinv hyped this show 🔥', '@jaysmith just bought a ticket', '@nocturnalwave shared your link', '@mx.lo hyped this show 🔥', '@dana.k just checked in'].map((item, i) => (
           <div key={i} style={{ fontFamily: 'var(--f-b)', fontSize: '.78rem', color: 'var(--ink-2)', padding: '.4rem 0', borderBottom: '1px solid var(--line-2)' }}>{item}</div>
         ))}
       </div>
       <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
-        <button onClick={() => setHyped(h => h + 1)} style={{ flex: 1, padding: '11px', borderRadius: 999, background: 'var(--accent)', color: '#fff', border: 'none', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.88rem', cursor: 'pointer' }}>🔥 Hype · {(1284 + hyped).toLocaleString()}</button>
-        <button onClick={() => setCheckedIn(true)} style={{ flex: 1, padding: '11px', borderRadius: 999, background: checkedIn ? 'rgba(34,229,212,.15)' : 'transparent', color: checkedIn ? '#22e5d4' : 'var(--ink-2)', border: `1px solid ${checkedIn ? 'rgba(34,229,212,.3)' : 'var(--line)'}`, fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.88rem', cursor: 'pointer' }}>{checkedIn ? '✓ Here' : "I'm here"}</button>
+        <button onClick={() => setHyped(h => h + 1)} style={{ flex: 1, padding: '11px', borderRadius: 999, background: 'var(--accent)', color: '#fff', border: 'none', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.88rem', cursor: 'pointer' }}>🔥 {window.ihypeT ? window.ihypeT('hypeCounterLabel') : "Hype"} · {(1284 + hyped).toLocaleString()}</button>
+        <button onClick={() => setCheckedIn(true)} style={{ flex: 1, padding: '11px', borderRadius: 999, background: checkedIn ? 'rgba(34,229,212,.15)' : 'transparent', color: checkedIn ? '#22e5d4' : 'var(--ink-2)', border: `1px solid ${checkedIn ? 'rgba(34,229,212,.3)' : 'var(--line)'}`, fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.88rem', cursor: 'pointer' }}>{checkedIn ? '✓ Here' : (window.ihypeT ? window.ihypeT('imHere') : "I'm here")}</button>
       </div>
     </div>
   );
@@ -135,8 +135,8 @@ function PostPurchaseMoment({ show, onClose }) {
       <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(34,229,212,.12)', border: '2px solid #22e5d4', display: 'grid', placeItems: 'center', marginBottom: 16 }}>
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#22e5d4" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
       </div>
-      <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '-.03em', marginBottom: 6 }}>You're in.</div>
-      <div style={{ fontFamily: 'var(--f-b)', fontSize: '.85rem', color: 'var(--ink-2)', marginBottom: 28, textAlign: 'center' }}>Here's where your $18 went.</div>
+      <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '-.03em', marginBottom: 6 }}>{window.ihypeT ? window.ihypeT('youreIn') : "You're in."}</div>
+      <div style={{ fontFamily: 'var(--f-b)', fontSize: '.85rem', color: 'var(--ink-2)', marginBottom: 28, textAlign: 'center' }}>{window.ihypeT ? window.ihypeT('hereIsWhereWentBody') : "Here's where your $18 went."}</div>
       <div style={{ width: '100%', marginBottom: 18 }}>
         <div style={{ display: 'flex', height: 8, borderRadius: 999, overflow: 'hidden', gap: 2, marginBottom: 16 }}>
           <div style={{ flex: 45, background: '#ff5029', borderRadius: '999px 0 0 999px' }} />
@@ -152,8 +152,8 @@ function PostPurchaseMoment({ show, onClose }) {
           ))}
         </div>
       </div>
-      <div style={{ fontFamily: 'var(--f-m)', fontSize: '.72rem', letterSpacing: '.08em', textTransform: 'uppercase', color: '#22e5d4', marginBottom: 20 }}>iHYPE takes nothing · locked in charter</div>
-      <button onClick={onClose} style={{ width: '100%', padding: '13px', borderRadius: 999, background: 'var(--accent)', color: '#fff', border: 'none', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.95rem', cursor: 'pointer' }}>View my ticket →</button>
+      <div style={{ fontFamily: 'var(--f-m)', fontSize: '.72rem', letterSpacing: '.08em', textTransform: 'uppercase', color: '#22e5d4', marginBottom: 20 }}>{window.ihypeT ? window.ihypeT('takesNothingCharterLine') : "iHYPE takes nothing · locked in charter"}</div>
+      <button onClick={onClose} style={{ width: '100%', padding: '13px', borderRadius: 999, background: 'var(--accent)', color: '#fff', border: 'none', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.95rem', cursor: 'pointer' }}>{window.ihypeT ? window.ihypeT('viewMyTicket') : "View my ticket →"}</button>
     </div>
   );
 }
@@ -169,7 +169,7 @@ function NotifPrimer({ show, onAllow, onSkip }) {
     <div style={{ position: 'absolute', inset: 0, zIndex: 90, background: 'rgba(0,0,0,.65)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'flex-end' }}>
       <div style={{ width: '100%', background: 'var(--bg-2)', borderRadius: '22px 22px 0 0', padding: '1.5rem 1.25rem 2.5rem' }}>
         <div style={{ width: 50, height: 50, borderRadius: 14, background: 'rgba(255,80,41,.12)', border: '1px solid rgba(255,80,41,.25)', display: 'grid', placeItems: 'center', margin: '0 auto 16px', fontSize: 24 }}>🔔</div>
-        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.2rem', letterSpacing: '-.03em', textAlign: 'center', marginBottom: 8 }}>Know first.</div>
+        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.2rem', letterSpacing: '-.03em', textAlign: 'center', marginBottom: 8 }}>{window.ihypeT ? window.ihypeT('knowFirst') : "Know first."}</div>
         <p style={{ fontFamily: 'var(--f-b)', fontSize: '.85rem', color: 'var(--ink-2)', lineHeight: 1.6, textAlign: 'center', marginBottom: 24, maxWidth: '34ch', margin: '0 auto 24px' }}>Get notified when artists you've hyped drop tickets — before anyone else.</p>
         <button onClick={onAllow} style={{ width: '100%', padding: '13px', borderRadius: 999, background: 'var(--accent)', color: '#fff', border: 'none', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.95rem', cursor: 'pointer', marginBottom: 10 }}>Allow notifications</button>
         <button onClick={onSkip} style={{ width: '100%', padding: '11px', borderRadius: 999, background: 'transparent', color: 'var(--ink-3)', border: 'none', fontFamily: 'var(--f-m)', fontSize: '.85rem', cursor: 'pointer' }}>Not now</button>
@@ -189,7 +189,7 @@ function PostShowRating({ show, onClose }) {
         {!done ? (
           <>
             <div style={{ textAlign: 'center', marginBottom: 20 }}>
-              <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.2rem', marginBottom: 4 }}>How was the show?</div>
+              <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.2rem', marginBottom: 4 }}>{window.ihypeT ? window.ihypeT('howWasShow') : "How was the show?"}</div>
               <div style={{ fontFamily: 'var(--f-m)', fontSize: '.78rem', color: 'var(--ink-3)' }}>{show.artist} · {show.venue}</div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 24 }}>
@@ -197,16 +197,16 @@ function PostShowRating({ show, onClose }) {
                 <button key={n} onClick={() => setRating(n)} style={{ width: 44, height: 44, borderRadius: '50%', border: `2px solid ${rating >= n ? 'var(--accent)' : 'var(--line)'}`, background: rating >= n ? 'rgba(255,80,41,.12)' : 'transparent', fontSize: 20, cursor: 'pointer', display: 'grid', placeItems: 'center' }}>{rating >= n ? '🔥' : '☆'}</button>
               ))}
             </div>
-            <button onClick={() => rating && setDone(true)} style={{ width: '100%', padding: '12px', borderRadius: 999, background: rating ? 'var(--accent)' : 'var(--bg-3)', color: rating ? '#fff' : 'var(--ink-3)', border: 'none', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.9rem', cursor: rating ? 'pointer' : 'default' }}>Submit rating</button>
-            <button onClick={onClose} style={{ width: '100%', marginTop: 8, padding: '10px', borderRadius: 999, border: 'none', background: 'transparent', color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '.82rem', cursor: 'pointer' }}>Skip</button>
+            <button onClick={() => rating && setDone(true)} style={{ width: '100%', padding: '12px', borderRadius: 999, background: rating ? 'var(--accent)' : 'var(--bg-3)', color: rating ? '#fff' : 'var(--ink-3)', border: 'none', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.9rem', cursor: rating ? 'pointer' : 'default' }}>{window.ihypeT ? window.ihypeT('submitRating') : "Submit rating"}</button>
+            <button onClick={onClose} style={{ width: '100%', marginTop: 8, padding: '10px', borderRadius: 999, border: 'none', background: 'transparent', color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '.82rem', cursor: 'pointer' }}>{window.ihypeT ? window.ihypeT('skip') : "Skip"}</button>
           </>
         ) : (
           <div style={{ textAlign: 'center', padding: '1rem 0' }}>
             <div style={{ fontSize: 36, marginBottom: 12 }}>🔥</div>
-            <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.1rem', marginBottom: 8 }}>Thanks.</div>
-            <div style={{ fontFamily: 'var(--f-b)', fontSize: '.82rem', color: 'var(--ink-2)', lineHeight: 1.6, marginBottom: 16 }}>Your rating helps {show.artist} show up on the demand radar.</div>
-            <button onClick={() => { window.openIHYPEMemoryCard && window.openIHYPEMemoryCard(show); onClose(); }} style={{ width: '100%', padding: '12px', borderRadius: 999, background: 'var(--accent)', color: '#fff', border: 'none', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.9rem', cursor: 'pointer', marginBottom: 8 }}>Get your memory card 🎫</button>
-            <button onClick={onClose} style={{ width: '100%', padding: '10px', borderRadius: 999, border: 'none', background: 'transparent', color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '.82rem', cursor: 'pointer' }}>Skip</button>
+            <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.1rem', marginBottom: 8 }}>{window.ihypeT ? window.ihypeT('thanks') : 'Thanks.'}</div>
+            <div style={{ fontFamily: 'var(--f-b)', fontSize: '.82rem', color: 'var(--ink-2)', lineHeight: 1.6, marginBottom: 16 }}>{(window.ihypeT ? window.ihypeT('ratingHelps') : 'Your rating helps {artist} show up on the demand radar.').replace('{artist}', show.artist)}</div>
+            <button onClick={() => { window.openIHYPEMemoryCard && window.openIHYPEMemoryCard(show); onClose(); }} style={{ width: '100%', padding: '12px', borderRadius: 999, background: 'var(--accent)', color: '#fff', border: 'none', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.9rem', cursor: 'pointer', marginBottom: 8 }}>(window.ihypeT ? window.ihypeT('getMemoryCard') : "Get your memory card 🎫")</button>
+            <button onClick={onClose} style={{ width: '100%', padding: '10px', borderRadius: 999, border: 'none', background: 'transparent', color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '.82rem', cursor: 'pointer' }}>(window.ihypeT ? window.ihypeT('skip') : "Skip")</button>
           </div>
         )}
       </div>
@@ -221,9 +221,9 @@ function TicketTransferSheet({ open, onClose }) {
     <div style={{ position: 'absolute', inset: 0, zIndex: 80, background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(6px)' }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'var(--bg-2)', borderRadius: '22px 22px 0 0', padding: '1.25rem 1.25rem 2.5rem' }}>
         <div style={{ width: 36, height: 4, borderRadius: 999, background: 'var(--line)', margin: '0 auto 16px' }} />
-        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.1rem', marginBottom: 6 }}>Transfer ticket</div>
-        <div style={{ fontFamily: 'var(--f-m)', fontSize: '.78rem', color: 'var(--ink-3)', marginBottom: 18 }}>Midnight Echo · The Echo · Fri Jun 20</div>
-        <input value={val} onChange={e => setVal(e.target.value)} placeholder="Phone number or email" style={{ width: '100%', padding: '11px 14px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--bg-3)', color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: '.88rem', outline: 'none', boxSizing: 'border-box', marginBottom: 16 }} />
+        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.1rem', marginBottom: 6 }}>{window.ihypeT ? window.ihypeT('transferTicket') : 'Transfer ticket'}</div>
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: '.78rem', color: 'var(--ink-3)', marginBottom: 18 }}>{window.ihypeT ? window.ihypeT('midnightEchoLine') : "Midnight Echo · The Echo · Fri Jun 20"}</div>
+        <input value={val} onChange={e => setVal(e.target.value)} placeholder={window.ihypeT ? window.ihypeT('phoneOrEmail') : 'Phone number or email'} style={{ width: '100%', padding: '11px 14px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--bg-3)', color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: '.88rem', outline: 'none', boxSizing: 'border-box', marginBottom: 16 }} />
         <button onClick={() => val && onClose()} style={{ width: '100%', padding: '12px', borderRadius: 999, background: 'var(--accent)', color: '#fff', border: 'none', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.9rem', cursor: 'pointer' }}>Send transfer</button>
         <button onClick={onClose} style={{ width: '100%', marginTop: 8, padding: '10px', borderRadius: 999, border: 'none', background: 'transparent', color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '.82rem', cursor: 'pointer' }}>Cancel</button>
       </div>
@@ -242,22 +242,22 @@ function RequestSheet({ open, onClose }) {
         <div style={{ width: 36, height: 4, borderRadius: 999, background: 'var(--line)', margin: '0 auto 16px' }} />
         {!sent ? (
           <>
-            <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.1rem', marginBottom: 6 }}>Request an artist</div>
-            <div style={{ fontFamily: 'var(--f-b)', fontSize: '.82rem', color: 'var(--ink-2)', lineHeight: 1.6, marginBottom: 18 }}>Enough requests unlock a booking offer from the venue to the artist via the demand radar.</div>
-            {[['Artist', artist, setArtist, 'Midnight Echo'], ['Venue', venue, setVenue, 'The Echo, Zebulon…']].map(([lbl, val, set, ph]) => (
+            <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.1rem', marginBottom: 6 }}>{window.ihypeT ? window.ihypeT('requestArtist') : 'Request an artist'}</div>
+            <div style={{ fontFamily: 'var(--f-b)', fontSize: '.82rem', color: 'var(--ink-2)', lineHeight: 1.6, marginBottom: 18 }}>{window.ihypeT ? window.ihypeT('requestArtistSub') : "Enough requests unlock a booking offer from the venue to the artist via the demand radar."}</div>
+            {[[(window.ihypeT ? window.ihypeT('artistLabel') : 'Artist'), artist, setArtist, 'Midnight Echo'], [(window.ihypeT ? window.ihypeT('venueLabel') : 'Venue'), venue, setVenue, 'The Echo, Zebulon…']].map(([lbl, val, set, ph]) => (
               <div key={lbl} style={{ marginBottom: 12 }}>
                 <div style={{ fontFamily: 'var(--f-m)', fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 6 }}>{lbl}</div>
                 <input value={val} onChange={e => set(e.target.value)} placeholder={ph} style={{ width: '100%', padding: '11px 14px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--bg-3)', color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: '.88rem', outline: 'none', boxSizing: 'border-box' }} />
               </div>
             ))}
-            <button onClick={() => artist && venue && setSent(true)} style={{ width: '100%', padding: '12px', borderRadius: 999, background: artist && venue ? 'var(--accent)' : 'var(--bg-3)', color: artist && venue ? '#fff' : 'var(--ink-3)', border: 'none', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.9rem', cursor: artist && venue ? 'pointer' : 'default' }}>Send request →</button>
+            <button onClick={() => artist && venue && setSent(true)} style={{ width: '100%', padding: '12px', borderRadius: 999, background: artist && venue ? 'var(--accent)' : 'var(--bg-3)', color: artist && venue ? '#fff' : 'var(--ink-3)', border: 'none', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.9rem', cursor: artist && venue ? 'pointer' : 'default' }}>{window.ihypeT ? window.ihypeT('sendRequest') : "Send request →"}</button>
           </>
         ) : (
           <div style={{ textAlign: 'center', padding: '1rem 0' }}>
             <div style={{ fontSize: 36, marginBottom: 14 }}>🔥</div>
-            <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.2rem', marginBottom: 8 }}>Request sent.</div>
-            <div style={{ fontFamily: 'var(--f-b)', fontSize: '.85rem', color: 'var(--ink-2)', lineHeight: 1.6, marginBottom: 20 }}>{artist} at {venue}. When enough fans request this show, the venue gets notified.</div>
-            <button onClick={() => { setSent(false); onClose(); }} style={{ width: '100%', padding: '12px', borderRadius: 999, background: 'var(--accent)', color: '#fff', border: 'none', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.9rem', cursor: 'pointer' }}>Done</button>
+            <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.2rem', marginBottom: 8 }}>{window.ihypeT ? window.ihypeT('requestSentTitle') : "Request sent."}</div>
+            <div style={{ fontFamily: 'var(--f-b)', fontSize: '.85rem', color: 'var(--ink-2)', lineHeight: 1.6, marginBottom: 20 }}>{(window.ihypeT ? window.ihypeT('requestedNotify') : '{artist} at {venue}. When enough fans request this show, the venue gets notified.').replace('{artist}', artist).replace('{venue}', venue)}</div>
+            <button onClick={() => { setSent(false); onClose(); }} style={{ width: '100%', padding: '12px', borderRadius: 999, background: 'var(--accent)', color: '#fff', border: 'none', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.9rem', cursor: 'pointer' }}>{window.ihypeT ? window.ihypeT('doneShort') : "Done"}</button>
           </div>
         )}
       </div>
@@ -273,11 +273,11 @@ function ArtistAnalyticsSheet({ open, onClose }) {
     <div style={{ position: 'absolute', inset: 0, zIndex: 70, background: 'rgba(0,0,0,.55)', backdropFilter: 'blur(6px)' }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'var(--bg-2)', borderRadius: '22px 22px 0 0', padding: '1.25rem 1.25rem 2.5rem', maxHeight: '85%', overflowY: 'auto' }}>
         <div style={{ width: 36, height: 4, borderRadius: 999, background: 'var(--line)', margin: '0 auto 18px' }} />
-        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.1rem', marginBottom: 18 }}>Analytics · Midnight Echo</div>
+        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.1rem', marginBottom: 18 }}>{window.ihypeT ? window.ihypeT('analyticsTitle') : "Analytics · Midnight Echo"}</div>
         <div style={{ padding: '1rem', borderRadius: 14, border: '1px solid var(--line)', background: 'var(--bg-3)', marginBottom: 12 }}>
-          <div style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 10 }}>Seeds performance</div>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 10 }}>{window.ihypeT ? window.ihypeT('seedsPerformance') : "Seeds performance"}</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-            {[['68%', 'Swipe right', 'var(--accent)'], ['18%', 'Swipe up', '#22e5d4'], ['14%', 'Swipe left', 'var(--ink-3)']].map(([v, l, c]) => (
+            {[['68%', window.ihypeT ? window.ihypeT('swipeRight') : 'Swipe right', 'var(--accent)'], ['18%', window.ihypeT ? window.ihypeT('swipeUp') : 'Swipe up', '#22e5d4'], ['14%', window.ihypeT ? window.ihypeT('swipeLeft') : 'Swipe left', 'var(--ink-3)']].map(([v, l, c]) => (
               <div key={l} style={{ textAlign: 'center' }}>
                 <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.3rem', color: c, lineHeight: 1 }}>{v}</div>
                 <div style={{ fontFamily: 'var(--f-m)', fontSize: '.65rem', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--ink-3)', marginTop: 3 }}>{l}</div>
@@ -286,7 +286,7 @@ function ArtistAnalyticsSheet({ open, onClose }) {
           </div>
         </div>
         <div style={{ padding: '1rem', borderRadius: 14, border: '1px solid var(--line)', background: 'var(--bg-3)', marginBottom: 12 }}>
-          <div style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 12 }}>Plays · last 4 weeks</div>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 12 }}>{window.ihypeT ? window.ihypeT('playsLast4Weeks') : "Plays · last 4 weeks"}</div>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 80 }}>
             {plays.map((v, i) => (
               <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
@@ -298,7 +298,7 @@ function ArtistAnalyticsSheet({ open, onClose }) {
           </div>
         </div>
         <div style={{ padding: '1rem', borderRadius: 14, border: '1px solid var(--line)', background: 'var(--bg-3)' }}>
-          <div style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 10 }}>Top cities</div>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 10 }}>{window.ihypeT ? window.ihypeT('topCities') : "Top cities"}</div>
           {[['Los Angeles', '62%'], ['New York', '18%'], ['Chicago', '8%'], ['Austin', '7%']].map(([city, pct]) => (
             <div key={city} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
               <div style={{ flex: 1, fontFamily: 'var(--f-b)', fontSize: '.82rem' }}>{city}</div>
@@ -309,7 +309,7 @@ function ArtistAnalyticsSheet({ open, onClose }) {
             </div>
           ))}
         </div>
-        <button onClick={onClose} style={{ width: '100%', marginTop: 14, padding: '11px', borderRadius: 999, border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-2)', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.88rem', cursor: 'pointer' }}>Done</button>
+        <button onClick={onClose} style={{ width: '100%', marginTop: 14, padding: '11px', borderRadius: 999, border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-2)', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.88rem', cursor: 'pointer' }}>{window.ihypeT ? window.ihypeT('doneShort') : "Done"}</button>
       </div>
     </div>
   );
@@ -319,7 +319,7 @@ function InviteSheet({ open, onClose, onToast }) {
   const [copied, setCopied] = React.useState(false);
   const link = 'https://ihype.app/join?ref=me';
   const share = async () => {
-    const text = 'Join iHYPE — music, events, and zero fees. Early access:';
+    const text = 'Join iHYPE — music, events, and zero iHYPE fees. Early access:';
     const url = link;
     if (navigator.share) { try { await navigator.share({ title: 'iHYPE', text, url }); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch(e) {} }
     else { navigator.clipboard && navigator.clipboard.writeText(link); setCopied(true); setTimeout(() => setCopied(false), 2000); onToast && onToast('Invite link copied!'); }
@@ -331,7 +331,7 @@ function InviteSheet({ open, onClose, onToast }) {
         <div style={{ width: 36, height: 4, borderRadius: 999, background: 'var(--line)', margin: '0 auto 20px' }} />
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
           <div style={{ fontSize: 36, marginBottom: 10 }}>🎶</div>
-          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.2rem', letterSpacing: '-.03em', marginBottom: 8 }}>Invite a friend.</div>
+          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.2rem', letterSpacing: '-.03em', marginBottom: 8 }}>{window.ihypeT ? window.ihypeT('inviteFriendTitle') : "Invite a friend."}</div>
           <div style={{ fontFamily: 'var(--f-b)', fontSize: '.85rem', color: 'var(--ink-2)', lineHeight: 1.6, maxWidth: '34ch', margin: '0 auto' }}>They get early access. If they buy a ticket, you both earn from the 10% promoter pool.</div>
         </div>
         <div style={{ padding: '12px 14px', borderRadius: 14, border: '1px solid var(--line)', background: 'var(--bg-3)', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
@@ -362,8 +362,8 @@ function HelpSheet({ open, onClose }) {
     <div style={{ position: 'absolute', inset: 0, zIndex: 70, background: 'rgba(0,0,0,.55)', backdropFilter: 'blur(6px)' }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'var(--bg-2)', borderRadius: '22px 22px 0 0', padding: '1.25rem 1.25rem 2.5rem', maxHeight: '85%', overflowY: 'auto' }}>
         <div style={{ width: 36, height: 4, borderRadius: 999, background: 'var(--line)', margin: '0 auto 18px' }} />
-        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.1rem', marginBottom: 18 }}>Help & FAQ</div>
-        {FAQ.map((f, i) => (
+        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.1rem', marginBottom: 18 }}>{window.ihypeT ? window.ihypeT('helpFaq') : 'Help & FAQ'}</div>
+        {(window.ihypeFAQ ? window.ihypeFAQ(FAQ) : FAQ).map((f, i) => (
           <div key={i} style={{ borderBottom: '1px solid var(--line-2)' }}>
             <button onClick={() => setExpanded(expanded === i ? null : i)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '.85rem 0', background: 'none', border: 'none', color: 'var(--ink)', cursor: 'pointer', textAlign: 'left' }}>
               <span style={{ fontFamily: 'var(--f-b)', fontWeight: 700, fontSize: '.88rem', flex: 1, paddingRight: 12 }}>{f.q}</span>
@@ -391,7 +391,7 @@ function ChangelogSheet({ open, onClose }) {
       <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'var(--bg-2)', borderRadius: '22px 22px 0 0', padding: '1.25rem 1.25rem 2.5rem', maxHeight: '80%', overflowY: 'auto' }}>
         <div style={{ width: 36, height: 4, borderRadius: 999, background: 'var(--line)', margin: '0 auto 18px' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
-          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.1rem' }}>What's new</div>
+          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.1rem' }}>{window.ihypeT ? window.ihypeT('whatsNew') : "What's new"}</div>
           <span style={{ fontFamily: 'var(--f-m)', fontSize: '.7rem', padding: '3px 10px', borderRadius: 999, background: 'rgba(255,184,74,.1)', border: '1px solid rgba(255,184,74,.25)', color: '#ffb84a' }}>Beta</span>
         </div>
         {entries.map(e => (
@@ -418,15 +418,19 @@ function SettingsSheet({ open, onClose }) {
   const [notifs, setNotifs] = React.useState(true);
   const [darkMode, setDarkMode] = React.useState(() => localStorage.getItem('ihype_theme') !== 'light');
   const toggleTheme = () => { const next = !darkMode; setDarkMode(next); if (window.toggleIHYPETheme) window.toggleIHYPETheme(); };
+  const t = window.useIhypeI18n ? window.useIhypeI18n() : window.ihypeT;
+  const [lang, setLang] = React.useState(window.ihypeGetLang ? window.ihypeGetLang() : 'en');
+  const [scale, setScale] = React.useState(window.ihypeGetScale ? window.ihypeGetScale() : 1);
+  const scaleIdx = (window.IHYPE_SCALES || [0.9,1,1.15,1.3]).indexOf(scale);
   if (!open) return null;
   const rows = [
-    { label: 'Notifications', sub: 'Ticket drops, referrals, live shows', ctrl: 'toggle', val: notifs, set: setNotifs },
+    { label: t('notifications'), sub: t('notifSub'), ctrl: 'toggle', val: notifs, set: setNotifs },
   ];
   return (
     <div style={{ position: 'absolute', inset: 0, zIndex: 70, background: 'rgba(0,0,0,.55)', backdropFilter: 'blur(6px)' }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'var(--bg-2)', borderRadius: '22px 22px 0 0', padding: '1.25rem 1.25rem 2.5rem', maxHeight: '80%', overflowY: 'auto' }}>
         <div style={{ width: 36, height: 4, borderRadius: 999, background: 'var(--line)', margin: '0 auto 18px' }} />
-        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.1rem', marginBottom: 18 }}>Settings</div>
+        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.1rem', marginBottom: 18 }}>{t('settings')}</div>
         {rows.map(r => (
           <div key={r.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.85rem 0', borderBottom: '1px solid var(--line-2)' }}>
             <div><div style={{ fontWeight: 600, fontSize: '.9rem' }}>{r.label}</div><div style={{ fontFamily: 'var(--f-m)', fontSize: '.72rem', color: 'var(--ink-3)', marginTop: 2 }}>{r.sub}</div></div>
@@ -435,6 +439,23 @@ function SettingsSheet({ open, onClose }) {
             </button>
           </div>
         ))}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.85rem 0', borderBottom: '1px solid var(--line-2)' }}>
+          <div style={{ fontWeight: 600, fontSize: '.9rem' }}>{t('language')}</div>
+          <select value={lang} onChange={e => { setLang(e.target.value); window.ihypeSetLang && window.ihypeSetLang(e.target.value); }} style={{ fontFamily: 'var(--f-m)', fontSize: '.82rem', color: 'var(--ink-1)', background: 'var(--bg-3)', border: '1px solid var(--line)', borderRadius: 8, padding: '6px 8px' }}>
+            {Object.entries(window.IHYPE_LANG_NAMES || { en: 'English' }).map(([code, name]) => <option key={code} value={code}>{name}</option>)}
+          </select>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.85rem 0', borderBottom: '1px solid var(--line-2)' }}>
+          <div>
+            <div style={{ fontWeight: 600, fontSize: '.9rem' }}>{t('textSize')}</div>
+            <div style={{ fontFamily: 'var(--f-m)', fontSize: '.72rem', color: 'var(--ink-3)', marginTop: 2 }}>Scales all text in the app</div>
+          </div>
+          <div style={{ display: 'flex', gap: 4 }}>
+            {(window.IHYPE_SCALES || [0.9,1,1.15,1.3]).map((s, i) => (
+              <button key={s} onClick={() => { setScale(s); window.ihypeSetScale && window.ihypeSetScale(s); }} aria-label={'Text size ' + (i+1) + ' of 4'} style={{ width: 30, height: 30, borderRadius: 8, border: scale === s ? '1px solid var(--accent)' : '1px solid var(--line)', background: scale === s ? 'rgba(255,80,41,.12)' : 'var(--bg-3)', color: scale === s ? 'var(--accent)' : 'var(--ink-3)', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 11 + i * 2, cursor: 'pointer', lineHeight: 1 }}>A</button>
+            ))}
+          </div>
+        </div>
         {[
           ['Invite a friend', () => { onClose(); setTimeout(() => window.openIHYPEInvite && window.openIHYPEInvite(), 200); }],
           ["What's new", () => { onClose(); setTimeout(() => window.openIHYPEChangelog && window.openIHYPEChangelog(), 200); }],
@@ -452,8 +473,8 @@ function SettingsSheet({ open, onClose }) {
           <span style={{ fontFamily: 'var(--f-m)', fontSize: '.72rem', color: 'var(--ink-3)' }}>iHYPE 0.1.0-beta.5 · Jun 2026</span>
           <span style={{ fontFamily: 'var(--f-m)', fontSize: '.72rem', color: '#ffb84a', padding: '2px 8px', borderRadius: 999, background: 'rgba(255,184,74,.1)', border: '1px solid rgba(255,184,74,.2)' }}>Beta</span>
         </div>
-        <button onClick={() => { if (confirm('Reset all local data and restart the app? This clears your onboarding, tickets, and preferences.')) { const plat = localStorage.getItem('ihype_platform'); localStorage.clear(); if (plat) localStorage.setItem('ihype_platform', plat); location.reload(); } }} style={{ width: '100%', marginTop: 8, padding: '11px', borderRadius: 999, border: '1px solid rgba(255,80,41,.3)', background: 'rgba(255,80,41,.06)', color: '#ff5029', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.84rem', cursor: 'pointer' }}>Reset app data</button>
-        <button onClick={onClose} style={{ width: '100%', marginTop: 8, padding: '11px', borderRadius: 999, border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-2)', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.88rem', cursor: 'pointer' }}>Done</button>
+        <button onClick={() => { if (confirm('Reset all local data and restart the app? This clears your onboarding, tickets, and preferences.')) { const plat = localStorage.getItem('ihype_platform'); localStorage.clear(); if (plat) localStorage.setItem('ihype_platform', plat); location.reload(); } }} style={{ width: '100%', marginTop: 8, padding: '11px', borderRadius: 999, border: '1px solid rgba(255,80,41,.3)', background: 'rgba(255,80,41,.06)', color: '#ff5029', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.84rem', cursor: 'pointer' }}>{t('resetData')}</button>
+        <button onClick={onClose} style={{ width: '100%', marginTop: 8, padding: '11px', borderRadius: 999, border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-2)', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.88rem', cursor: 'pointer' }}>{t('done')}</button>
       </div>
     </div>
   );
@@ -474,7 +495,7 @@ function FeedbackWidget({ onToast }) {
       {open && <div style={{ position: 'absolute', bottom: 72, right: 12, left: 12, zIndex: 60, background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 18, padding: '1rem', boxShadow: '0 20px 40px rgba(0,0,0,.5)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.9rem' }}>Beta feedback</div>
-          <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--ink-3)', cursor: 'pointer', fontSize: 18, padding: 0, lineHeight: 1 }}>×</button>
+          <button onClick={() => setOpen(false)} aria-label="Close" style={{ background: 'none', border: 'none', color: 'var(--ink-3)', cursor: 'pointer', fontSize: 18, padding: 0, lineHeight: 1 }}>×</button>
         </div>
         <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
           {[['bug', 'Bug'], ['idea', 'Idea'], ['confusing', 'Unclear']].map(([id, lbl]) => (
@@ -555,8 +576,8 @@ function ArtistProfileSheet({ artist, onClose, onBuy }) {
           </div>
           <div style={{ display: 'flex', gap: 7, flexShrink: 0 }}>
             <ArtistMenu artist={artist} onToast={onClose} />
-            <button onClick={() => { setHyped(h => !h); window.IHYPE_HYPE_BRIDGE && window.IHYPE_HYPE_BRIDGE.canSpend() && window.IHYPE_HYPE_BRIDGE.spend(); }} style={{ padding: '7px 13px', borderRadius: 999, border: `1px solid ${hyped ? 'var(--accent)' : 'var(--line)'}`, background: hyped ? 'rgba(255,80,41,.12)' : 'transparent', color: hyped ? 'var(--accent)' : 'var(--ink-2)', fontFamily: 'var(--f-m)', fontSize: '.78rem', cursor: 'pointer', fontWeight: 700 }}>🔥 {hyped ? 'Hyped' : 'Hype'}</button>
-            <button onClick={() => setFollowed(f => !f)} style={{ padding: '7px 13px', borderRadius: 999, border: `1px solid ${followed ? 'var(--accent)' : 'var(--line)'}`, background: followed ? 'rgba(255,80,41,.08)' : 'transparent', color: followed ? 'var(--accent)' : 'var(--ink-2)', fontFamily: 'var(--f-m)', fontSize: '.78rem', cursor: 'pointer', fontWeight: followed ? 700 : 500 }}>{followed ? 'Following' : 'Follow'}</button>
+            <button onClick={() => { setHyped(h => !h); window.IHYPE_HYPE_BRIDGE && window.IHYPE_HYPE_BRIDGE.canSpend() && window.IHYPE_HYPE_BRIDGE.spend(); }} style={{ padding: '7px 13px', borderRadius: 999, border: `1px solid ${hyped ? 'var(--accent)' : 'var(--line)'}`, background: hyped ? 'rgba(255,80,41,.12)' : 'transparent', color: hyped ? 'var(--accent)' : 'var(--ink-2)', fontFamily: 'var(--f-m)', fontSize: '.78rem', cursor: 'pointer', fontWeight: 700 }}>🔥 {hyped ? (window.ihypeT ? window.ihypeT('hypedLabel') : 'Hyped') : (window.ihypeT ? window.ihypeT('hypeCounterLabel') : 'Hype')}</button>
+            <button onClick={() => setFollowed(f => !f)} style={{ padding: '7px 13px', borderRadius: 999, border: `1px solid ${followed ? 'var(--accent)' : 'var(--line)'}`, background: followed ? 'rgba(255,80,41,.08)' : 'transparent', color: followed ? 'var(--accent)' : 'var(--ink-2)', fontFamily: 'var(--f-m)', fontSize: '.78rem', cursor: 'pointer', fontWeight: followed ? 700 : 500 }}>{followed ? (window.ihypeT ? window.ihypeT('followingLabel') : 'Following') : (window.ihypeT ? window.ihypeT('followLabel') : 'Follow')}</button>
           </div>
         </div>
         {/* Stats */}
@@ -576,7 +597,7 @@ function ArtistProfileSheet({ artist, onClose, onBuy }) {
           </div>
         )}
         {/* Bio */}
-        <p style={{ fontFamily: 'var(--f-b)', fontSize: '.85rem', color: 'var(--ink-2)', lineHeight: 1.7, marginBottom: 22 }}>{artist.bio || 'Independent artist on iHYPE.'}</p>
+        <p style={{ fontFamily: 'var(--f-b)', fontSize: '.85rem', color: 'var(--ink-2)', lineHeight: 1.7, marginBottom: 22 }}>{artist.bio || (window.ihypeT ? window.ihypeT('indieArtistBio') : 'Independent artist on iHYPE.')}</p>
         {/* Tracks */}
         {artist.tracks && artist.tracks.length > 0 && (
           <>
@@ -626,19 +647,19 @@ function SeedMatchSheet({ match, onClose, onBuy }) {
         <div style={{ width: 36, height: 4, borderRadius: 999, background: 'var(--line)', margin: '0 auto 22px' }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
           <span style={{ width: 8, height: 8, borderRadius: '50%', background: tint, display: 'inline-block' }} />
-          <span style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.12em', textTransform: 'uppercase', color: tint }}>Playing near you</span>
+          <span style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.12em', textTransform: 'uppercase', color: tint }}>{window.ihypeT ? window.ihypeT('playingNearYou') : "Playing near you"}</span>
         </div>
         <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.5rem', letterSpacing: '-.04em', lineHeight: .95, marginBottom: 6 }}>{match.artist}</div>
         <div style={{ fontFamily: 'var(--f-m)', fontSize: '.82rem', color: 'var(--ink-2)', marginBottom: 22 }}>{match.event} · {match.date}</div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', borderRadius: 14, border: `1px solid ${tint}33`, background: `${tint}0d`, marginBottom: 18 }}>
           <div>
-            <div style={{ fontFamily: 'var(--f-m)', fontSize: '.72rem', color: 'var(--ink-3)', marginBottom: 2 }}>You hyped them — early access</div>
-            <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.1rem', color: tint }}>${match.price} · +$0 fees</div>
+            <div style={{ fontFamily: 'var(--f-m)', fontSize: '.72rem', color: 'var(--ink-3)', marginBottom: 2 }}>{window.ihypeT ? window.ihypeT('hypedEarlyAccess') : "You hyped them — early access"}</div>
+            <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.1rem', color: tint }}>${match.price} · +$0 iHYPE fees</div>
           </div>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={tint} strokeWidth="2" strokeLinecap="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z"/></svg>
         </div>
-        <button onClick={() => { onClose(); onBuy && onBuy(match); }} style={{ width: '100%', padding: '13px', borderRadius: 999, background: 'var(--accent)', color: '#fff', border: 'none', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.95rem', cursor: 'pointer', marginBottom: 8 }}>Get ticket →</button>
-        <button onClick={onClose} style={{ width: '100%', padding: '10px', borderRadius: 999, border: 'none', background: 'transparent', color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '.82rem', cursor: 'pointer' }}>Dismiss</button>
+        <button onClick={() => { onClose(); onBuy && onBuy(match); }} style={{ width: '100%', padding: '13px', borderRadius: 999, background: 'var(--accent)', color: '#fff', border: 'none', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.95rem', cursor: 'pointer', marginBottom: 8 }}>{window.ihypeT ? window.ihypeT('getTicketArrow') : "Get ticket →"}</button>
+        <button onClick={onClose} style={{ width: '100%', padding: '10px', borderRadius: 999, border: 'none', background: 'transparent', color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '.82rem', cursor: 'pointer' }}>{window.ihypeT ? window.ihypeT('dismissWord') : "Dismiss"}</button>
       </div>
     </div>
   );
@@ -662,7 +683,7 @@ function TicketQRSheet({ ticket, onClose }) {
   }, [ticket]);
   return (
     <div style={{ position:'absolute', inset:0, zIndex:88, background:'rgba(0,0,0,.85)', backdropFilter:'blur(10px)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'1.5rem' }}>
-      <button onClick={onClose} style={{ position:'absolute', top:20, right:20, background:'none', border:'none', color:'var(--ink-3)', fontSize:26, cursor:'pointer', lineHeight:1 }}>×</button>
+      <button onClick={onClose} aria-label="Close" style={{ position:'absolute', top:20, right:20, background:'none', border:'none', color:'var(--ink-3)', fontSize:26, cursor:'pointer', lineHeight:1 }}>×</button>
       <div onClick={() => setFlipped(f => !f)} style={{ width:280, height:380, perspective:1000, cursor:'pointer' }}>
         <div style={{ width:'100%', height:'100%', position:'relative', transformStyle:'preserve-3d', transition:'transform .55s cubic-bezier(.4,0,.2,1)', transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
           {/* Front — ticket info */}
@@ -677,7 +698,7 @@ function TicketQRSheet({ ticket, onClose }) {
               <div style={{ flex:45, background:'#22e5d4' }} />
               <div style={{ flex:10, background:'#b983ff', borderRadius:'0 999px 999px 0' }} />
             </div>
-            <div style={{ textAlign:'center', fontFamily:'var(--f-m)', fontSize:'.7rem', color:'var(--ink-3)', opacity:.7 }}>Tap to reveal QR</div>
+            <div style={{ textAlign:'center', fontFamily:'var(--f-m)', fontSize:'.7rem', color:'var(--ink-3)', opacity:.7 }}>{window.ihypeT ? window.ihypeT('tapToRevealQR') : "Tap to reveal QR"}</div>
           </div>
           {/* Back — QR */}
           <div style={{ position:'absolute', inset:0, backfaceVisibility:'hidden', transform:'rotateY(180deg)', borderRadius:22, background:'#fff', padding:'1.5rem', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
@@ -689,7 +710,7 @@ function TicketQRSheet({ ticket, onClose }) {
           </div>
         </div>
       </div>
-      <div style={{ marginTop:20, fontFamily:'var(--f-m)', fontSize:'.72rem', color:'var(--ink-3)', letterSpacing:'.06em' }}>Tap ticket to flip</div>
+      <div style={{ marginTop:20, fontFamily:'var(--f-m)', fontSize:'.72rem', color:'var(--ink-3)', letterSpacing:'.06em' }}>{window.ihypeT ? window.ihypeT('tapTicketFlip') : "Tap ticket to flip"}</div>
     </div>
   );
 }
@@ -710,22 +731,22 @@ function PostShowMemoryCard({ show, onClose }) {
         {/* Card */}
         <div style={{ borderRadius:24, background:`linear-gradient(160deg,${tint}55,${tint}11)`, border:`1px solid ${tint}33`, padding:'2rem 1.5rem', textAlign:'center', marginBottom:18, position:'relative', overflow:'hidden' }}>
           <div style={{ position:'absolute', top:-40, right:-40, width:180, height:180, borderRadius:'50%', background:`${tint}18` }} />
-          <div style={{ fontFamily:'var(--f-m)', fontSize:'.65rem', letterSpacing:'.18em', textTransform:'uppercase', color:tint, marginBottom:14 }}>You were there.</div>
+          <div style={{ fontFamily:'var(--f-m)', fontSize:'.65rem', letterSpacing:'.18em', textTransform:'uppercase', color:tint, marginBottom:14 }}>{window.ihypeT ? window.ihypeT('youWereThere') : "You were there."}</div>
           <div style={{ fontFamily:'var(--f-d)', fontWeight:800, fontSize:'2rem', letterSpacing:'-.04em', lineHeight:.95, marginBottom:8 }}>{show.artist}</div>
           <div style={{ fontFamily:'var(--f-b)', fontSize:'.88rem', color:'var(--ink-2)', marginBottom:6 }}>{show.venue || 'Live'}</div>
           <div style={{ fontFamily:'var(--f-m)', fontSize:'.75rem', color:'var(--ink-3)', marginBottom:20 }}>{show.date || 'Jun 20, 2026'}</div>
           <div style={{ display:'flex', justifyContent:'center', gap:18 }}>
-            {[['🔥','4,821 hypes'], ['🎟','218 tickets'], ['💸','$0 fees']].map(([ic, lbl]) => (
+            {[['🔥','4,821 ' + (window.ihypeT ? window.ihypeT('hypesCount') : 'hypes')], ['🎟','218 ' + (window.ihypeT ? window.ihypeT('ticketsCount') : 'tickets')], ['💸',(window.ihypeT ? window.ihypeT('zeroFees') : "$0 iHYPE fees")]].map(([ic, lbl]) => (
               <div key={lbl} style={{ textAlign:'center' }}>
                 <div style={{ fontSize:20, marginBottom:4 }}>{ic}</div>
                 <div style={{ fontFamily:'var(--f-m)', fontSize:'.6rem', letterSpacing:'.06em', textTransform:'uppercase', color:'var(--ink-3)' }}>{lbl}</div>
               </div>
             ))}
           </div>
-          <div style={{ marginTop:18, fontFamily:'var(--f-m)', fontSize:'.65rem', letterSpacing:'.08em', color:'rgba(255,255,255,.3)' }}>iHYPE · powered by fans</div>
+          <div style={{ marginTop:18, fontFamily:'var(--f-m)', fontSize:'.65rem', letterSpacing:'.08em', color:'rgba(255,255,255,.3)' }}>{window.ihypeT ? window.ihypeT('poweredByFans') : "iHYPE · powered by fans"}</div>
         </div>
-        <button onClick={share} style={{ width:'100%', padding:'13px', borderRadius:999, background:shared?'rgba(34,229,212,.15)':'var(--accent)', color:shared?'#22e5d4':'#fff', border:shared?'1px solid rgba(34,229,212,.3)':'none', fontFamily:'var(--f-d)', fontWeight:800, fontSize:'.95rem', cursor:'pointer', marginBottom:10 }}>{shared ? '✓ Shared' : 'Share this moment'}</button>
-        <button onClick={onClose} style={{ width:'100%', padding:'10px', borderRadius:999, border:'none', background:'transparent', color:'var(--ink-3)', fontFamily:'var(--f-m)', fontSize:'.82rem', cursor:'pointer' }}>Done</button>
+        <button onClick={share} style={{ width:'100%', padding:'13px', borderRadius:999, background:shared?'rgba(34,229,212,.15)':'var(--accent)', color:shared?'#22e5d4':'#fff', border:shared?'1px solid rgba(34,229,212,.3)':'none', fontFamily:'var(--f-d)', fontWeight:800, fontSize:'.95rem', cursor:'pointer', marginBottom:10 }}>{shared ? '✓ ' + (window.ihypeT ? window.ihypeT('sharedDone') : 'Shared') : (window.ihypeT ? window.ihypeT('shareThisMoment') : 'Share this moment')}</button>
+        <button onClick={onClose} style={{ width:'100%', padding:'10px', borderRadius:999, border:'none', background:'transparent', color:'var(--ink-3)', fontFamily:'var(--f-m)', fontSize:'.82rem', cursor:'pointer' }}>(window.ihypeT ? window.ihypeT('doneWord') : "Done")</button>
       </div>
     </div>
   );
@@ -742,7 +763,7 @@ function PlaylistCreateSheet({ open, onClose, onCreated }) {
     <div style={{ position:'absolute', inset:0, zIndex:80, background:'rgba(0,0,0,.6)', backdropFilter:'blur(6px)' }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ position:'absolute', bottom:0, left:0, right:0, background:'var(--bg-2)', borderRadius:'22px 22px 0 0', padding:'1.25rem 1.25rem 2.5rem' }}>
         <div style={{ width:36, height:4, borderRadius:999, background:'var(--line)', margin:'0 auto 18px' }} />
-        <div style={{ fontFamily:'var(--f-d)', fontWeight:800, fontSize:'1.1rem', marginBottom:18 }}>New playlist</div>
+        <div style={{ fontFamily:'var(--f-d)', fontWeight:800, fontSize:'1.1rem', marginBottom:18 }}>{window.ihypeT ? window.ihypeT('newPlaylist') : 'New playlist'}</div>
         {/* Color picker */}
         <div style={{ display:'flex', gap:8, marginBottom:16, justifyContent:'center' }}>
           {TINTS.map(t => (
@@ -765,19 +786,19 @@ function FriendActivitySheet({ open, onClose }) {
   if (!open) return null;
   const D = window.IHYPE_DATA;
   const activities = [
-    { friend:'Dev R', tint:'#b983ff', action:'hyped', target:'Midnight Echo', detail:'Carousel', time:'4m', type:'hype' },
-    { friend:'Mara K', tint:'#22e5d4', action:'bought a ticket to', target:'Nyla', detail:'Basement Tapes · Jun 21', time:'22m', type:'ticket' },
-    { friend:'Theo P', tint:'#ffb84a', action:'shared', target:'Sunroom', detail:'Album Release · $20', time:'1h', type:'share' },
-    { friend:'Sun L', tint:'#ff5029', action:'hyped', target:'Wax Tropic', detail:'Heatwave', time:'2h', type:'hype' },
-    { friend:'Dev R', tint:'#b983ff', action:'saved', target:'Cold Harbor', detail:'Tidewater', time:'3h', type:'save' },
-    { friend:'Mara K', tint:'#22e5d4', action:'bought a ticket to', target:'Midnight Echo', detail:'Live at The Echo · Jun 20', time:'5h', type:'ticket' },
+    { friend:'Dev R', tint:'#b983ff', action:(window.ihypeT ? window.ihypeT('friendHyped') : 'hyped'), target:'Midnight Echo', detail:'Carousel', time:'4m', type:'hype' },
+    { friend:'Mara K', tint:'#22e5d4', action:(window.ihypeT ? window.ihypeT('friendBoughtTicket') : 'bought a ticket to'), target:'Nyla', detail:'Basement Tapes · Jun 21', time:'22m', type:'ticket' },
+    { friend:'Theo P', tint:'#ffb84a', action:(window.ihypeT ? window.ihypeT('friendShared') : 'shared'), target:'Sunroom', detail:'Album Release · $20', time:'1h', type:'share' },
+    { friend:'Sun L', tint:'#ff5029', action:(window.ihypeT ? window.ihypeT('friendHyped') : 'hyped'), target:'Wax Tropic', detail:'Heatwave', time:'2h', type:'hype' },
+    { friend:'Dev R', tint:'#b983ff', action:(window.ihypeT ? window.ihypeT('friendSaved') : 'saved'), target:'Cold Harbor', detail:'Tidewater', time:'3h', type:'save' },
+    { friend:'Mara K', tint:'#22e5d4', action:(window.ihypeT ? window.ihypeT('friendBoughtTicket') : 'bought a ticket to'), target:'Midnight Echo', detail:'Live at The Echo · Jun 20', time:'5h', type:'ticket' },
   ];
   const icons = { hype:'🔥', ticket:'🎟', share:'↗', save:'♡' };
   return (
     <div style={{ position:'absolute', inset:0, zIndex:72, background:'rgba(0,0,0,.55)', backdropFilter:'blur(6px)' }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{ position:'absolute', bottom:0, left:0, right:0, background:'var(--bg-2)', borderRadius:'22px 22px 0 0', padding:'1.25rem 1.25rem 2.5rem', maxHeight:'80%', overflowY:'auto' }}>
         <div style={{ width:36, height:4, borderRadius:999, background:'var(--line)', margin:'0 auto 18px' }} />
-        <div style={{ fontFamily:'var(--f-d)', fontWeight:800, fontSize:'1.1rem', marginBottom:18 }}>Friend activity</div>
+        <div style={{ fontFamily:'var(--f-d)', fontWeight:800, fontSize:'1.1rem', marginBottom:18 }}>{window.ihypeT ? window.ihypeT('friendActivity') : 'Friend activity'}</div>
         {activities.map((a, i) => (
           <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:12, padding:'.85rem 0', borderBottom:'1px solid var(--line-2)' }}>
             <div style={{ width:38, height:38, borderRadius:10, background:`linear-gradient(135deg,${a.tint}88,${a.tint}22)`, flexShrink:0, display:'grid', placeItems:'center', fontFamily:'var(--f-d)', fontWeight:800, fontSize:'.95rem', color:'#fff' }}>{a.friend[0]}</div>

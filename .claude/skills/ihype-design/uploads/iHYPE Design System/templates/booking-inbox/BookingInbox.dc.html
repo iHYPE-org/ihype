@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<!-- @template name="iHYPE Booking Inbox" description="Inbound show requests from venues/promoters to an artist or DJ — accept/decline" -->
+<helmet>
+  <script src="./ds-base.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>html,body{margin:0;background:radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),#0a0805}*{box-sizing:border-box}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}</style>
+</helmet>
+<div style="min-height:100vh;background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;padding:44px 24px 100px;max-width:640px;margin:0 auto">
+  <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px;letter-spacing:-.02em;margin:0 0 4px">Booking Inbox</h1>
+  <p style="font-size:14px;color:rgba(240,235,229,.55);margin:0 0 24px">Requests from venues and promoters to play a show.</p>
+
+  <div style="display:flex;gap:6px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:4px;width:fit-content;margin-bottom:24px">
+    <sc-for list="{{ filters }}" as="f" hint-placeholder-count="3">
+      <sc-if value="{{ f.active }}"><button onClick="{{ f.pick }}" style="padding:7px 14px;border-radius:9px;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:rgba(255,255,255,.08);color:#f0ebe5">{{ f.label }}</button></sc-if>
+      <sc-if value="{{ f.inactive }}"><button onClick="{{ f.pick }}" style="padding:7px 14px;border-radius:9px;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:transparent;color:#5a5048">{{ f.label }}</button></sc-if>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{ hasRequests }}">
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <sc-for list="{{ requests }}" as="r" hint-placeholder-count="3">
+        <div style="border:1px solid rgba(255,255,255,.15);border-radius:14px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);padding:18px 20px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px">
+            <div><div style="font-weight:700;font-size:15px">{{ r.venue }}</div><div style="font-size:12px;color:#9e9080;margin-top:3px">{{ r.date }} · {{ r.city }}</div></div>
+            <sc-if value="{{ r.isPending }}"><span style="flex-shrink:0;font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;padding:5px 10px;border-radius:999px;background:rgba(255,184,74,.15);color:#ffb84a">Pending</span></sc-if>
+            <sc-if value="{{ r.isAccepted }}"><span style="flex-shrink:0;font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;padding:5px 10px;border-radius:999px;background:rgba(34,229,212,.15);color:#22e5d4">Accepted</span></sc-if>
+            <sc-if value="{{ r.isDeclined }}"><span style="flex-shrink:0;font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;padding:5px 10px;border-radius:999px;background:rgba(120,120,120,.15);color:#9e9080">Declined</span></sc-if>
+          </div>
+          <p style="font-size:13px;color:#9e9080;line-height:1.6;margin:0 0 14px">{{ r.message }}</p>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#5a5048">Offer: {{ r.offer }}</div>
+            <sc-if value="{{ r.isPending }}">
+              <div style="display:flex;gap:8px">
+                <button onClick="{{ r.decline }}" style="padding:8px 16px;border-radius:9px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#f0ebe5;font-size:12px;font-weight:600;cursor:pointer">Decline</button>
+                <button onClick="{{ r.accept }}" style="padding:8px 16px;border-radius:9px;border:none;background:#22e5d4;color:#0a0805;font-size:12px;font-weight:600;cursor:pointer">Accept</button>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+  <sc-if value="{{ noRequests }}">
+    <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:56px 24px;border:1px dashed rgba(255,255,255,.08);border-radius:16px">
+      <div style="font-size:28px;opacity:.5">📭</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px">No requests here</div>
+      <div style="font-size:13px;color:#9e9080;max-width:300px;line-height:1.5">Booking requests from venues and promoters will show up here.</div>
+    </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { filter: 'all', statuses: { 0: 'pending', 1: 'pending', 2: 'accepted' } };
+  renderVals() {
+    const { filter, statuses } = this.state;
+    const BASE = [
+      { venue: 'Schuba\u2019s', date: 'Aug 14, 2026', city: 'Chicago, IL', message: 'We\u2019d love to have you headline our Friday series — full backline provided.', offer: '$650 guarantee' },
+      { venue: 'The Sinclair', date: 'Sep 2, 2026', city: 'Boston, MA', message: 'Opening slot for a touring dream-pop act, similar sound to yours.', offer: '$300 + door split' },
+      { venue: 'Mars.fm', date: 'Jul 30, 2026', city: 'Los Angeles, CA', message: 'Radio session + short in-studio set for our afternoon show.', offer: '$150 flat' },
+    ];
+    const requests = BASE.map((r, i) => {
+      const s = statuses[i];
+      return {
+        ...r, isPending: s === 'pending', isAccepted: s === 'accepted', isDeclined: s === 'declined',
+        accept: () => this.setState(st => ({ statuses: { ...st.statuses, [i]: 'accepted' } })),
+        decline: () => this.setState(st => ({ statuses: { ...st.statuses, [i]: 'declined' } })),
+      };
+    }).filter(r => filter === 'all' || (filter === 'pending' && r.isPending) || (filter === 'accepted' && r.isAccepted));
+    return {
+      filters: [['all','All'],['pending','Pending'],['accepted','Accepted']].map(([id, label]) => ({ label, active: filter === id, inactive: filter !== id, pick: () => this.setState({ filter: id }) })),
+      requests, hasRequests: requests.length > 0, noRequests: requests.length === 0,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

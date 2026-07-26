@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<!-- @template name="iHYPE Role Dashboard" description="Per-role analytics dashboard — Artist/DJ/Venue/Fan/Promoter, switchable" -->
+<helmet>
+  <script src="./ds-base.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>html,body{margin:0;background:radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),#0a0805}*{box-sizing:border-box}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}</style>
+</helmet>
+<div style="min-height:100vh;background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;padding:40px 28px 100px;max-width:1040px;margin:0 auto">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:24px">
+    <div>
+      <sc-if value="{{ isArtist }}"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#ff5029">{{ roleLabel }} Dashboard</div></sc-if>
+      <sc-if value="{{ isDj }}"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#ff3e9a">{{ roleLabel }} Dashboard</div></sc-if>
+      <sc-if value="{{ isVenue }}"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#22e5d4">{{ roleLabel }} Dashboard</div></sc-if>
+      <sc-if value="{{ isFan }}"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#b983ff">{{ roleLabel }} Dashboard</div></sc-if>
+      <sc-if value="{{ isPromoter }}"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#ffb84a">{{ roleLabel }} Dashboard</div></sc-if>
+      <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:30px;letter-spacing:-.02em;margin:6px 0 0">{{ headline }}</h1>
+    </div>
+    <div style="display:flex;gap:6px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:4px">
+      <sc-for list="{{ roles }}" as="r" hint-placeholder-count="5">
+        <sc-if value="{{ r.active }}"><button onClick="{{ r.pick }}" style="padding:7px 13px;border-radius:9px;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:rgba(255,255,255,.08);color:#f0ebe5">{{ r.label }}</button></sc-if>
+        <sc-if value="{{ r.inactive }}"><button onClick="{{ r.pick }}" style="padding:7px 13px;border-radius:9px;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:transparent;color:#5a5048">{{ r.label }}</button></sc-if>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:6px;margin-bottom:24px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:4px;width:fit-content">
+    <sc-if value="{{ isOverview }}"><button onClick="{{ viewOverview }}" style="padding:8px 16px;border-radius:9px;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:rgba(255,255,255,.08);color:#f0ebe5">Overview</button></sc-if>
+    <sc-if value="{{ isNotifs }}"><button onClick="{{ viewOverview }}" style="padding:8px 16px;border-radius:9px;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:transparent;color:#5a5048">Overview</button></sc-if>
+    <sc-if value="{{ isNotifs }}"><button onClick="{{ viewNotifs }}" style="padding:8px 16px;border-radius:9px;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:rgba(255,255,255,.08);color:#f0ebe5">Notifications</button></sc-if>
+    <sc-if value="{{ isOverview }}"><button onClick="{{ viewNotifs }}" style="display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:9px;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:transparent;color:#5a5048">Notifications<span style="min-width:16px;height:16px;padding:0 5px;border-radius:999px;background:#ff5029;color:#fff;font-size:9px;display:inline-flex;align-items:center;justify-content:center">{{ unread }}</span></button></sc-if>
+  </div>
+
+  <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+  <div id="rd-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px">
+    <sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
+      <div style="border:1px solid rgba(255,255,255,.15);border-radius:14px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);padding:20px 16px;text-align:center">
+        <sc-if value="{{ isArtist }}"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;letter-spacing:-.02em;color:#ff5029">{{ s.val }}</div></sc-if>
+        <sc-if value="{{ isDj }}"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;letter-spacing:-.02em;color:#ff3e9a">{{ s.val }}</div></sc-if>
+        <sc-if value="{{ isVenue }}"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;letter-spacing:-.02em;color:#22e5d4">{{ s.val }}</div></sc-if>
+        <sc-if value="{{ isFan }}"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;letter-spacing:-.02em;color:#b983ff">{{ s.val }}</div></sc-if>
+        <sc-if value="{{ isPromoter }}"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;letter-spacing:-.02em;color:#ffb84a">{{ s.val }}</div></sc-if>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#9e9080;margin-top:8px">{{ s.label }}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px">
+    <div style="border:1px solid rgba(255,255,255,.15);border-radius:16px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);padding:20px 22px">
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;margin-bottom:14px">{{ chartTitle }}</div>
+      <sc-if value="{{ isArtist }}"><div style="display:flex;align-items:flex-end;gap:8px;height:120px">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#ff5029;opacity:.85;height:29px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">M</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#ff5029;opacity:.85;height:52px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">T</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#ff5029;opacity:.85;height:39px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">W</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#ff5029;opacity:.85;height:65px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">T</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#ff5029;opacity:.85;height:89px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">F</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#ff5029;opacity:.85;height:77px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">S</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#ff5029;opacity:.85;height:100px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">S</div></div>
+      </div></sc-if>
+      <sc-if value="{{ isDj }}"><div style="display:flex;align-items:flex-end;gap:8px;height:120px">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#ff3e9a;opacity:.85;height:48px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">M</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#ff3e9a;opacity:.85;height:61px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">T</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#ff3e9a;opacity:.85;height:41px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">W</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#ff3e9a;opacity:.85;height:76px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">T</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#ff3e9a;opacity:.85;height:89px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">F</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#ff3e9a;opacity:.85;height:65px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">S</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#ff3e9a;opacity:.85;height:100px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">S</div></div>
+      </div></sc-if>
+      <sc-if value="{{ isVenue }}"><div style="display:flex;align-items:flex-end;gap:8px;height:120px">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#22e5d4;opacity:.85;height:43px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">M</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#22e5d4;opacity:.85;height:60px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">T</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#22e5d4;opacity:.85;height:54px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">W</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#22e5d4;opacity:.85;height:71px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">T</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#22e5d4;opacity:.85;height:86px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">F</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#22e5d4;opacity:.85;height:79px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">S</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#22e5d4;opacity:.85;height:100px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">S</div></div>
+      </div></sc-if>
+      <sc-if value="{{ isFan }}"><div style="display:flex;align-items:flex-end;gap:8px;height:120px">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#b983ff;opacity:.85;height:100px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">M</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#b983ff;opacity:.85;height:67px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">T</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#b983ff;opacity:.85;height:100px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">W</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#b983ff;opacity:.85;height:33px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">T</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#b983ff;opacity:.85;height:100px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">F</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#b983ff;opacity:.85;height:67px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">S</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#b983ff;opacity:.85;height:100px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">S</div></div>
+      </div></sc-if>
+      <sc-if value="{{ isPromoter }}"><div style="display:flex;align-items:flex-end;gap:8px;height:120px">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#ffb84a;opacity:.85;height:33px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">M</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#ffb84a;opacity:.85;height:47px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">T</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#ffb84a;opacity:.85;height:30px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">W</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#ffb84a;opacity:.85;height:67px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">T</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#ffb84a;opacity:.85;height:87px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">F</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#ffb84a;opacity:.85;height:60px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">S</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;border-radius:5px 5px 0 0;background:#ffb84a;opacity:.85;height:100px"></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048">S</div></div>
+      </div></sc-if>
+    </div>
+    <div style="border:1px solid rgba(255,255,255,.15);border-radius:16px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);padding:20px 22px">
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;margin-bottom:14px">{{ splitTitle }}</div>
+      <sc-if value="{{ isArtist }}"><div style="display:flex;flex-direction:column;gap:12px">
+        <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:#9e9080">You — Artist</span><span style="font-weight:600">70%</span></div><div style="height:6px;border-radius:3px;background:rgba(255,255,255,.06)"><div style="height:100%;border-radius:3px;background:#ff5029;width:70%"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:#9e9080">Empty Bottle — Venue</span><span style="font-weight:600">20%</span></div><div style="height:6px;border-radius:3px;background:rgba(255,255,255,.06)"><div style="height:100%;border-radius:3px;background:#ff5029;width:20%"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:#9e9080">Promoter pool</span><span style="font-weight:600">10%</span></div><div style="height:6px;border-radius:3px;background:rgba(255,255,255,.06)"><div style="height:100%;border-radius:3px;background:#ff5029;width:10%"></div></div></div>
+      </div></sc-if>
+      <sc-if value="{{ isDj }}"><div style="display:flex;flex-direction:column;gap:12px">
+        <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:#9e9080">Ticket referrals</span><span style="font-weight:600">62%</span></div><div style="height:6px;border-radius:3px;background:rgba(255,255,255,.06)"><div style="height:100%;border-radius:3px;background:#ff3e9a;width:62%"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:#9e9080">Radio ad revenue share</span><span style="font-weight:600">28%</span></div><div style="height:6px;border-radius:3px;background:rgba(255,255,255,.06)"><div style="height:100%;border-radius:3px;background:#ff3e9a;width:28%"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:#9e9080">Tips</span><span style="font-weight:600">10%</span></div><div style="height:6px;border-radius:3px;background:rgba(255,255,255,.06)"><div style="height:100%;border-radius:3px;background:#ff3e9a;width:10%"></div></div></div>
+      </div></sc-if>
+      <sc-if value="{{ isVenue }}"><div style="display:flex;flex-direction:column;gap:12px">
+        <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:#9e9080">Venue — you</span><span style="font-weight:600">20%</span></div><div style="height:6px;border-radius:3px;background:rgba(255,255,255,.06)"><div style="height:100%;border-radius:3px;background:#22e5d4;width:20%"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:#9e9080">Artists</span><span style="font-weight:600">70%</span></div><div style="height:6px;border-radius:3px;background:rgba(255,255,255,.06)"><div style="height:100%;border-radius:3px;background:#22e5d4;width:70%"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:#9e9080">Promoter pool</span><span style="font-weight:600">10%</span></div><div style="height:6px;border-radius:3px;background:rgba(255,255,255,.06)"><div style="height:100%;border-radius:3px;background:#22e5d4;width:10%"></div></div></div>
+      </div></sc-if>
+      <sc-if value="{{ isFan }}"><div style="display:flex;flex-direction:column;gap:12px">
+        <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:#9e9080">Bedroom Pop</span><span style="font-weight:600">42%</span></div><div style="height:6px;border-radius:3px;background:rgba(255,255,255,.06)"><div style="height:100%;border-radius:3px;background:#b983ff;width:42%"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:#9e9080">Indie</span><span style="font-weight:600">38%</span></div><div style="height:6px;border-radius:3px;background:rgba(255,255,255,.06)"><div style="height:100%;border-radius:3px;background:#b983ff;width:38%"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:#9e9080">Shoegaze</span><span style="font-weight:600">20%</span></div><div style="height:6px;border-radius:3px;background:rgba(255,255,255,.06)"><div style="height:100%;border-radius:3px;background:#b983ff;width:20%"></div></div></div>
+      </div></sc-if>
+      <sc-if value="{{ isPromoter }}"><div style="display:flex;flex-direction:column;gap:12px">
+        <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:#9e9080">You</span><span style="font-weight:600">8.4%</span></div><div style="height:6px;border-radius:3px;background:rgba(255,255,255,.06)"><div style="height:100%;border-radius:3px;background:#ffb84a;width:8.4%"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:#9e9080">Other promoters</span><span style="font-weight:600">1.6%</span></div><div style="height:6px;border-radius:3px;background:rgba(255,255,255,.06)"><div style="height:100%;border-radius:3px;background:#ffb84a;width:1.6%"></div></div></div>
+        <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:#9e9080">Unclaimed pool</span><span style="font-weight:600">—</span></div><div style="height:6px;border-radius:3px;background:rgba(255,255,255,.06)"><div style="height:100%;border-radius:3px;background:#ffb84a;width:0%"></div></div></div>
+      </div></sc-if>
+    </div>
+  </div>
+
+  <div style="margin-top:28px">
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;margin-bottom:12px">{{ activityTitle }}</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <sc-for list="{{ activity }}" as="a" hint-placeholder-count="4">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid rgba(255,255,255,.15);border-radius:12px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);padding:14px 16px">
+          <div><div style="font-weight:600;font-size:14px">{{ a.title }}</div><div style="font-size:12px;color:#9e9080;margin-top:3px">{{ a.meta }}</div></div>
+          <sc-if value="{{ isArtist }}"><div style="font-weight:700;flex-shrink:0;color:#ff5029">{{ a.value }}</div></sc-if>
+          <sc-if value="{{ isDj }}"><div style="font-weight:700;flex-shrink:0;color:#ff3e9a">{{ a.value }}</div></sc-if>
+          <sc-if value="{{ isVenue }}"><div style="font-weight:700;flex-shrink:0;color:#22e5d4">{{ a.value }}</div></sc-if>
+          <sc-if value="{{ isFan }}"><div style="font-weight:700;flex-shrink:0;color:#b983ff">{{ a.value }}</div></sc-if>
+          <sc-if value="{{ isPromoter }}"><div style="font-weight:700;flex-shrink:0;color:#ffb84a">{{ a.value }}</div></sc-if>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isNotifs }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="4">
+      <div style="display:flex;gap:14px;align-items:flex-start;border:1px solid rgba(255,255,255,.15);border-radius:12px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);padding:15px 17px">
+        <sc-if value="{{ n.unread }}"><span style="width:8px;height:8px;border-radius:50%;background:#ff5029;flex-shrink:0;margin-top:6px;box-shadow:0 0 8px #ff5029"></span></sc-if>
+        <sc-if value="{{ n.read }}"><span style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.12);flex-shrink:0;margin-top:6px"></span></sc-if>
+        <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:14px">{{ n.title }}</div><div style="font-size:12.5px;color:#9e9080;margin-top:3px;line-height:1.5">{{ n.body }}</div></div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#5a5048;flex-shrink:0">{{ n.when }}</div>
+      </div>
+    </sc-for>
+  </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { role: 'artist', view: 'overview' };
+  componentDidMount() { this._stagger(); }
+  componentDidUpdate() { this._stagger(); }
+  _stagger() {
+    requestAnimationFrame(() => {
+      const grid = document.getElementById('rd-stats');
+      if (!grid) return;
+      Array.from(grid.children).forEach((el, i) => {
+        el.style.animation = 'none';
+        void el.offsetWidth;
+        el.style.animation = 'ihFadeUp .5s cubic-bezier(.16,1,.3,1) both';
+        el.style.animationDelay = (i * 70) + 'ms';
+      });
+    });
+  }
+  renderVals() {
+    const role = this.state.role;
+    const DATA = {
+      artist: { label: 'Artist', accent: '#ff5029', headline: 'Nyla', chartTitle: 'Hypes — last 7 days', splitTitle: 'Your split (Sundown, Jul 20)', activityTitle: 'Recent payouts',
+        stats: [['4,821','Total hypes'],['1,247','Followers'],['$1,248.60','Last payout'],['312','Show tickets sold']],
+        bars: [29,52,39,65,89,77,100], splitRows: [['You — Artist','70%'],['Empty Bottle — Venue','20%'],['Promoter pool','10%']],
+        activity: [['Sundown Tour — Portland','Jul 20, 2026','$1,248.60'],['Glasslight — Austin','Jul 12, 2026','$980.00'],['Neon District Release','Jul 2, 2026','$46.20']] },
+      dj: { label: 'DJ', accent: '#ff3e9a', headline: 'DJ Caro', chartTitle: 'Radio listens — last 7 days', splitTitle: 'Referral earnings this month', activityTitle: 'Recent shows hosted',
+        stats: [['2,214','Followers'],['96','Ad campaigns vetted'],['$212.40','Referral earnings'],['14','Shows hosted']],
+        bars: [48,61,41,76,89,65,100], splitRows: [['Ticket referrals','62%'],['Radio ad revenue share','28%'],['Tips','10%']],
+        activity: [['Late Coast — Live Session','Jul 24, 2026','Free'],['Sundown Session','Jul 18, 2026','+3 tickets'],['Drift Coast','Jul 9, 2026','+5 tickets']] },
+      venue: { label: 'Venue', accent: '#22e5d4', headline: 'Empty Bottle', chartTitle: 'Tickets sold — last 7 days', splitTitle: 'Your split (this month)', activityTitle: 'Recent settlements',
+        stats: [['312','Shows booked'],['14,208','Tickets sold (all time)'],['$8,240','Paid out (30d)'],['94%','Capacity — avg']],
+        bars: [43,60,54,71,86,79,100], splitRows: [['Venue — you','20%'],['Artists','70%'],['Promoter pool','10%']],
+        activity: [['Sundown — Maya Reyes','Jul 20, 2026','$392.00'],['Drift Coast — Wax Tropic','Jul 12, 2026','$298.00'],['Harborside Sessions','Jul 5, 2026','$150.00']] },
+      fan: { label: 'Fan', accent: '#b983ff', headline: 'Jordan Lee', chartTitle: 'Hypes cast — last 7 days', splitTitle: 'Your taste map', activityTitle: 'Recent activity',
+        stats: [['127','Hypes cast'],['14','Shows attended'],['$4.20','Referral earnings'],['42','Following']],
+        bars: [100,67,100,33,100,67,100], splitRows: [['Bedroom Pop','42%'],['Indie','38%'],['Shoegaze','20%']],
+        activity: [['HYPEd — Sundown','2h ago','+1 hype'],['RSVP\u2019d — Drift Coast','1d ago','free'],['Bought ticket — Neon District','3d ago','$25.00']] },
+      promoter: { label: 'Promoter', accent: '#ffb84a', headline: 'Jam Productions', chartTitle: 'Tickets driven — last 7 days', splitTitle: 'Promoter pool split', activityTitle: 'Recent campaigns',
+        stats: [['640','Followers'],['3','Active campaigns'],['$640.00','Earned (30d)'],['22','Referral tickets']],
+        bars: [33,47,30,67,87,60,100], splitRows: [['You','8.4%'],['Other promoters','1.6%'],['Unclaimed pool','—']],
+        activity: [['Sundown Tour push','Jul 20, 2026','+3 tickets'],['Drift Coast flyers','Jul 12, 2026','+5 tickets'],['Neon District ads','Jul 2, 2026','+14 tickets']] },
+    };
+    const d = DATA[role];
+    const NOTIFS = {
+      artist: [['Payout sent','$1,248.60 from Sundown Tour landed in your Stripe account.','2h',true],['New follower milestone','You passed 1,200 followers this week.','1d',true],['Show confirmed','Empty Bottle confirmed your Aug 2 booking.','2d',false],['Track cleared','“Neon District” passed copyright screening.','4d',false]],
+      dj: [['Radio show hit 1.3K live','Late Coast just had your biggest audience yet.','20m',true],['Referral earned','You earned $6.40 from a ticket you drove.','5h',true],['Booked as lineup act','Empty Bottle added you to the Aug 2 lineup — review the split.','1d',false],['Crate upload cleared','Your set uploaded to the free-use library.','3d',false]],
+      venue: [['Booking request','Wax Tropic wants to play Aug 12 — review in your inbox.','1h',true],['Settlement released','$392.00 from the Sundown show was paid out.','1d',true],['Capacity alert','Drift Coast is 92% sold with 2 days left.','2d',false],['New review','A fan left a 5★ review for last week’s show.','5d',false]],
+      fan: [['Tickets dropped','Midnight Echo — Live at The Echo. You get first access.','12m',true],['You earned $3.60','A friend bought a ticket through your link.','2h',true],['2 rising artists near you','New Seeds matched to your taste.','1d',false],['Nyla is on air','Late Set radio just went live.','2d',false]],
+      promoter: [['+3 tickets driven','Your Sundown Tour push converted 3 sales.','3h',true],['Payout pending','$640.00 settles when Drift Coast ends.','1d',true],['Campaign approved','Your Neon District ads are live.','2d',false],['Pool updated','Your gate share rose to 8.4%.','4d',false]],
+    };
+    const notifsRaw = NOTIFS[role];
+    const ROLES = [['artist','Artist'],['dj','DJ'],['venue','Venue'],['fan','Fan'],['promoter','Promoter']];
+    return {
+      isArtist: role === 'artist', isDj: role === 'dj', isVenue: role === 'venue', isFan: role === 'fan', isPromoter: role === 'promoter',
+      isOverview: this.state.view === 'overview', isNotifs: this.state.view === 'notifs',
+      viewOverview: () => this.setState({ view: 'overview' }), viewNotifs: () => this.setState({ view: 'notifs' }),
+      unread: notifsRaw.filter(n => n[3]).length,
+      notifs: notifsRaw.map(([title, body, when, unread]) => ({ title, body, when, unread, read: !unread })),
+      roleLabel: d.label, headline: d.headline,
+      chartTitle: d.chartTitle, splitTitle: d.splitTitle, activityTitle: d.activityTitle,
+      roles: ROLES.map(([id, label]) => ({ label, active: role === id, inactive: role !== id, pick: () => this.setState({ role: id }) })),
+      stats: d.stats.map(([val, label]) => ({ val, label })),
+      activity: d.activity.map(([title, meta, value]) => ({ title, meta, value })),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

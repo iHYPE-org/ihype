@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<!-- @template name="iHYPE App Store Kit" description="App Store screenshot set (4 marketing frames) + listing copy (title/subtitle/description/keywords). Pick via `kind` tweak." -->
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}body{background:#0a0805;-webkit-font-smoothing:antialiased}</style>
+</helmet>
+
+<sc-if value="{{ isShots }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;gap:18px;padding:40px;overflow-x:auto;background:#0a0805">
+    <sc-for list="{{ shots }}" as="s" hint-placeholder-count="4">
+<sc-if value="{{ s.isAccent }}"><div style="width:270px;height:585px;flex-shrink:0;border-radius:28px;overflow:hidden;position:relative;background:linear-gradient(160deg,#ff5029,#ff502955 65%,#0a0805);padding:26px 20px;display:flex;flex-direction:column">
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;letter-spacing:-.02em;color:#fff;line-height:1.15;text-shadow:0 2px 14px rgba(0,0,0,.4);margin-bottom:18px">{{ s.headline }}</div>
+        <div style="flex:1;border-radius:20px;background:rgba(10,8,5,.72);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(6px);padding:16px;display:flex;flex-direction:column;gap:10px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5)">{{ s.eyebrow }}</div>
+          <div style="font-family:'DM Sans',sans-serif;font-size:12px;color:#f0ebe5;line-height:1.5">{{ s.body }}</div>
+        </div>
+        <div style="margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;color:rgba(255,255,255,.55);text-align:center">iHYPE</div>
+      </div></sc-if>
+      <sc-if value="{{ s.isPurple }}"><div style="width:270px;height:585px;flex-shrink:0;border-radius:28px;overflow:hidden;position:relative;background:linear-gradient(160deg,#b983ff,#6a3fbf55 65%,#0a0805);padding:26px 20px;display:flex;flex-direction:column">
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;letter-spacing:-.02em;color:#fff;line-height:1.15;text-shadow:0 2px 14px rgba(0,0,0,.4);margin-bottom:18px">{{ s.headline }}</div>
+        <div style="flex:1;border-radius:20px;background:rgba(10,8,5,.72);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(6px);padding:16px;display:flex;flex-direction:column;gap:10px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5)">{{ s.eyebrow }}</div>
+          <div style="font-family:'DM Sans',sans-serif;font-size:12px;color:#f0ebe5;line-height:1.5">{{ s.body }}</div>
+        </div>
+        <div style="margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;color:rgba(255,255,255,.55);text-align:center">iHYPE</div>
+      </div></sc-if>
+      <sc-if value="{{ s.isTeal }}"><div style="width:270px;height:585px;flex-shrink:0;border-radius:28px;overflow:hidden;position:relative;background:linear-gradient(160deg,#22e5d4,#0a8a7a55 65%,#0a0805);padding:26px 20px;display:flex;flex-direction:column">
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;letter-spacing:-.02em;color:#fff;line-height:1.15;text-shadow:0 2px 14px rgba(0,0,0,.4);margin-bottom:18px">{{ s.headline }}</div>
+        <div style="flex:1;border-radius:20px;background:rgba(10,8,5,.72);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(6px);padding:16px;display:flex;flex-direction:column;gap:10px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5)">{{ s.eyebrow }}</div>
+          <div style="font-family:'DM Sans',sans-serif;font-size:12px;color:#f0ebe5;line-height:1.5">{{ s.body }}</div>
+        </div>
+        <div style="margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;color:rgba(255,255,255,.55);text-align:center">iHYPE</div>
+      </div></sc-if>
+      <sc-if value="{{ s.isPink }}"><div style="width:270px;height:585px;flex-shrink:0;border-radius:28px;overflow:hidden;position:relative;background:linear-gradient(160deg,#ff3e9a,#ff3e9a33 65%,#0a0805);padding:26px 20px;display:flex;flex-direction:column">
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;letter-spacing:-.02em;color:#fff;line-height:1.15;text-shadow:0 2px 14px rgba(0,0,0,.4);margin-bottom:18px">{{ s.headline }}</div>
+        <div style="flex:1;border-radius:20px;background:rgba(10,8,5,.72);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(6px);padding:16px;display:flex;flex-direction:column;gap:10px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5)">{{ s.eyebrow }}</div>
+          <div style="font-family:'DM Sans',sans-serif;font-size:12px;color:#f0ebe5;line-height:1.5">{{ s.body }}</div>
+        </div>
+        <div style="margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;color:rgba(255,255,255,.55);text-align:center">iHYPE</div>
+      </div></sc-if>
+    </sc-for>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isCopy }}" hint-placeholder-val="{{ false }}">
+  <div style="max-width:640px;margin:0 auto;padding:56px 28px 100px;color:#f0ebe5;font-family:'DM Sans',sans-serif">
+    <p style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;color:#5a5048;margin-bottom:10px">App Store listing</p>
+    <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.7rem,5vw,2.2rem);letter-spacing:-.03em;margin-bottom:28px">Listing copy</h1>
+
+    <div style="margin-bottom:22px"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#ff5029;margin-bottom:8px">Title (30 char max)</div><div style="font-size:1.1rem;font-weight:700">iHYPE: Live Music, 0% Fees</div></div>
+    <div style="margin-bottom:22px"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#ff5029;margin-bottom:8px">Subtitle (30 char max)</div><div style="font-size:1rem">70/20/10 split. We take $0.</div></div>
+    <div style="margin-bottom:22px"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#ff5029;margin-bottom:8px">Promotional text (170 char)</div><div style="font-size:.92rem;color:#c9beb1;line-height:1.6">Now in closed alpha in Portland, ME. Discover local artists, buy tickets at face value, and hype the shows you believe in — every ticket splits 70/20/10, forever.</div></div>
+    <div style="margin-bottom:22px"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#ff5029;margin-bottom:8px">Description</div><div style="font-size:.9rem;color:#c9beb1;line-height:1.7">iHYPE is live music built on one rule: the platform takes nothing from ticket sales.<br/><br/>Every ticket splits 70% to the artist, 20% to the venue, 10% to a promoter pool shared by everyone who helped spread the word — locked in our founding charter. No service fees, no processing markup beyond the unavoidable cost of accepting a card.<br/><br/>Listen to the radio, hype the artists you believe in before anyone else has heard of them, and buy tickets at face value — direct.<br/><br/>iHYPE is funded by music-only advertising, the same way terrestrial radio always has been. No data sales. No streaming cuts. No middlemen.</div></div>
+    <div style="margin-bottom:22px"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#ff5029;margin-bottom:8px">Keywords</div><div style="font-size:.9rem;color:#c9beb1">live music, concert tickets, local artists, indie music, radio, ticketing, venue, DJ, no fees, discover music</div></div>
+    <div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#ff5029;margin-bottom:8px">Category</div><div style="font-size:.9rem;color:#c9beb1">Music (primary) · Entertainment (secondary)</div></div>
+  </div>
+</sc-if>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;1120px&quot;,&quot;height&quot;:&quot;680px&quot;},&quot;kind&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;screenshots&quot;,&quot;tsType&quot;:&quot;'screenshots'|'copy'&quot;,&quot;options&quot;:[&quot;screenshots&quot;,&quot;copy&quot;],&quot;section&quot;:&quot;View&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const kind = this.props.kind ?? 'screenshots';
+    return {
+      isShots: kind === 'screenshots', isCopy: kind === 'copy',
+      shots: [
+        { headline: 'Live music, 0% fees.', eyebrow: 'The charter', body: '70% artist · 20% venue · 10% promoters · 0% iHYPE — locked before a single ticket sells.', isAccent: true },
+        { headline: 'Discover before anyone else.', eyebrow: 'Seeds', body: 'Swipe to hype new artists. Your taste shapes what iHYPE surfaces next.', isPurple: true },
+        { headline: 'Tickets at face value.', eyebrow: 'Checkout', body: 'No service fees, ever. Only the unavoidable cost of accepting a card.', isTeal: true },
+        { headline: 'Earn from the shows you love.', eyebrow: 'Promoter pool', body: 'Share a link. When it sells a ticket, you earn your share of the 10% pool.', isPink: true },
+      ],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<!-- @template name="iHYPE Role Settings" description="Account settings per role — profile, notifications, payouts link, danger zone" -->
+<helmet>
+  <script src="./ds-base.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>html,body{margin:0;background:radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),#0a0805}*{box-sizing:border-box}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}</style>
+</helmet>
+<div style="min-height:100vh;background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;padding:44px 24px 100px;max-width:640px;margin:0 auto">
+  <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px;letter-spacing:-.02em;margin:0 0 4px">Settings</h1>
+  <div style="display:flex;gap:6px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:4px;width:fit-content;margin:18px 0 28px">
+    <sc-for list="{{ roles }}" as="r" hint-placeholder-count="5">
+      <sc-if value="{{ r.active }}"><button onClick="{{ r.pick }}" style="padding:7px 13px;border-radius:9px;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:rgba(255,255,255,.08);color:#f0ebe5">{{ r.label }}</button></sc-if>
+      <sc-if value="{{ r.inactive }}"><button onClick="{{ r.pick }}" style="padding:7px 13px;border-radius:9px;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:transparent;color:#5a5048">{{ r.label }}</button></sc-if>
+    </sc-for>
+  </div>
+
+  <div style="border:1px solid rgba(255,255,255,.15);border-radius:16px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);padding:22px;margin-bottom:16px">
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;margin-bottom:16px">{{ profileLabel }} profile</div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#5a5048;margin-bottom:6px">Display name</div>
+        <input value="{{ name }}" style="width:100%;height:42px;background:#0a0805;border:1px solid rgba(255,255,255,.14);border-radius:9px;padding:0 14px;color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:14px;box-sizing:border-box"></div>
+      <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#5a5048;margin-bottom:6px">Bio</div>
+        <textarea rows="3" style="width:100%;background:#0a0805;border:1px solid rgba(255,255,255,.14);border-radius:9px;padding:10px 14px;color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:14px;box-sizing:border-box;resize:vertical">{{ bio }}</textarea></div>
+    </div>
+  </div>
+
+  <div style="border:1px solid rgba(255,255,255,.15);border-radius:16px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);padding:22px;margin-bottom:16px">
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;margin-bottom:14px">Notifications</div>
+    <sc-for list="{{ toggles }}" as="t" hint-placeholder-count="3">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.13)">
+        <div><div style="font-size:14px;font-weight:500">{{ t.label }}</div><div style="font-size:12px;color:#9e9080;margin-top:2px">{{ t.detail }}</div></div>
+        <sc-if value="{{ t.on }}"><button onClick="{{ t.toggle }}" style="width:42px;height:24px;border-radius:12px;border:none;cursor:pointer;background:#22e5d4;position:relative"><span style="position:absolute;top:2px;left:20px;width:20px;height:20px;border-radius:50%;background:#0a0805"></span></button></sc-if>
+        <sc-if value="{{ t.off }}"><button onClick="{{ t.toggle }}" style="width:42px;height:24px;border-radius:12px;border:none;cursor:pointer;background:rgba(255,255,255,.14);position:relative"><span style="position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#f0ebe5"></span></button></sc-if>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="border:1px solid rgba(255,255,255,.15);border-radius:16px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);padding:22px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:16px">
+    <div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px">Payouts</div><div style="font-size:13px;color:#9e9080;margin-top:4px">Manage your Stripe Connect account and view history</div></div>
+    <sc-if value="{{ isArtist }}"><a href="#" style="flex-shrink:0;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;color:#ff5029;text-decoration:none">Open →</a></sc-if>
+    <sc-if value="{{ isDj }}"><a href="#" style="flex-shrink:0;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;color:#ff3e9a;text-decoration:none">Open →</a></sc-if>
+    <sc-if value="{{ isVenue }}"><a href="#" style="flex-shrink:0;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;color:#22e5d4;text-decoration:none">Open →</a></sc-if>
+    <sc-if value="{{ isFan }}"><a href="#" style="flex-shrink:0;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;color:#b983ff;text-decoration:none">Open →</a></sc-if>
+    <sc-if value="{{ isPromoter }}"><a href="#" style="flex-shrink:0;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;color:#ffb84a;text-decoration:none">Open →</a></sc-if>
+  </div>
+
+  <div style="border:1px solid rgba(255,80,41,.25);border-radius:16px;background:rgba(255,80,41,.05);padding:22px">
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:#ff5029;margin-bottom:10px">Danger zone</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:16px">
+      <div style="font-size:13px;color:#9e9080">Deactivate this {{ profileLabelLower }} profile</div>
+      <button style="flex-shrink:0;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;padding:8px 16px;border-radius:9px;border:1px solid rgba(255,80,41,.4);background:transparent;color:#ff5029;cursor:pointer">Deactivate</button>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { role: 'artist', toggles: { hype: true, payout: true, events: false } };
+  renderVals() {
+    const { role, toggles } = this.state;
+    const DATA = {
+      artist: { label: 'Artist', accent: '#ff5029', name: 'Nyla', bio: 'Dream-pop from Portland, ME. New EP out now.' },
+      dj: { label: 'DJ', accent: '#ff3e9a', name: 'DJ Caro', bio: 'House & disco, live every Friday night.' },
+      venue: { label: 'Venue', accent: '#22e5d4', name: 'Empty Bottle', bio: 'All-ages venue, Chicago. Booking indie and shoegaze.' },
+      fan: { label: 'Fan', accent: '#b983ff', name: 'Jordan Lee', bio: 'Bedroom pop and indie. Portland, ME.' },
+      promoter: { label: 'Promoter', accent: '#ffb84a', name: 'Jam Productions', bio: 'Independent show promoter, Midwest circuit.' },
+    };
+    const d = DATA[role];
+    const TOGGLES = [
+      ['hype', 'HYPE moments', 'When a track you follow hits a hype spike'],
+      ['payout', 'Payout received', 'Real-time alert when a Stripe transfer lands'],
+      ['events', 'New shows nearby', 'Weekly digest of shows in your area'],
+    ];
+    return {
+      isArtist: role === 'artist', isDj: role === 'dj', isVenue: role === 'venue', isFan: role === 'fan', isPromoter: role === 'promoter',
+      profileLabel: d.label, profileLabelLower: d.label.toLowerCase(), name: d.name, bio: d.bio,
+      roles: [['artist','Artist'],['dj','DJ'],['venue','Venue'],['fan','Fan'],['promoter','Promoter']].map(([id, label]) => ({ label, active: role === id, inactive: role !== id, pick: () => this.setState({ role: id }) })),
+      toggles: TOGGLES.map(([key, label, detail]) => ({ label, detail, on: toggles[key], off: !toggles[key], toggle: () => this.setState(s => ({ toggles: { ...s.toggles, [key]: !s.toggles[key] } })) })),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

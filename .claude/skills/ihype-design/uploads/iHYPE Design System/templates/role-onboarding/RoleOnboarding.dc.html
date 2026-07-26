@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<!-- @template name="iHYPE Role Onboarding" description="Multi-step onboarding wizard — Artist/DJ/Venue signup, switchable role" -->
+<helmet>
+  <script src="./ds-base.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>html,body{margin:0;background:radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),#0a0805}*{box-sizing:border-box}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}</style>
+</helmet>
+<div style="min-height:100vh;background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;padding:44px 24px 100px;max-width:520px;margin:0 auto">
+  <div style="display:flex;gap:6px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:4px;margin-bottom:28px;width:fit-content">
+    <sc-for list="{{ roles }}" as="r" hint-placeholder-count="3">
+      <sc-if value="{{ r.active }}"><button onClick="{{ r.pick }}" style="padding:7px 14px;border-radius:9px;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:rgba(255,255,255,.08);color:#f0ebe5">{{ r.label }}</button></sc-if>
+      <sc-if value="{{ r.inactive }}"><button onClick="{{ r.pick }}" style="padding:7px 14px;border-radius:9px;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:transparent;color:#5a5048">{{ r.label }}</button></sc-if>
+    </sc-for>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-bottom:28px">
+    <sc-for list="{{ steps }}" as="st" hint-placeholder-count="3">
+      <div style="flex:1">
+        <sc-if value="{{ st.doneArtist }}"><div style="height:4px;border-radius:999px;background:#ff5029"></div></sc-if>
+        <sc-if value="{{ st.doneDj }}"><div style="height:4px;border-radius:999px;background:#ff3e9a"></div></sc-if>
+        <sc-if value="{{ st.doneVenue }}"><div style="height:4px;border-radius:999px;background:#22e5d4"></div></sc-if>
+        <sc-if value="{{ st.notDone }}"><div style="height:4px;border-radius:999px;background:rgba(255,255,255,.1)"></div></sc-if>
+        <sc-if value="{{ st.done }}"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#f0ebe5;margin-top:8px">{{ st.label }}</div></sc-if>
+        <sc-if value="{{ st.notDone }}"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#5a5048;margin-top:8px">{{ st.label }}</div></sc-if>
+      </div>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{ isStep1 }}">
+    <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:26px;letter-spacing:-.02em;margin:0 0 6px">{{ step1Title }}</h1>
+    <p style="font-size:14px;color:rgba(240,235,229,.55);margin:0 0 24px">{{ step1Sub }}</p>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#5a5048;margin-bottom:6px">{{ nameLabel }}</div>
+        <input placeholder="{{ namePlaceholder }}" style="width:100%;height:44px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.14);border-radius:9px;padding:0 14px;color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:14px;box-sizing:border-box"></div>
+      <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#5a5048;margin-bottom:6px">Home city</div>
+        <input placeholder="Portland, ME" style="width:100%;height:44px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.14);border-radius:9px;padding:0 14px;color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:14px;box-sizing:border-box"></div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isStep2 }}">
+    <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:26px;letter-spacing:-.02em;margin:0 0 6px">{{ step2Title }}</h1>
+    <p style="font-size:14px;color:rgba(240,235,229,.55);margin:0 0 24px">{{ step2Sub }}</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <sc-for list="{{ genreOrGenreLike }}" as="g" hint-placeholder-count="6">
+        <sc-if value="{{ g.activeArtist }}"><button onClick="{{ g.toggle }}" style="padding:8px 14px;border-radius:999px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;border:1px solid #ff5029;background:rgba(255,80,41,.13);color:#ff5029">{{ g.label }}</button></sc-if>
+        <sc-if value="{{ g.activeDj }}"><button onClick="{{ g.toggle }}" style="padding:8px 14px;border-radius:999px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;border:1px solid #ff3e9a;background:rgba(255,62,154,.13);color:#ff3e9a">{{ g.label }}</button></sc-if>
+        <sc-if value="{{ g.activeVenue }}"><button onClick="{{ g.toggle }}" style="padding:8px 14px;border-radius:999px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;border:1px solid #22e5d4;background:rgba(34,229,212,.13);color:#22e5d4">{{ g.label }}</button></sc-if>
+        <sc-if value="{{ g.inactive }}"><button onClick="{{ g.toggle }}" style="padding:8px 14px;border-radius:999px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;border:1px solid rgba(255,255,255,.14);background:transparent;color:#9e9080">{{ g.label }}</button></sc-if>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isStep3 }}">
+    <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:26px;letter-spacing:-.02em;margin:0 0 6px">You're set</h1>
+    <p style="font-size:14px;color:rgba(240,235,229,.55);margin:0 0 24px;line-height:1.6">{{ step3Body }}</p>
+    <div style="border:1px solid rgba(255,255,255,.15);border-radius:14px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);padding:18px 20px">
+      <sc-if value="{{ isArtist }}"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#ff5029;margin-bottom:8px">The charter, in one line</div></sc-if>
+      <sc-if value="{{ isDj }}"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#ff3e9a;margin-bottom:8px">The charter, in one line</div></sc-if>
+      <sc-if value="{{ isVenue }}"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#22e5d4;margin-bottom:8px">The charter, in one line</div></sc-if>
+      <div style="font-size:14px;color:#f0ebe5;line-height:1.6">70% to artists, 20% to venues, 10% to promoters — on every ticket, every time. iHYPE takes 0%.</div>
+    </div>
+  </sc-if>
+
+  <div style="display:flex;gap:10px;margin-top:32px">
+    <sc-if value="{{ showBack }}"><button onClick="{{ back }}" style="flex:1;height:46px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#f0ebe5;font-family:'DM Sans',sans-serif;font-weight:600;font-size:14px;cursor:pointer">Back</button></sc-if>
+    <sc-if value="{{ isArtist }}"><button onClick="{{ next }}" style="flex:2;height:46px;border-radius:12px;border:none;background:#ff5029;color:#0a0805;font-family:'DM Sans',sans-serif;font-weight:700;font-size:14px;cursor:pointer">{{ nextLabel }}</button></sc-if>
+    <sc-if value="{{ isDj }}"><button onClick="{{ next }}" style="flex:2;height:46px;border-radius:12px;border:none;background:#ff3e9a;color:#0a0805;font-family:'DM Sans',sans-serif;font-weight:700;font-size:14px;cursor:pointer">{{ nextLabel }}</button></sc-if>
+    <sc-if value="{{ isVenue }}"><button onClick="{{ next }}" style="flex:2;height:46px;border-radius:12px;border:none;background:#22e5d4;color:#0a0805;font-family:'DM Sans',sans-serif;font-weight:700;font-size:14px;cursor:pointer">{{ nextLabel }}</button></sc-if>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { role: 'artist', step: 1, genres: {} };
+  renderVals() {
+    const { role, step, genres } = this.state;
+    const ROLE_DATA = {
+      artist: { label: 'Artist', accent: '#ff5029', nameLabel: 'Artist / act name', namePlaceholder: 'e.g. Maya Reyes',
+        step1Title: 'Tell us about your act', step1Sub: 'This becomes your public artist profile.',
+        step2Title: 'Pick your genres', step2Sub: 'Helps fans and Seeds discovery find you.',
+        step3Body: 'Your artist profile is live. Upload a track, or head straight to your dashboard.',
+        genres: ['Dream-pop','Indie','Shoegaze','Jazz','Punk','Lo-fi'] },
+      dj: { label: 'DJ', accent: '#ff3e9a', nameLabel: 'DJ / host name', namePlaceholder: 'e.g. DJ Caro',
+        step1Title: 'Set up your radio profile', step1Sub: 'Fans will find your live shows and sets here.',
+        step2Title: 'What do you play?', step2Sub: 'Used to match you with the right listeners.',
+        step3Body: 'Your DJ profile is live. Go live on radio, or set up your referral link first.',
+        genres: ['House','Techno','Hip-hop','Disco','Ambient','Drum & Bass'] },
+      venue: { label: 'Venue', accent: '#22e5d4', nameLabel: 'Venue name', namePlaceholder: 'e.g. Empty Bottle',
+        step1Title: 'Set up your venue', step1Sub: 'This becomes your public venue profile and booking page.',
+        step2Title: 'What do you book?', step2Sub: 'Helps promoters and artists know your fit.',
+        step3Body: 'Your venue profile is live. Create your first show, or connect payouts first.',
+        genres: ['Live music','DJ nights','All-ages','18+','21+','Outdoor'] },
+    };
+    const r = ROLE_DATA[role];
+    const isArtist = role === 'artist', isDj = role === 'dj', isVenue = role === 'venue';
+    return {
+      isArtist, isDj, isVenue,
+      roles: [['artist','Artist'],['dj','DJ'],['venue','Venue']].map(([id, label]) => ({ label, active: role === id, inactive: role !== id, pick: () => this.setState({ role: id, step: 1, genres: {} }) })),
+      steps: ['Basics', 'Sound', 'Done'].map((label, i) => {
+        const done = step > i;
+        return { label, done, notDone: !done, doneArtist: done && isArtist, doneDj: done && isDj, doneVenue: done && isVenue };
+      }),
+      isStep1: step === 1, isStep2: step === 2, isStep3: step === 3,
+      nameLabel: r.nameLabel, namePlaceholder: r.namePlaceholder,
+      step1Title: r.step1Title, step1Sub: r.step1Sub, step2Title: r.step2Title, step2Sub: r.step2Sub, step3Body: r.step3Body,
+      genreOrGenreLike: r.genres.map(g => {
+        const active = !!genres[g];
+        return { label: g, activeArtist: active && isArtist, activeDj: active && isDj, activeVenue: active && isVenue, inactive: !active, toggle: () => this.setState(s => ({ genres: { ...s.genres, [g]: !s.genres[g] } })) };
+      }),
+      showBack: step > 1,
+      nextLabel: step === 3 ? 'Go to dashboard' : 'Continue',
+      back: () => this.setState(s => ({ step: Math.max(1, s.step - 1) })),
+      next: () => this.setState(s => ({ step: Math.min(3, s.step + 1) })),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

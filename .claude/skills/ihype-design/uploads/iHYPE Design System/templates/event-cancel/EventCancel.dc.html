@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<!-- @template name="iHYPE Event Cancellation" description="Event cancellation flow — reason, refund preview, confirm" -->
+<helmet>
+  <script src="./ds-base.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>html,body{margin:0;background:radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),#0a0805}*{box-sizing:border-box}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}</style>
+</helmet>
+<div style="min-height:100vh;background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;padding:44px 24px 100px;max-width:520px;margin:0 auto">
+  <sc-if value="{{ isForm }}">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#ff5029;margin-bottom:8px">Cancel event</div>
+    <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:26px;letter-spacing:-.02em;margin:0 0 6px">Sundown Tour — Portland</h1>
+    <div style="font-size:13px;color:#9e9080;margin-bottom:24px">Jul 20, 2026 · Empty Bottle · 412 tickets sold</div>
+
+    <div style="border:1px solid rgba(255,80,41,.25);background:rgba(255,80,41,.06);border-radius:12px;padding:14px 16px;margin-bottom:24px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#ff5029;margin-bottom:4px">This can't be undone</div>
+      <p style="font-size:12.5px;color:#9e9080;line-height:1.6;margin:0">All 412 ticket holders will be refunded in full — face value plus the Stripe processing fee. Ticket sales stop immediately.</p>
+    </div>
+
+    <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#5a5048;margin-bottom:6px">Reason for cancellation</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+        <sc-for list="{{ reasons }}" as="r" hint-placeholder-count="4">
+          <sc-if value="{{ r.active }}"><button onClick="{{ r.pick }}" style="padding:8px 14px;border-radius:999px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;border:1px solid #ff5029;background:rgba(255,80,41,.13);color:#ff5029">{{ r.label }}</button></sc-if>
+          <sc-if value="{{ r.inactive }}"><button onClick="{{ r.pick }}" style="padding:8px 14px;border-radius:999px;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;border:1px solid rgba(255,255,255,.14);background:transparent;color:#9e9080">{{ r.label }}</button></sc-if>
+        </sc-for>
+      </div>
+      <textarea rows="3" placeholder="Add details for ticket holders (optional)" style="width:100%;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.14);border-radius:9px;padding:10px 14px;color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:14px;box-sizing:border-box;resize:vertical"></textarea>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;border-top:1px solid rgba(255,255,255,.15);margin-top:22px;padding-top:16px;font-size:13px">
+      <span style="color:#9e9080">Total refunded to fans</span><span style="font-weight:700">$11,536.00</span>
+    </div>
+
+    <button onClick="{{ confirm }}" style="width:100%;height:48px;border-radius:12px;border:none;background:#ff5029;color:#fff;font-family:'DM Sans',sans-serif;font-weight:700;font-size:14px;cursor:pointer;margin-top:20px">Cancel event & refund all tickets</button>
+  </sc-if>
+
+  <sc-if value="{{ isConfirmed }}">
+    <div style="text-align:center;padding:60px 20px">
+      <div style="font-size:40px;margin-bottom:16px">✓</div>
+      <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;margin:0 0 10px">Event cancelled</h1>
+      <p style="font-size:14px;color:#9e9080;line-height:1.6;max-width:360px;margin:0 auto">412 ticket holders are being refunded now via Stripe. Most refunds land within 5–10 business days.</p>
+    </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { reason: 'venue', confirmed: false };
+  renderVals() {
+    const cur = this.state.reason;
+    const REASONS = [['artist','Artist unavailable'],['venue','Venue issue'],['low','Low ticket sales'],['other','Other']];
+    return {
+      isForm: !this.state.confirmed, isConfirmed: this.state.confirmed,
+      reasons: REASONS.map(([id, label]) => ({ label, active: cur === id, inactive: cur !== id, pick: () => this.setState({ reason: id }) })),
+      confirm: () => this.setState({ confirmed: true }),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

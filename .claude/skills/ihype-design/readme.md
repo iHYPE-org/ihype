@@ -143,18 +143,31 @@ guidelines/                         ← 20 DS tab cards
   spacing-tokens / radius / shadows     ← spacing specimens
   brand-wordmark / brand-roles / brand-wordmark-svg  ← brand
 
-components/core/                    ← 10 components, each with .jsx + .d.ts + .prompt.md
-  Button   ← solid / ghost / outline; role-color aware
-  Badge    ← inline role/status label
-  Chip     ← selectable filter pill (genre, role, status)
-  Card     ← bordered panel with optional header
-  Eyebrow  ← mono-caps metadata label
-  Input    ← text field; label / hint / error / leading / trailing
-  Tabs     ← horizontal tab bar with active underline + count badge
-  Toast    ← transient notification (success / warn / error / info)
-  Toggle   ← iOS-style switch row with detail line
-  Avatar   ← role-color initials avatar
-  core.card.html  ← component showcase (DS tab)
+components/core/                    ← 24 components, each with .jsx + .d.ts + .prompt.md
+  Button      ← solid / ghost / outline; role-color aware
+  Badge       ← inline role/status label
+  Chip        ← selectable filter pill (genre, role, status)
+  Card        ← bordered panel with optional header
+  Eyebrow     ← mono-caps metadata label
+  Input       ← text field; label / hint / error / leading / trailing
+  Textarea    ← multiline field; label / hint / error
+  Tabs        ← horizontal tab bar with active underline + count badge
+  Toast       ← transient notification (success / warn / error / info)
+  Toggle      ← iOS-style switch row with detail line
+  Avatar      ← role-color initials avatar
+  Icon        ← Lucide CDN wrapper
+  Select      ← dropdown field
+  Dialog      ← modal with title/description
+  Checkbox    ← labeled checkbox with detail line
+  Radio       ← labeled radio group
+  Skeleton / SkeletonText ← loading placeholders
+  ProgressBar ← labeled progress bar with % value
+  StatCard    ← metric tile (value + label + optional delta)
+  StatusPill  ← rounded connection/status indicator (ok/pending/warn/neutral)
+  EmptyState  ← "nothing here yet" pattern with icon/title/detail/action
+  ListRow     ← shared row shape (leading + title/meta + trailing) for lists
+  HypeButton  ← the namesake mechanic — flame toggle, live count, pop + ring animation
+  core.card.html / hype.card.html  ← component showcases (DS tab)
 
 ui_kits/
   fan-app/
@@ -214,11 +227,33 @@ Reconciled July 2026 against the shipped product. Canonical facts:
 - **Promise copy pattern** (About page): 0% ticket fee · No streaming cuts · No ads · Open to all.
 - New surfaces grounded in product code: `templates/charter/` (We take nothing.), `templates/about/` (timeline), Believers leaderboard + Wrapped cards in `guidelines/`.
 - 2026 brand assets: `assets/brand/logo-sticker-2026.png`, `icon-512.png`, `icon-192.png`.
-- ⚠ Known app-side bug (filed upstream, not ours): `src/app/artists/[slug]/page.tsx:161` in the product repo still renders a stale "45%" artist stat.
+- ✅ The stale "45%" artist stat bug is fixed upstream — `src/app/artists/[slug]/page.tsx` now renders the real 70/20/10 split card. No longer a known issue.
+- **Org status (confirmed 2026-07-20)**: iHYPE is officially 501(c)(3) certified with a Stripe account attached to its nonprofit bank account. **Paid ticketing is live** — real money moves (Stripe Checkout, real Connect transfers, real webhook-verified payouts). Copy can now say "live" rather than "backend-ready."
+- **Retired product routes**: `/studio` and `/home` are bare redirects to `/listen` (the Workbench/role-switching single-dashboard concept is gone); `/beta` redirects to `/register`. DJ profiles live at `/promoters/[slug]`, not `/artists/[slug]`.
+- All product-code gaps flagged in v6 (per-role dashboards/onboarding/settings, payouts, track detail, lineup/split, advertiser signup, booking inbox, event cancellation, support tickets) now have templates — see v7 below.
 
 ---
 
 ## CHANGELOG
+
+### v7 — July 23, 2026 (component + template gap-fill)
+- Added 5 core components: StatCard, StatusPill, EmptyState, ListRow, Textarea (23 total) — demoed in `components/core/core.card.html`
+- Added 9 templates closing the gaps identified against the live product: Role Dashboard (Artist/DJ/Venue/Fan/Promoter analytics), Role Onboarding (Artist/DJ/Venue wizard), Role Settings, Track Detail (`/tracks/[hexId]`), Lineup & Split Agreement, Advertiser Signup (`/advertise/register`), Booking Inbox, Event Cancellation, My Support Tickets
+- Added Payout Settings + Payout History templates (from the v6 backend-doc sync) grounded in the real `/me/payout-settings` and `/me/payouts` pages
+
+### v6 — July 23, 2026 (backend-doc sync)
+- Found backend seam docs contradicting the readme's own live-status note: `BACKEND_SPEC.md`, `openapi.yaml`, `schema.sql`, `lib/api.js` (+ mirrors in `engineering/` and `templates/fan-app/api.js`) still described payouts as "banking-gated" / test-mode
+- Confirmed against `iHYPE-org/ihype@main`: `src/lib/show-payouts.ts` runs real per-show Stripe Connect transfers automatically on a cron; `/me/payout-settings` and `/me/payouts` are real, live pages — not projections
+- Updated all backend docs, `lib/api.js`'s `payouts` object (no longer throws a hardcoded 503), `index.html`, `guidelines/architecture.html`, `templates/beta-launch-deck/BetaLaunchDeck.dc.html`, and `beta/README.md` from "gated/blocked" language to "live"
+- Re-synced `templates/ios-app/IosApp.dc.html` (Dynamic Island + SF Pro chrome) alongside the existing Android app template
+- Fixed 9 templates using dynamic `style="...{{ }}..."` holes for categorical role/state colors (compiler flags these as paint-blocking) — replaced with literal `sc-if`-branched markup: Status, Transparency, Audit, Legal, PromoterDashboard, Discover, ProfilePage, Welcome, EventCreate, ShowDetail
+
+### v5 — July 23, 2026 (GitHub audit)
+- Audited `iHYPE-org/ihype@main` (CLAUDE.md + DESIGN_SYNC.md) for drift since last sync
+- Confirmed fixed: stale "45%" artist stat bug — real product now shows correct 70/20/10
+- Confirmed live: paid ticketing (real Stripe charges/transfers), 501(c)(3) certification — copy updated from "backend-ready" to "live" where relevant
+- Confirmed retired: `/studio`, `/home` → redirect to `/listen`; `/beta` → redirects to `/register`; DJ profiles are at `/promoters/[slug]`
+- No visual/component changes made — engineering-side (schema, cron, Stripe internals, per-role analytics/dashboards, onboarding wizards, payouts, lineup-split, advertiser signup) shipped without new design source; flagged in PRODUCT SYNC as templates not yet built here
 
 ### v4 — June 21, 2026
 - **Fan App (4-platform)** — full rebuild of ui_kits/fan-app/ as a 7-file modular React app

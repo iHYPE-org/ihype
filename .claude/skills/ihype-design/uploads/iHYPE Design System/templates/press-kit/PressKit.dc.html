@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<!-- @template name="iHYPE Press Kit" description="Brand press kit — boilerplate, fact sheet, founder quote, logo/color specs, contact." -->
+<helmet>
+  <script src="./ds-base.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
+  <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}body{background:radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}a{color:inherit;text-decoration:none}</style>
+</helmet>
+
+<div style="max-width:760px;margin:0 auto;padding:56px 28px 100px">
+  <p style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;color:#5a5048;margin-bottom:10px">Press kit</p>
+  <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2rem,6vw,3rem);letter-spacing:-.03em;margin-bottom:20px">iHYPE</h1>
+
+  <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;margin-bottom:10px">Boilerplate</h2>
+  <p style="font-size:.92rem;color:#c9beb1;line-height:1.75;margin-bottom:32px">iHYPE is a not-for-profit live music platform built on a single founding constraint: the company takes nothing from ticket sales. Every ticket splits 70% to the artist, 20% to the venue, and 10% to a promoter pool shared by whoever helped sell it — locked in iHYPE's charter and unchangeable without dissolving and re-incorporating the company. iHYPE is funded entirely by music-related advertising, the same way terrestrial radio has always worked. Founded in Portland, Maine in January 2026, iHYPE is run by two people and AI automation.</p>
+
+  <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;margin-bottom:10px">Fact sheet</h2>
+  <div style="background:rgba(255,255,255,.04);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.15);border-radius:14px;overflow:hidden;margin-bottom:32px">
+    <sc-for list="{{ facts }}" as="f" hint-placeholder-count="8">
+      <div style="display:flex;justify-content:space-between;padding:13px 20px;border-bottom:1px solid rgba(255,255,255,.13);font-size:.86rem"><span style="color:#9e9080">{{ f.k }}</span><span style="color:#f0ebe5;text-align:right;max-width:60%">{{ f.v }}</span></div>
+    </sc-for>
+  </div>
+
+  <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;margin-bottom:14px">Founder quote</h2>
+  <blockquote style="border-left:2px solid #ff5029;padding-left:20px;margin-bottom:32px">
+    <p style="font-family:'Instrument Serif',serif;font-style:italic;font-size:1.3rem;line-height:1.5;color:#f0ebe5">"Every platform that started with good intentions eventually faced a board meeting where fees made sense. We wanted to make that conversation impossible."</p>
+  </blockquote>
+
+  <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;margin-bottom:14px">Brand assets</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:32px">
+    <div style="background:#ff5029;border-radius:14px;padding:36px 20px;text-align:center"><span style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:#fff">iHYPE</span></div>
+    <div style="background:#0a0805;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:36px 20px;text-align:center"><span style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:#f0ebe5">iHYPE</span></div>
+  </div>
+  <div style="display:flex;border-radius:12px;overflow:hidden;margin-bottom:32px">
+    <sc-for list="{{ colors }}" as="c" hint-placeholder-count="5">
+      <sc-if value="{{ c.isDark }}"><div style="flex:1;height:64px;background:#0a0805;display:flex;align-items:flex-end;padding:8px;font-family:'JetBrains Mono',monospace;font-size:9px;color:#9e9080">{{ c.label }}</div></sc-if>
+      <sc-if value="{{ c.isAccent }}"><div style="flex:1;height:64px;background:#ff5029;display:flex;align-items:flex-end;padding:8px;font-family:'JetBrains Mono',monospace;font-size:9px;color:#fff">{{ c.label }}</div></sc-if>
+      <sc-if value="{{ c.isTeal }}"><div style="flex:1;height:64px;background:#22e5d4;display:flex;align-items:flex-end;padding:8px;font-family:'JetBrains Mono',monospace;font-size:9px;color:#0a0805">{{ c.label }}</div></sc-if>
+      <sc-if value="{{ c.isPurple }}"><div style="flex:1;height:64px;background:#b983ff;display:flex;align-items:flex-end;padding:8px;font-family:'JetBrains Mono',monospace;font-size:9px;color:#0a0805">{{ c.label }}</div></sc-if>
+      <sc-if value="{{ c.isPink }}"><div style="flex:1;height:64px;background:#ff3e9a;display:flex;align-items:flex-end;padding:8px;font-family:'JetBrains Mono',monospace;font-size:9px;color:#fff">{{ c.label }}</div></sc-if>
+    </sc-for>
+  </div>
+
+  <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;margin-bottom:10px">Contact</h2>
+  <p style="font-size:.9rem;color:#c9beb1;line-height:1.7">Press inquiries: <a href="mailto:admin@ihype.org" style="color:#ff5029">admin@ihype.org</a><br>Portland, ME</p>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      facts: [
+        { k: 'Founded', v: 'January 2026 · Portland, ME' }, { k: 'Structure', v: 'Not-for-profit (iHYPE Inc.)' },
+        { k: 'Team', v: '2 people + AI automation' }, { k: 'Ticket split', v: '70% artist / 20% venue / 10% promoters / 0% iHYPE' },
+        { k: 'Revenue', v: 'Music-related advertising only' }, { k: 'Payments', v: 'Stripe direct — card fee passed through at cost' },
+        { k: 'Content', v: 'Audio only — no video, ever' }, { k: 'Contact', v: 'admin@ihype.org' },
+      ],
+      colors: [
+        { label: '#0a0805', isDark: true }, { label: '#ff5029', isAccent: true }, { label: '#22e5d4', isTeal: true },
+        { label: '#b983ff', isPurple: true }, { label: '#ff3e9a', isPink: true },
+      ],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -69,7 +69,7 @@ function mkBlock(type, label, secs, tint, meta={}) { return { _id: _blockId++, t
 function LibraryScreen({ crate, onAddToCrate, onRemoveFromCrate }) {
   const [q, setQ] = React.useState('');
   const [genre, setGenre] = React.useState('All');
-  const lib = (window.IHYPE_DATA.freeUseLibrary || []);
+  const lib = (window.IHYPE_DATA.freeUseLibrary || []).filter(s => s.radioEligible !== false);
   const crateIds = crate.map(c => c.id);
   const filtered = lib.filter(s =>
     (genre === 'All' || s.genre === genre) &&
@@ -81,8 +81,8 @@ function LibraryScreen({ crate, onAddToCrate, onRemoveFromCrate }) {
       <div style={{ padding:'0 14px 10px', flexShrink:0 }}>
         <div style={{ display:'flex', alignItems:'center', gap:8, background:'rgba(255,255,255,.06)', borderRadius:12, padding:'9px 12px', border:'1px solid rgba(185,131,255,.15)' }}>
           <span style={{ color:'var(--ink-3)', fontSize:14 }}>🔍</span>
-          <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search free-use tracks…" style={{ flex:1, background:'none', border:'none', outline:'none', color:'var(--ink)', fontFamily:'var(--f-b)', fontSize:'.88rem' }} />
-          {q && <button onClick={()=>setQ('')} style={{ background:'none', border:'none', color:'var(--ink-3)', cursor:'pointer', fontSize:14 }}>×</button>}
+          <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search opt-in tracks…" style={{ flex:1, background:'none', border:'none', outline:'none', color:'var(--ink)', fontFamily:'var(--f-b)', fontSize:'.88rem' }} />
+          {q && <button onClick={()=>setQ('')} aria-label="Clear search" style={{ background:'none', border:'none', color:'var(--ink-3)', cursor:'pointer', fontSize:14 }}>×</button>}
         </div>
       </div>
       {/* Genre chips */}
@@ -93,7 +93,7 @@ function LibraryScreen({ crate, onAddToCrate, onRemoveFromCrate }) {
       </div>
       {/* Notice */}
       <div style={{ margin:'0 14px 10px', padding:'7px 12px', borderRadius:10, background:'rgba(185,131,255,.07)', border:'1px solid rgba(185,131,255,.15)', fontFamily:'var(--f-m)', fontSize:'.68rem', color:'rgba(185,131,255,.8)', letterSpacing:'.04em' }}>
-        ✓ All tracks below are licensed for free use by artists on iHYPE.
+        ✓ All tracks below have artists who opted in to radio shows.
       </div>
       {/* Song list */}
       <div style={{ flex:1, overflowY:'auto', padding:'0 14px 14px' }}>
@@ -142,7 +142,7 @@ function CrateScreen({ crate, setCrate, onGoStudio }) {
               <div style={{ fontFamily:'var(--f-d)', fontWeight:800, fontSize:'.88rem', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{s.t}</div>
               <div style={{ fontFamily:'var(--f-m)', fontSize:'.7rem', color:'var(--ink-3)' }}>{s.a} · {s.len}</div>
             </div>
-            <button onClick={()=>remove(s.id)} style={{ background:'none', border:'none', color:'rgba(255,80,41,.5)', cursor:'pointer', fontSize:18, flexShrink:0, lineHeight:1 }}>×</button>
+            <button onClick={()=>remove(s.id)} aria-label={"Remove " + s.t + " from crate"} style={{ background:'none', border:'none', color:'rgba(255,80,41,.5)', cursor:'pointer', fontSize:18, flexShrink:0, lineHeight:1 }}>×</button>
           </div>
         ))}
       </div>
@@ -256,7 +256,7 @@ function StudioScreen({ crate, showTitle, setShowTitle, onPublish }) {
         {crate.length === 0 && (
           <div style={{ marginBottom:14, padding:'16px', borderRadius:16, background:'rgba(185,131,255,.06)', border:'1px dashed rgba(185,131,255,.25)', textAlign:'center' }}>
             <div style={{ fontFamily:'var(--f-d)', fontWeight:800, fontSize:'.9rem', marginBottom:6 }}>Your crate is empty</div>
-            <div style={{ fontFamily:'var(--f-b)', fontSize:'.78rem', color:'var(--ink-3)', marginBottom:12, lineHeight:1.5 }}>Browse free-use tracks and add them to your crate first.</div>
+            <div style={{ fontFamily:'var(--f-b)', fontSize:'.78rem', color:'var(--ink-3)', marginBottom:12, lineHeight:1.5 }}>Browse opt-in tracks and add them to your crate first.</div>
             <button onClick={()=>setTab('library')} style={{ padding:'8px 20px', borderRadius:999, background:'rgba(185,131,255,.15)', border:'1px solid rgba(185,131,255,.35)', color:'#b983ff', fontFamily:'var(--f-d)', fontWeight:800, fontSize:'.82rem', cursor:'pointer' }}>Browse Library →</button>
           </div>
         )}

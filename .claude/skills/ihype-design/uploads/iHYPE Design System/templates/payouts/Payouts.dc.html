@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<!-- @template name="iHYPE Payouts" description="Unified payouts hub — History (real Stripe transfers) / Settings (Connect status) / This show (per-event 70/20/10 projection). Merges the former three payout templates into one tabbed screen." -->
+<helmet>
+  <script src="./ds-base.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>html,body{margin:0;background:radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),#0a0805}*{box-sizing:border-box}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}</style>
+</helmet>
+<div style="min-height:100vh;background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;padding:48px 24px 100px;max-width:660px;margin:0 auto">
+  <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px;letter-spacing:-.02em;margin:0 0 8px">Payouts</h1>
+  <p style="font-size:14px;color:rgba(240,235,229,.55);margin:0 0 22px">Every share settles automatically after each show — 70% artist / 20% venue / 10% promoters, iHYPE takes 0%.</p>
+
+  <div style="display:flex;gap:6px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:4px;width:fit-content;margin-bottom:28px">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+      <sc-if value="{{ t.active }}"><button onClick="{{ t.select }}" style="padding:8px 16px;border-radius:9px;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:rgba(255,255,255,.08);color:#f0ebe5">{{ t.label }}</button></sc-if>
+      <sc-if value="{{ t.inactive }}"><button onClick="{{ t.select }}" style="padding:8px 16px;border-radius:9px;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:transparent;color:#5a5048">{{ t.label }}</button></sc-if>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{ isHistory }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;gap:24px;border:1px solid rgba(255,255,255,.15);border-radius:14px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);padding:18px 22px;margin-bottom:26px">
+      <div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;color:#22e5d4">{{ totalReceived }}</div><div style="font-size:12px;color:rgba(240,235,229,.55);margin-top:4px">Total received</div></div>
+      <div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px">{{ receivedCount }}</div><div style="font-size:12px;color:rgba(240,235,229,.55);margin-top:4px">Payouts</div></div>
+    </div>
+    <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;margin:0 0 12px">Received</h2>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:26px">
+      <sc-for list="{{ received }}" as="r" hint-placeholder-count="3">
+        <div style="border:1px solid rgba(255,255,255,.15);border-radius:12px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);padding:16px;display:flex;justify-content:space-between;align-items:center;gap:12px">
+          <div><div style="font-weight:600;font-size:14px">{{ r.title }}</div><div style="font-size:12px;color:rgba(240,235,229,.55);margin-top:3px">{{ r.payee }} · {{ r.date }}</div></div>
+          <div style="font-weight:700;color:#22e5d4;flex-shrink:0">{{ r.amount }}</div>
+        </div>
+      </sc-for>
+    </div>
+    <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;margin:0 0 8px">Pending</h2>
+    <p style="font-size:12.5px;color:rgba(240,235,229,.5);margin:0 0 12px">Released automatically once the show ends.</p>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <sc-for list="{{ pending }}" as="pd" hint-placeholder-count="2">
+        <div style="border:1px solid rgba(255,255,255,.15);border-radius:12px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);padding:16px;display:flex;justify-content:space-between;align-items:center;gap:12px">
+          <div><div style="font-weight:600;font-size:14px">{{ pd.title }}</div><div style="font-size:12px;color:rgba(240,235,229,.55);margin-top:3px">{{ pd.payee }} · {{ pd.status }}</div></div>
+          <div style="font-weight:700;flex-shrink:0">{{ pd.amount }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:24px">
+      <sc-for list="{{ profiles }}" as="p" hint-placeholder-count="3">
+        <div style="border:1px solid rgba(255,255,255,.15);border-radius:16px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);padding:18px 20px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px">
+            <div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:15px">{{ p.name }}</div><div style="font-size:12px;color:rgba(240,235,229,.55);margin-top:2px">{{ p.roleLabel }}</div></div>
+            <sc-if value="{{ p.onboarded }}"><span style="flex-shrink:0;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;padding:5px 10px;border-radius:999px;background:rgba(34,229,212,.15);color:#22e5d4">Verified</span></sc-if>
+            <sc-if value="{{ p.notOnboarded }}"><span style="flex-shrink:0;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;padding:5px 10px;border-radius:999px;background:rgba(120,120,120,.15);color:rgba(240,235,229,.55)">Not connected</span></sc-if>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.15)">
+            <div style="width:40px;height:40px;border-radius:10px;background:rgba(34,229,212,.12);color:#22e5d4;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg fill="none" height="19" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewBox="0 0 24 24" width="19"><rect height="14" rx="2" width="20" x="2" y="5"></rect><line x1="2" x2="22" y1="10" y2="10"></line></svg></div>
+            <div style="flex:1;min-width:0">
+              <sc-if value="{{ p.hasAccount }}"><div style="font-size:14px;font-weight:500">Connected via Stripe Connect</div><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:rgba(240,235,229,.55);margin-top:3px">{{ p.acctMasked }}</div></sc-if>
+              <sc-if value="{{ p.noAccount }}"><div style="font-size:14px;font-weight:500">No payout account connected yet</div></sc-if>
+            </div>
+            <button onClick="{{ p.connect }}" style="flex-shrink:0;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;padding:9px 16px;border-radius:9px;border:none;cursor:pointer;background:#22e5d4;color:#0a0805">{{ p.btnLabel }}</button>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="border:1px solid rgba(255,255,255,.15);border-radius:12px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);padding:14px 16px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:rgba(240,235,229,.5);margin-bottom:4px">Payment processing (Stripe) — iHYPE's only fee</div>
+      <p style="font-size:12.5px;color:rgba(240,235,229,.6);line-height:1.6;margin:0">2.9% + $0.30 per ticket (3.5% + $0.30 for Amex), charged by Stripe — not by iHYPE. iHYPE still takes 0% of the ticket price itself.</p>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isShow }}" hint-placeholder-val="{{ false }}">
+    <div style="border:1px solid rgba(255,255,255,.15);border-radius:18px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);padding:24px;margin-bottom:16px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(240,235,229,.5);margin-bottom:6px">Nyla — Glasslight Tour · Jul 10</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><span style="display:inline-flex;align-items:center;gap:7px;font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:#ffb84a;border:1px solid rgba(255,184,74,.35);background:rgba(255,184,74,.07);border-radius:999px;padding:6px 12px">● Settlement pending — releases at show end</span></div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#9e9080;margin-bottom:8px">Gross · 412 tickets · $28.00 each</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2rem;letter-spacing:-.03em;margin-bottom:18px">$11,536.00</div>
+      <div style="display:flex;border-radius:10px;overflow:hidden">
+        <div style="flex:7;padding:15px;text-align:center;background:rgba(255,80,41,.15)"><div style="font-size:18px;font-weight:700;color:#ff5029">$8,075.20</div><div style="font-size:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.12em;color:#ff5029;margin-top:4px">Artist · 70%</div></div>
+        <div style="flex:2;padding:15px;text-align:center;background:rgba(34,229,212,.15)"><div style="font-size:18px;font-weight:700;color:#22e5d4">$2,307.20</div><div style="font-size:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.12em;color:#22e5d4;margin-top:4px">Venue · 20%</div></div>
+        <div style="flex:1;padding:15px;text-align:center;background:rgba(255,62,154,.15)"><div style="font-size:18px;font-weight:700;color:#ff3e9a">$1,153.60</div><div style="font-size:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.12em;color:#ff3e9a;margin-top:4px">Promoters · 10%</div></div>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:#5a5048;margin-top:14px;line-height:1.7">iHYPE · 0% — $0.00. Card-processing fees (2.9% + $0.30) were paid by the buyer above face value and never touch this split.</div>
+    </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;720px&quot;,&quot;height&quot;:&quot;860px&quot;}}">
+class Component extends DCLogic {
+  state = {
+    tab: 'history',
+    accounts: { artist: { onboarded: true, id: 'acct_1PZk8jFxHy2029' }, dj: { onboarded: false, id: 'acct_1PZm2rFxHy2044' }, venue: { onboarded: false, id: null } },
+  };
+  renderVals() {
+    const { tab, accounts: A } = this.state;
+    const received = [
+      { title: 'Nyla — Glasslight Tour', payee: 'Artist payout', date: 'Jul 20, 2026', amount: '$1,248.60' },
+      { title: 'Empty Bottle — Sundown Session', payee: 'Venue payout', date: 'Jul 18, 2026', amount: '$392.00' },
+      { title: 'Neon District Release Show', payee: 'Promoter affiliate', date: 'Jul 12, 2026', amount: '$46.20' },
+    ];
+    const pending = [
+      { title: 'Wax Tropic — Drift Coast', payee: 'Artist payout', status: 'Show scheduled', amount: '$980.00' },
+      { title: 'Schuba\u2019s — Reina Sol\u00eds', payee: 'Venue payout', status: 'Show scheduled', amount: '$210.00' },
+    ];
+    const totalCents = received.reduce((s, r) => s + Math.round(parseFloat(r.amount.replace(/[$,]/g, '')) * 100), 0);
+    const PROFILES = [
+      { key: 'artist', name: 'Nyla', roleLabel: 'Artist' },
+      { key: 'dj', name: 'DJ Caro', roleLabel: 'Promoter/DJ' },
+      { key: 'venue', name: 'Empty Bottle', roleLabel: 'Venue' },
+    ];
+    return {
+      tabs: [['history','History'],['settings','Settings'],['show','This show']].map(([id, label]) => ({ label, active: tab === id, inactive: tab !== id, select: () => this.setState({ tab: id }) })),
+      isHistory: tab === 'history', isSettings: tab === 'settings', isShow: tab === 'show',
+      received, pending, receivedCount: received.length,
+      totalReceived: '$' + (totalCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      profiles: PROFILES.map(p => {
+        const a = A[p.key], hasAccount = !!a.id;
+        return {
+          ...p, onboarded: a.onboarded, notOnboarded: !a.onboarded, hasAccount, noAccount: !hasAccount,
+          acctMasked: hasAccount ? a.id.slice(0, 9) + '···' + a.id.slice(-4) : '',
+          btnLabel: a.onboarded ? 'Reconnect' : hasAccount ? 'Finish setup' : 'Connect',
+          connect: () => this.setState(s => ({ accounts: { ...s.accounts, [p.key]: { onboarded: true, id: a.id || 'acct_1PZnew' + Math.random().toString(36).slice(2, 8) } } })),
+        };
+      }),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

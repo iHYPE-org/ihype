@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ihype.app/sitemap.xml
+
+# Beta note: some paths are gated behind invite codes and won't be crawlable.
+Disallow: /api/
+Disallow: /ops/

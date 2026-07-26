@@ -282,26 +282,25 @@ promoter share:     min(0.10, 0.10 × referral.gross_driven_cents / event.total_
 
 If `total_gross_cents = 0` (free event): skip settlement; no promoter payout.
 
-## 5. What's blocked on nonprofit status → banking
+## 5. Launch status (2026-07-20)
 
-| Can build NOW | Blocked until EIN + bank/Stripe |
-|---------------|--------------------------------|
-| Auth, beta gate, users, roles | `payout_accounts`, Stripe Connect onboarding |
-| Feed, search, charts, seeds | `POST /tickets` real charge (use **$0 / test mode** now) |
-| Hype + budgets | Settlement job transfers |
-| Events, charter/split snapshot | Promoter payout (math can run; transfer can't) |
-| Tickets as **records** (free/test) | `POST /payouts` |
-| DJ library, crate, radio studio | — |
-| Live shows + chat + moderation | — |
-| Reports / ops / verify | — |
-| Telemetry endpoint | — |
+iHYPE is 501(c)(3) certified with a Stripe account on its nonprofit bank account. Everything below is live, not simulated:
 
-**Unblock checklist once nonprofit lands:**
-1. EIN → Stripe Connect (nonprofit/platform account; ask Stripe about reduced nonprofit pricing).
-2. Set up Connect **Express** sub-accounts for artists/venues/DJs (handles their KYC).
-3. Flip `POST /tickets` from test → live payment intents.
-4. Enable the settlement job's transfer step.
-5. Money-transmitter review — since you hold funds briefly and split them, confirm whether Connect's liability model covers you or you need an MTL. **Get legal eyes on this before live charges.**
+| Live now |
+|---------|
+| Auth, beta gate, users, roles |
+| Feed, search, charts, seeds |
+| Hype + budgets |
+| Events, charter/split snapshot |
+| `POST /tickets` — real Stripe charge |
+| Stripe Connect Express onboarding (`payout_accounts`) |
+| Settlement job transfers — real per-entry Stripe transfers, released automatically when a show ends |
+| DJ library, crate, radio studio |
+| Live shows + chat + moderation |
+| Reports / ops / verify |
+| Telemetry endpoint |
+
+Remaining scope, not blockers: multi-Connect-account support (one Connect account per profile today), a payout-schedule selector (payouts are always immediate-on-show-end, no batching option exists), and a per-user "email me on payout" toggle (the cron already emails unconditionally on every transfer).
 
 ---
 

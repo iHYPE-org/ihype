@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<!-- @template name="iHYPE Track Detail" description="Public track detail page — /tracks/[hexId], play, hype, credits" -->
+<helmet>
+  <script src="./ds-base.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>html,body{margin:0;background:radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),#0a0805}*{box-sizing:border-box}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}</style>
+</helmet>
+<div style="min-height:100vh;background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;padding:44px 24px 100px;max-width:640px;margin:0 auto">
+  <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#5a5048;margin-bottom:18px">iH/{{ hexId }}</div>
+  <div style="border-radius:24px;overflow:hidden;aspect-ratio:1;background:linear-gradient(135deg,#ff5029,#ff502955 55%,#1a1612);position:relative;margin-bottom:22px">
+    <div style="position:absolute;inset:0;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.2),transparent 55%)"></div>
+    <div style="position:absolute;left:24px;bottom:24px;font-family:'Syne',sans-serif;font-weight:800;font-size:32px;color:rgba(255,255,255,.95);text-shadow:0 2px 12px rgba(0,0,0,.5)">{{ title }}</div>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+    <div><h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;letter-spacing:-.02em;margin:0">{{ title }}</h1><div style="font-size:14px;color:#9e9080;margin-top:5px">{{ artist }} · {{ releaseDate }}</div></div>
+    <sc-if value="{{ hyped }}"><button onClick="{{ toggleHype }}" style="flex-shrink:0;font-family:'Syne',sans-serif;font-weight:800;font-size:.85rem;background:rgba(255,80,41,.15);color:#ff5029;border:none;padding:11px 20px;border-radius:999px;cursor:pointer">🔥 {{ hypeCount }}</button></sc-if>
+    <sc-if value="{{ notHyped }}"><button onClick="{{ toggleHype }}" style="flex-shrink:0;font-family:'Syne',sans-serif;font-weight:800;font-size:.85rem;background:#ff5029;color:#fff;border:none;padding:11px 20px;border-radius:999px;cursor:pointer">🔥 {{ hypeCount }}</button></sc-if>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:16px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:16px 18px;margin-bottom:24px">
+    <button onClick="{{ togglePlay }}" style="width:52px;height:52px;border-radius:50%;background:#f0ebe5;color:#0a0805;border:none;flex-shrink:0;font-size:18px;cursor:pointer">{{ playIcon }}</button>
+    <div style="flex:1">
+      <div style="height:5px;border-radius:3px;background:rgba(255,255,255,.1)"><div style="width:42%;height:100%;background:#ff5029;border-radius:3px"></div></div>
+      <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;color:#5a5048;margin-top:8px"><span>{{ elapsed }}</span><span>{{ duration }}</span></div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px;margin-bottom:28px">
+    <div style="flex:1;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:14px;text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:#22e5d4">{{ plays }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#9e9080;margin-top:4px">Plays</div></div>
+    <div style="flex:1;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:14px;text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:#b983ff">{{ chartRank }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#9e9080;margin-top:4px">Charts rank</div></div>
+    <div style="flex:1;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:14px;text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:#ff3e9a">{{ genre }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#9e9080;margin-top:4px">Genre</div></div>
+  </div>
+
+  <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;margin:0 0 12px">Credits</h2>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:28px">
+    <sc-for list="{{ credits }}" as="c" hint-placeholder-count="4">
+      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.13);font-size:13px"><span style="color:#9e9080">{{ c.role }}</span><span style="color:#f0ebe5">{{ c.name }}</span></div>
+    </sc-for>
+  </div>
+
+  <div style="border:1px solid rgba(255,255,255,.15);border-radius:12px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);padding:14px 16px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#5a5048;margin-bottom:4px">Free for use</div>
+    <p style="font-size:12.5px;color:#9e9080;line-height:1.6;margin:0">This track is cleared for DJ crates and radio play under iHYPE's free-use policy. No sync licensing required for on-platform spins.</p>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { hyped: false, playing: false };
+  renderVals() {
+    const { hyped, playing } = this.state;
+    return {
+      hexId: 'A82F91', title: 'Sundown', artist: 'Nyla', releaseDate: 'Jun 2026',
+      hyped, notHyped: !hyped,
+      hypeCount: (9834 + (hyped ? 1 : 0)).toLocaleString(),
+      toggleHype: () => this.setState(s => ({ hyped: !s.hyped })),
+      playIcon: playing ? '❚❚' : '▶',
+      togglePlay: () => this.setState(s => ({ playing: !s.playing })),
+      elapsed: '1:32', duration: '3:38',
+      plays: '48.2k', chartRank: '#1', genre: 'Dream-pop',
+      credits: [
+        { role: 'Artist', name: 'Nyla' },
+        { role: 'Producer', name: 'Reina Solís' },
+        { role: 'Mixed by', name: 'Verb Collective' },
+        { role: 'Label', name: 'Independent' },
+      ],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

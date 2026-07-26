@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iHYPE — Discover Heat Map</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+header{padding:16px 22px;border-bottom:1px solid rgba(255,255,255,.13);display:flex;align-items:center;gap:14px;flex-shrink:0}
+h1{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;letter-spacing:-.02em;margin:0}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#ff5029}
+#map{position:absolute;inset:0;filter:saturate(.15) brightness(.65) contrast(1.1)}
+.legend{position:absolute;bottom:20px;left:20px;z-index:500;background:rgba(10,8,5,.9);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.04em;display:flex;flex-direction:column;gap:6px}
+.legend div{display:flex;align-items:center;gap:8px}
+.dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.wrap{position:relative;flex:1}
+.leaflet-popup-content-wrapper{background:#1a1612;color:#f0ebe5;border-radius:10px}
+.leaflet-popup-tip{background:#1a1612}
+.pop b{font-family:'Syne',sans-serif;font-size:13px}
+.pop span{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;color:#9e9080;margin-top:2px}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="eyebrow">Discover</div>
+    <h1>Where fans are hyping — live map</h1>
+  </div>
+</header>
+<div class="wrap">
+  <div id="map"></div>
+  <div class="legend">
+    <div><span class="dot" style="background:#ff1f3d"></span>Fire — hottest demand</div>
+    <div><span class="dot" style="background:#ff5029"></span>Hot — rising fast</div>
+    <div><span class="dot" style="background:#ffb84a"></span>Warm — building</div>
+    <div><span class="dot" style="background:#3a4a5a"></span>Cold — just started</div>
+  </div>
+</div>
+<script>
+const CITIES = [
+  { name: 'Portland, ME', lat: 43.6591, lng: -70.2568, hypes: 8087, tier: 'fire', color: '#ff1f3d' },
+  { name: 'New York, NY', lat: 40.7128, lng: -74.0060, hypes: 4528, tier: 'hot', color: '#ff5029' },
+  { name: 'Austin, TX', lat: 30.2672, lng: -97.7431, hypes: 2406, tier: 'warm', color: '#ffb84a' },
+  { name: 'Los Angeles, CA', lat: 34.0522, lng: -118.2437, hypes: 640, tier: 'cold', color: '#3a4a5a' },
+];
+const map = L.map('map', { zoomControl: true, attributionControl: true }).setView([39, -95], 4);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 12 }).addTo(map);
+const RADIUS = { fire: 26, hot: 20, warm: 15, cold: 10 };
+CITIES.forEach(c => {
+  L.circleMarker([c.lat, c.lng], {
+    radius: RADIUS[c.tier], color: c.color, weight: 2, fillColor: c.color, fillOpacity: 0.35,
+  }).addTo(map).bindPopup(`<div class="pop"><b>${c.name}</b><span>${c.hypes.toLocaleString()} hypes this week</span></div>`);
+  L.circleMarker([c.lat, c.lng], { radius: 4, color: c.color, weight: 0, fillColor: c.color, fillOpacity: 1 }).addTo(map);
+});
+</script>
+</body>
+</html>

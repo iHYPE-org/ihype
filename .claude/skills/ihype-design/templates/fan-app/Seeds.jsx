@@ -7,7 +7,7 @@ const SEEDS = [
   { artist: 'Wax Tropic', track: 'Heatwave', tags: ['synth-pop', 'disco'], hype: 642, city: 'Oakland', g: ['#b983ff', '#ff3e9a'], show: { artist: 'Wax Tropic', event: 'Zebulon', date: 'Sat Jun 21 · 8:30 PM', price: 22, tint: '#b983ff', id: 's2' } },
   { artist: 'Midnight Echo', track: 'Carousel', tags: ['dream-pop', 'shoegaze'], hype: 1284, city: 'Los Angeles', g: ['#ff5029', '#ff3e9a'], show: { artist: 'Midnight Echo', event: 'Live at The Echo', date: 'Fri Jun 20 · 9:00 PM', price: 18, tint: '#ff5029', id: 's1' } },
   { artist: 'Sunroom', track: 'Paper Cup', tags: ['indie', 'lo-fi'], hype: 877, city: 'San Diego', g: ['#ffb84a', '#ff5029'], show: { artist: 'Sunroom', event: 'Album Release', date: 'Sun Jun 22 · 7:00 PM', price: 20, tint: '#ffb84a', id: 's4' } },
-  { artist: 'Cold Harbor', track: 'Tidewater', tags: ['post-punk'], hype: 205, city: 'Long Beach', g: ['#39d8df', '#22e5d4'] },
+  { artist: 'Cold Harbor', track: 'Tidewater', tags: ['post-punk'], hype: 205, city: 'Long Beach', g: ['#39d8df', '#22e5d4'], radioEligible: false },
 ];
 
 function SeedsScreen({ onIdxChange }) {
@@ -173,6 +173,7 @@ function SeedCard({ card, flash, style, shimmer, ...rest }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontFamily: 'var(--f-m)', fontSize: 11, color: 'rgba(255,255,255,.8)', marginTop: 8 }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="#fff"><path d="M12 2c1 3-1 5-3 6 1-3.5 0-5.5-1-6.5C8 5 7 7 8 9 6 7.5 6 5 7 4 5 6 4 10 6.5 12.5 7 13 7 15 8 16a4 4 0 1 0 8 0c0-4-2-6-4-14z"/></svg> {card.hype.toLocaleString()} hype · 0:30 preview
         </div>
+        {card.radioEligible === false && <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '.04em', color: 'rgba(255,255,255,.7)', marginTop: 5 }}>📻 Not in radio shows — artist opted out</div>}
       </div>
     </div>
   );

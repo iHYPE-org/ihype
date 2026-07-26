@@ -57,13 +57,13 @@ function ListenSearch({ onToast }) {
     <div>
       <div style={{ position: 'relative', marginBottom: 14 }}>
         <svg style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)' }} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
-        <input value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && q.trim()) commit(q.trim()); }} placeholder="Search artists, DJs, playlists…" style={{ width: '100%', padding: '10px 36px 10px 38px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--bg-3)', color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: '.88rem', outline: 'none', boxSizing: 'border-box' }} />
-        {q && <button onClick={() => setQ('')} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--ink-3)', cursor: 'pointer', fontSize: 16, padding: 0, lineHeight: 1 }}>×</button>}
+        <input value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && q.trim()) commit(q.trim()); }} placeholder={window.ihypeT ? window.ihypeT('searchArtists') : 'Search artists, DJs, playlists…'} style={{ width: '100%', padding: '10px 36px 10px 38px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--bg-3)', color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: '.88rem', outline: 'none', boxSizing: 'border-box' }} />
+        {q && <button onClick={() => setQ('')} aria-label="Clear search" style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--ink-3)', cursor: 'pointer', fontSize: 16, padding: 0, lineHeight: 1 }}>×</button>}
       </div>
       {!q && history.length > 0 && (
         <div style={{ marginBottom: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-            <div style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>Recent</div>
+            <div style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>{window.ihypeT ? window.ihypeT('recent') : 'Recent'}</div>
             <button onClick={() => { localStorage.removeItem(LS_HISTORY_KEY); setHistory([]); }} style={{ background: 'none', border: 'none', color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '.7rem', cursor: 'pointer' }}>Clear</button>
           </div>
           {history.map(h => (
@@ -76,7 +76,7 @@ function ListenSearch({ onToast }) {
       )}
       {!q && (
         <div>
-          <div style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 10 }}>Trending now</div>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 10 }}>{window.ihypeT ? window.ihypeT('trendingNow') : 'Trending now'}</div>
           {D.seeds.map(s => (
             <div key={s.artist} onClick={() => commit(s.artist)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '.65rem 0', borderBottom: '1px solid var(--line-2)', cursor: 'pointer' }}>
               <div style={{ width: 38, height: 38, borderRadius: 9, background: `linear-gradient(135deg,${s.tint}88,${s.tint}22)`, flexShrink: 0 }} />
@@ -85,7 +85,7 @@ function ListenSearch({ onToast }) {
           ))}
         </div>
       )}
-      {q && results.length === 0 && <div style={{ textAlign: 'center', padding: '2rem 1rem', fontFamily: 'var(--f-m)', fontSize: '.85rem', color: 'var(--ink-3)' }}>No results for "{q}"</div>}
+      {q && results.length === 0 && <div style={{ textAlign: 'center', padding: '2rem 1rem', fontFamily: 'var(--f-m)', fontSize: '.85rem', color: 'var(--ink-3)' }}>{(window.ihypeT ? window.ihypeT('noResultsFor') : 'No results for')} "{q}"</div>}
       {q && results.map((r, i) => (
         <div key={i} onClick={() => commit(r.name)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '.65rem 0', borderBottom: '1px solid var(--line-2)', cursor: 'pointer' }}>
           <div style={{ width: 38, height: 38, borderRadius: 9, background: `linear-gradient(135deg,${r.tint}88,${r.tint}22)`, flexShrink: 0 }} />
@@ -164,7 +164,7 @@ function ListenCharts() {
         })}
       </div>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
-        <div style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>Top hypes · LA</div>
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>{window.ihypeT ? window.ihypeT('topHypes') : 'Top hypes · LA'}</div>
         <button onClick={() => window.openIHYPEFriendActivity && window.openIHYPEFriendActivity()} style={{ fontFamily:'var(--f-m)', fontSize:'.68rem', color:'var(--accent)', background:'none', border:'none', cursor:'pointer', letterSpacing:'.06em' }}>Friends →</button>
       </div>
       <style>{'@keyframes growUp{from{transform:scaleY(0)}to{transform:scaleY(1)}}'}</style>
@@ -188,7 +188,7 @@ function ListenPlaylists() {
   return (
     <div>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
-        <div style={{ fontFamily:'var(--f-m)', fontSize:'.68rem', letterSpacing:'.12em', textTransform:'uppercase', color:'var(--ink-3)' }}>Your playlists</div>
+        <div style={{ fontFamily:'var(--f-m)', fontSize:'.68rem', letterSpacing:'.12em', textTransform:'uppercase', color:'var(--ink-3)' }}>{window.ihypeT ? window.ihypeT('yourPlaylists') : 'Your playlists'}</div>
         <button onClick={() => window.openIHYPEPlaylistCreate && window.openIHYPEPlaylistCreate()} style={{ width:28, height:28, borderRadius:'50%', background:'rgba(255,80,41,.12)', border:'1px solid rgba(255,80,41,.25)', color:'var(--accent)', fontFamily:'var(--f-d)', fontWeight:800, fontSize:'1.1rem', cursor:'pointer', display:'grid', placeItems:'center', lineHeight:1 }}>+</button>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -216,7 +216,7 @@ function ListenFollowing() {
   return (
     <div>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
-        <div style={{ fontFamily:'var(--f-m)', fontSize:'.68rem', letterSpacing:'.12em', textTransform:'uppercase', color:'var(--ink-3)' }}>Activity from people you follow</div>
+        <div style={{ fontFamily:'var(--f-m)', fontSize:'.68rem', letterSpacing:'.12em', textTransform:'uppercase', color:'var(--ink-3)' }}>{window.ihypeT ? window.ihypeT('activityFrom') : 'Activity from people you follow'}</div>
         <button onClick={() => window.openIHYPEFriendActivity && window.openIHYPEFriendActivity()} style={{ display:'flex', alignItems:'center', gap:5, padding:'4px 10px', borderRadius:999, border:'1px solid rgba(185,131,255,.3)', background:'rgba(185,131,255,.06)', color:'#b983ff', fontFamily:'var(--f-m)', fontSize:'.7rem', cursor:'pointer', fontWeight:700 }}>👥 Friends</button>
       </div>
       {followed.map((f, i) => (
@@ -253,10 +253,10 @@ function ListenLeaderboard() {
   return (
     <div>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
-        <div style={{ fontFamily:'var(--f-m)', fontSize:'.65rem', letterSpacing:'.12em', textTransform:'uppercase', color:'var(--ink-3)' }}>HYPE Leaderboard · This Week</div>
+        <div style={{ fontFamily:'var(--f-m)', fontSize:'.65rem', letterSpacing:'.12em', textTransform:'uppercase', color:'var(--ink-3)' }}>{window.ihypeT ? window.ihypeT('hypeLeaderboard') : 'HYPE Leaderboard · This Week'}</div>
         <div style={{ display:'flex', alignItems:'center', gap:5 }}>
           <span style={{ width:6, height:6, borderRadius:'50%', background:'#ff5029', boxShadow:'0 0 6px #ff5029', display:'inline-block' }} />
-          <span style={{ fontFamily:'var(--f-m)', fontSize:'.65rem', color:'var(--ink-3)' }}>Live</span>
+          <span style={{ fontFamily:'var(--f-m)', fontSize:'.65rem', color:'var(--ink-3)' }}>{window.ihypeT ? window.ihypeT('live') : 'Live'}</span>
         </div>
       </div>
       {ARTISTS.map((a,i) => (

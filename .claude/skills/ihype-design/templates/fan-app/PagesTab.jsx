@@ -51,14 +51,14 @@ function StatGrid({ stats }) {
 function PromoterLink({ onToast }) {
   return (
     <div style={{ padding: '1rem', borderRadius: 16, border: '1px solid rgba(185,131,255,.25)', background: 'rgba(185,131,255,.06)', marginBottom: 12 }}>
-      <div style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.12em', textTransform: 'uppercase', color: '#b983ff', marginBottom: 6 }}>Your promoter link · 10% pool</div>
+      <div style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.12em', textTransform: 'uppercase', color: '#b983ff', marginBottom: 6 }}>{window.ihypeT ? window.ihypeT('promoterLinkPool') : 'Your promoter link · 10% pool'}</div>
       <div style={{ display: 'flex', gap: 16, marginBottom: 10 }}>
         {[['$16.20', 'Earned', 'var(--accent)'], ['47', 'Clicks', '#22e5d4'], ['3', 'Purchases', '#b983ff']].map(([v, l, c]) => (
           <div key={l}><div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.2rem', color: c, lineHeight: 1 }}>{v}</div><div style={{ fontFamily: 'var(--f-m)', fontSize: '.65rem', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-3)', marginTop: 3 }}>{l}</div></div>
         ))}
       </div>
-      <div style={{ fontFamily: 'var(--f-m)', fontSize: '.75rem', color: 'var(--ink-2)', lineHeight: 1.5, marginBottom: 10 }}>Each purchase through your link earns your proportional share of the 10% promoter pool.</div>
-      <button onClick={() => onToast && onToast('Link copied!')} style={{ width: '100%', padding: '10px', borderRadius: 12, border: '1px solid rgba(185,131,255,.3)', background: 'rgba(185,131,255,.1)', color: '#b983ff', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.85rem', cursor: 'pointer' }}>Copy my referral link</button>
+      <div style={{ fontFamily: 'var(--f-m)', fontSize: '.75rem', color: 'var(--ink-2)', lineHeight: 1.5, marginBottom: 10 }}>{window.ihypeT ? window.ihypeT('promoterLinkDesc') : 'Each purchase through your link earns your proportional share of the 10% promoter pool.'}</div>
+      <button onClick={() => onToast && onToast(window.ihypeT ? window.ihypeT('linkCopied') : 'Link copied!')} style={{ width: '100%', padding: '10px', borderRadius: 12, border: '1px solid rgba(185,131,255,.3)', background: 'rgba(185,131,255,.1)', color: '#b983ff', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.85rem', cursor: 'pointer' }}>{window.ihypeT ? window.ihypeT('copyReferral') : 'Copy my referral link'}</button>
     </div>
   );
 }
@@ -69,7 +69,7 @@ function BarChart() {
   const max = Math.max(...vals);
   return (
     <div style={{ padding: '1rem', borderRadius: 16, border: '1px solid var(--line)', background: 'var(--bg-2)', marginBottom: 12 }}>
-      <div style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 12 }}>Events attended by month</div>
+      <div style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 12 }}>{window.ihypeT ? window.ihypeT('eventsAttended') : 'Events attended by month'}</div>
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 80 }}>
         {vals.map((v, i) => (
           <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
@@ -90,9 +90,9 @@ function FanPage({ onToast }) {
       <StatGrid stats={getFanStats(period)} />
       <BarChart />
       <PromoterLink onToast={onToast} />
-      <button onClick={() => window.openIHYPEFriendActivity && window.openIHYPEFriendActivity()} style={{ width: '100%', padding: '11px', borderRadius: 12, border: '1px solid rgba(185,131,255,.3)', background: 'rgba(185,131,255,.06)', color: '#b983ff', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.88rem', cursor: 'pointer', marginBottom: 8 }}>👥 Friend activity</button>
-      <button style={{ width: '100%', padding: '11px', borderRadius: 12, border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-2)', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.88rem', cursor: 'pointer', marginBottom: 8 }}>Edit page</button>
-      <button onClick={() => window.openIHYPESettings && window.openIHYPESettings()} style={{ width: '100%', padding: '11px', borderRadius: 12, border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '.82rem', cursor: 'pointer' }}>Settings</button>
+      <button onClick={() => window.openIHYPEFriendActivity && window.openIHYPEFriendActivity()} style={{ width: '100%', padding: '11px', borderRadius: 12, border: '1px solid rgba(185,131,255,.3)', background: 'rgba(185,131,255,.06)', color: '#b983ff', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.88rem', cursor: 'pointer', marginBottom: 8 }}>👥 {window.ihypeT ? window.ihypeT('friendActivity') : 'Friend activity'}</button>
+      <button style={{ width: '100%', padding: '11px', borderRadius: 12, border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-2)', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.88rem', cursor: 'pointer', marginBottom: 8 }}>{window.ihypeT ? window.ihypeT('editPage') : 'Edit page'}</button>
+      <button onClick={() => window.openIHYPESettings && window.openIHYPESettings()} style={{ width: '100%', padding: '11px', borderRadius: 12, border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '.82rem', cursor: 'pointer' }}>{window.ihypeT ? window.ihypeT('settings') : 'Settings'}</button>
     </div>
   );
 }
@@ -107,7 +107,7 @@ function DJPage({ onToast }) {
       <StatGrid stats={[...getFanStats(period), { label: 'Radio shows', v: '14', color: '#b983ff' }, { label: 'Total listeners', v: '12.4K', color: '#22e5d4' }]} />
       <div style={{ marginBottom: 12, padding: '1rem', borderRadius: 16, border: '1px solid rgba(185,131,255,.25)', background: 'rgba(185,131,255,.06)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <div style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.12em', textTransform: 'uppercase', color: '#b983ff' }}>My Crate</div>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.12em', textTransform: 'uppercase', color: '#b983ff' }}>{window.ihypeT ? window.ihypeT('myCrate') : 'My Crate'}</div>
           <button style={{ padding: '4px 10px', borderRadius: 999, border: '1px solid rgba(185,131,255,.3)', background: 'transparent', color: '#b983ff', fontFamily: 'var(--f-m)', fontSize: '.7rem', cursor: 'pointer' }}>+ Add track</button>
         </div>
         {crate.map((t, i) => (
@@ -138,30 +138,61 @@ function TrackUploadBlock({ onToast }) {
     try { return JSON.parse(localStorage.getItem('ihype_my_tracks')||'[]'); } catch { return []; }
   });
   const [dragging, setDragging] = React.useState(false);
+  const [pending, setPending] = React.useState(null);
   const save = (t) => { localStorage.setItem('ihype_my_tracks', JSON.stringify(t)); setTracks(t); };
-  const addMock = () => {
+  const startUpload = () => {
     const titles = ['Neon Cascade','Glass Heart','Low Tide','Ember Drift','Static Rain'];
-    const t = [...tracks, { id: 't_'+Date.now(), title: titles[tracks.length%titles.length], license: 'all_rights', duration: '3:'+Math.floor(Math.random()*59).toString().padStart(2,'0'), uploaded: Date.now() }];
-    save(t); onToast && onToast('Track uploaded (simulated)');
+    setPending({ title: titles[tracks.length%titles.length], duration: '3:'+Math.floor(Math.random()*59).toString().padStart(2,'0'), seedClip: true, radioEligible: true });
+  };
+  const confirmUpload = () => {
+    const t = [...tracks, { id: 't_'+Date.now(), license: 'all_rights', uploaded: Date.now(), ...pending }];
+    save(t); setPending(null); onToast && onToast('Track uploaded');
   };
   const toggle = (id) => { save(tracks.map(t => t.id===id ? {...t, license: t.license==='free_use_limited' ? 'all_rights' : 'free_use_limited'} : t)); };
+  const toggleRadio = (id) => { save(tracks.map(t => t.id===id ? {...t, radioEligible: !t.radioEligible} : t)); };
   const remove = (id) => { save(tracks.filter(t => t.id!==id)); };
   return (
     <div style={{ padding: '1rem', borderRadius: 16, border: `1px solid ${dragging ? 'var(--accent)' : 'var(--line)'}`, background: dragging ? 'rgba(255,80,41,.05)' : 'var(--bg-2)', marginBottom: 12, transition: 'border-color .15s' }}
-         onDragOver={e=>{e.preventDefault();setDragging(true)}} onDragLeave={()=>setDragging(false)} onDrop={e=>{e.preventDefault();setDragging(false);addMock();}}>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: tracks.length?10:0 }}>
+         onDragOver={e=>{e.preventDefault();setDragging(true)}} onDragLeave={()=>setDragging(false)} onDrop={e=>{e.preventDefault();setDragging(false);startUpload();}}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: (tracks.length||pending)?10:0 }}>
         <div style={{ fontFamily:'var(--f-m)', fontSize:'.68rem', letterSpacing:'.12em', textTransform:'uppercase', color:'var(--ink-3)' }}>My tracks · {tracks.length}</div>
-        <button onClick={addMock} style={{ padding:'4px 12px', borderRadius:999, border:'1px solid rgba(255,80,41,.3)', background:'rgba(255,80,41,.08)', color:'var(--accent)', fontFamily:'var(--f-d)', fontWeight:800, fontSize:'.78rem', cursor:'pointer' }}>+ Upload</button>
+        {!pending && <button onClick={startUpload} style={{ padding:'4px 12px', borderRadius:999, border:'1px solid rgba(255,80,41,.3)', background:'rgba(255,80,41,.08)', color:'var(--accent)', fontFamily:'var(--f-d)', fontWeight:800, fontSize:'.78rem', cursor:'pointer' }}>+ Upload</button>}
       </div>
-      {tracks.length === 0 && <div style={{ textAlign:'center', padding:'18px 0', fontFamily:'var(--f-m)', fontSize:'.8rem', color:'var(--ink-3)' }}>Drag an audio file here or tap Upload</div>}
-      {tracks.map(t => (
-        <div key={t.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'.5rem 0', borderTop:'1px solid var(--line-2)' }}>
-          <div style={{ flex:1 }}>
-            <div style={{ fontWeight:700, fontSize:'.84rem' }}>{t.title}</div>
-            <div style={{ fontFamily:'var(--f-m)', fontSize:'.68rem', color:'var(--ink-3)', marginTop:2 }}>{t.duration} · {t.license==='free_use_limited' ? '🔓 free-use' : '🔒 all rights'}</div>
+      {tracks.length === 0 && !pending && <div style={{ textAlign:'center', padding:'18px 0', fontFamily:'var(--f-m)', fontSize:'.8rem', color:'var(--ink-3)' }}>{window.ihypeT ? window.ihypeT('dragOrUpload') : 'Drag an audio file here or tap Upload'}</div>}
+      {pending && (
+        <div style={{ borderRadius:12, border:'1px solid rgba(255,255,255,.14)', background:'var(--bg-3)', padding:'12px 14px', marginBottom:10 }}>
+          <div style={{ fontWeight:700, fontSize:'.86rem', marginBottom:10 }}>{pending.title} <span style={{ color:'var(--ink-3)', fontWeight:500 }}>· {pending.duration}</span></div>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:10, padding:'9px 0', borderTop:'1px solid var(--line-2)' }}>
+            <div style={{ flex:1 }}>
+              <div style={{ fontFamily:'var(--f-m)', fontSize:'.75rem', fontWeight:700 }}>{window.ihypeT ? window.ihypeT('createSeedClip') : 'Create a Seed clip'}</div>
+              <div style={{ fontFamily:'var(--f-b)', fontSize:'.72rem', color:'var(--ink-3)', lineHeight:1.5, marginTop:2 }}>Up to 30s for Seeds discovery. You can remove it anytime — including if you leave iHYPE.</div>
+            </div>
+            <button onClick={()=>setPending(p=>({...p, seedClip: !p.seedClip}))} style={{ flexShrink:0, width:40, height:24, borderRadius:999, border:'none', cursor:'pointer', background: pending.seedClip ? 'var(--accent)' : 'var(--line)', position:'relative' }}><span style={{ position:'absolute', top:3, left: pending.seedClip ? 19 : 3, width:18, height:18, borderRadius:'50%', background:'#fff', transition:'left .15s' }} /></button>
           </div>
-          <button onClick={()=>toggle(t.id)} style={{ padding:'3px 9px', borderRadius:999, border:'1px solid rgba(185,131,255,.3)', background:'transparent', color:'#b983ff', fontFamily:'var(--f-m)', fontSize:'.64rem', cursor:'pointer' }}>{t.license==='free_use_limited'?'Make private':'Free-use'}</button>
-          <button onClick={()=>remove(t.id)} style={{ background:'none', border:'none', color:'var(--ink-3)', cursor:'pointer', fontSize:'.9rem' }}>×</button>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:10, padding:'9px 0', borderTop:'1px solid var(--line-2)' }}>
+            <div style={{ flex:1 }}>
+              <div style={{ fontFamily:'var(--f-m)', fontSize:'.75rem', fontWeight:700 }}>{window.ihypeT ? window.ihypeT('allowInRadio') : 'Allow this track in radio shows'}</div>
+              <div style={{ fontFamily:'var(--f-b)', fontSize:'.72rem', color:'var(--ink-3)', lineHeight:1.5, marginTop:2 }}>{pending.radioEligible ? "DJs can add it to their crate for live and recorded shows — reaches new listeners." : "DJs won't be able to add this to a crate or show."} {pending.radioEligible && <span style={{ color:'#ffb84a' }}>Once a show airs, this track is archived in it permanently — turning this off later only stops new shows, it can't pull it out of ones already recorded.</span>}</div>
+            </div>
+            <button onClick={()=>setPending(p=>({...p, radioEligible: !p.radioEligible}))} style={{ flexShrink:0, width:40, height:24, borderRadius:999, border:'none', cursor:'pointer', background: pending.radioEligible ? 'var(--accent)' : 'var(--line)', position:'relative' }}><span style={{ position:'absolute', top:3, left: pending.radioEligible ? 19 : 3, width:18, height:18, borderRadius:'50%', background:'#fff', transition:'left .15s' }} /></button>
+          </div>
+          <div style={{ display:'flex', gap:8, marginTop:10 }}>
+            <button onClick={confirmUpload} style={{ flex:1, padding:'9px', borderRadius:10, border:'none', background:'var(--accent)', color:'#fff', fontFamily:'var(--f-d)', fontWeight:800, fontSize:'.8rem', cursor:'pointer' }}>{window.ihypeT ? window.ihypeT('publishTrack') : 'Publish track'}</button>
+            <button onClick={()=>setPending(null)} style={{ padding:'9px 14px', borderRadius:10, border:'1px solid var(--line)', background:'transparent', color:'var(--ink-3)', fontFamily:'var(--f-d)', fontWeight:700, fontSize:'.8rem', cursor:'pointer' }}>{window.ihypeT ? window.ihypeT('cancel') : 'Cancel'}</button>
+          </div>
+        </div>
+      )}
+      {tracks.map(t => (
+        <div key={t.id} style={{ padding:'.5rem 0', borderTop:'1px solid var(--line-2)' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <div style={{ flex:1 }}>
+              <div style={{ fontWeight:700, fontSize:'.84rem' }}>{t.title}</div>
+              <div style={{ fontFamily:'var(--f-m)', fontSize:'.68rem', color:'var(--ink-3)', marginTop:2 }}>{t.duration} · {t.license==='free_use_limited' ? '🔓 free-use' : '🔒 all rights'} · {t.seedClip ? '🌱 seed' : 'no seed'} · {t.radioEligible===false ? '📻 opted out' : '📻 radio-eligible'}</div>
+            </div>
+            <button onClick={()=>toggle(t.id)} style={{ padding:'3px 9px', borderRadius:999, border:'1px solid rgba(185,131,255,.3)', background:'transparent', color:'#b983ff', fontFamily:'var(--f-m)', fontSize:'.64rem', cursor:'pointer' }}>{t.license==='free_use_limited'?'Make private':'Free-use'}</button>
+            <button onClick={()=>remove(t.id)} aria-label={"Remove " + t.title} style={{ background:'none', border:'none', color:'var(--ink-3)', cursor:'pointer', fontSize:'.9rem' }}>×</button>
+          </div>
+          <button onClick={()=>toggleRadio(t.id)} style={{ marginTop:6, padding:'3px 9px', borderRadius:999, border:'1px solid rgba(255,184,74,.35)', background:'transparent', color:'#ffb84a', fontFamily:'var(--f-m)', fontSize:'.62rem', cursor:'pointer' }}>{t.radioEligible===false ? 'Allow in future radio shows' : 'Opt out of future radio shows'}</button>
         </div>
       ))}
     </div>
@@ -181,10 +212,10 @@ function ArtistPage({ onToast }) {
       <TrackUploadBlock onToast={onToast} />
       <BarChart />
       <PromoterLink onToast={onToast} />
-      <button onClick={() => window.openIHYPETourCreator && window.openIHYPETourCreator()} style={{ width: '100%', padding: '11px', borderRadius: 12, border: '1px solid rgba(255,80,41,.25)', background: 'rgba(255,80,41,.06)', color: '#ff5029', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.88rem', cursor: 'pointer', marginBottom: 8 }}>Tour Creator →</button>
-      <button onClick={() => window.openIHYPEAnalytics && window.openIHYPEAnalytics()} style={{ width: '100%', padding: '11px', borderRadius: 12, border: '1px solid rgba(255,80,41,.2)', background: 'rgba(255,80,41,.05)', color: 'var(--accent)', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.88rem', cursor: 'pointer', marginBottom: 8 }}>Analytics →</button>
-      <button style={{ width: '100%', padding: '11px', borderRadius: 12, border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-2)', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.88rem', cursor: 'pointer', marginBottom: 8 }}>Edit page</button>
-      <button onClick={() => window.openIHYPESettings && window.openIHYPESettings()} style={{ width: '100%', padding: '11px', borderRadius: 12, border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '.82rem', cursor: 'pointer' }}>Settings</button>
+      <button onClick={() => window.openIHYPETourCreator && window.openIHYPETourCreator()} style={{ width: '100%', padding: '11px', borderRadius: 12, border: '1px solid rgba(255,80,41,.25)', background: 'rgba(255,80,41,.06)', color: '#ff5029', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.88rem', cursor: 'pointer', marginBottom: 8 }}>{window.ihypeT ? window.ihypeT('tourCreator') : 'Tour Creator →'}</button>
+      <button onClick={() => window.openIHYPEAnalytics && window.openIHYPEAnalytics()} style={{ width: '100%', padding: '11px', borderRadius: 12, border: '1px solid rgba(255,80,41,.2)', background: 'rgba(255,80,41,.05)', color: 'var(--accent)', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.88rem', cursor: 'pointer', marginBottom: 8 }}>{window.ihypeT ? window.ihypeT('analytics') : 'Analytics →'}</button>
+      <button style={{ width: '100%', padding: '11px', borderRadius: 12, border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-2)', fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '.88rem', cursor: 'pointer', marginBottom: 8 }}>{window.ihypeT ? window.ihypeT('editPage') : 'Edit page'}</button>
+      <button onClick={() => window.openIHYPESettings && window.openIHYPESettings()} style={{ width: '100%', padding: '11px', borderRadius: 12, border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '.82rem', cursor: 'pointer' }}>{window.ihypeT ? window.ihypeT('settings') : 'Settings'}</button>
     </div>
   );
 }
@@ -201,7 +232,7 @@ function VenuePage({ onToast }) {
       </div>
       <div style={{ marginBottom: 12, padding: '1rem', borderRadius: 16, border: '1px solid rgba(34,229,212,.2)', background: 'rgba(34,229,212,.04)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <div style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.12em', textTransform: 'uppercase', color: '#22e5d4' }}>Upcoming events</div>
+          <div style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', letterSpacing: '.12em', textTransform: 'uppercase', color: '#22e5d4' }}>{window.ihypeT ? window.ihypeT('upcomingEvents') : 'Upcoming events'}</div>
           <button style={{ padding: '3px 10px', borderRadius: 999, border: '1px solid rgba(34,229,212,.3)', background: 'transparent', color: '#22e5d4', fontFamily: 'var(--f-m)', fontSize: '.7rem', cursor: 'pointer' }}>+ Create</button>
         </div>
         {[{ name: 'Midnight Echo', date: 'Fri Jun 20 · 9PM', sold: 218, cap: 300, tint: '#ff5029' }, { name: 'Wax Tropic', date: 'Sat Jun 21 · 8PM', sold: 142, cap: 250, tint: '#b983ff' }].map((ev, i) => (
@@ -244,7 +275,7 @@ function CreatePageFlow({ onToast, onDone }) {
     <div>
       {step === 0 && (
         <div>
-          <div style={{ fontFamily:'var(--f-d)', fontWeight:800, fontSize:'1.2rem', letterSpacing:'-.03em', marginBottom:6 }}>Create a page.</div>
+          <div style={{ fontFamily:'var(--f-d)', fontWeight:800, fontSize:'1.2rem', letterSpacing:'-.03em', marginBottom:6 }}>{window.ihypeT ? window.ihypeT('createPage') : 'Create a page.'}</div>
           <p style={{ fontFamily:'var(--f-b)', fontSize:'.84rem', color:'var(--ink-2)', lineHeight:1.6, marginBottom:16 }}>Your public presence on iHYPE. Pick a type.</p>
           {ROLES.map(r => (
             <div key={r.id} onClick={()=>setRole(r.id)} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px', borderRadius:14,
@@ -254,7 +285,7 @@ function CreatePageFlow({ onToast, onDone }) {
               {role===r.id && <span style={{ color:r.tint }}>✓</span>}
             </div>
           ))}
-          <button onClick={()=>role&&setStep(1)} disabled={!role} style={{ width:'100%', padding:'12px', borderRadius:999, border:'none', background:role?rf.tint:'var(--bg-3)', color:role?'#fff':'var(--ink-3)', fontFamily:'var(--f-d)', fontWeight:800, fontSize:'.9rem', cursor:role?'pointer':'default', marginTop:6 }}>Continue →</button>
+          <button onClick={()=>role&&setStep(1)} disabled={!role} style={{ width:'100%', padding:'12px', borderRadius:999, border:'none', background:role?rf.tint:'var(--bg-3)', color:role?'#fff':'var(--ink-3)', fontFamily:'var(--f-d)', fontWeight:800, fontSize:'.9rem', cursor:role?'pointer':'default', marginTop:6 }}>{window.ihypeT ? window.ihypeT('continueArrow') : 'Continue →'}</button>
         </div>
       )}
       {step === 1 && (
@@ -287,8 +318,8 @@ function CreatePageFlow({ onToast, onDone }) {
               <div style={{ fontFamily:'var(--f-m)', fontSize:'.74rem', color:'var(--ink-2)', marginTop:5, lineHeight:1.5 }}>of every ticket, locked in charter. iHYPE takes nothing from your split.</div>
             </div>
           )}
-          <button onClick={publish} style={{ width:'100%', padding:'13px', borderRadius:999, border:'none', background:rf.tint, color:'#fff', fontFamily:'var(--f-d)', fontWeight:800, fontSize:'.96rem', cursor:'pointer', boxShadow:`0 6px 22px ${rf.tint}44` }}>Publish {role} page →</button>
-          <div style={{ fontFamily:'var(--f-m)', fontSize:'.7rem', color:'var(--ink-3)', marginTop:10, textAlign:'center', lineHeight:1.5 }}>Beta: this is a simulated publish. Real pages go live after verification.</div>
+          <button onClick={publish} style={{ width:'100%', padding:'13px', borderRadius:999, border:'none', background:rf.tint, color:'#fff', fontFamily:'var(--f-d)', fontWeight:800, fontSize:'.96rem', cursor:'pointer', boxShadow:`0 6px 22px ${rf.tint}44` }}>{window.ihypeT ? window.ihypeT('publishWord') : 'Publish'} {role} {window.ihypeT ? window.ihypeT('pageWord') : 'page →'}</button>
+          <div style={{ fontFamily:'var(--f-m)', fontSize:'.7rem', color:'var(--ink-3)', marginTop:10, textAlign:'center', lineHeight:1.5 }}>Your page goes live after verification.</div>
         </div>
       )}
     </div>
@@ -312,7 +343,7 @@ function DJPublicProfile({ dj, onBack }) {
         </div>
         <button style={{ padding:'7px 16px', borderRadius:999, border:`1px solid ${dj.tint}55`, background:`${dj.tint}12`, color:dj.tint, fontFamily:'var(--f-d)', fontWeight:800, fontSize:'.8rem', cursor:'pointer' }}>Follow</button>
       </div>
-      <div style={{ fontFamily:'var(--f-m)', fontSize:'.7rem', letterSpacing:'.14em', textTransform:'uppercase', color:'var(--ink-3)', marginBottom:12 }}>Radio shows</div>
+      <div style={{ fontFamily:'var(--f-m)', fontSize:'.7rem', letterSpacing:'.14em', textTransform:'uppercase', color:'var(--ink-3)', marginBottom:12 }}>{window.ihypeT ? window.ihypeT('radioShows') : 'Radio shows'}</div>
       {shows.map(s => (
         <div key={s.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'.8rem 0', borderBottom:'1px solid var(--line-2)' }}>
           <div style={{ width:44, height:44, borderRadius:11, background:`linear-gradient(135deg,${dj.tint}66,${dj.tint}22)`, flexShrink:0, display:'grid', placeItems:'center' }}>
@@ -343,7 +374,7 @@ function BrowsePages() {
   return (
     <div>
       <div style={{ position: 'relative', marginBottom: 14 }}>
-        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search fans, DJs, artists, venues…" style={{ width: '100%', padding: '10px 14px 10px 38px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--bg-3)', color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: '.88rem', outline: 'none', boxSizing: 'border-box' }} />
+        <input value={q} onChange={e => setQ(e.target.value)} placeholder={window.ihypeT ? window.ihypeT('searchPeople') : 'Search fans, DJs, artists, venues…'} style={{ width: '100%', padding: '10px 14px 10px 38px', borderRadius: 12, border: '1px solid var(--line)', background: 'var(--bg-3)', color: 'var(--ink)', fontFamily: 'var(--f-b)', fontSize: '.88rem', outline: 'none', boxSizing: 'border-box' }} />
         <svg style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-3)' }} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
       </div>
       {results.map(p => (
@@ -393,7 +424,7 @@ function RoleSwitcherSheet({ open, currentRole, onClose, onSwitch }) {
     <div onClick={onClose} style={{ position: 'absolute', inset: 0, zIndex: 70, background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'flex-end' }}>
       <div onClick={e => e.stopPropagation()} style={{ width: '100%', background: 'var(--bg-2)', borderRadius: '20px 20px 0 0', padding: '20px 16px 32px' }}>
         <div style={{ width: 36, height: 4, borderRadius: 999, background: 'var(--line-2)', margin: '0 auto 18px' }} />
-        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.1rem', marginBottom: 14 }}>Switch role</div>
+        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.1rem', marginBottom: 14 }}>{window.ihypeT ? window.ihypeT('switchRole') : 'Switch role'}</div>
         {roles.map(r => {
           const on = r.id === currentRole;
           return (

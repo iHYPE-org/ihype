@@ -21,7 +21,7 @@ window.IHYPE_DATA = {
   ],
   artist: {
     name: 'Midnight Echo', handle: '@midnightecho', city: 'Los Angeles, CA',
-    bio: 'Four-piece dream-pop outfit. Reverb, tape loops, and a drum machine named Carl. Booking direct — no agents, no fees.',
+    bio: 'Four-piece dream-pop outfit. Reverb, tape loops, and a drum machine named Carl. Booking direct — no agents, no platform cut.',
     hype: 4821, monthly: '12.4K', tags: ['dream-pop', 'shoegaze', 'lo-fi'],
     tracks: [
       { t: 'Carousel', len: '3:42', plays: '48.1K' },
@@ -35,7 +35,7 @@ window.IHYPE_DATA = {
     { id:'fu2', t:'Goldenrod', a:'Nyla', genre:'R&B', len:'3:21', bpm:88, tint:'#22e5d4', license:'free-use' },
     { id:'fu3', t:'Heatwave', a:'Wax Tropic', genre:'Electronic', len:'4:10', bpm:124, tint:'#b983ff', license:'free-use' },
     { id:'fu4', t:'Paper Walls', a:'Midnight Echo', genre:'Dream-Pop', len:'2:58', bpm:84, tint:'#ff5029', license:'free-use' },
-    { id:'fu5', t:'Tidewater', a:'Cold Harbor', genre:'Ambient', len:'5:30', bpm:70, tint:'#5b8cff', license:'free-use' },
+    { id:'fu5', t:'Tidewater', a:'Cold Harbor', genre:'Ambient', len:'5:30', bpm:70, tint:'#5b8cff', license:'free-use', radioEligible:false },
     { id:'fu6', t:'Slow Static', a:'Midnight Echo', genre:'Shoegaze', len:'4:05', bpm:78, tint:'#ff5029', license:'free-use' },
     { id:'fu7', t:'Neon Drift', a:'DJ Caro', genre:'Electronic', len:'6:12', bpm:128, tint:'#b983ff', license:'free-use' },
     { id:'fu8', t:'Copper Sky', a:'Sunroom', genre:'Indie', len:'3:44', bpm:110, tint:'#ffb84a', license:'free-use' },

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Profile Page" description="Public profile page for artists/venues/DJs/fans/promoters — hero with avatar + follow/share, stat row, About/Tracks/Shows tabs, 70/20/10 charter split card. Grounded in src/app/artists/[slug]/page.tsx." -->
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}body{background:radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}a{color:inherit;text-decoration:none}</style>
+</helmet>
+
+<div style="max-width:640px;margin:0 auto;padding:32px 0 100px">
+  <!-- HERO -->
+  <div style="padding:40px 32px 32px;border-bottom:1px solid rgba(255,255,255,.17)">
+    <div style="display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap">
+      <sc-if value="{{ isArtist }}"><div style="width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,#ff5029,#b983ff);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff"><span style="font-family:'Syne',sans-serif;font-weight:800;font-size:32px">{{ initial }}</span></div></sc-if>
+      <sc-if value="{{ isVenue }}"><div style="width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,#22e5d4,#b983ff);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff"><span style="font-family:'Syne',sans-serif;font-weight:800;font-size:32px">{{ initial }}</span></div></sc-if>
+      <sc-if value="{{ isDj }}"><div style="width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,#ff3e9a,#b983ff);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff"><span style="font-family:'Syne',sans-serif;font-weight:800;font-size:32px">{{ initial }}</span></div></sc-if>
+      <sc-if value="{{ isFan }}"><div style="width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,#b983ff,#b983ff);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff"><span style="font-family:'Syne',sans-serif;font-weight:800;font-size:32px">{{ initial }}</span></div></sc-if>
+      <sc-if value="{{ isPromoter }}"><div style="width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,#ffb84a,#b983ff);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff"><span style="font-family:'Syne',sans-serif;font-weight:800;font-size:32px">{{ initial }}</span></div></sc-if>
+      <div style="flex:1;min-width:220px">
+        <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px">{{ name }}</div>
+        <div style="font-size:14px;color:rgba(240,235,229,.65);margin-bottom:14px">{{ sub }}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+          <sc-if value="{{ isArtist }}"><span style="display:inline-block;padding:5px 12px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.14em;background:rgba(255,80,41,.15);color:#ff5029">{{ roleLabel }}</span></sc-if>
+          <sc-if value="{{ isVenue }}"><span style="display:inline-block;padding:5px 12px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.14em;background:rgba(34,229,212,.15);color:#22e5d4">{{ roleLabel }}</span></sc-if>
+          <sc-if value="{{ isDj }}"><span style="display:inline-block;padding:5px 12px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.14em;background:rgba(255,62,154,.15);color:#ff3e9a">{{ roleLabel }}</span></sc-if>
+          <sc-if value="{{ isFan }}"><span style="display:inline-block;padding:5px 12px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.14em;background:rgba(185,131,255,.15);color:#b983ff">{{ roleLabel }}</span></sc-if>
+          <sc-if value="{{ isPromoter }}"><span style="display:inline-block;padding:5px 12px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.14em;background:rgba(255,184,74,.15);color:#ffb84a">{{ roleLabel }}</span></sc-if>
+          <span style="display:inline-block;padding:5px 12px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.14em;background:rgba(34,229,212,.15);color:#22e5d4">✓ Verified</span>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <sc-if value="{{ following }}"><button onClick="{{ toggleFollow }}" style="display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:9px;font-size:13px;font-weight:700;background:rgba(34,229,212,.15);color:#22e5d4;border:1px solid rgba(255,255,255,.12);cursor:pointer;font-family:'DM Sans',sans-serif">{{ followLabel }}</button></sc-if>
+          <sc-if value="{{ notFollowing }}"><button onClick="{{ toggleFollow }}" style="display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:9px;font-size:13px;font-weight:700;background:#ff5029;color:#fff;border:1px solid rgba(255,255,255,.12);cursor:pointer;font-family:'DM Sans',sans-serif">{{ followLabel }}</button></sc-if>
+          <button style="display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:9px;font-size:13px;font-weight:700;background:rgba(255,255,255,.08);color:#f0ebe5;border:1px solid rgba(255,255,255,.12);cursor:pointer;font-family:'DM Sans',sans-serif">Share</button>
+        </div>
+      </div>
+    </div>
+    <div id="pp-stats" style="display:flex;gap:32px;margin-top:24px;padding-top:24px;border-top:1px solid rgba(255,255,255,.17);flex-wrap:wrap">
+      <sc-if value="{{ isArtist }}"><sc-for list="{{ stats }}" as="st" hint-placeholder-count="4"><div><div style="font-size:22px;font-weight:700;color:#ff5029;font-family:'Syne',sans-serif">{{ st.val }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:rgba(240,235,229,.55);margin-top:2px">{{ st.label }}</div></div></sc-for></sc-if>
+      <sc-if value="{{ isVenue }}"><sc-for list="{{ stats }}" as="st" hint-placeholder-count="4"><div><div style="font-size:22px;font-weight:700;color:#22e5d4;font-family:'Syne',sans-serif">{{ st.val }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:rgba(240,235,229,.55);margin-top:2px">{{ st.label }}</div></div></sc-for></sc-if>
+      <sc-if value="{{ isDj }}"><sc-for list="{{ stats }}" as="st" hint-placeholder-count="4"><div><div style="font-size:22px;font-weight:700;color:#ff3e9a;font-family:'Syne',sans-serif">{{ st.val }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:rgba(240,235,229,.55);margin-top:2px">{{ st.label }}</div></div></sc-for></sc-if>
+      <sc-if value="{{ isFan }}"><sc-for list="{{ stats }}" as="st" hint-placeholder-count="4"><div><div style="font-size:22px;font-weight:700;color:#b983ff;font-family:'Syne',sans-serif">{{ st.val }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:rgba(240,235,229,.55);margin-top:2px">{{ st.label }}</div></div></sc-for></sc-if>
+      <sc-if value="{{ isPromoter }}"><sc-for list="{{ stats }}" as="st" hint-placeholder-count="4"><div><div style="font-size:22px;font-weight:700;color:#ffb84a;font-family:'Syne',sans-serif">{{ st.val }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:rgba(240,235,229,.55);margin-top:2px">{{ st.label }}</div></div></sc-for></sc-if>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div style="padding:0 32px">
+    <div style="display:flex;gap:24px;border-bottom:1px solid rgba(255,255,255,.17);margin:28px 0">
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+        <sc-if value="{{ t.inactive }}"><button onClick="{{ t.select }}" style="padding:10px 0;border:none;background:transparent;border-bottom:2px solid transparent;cursor:pointer;font-weight:600;font-size:14px;color:rgba(240,235,229,.6);font-family:'DM Sans',sans-serif">{{ t.label }}</button></sc-if>
+        <sc-if value="{{ t.activeArtist }}"><button onClick="{{ t.select }}" style="padding:10px 0;border:none;background:transparent;border-bottom:2px solid #ff5029;cursor:pointer;font-weight:600;font-size:14px;color:#f0ebe5;font-family:'DM Sans',sans-serif">{{ t.label }}</button></sc-if>
+        <sc-if value="{{ t.activeVenue }}"><button onClick="{{ t.select }}" style="padding:10px 0;border:none;background:transparent;border-bottom:2px solid #22e5d4;cursor:pointer;font-weight:600;font-size:14px;color:#f0ebe5;font-family:'DM Sans',sans-serif">{{ t.label }}</button></sc-if>
+        <sc-if value="{{ t.activeDj }}"><button onClick="{{ t.select }}" style="padding:10px 0;border:none;background:transparent;border-bottom:2px solid #ff3e9a;cursor:pointer;font-weight:600;font-size:14px;color:#f0ebe5;font-family:'DM Sans',sans-serif">{{ t.label }}</button></sc-if>
+        <sc-if value="{{ t.activeFan }}"><button onClick="{{ t.select }}" style="padding:10px 0;border:none;background:transparent;border-bottom:2px solid #b983ff;cursor:pointer;font-weight:600;font-size:14px;color:#f0ebe5;font-family:'DM Sans',sans-serif">{{ t.label }}</button></sc-if>
+        <sc-if value="{{ t.activePromoter }}"><button onClick="{{ t.select }}" style="padding:10px 0;border:none;background:transparent;border-bottom:2px solid #ffb84a;cursor:pointer;font-weight:600;font-size:14px;color:#f0ebe5;font-family:'DM Sans',sans-serif">{{ t.label }}</button></sc-if>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{ isAbout }}" hint-placeholder-val="{{ true }}">
+      <p style="font-size:15px;line-height:1.7;color:rgba(240,235,229,.85);margin-bottom:24px">{{ about }}</p>
+      <div style="border:1px solid rgba(255,80,41,.2);border-radius:10px;padding:20px;background:rgba(255,80,41,.05)">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(240,235,229,.5)">Charter Split · Every ticket</div>
+        <div style="display:flex;border-radius:8px;overflow:hidden;margin-top:14px">
+          <div style="flex:7;padding:12px;text-align:center;background:rgba(255,80,41,.15)"><div style="font-size:18px;font-weight:700;color:#ff5029">70%</div><div style="font-size:11px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.12em;color:#ff5029;margin-top:4px">Artist</div></div>
+          <div style="flex:2;padding:12px;text-align:center;background:rgba(34,229,212,.15)"><div style="font-size:18px;font-weight:700;color:#22e5d4">20%</div><div style="font-size:11px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.12em;color:#22e5d4;margin-top:4px">Venue</div></div>
+          <div style="flex:1;padding:12px;text-align:center;background:rgba(255,62,154,.15)"><div style="font-size:18px;font-weight:700;color:#ff3e9a">10%</div><div style="font-size:11px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.12em;color:#ff3e9a;margin-top:4px">Promoters</div></div>
+        </div>
+        <p style="font-size:12px;color:rgba(240,235,229,.55);margin-top:12px">iHYPE takes 0% · locked in the charter</p>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isTracks }}" hint-placeholder-val="{{ false }}">
+      <sc-for list="{{ tracks }}" as="tr" hint-placeholder-count="4">
+        <div style="display:flex;align-items:center;gap:14px;padding:12px 14px;border:1px solid rgba(255,255,255,.15);border-radius:10px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);margin-bottom:10px">
+          <sc-if value="{{ tr.notPlaying }}"><button onClick="{{ tr.play }}" style="width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.08);color:#f0ebe5;border:none;cursor:pointer;font-size:.8rem;flex-shrink:0">{{ tr.playIcon }}</button></sc-if>
+          <sc-if value="{{ tr.playingArtist }}"><button onClick="{{ tr.play }}" style="width:38px;height:38px;border-radius:50%;background:#ff5029;color:#fff;border:none;cursor:pointer;font-size:.8rem;flex-shrink:0">{{ tr.playIcon }}</button></sc-if>
+          <sc-if value="{{ tr.playingVenue }}"><button onClick="{{ tr.play }}" style="width:38px;height:38px;border-radius:50%;background:#22e5d4;color:#fff;border:none;cursor:pointer;font-size:.8rem;flex-shrink:0">{{ tr.playIcon }}</button></sc-if>
+          <sc-if value="{{ tr.playingDj }}"><button onClick="{{ tr.play }}" style="width:38px;height:38px;border-radius:50%;background:#ff3e9a;color:#fff;border:none;cursor:pointer;font-size:.8rem;flex-shrink:0">{{ tr.playIcon }}</button></sc-if>
+          <sc-if value="{{ tr.playingFan }}"><button onClick="{{ tr.play }}" style="width:38px;height:38px;border-radius:50%;background:#b983ff;color:#fff;border:none;cursor:pointer;font-size:.8rem;flex-shrink:0">{{ tr.playIcon }}</button></sc-if>
+          <sc-if value="{{ tr.playingPromoter }}"><button onClick="{{ tr.play }}" style="width:38px;height:38px;border-radius:50%;background:#ffb84a;color:#fff;border:none;cursor:pointer;font-size:.8rem;flex-shrink:0">{{ tr.playIcon }}</button></sc-if>
+          <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ tr.title }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:.68rem;color:rgba(240,235,229,.5);margin-top:2px">{{ tr.meta }}</div></div>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:.72rem;color:rgba(240,235,229,.5)">{{ tr.dur }}</span>
+        </div>
+      </sc-for>
+    </sc-if>
+
+    <sc-if value="{{ isShows }}" hint-placeholder-val="{{ false }}">
+      <sc-for list="{{ shows }}" as="sh" hint-placeholder-count="3">
+        <a href="#" style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;border:1px solid rgba(255,255,255,.17);border-radius:8px;background:rgba(255,255,255,.04);backdrop-filter:blur(24px);margin-bottom:10px">
+          <div style="flex:1;min-width:0"><div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ sh.title }}</div><div style="font-size:12px;color:rgba(240,235,229,.55)">{{ sh.meta }}</div></div>
+          <div style="flex-shrink:0;text-align:right"><div style="font-size:18px;font-weight:700;color:#ff5029">{{ sh.price }}</div><div style="font-size:11px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.12em;color:rgba(240,235,229,.5)">$0 fees</div></div>
+        </a>
+      </sc-for>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;680px&quot;,&quot;height&quot;:&quot;900px&quot;},&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;artist&quot;,&quot;tsType&quot;:&quot;'artist'|'venue'|'dj'|'fan'|'promoter'&quot;,&quot;options&quot;:[&quot;artist&quot;,&quot;venue&quot;,&quot;dj&quot;,&quot;fan&quot;,&quot;promoter&quot;],&quot;section&quot;:&quot;Profile&quot;}}">
+class Component extends DCLogic {
+  state = { tab: 'about', following: false, playing: null };
+  componentDidMount() { this._stagger(); }
+  _stagger() {
+    requestAnimationFrame(() => {
+      const grid = document.getElementById('pp-stats');
+      if (!grid) return;
+      Array.from(grid.children).forEach((el, i) => {
+        el.style.animation = 'ihFadeUp .5s cubic-bezier(.16,1,.3,1) both';
+        el.style.animationDelay = (i * 70) + 'ms';
+      });
+    });
+  }
+  renderVals() {
+    const role = this.props.role ?? 'artist';
+    const { tab, following, playing } = this.state;
+    const R = {
+      artist:   { name: 'Nyla', roleLabel: 'Artist', tint: '#ff5029', badgeBg: 'rgba(255,80,41,.15)', sub: 'dream-pop · r&b · Portland, ME', about: 'Dream-pop from the Maine coast. Glasslight (2026) out now — every ticket to every show splits 70/20/10, locked by charter.', stats: [['12.4K','Total Plays'],['4,821','Total Hypes'],['9','Shows'],['1,208','Followers']] },
+      venue:    { name: 'Port City Music Hall', roleLabel: 'Venue', tint: '#22e5d4', badgeBg: 'rgba(34,229,212,.15)', sub: 'Capacity 550 · Portland, ME', about: 'Independent room in the heart of the Old Port. 20% of every gate, guaranteed by charter — no rental games, no fee splits.', stats: [['37','Shows Hosted'],['14.2K','Tickets Sold'],['550','Capacity'],['96%','Avg. Fill']] },
+      dj:       { name: 'DJ Caro', roleLabel: 'DJ', tint: '#ff3e9a', badgeBg: 'rgba(255,62,154,.15)', sub: 'electronic · lo-fi · New York', about: 'Late Coast radio — weekly shows built from the free-use library. Every referral I share pays from the dedicated 10% promoter pool.', stats: [['22','Radio Shows'],['8,914','Show Plays'],['$248','Promo Earned'],['640','Followers']] },
+      fan:      { name: 'Jess R.', roleLabel: 'Fan', tint: '#b983ff', badgeBg: 'rgba(185,131,255,.15)', sub: 'Los Angeles · believer since Mar 2026', about: 'Early believer in 14 artists. Hyped Nyla before 4,809 others.', stats: [['4,218','Min. Listened'],['312','Hypes Sent'],['11','Shows Attended'],['#12','Believer Rank']] },
+      promoter: { name: 'Theo M.', roleLabel: 'Promoter', tint: '#ffb84a', badgeBg: 'rgba(255,184,74,.15)', sub: 'Fan-promoter · New York', about: 'I share the shows I believe in. Referral links have driven $2,340 in gate — earning from the 10% promoter pool, never the artist\u2019s 70%.', stats: [['$186','Earned'],['83','Tickets Driven'],['6','Events Promoted'],['412','Followers']] },
+    }[role] || {};
+    const TRACKS = [
+      { title: 'Glasslight', meta: 'all rights reserved', dur: '3:34' },
+      { title: 'Undertow', meta: 'free-use \u00b7 crateable by DJs', dur: '3:18' },
+      { title: 'Half-Moon Motel', meta: 'all rights reserved', dur: '4:02' },
+    ];
+    return {
+      ...R,
+      isArtist: role === 'artist', isVenue: role === 'venue', isDj: role === 'dj', isFan: role === 'fan', isPromoter: role === 'promoter',
+      initial: (R.name || 'A').charAt(0),
+      stats: (R.stats || []).map(([val, label]) => ({ val, label })),
+      followLabel: following ? '\u2713 Following' : 'Follow',
+      following, notFollowing: !following,
+      toggleFollow: () => this.setState(s => ({ following: !s.following })),
+      tabs: ['about', 'tracks', 'shows'].map(id => {
+        const active = tab === id;
+        return {
+          label: id[0].toUpperCase() + id.slice(1),
+          inactive: !active,
+          activeArtist: active && role === 'artist', activeVenue: active && role === 'venue', activeDj: active && role === 'dj',
+          activeFan: active && role === 'fan', activePromoter: active && role === 'promoter',
+          select: () => this.setState({ tab: id }),
+        };
+      }),
+      isAbout: tab === 'about', isTracks: tab === 'tracks', isShows: tab === 'shows',
+      tracks: TRACKS.map((t, i) => {
+        const isPlaying = playing === i;
+        return {
+          ...t,
+          playIcon: isPlaying ? '\u275A\u275A' : '\u25B6',
+          notPlaying: !isPlaying,
+          playingArtist: isPlaying && role === 'artist', playingVenue: isPlaying && role === 'venue', playingDj: isPlaying && role === 'dj',
+          playingFan: isPlaying && role === 'fan', playingPromoter: isPlaying && role === 'promoter',
+          play: () => this.setState(s => ({ playing: s.playing === i ? null : i })),
+        };
+      }),
+      shows: [
+        { title: 'Glasslight Tour \u2014 Portland', meta: 'Fri Jul 10 \u00b7 Port City Music Hall', price: '$28' },
+        { title: 'Glasslight Tour \u2014 Boston', meta: 'Sat Jul 18 \u00b7 The Sinclair', price: '$32' },
+        { title: 'Harborside Sessions', meta: 'Sun Aug 2 \u00b7 Thompson\u2019s Point', price: 'Free' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

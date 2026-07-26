@@ -1,0 +1,484 @@
+<!-- @dsCard group="Android App" viewport="430x910" name="iHYPE Android App" subtitle="Home · Charts · Shows · You (DJ referral) · Notifications · Privacy · Transparency" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>iHYPE · Fan App</title>
+<link rel="icon" type="image/svg+xml" href="../../assets/logo/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;600&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;background:#0a0805;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;font-family:'DM Sans',system-ui,sans-serif}
+::-webkit-scrollbar{display:none}
+.phone{width:390px;height:844px;border-radius:52px;overflow:hidden;background:#0a0805;color:#f0ebe5;border:8px solid rgba(116,119,117,.5);box-shadow:0 30px 80px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.06);display:flex;flex-direction:column;position:relative}
+.sb{height:40px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;position:relative}
+.pch{position:absolute;left:50%;top:8px;transform:translateX(-50%);width:24px;height:24px;border-radius:50%;background:#1a1612}
+.scr{flex:1;overflow-y:auto;overflow-x:hidden}
+.bnav{height:72px;border-top:1px solid rgba(255,255,255,.06);display:flex;align-items:center;flex-shrink:0;background:#100d09}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;cursor:pointer;border:none;background:transparent;color:#5a5048;transition:color 120ms}
+.ni.on{color:#ff5029}
+.nl{font-family:'JetBrains Mono',monospace;font-size:7px;letter-spacing:.14em;text-transform:uppercase}
+.gest{height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#100d09}
+.gest div{width:108px;height:4px;border-radius:2px;background:rgba(255,255,255,.22)}
+.sub-hdr{display:flex;align-items:center;padding:4px 8px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.back{width:44px;height:44px;background:transparent;border:none;color:#f0ebe5;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ey{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase}
+.dp{font-family:'Syne',sans-serif;font-weight:800}
+.chip{padding:3px 9px;border-radius:99px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;display:inline-flex;align-items:center;gap:5px}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.75)}}
+@keyframes burst{0%{transform:scale(1)}30%{transform:scale(1.5)}60%{transform:scale(.85)}100%{transform:scale(1)}}
+.hyped{animation:burst .5s cubic-bezier(.2,.7,.3,1)}
+</style>
+</head>
+<body>
+<a href="../../index.html" style="position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:99px;background:#100d09;color:#9e9080;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;border:1px solid rgba(255,255,255,.12);text-decoration:none">← DS</a>
+<div class="phone">
+  <!-- Status bar -->
+  <div class="sb">
+    <span style="font-size:14px">9:41</span>
+    <div class="pch"></div>
+    <div style="display:flex;align-items:center;gap:5px">
+      <svg width="15" height="11" viewBox="0 0 15 11" fill="#f0ebe5"><rect x="0" y="4" width="2.5" height="7" rx="1"/><rect x="3.5" y="2.5" width="2.5" height="8.5" rx="1"/><rect x="7" y="0" width="2.5" height="11" rx="1"/><rect x="10.5" y="1.5" width="2.5" height="9.5" rx="1"/></svg>
+      <svg width="16" height="11" viewBox="0 0 16 11" fill="none"><rect x=".5" y=".5" width="13" height="10" rx="2.5" stroke="#f0ebe5" stroke-opacity=".35"/><rect x="14" y="3.5" width="1.5" height="4" rx=".75" fill="#f0ebe5" fill-opacity=".4"/><rect x="2" y="2" width="9" height="7" rx="1.5" fill="#f0ebe5"/></svg>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div id="s-home" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+    <div class="scr">
+      <div style="padding:8px 20px 0;display:flex;align-items:center;justify-content:space-between">
+        <div><div class="ey" style="color:#5a5048;font-size:8px">From</div><div style="font-weight:500;font-size:14px;margin-top:1px">Tonight's queue</div></div>
+        <button onclick="show('notif')" style="width:44px;height:44px;border-radius:50%;background:transparent;border:none;color:#f0ebe5;cursor:pointer;position:relative;display:flex;align-items:center;justify-content:center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <div style="position:absolute;top:8px;right:8px;width:8px;height:8px;border-radius:50%;background:#ff5029;border:2px solid #0a0805"></div>
+        </button>
+      </div>
+      <!-- Album art -->
+      <div style="margin:8px 20px 0;border-radius:28px;overflow:hidden;aspect-ratio:1;position:relative;background:linear-gradient(135deg,#ff5029,#ff502966 50%,#1a1612);box-shadow:0 30px 80px rgba(255,80,41,.27)">
+        <div style="position:absolute;inset:0;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.2),transparent 55%)"></div>
+        <div style="position:absolute;left:20px;bottom:20px"><div class="dp" style="font-size:36px;letter-spacing:-.02em;line-height:1;color:rgba(255,255,255,.95);text-shadow:0 2px 12px rgba(0,0,0,.5)">SUNDOWN</div></div>
+        <button onclick="goArtist()" style="position:absolute;right:14px;bottom:14px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.2);border-radius:99px;padding:6px 12px;color:#f0ebe5;font-size:12px;font-weight:500;cursor:pointer;backdrop-filter:blur(8px)">Maya Reyes →</button>
+      </div>
+      <!-- Controls -->
+      <div style="padding:14px 22px 0;display:flex;align-items:flex-start;gap:12px">
+        <div style="flex:1"><h1 style="font-size:24px;font-weight:500;margin:0;line-height:1">Sundown</h1><div style="font-size:14px;color:#9e9080;margin-top:4px">Maya Reyes</div></div>
+        <button id="hype-btn" onclick="doHype()" style="width:48px;height:48px;border-radius:14px;background:rgba(255,80,41,.22);color:#ff5029;border:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="#ff5029"><path d="M12 21s-7-4.5-9.5-9.2C.8 8.2 3 4.5 6.5 4.5c2 0 3.5 1 5.5 3 2-2 3.5-3 5.5-3C21 4.5 23.2 8.2 21.5 11.8 19 16.5 12 21 12 21z"/></svg>
+        </button>
+      </div>
+      <div style="padding:14px 22px 0">
+        <div style="height:5px;background:rgba(255,255,255,.1);border-radius:3px"><div style="width:42%;height:100%;background:#f0ebe5;border-radius:3px;position:relative"><div style="position:absolute;right:-7px;top:-5px;width:15px;height:15px;border-radius:50%;background:#f0ebe5;box-shadow:0 0 0 5px rgba(240,235,229,.18)"></div></div></div>
+        <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:11px;color:#5a5048;margin-top:8px"><span>1:32</span><span style="color:#ff5029;font-weight:600">● HYPE FIRES AT 3:38</span><span>-2:08</span></div>
+      </div>
+      <div style="padding:14px 22px 0;display:flex;align-items:center;justify-content:space-between">
+        <button style="background:transparent;border:none;color:#9e9080;cursor:pointer"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zm9.5 0V6h2v12h-2z"/></svg></button>
+        <button style="background:transparent;border:none;color:#f0ebe5;cursor:pointer"><svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l14 8L6 20z"/></svg></button>
+        <button style="width:78px;height:78px;border-radius:26px;background:#f0ebe5;color:#0a0805;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 14px 36px rgba(0,0,0,.5)"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/></svg></button>
+        <button style="background:transparent;border:none;color:#f0ebe5;cursor:pointer;transform:scaleX(-1)"><svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l14 8L6 20z"/></svg></button>
+        <button style="background:transparent;border:none;color:#9e9080;cursor:pointer;transform:scaleX(-1)"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zm9.5 0V6h2v12h-2z"/></svg></button>
+      </div>
+      <!-- Queue -->
+      <div style="padding:16px 22px 20px">
+        <div class="ey" style="color:#5a5048;margin-bottom:6px">Up Next</div>
+        <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)"><div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#b983ff,#6a3fbf);flex-shrink:0"></div><div style="flex:1"><div style="font-size:14px;font-weight:500">Neon District</div><div style="font-size:11px;color:#5a5048;margin-top:1px">Reina Solís · <span style="color:#ff5029">● @2:14</span></div></div></div>
+        <div style="display:flex;align-items:center;gap:12px;padding:8px 0"><div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#22e5d4,#0a8a7a);flex-shrink:0"></div><div style="flex:1"><div style="font-size:14px;font-weight:500">Dusk Protocol</div><div style="font-size:11px;color:#5a5048;margin-top:1px">Verb Collective</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <div id="s-charts" style="flex:1;overflow:hidden;display:flex;flex-direction:column;display:none">
+    <div class="scr">
+      <div style="padding:14px 20px 10px;display:flex;justify-content:space-between;align-items:baseline">
+        <div><div class="ey" style="color:#ff5029;font-size:8px">HYPE CHARTS</div><div class="dp" style="font-size:24px;margin-top:3px">Top tracks</div></div>
+        <div id="chart-period" style="display:flex;background:#1a1612;border:1px solid rgba(255,255,255,.12);border-radius:8px;overflow:hidden">
+          <button onclick="setPeriod('day',this)" style="padding:5px 10px;background:#ff5029;border:none;color:#0a0805;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;cursor:pointer">Today</button>
+          <button onclick="setPeriod('week',this)" style="padding:5px 10px;background:transparent;border:none;color:#5a5048;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;cursor:pointer">Week</button>
+          <button onclick="setPeriod('all',this)" style="padding:5px 10px;background:transparent;border:none;color:#5a5048;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;cursor:pointer">All</button>
+        </div>
+      </div>
+      <!-- Chart entries -->
+      <div id="chart-list" style="padding:0 16px"></div>
+      <!-- Seeds discovery -->
+      <div style="padding:16px 20px 6px;border-top:1px solid rgba(255,255,255,.06);margin-top:12px">
+        <div class="ey" style="color:#b983ff;font-size:8px;margin-bottom:10px">DISCOVER · SEEDS</div>
+        <div style="background:#100d09;border:1px solid rgba(255,255,255,.1);border-radius:20px;overflow:hidden">
+          <div style="height:130px;background:linear-gradient(135deg,#b983ff,#6a3fbf 60%,#1a1612);position:relative">
+            <div style="position:absolute;bottom:14px;left:16px"><div class="ey" style="color:rgba(255,255,255,.6);font-size:8px">NEW SEED</div><div class="dp" style="font-size:22px;margin-top:3px;line-height:1">Glass Hours</div></div>
+          </div>
+          <div style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center">
+            <div><div style="font-size:14px;font-weight:600">Glass Hours</div><div style="font-size:12px;color:#9e9080;margin-top:2px">Maya Reyes · 342 HYPEs</div></div>
+            <div style="display:flex;gap:8px">
+              <button style="height:38px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.06);color:#9e9080;border:1px solid rgba(255,255,255,.12);font-size:12px;font-weight:600;cursor:pointer">Skip</button>
+              <button style="height:38px;padding:0 14px;border-radius:12px;background:#b983ff;color:#0a0805;border:none;font-size:12px;font-weight:600;cursor:pointer">HYPE</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="height:20px"></div>
+    </div>
+  </div>
+
+  <!-- SHOWS -->
+  <div id="s-shows" style="flex:1;overflow:hidden;display:flex;flex-direction:column;display:none">
+    <div class="scr">
+      <div style="padding:14px 20px 10px;border-bottom:1px solid rgba(255,255,255,.06)"><div class="dp" style="font-size:24px">Shows</div><div class="ey" style="color:#5a5048;font-size:8px;margin-top:3px">Chicago · This week</div></div>
+      <div style="margin:12px 16px 0;border-radius:18px;background:#100d09;border:1px solid rgba(255,255,255,.06);overflow:hidden">
+        <div style="height:100px;background:linear-gradient(135deg,#ff5029,#ff502955 60%,#1a1612);display:flex;align-items:flex-end;padding:12px 14px"><div><div class="ey" style="color:#22e5d4;font-size:8px">TONIGHT · EMPTY BOTTLE</div><div style="font-size:18px;font-weight:500;margin-top:3px">Maya Reyes</div></div></div>
+        <div style="padding:12px 14px 14px">
+          <div class="ey" style="color:#5a5048;font-size:8px">SAT JUN 21 · 9:00 PM · 21+</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#22e5d4;letter-spacing:.1em;margin-top:6px">● 3 friends going · SOLD OUT</div>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button onclick="show('checkout')" style="flex:1;height:40px;border-radius:10px;background:#22e5d4;color:#0a0805;border:none;font-size:13px;font-weight:600;cursor:pointer">Get ticket</button>
+            <button style="flex:1;height:40px;border-radius:10px;background:transparent;color:#f0ebe5;border:1px solid rgba(255,255,255,.14);font-size:13px;font-weight:600;cursor:pointer">RSVP free</button>
+          </div>
+        </div>
+      </div>
+      <div style="margin:10px 16px 0;border-radius:18px;background:#100d09;border:1px solid rgba(255,255,255,.06);overflow:hidden">
+        <div style="height:100px;background:linear-gradient(135deg,#b983ff,#b983ff44 60%,#1a1612);display:flex;align-items:flex-end;padding:12px 14px"><div><div class="ey" style="color:#b983ff;font-size:8px">SUN JUN 22 · SCHUBA'S</div><div style="font-size:18px;font-weight:500;margin-top:3px">DJ Reina Solís</div></div></div>
+        <div style="padding:12px 14px 14px">
+          <div class="ey" style="color:#5a5048;font-size:8px">SUN JUN 22 · 10:00 PM · 21+</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#b983ff;letter-spacing:.1em;margin-top:6px">● 1 friend going · 94 HYPEs</div>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button onclick="show('checkout')" style="flex:1;height:40px;border-radius:10px;background:#b983ff;color:#0a0805;border:none;font-size:13px;font-weight:600;cursor:pointer">Get ticket · $18</button>
+          </div>
+        </div>
+      </div>
+      <div style="height:20px"></div>
+    </div>
+  </div>
+
+  <!-- YOU -->
+  <div id="s-you" style="flex:1;overflow:hidden;display:flex;flex-direction:column;display:none">
+    <div class="scr">
+      <!-- Profile -->
+      <div style="padding:14px 20px 12px;display:flex;align-items:center;gap:14px">
+        <div style="width:68px;height:68px;border-radius:22px;background:linear-gradient(135deg,#b983ff,#ff5029);color:#0a0805;font-family:'Syne',sans-serif;font-weight:800;font-size:26px;display:flex;align-items:center;justify-content:center;flex-shrink:0">J</div>
+        <div style="flex:1"><div style="font-size:22px;font-weight:400">Jordan Lee</div><div class="ey" style="color:#5a5048;font-size:8px;margin-top:3px">iH/J4N7 · Jun 2026</div>
+          <div style="display:flex;gap:5px;margin-top:6px">
+            <span class="chip" style="background:rgba(185,131,255,.15);color:#b983ff;border:1px solid rgba(185,131,255,.3)">FAN</span>
+            <span class="chip" style="background:rgba(255,62,154,.12);color:#ff3e9a;border:1px solid rgba(255,62,154,.25)">DJ</span>
+          </div>
+        </div>
+      </div>
+      <!-- Stats -->
+      <div style="display:flex;gap:8px;padding:0 16px 14px">
+        <div style="flex:1;padding:12px 14px;background:rgba(255,80,41,.12);border-radius:18px"><div class="dp" style="font-size:24px;color:#ff5029">127</div><div class="ey" style="color:#5a5048;font-size:8px;margin-top:5px">HYPES</div></div>
+        <div style="flex:1;padding:12px 14px;background:rgba(34,229,212,.12);border-radius:18px"><div class="dp" style="font-size:24px;color:#22e5d4">14</div><div class="ey" style="color:#5a5048;font-size:8px;margin-top:5px">SHOWS</div></div>
+        <div style="flex:1;padding:12px 14px;background:rgba(255,62,154,.12);border-radius:18px"><div class="dp" style="font-size:24px;color:#ff3e9a">$4.20</div><div class="ey" style="color:#5a5048;font-size:8px;margin-top:5px">EARNED</div></div>
+      </div>
+      <!-- DJ Referral section -->
+      <div style="margin:0 16px 14px;padding:16px;background:rgba(255,62,154,.08);border:1px solid rgba(255,62,154,.25);border-radius:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="ey" style="color:#ff3e9a;font-size:8px;display:flex;align-items:center;gap:5px"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#ff3e9a"></span>DJ REFERRAL LINK</div>
+          <div class="ey" style="color:#5a5048;font-size:8px">3 tickets sold</div>
+        </div>
+        <div style="background:#0a0805;border:1px solid rgba(255,62,154,.2);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <div style="flex:1;font-family:'JetBrains Mono',monospace;font-size:10px;color:#9e9080;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">ihype.fm/ref/J4N7</div>
+          <button style="padding:5px 10px;background:#ff3e9a;color:#0a0805;border:none;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;cursor:pointer;font-weight:600">COPY</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <div style="padding:10px;background:rgba(0,0,0,.2);border-radius:10px"><div class="dp" style="font-size:18px;color:#f0ebe5">$4.20</div><div class="ey" style="color:#5a5048;font-size:7px;margin-top:3px">EARNED EST.</div></div>
+          <div style="padding:10px;background:rgba(0,0,0,.2);border-radius:10px"><div class="dp" style="font-size:18px;color:#f0ebe5">8.4%</div><div class="ey" style="color:#5a5048;font-size:7px;margin-top:3px">OF GATE SHARE</div></div>
+        </div>
+        <div style="font-size:11px;color:#9e9080;line-height:1.5">You promoted <strong style="color:#f0ebe5">3 of 36 tickets</strong> sold at Empty Bottle Jun 27. Your share of the gate: <strong style="color:#ff3e9a">8.4% → up to 10% payout</strong> once final gate is tallied.</div>
+        <button onclick="show('referral')" style="margin-top:12px;width:100%;height:38px;background:transparent;border:1px solid rgba(255,62,154,.3);border-radius:10px;color:#ff3e9a;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer">How earnings work →</button>
+      </div>
+      <!-- Taste map -->
+      <div style="margin:0 16px 14px;padding:14px;background:#100d09;border-radius:20px">
+        <div style="font-size:14px;font-weight:500;margin-bottom:10px">Taste map</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          <span style="padding:6px 12px;border-radius:99px;background:rgba(255,80,41,.2);color:#ff5029;font-size:12px;font-weight:600">Bedroom Pop 42%</span>
+          <span style="padding:6px 12px;border-radius:99px;background:rgba(255,80,41,.14);color:#ff5029;font-size:12px;font-weight:500">Indie 38%</span>
+          <span style="padding:5px 10px;border-radius:99px;background:rgba(185,131,255,.12);color:#b983ff;font-size:11px">Shoegaze 18%</span>
+          <span style="padding:5px 10px;border-radius:99px;background:rgba(185,131,255,.1);color:#b983ff;font-size:11px">House 14%</span>
+          <span style="padding:4px 8px;border-radius:99px;background:rgba(34,229,212,.08);color:#22e5d4;font-size:10px">Folk 9%</span>
+        </div>
+      </div>
+      <!-- Settings rows -->
+      <div style="margin:0 16px 20px;background:#100d09;border-radius:20px;overflow:hidden">
+        <div onclick="show('tickets')" style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer"><div style="flex:1"><div style="font-size:14px;font-weight:500">My Tickets</div><div style="font-size:11px;color:#5a5048;margin-top:1px">Wallet · QR codes · past shows</div></div><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12h14m-5-6l6 6-6 6" stroke="#5a5048" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div onclick="show('privacy')" style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer"><div style="flex:1"><div style="font-size:14px;font-weight:500">Privacy</div><div style="font-size:11px;color:#5a5048;margin-top:1px">Data ethics · toggle controls</div></div><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12h14m-5-6l6 6-6 6" stroke="#5a5048" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div onclick="show('transparency')" style="display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer"><div style="flex:1"><div style="font-size:14px;font-weight:500">Transparency</div><div style="font-size:11px;color:#5a5048;margin-top:1px">The ledger · $0 fees</div></div><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12h14m-5-6l6 6-6 6" stroke="#5a5048" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTIFICATIONS push screen -->
+  <div id="s-notif" style="flex:1;overflow:hidden;display:flex;flex-direction:column;display:none">
+    <div class="sub-hdr">
+      <button class="back" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M11 6l-6 6 6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div style="flex:1;text-align:center"><div class="ey" style="color:#ff5029;font-size:8px">ALERTS</div><div class="dp" style="font-size:17px;margin-top:2px">Notifications</div></div>
+      <button onclick="clearNotifs()" style="width:44px;height:44px;background:transparent;border:none;color:#5a5048;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:9px">Clear</button>
+    </div>
+    <div class="scr">
+      <div style="padding:10px 16px">
+        <div class="ey" style="color:#5a5048;margin-bottom:6px">New</div>
+        <!-- Notif items -->
+        <div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06)"><div style="width:38px;height:38px;border-radius:12px;background:rgba(255,80,41,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="#ff5029"><path d="M12 21s-7-4.5-9.5-9.2C.8 8.2 3 4.5 6.5 4.5c2 0 3.5 1 5.5 3 2-2 3.5-3 5.5-3C21 4.5 23.2 8.2 21.5 11.8 19 16.5 12 21 12 21z"/></svg></div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">Your HYPE fired</div><div style="font-size:12px;color:#9e9080;margin-top:2px;line-height:1.4">Sundown by Maya Reyes hit its moment at 3:38 — you're in the chart.</div><div class="ey" style="color:#5a5048;font-size:7px;margin-top:5px">2 MIN AGO</div></div></div>
+        <div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06)"><div style="width:38px;height:38px;border-radius:12px;background:rgba(255,62,154,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.5 2.5L18 4l1 3.5L22 9l-1.5 3 1.5 3-3 1.5-1 3.5-3.5-.5L12 22l-2.5-2.5L6 20l-1-3.5L2 15l1.5-3L2 9l3-1.5L6 4l3.5.5L12 2z" stroke="#ff3e9a" stroke-width="1.4"/><path d="M8 12l3 3 5-6" stroke="#ff3e9a" stroke-width="1.8" stroke-linecap="round"/></svg></div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">Referral ticket sold</div><div style="font-size:12px;color:#9e9080;margin-top:2px;line-height:1.4">Someone used your link for Empty Bottle Jun 27 — est. $1.40 added to your payout.</div><div class="ey" style="color:#5a5048;font-size:7px;margin-top:5px">18 MIN AGO</div></div></div>
+        <div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06)"><div style="width:38px;height:38px;border-radius:12px;background:rgba(34,229,212,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2" stroke="#22e5d4" stroke-width="1.6"/><path d="M3 10h18M8 3v4M16 3v4" stroke="#22e5d4" stroke-width="1.6" stroke-linecap="round"/></svg></div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">New show announced</div><div style="font-size:12px;color:#9e9080;margin-top:2px;line-height:1.4">Maya Reyes added a date at Thalia Hall — Jul 5. Tickets on sale now.</div><div class="ey" style="color:#5a5048;font-size:7px;margin-top:5px">1 HR AGO</div></div></div>
+        <div class="ey" style="color:#5a5048;margin:14px 0 6px">Earlier</div>
+        <div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06)"><div style="width:38px;height:38px;border-radius:12px;background:rgba(127,179,255,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 11l4 4 12-12" stroke="#7fb3ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">Governance vote open</div><div style="font-size:12px;color:#9e9080;margin-top:2px;line-height:1.4">Proposal: "Add Low Season to all June setlists" — 3 days left to vote.</div><div class="ey" style="color:#5a5048;font-size:7px;margin-top:5px">YESTERDAY</div></div></div>
+        <div style="display:flex;gap:12px;padding:12px 0"><div style="width:38px;height:38px;border-radius:12px;background:rgba(255,80,41,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 17l6-6 4 4 8-9" stroke="#ff5029" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">Sundown entered charts</div><div style="font-size:12px;color:#9e9080;margin-top:2px;line-height:1.4">Track entered the iHYPE Weekly at #12 — your HYPE counted.</div><div class="ey" style="color:#5a5048;font-size:7px;margin-top:5px">YESTERDAY</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRIVACY push -->
+  <div id="s-privacy" style="flex:1;overflow:hidden;display:flex;flex-direction:column;display:none">
+    <div class="sub-hdr">
+      <button class="back" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M11 6l-6 6 6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div style="flex:1;text-align:center"><div class="ey" style="color:#22e5d4;font-size:8px">DATA ETHICS</div><div class="dp" style="font-size:17px;margin-top:2px">Privacy</div></div>
+      <div style="width:44px"></div>
+    </div>
+    <div class="scr" style="padding:14px 16px">
+      <div style="padding:14px;border-radius:18px;background:rgba(34,229,212,.1);border:1px solid rgba(34,229,212,.25);margin-bottom:14px">
+        <div class="ey" style="color:#22e5d4;font-size:8px;margin-bottom:10px">YOUR DATA THIS WEEK</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div><div class="dp" style="font-size:20px;color:#22e5d4">0</div><div style="font-size:11px;color:#5a5048;margin-top:3px">PII sold</div></div>
+          <div><div class="dp" style="font-size:20px;color:#f0ebe5">12</div><div style="font-size:11px;color:#5a5048;margin-top:3px">Cohort queries</div></div>
+        </div>
+      </div>
+      <div style="background:#100d09;border-radius:18px;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid rgba(255,255,255,.06)"><div style="flex:1"><div style="font-size:13px;font-weight:500">Show my Hypes publicly</div></div><div style="width:40px;height:22px;border-radius:99px;background:#ff5029;position:relative"><div style="position:absolute;right:3px;top:2px;width:18px;height:18px;border-radius:50%;background:#f0ebe5"></div></div></div>
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid rgba(255,255,255,.06)"><div style="flex:1"><div style="font-size:13px;font-weight:500">Receive industry-only ads</div></div><div style="width:40px;height:22px;border-radius:99px;background:#ff5029;position:relative"><div style="position:absolute;right:3px;top:2px;width:18px;height:18px;border-radius:50%;background:#f0ebe5"></div></div></div>
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 14px"><div style="flex:1"><div style="font-size:13px;font-weight:500">Use my vote for governance</div></div><div style="width:40px;height:22px;border-radius:99px;background:#ff5029;position:relative"><div style="position:absolute;right:3px;top:2px;width:18px;height:18px;border-radius:50%;background:#f0ebe5"></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRANSPARENCY push -->
+  <div id="s-transparency" style="flex:1;overflow:hidden;display:flex;flex-direction:column;display:none">
+    <div class="sub-hdr">
+      <button class="back" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M11 6l-6 6 6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div style="flex:1;text-align:center"><div class="ey" style="color:#b983ff;font-size:8px">THE LEDGER</div><div class="dp" style="font-size:17px;margin-top:2px">Transparency</div></div>
+      <div style="width:44px"></div>
+    </div>
+    <div class="scr" style="padding:14px 20px">
+      <div class="ey" style="color:#5a5048;margin-bottom:6px">FEES COLLECTED · ALL-TIME</div>
+      <div class="dp" style="font-size:72px;color:#22e5d4;letter-spacing:-.04em;line-height:.9;margin-bottom:12px">$0</div>
+      <p style="font-family:'Instrument Serif',serif;font-style:italic;font-size:15px;color:#9e9080;margin:0 0 18px;line-height:1.5">Not a promotional rate. Written into how we work.</p>
+      <div style="background:#100d09;border-radius:18px;padding:14px;overflow:hidden">
+        <div style="font-size:13px;font-weight:500;margin-bottom:10px">May 2026 · Operations</div>
+        <div style="display:flex;justify-content:space-between;padding:5px 0;border-top:1px solid rgba(255,255,255,.06);font-family:'JetBrains Mono',monospace;font-size:10px;color:#9e9080"><span>Patron membership</span><span style="color:#22e5d4">+$3,840</span></div>
+        <div style="display:flex;justify-content:space-between;padding:5px 0;border-top:1px solid rgba(255,255,255,.06);font-family:'JetBrains Mono',monospace;font-size:10px;color:#9e9080"><span>One-time gifts</span><span style="color:#22e5d4">+$1,205</span></div>
+        <div style="display:flex;justify-content:space-between;padding:5px 0;border-top:1px solid rgba(255,255,255,.06);font-family:'JetBrains Mono',monospace;font-size:10px;color:#9e9080"><span>Compute / hosting</span><span>−$847</span></div>
+        <div style="display:flex;justify-content:space-between;padding:5px 0;border-top:1px solid rgba(255,255,255,.06);font-family:'JetBrains Mono',monospace;font-size:10px;color:#f0ebe5;font-weight:500"><span>Net to reserve</span><span style="color:#b983ff;font-weight:700">+$1,936</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHECKOUT push -->
+  <div id="s-checkout" style="flex:1;overflow:hidden;display:flex;flex-direction:column;display:none">
+    <div class="sub-hdr">
+      <button class="back" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M11 6l-6 6 6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div style="flex:1;text-align:center"><div class="ey" style="color:#22e5d4;font-size:8px">CHECKOUT</div><div class="dp" style="font-size:17px;margin-top:2px">Get your ticket</div></div>
+      <div style="width:44px"></div>
+    </div>
+    <div class="scr" style="padding:14px 16px">
+      <div style="background:linear-gradient(135deg,#ff5029,#ff502944 60%,#1a1612);border-radius:16px;padding:16px;margin-bottom:14px">
+        <div class="ey" style="color:#22e5d4;font-size:8px">EMPTY BOTTLE · CHICAGO</div>
+        <div style="font-size:18px;font-weight:500;margin-top:4px">Maya Reyes</div>
+        <div class="ey" style="color:rgba(255,255,255,.5);font-size:8px;margin-top:4px">SAT JUN 21 · 9:00 PM · DOORS 8:30</div>
+      </div>
+      <!-- Ticket type -->
+      <div style="margin-bottom:14px">
+        <div class="ey" style="color:#5a5048;margin-bottom:8px">TICKET TYPE</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(255,80,41,.08);border:1px solid rgba(255,80,41,.4);border-radius:12px;cursor:pointer">
+            <div style="width:18px;height:18px;border-radius:50%;border:1.5px solid #ff5029;display:flex;align-items:center;justify-content:center"><div style="width:8px;height:8px;border-radius:50%;background:#ff5029"></div></div>
+            <div style="flex:1"><div style="font-size:14px;font-weight:500">General Admission</div><div style="font-size:12px;color:#9e9080;margin-top:1px">Standing room · door entry</div></div>
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px">$20</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:#100d09;border:1px solid rgba(255,255,255,.08);border-radius:12px;cursor:pointer">
+            <div style="width:18px;height:18px;border-radius:50%;border:1.5px solid rgba(255,255,255,.2)"></div>
+            <div style="flex:1"><div style="font-size:14px;font-weight:500">VIP Early Entry</div><div style="font-size:12px;color:#9e9080;margin-top:1px">Early entry + merch discount</div></div>
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px">$35</div>
+          </div>
+        </div>
+      </div>
+      <!-- Referral code -->
+      <div style="margin-bottom:14px">
+        <div class="ey" style="color:#5a5048;margin-bottom:8px">REFERRAL CODE (OPTIONAL)</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:0 12px;height:44px;background:#100d09;border:1px solid rgba(255,255,255,.12);border-radius:10px">
+          <input type="text" placeholder="e.g. J4N7" style="flex:1;background:transparent;border:none;color:#f0ebe5;font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;letter-spacing:.1em" />
+        </div>
+        <div style="font-size:11px;color:#5a5048;margin-top:5px;line-height:1.5">If a DJ or fan referred you, enter their code — they earn up to 10% of the gate on their referred tickets.</div>
+      </div>
+      <!-- Summary -->
+      <div style="background:#100d09;border-radius:14px;padding:14px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);font-family:'JetBrains Mono',monospace;font-size:10px;color:#9e9080"><span>General Admission × 1</span><span style="color:#f0ebe5">$20.00</span></div>
+        <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);font-family:'JetBrains Mono',monospace;font-size:10px;color:#9e9080"><span>iHYPE fee</span><span style="color:#22e5d4">$0.00</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0 0;align-items:baseline"><span class="ey" style="color:#5a5048">Total</span><span class="dp" style="font-size:22px;color:#f0ebe5">$20.00</span></div>
+      </div>
+      <button onclick="showQR()" style="width:100%;height:52px;border-radius:16px;background:#ff5029;color:#0a0805;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;border:none;cursor:pointer">Pay with Apple Pay</button>
+      <button onclick="showDecline()" style="margin-top:10px;width:100%;height:36px;background:transparent;border:none;color:#5a5048;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer">▸ Preview payment error</button>
+    </div>
+  </div>
+
+  <!-- MY TICKETS push -->
+  <div id="s-tickets" style="flex:1;overflow:hidden;display:flex;flex-direction:column;display:none">
+    <div class="sub-hdr">
+      <button class="back" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M11 6l-6 6 6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div style="flex:1;text-align:center"><div class="ey" style="color:#22e5d4;font-size:8px">WALLET</div><div class="dp" style="font-size:17px;margin-top:2px">My Tickets</div></div>
+      <div style="width:44px"></div>
+    </div>
+    <div class="scr" style="padding:14px 16px">
+      <div class="ey" style="color:#5a5048;margin-bottom:10px">UPCOMING · 1</div>
+      <!-- Ticket card -->
+      <div style="border-radius:18px;overflow:hidden;background:#100d09;border:1px solid rgba(255,255,255,.08);margin-bottom:16px">
+        <div style="background:linear-gradient(135deg,#ff5029,#ff502944 60%,#1a1612);padding:16px;position:relative">
+          <div class="ey" style="color:#22e5d4;font-size:8px">EMPTY BOTTLE · CHICAGO</div>
+          <div style="font-size:18px;font-weight:500;margin-top:4px">Maya Reyes</div>
+          <div class="ey" style="color:rgba(255,255,255,.55);font-size:8px;margin-top:4px">SAT JUN 21 · 9:00 PM · GA</div>
+        </div>
+        <div style="border-top:1.5px dashed rgba(255,255,255,.12);position:relative"><div style="position:absolute;left:-8px;top:-8px;width:16px;height:16px;border-radius:50%;background:#0a0805"></div><div style="position:absolute;right:-8px;top:-8px;width:16px;height:16px;border-radius:50%;background:#0a0805"></div></div>
+        <div style="padding:18px;display:flex;flex-direction:column;align-items:center">
+          <div style="width:120px;height:120px;background:#f0ebe5;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:12px"><svg width="80" height="80" viewBox="0 0 10 10" fill="#0a0805"><rect x="0" y="0" width="4" height="4"/><rect x="6" y="0" width="4" height="4"/><rect x="0" y="6" width="4" height="4"/><rect x="1" y="1" width="2" height="2" fill="#f0ebe5"/><rect x="7" y="1" width="2" height="2" fill="#f0ebe5"/><rect x="1" y="7" width="2" height="2" fill="#f0ebe5"/><rect x="5" y="5" width="1" height="1"/><rect x="7" y="5" width="1" height="1"/><rect x="5" y="7" width="1" height="1"/><rect x="9" y="9" width="1" height="1"/></svg></div>
+          <div class="ey" style="color:#5a5048;font-size:8px">iH/TKT · 9F2A-7C41</div>
+          <div style="font-size:11px;color:#9e9080;margin-top:4px">Show this at the door</div>
+        </div>
+      </div>
+      <div class="ey" style="color:#5a5048;margin-bottom:10px">PAST</div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:#100d09;border-radius:14px;opacity:.6">
+        <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#b983ff,#1a1612);flex-shrink:0"></div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:500">Reina Solís</div><div class="ey" style="color:#5a5048;font-size:7px;margin-top:3px">SCHUBA'S · MAY 30</div></div>
+        <div class="ey" style="color:#5a5048;font-size:7px">ATTENDED</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REFERRAL EARNINGS explainer push -->
+  <div id="s-referral" style="flex:1;overflow:hidden;display:flex;flex-direction:column;display:none">
+    <div class="sub-hdr">
+      <button class="back" onclick="back()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M11 6l-6 6 6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div style="flex:1;text-align:center"><div class="ey" style="color:#ff3e9a;font-size:8px">DJ PROGRAM</div><div class="dp" style="font-size:17px;margin-top:2px">How earnings work</div></div>
+      <div style="width:44px"></div>
+    </div>
+    <div class="scr" style="padding:18px 20px">
+      <p style="font-size:14px;color:#f0ebe5;line-height:1.6;margin:0 0 20px">Share your link. When someone buys a ticket through it, you earn a share of <strong>that show's gate</strong> — scaled to how much of the crowd you brought.</p>
+      <!-- Steps -->
+      <div style="display:flex;gap:14px;margin-bottom:16px"><div style="width:28px;height:28px;border-radius:9px;background:rgba(255,62,154,.15);color:#ff3e9a;font-family:'Syne',sans-serif;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div><div><div style="font-size:14px;font-weight:600">Share your link</div><div style="font-size:12px;color:#9e9080;line-height:1.5;margin-top:2px">Every ticket bought through ihype.fm/ref/J4N7 is attributed to you.</div></div></div>
+      <div style="display:flex;gap:14px;margin-bottom:16px"><div style="width:28px;height:28px;border-radius:9px;background:rgba(255,62,154,.15);color:#ff3e9a;font-family:'Syne',sans-serif;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div><div><div style="font-size:14px;font-weight:600">Your gate share scales</div><div style="font-size:12px;color:#9e9080;line-height:1.5;margin-top:2px">Bring 3 of 36 tickets and you earn on ~8.4% of the gate. Bring more, earn more — capped at <strong style="color:#ff3e9a">10%</strong>.</div></div></div>
+      <div style="display:flex;gap:14px;margin-bottom:20px"><div style="width:28px;height:28px;border-radius:9px;background:rgba(255,62,154,.15);color:#ff3e9a;font-family:'Syne',sans-serif;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div><div><div style="font-size:14px;font-weight:600">Paid out after the show</div><div style="font-size:12px;color:#9e9080;line-height:1.5;margin-top:2px">Once the final gate is tallied (within 72h of doors), earnings land in your iHYPE balance.</div></div></div>
+      <!-- Worked example -->
+      <div style="padding:16px;background:rgba(255,62,154,.07);border:1px solid rgba(255,62,154,.22);border-radius:16px">
+        <div class="ey" style="color:#ff3e9a;font-size:8px;margin-bottom:10px">WORKED EXAMPLE</div>
+        <div style="display:flex;justify-content:space-between;padding:5px 0;font-family:'JetBrains Mono',monospace;font-size:11px;color:#9e9080"><span>Gate (36 × $20)</span><span style="color:#f0ebe5">$720.00</span></div>
+        <div style="display:flex;justify-content:space-between;padding:5px 0;font-family:'JetBrains Mono',monospace;font-size:11px;color:#9e9080"><span>You brought</span><span style="color:#f0ebe5">3 tickets (8.4%)</span></div>
+        <div style="display:flex;justify-content:space-between;padding:5px 0;font-family:'JetBrains Mono',monospace;font-size:11px;color:#9e9080;border-top:1px solid rgba(255,255,255,.08);margin-top:4px;padding-top:9px"><span>Your share</span><span style="color:#ff3e9a;font-weight:600">≈ $4.20</span></div>
+      </div>
+      <div style="font-size:11px;color:#5a5048;line-height:1.5;margin-top:14px">Share is calculated per show. Refunded tickets don't count. Full terms at ihype.fm/dj-terms.</div>
+    </div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="bnav" id="bnav">
+    <button class="ni on" id="ni-home" onclick="show('home')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      <span class="nl">Home</span>
+    </button>
+    <button class="ni" id="ni-charts" onclick="show('charts')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 17l6-6 4 4 8-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="nl">Charts</span>
+    </button>
+    <button class="ni" id="ni-shows" onclick="show('shows')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <span class="nl">Shows</span>
+    </button>
+    <button class="ni" id="ni-you" onclick="show('you')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <span class="nl">You</span>
+    </button>
+  </div>
+  <div class="gest"><div></div></div>
+</div>
+
+<script>
+const MAIN = ['home','charts','shows','you'];
+const PUSH = ['notif','privacy','transparency','checkout','tickets','referral'];
+const ALL = [...MAIN,...PUSH];
+let prev = 'home', cur = 'home';
+
+const CHARTS = [
+  {rank:1, title:'Sundown', artist:'Maya Reyes', hypes:9847, moment:'3:38', grad:'#ff5029,#b91f00', up:2},
+  {rank:2, title:'Neon District', artist:'Reina Solís', hypes:7204, moment:'2:14', grad:'#b983ff,#6a3fbf', up:0},
+  {rank:3, title:'Glass Hours', artist:'Maya Reyes', hypes:6891, moment:'1:52', grad:'#b983ff,#1a1612', up:5},
+  {rank:4, title:'Pacific Sun', artist:'Lola Bay', hypes:5230, moment:'4:01', grad:'#22e5d4,#0a8a7a', down:1},
+  {rank:5, title:'Dusk Protocol', artist:'Verb Collective', hypes:4102, moment:'3:17', grad:'#7fb3ff,#1a3a6a', up:3},
+  {rank:6, title:'Low Season', artist:'Hovvdy', hypes:3840, moment:'2:44', grad:'#ffb84a,#8a5a00', up:0},
+  {rank:7, title:'Frequency', artist:'Lena M.', hypes:2990, moment:'1:55', grad:'#ff3e9a,#8a0050', down:2},
+];
+
+function renderCharts() {
+  const ul = CHARTS.map((t,i)=>{
+    const trend = t.up > 0 ? `<span style="color:#22e5d4;font-family:'JetBrains Mono',monospace;font-size:8px">▲${t.up}</span>` : t.down > 0 ? `<span style="color:#ff4545;font-family:'JetBrains Mono',monospace;font-size:8px">▼${t.down}</span>` : `<span style="color:#5a5048;font-family:'JetBrains Mono',monospace;font-size:8px">—</span>`;
+    return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06)"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:rgba(255,255,255,.18);width:22px;text-align:center">${t.rank}</div><div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,${t.grad});flex-shrink:0"></div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.title}</div><div style="font-size:11px;color:#9e9080;margin-top:2px">${t.artist}</div></div><div style="text-align:right;flex-shrink:0"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:13px">${(t.hypes/1000).toFixed(1)}k</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:#ff5029;margin-top:2px">● ${t.moment}</div></div>${trend}</div>`;
+  });
+  document.getElementById('chart-list').innerHTML = ul.join('');
+}
+renderCharts();
+
+function setPeriod(p,btn) {
+  document.querySelectorAll('#chart-period button').forEach(b=>{b.style.background='transparent';b.style.color='#5a5048'});
+  btn.style.background='#ff5029';btn.style.color='#0a0805';
+}
+
+const _orig = {};
+function show(scr) {
+  if (MAIN.includes(cur)) prev = cur;
+  cur = scr;
+  // Cache original innerHTML once, restore on re-entry (checkout/notif get replaced by flows)
+  if ((scr === 'checkout' || scr === 'notif')) {
+    const root = document.getElementById('s-'+scr);
+    const body = root && root.querySelector('.scr');
+    if (body) {
+      if (_orig[scr] === undefined) _orig[scr] = body.innerHTML;
+      else body.innerHTML = _orig[scr];
+    }
+  }
+  ALL.forEach(s => {
+    const el = document.getElementById('s-'+s);
+    if (el) el.style.display = s===scr ? 'flex' : 'none';
+  });
+  const isPush = PUSH.includes(scr);
+  document.getElementById('bnav').style.display = isPush ? 'none' : 'flex';
+  MAIN.forEach(s => {
+    const btn = document.getElementById('ni-'+s);
+    if (btn) { btn.classList.toggle('on', s===scr); }
+  });
+  try { localStorage.setItem('ihype-app-scr', scr); } catch {}
+}
+function back() { show(prev); }
+function goArtist() { window.location.href = 'artist.html'; }
+function doHype() {
+  const btn = document.getElementById('hype-btn');
+  btn.classList.add('hyped');
+  setTimeout(()=>btn.classList.remove('hyped'), 500);
+}
+function showQR() {
+  const el = document.getElementById('s-checkout');
+  el.querySelector('.scr').innerHTML = `<div style="padding:28px 24px;display:flex;flex-direction:column;align-items:center;text-align:center"><div style="width:56px;height:56px;border-radius:50%;background:rgba(34,229,212,.15);display:flex;align-items:center;justify-content:center;margin-bottom:16px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#22e5d4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;letter-spacing:-.01em;margin-bottom:6px">You're in</div><div style="font-size:13px;color:#9e9080;line-height:1.6;margin-bottom:20px">Receipt sent to <span style="color:#f0ebe5">jordan@email.com</span></div><div style="width:140px;height:140px;background:#f0ebe5;border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:18px"><svg width="96" height="96" viewBox="0 0 10 10" fill="#0a0805"><rect x="0" y="0" width="4" height="4"/><rect x="6" y="0" width="4" height="4"/><rect x="0" y="6" width="4" height="4"/><rect x="1" y="1" width="2" height="2" fill="#f0ebe5"/><rect x="7" y="1" width="2" height="2" fill="#f0ebe5"/><rect x="1" y="7" width="2" height="2" fill="#f0ebe5"/><rect x="5" y="5" width="1" height="1"/><rect x="7" y="5" width="1" height="1"/><rect x="5" y="7" width="1" height="1"/><rect x="9" y="9" width="1" height="1"/></svg></div><div style="width:100%;background:#100d09;border-radius:14px;padding:14px;margin-bottom:18px;text-align:left"><div style="display:flex;justify-content:space-between;padding:4px 0;font-family:'JetBrains Mono',monospace;font-size:10px;color:#9e9080"><span>Maya Reyes · Empty Bottle</span></div><div style="display:flex;justify-content:space-between;padding:4px 0;font-family:'JetBrains Mono',monospace;font-size:10px;color:#9e9080"><span>Sat Jun 21 · 9:00 PM · GA</span></div><div style="display:flex;justify-content:space-between;padding:4px 0;font-family:'JetBrains Mono',monospace;font-size:10px;color:#9e9080"><span>Order</span><span style="color:#f0ebe5">iH/TKT-9F2A</span></div><div style="display:flex;justify-content:space-between;padding:8px 0 0;border-top:1px solid rgba(255,255,255,.08);margin-top:4px"><span class="ey" style="color:#5a5048">Paid</span><span class="dp" style="font-size:16px;color:#22e5d4">$20.00</span></div></div><button onclick="show('tickets')" style="width:100%;height:48px;border-radius:14px;background:#22e5d4;color:#0a0805;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;border:none;cursor:pointer;margin-bottom:10px">View in My Tickets</button><button style="width:100%;height:44px;border-radius:14px;background:#0a0805;color:#f0ebe5;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;border:1px solid rgba(255,255,255,.18);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="3" stroke="currentColor" stroke-width="1.6"/><path d="M3 10h18" stroke="currentColor" stroke-width="1.6"/></svg>Add to Apple Wallet</button></div>`;
+}
+function showDecline() {
+  const el = document.getElementById('s-checkout');
+  el.querySelector('.scr').innerHTML = `<div style="padding:28px 24px;display:flex;flex-direction:column;align-items:center;text-align:center"><div style="width:56px;height:56px;border-radius:50%;background:rgba(255,69,69,.15);display:flex;align-items:center;justify-content:center;margin-bottom:16px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 8v5M12 16.5v.5" stroke="#ff4545" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="#ff4545" stroke-width="1.8"/></svg></div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;letter-spacing:-.01em;margin-bottom:6px">Payment declined</div><div style="font-size:13px;color:#9e9080;line-height:1.6;margin-bottom:6px">Your card was declined by the issuer. No charge was made.</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#5a5048;letter-spacing:.08em;margin-bottom:24px">ERR · card_declined</div><div style="width:100%;padding:14px;background:rgba(255,184,74,.08);border:1px solid rgba(255,184,74,.22);border-radius:12px;font-size:12px;color:#9e9080;line-height:1.5;text-align:left;margin-bottom:18px"><span style="color:#ffb84a;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase">Heads up</span><br>This show is selling fast — your seat is held for 8 more minutes while you retry.</div><button onclick="backToCheckout()" style="width:100%;height:48px;border-radius:14px;background:#ff5029;color:#0a0805;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;border:none;cursor:pointer;margin-bottom:10px">Try another card</button><button onclick="back()" style="width:100%;height:44px;border-radius:14px;background:transparent;color:#5a5048;font-family:'DM Sans',sans-serif;font-size:13px;border:1px solid rgba(255,255,255,.12);cursor:pointer">Cancel</button></div>`;
+}
+function backToCheckout() {
+  show('shows'); setTimeout(()=>show('checkout'), 10);
+}
+function clearNotifs() {
+  const el = document.getElementById('s-notif');
+  el.querySelector('.scr').innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:40px;text-align:center"><div style="width:56px;height:56px;border-radius:50%;background:#1a1612;display:flex;align-items:center;justify-content:center;margin-bottom:16px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" stroke="#5a5048" stroke-width="1.6" stroke-linecap="round"/></svg></div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;margin-bottom:6px">All caught up</div><div style="font-size:13px;color:#9e9080;line-height:1.5">No new notifications.<br>We'll ping you when your HYPE fires.</div></div>`;
+}
+
+try {
+  const s = localStorage.getItem('ihype-app-scr');
+  if (s && ALL.includes(s)) show(s); else show('home');
+} catch { show('home'); }
+</script>
+</body>
+</html>

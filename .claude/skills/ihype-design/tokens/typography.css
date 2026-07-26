@@ -1,10 +1,10 @@
 /* iHYPE Typography Tokens */
 :root {
   /* ── Font Families ── */
-  --font-display: 'Syne', sans-serif;
-  --font-body:    'DM Sans', system-ui, sans-serif;
-  --font-mono:    'JetBrains Mono', monospace;
-  --font-serif:   'Instrument Serif', serif;
+  --font-display: 'Syne', 'Noto Sans Arabic', 'Noto Sans SC', 'Noto Sans JP', sans-serif;
+  --font-body:    'DM Sans', 'Noto Sans Arabic', 'Noto Sans SC', 'Noto Sans JP', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'Noto Sans Arabic', 'Noto Sans SC', 'Noto Sans JP', monospace;
+  --font-serif:   'Instrument Serif', 'Noto Sans Arabic', 'Noto Sans SC', 'Noto Sans JP', serif;
 
   /* ── Font Sizes ── */
   --text-xs:   9px;
