@@ -45,6 +45,11 @@ export function PasskeyManager() {
     try {
       const optRes = await fetch('/api/auth/passkey/register');
       const options = await optRes.json();
+      if (!optRes.ok) {
+        throw new Error(
+          typeof options?.error === 'string' ? options.error : 'Could not start passkey registration.',
+        );
+      }
       const attestation = await startRegistration({ optionsJSON: options });
       await postJson('/api/auth/passkey/register', attestation);
       setStatus('Passkey added. You can now sign in without a password.');
