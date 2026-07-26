@@ -6030,7 +6030,13 @@ a .ihype-card, a.ihype-card {
 .ihype-btn-primary {
   padding: 13px;
   background: var(--accent, #ff5029);
-  color: #fff;
+  /* White-on-#ff5029 fails WCAG AA contrast (3.26:1, needs 4.5:1) at this
+     button's font sizes/weights — verified with axe-core against every page
+     this style appears on. A fixed dark value (not var(--bg), which flips
+     to a light cream in [data-theme="light"] and would leave the same
+     failure there since --accent doesn't change between themes) hits 6.1:1
+     while keeping the exact brand orange background unchanged. */
+  color: #0a0805;
   border: none;
   border-radius: 8px;
   font-weight: 700;

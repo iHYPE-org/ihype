@@ -42,7 +42,7 @@ export function RequestBetaAccessForm({ role }: Props) {
   if (!open) {
     return (
       <button type="button" className="beta-access-toggle" onClick={() => setOpen(true)}>
-        Don&apos;t have a code? Request beta access →
+        Don&apos;t have a code? Request alpha access →
       </button>
     );
   }
