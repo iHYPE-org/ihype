@@ -320,7 +320,7 @@ export default function SettingsPage() {
                     </div>
                     <Link className="settings-btn settings-btn-ghost" href="/me/promote">Connect</Link>
                   </div>
-                  <Row action={<Link className="settings-btn settings-btn-ghost" href="/me/payouts">View</Link>} detail="Every payout receipt, itemized 70/20/10" label="Payout history" />
+                  <Row action={<Link className="settings-btn settings-btn-ghost" href="/payouts?tab=history">View</Link>} detail="Every payout receipt, itemized 70/20/10" label="Payout history" />
                 </>
               ) : (
                 <div className="settings-row settings-payout-card">

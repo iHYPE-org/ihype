@@ -155,7 +155,7 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
           iHYPE takes nothing · locked in the charter
         </p>
         <div className="payout-print-actions" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <Link href="/me/payouts" style={{ fontFamily: 'var(--font-mono)', fontSize: '.72rem', color: 'var(--ink-2, #9e9080)' }}>
+          <Link href="/payouts?tab=history" style={{ fontFamily: 'var(--font-mono)', fontSize: '.72rem', color: 'var(--ink-2, #9e9080)' }}>
             View all payouts →
           </Link>
           <PayoutActions title={show.title} />
