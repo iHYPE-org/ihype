@@ -89,7 +89,6 @@ async function main() {
     await upsertTestUsersIfEmpty(beforeCount);
 
     await client.query('DELETE FROM "Session"');
-    await client.query('DELETE FROM "MfaChallenge"');
     await client.query('DELETE FROM "PasswordResetCode"');
     await client.query('DELETE FROM "MagicLinkToken"');
     await client.query('DELETE FROM "Passkey"');
