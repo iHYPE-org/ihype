@@ -2,7 +2,7 @@
  * iHYPE API Client — lib/api.js
  * Works in two modes:
  *   MOCK  — no backend needed; uses window.IHYPE_DATA + localStorage (default in this design system)
- *   REAL  — set window.IHYPE_API_BASE = 'https://api.ihype.app/v1' before loading. Production is LIVE:
+ *   REAL  — set window.IHYPE_API_BASE = 'https://api.ihype.org/v1' before loading. Production is LIVE:
  *           real Stripe charges, real Connect transfers, real payouts.
  *
  * Usage (after loading this script):
@@ -57,7 +57,7 @@
       id:           'u_' + Math.random().toString(36).slice(2,8),
       handle:       prefs?.handle || 'demo_user',
       display_name: prefs?.displayName || 'Demo User',
-      email:        prefs?.email || 'demo@ihype.app',
+      email:        prefs?.email || 'demo@ihype.org',
       city:         prefs?.city  || 'Los Angeles',
       genres:       prefs?.genres || ['dream-pop','lo-fi','electronic'],
       roles:        [prefs?.role || 'fan'],
@@ -290,7 +290,7 @@
         await DELAY();
         const prefs  = getPrefs() || {};
         const code   = (prefs.handle || 'demo') + '-' + event_id.slice(-4) + '-' + Math.random().toString(36).slice(2,6);
-        const url    = `https://ihype.app/e/${event_id}?ref=${code}`;
+        const url    = `https://ihype.org/e/${event_id}?ref=${code}`;
         window.track && window.track('referral_create', { event_id, code });
         return { code, share_url: url };
       }

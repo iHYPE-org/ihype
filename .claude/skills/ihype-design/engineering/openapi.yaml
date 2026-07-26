@@ -6,7 +6,7 @@ info:
     iHYPE backend contract. LIVE — 501(c)(3) certified, real Stripe charges and Connect payouts.
     See BACKEND_SPEC.md and schema.sql. Auth: bearer JWT from magic-link.
 servers:
-  - url: https://api.ihype.app/v1
+  - url: https://api.ihype.org/v1
 security:
   - bearerAuth: []
 tags:

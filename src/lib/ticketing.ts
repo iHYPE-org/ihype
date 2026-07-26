@@ -1,7 +1,6 @@
 export const PLATFORM_COMMISSION_PERCENT = 0;
 export const DEFAULT_PROMOTER_AFFILIATE_PERCENT = 10;
 export const MAX_PROMOTER_AFFILIATE_PERCENT = 10;
-export const PROMOTER_POOL_PERCENT = DEFAULT_PROMOTER_AFFILIATE_PERCENT;
 
 type SplitInput = {
   venuePayoutPercent: number;

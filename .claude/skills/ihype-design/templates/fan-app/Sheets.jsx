@@ -317,7 +317,7 @@ function ArtistAnalyticsSheet({ open, onClose }) {
 
 function InviteSheet({ open, onClose, onToast }) {
   const [copied, setCopied] = React.useState(false);
-  const link = 'https://ihype.app/join?ref=me';
+  const link = 'https://ihype.org/join?ref=me';
   const share = async () => {
     const text = 'Join iHYPE — music, events, and zero iHYPE fees. Early access:';
     const url = link;
@@ -461,8 +461,8 @@ function SettingsSheet({ open, onClose }) {
           ["What's new", () => { onClose(); setTimeout(() => window.openIHYPEChangelog && window.openIHYPEChangelog(), 200); }],
           ['Help & FAQ', () => { onClose(); setTimeout(() => window.openIHYPEHelp && window.openIHYPEHelp(), 200); }],
           ['Linked payment', null, 'Apple Pay ✓'],
-          ['Terms of Service', () => window.open('https://ihype.app/terms', '_blank')],
-          ['Privacy Policy', () => window.open('https://ihype.app/privacy', '_blank')],
+          ['Terms of Service', () => window.open('https://ihype.org/terms', '_blank')],
+          ['Privacy Policy', () => window.open('https://ihype.org/privacy', '_blank')],
         ].map(([label, action, note]) => (
           <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '.85rem 0', borderBottom: '1px solid var(--line-2)', alignItems: 'center' }}>
             <span style={{ fontSize: '.9rem' }}>{label}</span>
@@ -537,7 +537,7 @@ function ArtistMenu({ artist }) {
         <div onClick={()=>setOpen(false)} style={{ position:'fixed', inset:0, zIndex:200 }}>
           <div onClick={e=>e.stopPropagation()} style={{ position:'absolute', top:40, right:0, background:'var(--bg-2)', border:'1px solid var(--line)', borderRadius:14, padding:'6px 0', minWidth:160, boxShadow:'0 8px 32px rgba(0,0,0,.5)', zIndex:201 }}>
             {done ? <div style={{ padding:'10px 14px', fontFamily:'var(--f-m)', fontSize:'.8rem', color:'#22e5d4' }}>{done} ✓</div> : [
-              ['🔗 Share profile', () => { if(navigator.share) navigator.share({title:artist?.name, url:'https://ihype.app/a/'+encodeURIComponent(artist?.name||'')}); setOpen(false); }],
+              ['🔗 Share profile', () => { if(navigator.share) navigator.share({title:artist?.name, url:'https://ihype.org/a/'+encodeURIComponent(artist?.name||'')}); setOpen(false); }],
               ['🚩 Report', () => { setDone('Reported'); setTimeout(()=>setOpen(false),1200); }],
               ['🚫 Block', () => { setDone('Blocked'); setTimeout(()=>setOpen(false),1200); }],
             ].map(([lbl, fn]) => <button key={lbl} onClick={fn} style={{ display:'block', width:'100%', padding:'10px 14px', background:'none', border:'none', color:lbl.includes('Block')?'#ff5029':'var(--ink)', fontFamily:'var(--f-b)', fontSize:'.84rem', cursor:'pointer', textAlign:'left' }}>{lbl}</button>)}
@@ -722,7 +722,7 @@ function PostShowMemoryCard({ show, onClose }) {
   const tint = show.tint || '#ff5029';
   const share = async () => {
     const text = `I was there 🔥 ${show.artist} at ${show.venue || 'the show'}. Powered by iHYPE.`;
-    if (navigator.share) { try { await navigator.share({ text, url: 'https://ihype.app' }); setShared(true); } catch(e) {} }
+    if (navigator.share) { try { await navigator.share({ text, url: 'https://ihype.org' }); setShared(true); } catch(e) {} }
     else { navigator.clipboard && navigator.clipboard.writeText(text); setShared(true); }
   };
   return (

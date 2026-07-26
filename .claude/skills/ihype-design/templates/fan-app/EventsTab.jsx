@@ -66,7 +66,7 @@ function CheckoutSheet({ show, onClose, onDone }) {
         </button>
         <style>{'@keyframes ihype-spin{to{transform:rotate(360deg)}}'}</style>
         <p style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', color: 'var(--ink-3)', textAlign: 'center', marginTop: 8 }}>{window.ihypeT ? window.ihypeT('ckFeeCharter') : 'iHYPE fee $0 · 70% to artist · locked in charter'}</p>
-        <p style={{ fontFamily: 'var(--f-m)', fontSize: '.62rem', color: 'var(--ink-3)', textAlign: 'center', marginTop: 6, opacity:.8 }}>{window.ihypeT ? window.ihypeT('ckAgreeTerms') : 'By buying you agree to the'} <a href="https://ihype.app/terms" target="_blank" style={{color:'var(--ink-3)'}}>{window.ihypeT ? window.ihypeT('ckTerms') : 'Terms'}</a>.</p>
+        <p style={{ fontFamily: 'var(--f-m)', fontSize: '.62rem', color: 'var(--ink-3)', textAlign: 'center', marginTop: 6, opacity:.8 }}>{window.ihypeT ? window.ihypeT('ckAgreeTerms') : 'By buying you agree to the'} <a href="https://ihype.org/terms" target="_blank" style={{color:'var(--ink-3)'}}>{window.ihypeT ? window.ihypeT('ckTerms') : 'Terms'}</a>.</p>
       </div>
     </div>
   );
@@ -138,7 +138,7 @@ function EventCard({ s, onBuy, idx }) {
           </div>
         </div>
         <button onClick={() => { setHyped(h => { navigator.vibrate && navigator.vibrate(hyped?10:[20,10,20]); return !h; }) }} style={{ width: 34, height: 34, borderRadius: '50%', border: `1px solid ${hyped ? 'var(--accent)' : 'var(--line)'}`, background: hyped ? 'rgba(255,80,41,.12)' : 'transparent', color: hyped ? 'var(--accent)' : 'var(--ink-3)', cursor: 'pointer', fontSize: 16, display: 'grid', placeItems: 'center' }}>{hyped ? '🔥' : '☆'}</button>
-        <button onClick={async () => { const url = 'https://ihype.app/e/' + s.id + '?ref=me'; if (navigator.share) { try { await navigator.share({ title: s.artist + ' @ ' + s.venue, text: 'Get tickets — no fees', url }); return; } catch(e) {} } navigator.clipboard && navigator.clipboard.writeText(url); }} title="Share referral link" style={{ width: 34, height: 34, borderRadius: '50%', border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-3)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
+        <button onClick={async () => { const url = 'https://ihype.org/e/' + s.id + '?ref=me'; if (navigator.share) { try { await navigator.share({ title: s.artist + ' @ ' + s.venue, text: 'Get tickets — no fees', url }); return; } catch(e) {} } navigator.clipboard && navigator.clipboard.writeText(url); }} title="Share referral link" style={{ width: 34, height: 34, borderRadius: '50%', border: '1px solid var(--line)', background: 'transparent', color: 'var(--ink-3)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>
         </button>
         {SOLD_OUT[s.id]

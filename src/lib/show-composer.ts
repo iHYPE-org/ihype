@@ -92,8 +92,6 @@ export type ShowProductionPlan = z.infer<typeof showProductionPlanSchema>;
 export type AdvertisingScope = z.infer<typeof advertisingScopeSchema>;
 export type ShowMediaType = z.infer<typeof showMediaTypeSchema>;
 
-export const samplePadSlots = Array.from({ length: 16 }, (_, index) => index + 1);
-
 export const royaltyFreeSampleClips: ShowSamplePad[] = [
   {
     sampleId: '0x9a1b3c5d7e8f1021',
