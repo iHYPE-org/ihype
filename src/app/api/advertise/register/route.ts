@@ -10,11 +10,15 @@ import { readClientAddress } from '@/lib/request-meta';
 import { isReservedPlatformEmail } from '@/lib/runtime-flags';
 import { recordAuditEvent } from '@/lib/audit';
 
+const ADVERTISER_CATEGORIES = ['LABEL', 'VENUE_PROMOTER', 'GEAR', 'TICKETING', 'MERCH', 'TOUR'] as const;
+
 const schema = z.object({
   email: z.string().trim().email(),
   companyName: z.string().trim().min(2).max(120),
   contactName: z.string().trim().max(120).optional(),
   website: z.string().trim().url().or(z.literal('')).optional(),
+  category: z.enum(ADVERTISER_CATEGORIES).optional(),
+  pitch: z.string().trim().max(1000).optional(),
 });
 
 /**
@@ -79,6 +83,8 @@ export async function POST(request: Request) {
           companyName: body.companyName,
           contactName: body.contactName || null,
           website: body.website || null,
+          category: body.category ?? null,
+          pitch: body.pitch || null,
         },
       });
 

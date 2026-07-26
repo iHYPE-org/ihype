@@ -6,11 +6,22 @@ import type { FormEvent } from 'react';
 import { postJson } from '@/lib/api-client';
 import { getErrorMessage } from '@/components/AuthShared';
 
+const CATEGORIES: { id: string; label: string }[] = [
+  { id: 'LABEL', label: 'Record label' },
+  { id: 'VENUE_PROMOTER', label: 'Venue/promoter' },
+  { id: 'GEAR', label: 'Gear & instruments' },
+  { id: 'TICKETING', label: 'Ticketing' },
+  { id: 'MERCH', label: 'Merch' },
+  { id: 'TOUR', label: 'Tour support' },
+];
+
 export function AdvertiserRegisterForm() {
   const [email, setEmail] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [contactName, setContactName] = useState('');
   const [website, setWebsite] = useState('');
+  const [category, setCategory] = useState<string | null>(null);
+  const [pitch, setPitch] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
@@ -25,6 +36,8 @@ export function AdvertiserRegisterForm() {
         companyName: companyName.trim(),
         contactName: contactName.trim() || undefined,
         website: website.trim() || undefined,
+        category: category ?? undefined,
+        pitch: pitch.trim() || undefined,
       });
       setSent(true);
     } catch (err) {
@@ -60,6 +73,14 @@ export function AdvertiserRegisterForm() {
           For music stores, merch printers, live-production companies, and other music-adjacent
           businesses — no artist, venue, or DJ account required, and no public profile page.
         </p>
+
+        <div className="aar-notice">
+          <div className="aar-notice-label">Music-industry only</div>
+          <p className="aar-notice-body">
+            iHYPE only accepts advertisers in music, live events, or related creator services — labels,
+            venues, gear, ticketing, merch, tour support. Everything else is rejected at screening.
+          </p>
+        </div>
 
         <label className="aar-label" htmlFor="companyName">Company name</label>
         <input
@@ -101,6 +122,30 @@ export function AdvertiserRegisterForm() {
           value={website}
         />
 
+        <label className="aar-label" htmlFor="category">Category (optional)</label>
+        <div className="aar-cat-row" id="category">
+          {CATEGORIES.map((c) => (
+            <button
+              className={c.id === category ? 'aar-cat active' : 'aar-cat'}
+              key={c.id}
+              onClick={() => setCategory((cur) => (cur === c.id ? null : c.id))}
+              type="button"
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+
+        <label className="aar-label" htmlFor="pitch">Tell us about your business (optional)</label>
+        <textarea
+          className="aar-input aar-textarea"
+          id="pitch"
+          onChange={(e) => setPitch(e.target.value)}
+          placeholder="What do you sell, and to whom?"
+          rows={3}
+          value={pitch}
+        />
+
         {error && <p className="aar-error">{error}</p>}
 
         <button className="aar-btn" disabled={submitting} type="submit">
@@ -125,8 +170,15 @@ const styles = `
   .aar-sub { font-size: 13.5px; color: var(--ink-a65); line-height: 1.6; margin: 0 0 28px; }
   .aar-label { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a55); margin: 14px 0 6px; }
   .aar-label:first-of-type { margin-top: 0; }
-  .aar-input { width: 100%; font-size: 14px; color: var(--ink); background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 12px 14px; outline: none; }
+  .aar-input { width: 100%; font-size: 14px; color: var(--ink); background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 12px 14px; outline: none; font-family: inherit; box-sizing: border-box; }
   .aar-input:focus { border-color: var(--accent, #ff5029); }
+  .aar-textarea { resize: vertical; }
+  .aar-notice { border: 1px solid rgba(255,184,74,.25); background: rgba(255,184,74,.06); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 24px; }
+  .aar-notice-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: #ffb84a; margin-bottom: 4px; }
+  .aar-notice-body { font-size: 12.5px; color: var(--ink-a65); line-height: 1.6; margin: 0; }
+  .aar-cat-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+  .aar-cat { padding: 7px 13px; border-radius: var(--radius-pill); font-size: 12.5px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--ink-a65); font-family: inherit; }
+  .aar-cat.active { border-color: #ffb84a; background: rgba(255,184,74,.13); color: #ffb84a; }
   .aar-error { color: var(--accent, #ff5029); font-size: 12.5px; margin: 14px 0 0; }
   .aar-btn { margin-top: 26px; font-family: var(--font-mono); font-size: 13px; text-transform: uppercase; letter-spacing: .06em; padding: 13px 20px; border-radius: var(--radius-pill); border: none; background: var(--accent, #ff5029); color: #fff; cursor: pointer; }
   .aar-btn:disabled { opacity: .6; cursor: default; }

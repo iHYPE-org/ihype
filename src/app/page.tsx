@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { PiAdminButton } from '@/components/PiAdminButton';
+import { isInviteCodeRequiredRuntime } from '@/lib/runtime-flags';
 import { db } from '@/lib/db';
 import { IndexTabsShowcase } from '@/components/IndexTabsShowcase';
 import { IndexStickyCta } from '@/components/IndexStickyCta';
@@ -44,12 +45,18 @@ export default async function RootPage() {
   const session = await auth();
   if (session?.user?.id) redirect('/home');
 
-  const [artistCount, fanCount, totalHypes, showCount] = await Promise.all([
+  const [artistCount, fanCount, totalHypes, showCount, inviteOnly] = await Promise.all([
     db.profile.count({ where: { type: 'ARTIST' } }).catch(() => 0),
     db.profile.count({ where: { type: 'LISTENER' } }).catch(() => 0),
     db.profileHypeEvent.count().catch(() => 0),
     db.show.count({ where: { status: { in: ['SCHEDULED', 'LIVE'] } } }).catch(() => 0),
+    isInviteCodeRequiredRuntime(),
   ]);
+
+  // Matches the reasoning behind removing hardcoded "beta" copy elsewhere
+  // (row 235-era fix): "beta" framing only makes sense while signup is
+  // actually invite-gated, and self-corrects the moment that flag flips off.
+  const primaryCtaLabel = inviteOnly ? 'Request Beta' : 'Get started';
 
   const fmt = (n: number) => n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}K` : String(n);
 
@@ -120,7 +127,7 @@ export default async function RootPage() {
               {/* Mobile-only: the pitch has to convert without a scroll — desktop
                   relies on the final CTA section further down the page. */}
               <div className="idx-hero-cta">
-                <Link href="/register" className="idx-hero-cta-primary">Join Beta — it&apos;s free →</Link>
+                <Link href="/join" className="idx-hero-cta-primary">{primaryCtaLabel} — it&apos;s free →</Link>
                 <Link href="/login" className="idx-hero-cta-secondary">Already have an account? <u>Sign in</u></Link>
               </div>
             </div>
@@ -273,10 +280,10 @@ export default async function RootPage() {
           </h2>
           <div className="grid grid-2 idx-roles-grid" style={{ gap: '0.75rem' }}>
             {[
-              { role: 'Artists', color: '#ff5029', icon: '🎤', href: '/register?role=ARTIST', items: ['70% of every ticket you sell', 'Upload music as swipeable Seeds', 'Build your public page and catalog', 'See who\'s hyping your work'] },
-              { role: 'Fans', color: '#b983ff', icon: '🎧', href: '/register?role=FAN', items: ['Discover new music before it blows up', 'Buy tickets with no fees', 'Earn 10% on tickets you refer', 'Track your scene with hype streaks'] },
-              { role: 'Promoters / DJs', color: '#ffb84a', icon: '🎛️', href: '/register?role=DJ', items: ['10% referral on every ticket you drive', 'Host radio shows on the platform', 'Build a following and grow your scene', 'Referral links for every event'] },
-              { role: 'Venues', color: '#22e5d4', icon: '🏛️', href: '/register?role=VENUE', items: ['20% of every show you host', 'Zero ticketing fees for buyers', 'Demand radar shows what\'s trending', 'Connect with artists and promoters'] },
+              { role: 'Artists', color: '#ff5029', icon: '🎤', href: '/for-artists', items: ['70% of every ticket you sell', 'Upload music as swipeable Seeds', 'Build your public page and catalog', 'See who\'s hyping your work'] },
+              { role: 'Fans', color: '#b983ff', icon: '🎧', href: '/for-fans', items: ['Discover new music before it blows up', 'Buy tickets with no fees', 'Earn 10% on tickets you refer', 'Track your scene with hype streaks'] },
+              { role: 'Promoters / DJs', color: '#ffb84a', icon: '🎛️', href: '/for-djs', items: ['10% referral on every ticket you drive', 'Host radio shows on the platform', 'Build a following and grow your scene', 'Referral links for every event'] },
+              { role: 'Venues', color: '#22e5d4', icon: '🏛️', href: '/for-venues', items: ['20% of every show you host', 'Zero ticketing fees for buyers', 'Demand radar shows what\'s trending', 'Connect with artists and promoters'] },
             ].map(r => (
               <div className="idx-role-card" key={r.role} style={{
                 padding: '1.5rem', borderRadius: 18,
@@ -355,7 +362,7 @@ export default async function RootPage() {
                 ))}
               </div>
               <Link
-                href="/register?role=ARTIST"
+                href="/for-artists"
                 style={{
                   display: 'inline-block',
                   padding: '0.75rem 1.75rem', borderRadius: 12,
@@ -515,7 +522,7 @@ export default async function RootPage() {
               No subscription. No fees. Just music, community, and a platform that&apos;s actually on your side.
             </p>
             <Link
-              href="/register"
+              href="/join"
               style={{
                 display: 'inline-block',
                 padding: '0.9rem 2.5rem', borderRadius: 999,
@@ -525,7 +532,7 @@ export default async function RootPage() {
                 textDecoration: 'none',
               }}
             >
-              Join Beta →
+              {primaryCtaLabel} →
             </Link>
             <div style={{ marginTop: '1.25rem' }}>
               <Link href="/login" style={{ fontFamily: 'var(--f-b)', fontSize: '0.9rem', color: 'var(--ink-3)', textDecoration: 'none' }}>
