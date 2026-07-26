@@ -271,6 +271,76 @@ export default async function ShowDetailPage({
     ? await db.hypeEvent.findUnique({ where: { userId_showId: { userId: session.user.id, showId: show.id } }, select: { userId: true } })
     : null;
 
+  // Demand sparkline — real ticket-order velocity over the last 12h, bucketed
+  // into 8 windows (no fabricated data; all-cold when there's no order signal).
+  const DEMAND_WINDOW_MS = 12 * 60 * 60 * 1000;
+  const DEMAND_BUCKETS = 8;
+  const demandWindowStart = new Date(Date.now() - DEMAND_WINDOW_MS);
+  const demandOrders = show.isTicketed
+    ? await db.ticketOrder.findMany({
+        where: { showId: show.id, createdAt: { gte: demandWindowStart }, status: { not: 'VOID' } },
+        select: { createdAt: true, quantity: true },
+      })
+    : [];
+  const demandBucketMs = DEMAND_WINDOW_MS / DEMAND_BUCKETS;
+  const demandBucketValues = Array.from({ length: DEMAND_BUCKETS }, () => 0);
+  for (const order of demandOrders) {
+    const idx = Math.min(
+      DEMAND_BUCKETS - 1,
+      Math.max(0, Math.floor((order.createdAt.getTime() - demandWindowStart.getTime()) / demandBucketMs))
+    );
+    demandBucketValues[idx] += order.quantity;
+  }
+  const demandMax = Math.max(...demandBucketValues, 0);
+  const demandSpark = demandBucketValues.map((value) => {
+    const frac = demandMax > 0 ? value / demandMax : 0;
+    return {
+      isCold: demandMax === 0 || frac < 0.3,
+      isWarm: demandMax > 0 && frac >= 0.3 && frac < 0.6,
+      isHot: demandMax > 0 && frac >= 0.6 && frac < 0.85,
+      isFire: demandMax > 0 && frac >= 0.85,
+    };
+  });
+  const demandLatest = demandSpark[demandSpark.length - 1];
+  const demandLabel = demandMax === 0 ? 'Cold' : demandLatest.isFire ? 'Fire' : demandLatest.isHot ? 'Hot' : demandLatest.isWarm ? 'Warm' : 'Cold';
+  const demandLabelColor = demandLabel === 'Fire' ? '#ff1f3d' : demandLabel === 'Hot' ? 'var(--accent)' : demandLabel === 'Warm' ? '#ffb84a' : 'var(--ink-a50)';
+
+  // Venue comps — real sibling shows at the same venue, ranked by hype count
+  // (no fabricated demand numbers; falls back to an empty list when the venue
+  // has no other ticketed shows yet).
+  const venueComps = show.isTicketed && show.venueProfileId
+    ? await (async () => {
+        const siblings = await db.show.findMany({
+          where: {
+            venueProfileId: show.venueProfileId,
+            isTicketed: true,
+            id: { not: show.id },
+            status: { in: ['SCHEDULED', 'LIVE', 'ENDED'] },
+          },
+          orderBy: { hypeCount: 'desc' },
+          take: 3,
+          select: { id: true, title: true, hypeCount: true },
+        });
+        const combined = [
+          { id: show.id, title: `${show.title} (this show)`, hypeCount: show.hypeCount, isCurrent: true },
+          ...siblings.map((s) => ({ ...s, isCurrent: false })),
+        ].sort((a, b) => b.hypeCount - a.hypeCount);
+        const tiers = ['isFire', 'isHot', 'isWarm', 'isCold'] as const;
+        return combined.map((c, i) => {
+          const tier = tiers[Math.min(i, tiers.length - 1)];
+          return {
+            id: c.id,
+            title: c.title,
+            isCurrent: c.isCurrent,
+            isFire: tier === 'isFire',
+            isHot: tier === 'isHot',
+            isWarm: tier === 'isWarm',
+            isCold: tier === 'isCold',
+          };
+        });
+      })()
+    : [];
+
   const date = show.startsAt ? new Date(show.startsAt).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : null;
   const time = show.startsAt ? new Date(show.startsAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : null;
   const price = show.isTicketed ? show.ticketPriceCents / 100 : 0;
@@ -417,6 +487,23 @@ export default async function ShowDetailPage({
                 {show.venueProfile?.slug && (
                   <div style={{ marginTop: 16 }}>
                     <Link className="button small secondary" href={`/venues/${show.venueProfile.slug}`}>View Venue Page →</Link>
+                  </div>
+                )}
+                {venueComps.length > 0 && (
+                  <div style={{ marginTop: 24 }}>
+                    <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 17, marginBottom: 4 }}>How this show comps</h2>
+                    <p className="meta" style={{ marginBottom: 14 }}>Demand vs. other shows at {show.venueProfile?.name ?? 'this venue'} this season.</p>
+                    {venueComps.map((vc) => (
+                      <div key={vc.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid var(--hair-80)' }}>
+                        <span style={{ flex: 1, fontSize: 14, color: 'var(--ink-a85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{vc.title}</span>
+                        <div style={{ width: 110, height: 6, borderRadius: 3, background: 'var(--hair-100)', overflow: 'hidden', flexShrink: 0 }}>
+                          {vc.isFire && <div style={{ width: '100%', height: '100%', background: '#ff1f3d' }} />}
+                          {vc.isHot && <div style={{ width: '70%', height: '100%', background: 'var(--accent)' }} />}
+                          {vc.isWarm && <div style={{ width: '45%', height: '100%', background: '#ffb84a' }} />}
+                          {vc.isCold && <div style={{ width: '20%', height: '100%', background: 'var(--ink-a35)' }} />}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -746,6 +833,28 @@ export default async function ShowDetailPage({
                   <div style={{ fontSize: 12, color: 'var(--ink-a60)', marginBottom: 16 }}>{sold} / {cap} sold · {cap - sold} remaining</div>
                 </>
               )}
+
+              <div style={{ marginBottom: 18 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a40)' }}>Demand — last 12h</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: demandLabelColor }}>
+                    {demandLabel === 'Fire' ? '🔥 Fire' : demandLabel}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 26 }}>
+                  {demandSpark.map((bar, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        flex: 1,
+                        borderRadius: 2,
+                        height: bar.isFire ? '100%' : bar.isHot ? '70%' : bar.isWarm ? '45%' : '25%',
+                        background: bar.isFire ? '#ff1f3d' : bar.isHot ? 'var(--accent)' : bar.isWarm ? '#ffb84a' : 'var(--ink-a35)',
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
 
               {!isPaymentProcessingConfigured() ? (
                 <div style={{ border: '1px solid rgba(34,229,212,.3)', borderRadius: 10, padding: 16, background: 'rgba(34,229,212,.06)' }}>

@@ -87,6 +87,105 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
   const profileRoute = (type: string, slug: string) =>
     type === 'VENUE' ? `/venues/${slug}` : `/artists/${slug}`;
 
+  // "On air now" — real live radio shows, keyed by DJ headliner profile id,
+  // so the trending-DJ cards below can show a genuine on-air badge instead
+  // of a fabricated status.
+  const trendingDjIds = topArtists.filter(p => p.type === 'DJ').map(p => p.id);
+  const onAirShows = trendingDjIds.length
+    ? await db.show.findMany({
+        where: { isRadioShow: true, status: 'LIVE', headlinerProfileId: { in: trendingDjIds } },
+        select: { headlinerProfileId: true },
+      })
+    : [];
+  const onAirProfileIds = new Set(onAirShows.map(s => s.headlinerProfileId).filter(Boolean));
+
+  // "Rising near you" — ranked by real hype velocity (recent HypeEvent/
+  // ProfileHypeEvent rows in a trailing window), not by date. Both models
+  // record a fresh createdAt on every (re)hype (see POST /api/hype), so a
+  // count of rows since `risingSince` is a genuine recent-activity signal.
+  const RISING_WINDOW_HOURS = 6;
+  const risingSince = new Date(Date.now() - RISING_WINDOW_HOURS * 60 * 60 * 1000);
+  const [risingShowCounts, risingProfileCounts] = await Promise.all([
+    db.hypeEvent.groupBy({ by: ['showId'], where: { createdAt: { gte: risingSince } }, _count: { _all: true } }),
+    db.profileHypeEvent.groupBy({ by: ['profileId'], where: { createdAt: { gte: risingSince } }, _count: { _all: true } }),
+  ]);
+  const topRisingShowIds = [...risingShowCounts].sort((a, b) => b._count._all - a._count._all).slice(0, 6).map(g => g.showId);
+  const topRisingProfileIds = [...risingProfileCounts].sort((a, b) => b._count._all - a._count._all).slice(0, 6).map(g => g.profileId);
+  const [risingShows, risingProfiles] = await Promise.all([
+    topRisingShowIds.length
+      ? db.show.findMany({
+          where: { id: { in: topRisingShowIds }, status: { in: ['SCHEDULED', 'LIVE'] }, ...getDemoCreatorExclusion() },
+          select: { id: true, slug: true, title: true, status: true, hypeCount: true, headlinerProfile: { select: { name: true } }, venueProfile: { select: { city: true } } },
+        })
+      : Promise.resolve([]),
+    topRisingProfileIds.length
+      ? db.profile.findMany({
+          where: { id: { in: topRisingProfileIds }, discoverable: true, ...getDemoOwnerExclusion() },
+          select: { id: true, slug: true, name: true, type: true, city: true, stateRegion: true, hypeCount: true },
+        })
+      : Promise.resolve([]),
+  ]);
+  const risingCountByShow = new Map(risingShowCounts.map(g => [g.showId, g._count._all]));
+  const risingCountByProfile = new Map(risingProfileCounts.map(g => [g.profileId, g._count._all]));
+  const rising = [
+    ...risingShows.map(s => ({
+      key: `show:${s.id}`,
+      href: `/shows/${s.slug}`,
+      title: s.title,
+      meta: [s.headlinerProfile?.name ?? 'iHYPE Radio', s.venueProfile?.city, s.status === 'LIVE' ? 'Live now' : null].filter(Boolean).join(' · '),
+      hypeCount: s.hypeCount,
+      targetType: 'show' as const,
+      targetId: s.id,
+      count: risingCountByShow.get(s.id) ?? 0,
+    })),
+    ...risingProfiles.map(p => ({
+      key: `profile:${p.id}`,
+      href: profileRoute(p.type, p.slug),
+      title: p.name,
+      meta: [p.city, p.stateRegion].filter(Boolean).join(', '),
+      hypeCount: p.hypeCount,
+      targetType: 'profile' as const,
+      targetId: p.id,
+      count: risingCountByProfile.get(p.id) ?? 0,
+    })),
+  ]
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 6)
+    .map(r => ({ ...r, ratePerHour: Math.max(1, Math.round(r.count / RISING_WINDOW_HOURS)) }));
+
+  // Heat map — city heat bars (real sum of Profile.hypeCount grouped by city)
+  // and genre heat chips (Profile.genres is a String[] so Prisma can't
+  // group by array element; aggregated in JS from a bounded profile scan).
+  const [cityHeatRaw, genreHeatProfiles] = await Promise.all([
+    db.profile.groupBy({
+      by: ['city'],
+      where: { type: { in: ['ARTIST', 'DJ', 'VENUE'] }, discoverable: true, city: { not: null }, ...getDemoOwnerExclusion() },
+      _sum: { hypeCount: true },
+      orderBy: { _sum: { hypeCount: 'desc' } },
+      take: 6,
+    }),
+    db.profile.findMany({
+      where: { type: { in: ['ARTIST', 'DJ'] }, discoverable: true, genres: { isEmpty: false }, ...getDemoOwnerExclusion() },
+      select: { genres: true, hypeCount: true },
+      take: 300,
+    }),
+  ]);
+  const genreHeatTotals = new Map<string, number>();
+  for (const p of genreHeatProfiles) {
+    for (const g of p.genres) genreHeatTotals.set(g, (genreHeatTotals.get(g) ?? 0) + p.hypeCount);
+  }
+  const heatTier = (score: number, [fire, hot, warm]: [number, number, number]) =>
+    score >= fire ? 'fire' : score >= hot ? 'hot' : score >= warm ? 'warm' : 'cold';
+  const HEAT_TIER_COLOR: Record<string, string> = { fire: '#ff1f3d', hot: 'var(--accent)', warm: '#ffb84a', cold: '#3a4a5a' };
+  const HEAT_TIER_WIDTH: Record<string, string> = { fire: '100%', hot: '70%', warm: '45%', cold: '20%' };
+  const cityHeat = cityHeatRaw
+    .filter(c => c.city)
+    .map(c => ({ label: c.city as string, score: c._sum.hypeCount ?? 0, tier: heatTier(c._sum.hypeCount ?? 0, [6000, 2500, 1000]) }));
+  const genreHeat = [...genreHeatTotals.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([label, score]) => ({ label, score, tier: heatTier(score, [4000, 1800, 800]) }));
+
   const buildUrl = (city: string | null, genre: string | null) => {
     const p = new URLSearchParams();
     if (city) p.set('city', city);
@@ -131,6 +230,68 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-a50)', flexShrink: 0 }}>Get tickets</span>
         </div>
       </Link>
+
+      {/* Rising near you — hype-velocity ranking */}
+      {rising.length > 0 && (
+        <section style={{ marginBottom: 32 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, margin: 0 }}>🔥 Rising near you</h2>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a35)' }}>
+              Sorted by hype velocity, not date
+            </span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
+            {rising.map(r => (
+              <Link key={r.key} href={r.href} style={{ textDecoration: 'none' }}>
+                <div style={{ background: 'linear-gradient(135deg, rgba(255,80,41,.14), transparent 60%), var(--hair-40)', border: '1px solid rgba(255,80,41,.25)', borderRadius: 12, padding: '14px 16px' }}>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, marginBottom: 3, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</div>
+                  <div style={{ fontSize: 11, color: 'var(--ink-a55)', marginBottom: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.meta}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent)' }}>▲ {r.ratePerHour}/hr</span>
+                    <CompactHypeButton targetType={r.targetType} targetId={r.targetId} initialCount={r.hypeCount} />
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Heat map — real city/genre hype aggregates. Map view links to the
+          companion DiscoverMap design; no Next.js route exists for it yet
+          (not in CLAUDE.md's page map), so it's rendered as a label rather
+          than a broken link. */}
+      {(cityHeat.length > 0 || genreHeat.length > 0) && (
+        <section style={{ marginBottom: 32, border: '1px solid var(--hair-80)', borderRadius: 16, background: 'var(--hair-40)', padding: '20px 22px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, margin: 0 }}>🌡️ Heat map</h2>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a30)' }}>Map view (coming soon)</span>
+          </div>
+          {cityHeat.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginBottom: genreHeat.length > 0 ? 18 : 0 }}>
+              {cityHeat.map(ch => (
+                <div key={ch.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ width: 92, flexShrink: 0, fontSize: 12, color: 'var(--ink-a70)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ch.label}</span>
+                  <div style={{ flex: 1, height: 8, borderRadius: 4, background: 'var(--hair-80)', overflow: 'hidden' }} role="img" aria-label={`${ch.label}: ${ch.score.toLocaleString()} hypes`}>
+                    <div style={{ width: HEAT_TIER_WIDTH[ch.tier], height: '100%', borderRadius: 4, background: HEAT_TIER_COLOR[ch.tier] }} />
+                  </div>
+                  <span style={{ width: 72, flexShrink: 0, textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-a45)' }}>{ch.score.toLocaleString()} hypes</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {genreHeat.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {genreHeat.map(gh => (
+                <span key={gh.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 11px', borderRadius: 999, fontSize: 11, fontFamily: 'var(--font-mono)', background: `${HEAT_TIER_COLOR[gh.tier]}20`, border: `1px solid ${HEAT_TIER_COLOR[gh.tier]}40`, color: HEAT_TIER_COLOR[gh.tier] }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: HEAT_TIER_COLOR[gh.tier] }} />
+                  {gh.label}
+                </span>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Filters */}
       {(cities.length > 0 || genres.length > 0) && (
@@ -255,6 +416,12 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
                     </div>
                     {p.city && (
                       <div style={{ fontSize: 11, color: 'var(--ink-a50)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.city}</div>
+                    )}
+                    {p.type === 'DJ' && onAirProfileIds.has(p.id) && (
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 5, padding: '2px 8px', borderRadius: 999, background: 'rgba(255,62,154,.15)', border: '1px solid rgba(255,62,154,.3)' }}>
+                        <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#ff3e9a' }} />
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.06em', textTransform: 'uppercase', color: '#ff3e9a' }}>On air now</span>
+                      </div>
                     )}
                   </div>
                 </Link>

@@ -29,6 +29,7 @@ async function getTrack(hexId: string) {
       artworkUrl: true,
       createdAt: true,
       profileId: true,
+      freeUseEnabled: true,
       profile: {
         select: {
           id: true,
@@ -177,6 +178,20 @@ export default async function TrackDetailPage({ params }: { params: Promise<{ he
           </div>
         </div>
 
+        <div className="track-radio-status">
+          {asset.freeUseEnabled ? (
+            <>
+              <div className="track-radio-status-label track-radio-status-eligible">Radio-eligible</div>
+              <p className="track-radio-status-body">The artist opted this track into DJ crates and radio play. No sync licensing required for on-platform spins.</p>
+            </>
+          ) : (
+            <>
+              <div className="track-radio-status-label track-radio-status-not-eligible">Not in radio shows</div>
+              <p className="track-radio-status-body">The artist has opted this track out of DJ crates and radio play for now. It won&apos;t appear in any show&apos;s crate.</p>
+            </>
+          )}
+        </div>
+
         <div className="track-section-head">
           <span className="track-eyebrow-sm">More from {asset.profile.name}</span>
         </div>
@@ -219,6 +234,11 @@ export default async function TrackDetailPage({ params }: { params: Promise<{ he
         .track-credit-row a { color: inherit; }
         .track-status-ok { color: var(--role-venue, #22e5d4) !important; }
         .track-status-pending { color: var(--accent) !important; }
+        .track-radio-status { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg3, var(--bg2)); padding: 14px 18px; margin-bottom: 28px; }
+        .track-radio-status-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
+        .track-radio-status-eligible { color: var(--ink-a55); }
+        .track-radio-status-not-eligible { color: #ffb84a; }
+        .track-radio-status-body { font-size: 12.5px; color: var(--ink-a55); line-height: 1.6; margin: 0; }
         .track-section-head { display: flex; justify-content: space-between; align-items: baseline; margin-top: 8px; }
         .track-empty { text-align: center; padding: 30px 24px; color: var(--ink-a50); }
         .track-more-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }

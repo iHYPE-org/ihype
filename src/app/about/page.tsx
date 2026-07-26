@@ -13,8 +13,9 @@ export default function AboutPage() {
         <p className="lp-hype-eyebrow">NOT-FOR-PROFIT · BUILT FOR THE SCENE</p>
         <h1 className="lp-hero-h" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)' }}>About iHYPE</h1>
         <p className="lp-hero-sub">
-          iHYPE exists to give independent artists, venues, and promoters a platform that doesn&apos;t take a cut.
-          No platform fee on tickets. No streaming royalty deductions. No algorithmic pay-to-play.
+          iHYPE exists because fans, not fees, should decide who rises. We give independent artists, venues, and
+          DJs a platform that doesn&apos;t take a cut — but none of it means anything without fans showing up to
+          hype, buy, and spread the word. No platform fee on tickets. No algorithmic pay-to-play.
           Built and governed by the community it serves.
         </p>
       </section>
@@ -95,11 +96,11 @@ export default function AboutPage() {
       <section className="lp-footer-cta">
         <h2 className="lp-section-head" style={{ marginBottom: '8px' }}>Join the scene</h2>
         <p className="lp-hype-body" style={{ textAlign: 'center', marginBottom: '24px' }}>
-          Ready to be part of a platform that puts artists first?
+          Whether you hype from the crowd or play from the stage, this only works if you&apos;re in it.
         </p>
         <div className="lp-hero-actions" style={{ justifyContent: 'center' }}>
-          <Link href="/register" className="lp-btn-primary">Get started free</Link>
-          <Link href="/transparency" className="lp-btn-ghost">Transparency report →</Link>
+          <Link href="/register" className="lp-btn-primary">Join as a fan — free</Link>
+          <Link href="/charter" className="lp-btn-ghost">Read the charter →</Link>
         </div>
       </section>
     </div>

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { SupportTicketComposer } from '@/components/SupportTicketComposer';
 
 export const dynamic = 'force-dynamic';
 
@@ -75,6 +76,8 @@ export default async function SupportTicketsPage() {
       <p style={{ fontSize: 14, color: 'var(--ink-a65)', marginBottom: 32 }}>
         Every support request you&apos;ve sent us, and where it stands.
       </p>
+
+      <SupportTicketComposer />
 
       {tickets.length === 0 ? (
         <div style={{
