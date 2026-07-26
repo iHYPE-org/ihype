@@ -39,7 +39,7 @@ export function IndexStickyCta({ heroSelector }: { heroSelector: string }) {
         <b>Join the scene</b>
         <span>Completely free · no fees</span>
       </div>
-      <Link href="/register">Join Beta →</Link>
+      <Link href="/register">Join now →</Link>
       <style>{`
         .idx-sticky-cta { display: none; }
         @media (max-width: 768px) {
