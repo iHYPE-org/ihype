@@ -33,7 +33,7 @@ export const profileBackdropToneIds = [
 
 export type ProfileBackdropTone = (typeof profileBackdropToneIds)[number];
 
-const profileFontPresetIds = [
+export const profileFontPresetIds = [
   'night-broadcast',
   'poster-serif',
   'club-mono',
@@ -324,7 +324,7 @@ export const profileBackdropTones: ProfileBackdropToneDefinition[] = [
   }
 ];
 
-const profileFontPresets: ProfileFontPresetDefinition[] = [
+export const profileFontPresets: ProfileFontPresetDefinition[] = [
   {
     id: 'night-broadcast',
     label: 'Night Broadcast',
@@ -369,6 +369,14 @@ const profileFontPresets: ProfileFontPresetDefinition[] = [
   }
 ];
 
+function normalizeProfileFontPreset(value?: string | null): ProfileFontPreset | null {
+  if (value && profileFontPresetIds.includes(value as ProfileFontPreset)) {
+    return value as ProfileFontPreset;
+  }
+
+  return null;
+}
+
 function normalizeProfileDesignPreset(value?: string | null): ProfileDesignPreset {
   if (value && profileDesignPresetIds.includes(value as ProfileDesignPreset)) {
     return value as ProfileDesignPreset;
@@ -408,6 +416,13 @@ export function getProfileBackdropTone(value?: string | null) {
   return profileBackdropTones.find((tone) => tone.id === backdropToneId) ?? profileBackdropTones[0];
 }
 
+/** Returns null when no font preset is chosen — the page keeps the site's default fonts. */
+export function getProfileFontPreset(value?: string | null) {
+  const fontPresetId = normalizeProfileFontPreset(value);
+  if (!fontPresetId) return null;
+  return profileFontPresets.find((preset) => preset.id === fontPresetId) ?? null;
+}
+
 /**
  * Resolves a profile's stored theme fields into CSS custom-property
  * overrides for its public page. Returns `null` for the untouched
@@ -426,16 +441,19 @@ export function resolveProfileThemeVars(profile: {
   themePreset?: string | null;
   themeAccentTone?: string | null;
   themeBackdropTone?: string | null;
+  themeFontPreset?: string | null;
 }): Record<string, string> | null {
   const untouched =
     (!profile.themePreset || profile.themePreset === DEFAULT_PROFILE_DESIGN_PRESET) &&
     !profile.themeAccentTone &&
-    !profile.themeBackdropTone;
+    !profile.themeBackdropTone &&
+    !profile.themeFontPreset;
   if (untouched) return null;
 
   const preset = getProfileDesignPreset(profile.themePreset);
   const accentTone = getProfileAccentTone(profile.themeAccentTone);
   const backdropTone = getProfileBackdropTone(profile.themeBackdropTone);
+  const fontPreset = getProfileFontPreset(profile.themeFontPreset);
 
   return {
     '--profile-accent': accentTone.accent ?? preset.accent,
@@ -443,6 +461,10 @@ export function resolveProfileThemeVars(profile: {
     '--profile-hero': backdropTone.hero ?? preset.hero,
     '--profile-panel': backdropTone.panel ?? preset.panel,
     '--profile-border': backdropTone.border ?? preset.border,
+    ...(fontPreset ? {
+      '--profile-font-display': fontPreset.displayFamily,
+      '--profile-font-body': fontPreset.bodyFamily,
+    } : {}),
   };
 }
 

@@ -62,7 +62,7 @@ export async function POST(request: Request) {
         tourContent: true, upcomingContent: true, requestContent: true,
         previousShowHighlights: true, merchContent: true,
         hoursText: true, parkingDetails: true, stayRecommendations: true,
-        themePreset: true, themeAccentTone: true, themeBackdropTone: true,
+        themePreset: true, themeAccentTone: true, themeBackdropTone: true, themeFontPreset: true,
       },
     }));
   } catch {

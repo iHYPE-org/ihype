@@ -225,7 +225,7 @@ export default async function FanProfilePage({
         .fan-hero-row { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
         @media (max-width: 600px) { .fan-hero { padding: 24px 20px; } .fan-content { padding: 0 20px; } }
         .fan-avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--profile-hero, linear-gradient(135deg,#b983ff,#ff3e9a)); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; overflow: hidden; }
-        .fan-display-name { font-family: var(--font-display); font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 4px; color: var(--ink); }
+        .fan-display-name { font-family: var(--profile-font-display, var(--font-display)); font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 4px; color: var(--ink); }
         .fan-handle { font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a50); margin-bottom: 12px; }
         .fan-hero-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
         .fan-badge { display: inline-block; padding: 5px 12px; border-radius: 4px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; }
@@ -233,7 +233,7 @@ export default async function FanProfilePage({
         .fan-hero-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; background: var(--line); color: var(--ink); border: 1px solid var(--hair-100); }
         .fan-hero-btn:hover { background: var(--hair-100); }
         .fan-stats { display: flex; gap: 28px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--line); }
-        .fan-stat-val { font-size: 22px; font-weight: 700; color: var(--profile-accent, var(--role-fan, #b983ff)); font-family: var(--font-display); }
+        .fan-stat-val { font-size: 22px; font-weight: 700; color: var(--profile-accent, var(--role-fan, #b983ff)); font-family: var(--profile-font-display, var(--font-display)); }
         .fan-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a55); margin-top: 2px; }
         .fan-content { padding: 0 32px; }
         .fan-tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--line); margin: 28px 0; flex-wrap: wrap; }
@@ -247,7 +247,7 @@ export default async function FanProfilePage({
         .fan-show-list { display: flex; flex-direction: column; gap: 12px; }
         .fan-show-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg2); text-decoration: none; color: inherit; }
         .fan-show-row:hover { background: var(--bg3); }
-        .fan-show-row h4 { font-family: var(--font-display); font-size: 14px; font-weight: 800; margin-bottom: 2px; color: var(--ink); }
+        .fan-show-row h4 { font-family: var(--profile-font-display, var(--font-display)); font-size: 14px; font-weight: 800; margin-bottom: 2px; color: var(--ink); }
         .fan-show-row p { font-size: 12px; color: var(--ink-a55); }
         .fan-ref-box { background: rgba(185,131,255,.06); border: 1px solid rgba(185,131,255,.2); border-radius: 10px; padding: 24px; margin-bottom: 24px; }
         .fan-ref-label { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; color: var(--profile-accent, var(--role-fan, #b983ff)); margin-bottom: 10px; }

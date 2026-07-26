@@ -2,6 +2,7 @@ import {
   profileDesignPresetIds,
   profileAccentToneIds,
   profileBackdropToneIds,
+  profileFontPresetIds,
 } from '@/lib/profile-design';
 
 // Field → max-length maps mirror profile-editor-schema.ts. The AI page
@@ -36,6 +37,7 @@ const THEME_FIELDS: Record<string, readonly string[]> = {
   themePreset: profileDesignPresetIds,
   themeAccentTone: profileAccentToneIds,
   themeBackdropTone: profileBackdropToneIds,
+  themeFontPreset: profileFontPresetIds,
 };
 
 export const AI_FIELD_LABELS: Record<string, string> = {
@@ -57,6 +59,7 @@ export const AI_FIELD_LABELS: Record<string, string> = {
   themePreset: 'Design preset',
   themeAccentTone: 'Accent tone',
   themeBackdropTone: 'Backdrop tone',
+  themeFontPreset: 'Font pairing',
 };
 
 /** Text fields (with length caps) the AI may edit for a given profile type. */
@@ -79,6 +82,7 @@ export const themeFieldValues = {
   themePreset: profileDesignPresetIds,
   themeAccentTone: profileAccentToneIds,
   themeBackdropTone: profileBackdropToneIds,
+  themeFontPreset: profileFontPresetIds,
 } as const;
 
 /**

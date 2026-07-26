@@ -241,7 +241,7 @@ export default async function DJProfilePage({
         .dj-hero-row { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
         @media (max-width: 600px) { .dj-hero { padding: 24px 20px; } .dj-content { padding: 0 20px; } }
         .dj-avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--profile-hero, linear-gradient(135deg,#ff3e9a,#b983ff)); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; overflow: hidden; }
-        .dj-name { font-family: var(--font-display); font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 4px; color: var(--ink); }
+        .dj-name { font-family: var(--profile-font-display, var(--font-display)); font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 4px; color: var(--ink); }
         .dj-handle { font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a50); margin-bottom: 12px; }
         .dj-hero-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
         .dj-badge { display: inline-block; padding: 5px 12px; border-radius: 4px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; }
@@ -249,7 +249,7 @@ export default async function DJProfilePage({
         .dj-hero-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; background: var(--line); color: var(--ink); border: 1px solid var(--hair-100); }
         .dj-hero-btn:hover { background: var(--hair-100); }
         .dj-stats { display: flex; gap: 28px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--line); }
-        .dj-stat-val { font-size: 22px; font-weight: 700; color: var(--profile-accent, #ff3e9a); font-family: var(--font-display); }
+        .dj-stat-val { font-size: 22px; font-weight: 700; color: var(--profile-accent, #ff3e9a); font-family: var(--profile-font-display, var(--font-display)); }
         .dj-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a55); margin-top: 2px; }
         .dj-content { padding: 0 32px; }
         .dj-tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--line); margin: 28px 0; }
@@ -257,7 +257,7 @@ export default async function DJProfilePage({
         .dj-tab.active { color: var(--ink); border-color: var(--profile-accent, #ff3e9a); }
         .dj-show-card { border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; background: var(--bg2); display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; text-decoration: none; color: inherit; }
         .dj-show-card:hover { background: var(--bg3); }
-        .dj-show-title { font-family: var(--font-display); font-size: 15px; font-weight: 800; margin-bottom: 3px; color: var(--ink); }
+        .dj-show-title { font-family: var(--profile-font-display, var(--font-display)); font-size: 15px; font-weight: 800; margin-bottom: 3px; color: var(--ink); }
         .dj-show-meta { font-size: 12px; color: var(--ink-a55); }
         .dj-live-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 9999px; background: rgba(255,62,154,.15); color: #ff3e9a; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
         .dj-earn-list { border: 1px solid var(--line); border-radius: 10px; padding: 0 20px; background: var(--bg2); }
