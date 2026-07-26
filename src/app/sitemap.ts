@@ -30,6 +30,11 @@ const STATIC: MetadataRoute.Sitemap = [
   { url: `${base}/dmca`,           changeFrequency: 'monthly', priority: 0.3 },
   { url: `${base}/register`,       changeFrequency: 'monthly', priority: 0.7 },
   { url: `${base}/login`,          changeFrequency: 'monthly', priority: 0.5 },
+  { url: `${base}/join`,           changeFrequency: 'monthly', priority: 0.6 },
+  { url: `${base}/for-artists`,    changeFrequency: 'monthly', priority: 0.6 },
+  { url: `${base}/for-djs`,        changeFrequency: 'monthly', priority: 0.6 },
+  { url: `${base}/for-venues`,     changeFrequency: 'monthly', priority: 0.6 },
+  { url: `${base}/for-fans`,       changeFrequency: 'monthly', priority: 0.6 },
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
