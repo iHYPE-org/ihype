@@ -33,8 +33,24 @@ export async function getLocale(): Promise<Locale> {
   return isSupportedLocale(value) ? value : 'en';
 }
 
-/** Returns a `t(key, fallback)` bound to one locale, for use in a server component: `const t = getT(await getLocale())`. */
+/**
+ * Returns a `t(key, fallback)` bound to one locale, for use in a server
+ * component: `const t = getT(await getLocale())`.
+ *
+ * Resolution is deliberately IDENTICAL to the client's useI18n(): the locale's
+ * own dictionary, then the inline English fallback. There is no separate
+ * en.json tier here even though this module can see the file.
+ *
+ * That matters for correctness, not symmetry. The client dropped its static
+ * en.json import (it is redundant — every t() call carries its English text
+ * inline, and bundling it cost 53KB on every page load). If the server kept
+ * consulting en.json as a middle tier, then any key whose en.json value ever
+ * drifted from its inline fallback would render one string server-side and a
+ * different one client-side — a React hydration mismatch, and a confusing one
+ * to trace back to a dictionary edit. The two paths now cannot disagree.
+ * `src/lib/__tests__/i18n-parity.test.ts` locks this down.
+ */
 export function getT(locale: Locale) {
-  const dict = DICTIONARIES[locale] ?? DICTIONARIES.en;
-  return (key: string, fallback?: string): string => dict[key] ?? DICTIONARIES.en[key] ?? fallback ?? key;
+  const dict = locale === 'en' ? {} : (DICTIONARIES[locale] ?? {});
+  return (key: string, fallback?: string): string => dict[key] ?? fallback ?? key;
 }

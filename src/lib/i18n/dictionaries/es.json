@@ -2317,7 +2317,7 @@
   "tpDMS1T": "Cómo funciona el proceso",
   "tpDMTitle": "Retirada por derechos de autor",
   "tpDescInfringement": "Descripción de la infracción",
-  "tpDmcaNote": "Para solicitudes de retirada DMCA, envía un correo a <a href=\"mailto:dmca@ihype.org\">dmca@ihype.org</a> con el asunto \"Solicitud de retirada DMCA\". Respondemos en 5 días hábiles.",
+  "tpDmcaNote": "Para solicitudes de retirada DMCA, envía un correo a <a href=\"mailto:admin@ihype.org\">admin@ihype.org</a> con el asunto \"Solicitud de retirada DMCA\". Respondemos en 5 días hábiles.",
   "tpInfringingUrl": "URL infractora",
   "tpRequiredNote": "Nombre, correo y URL infractora son obligatorios.",
   "tpSubmitAnother": "Enviar otra solicitud",

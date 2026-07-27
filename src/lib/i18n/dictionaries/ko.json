@@ -2315,7 +2315,7 @@
   "tpDMS1T": "절차 진행 방식",
   "tpDMTitle": "저작권 게시 중단",
   "tpDescInfringement": "침해 내용 설명",
-  "tpDmcaNote": "DMCA 게시 중단 요청은 제목을 \"DMCA Takedown Request\"로 하여 <a href=\"mailto:dmca@ihype.org\">dmca@ihype.org</a>로 이메일을 보내주세요. 영업일 기준 5일 이내에 답변드립니다.",
+  "tpDmcaNote": "DMCA 게시 중단 요청은 제목을 \"DMCA Takedown Request\"로 하여 <a href=\"mailto:admin@ihype.org\">admin@ihype.org</a>로 이메일을 보내주세요. 영업일 기준 5일 이내에 답변드립니다.",
   "tpInfringingUrl": "침해 URL",
   "tpRequiredNote": "이름, 이메일, 침해 URL은 필수입니다.",
   "tpSubmitAnother": "다른 요청 제출",

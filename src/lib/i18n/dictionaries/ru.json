@@ -2315,7 +2315,7 @@
   "tpDMS1T": "Как работает процесс",
   "tpDMTitle": "Удаление по авторскому праву",
   "tpDescInfringement": "Описание нарушения",
-  "tpDmcaNote": "Для запросов на удаление по DMCA напишите на <a href=\"mailto:dmca@ihype.org\">dmca@ihype.org</a> с темой «DMCA Takedown Request». Мы отвечаем в течение 5 рабочих дней.",
+  "tpDmcaNote": "Для запросов на удаление по DMCA напишите на <a href=\"mailto:admin@ihype.org\">admin@ihype.org</a> с темой «DMCA Takedown Request». Мы отвечаем в течение 5 рабочих дней.",
   "tpInfringingUrl": "URL с нарушением",
   "tpRequiredNote": "Имя, email и URL с нарушением обязательны.",
   "tpSubmitAnother": "Отправить ещё один запрос",

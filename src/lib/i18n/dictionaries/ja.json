@@ -2306,7 +2306,7 @@
   "tpDMS1T": "手続きの流れ",
   "tpDMTitle": "著作権テイクダウン",
   "tpDescInfringement": "侵害内容の説明",
-  "tpDmcaNote": "DMCAテイクダウン請求は、件名を「DMCA Takedown Request」として <a href=\"mailto:dmca@ihype.org\">dmca@ihype.org</a> までメールしてください。5営業日以内に返信します。",
+  "tpDmcaNote": "DMCAテイクダウン請求は、件名を「DMCA Takedown Request」として <a href=\"mailto:admin@ihype.org\">admin@ihype.org</a> までメールしてください。5営業日以内に返信します。",
   "tpInfringingUrl": "侵害コンテンツのURL",
   "tpRequiredNote": "名前、メールアドレス、侵害URLは必須です。",
   "tpSubmitAnother": "別の請求を送信",

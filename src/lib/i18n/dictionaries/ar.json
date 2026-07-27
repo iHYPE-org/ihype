@@ -2292,7 +2292,7 @@
   "tpDMS1T": "كيف تسير العملية",
   "tpDMTitle": "إزالة بموجب حقوق النشر",
   "tpDescInfringement": "وصف المخالفة",
-  "tpDmcaNote": "لطلبات الإزالة بموجب DMCA، راسلنا على <a href=\"mailto:dmca@ihype.org\">dmca@ihype.org</a> بعنوان \"DMCA Takedown Request\". نرد خلال 5 أيام عمل.",
+  "tpDmcaNote": "لطلبات الإزالة بموجب DMCA، راسلنا على <a href=\"mailto:admin@ihype.org\">admin@ihype.org</a> بعنوان \"DMCA Takedown Request\". نرد خلال 5 أيام عمل.",
   "tpInfringingUrl": "رابط المحتوى المخالف",
   "tpRequiredNote": "الاسم والبريد الإلكتروني ورابط المحتوى المخالف حقول مطلوبة.",
   "tpSubmitAnother": "إرسال طلب آخر",

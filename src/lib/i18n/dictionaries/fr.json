@@ -2317,7 +2317,7 @@
   "tpDMS1T": "Comment fonctionne le processus",
   "tpDMTitle": "Retrait pour droits d'auteur",
   "tpDescInfringement": "Description de la contrefaçon",
-  "tpDmcaNote": "Pour les demandes de retrait DMCA, envoyez un e-mail à <a href=\"mailto:dmca@ihype.org\">dmca@ihype.org</a> avec pour objet « Demande de retrait DMCA ». Nous répondons sous 5 jours ouvrés.",
+  "tpDmcaNote": "Pour les demandes de retrait DMCA, envoyez un e-mail à <a href=\"mailto:admin@ihype.org\">admin@ihype.org</a> avec pour objet « Demande de retrait DMCA ». Nous répondons sous 5 jours ouvrés.",
   "tpInfringingUrl": "URL contrefaisante",
   "tpRequiredNote": "Le nom, l'e-mail et l'URL contrefaisante sont obligatoires.",
   "tpSubmitAnother": "Soumettre une autre demande",

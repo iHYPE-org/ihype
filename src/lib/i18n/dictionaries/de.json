@@ -2315,7 +2315,7 @@
   "tpDMS1T": "So funktioniert der Prozess",
   "tpDMTitle": "Urheberrechts-Löschung",
   "tpDescInfringement": "Beschreibung der Rechtsverletzung",
-  "tpDmcaNote": "Für DMCA-Löschanträge sende eine E-Mail an <a href=\"mailto:dmca@ihype.org\">dmca@ihype.org</a> mit dem Betreff „DMCA Takedown Request\". Wir antworten innerhalb von 5 Werktagen.",
+  "tpDmcaNote": "Für DMCA-Löschanträge sende eine E-Mail an <a href=\"mailto:admin@ihype.org\">admin@ihype.org</a> mit dem Betreff „DMCA Takedown Request\". Wir antworten innerhalb von 5 Werktagen.",
   "tpInfringingUrl": "Rechtsverletzende URL",
   "tpRequiredNote": "Name, E-Mail und rechtsverletzende URL sind erforderlich.",
   "tpSubmitAnother": "Weiteren Antrag einreichen",

@@ -2317,7 +2317,7 @@
   "tpDMS1T": "Come funziona il processo",
   "tpDMTitle": "Rimozione per copyright",
   "tpDescInfringement": "Descrizione della violazione",
-  "tpDmcaNote": "Per richieste di rimozione DMCA, invia un'email a <a href=\"mailto:dmca@ihype.org\">dmca@ihype.org</a> con oggetto \"Richiesta di rimozione DMCA\". Rispondiamo entro 5 giorni lavorativi.",
+  "tpDmcaNote": "Per richieste di rimozione DMCA, invia un'email a <a href=\"mailto:admin@ihype.org\">admin@ihype.org</a> con oggetto \"Richiesta di rimozione DMCA\". Rispondiamo entro 5 giorni lavorativi.",
   "tpInfringingUrl": "URL illecito",
   "tpRequiredNote": "Nome, email e URL illecito sono obbligatori.",
   "tpSubmitAnother": "Invia un'altra richiesta",

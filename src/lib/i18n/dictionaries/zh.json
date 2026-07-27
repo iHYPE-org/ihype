@@ -2288,7 +2288,7 @@
   "tpDMS1T": "处理流程如何运作",
   "tpDMTitle": "版权下架",
   "tpDescInfringement": "侵权情况说明",
-  "tpDmcaNote": "如需提交DMCA下架请求，请发送邮件至 <a href=\"mailto:dmca@ihype.org\">dmca@ihype.org</a>，主题注明“DMCA下架请求”。我们将在5个工作日内回复。",
+  "tpDmcaNote": "如需提交DMCA下架请求，请发送邮件至 <a href=\"mailto:admin@ihype.org\">admin@ihype.org</a>，主题注明“DMCA下架请求”。我们将在5个工作日内回复。",
   "tpInfringingUrl": "侵权内容链接",
   "tpRequiredNote": "姓名、邮箱和侵权链接为必填项。",
   "tpSubmitAnother": "提交另一份请求",
