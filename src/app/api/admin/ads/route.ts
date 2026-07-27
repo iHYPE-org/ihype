@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
+import { requireRecentAdminReauth } from '@/lib/admin-confirmation';
+import { AD_CAMPAIGN_STATUSES, type AdCampaignStatus } from '@/lib/ad-vetting';
 import { notifyAdvertiser } from '@/lib/ad-campaign-notify';
 import { createAdCampaignCheckoutSession } from '@/lib/stripe';
 import { log } from '@/lib/logger';
@@ -12,7 +14,15 @@ export async function GET(request: Request) {
     if (!isAdminSession(session)) return NextResponse.json({ error: 'Admin access required.' }, { status: 403 });
 
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status') ?? undefined;
+    // Ad.status is a plain String column, so an unrecognised filter doesn't
+    // error — it silently matches nothing, which reads in the admin UI as
+    // "there are no campaigns." Reject the typo instead of showing an
+    // empty queue.
+    const requestedStatus = searchParams.get('status');
+    if (requestedStatus && !AD_CAMPAIGN_STATUSES.includes(requestedStatus as AdCampaignStatus)) {
+      return NextResponse.json({ error: 'Unknown status filter.' }, { status: 400 });
+    }
+    const status = requestedStatus ?? undefined;
 
     const ads = await db.ad.findMany({
       where: status ? { status } : undefined,
@@ -30,7 +40,17 @@ export async function GET(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const session = await auth();
-    if (!isAdminSession(session)) return NextResponse.json({ error: 'Admin access required.' }, { status: 403 });
+    if (!isAdminSession(session) || !session?.user?.id) {
+      return NextResponse.json({ error: 'Admin access required.' }, { status: 403 });
+    }
+
+    // Step-up auth: approving here opens a real Stripe authorization against
+    // the advertiser's card, and rejecting kills a paid campaign. Same gate
+    // as the other money- and enforcement-touching admin routes.
+    const reauthed = await requireRecentAdminReauth(session.user.id);
+    if (!reauthed) {
+      return NextResponse.json({ requiresReauth: true }, { status: 401 });
+    }
 
     const { id, status } = await request.json();
     if (!id || !['APPROVED', 'REJECTED'].includes(status)) {

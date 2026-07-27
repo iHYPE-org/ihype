@@ -92,7 +92,7 @@ If a UI detail is unclear → ask Claude Design to clarify in the .dc.html. Neve
 
 ## Infrastructure (already configured — do not reconfigure)
 
-- **Database:** Supabase Postgres at `db.bjkabtzvgfshsrmjhrkx.supabase.co` — 71 migrations applied, all tables exist
+- **Database:** Supabase Postgres at `db.bjkabtzvgfshsrmjhrkx.supabase.co` — 99 migrations in `prisma/migrations`, all tables exist. Two are deliberately gated and unapplied (`20260714020000_drop_ad_submission`, `20260714050000_drop_ad_image_url`); `20260727120000_enable_rls_all_tables` carries a pre-flight checklist in its own comment — read it before applying.
 - **Cloudflare Worker:** `ihype` — deployed, secrets already set
 - **Hyperdrive:** `03f39c51f80a45d3bb6792a9676e292e` — pooled Postgres connection
 - **KV namespace:** `b6330641874a4420b240d3a82760a9aa` — runtime flags

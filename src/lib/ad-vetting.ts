@@ -23,7 +23,19 @@ export interface VettingResult {
 // but is never returned by adCampaignStatusFromVetting itself — vetting
 // only ever produces APPROVED/REJECTED/PENDING; the route translates a
 // vetting APPROVED into the stored AWAITING_PAYMENT status.
-export type AdCampaignStatus = 'APPROVED' | 'REJECTED' | 'PENDING' | 'CANCELLED' | 'PAUSED' | 'AWAITING_PAYMENT';
+// Runtime list and type are derived from one another so a new status can't
+// be added to one without the other — Ad.status is a plain String column,
+// so this is the only place the valid set is actually pinned down.
+export const AD_CAMPAIGN_STATUSES = [
+  'APPROVED',
+  'REJECTED',
+  'PENDING',
+  'CANCELLED',
+  'PAUSED',
+  'AWAITING_PAYMENT',
+] as const;
+
+export type AdCampaignStatus = (typeof AD_CAMPAIGN_STATUSES)[number];
 
 export function adCampaignStatusFromVetting(result: VettingResult): AdCampaignStatus {
   if (result.requiresManualReview) return 'PENDING';
