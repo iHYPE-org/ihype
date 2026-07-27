@@ -92,7 +92,9 @@ If a UI detail is unclear → ask Claude Design to clarify in the .dc.html. Neve
 
 ## Infrastructure (already configured — do not reconfigure)
 
-- **Database:** Supabase Postgres at `db.bjkabtzvgfshsrmjhrkx.supabase.co` — 99 migrations in `prisma/migrations`, all tables exist. Two are deliberately gated and unapplied (`20260714020000_drop_ad_submission`, `20260714050000_drop_ad_image_url`); `20260727120000_enable_rls_all_tables` carries a pre-flight checklist in its own comment — read it before applying.
+- **Database:** Supabase Postgres at `db.bjkabtzvgfshsrmjhrkx.supabase.co` — 99 migrations in `prisma/migrations`, all tables exist.
+- **Every migration in `prisma/migrations/` is applied to production automatically.** `.github/workflows/deploy-production.yml` runs `prisma migrate deploy` on every push to `main`. There is no manual apply step and never was. A "DO NOT APPLY BLIND" comment in a migration header does **not** gate anything on its own — three migrations carried such comments and all three shipped on merge, including two that drop data (`20260714020000_drop_ad_submission`, `20260714050000_drop_ad_image_url`) and `20260727120000_enable_rls_all_tables`. Earlier revisions of this file described the first two as unapplied; that was wrong.
+- **To gate a migration, park it in `prisma/migrations-pending/`** — Prisma never reads that directory. `npm run guard:migrations` (`scripts/check-gated-migrations.mjs`, wired into CI and into the production deploy immediately before the migrate step) fails the build if a migration marked `@gated` sits in `prisma/migrations/`. Applying one is a deliberate `git mv` back, in its own commit. See `prisma/migrations-pending/README.md`.
 - **Cloudflare Worker:** `ihype` — deployed, secrets already set
 - **Hyperdrive:** `03f39c51f80a45d3bb6792a9676e292e` — pooled Postgres connection
 - **KV namespace:** `b6330641874a4420b240d3a82760a9aa` — runtime flags
