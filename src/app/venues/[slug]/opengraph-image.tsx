@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { db } from '@/lib/db';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const runtime = 'nodejs';
 export const alt = 'Venue on iHYPE';
@@ -8,12 +9,13 @@ export const contentType = 'image/png';
 
 export default async function OgImage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const t = getT(await getLocale());
   const profile = await db.profile.findUnique({
     where: { slug },
     select: { name: true, city: true, stateRegion: true, hypeCount: true }
   });
 
-  const name = profile?.name ?? 'Venue';
+  const name = profile?.name ?? t('venuesSlugOpengraphImage.fallbackName', 'Venue');
   const location = [profile?.city, profile?.stateRegion].filter(Boolean).join(', ');
   const hype = profile?.hypeCount ? `${profile.hypeCount} HYPE` : '';
 
@@ -35,7 +37,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
           <span style={{ color: '#fff7ec', fontSize: 28, fontWeight: 900, letterSpacing: '0.06em' }}>i</span>
           <span style={{ color: '#ff5029', fontSize: 28, fontWeight: 900, letterSpacing: '0.06em' }}>HYPE</span>
           <span style={{ color: '#22e5d4', fontSize: 18, fontWeight: 700, marginLeft: 24, letterSpacing: '0.16em' }}>
-            VENUE
+            {t('venuesSlugOpengraphImage.venueTag', 'VENUE')}
           </span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

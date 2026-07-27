@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ShareButton } from '@/components/ShareButton';
+import { useI18n } from '@/components/I18nProvider';
 import {
   calculateTicketOrderFinancials,
   formatCurrencyFromCents,
@@ -77,6 +78,7 @@ export function TicketSaleCard({
   viewerLocation,
   venueLocation
 }: TicketSaleCardProps) {
+  const { t } = useI18n();
   const router = useRouter();
   const [quantity, setQuantity] = useState('1');
   const [pending, setPending] = useState(false);
@@ -116,7 +118,7 @@ export function TicketSaleCard({
     currentFan?.storedPaymentTokenBrand && currentFan?.storedPaymentTokenLast4
       ? `${currentFan.storedPaymentTokenBrand} **** ${currentFan.storedPaymentTokenLast4}`
       : currentFan?.hasStoredPaymentToken
-        ? 'Stored payment token'
+        ? t('ticketSaleCard.storedPaymentTokenLabel', 'Stored payment token')
         : null;
   const viewerTaxRegion =
     [
@@ -150,12 +152,17 @@ export function TicketSaleCard({
     if (response.ok) {
       setQuantity('1');
       setIssuedTickets((data.tickets ?? []) as IssuedTicket[]);
-      setMessage(data.message ?? (data.captureMode === 'captured' ? 'Tickets issued.' : 'Tickets reserved.'));
+      setMessage(
+        data.message ??
+          (data.captureMode === 'captured'
+            ? t('ticketSaleCard.ticketsIssuedFallback', 'Tickets issued.')
+            : t('ticketSaleCard.ticketsReservedFallback', 'Tickets reserved.'))
+      );
       router.refresh();
     } else {
       setAgeGated(data.code === 'AGE_18_REQUIRED');
       setEmailUnverified(data.code === 'EMAIL_NOT_VERIFIED');
-      setMessage(data.error ?? 'Could not complete the ticket request.');
+      setMessage(data.error ?? t('ticketSaleCard.ticketRequestErrorFallback', 'Could not complete the ticket request.'));
     }
 
     setPending(false);
@@ -165,71 +172,75 @@ export function TicketSaleCard({
     <section className="panel ticketing-panel">
       <div className="ticketing-panel-header">
         <div>
-          <div className="badge">Ticket Sales</div>
+          <div className="badge">{t('ticketSaleCard.badge', 'Ticket Sales')}</div>
           <h2>{title}</h2>
           <p className="kicker">
-            Reserved tickets are tied to fan payment tokens and route venue, artist, affiliate promoter, and tax amounts
-            into a clean accounts-payable trail.
+            {t(
+              'ticketSaleCard.kicker',
+              'Reserved tickets are tied to fan payment tokens and route venue, artist, affiliate promoter, and tax amounts into a clean accounts-payable trail.'
+            )}
           </p>
         </div>
         <div className="ticket-price-badge">
           <strong>{formatCurrencyFromCents(ticketPriceCents)}</strong>
-          <span>per ticket</span>
+          <span>{t('ticketSaleCard.perTicket', 'per ticket')}</span>
         </div>
       </div>
 
       <div className="grid grid-3">
         <div className="stat">
           <strong>{ticketsSoldCount}</strong>
-          Reserved + sold
+          {t('ticketSaleCard.reservedSoldLabel', 'Reserved + sold')}
         </div>
         <div className="stat">
-          <strong>{remainingTickets === null ? 'Open' : remainingTickets}</strong>
-          Remaining
+          <strong>{remainingTickets === null ? t('ticketSaleCard.openLabel', 'Open') : remainingTickets}</strong>
+          {t('ticketSaleCard.remainingLabel', 'Remaining')}
         </div>
         <div className="stat">
-          <strong>{ticketingOpen ? 'Open now' : ticketingOpensAtLabel ?? 'Waiting for venue open'}</strong>
-          Charge state
+          <strong>{ticketingOpen ? t('ticketSaleCard.openNowLabel', 'Open now') : ticketingOpensAtLabel ?? t('ticketSaleCard.waitingForVenueOpenLabel', 'Waiting for venue open')}</strong>
+          {t('ticketSaleCard.chargeStateLabel', 'Charge state')}
         </div>
       </div>
 
       <div className="ticketing-split-grid">
         <div className="signal-card">
           <strong>{venueName}</strong>
-          <span>{formatPercent(venuePayoutPercent)} share</span>
-          <span>{formatCurrencyFromCents(preview.venuePayoutCents)} for this order</span>
+          <span>{formatPercent(venuePayoutPercent)} {t('ticketSaleCard.shareLabel', 'share')}</span>
+          <span>{formatCurrencyFromCents(preview.venuePayoutCents)} {t('ticketSaleCard.forThisOrderLabel', 'for this order')}</span>
         </div>
         <div className="signal-card">
           <strong>{artistName}</strong>
-          <span>{formatPercent(artistPayoutPercent)} share</span>
-          <span>{formatCurrencyFromCents(preview.artistPayoutCents)} for this order</span>
+          <span>{formatPercent(artistPayoutPercent)} {t('ticketSaleCard.shareLabel', 'share')}</span>
+          <span>{formatCurrencyFromCents(preview.artistPayoutCents)} {t('ticketSaleCard.forThisOrderLabel', 'for this order')}</span>
         </div>
         <div className="signal-card">
-          <strong>{affiliatePromoterName ?? promoterName ?? 'Promoter affiliate pool'}</strong>
-          <span>{formatPercent(promoterPayoutPercent)} affiliate share</span>
-          <span>{formatCurrencyFromCents(preview.promoterPayoutCents)} for this order</span>
+          <strong>{affiliatePromoterName ?? promoterName ?? t('ticketSaleCard.promoterAffiliatePoolFallback', 'Promoter affiliate pool')}</strong>
+          <span>{formatPercent(promoterPayoutPercent)} {t('ticketSaleCard.affiliateShareLabel', 'affiliate share')}</span>
+          <span>{formatCurrencyFromCents(preview.promoterPayoutCents)} {t('ticketSaleCard.forThisOrderLabel', 'for this order')}</span>
         </div>
       </div>
 
       {remainingTickets === 0 ? (
-        <div className="empty">This ticket allocation is sold out.</div>
+        <div className="empty">{t('ticketSaleCard.soldOut', 'This ticket allocation is sold out.')}</div>
       ) : !currentFan ? (
         <div className="empty">
-          Sign in with a fan account to reserve tickets against your stored payment token.
+          {t('ticketSaleCard.signInPrompt', 'Sign in with a fan account to reserve tickets against your stored payment token.')}
           <div className="cta-row">
             <Link className="button small secondary" href="/login">
-              Sign in
+              {t('ticketSaleCard.signInButton', 'Sign in')}
             </Link>
           </div>
         </div>
       ) : !currentFan.hasStoredPaymentToken ? (
         <div className="empty">
-          <strong style={{ display: 'block', marginBottom: '0.5rem' }}>Payment method required</strong>
-          Fan accounts need a saved payment method before reserving tickets. Payment onboarding is being finalised for
-          beta launch, and your account will be notified when it opens.
+          <strong style={{ display: 'block', marginBottom: '0.5rem' }}>{t('ticketSaleCard.paymentMethodRequiredTitle', 'Payment method required')}</strong>
+          {t(
+            'ticketSaleCard.paymentMethodRequiredBody',
+            'Fan accounts need a saved payment method before reserving tickets. Payment onboarding is being finalised for beta launch, and your account will be notified when it opens.'
+          )}
           <div className="cta-row" style={{ marginTop: '1rem' }}>
             <Link className="button small secondary" href="/tickets">
-              Ticketing Engine
+              {t('ticketSaleCard.ticketingEngineButton', 'Ticketing Engine')}
             </Link>
           </div>
         </div>
@@ -239,23 +250,23 @@ export function TicketSaleCard({
             <div className="ticketing-context-grid">
               {currentFan ? (
                 <div className="signal-card">
-                  <strong>{currentFan.name ?? 'Signed-in fan'}</strong>
+                  <strong>{currentFan.name ?? t('ticketSaleCard.signedInFanFallback', 'Signed-in fan')}</strong>
                   <span>{currentFan.email}</span>
-                  <span>{fanPaymentLabel ?? 'Stored payment token on file.'}</span>
+                  <span>{fanPaymentLabel ?? t('ticketSaleCard.storedTokenOnFile', 'Stored payment token on file.')}</span>
                 </div>
               ) : null}
               {viewerTaxRegion ? (
                 <div className="signal-card">
-                  <strong>Buyer tax region</strong>
+                  <strong>{t('ticketSaleCard.buyerTaxRegionLabel', 'Buyer tax region')}</strong>
                   <span>{viewerTaxRegion}</span>
-                  <span>Tax is calculated from request location at purchase time.</span>
+                  <span>{t('ticketSaleCard.buyerTaxRegionNote', 'Tax is calculated from request location at purchase time.')}</span>
                 </div>
               ) : null}
               {venueTaxRegion ? (
                 <div className="signal-card">
-                  <strong>Venue tax region</strong>
+                  <strong>{t('ticketSaleCard.venueTaxRegionLabel', 'Venue tax region')}</strong>
                   <span>{venueTaxRegion}</span>
-                  <span>Used for payout and payable reconciliation.</span>
+                  <span>{t('ticketSaleCard.venueTaxRegionNote', 'Used for payout and payable reconciliation.')}</span>
                 </div>
               ) : null}
             </div>
@@ -264,21 +275,21 @@ export function TicketSaleCard({
           <div className="grid grid-2">
             <div className="stat">
               <strong>{currentFan.name || currentFan.email}</strong>
-              Fan account
+              {t('ticketSaleCard.fanAccountLabel', 'Fan account')}
             </div>
             <div className="stat">
-              <strong>{fanPaymentLabel ?? 'Stored token on file'}</strong>
-              Payment source
+              <strong>{fanPaymentLabel ?? t('ticketSaleCard.storedTokenOnFileShort', 'Stored token on file')}</strong>
+              {t('ticketSaleCard.paymentSourceLabel', 'Payment source')}
             </div>
           </div>
 
           <div className="grid grid-2">
             <label className="field">
-              <span>Quantity</span>
+              <span>{t('ticketSaleCard.quantityLabel', 'Quantity')}</span>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <button
                   type="button"
-                  aria-label="Decrease quantity"
+                  aria-label={t('ticketSaleCard.decreaseQuantityAriaLabel', 'Decrease quantity')}
                   onClick={() => setQuantity((q) => String(Math.max(1, Number(q || 1) - 1)))}
                   style={{ minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '4px 12px', border: '1px solid var(--line, #333)', background: 'transparent', borderRadius: 6, cursor: 'pointer', fontSize: '1.2em', lineHeight: 1 }}
                 >
@@ -297,7 +308,7 @@ export function TicketSaleCard({
                 />
                 <button
                   type="button"
-                  aria-label="Increase quantity"
+                  aria-label={t('ticketSaleCard.increaseQuantityAriaLabel', 'Increase quantity')}
                   onClick={() => {
                     const cap = remainingTickets === null ? 8 : Math.max(remainingTickets, 1);
                     setQuantity((q) => String(Math.min(cap, Number(q || 1) + 1)));
@@ -310,34 +321,36 @@ export function TicketSaleCard({
             </label>
 
             <div className="ticketing-split-preview">
-              <div className="meta">Order preview</div>
+              <div className="meta">{t('ticketSaleCard.orderPreviewLabel', 'Order preview')}</div>
               <div className="ticketing-order-summary">
-                <div><span>Subtotal</span><strong>{formatCurrencyFromCents(preview.subtotalCents)}</strong></div>
-                <div><span>Local tax</span><strong>{formatCurrencyFromCents(preview.localCents)}</strong></div>
-                <div><span>State / province tax</span><strong>{formatCurrencyFromCents(preview.stateCents)}</strong></div>
-                <div><span>Country tax</span><strong>{formatCurrencyFromCents(preview.countryCents)}</strong></div>
-                <div><span>International tax</span><strong>{formatCurrencyFromCents(preview.internationalCents)}</strong></div>
-                <div><span>Total tax</span><strong>{formatCurrencyFromCents(preview.totalTaxCents)}</strong></div>
-                <div><span>Total charge</span><strong>{formatCurrencyFromCents(preview.totalChargeCents)}</strong></div>
+                <div><span>{t('ticketSaleCard.subtotalLabel', 'Subtotal')}</span><strong>{formatCurrencyFromCents(preview.subtotalCents)}</strong></div>
+                <div><span>{t('ticketSaleCard.localTaxLabel', 'Local tax')}</span><strong>{formatCurrencyFromCents(preview.localCents)}</strong></div>
+                <div><span>{t('ticketSaleCard.stateTaxLabel', 'State / province tax')}</span><strong>{formatCurrencyFromCents(preview.stateCents)}</strong></div>
+                <div><span>{t('ticketSaleCard.countryTaxLabel', 'Country tax')}</span><strong>{formatCurrencyFromCents(preview.countryCents)}</strong></div>
+                <div><span>{t('ticketSaleCard.internationalTaxLabel', 'International tax')}</span><strong>{formatCurrencyFromCents(preview.internationalCents)}</strong></div>
+                <div><span>{t('ticketSaleCard.totalTaxLabel', 'Total tax')}</span><strong>{formatCurrencyFromCents(preview.totalTaxCents)}</strong></div>
+                <div><span>{t('ticketSaleCard.totalChargeLabel', 'Total charge')}</span><strong>{formatCurrencyFromCents(preview.totalChargeCents)}</strong></div>
               </div>
             </div>
           </div>
 
           <div className="empty">
             {ticketingOpen
-              ? 'This event is officially open. Your stored payment token will be charged now and QR tickets will be emailed immediately.'
-              : `This event is not open yet. Your quantity will be reserved now, then charged to your stored token when the venue opens the event${ticketingOpensAtLabel ? ` (${ticketingOpensAtLabel})` : ''}.`}
+              ? t('ticketSaleCard.openNotice', 'This event is officially open. Your stored payment token will be charged now and QR tickets will be emailed immediately.')
+              : ticketingOpensAtLabel
+                ? t('ticketSaleCard.notOpenYetWithDateNotice', 'This event is not open yet. Your quantity will be reserved now, then charged to your stored token when the venue opens the event ({date}).').replace('{date}', ticketingOpensAtLabel)
+                : t('ticketSaleCard.notOpenYetNotice', 'This event is not open yet. Your quantity will be reserved now, then charged to your stored token when the venue opens the event.')}
           </div>
 
           <div className="cta-row">
             <button className="button" disabled={pending} type="submit">
               {pending
                 ? ticketingOpen
-                  ? 'Charging...'
-                  : 'Reserving...'
+                  ? t('ticketSaleCard.chargingButton', 'Charging...')
+                  : t('ticketSaleCard.reservingButton', 'Reserving...')
                 : ticketingOpen
-                  ? 'Charge stored token now'
-                  : 'Reserve tickets'}
+                  ? t('ticketSaleCard.chargeStoredTokenButton', 'Charge stored token now')
+                  : t('ticketSaleCard.reserveTicketsButton', 'Reserve tickets')}
             </button>
             {message ? (
               <span className="meta">
@@ -345,13 +358,13 @@ export function TicketSaleCard({
                 {ageGated ? (
                   <>
                     {' '}
-                    <Link href="/me/settings">Confirm your age in Settings →</Link>
+                    <Link href="/me/settings">{t('ticketSaleCard.confirmAgeLink', 'Confirm your age in Settings →')}</Link>
                   </>
                 ) : null}
                 {emailUnverified ? (
                   <>
                     {' '}
-                    <Link href="/verify-email">Verify your email →</Link>
+                    <Link href="/verify-email">{t('ticketSaleCard.verifyEmailLink', 'Verify your email →')}</Link>
                   </>
                 ) : null}
               </span>
@@ -363,8 +376,8 @@ export function TicketSaleCard({
       {issuedTickets.length ? (
         <div className="ticket-issued-grid">
           <div className="cta-row" style={{ marginBottom: 12 }}>
-            <strong className="meta">You&apos;re going!</strong>
-            <ShareButton path={`/shows/${showSlug}`} title={`I'm going to ${title}`} label="Invite friends" />
+            <strong className="meta">{t('ticketSaleCard.youreGoing', "You're going!")}</strong>
+            <ShareButton path={`/shows/${showSlug}`} title={`I'm going to ${title}`} label={t('ticketSaleCard.inviteFriendsLabel', 'Invite friends')} />
           </div>
           {issuedTickets.map((ticket) => (
             <article className="ticket-issued-card" key={ticket.id}>
@@ -374,7 +387,7 @@ export function TicketSaleCard({
                 <span>{ticket.serializedId}</span>
                 <span>{ticket.status}</span>
                 <a className="button small secondary" href={ticket.verificationUrl} target="_blank" rel="noreferrer">
-                  Open verification
+                  {t('ticketSaleCard.openVerificationLink', 'Open verification')}
                 </a>
               </div>
             </article>

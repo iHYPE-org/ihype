@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 export function SocialPostCopy({ text }: { text: string }) {
+  const { t } = useI18n();
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
@@ -15,7 +17,7 @@ export function SocialPostCopy({ text }: { text: string }) {
 
   return (
     <button className="button small secondary" onClick={copy} style={{ flexShrink: 0 }}>
-      {copied ? '✓ Copied' : 'Copy'}
+      {copied ? `✓ ${t('socialPostCopy.copied', 'Copied')}` : t('socialPostCopy.copy', 'Copy')}
     </button>
   );
 }

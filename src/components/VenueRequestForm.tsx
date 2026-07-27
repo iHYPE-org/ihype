@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 export function VenueRequestForm({ venueProfileId }: { venueProfileId: string }) {
+  const { t } = useI18n();
   const [artistName, setArtistName] = useState('');
   const [date, setDate] = useState('');
   const [genre, setGenre] = useState('');
@@ -15,8 +17,8 @@ export function VenueRequestForm({ venueProfileId }: { venueProfileId: string })
     setPending(true);
     setMessage(null);
     const noteParts = [
-      date ? `Proposed date: ${date}` : null,
-      genre ? `Genre / type of show: ${genre}` : null,
+      date ? `${t('venueRequestForm.proposedDate', 'Proposed date')}: ${date}` : null,
+      genre ? `${t('venueRequestForm.genreType', 'Genre / type of show')}: ${genre}` : null,
       notes.trim() || null,
     ].filter(Boolean);
 
@@ -36,9 +38,9 @@ export function VenueRequestForm({ venueProfileId }: { venueProfileId: string })
       setDate('');
       setGenre('');
       setNotes('');
-      setMessage('Request submitted!');
+      setMessage(t('venueRequestForm.requestSubmitted', 'Request submitted!'));
     } else {
-      setMessage(data.error ?? 'Could not send this request.');
+      setMessage(data.error ?? t('venueRequestForm.errorCouldNotSend', 'Could not send this request.'));
     }
     setPending(false);
   }
@@ -46,23 +48,23 @@ export function VenueRequestForm({ venueProfileId }: { venueProfileId: string })
   return (
     <form className="venue-request-form" onSubmit={submit}>
       <div className="venue-form-group">
-        <label htmlFor="venue-request-artist">Artist name or iHYPE handle</label>
-        <input id="venue-request-artist" onChange={(e) => setArtistName(e.target.value)} placeholder="@artisthandle or Artist Name" type="text" value={artistName} />
+        <label htmlFor="venue-request-artist">{t('venueRequestForm.artistNameLabel', 'Artist name or iHYPE handle')}</label>
+        <input id="venue-request-artist" onChange={(e) => setArtistName(e.target.value)} placeholder={t('venueRequestForm.artistNamePlaceholder', '@artisthandle or Artist Name')} type="text" value={artistName} />
       </div>
       <div className="venue-form-group">
-        <label htmlFor="venue-request-date">Proposed date</label>
+        <label htmlFor="venue-request-date">{t('venueRequestForm.proposedDateLabel', 'Proposed date')}</label>
         <input id="venue-request-date" onChange={(e) => setDate(e.target.value)} type="date" value={date} />
       </div>
       <div className="venue-form-group">
-        <label htmlFor="venue-request-genre">Genre / type of show</label>
-        <input id="venue-request-genre" onChange={(e) => setGenre(e.target.value)} placeholder="e.g. Deep House, Indie, DJ Night" type="text" value={genre} />
+        <label htmlFor="venue-request-genre">{t('venueRequestForm.genreLabel', 'Genre / type of show')}</label>
+        <input id="venue-request-genre" onChange={(e) => setGenre(e.target.value)} placeholder={t('venueRequestForm.genrePlaceholder', 'e.g. Deep House, Indie, DJ Night')} type="text" value={genre} />
       </div>
       <div className="venue-form-group">
-        <label htmlFor="venue-request-notes">Notes</label>
-        <textarea id="venue-request-notes" onChange={(e) => setNotes(e.target.value)} placeholder="Anything else we should know…" value={notes} />
+        <label htmlFor="venue-request-notes">{t('venueRequestForm.notesLabel', 'Notes')}</label>
+        <textarea id="venue-request-notes" onChange={(e) => setNotes(e.target.value)} placeholder={t('venueRequestForm.notesPlaceholder', 'Anything else we should know…')} value={notes} />
       </div>
       <button className="venue-submit-btn" disabled={pending} type="submit">
-        {pending ? 'Submitting…' : 'Submit Request'}
+        {pending ? t('venueRequestForm.submitting', 'Submitting…') : t('venueRequestForm.submitRequest', 'Submit Request')}
       </button>
       {message && <p style={{ marginTop: 12, fontSize: 13, color: '#22e5d4' }}>{message}</p>}
 

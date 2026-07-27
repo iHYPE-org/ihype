@@ -1,14 +1,24 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
-const STEPS = [
-  'Attesting device',
-  'Resolving operator role',
-  'Satisfying MFA',
-  'Minting session token',
-  'Writing ledger entry',
-  'Resuming automations',
-];
+const STEP_KEYS = [
+  'attestingDevice',
+  'resolvingOperatorRole',
+  'satisfyingMfa',
+  'mintingSessionToken',
+  'writingLedgerEntry',
+  'resumingAutomations',
+] as const;
+
+const STEP_FALLBACKS: Record<(typeof STEP_KEYS)[number], string> = {
+  attestingDevice: 'Attesting device',
+  resolvingOperatorRole: 'Resolving operator role',
+  satisfyingMfa: 'Satisfying MFA',
+  mintingSessionToken: 'Minting session token',
+  writingLedgerEntry: 'Writing ledger entry',
+  resumingAutomations: 'Resuming automations',
+};
 
 function initials(name?: string | null, email?: string | null): string {
   if (name) {
@@ -30,6 +40,7 @@ interface Props {
 }
 
 export function OpsLoginGate({ name, email, children }: Props) {
+  const { t } = useI18n();
   const [phase, setPhase] = useState<Phase>('login');
   const [ready, setReady] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
@@ -50,7 +61,7 @@ export function OpsLoginGate({ name, email, children }: Props) {
     function tick() {
       setCompletedSteps(prev => [...prev, step]);
       step++;
-      if (step < STEPS.length) {
+      if (step < STEP_KEYS.length) {
         setActiveStep(step);
         timerRef.current = setTimeout(tick, 420 + Math.random() * 180);
       } else {
@@ -69,7 +80,7 @@ export function OpsLoginGate({ name, email, children }: Props) {
   if (!ready || phase === 'done') return <>{children}</>;
 
   const ops = initials(name, email);
-  const displayName = name ?? email ?? 'Operator';
+  const displayName = name ?? email ?? t('opsLoginGate.operator', 'Operator');
   const displayEmail = email ?? '';
 
   return (
@@ -78,7 +89,7 @@ export function OpsLoginGate({ name, email, children }: Props) {
         <div className="ops-login-card">
           <div className="ops-login-top">
             <span className="ops-wordmark">iH<span className="ops-dot">·</span><span className="ops-ops">OPS</span></span>
-            <span className="ops-chip">OPERATOR</span>
+            <span className="ops-chip">{t('opsLoginGate.operatorChip', 'OPERATOR')}</span>
           </div>
 
           <div className="ops-identity">
@@ -91,34 +102,34 @@ export function OpsLoginGate({ name, email, children }: Props) {
 
           <div className="ops-trust-facts">
             <div className="ops-trust-fact">
-              <span className="ops-trust-label">Device</span>
-              <span className="ops-trust-value ops-trust-ok">✓ Recognized</span>
+              <span className="ops-trust-label">{t('opsLoginGate.device', 'Device')}</span>
+              <span className="ops-trust-value ops-trust-ok">✓ {t('opsLoginGate.recognized', 'Recognized')}</span>
             </div>
             <div className="ops-trust-fact">
-              <span className="ops-trust-label">Passkey</span>
-              <span className="ops-trust-value ops-trust-ok">✓ Registered</span>
+              <span className="ops-trust-label">{t('opsLoginGate.passkey', 'Passkey')}</span>
+              <span className="ops-trust-value ops-trust-ok">✓ {t('opsLoginGate.registered', 'Registered')}</span>
             </div>
             <div className="ops-trust-fact">
-              <span className="ops-trust-label">Role</span>
-              <span className="ops-trust-value">OPERATOR</span>
+              <span className="ops-trust-label">{t('opsLoginGate.role', 'Role')}</span>
+              <span className="ops-trust-value">{t('opsLoginGate.operatorChip', 'OPERATOR')}</span>
             </div>
             <div className="ops-trust-fact">
-              <span className="ops-trust-label">Session</span>
-              <span className="ops-trust-value">8 h TTL</span>
+              <span className="ops-trust-label">{t('opsLoginGate.session', 'Session')}</span>
+              <span className="ops-trust-value">{t('opsLoginGate.sessionTtl', '8 h TTL')}</span>
             </div>
           </div>
 
           <p className="ops-login-sub">
-            Sign-in is automated — your device and passkey are on file. No password required.
+            {t('opsLoginGate.loginSub', 'Sign-in is automated — your device and passkey are on file. No password required.')}
           </p>
 
           <button className="ops-cta" onClick={startProvisioning}>
-            Continue with trusted device
+            {t('opsLoginGate.continueCta', 'Continue with trusted device')}
           </button>
 
           <div className="ops-governance">
-            <span>Public ledger · obfuscated to cohort_op_1</span>
-            <span>Bans &gt;7 days require member vote</span>
+            <span>{t('opsLoginGate.governanceLedger', 'Public ledger · obfuscated to cohort_op_1')}</span>
+            <span>{t('opsLoginGate.governanceBans', 'Bans >7 days require member vote')}</span>
           </div>
         </div>
       )}
@@ -128,17 +139,17 @@ export function OpsLoginGate({ name, email, children }: Props) {
           <div className="ops-login-top">
             <span className="ops-wordmark">iH<span className="ops-dot">·</span><span className="ops-ops">OPS</span></span>
           </div>
-          <p className="ops-prov-title">Setting up your session</p>
+          <p className="ops-prov-title">{t('opsLoginGate.settingUpSession', 'Setting up your session')}</p>
           <div className="ops-steps">
-            {STEPS.map((step, i) => {
+            {STEP_KEYS.map((stepKey, i) => {
               const done = completedSteps.includes(i);
               const active = activeStep === i;
               return (
-                <div key={step} className={`ops-step${done ? ' ops-step-done' : active ? ' ops-step-active' : ''}`}>
+                <div key={stepKey} className={`ops-step${done ? ' ops-step-done' : active ? ' ops-step-active' : ''}`}>
                   <span className="ops-step-icon">
                     {done ? '✓' : active ? <span className="ops-spin">⟳</span> : '○'}
                   </span>
-                  <span>{step}</span>
+                  <span>{t(`opsLoginGate.step.${stepKey}`, STEP_FALLBACKS[stepKey])}</span>
                 </div>
               );
             })}

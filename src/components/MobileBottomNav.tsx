@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { NavDrawer } from '@/components/NavDrawer';
 import { useMobileShell } from '@/lib/MobileShellContext';
 import type { ShellSection } from '@/lib/mobileShell';
+import { useI18n } from '@/components/I18nProvider';
 
 const TAB_TO_SECTION: Record<string, ShellSection> = { listen: 'listen', events: 'shows', pages: 'pages' };
 
@@ -75,6 +76,7 @@ const tabButtonStyle = {
 };
 
 export function MobileBottomNav() {
+  const { t } = useI18n();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const shell = useMobileShell();
@@ -110,30 +112,30 @@ export function MobileBottomNav() {
           justifyContent: 'space-around',
         }}
       >
-        {TABS.map(t => (
+        {TABS.map(tabDef => (
           <Link
-            key={t.id}
-            href={t.href}
+            key={tabDef.id}
+            href={tabDef.href}
             onClick={(e) => {
               if (!shell?.active) return;
               e.preventDefault();
-              shell.goToSectionHome(TAB_TO_SECTION[t.id]);
+              shell.goToSectionHome(TAB_TO_SECTION[tabDef.id]);
             }}
-            style={{ ...tabButtonStyle, color: active === t.id ? 'var(--accent, #ff5029)' : 'rgba(240,240,240,0.45)' }}
+            style={{ ...tabButtonStyle, color: active === tabDef.id ? 'var(--accent, #ff5029)' : 'rgba(240,240,240,0.45)' }}
           >
-            {t.icon}
-            <span>{t.label}</span>
+            {tabDef.icon}
+            <span>{t(`mobileBottomNav.tab.${tabDef.id}`, tabDef.label)}</span>
           </Link>
         ))}
         <button
           aria-expanded={menuOpen}
-          aria-label="Open menu"
+          aria-label={t('mobileBottomNav.openMenuAriaLabel', 'Open menu')}
           onClick={() => setMenuOpen(true)}
           style={{ ...tabButtonStyle, background: 'none', border: 'none', cursor: 'pointer', color: menuOpen ? 'var(--accent, #ff5029)' : 'rgba(240,240,240,0.45)' }}
           type="button"
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
-          <span>Menu</span>
+          <span>{t('mobileBottomNav.menuLabel', 'Menu')}</span>
         </button>
       </nav>
       <NavDrawer onOpenChange={setMenuOpen} open={menuOpen} showTrigger={false} />

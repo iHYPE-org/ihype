@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { db } from '@/lib/db';
 import type { Show } from '@prisma/client';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 type ShowWithVenue = Show & {
   venueProfile: {
@@ -22,6 +23,7 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function ShowsMapPage() {
+  const t = getT(await getLocale());
   const shows = await db.show.findMany({
     where: {
       status: { in: ['SCHEDULED', 'LIVE'] },
@@ -37,7 +39,7 @@ export default async function ShowsMapPage() {
   // Group by city
   const cityMap = new Map<string, ShowWithVenue[]>();
   for (const show of shows) {
-    const city = show.venueProfile?.city ?? 'Unknown city';
+    const city = show.venueProfile?.city ?? t('showsMapPage.unknownCity', 'Unknown city');
     if (!cityMap.has(city)) cityMap.set(city, []);
     cityMap.get(city)!.push(show);
   }
@@ -47,18 +49,18 @@ export default async function ShowsMapPage() {
   return (
     <div className="container section" style={{ maxWidth: 960 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
-        <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 28, margin: 0 }}>Shows near me</h1>
+        <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 28, margin: 0 }}>{t('showsMapPage.showsNearMe', 'Shows near me')}</h1>
         <Link href="/shows" className="button secondary" style={{ fontSize: 12, padding: '6px 14px' }}>
-          List view
+          {t('showsMapPage.listView', 'List view')}
         </Link>
       </div>
 
       <p className="meta" style={{ marginBottom: 32 }}>
-        {shows.length} upcoming show{shows.length !== 1 ? 's' : ''} across {cities.length} cit{cities.length !== 1 ? 'ies' : 'y'}.
+        {shows.length} {t('showsMapPage.upcomingShowPrefix', 'upcoming show')}{shows.length !== 1 ? 's' : ''} {t('showsMapPage.acrossPrefix', 'across')} {cities.length} {t('showsMapPage.cityPrefix', 'cit')}{cities.length !== 1 ? 'ies' : 'y'}.
       </p>
 
       {cities.length === 0 ? (
-        <p className="meta">No upcoming shows found.</p>
+        <p className="meta">{t('showsMapPage.noUpcomingShowsFound', 'No upcoming shows found.')}</p>
       ) : (
         <div style={{ display: 'grid', gap: 40 }}>
           {cities.map(([city, cityShows]) => {
@@ -79,7 +81,7 @@ export default async function ShowsMapPage() {
                     rel="noopener noreferrer"
                     style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--accent)', textDecoration: 'none', padding: '2px 8px', border: '1px solid rgba(255,80,41,.3)', borderRadius: 4 }}
                   >
-                    View on map ↗
+                    {t('showsMapPage.viewOnMap', 'View on map ↗')}
                   </a>
                 </div>
                 <div style={{ display: 'grid', gap: 8 }}>
@@ -105,7 +107,7 @@ export default async function ShowsMapPage() {
                   ))}
                   {cityShows.length > 8 && (
                     <Link href={`/shows?city=${encodeURIComponent(city)}`} className="text-link" style={{ fontSize: 12, padding: '4px 0' }}>
-                      +{cityShows.length - 8} more in {city}
+                      +{cityShows.length - 8} {t('showsMapPage.moreInCity', 'more in')} {city}
                     </Link>
                   )}
                 </div>

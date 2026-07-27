@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getProfilePathForType } from '@/lib/profile-paths';
 import { PayoutConnectButton } from '@/components/PayoutConnectButton';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 type SettingsProfile = {
   id: string;
@@ -11,26 +12,27 @@ type SettingsProfile = {
   stripeConnectOnboarded: boolean;
 };
 
-function roleLabel(type: string) {
-  if (type === 'DJ') return 'Promoter/DJ';
-  if (type === 'VENUE') return 'Venue';
-  return 'Artist';
+function roleLabel(type: string, t: Awaited<ReturnType<typeof getT>>) {
+  if (type === 'DJ') return t('payoutSettingsPanel.rolePromoterDj', 'Promoter/DJ');
+  if (type === 'VENUE') return t('payoutSettingsPanel.roleVenue', 'Venue');
+  return t('payoutSettingsPanel.roleArtist', 'Artist');
 }
 
 /** Extracted verbatim from the former standalone `/me/payout-settings` page (DESIGN_SYNC row 245), now reused from the `/payouts` tabbed hub. Its "deliberately omitted" notes (multi-account, payout schedule, email toggle) still apply — see the original page's history in DESIGN_SYNC.md. */
-export function PayoutSettingsPanel({ profiles, stripeReady }: { profiles: SettingsProfile[]; stripeReady: boolean }) {
+export async function PayoutSettingsPanel({ profiles, stripeReady }: { profiles: SettingsProfile[]; stripeReady: boolean }) {
+  const t = getT(await getLocale());
   return (
     <div className="pset-panel">
-      <p className="pset-sub">Your share is paid out automatically after each show, split 70% artist / 20% venue / 10% promoters per the charter.</p>
+      <p className="pset-sub">{t('payoutSettingsPanel.autoPayoutNote', 'Your share is paid out automatically after each show, split 70% artist / 20% venue / 10% promoters per the charter.')}</p>
 
       {!stripeReady && (
-        <div className="pset-warn">Payments are not configured on this server right now — connecting accounts is temporarily unavailable.</div>
+        <div className="pset-warn">{t('payoutSettingsPanel.paymentsNotConfigured', 'Payments are not configured on this server right now — connecting accounts is temporarily unavailable.')}</div>
       )}
 
       {profiles.length === 0 ? (
         <div className="pset-empty">
-          <p>You don&apos;t have an artist, DJ, or venue profile yet — payout accounts connect to those profile types.</p>
-          <Link href="/pages">Create a profile →</Link>
+          <p>{t('payoutSettingsPanel.noProfileYet', "You don't have an artist, DJ, or venue profile yet — payout accounts connect to those profile types.")}</p>
+          <Link href="/pages">{t('payoutSettingsPanel.createProfile', 'Create a profile →')}</Link>
         </div>
       ) : (
         <div className="pset-list">
@@ -39,10 +41,10 @@ export function PayoutSettingsPanel({ profiles, stripeReady }: { profiles: Setti
               <div className="pset-card-top">
                 <div>
                   <div className="pset-name">{p.name}</div>
-                  <div className="pset-role">{roleLabel(p.type)} · <Link href={getProfilePathForType(p.type, p.slug)}>view profile</Link></div>
+                  <div className="pset-role">{roleLabel(p.type, t)} · <Link href={getProfilePathForType(p.type, p.slug)}>{t('payoutSettingsPanel.viewProfile', 'view profile')}</Link></div>
                 </div>
                 <span className={`pset-pill ${p.stripeConnectOnboarded ? 'pset-pill-on' : 'pset-pill-off'}`}>
-                  {p.stripeConnectOnboarded ? 'Verified' : 'Not yet connected'}
+                  {p.stripeConnectOnboarded ? t('payoutSettingsPanel.verified', 'Verified') : t('payoutSettingsPanel.notYetConnected', 'Not yet connected')}
                 </span>
               </div>
 
@@ -53,11 +55,11 @@ export function PayoutSettingsPanel({ profiles, stripeReady }: { profiles: Setti
                 <div className="pset-account-info">
                   {p.stripeConnectAccountId ? (
                     <>
-                      <div className="pset-account-label">Connected via Stripe Connect</div>
+                      <div className="pset-account-label">{t('payoutSettingsPanel.connectedViaStripe', 'Connected via Stripe Connect')}</div>
                       <div className="pset-account-id">{p.stripeConnectAccountId.slice(0, 9)}···{p.stripeConnectAccountId.slice(-4)}</div>
                     </>
                   ) : (
-                    <div className="pset-account-label">No payout account connected yet</div>
+                    <div className="pset-account-label">{t('payoutSettingsPanel.noAccountConnected', 'No payout account connected yet')}</div>
                   )}
                 </div>
                 {stripeReady && (
@@ -73,8 +75,8 @@ export function PayoutSettingsPanel({ profiles, stripeReady }: { profiles: Setti
       )}
 
       <div className="pset-note">
-        <div className="pset-note-label">Payment processing (Stripe) — iHYPE&apos;s only fee</div>
-        <p>2.9% + $0.30 per ticket (3.5% + $0.30 for Amex), charged by Stripe — not by iHYPE. iHYPE still takes 0% of the ticket price itself.</p>
+        <div className="pset-note-label">{t('payoutSettingsPanel.stripeFeeLabel', "Payment processing (Stripe) — iHYPE's only fee")}</div>
+        <p>{t('payoutSettingsPanel.stripeFeeDetail', '2.9% + $0.30 per ticket (3.5% + $0.30 for Amex), charged by Stripe — not by iHYPE. iHYPE still takes 0% of the ticket price itself.')}</p>
       </div>
 
       <style>{`

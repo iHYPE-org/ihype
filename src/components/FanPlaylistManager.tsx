@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ShareButton } from '@/components/ShareButton';
+import { useI18n } from '@/components/I18nProvider';
 
 type MediaTrack = {
   id: string;
@@ -43,6 +44,7 @@ export function FanPlaylistManager({
   currentTrack: MediaTrack | null;
   playTrack: (track: MediaTrack, queue?: MediaTrack[]) => void;
 }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [authorized, setAuthorized] = useState(true);
@@ -72,7 +74,7 @@ export function FanPlaylistManager({
       setFavorites(data.favorites ?? []);
       setActivePlaylistId((current) => current ?? data.playlists?.[0]?.id ?? null);
     } catch {
-      setMessage('Could not load playlists right now.');
+      setMessage(t('fanPlaylistManager.loadError', 'Could not load playlists right now.'));
     }
 
     setLoading(false);
@@ -157,14 +159,14 @@ export function FanPlaylistManager({
     const data = await response.json();
 
     if (!response.ok) {
-      setMessage(data.error ?? 'Could not create playlist.');
+      setMessage(data.error ?? t('fanPlaylistManager.createError', 'Could not create playlist.'));
       return;
     }
 
     setPlaylists((current) => [...current, data]);
     setActivePlaylistId(data.id);
     setNewPlaylistName('');
-    setMessage(`Created ${data.name}.`);
+    setMessage(`${t('fanPlaylistManager.createdPrefix', 'Created')} ${data.name}.`);
   }
 
   async function handleAddCurrentTrack() {
@@ -180,7 +182,7 @@ export function FanPlaylistManager({
     const data = await response.json();
 
     if (!response.ok) {
-      setMessage(data.error ?? 'Could not add this track.');
+      setMessage(data.error ?? t('fanPlaylistManager.addTrackError', 'Could not add this track.'));
       return;
     }
 
@@ -189,7 +191,7 @@ export function FanPlaylistManager({
         playlist.id === activePlaylistId ? { ...playlist, items: [...playlist.items, data] } : playlist
       )
     );
-    setMessage(`${currentTrackPayload.title} added to ${activePlaylist?.name ?? 'playlist'}.`);
+    setMessage(`${currentTrackPayload.title} ${t('fanPlaylistManager.addedToSuffix', 'added to')} ${activePlaylist?.name ?? t('fanPlaylistManager.playlistFallback', 'playlist')}.`);
   }
 
   async function handleToggleFavorite() {
@@ -205,7 +207,7 @@ export function FanPlaylistManager({
     const data = await response.json();
 
     if (!response.ok) {
-      setMessage(data.error ?? 'Could not update loved media.');
+      setMessage(data.error ?? t('fanPlaylistManager.favoriteUpdateError', 'Could not update loved media.'));
       return;
     }
 
@@ -214,7 +216,7 @@ export function FanPlaylistManager({
         ? current.filter((favorite) => favorite.mediaId !== currentTrackPayload.mediaId)
         : [{ mediaId: currentTrackPayload.mediaId }, ...current]
     );
-    setMessage(isCurrentTrackLoved ? 'Removed from loved tracks.' : 'Tagged as loved.');
+    setMessage(isCurrentTrackLoved ? t('fanPlaylistManager.removedFromLoved', 'Removed from loved tracks.') : t('fanPlaylistManager.taggedAsLoved', 'Tagged as loved.'));
   }
 
   async function handleRemoveItem(itemId: string) {
@@ -228,7 +230,7 @@ export function FanPlaylistManager({
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
-      setMessage(data?.error ?? 'Could not remove this item.');
+      setMessage(data?.error ?? t('fanPlaylistManager.removeItemError', 'Could not remove this item.'));
       return;
     }
 
@@ -259,7 +261,7 @@ export function FanPlaylistManager({
     const data = await response.json();
 
     if (!response.ok) {
-      setMessage(data.error ?? 'Could not reorder playlist.');
+      setMessage(data.error ?? t('fanPlaylistManager.reorderError', 'Could not reorder playlist.'));
       void loadPlaylists();
       return;
     }
@@ -311,22 +313,22 @@ export function FanPlaylistManager({
           onClick={() => setOpen((value) => !value)}
           type="button"
         >
-          <span>My playlists</span>
+          <span>{t('fanPlaylistManager.myPlaylists', 'My playlists')}</span>
           {playlists.length ? <strong>{playlists.length}</strong> : null}
         </button>
       </div>
 
       {open ? (
-        <div className="fan-playlist-panel" role="dialog" aria-label="My playlists">
+        <div className="fan-playlist-panel" role="dialog" aria-label={t('fanPlaylistManager.myPlaylists', 'My playlists')}>
           <div className="fan-playlist-panel-head">
             <div>
-              <strong>My playlists</strong>
+              <strong>{t('fanPlaylistManager.myPlaylists', 'My playlists')}</strong>
               <p className="meta">
-                Save tracks you love, reorder them, and reopen this panel whenever you want to keep building.
+                {t('fanPlaylistManager.panelDescription', 'Save tracks you love, reorder them, and reopen this panel whenever you want to keep building.')}
               </p>
             </div>
             <button className="media-player-button" onClick={() => setOpen(false)} type="button">
-              Close
+              {t('fanPlaylistManager.close', 'Close')}
             </button>
           </div>
 
@@ -335,20 +337,20 @@ export function FanPlaylistManager({
           <form className="fan-playlist-create" onSubmit={handleCreatePlaylist}>
             <input
               onChange={(event) => setNewPlaylistName(event.target.value)}
-              placeholder="Create a playlist"
+              placeholder={t('fanPlaylistManager.createPlaceholder', 'Create a playlist')}
               type="text"
               value={newPlaylistName}
             />
             <button className="button small secondary" type="submit">
-              Add
+              {t('fanPlaylistManager.addPlaylistButton', 'Add')}
             </button>
           </form>
 
           <div className="fan-playlist-current">
             <div>
-              <strong>{currentTrack?.title ?? 'No current track'}</strong>
+              <strong>{currentTrack?.title ?? t('fanPlaylistManager.noCurrentTrack', 'No current track')}</strong>
               <p className="meta">
-                {currentTrack ? `${currentTrack.artistName}${currentTrack.notes ? ` | ${currentTrack.notes}` : ''}` : 'Play a track to tag it or file it into a playlist.'}
+                {currentTrack ? `${currentTrack.artistName}${currentTrack.notes ? ` | ${currentTrack.notes}` : ''}` : t('fanPlaylistManager.playToTag', 'Play a track to tag it or file it into a playlist.')}
               </p>
             </div>
             <div className="cta-row">
@@ -358,7 +360,7 @@ export function FanPlaylistManager({
                 onClick={handleToggleFavorite}
                 type="button"
               >
-                {isCurrentTrackLoved ? 'Loved' : 'Love'}
+                {isCurrentTrackLoved ? t('fanPlaylistManager.loved', 'Loved') : t('fanPlaylistManager.love', 'Love')}
               </button>
               <button
                 className="button small secondary"
@@ -366,14 +368,14 @@ export function FanPlaylistManager({
                 onClick={handleAddCurrentTrack}
                 type="button"
               >
-                Add to playlist
+                {t('fanPlaylistManager.addToPlaylist', 'Add to playlist')}
               </button>
             </div>
           </div>
 
           <div className="fan-playlist-layout">
             <aside className="fan-playlist-sidebar">
-              {loading && !playlists.length ? <div className="empty">Loading playlists...</div> : null}
+              {loading && !playlists.length ? <div className="empty">{t('fanPlaylistManager.loadingPlaylists', 'Loading playlists...')}</div> : null}
               {playlists.map((playlist) => (
                 <button
                   className={playlist.id === activePlaylistId ? 'fan-playlist-tab active' : 'fan-playlist-tab'}
@@ -382,10 +384,10 @@ export function FanPlaylistManager({
                   type="button"
                 >
                   <strong>{playlist.name}</strong>
-                  <span>{playlist.items.length} tracks</span>
+                  <span>{playlist.items.length} {t('fanPlaylistManager.tracksLabel', 'tracks')}</span>
                 </button>
               ))}
-              {!playlists.length && !loading ? <div className="empty">Create your first playlist to start collecting tracks.</div> : null}
+              {!playlists.length && !loading ? <div className="empty">{t('fanPlaylistManager.noPlaylistsEmpty', 'Create your first playlist to start collecting tracks.')}</div> : null}
             </aside>
 
             <div className="fan-playlist-viewer">
@@ -394,9 +396,9 @@ export function FanPlaylistManager({
                   <div className="fan-playlist-viewer-head">
                     <div>
                       <strong>{activePlaylist.name}</strong>
-                      <span className="meta">Drag and drop to reorder.</span>
+                      <span className="meta">{t('fanPlaylistManager.dragToReorder', 'Drag and drop to reorder.')}</span>
                     </div>
-                    <ShareButton className="button small secondary" label="Share" path={`/playlist/${activePlaylist.id}`} title={activePlaylist.name} />
+                    <ShareButton className="button small secondary" label={t('fanPlaylistManager.share', 'Share')} path={`/playlist/${activePlaylist.id}`} title={activePlaylist.name} />
                   </div>
 
                   <div className="fan-playlist-items">
@@ -426,17 +428,17 @@ export function FanPlaylistManager({
                             onClick={() => handleRemoveItem(item.id)}
                             type="button"
                           >
-                            Remove
+                            {t('fanPlaylistManager.remove', 'Remove')}
                           </button>
                         </article>
                       ))
                     ) : (
-                      <div className="empty">This playlist is empty. Add the current track or start playing songs from artist pages.</div>
+                      <div className="empty">{t('fanPlaylistManager.emptyPlaylistBody', 'This playlist is empty. Add the current track or start playing songs from artist pages.')}</div>
                     )}
                   </div>
                 </>
               ) : (
-                <div className="empty">Choose a playlist to review its tracks.</div>
+                <div className="empty">{t('fanPlaylistManager.choosePlaylist', 'Choose a playlist to review its tracks.')}</div>
               )}
             </div>
           </div>

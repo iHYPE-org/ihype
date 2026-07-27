@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 type Stat = { value: string; label: string };
 type Feature = { emoji: string; title: string; body: string };
@@ -39,7 +40,8 @@ const HEAT_COLOR = ['#ff1f3d', 'var(--accent)', '#ffb84a', '#3a4a5a'];
  * an account exists, and /register + the post-signup onboarding wizard
  * already collect it for real.
  */
-export function RecruitingKitPage({ config, cityHeat }: { config: RecruitingKitConfig; cityHeat: CityHeat[] }) {
+export async function RecruitingKitPage({ config, cityHeat }: { config: RecruitingKitConfig; cityHeat: CityHeat[] }) {
+  const t = getT(await getLocale());
   const maxScore = Math.max(...cityHeat.map((c) => c.score), 1);
 
   return (
@@ -85,7 +87,7 @@ export function RecruitingKitPage({ config, cityHeat }: { config: RecruitingKitC
                 {cityHeat.map((c, i) => (
                   <div className="rk-heat-row" key={c.label}>
                     <span className="rk-heat-city">{c.label}</span>
-                    <div className="rk-heat-track" role="img" aria-label={`${c.label}: ${c.score.toLocaleString()} hypes`}>
+                    <div className="rk-heat-track" role="img" aria-label={`${c.label}: ${c.score.toLocaleString()} ${t('recruitingKitPage.hypes', 'hypes')}`}>
                       <div
                         className="rk-heat-bar"
                         style={{ width: `${Math.max(20, Math.round((c.score / maxScore) * 100))}%`, background: HEAT_COLOR[Math.min(i, HEAT_COLOR.length - 1)] }}
@@ -131,9 +133,9 @@ export function RecruitingKitPage({ config, cityHeat }: { config: RecruitingKitC
         <div className="rk-footer-inner">
           <Link className="rk-logo" href="/">iHYPE</Link>
           <div className="rk-footer-links">
-            <Link href="/advertise">Advertise</Link>
-            <Link href="/about">About</Link>
-            <Link href="/support">Support</Link>
+            <Link href="/advertise">{t('recruitingKitPage.footerAdvertise', 'Advertise')}</Link>
+            <Link href="/about">{t('recruitingKitPage.footerAbout', 'About')}</Link>
+            <Link href="/support">{t('recruitingKitPage.footerSupport', 'Support')}</Link>
           </div>
         </div>
       </footer>

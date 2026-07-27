@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AdminReauthPrompt } from '@/components/AdminReauthPrompt';
+import { useI18n } from '@/components/I18nProvider';
 
 /**
  * "Resolve all on page" / "Dismiss all on page" for the admin reports queue.
@@ -15,6 +16,7 @@ import { AdminReauthPrompt } from '@/components/AdminReauthPrompt';
  */
 export function ReportPageBulkButtons({ ids }: { ids: string[] }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pendingReauth, setPendingReauth] = useState<string | null>(null);
@@ -34,10 +36,10 @@ export function ReportPageBulkButtons({ ids }: { ids: string[] }) {
       } else if (data.ok) {
         router.refresh();
       } else {
-        setError(data.error ?? 'Unknown error');
+        setError(data.error ?? t('reportPageBulkButtons.unknownError', 'Unknown error'));
       }
     } catch {
-      setError('Request failed');
+      setError(t('reportPageBulkButtons.requestFailed', 'Request failed'));
     } finally {
       setLoading(null);
     }
@@ -51,7 +53,7 @@ export function ReportPageBulkButtons({ ids }: { ids: string[] }) {
         type="button"
         style={{ background: 'rgba(34,229,212,.1)', color: '#22e5d4', border: '1px solid rgba(34,229,212,.25)', borderRadius: 6, padding: '5px 14px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--f-m)' }}
       >
-        {loading === 'resolve_reports' ? 'Resolving…' : `Resolve all on page (${ids.length})`}
+        {loading === 'resolve_reports' ? t('reportPageBulkButtons.resolving', 'Resolving…') : `${t('reportPageBulkButtons.resolveAllOnPage', 'Resolve all on page')} (${ids.length})`}
       </button>
       <button
         disabled={loading !== null}
@@ -59,7 +61,7 @@ export function ReportPageBulkButtons({ ids }: { ids: string[] }) {
         type="button"
         style={{ background: 'var(--line)', color: 'var(--ink-2)', border: '1px solid var(--line)', borderRadius: 6, padding: '5px 14px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--f-m)' }}
       >
-        {loading === 'dismiss_reports' ? 'Dismissing…' : 'Dismiss all on page'}
+        {loading === 'dismiss_reports' ? t('reportPageBulkButtons.dismissing', 'Dismissing…') : t('reportPageBulkButtons.dismissAllOnPage', 'Dismiss all on page')}
       </button>
       {error && <span style={{ fontSize: 11, color: '#e74c3c', fontFamily: 'var(--f-m)' }}>{error}</span>}
       {pendingReauth && (

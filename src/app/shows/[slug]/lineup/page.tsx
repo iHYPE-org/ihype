@@ -169,7 +169,7 @@ export default async function LineupSplitPage({ params }: { params: Promise<{ sl
 
       {isVenueOwner && (
         <p className="lsp-foot">
-          <Link href={`/shows/${show.slug}`}>Back to show</Link>
+          <Link href={`/shows/${show.slug}`}>{t('showsSlugLineupPage.backToShowPlain', 'Back to show')}</Link>
         </p>
       )}
 

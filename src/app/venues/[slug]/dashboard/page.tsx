@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getVenueDashboardData } from '@/lib/venue-dashboard';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function VenueDashboardPage({ params }: { params: Promise<{ slug: string }> }) {
+  const t = getT(await getLocale());
   const { slug } = await params;
   const session = await auth();
   if (!session?.user?.id) {
@@ -40,42 +42,42 @@ export default async function VenueDashboardPage({ params }: { params: Promise<{
     <div className="vdash">
       <header className="vdash-head">
         <div>
-          <div className="vdash-eyebrow">Welcome back</div>
+          <div className="vdash-eyebrow">{t('venuesSlugDashboardPage.welcomeBack', 'Welcome back')}</div>
           <h1>{profile.name}</h1>
         </div>
         <div className="vdash-head-actions">
-          <Link className="vdash-btn vdash-btn-outline" href={`/venues/${profile.slug}/booking-inbox`}>Booking Inbox</Link>
-          <Link className="vdash-btn vdash-btn-solid" href="/events/new">+ Create Event</Link>
+          <Link className="vdash-btn vdash-btn-outline" href={`/venues/${profile.slug}/booking-inbox`}>{t('venuesSlugDashboardPage.bookingInbox', 'Booking Inbox')}</Link>
+          <Link className="vdash-btn vdash-btn-solid" href="/events/new">{t('venuesSlugDashboardPage.createEvent', '+ Create Event')}</Link>
         </div>
       </header>
 
       <div className="vdash-stats">
         <div className="vdash-card">
-          <div className="vdash-card-label">This Month</div>
+          <div className="vdash-card-label">{t('venuesSlugDashboardPage.thisMonth', 'This Month')}</div>
           <div className="vdash-card-val">{formatCurrencyFromCents(data.thisMonthEarningsCents)}</div>
-          <div className="vdash-card-sub">Your split share this calendar month · $0 iHYPE fee</div>
+          <div className="vdash-card-sub">{t('venuesSlugDashboardPage.thisMonthSub', 'Your split share this calendar month · $0 iHYPE fee')}</div>
         </div>
         <div className="vdash-card">
-          <div className="vdash-card-label">Shows Booked</div>
+          <div className="vdash-card-label">{t('venuesSlugDashboardPage.showsBooked', 'Shows Booked')}</div>
           <div className="vdash-card-val">{data.showsBookedCount}</div>
-          <div className="vdash-card-sub vdash-card-sub-accent">{data.upcomingShowsCount} upcoming</div>
+          <div className="vdash-card-sub vdash-card-sub-accent">{data.upcomingShowsCount} {t('venuesSlugDashboardPage.upcomingSuffix', 'upcoming')}</div>
         </div>
         <div className="vdash-card">
-          <div className="vdash-card-label">Pending Requests</div>
+          <div className="vdash-card-label">{t('venuesSlugDashboardPage.pendingRequests', 'Pending Requests')}</div>
           <div className="vdash-card-val">{data.pendingBookingRequestCount}</div>
           <div className="vdash-card-sub vdash-card-sub-accent">
-            {data.pendingBookingRequestCount > 0 ? 'Needs review' : 'All caught up'}
+            {data.pendingBookingRequestCount > 0 ? t('venuesSlugDashboardPage.needsReview', 'Needs review') : t('venuesSlugDashboardPage.allCaughtUp', 'All caught up')}
           </div>
         </div>
         <div className="vdash-card">
-          <div className="vdash-card-label">Next Payout</div>
+          <div className="vdash-card-label">{t('venuesSlugDashboardPage.nextPayout', 'Next Payout')}</div>
           <div className="vdash-card-val">{data.nextPayout?.label ?? '—'}</div>
           <div className="vdash-card-sub">
             {data.nextPayout?.amountCents != null
-              ? `${formatCurrencyFromCents(data.nextPayout.amountCents)} pending release`
+              ? `${formatCurrencyFromCents(data.nextPayout.amountCents)} ${t('venuesSlugDashboardPage.pendingRelease', 'pending release')}`
               : data.nextPayout?.estimated
-                ? 'Estimated — depends on ticket sales before then'
-                : 'No pending payouts right now'}
+                ? t('venuesSlugDashboardPage.estimatedNote', 'Estimated — depends on ticket sales before then')
+                : t('venuesSlugDashboardPage.noPendingPayouts', 'No pending payouts right now')}
           </div>
         </div>
       </div>
@@ -83,27 +85,27 @@ export default async function VenueDashboardPage({ params }: { params: Promise<{
       <div className="vdash-grid">
         <div>
           <div className="vdash-section-head">
-            <span className="vdash-eyebrow-sm">Upcoming Shows</span>
-            <Link className="vdash-link-sm" href={`/venues/${profile.slug}/calendar`}>Full calendar →</Link>
+            <span className="vdash-eyebrow-sm">{t('venuesSlugDashboardPage.upcomingShows', 'Upcoming Shows')}</span>
+            <Link className="vdash-link-sm" href={`/venues/${profile.slug}/calendar`}>{t('venuesSlugDashboardPage.fullCalendar', 'Full calendar →')}</Link>
           </div>
           {data.upcomingShows.length === 0 ? (
-            <div className="vdash-empty">No upcoming shows — accept a booking to get started.</div>
+            <div className="vdash-empty">{t('venuesSlugDashboardPage.noUpcomingShows', 'No upcoming shows — accept a booking to get started.')}</div>
           ) : (
             <div className="vdash-shows">
               {data.upcomingShows.map((show) => {
                 const date = show.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
                 const soldLabel = show.ticketCapacity
-                  ? `${show.ticketsSoldCount.toLocaleString()} / ${show.ticketCapacity.toLocaleString()} sold`
-                  : `${show.ticketsSoldCount.toLocaleString()} sold`;
+                  ? `${show.ticketsSoldCount.toLocaleString()} / ${show.ticketCapacity.toLocaleString()} ${t('venuesSlugDashboardPage.sold', 'sold')}`
+                  : `${show.ticketsSoldCount.toLocaleString()} ${t('venuesSlugDashboardPage.sold', 'sold')}`;
                 return (
                   <Link className="vdash-show-row" href={show.status === 'DRAFT' ? `/shows/${show.slug}/lineup` : `/shows/${show.slug}`} key={show.id}>
                     <div>
                       <div className="vdash-show-title">{show.title}</div>
                       <div className="vdash-show-meta">
-                        {date} · {show.status === 'DRAFT' ? 'Draft — manage lineup' : soldLabel}
+                        {date} · {show.status === 'DRAFT' ? t('venuesSlugDashboardPage.draftManageLineup', 'Draft — manage lineup') : soldLabel}
                       </div>
                     </div>
-                    <span className="vdash-pill">{show.status === 'LIVE' ? 'Live' : show.status === 'DRAFT' ? 'Draft' : 'On sale'}</span>
+                    <span className="vdash-pill">{show.status === 'LIVE' ? t('venuesSlugDashboardPage.statusLive', 'Live') : show.status === 'DRAFT' ? t('venuesSlugDashboardPage.statusDraft', 'Draft') : t('venuesSlugDashboardPage.statusOnSale', 'On sale')}</span>
                   </Link>
                 );
               })}
@@ -111,10 +113,10 @@ export default async function VenueDashboardPage({ params }: { params: Promise<{
           )}
 
           <div className="vdash-section-head" style={{ marginTop: 28 }}>
-            <span className="vdash-eyebrow-sm">Activity</span>
+            <span className="vdash-eyebrow-sm">{t('venuesSlugDashboardPage.activity', 'Activity')}</span>
           </div>
           {data.activity.length === 0 ? (
-            <div className="vdash-empty">No activity yet.</div>
+            <div className="vdash-empty">{t('venuesSlugDashboardPage.noActivityYet', 'No activity yet.')}</div>
           ) : (
             <div className="vdash-activity">
               {data.activity.map((item) => (
@@ -128,15 +130,15 @@ export default async function VenueDashboardPage({ params }: { params: Promise<{
         </div>
 
         <div>
-          <div className="vdash-eyebrow-sm">Quick Actions</div>
+          <div className="vdash-eyebrow-sm">{t('venuesSlugDashboardPage.quickActions', 'Quick Actions')}</div>
           <div className="vdash-actions">
-            <Link className="vdash-action" href={`/venues/${profile.slug}/booking-inbox`}>Review booking requests</Link>
-            <Link className="vdash-action" href={`/venues/${profile.slug}/calendar`}>View calendar</Link>
+            <Link className="vdash-action" href={`/venues/${profile.slug}/booking-inbox`}>{t('venuesSlugDashboardPage.reviewBookingRequests', 'Review booking requests')}</Link>
+            <Link className="vdash-action" href={`/venues/${profile.slug}/calendar`}>{t('venuesSlugDashboardPage.viewCalendar', 'View calendar')}</Link>
             {data.nextScannableShowSlug && (
-              <Link className="vdash-action" href={`/shows/${data.nextScannableShowSlug}/scan`}>Door check-in scanner</Link>
+              <Link className="vdash-action" href={`/shows/${data.nextScannableShowSlug}/scan`}>{t('venuesSlugDashboardPage.doorCheckInScanner', 'Door check-in scanner')}</Link>
             )}
-            <Link className="vdash-action" href={`/venues/${profile.slug}/analytics`}>View analytics</Link>
-            <Link className="vdash-action" href={`/venues/${profile.slug}`}>Edit my page</Link>
+            <Link className="vdash-action" href={`/venues/${profile.slug}/analytics`}>{t('venuesSlugDashboardPage.viewAnalytics', 'View analytics')}</Link>
+            <Link className="vdash-action" href={`/venues/${profile.slug}`}>{t('venuesSlugDashboardPage.editMyPage', 'Edit my page')}</Link>
           </div>
         </div>
       </div>

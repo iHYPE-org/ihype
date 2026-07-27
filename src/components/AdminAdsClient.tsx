@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useI18n } from '@/components/I18nProvider';
 
 interface Ad {
   id: string;
@@ -39,6 +40,7 @@ interface Props {
 }
 
 export function AdminAdsClient({ ads: initial, status, q, page, total, pageSize }: Props) {
+  const { t } = useI18n();
   const router = useRouter();
   const [ads, setAds] = useState(initial);
   const [loading, setLoading] = useState<string | null>(null);
@@ -67,7 +69,7 @@ export function AdminAdsClient({ ads: initial, status, q, page, total, pageSize 
       <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <input
           defaultValue={q}
-          placeholder="Search campaign title or link…"
+          placeholder={t('adminAdsClient.searchPlaceholder', 'Search campaign title or link…')}
           className="input"
           style={{ flex: 1, minWidth: 180 }}
           onKeyDown={e => { if (e.key === 'Enter') navigate({ q: (e.target as HTMLInputElement).value, page: '1' }); }}
@@ -79,18 +81,18 @@ export function AdminAdsClient({ ads: initial, status, q, page, total, pageSize 
           style={{ width: 160 }}
           onChange={e => navigate({ status: e.target.value, page: '1' })}
         >
-          <option value="">All statuses</option>
-          <option value="PENDING">Pending review</option>
-          <option value="APPROVED">Approved</option>
-          <option value="REJECTED">Rejected</option>
-          <option value="PAUSED">Paused</option>
-          <option value="CANCELLED">Cancelled</option>
+          <option value="">{t('adminAdsClient.statusAll', 'All statuses')}</option>
+          <option value="PENDING">{t('adminAdsClient.statusPending', 'Pending review')}</option>
+          <option value="APPROVED">{t('adminAdsClient.statusApproved', 'Approved')}</option>
+          <option value="REJECTED">{t('adminAdsClient.statusRejected', 'Rejected')}</option>
+          <option value="PAUSED">{t('adminAdsClient.statusPaused', 'Paused')}</option>
+          <option value="CANCELLED">{t('adminAdsClient.statusCancelled', 'Cancelled')}</option>
         </select>
       </div>
 
       {/* List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {ads.length === 0 && <p className="empty">No campaigns found.</p>}
+        {ads.length === 0 && <p className="empty">{t('adminAdsClient.noCampaigns', 'No campaigns found.')}</p>}
         {ads.map((ad) => (
           <div className="panel" key={ad.id} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -109,19 +111,19 @@ export function AdminAdsClient({ ads: initial, status, q, page, total, pageSize 
             {ad.audioUrl ? (
               <audio controls preload="none" src={ad.audioUrl} style={{ height: 32, maxWidth: 320 }} />
             ) : (
-              <p className="meta">No ad audio uploaded.</p>
+              <p className="meta">{t('adminAdsClient.noAudio', 'No ad audio uploaded.')}</p>
             )}
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <span className="meta">{new Date(ad.createdAt).toLocaleString()}</span>
               {typeof ad.audioDurationSecs === 'number' && <span className="meta">:{ad.audioDurationSecs}</span>}
-              <span className="meta">{ad.impressions.toLocaleString()} impressions</span>
-              <span className="meta">{ad.clicks.toLocaleString()} clicks</span>
-              <span className="meta">${((ad.budgetCents - ad.spentCents) / 100).toFixed(2)} budget remaining</span>
+              <span className="meta">{ad.impressions.toLocaleString()} {t('adminAdsClient.impressions', 'impressions')}</span>
+              <span className="meta">{ad.clicks.toLocaleString()} {t('adminAdsClient.clicks', 'clicks')}</span>
+              <span className="meta">${((ad.budgetCents - ad.spentCents) / 100).toFixed(2)} {t('adminAdsClient.budgetRemaining', 'budget remaining')}</span>
             </div>
             {ad.status === 'PENDING' && (
               <div style={{ display: 'flex', gap: 8 }}>
-                <button className="button small" disabled={loading === ad.id} onClick={() => updateStatus(ad.id, 'APPROVED')}>Approve</button>
-                <button className="button small secondary" disabled={loading === ad.id} onClick={() => updateStatus(ad.id, 'REJECTED')}>Reject</button>
+                <button className="button small" disabled={loading === ad.id} onClick={() => updateStatus(ad.id, 'APPROVED')}>{t('adminAdsClient.approve', 'Approve')}</button>
+                <button className="button small secondary" disabled={loading === ad.id} onClick={() => updateStatus(ad.id, 'REJECTED')}>{t('adminAdsClient.reject', 'Reject')}</button>
               </div>
             )}
           </div>

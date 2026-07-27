@@ -1,6 +1,11 @@
 'use client';
 
 import { useState, type ReactElement } from 'react';
+import { useI18n } from '@/components/I18nProvider';
+
+function featSlug(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
 
 type TabId = 'listen' | 'events' | 'pages';
 
@@ -101,6 +106,7 @@ const FEATURES: Record<TabId, { color: string; bg: string; icon: ReactElement; n
 };
 
 export function IndexTabsShowcase() {
+  const { t } = useI18n();
   const [active, setActive] = useState<TabId>('listen');
 
   return (
@@ -133,8 +139,8 @@ export function IndexTabsShowcase() {
               }}>
                 {tab.icon}
               </div>
-              <div style={{ fontFamily: 'var(--f-d)', fontSize: 'clamp(16px, 2.5vw, 22px)', fontWeight: 800, letterSpacing: '-.02em', lineHeight: 1 }}>{tab.label}</div>
-              <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, letterSpacing: '.14em', textTransform: 'uppercase', color: isActive ? 'rgba(255,80,41,.7)' : 'var(--ink-a35)', transition: 'color 180ms' }}>{tab.sub}</div>
+              <div style={{ fontFamily: 'var(--f-d)', fontSize: 'clamp(16px, 2.5vw, 22px)', fontWeight: 800, letterSpacing: '-.02em', lineHeight: 1 }}>{t(`indexTabsShowcase.tab.${tab.id}.label`, tab.label)}</div>
+              <div style={{ fontFamily: 'var(--f-m)', fontSize: 9, letterSpacing: '.14em', textTransform: 'uppercase', color: isActive ? 'rgba(255,80,41,.7)' : 'var(--ink-a35)', transition: 'color 180ms' }}>{t(`indexTabsShowcase.tab.${tab.id}.sub`, tab.sub)}</div>
             </button>
           );
         })}
@@ -151,8 +157,8 @@ export function IndexTabsShowcase() {
               {f.icon}
             </div>
             <div>
-              <div style={{ fontFamily: 'var(--f-d)', fontSize: 15, fontWeight: 800, letterSpacing: '-.01em', marginBottom: 2, color: 'var(--ink)' }}>{f.name}</div>
-              <p style={{ fontSize: 12, color: 'var(--ink-a55)', lineHeight: 1.55, margin: 0 }}>{f.desc}</p>
+              <div style={{ fontFamily: 'var(--f-d)', fontSize: 15, fontWeight: 800, letterSpacing: '-.01em', marginBottom: 2, color: 'var(--ink)' }}>{t(`indexTabsShowcase.feature.${featSlug(f.name)}.name`, f.name)}</div>
+              <p style={{ fontSize: 12, color: 'var(--ink-a55)', lineHeight: 1.55, margin: 0 }}>{t(`indexTabsShowcase.feature.${featSlug(f.name)}.desc`, f.desc)}</p>
             </div>
           </div>
         ))}

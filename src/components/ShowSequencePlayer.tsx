@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { buildResolvedSequence, type ShowProductionPlan } from '@/lib/show-composer';
+import { useI18n } from '@/components/I18nProvider';
 
 type ShowSequencePlayerProps = {
   showId: string;
@@ -20,6 +21,7 @@ export function ShowSequencePlayer({
   isPreview = false,
   autoPlay = false
 }: ShowSequencePlayerProps) {
+  const { t } = useI18n();
   const mediaRef = useRef<HTMLMediaElement | null>(null);
   const autoAdvanceTimerRef = useRef<number | null>(null);
   const hasRecordedListenRef = useRef(false);
@@ -146,7 +148,7 @@ export function ShowSequencePlayer({
   }
 
   if (!resolvedSequence.length) {
-    return <div className="empty">No show media has been arranged for playback yet.</div>;
+    return <div className="empty">{t('showSequencePlayer.empty', 'No show media has been arranged for playback yet.')}</div>;
   }
 
   return (
@@ -154,8 +156,8 @@ export function ShowSequencePlayer({
       <div className="show-sequence-stage">
         <div className="show-sequence-stage-head">
           <div>
-            <div className="badge">{isPreview ? 'Preview' : 'Broadcast'}</div>
-            <h3>{activeItem?.label ?? 'Run of show'}</h3>
+            <div className="badge">{isPreview ? t('showSequencePlayer.preview', 'Preview') : t('showSequencePlayer.broadcast', 'Broadcast')}</div>
+            <h3>{activeItem?.label ?? t('showSequencePlayer.runOfShow', 'Run of show')}</h3>
             {activeItem?.notes ? <p className="meta">{activeItem.notes}</p> : null}
           </div>
           <div className="show-sequence-controls">
@@ -165,14 +167,14 @@ export function ShowSequencePlayer({
               onClick={() => moveToIndex(activeIndex - 1)}
               type="button"
             >
-              Prev
+              {t('showSequencePlayer.prev', 'Prev')}
             </button>
             <button
               className="button small"
               onClick={() => setIsPlaying((current) => !current)}
               type="button"
             >
-              {isPlaying ? 'Pause' : 'Play'}
+              {isPlaying ? t('showSequencePlayer.pause', 'Pause') : t('showSequencePlayer.play', 'Play')}
             </button>
             <button
               className="button small secondary"
@@ -180,7 +182,7 @@ export function ShowSequencePlayer({
               onClick={() => moveToIndex(activeIndex + 1)}
               type="button"
             >
-              Next
+              {t('showSequencePlayer.next', 'Next')}
             </button>
           </div>
         </div>
@@ -199,7 +201,7 @@ export function ShowSequencePlayer({
         ) : (
           <div className="show-sequence-text-card">
             <strong>{activeItem?.label}</strong>
-            <p>{activeItem?.notes ?? 'This cue is text-only and will auto-advance.'}</p>
+            <p>{activeItem?.notes ?? t('showSequencePlayer.textOnlyCue', 'This cue is text-only and will auto-advance.')}</p>
           </div>
         )}
       </div>

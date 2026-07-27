@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 export function FollowButton({ profileId, variant = 'chip' }: { profileId: string; variant?: 'chip' | 'hero' }) {
+  const { t } = useI18n();
   const [following, setFollowing] = useState(false);
   const [count, setCount] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -75,7 +77,7 @@ export function FollowButton({ profileId, variant = 'chip' }: { profileId: strin
       onClick={toggle}
       type="button"
       aria-pressed={following}
-      aria-label={following ? 'Unfollow' : 'Follow'}
+      aria-label={following ? t('followButton.unfollow', 'Unfollow') : t('followButton.follow', 'Follow')}
       style={{
         ...(variant === 'hero' ? heroStyle : chipStyle),
         border: following ? '1px solid rgba(255,80,41,.4)' : variant === 'hero' ? '1px solid var(--hair-100)' : '1px solid var(--hair-120)',
@@ -86,7 +88,7 @@ export function FollowButton({ profileId, variant = 'chip' }: { profileId: strin
         opacity: busy ? 0.6 : 1,
       }}
     >
-      {following ? '✓ Following' : '+ Follow'}{count > 0 ? ` · ${count}` : ''}
+      {following ? t('followButton.followingLabel', '✓ Following') : t('followButton.followLabel', '+ Follow')}{count > 0 ? ` · ${count}` : ''}
     </button>
   );
 }

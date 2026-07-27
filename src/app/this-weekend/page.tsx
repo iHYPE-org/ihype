@@ -4,6 +4,7 @@ import { detectRequestLocation } from '@/lib/request-location';
 import { getWeekendShows } from '@/lib/weekendShows';
 import { NearbyShowsWidget } from '@/components/NearbyShowsWidget';
 import type { Metadata } from 'next';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,6 +26,7 @@ function fmtWhen(iso: string): string {
 }
 
 export default async function ThisWeekendPage() {
+  const t = getT(await getLocale());
   const [session, location] = await Promise.all([auth(), detectRequestLocation()]);
   const feed = await getWeekendShows(session?.user?.id ?? null, location);
 
@@ -33,9 +35,9 @@ export default async function ThisWeekendPage() {
       <style>{WEEKEND_CSS}</style>
 
       <header className="weekend-head">
-        <span className="weekend-eyebrow">THIS WEEKEND · {feed.rangeLabel.toUpperCase()}</span>
+        <span className="weekend-eyebrow">{t('thisWeekendPage.eyebrow', 'THIS WEEKEND')} · {feed.rangeLabel.toUpperCase()}</span>
         <h1 className="weekend-title">
-          {feed.cityLabel ? <>What&apos;s on in<br />{feed.cityLabel}</> : <>What&apos;s on<br />this weekend</>}
+          {feed.cityLabel ? <>{t('thisWeekendPage.whatsOnIn', "What's on in")}<br />{feed.cityLabel}</> : <>{t('thisWeekendPage.whatsOn', "What's on")}<br />{t('thisWeekendPage.thisWeekend', 'this weekend')}</>}
         </h1>
       </header>
 
@@ -43,8 +45,8 @@ export default async function ThisWeekendPage() {
 
       {feed.shows.length === 0 ? (
         <div className="weekend-empty">
-          <p>No shows on the calendar for this weekend yet.</p>
-          <Link href="/discover" className="weekend-cta">Discover artists</Link>
+          <p>{t('thisWeekendPage.emptyState', 'No shows on the calendar for this weekend yet.')}</p>
+          <Link href="/discover" className="weekend-cta">{t('thisWeekendPage.discoverArtists', 'Discover artists')}</Link>
         </div>
       ) : (
         <ul className="weekend-list">
@@ -58,13 +60,13 @@ export default async function ThisWeekendPage() {
                     {s.venueName ?? 'Venue TBA'}{s.venueCity ? ` · ${s.venueCity}` : ''}
                   </div>
                   <div className="weekend-card-tags">
-                    {s.youHyped && <span className="weekend-tag weekend-tag-hyped">You hyped {s.headlinerName ?? 'them'}</span>}
-                    {s.local && !s.youHyped && <span className="weekend-tag weekend-tag-local">Near you</span>}
-                    {s.goingCount > 0 && <span className="weekend-tag">{s.goingCount} going</span>}
-                    {s.hypeCount > 0 && <span className="weekend-tag">{s.hypeCount} HYPE</span>}
+                    {s.youHyped && <span className="weekend-tag weekend-tag-hyped">{t('thisWeekendPage.youHyped', 'You hyped')} {s.headlinerName ?? t('thisWeekendPage.them', 'them')}</span>}
+                    {s.local && !s.youHyped && <span className="weekend-tag weekend-tag-local">{t('thisWeekendPage.nearYou', 'Near you')}</span>}
+                    {s.goingCount > 0 && <span className="weekend-tag">{s.goingCount} {t('thisWeekendPage.going', 'going')}</span>}
+                    {s.hypeCount > 0 && <span className="weekend-tag">{s.hypeCount} {t('thisWeekendPage.hype', 'HYPE')}</span>}
                   </div>
                 </div>
-                <div className="weekend-card-cta">{s.isTicketed ? 'Get ticket' : 'RSVP'}</div>
+                <div className="weekend-card-cta">{s.isTicketed ? t('thisWeekendPage.getTicket', 'Get ticket') : t('thisWeekendPage.rsvp', 'RSVP')}</div>
               </Link>
             </li>
           ))}
@@ -73,7 +75,7 @@ export default async function ThisWeekendPage() {
 
       {!session?.user?.id && feed.shows.length > 0 && (
         <p className="weekend-foot">
-          <Link href="/register">Sign up</Link> to hype artists and get shows tailored to your taste.
+          <Link href="/register">{t('thisWeekendPage.signUp', 'Sign up')}</Link> {t('thisWeekendPage.signUpSuffix', 'to hype artists and get shows tailored to your taste.')}
         </p>
       )}
     </div>

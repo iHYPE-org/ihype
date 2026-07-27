@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 const STATUSES = ['open', 'planned', 'shipped', 'declined'] as const;
 
@@ -10,6 +11,7 @@ interface FeedbackStatusSelectProps {
 }
 
 export function FeedbackStatusSelect({ id, status: initialStatus }: FeedbackStatusSelectProps) {
+  const { t } = useI18n();
   const [status, setStatus] = useState(initialStatus);
   const [loading, setLoading] = useState(false);
 
@@ -40,7 +42,7 @@ export function FeedbackStatusSelect({ id, status: initialStatus }: FeedbackStat
       style={{ width: 120 }}
     >
       {STATUSES.map((s) => (
-        <option key={s} value={s}>{s}</option>
+        <option key={s} value={s}>{t(`feedbackStatusSelect.status.${s}`, s)}</option>
       ))}
     </select>
   );

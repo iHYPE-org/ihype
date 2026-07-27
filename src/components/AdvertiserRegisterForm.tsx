@@ -5,17 +5,18 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { postJson } from '@/lib/api-client';
 import { getErrorMessage } from '@/components/AuthShared';
-
-const CATEGORIES: { id: string; label: string }[] = [
-  { id: 'LABEL', label: 'Record label' },
-  { id: 'VENUE_PROMOTER', label: 'Venue/promoter' },
-  { id: 'GEAR', label: 'Gear & instruments' },
-  { id: 'TICKETING', label: 'Ticketing' },
-  { id: 'MERCH', label: 'Merch' },
-  { id: 'TOUR', label: 'Tour support' },
-];
+import { useI18n } from '@/components/I18nProvider';
 
 export function AdvertiserRegisterForm() {
+  const { t } = useI18n();
+  const CATEGORIES: { id: string; label: string }[] = [
+    { id: 'LABEL', label: t('advertiserRegisterForm.categoryLabel', 'Record label') },
+    { id: 'VENUE_PROMOTER', label: t('advertiserRegisterForm.categoryVenuePromoter', 'Venue/promoter') },
+    { id: 'GEAR', label: t('advertiserRegisterForm.categoryGear', 'Gear & instruments') },
+    { id: 'TICKETING', label: t('advertiserRegisterForm.categoryTicketing', 'Ticketing') },
+    { id: 'MERCH', label: t('advertiserRegisterForm.categoryMerch', 'Merch') },
+    { id: 'TOUR', label: t('advertiserRegisterForm.categoryTour', 'Tour support') },
+  ];
   const [email, setEmail] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [contactName, setContactName] = useState('');
@@ -41,7 +42,7 @@ export function AdvertiserRegisterForm() {
       });
       setSent(true);
     } catch (err) {
-      setError(getErrorMessage(err, 'Something went wrong. Please try again.'));
+      setError(getErrorMessage(err, t('advertiserRegisterForm.genericError', 'Something went wrong. Please try again.')));
     } finally {
       setSubmitting(false);
     }
@@ -52,12 +53,11 @@ export function AdvertiserRegisterForm() {
       <div className="aar-page">
         <div className="aar-card aar-done">
           <div className="aar-check">✓</div>
-          <h1 className="aar-title">Check your inbox.</h1>
+          <h1 className="aar-title">{t('advertiserRegisterForm.checkInboxTitle', 'Check your inbox.')}</h1>
           <p className="aar-sub">
-            We sent a one-tap sign-in link to <b>{email.trim()}</b>. Open it to finish setting up
-            your advertiser account and land straight in your campaign dashboard.
+            {t('advertiserRegisterForm.checkInboxSubPrefix', 'We sent a one-tap sign-in link to')} <b>{email.trim()}</b>. {t('advertiserRegisterForm.checkInboxSubSuffix', 'Open it to finish setting up your advertiser account and land straight in your campaign dashboard.')}
           </p>
-          <Link className="aar-link" href="/advertise">← Back to Advertise</Link>
+          <Link className="aar-link" href="/advertise">{t('advertiserRegisterForm.backToAdvertise', '← Back to Advertise')}</Link>
         </div>
         <style>{styles}</style>
       </div>
@@ -67,62 +67,60 @@ export function AdvertiserRegisterForm() {
   return (
     <div className="aar-page">
       <form className="aar-card" onSubmit={submit}>
-        <div className="aar-eyebrow">3rd-Party Advertiser Account</div>
-        <h1 className="aar-title">Manage your ad campaigns.</h1>
+        <div className="aar-eyebrow">{t('advertiserRegisterForm.eyebrow', '3rd-Party Advertiser Account')}</div>
+        <h1 className="aar-title">{t('advertiserRegisterForm.title', 'Manage your ad campaigns.')}</h1>
         <p className="aar-sub">
-          For music stores, merch printers, live-production companies, and other music-adjacent
-          businesses — no artist, venue, or DJ account required, and no public profile page.
+          {t('advertiserRegisterForm.sub', 'For music stores, merch printers, live-production companies, and other music-adjacent businesses — no artist, venue, or DJ account required, and no public profile page.')}
         </p>
 
         <div className="aar-notice">
-          <div className="aar-notice-label">Music-industry only</div>
+          <div className="aar-notice-label">{t('advertiserRegisterForm.noticeLabel', 'Music-industry only')}</div>
           <p className="aar-notice-body">
-            iHYPE only accepts advertisers in music, live events, or related creator services — labels,
-            venues, gear, ticketing, merch, tour support. Everything else is rejected at screening.
+            {t('advertiserRegisterForm.noticeBody', 'iHYPE only accepts advertisers in music, live events, or related creator services — labels, venues, gear, ticketing, merch, tour support. Everything else is rejected at screening.')}
           </p>
         </div>
 
-        <label className="aar-label" htmlFor="companyName">Company name</label>
+        <label className="aar-label" htmlFor="companyName">{t('advertiserRegisterForm.companyNameLabel', 'Company name')}</label>
         <input
           className="aar-input"
           id="companyName"
           onChange={(e) => setCompanyName(e.target.value)}
-          placeholder="NorthBeat Pedals"
+          placeholder={t('advertiserRegisterForm.companyNamePlaceholder', 'NorthBeat Pedals')}
           required
           value={companyName}
         />
 
-        <label className="aar-label" htmlFor="email">Email</label>
+        <label className="aar-label" htmlFor="email">{t('advertiserRegisterForm.emailLabel', 'Email')}</label>
         <input
           className="aar-input"
           id="email"
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@yourcompany.com"
+          placeholder={t('advertiserRegisterForm.emailPlaceholder', 'you@yourcompany.com')}
           required
           type="email"
           value={email}
         />
 
-        <label className="aar-label" htmlFor="contactName">Contact name (optional)</label>
+        <label className="aar-label" htmlFor="contactName">{t('advertiserRegisterForm.contactNameLabel', 'Contact name (optional)')}</label>
         <input
           className="aar-input"
           id="contactName"
           onChange={(e) => setContactName(e.target.value)}
-          placeholder="Jamie Lee"
+          placeholder={t('advertiserRegisterForm.contactNamePlaceholder', 'Jamie Lee')}
           value={contactName}
         />
 
-        <label className="aar-label" htmlFor="website">Website (optional)</label>
+        <label className="aar-label" htmlFor="website">{t('advertiserRegisterForm.websiteLabel', 'Website (optional)')}</label>
         <input
           className="aar-input"
           id="website"
           onChange={(e) => setWebsite(e.target.value)}
-          placeholder="https://yourcompany.com"
+          placeholder={t('advertiserRegisterForm.websitePlaceholder', 'https://yourcompany.com')}
           type="url"
           value={website}
         />
 
-        <label className="aar-label" htmlFor="category">Category (optional)</label>
+        <label className="aar-label" htmlFor="category">{t('advertiserRegisterForm.categoryFieldLabel', 'Category (optional)')}</label>
         <div className="aar-cat-row" id="category">
           {CATEGORIES.map((c) => (
             <button
@@ -136,12 +134,12 @@ export function AdvertiserRegisterForm() {
           ))}
         </div>
 
-        <label className="aar-label" htmlFor="pitch">Tell us about your business (optional)</label>
+        <label className="aar-label" htmlFor="pitch">{t('advertiserRegisterForm.pitchLabel', 'Tell us about your business (optional)')}</label>
         <textarea
           className="aar-input aar-textarea"
           id="pitch"
           onChange={(e) => setPitch(e.target.value)}
-          placeholder="What do you sell, and to whom?"
+          placeholder={t('advertiserRegisterForm.pitchPlaceholder', 'What do you sell, and to whom?')}
           rows={3}
           value={pitch}
         />
@@ -149,12 +147,12 @@ export function AdvertiserRegisterForm() {
         {error && <p className="aar-error">{error}</p>}
 
         <button className="aar-btn" disabled={submitting} type="submit">
-          {submitting ? 'Creating account…' : 'Create advertiser account →'}
+          {submitting ? t('advertiserRegisterForm.creating', 'Creating account…') : t('advertiserRegisterForm.submit', 'Create advertiser account →')}
         </button>
 
         <p className="aar-fineprint">
-          We'll email you a sign-in link — no password to set. Already have an advertiser account?{' '}
-          <Link href="/login?callbackUrl=/advertise/dashboard">Sign in</Link>.
+          {t('advertiserRegisterForm.fineprint', "We'll email you a sign-in link — no password to set. Already have an advertiser account?")}{' '}
+          <Link href="/login?callbackUrl=/advertise/dashboard">{t('advertiserRegisterForm.signIn', 'Sign in')}</Link>.
         </p>
       </form>
       <style>{styles}</style>

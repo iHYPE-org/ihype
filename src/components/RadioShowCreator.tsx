@@ -5,6 +5,7 @@ import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiFetch, postJson } from '@/lib/api-client';
 import { MUSIC_GENRES } from '@/lib/genres';
+import { useI18n } from '@/components/I18nProvider';
 import {
   royaltyFreeSampleClips,
   buildAutoAdBreak,
@@ -79,6 +80,7 @@ function PreviewIcon({ playing }: { playing: boolean }) {
 }
 
 export function RadioShowCreator({ initialCrate, profile }: { initialCrate: CrateTrack[]; profile: DjProfile }) {
+  const { t } = useI18n();
   const router = useRouter();
   const [title, setTitle] = useState('Untitled show');
   const [genre, setGenre] = useState(GENRES[0]);
@@ -133,6 +135,15 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
     toastTimer.current = setTimeout(() => setToast(''), 2600);
   }
 
+  function typeLabel(kind: Block['kind']): string {
+    switch (kind) {
+      case 'MEDIA': return t('radioShowCreator.typeTrack', 'Track');
+      case 'VOICE_OVER': return t('radioShowCreator.typeVoiceover', 'Voiceover');
+      case 'SAMPLE': return t('radioShowCreator.typeSample', 'Sample');
+      case 'AD': return t('radioShowCreator.typeAdBreak', 'Ad break');
+    }
+  }
+
   const { starts, total, adTime, adBreaks } = useMemo(() => {
     let acc = 0;
     let ad = 0;
@@ -151,54 +162,54 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
 
   const adLoad = total ? Math.round((adTime / total) * 100) : 0;
 
-  function crateTrackToMediaItem(t: CrateTrack): ShowMediaItem {
+  function crateTrackToMediaItem(track: CrateTrack): ShowMediaItem {
     return {
-      mediaId: t.hexId,
-      title: t.title,
-      url: `/api/media/${t.hexId}`,
+      mediaId: track.hexId,
+      title: track.title,
+      url: `/api/media/${track.hexId}`,
       artistProfileId: profile.id,
-      artistName: t.artistName,
+      artistName: track.artistName,
       mediaType: 'audio',
-      durationSeconds: t.durationSecs,
+      durationSeconds: track.durationSecs,
     };
   }
 
-  function addTrack(t: CrateTrack) {
+  function addTrack(track: CrateTrack) {
     setBlocks((b) => [
       ...b,
-      { uid: uid(), kind: 'MEDIA', label: t.title, sub: t.artistName, dur: t.durationSecs, color: TYPE_META.MEDIA.color, mediaItem: crateTrackToMediaItem(t) },
+      { uid: uid(), kind: 'MEDIA', label: track.title, sub: track.artistName, dur: track.durationSecs, color: TYPE_META.MEDIA.color, mediaItem: crateTrackToMediaItem(track) },
     ]);
-    showToast(`Added “${t.title}” to the show`);
+    showToast(`${t('radioShowCreator.toastAdded', 'Added')} “${track.title}” ${t('radioShowCreator.toastToShow', 'to the show')}`);
   }
 
-  function libraryTrackToMediaItem(t: LibraryTrack): ShowMediaItem {
+  function libraryTrackToMediaItem(track: LibraryTrack): ShowMediaItem {
     return {
-      mediaId: t.hexId,
-      title: t.title,
-      url: t.streamUrl,
-      artistProfileId: t.artist.profileId,
-      artistName: t.artist.name,
-      notes: t.notes,
-      mimeType: t.mimeType,
+      mediaId: track.hexId,
+      title: track.title,
+      url: track.streamUrl,
+      artistProfileId: track.artist.profileId,
+      artistName: track.artist.name,
+      notes: track.notes,
+      mimeType: track.mimeType,
       mediaType: 'audio',
-      durationSeconds: t.durationSecs ?? 180,
+      durationSeconds: track.durationSecs ?? 180,
     };
   }
 
-  function addLibraryTrack(t: LibraryTrack) {
+  function addLibraryTrack(track: LibraryTrack) {
     setBlocks((b) => [
       ...b,
       {
         uid: uid(),
         kind: 'MEDIA',
-        label: t.title,
-        sub: t.artist.name,
-        dur: t.durationSecs ?? 180,
+        label: track.title,
+        sub: track.artist.name,
+        dur: track.durationSecs ?? 180,
         color: TYPE_META.MEDIA.color,
-        mediaItem: libraryTrackToMediaItem(t),
+        mediaItem: libraryTrackToMediaItem(track),
       },
     ]);
-    showToast(`Added “${t.title}” by ${t.artist.name} to the show`);
+    showToast(`${t('radioShowCreator.toastAdded', 'Added')} “${track.title}” ${t('radioShowCreator.toastBy', 'by')} ${track.artist.name} ${t('radioShowCreator.toastToShow', 'to the show')}`);
   }
 
   // Platform-wide free-use library search (GET /api/artist-media/free-use) —
@@ -215,7 +226,7 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
       })
       .catch(() => {
         if (requestId !== libraryRequestId.current) return;
-        setLibraryError('Could not load the free-use library. Try again.');
+        setLibraryError(t('radioShowCreator.couldNotLoadLibrary', 'Could not load the free-use library. Try again.'));
       })
       .finally(() => {
         if (requestId !== libraryRequestId.current) return;
@@ -270,10 +281,10 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
     const instance: ShowSamplePad = { ...sample, assignedPad: padCounterRef.current };
     setBlocks((b) => [
       ...b,
-      { uid: uid(), kind: 'SAMPLE', label: sample.title, sub: 'Free-use · cleared', dur: 6, color: TYPE_META.SAMPLE.color, samplePad: instance },
+      { uid: uid(), kind: 'SAMPLE', label: sample.title, sub: t('radioShowCreator.freeUseCleared', 'Free-use · cleared'), dur: 6, color: TYPE_META.SAMPLE.color, samplePad: instance },
     ]);
     closeSamplePicker();
-    showToast(`Added “${sample.title}” sample`);
+    showToast(`${t('radioShowCreator.toastAdded', 'Added')} “${sample.title}” ${t('radioShowCreator.toastSample', 'sample')}`);
   }
 
   async function openAdPreview() {
@@ -296,7 +307,7 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
 
     const clips = buildAutoAdBreak(scope, adPlan?.breakDurationSecs ?? 90);
     if (!clips.length) {
-      showToast('No ad clips available for this scope yet');
+      showToast(t('radioShowCreator.noAdClips', 'No ad clips available for this scope yet'));
       return;
     }
     setAdPreviewIsMarketplace(false);
@@ -313,9 +324,9 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
     const dur = clips.reduce((s, c) => s + (c.durationSeconds ?? 0), 0);
     setBlocks((b) => [
       ...b,
-      { uid: uid(), kind: 'AD', label: `Ad break · ${scope}`, sub: `${clips.length} spot${clips.length > 1 ? 's' : ''}`, dur, color: TYPE_META.AD.color, adClips: clips },
+      { uid: uid(), kind: 'AD', label: `${t('radioShowCreator.adBreak', 'Ad break')} · ${scope}`, sub: `${clips.length} ${clips.length > 1 ? t('radioShowCreator.spotsPlural', 'spots') : t('radioShowCreator.spotSingular', 'spot')}`, dur, color: TYPE_META.AD.color, adClips: clips },
     ]);
-    showToast(`Added a ${fmt(dur)} ad break to the timeline`);
+    showToast(`${t('radioShowCreator.toastAddedAdBreak', 'Added a')} ${fmt(dur)} ${t('radioShowCreator.toastAdBreakToTimeline', 'ad break to the timeline')}`);
     closeAdPreview();
   }
 
@@ -356,8 +367,8 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
     e.currentTarget.setPointerCapture(e.pointerId);
     e.preventDefault();
   }
-  function onCratePointerDown(t: CrateTrack, e: ReactPointerEvent<HTMLElement>) {
-    beginDrag({ kind: 'crate', track: t }, e);
+  function onCratePointerDown(track: CrateTrack, e: ReactPointerEvent<HTMLElement>) {
+    beginDrag({ kind: 'crate', track }, e);
   }
   function onBlockPointerDown(i: number, e: ReactPointerEvent<HTMLElement>) {
     beginDrag({ kind: 'block', index: i }, e);
@@ -378,13 +389,13 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
     const idx = computeOverIndexAt(e.clientY) ?? blocks.length;
 
     if (d.kind === 'crate') {
-      const t = d.track;
+      const track = d.track;
       setBlocks((b) => {
         const nb = [...b];
-        nb.splice(idx, 0, { uid: uid(), kind: 'MEDIA', label: t.title, sub: t.artistName, dur: t.durationSecs, color: TYPE_META.MEDIA.color, mediaItem: crateTrackToMediaItem(t) });
+        nb.splice(idx, 0, { uid: uid(), kind: 'MEDIA', label: track.title, sub: track.artistName, dur: track.durationSecs, color: TYPE_META.MEDIA.color, mediaItem: crateTrackToMediaItem(track) });
         return nb;
       });
-      showToast(`Placed “${t.title}” in the timeline`);
+      showToast(`${t('radioShowCreator.toastPlaced', 'Placed')} “${track.title}” ${t('radioShowCreator.toastInTimeline', 'in the timeline')}`);
     } else {
       setBlocks((b) => {
         const nb = [...b];
@@ -417,7 +428,7 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
       mr.start();
       setRecorder({ phase: 'recording' });
     } catch {
-      showToast('Microphone access denied or unavailable');
+      showToast(t('radioShowCreator.micAccessDenied', 'Microphone access denied or unavailable'));
     }
   }
 
@@ -449,9 +460,10 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
 
   function placeVoiceover() {
     if (recorder.phase !== 'done') return;
+    const voiceOverTitle = t('radioShowCreator.voiceoverSegment', 'Voiceover segment');
     const voiceOver: VoiceOverCue = {
       id: uid(),
-      title: 'Voiceover segment',
+      title: voiceOverTitle,
       script: '',
       durationSeconds: recorder.durationSecs,
       recordingDataUrl: recorder.url,
@@ -459,10 +471,10 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
     };
     setBlocks((b) => [
       ...b,
-      { uid: uid(), kind: 'VOICE_OVER', label: 'Voiceover segment', sub: `Your voice · ${fmt(recorder.durationSecs)}`, dur: recorder.durationSecs, color: TYPE_META.VOICE_OVER.color, voiceOver },
+      { uid: uid(), kind: 'VOICE_OVER', label: voiceOverTitle, sub: `${t('radioShowCreator.yourVoice', 'Your voice')} · ${fmt(recorder.durationSecs)}`, dur: recorder.durationSecs, color: TYPE_META.VOICE_OVER.color, voiceOver },
     ]);
     setRecorder({ phase: 'idle' });
-    showToast('Voiceover added to the show');
+    showToast(t('radioShowCreator.toastVoiceoverAdded', 'Voiceover added to the show'));
   }
 
   function buildProductionPlan(): ShowProductionPlan {
@@ -529,15 +541,15 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
 
   async function saveDraft() {
     if (!blocks.length) {
-      showToast('Add at least one block first');
+      showToast(t('radioShowCreator.addAtLeastOneBlock', 'Add at least one block first'));
       return;
     }
     setSaving('draft');
     try {
       await persist('DRAFT');
-      showToast('Draft saved');
+      showToast(t('radioShowCreator.toastDraftSaved', 'Draft saved'));
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Could not save draft');
+      showToast(err instanceof Error ? err.message : t('radioShowCreator.couldNotSaveDraft', 'Could not save draft'));
     } finally {
       setSaving(null);
     }
@@ -545,19 +557,19 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
 
   async function schedule() {
     if (!blocks.length) {
-      showToast('Add at least one block first');
+      showToast(t('radioShowCreator.addAtLeastOneBlock', 'Add at least one block first'));
       return;
     }
     if (!when) {
-      showToast('Choose a go-live date/time first');
+      showToast(t('radioShowCreator.chooseGoLiveTime', 'Choose a go-live date/time first'));
       return;
     }
     setSaving('schedule');
     try {
       await persist('SCHEDULED');
-      showToast('Show scheduled — listeners will be notified');
+      showToast(t('radioShowCreator.toastShowScheduled', 'Show scheduled — listeners will be notified'));
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Could not schedule show');
+      showToast(err instanceof Error ? err.message : t('radioShowCreator.couldNotScheduleShow', 'Could not schedule show'));
     } finally {
       setSaving(null);
     }
@@ -565,7 +577,7 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
 
   async function goLive() {
     if (!blocks.length) {
-      showToast('Add at least one block first');
+      showToast(t('radioShowCreator.addAtLeastOneBlock', 'Add at least one block first'));
       return;
     }
     setSaving('live');
@@ -576,10 +588,10 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'LIVE' }),
       });
-      showToast('You are live — audio only, no video');
+      showToast(t('radioShowCreator.toastYouAreLive', 'You are live — audio only, no video'));
       router.push(`/shows/${show.slug}`);
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Could not go live');
+      showToast(err instanceof Error ? err.message : t('radioShowCreator.couldNotGoLive', 'Could not go live'));
       setSaving(null);
     }
   }
@@ -587,11 +599,11 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
   return (
     <div className="rsc-root">
       <div className="rsc-head">
-        <div className="rsc-eyebrow">Radio Show Creator · {profile.name}</div>
-        <input className="rsc-title-input" onChange={(e) => setTitle(e.target.value)} placeholder="Untitled show" value={title} />
+        <div className="rsc-eyebrow">{t('radioShowCreator.eyebrow', 'Radio Show Creator')} · {profile.name}</div>
+        <input className="rsc-title-input" onChange={(e) => setTitle(e.target.value)} placeholder={t('radioShowCreator.untitledShow', 'Untitled show')} value={title} />
         <div className="rsc-metarow">
           <label className="rsc-field">
-            <span>Genre</span>
+            <span>{t('radioShowCreator.genre', 'Genre')}</span>
             <select className="rsc-select" onChange={(e) => setGenre(e.target.value)} value={genre}>
               {GENRES.map((g) => (
                 <option key={g}>{g}</option>
@@ -599,7 +611,7 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
             </select>
           </label>
           <label className="rsc-field">
-            <span>Ad reach / scope</span>
+            <span>{t('radioShowCreator.adReachScope', 'Ad reach / scope')}</span>
             <select className="rsc-select" onChange={(e) => { scopeTouchedRef.current = true; setScope(e.target.value as AdvertisingScope); }} value={scope}>
               {SCOPES.map((s) => (
                 <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
@@ -607,89 +619,89 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
             </select>
             {adPlan && (
               <span className="rsc-ai-hint" title={adPlan.rationale}>
-                AI: {adPlan.scope} · {adPlan.breaksPerHour} break{adPlan.breaksPerHour === 1 ? '' : 's'}/hr · target {adPlan.targetAdLoadPct}% load
+                {t('radioShowCreator.aiPrefix', 'AI:')} {adPlan.scope} · {adPlan.breaksPerHour} {adPlan.breaksPerHour === 1 ? t('radioShowCreator.breakSingular', 'break') : t('radioShowCreator.breakPlural', 'breaks')}/hr · {t('radioShowCreator.target', 'target')} {adPlan.targetAdLoadPct}% {t('radioShowCreator.load', 'load')}
               </span>
             )}
           </label>
           <label className="rsc-field">
-            <span>Go live</span>
+            <span>{t('radioShowCreator.goLive', 'Go live')}</span>
             <input className="rsc-dt" onChange={(e) => setWhen(e.target.value)} type="datetime-local" value={when} />
           </label>
           <div className="rsc-actions">
             <button className="rsc-btn rsc-btn-ghost" disabled={saving !== null} onClick={saveDraft} type="button">
-              {saving === 'draft' ? 'Saving…' : 'Save draft'}
+              {saving === 'draft' ? t('radioShowCreator.saving', 'Saving…') : t('radioShowCreator.saveDraft', 'Save draft')}
             </button>
             <button className="rsc-btn rsc-btn-outline" disabled={saving !== null} onClick={schedule} type="button">
-              {saving === 'schedule' ? 'Scheduling…' : 'Schedule'}
+              {saving === 'schedule' ? t('radioShowCreator.scheduling', 'Scheduling…') : t('radioShowCreator.schedule', 'Schedule')}
             </button>
             <button className="rsc-btn rsc-btn-solid" disabled={saving !== null} onClick={goLive} type="button">
-              {saving === 'live' ? 'Going live…' : '● Go live'}
+              {saving === 'live' ? t('radioShowCreator.goingLive', 'Going live…') : t('radioShowCreator.goLiveBtn', '● Go live')}
             </button>
           </div>
         </div>
 
         <div className="rsc-stats">
-          <div className="rsc-stat"><div className="v">{fmt(total)}</div><div className="l">Runtime</div></div>
-          <div className="rsc-stat"><div className="v">{blocks.length}</div><div className="l">Segments</div></div>
-          <div className="rsc-stat"><div className="v" style={{ color: 'var(--accent)' }}>{adBreaks}</div><div className="l">Ad breaks</div></div>
-          <div className="rsc-stat"><div className="v" style={{ color: adLoad > 25 ? 'var(--accent)' : 'var(--ink)' }}>{adLoad}%</div><div className="l">Ad load</div></div>
+          <div className="rsc-stat"><div className="v">{fmt(total)}</div><div className="l">{t('radioShowCreator.statRuntime', 'Runtime')}</div></div>
+          <div className="rsc-stat"><div className="v">{blocks.length}</div><div className="l">{t('radioShowCreator.statSegments', 'Segments')}</div></div>
+          <div className="rsc-stat"><div className="v" style={{ color: 'var(--accent)' }}>{adBreaks}</div><div className="l">{t('radioShowCreator.statAdBreaks', 'Ad breaks')}</div></div>
+          <div className="rsc-stat"><div className="v" style={{ color: adLoad > 25 ? 'var(--accent)' : 'var(--ink)' }}>{adLoad}%</div><div className="l">{t('radioShowCreator.statAdLoad', 'Ad load')}</div></div>
         </div>
       </div>
 
       <div className="rsc-body">
         <div className="rsc-panel rsc-crate-col">
           <div className="rsc-panel-head">
-            <span className="rsc-panel-title">Your crate · {initialCrate.length} cleared</span>
-            <span className="rsc-drag-hint">Drag →</span>
+            <span className="rsc-panel-title">{t('radioShowCreator.yourCrate', 'Your crate')} · {initialCrate.length} {t('radioShowCreator.cleared', 'cleared')}</span>
+            <span className="rsc-drag-hint">{t('radioShowCreator.dragArrow', 'Drag →')}</span>
           </div>
           <div className="rsc-panel-body">
             {initialCrate.length === 0 ? (
-              <p className="rsc-empty-note">No free-use tracks yet. Upload some from your DJ page&apos;s Crate tab.</p>
+              <p className="rsc-empty-note">{t('radioShowCreator.noFreeUseTracksYet', "No free-use tracks yet. Upload some from your DJ page's Crate tab.")}</p>
             ) : (
-              initialCrate.map((t) => (
-                <div className="rsc-crate-item" key={t.hexId}>
+              initialCrate.map((track) => (
+                <div className="rsc-crate-item" key={track.hexId}>
                   <span
                     className="rsc-grip"
                     onPointerCancel={onDragPointerCancel}
-                    onPointerDown={(e) => onCratePointerDown(t, e)}
+                    onPointerDown={(e) => onCratePointerDown(track, e)}
                     onPointerMove={onDragPointerMove}
                     onPointerUp={onDragPointerUp}
                   >
                     <svg fill="currentColor" height="12" viewBox="0 0 24 24" width="12"><circle cx="9" cy="6" r="1.6" /><circle cx="15" cy="6" r="1.6" /><circle cx="9" cy="12" r="1.6" /><circle cx="15" cy="12" r="1.6" /><circle cx="9" cy="18" r="1.6" /><circle cx="15" cy="18" r="1.6" /></svg>
                   </span>
                   <div className="rsc-crate-art" style={{ background: 'linear-gradient(135deg,#ff3e9a,#b983ff)' }} />
-                  <div className="rsc-crate-info"><h5>{t.title}</h5><p>{t.artistName}</p></div>
-                  <span className="rsc-crate-dur">{fmt(t.durationSecs)}</span>
-                  <button className="rsc-crate-add" onClick={() => addTrack(t)} title="Add to show" type="button">
+                  <div className="rsc-crate-info"><h5>{track.title}</h5><p>{track.artistName}</p></div>
+                  <span className="rsc-crate-dur">{fmt(track.durationSecs)}</span>
+                  <button className="rsc-crate-add" onClick={() => addTrack(track)} title={t('radioShowCreator.addToShow', 'Add to show')} type="button">
                     <svg fill="none" height="14" stroke="currentColor" strokeLinecap="round" strokeWidth="2.2" viewBox="0 0 24 24" width="14"><path d="M12 5v14M5 12h14" /></svg>
                   </button>
                 </div>
               ))
             )}
 
-            <div className="rsc-add-label">Add to show</div>
+            <div className="rsc-add-label">{t('radioShowCreator.addToShow', 'Add to show')}</div>
 
             {recorder.phase === 'idle' && (
               <button className="rsc-upload-btn" onClick={startRecording} type="button">
                 <span className="rsc-upload-ico" style={{ background: 'rgba(185,131,255,.14)' }}>
                   <svg fill="none" height="17" stroke="#b983ff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="17"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4" /></svg>
                 </span>
-                <div><div className="rsc-upload-t">Record voiceover</div><div className="rsc-upload-s">Real mic recording, drop between tracks</div></div>
+                <div><div className="rsc-upload-t">{t('radioShowCreator.recordVoiceover', 'Record voiceover')}</div><div className="rsc-upload-s">{t('radioShowCreator.realMicRecording', 'Real mic recording, drop between tracks')}</div></div>
               </button>
             )}
             {recorder.phase === 'recording' && (
               <div className="rsc-recording-card">
-                <span className="rsc-rec-dot" /> Recording… <button className="rsc-btn rsc-btn-ghost" onClick={stopRecording} type="button">Stop</button>
+                <span className="rsc-rec-dot" /> {t('radioShowCreator.recordingEllipsis', 'Recording…')} <button className="rsc-btn rsc-btn-ghost" onClick={stopRecording} type="button">{t('radioShowCreator.stop', 'Stop')}</button>
               </div>
             )}
-            {recorder.phase === 'processing' && <div className="rsc-recording-card">Processing your recording…</div>}
+            {recorder.phase === 'processing' && <div className="rsc-recording-card">{t('radioShowCreator.processingRecording', 'Processing your recording…')}</div>}
             {recorder.phase === 'done' && (
               <div className="rsc-recording-card">
-                <span>Recorded · {fmt(recorder.durationSecs)}</span>
+                <span>{t('radioShowCreator.recorded', 'Recorded')} · {fmt(recorder.durationSecs)}</span>
                 <audio className="rsc-vo-preview" controls src={recorder.url} />
                 <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                  <button className="rsc-btn rsc-btn-solid" onClick={placeVoiceover} type="button">Add to timeline</button>
-                  <button className="rsc-btn rsc-btn-ghost" onClick={discardRecording} type="button">Discard</button>
+                  <button className="rsc-btn rsc-btn-solid" onClick={placeVoiceover} type="button">{t('radioShowCreator.addToTimeline', 'Add to timeline')}</button>
+                  <button className="rsc-btn rsc-btn-ghost" onClick={discardRecording} type="button">{t('radioShowCreator.discard', 'Discard')}</button>
                 </div>
               </div>
             )}
@@ -698,36 +710,36 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
               <span className="rsc-upload-ico" style={{ background: 'rgba(34,229,212,.14)' }}>
                 <svg fill="none" height="17" stroke="#22e5d4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="17"><path d="M2 12h3l2-7 4 14 3-9 2 5h6" /></svg>
               </span>
-              <div><div className="rsc-upload-t">Add sample</div><div className="rsc-upload-s">Royalty-free · already cleared</div></div>
+              <div><div className="rsc-upload-t">{t('radioShowCreator.addSample', 'Add sample')}</div><div className="rsc-upload-s">{t('radioShowCreator.royaltyFreeAlreadyCleared', 'Royalty-free · already cleared')}</div></div>
             </button>
 
             <button className="rsc-upload-btn" onClick={openLibraryPicker} type="button">
               <span className="rsc-upload-ico" style={{ background: 'rgba(255,62,154,.14)' }}>
                 <svg fill="none" height="17" stroke="#ff3e9a" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="17"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
               </span>
-              <div><div className="rsc-upload-t">Browse free-use library</div><div className="rsc-upload-s">Search cleared tracks from every artist on iHYPE</div></div>
+              <div><div className="rsc-upload-t">{t('radioShowCreator.browseFreeUseLibrary', 'Browse free-use library')}</div><div className="rsc-upload-s">{t('radioShowCreator.searchClearedTracks', 'Search cleared tracks from every artist on iHYPE')}</div></div>
             </button>
-            <p className="rsc-fineprint">Voiceovers are your own recording, private to this show. Samples come from a pre-cleared royalty-free catalogue — nothing here needs a copyright check. The free-use library pulls in tracks other artists have opted into sharing platform-wide.</p>
+            <p className="rsc-fineprint">{t('radioShowCreator.voiceoverFineprint', 'Voiceovers are your own recording, private to this show. Samples come from a pre-cleared royalty-free catalogue — nothing here needs a copyright check. The free-use library pulls in tracks other artists have opted into sharing platform-wide.')}</p>
           </div>
         </div>
 
         <div className="rsc-timeline-col">
           <div className="rsc-panel">
             <div className="rsc-panel-head">
-              <span className="rsc-panel-title">Show timeline</span>
+              <span className="rsc-panel-title">{t('radioShowCreator.showTimeline', 'Show timeline')}</span>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className="rsc-ad-btn" onClick={openAdPreview} type="button">
                   <svg fill="none" height="13" stroke="currentColor" strokeLinecap="round" strokeWidth="2.2" viewBox="0 0 24 24" width="13"><path d="M12 5v14M5 12h14" /></svg>
-                  Ad break · ~1:30
+                  {t('radioShowCreator.adBreakApprox', 'Ad break · ~1:30')}
                 </button>
-                {blocks.length > 0 && <button className="rsc-clear-btn" onClick={() => setBlocks([])} type="button">Clear</button>}
+                {blocks.length > 0 && <button className="rsc-clear-btn" onClick={() => setBlocks([])} type="button">{t('radioShowCreator.clear', 'Clear')}</button>}
               </div>
             </div>
             {adPlan && adPlan.advertiserTypes.length > 0 && (
               <div className="rsc-ad-types">
-                <span className="rsc-ad-types-label">AI-matched for this show:</span>
-                {adPlan.advertiserTypes.map((t) => (
-                  <span className="rsc-ad-type-chip" key={t}>{t}</span>
+                <span className="rsc-ad-types-label">{t('radioShowCreator.aiMatchedForShow', 'AI-matched for this show:')}</span>
+                {adPlan.advertiserTypes.map((type) => (
+                  <span className="rsc-ad-type-chip" key={type}>{type}</span>
                 ))}
               </div>
             )}
@@ -735,8 +747,8 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
               {blocks.length === 0 && (
                 <div className="rsc-tl-empty">
                   <svg fill="none" height="40" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.4" viewBox="0 0 24 24" width="40"><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg>
-                  <div className="rsc-tl-empty-title">Build your set</div>
-                  <div>Drag tracks from your crate, or record a voiceover, add a sample, or drop in an ad break.</div>
+                  <div className="rsc-tl-empty-title">{t('radioShowCreator.buildYourSet', 'Build your set')}</div>
+                  <div>{t('radioShowCreator.dragTracksHint', 'Drag tracks from your crate, or record a voiceover, add a sample, or drop in an ad break.')}</div>
                 </div>
               )}
 
@@ -758,7 +770,7 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
                       <span className="rsc-tl-pos">{fmt(starts[i])}</span>
                       <span className="rsc-tl-type" style={{ background: meta.color }} />
                       <div className="rsc-tl-main">
-                        <h4><span className="rsc-tl-chip" style={{ background: `${meta.color}22`, color: meta.color }}>{meta.label}</span>{b.label}</h4>
+                        <h4><span className="rsc-tl-chip" style={{ background: `${meta.color}22`, color: meta.color }}>{typeLabel(b.kind)}</span>{b.label}</h4>
                         {b.kind === 'AD' ? (
                           <div className="rsc-ad-spots">
                             {b.adClips.map((clip) => (
@@ -774,7 +786,7 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
                         )}
                       </div>
                       <span className="rsc-tl-dur">{fmt(b.dur)}</span>
-                      <button className="rsc-tl-rm" onClick={() => removeBlock(b.uid)} title="Remove" type="button">
+                      <button className="rsc-tl-rm" onClick={() => removeBlock(b.uid)} title={t('radioShowCreator.remove', 'Remove')} type="button">
                         <svg fill="none" height="15" stroke="currentColor" strokeLinecap="round" strokeWidth="2" viewBox="0 0 24 24" width="15"><path d="M18 6 6 18M6 6l12 12" /></svg>
                       </button>
                     </div>
@@ -787,11 +799,11 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
 
           {blocks.length > 0 && (
             <div className="rsc-summary">
-              <div><div className="rsc-s-v">{fmt(total)}</div><div className="rsc-s-l">Total runtime</div></div>
-              <div><div className="rsc-s-v">{fmt(total - adTime)}</div><div className="rsc-s-l">Music + talk</div></div>
-              <div><div className="rsc-s-v" style={{ color: 'var(--accent)' }}>{fmt(adTime)}</div><div className="rsc-s-l">Ad time</div></div>
+              <div><div className="rsc-s-v">{fmt(total)}</div><div className="rsc-s-l">{t('radioShowCreator.totalRuntime', 'Total runtime')}</div></div>
+              <div><div className="rsc-s-v">{fmt(total - adTime)}</div><div className="rsc-s-l">{t('radioShowCreator.musicPlusTalk', 'Music + talk')}</div></div>
+              <div><div className="rsc-s-v" style={{ color: 'var(--accent)' }}>{fmt(adTime)}</div><div className="rsc-s-l">{t('radioShowCreator.adTime', 'Ad time')}</div></div>
               <div className="rsc-s-bar">
-                <div className="rsc-s-bar-label"><span>Ad load</span><span>{adLoad}%</span></div>
+                <div className="rsc-s-bar-label"><span>{t('radioShowCreator.statAdLoad', 'Ad load')}</span><span>{adLoad}%</span></div>
                 <div className="rsc-s-bar-track"><div className="rsc-s-bar-fill" style={{ width: `${Math.min(100, adLoad)}%` }} /></div>
               </div>
             </div>
@@ -803,7 +815,7 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
         <div className="rsc-modal-wrap" onClick={(e) => { if (e.target === e.currentTarget) closeSamplePicker(); }}>
           <div className="rsc-modal">
             <div className="rsc-modal-head">
-              <span>Add a sample</span>
+              <span>{t('radioShowCreator.addASample', 'Add a sample')}</span>
               <span onClick={closeSamplePicker} style={{ cursor: 'pointer' }}>×</span>
             </div>
             <div className="rsc-modal-body">
@@ -812,7 +824,7 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
                   <button
                     className="rsc-sample-preview"
                     onClick={() => togglePreview(sample.sampleId, sample.url)}
-                    title={previewingId === sample.sampleId ? 'Pause preview' : 'Preview sample'}
+                    title={previewingId === sample.sampleId ? t('radioShowCreator.pausePreview', 'Pause preview') : t('radioShowCreator.previewSample', 'Preview sample')}
                     type="button"
                   >
                     <PreviewIcon playing={previewingId === sample.sampleId} />
@@ -822,7 +834,7 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
                     <div style={{ fontWeight: 700, fontSize: 13 }}>{sample.title}</div>
                     <div style={{ fontSize: 11, color: 'var(--ink-a50)' }}>{sample.category ?? 'fx'} · {sample.notes}</div>
                   </div>
-                  <button className="rsc-sample-add" onClick={() => addSample(sample)} title="Add to show" type="button">
+                  <button className="rsc-sample-add" onClick={() => addSample(sample)} title={t('radioShowCreator.addToShow', 'Add to show')} type="button">
                     <svg fill="none" height="14" stroke="currentColor" strokeLinecap="round" strokeWidth="2.2" viewBox="0 0 24 24" width="14"><path d="M12 5v14M5 12h14" /></svg>
                   </button>
                 </div>
@@ -836,7 +848,7 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
         <div className="rsc-modal-wrap" onClick={(e) => { if (e.target === e.currentTarget) closeLibraryPicker(); }}>
           <div className="rsc-modal rsc-modal-lg">
             <div className="rsc-modal-head">
-              <span>Browse free-use library</span>
+              <span>{t('radioShowCreator.browseFreeUseLibrary', 'Browse free-use library')}</span>
               <span onClick={closeLibraryPicker} style={{ cursor: 'pointer' }}>×</span>
             </div>
             <div style={{ padding: '10px 14px 0' }}>
@@ -844,39 +856,39 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
                 autoFocus
                 className="rsc-select"
                 onChange={(e) => onLibraryQueryChange(e.target.value)}
-                placeholder="Search by track title or artist name…"
+                placeholder={t('radioShowCreator.searchByTrackOrArtist', 'Search by track title or artist name…')}
                 style={{ width: '100%' }}
                 type="text"
                 value={libraryQuery}
               />
             </div>
             <div className="rsc-modal-body">
-              {libraryLoading && <p className="rsc-empty-note">Searching…</p>}
+              {libraryLoading && <p className="rsc-empty-note">{t('radioShowCreator.searchingEllipsis', 'Searching…')}</p>}
               {!libraryLoading && libraryError && <p className="rsc-empty-note">{libraryError}</p>}
               {!libraryLoading && !libraryError && libraryTracks.length === 0 && (
                 <p className="rsc-empty-note">
-                  {libraryQuery ? `No free-use tracks match “${libraryQuery}”.` : 'No free-use tracks are available platform-wide yet.'}
+                  {libraryQuery ? `${t('radioShowCreator.noFreeUseTracksMatch', 'No free-use tracks match')} “${libraryQuery}”.` : t('radioShowCreator.noFreeUseTracksPlatformWide', 'No free-use tracks are available platform-wide yet.')}
                 </p>
               )}
-              {!libraryLoading && !libraryError && libraryTracks.map((t) => (
-                <div className="rsc-sample-row" key={t.hexId}>
+              {!libraryLoading && !libraryError && libraryTracks.map((track) => (
+                <div className="rsc-sample-row" key={track.hexId}>
                   <button
                     className="rsc-sample-preview"
-                    onClick={() => togglePreview(t.hexId, t.streamUrl)}
-                    title={previewingId === t.hexId ? 'Pause preview' : 'Preview track'}
+                    onClick={() => togglePreview(track.hexId, track.streamUrl)}
+                    title={previewingId === track.hexId ? t('radioShowCreator.pausePreview', 'Pause preview') : t('radioShowCreator.previewTrack', 'Preview track')}
                     type="button"
                   >
-                    <PreviewIcon playing={previewingId === t.hexId} />
+                    <PreviewIcon playing={previewingId === track.hexId} />
                   </button>
                   <div className="rsc-crate-art" style={{ background: 'linear-gradient(135deg,#ff3e9a,#b983ff)' }} />
                   <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
-                    <div style={{ fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</div>
+                    <div style={{ fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{track.title}</div>
                     <div style={{ fontSize: 11, color: 'var(--ink-a50)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {t.artist.name}{t.artist.location ? ` · ${t.artist.location}` : ''}
+                      {track.artist.name}{track.artist.location ? ` · ${track.artist.location}` : ''}
                     </div>
                   </div>
-                  <span className="rsc-crate-dur">{fmt(t.durationSecs ?? 180)}</span>
-                  <button className="rsc-sample-add" onClick={() => addLibraryTrack(t)} title="Add to show" type="button">
+                  <span className="rsc-crate-dur">{fmt(track.durationSecs ?? 180)}</span>
+                  <button className="rsc-sample-add" onClick={() => addLibraryTrack(track)} title={t('radioShowCreator.addToShow', 'Add to show')} type="button">
                     <svg fill="none" height="14" stroke="currentColor" strokeLinecap="round" strokeWidth="2.2" viewBox="0 0 24 24" width="14"><path d="M12 5v14M5 12h14" /></svg>
                   </button>
                 </div>
@@ -890,21 +902,21 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
         <div className="rsc-modal-wrap" onClick={(e) => { if (e.target === e.currentTarget) closeAdPreview(); }}>
           <div className="rsc-modal">
             <div className="rsc-modal-head">
-              <span>Preview ad break</span>
+              <span>{t('radioShowCreator.previewAdBreak', 'Preview ad break')}</span>
               <span onClick={closeAdPreview} style={{ cursor: 'pointer' }}>×</span>
             </div>
             <div className="rsc-modal-body">
               <p className="rsc-fineprint" style={{ margin: '0 4px 4px' }}>
                 {adPreviewIsMarketplace
-                  ? <>Real advertiser campaigns purchased for &quot;{scope}&quot; reach — preview each spot, then add the break to your timeline. You&apos;ll be credited an impression each time one plays.</>
-                  : <>No purchased ads for &quot;{scope}&quot; reach yet — auto-picked from the placeholder ad catalog instead. Preview each spot, then add the break to your timeline.</>}
+                  ? <>{t('radioShowCreator.marketplaceAdsPrefix', 'Real advertiser campaigns purchased for')} &quot;{scope}&quot; {t('radioShowCreator.marketplaceAdsSuffix', "reach — preview each spot, then add the break to your timeline. You'll be credited an impression each time one plays.")}</>
+                  : <>{t('radioShowCreator.placeholderAdsPrefix', 'No purchased ads for')} &quot;{scope}&quot; {t('radioShowCreator.placeholderAdsSuffix', 'reach yet — auto-picked from the placeholder ad catalog instead. Preview each spot, then add the break to your timeline.')}</>}
               </p>
               {adPreviewClips.map((clip) => (
                 <div className="rsc-sample-row" key={clip.clipId}>
                   <button
                     className="rsc-sample-preview"
                     onClick={() => togglePreview(clip.clipId, clip.url)}
-                    title={previewingId === clip.clipId ? 'Pause preview' : 'Preview ad'}
+                    title={previewingId === clip.clipId ? t('radioShowCreator.pausePreview', 'Pause preview') : t('radioShowCreator.previewAd', 'Preview ad')}
                     type="button"
                   >
                     <PreviewIcon playing={previewingId === clip.clipId} />
@@ -917,8 +929,8 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
               ))}
             </div>
             <div style={{ display: 'flex', gap: 8, padding: '0 14px 14px' }}>
-              <button className="rsc-btn rsc-btn-solid" onClick={confirmAdBreak} type="button">Add to timeline</button>
-              <button className="rsc-btn rsc-btn-ghost" onClick={closeAdPreview} type="button">Cancel</button>
+              <button className="rsc-btn rsc-btn-solid" onClick={confirmAdBreak} type="button">{t('radioShowCreator.addToTimeline', 'Add to timeline')}</button>
+              <button className="rsc-btn rsc-btn-ghost" onClick={closeAdPreview} type="button">{t('radioShowCreator.cancel', 'Cancel')}</button>
             </div>
           </div>
         </div>

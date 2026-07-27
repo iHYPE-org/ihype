@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 // ─── Icon ────────────────────────────────────────────────────────────────────
 
@@ -50,6 +51,7 @@ function Logo({ gradient = false, size = 'md' }: { gradient?: boolean; size?: 's
 // ─── HypeButton ──────────────────────────────────────────────────────────────
 
 function HypeButton({ initialCount = 0, initiallyHyped = false }: { initialCount?: number; initiallyHyped?: boolean }) {
+  const { t } = useI18n();
   const [count, setCount] = useState(initialCount);
   const [hyped, setHyped] = useState(initiallyHyped);
   const [pop, setPop] = useState(false);
@@ -76,7 +78,7 @@ function HypeButton({ initialCount = 0, initiallyHyped = false }: { initialCount
       }}
     >
       <Icon name={hyped ? 'check' : 'flame'} size={17} color={hyped ? '#fff' : 'var(--accent)'} strokeWidth={hyped ? 3 : 1.75} />
-      {hyped ? 'Hyped' : 'Hype'} {count.toLocaleString()}
+      {hyped ? t('walkthroughDeck.hyped', 'Hyped') : t('walkthroughDeck.hype', 'Hype')} {count.toLocaleString()}
     </button>
   );
 }
@@ -198,6 +200,7 @@ function QRCode({ value = 'IHYPE', size = 176 }: { value?: string; size?: number
 function QRPass({ artist, detail, admits = 1, serial = 'IH-0000-0000' }: {
   artist: string; detail?: string; admits?: number; serial?: string;
 }) {
+  const { t } = useI18n();
   return (
     <div style={{
       borderRadius: 'var(--radius-2xl)', overflow: 'hidden',
@@ -207,7 +210,7 @@ function QRPass({ artist, detail, admits = 1, serial = 'IH-0000-0000' }: {
     }}>
       <div style={{ padding: '1.5rem', background: 'linear-gradient(135deg, var(--accent), #ff3e9a)' }}>
         <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,.85)' }}>
-          iHYPE · admit {admits}
+          iHYPE · {t('walkthroughDeck.admit', 'admit')} {admits}
         </div>
         <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.5rem', color: '#fff', letterSpacing: '-0.02em', marginTop: 6, lineHeight: 1.1 }}>{artist}</div>
         {detail && <div style={{ fontFamily: 'var(--f-b)', fontSize: '0.85rem', color: 'rgba(255,255,255,.92)', marginTop: 4 }}>{detail}</div>}
@@ -219,7 +222,7 @@ function QRPass({ artist, detail, admits = 1, serial = 'IH-0000-0000' }: {
       <div style={{ padding: '1.75rem 1.5rem 1.5rem', display: 'grid', placeItems: 'center', gap: '1rem', borderTop: '2px dashed var(--hair-100)' }}>
         <QRCode value={serial} />
         <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.8rem', letterSpacing: '0.1em', color: '#9e9080' }}>{serial}</div>
-        <div style={{ fontFamily: 'var(--f-b)', fontSize: '0.78rem', color: '#7a7060', textAlign: 'center' }}>Scan at the door · transferable · no app required</div>
+        <div style={{ fontFamily: 'var(--f-b)', fontSize: '0.78rem', color: '#7a7060', textAlign: 'center' }}>{t('walkthroughDeck.scanAtDoor', 'Scan at the door · transferable · no app required')}</div>
       </div>
     </div>
   );
@@ -265,16 +268,17 @@ const SLIDE_STYLE: React.CSSProperties = {
 };
 
 function Slide01Cover() {
+  const { t } = useI18n();
   return (
     <section style={{ ...SLIDE_STYLE, background: '#0a0805', padding: 88, flexDirection: 'column', justifyContent: 'space-between' }}>
       <div style={{ position: 'absolute', width: 600, height: 600, borderRadius: '50%', filter: 'blur(120px)', top: -200, left: -120, background: 'radial-gradient(circle, rgba(255,80,41,.3), transparent 70%)' }} />
       <div style={{ position: 'absolute', width: 600, height: 600, borderRadius: '50%', filter: 'blur(120px)', bottom: -240, right: -120, background: 'radial-gradient(circle, rgba(185,131,255,.22), transparent 70%)' }} />
       <div style={{ position: 'relative' }}><Logo size="lg" /></div>
       <div style={{ position: 'relative' }}>
-        <Kick>Product walkthrough</Kick>
-        <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, letterSpacing: '-.04em', color: 'var(--ink)', lineHeight: .95, margin: '22px 0 0', fontSize: 92 }}>One loop.<br />Four roles.<br />Zero fees.</h1>
+        <Kick>{t('walkthroughDeck.slide01Kick', 'Product walkthrough')}</Kick>
+        <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, letterSpacing: '-.04em', color: 'var(--ink)', lineHeight: .95, margin: '22px 0 0', fontSize: 92 }}>{t('walkthroughDeck.slide01TitleLine1', 'One loop.')}<br />{t('walkthroughDeck.slide01TitleLine2', 'Four roles.')}<br />{t('walkthroughDeck.slide01TitleLine3', 'Zero fees.')}</h1>
         <Body style={{ fontSize: 23, maxWidth: '60ch', marginTop: 26 }}>
-          How a single hype turns into a booked show, a sold ticket, a paid artist, and a fan who got in early — with iHYPE taking nothing.
+          {t('walkthroughDeck.slide01Body', 'How a single hype turns into a booked show, a sold ticket, a paid artist, and a fan who got in early — with iHYPE taking nothing.')}
         </Body>
       </div>
     </section>
@@ -282,22 +286,23 @@ function Slide01Cover() {
 }
 
 function Slide02Problem() {
+  const { t } = useI18n();
   return (
     <section style={{ ...SLIDE_STYLE, background: '#100d09', padding: 88, flexDirection: 'column', justifyContent: 'center' }}>
-      <Kick>The status quo</Kick>
-      <H size={60} style={{ maxWidth: '20ch', marginTop: 26 }}>The middle takes the most.</H>
+      <Kick>{t('walkthroughDeck.slide02Kick', 'The status quo')}</Kick>
+      <H size={60} style={{ maxWidth: '20ch', marginTop: 26 }}>{t('walkthroughDeck.slide02Title', 'The middle takes the most.')}</H>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24, marginTop: 48 }}>
         <StepCard>
           <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 52, letterSpacing: '-.04em', color: '#ff5029', lineHeight: .95 }}>27%</div>
-          <Body style={{ marginTop: 10, fontSize: 17 }}>Ticketmaster fees on top of face value.</Body>
+          <Body style={{ marginTop: 10, fontSize: 17 }}>{t('walkthroughDeck.slide02Card1', 'Ticketmaster fees on top of face value.')}</Body>
         </StepCard>
         <StepCard>
           <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 52, letterSpacing: '-.04em', color: '#b983ff', lineHeight: .95 }}>$0.003</div>
-          <Body style={{ marginTop: 10, fontSize: 17 }}>Spotify per stream to the artist.</Body>
+          <Body style={{ marginTop: 10, fontSize: 17 }}>{t('walkthroughDeck.slide02Card2', 'Spotify per stream to the artist.')}</Body>
         </StepCard>
         <StepCard>
           <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 52, letterSpacing: '-.04em', color: '#22e5d4', lineHeight: .95 }}>0</div>
-          <Body style={{ marginTop: 10, fontSize: 17 }}>Transparency into where your money goes.</Body>
+          <Body style={{ marginTop: 10, fontSize: 17 }}>{t('walkthroughDeck.slide02Card3', 'Transparency into where your money goes.')}</Body>
         </StepCard>
       </div>
     </section>
@@ -305,88 +310,93 @@ function Slide02Problem() {
 }
 
 function Slide03Loop() {
+  const { t } = useI18n();
   const roles = [
-    { label: 'Fan hypes', color: '#b983ff' },
-    { label: 'Venue sees demand', color: '#22e5d4' },
-    { label: 'Artist accepts', color: '#ff5029' },
-    { label: 'Fan buys', color: 'var(--ink)' },
-    { label: 'Promoter earns', color: '#ffb84a' },
-    { label: 'Everyone paid', color: '#22e5d4' },
+    { key: 'fanHypes', label: t('walkthroughDeck.slide03RoleFanHypes', 'Fan hypes'), color: '#b983ff' },
+    { key: 'venueSeesDemand', label: t('walkthroughDeck.slide03RoleVenueSeesDemand', 'Venue sees demand'), color: '#22e5d4' },
+    { key: 'artistAccepts', label: t('walkthroughDeck.slide03RoleArtistAccepts', 'Artist accepts'), color: '#ff5029' },
+    { key: 'fanBuys', label: t('walkthroughDeck.slide03RoleFanBuys', 'Fan buys'), color: 'var(--ink)' },
+    { key: 'promoterEarns', label: t('walkthroughDeck.slide03RolePromoterEarns', 'Promoter earns'), color: '#ffb84a' },
+    { key: 'everyonePaid', label: t('walkthroughDeck.slide03RoleEveryonePaid', 'Everyone paid'), color: '#22e5d4' },
   ];
   return (
     <section style={{ ...SLIDE_STYLE, background: '#0a0805', padding: '80px 88px', flexDirection: 'column', justifyContent: 'center' }}>
-      <Kick>The iHYPE loop</Kick>
-      <H size={54} style={{ marginTop: 24, marginBottom: 44 }}>Every role feeds the next.</H>
+      <Kick>{t('walkthroughDeck.slide03Kick', 'The iHYPE loop')}</Kick>
+      <H size={54} style={{ marginTop: 24, marginBottom: 44 }}>{t('walkthroughDeck.slide03Title', 'Every role feeds the next.')}</H>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
         {roles.map((r, i) => (
-          <React.Fragment key={r.label}>
+          <React.Fragment key={r.key}>
             <span style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 22, color: r.color }}>{r.label}</span>
             {i < roles.length - 1 && <span style={{ color: '#7a7060', fontSize: 24 }}>→</span>}
           </React.Fragment>
         ))}
       </div>
       <Body style={{ fontSize: 20, marginTop: 40, maxWidth: '62ch' }}>
-        The next slides walk one show through the whole loop — Midnight Echo at The Echo.
+        {t('walkthroughDeck.slide03Body', 'The next slides walk one show through the whole loop — Midnight Echo at The Echo.')}
       </Body>
     </section>
   );
 }
 
 function Slide04Hype() {
+  const { t } = useI18n();
   return (
     <section style={{ ...SLIDE_STYLE, background: '#0a0805', padding: 88, flexDirection: 'column', justifyContent: 'center' }}>
-      <Num>01 / 06 · FAN</Num>
-      <H size={64} style={{ marginTop: 18 }}>A fan hypes a track.</H>
+      <Num>{t('walkthroughDeck.slide04Num', '01 / 06 · FAN')}</Num>
+      <H size={64} style={{ marginTop: 18 }}>{t('walkthroughDeck.slide04Title', 'A fan hypes a track.')}</H>
       <Body style={{ fontSize: 21, maxWidth: '58ch', marginTop: 22 }}>
-        In Seeds, swiping right on Midnight Echo spends one of five weekly hypes. Hype is scarce, so it&rsquo;s a real signal — not a free like.
+        {t('walkthroughDeck.slide04Body', "In Seeds, swiping right on Midnight Echo spends one of five weekly hypes. Hype is scarce, so it's a real signal — not a free like.")}
       </Body>
       <div style={{ marginTop: 40, display: 'flex', gap: 14, alignItems: 'center' }}>
         <HypeButton initialCount={1284} initiallyHyped={true} />
-        <Body style={{ fontSize: 18 }}>scarce by design · 5 per week</Body>
+        <Body style={{ fontSize: 18 }}>{t('walkthroughDeck.slide04Caption', 'scarce by design · 5 per week')}</Body>
       </div>
     </section>
   );
 }
 
 function Slide05Demand() {
+  const { t } = useI18n();
   return (
     <section style={{ ...SLIDE_STYLE, background: '#0a0805', padding: 88, flexDirection: 'column', justifyContent: 'center' }}>
-      <Num>02 / 06 · VENUE</Num>
-      <H size={64} style={{ marginTop: 18 }}>Demand radar lights up.</H>
+      <Num>{t('walkthroughDeck.slide05Num', '02 / 06 · VENUE')}</Num>
+      <H size={64} style={{ marginTop: 18 }}>{t('walkthroughDeck.slide05Title', 'Demand radar lights up.')}</H>
       <Body style={{ fontSize: 21, maxWidth: '58ch', marginTop: 22 }}>
-        Aggregated local hype tells The Echo who&rsquo;s about to pop — so they book the room before the rest of the city catches on.
+        {t('walkthroughDeck.slide05Body', "Aggregated local hype tells The Echo who's about to pop — so they book the room before the rest of the city catches on.")}
       </Body>
       <div style={{ marginTop: 40, display: 'flex', gap: 16 }}>
-        <StatTile value="+61%" label="Local hype, 30d" color="var(--role-venue)" />
-        <StatTile value="#1" label="On the LA radar" color="var(--accent)" />
+        <StatTile value="+61%" label={t('walkthroughDeck.slide05Stat1', 'Local hype, 30d')} color="var(--role-venue)" />
+        <StatTile value="#1" label={t('walkthroughDeck.slide05Stat2', 'On the LA radar')} color="var(--accent)" />
       </div>
     </section>
   );
 }
 
 function Slide06Booking() {
+  const { t } = useI18n();
   return (
     <section style={{ ...SLIDE_STYLE, background: '#0a0805', padding: 88, flexDirection: 'column', justifyContent: 'center' }}>
-      <Num>03 / 06 · ARTIST</Num>
-      <H size={64} style={{ marginTop: 18 }}>The offer becomes a show.</H>
+      <Num>{t('walkthroughDeck.slide06Num', '03 / 06 · ARTIST')}</Num>
+      <H size={64} style={{ marginTop: 18 }}>{t('walkthroughDeck.slide06Title', 'The offer becomes a show.')}</H>
       <Body style={{ fontSize: 21, maxWidth: '58ch', marginTop: 22 }}>
-        The venue sends a booking offer; it lands in the artist&rsquo;s inbox. One tap to accept turns it into a live, on-sale show.
+        {t('walkthroughDeck.slide06Body', "The venue sends a booking offer; it lands in the artist's inbox. One tap to accept turns it into a live, on-sale show.")}
       </Body>
       <div style={{ marginTop: 40, maxWidth: 560 }}>
-        <ListRow icon="venue" iconTint="var(--role-venue)" title="The Echo — Fri Jun 27" subtitle="300 cap · $18 · offer accepted" />
+        <ListRow icon="venue" iconTint="var(--role-venue)" title={t('walkthroughDeck.slide06RowTitle', 'The Echo — Fri Jun 27')} subtitle={t('walkthroughDeck.slide06RowSubtitle', '300 cap · $18 · offer accepted')} />
       </div>
     </section>
   );
 }
 
 function Slide07Ticket() {
+  const { t } = useI18n();
   return (
     <section style={{ ...SLIDE_STYLE, background: '#0a0805', padding: '80px 88px', flexDirection: 'row', alignItems: 'center', gap: 64 }}>
       <div style={{ flex: 1 }}>
-        <Num>04 / 06 · FAN</Num>
-        <H size={60} style={{ marginTop: 18 }}>A ticket, at face value.</H>
+        <Num>{t('walkthroughDeck.slide07Num', '04 / 06 · FAN')}</Num>
+        <H size={60} style={{ marginTop: 18 }}>{t('walkthroughDeck.slide07Title', 'A ticket, at face value.')}</H>
         <Body style={{ fontSize: 21, maxWidth: '46ch', marginTop: 22 }}>
-          $18 is $18. Zero service fees. And every buyer can see exactly where their money goes — 70% artist, 20% venue, 10% promoter.
+          {t('walkthroughDeck.slide07Body', '$18 is $18. Zero service fees. And every buyer can see exactly where their money goes — 70% artist, 20% venue, 10% promoter.')}
         </Body>
         <div style={{ marginTop: 34, maxWidth: 420 }}>
           <SplitBar total={18} />

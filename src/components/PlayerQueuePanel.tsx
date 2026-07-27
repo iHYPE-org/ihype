@@ -2,6 +2,7 @@
 
 import React from 'react';
 import type { MediaTrack } from '@/components/GlobalMediaPlayer';
+import { useI18n } from '@/components/I18nProvider';
 
 type DockPanel = 'queue' | 'history' | null;
 
@@ -32,6 +33,7 @@ export function PlayerQueuePanel({
   removeFromQueue,
   queue,
 }: PlayerQueuePanelProps) {
+  const { t } = useI18n();
   if (panel === null) return null;
 
   return (
@@ -56,7 +58,7 @@ export function PlayerQueuePanel({
             }}
             type="button"
           >
-            {p === 'queue' ? `Up next (${upcomingTracks.length})` : `History (${history.length})`}
+            {p === 'queue' ? `${t('playerQueuePanel.upNext', 'Up next')} (${upcomingTracks.length})` : `${t('playerQueuePanel.history', 'History')} (${history.length})`}
           </button>
         ))}
         <button onClick={() => setPanel(null)} style={{ ...btnBase, padding: '6px 10px', opacity: 0.4, fontSize: '0.8rem' }} type="button">✕</button>
@@ -66,7 +68,7 @@ export function PlayerQueuePanel({
       <div style={{ overflowY: 'auto', flex: 1, padding: '0.4rem' }}>
         {panel === 'queue' && (
           upcomingTracks.length === 0
-            ? <p style={{ fontSize: '0.75rem', opacity: 0.4, margin: '0.5rem 0.25rem' }}>{isAutoplay ? 'Radio will load more when queue ends.' : 'Queue is empty.'}</p>
+            ? <p style={{ fontSize: '0.75rem', opacity: 0.4, margin: '0.5rem 0.25rem' }}>{isAutoplay ? t('playerQueuePanel.radioWillLoadMore', 'Radio will load more when queue ends.') : t('playerQueuePanel.queueEmpty', 'Queue is empty.')}</p>
             : upcomingTracks.map((track, i) => (
               <div key={track.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px', borderRadius: 4 }}
                 onMouseEnter={e => (e.currentTarget.style.background = 'var(--hair-50)')}
@@ -77,13 +79,13 @@ export function PlayerQueuePanel({
                   <div style={{ fontSize: '0.77rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.title}</div>
                   <div style={{ fontSize: '0.67rem', opacity: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.artistName}</div>
                 </div>
-                <button onClick={() => removeFromQueue(track.id)} style={{ ...btnBase, opacity: 0.3, fontSize: '0.65rem' }} title="Remove" type="button">✕</button>
+                <button onClick={() => removeFromQueue(track.id)} style={{ ...btnBase, opacity: 0.3, fontSize: '0.65rem' }} title={t('playerQueuePanel.remove', 'Remove')} type="button">✕</button>
               </div>
             ))
         )}
         {panel === 'history' && (
           history.length === 0
-            ? <p style={{ fontSize: '0.75rem', opacity: 0.4, margin: '0.5rem 0.25rem' }}>Nothing played yet this session.</p>
+            ? <p style={{ fontSize: '0.75rem', opacity: 0.4, margin: '0.5rem 0.25rem' }}>{t('playerQueuePanel.nothingPlayedYet', 'Nothing played yet this session.')}</p>
             : history.map((track, i) => (
               <div key={`${track.id}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px', borderRadius: 4 }}
                 onMouseEnter={e => (e.currentTarget.style.background = 'var(--hair-50)')}
@@ -102,13 +104,13 @@ export function PlayerQueuePanel({
       {/* Autoplay toggle footer (queue panel only) */}
       {panel === 'queue' && (
         <div style={{ borderTop: '1px solid var(--hair-80)', padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '0.68rem', opacity: 0.6 }}>Autoplay radio</span>
+          <span style={{ fontSize: '0.68rem', opacity: 0.6 }}>{t('playerQueuePanel.autoplayRadio', 'Autoplay radio')}</span>
           <button
             onClick={toggleAutoplay}
             type="button"
             style={{ ...btnBase, fontSize: '0.68rem', fontWeight: 700, opacity: isAutoplay ? 1 : 0.4, color: isAutoplay ? 'var(--accent, #ff5029)' : 'inherit' }}
           >
-            {isAutoplay ? 'On' : 'Off'}
+            {isAutoplay ? t('playerQueuePanel.on', 'On') : t('playerQueuePanel.off', 'Off')}
           </button>
         </div>
       )}

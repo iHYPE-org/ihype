@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { MobileQuickGrid, type QuickGridItem } from '@/components/MobileQuickGrid';
 import { PullToRefresh } from '@/components/PullToRefresh';
 import { useMobileShell } from '@/lib/MobileShellContext';
+import { useI18n } from '@/components/I18nProvider';
 
 const PALETTE = ['#ff5029', '#b983ff', '#22e5d4', '#ff3e9a', '#ffb84a', '#7fb3ff'];
 
@@ -140,6 +141,7 @@ function timeLabel(iso: string | null) {
 }
 
 function SeedDeck({ seeds, onAct }: { seeds: Seed[]; onAct: (seed: Seed, action: 'save' | 'skip' | 'hype') => void }) {
+  const { t } = useI18n();
   const [idx, setIdx] = useState(0);
   const [drag, setDrag] = useState({ x: 0, y: 0, active: false });
   const [flash, setFlash] = useState<'add' | 'skip' | null>(null);
@@ -151,9 +153,9 @@ function SeedDeck({ seeds, onAct }: { seeds: Seed[]; onAct: (seed: Seed, action:
   if (!card) {
     return (
       <div style={{ textAlign: 'center', padding: '50px 24px' }}>
-        <p style={{ marginTop: 14, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, color: 'var(--ink-a60)' }}>You&apos;re all caught up.</p>
-        <p style={{ marginTop: 6, fontSize: 13, color: 'var(--ink-a50)' }}>New seeds drop as artists upload. Check back soon.</p>
-        <button style={{ ...bGhost, marginTop: 18 }} onClick={() => setIdx(0)} type="button">Start over</button>
+        <p style={{ marginTop: 14, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, color: 'var(--ink-a60)' }}>{t('listenHome.seedDeckCaughtUp', "You're all caught up.")}</p>
+        <p style={{ marginTop: 6, fontSize: 13, color: 'var(--ink-a50)' }}>{t('listenHome.seedDeckCaughtUpBody', 'New seeds drop as artists upload. Check back soon.')}</p>
+        <button style={{ ...bGhost, marginTop: 18 }} onClick={() => setIdx(0)} type="button">{t('listenHome.seedDeckStartOver', 'Start over')}</button>
       </div>
     );
   }
@@ -235,7 +237,7 @@ function SeedDeck({ seeds, onAct }: { seeds: Seed[]; onAct: (seed: Seed, action:
             fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,.92)',
             background: 'rgba(0,0,0,.28)', border: '1px solid var(--hair-220)', padding: '5px 11px', borderRadius: 9999,
           }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', display: 'inline-block' }} /> New seed
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', display: 'inline-block' }} /> {t('listenHome.seedDeckNewSeedBadge', 'New seed')}
           </div>
           <button
             onClick={(e) => { e.stopPropagation(); onAct(card, 'hype'); }}
@@ -250,10 +252,10 @@ function SeedDeck({ seeds, onAct }: { seeds: Seed[]; onAct: (seed: Seed, action:
           </button>
 
           {flash === 'add' && (
-            <div style={{ position: 'absolute', top: '50%', right: 24, zIndex: 5, transform: `translateY(-50%) scale(${Math.min(1.15, 0.85 + Math.abs(drag.x) / 320)})`, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 26, letterSpacing: '.04em', textTransform: 'uppercase', color: '#fff', padding: '10px 22px', borderRadius: 14, border: '3px solid #22e5d4', background: 'rgba(34,229,212,.34)', boxShadow: '0 0 30px rgba(34,229,212,.5)' }}>Seed</div>
+            <div style={{ position: 'absolute', top: '50%', right: 24, zIndex: 5, transform: `translateY(-50%) scale(${Math.min(1.15, 0.85 + Math.abs(drag.x) / 320)})`, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 26, letterSpacing: '.04em', textTransform: 'uppercase', color: '#fff', padding: '10px 22px', borderRadius: 14, border: '3px solid #22e5d4', background: 'rgba(34,229,212,.34)', boxShadow: '0 0 30px rgba(34,229,212,.5)' }}>{t('listenHome.seedDeckFlashSeed', 'Seed')}</div>
           )}
           {flash === 'skip' && (
-            <div style={{ position: 'absolute', top: '50%', left: 24, zIndex: 5, transform: `translateY(-50%) scale(${Math.min(1.15, 0.85 + Math.abs(drag.x) / 320)})`, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 26, letterSpacing: '.04em', textTransform: 'uppercase', color: '#fff', padding: '10px 22px', borderRadius: 14, border: '3px solid #fff', background: 'rgba(0,0,0,.42)' }}>Skip</div>
+            <div style={{ position: 'absolute', top: '50%', left: 24, zIndex: 5, transform: `translateY(-50%) scale(${Math.min(1.15, 0.85 + Math.abs(drag.x) / 320)})`, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 26, letterSpacing: '.04em', textTransform: 'uppercase', color: '#fff', padding: '10px 22px', borderRadius: 14, border: '3px solid #fff', background: 'rgba(0,0,0,.42)' }}>{t('listenHome.seedDeckFlashSkip', 'Skip')}</div>
           )}
 
           <div style={{ position: 'relative', zIndex: 3, padding: 22 }}>
@@ -271,11 +273,11 @@ function SeedDeck({ seeds, onAct }: { seeds: Seed[]; onAct: (seed: Seed, action:
       <div style={{ display: 'flex', justifyContent: 'center', gap: 22, marginTop: 24 }}>
         <button onClick={() => commit('skip')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer' }} type="button">
           <span style={{ width: 58, height: 58, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--hair-120)', background: 'var(--hair-40)' }}>✕</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Skip</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>{t('listenHome.seedsSkipLabel', 'Skip')}</span>
         </button>
         <button onClick={() => commit('add')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer' }} type="button">
           <span style={{ width: 58, height: 58, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(34,229,212,.4)', background: 'rgba(34,229,212,.14)' }}>+</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Save to library</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>{t('listenHome.seedsSaveLabel', 'Save to library')}</span>
         </button>
       </div>
       <div style={{ marginTop: 16, fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-a50)' }}>{idx + 1} / {seeds.length}</div>
@@ -292,8 +294,9 @@ export function ListenHome({
   isShellForeground?: boolean;
   resetToken?: number;
 } = {}) {
+  const { t } = useI18n();
   const shell = useMobileShell();
-  const validInitialTab = TABS.some((t) => t.id === initialTab) ? (initialTab as ListenTab) : null;
+  const validInitialTab = TABS.some((tabDef) => tabDef.id === initialTab) ? (initialTab as ListenTab) : null;
   const [tab, setTab] = useState<ListenTab>(validInitialTab ?? 'seeds');
   const [gridMode, setGridMode] = useState(!validInitialTab);
   const prevResetToken = useRef(resetToken);
@@ -465,19 +468,19 @@ export function ListenHome({
 
   const gridItems: QuickGridItem[] = [
     {
-      id: 'seeds', label: 'Seeds', color: '#ff5029', sublabel: 'Swipe to explore',
+      id: 'seeds', label: t('listenHome.grid.seedsLabel', 'Seeds'), color: '#ff5029', sublabel: t('listenHome.grid.seedsSublabel', 'Swipe to explore'),
       icon: <svg fill="none" height="30" stroke="#ff5029" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><rect height="7" rx="1.5" width="7" x="3" y="3" /><rect height="7" rx="1.5" width="7" x="14" y="3" /><rect height="7" rx="1.5" width="7" x="3" y="14" /><rect height="7" rx="1.5" width="7" x="14" y="14" /></svg>,
     },
     {
-      id: 'radio', label: 'Radio', color: '#22e5d4', sublabel: liveShow ? 'Live now' : upcomingShows.length > 0 ? 'Coming up' : 'Nothing live',
+      id: 'radio', label: t('listenHome.grid.radioLabel', 'Radio'), color: '#22e5d4', sublabel: liveShow ? t('listenHome.grid.radioLiveNow', 'Live now') : upcomingShows.length > 0 ? t('listenHome.grid.radioComingUp', 'Coming up') : t('listenHome.grid.radioNothingLive', 'Nothing live'),
       icon: <svg fill="none" height="30" stroke="#22e5d4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><circle cx="12" cy="14" r="4" /><path d="M4 14a8 8 0 0 1 16 0" /><path d="M2 14a10 10 0 0 1 20 0" /></svg>,
     },
     {
-      id: 'charts', label: 'Charts', color: '#ff3e9a', sublabel: 'Top this week',
+      id: 'charts', label: t('listenHome.grid.chartsLabel', 'Charts'), color: '#ff3e9a', sublabel: t('listenHome.grid.chartsSublabel', 'Top this week'),
       icon: <svg fill="none" height="30" stroke="#ff3e9a" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><line x1="6" x2="6" y1="20" y2="12" /><line x1="12" x2="12" y1="20" y2="6" /><line x1="18" x2="18" y1="20" y2="15" /></svg>,
     },
     {
-      id: 'playlists', label: 'Playlists', color: '#b983ff', sublabel: `${playlists?.length ?? 0} saved`,
+      id: 'playlists', label: t('listenHome.grid.playlistsLabel', 'Playlists'), color: '#b983ff', sublabel: `${playlists?.length ?? 0} ${t('listenHome.grid.playlistsSublabelSuffix', 'saved')}`,
       icon: <svg fill="none" height="30" stroke="#b983ff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><line x1="8" x2="21" y1="6" y2="6" /><line x1="8" x2="21" y1="12" y2="12" /><line x1="8" x2="21" y1="18" y2="18" /><circle cx="4" cy="6" fill="#b983ff" r="1.5" stroke="none" /><circle cx="4" cy="12" fill="#b983ff" r="1.5" stroke="none" /><circle cx="4" cy="18" fill="#b983ff" r="1.5" stroke="none" /></svg>,
     },
   ];
@@ -498,7 +501,7 @@ export function ListenHome({
         onSearchTap={() => { setGridMode(false); setTab('search'); }}
         onSelect={(id) => { setGridMode(false); setTab(id as typeof tab); }}
         onSwipeSection={shell?.swipeSection}
-        searchPlaceholder="Search artists, venues, shows…"
+        searchPlaceholder={t('listenHome.searchPlaceholder', 'Search artists, venues, shows…')}
       />
 
       <PullToRefresh onRefresh={refreshAll}>
@@ -506,20 +509,20 @@ export function ListenHome({
       <div ref={contentTopRef} />
       <button className="mqg-back" onClick={() => setGridMode(true)} type="button">
         <svg fill="none" height="18" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="18"><polyline points="15 18 9 12 15 6" /></svg>
-        Listen
+        {t('listenHome.backButton', 'Listen')}
       </button>
 
-      <h1 className="sr-only">Listen</h1>
+      <h1 className="sr-only">{t('listenHome.heading', 'Listen')}</h1>
 
       <div className="mqg-tabstrip" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 26 }}>
-        {TABS.map((t) => (
+        {TABS.map((tabDef) => (
           <button
-            key={t.id}
-            className={tab === t.id ? 'sub-tab active' : 'sub-tab'}
-            onClick={() => setTab(t.id)}
+            key={tabDef.id}
+            className={tab === tabDef.id ? 'sub-tab active' : 'sub-tab'}
+            onClick={() => setTab(tabDef.id)}
             type="button"
           >
-            {t.label}
+            {t(`listenHome.tab.${tabDef.id}`, tabDef.label)}
           </button>
         ))}
       </div>
@@ -530,19 +533,19 @@ export function ListenHome({
           <input
             autoFocus
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search artists, venues, shows…"
+            placeholder={t('listenHome.searchPlaceholder', 'Search artists, venues, shows…')}
             style={{ width: '100%', boxSizing: 'border-box', background: 'var(--hair-30)', border: '1px solid var(--hair-80)', borderRadius: 12, padding: '14px 16px', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontSize: 15, marginBottom: 24 }}
             type="text"
             value={q}
           />
-          {!q.trim() && <div style={emptyStyle}><p>Search across tracks, artists, and genres.</p></div>}
+          {!q.trim() && <div style={emptyStyle}><p>{t('listenHome.searchHint', 'Search across tracks, artists, and genres.')}</p></div>}
           {q.trim() && searchResults === null && <ListSkeleton rows={5} />}
           {q.trim() && searchResults && searchArtists.length === 0 && searchSongs.length === 0 && (
-            <div style={emptyStyle}><p>No results for &ldquo;{q}&rdquo;.</p></div>
+            <div style={emptyStyle}><p>{t('listenHome.searchNoResults', 'No results for')} &ldquo;{q}&rdquo;.</p></div>
           )}
           {searchArtists.length > 0 && (
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 12 }}>Artists</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 12 }}>{t('listenHome.searchArtistsHeading', 'Artists')}</div>
               <div style={panel}>
                 {searchArtists.map((r, i) => (
                   <Link key={r.id} href={r.type === 'venue' ? `/venues/${r.slug}` : r.type === 'promoter' ? `/promoters/${r.slug}` : `/artists/${r.slug}`} style={{ ...chartRow, textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
@@ -559,7 +562,7 @@ export function ListenHome({
           )}
           {searchSongs.length > 0 && (
             <div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 12 }}>Tracks</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 12 }}>{t('listenHome.searchTracksHeading', 'Tracks')}</div>
               <div style={panel}>
                 {searchSongs.map((r) => (
                   <div key={r.id} style={chartRow}>
@@ -595,7 +598,7 @@ export function ListenHome({
               ))}
             </div>
           )}
-          <p style={{ fontSize: 13, color: 'var(--ink-a50)', margin: '0 0 18px', textAlign: 'center' }}>Swipe right to save · left to skip</p>
+          <p style={{ fontSize: 13, color: 'var(--ink-a50)', margin: '0 0 18px', textAlign: 'center' }}>{t('listenHome.seedsSwipeHint', 'Swipe right to save · left to skip')}</p>
           {seeds === null ? (
             <div style={{ position: 'relative', width: '100%', maxWidth: 440, aspectRatio: '1 / 1', margin: '4px auto 0' }}>
               <div className="ihype-skeleton" style={{ position: 'absolute', inset: 0, borderRadius: 28 }} />
@@ -609,18 +612,18 @@ export function ListenHome({
                 background: 'linear-gradient(155deg, rgba(255,80,41,.06), rgba(185,131,255,.05))',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 24, textAlign: 'center',
               }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-a40)', border: '1px solid var(--line-2)', borderRadius: 9999, padding: '5px 11px' }}>No new seeds</span>
-                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 24, letterSpacing: '-.03em', color: 'var(--ink-a55)', lineHeight: 1 }}>Fresh drops land here</div>
-                <p style={{ fontSize: 13, color: 'var(--ink-a45)', margin: 0 }}>New seeds appear as artists upload. Check back soon.</p>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-a40)', border: '1px solid var(--line-2)', borderRadius: 9999, padding: '5px 11px' }}>{t('listenHome.seedsEmptyBadge', 'No new seeds')}</span>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 24, letterSpacing: '-.03em', color: 'var(--ink-a55)', lineHeight: 1 }}>{t('listenHome.seedsEmptyTitle', 'Fresh drops land here')}</div>
+                <p style={{ fontSize: 13, color: 'var(--ink-a45)', margin: 0 }}>{t('listenHome.seedsEmptyBody', 'New seeds appear as artists upload. Check back soon.')}</p>
               </div>
               <div style={{ display: 'flex', justifyContent: 'center', gap: 22, marginTop: 24, opacity: 0.35, pointerEvents: 'none' }} aria-hidden="true">
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
                   <span style={{ width: 58, height: 58, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--hair-120)', background: 'var(--hair-40)' }}>✕</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Skip</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>{t('listenHome.seedsSkipLabel', 'Skip')}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
                   <span style={{ width: 58, height: 58, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(34,229,212,.4)', background: 'rgba(34,229,212,.14)' }}>+</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Save to library</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>{t('listenHome.seedsSaveLabel', 'Save to library')}</span>
                 </div>
               </div>
             </div>
@@ -637,24 +640,24 @@ export function ListenHome({
           {radio !== null && !liveShow && upcomingShows.length === 0 && (
             <div style={{ border: '1px dashed var(--line-2)', borderRadius: 16, padding: 20, background: 'var(--hair-20)' }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a40)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 7 }}>
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--ink-a25)' }} /> OFF AIR
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--ink-a25)' }} /> {t('listenHome.radioOffAir', 'OFF AIR')}
               </div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 4, color: 'var(--ink-a55)' }}>No shows on air</div>
-              <div style={{ fontSize: 13, color: 'var(--ink-a45)', marginBottom: 16 }}>DJs go live on audio — scheduled shows appear here.</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 4, color: 'var(--ink-a55)' }}>{t('listenHome.radioNoShowsTitle', 'No shows on air')}</div>
+              <div style={{ fontSize: 13, color: 'var(--ink-a45)', marginBottom: 16 }}>{t('listenHome.radioNoShowsBody', 'DJs go live on audio — scheduled shows appear here.')}</div>
               <div style={{ display: 'flex', gap: 8, paddingTop: 16, borderTop: '1px solid var(--line)' }}>
-                <Link href="/radio" style={bGhost}>View the station</Link>
+                <Link href="/radio" style={bGhost}>{t('listenHome.radioViewStation', 'View the station')}</Link>
               </div>
             </div>
           )}
           {liveShow && (
             <div style={{ border: '1px solid var(--hair-70)', borderRadius: 16, padding: 20, background: 'var(--hair-30)', marginBottom: 12 }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a50)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 7 }}>
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)', animation: 'ihype-blink 1.2s ease-in-out infinite' }} /> LIVE NOW
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)', animation: 'ihype-blink 1.2s ease-in-out infinite' }} /> {t('listenHome.radioLiveNow', 'LIVE NOW')}
               </div>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 4 }}>{liveShow.title}</div>
-              <div style={{ fontSize: 13, color: 'var(--ink-a60)', marginBottom: 16 }}>{liveShow.headlinerProfile?.name ?? 'iHYPE Radio'}</div>
+              <div style={{ fontSize: 13, color: 'var(--ink-a60)', marginBottom: 16 }}>{liveShow.headlinerProfile?.name ?? t('listenHome.radioDefaultStationName', 'iHYPE Radio')}</div>
               <div style={{ display: 'flex', gap: 8, paddingTop: 16, borderTop: '1px solid var(--line)' }}>
-                <Link href="/radio" style={bSolid}>Tune In</Link>
+                <Link href="/radio" style={bSolid}>{t('listenHome.radioTuneIn', 'Tune In')}</Link>
               </div>
             </div>
           )}
@@ -662,9 +665,9 @@ export function ListenHome({
             <div key={s.id} style={{ border: '1px solid var(--hair-70)', borderRadius: 16, padding: 20, background: 'var(--hair-30)', marginBottom: 12 }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a50)', marginBottom: 10 }}>{timeLabel(s.startsAt)}</div>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 4 }}>{s.title}</div>
-              <div style={{ fontSize: 13, color: 'var(--ink-a60)', marginBottom: 16 }}>{s.headlinerProfile?.name ?? 'iHYPE Radio'}</div>
+              <div style={{ fontSize: 13, color: 'var(--ink-a60)', marginBottom: 16 }}>{s.headlinerProfile?.name ?? t('listenHome.radioDefaultStationName', 'iHYPE Radio')}</div>
               <div style={{ display: 'flex', gap: 8, paddingTop: 16, borderTop: '1px solid var(--line)' }}>
-                <Link href="/radio" style={bGhost}>View schedule</Link>
+                <Link href="/radio" style={bGhost}>{t('listenHome.radioViewSchedule', 'View schedule')}</Link>
               </div>
             </div>
           ))}
@@ -675,7 +678,11 @@ export function ListenHome({
       {tab === 'charts' && (
         <div className="sub-panel">
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
-            {[{ id: 'forYou' as const, label: 'For You' }, { id: 'local' as const, label: 'Local' }, { id: 'national' as const, label: 'National' }].map((s) => (
+            {[
+              { id: 'forYou' as const, label: t('listenHome.chartsScopeForYou', 'For You') },
+              { id: 'local' as const, label: t('listenHome.chartsScopeLocal', 'Local') },
+              { id: 'national' as const, label: t('listenHome.chartsScopeNational', 'National') },
+            ].map((s) => (
               <div
                 key={s.id}
                 onClick={() => setChartScope(s.id)}
@@ -697,7 +704,7 @@ export function ListenHome({
             ))}
           </div>
           <div style={panel}>
-            <div style={panelHead}>Hype Leaderboard · Last 7 days</div>
+            <div style={panelHead}>{t('listenHome.chartsLeaderboardHeading', 'Hype Leaderboard · Last 7 days')}</div>
             {charts === null && Array.from({ length: 5 }).map((_, i) => (
               <div key={i} style={chartRow}>
                 <div className="ihype-skeleton" style={{ width: 26, height: 18, borderRadius: 4, flexShrink: 0 }} />
@@ -708,7 +715,7 @@ export function ListenHome({
                 </div>
               </div>
             ))}
-            {charts !== null && filteredChartRows.length === 0 && <div style={{ ...emptyStyle, padding: '32px 20px' }}><p>No tracks charting here yet.</p></div>}
+            {charts !== null && filteredChartRows.length === 0 && <div style={{ ...emptyStyle, padding: '32px 20px' }}><p>{t('listenHome.chartsEmpty', 'No tracks charting here yet.')}</p></div>}
             {filteredChartRows.map((c, i) => (
               <Link key={c.id} href={`/artists/${c.artistSlug}`} style={{ ...chartRow, textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, width: 26, color: 'var(--ink-a20)', flexShrink: 0 }}>{i + 1}</div>
@@ -729,18 +736,18 @@ export function ListenHome({
         <div className="sub-panel">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 10, flexWrap: 'wrap' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>
-              Your Playlists · {playlists?.length ?? 0}
+              {t('listenHome.playlistsHeading', 'Your Playlists')} · {playlists?.length ?? 0}
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <input
                 onChange={(e) => setNewPlName(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') createPlaylist(); }}
-                placeholder="New playlist name"
+                placeholder={t('listenHome.newPlaylistPlaceholder', 'New playlist name')}
                 style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--hair-100)', background: 'var(--hair-30)', color: 'var(--ink)', fontSize: 13, fontFamily: 'var(--font-body)' }}
                 type="text"
                 value={newPlName}
               />
-              <button onClick={createPlaylist} style={bGhost} type="button">+ New</button>
+              <button onClick={createPlaylist} style={bGhost} type="button">{t('listenHome.newPlaylistButton', '+ New')}</button>
             </div>
           </div>
 
@@ -764,13 +771,13 @@ export function ListenHome({
                   <div key={i} style={{ border: '1px dashed var(--hair-120)', borderRadius: 16, overflow: 'hidden', background: 'var(--hair-15)' }}>
                     <div style={{ height: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg,${PALETTE[i]}14 0%, transparent 100%)`, borderBottom: '1px solid var(--hair-40)', fontSize: 28, opacity: 0.4 }}>🎵</div>
                     <div style={{ padding: '16px 18px 18px' }}>
-                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 2, color: 'var(--ink-a30)' }}>{i === 0 ? 'Your first playlist' : 'Room for more'}</div>
-                      <div style={{ fontSize: 13, color: 'var(--ink-a25)' }}>0 tracks</div>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 2, color: 'var(--ink-a30)' }}>{i === 0 ? t('listenHome.playlistsEmptyCardFirst', 'Your first playlist') : t('listenHome.playlistsEmptyCardMore', 'Room for more')}</div>
+                      <div style={{ fontSize: 13, color: 'var(--ink-a25)' }}>{t('listenHome.playlistsEmptyCardTrackCount', '0 tracks')}</div>
                     </div>
                   </div>
                 ))}
               </div>
-              <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--ink-a50)', marginTop: 16 }}>No playlists yet — name one above to get started.</p>
+              <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--ink-a50)', marginTop: 16 }}>{t('listenHome.playlistsEmptyHint', 'No playlists yet — name one above to get started.')}</p>
             </div>
           )}
 
@@ -780,7 +787,7 @@ export function ListenHome({
                 <div style={{ height: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg,${PALETTE[i % PALETTE.length]}33 0%, transparent 100%)`, borderBottom: '1px solid var(--hair-50)', fontSize: 28 }}>🎵</div>
                 <div style={{ padding: '16px 18px 18px' }}>
                   <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 2 }}>{p.name}</div>
-                  <div style={{ fontSize: 13, color: 'var(--ink-a50)' }}>{p.items.length} track{p.items.length === 1 ? '' : 's'}</div>
+                  <div style={{ fontSize: 13, color: 'var(--ink-a50)' }}>{p.items.length} {p.items.length === 1 ? t('listenHome.trackSingular', 'track') : t('listenHome.trackPlural', 'tracks')}</div>
                 </div>
               </div>
             ))}
@@ -788,7 +795,7 @@ export function ListenHome({
 
           {savedSeeds.length > 0 && (
             <div style={{ marginTop: 32 }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 12 }}>Discover · saved from Seeds</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 12 }}>{t('listenHome.discoverSavedFromSeedsHeading', 'Discover · saved from Seeds')}</div>
               <div style={panel}>
                 {savedSeeds.map((s) => (
                   <Link key={s.id} href={profileHref(s.artistProfileType, s.artistProfileSlug)} style={{ ...chartRow, textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
@@ -801,7 +808,7 @@ export function ListenHome({
 
           {favorites.length > 0 && (
             <div style={{ marginTop: 32 }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 12 }}>Favorites</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 12 }}>{t('listenHome.favoritesHeading', 'Favorites')}</div>
               <div style={panel}>
                 {favorites.map((f) => (
                   f.artistProfileSlug ? (
@@ -824,19 +831,19 @@ export function ListenHome({
       {tab === 'playlists' && openPl && openPlaylist && (
         <div className="sub-panel">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-            <button onClick={() => setOpenPl(null)} style={bGhost} type="button">← Back</button>
+            <button onClick={() => setOpenPl(null)} style={bGhost} type="button">{t('listenHome.playlistDetailBack', '← Back')}</button>
             <div style={{ flex: 1 }} />
-            <button onClick={() => shareLink(openPlaylist.id)} style={bGhost} type="button">Share</button>
+            <button onClick={() => shareLink(openPlaylist.id)} style={bGhost} type="button">{t('listenHome.playlistDetailShare', 'Share')}</button>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
             <div style={{ width: 72, height: 72, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, rgba(255,80,41,.3) 0%, transparent 100%)', border: '1px solid var(--line)', fontSize: 28 }}>🎵</div>
             <div>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 24, letterSpacing: '-.02em' }}>{openPlaylist.name}</div>
-              <div style={{ fontSize: 12, color: 'var(--ink-a50)', marginTop: 2 }}>{openPlaylist.items.length} track{openPlaylist.items.length === 1 ? '' : 's'}</div>
+              <div style={{ fontSize: 12, color: 'var(--ink-a50)', marginTop: 2 }}>{openPlaylist.items.length} {openPlaylist.items.length === 1 ? t('listenHome.trackSingular', 'track') : t('listenHome.trackPlural', 'tracks')}</div>
             </div>
           </div>
           <div style={panel}>
-            {openPlaylist.items.length === 0 && <div style={{ ...emptyStyle, padding: '32px 20px' }}><p>No tracks yet — add tracks from the media player while listening.</p></div>}
+            {openPlaylist.items.length === 0 && <div style={{ ...emptyStyle, padding: '32px 20px' }}><p>{t('listenHome.playlistDetailEmpty', 'No tracks yet — add tracks from the media player while listening.')}</p></div>}
             {openPlaylist.items.map((it, i) => {
               const isDragging = dragState && dragState.index === i;
               const isOver = dragState && dragState.overIndex === i && dragState.index !== i;
@@ -854,7 +861,7 @@ export function ListenHome({
                   <div
                     onPointerDown={(e) => onGripPointerDown(openPlaylist.id, i, e)}
                     style={{ cursor: 'grab', touchAction: 'none', color: 'var(--ink-a30)', flexShrink: 0 }}
-                    title="Drag to reorder"
+                    title={t('listenHome.playlistDetailDragToReorder', 'Drag to reorder')}
                   >
                     <svg fill="currentColor" height="14" viewBox="0 0 24 24" width="14"><circle cx="8" cy="6" r="1.6" /><circle cx="16" cy="6" r="1.6" /><circle cx="8" cy="12" r="1.6" /><circle cx="16" cy="12" r="1.6" /><circle cx="8" cy="18" r="1.6" /><circle cx="16" cy="18" r="1.6" /></svg>
                   </div>
@@ -863,7 +870,7 @@ export function ListenHome({
                     <div style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.title}</div>
                     <div style={{ fontSize: 11, color: 'var(--ink-a50)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.artistName}</div>
                   </div>
-                  <button onClick={() => removeItem(openPlaylist.id, it.id)} style={{ ...bGhost, padding: '6px 12px', fontSize: 12 }} type="button">Remove</button>
+                  <button onClick={() => removeItem(openPlaylist.id, it.id)} style={{ ...bGhost, padding: '6px 12px', fontSize: 12 }} type="button">{t('listenHome.playlistDetailRemove', 'Remove')}</button>
                 </div>
               );
             })}

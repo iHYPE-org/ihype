@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 export function AdminCommunityEditor() {
+  const { t } = useI18n();
   const [slug, setSlug] = useState('');
   const [title, setTitle] = useState('');
   const [summary, setSummary] = useState('');
@@ -21,14 +23,14 @@ export function AdminCommunityEditor() {
       body: JSON.stringify({ slug, title, summary, body, category })
     });
     if (res.ok) {
-      setMsg('Published.');
+      setMsg(t('adminCommunityEditor.published', 'Published.'));
       setSlug('');
       setTitle('');
       setSummary('');
       setBody('');
     } else {
       const j = await res.json().catch(() => ({}));
-      setMsg(j.error ?? 'Failed.');
+      setMsg(j.error ?? t('adminCommunityEditor.failed', 'Failed.'));
     }
     setBusy(false);
   }
@@ -43,16 +45,16 @@ export function AdminCommunityEditor() {
             onClick={() => setCategory(c)}
             type="button"
           >
-            {c === 'update' ? 'Update' : 'Announcement'}
+            {c === 'update' ? t('adminCommunityEditor.categoryUpdate', 'Update') : t('adminCommunityEditor.categoryAnnouncement', 'Announcement')}
           </button>
         ))}
       </div>
-      <input className="input" placeholder="slug-here" value={slug} onChange={(e) => setSlug(e.target.value)} required />
-      <input className="input" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-      <input className="input" placeholder="One-line summary" value={summary} onChange={(e) => setSummary(e.target.value)} />
+      <input className="input" placeholder={t('adminCommunityEditor.slugPlaceholder', 'slug-here')} value={slug} onChange={(e) => setSlug(e.target.value)} required />
+      <input className="input" placeholder={t('adminCommunityEditor.titlePlaceholder', 'Title')} value={title} onChange={(e) => setTitle(e.target.value)} required />
+      <input className="input" placeholder={t('adminCommunityEditor.summaryPlaceholder', 'One-line summary')} value={summary} onChange={(e) => setSummary(e.target.value)} />
       <textarea
         rows={8}
-        placeholder="Full update…"
+        placeholder={t('adminCommunityEditor.bodyPlaceholder', 'Full update…')}
         value={body}
         onChange={(e) => setBody(e.target.value)}
         required
@@ -60,7 +62,7 @@ export function AdminCommunityEditor() {
       />
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <button className="button" type="submit" disabled={busy}>
-          {busy ? 'Publishing…' : 'Publish'}
+          {busy ? t('adminCommunityEditor.publishing', 'Publishing…') : t('adminCommunityEditor.publish', 'Publish')}
         </button>
         {msg ? <span className="meta">{msg}</span> : null}
       </div>

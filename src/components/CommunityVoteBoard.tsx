@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 type FeatureRequest = {
   id: string;
@@ -37,6 +38,7 @@ const STATUS_COLOR: Record<string, string> = {
  * model) that page always used.
  */
 export function CommunityVoteBoard() {
+  const { t } = useI18n();
   const [requests, setRequests] = useState<FeatureRequest[]>([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -62,7 +64,7 @@ export function CommunityVoteBoard() {
       setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, votes: data.votes } : r)).sort((a, b) => b.votes - a.votes));
     } else {
       const data = await res.json().catch(() => ({}));
-      setMessage(data.error ?? 'Could not register that vote.');
+      setMessage(data.error ?? t('communityVoteBoard.voteError', 'Could not register that vote.'));
     }
   }
 
@@ -79,10 +81,10 @@ export function CommunityVoteBoard() {
       setRequests((prev) => [data.request, ...prev]);
       setTitle('');
       setDescription('');
-      setMessage('Submitted — thanks for the idea.');
+      setMessage(t('communityVoteBoard.submitSuccess', 'Submitted — thanks for the idea.'));
     } else {
       const data = await res.json().catch(() => ({}));
-      setMessage(data.error ?? 'Could not submit that idea.');
+      setMessage(data.error ?? t('communityVoteBoard.submitError', 'Could not submit that idea.'));
     }
   }
 
@@ -91,7 +93,7 @@ export function CommunityVoteBoard() {
       <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
         <input
           style={inputStyle}
-          placeholder="Short title for your idea"
+          placeholder={t('communityVoteBoard.titlePlaceholder', 'Short title for your idea')}
           required
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -99,7 +101,7 @@ export function CommunityVoteBoard() {
         />
         <textarea
           style={{ ...inputStyle, resize: 'vertical' }}
-          placeholder="Describe what you'd want built."
+          placeholder={t('communityVoteBoard.descriptionPlaceholder', "Describe what you'd want built.")}
           required
           rows={3}
           value={description}
@@ -108,14 +110,14 @@ export function CommunityVoteBoard() {
         />
         {message && <p style={{ fontSize: 13, color: 'var(--accent)', margin: 0 }}>{message}</p>}
         <button className="ihype-btn-primary" type="submit" style={{ alignSelf: 'flex-start', padding: '11px 22px' }}>
-          Submit idea
+          {t('communityVoteBoard.submitButton', 'Submit idea')}
         </button>
       </form>
 
       {loading ? (
-        <p style={{ fontSize: 13, color: 'var(--ink-a45)' }}>Loading…</p>
+        <p style={{ fontSize: 13, color: 'var(--ink-a45)' }}>{t('communityVoteBoard.loading', 'Loading…')}</p>
       ) : requests.length === 0 ? (
-        <p style={{ fontSize: 13, color: 'var(--ink-a45)' }}>No feature requests yet — be the first to suggest one.</p>
+        <p style={{ fontSize: 13, color: 'var(--ink-a45)' }}>{t('communityVoteBoard.emptyState', 'No feature requests yet — be the first to suggest one.')}</p>
       ) : (
         <div>
           {requests.map((fr) => (

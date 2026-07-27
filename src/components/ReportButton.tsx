@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useId, useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 type ReportTargetType = 'profile' | 'show' | 'media' | 'ticket';
 
@@ -13,21 +14,13 @@ type ReportButtonProps = {
   className?: string;
 };
 
-const REASONS = [
-  'Spam or scam',
-  'Harassment or abuse',
-  'Impersonation',
-  'Copyright / IP violation',
-  'Inappropriate content',
-  'Other',
-];
-
 /**
  * Subtle flag-icon report control. Opens a minimal confirm/reason dialog and
  * POSTs to /api/content-reports (src/app/api/content-reports/route.ts) —
  * targetType must be one of that route's allowed values: 'profile' | 'show' | 'media' | 'ticket'.
  */
 export function ReportButton({ targetType, targetId, entityLabel, className }: ReportButtonProps) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState('');
   const [details, setDetails] = useState('');
@@ -54,6 +47,15 @@ export function ReportButton({ targetType, targetId, entityLabel, className }: R
     setError('');
   }
 
+  const reasons = [
+    t('reportButton.reasonSpam', 'Spam or scam'),
+    t('reportButton.reasonHarassment', 'Harassment or abuse'),
+    t('reportButton.reasonImpersonation', 'Impersonation'),
+    t('reportButton.reasonCopyright', 'Copyright / IP violation'),
+    t('reportButton.reasonInappropriate', 'Inappropriate content'),
+    t('reportButton.reasonOther', 'Other'),
+  ];
+
   function close() {
     setOpen(false);
     // Small delay avoids a visible content flash while the dialog fades/unmounts.
@@ -62,7 +64,7 @@ export function ReportButton({ targetType, targetId, entityLabel, className }: R
 
   async function submit() {
     if (!reason) {
-      setError('Choose a reason.');
+      setError(t('reportButton.chooseReasonError', 'Choose a reason.'));
       return;
     }
     setStatus('submitting');
@@ -76,23 +78,23 @@ export function ReportButton({ targetType, targetId, entityLabel, className }: R
       const data = await response.json().catch(() => ({} as Record<string, unknown>));
       if (!response.ok) {
         setStatus('error');
-        setError((data.error as string | undefined) ?? 'Could not submit report.');
+        setError((data.error as string | undefined) ?? t('reportButton.submitErrorGeneric', 'Could not submit report.'));
         return;
       }
       setStatus('done');
     } catch {
       setStatus('error');
-      setError('Could not submit report (network error).');
+      setError(t('reportButton.submitErrorNetwork', 'Could not submit report (network error).'));
     }
   }
 
   return (
     <>
       <button
-        aria-label={`Report this ${noun}`}
+        aria-label={t('reportButton.reportAriaLabel', 'Report this {noun}').replace('{noun}', noun)}
         className={className}
         onClick={() => setOpen(true)}
-        title={`Report this ${noun}`}
+        title={t('reportButton.reportTitle', 'Report this {noun}').replace('{noun}', noun)}
         type="button"
         style={
           className
@@ -117,7 +119,7 @@ export function ReportButton({ targetType, targetId, entityLabel, className }: R
           <path d="M4 3v18" />
           <path d="M4 4h13l-2.5 4L17 12H4" />
         </svg>
-        {className ? 'Report' : null}
+        {className ? t('reportButton.reportLabel', 'Report') : null}
       </button>
 
       {open && (
@@ -136,45 +138,45 @@ export function ReportButton({ targetType, targetId, entityLabel, className }: R
           >
             {status === 'done' ? (
               <>
-                <h2 id={titleId} style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, marginTop: 0 }}>Report received</h2>
-                <p className="meta">Thanks — our team will review this {noun}.</p>
-                <button className="button small secondary" onClick={close} type="button">Close</button>
+                <h2 id={titleId} style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, marginTop: 0 }}>{t('reportButton.receivedTitle', 'Report received')}</h2>
+                <p className="meta">{t('reportButton.receivedBody', 'Thanks — our team will review this {noun}.').replace('{noun}', noun)}</p>
+                <button className="button small secondary" onClick={close} type="button">{t('reportButton.closeButton', 'Close')}</button>
               </>
             ) : (
               <>
-                <h2 id={titleId} style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, marginTop: 0 }}>Report this {noun}</h2>
-                <p className="meta" style={{ marginBottom: 16 }}>Tell us what&apos;s wrong. Reports go to our moderation team.</p>
+                <h2 id={titleId} style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, marginTop: 0 }}>{t('reportButton.dialogTitle', 'Report this {noun}').replace('{noun}', noun)}</h2>
+                <p className="meta" style={{ marginBottom: 16 }}>{t('reportButton.dialogIntro', "Tell us what's wrong. Reports go to our moderation team.")}</p>
 
                 <form className="form" onSubmit={(event) => { event.preventDefault(); submit(); }}>
                   <label className="field">
-                    <span>Reason</span>
+                    <span>{t('reportButton.reasonLabel', 'Reason')}</span>
                     <select onChange={(event) => setReason(event.target.value)} value={reason}>
-                      <option value="">Select a reason…</option>
-                      {REASONS.map((r) => <option key={r} value={r}>{r}</option>)}
+                      <option value="">{t('reportButton.reasonPlaceholder', 'Select a reason…')}</option>
+                      {reasons.map((r) => <option key={r} value={r}>{r}</option>)}
                     </select>
                   </label>
 
                   <label className="field">
-                    <span>Details (optional)</span>
+                    <span>{t('reportButton.detailsLabel', 'Details (optional)')}</span>
                     <textarea
                       maxLength={1200}
                       onChange={(event) => setDetails(event.target.value)}
-                      placeholder="Anything that helps our review…"
+                      placeholder={t('reportButton.detailsPlaceholder', 'Anything that helps our review…')}
                       rows={4}
                       value={details}
                     />
                   </label>
 
                   <label className="bot-field" aria-hidden="true">
-                    <span>Company</span>
+                    <span>{t('reportButton.companyLabel', 'Company')}</span>
                     <input autoComplete="off" onChange={(event) => setCompany(event.target.value)} tabIndex={-1} type="text" value={company} />
                   </label>
 
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button className="button small" disabled={status === 'submitting'} type="submit">
-                      {status === 'submitting' ? 'Submitting…' : 'Submit report'}
+                      {status === 'submitting' ? t('reportButton.submitting', 'Submitting…') : t('reportButton.submitButton', 'Submit report')}
                     </button>
-                    <button className="button small secondary" onClick={close} type="button">Cancel</button>
+                    <button className="button small secondary" onClick={close} type="button">{t('reportButton.cancelButton', 'Cancel')}</button>
                   </div>
                   {error ? <p className="status-note status-note-error">{error}</p> : null}
                 </form>

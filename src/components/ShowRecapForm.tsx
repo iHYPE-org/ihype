@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 export function ShowRecapForm({ showId, initialRecap }: { showId: string; initialRecap?: string | null }) {
+  const { t } = useI18n();
   const [text, setText] = useState(initialRecap ?? '');
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
@@ -18,13 +20,13 @@ export function ShowRecapForm({ showId, initialRecap }: { showId: string; initia
       });
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
-        setErrorMsg(data.error ?? 'Failed to save recap.');
+        setErrorMsg(data.error ?? t('showRecapForm.saveFailedError', 'Failed to save recap.'));
         setStatus('error');
       } else {
         setStatus('saved');
       }
     } catch {
-      setErrorMsg('Network error. Please try again.');
+      setErrorMsg(t('showRecapForm.networkError', 'Network error. Please try again.'));
       setStatus('error');
     }
   }
@@ -32,21 +34,21 @@ export function ShowRecapForm({ showId, initialRecap }: { showId: string; initia
   return (
     <form onSubmit={handleSubmit} style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
       <label className="form-label">
-        Show recap
+        {t('showRecapForm.label', 'Show recap')}
         <textarea
           className="input"
           rows={6}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Share how the show went — highlights, moments, thank-yous…"
+          placeholder={t('showRecapForm.placeholder', 'Share how the show went — highlights, moments, thank-yous…')}
           style={{ resize: 'vertical' }}
           maxLength={5000}
         />
       </label>
       {status === 'error' && <p style={{ color: 'var(--accent)' }}>{errorMsg}</p>}
-      {status === 'saved' && <p style={{ color: '#22e5d4' }}>Recap saved.</p>}
+      {status === 'saved' && <p style={{ color: '#22e5d4' }}>{t('showRecapForm.savedMessage', 'Recap saved.')}</p>}
       <button className="button small" type="submit" disabled={status === 'saving'}>
-        {status === 'saving' ? 'Saving…' : 'Save recap'}
+        {status === 'saving' ? t('showRecapForm.saving', 'Saving…') : t('showRecapForm.saveButton', 'Save recap')}
       </button>
     </form>
   );

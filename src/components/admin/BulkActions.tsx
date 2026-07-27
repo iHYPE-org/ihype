@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { AdminReauthPrompt } from '@/components/AdminReauthPrompt';
+import { useI18n } from '@/components/I18nProvider';
 
 interface BulkItem {
   id: string;
@@ -16,6 +17,7 @@ interface BulkActionsProps {
 }
 
 export function BulkActions({ items, type }: BulkActionsProps) {
+  const { t } = useI18n();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [action, setAction] = useState<BulkAction>(type === 'profiles' ? 'verify_profiles' : 'feature_shows');
   const [loading, setLoading] = useState(false);
@@ -49,32 +51,32 @@ export function BulkActions({ items, type }: BulkActionsProps) {
       if (data.requiresReauth) {
         setNeedsReauth(true);
       } else if (data.ok) {
-        setResult(`Updated ${data.updated ?? selected.size} records`);
+        setResult(`${t('bulkActions.updatedRecords', 'Updated')} ${data.updated ?? selected.size} ${t('bulkActions.records', 'records')}`);
         setSelected(new Set());
       } else {
-        setResult(`Error: ${data.error ?? 'Unknown error'}`);
+        setResult(`${t('bulkActions.error', 'Error')}: ${data.error ?? t('bulkActions.unknownError', 'Unknown error')}`);
       }
     } catch (err) {
-      setResult('Request failed');
+      setResult(t('bulkActions.requestFailed', 'Request failed'));
     } finally {
       setLoading(false);
     }
   };
 
   const profileActions: { value: BulkAction; label: string }[] = [
-    { value: 'verify_profiles', label: 'Verify profiles' },
+    { value: 'verify_profiles', label: t('bulkActions.verifyProfiles', 'Verify profiles') },
   ];
   const showActions: { value: BulkAction; label: string }[] = [
-    { value: 'feature_shows', label: 'Feature shows' },
-    { value: 'unfeature_shows', label: 'Unfeature shows' },
+    { value: 'feature_shows', label: t('bulkActions.featureShows', 'Feature shows') },
+    { value: 'unfeature_shows', label: t('bulkActions.unfeatureShows', 'Unfeature shows') },
   ];
   const actionOptions = type === 'profiles' ? profileActions : showActions;
 
   return (
     <div style={{ marginTop: 12 }}>
       <div style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-        <button className="button small secondary" onClick={selectAll}>Select all</button>
-        <button className="button small secondary" onClick={clearAll}>Clear</button>
+        <button className="button small secondary" onClick={selectAll}>{t('bulkActions.selectAll', 'Select all')}</button>
+        <button className="button small secondary" onClick={clearAll}>{t('bulkActions.clear', 'Clear')}</button>
         <select
           value={action}
           onChange={(e) => setAction(e.target.value as BulkAction)}
@@ -89,7 +91,7 @@ export function BulkActions({ items, type }: BulkActionsProps) {
           onClick={apply}
           disabled={loading || selected.size === 0}
         >
-          {loading ? 'Applying…' : `Apply to ${selected.size}`}
+          {loading ? t('bulkActions.applying', 'Applying…') : `${t('bulkActions.applyTo', 'Apply to')} ${selected.size}`}
         </button>
         {result && <span style={{ fontSize: 13, color: result.startsWith('Error') ? '#e74c3c' : '#2ecc71' }}>{result}</span>}
       </div>

@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AccessibilityControls } from '@/components/AccessibilityControls';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { useI18n } from '@/components/I18nProvider';
 
 const ico = {
   fill: 'none' as const,
@@ -69,6 +70,7 @@ export function NavDrawer({
   onOpenChange?: (open: boolean) => void;
   showTrigger?: boolean;
 } = {}) {
+  const { t } = useI18n();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = openProp ?? internalOpen;
   const setOpen = onOpenChange ?? setInternalOpen;
@@ -83,7 +85,7 @@ export function NavDrawer({
       {showTrigger && (
         <button
           className="nav-drawer-trigger"
-          aria-label="Open menu"
+          aria-label={t('navDrawer.openMenuAriaLabel', 'Open menu')}
           aria-expanded={open}
           onClick={() => setOpen(true)}
         >
@@ -100,7 +102,7 @@ export function NavDrawer({
           <nav className="nav-drawer" aria-label="Secondary navigation">
             <button
               className="nav-drawer-close"
-              aria-label="Close menu"
+              aria-label={t('navDrawer.closeMenuAriaLabel', 'Close menu')}
               onClick={() => setOpen(false)}
             >
               <svg aria-hidden="true" fill="none" height="15" viewBox="0 0 24 24" width="15" stroke="currentColor" strokeLinecap="round" strokeWidth="2">
@@ -128,22 +130,22 @@ export function NavDrawer({
                     </span>
                     <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2, minWidth: 0 }}>
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '.14em', textTransform: 'uppercase', color: '#22e5d4' }}>
-                        Signed in
+                        {t('navDrawer.signedIn', 'Signed in')}
                       </span>
                       <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {accountName}
                       </span>
                     </span>
                   </Link>
-                  <a href="/api/auth/signout" style={{ fontSize: 12, opacity: 0.6, flexShrink: 0 }}>Sign out</a>
+                  <a href="/api/auth/signout" style={{ fontSize: 12, opacity: 0.6, flexShrink: 0 }}>{t('navDrawer.signOut', 'Sign out')}</a>
                 </div>
               ) : (
                 <div style={{ display: 'flex', gap: 10 }}>
                   <Link className="button secondary small" href="/login" onClick={() => setOpen(false)} style={{ flex: 1, textAlign: 'center' }}>
-                    Sign in
+                    {t('navDrawer.signIn', 'Sign in')}
                   </Link>
                   <Link className="button small" href="/register" onClick={() => setOpen(false)} style={{ flex: 1, textAlign: 'center' }}>
-                    Join free
+                    {t('navDrawer.joinFree', 'Join free')}
                   </Link>
                 </div>
               )}
@@ -157,7 +159,7 @@ export function NavDrawer({
                     onClick={() => setOpen(false)}
                   >
                     <svg {...ico}><rect height="8" rx="1.5" width="8" x="3" y="3" /><rect height="4" rx="1.5" width="8" x="13" y="3" /><rect height="4" rx="1.5" width="8" x="13" y="11" /><rect height="8" rx="1.5" width="8" x="3" y="13" /></svg>
-                    My Dashboard
+                    {t('navDrawer.myDashboard', 'My Dashboard')}
                   </Link>
                 </li>
                 <li>
@@ -167,7 +169,7 @@ export function NavDrawer({
                     onClick={() => setOpen(false)}
                   >
                     <svg {...ico}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
-                    Notifications
+                    {t('navDrawer.notifications', 'Notifications')}
                   </Link>
                 </li>
                 <li>
@@ -177,7 +179,7 @@ export function NavDrawer({
                     onClick={() => setOpen(false)}
                   >
                     <svg {...ico}><path d="M12 3l2.5 5.7 6 .5-4.5 4 1.4 6-5.4-3.2L6.6 19l1.4-6-4.5-4 6-.5L12 3Z" /></svg>
-                    My Scene
+                    {t('navDrawer.myScene', 'My Scene')}
                   </Link>
                 </li>
               </ul>
@@ -185,6 +187,7 @@ export function NavDrawer({
             <ul className="nav-drawer-list">
               {menuLinks.map((link) => {
                 const isActive = pathname === link.href;
+                const key = link.href.replace(/^\//, '').replace(/[-/](\w)/g, (_, c) => c.toUpperCase());
                 return (
                   <li key={link.href}>
                     <Link
@@ -193,7 +196,7 @@ export function NavDrawer({
                       onClick={() => setOpen(false)}
                     >
                       {link.icon}
-                      {link.label}
+                      {t(`navDrawer.menuLink.${key}`, link.label)}
                     </Link>
                   </li>
                 );
@@ -206,7 +209,7 @@ export function NavDrawer({
               <LanguageSwitcher />
             </div>
             <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 13, opacity: 0.5 }}>Theme</span>
+              <span style={{ fontSize: 13, opacity: 0.5 }}>{t('navDrawer.theme', 'Theme')}</span>
               <ThemeToggle />
             </div>
           </nav>

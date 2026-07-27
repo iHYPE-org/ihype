@@ -2,18 +2,20 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useI18n } from '@/components/I18nProvider';
 
 type Action = 'cancel' | 'pause' | 'resume' | 'retry-checkout';
 
-const CONFIRM_COPY: Partial<Record<Action, string>> = {
-  cancel: 'Cancel this campaign? It will stop running immediately and can\'t be resumed.',
-  pause: 'Pause this campaign? It stops running until you resume it — your remaining run length is preserved.',
-  resume: 'Resume this campaign?',
-};
-
 export function CampaignCancelButton({ campaignId, status }: { campaignId: string; status: string }) {
+  const { t } = useI18n();
   const router = useRouter();
   const [pending, setPending] = useState<Action | null>(null);
+
+  const CONFIRM_COPY: Partial<Record<Action, string>> = {
+    cancel: t('campaignCancelButton.confirmCancel', "Cancel this campaign? It will stop running immediately and can't be resumed."),
+    pause: t('campaignCancelButton.confirmPause', 'Pause this campaign? It stops running until you resume it — your remaining run length is preserved.'),
+    resume: t('campaignCancelButton.confirmResume', 'Resume this campaign?'),
+  };
 
   async function act(action: Action) {
     const confirmCopy = CONFIRM_COPY[action];
@@ -42,10 +44,10 @@ export function CampaignCancelButton({ campaignId, status }: { campaignId: strin
     return (
       <div style={{ display: 'flex', gap: 8 }}>
         <button className="button small" disabled={pending !== null} onClick={() => act('retry-checkout')} type="button">
-          {pending === 'retry-checkout' ? 'Redirecting…' : 'Pay now →'}
+          {pending === 'retry-checkout' ? t('campaignCancelButton.redirecting', 'Redirecting…') : t('campaignCancelButton.payNow', 'Pay now →')}
         </button>
         <button className="button small secondary" disabled={pending !== null} onClick={() => act('cancel')} type="button">
-          {pending === 'cancel' ? 'Cancelling…' : 'Cancel'}
+          {pending === 'cancel' ? t('campaignCancelButton.cancelling', 'Cancelling…') : t('campaignCancelButton.cancel', 'Cancel')}
         </button>
       </div>
     );
@@ -55,16 +57,16 @@ export function CampaignCancelButton({ campaignId, status }: { campaignId: strin
     <div style={{ display: 'flex', gap: 8 }}>
       {status === 'APPROVED' && (
         <button className="button small secondary" disabled={pending !== null} onClick={() => act('pause')} type="button">
-          {pending === 'pause' ? 'Pausing…' : 'Pause'}
+          {pending === 'pause' ? t('campaignCancelButton.pausing', 'Pausing…') : t('campaignCancelButton.pause', 'Pause')}
         </button>
       )}
       {status === 'PAUSED' && (
         <button className="button small" disabled={pending !== null} onClick={() => act('resume')} type="button">
-          {pending === 'resume' ? 'Resuming…' : 'Resume'}
+          {pending === 'resume' ? t('campaignCancelButton.resuming', 'Resuming…') : t('campaignCancelButton.resume', 'Resume')}
         </button>
       )}
       <button className="button small secondary" disabled={pending !== null} onClick={() => act('cancel')} type="button">
-        {pending === 'cancel' ? 'Cancelling…' : 'Cancel campaign'}
+        {pending === 'cancel' ? t('campaignCancelButton.cancelling', 'Cancelling…') : t('campaignCancelButton.cancelCampaign', 'Cancel campaign')}
       </button>
     </div>
   );

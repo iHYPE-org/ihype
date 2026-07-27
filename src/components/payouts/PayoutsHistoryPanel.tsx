@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 type PayableEntry = {
   id: string;

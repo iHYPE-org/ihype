@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { startRegistration } from '@simplewebauthn/browser';
+import { useI18n } from '@/components/I18nProvider';
 
 type Step = 'idle' | 'creating' | 'registering' | 'done' | 'error';
 
 export function AdminSetupClient() {
+  const { t } = useI18n();
   const router = useRouter();
   const [secret, setSecret] = useState('');
   const [step, setStep] = useState<Step>('idle');
@@ -17,7 +19,7 @@ export function AdminSetupClient() {
     event.preventDefault();
     setError('');
     setStep('creating');
-    setStatus('Creating account...');
+    setStatus(t('adminSetupClient.creatingAccount', 'Creating account...'));
 
     try {
       const res = await fetch('/api/admin/setup', {
@@ -30,16 +32,16 @@ export function AdminSetupClient() {
       });
       if (!res.ok) {
         const payload = await res.json().catch(() => ({}));
-        throw new Error(typeof payload.error === 'string' ? payload.error : `Failed (${res.status}).`);
+        throw new Error(typeof payload.error === 'string' ? payload.error : `${t('adminSetupClient.failedWithStatus', 'Failed')} (${res.status}).`);
       }
 
       setStep('registering');
-      setStatus('Register your passkey now — follow your browser prompt.');
+      setStatus(t('adminSetupClient.registerPasskeyPrompt', 'Register your passkey now — follow your browser prompt.'));
 
       const optRes = await fetch('/api/auth/passkey/register-first');
       const options = await optRes.json();
       if (!optRes.ok) {
-        throw new Error(typeof options.error === 'string' ? options.error : 'Could not start passkey registration.');
+        throw new Error(typeof options.error === 'string' ? options.error : t('adminSetupClient.couldNotStartRegistration', 'Could not start passkey registration.'));
       }
 
       const attestation = await startRegistration({ optionsJSON: options });
@@ -51,15 +53,15 @@ export function AdminSetupClient() {
       });
       const verifyData = await verifyRes.json().catch(() => ({}));
       if (!verifyRes.ok) {
-        throw new Error(typeof verifyData.error === 'string' ? verifyData.error : 'Passkey verification failed.');
+        throw new Error(typeof verifyData.error === 'string' ? verifyData.error : t('adminSetupClient.verificationFailed', 'Passkey verification failed.'));
       }
 
       setStep('done');
-      setStatus('Done! Redirecting to admin...');
+      setStatus(t('adminSetupClient.doneRedirecting', 'Done! Redirecting to admin...'));
       setTimeout(() => router.push('/admin'), 700);
     } catch (err) {
       setStep('error');
-      setError(err instanceof Error ? err.message : 'Something went wrong.');
+      setError(err instanceof Error ? err.message : t('adminSetupClient.somethingWentWrong', 'Something went wrong.'));
     }
   }
 
@@ -76,9 +78,9 @@ export function AdminSetupClient() {
         border: '1px solid var(--hair-80)'
       }}
     >
-      <h1 style={{ margin: '0 0 6px', fontSize: 22 }}>Admin setup</h1>
+      <h1 style={{ margin: '0 0 6px', fontSize: 22 }}>{t('adminSetupClient.heading', 'Admin setup')}</h1>
       <p style={{ margin: '0 0 18px', opacity: 0.75, fontSize: 14 }}>
-        Set up admin access for <strong>admin@ihype.org</strong>. Requires <code>ALLOW_ADMIN_SETUP=true</code> and should be disabled after the first passkey is registered.
+        {t('adminSetupClient.descriptionPrefix', 'Set up admin access for')} <strong>admin@ihype.org</strong>. {t('adminSetupClient.descriptionSuffix', 'Requires')} <code>ALLOW_ADMIN_SETUP=true</code> {t('adminSetupClient.descriptionSuffix2', 'and should be disabled after the first passkey is registered.')}
       </p>
 
       <form onSubmit={handleSubmit}>
@@ -119,12 +121,12 @@ export function AdminSetupClient() {
           }}
         >
           {step === 'creating'
-            ? 'Creating account...'
+            ? t('adminSetupClient.creatingAccount', 'Creating account...')
             : step === 'registering'
-              ? 'Registering passkey...'
+              ? t('adminSetupClient.registeringPasskey', 'Registering passkey...')
               : step === 'done'
-                ? 'Done'
-                : 'Create admin account'}
+                ? t('adminSetupClient.done', 'Done')
+                : t('adminSetupClient.createAdminAccount', 'Create admin account')}
         </button>
       </form>
 

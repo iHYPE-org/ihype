@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 interface ReferralStats {
   clicks: number;
@@ -25,6 +26,7 @@ const statBox: React.CSSProperties = {
 };
 
 export function PagesReferralTab() {
+  const { t } = useI18n();
   const [info, setInfo] = useState<ReferralInfo | null>(null);
   const [stats, setStats] = useState<ReferralStats | null>(null);
   const [copied, setCopied] = useState(false);
@@ -47,13 +49,12 @@ export function PagesReferralTab() {
     return (
       <div style={{ background: 'rgba(185,131,255,.06)', border: '1px solid rgba(185,131,255,.18)', borderRadius: 16, padding: 24, textAlign: 'center' }}>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: '#b983ff', marginBottom: 10 }}>
-          HYPE Link · 18+
+          {t('pagesReferralTab.ageGateBadge', 'HYPE Link · 18+')}
         </div>
         <p style={{ fontSize: 14, color: 'var(--ink-a75)', lineHeight: 1.6, margin: '0 0 16px' }}>
-          Referral links are for members 18 and older. If that&rsquo;s you, confirm your age once in Settings and
-          your HYPE Link unlocks right away.
+          {t('pagesReferralTab.ageGateBody', "Referral links are for members 18 and older. If that's you, confirm your age once in Settings and your HYPE Link unlocks right away.")}
         </p>
-        <Link className="ihype-btn-primary" href="/me/settings">Confirm my age in Settings</Link>
+        <Link className="ihype-btn-primary" href="/me/settings">{t('pagesReferralTab.ageGateCta', 'Confirm my age in Settings')}</Link>
       </div>
     );
   }
@@ -70,44 +71,44 @@ export function PagesReferralTab() {
   return (
     <div>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a35)', marginBottom: 14 }}>
-        HYPE LINK
+        {t('pagesReferralTab.sectionLabel', 'HYPE LINK')}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 12 }}>
         <div style={statBox}>
           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', marginBottom: 5 }}>
             {stats ? money(stats.estimatedCommissionCents) : '—'}
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Est. earned</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>{t('pagesReferralTab.estEarned', 'Est. earned')}</div>
         </div>
         <div style={statBox}>
           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', marginBottom: 5 }}>
             {stats?.ticketSales ?? '—'}
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Tickets driven</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>{t('pagesReferralTab.ticketsDriven', 'Tickets driven')}</div>
         </div>
         <div style={statBox}>
           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', marginBottom: 5 }}>
             {stats?.clicks ?? '—'}
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Clicks</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>{t('pagesReferralTab.clicks', 'Clicks')}</div>
         </div>
       </div>
       <div style={{ background: 'rgba(185,131,255,.06)', border: '1px solid rgba(185,131,255,.18)', borderRadius: 16, padding: 20 }}>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: '#b983ff', marginBottom: 12 }}>
-          Your HYPE Link · your unique fan ID — earn on every ticket you drive
+          {t('pagesReferralTab.linkSectionLabel', 'Your HYPE Link · your unique fan ID — earn on every ticket you drive')}
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 14 }}>
           <div style={{ flex: 1, background: 'var(--hair-40)', border: '1px solid var(--hair-80)', borderRadius: 9, padding: '11px 14px', fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-a70)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {link || 'Loading…'}
+            {link || t('pagesReferralTab.loading', 'Loading…')}
           </div>
           <button onClick={copy} className="ihype-btn-primary" style={{ flexShrink: 0 }}>
-            {copied ? 'Copied' : 'Copy'}
+            {copied ? t('pagesReferralTab.copied', 'Copied') : t('pagesReferralTab.copy', 'Copy')}
           </button>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <a className="ihype-btn-ghost" href={`sms:?body=${encodeURIComponent(info?.shareText ?? '')}`}>Message</a>
-          <a className="ihype-btn-ghost" target="_blank" rel="noreferrer" href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(info?.shareText ?? '')}`}>Twitter / X</a>
-          <a className="ihype-btn-ghost" href={`mailto:?subject=${encodeURIComponent('Join me on iHYPE')}&body=${encodeURIComponent(info?.shareText ?? '')}`}>Email</a>
+          <a className="ihype-btn-ghost" href={`sms:?body=${encodeURIComponent(info?.shareText ?? '')}`}>{t('pagesReferralTab.shareMessage', 'Message')}</a>
+          <a className="ihype-btn-ghost" target="_blank" rel="noreferrer" href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(info?.shareText ?? '')}`}>{t('pagesReferralTab.shareTwitter', 'Twitter / X')}</a>
+          <a className="ihype-btn-ghost" href={`mailto:?subject=${encodeURIComponent('Join me on iHYPE')}&body=${encodeURIComponent(info?.shareText ?? '')}`}>{t('pagesReferralTab.shareEmail', 'Email')}</a>
         </div>
       </div>
     </div>

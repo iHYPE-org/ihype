@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { postJson } from '@/lib/api-client';
+import { useI18n } from '@/components/I18nProvider';
 
 export type RoleOption = 'FAN' | 'ARTIST' | 'DJ' | 'VENUE';
 export type AuthMethod = 'email' | 'passkey';
@@ -46,6 +47,7 @@ export function AuthCardShell({
   subtitle: string;
   children: ReactNode;
 }) {
+  const { t } = useI18n();
   return (
     <section className="authcard-page">
       <div className="authcard-wrap">
@@ -60,7 +62,7 @@ export function AuthCardShell({
             href="/login"
             role="tab"
           >
-            Sign In
+            {t('authShared.signInTab', 'Sign In')}
           </Link>
           <Link
             aria-selected={mode === 'signup'}
@@ -68,13 +70,13 @@ export function AuthCardShell({
             href="/register"
             role="tab"
           >
-            Create Account
+            {t('authShared.createAccountTab', 'Create Account')}
           </Link>
         </div>
 
         <div className="authcard-box">{children}</div>
 
-        <p className="authcard-charter">iHYPE takes nothing · locked in the charter</p>
+        <p className="authcard-charter">{t('authShared.charterLine', 'iHYPE takes nothing · locked in the charter')}</p>
       </div>
     </section>
   );

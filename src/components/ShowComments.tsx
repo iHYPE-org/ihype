@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 type Reaction = { emoji: string; count: number };
 type Comment = {
@@ -14,6 +15,7 @@ type Comment = {
 const REACTION_EMOJIS = ['👍', '❤️', '🔥'];
 
 export function ShowComments({ showId, canComment }: { showId: string; canComment: boolean }) {
+  const { t } = useI18n();
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState('');
@@ -50,13 +52,13 @@ export function ShowComments({ showId, canComment }: { showId: string; canCommen
       });
       const data = (await res.json()) as { error?: string; comment?: Omit<Comment, 'reactions'> };
       if (!res.ok || !data.comment) {
-        setErrorMsg(data.error ?? 'Failed to post comment.');
+        setErrorMsg(data.error ?? t('showComments.postFailedError', 'Failed to post comment.'));
       } else {
         setComments((prev) => [{ ...data.comment!, reactions: [] }, ...prev]);
         setText('');
       }
     } catch {
-      setErrorMsg('Network error. Please try again.');
+      setErrorMsg(t('showComments.networkError', 'Network error. Please try again.'));
     } finally {
       setPosting(false);
     }
@@ -84,35 +86,35 @@ export function ShowComments({ showId, canComment }: { showId: string; canCommen
 
   return (
     <div className="panel" style={{ padding: '1.25rem', marginTop: 24 }}>
-      <h2 style={{ marginTop: 0 }}>Comments</h2>
+      <h2 style={{ marginTop: 0 }}>{t('showComments.heading', 'Comments')}</h2>
 
       {canComment ? (
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
           <label className="form-label">
-            Add a comment
+            {t('showComments.addCommentLabel', 'Add a comment')}
             <textarea
               className="input"
               rows={3}
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Say something about this show…"
+              placeholder={t('showComments.commentPlaceholder', 'Say something about this show…')}
               style={{ resize: 'vertical' }}
               maxLength={1500}
             />
           </label>
           {errorMsg && <p style={{ color: 'var(--accent)' }}>{errorMsg}</p>}
           <button className="button small" type="submit" disabled={posting || !text.trim()}>
-            {posting ? 'Posting…' : 'Post comment'}
+            {posting ? t('showComments.posting', 'Posting…') : t('showComments.postButton', 'Post comment')}
           </button>
         </form>
       ) : (
-        <p className="meta">Sign in to join the conversation.</p>
+        <p className="meta">{t('showComments.signInPrompt', 'Sign in to join the conversation.')}</p>
       )}
 
       {loading ? (
-        <p className="meta">Loading comments…</p>
+        <p className="meta">{t('showComments.loading', 'Loading comments…')}</p>
       ) : comments.length === 0 ? (
-        <p className="meta">No comments yet — be the first to say something.</p>
+        <p className="meta">{t('showComments.emptyState', 'No comments yet — be the first to say something.')}</p>
       ) : (
         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: '0.6rem' }}>
           {comments.map((comment) => (
@@ -138,7 +140,7 @@ export function ShowComments({ showId, canComment }: { showId: string; canCommen
                       className="button small secondary"
                       type="button"
                       disabled={!canComment}
-                      title={canComment ? undefined : 'Sign in to react'}
+                      title={canComment ? undefined : t('showComments.signInToReactTitle', 'Sign in to react')}
                       onClick={() => void toggleReaction(comment.id, emoji)}
                       style={{ fontSize: 12, padding: '2px 10px' }}
                     >

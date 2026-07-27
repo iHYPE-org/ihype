@@ -2,8 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
-async function postSupportRequest(body: unknown) {
+async function postSupportRequest(body: unknown, fallbackError: string) {
   const response = await fetch('/api/support', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -12,7 +13,7 @@ async function postSupportRequest(body: unknown) {
   const payload = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(typeof payload.error === 'string' ? payload.error : 'Could not send request.');
+    throw new Error(typeof payload.error === 'string' ? payload.error : fallbackError);
   }
 
   return payload;
@@ -34,6 +35,7 @@ async function postSupportRequest(body: unknown) {
  * client-only "prepend to list" behavior.
  */
 export function SupportTicketComposer() {
+  const { t } = useI18n();
   const router = useRouter();
   const [composing, setComposing] = useState(false);
   const [subject, setSubject] = useState('');
@@ -56,18 +58,19 @@ export function SupportTicketComposer() {
 
     setSubmitting(true);
     setError('');
+    const fallbackError = t('supportTicketComposer.sendErrorFallback', 'Could not send request.');
     try {
       await postSupportRequest({
         type: 'general',
         subject: subject.trim(),
         details: details.trim() || 'No additional details provided.',
-      });
+      }, fallbackError);
       setComposing(false);
       setSubject('');
       setDetails('');
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not send request.');
+      setError(err instanceof Error ? err.message : fallbackError);
     } finally {
       setSubmitting(false);
     }
@@ -85,7 +88,7 @@ export function SupportTicketComposer() {
             background: '#ff5029', color: '#fff',
           }}
         >
-          {composing ? 'Close' : 'New ticket'}
+          {composing ? t('supportTicketComposer.closeButton', 'Close') : t('supportTicketComposer.newTicketButton', 'New ticket')}
         </button>
       </div>
 
@@ -98,12 +101,12 @@ export function SupportTicketComposer() {
           }}
         >
           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, color: 'var(--ink)' }}>
-            New ticket
+            {t('supportTicketComposer.formTitle', 'New ticket')}
           </div>
           <input
             value={subject}
             onChange={(event) => setSubject(event.target.value)}
-            placeholder="Subject"
+            placeholder={t('supportTicketComposer.subjectPlaceholder', 'Subject')}
             style={{
               width: '100%', height: 42, background: 'var(--bg)', border: '1px solid var(--line)',
               borderRadius: 'var(--radius-sm)', padding: '0 14px', color: 'var(--ink)', fontSize: 14,
@@ -114,7 +117,7 @@ export function SupportTicketComposer() {
             value={details}
             onChange={(event) => setDetails(event.target.value)}
             rows={4}
-            placeholder="Describe your issue"
+            placeholder={t('supportTicketComposer.detailsPlaceholder', 'Describe your issue')}
             style={{
               width: '100%', background: 'var(--bg)', border: '1px solid var(--line)',
               borderRadius: 'var(--radius-sm)', padding: '10px 14px', color: 'var(--ink)', fontSize: 14,
@@ -131,7 +134,7 @@ export function SupportTicketComposer() {
                 background: 'transparent', color: 'var(--ink)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
               }}
             >
-              Cancel
+              {t('supportTicketComposer.cancelButton', 'Cancel')}
             </button>
             <button
               type="submit"
@@ -143,7 +146,7 @@ export function SupportTicketComposer() {
                 cursor: canSubmit ? 'pointer' : 'not-allowed',
               }}
             >
-              {submitting ? 'Submitting…' : 'Submit'}
+              {submitting ? t('supportTicketComposer.submittingButton', 'Submitting…') : t('supportTicketComposer.submitButton', 'Submit')}
             </button>
           </div>
         </form>
