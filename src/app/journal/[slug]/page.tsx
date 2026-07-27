@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import type { Metadata } from 'next';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,6 +64,7 @@ export default async function JournalPost({
   const { slug } = await params;
   const found = await findEditorialPost(slug);
   if (!found) return notFound();
+  const t = getT(await getLocale());
   const meta = (found.metadata ?? {}) as EditorialMeta;
   const paragraphs = meta.body ? meta.body.split(/\n{2,}/).filter(Boolean) : [];
 
@@ -80,7 +82,7 @@ export default async function JournalPost({
           marginBottom: 26
         }}
       >
-        ← Journal
+        {t('journalSlugPage.backLink', '← Journal')}
       </Link>
       <h1
         style={{
@@ -119,7 +121,7 @@ export default async function JournalPost({
           </p>
         ))
       ) : (
-        <p className="meta">This post has no body.</p>
+        <p className="meta">{t('journalSlugPage.noBody', 'This post has no body.')}</p>
       )}
       <div
         style={{
@@ -133,9 +135,9 @@ export default async function JournalPost({
           lineHeight: 1.6
         }}
       >
-        Every show covered in the Journal splits 70/20/10 — and iHYPE takes 0%.{' '}
+        {t('journalSlugPage.splitNote', 'Every show covered in the Journal splits 70/20/10 — and iHYPE takes 0%.')}{' '}
         <Link href="/charter" style={{ color: 'var(--accent)' }}>
-          See the charter →
+          {t('journalSlugPage.charterLink', 'See the charter →')}
         </Link>
       </div>
     </div>

@@ -1,10 +1,12 @@
 'use client';
 import { useState } from 'react';
 import { AdminReauthPrompt } from '@/components/AdminReauthPrompt';
+import { useI18n } from '@/components/I18nProvider';
 
 type Action = 'approve' | 'dismiss';
 
 export function ModerationActions({ reportId }: { reportId: string }) {
+  const { t } = useI18n();
   const [status, setStatus] = useState<'idle' | 'pending' | 'done'>('idle');
   const [reauthAction, setReauthAction] = useState<Action | null>(null);
   const [error, setError] = useState('');
@@ -29,7 +31,7 @@ export function ModerationActions({ reportId }: { reportId: string }) {
         if (payload.requiresReauth) {
           setReauthAction(action);
         } else {
-          setError(typeof payload.error === 'string' ? payload.error : 'Action failed.');
+          setError(typeof payload.error === 'string' ? payload.error : t('moderationActions.actionFailed', 'Action failed.'));
         }
         setStatus('idle');
         return;
@@ -37,20 +39,20 @@ export function ModerationActions({ reportId }: { reportId: string }) {
 
       setStatus('done');
     } catch {
-      setError('Action failed.');
+      setError(t('moderationActions.actionFailed', 'Action failed.'));
       setStatus('idle');
     }
   }
 
-  if (status === 'done') return <span className="meta">Done</span>;
+  if (status === 'done') return <span className="meta">{t('moderationActions.done', 'Done')}</span>;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ display: 'flex', gap: 8 }}>
         <button className="button small" disabled={status === 'pending'} onClick={() => act('approve')} type="button">
-          {status === 'pending' ? 'Saving...' : 'Remove content'}
+          {status === 'pending' ? t('moderationActions.saving', 'Saving...') : t('moderationActions.removeContent', 'Remove content')}
         </button>
         <button className="button small secondary" disabled={status === 'pending'} onClick={() => act('dismiss')} type="button">
-          Dismiss
+          {t('moderationActions.dismiss', 'Dismiss')}
         </button>
       </div>
       {reauthAction ? (

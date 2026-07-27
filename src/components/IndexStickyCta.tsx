@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useI18n } from '@/components/I18nProvider';
 
 /**
  * Mobile-only sticky "Join Beta" bar that slides in once the hero has
@@ -10,6 +11,7 @@ import Link from 'next/link';
  * just at the very top and very bottom.
  */
 export function IndexStickyCta({ heroSelector }: { heroSelector: string }) {
+  const { t } = useI18n();
   const [show, setShow] = useState(false);
   const rafRef = useRef<number | null>(null);
 
@@ -36,10 +38,10 @@ export function IndexStickyCta({ heroSelector }: { heroSelector: string }) {
   return (
     <div className={`idx-sticky-cta${show ? ' is-visible' : ''}`}>
       <div className="idx-sticky-cta-text">
-        <b>Join the scene</b>
-        <span>Completely free · no fees</span>
+        <b>{t('indexStickyCta.heading', 'Join the scene')}</b>
+        <span>{t('indexStickyCta.subheading', 'Completely free · no fees')}</span>
       </div>
-      <Link href="/register">Join now →</Link>
+      <Link href="/register">{t('indexStickyCta.cta', 'Join now →')}</Link>
       <style>{`
         .idx-sticky-cta { display: none; }
         @media (max-width: 768px) {

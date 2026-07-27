@@ -7,6 +7,7 @@ import { db } from '@/lib/db';
 import { getHealthSnapshot } from '@/lib/health';
 import { kvPut } from '@/lib/kv';
 import { getRateLimitMetrics } from '@/lib/rate-limit';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -67,9 +68,21 @@ function StatusDot({ ok }: { ok: boolean }) {
 }
 
 export default async function StatusPage() {
+  const t = getT(await getLocale());
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
   if (!isAdminSession(session)) redirect(WORKBENCH_PATH);
+
+  const trLabel = (label: string) => {
+    switch (label) {
+      case 'Reachable': return t('statusPage.labelReachable', 'Reachable');
+      case 'Unreachable': return t('statusPage.labelUnreachable', 'Unreachable');
+      case 'API key missing': return t('statusPage.labelApiKeyMissing', 'API key missing');
+      case 'Connected': return t('statusPage.labelConnected', 'Connected');
+      case 'Error': return t('statusPage.labelError', 'Error');
+      default: return label;
+    }
+  };
 
   const [dbOk, resendResult, kvResult, rateLimitMetrics, health] = await Promise.all([
     checkDb(),
@@ -96,9 +109,9 @@ export default async function StatusPage() {
   return (
     <div className="container section" style={{ maxWidth: 760 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 10 }}>
-        <h1 className="title" style={{ margin: 0 }}>System status</h1>
+        <h1 className="title" style={{ margin: 0 }}>{t('statusPage.title', 'System status')}</h1>
         <span className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.64rem', letterSpacing: '.14em', textTransform: 'uppercase' }}>
-          Admin only · refreshed on load
+          {t('statusPage.adminOnlyNote', 'Admin only · refreshed on load')}
         </span>
       </div>
 
@@ -120,56 +133,56 @@ export default async function StatusPage() {
         }}
       >
         <span style={{ width: 8, height: 8, borderRadius: '50%', background: allOk ? 'var(--success)' : 'var(--warning)' }} />
-        {allOk ? 'All systems operational' : 'Some checks failed'}
+        {allOk ? t('statusPage.allSystemsOperational', 'All systems operational') : t('statusPage.someChecksFailed', 'Some checks failed')}
       </div>
 
       <h2 className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.68rem', letterSpacing: '.2em', textTransform: 'uppercase', marginBottom: 14 }}>
-        Environment checks
+        {t('statusPage.environmentChecks', 'Environment checks')}
       </h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 44 }}>
         <div className="panel" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px' }}>
           <StatusDot ok={dbOk} />
           <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Database</div>
-            <div className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.66rem', marginTop: 2 }}>DATABASE_URL · Supabase Postgres</div>
+            <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{t('statusPage.database', 'Database')}</div>
+            <div className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.66rem', marginTop: 2 }}>{t('statusPage.databaseMeta', 'DATABASE_URL · Supabase Postgres')}</div>
           </div>
-          <span className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.62rem', letterSpacing: '.1em', textTransform: 'uppercase' }}>{dbOk ? 'Connected' : 'Error'}</span>
+          <span className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.62rem', letterSpacing: '.1em', textTransform: 'uppercase' }}>{dbOk ? t('statusPage.labelConnected', 'Connected') : t('statusPage.labelError', 'Error')}</span>
         </div>
 
         <div className="panel" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px' }}>
           <StatusDot ok={resendResult.ok} />
           <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Email</div>
-            <div className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.66rem', marginTop: 2 }}>RESEND_API_KEY · Resend</div>
+            <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{t('statusPage.email', 'Email')}</div>
+            <div className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.66rem', marginTop: 2 }}>{t('statusPage.emailMeta', 'RESEND_API_KEY · Resend')}</div>
           </div>
-          <span className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.62rem', letterSpacing: '.1em', textTransform: 'uppercase' }}>{resendResult.label}</span>
+          <span className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.62rem', letterSpacing: '.1em', textTransform: 'uppercase' }}>{trLabel(resendResult.label)}</span>
         </div>
 
         <div className="panel" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px' }}>
           <StatusDot ok={kvResult.ok} />
           <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>KV / rate limiting</div>
-            <div className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.66rem', marginTop: 2 }}>Cloudflare KV</div>
+            <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{t('statusPage.kvRateLimiting', 'KV / rate limiting')}</div>
+            <div className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.66rem', marginTop: 2 }}>{t('statusPage.kvMeta', 'Cloudflare KV')}</div>
           </div>
-          <span className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.62rem', letterSpacing: '.1em', textTransform: 'uppercase' }}>{kvResult.label}</span>
+          <span className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.62rem', letterSpacing: '.1em', textTransform: 'uppercase' }}>{trLabel(kvResult.label)}</span>
         </div>
 
         <div className="panel" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px' }}>
           <StatusDot ok={true} />
           <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>AI</div>
-            <div className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.66rem', marginTop: 2 }}>Cloudflare Workers AI</div>
+            <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{t('statusPage.ai', 'AI')}</div>
+            <div className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.66rem', marginTop: 2 }}>{t('statusPage.aiMeta', 'Cloudflare Workers AI')}</div>
           </div>
-          <span className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.62rem', letterSpacing: '.1em', textTransform: 'uppercase' }}>Built-in binding</span>
+          <span className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.62rem', letterSpacing: '.1em', textTransform: 'uppercase' }}>{t('statusPage.builtInBinding', 'Built-in binding')}</span>
         </div>
 
         <div className="panel" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px' }}>
           <StatusDot ok={stripePresent} />
           <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>Payments</div>
-            <div className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.66rem', marginTop: 2 }}>STRIPE_SECRET_KEY</div>
+            <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{t('statusPage.payments', 'Payments')}</div>
+            <div className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.66rem', marginTop: 2 }}>{t('statusPage.paymentsMeta', 'STRIPE_SECRET_KEY')}</div>
           </div>
-          <span className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.62rem', letterSpacing: '.1em', textTransform: 'uppercase' }}>{stripePresent ? 'Present' : 'Missing'}</span>
+          <span className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.62rem', letterSpacing: '.1em', textTransform: 'uppercase' }}>{stripePresent ? t('statusPage.present', 'Present') : t('statusPage.missing', 'Missing')}</span>
         </div>
 
         {envChecks.map(({ key, ok }) => (
@@ -177,15 +190,15 @@ export default async function StatusPage() {
             <StatusDot ok={ok} />
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 700, fontSize: '0.9rem', fontFamily: 'var(--f-m)' }}>{key}</div>
-              <div className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.66rem', marginTop: 2 }}>Required environment variable</div>
+              <div className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.66rem', marginTop: 2 }}>{t('statusPage.requiredEnvVar', 'Required environment variable')}</div>
             </div>
-            <span className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.62rem', letterSpacing: '.1em', textTransform: 'uppercase' }}>{ok ? 'Present' : 'Missing'}</span>
+            <span className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.62rem', letterSpacing: '.1em', textTransform: 'uppercase' }}>{ok ? t('statusPage.present', 'Present') : t('statusPage.missing', 'Missing')}</span>
           </div>
         ))}
       </div>
 
       <h2 className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.68rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'var(--warning)', marginBottom: 14 }}>
-        Launch readiness
+        {t('statusPage.launchReadiness', 'Launch readiness')}
       </h2>
       <div
         style={{
@@ -200,8 +213,8 @@ export default async function StatusPage() {
           <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '9px 0' }}>
             <span style={{ fontFamily: 'var(--f-m)', fontSize: '0.8rem', color: 'var(--success)', flexShrink: 0, marginTop: 1 }}>✓</span>
             <div>
-              <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>All launch checks passing</div>
-              <div className="meta" style={{ fontSize: '0.8rem', marginTop: 2, lineHeight: 1.5 }}>No blockers. Ship it.</div>
+              <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>{t('statusPage.allLaunchChecksPassing', 'All launch checks passing')}</div>
+              <div className="meta" style={{ fontSize: '0.8rem', marginTop: 2, lineHeight: 1.5 }}>{t('statusPage.noBlockersShipIt', 'No blockers. Ship it.')}</div>
             </div>
           </div>
         ) : (
@@ -215,22 +228,22 @@ export default async function StatusPage() {
       </div>
 
       <p className="meta" style={{ marginBottom: 16 }}>
-        Checked at {new Date().toUTCString()}
+        {t('statusPage.checkedAt', 'Checked at')} {new Date().toUTCString()}
       </p>
 
       {rateLimitMetrics.length > 0 && (
         <>
           <h2 className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.68rem', letterSpacing: '.2em', textTransform: 'uppercase', marginBottom: 14 }}>
-            Rate limits
+            {t('statusPage.rateLimits', 'Rate limits')}
           </h2>
-          <p className="meta" style={{ marginBottom: 12 }}>Top {rateLimitMetrics.length} buckets by request count.</p>
+          <p className="meta" style={{ marginBottom: 12 }}>{t('statusPage.topBucketsPrefix', 'Top')} {rateLimitMetrics.length} {t('statusPage.topBucketsSuffix', 'buckets by request count.')}</p>
           <div style={{ overflowX: 'auto' }}>
             <div className="panel" style={{ borderRadius: 14, overflow: 'hidden', padding: 0 }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--f-m)', fontSize: 12 }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--line-2)', color: 'var(--ink-3)', letterSpacing: '.08em', textTransform: 'uppercase' }}>
-                    <th style={{ textAlign: 'left', padding: '12px 18px', fontWeight: 600, fontSize: 10 }}>Bucket key</th>
-                    <th style={{ textAlign: 'right', padding: '12px 18px', fontWeight: 600, fontSize: 10 }}>Hits</th>
+                    <th style={{ textAlign: 'left', padding: '12px 18px', fontWeight: 600, fontSize: 10 }}>{t('statusPage.bucketKey', 'Bucket key')}</th>
+                    <th style={{ textAlign: 'right', padding: '12px 18px', fontWeight: 600, fontSize: 10 }}>{t('statusPage.hits', 'Hits')}</th>
                   </tr>
                 </thead>
                 <tbody>

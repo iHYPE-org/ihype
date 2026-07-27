@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 /**
  * Send side of the BookingRequest flow — sits on a venue's "demand radar"
@@ -9,6 +10,7 @@ import { useState } from 'react';
  * profile already exists, which we surface as an already-sent state.
  */
 export function SendBookingRequestButton({ toProfileId, defaultMessage }: { toProfileId: string; defaultMessage: string }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState(defaultMessage);
   const [pending, setPending] = useState(false);
@@ -40,17 +42,17 @@ export function SendBookingRequestButton({ toProfileId, defaultMessage }: { toPr
   }
 
   if (state === 'sent') {
-    return <span className="send-booking-done">Request sent</span>;
+    return <span className="send-booking-done">{t('sendBookingRequestButton.sent', 'Request sent')}</span>;
   }
   if (state === 'already') {
-    return <span className="send-booking-done">Already pending</span>;
+    return <span className="send-booking-done">{t('sendBookingRequestButton.already', 'Already pending')}</span>;
   }
 
   return (
     <div className="send-booking-wrap">
       {!open ? (
         <button type="button" className="send-booking-btn" onClick={() => setOpen(true)}>
-          Send booking request
+          {t('sendBookingRequestButton.openButton', 'Send booking request')}
         </button>
       ) : (
         <div className="send-booking-panel">
@@ -61,13 +63,13 @@ export function SendBookingRequestButton({ toProfileId, defaultMessage }: { toPr
             maxLength={1000}
             rows={3}
           />
-          {state === 'error' && <p className="send-booking-error">Couldn&apos;t send that — try again.</p>}
+          {state === 'error' && <p className="send-booking-error">{t('sendBookingRequestButton.error', "Couldn't send that — try again.")}</p>}
           <div className="send-booking-actions">
             <button type="button" className="send-booking-btn" disabled={pending} onClick={submit}>
-              {pending ? 'Sending…' : 'Send'}
+              {pending ? t('sendBookingRequestButton.sending', 'Sending…') : t('sendBookingRequestButton.sendButton', 'Send')}
             </button>
             <button type="button" className="send-booking-cancel" disabled={pending} onClick={() => setOpen(false)}>
-              Cancel
+              {t('sendBookingRequestButton.cancelButton', 'Cancel')}
             </button>
           </div>
         </div>

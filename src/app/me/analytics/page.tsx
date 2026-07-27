@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getPromoterDashboard } from '@/lib/promoterDashboard';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,6 +81,7 @@ export default async function FanAnalyticsPage({
   const session = await auth();
   if (!session?.user?.id) redirect('/login?callbackUrl=/me/analytics');
 
+  const t = getT(await getLocale());
   const userId = session.user.id;
   const { range: rawRange } = await searchParams;
   const range: RangeId = rawRange === '7d' || rawRange === 'ytd' ? rawRange : '30d';
@@ -154,7 +156,7 @@ export default async function FanAnalyticsPage({
 
   return (
     <div className="fa-page">
-      <h1 className="fa-title">Your Activity</h1>
+      <h1 className="fa-title">{t('meAnalyticsPage.title', 'Your Activity')}</h1>
 
       <div className="fa-tabs">
         {RANGE_TABS.map((tab) => (
@@ -163,7 +165,11 @@ export default async function FanAnalyticsPage({
             href={tab.id === '30d' ? '/me/analytics' : `/me/analytics?range=${tab.id}`}
             className={`fa-tab${tab.id === range ? ' fa-tab-active' : ''}`}
           >
-            {tab.label}
+            {tab.id === '7d'
+              ? t('meAnalyticsPage.range7d', '7 Days')
+              : tab.id === '30d'
+                ? t('meAnalyticsPage.range30d', '30 Days')
+                : t('meAnalyticsPage.rangeYtd', 'YTD')}
           </Link>
         ))}
       </div>
@@ -173,27 +179,27 @@ export default async function FanAnalyticsPage({
             daily listen streaks (no field/model for it). Omitted rather than
             fabricated, same as src/app/me/dashboard/page.tsx. */}
         <Link className="fa-stat-card" href="/tickets">
-          <div className="fa-stat-label">Hype Cast</div>
+          <div className="fa-stat-label">{t('meAnalyticsPage.hypeCastLabel', 'Hype Cast')}</div>
           <div className="fa-stat-val">{hypeCastCurrent.toLocaleString()}</div>
           <div className="fa-stat-sub" style={{ color: hypeDelta !== 0 ? 'var(--role-fan, #b983ff)' : undefined }}>
-            {hypeDelta > 0 ? `+${hypeDelta}` : hypeDelta} this period
+            {hypeDelta > 0 ? `+${hypeDelta}` : hypeDelta} {t('meAnalyticsPage.thisPeriod', 'this period')}
           </div>
         </Link>
         <div className="fa-stat-card">
-          <div className="fa-stat-label">Shows Attended</div>
+          <div className="fa-stat-label">{t('meAnalyticsPage.showsAttendedLabel', 'Shows Attended')}</div>
           <div className="fa-stat-val">{showsAttended.toLocaleString()}</div>
-          <div className="fa-stat-sub">This period</div>
+          <div className="fa-stat-sub">{t('meAnalyticsPage.thisPeriodCap', 'This period')}</div>
         </div>
         <div className="fa-stat-card">
-          <div className="fa-stat-label">Referral Earned</div>
+          <div className="fa-stat-label">{t('meAnalyticsPage.referralEarnedLabel', 'Referral Earned')}</div>
           <div className="fa-stat-val" style={{ color: 'var(--role-fan, #b983ff)' }}>
             {formatCurrencyFromCents(promoterDashboard.earnedCents)}
           </div>
-          <div className="fa-stat-sub">From your HYPE Link (lifetime, pending settlement)</div>
+          <div className="fa-stat-sub">{t('meAnalyticsPage.referralEarnedSub', 'From your HYPE Link (lifetime, pending settlement)')}</div>
         </div>
       </div>
 
-      <div className="fa-eyebrow">Hype cast over time</div>
+      <div className="fa-eyebrow">{t('meAnalyticsPage.hypeCastOverTime', 'Hype cast over time')}</div>
       <div className="fa-chart">
         {buckets.map((b, i) => (
           <div className="fa-chart-bar-wrap" key={i} title={`${b.label}: ${b.count}`}>
@@ -207,11 +213,11 @@ export default async function FanAnalyticsPage({
       </div>
 
       <div className="fa-section-head">
-        <span className="fa-eyebrow-sm">Top Artists</span>
+        <span className="fa-eyebrow-sm">{t('meAnalyticsPage.topArtists', 'Top Artists')}</span>
       </div>
       {topArtists.length === 0 ? (
         <div className="fa-empty">
-          <p>No hype activity in this period yet.</p>
+          <p>{t('meAnalyticsPage.noHypeActivity', 'No hype activity in this period yet.')}</p>
         </div>
       ) : (
         <div className="fa-artist-list">
@@ -223,7 +229,7 @@ export default async function FanAnalyticsPage({
                   {[artist.genre, artist.city].filter(Boolean).join(' · ') || ' '}
                 </div>
               </div>
-              <span className="fa-artist-count">{artist.count} hype{artist.count === 1 ? '' : 's'}</span>
+              <span className="fa-artist-count">{artist.count} {artist.count === 1 ? t('meAnalyticsPage.hypeSingular', 'hype') : t('meAnalyticsPage.hypePlural', 'hypes')}</span>
             </Link>
           ))}
         </div>

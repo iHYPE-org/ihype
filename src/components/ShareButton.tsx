@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 type ShareButtonProps = {
   path: string;
@@ -11,8 +12,10 @@ type ShareButtonProps = {
   refCode?: string;
 };
 
-export function ShareButton({ path, title, className, label = 'Share', refCode }: ShareButtonProps) {
+export function ShareButton({ path, title, className, label, refCode }: ShareButtonProps) {
+  const { t } = useI18n();
   const [status, setStatus] = useState<'idle' | 'done'>('idle');
+  const resolvedLabel = label ?? t('shareButton.defaultLabel', 'Share');
 
   async function handleShare() {
     const url = new URL(path, window.location.origin);
@@ -39,7 +42,7 @@ export function ShareButton({ path, title, className, label = 'Share', refCode }
       } else if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(url.toString());
       } else {
-        window.prompt('Copy this link', url.toString());
+        window.prompt(t('shareButton.copyLinkPrompt', 'Copy this link'), url.toString());
       }
 
       setStatus('done');
@@ -51,7 +54,7 @@ export function ShareButton({ path, title, className, label = 'Share', refCode }
 
   return (
     <button className={className ?? 'button small secondary'} onClick={handleShare} type="button">
-      {status === 'done' ? 'Shared' : label}
+      {status === 'done' ? t('shareButton.sharedLabel', 'Shared') : resolvedLabel}
     </button>
   );
 }

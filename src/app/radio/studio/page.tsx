@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { RadioShowCreator } from '@/components/RadioShowCreator';
 import type { Metadata } from 'next';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'Radio Show Creator',
@@ -11,6 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RadioStudioPage() {
+  const t = getT(await getLocale());
   const session = await auth();
   if (!session?.user?.id) {
     redirect('/login?callbackUrl=/radio/studio');
@@ -24,12 +26,12 @@ export default async function RadioStudioPage() {
   if (!profile) {
     return (
       <div style={{ maxWidth: 560, margin: '80px auto', padding: '0 24px', textAlign: 'center' }}>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 24, marginBottom: 12 }}>You need a DJ page first</h1>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 24, marginBottom: 12 }}>{t('radioStudioPage.needDjPageTitle', 'You need a DJ page first')}</h1>
         <p style={{ color: 'var(--ink-a60)', marginBottom: 20 }}>
-          Radio Show Creator builds shows from a DJ profile&apos;s free-use crate. Set up your DJ page to get started.
+          {t('radioStudioPage.needDjPageBody', "Radio Show Creator builds shows from a DJ profile's free-use crate. Set up your DJ page to get started.")}
         </p>
         <Link href="/pages" style={{ display: 'inline-block', padding: '10px 20px', borderRadius: 8, background: 'var(--accent)', color: '#fff', fontWeight: 700, textDecoration: 'none' }}>
-          Go to Pages →
+          {t('radioStudioPage.goToPages', 'Go to Pages →')}
         </Link>
       </div>
     );

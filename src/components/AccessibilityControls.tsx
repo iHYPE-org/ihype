@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useId, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
+import { useI18n } from '@/components/I18nProvider';
 
 type AccessibilitySettings = {
   highContrast: boolean;
@@ -106,6 +107,7 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
 }
 
 export function AccessibilityControls({ inline = false }: { inline?: boolean } = {}) {
+  const { t } = useI18n();
   const panelId = useId();
   const [isOpen, setIsOpen] = useState(inline);
   const ctx = useContext(AccessibilityContext);
@@ -138,18 +140,18 @@ export function AccessibilityControls({ inline = false }: { inline?: boolean } =
 
   const panel = (
     <section
-      aria-label="Accessibility settings"
+      aria-label={t('accessibilityControls.panelAriaLabel', 'Accessibility settings')}
       className={inline ? 'a11y-panel a11y-panel-inline' : 'a11y-panel'}
       id={panelId}
     >
       <div className="a11y-panel-head">
         <div>
-          <strong>Accessibility</strong>
-          <p className="meta">Preferences apply across the full site on this device.</p>
+          <strong>{t('accessibilityControls.heading', 'Accessibility')}</strong>
+          <p className="meta">{t('accessibilityControls.subheading', 'Preferences apply across the full site on this device.')}</p>
         </div>
         {!inline ? (
           <button className="a11y-close" onClick={() => setIsOpen(false)} type="button">
-            Close
+            {t('accessibilityControls.close', 'Close')}
           </button>
         ) : null}
       </div>
@@ -162,8 +164,8 @@ export function AccessibilityControls({ inline = false }: { inline?: boolean } =
             type="checkbox"
           />
           <span>
-            <strong>High contrast</strong>
-            <small>Maximizes text and border contrast.</small>
+            <strong>{t('accessibilityControls.highContrastLabel', 'High contrast')}</strong>
+            <small>{t('accessibilityControls.highContrastDesc', 'Maximizes text and border contrast.')}</small>
           </span>
         </label>
 
@@ -174,8 +176,8 @@ export function AccessibilityControls({ inline = false }: { inline?: boolean } =
             type="checkbox"
           />
           <span>
-            <strong>Larger text</strong>
-            <small>Increases base text size site-wide.</small>
+            <strong>{t('accessibilityControls.largerTextLabel', 'Larger text')}</strong>
+            <small>{t('accessibilityControls.largerTextDesc', 'Increases base text size site-wide.')}</small>
           </span>
         </label>
 
@@ -186,8 +188,8 @@ export function AccessibilityControls({ inline = false }: { inline?: boolean } =
             type="checkbox"
           />
           <span>
-            <strong>Reduce motion</strong>
-            <small>Minimizes animation and smooth scrolling.</small>
+            <strong>{t('accessibilityControls.reduceMotionLabel', 'Reduce motion')}</strong>
+            <small>{t('accessibilityControls.reduceMotionDesc', 'Minimizes animation and smooth scrolling.')}</small>
           </span>
         </label>
 
@@ -198,8 +200,8 @@ export function AccessibilityControls({ inline = false }: { inline?: boolean } =
             type="checkbox"
           />
           <span>
-            <strong>Underline links</strong>
-            <small>Makes text links easier to identify.</small>
+            <strong>{t('accessibilityControls.underlineLinksLabel', 'Underline links')}</strong>
+            <small>{t('accessibilityControls.underlineLinksDesc', 'Makes text links easier to identify.')}</small>
           </span>
         </label>
 
@@ -210,15 +212,15 @@ export function AccessibilityControls({ inline = false }: { inline?: boolean } =
             type="checkbox"
           />
           <span>
-            <strong>Readable font</strong>
-            <small>Uses a simpler font stack for long reading.</small>
+            <strong>{t('accessibilityControls.readableFontLabel', 'Readable font')}</strong>
+            <small>{t('accessibilityControls.readableFontDesc', 'Uses a simpler font stack for long reading.')}</small>
           </span>
         </label>
       </div>
 
       <div className="a11y-actions">
         <button className="a11y-close" onClick={resetSettings} type="button">
-          Reset
+          {t('accessibilityControls.reset', 'Reset')}
         </button>
         {!inline ? (
           <button
@@ -229,7 +231,7 @@ export function AccessibilityControls({ inline = false }: { inline?: boolean } =
               borderRadius: 999, padding: '8px 16px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer',
             }}
           >
-            Apply
+            {t('accessibilityControls.apply', 'Apply')}
           </button>
         ) : null}
       </div>
@@ -243,14 +245,14 @@ export function AccessibilityControls({ inline = false }: { inline?: boolean } =
   return (
     <div className="a11y-menu">
       <button
-        aria-label="Open accessibility preferences"
+        aria-label={t('accessibilityControls.openAriaLabel', 'Open accessibility preferences')}
         aria-controls={panelId}
         aria-expanded={isOpen}
         className="nav-a11y-button"
         onClick={() => setIsOpen((current) => !current)}
         type="button"
       >
-        Accessibility{activeCount ? ` (${activeCount})` : ''}
+        {t('accessibilityControls.menuLabel', 'Accessibility')}{activeCount ? ` (${activeCount})` : ''}
       </button>
 
       {isOpen ? panel : null}
@@ -259,13 +261,14 @@ export function AccessibilityControls({ inline = false }: { inline?: boolean } =
 }
 
 export function RouteAccessibilityAnnouncer() {
+  const { t } = useI18n();
   const pathname = usePathname();
   const [announcement, setAnnouncement] = useState('');
 
   useEffect(() => {
     const title = document.title || 'iHYPE.org';
-    setAnnouncement(`${title} loaded`);
-  }, [pathname]);
+    setAnnouncement(`${title} ${t('accessibilityControls.pageLoadedSuffix', 'loaded')}`);
+  }, [pathname, t]);
 
   return (
     <div aria-atomic="true" aria-live="polite" className="sr-only" role="status">

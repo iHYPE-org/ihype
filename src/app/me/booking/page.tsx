@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { getVenueBookingRecommendations } from '@/lib/venueBooking';
 import { SendBookingRequestButton } from '@/components/SendBookingRequestButton';
+import { getLocale, getT } from '@/lib/i18n/server';
 import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
@@ -20,29 +21,29 @@ export default async function BookingPage() {
   }
 
   const feed = await getVenueBookingRecommendations(session.user.id);
+  const t = getT(await getLocale());
 
   return (
     <div className="booking-page">
       <style>{BOOKING_CSS}</style>
 
       <header className="booking-head">
-        <span className="booking-eyebrow">BOOK THESE ARTISTS{feed.venueCity ? ` · ${feed.venueCity.toUpperCase()}` : ''}</span>
-        <h1 className="booking-title">Your demand radar</h1>
+        <span className="booking-eyebrow">{t('meBookingPage.eyebrow', 'BOOK THESE ARTISTS')}{feed.venueCity ? ` · ${feed.venueCity.toUpperCase()}` : ''}</span>
+        <h1 className="booking-title">{t('meBookingPage.title', 'Your demand radar')}</h1>
         <p className="booking-sub">
-          Rising artists matched to {feed.venueName ?? 'your venue'} by genre, locality, and hype momentum.
-          Acts you&apos;ve already booked are filtered out.
+          {t('meBookingPage.subPrefix', 'Rising artists matched to')} {feed.venueName ?? t('meBookingPage.yourVenue', 'your venue')} {t('meBookingPage.subSuffix', 'by genre, locality, and hype momentum. Acts you’ve already booked are filtered out.')}
         </p>
       </header>
 
       {!feed.hasVenue ? (
         <div className="booking-empty">
-          <p>This recommender is for venue accounts. Set up a venue page to see artists to book.</p>
-          <Link href="/pages" className="booking-cta">Set up your venue</Link>
+          <p>{t('meBookingPage.venueOnlyMessage', 'This recommender is for venue accounts. Set up a venue page to see artists to book.')}</p>
+          <Link href="/pages" className="booking-cta">{t('meBookingPage.setUpVenueCta', 'Set up your venue')}</Link>
         </div>
       ) : feed.candidates.length === 0 ? (
         <div className="booking-empty">
-          <p>No new artist matches right now — check back as more artists join your scene.</p>
-          <Link href="/discover" className="booking-cta">Browse artists</Link>
+          <p>{t('meBookingPage.noMatchesMessage', 'No new artist matches right now — check back as more artists join your scene.')}</p>
+          <Link href="/discover" className="booking-cta">{t('meBookingPage.browseArtistsCta', 'Browse artists')}</Link>
         </div>
       ) : (
         <ul className="booking-list">
@@ -54,18 +55,18 @@ export default async function BookingPage() {
               <div className="booking-card-body">
                 <Link href={`/artists/${c.slug}`} className="booking-card-name">{c.name}</Link>
                 <div className="booking-card-meta">
-                  {c.genres.length > 0 ? c.genres.join(' · ') : 'No genres listed'}{c.city ? ` · ${c.city}` : ''}
+                  {c.genres.length > 0 ? c.genres.join(' · ') : t('meBookingPage.noGenresListed', 'No genres listed')}{c.city ? ` · ${c.city}` : ''}
                 </div>
                 <div className="booking-card-tags">
                   <span className="booking-reason">{c.reason}</span>
-                  {c.hypeCount > 0 && <span className="booking-hype">{c.hypeCount} HYPE</span>}
+                  {c.hypeCount > 0 && <span className="booking-hype">{c.hypeCount} {t('meBookingPage.hypeUnit', 'HYPE')}</span>}
                 </div>
                 <SendBookingRequestButton
                   toProfileId={c.profileId}
-                  defaultMessage={`Hi ${c.name}, we'd love to have you play a show at ${feed.venueName ?? 'our venue'}${feed.venueCity ? ` in ${feed.venueCity}` : ''}. ${c.reason} — let us know if you're interested!`}
+                  defaultMessage={`${t('meBookingPage.messageGreeting', 'Hi')} ${c.name}, ${t('meBookingPage.messageBody', "we'd love to have you play a show at")} ${feed.venueName ?? t('meBookingPage.ourVenue', 'our venue')}${feed.venueCity ? ` ${t('meBookingPage.inCity', 'in')} ${feed.venueCity}` : ''}. ${c.reason} — ${t('meBookingPage.messageClosing', "let us know if you're interested!")}`}
                 />
               </div>
-              <Link href={`/artists/${c.slug}`} className="booking-card-cta">View</Link>
+              <Link href={`/artists/${c.slug}`} className="booking-card-cta">{t('meBookingPage.viewCta', 'View')}</Link>
             </li>
           ))}
         </ul>

@@ -3,8 +3,10 @@
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { useI18n } from '@/components/I18nProvider';
 
 export function SearchBar() {
+  const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -42,7 +44,7 @@ export function SearchBar() {
       >
         <input
           name="q"
-          placeholder="Search artists, shows…"
+          placeholder={t('searchBar.placeholder', 'Search artists, shows…')}
           type="search"
           style={{
             background: 'var(--bg-3)',
@@ -59,26 +61,26 @@ export function SearchBar() {
       {/* Mobile: icon button that expands to overlay */}
       <button
         className="search-bar-mobile-trigger"
-        aria-label="Search"
+        aria-label={t('searchBar.searchAriaLabel', 'Search')}
         onClick={handleIconClick}
       >
         🔍
       </button>
 
       {expanded && (
-        <div className="search-bar-overlay" role="dialog" aria-label="Search">
+        <div className="search-bar-overlay" role="dialog" aria-label={t('searchBar.searchAriaLabel', 'Search')}>
           <form onSubmit={handleSubmit} className="search-bar-overlay-form">
             <input
               ref={inputRef}
               type="search"
-              placeholder="Search artists, shows…"
+              placeholder={t('searchBar.placeholder', 'Search artists, shows…')}
               className="search-bar-overlay-input"
               autoComplete="off"
             />
-            <button type="submit" className="search-bar-overlay-submit" aria-label="Go">
+            <button type="submit" className="search-bar-overlay-submit" aria-label={t('searchBar.goAriaLabel', 'Go')}>
               🔍
             </button>
-            <button type="button" className="search-bar-overlay-close" onClick={handleClose} aria-label="Close search">
+            <button type="button" className="search-bar-overlay-close" onClick={handleClose} aria-label={t('searchBar.closeAriaLabel', 'Close search')}>
               ✕
             </button>
           </form>

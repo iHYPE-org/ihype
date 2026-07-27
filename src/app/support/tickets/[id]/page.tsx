@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,6 +39,7 @@ function fmtDateTime(d: Date) {
  * (back link, subject + status pill, mono meta line, message card).
  */
 export default async function SupportTicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = getT(await getLocale());
   const session = await auth();
   const { id } = await params;
 
@@ -70,7 +72,7 @@ export default async function SupportTicketDetailPage({ params }: { params: Prom
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="15 18 9 12 15 6" />
         </svg>
-        Back to My Tickets
+        {t('supportTicketsIdPage.backToMyTickets', 'Back to My Tickets')}
       </Link>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 6 }}>
@@ -90,7 +92,7 @@ export default async function SupportTicketDetailPage({ params }: { params: Prom
         fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '.1em', textTransform: 'uppercase',
         color: 'var(--ink-a50)', marginBottom: 28,
       }}>
-        {ticket.type} · {ticket.priority} priority · Opened {fmtDateTime(ticket.createdAt)}
+        {ticket.type} · {ticket.priority} {t('supportTicketsIdPage.priorityLabel', 'priority')} · {t('supportTicketsIdPage.openedLabel', 'Opened')} {fmtDateTime(ticket.createdAt)}
       </div>
 
       <div style={{
@@ -107,7 +109,7 @@ export default async function SupportTicketDetailPage({ params }: { params: Prom
         border: '1px solid var(--line)',
       }}>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--ink-a50)' }}>
-          Last updated {fmtDateTime(ticket.updatedAt)}. We reply within 24h.
+          {t('supportTicketsIdPage.lastUpdated', 'Last updated')} {fmtDateTime(ticket.updatedAt)}. {t('supportTicketsIdPage.replyWithin24h', 'We reply within 24h.')}
         </div>
       </div>
     </div>

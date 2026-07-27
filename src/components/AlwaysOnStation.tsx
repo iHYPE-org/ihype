@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { track } from '@/lib/analytics';
+import { useI18n } from '@/components/I18nProvider';
 
 type StationTrack = {
   hexId: string;
@@ -27,6 +28,7 @@ type StationState = {
 // current track at the server-synced offset, and advances to whatever the
 // station says is playing next — so it's never silent. Audio only.
 export function AlwaysOnStation({ initial }: { initial: StationState }) {
+  const { t } = useI18n();
   const [state, setState] = useState<StationState>(initial);
   const [playing, setPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -85,14 +87,14 @@ export function AlwaysOnStation({ initial }: { initial: StationState }) {
       <div className="station-head">
         <span className="station-dot" aria-hidden="true" />
         <span className="station-status">
-          {state.live ? 'DJ LIVE' : np ? 'AUTO-DJ · ALWAYS ON' : 'OFF AIR'}
+          {state.live ? t('alwaysOnStation.djLive', 'DJ LIVE') : np ? t('alwaysOnStation.autoDj', 'AUTO-DJ · ALWAYS ON') : t('alwaysOnStation.offAir', 'OFF AIR')}
         </span>
       </div>
 
       {state.live && state.liveShow ? (
         <div className="station-live">
           <p className="station-live-title">{state.liveShow.title}</p>
-          <Link href={`/shows/${state.liveShow.slug}`} className="station-cta">Join the live show</Link>
+          <Link href={`/shows/${state.liveShow.slug}`} className="station-cta">{t('alwaysOnStation.joinLiveShow', 'Join the live show')}</Link>
         </div>
       ) : np ? (
         <>
@@ -102,22 +104,22 @@ export function AlwaysOnStation({ initial }: { initial: StationState }) {
               <div className="station-track">{np.title}</div>
               <Link href={`/artists/${np.artistSlug}`} className="station-artist">{np.artistName}</Link>
             </div>
-            <button type="button" className="station-toggle" onClick={toggle} aria-label={playing ? 'Pause' : 'Play'}>
+            <button type="button" className="station-toggle" onClick={toggle} aria-label={playing ? t('alwaysOnStation.pause', 'Pause') : t('alwaysOnStation.play', 'Play')}>
               {playing ? '❚❚' : '▶'}
             </button>
           </div>
 
           {state.upNext.length > 0 && (
             <div className="station-next">
-              <span className="station-next-label">UP NEXT</span>
-              {state.upNext.map((t, i) => (
-                <span key={`${t.hexId}-${i}`} className="station-next-item">{t.title} · {t.artistName}</span>
+              <span className="station-next-label">{t('alwaysOnStation.upNext', 'UP NEXT')}</span>
+              {state.upNext.map((nextTrack, i) => (
+                <span key={`${nextTrack.hexId}-${i}`} className="station-next-item">{nextTrack.title} · {nextTrack.artistName}</span>
               ))}
             </div>
           )}
         </>
       ) : (
-        <p className="station-empty">The station is quiet — no free-use tracks in the crate yet.</p>
+        <p className="station-empty">{t('alwaysOnStation.stationQuiet', 'The station is quiet — no free-use tracks in the crate yet.')}</p>
       )}
     </div>
   );

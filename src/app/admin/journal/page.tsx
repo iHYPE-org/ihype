@@ -6,6 +6,7 @@ import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
 import { recordAuditEvent } from '@/lib/audit';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'Journal · iHYPE Admin',
@@ -36,6 +37,7 @@ async function seedSamplePost() {
 }
 
 export default async function AdminJournalPage() {
+  const t = getT(await getLocale());
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
   if (!isAdminSession(session)) redirect(WORKBENCH_PATH);
@@ -49,15 +51,15 @@ export default async function AdminJournalPage() {
   return (
     <div className="container section admin-console">
       <section className="panel">
-        <h1>Journal editor</h1>
-        <p className="meta">Editorial posts are written to AuditLog so we don't need new tables.</p>
+        <h1>{t('adminJournalPage.title', 'Journal editor')}</h1>
+        <p className="meta">{t('adminJournalPage.description', "Editorial posts are written to AuditLog so we don't need new tables.")}</p>
         <AdminJournalEditor />
       </section>
 
       <section className="panel" style={{ marginTop: 12 }}>
-        <h2>Recent posts</h2>
+        <h2>{t('adminJournalPage.recentPostsHeading', 'Recent posts')}</h2>
         <form action={seedSamplePost} style={{ marginBottom: 8 }}>
-          <button className="button small secondary" type="submit">Seed sample post</button>
+          <button className="button small secondary" type="submit">{t('adminJournalPage.seedSamplePost', 'Seed sample post')}</button>
         </form>
         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 6 }}>
           {posts.map((p) => {

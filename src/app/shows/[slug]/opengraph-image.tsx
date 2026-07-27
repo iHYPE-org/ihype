@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { db } from '@/lib/db';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const runtime = 'nodejs';
 export const alt = 'Show on iHYPE';
@@ -8,6 +9,7 @@ export const contentType = 'image/png';
 
 export default async function OgImage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const t = getT(await getLocale());
   const show = await db.show.findUnique({
     where: { slug },
     select: {
@@ -17,7 +19,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
     },
   });
 
-  const title = show?.title ?? 'Show';
+  const title = show?.title ?? t('showsSlugOpengraphImage.show', 'Show');
   const date = show?.startsAt
     ? new Date(show.startsAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : '';
@@ -42,13 +44,13 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
           <span style={{ color: '#fff7ec', fontSize: 28, fontWeight: 900, letterSpacing: '0.06em' }}>i</span>
           <span style={{ color: '#ff5029', fontSize: 28, fontWeight: 900, letterSpacing: '0.06em' }}>HYPE</span>
           {isLive && (
-            <span style={{ marginLeft: 16, fontSize: 14, fontWeight: 800, letterSpacing: '0.12em', color: '#ff5029', background: 'rgba(255,80,41,0.15)', padding: '4px 12px', borderRadius: 999 }}>● LIVE</span>
+            <span style={{ marginLeft: 16, fontSize: 14, fontWeight: 800, letterSpacing: '0.12em', color: '#ff5029', background: 'rgba(255,80,41,0.15)', padding: '4px 12px', borderRadius: 999 }}>{t('showsSlugOpengraphImage.liveBadge', '● LIVE')}</span>
           )}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {(date || show?.isRadioShow) && (
             <div style={{ fontSize: 18, color: '#22e5d4', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-              {show?.isRadioShow ? 'Radio Show' : date}
+              {show?.isRadioShow ? t('showsSlugOpengraphImage.radioShow', 'Radio Show') : date}
             </div>
           )}
           <div style={{ fontSize: 72, fontWeight: 900, color: '#f0ebe5', lineHeight: 0.98, letterSpacing: '-0.03em' }}>{title}</div>

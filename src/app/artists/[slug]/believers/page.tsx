@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth';
 import { getEarlyBelievers } from '@/lib/earlyBelievers';
 import { BelieverShareButton } from '@/components/BelieverShareButton';
 import type { Metadata } from 'next';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,6 +31,7 @@ export async function generateMetadata(
 export default async function BelieversPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const session = await auth();
+  const t = getT(await getLocale());
   const data = await getEarlyBelievers(slug, session?.user?.id ?? null);
   if (!data) notFound();
 
@@ -38,24 +40,24 @@ export default async function BelieversPage({ params }: { params: Promise<{ slug
       <style>{BELIEVERS_CSS}</style>
 
       <header className="believers-head">
-        <span className="believers-eyebrow">EARLY BELIEVERS</span>
-        <h1 className="believers-title">Who called <Link href={`/artists/${data.artistSlug}`} className="believers-artist-link">{data.artistName}</Link> first</h1>
-        <p className="believers-sub">{data.totalBelievers} {data.totalBelievers === 1 ? 'person has' : 'people have'} hyped {data.artistName}. The first {data.earlyCount} are early believers.</p>
+        <span className="believers-eyebrow">{t('artistsSlugBelieversPage.eyebrow', 'EARLY BELIEVERS')}</span>
+        <h1 className="believers-title">{t('artistsSlugBelieversPage.titlePrefix', 'Who called')} <Link href={`/artists/${data.artistSlug}`} className="believers-artist-link">{data.artistName}</Link> {t('artistsSlugBelieversPage.titleSuffix', 'first')}</h1>
+        <p className="believers-sub">{data.totalBelievers} {data.totalBelievers === 1 ? t('artistsSlugBelieversPage.personHas', 'person has') : t('artistsSlugBelieversPage.peopleHave', 'people have')} {t('artistsSlugBelieversPage.hyped', 'hyped')} {data.artistName}. {t('artistsSlugBelieversPage.earlyExplainer', 'The first')} {data.earlyCount} {t('artistsSlugBelieversPage.areEarlyBelievers', 'are early believers.')}</p>
       </header>
 
       {data.viewerRank ? (
         <div className={`believers-you${data.viewerIsEarly ? ' believers-you-early' : ''}`}>
           <div className="believers-you-rank">#{data.viewerRank}</div>
           <div className="believers-you-text">
-            <strong>{data.viewerIsEarly ? "You're an early believer." : "You're a believer."}</strong>
-            <span>You were the {ordinal(data.viewerRank)} to hype {data.artistName}.</span>
+            <strong>{data.viewerIsEarly ? t('artistsSlugBelieversPage.youAreEarly', "You're an early believer.") : t('artistsSlugBelieversPage.youAreBeliever', "You're a believer.")}</strong>
+            <span>{t('artistsSlugBelieversPage.youWereThe', 'You were the')} {ordinal(data.viewerRank)} {t('artistsSlugBelieversPage.toHype', 'to hype')} {data.artistName}.</span>
           </div>
           <BelieverShareButton artistName={data.artistName} artistSlug={data.artistSlug} rank={data.viewerRank} />
         </div>
       ) : (
         <div className="believers-cta-card">
-          <span>Believe in {data.artistName}? Hype them and claim your rank.</span>
-          <Link href={`/artists/${data.artistSlug}`} className="believers-cta">Go hype</Link>
+          <span>{t('artistsSlugBelieversPage.believeIn', 'Believe in')} {data.artistName}? {t('artistsSlugBelieversPage.hypeAndClaim', 'Hype them and claim your rank.')}</span>
+          <Link href={`/artists/${data.artistSlug}`} className="believers-cta">{t('artistsSlugBelieversPage.goHype', 'Go hype')}</Link>
         </div>
       )}
 
@@ -68,9 +70,9 @@ export default async function BelieversPage({ params }: { params: Promise<{ slug
             </span>
             <span className="believers-name">
               {b.fanSlug ? <Link href={`/fans/${b.fanSlug}`}>{b.name}</Link> : b.name}
-              {b.isViewer && <span className="believers-you-tag">YOU</span>}
+              {b.isViewer && <span className="believers-you-tag">{t('artistsSlugBelieversPage.youTag', 'YOU')}</span>}
             </span>
-            {b.rank <= data.earlyCount && <span className="believers-early-tag">EARLY</span>}
+            {b.rank <= data.earlyCount && <span className="believers-early-tag">{t('artistsSlugBelieversPage.earlyTag', 'EARLY')}</span>}
           </li>
         ))}
       </ol>

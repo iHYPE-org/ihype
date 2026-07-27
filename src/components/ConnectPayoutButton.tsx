@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 interface Props {
   profileId: string;
@@ -15,6 +16,7 @@ interface Props {
  * (POST /api/stripe/connect/onboard) and redirects the browser there.
  */
 export function ConnectPayoutButton({ profileId, connected, hasStarted }: Props) {
+  const { t } = useI18n();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,13 +31,13 @@ export function ConnectPayoutButton({ profileId, connected, hasStarted }: Props)
       });
       const data = await res.json();
       if (!res.ok || !data.onboardingUrl) {
-        setError(data.error ?? 'Could not start payout onboarding.');
+        setError(data.error ?? t('connectPayoutButton.startError', 'Could not start payout onboarding.'));
         setLoading(false);
         return;
       }
       window.location.href = data.onboardingUrl;
     } catch {
-      setError('Could not reach the payments server.');
+      setError(t('connectPayoutButton.networkError', 'Could not reach the payments server.'));
       setLoading(false);
     }
   }
@@ -44,7 +46,7 @@ export function ConnectPayoutButton({ profileId, connected, hasStarted }: Props)
     return (
       <div className="connect-payout-badge connect-payout-badge-ok">
         <span className="connect-payout-dot" />
-        Payout account connected
+        {t('connectPayoutButton.connectedLabel', 'Payout account connected')}
       </div>
     );
   }
@@ -54,14 +56,14 @@ export function ConnectPayoutButton({ profileId, connected, hasStarted }: Props)
       <div>
         <div className="connect-payout-badge connect-payout-badge-pending">
           <span className="connect-payout-dot" />
-          {hasStarted ? 'Payout onboarding incomplete' : 'No payout account connected'}
+          {hasStarted ? t('connectPayoutButton.incompleteLabel', 'Payout onboarding incomplete') : t('connectPayoutButton.notConnectedLabel', 'No payout account connected')}
         </div>
         <p className="connect-payout-copy">
-          Connect a Stripe payout account to receive your share of ticket sales. This is handled entirely by Stripe — iHYPE never sees your bank details.
+          {t('connectPayoutButton.description', 'Connect a Stripe payout account to receive your share of ticket sales. This is handled entirely by Stripe — iHYPE never sees your bank details.')}
         </p>
       </div>
       <button type="button" className="connect-payout-btn" onClick={handleClick} disabled={loading}>
-        {loading ? 'Redirecting…' : hasStarted ? 'Finish payout setup' : 'Connect payout account'}
+        {loading ? t('connectPayoutButton.redirecting', 'Redirecting…') : hasStarted ? t('connectPayoutButton.finishSetup', 'Finish payout setup') : t('connectPayoutButton.connectButton', 'Connect payout account')}
       </button>
       {error ? <p className="connect-payout-error">{error}</p> : null}
 

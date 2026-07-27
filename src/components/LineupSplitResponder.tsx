@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 /**
  * The artist-facing Accept/Decline action for their own pending lineup
@@ -12,6 +13,7 @@ import { useState } from 'react';
  */
 export function LineupSplitResponder({ showId, splitPercent }: { showId: string; splitPercent: number }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [busy, setBusy] = useState<'accept' | 'decline' | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,13 +28,13 @@ export function LineupSplitResponder({ showId, splitPercent }: { showId: string;
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error ?? 'Something went wrong — try again.');
+        setError(data.error ?? t('lineupSplitResponder.genericError', 'Something went wrong — try again.'));
         setBusy(null);
         return;
       }
       router.refresh();
     } catch {
-      setError('Network error — try again.');
+      setError(t('lineupSplitResponder.networkError', 'Network error — try again.'));
       setBusy(null);
     }
   }
@@ -41,10 +43,10 @@ export function LineupSplitResponder({ showId, splitPercent }: { showId: string;
     <div>
       <div className="lsr-actions">
         <button className="lsr-btn lsr-btn-accept" disabled={busy !== null} onClick={() => respond('ACCEPTED')} type="button">
-          {busy === 'accept' ? 'Accepting…' : `Accept my ${splitPercent}%`}
+          {busy === 'accept' ? t('lineupSplitResponder.accepting', 'Accepting…') : `${t('lineupSplitResponder.acceptMy', 'Accept my')} ${splitPercent}%`}
         </button>
         <button className="lsr-btn lsr-btn-decline" disabled={busy !== null} onClick={() => respond('DECLINED')} type="button">
-          {busy === 'decline' ? 'Declining…' : 'Decline'}
+          {busy === 'decline' ? t('lineupSplitResponder.declining', 'Declining…') : t('lineupSplitResponder.decline', 'Decline')}
         </button>
       </div>
       {error && <p className="lsr-error">{error}</p>}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 type TicketReassignmentFormProps = {
   serializedId: string;
@@ -11,6 +12,7 @@ export function TicketReassignmentForm({
   serializedId,
   faceValueCents
 }: TicketReassignmentFormProps) {
+  const { t } = useI18n();
   const [newHolderName, setNewHolderName] = useState('');
   const [newHolderEmail, setNewHolderEmail] = useState('');
   const [pending, setPending] = useState(false);
@@ -37,31 +39,31 @@ export function TicketReassignmentForm({
     if (response.ok) {
       setNewHolderName('');
       setNewHolderEmail('');
-      setMessage(data.message ?? 'Ticket reassigned.');
+      setMessage(data.message ?? t('ticketReassignmentForm.reassignedFallback', 'Ticket reassigned.'));
       return;
     }
 
-    setMessage(data.error ?? 'Could not reassign this ticket.');
+    setMessage(data.error ?? t('ticketReassignmentForm.reassignErrorFallback', 'Could not reassign this ticket.'));
   }
 
   return (
     <form className="form" onSubmit={handleSubmit}>
       <div className="grid grid-2">
         <label className="field">
-          <span>New holder name</span>
+          <span>{t('ticketReassignmentForm.newHolderNameLabel', 'New holder name')}</span>
           <input onChange={(event) => setNewHolderName(event.target.value)} required value={newHolderName} />
         </label>
         <label className="field">
-          <span>New holder email</span>
+          <span>{t('ticketReassignmentForm.newHolderEmailLabel', 'New holder email')}</span>
           <input onChange={(event) => setNewHolderEmail(event.target.value)} required type="email" value={newHolderEmail} />
         </label>
       </div>
       <div className="empty">
-        Reassignment is locked to face value only. This token will be reissued for the same ticket value and emailed to the new holder.
+        {t('ticketReassignmentForm.reassignmentNotice', 'Reassignment is locked to face value only. This token will be reissued for the same ticket value and emailed to the new holder.')}
       </div>
       <div className="cta-row">
         <button className="button small secondary" disabled={pending} type="submit">
-          {pending ? 'Reassigning...' : 'Reassign ticket'}
+          {pending ? t('ticketReassignmentForm.reassigningButton', 'Reassigning...') : t('ticketReassignmentForm.reassignButton', 'Reassign ticket')}
         </button>
         {message ? <span className="meta">{message}</span> : null}
       </div>

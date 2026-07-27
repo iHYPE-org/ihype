@@ -8,6 +8,7 @@ import { PageEditor } from '@/components/PageEditor';
 import { PageRoleModules } from '@/components/PageRoleModules';
 import { PullToRefresh } from '@/components/PullToRefresh';
 import { useMobileShell } from '@/lib/MobileShellContext';
+import { useI18n } from '@/components/I18nProvider';
 
 const TYPE_COLOR: Record<string, string> = {
   ARTIST: '#ff5029',
@@ -111,6 +112,7 @@ type PagesData = {
 };
 
 export function PagesHome({ initialTab, isShellForeground = true, resetToken }: { initialTab?: string; isShellForeground?: boolean; resetToken?: number } = {}) {
+  const { t } = useI18n();
   const shell = useMobileShell();
   const validInitialTab = TABS.some((t) => t.id === initialTab) ? (initialTab as TabId) : null;
   const [tab, setTab] = useState<TabId>(validInitialTab ?? 'mypage');
@@ -167,7 +169,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
       });
       const created = await res.json();
       if (!res.ok) {
-        setCreateError(created.error ?? 'Could not create page.');
+        setCreateError(created.error ?? t('pagesHome.createPageFailed', 'Could not create page.'));
         return;
       }
       setData((prev) =>
@@ -183,7 +185,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
       contentTopRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
       setTimeout(() => setJustCreatedName(null), 6000);
     } catch {
-      setCreateError('Network error — try again.');
+      setCreateError(t('pagesHome.networkError', 'Network error — try again.'));
     } finally {
       setCreating(false);
     }
@@ -210,21 +212,23 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
 
   const selectedProfile = myProfiles.find((p) => p.id === selectedPageId) ?? myProfiles[0] ?? null;
 
+  const typeLabel = (type: string) => t(`pagesHome.typeLabel.${type}`, TYPE_LABEL[type] ?? type);
+
   const gridItems: QuickGridItem[] = [
     {
-      id: 'mypage', label: 'My Page', color: '#ff5029', sublabel: `${myProfiles.length} page${myProfiles.length === 1 ? '' : 's'}`,
+      id: 'mypage', label: t('pagesHome.gridLabel.mypage', 'My Page'), color: '#ff5029', sublabel: `${myProfiles.length} ${myProfiles.length === 1 ? t('pagesHome.gridSublabel.page', 'page') : t('pagesHome.gridSublabel.pages', 'pages')}`,
       icon: <svg fill="none" height="30" stroke="#ff5029" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" /></svg>,
     },
     {
-      id: 'network', label: 'Network', color: '#22e5d4', sublabel: `${following.length} following`,
+      id: 'network', label: t('pagesHome.gridLabel.network', 'Network'), color: '#22e5d4', sublabel: `${following.length} ${t('pagesHome.gridSublabel.following', 'following')}`,
       icon: <svg fill="none" height="30" stroke="#22e5d4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><circle cx="8" cy="8" r="3" /><circle cx="17" cy="9" r="2.5" /><path d="M2 20c0-3.3 2.7-6 6-6s6 2.7 6 6" /><path d="M14.5 14.2c2.5.4 4.5 2.6 4.5 5.3" /></svg>,
     },
     {
-      id: 'creator', label: 'Creator', color: '#ff3e9a', sublabel: 'Add a page',
+      id: 'creator', label: t('pagesHome.gridLabel.creator', 'Creator'), color: '#ff3e9a', sublabel: t('pagesHome.gridSublabel.creator', 'Add a page'),
       icon: <svg fill="none" height="30" stroke="#ff3e9a" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><line x1="12" x2="12" y1="5" y2="19" /><line x1="5" x2="19" y1="12" y2="12" /></svg>,
     },
     {
-      id: 'settings', label: 'Settings', color: '#b983ff', sublabel: 'Account & privacy', href: '/me/settings',
+      id: 'settings', label: t('pagesHome.gridLabel.settings', 'Settings'), color: '#b983ff', sublabel: t('pagesHome.gridSublabel.settings', 'Account & privacy'), href: '/me/settings',
       icon: (
         <svg fill="none" height="30" stroke="#b983ff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30">
           <circle cx="12" cy="12" r="3" />
@@ -237,8 +241,8 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
   if (signedOut) {
     return (
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 24px 100px', textAlign: 'center' }}>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, marginBottom: 10 }}>Sign in to see your pages</h1>
-        <Link href="/login?callbackUrl=/pages" style={bSolid}>Log in</Link>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, marginBottom: 10 }}>{t('pagesHome.signedOutHeading', 'Sign in to see your pages')}</h1>
+        <Link href="/login?callbackUrl=/pages" style={bSolid}>{t('pagesHome.logIn', 'Log in')}</Link>
       </div>
     );
   }
@@ -251,7 +255,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
         onSearchTap={() => { setGridMode(false); setTab('search'); }}
         onSelect={(id) => { setGridMode(false); setTab(id as TabId); }}
         onSwipeSection={shell?.swipeSection}
-        searchPlaceholder="Search artists, venues, shows…"
+        searchPlaceholder={t('pagesHome.searchPlaceholder', 'Search artists, venues, shows…')}
       />
 
       <PullToRefresh onRefresh={refreshAll}>
@@ -259,20 +263,20 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
       <div ref={contentTopRef} />
       <button className="mqg-back" onClick={() => setGridMode(true)} type="button">
         <svg fill="none" height="18" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="18"><polyline points="15 18 9 12 15 6" /></svg>
-        Pages
+        {t('pagesHome.backToPages', 'Pages')}
       </button>
 
-      <h1 className="sr-only">Pages</h1>
+      <h1 className="sr-only">{t('pagesHome.pagesHeading', 'Pages')}</h1>
 
-      <nav className="mqg-tabstrip" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 26 }} aria-label="Pages sections">
-        {TABS.map((t) => (
+      <nav className="mqg-tabstrip" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 26 }} aria-label={t('pagesHome.tabstripAriaLabel', 'Pages sections')}>
+        {TABS.map((tabItem) => (
           <button
-            key={t.id}
-            className={tab === t.id ? 'sub-tab active' : 'sub-tab'}
-            onClick={() => setTab(t.id)}
+            key={tabItem.id}
+            className={tab === tabItem.id ? 'sub-tab active' : 'sub-tab'}
+            onClick={() => setTab(tabItem.id)}
             type="button"
           >
-            {t.label}
+            {t(`pagesHome.tabLabel.${tabItem.id}`, tabItem.label)}
           </button>
         ))}
       </nav>
@@ -286,7 +290,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
             <input
               autoFocus
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search artists, venues, shows…"
+              placeholder={t('pagesHome.searchPlaceholder', 'Search artists, venues, shows…')}
               style={{ width: '100%', boxSizing: 'border-box', background: 'var(--hair-30)', border: '1px solid var(--hair-80)', borderRadius: 12, padding: '14px 16px 14px 46px', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontSize: 16 }}
               type="text"
               value={q}
@@ -294,17 +298,17 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
           </div>
           {!q.trim() ? (
             <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--ink-a50)' }}>
-              <p>Find an artist, venue, or DJ page.</p>
+              <p>{t('pagesHome.searchEmptyState', 'Find an artist, venue, or DJ page.')}</p>
             </div>
           ) : searchResults === null ? (
-            <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--ink-a50)' }}><p>Loading…</p></div>
+            <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--ink-a50)' }}><p>{t('pagesHome.loading', 'Loading…')}</p></div>
           ) : searchResults.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--ink-a50)' }}><p>No results for &ldquo;{q}&rdquo;.</p></div>
+            <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--ink-a50)' }}><p>{t('pagesHome.noResultsFor', 'No results for')} &ldquo;{q}&rdquo;.</p></div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {searchResults.map((r) => {
                 const color = r.type === 'venue' ? '#22e5d4' : r.type === 'promoter' ? '#ff3e9a' : '#ff5029';
-                const label = r.type === 'venue' ? 'Venue' : r.type === 'promoter' ? 'Promoter / DJ' : 'Artist';
+                const label = r.type === 'venue' ? t('pagesHome.resultTypeVenue', 'Venue') : r.type === 'promoter' ? t('pagesHome.resultTypePromoter', 'Promoter / DJ') : t('pagesHome.resultTypeArtist', 'Artist');
                 const route = r.type === 'venue' ? `/venues/${r.slug}` : r.type === 'promoter' ? `/promoters/${r.slug}` : `/artists/${r.slug}`;
                 const initials = r.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
                 return (
@@ -339,21 +343,21 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
       {tab === 'mypage' && (
         <div className="sub-panel">
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a35)', marginBottom: 14 }}>
-            YOUR PAGES
+            {t('pagesHome.yourPagesLabel', 'YOUR PAGES')}
           </div>
 
           {data === null ? (
-            <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--ink-a50)' }}><p>Loading your pages…</p></div>
+            <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--ink-a50)' }}><p>{t('pagesHome.loadingPages', 'Loading your pages…')}</p></div>
           ) : myProfiles.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '80px 0' }}>
               <p style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 20, marginBottom: 8, color: 'var(--ink)' }}>
-                No pages yet
+                {t('pagesHome.noPagesYet', 'No pages yet')}
               </p>
               <p style={{ fontSize: 14, color: 'var(--ink-a50)', marginBottom: 24 }}>
-                Create an artist, venue, or promoter page to get started.
+                {t('pagesHome.noPagesYetSub', 'Create an artist, venue, or promoter page to get started.')}
               </p>
               <button onClick={() => setTab('creator')} style={{ display: 'inline-block', padding: '12px 24px', background: 'var(--accent)', color: '#fff', borderRadius: 8, fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer' }} type="button">
-                Create your first page →
+                {t('pagesHome.createFirstPage', 'Create your first page →')}
               </button>
             </div>
           ) : (
@@ -384,7 +388,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15 }}>
                         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.14em', textTransform: 'uppercase', color }}>
-                          {TYPE_LABEL[p.type] ?? p.type}
+                          {typeLabel(p.type)}
                         </span>
                         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}>{p.name}</span>
                       </div>
@@ -400,7 +404,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                   }}
                   type="button"
                 >
-                  + New page
+                  {t('pagesHome.newPage', '+ New page')}
                 </button>
               </div>
 
@@ -424,7 +428,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                       fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase',
                       marginBottom: 5, color: TYPE_COLOR[selectedProfile.type] ?? '#ff5029',
                     }}>
-                      {(TYPE_LABEL[selectedProfile.type] ?? selectedProfile.type).toUpperCase()} PAGE
+                      {typeLabel(selectedProfile.type).toUpperCase()} {t('pagesHome.pageSuffix', 'PAGE')}
                     </div>
                     <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 3 }}>
                       {selectedProfile.name}
@@ -435,10 +439,10 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                   </div>
                   <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                     <Link href={profileRoute(selectedProfile.type, selectedProfile.slug)} style={bGhost}>
-                      View
+                      {t('pagesHome.view', 'View')}
                     </Link>
                     <button onClick={() => setTab('creator')} style={bSolid} type="button">
-                      Edit page
+                      {t('pagesHome.editPage', 'Edit page')}
                     </button>
                   </div>
                 </div>
@@ -460,26 +464,26 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
       {tab === 'network' && (
         <div className="sub-panel">
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a35)', marginBottom: 14 }}>
-            YOUR NETWORK
+            {t('pagesHome.yourNetworkLabel', 'YOUR NETWORK')}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 18 }}>
             <div style={{ background: 'var(--hair-30)', border: '1px solid var(--line)', borderRadius: 14, padding: 16, textAlign: 'center' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', marginBottom: 5 }}>
                 {String(following.length).padStart(2, '0')}
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Following</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>{t('pagesHome.followingStat', 'Following')}</div>
             </div>
             <div style={{ background: 'var(--hair-30)', border: '1px solid var(--line)', borderRadius: 14, padding: 16, textAlign: 'center' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', marginBottom: 5 }}>
                 {String(followersCount).padStart(2, '0')}
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Followers</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>{t('pagesHome.followersStat', 'Followers')}</div>
             </div>
             <div style={{ background: 'var(--hair-30)', border: '1px solid var(--line)', borderRadius: 14, padding: 16, textAlign: 'center' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', marginBottom: 5 }}>
                 {String(mutualCount).padStart(2, '0')}
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Mutuals</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>{t('pagesHome.mutualsStat', 'Mutuals')}</div>
             </div>
           </div>
 
@@ -495,14 +499,14 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                   color: netFilter === f.id ? 'var(--ink)' : 'var(--ink-a60)',
                 }}
               >
-                {f.label}
+                {t(`pagesHome.netFilterLabel.${f.id}`, f.label)}
               </div>
             ))}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 32 }}>
             {netListShown.length === 0 ? (
-              <div style={{ color: 'var(--ink-a50)', fontSize: 13, padding: '10px 2px' }}>No connections match.</div>
+              <div style={{ color: 'var(--ink-a50)', fontSize: 13, padding: '10px 2px' }}>{t('pagesHome.noConnectionsMatch', 'No connections match.')}</div>
             ) : (
               netListShown.map((p) => {
                 const color = TYPE_COLOR[p.type] ?? '#ff5029';
@@ -521,7 +525,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                       <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, letterSpacing: '-.01em', display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
                         <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
                         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, color, background: hexA(color, 0.14), flexShrink: 0 }}>
-                          {TYPE_LABEL[p.type] ?? p.type}
+                          {typeLabel(p.type)}
                         </span>
                       </div>
                       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -539,12 +543,12 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '8px 0 12px' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a35)' }}>
-              SUGGESTED FOR YOU
+              {t('pagesHome.suggestedForYou', 'SUGGESTED FOR YOU')}
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 32 }}>
             {netSuggestShown.length === 0 ? (
-              <div style={{ color: 'var(--ink-a50)', fontSize: 13, padding: '10px 2px' }}>No suggestions match.</div>
+              <div style={{ color: 'var(--ink-a50)', fontSize: 13, padding: '10px 2px' }}>{t('pagesHome.noSuggestionsMatch', 'No suggestions match.')}</div>
             ) : (
               netSuggestShown.map((p) => {
                 const color = TYPE_COLOR[p.type] ?? '#ff5029';
@@ -563,7 +567,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                       <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, letterSpacing: '-.01em', display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
                         <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
                         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, color, background: hexA(color, 0.14), flexShrink: 0 }}>
-                          {TYPE_LABEL[p.type] ?? p.type}
+                          {typeLabel(p.type)}
                         </span>
                       </div>
                       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -589,13 +593,13 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
               borderRadius: 12, border: '1px solid rgba(34,229,212,.3)', background: 'rgba(34,229,212,.08)',
               color: '#22e5d4', fontSize: 13, fontWeight: 600,
             }}>
-              ✓ &ldquo;{justCreatedName}&rdquo; page created — saved to your account. Edit it below.
+              ✓ &ldquo;{justCreatedName}&rdquo; {t('pagesHome.pageCreatedSuffix', 'page created — saved to your account. Edit it below.')}
             </div>
           )}
           {selectedProfile && (
             <>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a35)', marginBottom: 14 }}>
-                EDITING · {(TYPE_LABEL[selectedProfile.type] ?? selectedProfile.type).toUpperCase()}
+                {t('pagesHome.editingLabel', 'EDITING')} · {typeLabel(selectedProfile.type).toUpperCase()}
               </div>
               <PageEditor key={selectedProfile.id} profileId={selectedProfile.id} />
               <div style={{ borderTop: '1px solid var(--hair-70)', margin: '36px 0 22px' }} />
@@ -603,11 +607,13 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
           )}
 
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a35)', marginBottom: 14 }}>
-            {selectedProfile ? 'ADD ANOTHER PAGE' : 'PAGE CREATOR'}
+            {selectedProfile ? t('pagesHome.addAnotherPageLabel', 'ADD ANOTHER PAGE') : t('pagesHome.pageCreatorLabel', 'PAGE CREATOR')}
           </div>
           <div className="pages-create-grid">
             {CREATE_CARDS.map((card) => {
               const isCreating = creatingType === card.type;
+              const cardName = t(`pagesHome.createCardName.${card.type}`, card.name);
+              const cardDesc = t(`pagesHome.createCardDesc.${card.type}`, card.desc);
               if (isCreating) {
                 return (
                   <div key={card.type} style={{
@@ -618,14 +624,14 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                       {card.icon}
                     </div>
                     <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 800, letterSpacing: '-.01em', color: card.color }}>
-                      {card.name}
+                      {cardName}
                     </div>
                     <input
                       autoFocus
                       disabled={creating}
                       onChange={(e) => setCreatingName(e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter') addProfile(card.type); }}
-                      placeholder={`${card.name} name`}
+                      placeholder={`${cardName} ${t('pagesHome.createCardNameFieldSuffix', 'name')}`}
                       style={{ boxSizing: 'border-box', width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--hair-100)', background: 'var(--hair-40)', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontSize: 14 }}
                       type="text"
                       value={creatingName}
@@ -638,7 +644,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                         style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: card.color, color: '#fff', fontWeight: 700, fontSize: 13, cursor: creating ? 'default' : 'pointer', opacity: creating || !creatingName.trim() ? 0.6 : 1 }}
                         type="button"
                       >
-                        {creating ? 'Creating…' : 'Create'}
+                        {creating ? t('pagesHome.creating', 'Creating…') : t('pagesHome.create', 'Create')}
                       </button>
                       <button
                         disabled={creating}
@@ -646,7 +652,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                         style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid var(--hair-100)', background: 'transparent', color: 'var(--ink-a70)', fontSize: 13, cursor: 'pointer' }}
                         type="button"
                       >
-                        Cancel
+                        {t('pagesHome.cancel', 'Cancel')}
                       </button>
                     </div>
                   </div>
@@ -668,9 +674,9 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                   </div>
                   <div>
                     <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 800, letterSpacing: '-.01em', marginBottom: 3, color: card.color }}>
-                      {card.name}
+                      {cardName}
                     </div>
-                    <div style={{ fontSize: 12, color: 'var(--ink-a55)', lineHeight: 1.5 }}>{card.desc}</div>
+                    <div style={{ fontSize: 12, color: 'var(--ink-a55)', lineHeight: 1.5 }}>{cardDesc}</div>
                   </div>
                 </button>
               );

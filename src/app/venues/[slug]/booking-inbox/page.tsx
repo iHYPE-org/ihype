@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { VenueBookingInboxTabs } from '@/components/VenueBookingInboxTabs';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function VenueBookingInboxPage({ params }: { params: Promise<{ slug: string }> }) {
+  const t = getT(await getLocale());
   const session = await auth();
   const { slug } = await params;
 
@@ -37,8 +39,8 @@ export default async function VenueBookingInboxPage({ params }: { params: Promis
   return (
     <div className="vbip-page">
       <div className="vbip-header">
-        <h1>Booking Inbox</h1>
-        <Link className="vbip-back" href={`/venues/${profile.slug}/dashboard`}>← Dashboard</Link>
+        <h1>{t('venuesSlugBookingInboxPage.title', 'Booking Inbox')}</h1>
+        <Link className="vbip-back" href={`/venues/${profile.slug}/dashboard`}>{t('venuesSlugBookingInboxPage.backToDashboard', '← Dashboard')}</Link>
       </div>
       <VenueBookingInboxTabs profileId={profile.id} />
 

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useI18n } from '@/components/I18nProvider';
 
 interface TicketRef {
   id: string;
@@ -41,6 +42,7 @@ export function TicketCardActions({
   const [resendError, setResendError] = useState<string | null>(null);
   const [resendDone, setResendDone] = useState<string | null>(null);
   const router = useRouter();
+  const { t } = useI18n();
 
   // list-resale acts on a single ticket (not the whole order) — mirror the
   // existing share() precedent of treating the first ticket as the
@@ -60,13 +62,13 @@ export function TicketCardActions({
       const res = await fetch(`/api/tickets/${orderId}/refund`, { method: 'POST' });
       const data = await res.json();
       if (!res.ok) {
-        setCancelError(data.error ?? 'Could not submit cancellation request.');
+        setCancelError(data.error ?? t('ticketCardActions.cancelRequestErrorFallback', 'Could not submit cancellation request.'));
         return;
       }
-      setCancelDone('Cancelled — your refund has been issued and should appear in a few business days.');
+      setCancelDone(t('ticketCardActions.cancelDoneMessage', 'Cancelled — your refund has been issued and should appear in a few business days.'));
       router.refresh();
     } catch {
-      setCancelError('Network error');
+      setCancelError(t('ticketCardActions.networkError', 'Network error'));
     } finally {
       setCancelSubmitting(false);
     }
@@ -89,13 +91,13 @@ export function TicketCardActions({
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? 'Transfer failed');
+        setError(data.error ?? t('ticketCardActions.transferErrorFallback', 'Transfer failed'));
         return;
       }
-      setDone('Transferred. The recipient has been emailed their tickets.');
+      setDone(t('ticketCardActions.transferDoneMessage', 'Transferred. The recipient has been emailed their tickets.'));
       router.refresh();
     } catch {
-      setError('Network error');
+      setError(t('ticketCardActions.networkError', 'Network error'));
     } finally {
       setSubmitting(false);
     }
@@ -106,10 +108,10 @@ export function TicketCardActions({
     if (!first) return;
     const url = `${window.location.origin}/tickets/${first.serializedId}`;
     if (navigator.share) {
-      await navigator.share({ title: 'My iHYPE ticket', url }).catch(() => {});
+      await navigator.share({ title: t('ticketCardActions.shareTitle', 'My iHYPE ticket'), url }).catch(() => {});
     } else {
       await navigator.clipboard.writeText(url).catch(() => {});
-      alert('Ticket link copied to clipboard.');
+      alert(t('ticketCardActions.shareCopiedAlert', 'Ticket link copied to clipboard.'));
     }
   }
 
@@ -133,13 +135,13 @@ export function TicketCardActions({
       });
       const data = await res.json();
       if (!res.ok) {
-        setResaleError(data.error ?? 'Could not list ticket for resale.');
+        setResaleError(data.error ?? t('ticketCardActions.resaleErrorFallback', 'Could not list ticket for resale.'));
         return;
       }
-      setResaleDone(data.message ?? 'Ticket listed for resale.');
+      setResaleDone(data.message ?? t('ticketCardActions.resaleDoneFallback', 'Ticket listed for resale.'));
       router.refresh();
     } catch {
-      setResaleError('Network error');
+      setResaleError(t('ticketCardActions.networkError', 'Network error'));
     } finally {
       setResaleSubmitting(false);
     }
@@ -160,12 +162,12 @@ export function TicketCardActions({
       const res = await fetch('/api/tickets/resend-confirmation', { method: 'POST' });
       const data = await res.json();
       if (!res.ok) {
-        setResendError(data.error ?? 'Could not resend confirmation email.');
+        setResendError(data.error ?? t('ticketCardActions.resendErrorFallback', 'Could not resend confirmation email.'));
         return;
       }
-      setResendDone('Confirmation email sent.');
+      setResendDone(t('ticketCardActions.resendDoneMessage', 'Confirmation email sent.'));
     } catch {
-      setResendError('Network error');
+      setResendError(t('ticketCardActions.networkError', 'Network error'));
     } finally {
       setResendSubmitting(false);
     }
@@ -175,20 +177,20 @@ export function TicketCardActions({
     <>
       <div className="ticket-actions">
         <button className="btn btn-primary" onClick={() => setShowQr((v) => !v)} type="button">
-          {showQr ? 'Hide QR Code' : 'Show QR Code'}
+          {showQr ? t('ticketCardActions.hideQrButton', 'Hide QR Code') : t('ticketCardActions.showQrButton', 'Show QR Code')}
         </button>
-        <button className="btn" onClick={() => setTransferOpen(true)} type="button">Transfer</button>
-        <button className="btn" onClick={share} type="button">Share</button>
+        <button className="btn" onClick={() => setTransferOpen(true)} type="button">{t('ticketCardActions.transferButton', 'Transfer')}</button>
+        <button className="btn" onClick={share} type="button">{t('ticketCardActions.shareButton', 'Share')}</button>
         {resaleTicket && (
-          <button className="btn" onClick={() => setResaleOpen(true)} type="button">List for resale</button>
+          <button className="btn" onClick={() => setResaleOpen(true)} type="button">{t('ticketCardActions.listForResaleButton', 'List for resale')}</button>
         )}
         {(orderStatus === undefined || orderStatus === 'CAPTURED') && (
           <button className="btn" disabled={resendSubmitting} onClick={resendConfirmation} type="button">
-            {resendSubmitting ? 'Sending…' : 'Resend confirmation'}
+            {resendSubmitting ? t('ticketCardActions.sendingButton', 'Sending…') : t('ticketCardActions.resendConfirmationButton', 'Resend confirmation')}
           </button>
         )}
         {showCancel && (
-          <button className="btn" onClick={() => setCancelOpen(true)} style={{ color: '#ff5029' }} type="button">Cancel ticket</button>
+          <button className="btn" onClick={() => setCancelOpen(true)} style={{ color: '#ff5029' }} type="button">{t('ticketCardActions.cancelTicketButton', 'Cancel ticket')}</button>
         )}
       </div>
       {(resendDone || resendError) && (
@@ -197,18 +199,18 @@ export function TicketCardActions({
 
       {showQr && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 16 }}>
-          {tickets.map((t) => (
-            <div key={t.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+          {tickets.map((ticket) => (
+            <div key={ticket.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                alt={`QR code for ticket ${t.serializedId}`}
+                alt={`${t('ticketCardActions.qrCodeAlt', 'QR code for ticket')} ${ticket.serializedId}`}
                 height={120}
-                src={`/api/tickets/${t.serializedId}/qr`}
+                src={`/api/tickets/${ticket.serializedId}/qr`}
                 style={{ borderRadius: 8, background: 'var(--ink)' }}
                 width={120}
               />
               <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--ink-a50)', letterSpacing: '.04em' }}>
-                {t.serializedId}
+                {ticket.serializedId}
               </span>
             </div>
           ))}
@@ -223,28 +225,28 @@ export function TicketCardActions({
           role="dialog"
         >
           <div className="ihype-sheet-panel">
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, marginBottom: 16 }}>Transfer tickets</h3>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, marginBottom: 16 }}>{t('ticketCardActions.transferModalTitle', 'Transfer tickets')}</h3>
             {done ? (
               <>
                 <p style={{ fontSize: 13, color: '#22e5d4', marginBottom: 16 }}>{done}</p>
-                <button className="btn btn-primary" onClick={closeTransfer} style={{ width: '100%' }} type="button">Close</button>
+                <button className="btn btn-primary" onClick={closeTransfer} style={{ width: '100%' }} type="button">{t('ticketCardActions.closeButton', 'Close')}</button>
               </>
             ) : (
               <>
-                <label htmlFor="ticket-transfer-email" style={{ display: 'block', fontSize: 12, color: 'var(--ink-a50)', marginBottom: 6 }}>Recipient&apos;s email</label>
+                <label htmlFor="ticket-transfer-email" style={{ display: 'block', fontSize: 12, color: 'var(--ink-a50)', marginBottom: 6 }}>{t('ticketCardActions.recipientEmailLabel', "Recipient's email")}</label>
                 <input
                   id="ticket-transfer-email"
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="friend@example.com"
+                  placeholder={t('ticketCardActions.recipientEmailPlaceholder', 'friend@example.com')}
                   style={{ width: '100%', marginBottom: 16, padding: '10px 14px', border: '1px solid var(--hair-100)', borderRadius: 8, background: 'var(--bg)', color: 'var(--ink)' }}
                   type="email"
                   value={email}
                 />
                 {error && <p style={{ color: '#ff5029', fontSize: 12, marginBottom: 12 }}>{error}</p>}
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <button className="btn" onClick={closeTransfer} style={{ flex: 1 }} type="button">Cancel</button>
+                  <button className="btn" onClick={closeTransfer} style={{ flex: 1 }} type="button">{t('ticketCardActions.cancelButton', 'Cancel')}</button>
                   <button className="btn btn-primary" disabled={submitting || !email} onClick={transfer} style={{ flex: 1 }} type="button">
-                    {submitting ? 'Transferring…' : 'Transfer'}
+                    {submitting ? t('ticketCardActions.transferringButton', 'Transferring…') : t('ticketCardActions.transferButton', 'Transfer')}
                   </button>
                 </div>
               </>
@@ -261,15 +263,15 @@ export function TicketCardActions({
           role="dialog"
         >
           <div className="ihype-sheet-panel">
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, marginBottom: 16 }}>List for resale</h3>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, marginBottom: 16 }}>{t('ticketCardActions.resaleModalTitle', 'List for resale')}</h3>
             {resaleDone ? (
               <>
                 <p style={{ fontSize: 13, color: '#22e5d4', marginBottom: 16 }}>{resaleDone}</p>
-                <button className="btn btn-primary" onClick={closeResale} style={{ width: '100%' }} type="button">Close</button>
+                <button className="btn btn-primary" onClick={closeResale} style={{ width: '100%' }} type="button">{t('ticketCardActions.closeButton', 'Close')}</button>
               </>
             ) : (
               <>
-                <label htmlFor="ticket-resale-price" style={{ display: 'block', fontSize: 12, color: 'var(--ink-a50)', marginBottom: 6 }}>Resale price (max 110% of face value)</label>
+                <label htmlFor="ticket-resale-price" style={{ display: 'block', fontSize: 12, color: 'var(--ink-a50)', marginBottom: 6 }}>{t('ticketCardActions.resalePriceLabel', 'Resale price (max 110% of face value)')}</label>
                 <input
                   id="ticket-resale-price"
                   min="0"
@@ -282,9 +284,9 @@ export function TicketCardActions({
                 />
                 {resaleError && <p style={{ color: '#ff5029', fontSize: 12, marginBottom: 12 }}>{resaleError}</p>}
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <button className="btn" onClick={closeResale} style={{ flex: 1 }} type="button">Cancel</button>
+                  <button className="btn" onClick={closeResale} style={{ flex: 1 }} type="button">{t('ticketCardActions.cancelButton', 'Cancel')}</button>
                   <button className="btn btn-primary" disabled={resaleSubmitting || !resalePrice} onClick={listForResale} style={{ flex: 1 }} type="button">
-                    {resaleSubmitting ? 'Listing…' : 'List for resale'}
+                    {resaleSubmitting ? t('ticketCardActions.listingButton', 'Listing…') : t('ticketCardActions.listForResaleButton', 'List for resale')}
                   </button>
                 </div>
               </>
@@ -301,32 +303,32 @@ export function TicketCardActions({
           role="dialog"
         >
           <div className="ihype-sheet-panel">
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, marginBottom: 16 }}>Cancel ticket</h3>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, marginBottom: 16 }}>{t('ticketCardActions.cancelModalTitle', 'Cancel ticket')}</h3>
             {cancelDone ? (
               <>
                 <p style={{ fontSize: 13, color: '#22e5d4', marginBottom: 16 }}>{cancelDone}</p>
-                <button className="btn btn-primary" onClick={closeCancel} style={{ width: '100%' }} type="button">Close</button>
+                <button className="btn btn-primary" onClick={closeCancel} style={{ width: '100%' }} type="button">{t('ticketCardActions.closeButton', 'Close')}</button>
               </>
             ) : tooLateToCancel ? (
               <>
                 <p style={{ fontSize: 13, color: '#ffb84a', marginBottom: 16 }}>
-                  Cancellations close 48 hours before the show, so this ticket can no longer be cancelled — you can still transfer it to someone else.
+                  {t('ticketCardActions.tooLateToCancelMessage', 'Cancellations close 48 hours before the show, so this ticket can no longer be cancelled — you can still transfer it to someone else.')}
                 </p>
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <button className="btn" onClick={closeCancel} style={{ flex: 1 }} type="button">Close</button>
-                  <button className="btn btn-primary" onClick={() => { setCancelOpen(false); setTransferOpen(true); }} style={{ flex: 1 }} type="button">Transfer instead</button>
+                  <button className="btn" onClick={closeCancel} style={{ flex: 1 }} type="button">{t('ticketCardActions.closeButton', 'Close')}</button>
+                  <button className="btn btn-primary" onClick={() => { setCancelOpen(false); setTransferOpen(true); }} style={{ flex: 1 }} type="button">{t('ticketCardActions.transferInsteadButton', 'Transfer instead')}</button>
                 </div>
               </>
             ) : (
               <>
                 <p style={{ fontSize: 13, color: 'var(--ink-a60)', marginBottom: 16 }}>
-                  Your card will be refunded immediately. Cancellation is allowed up to 48 hours before the event.
+                  {t('ticketCardActions.cancelRefundInfo', 'Your card will be refunded immediately. Cancellation is allowed up to 48 hours before the event.')}
                 </p>
                 {cancelError && <p style={{ color: '#ff5029', fontSize: 12, marginBottom: 12 }}>{cancelError}</p>}
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <button className="btn" onClick={closeCancel} style={{ flex: 1 }} type="button">Keep ticket</button>
+                  <button className="btn" onClick={closeCancel} style={{ flex: 1 }} type="button">{t('ticketCardActions.keepTicketButton', 'Keep ticket')}</button>
                   <button className="btn btn-primary" disabled={cancelSubmitting} onClick={requestCancellation} style={{ flex: 1 }} type="button">
-                    {cancelSubmitting ? 'Submitting…' : 'Cancel & refund'}
+                    {cancelSubmitting ? t('ticketCardActions.submittingButton', 'Submitting…') : t('ticketCardActions.cancelRefundButton', 'Cancel & refund')}
                   </button>
                 </div>
               </>

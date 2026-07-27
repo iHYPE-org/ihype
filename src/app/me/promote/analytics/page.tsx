@@ -9,6 +9,7 @@ import {
 } from '@/lib/promoterDashboard';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { getBaseUrl } from '@/lib/utils';
+import { getLocale, getT } from '@/lib/i18n/server';
 import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
@@ -39,6 +40,7 @@ export default async function PromoterAnalyticsPage({
     redirect('/login?callbackUrl=/me/promote/analytics');
   }
 
+  const t = getT(await getLocale());
   const { range: rangeParam } = await searchParams;
   const range: PromoterAnalyticsRange = isValidRange(rangeParam) ? rangeParam : '30d';
 
@@ -67,38 +69,41 @@ export default async function PromoterAnalyticsPage({
   return (
     <div className="pa-page">
       <div className="pa-header">
-        <h1>Promoter Analytics</h1>
-        <p>Clicks, conversion, and earnings from your HYPE Links</p>
+        <h1>{t('mePromoteAnalyticsPage.title', 'Promoter Analytics')}</h1>
+        <p>{t('mePromoteAnalyticsPage.subtitle', 'Clicks, conversion, and earnings from your HYPE Links')}</p>
       </div>
 
       <div className="pa-stats-grid">
         <div className="pa-stat-card">
-          <div className="pa-stat-label">Total Clicks</div>
+          <div className="pa-stat-label">{t('mePromoteAnalyticsPage.totalClicksLabel', 'Total Clicks')}</div>
           <div className="pa-stat-value">{d.clicks.toLocaleString()}</div>
-          <div className="pa-stat-sub">Lifetime, all HYPE Links</div>
+          <div className="pa-stat-sub">{t('mePromoteAnalyticsPage.totalClicksSub', 'Lifetime, all HYPE Links')}</div>
         </div>
         <div className="pa-stat-card">
-          <div className="pa-stat-label">Tickets Driven</div>
+          <div className="pa-stat-label">{t('mePromoteAnalyticsPage.ticketsDrivenLabel', 'Tickets Driven')}</div>
           <div className="pa-stat-value">{d.ticketsSold.toLocaleString()}</div>
-          <div className="pa-stat-sub">{d.clicks > 0 ? `${conversionRate.toFixed(1)}% conversion` : 'No clicks yet'}</div>
+          <div className="pa-stat-sub">{d.clicks > 0 ? `${conversionRate.toFixed(1)}% ${t('mePromoteAnalyticsPage.conversion', 'conversion')}` : t('mePromoteAnalyticsPage.noClicksYet', 'No clicks yet')}</div>
         </div>
         <div className="pa-stat-card">
-          <div className="pa-stat-label">Total Earned</div>
+          <div className="pa-stat-label">{t('mePromoteAnalyticsPage.totalEarnedLabel', 'Total Earned')}</div>
           <div className="pa-stat-value">{formatCurrencyFromCents(d.earnedCents)}</div>
-          <div className="pa-stat-sub">Lifetime · {d.ordersDriven} order{d.ordersDriven === 1 ? '' : 's'}</div>
+          <div className="pa-stat-sub">{t('mePromoteAnalyticsPage.lifetime', 'Lifetime')} · {d.ordersDriven} {d.ordersDriven === 1 ? t('mePromoteAnalyticsPage.order', 'order') : t('mePromoteAnalyticsPage.orders', 'orders')}</div>
         </div>
         <div className="pa-stat-card">
-          <div className="pa-stat-label">Avg per Ticket</div>
+          <div className="pa-stat-label">{t('mePromoteAnalyticsPage.avgPerTicketLabel', 'Avg per Ticket')}</div>
           <div className="pa-stat-value">{d.ticketsSold > 0 ? formatCurrencyFromCents(avgPerTicketCents) : '—'}</div>
-          <div className="pa-stat-sub">Share of 10% pool</div>
+          <div className="pa-stat-sub">{t('mePromoteAnalyticsPage.sharePool', 'Share of 10% pool')}</div>
         </div>
       </div>
 
       <div className="pa-chart-card">
         <div className="pa-chart-head">
           <div>
-            <div className="pa-chart-title">Earnings over time</div>
-            <div className="pa-chart-sub">Real promoter-pool payouts, bucketed by {range === '7d' ? 'day' : range === '30d' ? 'week' : 'month'}</div>
+            <div className="pa-chart-title">{t('mePromoteAnalyticsPage.earningsOverTime', 'Earnings over time')}</div>
+            <div className="pa-chart-sub">
+              {t('mePromoteAnalyticsPage.bucketedByPrefix', 'Real promoter-pool payouts, bucketed by')}{' '}
+              {range === '7d' ? t('mePromoteAnalyticsPage.bucketDay', 'day') : range === '30d' ? t('mePromoteAnalyticsPage.bucketWeek', 'week') : t('mePromoteAnalyticsPage.bucketMonth', 'month')}
+            </div>
           </div>
           <div className="pa-range-tabs">
             {RANGES.map((r) => (
@@ -107,13 +112,17 @@ export default async function PromoterAnalyticsPage({
                 href={`/me/promote/analytics?range=${r.key}`}
                 className={`pa-range-tab${r.key === range ? ' pa-range-tab-active' : ''}`}
               >
-                {r.label}
+                {r.key === '7d'
+                  ? t('mePromoteAnalyticsPage.range7d', '7 Days')
+                  : r.key === '30d'
+                    ? t('mePromoteAnalyticsPage.range30d', '30 Days')
+                    : t('mePromoteAnalyticsPage.rangeYtd', 'YTD')}
               </Link>
             ))}
           </div>
         </div>
         {series.every((s) => s.earnedCents === 0) ? (
-          <div className="pa-chart-empty">No earnings in this period yet.</div>
+          <div className="pa-chart-empty">{t('mePromoteAnalyticsPage.noEarningsInPeriod', 'No earnings in this period yet.')}</div>
         ) : (
           <div className="pa-chart-bars">
             {series.map((s, i) => (
@@ -130,17 +139,17 @@ export default async function PromoterAnalyticsPage({
       </div>
 
       <div className="pa-links-card">
-        <div className="pa-links-head">Top-performing links</div>
+        <div className="pa-links-head">{t('mePromoteAnalyticsPage.topPerformingLinks', 'Top-performing links')}</div>
         {topLinks.length === 0 ? (
           <div className="pa-links-empty">
-            <p>No link activity yet — share your HYPE Link to start earning.</p>
+            <p>{t('mePromoteAnalyticsPage.noLinkActivity', 'No link activity yet — share your HYPE Link to start earning.')}</p>
           </div>
         ) : (
           topLinks.map((l) => (
             <div className="pa-link-row" key={l.hexId}>
               <span className="pa-link-url">{`${baseUrl}/h/${l.hexId}`}</span>
               <div className="pa-link-stats">
-                <span className="pa-link-clicks">{l.clicks.toLocaleString()} click{l.clicks === 1 ? '' : 's'}</span>
+                <span className="pa-link-clicks">{l.clicks.toLocaleString()} {l.clicks === 1 ? t('mePromoteAnalyticsPage.click', 'click') : t('mePromoteAnalyticsPage.clicks', 'clicks')}</span>
                 <span className="pa-link-earned">{formatCurrencyFromCents(l.earnedCents)}</span>
               </div>
             </div>
@@ -149,7 +158,7 @@ export default async function PromoterAnalyticsPage({
       </div>
 
       <p className="pa-foot">
-        <Link href="/me/promote">Back to Promoter Dashboard</Link>
+        <Link href="/me/promote">{t('mePromoteAnalyticsPage.backToPromoterDashboard', 'Back to Promoter Dashboard')}</Link>
       </p>
 
       <style>{`

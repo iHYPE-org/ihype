@@ -1,6 +1,7 @@
 'use client';
 
 import { useMediaPlayer, type MediaTrack } from '@/components/GlobalMediaPlayer';
+import { useI18n } from '@/components/I18nProvider';
 
 type RelatedTrack = {
   hexId: string;
@@ -26,6 +27,7 @@ function fmtDuration(secs: number | null) {
 }
 
 export function TrackPlayMainButton({ track }: { track: MediaTrack }) {
+  const { t } = useI18n();
   const { currentTrack, isPlaying, playTrack, togglePlayback } = useMediaPlayer();
   const isCurrent = currentTrack?.id === track.id;
   const isCurrentAndPlaying = isCurrent && isPlaying;
@@ -36,12 +38,13 @@ export function TrackPlayMainButton({ track }: { track: MediaTrack }) {
       onClick={() => { if (isCurrent) { togglePlayback(); return; } playTrack(track, [track]); }}
       type="button"
     >
-      {isCurrentAndPlaying ? '❙❙ Pause' : isCurrent ? '▶ Resume' : '▶ Play'}
+      {isCurrentAndPlaying ? t('tracksHexIdTrackPlayer.pause', '❙❙ Pause') : isCurrent ? t('tracksHexIdTrackPlayer.resume', '▶ Resume') : t('tracksHexIdTrackPlayer.play', '▶ Play')}
     </button>
   );
 }
 
 export function MoreFromArtistList({ track, related, artistName, artistSlug, artworkUrl }: TrackPlayerProps) {
+  const { t } = useI18n();
   const { currentTrack, isPlaying, playTrack, togglePlayback } = useMediaPlayer();
 
   const queue: MediaTrack[] = [
@@ -60,7 +63,7 @@ export function MoreFromArtistList({ track, related, artistName, artistSlug, art
   if (related.length === 0) {
     return (
       <div className="track-empty">
-        <p>No other tracks yet.</p>
+        <p>{t('tracksHexIdTrackPlayer.noOtherTracks', 'No other tracks yet.')}</p>
       </div>
     );
   }
@@ -79,7 +82,7 @@ export function MoreFromArtistList({ track, related, artistName, artistSlug, art
               onClick={() => { if (isCurrent) { togglePlayback(); return; } playTrack(trackForQueue, queue); }}
               style={r.artworkUrl ? { backgroundImage: `url(${r.artworkUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
               type="button"
-              aria-label={isCurrentAndPlaying ? `Pause ${r.title}` : `Play ${r.title}`}
+              aria-label={isCurrentAndPlaying ? `${t('tracksHexIdTrackPlayer.pauseAriaPrefix', 'Pause')} ${r.title}` : `${t('tracksHexIdTrackPlayer.playAriaPrefix', 'Play')} ${r.title}`}
             >
               {!r.artworkUrl ? (isCurrentAndPlaying ? '❙❙' : '▶') : null}
             </button>

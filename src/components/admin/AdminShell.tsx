@@ -1,6 +1,7 @@
 'use client';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { useI18n } from '@/components/I18nProvider';
 
 type AdminSection = 'overview'|'users'|'content'|'finance'|'ads'|'support'|'system'|'growth';
 
@@ -73,6 +74,7 @@ function initials(name?: string | null, email?: string | null): string {
 }
 
 export function AdminShell({ children, name, email }: Props) {
+  const { t } = useI18n();
   const pathname = usePathname();
   const active = sectionFromPathname(pathname);
   const ops = initials(name, email);
@@ -84,11 +86,11 @@ export function AdminShell({ children, name, email }: Props) {
       <header className="ops-topbar">
         <span className="ops-wordmark">iH<span className="ops-dot">·</span><span className="ops-ops">OPS</span></span>
         <div className="ops-topbar-mid">
-          <span className="ops-search-hint"><kbd>⌘K</kbd> Search</span>
+          <span className="ops-search-hint"><kbd>⌘K</kbd> {t('adminAdminShell.search', 'Search')}</span>
         </div>
         <div className="ops-topbar-right">
-          <span className="ops-chip ops-chip-sm">OPERATOR</span>
-          <div className="ops-topbar-avatar" title={name ?? email ?? 'Operator'}>{ops}</div>
+          <span className="ops-chip ops-chip-sm">{t('adminAdminShell.operator', 'OPERATOR')}</span>
+          <div className="ops-topbar-avatar" title={name ?? email ?? t('adminAdminShell.operatorTitle', 'Operator')}>{ops}</div>
         </div>
       </header>
 
@@ -100,10 +102,10 @@ export function AdminShell({ children, name, email }: Props) {
               key={item.s}
               href={item.href}
               className={`ops-rail-item${active === item.s ? ' ops-rail-active' : ''}`}
-              title={item.label}
+              title={t(`adminAdminShell.nav.${item.s}`, item.label)}
             >
               <span className="ops-rail-glyph">{item.glyph}</span>
-              <span className="ops-rail-label">{item.label}</span>
+              <span className="ops-rail-label">{t(`adminAdminShell.nav.${item.s}`, item.label)}</span>
             </Link>
           ))}
         </aside>
@@ -118,7 +120,7 @@ export function AdminShell({ children, name, email }: Props) {
                   href={item.href}
                   className={`ops-subnav-link${pathname.startsWith(item.href) ? ' ops-subnav-active' : ''}`}
                 >
-                  {item.label}
+                  {t(`adminAdminShell.subnav.${item.href}`, item.label)}
                 </Link>
               ))}
             </nav>
@@ -134,10 +136,10 @@ export function AdminShell({ children, name, email }: Props) {
             key={item.s}
             href={item.href}
             className={`ops-bottom-tab${active === item.s ? ' ops-rail-active' : ''}`}
-            title={item.label}
+            title={t(`adminAdminShell.nav.${item.s}`, item.label)}
           >
             <span className="ops-rail-glyph">{item.glyph}</span>
-            <span>{item.label}</span>
+            <span>{t(`adminAdminShell.nav.${item.s}`, item.label)}</span>
           </Link>
         ))}
       </nav>

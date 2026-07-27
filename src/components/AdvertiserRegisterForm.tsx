@@ -5,12 +5,24 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { postJson } from '@/lib/api-client';
 import { getErrorMessage } from '@/components/AuthShared';
+import { useI18n } from '@/components/I18nProvider';
 
 export function AdvertiserRegisterForm() {
+  const { t } = useI18n();
+  const CATEGORIES: { id: string; label: string }[] = [
+    { id: 'LABEL', label: t('advertiserRegisterForm.categoryLabel', 'Record label') },
+    { id: 'VENUE_PROMOTER', label: t('advertiserRegisterForm.categoryVenuePromoter', 'Venue/promoter') },
+    { id: 'GEAR', label: t('advertiserRegisterForm.categoryGear', 'Gear & instruments') },
+    { id: 'TICKETING', label: t('advertiserRegisterForm.categoryTicketing', 'Ticketing') },
+    { id: 'MERCH', label: t('advertiserRegisterForm.categoryMerch', 'Merch') },
+    { id: 'TOUR', label: t('advertiserRegisterForm.categoryTour', 'Tour support') },
+  ];
   const [email, setEmail] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [contactName, setContactName] = useState('');
   const [website, setWebsite] = useState('');
+  const [category, setCategory] = useState<string | null>(null);
+  const [pitch, setPitch] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
@@ -25,10 +37,12 @@ export function AdvertiserRegisterForm() {
         companyName: companyName.trim(),
         contactName: contactName.trim() || undefined,
         website: website.trim() || undefined,
+        category: category ?? undefined,
+        pitch: pitch.trim() || undefined,
       });
       setSent(true);
     } catch (err) {
-      setError(getErrorMessage(err, 'Something went wrong. Please try again.'));
+      setError(getErrorMessage(err, t('advertiserRegisterForm.genericError', 'Something went wrong. Please try again.')));
     } finally {
       setSubmitting(false);
     }
@@ -39,12 +53,11 @@ export function AdvertiserRegisterForm() {
       <div className="aar-page">
         <div className="aar-card aar-done">
           <div className="aar-check">✓</div>
-          <h1 className="aar-title">Check your inbox.</h1>
+          <h1 className="aar-title">{t('advertiserRegisterForm.checkInboxTitle', 'Check your inbox.')}</h1>
           <p className="aar-sub">
-            We sent a one-tap sign-in link to <b>{email.trim()}</b>. Open it to finish setting up
-            your advertiser account and land straight in your campaign dashboard.
+            {t('advertiserRegisterForm.checkInboxSubPrefix', 'We sent a one-tap sign-in link to')} <b>{email.trim()}</b>. {t('advertiserRegisterForm.checkInboxSubSuffix', 'Open it to finish setting up your advertiser account and land straight in your campaign dashboard.')}
           </p>
-          <Link className="aar-link" href="/advertise">← Back to Advertise</Link>
+          <Link className="aar-link" href="/advertise">{t('advertiserRegisterForm.backToAdvertise', '← Back to Advertise')}</Link>
         </div>
         <style>{styles}</style>
       </div>
@@ -54,62 +67,92 @@ export function AdvertiserRegisterForm() {
   return (
     <div className="aar-page">
       <form className="aar-card" onSubmit={submit}>
-        <div className="aar-eyebrow">3rd-Party Advertiser Account</div>
-        <h1 className="aar-title">Manage your ad campaigns.</h1>
+        <div className="aar-eyebrow">{t('advertiserRegisterForm.eyebrow', '3rd-Party Advertiser Account')}</div>
+        <h1 className="aar-title">{t('advertiserRegisterForm.title', 'Manage your ad campaigns.')}</h1>
         <p className="aar-sub">
-          For music stores, merch printers, live-production companies, and other music-adjacent
-          businesses — no artist, venue, or DJ account required, and no public profile page.
+          {t('advertiserRegisterForm.sub', 'For music stores, merch printers, live-production companies, and other music-adjacent businesses — no artist, venue, or DJ account required, and no public profile page.')}
         </p>
 
-        <label className="aar-label" htmlFor="companyName">Company name</label>
+        <div className="aar-notice">
+          <div className="aar-notice-label">{t('advertiserRegisterForm.noticeLabel', 'Music-industry only')}</div>
+          <p className="aar-notice-body">
+            {t('advertiserRegisterForm.noticeBody', 'iHYPE only accepts advertisers in music, live events, or related creator services — labels, venues, gear, ticketing, merch, tour support. Everything else is rejected at screening.')}
+          </p>
+        </div>
+
+        <label className="aar-label" htmlFor="companyName">{t('advertiserRegisterForm.companyNameLabel', 'Company name')}</label>
         <input
           className="aar-input"
           id="companyName"
           onChange={(e) => setCompanyName(e.target.value)}
-          placeholder="NorthBeat Pedals"
+          placeholder={t('advertiserRegisterForm.companyNamePlaceholder', 'NorthBeat Pedals')}
           required
           value={companyName}
         />
 
-        <label className="aar-label" htmlFor="email">Email</label>
+        <label className="aar-label" htmlFor="email">{t('advertiserRegisterForm.emailLabel', 'Email')}</label>
         <input
           className="aar-input"
           id="email"
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@yourcompany.com"
+          placeholder={t('advertiserRegisterForm.emailPlaceholder', 'you@yourcompany.com')}
           required
           type="email"
           value={email}
         />
 
-        <label className="aar-label" htmlFor="contactName">Contact name (optional)</label>
+        <label className="aar-label" htmlFor="contactName">{t('advertiserRegisterForm.contactNameLabel', 'Contact name (optional)')}</label>
         <input
           className="aar-input"
           id="contactName"
           onChange={(e) => setContactName(e.target.value)}
-          placeholder="Jamie Lee"
+          placeholder={t('advertiserRegisterForm.contactNamePlaceholder', 'Jamie Lee')}
           value={contactName}
         />
 
-        <label className="aar-label" htmlFor="website">Website (optional)</label>
+        <label className="aar-label" htmlFor="website">{t('advertiserRegisterForm.websiteLabel', 'Website (optional)')}</label>
         <input
           className="aar-input"
           id="website"
           onChange={(e) => setWebsite(e.target.value)}
-          placeholder="https://yourcompany.com"
+          placeholder={t('advertiserRegisterForm.websitePlaceholder', 'https://yourcompany.com')}
           type="url"
           value={website}
+        />
+
+        <label className="aar-label" htmlFor="category">{t('advertiserRegisterForm.categoryFieldLabel', 'Category (optional)')}</label>
+        <div className="aar-cat-row" id="category">
+          {CATEGORIES.map((c) => (
+            <button
+              className={c.id === category ? 'aar-cat active' : 'aar-cat'}
+              key={c.id}
+              onClick={() => setCategory((cur) => (cur === c.id ? null : c.id))}
+              type="button"
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+
+        <label className="aar-label" htmlFor="pitch">{t('advertiserRegisterForm.pitchLabel', 'Tell us about your business (optional)')}</label>
+        <textarea
+          className="aar-input aar-textarea"
+          id="pitch"
+          onChange={(e) => setPitch(e.target.value)}
+          placeholder={t('advertiserRegisterForm.pitchPlaceholder', 'What do you sell, and to whom?')}
+          rows={3}
+          value={pitch}
         />
 
         {error && <p className="aar-error">{error}</p>}
 
         <button className="aar-btn" disabled={submitting} type="submit">
-          {submitting ? 'Creating account…' : 'Create advertiser account →'}
+          {submitting ? t('advertiserRegisterForm.creating', 'Creating account…') : t('advertiserRegisterForm.submit', 'Create advertiser account →')}
         </button>
 
         <p className="aar-fineprint">
-          We'll email you a sign-in link — no password to set. Already have an advertiser account?{' '}
-          <Link href="/login?callbackUrl=/advertise/dashboard">Sign in</Link>.
+          {t('advertiserRegisterForm.fineprint', "We'll email you a sign-in link — no password to set. Already have an advertiser account?")}{' '}
+          <Link href="/login?callbackUrl=/advertise/dashboard">{t('advertiserRegisterForm.signIn', 'Sign in')}</Link>.
         </p>
       </form>
       <style>{styles}</style>
@@ -125,8 +168,15 @@ const styles = `
   .aar-sub { font-size: 13.5px; color: var(--ink-a65); line-height: 1.6; margin: 0 0 28px; }
   .aar-label { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a55); margin: 14px 0 6px; }
   .aar-label:first-of-type { margin-top: 0; }
-  .aar-input { width: 100%; font-size: 14px; color: var(--ink); background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 12px 14px; outline: none; }
+  .aar-input { width: 100%; font-size: 14px; color: var(--ink); background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 12px 14px; outline: none; font-family: inherit; box-sizing: border-box; }
   .aar-input:focus { border-color: var(--accent, #ff5029); }
+  .aar-textarea { resize: vertical; }
+  .aar-notice { border: 1px solid rgba(255,184,74,.25); background: rgba(255,184,74,.06); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 24px; }
+  .aar-notice-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: #ffb84a; margin-bottom: 4px; }
+  .aar-notice-body { font-size: 12.5px; color: var(--ink-a65); line-height: 1.6; margin: 0; }
+  .aar-cat-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+  .aar-cat { padding: 7px 13px; border-radius: var(--radius-pill); font-size: 12.5px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--ink-a65); font-family: inherit; }
+  .aar-cat.active { border-color: #ffb84a; background: rgba(255,184,74,.13); color: #ffb84a; }
   .aar-error { color: var(--accent, #ff5029); font-size: 12.5px; margin: 14px 0 0; }
   .aar-btn { margin-top: 26px; font-family: var(--font-mono); font-size: 13px; text-transform: uppercase; letter-spacing: .06em; padding: 13px 20px; border-radius: var(--radius-pill); border: none; background: var(--accent, #ff5029); color: #fff; cursor: pointer; }
   .aar-btn:disabled { opacity: .6; cursor: default; }

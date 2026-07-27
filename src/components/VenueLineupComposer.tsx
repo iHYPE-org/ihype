@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 type ExistingSlot = { profileSlug: string; profileName: string; splitPercent: number; isHeadliner: boolean };
 
@@ -26,6 +27,7 @@ export function VenueLineupComposer({
   existingSlots: ExistingSlot[];
 }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [rows, setRows] = useState<Row[]>(
     existingSlots.length > 0
       ? existingSlots.map((s) => ({ profileSlug: s.profileSlug, splitPercent: String(s.splitPercent), isHeadliner: s.isHeadliner }))
@@ -67,15 +69,15 @@ export function VenueLineupComposer({
   async function submit() {
     setError(null);
     if (rows.some((r) => !r.profileSlug.trim() || !r.splitPercent.trim())) {
-      setError('Every act needs a profile slug and a split percentage.');
+      setError(t('venueLineupComposer.errorMissingFields', 'Every act needs a profile slug and a split percentage.'));
       return;
     }
     if (remainder !== 0) {
-      setError(`Splits must add up to exactly ${artistPayoutPercent}% (currently ${total}%).`);
+      setError(`${t('venueLineupComposer.errorSplitsMustAddUp', 'Splits must add up to exactly')} ${artistPayoutPercent}% (${t('venueLineupComposer.errorCurrently', 'currently')} ${total}%).`);
       return;
     }
     if (rows.filter((r) => r.isHeadliner).length !== 1) {
-      setError('Exactly one act must be marked as the headliner.');
+      setError(t('venueLineupComposer.errorOneHeadliner', 'Exactly one act must be marked as the headliner.'));
       return;
     }
 
@@ -84,7 +86,7 @@ export function VenueLineupComposer({
       const resolved = await Promise.all(rows.map((r) => resolveProfileId(r.profileSlug.trim())));
       const missing = resolved.findIndex((r) => r === null);
       if (missing !== -1) {
-        setError(`Couldn't find an artist/DJ profile at slug "${rows[missing].profileSlug}".`);
+        setError(`${t('venueLineupComposer.errorProfileNotFound', "Couldn't find an artist/DJ profile at slug")} "${rows[missing].profileSlug}".`);
         setSubmitting(false);
         return;
       }
@@ -102,22 +104,22 @@ export function VenueLineupComposer({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error ?? 'Could not save the lineup proposal.');
+        setError(data.error ?? t('venueLineupComposer.errorCouldNotSave', 'Could not save the lineup proposal.'));
         setSubmitting(false);
         return;
       }
       router.refresh();
     } catch {
-      setError('Network error — try again.');
+      setError(t('venueLineupComposer.errorNetwork', 'Network error — try again.'));
       setSubmitting(false);
     }
   }
 
   return (
     <div className="vlc">
-      <div className="vlc-eyebrow">{existingSlots.length > 0 ? 'Revise lineup split' : 'Propose lineup split'}</div>
+      <div className="vlc-eyebrow">{existingSlots.length > 0 ? t('venueLineupComposer.eyebrowRevise', 'Revise lineup split') : t('venueLineupComposer.eyebrowPropose', 'Propose lineup split')}</div>
       <p className="vlc-hint">
-        Every act's split percentage must add up to this show's {artistPayoutPercent}% artist share. Submitting resets everyone's acceptance — each act has to sign off again.
+        {t('venueLineupComposer.hint', "Every act's split percentage must add up to this show's")} {artistPayoutPercent}% {t('venueLineupComposer.hintSuffix', "artist share. Submitting resets everyone's acceptance — each act has to sign off again.")}
       </p>
 
       {rows.map((row, i) => (
@@ -125,7 +127,7 @@ export function VenueLineupComposer({
           <input
             className="vlc-input vlc-input-slug"
             onChange={(e) => updateRow(i, { profileSlug: e.target.value })}
-            placeholder="artist or DJ profile slug"
+            placeholder={t('venueLineupComposer.placeholderSlug', 'artist or DJ profile slug')}
             value={row.profileSlug}
           />
           <input
@@ -137,11 +139,11 @@ export function VenueLineupComposer({
           />
           <label className="vlc-headliner">
             <input checked={row.isHeadliner} name="headliner" onChange={() => setHeadliner(i)} type="radio" />
-            Headliner
+            {t('venueLineupComposer.headliner', 'Headliner')}
           </label>
           {rows.length > 2 && (
             <button className="vlc-remove" onClick={() => removeRow(i)} type="button">
-              Remove
+              {t('venueLineupComposer.remove', 'Remove')}
             </button>
           )}
         </div>
@@ -149,17 +151,17 @@ export function VenueLineupComposer({
 
       <div className="vlc-actions">
         <button className="vlc-btn vlc-btn-outline" onClick={addRow} type="button">
-          + Add act
+          {t('venueLineupComposer.addAct', '+ Add act')}
         </button>
         <span className={`vlc-total${remainder !== 0 ? ' vlc-total-off' : ''}`}>
-          {total}% of {artistPayoutPercent}%
+          {total}% {t('venueLineupComposer.of', 'of')} {artistPayoutPercent}%
         </span>
       </div>
 
       {error && <p className="vlc-error">{error}</p>}
 
       <button className="vlc-btn vlc-btn-solid" disabled={submitting} onClick={submit} type="button">
-        {submitting ? 'Sending…' : existingSlots.length > 0 ? 'Re-propose lineup' : 'Send lineup proposal'}
+        {submitting ? t('venueLineupComposer.sending', 'Sending…') : existingSlots.length > 0 ? t('venueLineupComposer.reProposeLineup', 'Re-propose lineup') : t('venueLineupComposer.sendLineupProposal', 'Send lineup proposal')}
       </button>
 
       <style>{`

@@ -17,6 +17,7 @@ import {
 import type { AuthMethod, RegisterStep, RoleOption, SignupVariant } from '@/components/AuthShared';
 import { TurnstileWidget, type TurnstileWidgetHandle } from '@/components/TurnstileWidget';
 import { RequestBetaAccessForm } from '@/components/RequestBetaAccessForm';
+import { useI18n } from '@/components/I18nProvider';
 
 type PasskeyRegistrationOptions = Parameters<typeof startRegistration>[0]['optionsJSON'];
 
@@ -34,6 +35,7 @@ export function RegisterScreen({
   initialRole?: RoleOption;
   inviteOnly?: boolean;
 }) {
+  const { t } = useI18n();
   const [role, setRole] = useState<RoleOption>(initialRole);
   const [authMethod, setAuthMethod] = useState<AuthMethod>('email');
   const [signupVariant, setSignupVariant] = useState<SignupVariant>('email_first');
@@ -76,7 +78,7 @@ export function RegisterScreen({
 
   function validateAccountForm() {
     if (!email.trim()) {
-      throw new Error('Email is required so you can sign in with a magic link.');
+      throw new Error(t('authRegister.emailRequired', 'Email is required so you can sign in with a magic link.'));
     }
   }
 
@@ -109,13 +111,13 @@ export function RegisterScreen({
   async function sendSignupMagicLink() {
     await postJson('/api/auth/magic-link', { email: email.trim() });
     setStep('magic-link-sent');
-    setStatus('Account created. Check your inbox for a one-tap sign-in link.');
+    setStatus(t('authRegister.magicLinkSentStatus', 'Account created. Check your inbox for a one-tap sign-in link.'));
     trackSignupFunnel('login_magic_link_sent', { role, method: 'email', step: 'register', variant: signupVariant });
   }
 
   async function fetchPasskeyOptions(userId: string): Promise<PasskeyRegistrationOptions> {
     const optRes = await fetch(`/api/auth/passkey/register-first?userId=${userId}`);
-    if (!optRes.ok) throw new Error('Could not start passkey setup.');
+    if (!optRes.ok) throw new Error(t('authRegister.passkeySetupError', 'Could not start passkey setup.'));
     return optRes.json();
   }
 
@@ -136,7 +138,7 @@ export function RegisterScreen({
 
   async function registerPasskeyForAccount(userId: string, prefetched?: PasskeyRegistrationOptions | null) {
     setStep('passkey');
-    setStatus('Follow your device prompt. If it closes, retry here or finish with a magic link.');
+    setStatus(t('authRegister.passkeyFollowPrompt', 'Follow your device prompt. If it closes, retry here or finish with a magic link.'));
     trackSignupFunnel('passkey_prompt', { role, method: 'passkey', step: 'register', variant: signupVariant, ...getPasskeyDiagnostics() });
 
     // When options are already in hand, startRegistration() is the first
@@ -154,7 +156,7 @@ export function RegisterScreen({
     setGateError('');
     const code = inviteCode.trim();
     if (!code) {
-      setGateError('Enter a HYPE referral code to continue.');
+      setGateError(t('authRegister.gateCodeRequired', 'Enter a HYPE referral code to continue.'));
       return;
     }
     setGateChecking(true);
@@ -164,10 +166,10 @@ export function RegisterScreen({
         trackSignupFunnel('invite_gate_passed', { role, method: authMethod, step: 'gate', variant: signupVariant });
         setStep('form');
       } else {
-        setGateError(result.error ?? 'That code isn’t recognized. Ask an existing member for their HYPE code.');
+        setGateError(result.error ?? t('authRegister.gateCodeNotRecognized', 'That code isn’t recognized. Ask an existing member for their HYPE code.'));
       }
     } catch (err) {
-      setGateError(getErrorMessage(err, 'Could not check that code. Please try again.'));
+      setGateError(getErrorMessage(err, t('authRegister.gateCodeCheckError', 'Could not check that code. Please try again.')));
     } finally {
       setGateChecking(false);
     }
@@ -189,7 +191,7 @@ export function RegisterScreen({
       // a clearer, retryable message instead of letting it hit the server and
       // come back as a generic "Bot check failed."
       if (!accountCreated && awaitingTurnstile) {
-        throw new Error('Still verifying you’re human — give it a second and try again.');
+        throw new Error(t('authRegister.turnstilePending', 'Still verifying you’re human — give it a second and try again.'));
       }
 
       trackSignupFunnel('submit', { role, method: authMethod, step: 'form', variant: signupVariant });
@@ -203,7 +205,7 @@ export function RegisterScreen({
         await sendSignupMagicLink();
       }
     } catch (err) {
-      const reason = getErrorMessage(err, 'Could not create account.');
+      const reason = getErrorMessage(err, t('authRegister.createAccountError', 'Could not create account.'));
       trackSignupFunnel(authMethod === 'passkey' ? 'passkey_failed' : 'login_magic_link_failed', {
         role,
         method: authMethod,
@@ -214,7 +216,7 @@ export function RegisterScreen({
       });
       if (accountCreated) {
         setStep('passkey');
-        setStatus('Your account was created. Retry the passkey prompt or use a magic link to finish signing in.');
+        setStatus(t('authRegister.accountCreatedRetryPasskey', 'Your account was created. Retry the passkey prompt or use a magic link to finish signing in.'));
         // Warm a fresh challenge so the retry tap can open the prompt without
         // an awaited fetch first — the fix for iOS never showing the sheet.
         if (authMethod === 'passkey' && accountId) preparePasskeyOptions(accountId);
@@ -248,10 +250,10 @@ export function RegisterScreen({
     try {
       await registerPasskeyForAccount(createdAccountId, prefetched);
     } catch (err) {
-      const reason = getErrorMessage(err, 'Passkey setup was interrupted.');
+      const reason = getErrorMessage(err, t('authRegister.passkeyInterrupted', 'Passkey setup was interrupted.'));
       trackSignupFunnel('passkey_retry_failed', { role, method: 'passkey', step: 'register', reason, variant: signupVariant, ...getPasskeyDiagnostics(err) });
       setError(reason);
-      setStatus('Retry the passkey prompt, or use a magic link to finish signing in.');
+      setStatus(t('authRegister.retryPasskeyOrMagicLink', 'Retry the passkey prompt, or use a magic link to finish signing in.'));
       // Re-arm a fresh challenge for the next tap.
       preparePasskeyOptions(createdAccountId);
     } finally {
@@ -265,7 +267,7 @@ export function RegisterScreen({
     try {
       await sendSignupMagicLink();
     } catch (err) {
-      const reason = getErrorMessage(err, 'Could not send a magic link.');
+      const reason = getErrorMessage(err, t('authRegister.magicLinkSendError', 'Could not send a magic link.'));
       trackSignupFunnel('login_magic_link_failed', { role, method: 'email', step: 'register', reason, variant: signupVariant });
       setError(reason);
     } finally {
@@ -275,29 +277,27 @@ export function RegisterScreen({
 
   return (
     <AuthCardShell
-      eyebrow="JOIN THE SCENE"
+      eyebrow={t('authRegister.eyebrow', 'JOIN THE SCENE')}
       mode="signup"
       subtitle={
         step === 'gate'
-          ? 'iHYPE is in private alpha. Enter a HYPE referral code from an existing member to continue.'
+          ? t('authRegister.subtitleGate', 'iHYPE is in private alpha. Enter a HYPE referral code from an existing member to continue.')
           : step === 'passkey'
-          ? 'Retry the device prompt or finish with a magic link. Your account is not stranded.'
+          ? t('authRegister.subtitlePasskey', 'Retry the device prompt or finish with a magic link. Your account is not stranded.')
           : step === 'magic-link-sent'
-          ? 'Check your inbox for a one-tap link to finish signing in. You can add a passkey later from Settings.'
-          : 'Zero fees. 70/20/10. iHYPE takes nothing.'
+          ? t('authRegister.subtitleMagicLinkSent', 'Check your inbox for a one-tap link to finish signing in. You can add a passkey later from Settings.')
+          : t('authRegister.subtitleDefault', 'Zero fees. 70/20/10. iHYPE takes nothing.')
       }
-      title="Create account."
+      title={t('authRegister.title', 'Create account.')}
     >
       {step === 'gate' ? (
         <div className="authcard-gate">
           <div className="authcard-alpha-banner">
-            <strong>iHYPE is currently in private alpha.</strong> To keep the alpha small and well-tested, new
-            accounts need a HYPE code from an existing member. Enter one below to continue, or request access and
-            we&apos;ll reach out for the official launch.
+            <strong>{t('authRegister.alphaBannerStrong', 'iHYPE is currently in private alpha.')}</strong> {t('authRegister.alphaBannerBody', 'To keep the alpha small and well-tested, new accounts need a HYPE code from an existing member. Enter one below to continue, or request access and we’ll reach out for the official launch.')}
           </div>
           <form onSubmit={submitGate}>
             <div className="authcard-field">
-              <label htmlFor="authcard-gate-code">HYPE referral code</label>
+              <label htmlFor="authcard-gate-code">{t('authRegister.gateCodeLabel', 'HYPE referral code')}</label>
               <input
                 id="authcard-gate-code"
                 autoComplete="off"
@@ -306,14 +306,14 @@ export function RegisterScreen({
                   setInviteCode(event.target.value);
                   if (gateError) setGateError('');
                 }}
-                placeholder="A member's code or @username"
+                placeholder={t('authRegister.gateCodePlaceholder', "A member's code or @username")}
                 required
                 type="text"
                 value={inviteCode}
               />
             </div>
             <button className="authcard-btn-primary" disabled={gateChecking} type="submit">
-              {gateChecking ? 'Checking…' : 'Continue'}
+              {gateChecking ? t('authRegister.checking', 'Checking…') : t('authRegister.continueBtn', 'Continue')}
             </button>
           </form>
           {gateError ? <p className="authcard-status authcard-status-error">{gateError}</p> : null}
@@ -321,36 +321,36 @@ export function RegisterScreen({
         </div>
       ) : step === 'passkey' ? (
         <div className="authcard-passkey-pending">
-          <p>Waiting for your device passkey prompt.</p>
-          <p className="meta">Use Face ID, Touch ID, or your device PIN when prompted.</p>
+          <p>{t('authRegister.waitingForPrompt', 'Waiting for your device passkey prompt.')}</p>
+          <p className="meta">{t('authRegister.passkeyPromptHint', 'Use Face ID, Touch ID, or your device PIN when prompted.')}</p>
           <div className="authcard-passkey-actions">
             <button className="authcard-btn-primary" disabled={isSubmitting} onClick={retryPasskey} type="button">
-              {isSubmitting ? 'Opening prompt...' : 'Try passkey again'}
+              {isSubmitting ? t('authRegister.openingPrompt', 'Opening prompt...') : t('authRegister.tryPasskeyAgain', 'Try passkey again')}
             </button>
             <button className="authcard-btn-ghost" disabled={isSubmitting} onClick={useMagicLinkInstead} type="button">
-              Use a magic link instead
+              {t('authRegister.useMagicLinkInstead', 'Use a magic link instead')}
             </button>
           </div>
-          <p className="meta">You can add a passkey later from Settings after signing in.</p>
+          <p className="meta">{t('authRegister.addPasskeyLater', 'You can add a passkey later from Settings after signing in.')}</p>
         </div>
       ) : step === 'magic-link-sent' ? (
         <div className="authcard-magic-sent">
           <div aria-hidden="true" className="authcard-icon-badge authcard-icon-badge-teal">✉️</div>
-          <h2 className="authcard-magic-heading">Check your email</h2>
-          <p className="authcard-magic-body">We sent a sign-in link to <b>{email.trim()}</b>. It works once and expires in 15 minutes.</p>
+          <h2 className="authcard-magic-heading">{t('authRegister.checkYourEmail', 'Check your email')}</h2>
+          <p className="authcard-magic-body">{t('authRegister.magicLinkSentBody', 'We sent a sign-in link to')} <b>{email.trim()}</b>. {t('authRegister.magicLinkExpiry', 'It works once and expires in 15 minutes.')}</p>
           <button className="authcard-resend-btn" disabled={isSubmitting} onClick={useMagicLinkInstead} type="button">
-            {isSubmitting ? 'Resending…' : 'Resend link'}
+            {isSubmitting ? t('authRegister.resending', 'Resending…') : t('authRegister.resendLink', 'Resend link')}
           </button>
         </div>
       ) : (
         <form onSubmit={createAccount}>
           {inviteOnly ? (
             <div className="authcard-gate-confirmed">
-              <span aria-hidden="true">✓</span> HYPE code accepted — finish creating your account below.
+              <span aria-hidden="true">✓</span> {t('authRegister.gateAccepted', 'HYPE code accepted — finish creating your account below.')}
             </div>
           ) : null}
           <fieldset className="authcard-field">
-            <legend>I&apos;m joining as</legend>
+            <legend>{t('authRegister.joiningAsLegend', "I'm joining as")}</legend>
             <div className="authcard-role-grid">
               {roleOptions.map((option) => (
                 <label
@@ -372,7 +372,7 @@ export function RegisterScreen({
                     value={option.value}
                   />
                   <div className="authcard-role-dot" style={{ background: ROLE_COLOR[option.value] }} />
-                  <div className="authcard-role-name">{option.label}</div>
+                  <div className="authcard-role-name">{t(`authRegister.roleLabel.${option.value}`, option.label)}</div>
                 </label>
               ))}
             </div>
@@ -389,8 +389,8 @@ export function RegisterScreen({
               }}
               type="button"
             >
-              <strong>Magic link</strong>
-              <span>Most reliable: one-tap link sent to your inbox.</span>
+              <strong>{t('authRegister.magicLinkTitle', 'Magic link')}</strong>
+              <span>{t('authRegister.magicLinkDesc', 'Most reliable: one-tap link sent to your inbox.')}</span>
             </button>
             <button
               aria-selected={authMethod === 'passkey'}
@@ -402,16 +402,16 @@ export function RegisterScreen({
               }}
               type="button"
             >
-              <strong>Passkey</strong>
-              <span>Use your device prompt now, with a magic link as backup.</span>
+              <strong>{t('authRegister.passkeyTitle', 'Passkey')}</strong>
+              <span>{t('authRegister.passkeyDesc', 'Use your device prompt now, with a magic link as backup.')}</span>
             </button>
           </div>
 
           <div className="authcard-field">
-            <label>{needsPublicName ? (selectedRole?.label ?? 'Profile') + ' name' : 'Display name'}</label>
+            <label>{needsPublicName ? (selectedRole?.label ?? t('authRegister.profileLabel', 'Profile')) + ' ' + t('authRegister.nameSuffix', 'name') : t('authRegister.displayNameLabel', 'Display name')}</label>
             <input
               onChange={(event) => setName(event.target.value)}
-              placeholder={needsPublicName ? 'Your public artist/venue name' : 'Optional - shown on your profile'}
+              placeholder={needsPublicName ? t('authRegister.publicNamePlaceholder', 'Your public artist/venue name') : t('authRegister.displayNamePlaceholder', 'Optional - shown on your profile')}
               required={needsPublicName}
               type="text"
               value={name}
@@ -419,12 +419,12 @@ export function RegisterScreen({
           </div>
 
           <div className="authcard-field">
-            <label>Email <span className="authcard-field-optional">— required so passkey setup can fall back safely</span></label>
+            <label>{t('authRegister.emailLabel', 'Email')} <span className="authcard-field-optional">— {t('authRegister.emailOptionalHint', 'required so passkey setup can fall back safely')}</span></label>
             <input
               autoComplete="email"
               inputMode="email"
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="you@example.com"
+              placeholder={t('authRegister.emailPlaceholder', 'you@example.com')}
               required
               type="email"
               value={email}
@@ -432,11 +432,11 @@ export function RegisterScreen({
           </div>
 
           <div className="authcard-field">
-            <label>Phone</label>
+            <label>{t('authRegister.phoneLabel', 'Phone')}</label>
             <input
               autoComplete="tel"
               onChange={(event) => setPhone(event.target.value)}
-              placeholder="Optional"
+              placeholder={t('authRegister.phonePlaceholder', 'Optional')}
               type="tel"
               value={phone}
             />
@@ -445,16 +445,14 @@ export function RegisterScreen({
           <label className="authcard-check-row">
             <input checked={acceptedAge} onChange={(event) => setAcceptedAge(event.target.checked)} required type="checkbox" />
             <span>
-              I attest that I am 13 years of age or older and I recognize that iHYPE is not responsible for any
-              content within.
+              {t('authRegister.ageAttestation', 'I attest that I am 13 years of age or older and I recognize that iHYPE is not responsible for any content within.')}
             </span>
           </label>
 
           <label className="authcard-check-row">
             <input checked={acceptedAdult} onChange={(event) => setAcceptedAdult(event.target.checked)} type="checkbox" />
             <span>
-              I am 18 or older <span className="authcard-field-optional">— optional now, but required to buy
-              tickets or share referral links. You can confirm later in Settings.</span>
+              {t('authRegister.adultAttestation', 'I am 18 or older')} <span className="authcard-field-optional">— {t('authRegister.adultAttestationHint', 'optional now, but required to buy tickets or share referral links. You can confirm later in Settings.')}</span>
             </span>
           </label>
 
@@ -466,7 +464,7 @@ export function RegisterScreen({
                 required
                 type="checkbox"
               />
-              <span>I confirm I am authorized to upload or use the music/media I add to iHYPE.</span>
+              <span>{t('authRegister.uploadPolicyAttestation', 'I confirm I am authorized to upload or use the music/media I add to iHYPE.')}</span>
             </label>
           ) : null}
 
@@ -477,15 +475,15 @@ export function RegisterScreen({
           />
           <button className="authcard-btn-primary" disabled={isSubmitting} type="submit">
             {isSubmitting
-              ? 'Setting up...'
+              ? t('authRegister.settingUp', 'Setting up...')
               : authMethod === 'passkey'
-              ? 'Create account with passkey'
-              : 'Create account with magic link'}
+              ? t('authRegister.createAccountPasskey', 'Create account with passkey')
+              : t('authRegister.createAccountMagicLink', 'Create account with magic link')}
           </button>
           <div className="authcard-trust-row" aria-label="Signup trust links">
-            <Link href="/privacy">Privacy</Link>
-            <Link href="/terms">Terms</Link>
-            <Link href="/community-rules">Community rules</Link>
+            <Link href="/privacy">{t('authRegister.privacyLink', 'Privacy')}</Link>
+            <Link href="/terms">{t('authRegister.termsLink', 'Terms')}</Link>
+            <Link href="/community-rules">{t('authRegister.communityRulesLink', 'Community rules')}</Link>
           </div>
           <label className="bot-field" aria-hidden="true">
             <span>Company</span>
@@ -503,7 +501,7 @@ export function RegisterScreen({
       {status ? <p className="authcard-status">{status}</p> : null}
       {error ? <p className="authcard-status authcard-status-error">{error}</p> : null}
 
-      <p className="authcard-fine">Already have an account? <Link href="/login">Sign in</Link></p>
+      <p className="authcard-fine">{t('authRegister.alreadyHaveAccount', 'Already have an account?')} <Link href="/login">{t('authRegister.signInLink', 'Sign in')}</Link></p>
     </AuthCardShell>
   );
 }

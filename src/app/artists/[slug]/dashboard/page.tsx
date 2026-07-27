@@ -8,6 +8,7 @@ import { getProfileInsights } from '@/lib/profile-insights';
 import { getArtistDashboardStats } from '@/lib/artist-dashboard';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { getDemoCreatorExclusion } from '@/lib/runtime-flags';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +27,7 @@ function fmtDate(d: Date) {
 
 export default async function ArtistDashboardPage({ params }: { params: Promise<{ slug: string }> }) {
   const session = await auth();
+  const t = getT(await getLocale());
   const { slug } = await params;
 
   if (!session?.user?.id) {
@@ -67,19 +69,19 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
   if (dashStats.hypesThisWeek > 0) {
     activity.push({
       color: 'var(--accent)',
-      text: <><strong>{dashStats.hypesThisWeek.toLocaleString()}</strong> fan{dashStats.hypesThisWeek === 1 ? '' : 's'} hyped your profile this week</>,
+      text: <><strong>{dashStats.hypesThisWeek.toLocaleString()}</strong> {dashStats.hypesThisWeek === 1 ? t('artistsSlugDashboardPage.fanHypedSingular', 'fan hyped your profile this week') : t('artistsSlugDashboardPage.fanHypedPlural', 'fans hyped your profile this week')}</>,
     });
   }
   if (dashStats.ticketsSoldThisWeek > 0) {
     activity.push({
       color: 'var(--role-venue, #22e5d4)',
-      text: <><strong>{dashStats.ticketsSoldThisWeek.toLocaleString()}</strong> ticket{dashStats.ticketsSoldThisWeek === 1 ? '' : 's'} sold this week</>,
+      text: <><strong>{dashStats.ticketsSoldThisWeek.toLocaleString()}</strong> {dashStats.ticketsSoldThisWeek === 1 ? t('artistsSlugDashboardPage.ticketSoldSingular', 'ticket sold this week') : t('artistsSlugDashboardPage.ticketSoldPlural', 'tickets sold this week')}</>,
     });
   }
   if (bookingPending > 0) {
     activity.push({
       color: '#b983ff',
-      text: <><strong>{bookingPending.toLocaleString()}</strong> pending booking request{bookingPending === 1 ? '' : 's'} awaiting a reply</>,
+      text: <><strong>{bookingPending.toLocaleString()}</strong> {bookingPending === 1 ? t('artistsSlugDashboardPage.pendingBookingSingular', 'pending booking request awaiting a reply') : t('artistsSlugDashboardPage.pendingBookingPlural', 'pending booking requests awaiting a reply')}</>,
     });
   }
 
@@ -87,44 +89,44 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
     <div className="ad-page">
       <div className="ad-header">
         <div>
-          <div className="ad-eyebrow">Welcome back</div>
+          <div className="ad-eyebrow">{t('artistsSlugDashboardPage.welcomeBack', 'Welcome back')}</div>
           <h1 className="ad-title">{profile.name}</h1>
         </div>
         <div className="ad-header-actions">
-          <Link className="ad-btn ad-btn-solid" href="/events/new">+ Create Event</Link>
+          <Link className="ad-btn ad-btn-solid" href="/events/new">{t('artistsSlugDashboardPage.createEvent', '+ Create Event')}</Link>
         </div>
       </div>
 
       <div className="ad-stats-grid">
         <Link className="ad-stat-card" href={`/artists/${profile.slug}/analytics`}>
-          <div className="ad-stat-label">This Month</div>
+          <div className="ad-stat-label">{t('artistsSlugDashboardPage.thisMonthLabel', 'This Month')}</div>
           <div className="ad-stat-val" style={{ color: 'var(--accent)' }}>{formatCurrencyFromCents(dashStats.monthEarningsCents)}</div>
-          <div className="ad-stat-sub">Your 70% share · $0 iHYPE fee</div>
+          <div className="ad-stat-sub">{t('artistsSlugDashboardPage.yourShare', 'Your 70% share · $0 iHYPE fee')}</div>
         </Link>
         <div className="ad-stat-card">
-          <div className="ad-stat-label">Tickets Sold</div>
+          <div className="ad-stat-label">{t('artistsSlugDashboardPage.ticketsSoldLabel', 'Tickets Sold')}</div>
           <div className="ad-stat-val">{dashStats.ticketsSoldThisMonth.toLocaleString()}</div>
-          <div className="ad-stat-sub">This month</div>
+          <div className="ad-stat-sub">{t('artistsSlugDashboardPage.thisMonth', 'This month')}</div>
         </div>
         <div className="ad-stat-card">
-          <div className="ad-stat-label">Hype Cast</div>
+          <div className="ad-stat-label">{t('artistsSlugDashboardPage.hypeCastLabel', 'Hype Cast')}</div>
           <div className="ad-stat-val">{insights.hypeTotal.toLocaleString()}</div>
-          <div className="ad-stat-sub">Total hypes</div>
+          <div className="ad-stat-sub">{t('artistsSlugDashboardPage.totalHypes', 'Total hypes')}</div>
         </div>
         <div className="ad-stat-card">
-          <div className="ad-stat-label">Next Payout</div>
+          <div className="ad-stat-label">{t('artistsSlugDashboardPage.nextPayoutLabel', 'Next Payout')}</div>
           <div className="ad-stat-val">{dashStats.nextPayoutAt ? fmtDate(dashStats.nextPayoutAt) : '—'}</div>
-          <div className="ad-stat-sub">{dashStats.nextPayoutAt ? 'Released after show ends' : 'No pending payout'}</div>
+          <div className="ad-stat-sub">{dashStats.nextPayoutAt ? t('artistsSlugDashboardPage.releasedAfterShow', 'Released after show ends') : t('artistsSlugDashboardPage.noPendingPayout', 'No pending payout')}</div>
         </div>
       </div>
 
       <div className="ad-columns">
         <div>
           <div className="ad-section-head">
-            <span className="ad-eyebrow-sm">Upcoming Events</span>
+            <span className="ad-eyebrow-sm">{t('artistsSlugDashboardPage.upcomingEvents', 'Upcoming Events')}</span>
           </div>
           {upcomingShows.length === 0 ? (
-            <div className="ad-empty"><p>No upcoming events — create one to get started.</p></div>
+            <div className="ad-empty"><p>{t('artistsSlugDashboardPage.noUpcomingEvents', 'No upcoming events — create one to get started.')}</p></div>
           ) : (
             <div className="ad-events-list">
               {upcomingShows.map((show) => (
@@ -135,23 +137,23 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
                       {fmtDate(show.startsAt)}
                       {show.venueProfile?.name ? ` · ${show.venueProfile.name}` : ''}
                       {show.status === 'DRAFT'
-                        ? ' · Draft — review lineup split'
+                        ? ` · ${t('artistsSlugDashboardPage.draftReviewSplit', 'Draft — review lineup split')}`
                         : show.isTicketed && show.ticketCapacity
-                          ? ` · ${(show.ticketsSoldCount ?? 0).toLocaleString()} / ${show.ticketCapacity.toLocaleString()} sold`
+                          ? ` · ${(show.ticketsSoldCount ?? 0).toLocaleString()} / ${show.ticketCapacity.toLocaleString()} ${t('artistsSlugDashboardPage.sold', 'sold')}`
                           : ''}
                     </div>
                   </div>
-                  <span className="ad-pill">{show.status === 'LIVE' ? 'Live' : show.status === 'DRAFT' ? 'Draft' : 'On sale'}</span>
+                  <span className="ad-pill">{show.status === 'LIVE' ? t('artistsSlugDashboardPage.live', 'Live') : show.status === 'DRAFT' ? t('artistsSlugDashboardPage.draft', 'Draft') : t('artistsSlugDashboardPage.onSale', 'On sale')}</span>
                 </Link>
               ))}
             </div>
           )}
 
           <div className="ad-section-head" style={{ marginTop: 28 }}>
-            <span className="ad-eyebrow-sm">Activity</span>
+            <span className="ad-eyebrow-sm">{t('artistsSlugDashboardPage.activity', 'Activity')}</span>
           </div>
           {activity.length === 0 ? (
-            <div className="ad-empty"><p>No activity yet.</p></div>
+            <div className="ad-empty"><p>{t('artistsSlugDashboardPage.noActivity', 'No activity yet.')}</p></div>
           ) : (
             <div className="ad-activity-list">
               {activity.map((item, i) => (
@@ -165,11 +167,11 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
         </div>
 
         <div>
-          <div className="ad-section-head"><span className="ad-eyebrow-sm">Quick Actions</span></div>
+          <div className="ad-section-head"><span className="ad-eyebrow-sm">{t('artistsSlugDashboardPage.quickActions', 'Quick Actions')}</span></div>
           <div className="ad-actions-list">
-            <Link className="ad-btn ad-btn-outline ad-btn-full" href={`/artists/${profile.slug}?section=tracks`}>Upload a track</Link>
-            <Link className="ad-btn ad-btn-outline ad-btn-full" href={`/artists/${profile.slug}/analytics`}>View analytics</Link>
-            <Link className="ad-btn ad-btn-outline ad-btn-full" href={`/artists/${profile.slug}`}>Edit my page</Link>
+            <Link className="ad-btn ad-btn-outline ad-btn-full" href={`/artists/${profile.slug}?section=tracks`}>{t('artistsSlugDashboardPage.uploadTrack', 'Upload a track')}</Link>
+            <Link className="ad-btn ad-btn-outline ad-btn-full" href={`/artists/${profile.slug}/analytics`}>{t('artistsSlugDashboardPage.viewAnalytics', 'View analytics')}</Link>
+            <Link className="ad-btn ad-btn-outline ad-btn-full" href={`/artists/${profile.slug}`}>{t('artistsSlugDashboardPage.editMyPage', 'Edit my page')}</Link>
           </div>
         </div>
       </div>

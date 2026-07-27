@@ -3,16 +3,18 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
 import { FeedbackStatusSelect } from '@/components/admin/FeedbackStatusSelect';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminFeedbackPage() {
+  const t = getT(await getLocale());
   const session = await auth();
   if (!isAdminSession(session)) redirect('/');
   const requests = await db.featureRequest.findMany({ orderBy: [{ votes: 'desc' }, { createdAt: 'desc' }] });
   return (
     <div className="container section">
-      <h1 className="title">Feature Requests</h1>
+      <h1 className="title">{t('adminFeedbackPage.title', 'Feature Requests')}</h1>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {requests.map(fr => (
           <div className="panel" key={fr.id} style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>

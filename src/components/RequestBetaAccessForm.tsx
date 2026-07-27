@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { postJson } from '@/lib/api-client';
+import { useI18n } from '@/components/I18nProvider';
 
 interface Props {
   role?: string;
@@ -13,6 +14,7 @@ interface Props {
  * registration is gated behind an invite code.
  */
 export function RequestBetaAccessForm({ role }: Props) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
@@ -27,14 +29,14 @@ export function RequestBetaAccessForm({ role }: Props) {
       setStatus('sent');
     } catch (err) {
       setStatus('error');
-      setError(err instanceof Error ? err.message : 'Could not send your request. Try again.');
+      setError(err instanceof Error ? err.message : t('requestBetaAccessForm.sendError', 'Could not send your request. Try again.'));
     }
   }
 
   if (status === 'sent') {
     return (
       <div className="beta-access-panel beta-access-sent">
-        <p>Thanks — we&apos;ve got your email. We&apos;ll reach out when your invite is ready.</p>
+        <p>{t('requestBetaAccessForm.sentMessage', "Thanks — we've got your email. We'll reach out when your invite is ready.")}</p>
       </div>
     );
   }
@@ -42,26 +44,26 @@ export function RequestBetaAccessForm({ role }: Props) {
   if (!open) {
     return (
       <button type="button" className="beta-access-toggle" onClick={() => setOpen(true)}>
-        Don&apos;t have a code? Request alpha access →
+        {t('requestBetaAccessForm.toggleLabel', "Don't have a code? Request alpha access →")}
       </button>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="beta-access-panel">
-      <label className="beta-access-label" htmlFor="beta-access-email">Your email</label>
+      <label className="beta-access-label" htmlFor="beta-access-email">{t('requestBetaAccessForm.emailLabel', 'Your email')}</label>
       <div className="beta-access-row">
         <input
           id="beta-access-email"
           type="email"
           required
           autoComplete="email"
-          placeholder="you@example.com"
+          placeholder={t('requestBetaAccessForm.emailPlaceholder', 'you@example.com')}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <button type="submit" disabled={status === 'sending'}>
-          {status === 'sending' ? 'Sending…' : 'Request access'}
+          {status === 'sending' ? t('requestBetaAccessForm.sending', 'Sending…') : t('requestBetaAccessForm.submitLabel', 'Request access')}
         </button>
       </div>
       {error ? <p className="beta-access-error">{error}</p> : null}

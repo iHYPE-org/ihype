@@ -1,6 +1,9 @@
 'use client';
 
+import { useI18n } from '@/components/I18nProvider';
+
 export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  const { t } = useI18n();
   return (
     <html>
       <body style={{
@@ -17,16 +20,16 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
           </svg>
         </div>
         <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(28px, 5vw, 40px)', fontWeight: 800, letterSpacing: '-.03em', lineHeight: .95, margin: '0 0 16px' }}>
-          Something broke.
+          {t('globalError.heading', 'Something broke.')}
         </h2>
         <p style={{ fontSize: 15, color: 'rgba(240,235,229,.6)', maxWidth: 380, lineHeight: 1.6, margin: '0 0 24px' }}>
-          {error.digest ? `Error ID: ${error.digest}` : 'An unexpected error occurred. If it keeps happening, email admin@ihype.org.'}
+          {error.digest ? `${t('globalError.errorIdPrefix', 'Error ID:')} ${error.digest}` : t('globalError.unexpectedMessage', 'An unexpected error occurred. If it keeps happening, email admin@ihype.org.')}
         </p>
         <button
           onClick={reset}
           style={{ padding: '14px 28px', background: '#ff5029', color: '#fff', border: 'none', borderRadius: 10, fontFamily: "'Syne', sans-serif", fontSize: 16, fontWeight: 800, cursor: 'pointer' }}
         >
-          Try again
+          {t('globalError.tryAgain', 'Try again')}
         </button>
       </body>
     </html>

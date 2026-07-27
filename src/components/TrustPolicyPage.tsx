@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { useI18n } from '@/components/I18nProvider';
 
 type TrustPolicyPageProps = {
   badge: string;
@@ -12,6 +13,7 @@ type TrustPolicyPageProps = {
 };
 
 export function TrustPolicyPage({ badge, title, intro, lastUpdated, sections }: TrustPolicyPageProps) {
+  const { t } = useI18n();
   return (
     <main className="container section trust-policy-page">
       <section className="panel trust-policy-hero">
@@ -19,16 +21,16 @@ export function TrustPolicyPage({ badge, title, intro, lastUpdated, sections }: 
         <h1>{title}</h1>
         <p className="subtitle">{intro}</p>
         {lastUpdated && (
-          <p style={{ fontSize: 13, opacity: 0.6, marginTop: 8 }}>Last updated: {lastUpdated}</p>
+          <p style={{ fontSize: 13, opacity: 0.6, marginTop: 8 }}>{t('trustPolicyPage.lastUpdatedLabel', 'Last updated:')} {lastUpdated}</p>
         )}
         <div className="trust-policy-links">
-          <Link className="text-link" href="/legal?tab=privacy">Privacy</Link>
-          <Link className="text-link" href="/legal?tab=terms">Terms</Link>
-          <Link className="text-link" href="/copyright">Copyright</Link>
-          <Link className="text-link" href="/ticket-policy">Ticket policy</Link>
-          <Link className="text-link" href="/community-rules">Community rules</Link>
-          <Link className="text-link" href="/about">About iHYPE</Link>
-          <Link className="text-link" href="/support">Support</Link>
+          <Link className="text-link" href="/legal?tab=privacy">{t('trustPolicyPage.privacyLink', 'Privacy')}</Link>
+          <Link className="text-link" href="/legal?tab=terms">{t('trustPolicyPage.termsLink', 'Terms')}</Link>
+          <Link className="text-link" href="/copyright">{t('trustPolicyPage.copyrightLink', 'Copyright')}</Link>
+          <Link className="text-link" href="/ticket-policy">{t('trustPolicyPage.ticketPolicyLink', 'Ticket policy')}</Link>
+          <Link className="text-link" href="/community-rules">{t('trustPolicyPage.communityRulesLink', 'Community rules')}</Link>
+          <Link className="text-link" href="/about">{t('trustPolicyPage.aboutLink', 'About iHYPE')}</Link>
+          <Link className="text-link" href="/support">{t('trustPolicyPage.supportLink', 'Support')}</Link>
         </div>
       </section>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 /**
  * Real "Connect"/"Reconnect" action for a profile's Stripe Connect payout
@@ -9,9 +10,19 @@ import { useState } from 'react';
  * real returned onboardingUrl. No client-side fabrication of connection
  * state: this only ever navigates to Stripe's own hosted flow.
  */
-export function PayoutConnectButton({ profileId, label }: { profileId: string; label: string }) {
+type ConnectState = 'connect' | 'reconnect' | 'finish-setup';
+
+const STATE_KEY: Record<ConnectState, string> = {
+  connect: 'poConnect',
+  reconnect: 'poReconnect',
+  'finish-setup': 'poFinishSetup',
+};
+
+export function PayoutConnectButton({ profileId, state }: { profileId: string; state: ConnectState }) {
+  const { t } = useI18n();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const label = t(STATE_KEY[state]);
 
   async function connect() {
     setBusy(true);
@@ -24,13 +35,13 @@ export function PayoutConnectButton({ profileId, label }: { profileId: string; l
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.onboardingUrl) {
-        setError(data.error ?? 'Something went wrong — try again.');
+        setError(data.error ?? t('poConnectFailed'));
         setBusy(false);
         return;
       }
       window.location.href = data.onboardingUrl;
     } catch {
-      setError('Network error — try again.');
+      setError(t('poConnectFailed'));
       setBusy(false);
     }
   }
@@ -38,7 +49,7 @@ export function PayoutConnectButton({ profileId, label }: { profileId: string; l
   return (
     <div className="pcb">
       <button className="pcb-btn" disabled={busy} onClick={connect} type="button">
-        {busy ? 'Connecting…' : label}
+        {busy ? t('poConnecting') : label}
       </button>
       {error && <p className="pcb-error">{error}</p>}
 

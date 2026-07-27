@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 async function postBugReport(body: unknown) {
   const response = await fetch('/api/bug-report', {
@@ -23,6 +24,7 @@ const cardStyle: React.CSSProperties = {
 };
 
 export function BugReportPanel() {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,7 +47,7 @@ export function BugReportPanel() {
     setError('');
 
     if (!description.trim()) {
-      setError('Please describe what happened.');
+      setError(t('bugReportPanel.descriptionRequired', 'Please describe what happened.'));
       return;
     }
 
@@ -58,7 +60,7 @@ export function BugReportPanel() {
       });
       setSent(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not send report.');
+      setError(err instanceof Error ? err.message : t('bugReportPanel.sendError', 'Could not send report.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -74,8 +76,8 @@ export function BugReportPanel() {
         tabIndex={0}
       >
         <div aria-hidden="true" style={{ fontSize: 24, marginBottom: 8 }}>🐛</div>
-        <div style={{ fontSize: 14, fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 4 }}>Report a Bug</div>
-        <div style={{ fontSize: 12, color: 'var(--ink-a55)' }}>Something broken? Tell us what happened</div>
+        <div style={{ fontSize: 14, fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 4 }}>{t('bugReportPanel.cardTitle', 'Report a Bug')}</div>
+        <div style={{ fontSize: 12, color: 'var(--ink-a55)' }}>{t('bugReportPanel.cardSubtitle', 'Something broken? Tell us what happened')}</div>
       </div>
 
       {open && (
@@ -87,31 +89,31 @@ export function BugReportPanel() {
         >
           <div className="ihype-sheet-panel" style={{ maxWidth: 460 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 6 }}>
-              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 800 }}>Report a bug</h2>
-              <button onClick={close} aria-label="Close" style={{ background: 'none', border: 'none', color: 'var(--ink-a50)', fontSize: 22, cursor: 'pointer', lineHeight: 1, padding: 0 }}>×</button>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 800 }}>{t('bugReportPanel.dialogTitle', 'Report a bug')}</h2>
+              <button onClick={close} aria-label={t('bugReportPanel.closeAriaLabel', 'Close')} style={{ background: 'none', border: 'none', color: 'var(--ink-a50)', fontSize: 22, cursor: 'pointer', lineHeight: 1, padding: 0 }}>×</button>
             </div>
 
             {sent ? (
               <div style={{ fontSize: 13, color: '#22e5d4', padding: '10px 14px', background: 'rgba(34,229,212,.08)', borderRadius: 8 }}>
-                ✓ Thanks — we logged it and will take a look.
+                ✓ {t('bugReportPanel.sentConfirmation', 'Thanks — we logged it and will take a look.')}
               </div>
             ) : (
               <form className="form" onSubmit={submit}>
                 <p style={{ fontSize: 13, color: 'var(--ink-a55)', margin: '0 0 6px' }}>
-                  What happened? We&apos;ll attach the current page and viewport automatically.
+                  {t('bugReportPanel.dialogBody', "What happened? We'll attach the current page and viewport automatically.")}
                 </p>
                 <label className="field">
-                  <span>Description</span>
+                  <span>{t('bugReportPanel.descriptionLabel', 'Description')}</span>
                   <textarea
                     maxLength={2500}
                     onChange={(event) => setDescription(event.target.value)}
-                    placeholder="What were you doing when it broke?"
+                    placeholder={t('bugReportPanel.descriptionPlaceholder', 'What were you doing when it broke?')}
                     rows={6}
                     value={description}
                   />
                 </label>
                 <button className="button" disabled={isSubmitting} type="submit">
-                  {isSubmitting ? 'Sending…' : 'Send Report'}
+                  {isSubmitting ? t('bugReportPanel.sending', 'Sending…') : t('bugReportPanel.sendReport', 'Send Report')}
                 </button>
                 {error ? <p className="status-note status-note-error">{error}</p> : null}
               </form>

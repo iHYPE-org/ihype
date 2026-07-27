@@ -1,6 +1,8 @@
 import Link from 'next/link';
+import { getLocale, getT } from '@/lib/i18n/server';
 
-export default function NotFound() {
+export default async function NotFound() {
+  const t = getT(await getLocale());
   return (
     <div style={{
       minHeight: '100vh',
@@ -50,10 +52,10 @@ export default function NotFound() {
         lineHeight: 1.1,
         margin: '0 0 12px',
       }}>
-        This page skipped soundcheck.
+        {t('notFound.heading', 'This page skipped soundcheck.')}
       </h1>
       <p style={{ color: 'var(--ink-2, #9e9080)', marginBottom: 24, maxWidth: 400, lineHeight: 1.7, fontSize: '0.9rem' }}>
-        The page you&apos;re looking for doesn&apos;t exist, moved, or was never booked in the first place.
+        {t('notFound.body', "The page you're looking for doesn't exist, moved, or was never booked in the first place.")}
       </p>
       <Link href="/" style={{
         background: 'var(--accent, #ff5029)',
@@ -67,7 +69,7 @@ export default function NotFound() {
         letterSpacing: '-0.01em',
         boxShadow: '0 4px 20px rgba(255,80,41,0.3)',
       }}>
-        Back to the scene →
+        {t('notFound.cta', 'Back to the scene →')}
       </Link>
       <style>{`
         @keyframes notFoundGlitch {

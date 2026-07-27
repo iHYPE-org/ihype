@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { LineupSplitResponder } from '@/components/LineupSplitResponder';
 import { VenueLineupComposer } from '@/components/VenueLineupComposer';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +25,7 @@ function fmtDate(d: Date) {
 
 export default async function LineupSplitPage({ params }: { params: Promise<{ slug: string }> }) {
   const session = await auth();
+  const t = getT(await getLocale());
   const { slug } = await params;
 
   if (!session?.user?.id) {
@@ -60,21 +62,21 @@ export default async function LineupSplitPage({ params }: { params: Promise<{ sl
         {isVenueOwner ? (
           show.artistPayoutPercent != null ? (
             <>
-              <div className="lsp-eyebrow">Lineup Proposal</div>
-              <h1 className="lsp-title">{fmtDate(show.startsAt)} @ {show.venueProfile?.name ?? 'TBD'}</h1>
-              <p className="lsp-sub">No lineup has been proposed yet — add every billed act and their split below.</p>
+              <div className="lsp-eyebrow">{t('showsSlugLineupPage.lineupProposal', 'Lineup Proposal')}</div>
+              <h1 className="lsp-title">{fmtDate(show.startsAt)} @ {show.venueProfile?.name ?? t('showsSlugLineupPage.tbd', 'TBD')}</h1>
+              <p className="lsp-sub">{t('showsSlugLineupPage.noLineupProposedYet', 'No lineup has been proposed yet — add every billed act and their split below.')}</p>
               <VenueLineupComposer artistPayoutPercent={show.artistPayoutPercent} existingSlots={[]} showId={show.id} />
             </>
           ) : (
             <div className="lsp-empty">
-              <p>This show has no artist payout percentage set yet — set that up first.</p>
-              <Link href={`/shows/${show.slug}`}>Back to show →</Link>
+              <p>{t('showsSlugLineupPage.noArtistPayoutPercentSet', 'This show has no artist payout percentage set yet — set that up first.')}</p>
+              <Link href={`/shows/${show.slug}`}>{t('showsSlugLineupPage.backToShow', 'Back to show →')}</Link>
             </div>
           )
         ) : (
           <div className="lsp-empty">
-            <p>No lineup split has been proposed for this show yet.</p>
-            <Link href={`/shows/${show.slug}`}>Back to show →</Link>
+            <p>{t('showsSlugLineupPage.noLineupSplitProposed', 'No lineup split has been proposed for this show yet.')}</p>
+            <Link href={`/shows/${show.slug}`}>{t('showsSlugLineupPage.backToShow', 'Back to show →')}</Link>
           </div>
         )}
       </div>
@@ -86,10 +88,10 @@ export default async function LineupSplitPage({ params }: { params: Promise<{ sl
 
   return (
     <div className="lsp-page">
-      <div className="lsp-eyebrow">Lineup Proposal</div>
-      <h1 className="lsp-title">{fmtDate(show.startsAt)} @ {show.venueProfile?.name ?? 'TBD'}</h1>
+      <div className="lsp-eyebrow">{t('showsSlugLineupPage.lineupProposal', 'Lineup Proposal')}</div>
+      <h1 className="lsp-title">{fmtDate(show.startsAt)} @ {show.venueProfile?.name ?? t('showsSlugLineupPage.tbd', 'TBD')}</h1>
       <p className="lsp-sub">
-        Proposed by {show.venueProfile?.name ?? 'the venue'} · every artist below must accept before this booking locks.
+        {t('showsSlugLineupPage.proposedByPrefix', 'Proposed by')} {show.venueProfile?.name ?? t('showsSlugLineupPage.theVenue', 'the venue')} · {t('showsSlugLineupPage.everyArtistMustAccept', 'every artist below must accept before this booking locks.')}
       </p>
 
       <div className="lsp-splitbar">
@@ -101,10 +103,10 @@ export default async function LineupSplitPage({ params }: { params: Promise<{ sl
       </div>
       <div className="lsp-splitbar-legend">
         <span>{slots.map((s) => `${s.profile.name} ${s.splitPercent}%`).join(' · ')}</span>
-        <span>Venue {venuePercent}% · Promoters {promoterPercent}%</span>
+        <span>{t('showsSlugLineupPage.venueLabel', 'Venue')} {venuePercent}% · {t('showsSlugLineupPage.promotersLabel', 'Promoters')} {promoterPercent}%</span>
       </div>
 
-      <div className="lsp-eyebrow" style={{ marginTop: 32, marginBottom: 14 }}>Lineup</div>
+      <div className="lsp-eyebrow" style={{ marginTop: 32, marginBottom: 14 }}>{t('showsSlugLineupPage.lineup', 'Lineup')}</div>
       <div className="lsp-list">
         {slots.map((s) => {
           const isMe = s.profile.ownerId === session.user!.id;
@@ -115,11 +117,11 @@ export default async function LineupSplitPage({ params }: { params: Promise<{ sl
                   <div className="lsp-avatar" aria-hidden>{s.profile.name.slice(0, 1).toUpperCase()}</div>
                   <div>
                     <div className="lsp-name">{s.profile.name}</div>
-                    <div className="lsp-meta">{s.isHeadliner ? 'Headliner' : 'Support'} · {s.splitPercent}% of the {show.artistPayoutPercent}% pool</div>
+                    <div className="lsp-meta">{s.isHeadliner ? t('showsSlugLineupPage.headliner', 'Headliner') : t('showsSlugLineupPage.support', 'Support')} · {s.splitPercent}% {t('showsSlugLineupPage.ofThePoolPrefix', 'of the')} {show.artistPayoutPercent}% {t('showsSlugLineupPage.pool', 'pool')}</div>
                   </div>
                 </div>
                 <span className={`lsp-pill lsp-pill-${s.status.toLowerCase()}`}>
-                  {s.status === 'ACCEPTED' ? 'Accepted' : s.status === 'DECLINED' ? 'Declined' : 'Awaiting'}
+                  {s.status === 'ACCEPTED' ? t('showsSlugLineupPage.accepted', 'Accepted') : s.status === 'DECLINED' ? t('showsSlugLineupPage.declined', 'Declined') : t('showsSlugLineupPage.awaiting', 'Awaiting')}
                 </span>
               </div>
               {isMe && s.status === 'PENDING' && (
@@ -136,17 +138,17 @@ export default async function LineupSplitPage({ params }: { params: Promise<{ sl
         <div className={`lsp-status-note lsp-status-note-${myLineupSlot.status.toLowerCase()}`}>
           {myLineupSlot.status === 'ACCEPTED' ? (
             <>
-              <div className="lsp-status-label">You've accepted</div>
+              <div className="lsp-status-label">{t('showsSlugLineupPage.youveAccepted', "You've accepted")}</div>
               <p>
                 {slots.some((s) => s.status === 'PENDING')
-                  ? `Waiting on ${slots.filter((s) => s.status === 'PENDING').map((s) => s.profile.name).join(', ')}. You'll be notified the moment the booking locks.`
-                  : 'The booking has locked — this show is on sale.'}
+                  ? `${t('showsSlugLineupPage.waitingOnPrefix', 'Waiting on')} ${slots.filter((s) => s.status === 'PENDING').map((s) => s.profile.name).join(', ')}. ${t('showsSlugLineupPage.youllBeNotified', "You'll be notified the moment the booking locks.")}`
+                  : t('showsSlugLineupPage.bookingHasLocked', 'The booking has locked — this show is on sale.')}
               </p>
             </>
           ) : (
             <>
-              <div className="lsp-status-label">You declined</div>
-              <p>{show.venueProfile?.name ?? 'The venue'} has been notified. They may revise the split and re-propose.</p>
+              <div className="lsp-status-label">{t('showsSlugLineupPage.youDeclined', 'You declined')}</div>
+              <p>{show.venueProfile?.name ?? t('showsSlugLineupPage.theVenueCapitalized', 'The venue')} {t('showsSlugLineupPage.hasBeenNotified', 'has been notified. They may revise the split and re-propose.')}</p>
             </>
           )}
         </div>
@@ -167,7 +169,7 @@ export default async function LineupSplitPage({ params }: { params: Promise<{ sl
 
       {isVenueOwner && (
         <p className="lsp-foot">
-          <Link href={`/shows/${show.slug}`}>Back to show</Link>
+          <Link href={`/shows/${show.slug}`}>{t('showsSlugLineupPage.backToShowPlain', 'Back to show')}</Link>
         </p>
       )}
 

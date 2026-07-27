@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { startAuthentication } from '@simplewebauthn/browser';
 import { postJson } from '@/lib/api-client';
+import { useI18n } from '@/components/I18nProvider';
 
 /**
  * Inline panel shown when an admin endpoint responds with
@@ -17,6 +18,7 @@ export function AdminReauthPrompt({
   onSuccess: () => void;
   onCancel?: () => void;
 }) {
+  const { t } = useI18n();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -27,13 +29,13 @@ export function AdminReauthPrompt({
       const optRes = await fetch('/api/admin/reauth');
       const options = await optRes.json().catch(() => ({}));
       if (!optRes.ok) {
-        throw new Error(typeof options.error === 'string' ? options.error : 'Could not start passkey check.');
+        throw new Error(typeof options.error === 'string' ? options.error : t('adminReauthPrompt.couldNotStart', 'Could not start passkey check.'));
       }
       const assertion = await startAuthentication({ optionsJSON: options });
       await postJson('/api/admin/reauth', assertion);
       onSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Passkey verification failed.');
+      setError(err instanceof Error ? err.message : t('adminReauthPrompt.verificationFailed', 'Passkey verification failed.'));
     } finally {
       setBusy(false);
     }
@@ -41,7 +43,7 @@ export function AdminReauthPrompt({
 
   return (
     <div
-      aria-label="Confirm with passkey"
+      aria-label={t('adminReauthPrompt.ariaLabel', 'Confirm with passkey')}
       role="alertdialog"
       style={{
         display: 'grid',
@@ -52,17 +54,17 @@ export function AdminReauthPrompt({
         background: 'var(--hair-40)'
       }}
     >
-      <strong style={{ fontSize: 14 }}>Confirm it&apos;s you</strong>
+      <strong style={{ fontSize: 14 }}>{t('adminReauthPrompt.title', "Confirm it's you")}</strong>
       <small style={{ opacity: 0.75 }}>
-        This admin action needs a recent passkey check. Verify once, then the action retries automatically.
+        {t('adminReauthPrompt.description', 'This admin action needs a recent passkey check. Verify once, then the action retries automatically.')}
       </small>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <button className="button small" disabled={busy} onClick={() => void verify()} type="button">
-          {busy ? 'Waiting for passkey...' : 'Verify with passkey'}
+          {busy ? t('adminReauthPrompt.waiting', 'Waiting for passkey...') : t('adminReauthPrompt.verifyButton', 'Verify with passkey')}
         </button>
         {onCancel ? (
           <button className="button small secondary" disabled={busy} onClick={onCancel} type="button">
-            Cancel
+            {t('adminReauthPrompt.cancel', 'Cancel')}
           </button>
         ) : null}
       </div>

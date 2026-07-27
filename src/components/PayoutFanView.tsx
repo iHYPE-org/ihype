@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 export function PayoutFanView({
   priceCents,
@@ -13,6 +14,7 @@ export function PayoutFanView({
   venuePct: number;
   promoterPct: number;
 }) {
+  const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
 
   const fmt = (cents: number) => `$${(cents / 100).toFixed(2)}`;
@@ -29,27 +31,27 @@ export function PayoutFanView({
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="1.75" strokeLinecap="round"><circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" /></svg>
-          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.95rem' }}>What each fan sees</span>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.95rem' }}>{t('payoutFanView.title', 'What each fan sees')}</span>
         </div>
         <svg style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 150ms' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="1.75" strokeLinecap="round"><polyline points="6 9 12 15 18 9" /></svg>
       </button>
       {expanded && (
         <div style={{ marginTop: 16, padding: '14px 16px', borderRadius: 12, border: '1px solid var(--line, var(--hair-80))', background: 'var(--bg-3, #0a0805)' }}>
           <p style={{ fontSize: '0.85rem', color: 'var(--ink-2, #9e9080)', lineHeight: 1.6, marginBottom: 10 }}>
-            Every fan who bought a ticket sees this same breakdown. Their receipt shows:
+            {t('payoutFanView.intro', 'Every fan who bought a ticket sees this same breakdown. Their receipt shows:')}
           </p>
           <div style={{ display: 'grid', gap: 8 }}>
             <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--ink-3)', flexShrink: 0, minWidth: 90 }}>Your {fmt(priceCents)}</span>
-              <span style={{ fontSize: '0.78rem', color: 'var(--ink-2, #9e9080)', lineHeight: 1.5 }}>{fmt(artistShare)} artist · {fmt(venueShare)} venue · {fmt(promoterShare)} promoter · $0 iHYPE</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--ink-3)', flexShrink: 0, minWidth: 90 }}>{t('payoutFanView.yourLabel', 'Your')} {fmt(priceCents)}</span>
+              <span style={{ fontSize: '0.78rem', color: 'var(--ink-2, #9e9080)', lineHeight: 1.5 }}>{fmt(artistShare)} {t('payoutFanView.artistLabel', 'artist')} · {fmt(venueShare)} {t('payoutFanView.venueLabel', 'venue')} · {fmt(promoterShare)} {t('payoutFanView.promoterLabel', 'promoter')} · $0 {t('payoutFanView.ihypeLabel', 'iHYPE')}</span>
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--ink-3)', flexShrink: 0, minWidth: 90 }}>iHYPE fee</span>
-              <span style={{ fontSize: '0.78rem', color: '#22e5d4', lineHeight: 1.5 }}>$0.00 — locked in our charter. Forever.</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--ink-3)', flexShrink: 0, minWidth: 90 }}>{t('payoutFanView.ihypeFeeLabel', 'iHYPE fee')}</span>
+              <span style={{ fontSize: '0.78rem', color: '#22e5d4', lineHeight: 1.5 }}>{t('payoutFanView.ihypeFeeValue', '$0.00 — locked in our charter. Forever.')}</span>
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--ink-3)', flexShrink: 0, minWidth: 90 }}>Paid out</span>
-              <span style={{ fontSize: '0.78rem', color: 'var(--ink-2, #9e9080)', lineHeight: 1.5 }}>Automatically. Same night.</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--ink-3)', flexShrink: 0, minWidth: 90 }}>{t('payoutFanView.paidOutLabel', 'Paid out')}</span>
+              <span style={{ fontSize: '0.78rem', color: 'var(--ink-2, #9e9080)', lineHeight: 1.5 }}>{t('payoutFanView.paidOutValue', 'Automatically. Same night.')}</span>
             </div>
           </div>
         </div>

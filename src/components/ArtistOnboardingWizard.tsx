@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 type Step = 0 | 1 | 2 | 3;
 
@@ -18,6 +19,7 @@ export function ArtistOnboardingWizard({
   initialName: string;
   initialGenre: string;
 }) {
+  const { t } = useI18n();
   const [step, setStep] = useState<Step>(0);
   const [name, setName] = useState(initialName);
   const [genre, setGenre] = useState(initialGenre);
@@ -47,17 +49,17 @@ export function ArtistOnboardingWizard({
 
       if (!profileRes.ok) {
         const d = await profileRes.json().catch(() => ({}));
-        setSaveError(d.error ?? 'Failed to save your page. Please try again.');
+        setSaveError(d.error ?? t('artistOnboardingWizard.saveProfileFailed', 'Failed to save your page. Please try again.'));
         return;
       }
       if (!genreRes.ok) {
         const d = await genreRes.json().catch(() => ({}));
-        setSaveError(d.error ?? 'Failed to save your genre. Please try again.');
+        setSaveError(d.error ?? t('artistOnboardingWizard.saveGenreFailed', 'Failed to save your genre. Please try again.'));
         return;
       }
       setStep(1);
     } catch {
-      setSaveError('Network error — try again.');
+      setSaveError(t('artistOnboardingWizard.networkError', 'Network error — try again.'));
     } finally {
       setSaving(false);
     }
@@ -79,7 +81,7 @@ export function ArtistOnboardingWizard({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setPayoutError(data.error ?? 'Could not start payouts setup. Please try again.');
+        setPayoutError(data.error ?? t('artistOnboardingWizard.payoutStartFailed', 'Could not start payouts setup. Please try again.'));
         setPayoutBusy(false);
         return;
       }
@@ -87,10 +89,10 @@ export function ArtistOnboardingWizard({
         window.location.href = data.onboardingUrl;
         return;
       }
-      setPayoutError('Stripe did not return an onboarding link. Please try again.');
+      setPayoutError(t('artistOnboardingWizard.payoutNoLink', 'Stripe did not return an onboarding link. Please try again.'));
       setPayoutBusy(false);
     } catch {
-      setPayoutError('Network error — try again.');
+      setPayoutError(t('artistOnboardingWizard.networkError', 'Network error — try again.'));
       setPayoutBusy(false);
     }
   }
@@ -108,26 +110,26 @@ export function ArtistOnboardingWizard({
 
         {step === 0 && (
           <div>
-            <div className="aow-eyebrow">Step 1 of 3</div>
-            <h1 className="aow-title">Set up your page.</h1>
-            <p className="aow-sub">This becomes your public artist page — fans find you here.</p>
+            <div className="aow-eyebrow">{t('artistOnboardingWizard.step1Eyebrow', 'Step 1 of 3')}</div>
+            <h1 className="aow-title">{t('artistOnboardingWizard.step1Title', 'Set up your page.')}</h1>
+            <p className="aow-sub">{t('artistOnboardingWizard.step1Sub', 'This becomes your public artist page — fans find you here.')}</p>
 
             <label className="aow-field">
-              <span className="aow-label">Stage name</span>
+              <span className="aow-label">{t('artistOnboardingWizard.stageNameLabel', 'Stage name')}</span>
               <input
                 className="aow-input"
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Midnight Echo"
+                placeholder={t('artistOnboardingWizard.stageNamePlaceholder', 'Midnight Echo')}
                 type="text"
                 value={name}
               />
             </label>
             <label className="aow-field">
-              <span className="aow-label">Genre</span>
+              <span className="aow-label">{t('artistOnboardingWizard.genreLabel', 'Genre')}</span>
               <input
                 className="aow-input"
                 onChange={(e) => setGenre(e.target.value)}
-                placeholder="Deep House"
+                placeholder={t('artistOnboardingWizard.genrePlaceholder', 'Deep House')}
                 type="text"
                 value={genre}
               />
@@ -141,42 +143,42 @@ export function ArtistOnboardingWizard({
               onClick={goStep1}
               type="button"
             >
-              {saving ? 'Saving…' : 'Continue →'}
+              {saving ? t('artistOnboardingWizard.saving', 'Saving…') : t('artistOnboardingWizard.continue', 'Continue →')}
             </button>
             <div className="aow-alt-link">
-              or <Link href="/pages?tab=creator">build it with the AI Page Creator →</Link>
+              {t('artistOnboardingWizard.orPrefix', 'or')} <Link href="/pages?tab=creator">{t('artistOnboardingWizard.aiPageCreator', 'build it with the AI Page Creator →')}</Link>
             </div>
           </div>
         )}
 
         {step === 1 && (
           <div>
-            <div className="aow-eyebrow">Step 2 of 3</div>
-            <h1 className="aow-title">List your first event.</h1>
-            <p className="aow-sub">Optional — you can always add this later from Event Creator.</p>
+            <div className="aow-eyebrow">{t('artistOnboardingWizard.step2Eyebrow', 'Step 2 of 3')}</div>
+            <h1 className="aow-title">{t('artistOnboardingWizard.step2Title', 'List your first event.')}</h1>
+            <p className="aow-sub">{t('artistOnboardingWizard.step2Sub', 'Optional — you can always add this later from Event Creator.')}</p>
 
             <div className="aow-reminder-card">
-              <div className="aow-reminder-label">Reminder</div>
+              <div className="aow-reminder-label">{t('artistOnboardingWizard.reminderLabel', 'Reminder')}</div>
               <div className="aow-reminder-text">
-                Every ticket splits 70% to you, 20% venue, 10% promoters. iHYPE takes $0 — locked in our charter.
+                {t('artistOnboardingWizard.reminderText', 'Every ticket splits 70% to you, 20% venue, 10% promoters. iHYPE takes $0 — locked in our charter.')}
               </div>
             </div>
 
             <Link className="aow-btn aow-btn-solid" href="/events/new">
-              Create an event →
+              {t('artistOnboardingWizard.createEvent', 'Create an event →')}
             </Link>
             <button className="aow-btn aow-btn-ghost" onClick={goStep2} type="button">
-              Skip for now
+              {t('artistOnboardingWizard.skipForNow', 'Skip for now')}
             </button>
           </div>
         )}
 
         {step === 2 && (
           <div>
-            <div className="aow-eyebrow">Step 3 of 3</div>
-            <h1 className="aow-title">Connect payouts.</h1>
+            <div className="aow-eyebrow">{t('artistOnboardingWizard.step3Eyebrow', 'Step 3 of 3')}</div>
+            <h1 className="aow-title">{t('artistOnboardingWizard.step3Title', 'Connect payouts.')}</h1>
             <p className="aow-sub">
-              Your 70% share pays out automatically after each show, via Stripe Connect.
+              {t('artistOnboardingWizard.step3Sub', 'Your 70% share pays out automatically after each show, via Stripe Connect.')}
             </p>
 
             {payoutError && <div className="aow-error">{payoutError}</div>}
@@ -187,10 +189,10 @@ export function ArtistOnboardingWizard({
               onClick={connectStripe}
               type="button"
             >
-              {payoutBusy ? 'Connecting…' : 'Connect with Stripe →'}
+              {payoutBusy ? t('artistOnboardingWizard.connecting', 'Connecting…') : t('artistOnboardingWizard.connectStripe', 'Connect with Stripe →')}
             </button>
             <button className="aow-btn aow-btn-ghost" disabled={payoutBusy} onClick={skipPayouts} type="button">
-              I&rsquo;ll do this later
+              {t('artistOnboardingWizard.doThisLater', "I'll do this later")}
             </button>
           </div>
         )}
@@ -204,12 +206,12 @@ export function ArtistOnboardingWizard({
                 <circle cx="18" cy="16" r="3"></circle>
               </svg>
             </div>
-            <h1 className="aow-title" style={{ textAlign: 'center' }}>You&rsquo;re set up.</h1>
+            <h1 className="aow-title" style={{ textAlign: 'center' }}>{t('artistOnboardingWizard.doneTitle', "You're set up.")}</h1>
             <p className="aow-sub" style={{ textAlign: 'center', maxWidth: '34ch', margin: '8px auto 24px' }}>
-              Your page is live. Fans can find you, hype your tracks, and buy tickets to your shows.
+              {t('artistOnboardingWizard.doneSub', 'Your page is live. Fans can find you, hype your tracks, and buy tickets to your shows.')}
             </p>
             <Link className="aow-btn aow-btn-solid" href={`/artists/${slug}/dashboard`}>
-              Go to my page →
+              {t('artistOnboardingWizard.goToMyPage', 'Go to my page →')}
             </Link>
           </div>
         )}

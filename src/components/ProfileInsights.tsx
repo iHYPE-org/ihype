@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, type ReactNode } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 type InsightsData = {
   hypeTotal: number;
@@ -62,6 +63,7 @@ function PercentStat({ label, value, color }: { label: string; value: number; co
  * page's own section-tab mechanism, gated behind that page's isOwner check.
  */
 export function ProfileInsights({ profileId, profileType }: { profileId: string; profileType: string }) {
+  const { t } = useI18n();
   const [data, setData] = useState<InsightsData | null>(null);
   const [chart, setChart] = useState<ChartDay[]>([]);
   const [error, setError] = useState(false);
@@ -81,8 +83,8 @@ export function ProfileInsights({ profileId, profileType }: { profileId: string;
     return () => { cancelled = true; };
   }, [profileId]);
 
-  if (error) return <EmptyNote text="Couldn't load insights right now." />;
-  if (!data) return <EmptyNote text="Loading insights…" />;
+  if (error) return <EmptyNote text={t('profileInsights.couldntLoad', "Couldn't load insights right now.")} />;
+  if (!data) return <EmptyNote text={t('profileInsights.loading', 'Loading insights…')} />;
 
   const maxDay = Math.max(1, ...chart.map((d) => d.count));
   const hasChartActivity = chart.some((d) => d.count > 0);
@@ -93,22 +95,22 @@ export function ProfileInsights({ profileId, profileType }: { profileId: string;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
       <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
-        <Stat label="Hypes" value={data.hypeTotal} color="var(--accent, #ff5029)" />
-        <Stat label="Followers" value={data.followerCount} color="#b983ff" />
-        {data.listeners && <Stat label="Listeners" value={data.listeners.distinctListeners} color="#22e5d4" />}
-        {typeof data.ticketsSold === 'number' && <Stat label="Tickets sold" value={data.ticketsSold} color="#22e5d4" />}
-        {typeof data.trackCompletionRate === 'number' && <PercentStat label="Track completion" value={data.trackCompletionRate} color="#ff3e9a" />}
+        <Stat label={t('profileInsights.statHypes', 'Hypes')} value={data.hypeTotal} color="var(--accent, #ff5029)" />
+        <Stat label={t('profileInsights.statFollowers', 'Followers')} value={data.followerCount} color="#b983ff" />
+        {data.listeners && <Stat label={t('profileInsights.statListeners', 'Listeners')} value={data.listeners.distinctListeners} color="#22e5d4" />}
+        {typeof data.ticketsSold === 'number' && <Stat label={t('profileInsights.statTicketsSold', 'Tickets sold')} value={data.ticketsSold} color="#22e5d4" />}
+        {typeof data.trackCompletionRate === 'number' && <PercentStat label={t('profileInsights.statTrackCompletion', 'Track completion')} value={data.trackCompletionRate} color="#ff3e9a" />}
       </div>
 
       {typeof data.ticketRevenueCents === 'number' && (
-        <Section title="Ticket revenue">
+        <Section title={t('profileInsights.sectionTicketRevenue', 'Ticket revenue')}>
           <div style={{ fontSize: 26, fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
             ${(data.ticketRevenueCents / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </div>
         </Section>
       )}
 
-      <Section title="Hype activity — last 30 days">
+      <Section title={t('profileInsights.sectionHypeActivity', 'Hype activity — last 30 days')}>
         {hasChartActivity ? (
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 70 }}>
             {chart.map((d) => (
@@ -123,38 +125,38 @@ export function ProfileInsights({ profileId, profileType }: { profileId: string;
             ))}
           </div>
         ) : (
-          <EmptyNote text="No hype activity yet in the last 30 days." />
+          <EmptyNote text={t('profileInsights.noHypeActivity', 'No hype activity yet in the last 30 days.')} />
         )}
       </Section>
 
       {data.topTracks && (
-        <Section title="Top tracks">
+        <Section title={t('profileInsights.sectionTopTracks', 'Top tracks')}>
           {data.topTracks.length ? (
             <div>
-              {data.topTracks.map((t) => (
-                <div key={t.title} style={rowStyle}>
-                  <span style={{ fontSize: 14, color: 'var(--ink)' }}>{t.title}</span>
+              {data.topTracks.map((track) => (
+                <div key={track.title} style={rowStyle}>
+                  <span style={{ fontSize: 14, color: 'var(--ink)' }}>{track.title}</span>
                   <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: 'var(--ink-a55)' }}>
-                    {t.plays} listener{t.plays === 1 ? '' : 's'}
+                    {track.plays} {track.plays === 1 ? t('profileInsights.listenerSingular', 'listener') : t('profileInsights.listenerPlural', 'listeners')}
                   </span>
                 </div>
               ))}
             </div>
           ) : (
-            <EmptyNote text="No listens yet." />
+            <EmptyNote text={t('profileInsights.noListensYet', 'No listens yet.')} />
           )}
         </Section>
       )}
 
       {timeline && (
-        <Section title="Hype timeline — where in a show people HYPE">
+        <Section title={t('profileInsights.sectionHypeTimeline', 'Hype timeline — where in a show people HYPE')}>
           {timelineTotal > 0 ? (
             <div>
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 60 }}>
                 {timeline.buckets.map((count, i) => (
                   <div
                     key={i}
-                    title={`${Math.round((i / timeline.buckets.length) * 100)}–${Math.round(((i + 1) / timeline.buckets.length) * 100)}% into the show: ${count}`}
+                    title={`${Math.round((i / timeline.buckets.length) * 100)}–${Math.round(((i + 1) / timeline.buckets.length) * 100)}% ${t('profileInsights.intoTheShow', 'into the show')}: ${count}`}
                     style={{
                       flex: 1, height: `${Math.max(6, (count / maxTimelineBucket) * 100)}%`,
                       background: '#ff3e9a', borderRadius: 2, opacity: count > 0 ? 0.85 : 0.15,
@@ -163,23 +165,23 @@ export function ProfileInsights({ profileId, profileType }: { profileId: string;
                 ))}
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--ink-a40)', marginTop: 6 }}>
-                <span>Show start</span>
-                <span>Show end</span>
+                <span>{t('profileInsights.showStart', 'Show start')}</span>
+                <span>{t('profileInsights.showEnd', 'Show end')}</span>
               </div>
               {timeline.untracked > 0 && (
                 <p style={{ fontSize: 11, color: 'var(--ink-a40)', marginTop: 12 }}>
-                  +{timeline.untracked} more hype{timeline.untracked === 1 ? '' : 's'} fired without an active player open (position unknown).
+                  +{timeline.untracked} {timeline.untracked === 1 ? t('profileInsights.moreHypeSingular', 'more hype fired without an active player open (position unknown).') : t('profileInsights.moreHypePlural', 'more hypes fired without an active player open (position unknown).')}
                 </p>
               )}
             </div>
           ) : (
-            <EmptyNote text="No timestamped hype data yet — this fills in as people hype your shows while listening live." />
+            <EmptyNote text={t('profileInsights.noTimestampedHype', 'No timestamped hype data yet — this fills in as people hype your shows while listening live.')} />
           )}
         </Section>
       )}
 
       {data.topCities && (
-        <Section title={profileType === 'VENUE' ? 'Where ticket buyers travel from' : 'Where your fans are'}>
+        <Section title={profileType === 'VENUE' ? t('profileInsights.sectionWhereTicketBuyers', 'Where ticket buyers travel from') : t('profileInsights.sectionWhereYourFans', 'Where your fans are')}>
           {data.topCities.length ? (
             <div>
               {data.topCities.map((c) => (
@@ -190,20 +192,20 @@ export function ProfileInsights({ profileId, profileType }: { profileId: string;
               ))}
             </div>
           ) : (
-            <EmptyNote text="No ticket sales with a known location yet." />
+            <EmptyNote text={t('profileInsights.noTicketSalesWithLocation', 'No ticket sales with a known location yet.')} />
           )}
         </Section>
       )}
 
       <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a40)', margin: 0 }}>
-        Cohorts under 5 fans are never shown
+        {t('profileInsights.cohortsUnder5', 'Cohorts under 5 fans are never shown')}
       </p>
 
-      <Section title="Booking requests">
+      <Section title={t('profileInsights.sectionBookingRequests', 'Booking requests')}>
         <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
-          <Stat label="Pending" value={data.bookingRequests.pending} color="#ff5029" />
-          <Stat label="Accepted" value={data.bookingRequests.accepted} color="#22e5d4" />
-          <Stat label="Declined" value={data.bookingRequests.declined} color="var(--ink-a50)" />
+          <Stat label={t('profileInsights.statPending', 'Pending')} value={data.bookingRequests.pending} color="#ff5029" />
+          <Stat label={t('profileInsights.statAccepted', 'Accepted')} value={data.bookingRequests.accepted} color="#22e5d4" />
+          <Stat label={t('profileInsights.statDeclined', 'Declined')} value={data.bookingRequests.declined} color="var(--ink-a50)" />
         </div>
       </Section>
     </div>

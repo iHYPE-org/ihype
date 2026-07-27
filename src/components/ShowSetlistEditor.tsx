@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 type SetlistTemplate = { id: string; name: string; tracks: unknown };
 
@@ -13,6 +14,7 @@ export function ShowSetlistEditor({
   profileId?: string;
   initialTracks: string[];
 }) {
+  const { t } = useI18n();
   const [text, setText] = useState(initialTracks.join('\n'));
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -36,8 +38,8 @@ export function ShowSetlistEditor({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tracks })
     });
-    if (res.ok) setMsg('Saved.');
-    else setMsg('Could not save.');
+    if (res.ok) setMsg(t('showSetlistEditor.saved', 'Saved.'));
+    else setMsg(t('showSetlistEditor.couldNotSave', 'Could not save.'));
     setBusy(false);
   }
 
@@ -66,7 +68,7 @@ export function ShowSetlistEditor({
       : '';
     setText(tracks);
     setShowTemplates(false);
-    setMsg(`Loaded template "${template.name}".`);
+    setMsg(`${t('showSetlistEditor.loadedTemplate', 'Loaded template')} "${template.name}".`);
   }
 
   function templateTracksToText(template: SetlistTemplate) {
@@ -92,12 +94,12 @@ export function ShowSetlistEditor({
       if (res.ok && data?.template) {
         setTemplates((current) => [data.template, ...(current ?? [])]);
         setNewTemplateName('');
-        setMsg(`Saved template "${data.template.name}".`);
+        setMsg(`${t('showSetlistEditor.savedTemplate', 'Saved template')} "${data.template.name}".`);
       } else {
-        setMsg(data?.error ?? 'Could not save template.');
+        setMsg(data?.error ?? t('showSetlistEditor.couldNotSaveTemplate', 'Could not save template.'));
       }
     } catch {
-      setMsg('Could not save template.');
+      setMsg(t('showSetlistEditor.couldNotSaveTemplate', 'Could not save template.'));
     } finally {
       setSavingTemplate(false);
     }
@@ -131,20 +133,20 @@ export function ShowSetlistEditor({
       if (res.ok && data?.template) {
         const savedId = editingTemplateId;
         setTemplates((current) => (current ?? []).map((t) => (t.id === savedId ? data.template : t)));
-        setMsg(`Updated template "${data.template.name}".`);
+        setMsg(`${t('showSetlistEditor.updatedTemplate', 'Updated template')} "${data.template.name}".`);
         cancelEditTemplate();
       } else {
-        setMsg(data?.error ?? 'Could not update template.');
+        setMsg(data?.error ?? t('showSetlistEditor.couldNotUpdateTemplate', 'Could not update template.'));
       }
     } catch {
-      setMsg('Could not update template.');
+      setMsg(t('showSetlistEditor.couldNotUpdateTemplate', 'Could not update template.'));
     } finally {
       setSavingEdit(false);
     }
   }
 
   async function deleteTemplate(id: string) {
-    if (typeof window !== 'undefined' && !window.confirm('Delete this template?')) return;
+    if (typeof window !== 'undefined' && !window.confirm(t('showSetlistEditor.confirmDeleteTemplate', 'Delete this template?'))) return;
     setDeletingTemplateId(id);
     setMsg(null);
     try {
@@ -152,13 +154,13 @@ export function ShowSetlistEditor({
       if (res.ok) {
         setTemplates((current) => (current ?? []).filter((t) => t.id !== id));
         if (editingTemplateId === id) cancelEditTemplate();
-        setMsg('Template deleted.');
+        setMsg(t('showSetlistEditor.templateDeleted', 'Template deleted.'));
       } else {
         const data = await res.json().catch(() => null);
-        setMsg(data?.error ?? 'Could not delete template.');
+        setMsg(data?.error ?? t('showSetlistEditor.couldNotDeleteTemplate', 'Could not delete template.'));
       }
     } catch {
-      setMsg('Could not delete template.');
+      setMsg(t('showSetlistEditor.couldNotDeleteTemplate', 'Could not delete template.'));
     } finally {
       setDeletingTemplateId(null);
     }
@@ -166,7 +168,7 @@ export function ShowSetlistEditor({
 
   return (
     <section className="section">
-      <h2>Setlist (owner only)</h2>
+      <h2>{t('showSetlistEditor.title', 'Setlist (owner only)')}</h2>
       {profileId ? (
         <div style={{ marginBottom: 8 }}>
           <button
@@ -175,7 +177,11 @@ export function ShowSetlistEditor({
             disabled={loadingTemplates}
             type="button"
           >
-            {loadingTemplates ? 'Loading...' : showTemplates ? 'Hide templates' : 'Load template'}
+            {loadingTemplates
+              ? t('showSetlistEditor.loading', 'Loading...')
+              : showTemplates
+              ? t('showSetlistEditor.hideTemplates', 'Hide templates')
+              : t('showSetlistEditor.loadTemplate', 'Load template')}
           </button>
           {showTemplates && templates !== null ? (
             <div style={{ marginTop: 8, background: 'var(--bg-3)', border: '1px solid var(--line)', borderRadius: 8, padding: 8 }}>
@@ -183,7 +189,7 @@ export function ShowSetlistEditor({
                 <input
                   value={newTemplateName}
                   onChange={(e) => setNewTemplateName(e.target.value)}
-                  placeholder="New template name…"
+                  placeholder={t('showSetlistEditor.newTemplateNamePlaceholder', 'New template name…')}
                   type="text"
                   style={{
                     flex: 1,
@@ -202,16 +208,16 @@ export function ShowSetlistEditor({
                   disabled={savingTemplate || !newTemplateName.trim()}
                   type="button"
                 >
-                  {savingTemplate ? 'Saving…' : 'Save current as template'}
+                  {savingTemplate ? t('showSetlistEditor.saving', 'Saving…') : t('showSetlistEditor.saveCurrentAsTemplate', 'Save current as template')}
                 </button>
               </div>
               {templates.length === 0 ? (
-                <p style={{ fontSize: 12, color: 'var(--ink-3)', margin: 0 }}>No templates saved yet.</p>
+                <p style={{ fontSize: 12, color: 'var(--ink-3)', margin: 0 }}>{t('showSetlistEditor.noTemplatesSaved', 'No templates saved yet.')}</p>
               ) : (
-                templates.map((t) =>
-                  editingTemplateId === t.id ? (
+                templates.map((tmpl) =>
+                  editingTemplateId === tmpl.id ? (
                     <div
-                      key={t.id}
+                      key={tmpl.id}
                       style={{ marginBottom: 8, padding: 8, background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 6 }}
                     >
                       <input
@@ -234,7 +240,7 @@ export function ShowSetlistEditor({
                         value={editTracksText}
                         onChange={(e) => setEditTracksText(e.target.value)}
                         rows={5}
-                        placeholder="One track per line…"
+                        placeholder={t('showSetlistEditor.oneTrackPerLinePlaceholder', 'One track per line…')}
                         style={{
                           width: '100%',
                           padding: '6px 8px',
@@ -254,31 +260,31 @@ export function ShowSetlistEditor({
                           disabled={savingEdit || !editName.trim()}
                           type="button"
                         >
-                          {savingEdit ? 'Saving…' : 'Save changes'}
+                          {savingEdit ? t('showSetlistEditor.saving', 'Saving…') : t('showSetlistEditor.saveChanges', 'Save changes')}
                         </button>
                         <button className="button small secondary" onClick={cancelEditTemplate} disabled={savingEdit} type="button">
-                          Cancel
+                          {t('showSetlistEditor.cancel', 'Cancel')}
                         </button>
                       </div>
                     </div>
                   ) : (
                     <div
-                      key={t.id}
+                      key={tmpl.id}
                       style={{ display: 'flex', alignItems: 'center', gap: 4, marginRight: 6, marginBottom: 4 }}
                     >
-                      <button className="button small secondary" onClick={() => applyTemplate(t)} type="button">
-                        {t.name}
+                      <button className="button small secondary" onClick={() => applyTemplate(tmpl)} type="button">
+                        {tmpl.name}
                       </button>
-                      <button className="button small secondary" onClick={() => startEditTemplate(t)} type="button">
-                        Edit
+                      <button className="button small secondary" onClick={() => startEditTemplate(tmpl)} type="button">
+                        {t('showSetlistEditor.edit', 'Edit')}
                       </button>
                       <button
                         className="button small secondary"
-                        onClick={() => deleteTemplate(t.id)}
-                        disabled={deletingTemplateId === t.id}
+                        onClick={() => deleteTemplate(tmpl.id)}
+                        disabled={deletingTemplateId === tmpl.id}
                         type="button"
                       >
-                        {deletingTemplateId === t.id ? 'Deleting…' : 'Delete'}
+                        {deletingTemplateId === tmpl.id ? t('showSetlistEditor.deleting', 'Deleting…') : t('showSetlistEditor.delete', 'Delete')}
                       </button>
                     </div>
                   )
@@ -292,7 +298,7 @@ export function ShowSetlistEditor({
         value={text}
         onChange={(e) => setText(e.target.value)}
         rows={8}
-        placeholder="One track per line…"
+        placeholder={t('showSetlistEditor.oneTrackPerLinePlaceholder', 'One track per line…')}
         style={{
           width: '100%',
           padding: '10px 12px',
@@ -305,7 +311,7 @@ export function ShowSetlistEditor({
       />
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8 }}>
         <button className="button small" onClick={save} disabled={busy} type="button">
-          {busy ? 'Saving…' : 'Save setlist'}
+          {busy ? t('showSetlistEditor.saving', 'Saving…') : t('showSetlistEditor.saveSetlist', 'Save setlist')}
         </button>
         {msg ? <span className="meta">{msg}</span> : null}
       </div>

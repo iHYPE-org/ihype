@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { PasskeyManager } from '@/components/AuthScreens';
+import { useI18n } from '@/components/I18nProvider';
 
 interface Prefs {
   newShows: boolean;
@@ -51,6 +52,7 @@ function Row({ label, detail, action }: { label: string; detail: string; action?
 }
 
 export default function SettingsPage() {
+  const { t } = useI18n();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [emailVerified, setEmailVerified] = useState(true);
@@ -110,28 +112,28 @@ export default function SettingsPage() {
       const reg = await navigator.serviceWorker.ready;
       if (next) {
         if (Notification.permission === 'denied') {
-          throw new Error('Notifications are blocked for this site in your browser settings.');
+          throw new Error(t('settingsPage.pushBlocked', 'Notifications are blocked for this site in your browser settings.'));
         }
         const permission = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
-        if (permission !== 'granted') throw new Error('Permission was not granted.');
+        if (permission !== 'granted') throw new Error(t('settingsPage.pushPermissionDenied', 'Permission was not granted.'));
 
         const keyRes = await fetch('/api/push/vapid-key');
         const { key } = await keyRes.json();
-        if (!key) throw new Error('Push notifications are not configured yet.');
+        if (!key) throw new Error(t('settingsPage.pushNotConfigured', 'Push notifications are not configured yet.'));
 
         const sub = await reg.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(key) as BufferSource,
         });
         const json = sub.toJSON() as { endpoint: string; keys?: { p256dh?: string; auth?: string } };
-        if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) throw new Error('Subscription was incomplete.');
+        if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) throw new Error(t('settingsPage.pushSubscriptionIncomplete', 'Subscription was incomplete.'));
 
         const res = await fetch('/api/push/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ endpoint: json.endpoint, keys: { p256dh: json.keys.p256dh, auth: json.keys.auth } }),
         });
-        if (!res.ok) throw new Error('Could not save your subscription.');
+        if (!res.ok) throw new Error(t('settingsPage.pushSaveFailed', 'Could not save your subscription.'));
         setPushSubscribed(true);
       } else {
         const sub = await reg.pushManager.getSubscription();
@@ -147,7 +149,7 @@ export default function SettingsPage() {
         setPushSubscribed(false);
       }
     } catch (err) {
-      setPushError(err instanceof Error ? err.message : 'Something went wrong.');
+      setPushError(err instanceof Error ? err.message : t('settingsPage.somethingWentWrong', 'Something went wrong.'));
     } finally {
       setPushBusy(false);
     }
@@ -164,14 +166,14 @@ export default function SettingsPage() {
       });
       if (!res.ok) {
         const d = await res.json();
-        setError(d.error ?? 'Failed to save');
+        setError(d.error ?? t('settingsPage.saveFailed', 'Failed to save'));
       } else {
         setSaved(true);
         setTimeout(() => setSaved(false), 2500);
         router.refresh();
       }
     } catch {
-      setError('Network error');
+      setError(t('settingsPage.networkError', 'Network error'));
     } finally {
       setSaving(false);
     }
@@ -196,7 +198,7 @@ export default function SettingsPage() {
   }
 
   async function attestAdult() {
-    if (!confirm('Confirm that you are 18 years of age or older? This unlocks ticket purchases and referral links and cannot be undone.')) return;
+    if (!confirm(t('settingsPage.confirmAdult', 'Confirm that you are 18 years of age or older? This unlocks ticket purchases and referral links and cannot be undone.'))) return;
     setAttesting(true);
     setError(null);
     try {
@@ -209,17 +211,17 @@ export default function SettingsPage() {
         setIsAdult(true);
       } else {
         const d = await res.json().catch(() => ({}));
-        setError(d.error ?? 'Could not save your age confirmation.');
+        setError(d.error ?? t('settingsPage.ageConfirmFailed', 'Could not save your age confirmation.'));
       }
     } catch {
-      setError('Network error');
+      setError(t('settingsPage.networkError', 'Network error'));
     } finally {
       setAttesting(false);
     }
   }
 
   async function detachIdentity() {
-    if (!confirm('Detach your identity from activity history now?')) return;
+    if (!confirm(t('settingsPage.confirmDetach', 'Detach your identity from activity history now?'))) return;
     setDetaching(true);
     try {
       await fetch('/api/privacy/request', {
@@ -227,7 +229,7 @@ export default function SettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ kind: 'detach' }),
       });
-      alert('Identity detached — IP and location data have been removed from your activity log.');
+      alert(t('settingsPage.identityDetached', 'Identity detached — IP and location data have been removed from your activity log.'));
     } finally {
       setDetaching(false);
     }
@@ -238,13 +240,13 @@ export default function SettingsPage() {
     const link = `https://ihype.org/invite/${inviteHexId}`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: 'Join me on iHYPE', text: 'Join me on iHYPE — music discovery, tickets, and more.', url: link });
+        await navigator.share({ title: t('settingsPage.shareTitle', 'Join me on iHYPE'), text: t('settingsPage.shareText', 'Join me on iHYPE — music discovery, tickets, and more.'), url: link });
       } else if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(link);
         setInviteCopied(true);
         setTimeout(() => setInviteCopied(false), 1800);
       } else {
-        window.prompt('Copy your invite link', link);
+        window.prompt(t('settingsPage.copyInviteLinkPrompt', 'Copy your invite link'), link);
       }
     } catch {
       // Ignore canceled shares / clipboard failures.
@@ -264,15 +266,15 @@ export default function SettingsPage() {
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      setError('Export failed — try again or contact support.');
+      setError(t('settingsPage.exportFailed', 'Export failed — try again or contact support.'));
     } finally {
       setExporting(false);
     }
   }
 
   async function deleteAccount() {
-    if (!confirm('Are you sure? This cannot be undone.')) return;
-    const typed = prompt('Type DELETE to confirm account deletion:');
+    if (!confirm(t('settingsPage.confirmDelete', 'Are you sure? This cannot be undone.'))) return;
+    const typed = prompt(t('settingsPage.typeDeleteToConfirm', 'Type DELETE to confirm account deletion:'));
     if (typed !== 'DELETE') return;
     const res = await fetch('/api/settings/delete-account', {
       method: 'POST',
@@ -280,11 +282,11 @@ export default function SettingsPage() {
       body: JSON.stringify({ confirm: 'DELETE' }),
     });
     if (res.ok) {
-      alert('Account deletion scheduled. You will receive a confirmation email.');
+      alert(t('settingsPage.deletionScheduled', 'Account deletion scheduled. You will receive a confirmation email.'));
       window.location.href = '/api/auth/signout';
     } else {
       const d = await res.json().catch(() => ({}));
-      setError(d.error ?? 'Could not delete account.');
+      setError(d.error ?? t('settingsPage.deleteAccountFailed', 'Could not delete account.'));
     }
   }
 
@@ -293,15 +295,15 @@ export default function SettingsPage() {
 
   return (
     <div className="settings-page">
-      <h1>Settings</h1>
+      <h1>{t('settingsPage.title', 'Settings')}</h1>
 
       {loading ? (
-        <p style={{ color: 'var(--ink-a30)', fontFamily: 'var(--font-mono)', fontSize: 12 }}>Loading…</p>
+        <p style={{ color: 'var(--ink-a30)', fontFamily: 'var(--font-mono)', fontSize: 12 }}>{t('settingsPage.loading', 'Loading…')}</p>
       ) : (
         <>
           {/* Payout / Payment (role-aware) */}
           <div className="settings-section">
-            <div className="settings-section-title">{isCreator ? 'Payout destination' : 'Payment methods'}</div>
+            <div className="settings-section-title">{isCreator ? t('settingsPage.payoutDestination', 'Payout destination') : t('settingsPage.paymentMethods', 'Payment methods')}</div>
             <div className="settings-group">
               {isCreator ? (
                 <>
@@ -310,17 +312,17 @@ export default function SettingsPage() {
                       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke={roleColor} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div className="settings-row-label">No payout destination connected yet</div>
-                      <div className="settings-row-detail">Payouts land within 2 business days of a show closing</div>
+                      <div className="settings-row-label">{t('settingsPage.noPayoutDestination', 'No payout destination connected yet')}</div>
+                      <div className="settings-row-detail">{t('settingsPage.payoutsLandDetail', 'Payouts land within 2 business days of a show closing')}</div>
                       <div className="settings-split-mini">
-                        <span style={{ color: roleColor }}>{role === 'VENUE' ? '20% you' : '70% you'}</span>
-                        <span style={{ color: 'var(--ink-a50)' }}>{role === 'VENUE' ? '70% artist' : '20% venue'}</span>
-                        <span style={{ color: 'var(--ink-a50)' }}>10% promoters</span>
+                        <span style={{ color: roleColor }}>{role === 'VENUE' ? t('settingsPage.splitVenueYou', '20% you') : t('settingsPage.splitArtistYou', '70% you')}</span>
+                        <span style={{ color: 'var(--ink-a50)' }}>{role === 'VENUE' ? t('settingsPage.splitArtist', '70% artist') : t('settingsPage.splitVenue', '20% venue')}</span>
+                        <span style={{ color: 'var(--ink-a50)' }}>{t('settingsPage.splitPromoters', '10% promoters')}</span>
                       </div>
                     </div>
-                    <Link className="settings-btn settings-btn-ghost" href="/me/promote">Connect</Link>
+                    <Link className="settings-btn settings-btn-ghost" href="/me/promote">{t('settingsPage.connect', 'Connect')}</Link>
                   </div>
-                  <Row action={<Link className="settings-btn settings-btn-ghost" href="/me/payouts">View</Link>} detail="Every payout receipt, itemized 70/20/10" label="Payout history" />
+                  <Row action={<Link className="settings-btn settings-btn-ghost" href="/payouts?tab=history">{t('settingsPage.view', 'View')}</Link>} detail={t('settingsPage.payoutHistoryDetail', 'Every payout receipt, itemized 70/20/10')} label={t('settingsPage.payoutHistory', 'Payout history')} />
                 </>
               ) : (
                 <div className="settings-row settings-payout-card">
@@ -328,10 +330,10 @@ export default function SettingsPage() {
                     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#b983ff" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div className="settings-row-label">No payment method on file</div>
-                    <div className="settings-row-detail">Used for ticket purchases — face value + $0 fees</div>
+                    <div className="settings-row-label">{t('settingsPage.noPaymentMethod', 'No payment method on file')}</div>
+                    <div className="settings-row-detail">{t('settingsPage.paymentMethodDetail', 'Used for ticket purchases — face value + $0 fees')}</div>
                   </div>
-                  <Link className="settings-btn settings-btn-ghost" href="/me/tickets">Add</Link>
+                  <Link className="settings-btn settings-btn-ghost" href="/me/tickets">{t('settingsPage.add', 'Add')}</Link>
                 </div>
               )}
             </div>
@@ -339,66 +341,66 @@ export default function SettingsPage() {
 
           {/* Profile */}
           <div className="settings-section">
-            <div className="settings-section-title">Profile</div>
+            <div className="settings-section-title">{t('settingsPage.profile', 'Profile')}</div>
             <div className="settings-group">
               <Row
                 action={<input className="settings-input-inline" onChange={(e) => setName(e.target.value)} value={name} />}
-                detail="Shown on your profile"
-                label="Display name"
+                detail={t('settingsPage.shownOnProfile', 'Shown on your profile')}
+                label={t('settingsPage.displayName', 'Display name')}
               />
               <Row
                 action={emailVerified
-                  ? <span className="settings-row-detail">Contact admin@ihype.org to change</span>
-                  : <Link className="settings-btn settings-btn-ghost" href="/verify-email">Verify</Link>}
-                detail={emailVerified ? email : `${email} · not verified`}
-                label="Email"
+                  ? <span className="settings-row-detail">{t('settingsPage.contactToChange', 'Contact admin@ihype.org to change')}</span>
+                  : <Link className="settings-btn settings-btn-ghost" href="/verify-email">{t('settingsPage.verify', 'Verify')}</Link>}
+                detail={emailVerified ? email : `${email} · ${t('settingsPage.notVerified', 'not verified')}`}
+                label={t('settingsPage.email', 'Email')}
               />
               <Row
-                action={<Link className="settings-btn settings-btn-ghost" href="/verify">Manage</Link>}
+                action={<Link className="settings-btn settings-btn-ghost" href="/verify">{t('settingsPage.manage', 'Manage')}</Link>}
                 detail={role.charAt(0) + role.slice(1).toLowerCase()}
-                label="Role"
+                label={t('settingsPage.role', 'Role')}
               />
               <Row
                 action={
                   isAdult ? (
-                    <span className="settings-row-detail" style={{ color: '#22e5d4' }}>✓ 18+ confirmed</span>
+                    <span className="settings-row-detail" style={{ color: '#22e5d4' }}>{t('settingsPage.adultConfirmed', '✓ 18+ confirmed')}</span>
                   ) : (
                     <button className="settings-btn settings-btn-ghost" disabled={attesting} onClick={attestAdult} type="button">
-                      {attesting ? 'Saving…' : "I'm 18 or older"}
+                      {attesting ? t('settingsPage.saving', 'Saving…') : t('settingsPage.imEighteen', "I'm 18 or older")}
                     </button>
                   )
                 }
-                detail={isAdult ? 'Ticket purchases and referral links are unlocked' : 'Required to buy tickets or share referral links (13+ to listen)'}
-                label="Age verification"
+                detail={isAdult ? t('settingsPage.adultUnlockedDetail', 'Ticket purchases and referral links are unlocked') : t('settingsPage.adultRequiredDetail', 'Required to buy tickets or share referral links (13+ to listen)')}
+                label={t('settingsPage.ageVerification', 'Age verification')}
               />
             </div>
           </div>
 
           {/* Notifications */}
           <div className="settings-section">
-            <div className="settings-section-title">Notifications</div>
+            <div className="settings-section-title">{t('settingsPage.notifications', 'Notifications')}</div>
             <div className="settings-group">
-              <Row action={<Toggle checked={prefs.newShows} onChange={(v) => setPrefs((p) => ({ ...p, newShows: v }))} />} detail="When artists you follow announce shows" label="Ticket drops" />
-              <Row action={<Toggle checked={prefs.milestones} onChange={(v) => setPrefs((p) => ({ ...p, milestones: v }))} />} detail="When your tracks hit hype thresholds" label="Hype milestones" />
-              <Row action={<Toggle checked={prefs.journalPosts} onChange={(v) => setPrefs((p) => ({ ...p, journalPosts: v }))} />} detail="New posts from creators you follow" label="Journal posts" />
-              <Row action={<Toggle checked={prefs.weeklyDigest} onChange={(v) => setPrefs((p) => ({ ...p, weeklyDigest: v }))} />} detail="A weekly summary of upcoming shows and activity" label="Weekly digest" />
-              <Row action={<Toggle checked={prefs.radioLive} onChange={(v) => setPrefs((p) => ({ ...p, radioLive: v }))} />} detail="When DJs you follow go live" label="Radio shows" />
+              <Row action={<Toggle checked={prefs.newShows} onChange={(v) => setPrefs((p) => ({ ...p, newShows: v }))} />} detail={t('settingsPage.ticketDropsDetail', 'When artists you follow announce shows')} label={t('settingsPage.ticketDrops', 'Ticket drops')} />
+              <Row action={<Toggle checked={prefs.milestones} onChange={(v) => setPrefs((p) => ({ ...p, milestones: v }))} />} detail={t('settingsPage.hypeMilestonesDetail', 'When your tracks hit hype thresholds')} label={t('settingsPage.hypeMilestones', 'Hype milestones')} />
+              <Row action={<Toggle checked={prefs.journalPosts} onChange={(v) => setPrefs((p) => ({ ...p, journalPosts: v }))} />} detail={t('settingsPage.journalPostsDetail', 'New posts from creators you follow')} label={t('settingsPage.journalPosts', 'Journal posts')} />
+              <Row action={<Toggle checked={prefs.weeklyDigest} onChange={(v) => setPrefs((p) => ({ ...p, weeklyDigest: v }))} />} detail={t('settingsPage.weeklyDigestDetail', 'A weekly summary of upcoming shows and activity')} label={t('settingsPage.weeklyDigest', 'Weekly digest')} />
+              <Row action={<Toggle checked={prefs.radioLive} onChange={(v) => setPrefs((p) => ({ ...p, radioLive: v }))} />} detail={t('settingsPage.radioShowsDetail', 'When DJs you follow go live')} label={t('settingsPage.radioShows', 'Radio shows')} />
               {(role === 'ARTIST' || role === 'DJ') && (
-                <Row action={<Toggle checked={prefs.crateUploads} onChange={(v) => setPrefs((p) => ({ ...p, crateUploads: v }))} />} detail="When your upload clears screening" label={role === 'DJ' ? 'Crate uploads' : 'Track uploads'} />
+                <Row action={<Toggle checked={prefs.crateUploads} onChange={(v) => setPrefs((p) => ({ ...p, crateUploads: v }))} />} detail={t('settingsPage.crateUploadsDetail', 'When your upload clears screening')} label={role === 'DJ' ? t('settingsPage.crateUploads', 'Crate uploads') : t('settingsPage.trackUploads', 'Track uploads')} />
               )}
               {role === 'VENUE' && (
-                <Row action={<Toggle checked={prefs.bookingRequests} onChange={(v) => setPrefs((p) => ({ ...p, bookingRequests: v }))} />} detail="When an artist or DJ requests a slot" label="Booking requests" />
+                <Row action={<Toggle checked={prefs.bookingRequests} onChange={(v) => setPrefs((p) => ({ ...p, bookingRequests: v }))} />} detail={t('settingsPage.bookingRequestsDetail', 'When an artist or DJ requests a slot')} label={t('settingsPage.bookingRequests', 'Booking requests')} />
               )}
               <Row
                 action={<Toggle checked={pushSubscribed} disabled={!pushSupported || pushBusy} onChange={(v) => void togglePush(v)} />}
                 detail={
                   !pushSupported
-                    ? 'Not supported in this browser'
+                    ? t('settingsPage.pushNotSupported', 'Not supported in this browser')
                     : pushSubscribed
-                    ? 'Enabled on this device — separate from the app toggles above'
-                    : 'Get instant browser alerts on this device, even when iHYPE is closed'
+                    ? t('settingsPage.pushEnabledDetail', 'Enabled on this device — separate from the app toggles above')
+                    : t('settingsPage.pushPromptDetail', 'Get instant browser alerts on this device, even when iHYPE is closed')
                 }
-                label="Push notifications (this browser)"
+                label={t('settingsPage.pushLabel', 'Push notifications (this browser)')}
               />
               {pushError && <p style={{ color: '#ff5029', fontSize: 12, padding: '0 20px 14px' }}>{pushError}</p>}
             </div>
@@ -406,7 +408,7 @@ export default function SettingsPage() {
 
           {/* Security */}
           <div className="settings-section">
-            <div className="settings-section-title">Security</div>
+            <div className="settings-section-title">{t('settingsPage.security', 'Security')}</div>
             <div className="settings-group settings-passkeys">
               <PasskeyManager />
             </div>
@@ -414,24 +416,24 @@ export default function SettingsPage() {
 
           {/* Privacy */}
           <div className="settings-section">
-            <div className="settings-section-title">Privacy</div>
+            <div className="settings-section-title">{t('settingsPage.privacy', 'Privacy')}</div>
             <div className="settings-group">
               {isCreator && (
                 <Row
                   action={<Toggle checked={discoverable} disabled={savingDiscoverable} onChange={toggleDiscoverable} />}
-                  detail={role === 'VENUE' ? 'Artists can see your room in the demand radar and request a slot' : 'Fans can find your profile in Discover and search'}
-                  label={role === 'VENUE' ? 'Show me in demand radar' : 'Show me in discovery'}
+                  detail={role === 'VENUE' ? t('settingsPage.demandRadarDetail', 'Artists can see your room in the demand radar and request a slot') : t('settingsPage.discoveryDetail', 'Fans can find your profile in Discover and search')}
+                  label={role === 'VENUE' ? t('settingsPage.demandRadarLabel', 'Show me in demand radar') : t('settingsPage.discoveryLabel', 'Show me in discovery')}
                 />
               )}
               <Row
-                action={<button className="settings-btn settings-btn-ghost" disabled={detaching} onClick={detachIdentity} type="button">{detaching ? 'Detaching…' : 'Detach now'}</button>}
-                detail="Remove IP & location from your activity log now (automatic after 30 days)"
-                label="Early identity detachment"
+                action={<button className="settings-btn settings-btn-ghost" disabled={detaching} onClick={detachIdentity} type="button">{detaching ? t('settingsPage.detaching', 'Detaching…') : t('settingsPage.detachNow', 'Detach now')}</button>}
+                detail={t('settingsPage.identityDetachmentDetail', 'Remove IP & location from your activity log now (automatic after 30 days)')}
+                label={t('settingsPage.identityDetachmentLabel', 'Early identity detachment')}
               />
               <Row
-                action={<button className="settings-btn settings-btn-ghost" disabled={exporting} onClick={downloadExport} type="button">{exporting ? 'Preparing…' : 'Request export'}</button>}
-                detail="Get a copy of everything we hold"
-                label="Download my data"
+                action={<button className="settings-btn settings-btn-ghost" disabled={exporting} onClick={downloadExport} type="button">{exporting ? t('settingsPage.preparing', 'Preparing…') : t('settingsPage.requestExport', 'Request export')}</button>}
+                detail={t('settingsPage.downloadDataDetail', 'Get a copy of everything we hold')}
+                label={t('settingsPage.downloadDataLabel', 'Download my data')}
               />
             </div>
           </div>
@@ -439,19 +441,19 @@ export default function SettingsPage() {
           {/* Invite friends */}
           {inviteHexId && (
             <div className="settings-section">
-              <div className="settings-section-title">Invite Friends</div>
+              <div className="settings-section-title">{t('settingsPage.inviteFriends', 'Invite Friends')}</div>
               <div className="settings-group">
                 <Row
                   action={
                     <button className="settings-btn settings-btn-ghost" onClick={shareInviteLink} type="button">
-                      {inviteCopied ? 'Copied ✓' : 'Share'}
+                      {inviteCopied ? t('settingsPage.copied', 'Copied ✓') : t('settingsPage.share', 'Share')}
                     </button>
                   }
                   detail={`ihype.org/invite/${inviteHexId}`}
-                  label="Your invite link"
+                  label={t('settingsPage.yourInviteLink', 'Your invite link')}
                 />
                 <p className="settings-invite-note">
-                  Anyone who joins through your link skips the alpha invite code — no separate code needed.
+                  {t('settingsPage.inviteNote', 'Anyone who joins through your link skips the alpha invite code — no separate code needed.')}
                 </p>
               </div>
             </div>
@@ -459,20 +461,20 @@ export default function SettingsPage() {
 
           {/* Danger zone */}
           <div className="settings-section">
-            <div className="settings-section-title">Danger Zone</div>
+            <div className="settings-section-title">{t('settingsPage.dangerZone', 'Danger Zone')}</div>
             <div className="settings-group settings-danger-zone">
               {/* Plain <a>, not <Link>: /api/auth/signout is an API route, so it
                   needs a real navigation — a soft client-side nav won't hit it. */}
-              <Row action={<a className="settings-btn settings-btn-danger" href="/api/auth/signout">Sign out</a>} detail="Sign out of iHYPE on this device" label="Sign out" />
-              <Row action={<button className="settings-btn settings-btn-danger" onClick={deleteAccount} type="button">Delete</button>} detail="Permanent. All data removed within 30 days." label="Delete account" />
+              <Row action={<a className="settings-btn settings-btn-danger" href="/api/auth/signout">{t('settingsPage.signOut', 'Sign out')}</a>} detail={t('settingsPage.signOutDetail', 'Sign out of iHYPE on this device')} label={t('settingsPage.signOutLabel', 'Sign out')} />
+              <Row action={<button className="settings-btn settings-btn-danger" onClick={deleteAccount} type="button">{t('settingsPage.delete', 'Delete')}</button>} detail={t('settingsPage.deleteAccountDetail', 'Permanent. All data removed within 30 days.')} label={t('settingsPage.deleteAccountLabel', 'Delete account')} />
             </div>
           </div>
 
           {error && <p style={{ color: '#ff5029', fontSize: 13 }}>{error}</p>}
-          {saved && <p style={{ color: '#22e5d4', fontSize: 13, fontFamily: 'var(--font-mono)' }}>✓ Saved</p>}
+          {saved && <p style={{ color: '#22e5d4', fontSize: 13, fontFamily: 'var(--font-mono)' }}>{t('settingsPage.savedConfirm', '✓ Saved')}</p>}
 
           <button className="settings-btn settings-btn-accent" disabled={saving} onClick={save} style={{ width: '100%' }} type="button">
-            {saving ? 'Saving…' : 'Save settings'}
+            {saving ? t('settingsPage.saving', 'Saving…') : t('settingsPage.saveSettings', 'Save settings')}
           </button>
         </>
       )}

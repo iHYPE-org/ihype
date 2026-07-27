@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 export default function DmcaPage() {
+  const { t } = useI18n();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [url, setUrl] = useState('');
@@ -21,56 +23,59 @@ export default function DmcaPage() {
       });
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
-        setErrorMsg(data.error ?? 'Submission failed.');
+        setErrorMsg(data.error ?? t('dmcaPage.submissionFailed', 'Submission failed.'));
         setStatus('error');
       } else {
         setStatus('done');
       }
     } catch {
-      setErrorMsg('Network error. Please try again.');
+      setErrorMsg(t('dmcaPage.networkError', 'Network error. Please try again.'));
       setStatus('error');
     }
   }
 
   return (
     <div className="container section" style={{ maxWidth: 640 }}>
-      <div className="badge">DMCA</div>
-      <h1 className="title">Copyright Takedown</h1>
+      <div className="badge">{t('dmcaPage.badge', 'DMCA')}</div>
+      <h1 className="title">{t('dmcaPage.title', 'Copyright Takedown')}</h1>
       <p className="subtitle">
-        To report infringing content, complete the form below. We will review and respond within 5 business days. False claims may result in account suspension.
+        {t('dmcaPage.subtitle', 'To report infringing content, complete the form below. We will review and respond within 5 business days. False claims may result in account suspension.')}
       </p>
       <section className="panel" style={{ marginTop: 24, padding: '1.5rem' }}>
-        <h2 style={{ marginBottom: 8 }}>How the process works</h2>
+        <h2 style={{ marginBottom: 8 }}>{t('dmcaPage.processHeading', 'How the process works')}</h2>
         <p style={{ color: 'var(--muted)', lineHeight: 1.65 }}>
-          Submit the form with your contact details, the infringing URL, and a description of your original work. We acknowledge within 48 hours. Valid claims are removed within 5 business days. The content owner is notified and may file a counter-notice.
+          {t('dmcaPage.processBody', 'Submit the form with your contact details, the infringing URL, and a description of your original work. We acknowledge within 48 hours. Valid claims are removed within 5 business days. The content owner is notified and may file a counter-notice.')}
         </p>
       </section>
 
       <p style={{ marginTop: 12, padding: '10px 14px', background: 'var(--hair-40)', borderRadius: 8, fontSize: 14 }}>
-        For DMCA takedown requests, email{' '}
+        {t('dmcaPage.emailIntro', 'For DMCA takedown requests, email')}{' '}
+        {/* admin@ihype.org is the only contact address (CLAUDE.md brand rule).
+            dmca@ihype.org was never a real mailbox — takedown notices sent
+            there would bounce. Do not reintroduce it. */}
         <a href="mailto:admin@ihype.org?subject=DMCA%20Takedown%20Request">admin@ihype.org</a>{' '}
-        with subject &ldquo;DMCA Takedown Request&rdquo;. We respond within 5 business days.
+        {t('dmcaPage.emailSubjectNote', 'with subject “DMCA Takedown Request”. We respond within 5 business days.')}
       </p>
 
       {status === 'done' ? (
         <div className="panel" style={{ marginTop: 24, padding: '1.5rem' }}>
-          <p>Your DMCA request has been submitted. We will contact you at the email address provided.</p>
+          <p>{t('dmcaPage.submittedMessage', 'Your DMCA request has been submitted. We will contact you at the email address provided.')}</p>
         </div>
       ) : (
         <form onSubmit={handleSubmit} style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <label className="form-label">
-            Your name
+            {t('dmcaPage.nameLabel', 'Your name')}
             <input
               className="input"
               required
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Full legal name"
+              placeholder={t('dmcaPage.namePlaceholder', 'Full legal name')}
             />
           </label>
           <label className="form-label">
-            Your email
+            {t('dmcaPage.emailLabel', 'Your email')}
             <input
               className="input"
               required
@@ -81,7 +86,7 @@ export default function DmcaPage() {
             />
           </label>
           <label className="form-label">
-            Infringing URL
+            {t('dmcaPage.urlLabel', 'Infringing URL')}
             <input
               className="input"
               required
@@ -92,20 +97,20 @@ export default function DmcaPage() {
             />
           </label>
           <label className="form-label">
-            Description of infringement
+            {t('dmcaPage.descriptionLabel', 'Description of infringement')}
             <textarea
               className="input"
               required
               rows={6}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe the original work you own and how it is being infringed."
+              placeholder={t('dmcaPage.descriptionPlaceholder', 'Describe the original work you own and how it is being infringed.')}
               style={{ resize: 'vertical' }}
             />
           </label>
           {status === 'error' && <p style={{ color: 'var(--accent)' }}>{errorMsg}</p>}
           <button className="ihype-btn-primary" type="submit" disabled={status === 'submitting'}>
-            {status === 'submitting' ? 'Submitting…' : 'Submit DMCA request'}
+            {status === 'submitting' ? t('dmcaPage.submitting', 'Submitting…') : t('dmcaPage.submit', 'Submit DMCA request')}
           </button>
         </form>
       )}

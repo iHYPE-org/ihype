@@ -4,14 +4,16 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import VenueOnboardingWizard from '@/components/VenueOnboardingWizard';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const profile = await db.profile.findUnique({ where: { slug }, select: { name: true } });
+  const t = getT(await getLocale());
   return {
-    title: profile ? `Set up ${profile.name} · iHYPE` : 'Venue Setup · iHYPE',
+    title: profile ? `${t('venuesSlugOnboardingPage.metaTitlePrefix', 'Set up')} ${profile.name} · iHYPE` : t('venuesSlugOnboardingPage.metaTitleFallback', 'Venue Setup · iHYPE'),
     robots: { index: false, follow: false },
   };
 }

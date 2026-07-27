@@ -2,6 +2,7 @@ import { ImageResponse } from 'next/og';
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { getBaseUrl } from '@/lib/utils';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -11,8 +12,9 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
+  const t = getT(await getLocale());
   const show = await db.show.findUnique({ where: { slug }, select: { title: true } });
-  const title = show?.title ?? 'iHYPE Show';
+  const title = show?.title ?? t('showsSlugQrRoute.ihypeShow', 'iHYPE Show');
   const base = getBaseUrl();
   const checkinUrl = `${base}/shows/${slug}/checkin`;
 
@@ -33,7 +35,7 @@ export async function GET(
         }}
       >
         <div style={{ fontSize: 18, color: '#ff5029', letterSpacing: 4, marginBottom: 16 }}>
-          iHYPE CHECK-IN
+          {t('showsSlugQrRoute.ihypeCheckin', 'iHYPE CHECK-IN')}
         </div>
         <div style={{ fontSize: 28, fontWeight: 700, textAlign: 'center', marginBottom: 32 }}>
           {title}
@@ -53,7 +55,7 @@ export async function GET(
           {checkinUrl}
         </div>
         <div style={{ fontSize: 12, color: '#888', marginTop: 20 }}>
-          Scan or visit the URL above to check in
+          {t('showsSlugQrRoute.scanOrVisitToCheckin', 'Scan or visit the URL above to check in')}
         </div>
       </div>
     ),

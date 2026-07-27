@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 const STORAGE_KEY = 'ihype_cookie_consent';
 
 export function CookieConsent() {
+  const { t } = useI18n();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -53,8 +55,8 @@ export function CookieConsent() {
       }}
     >
       <p style={{ flex: '1 1 260px', margin: 0, fontSize: 13, color: 'var(--ink-2, #9e9080)', lineHeight: 1.5 }}>
-        We use essential cookies to keep you signed in, and optional analytics cookies to understand usage in aggregate.{' '}
-        <Link href="/legal?tab=privacy" style={{ color: 'var(--accent, #ff5029)', textDecoration: 'underline' }}>Read our privacy policy</Link>.
+        {t('cookieConsent.description', 'We use essential cookies to keep you signed in, and optional analytics cookies to understand usage in aggregate.')}{' '}
+        <Link href="/legal?tab=privacy" style={{ color: 'var(--accent, #ff5029)', textDecoration: 'underline' }}>{t('cookieConsent.privacyLink', 'Read our privacy policy')}</Link>.
       </p>
       <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
         <button
@@ -62,14 +64,14 @@ export function CookieConsent() {
           className="ihype-btn-ghost"
           style={{ fontSize: 13 }}
         >
-          Essential only
+          {t('cookieConsent.essentialOnly', 'Essential only')}
         </button>
         <button
           onClick={() => choose('all')}
           className="ihype-btn-primary"
           style={{ fontSize: 13, padding: '10px 18px' }}
         >
-          Accept all
+          {t('cookieConsent.acceptAll', 'Accept all')}
         </button>
       </div>
       <style>{`

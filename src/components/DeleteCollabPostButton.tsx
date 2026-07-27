@@ -2,13 +2,15 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useI18n } from '@/components/I18nProvider';
 
 export function DeleteCollabPostButton({ id }: { id: string }) {
+  const { t } = useI18n();
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
 
   async function handleDelete() {
-    if (!confirm('Delete this listing?')) return;
+    if (!confirm(t('deleteCollabPostButton.confirm', 'Delete this listing?'))) return;
     setDeleting(true);
     try {
       const res = await fetch(`/api/collab-board?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
@@ -30,7 +32,7 @@ export function DeleteCollabPostButton({ id }: { id: string }) {
       className="ihype-btn-ghost"
       style={{ padding: '4px 10px', fontSize: 11, flexShrink: 0 }}
     >
-      {deleting ? 'Deleting…' : 'Delete'}
+      {deleting ? t('deleteCollabPostButton.deleting', 'Deleting…') : t('deleteCollabPostButton.delete', 'Delete')}
     </button>
   );
 }

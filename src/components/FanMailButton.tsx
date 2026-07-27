@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 /**
  * Wires POST /api/profile/[slug]/fan-mail (src/app/api/profile/[slug]/fan-mail/route.ts).
@@ -15,12 +16,14 @@ import { useState } from 'react';
 export function FanMailButton({
   profileId,
   triggerClassName,
-  label = 'Send fan mail',
+  label,
 }: {
   profileId: string;
   triggerClassName?: string;
   label?: string;
 }) {
+  const { t } = useI18n();
+  const buttonLabel = label ?? t('fanMailButton.triggerLabel', 'Send fan mail');
   const [open, setOpen] = useState(false);
   const [subject, setSubject] = useState('');
   const [content, setContent] = useState('');
@@ -41,7 +44,7 @@ export function FanMailButton({
     const trimmedSubject = subject.trim();
     const trimmedContent = content.trim();
     if (!trimmedSubject || !trimmedContent) {
-      setError('Subject and message are both required.');
+      setError(t('fanMailButton.requiredError', 'Subject and message are both required.'));
       return;
     }
     setSubmitting(true);
@@ -54,12 +57,12 @@ export function FanMailButton({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error ?? 'Could not send fan mail.');
+        setError(data.error ?? t('fanMailButton.sendError', 'Could not send fan mail.'));
         return;
       }
       setSentCount(typeof data.sent === 'number' ? data.sent : 0);
     } catch {
-      setError('Network error — please try again.');
+      setError(t('fanMailButton.networkError', 'Network error — please try again.'));
     } finally {
       setSubmitting(false);
     }
@@ -68,42 +71,42 @@ export function FanMailButton({
   return (
     <>
       <button className={triggerClassName ?? 'button small secondary'} onClick={() => setOpen(true)} type="button">
-        {label}
+        {buttonLabel}
       </button>
 
       {open && (
         <div className="fm-modal-wrap" onClick={close}>
           <div className="fm-modal" onClick={(e) => e.stopPropagation()}>
             <div className="fm-modal-head">
-              <span>{sentCount !== null ? 'Fan mail sent' : 'Message your fans'}</span>
-              <button aria-label="Close" className="fm-modal-close" onClick={close} type="button">×</button>
+              <span>{sentCount !== null ? t('fanMailButton.sentTitle', 'Fan mail sent') : t('fanMailButton.composeTitle', 'Message your fans')}</span>
+              <button aria-label={t('fanMailButton.closeAriaLabel', 'Close')} className="fm-modal-close" onClick={close} type="button">×</button>
             </div>
             <div className="fm-modal-body">
               {sentCount !== null ? (
                 <p className="fm-status fm-status-ok">
-                  Sent to {sentCount} {sentCount === 1 ? 'fan' : 'fans'} who follow you with show notifications on.
+                  {t('fanMailButton.sentPrefix', 'Sent to')} {sentCount} {sentCount === 1 ? t('fanMailButton.fanSingular', 'fan') : t('fanMailButton.fanPlural', 'fans')} {t('fanMailButton.sentSuffix', 'who follow you with show notifications on.')}
                 </p>
               ) : (
                 <>
-                  <p className="fm-hint">This emails everyone currently following you (with notifications on). Limited to once every 7 days.</p>
+                  <p className="fm-hint">{t('fanMailButton.hint', 'This emails everyone currently following you (with notifications on). Limited to once every 7 days.')}</p>
                   <label className="fm-field">
-                    <span>Subject</span>
+                    <span>{t('fanMailButton.subjectLabel', 'Subject')}</span>
                     <input
                       disabled={submitting}
                       maxLength={100}
                       onChange={(e) => setSubject(e.target.value)}
-                      placeholder="What's this about?"
+                      placeholder={t('fanMailButton.subjectPlaceholder', "What's this about?")}
                       type="text"
                       value={subject}
                     />
                   </label>
                   <label className="fm-field">
-                    <span>Message</span>
+                    <span>{t('fanMailButton.messageLabel', 'Message')}</span>
                     <textarea
                       disabled={submitting}
                       maxLength={2000}
                       onChange={(e) => setContent(e.target.value)}
-                      placeholder="Write your update…"
+                      placeholder={t('fanMailButton.messagePlaceholder', 'Write your update…')}
                       rows={6}
                       value={content}
                     />
@@ -114,12 +117,12 @@ export function FanMailButton({
             </div>
             <div className="fm-modal-foot">
               {sentCount !== null ? (
-                <button className="fm-btn fm-btn-primary" onClick={close} type="button">Done</button>
+                <button className="fm-btn fm-btn-primary" onClick={close} type="button">{t('fanMailButton.done', 'Done')}</button>
               ) : (
                 <>
-                  <button className="fm-btn" disabled={submitting} onClick={close} type="button">Cancel</button>
+                  <button className="fm-btn" disabled={submitting} onClick={close} type="button">{t('fanMailButton.cancel', 'Cancel')}</button>
                   <button className="fm-btn fm-btn-primary" disabled={submitting} onClick={submit} type="button">
-                    {submitting ? 'Sending…' : 'Send'}
+                    {submitting ? t('fanMailButton.sending', 'Sending…') : t('fanMailButton.send', 'Send')}
                   </button>
                 </>
               )}

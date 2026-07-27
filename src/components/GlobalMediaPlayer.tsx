@@ -14,6 +14,7 @@ import Image from 'next/image';
 import { FanPlaylistManager } from '@/components/FanPlaylistManager';
 import { PlayerQueuePanel } from '@/components/PlayerQueuePanel';
 import { usePlayerKeyboard } from '@/lib/usePlayerKeyboard';
+import { useI18n } from '@/components/I18nProvider';
 
 export type MediaTrack = {
   id: string;
@@ -622,6 +623,12 @@ function repeatLabel(mode: RepeatMode) {
   return '';
 }
 
+function repeatTitleKey(mode: RepeatMode): [string, string] {
+  if (mode === 'off') return ['globalMediaPlayer.repeatOff', 'Repeat off'];
+  if (mode === 'all') return ['globalMediaPlayer.repeatAll', 'Repeat all'];
+  return ['globalMediaPlayer.repeatOne', 'Repeat one'];
+}
+
 function fmtSleep(seconds: number) {
   const m = Math.floor(seconds / 60);
   const s = String(seconds % 60).padStart(2, '0');
@@ -631,6 +638,7 @@ function fmtSleep(seconds: number) {
 type DockPanel = 'queue' | 'history' | null;
 
 export function SitePlayerDock() {
+  const { t } = useI18n();
   const {
     currentTrack, isPlaying, currentTime, duration,
     queue, currentIndex, repeatMode, isShuffle, isMuted, isAutoplay, playbackRate,
@@ -675,7 +683,7 @@ export function SitePlayerDock() {
   const btnBase: React.CSSProperties = { background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '2px 4px' };
 
   return (
-    <div className={`site-dock${mobileExpanded ? ' site-dock-expanded' : ''}`} role="region" aria-label="Media player">
+    <div className={`site-dock${mobileExpanded ? ' site-dock-expanded' : ''}`} role="region" aria-label={t('globalMediaPlayer.mediaPlayerRegion', 'Media player')}>
 
       {/* ── Queue / history popover ───────────────────────────────────────── */}
       <PlayerQueuePanel
@@ -697,15 +705,15 @@ export function SitePlayerDock() {
         role="button"
         tabIndex={0}
         aria-expanded={mobileExpanded}
-        aria-label={mobileExpanded ? 'Collapse player controls' : 'Expand player controls'}
+        aria-label={mobileExpanded ? t('globalMediaPlayer.collapsePlayerControls', 'Collapse player controls') : t('globalMediaPlayer.expandPlayerControls', 'Expand player controls')}
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setMobileExpanded(v => !v); } }}
       >
         <div className="site-dock-art" style={{ position: 'relative', background: currentTrack ? 'linear-gradient(135deg,#ff5029,#ff3e9a80)' : '#161310' }}>
           {currentTrack?.artworkUrl && <Image src={currentTrack.artworkUrl} alt={currentTrack.title} fill sizes="42px" style={{ objectFit: 'cover', borderRadius: 5 }} />}
         </div>
         <div className="site-dock-meta">
-          <div className="site-dock-title">{currentTrack?.title ?? 'Nothing playing'}</div>
-          <div className="site-dock-artist">{currentTrack?.artistName ?? 'Pick a track to start'}</div>
+          <div className="site-dock-title">{currentTrack?.title ?? t('globalMediaPlayer.nothingPlaying', 'Nothing playing')}</div>
+          <div className="site-dock-artist">{currentTrack?.artistName ?? t('globalMediaPlayer.pickTrackToStart', 'Pick a track to start')}</div>
         </div>
         <svg className="site-dock-expand-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <polyline points="18 15 12 9 6 15" />
@@ -716,7 +724,7 @@ export function SitePlayerDock() {
       <button
         className="site-dock-play site-dock-mobile-play"
         onClick={e => { e.stopPropagation(); togglePlayback(); }}
-        aria-label={isPlaying ? 'Pause' : 'Play'}
+        aria-label={isPlaying ? t('globalMediaPlayer.pause', 'Pause') : t('globalMediaPlayer.play', 'Play')}
         type="button"
       >
         {isPlaying ? <DkPause /> : <DkPlay />}
@@ -725,17 +733,17 @@ export function SitePlayerDock() {
       {/* ── Center: controls + scrubber ──────────────────────────────────── */}
       <div className="site-dock-c">
         <div className="site-dock-ctrls">
-          <button className="site-dock-btn" onClick={toggleShuffle} aria-label="Toggle shuffle" title="Shuffle" type="button"
+          <button className="site-dock-btn" onClick={toggleShuffle} aria-label={t('globalMediaPlayer.toggleShuffle', 'Toggle shuffle')} title={t('globalMediaPlayer.shuffle', 'Shuffle')} type="button"
             style={{ opacity: isShuffle ? 1 : 0.4, color: isShuffle ? 'var(--accent, #ff5029)' : 'inherit' }}>
             <DkShuffle />
           </button>
-          <button className="site-dock-btn" onClick={playPrevious} aria-label="Previous" type="button"><DkSkipP /></button>
-          <button className="site-dock-play" onClick={togglePlayback} aria-label={isPlaying ? 'Pause' : 'Play'} type="button">
+          <button className="site-dock-btn" onClick={playPrevious} aria-label={t('globalMediaPlayer.previous', 'Previous')} type="button"><DkSkipP /></button>
+          <button className="site-dock-play" onClick={togglePlayback} aria-label={isPlaying ? t('globalMediaPlayer.pause', 'Pause') : t('globalMediaPlayer.play', 'Play')} type="button">
             {isPlaying ? <DkPause /> : <DkPlay />}
           </button>
-          <button className="site-dock-btn" onClick={playNext} aria-label="Next" type="button"><DkSkipN /></button>
-          <button className="site-dock-btn" onClick={cycleRepeat} aria-label="Cycle repeat"
-            title={repeatMode === 'off' ? 'Repeat off' : repeatMode === 'all' ? 'Repeat all' : 'Repeat one'} type="button"
+          <button className="site-dock-btn" onClick={playNext} aria-label={t('globalMediaPlayer.next', 'Next')} type="button"><DkSkipN /></button>
+          <button className="site-dock-btn" onClick={cycleRepeat} aria-label={t('globalMediaPlayer.cycleRepeat', 'Cycle repeat')}
+            title={t(...repeatTitleKey(repeatMode))} type="button"
             style={{ opacity: repeatMode !== 'off' ? 1 : 0.4, color: repeatMode !== 'off' ? 'var(--accent, #ff5029)' : 'inherit', position: 'relative' }}>
             <DkRepeat />
             {rLabel && <span style={{ position: 'absolute', top: -4, right: -4, fontSize: '0.55rem', fontWeight: 700, lineHeight: 1 }}>{rLabel}</span>}
@@ -746,7 +754,7 @@ export function SitePlayerDock() {
           <div
             className="site-dock-track site-dock-waveform"
             role="slider"
-            aria-label="Playback position"
+            aria-label={t('globalMediaPlayer.playbackPosition', 'Playback position')}
             aria-valuenow={Math.round(progress * 100)}
             tabIndex={0}
             onClick={e => { const r = e.currentTarget.getBoundingClientRect(); seekTo(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * duration); }}
@@ -770,12 +778,12 @@ export function SitePlayerDock() {
       <div className="site-dock-r" style={{ alignItems: 'center', gap: 4 }}>
 
         {/* Mute + volume */}
-        <button className="site-dock-btn" onClick={toggleMute} aria-label={isMuted ? 'Unmute' : 'Mute'} title={isMuted ? 'Unmute (M)' : 'Mute (M)'} type="button"
+        <button className="site-dock-btn" onClick={toggleMute} aria-label={isMuted ? t('globalMediaPlayer.unmute', 'Unmute') : t('globalMediaPlayer.mute', 'Mute')} title={isMuted ? t('globalMediaPlayer.unmuteShortcut', 'Unmute (M)') : t('globalMediaPlayer.muteShortcut', 'Mute (M)')} type="button"
           style={{ opacity: isMuted ? 0.4 : 0.6, fontSize: '0.75rem' }}>
           {isMuted ? '🔇' : '🔊'}
         </button>
         <input
-          aria-label="Volume"
+          aria-label={t('globalMediaPlayer.volume', 'Volume')}
           type="range" min={0} max={1} step={0.05}
           value={isMuted ? 0 : volume}
           onChange={e => setVolume(Number(e.target.value))}
@@ -783,27 +791,27 @@ export function SitePlayerDock() {
         />
 
         {/* Speed */}
-        <button className="site-dock-btn" onClick={cycleSpeed} aria-label="Cycle speed" title="Playback speed" type="button"
+        <button className="site-dock-btn" onClick={cycleSpeed} aria-label={t('globalMediaPlayer.cycleSpeed', 'Cycle speed')} title={t('globalMediaPlayer.playbackSpeed', 'Playback speed')} type="button"
           style={{ fontSize: '0.6rem', fontWeight: 700, opacity: playbackRate !== 1 ? 1 : 0.5, minWidth: 26 }}>
           {playbackRate}×
         </button>
 
         {/* Sleep timer */}
         <button className="site-dock-btn" onClick={sleepMinutes !== null ? cancelSleepTimer : cycleSleepTimer}
-          aria-label="Sleep timer" title={sleepMinutes ? `Sleep in ${sleepRemainingSeconds !== null ? fmtSleep(sleepRemainingSeconds) : '—'} — click to cancel` : 'Sleep timer'} type="button"
+          aria-label={t('globalMediaPlayer.sleepTimer', 'Sleep timer')} title={sleepMinutes ? `${t('globalMediaPlayer.sleepIn', 'Sleep in')} ${sleepRemainingSeconds !== null ? fmtSleep(sleepRemainingSeconds) : '—'} — ${t('globalMediaPlayer.clickToCancel', 'click to cancel')}` : t('globalMediaPlayer.sleepTimer', 'Sleep timer')} type="button"
           style={{ fontSize: '0.62rem', opacity: sleepMinutes !== null ? 1 : 0.45, color: sleepMinutes !== null ? 'var(--accent, #ff5029)' : 'inherit', minWidth: 28, fontWeight: sleepMinutes !== null ? 700 : 400 }}>
           {sleepMinutes !== null && sleepRemainingSeconds !== null ? fmtSleep(sleepRemainingSeconds) : '💤'}
         </button>
 
         {/* Share */}
-        <button className="site-dock-btn" onClick={shareCurrentTrack} aria-label="Share track" title="Copy track link" type="button"
+        <button className="site-dock-btn" onClick={shareCurrentTrack} aria-label={t('globalMediaPlayer.shareTrack', 'Share track')} title={t('globalMediaPlayer.copyTrackLink', 'Copy track link')} type="button"
           style={{ opacity: currentTrack ? (copied ? 1 : 0.5) : 0.2, fontSize: '0.7rem', color: copied ? 'var(--accent, #ff5029)' : 'inherit' }}
           disabled={!currentTrack}>
           {copied ? '✓' : '⬆'}
         </button>
 
         {/* Queue / History toggle */}
-        <button className="site-dock-btn" onClick={() => togglePanel('queue')} aria-label="Toggle queue" title="Queue & history" type="button"
+        <button className="site-dock-btn" onClick={() => togglePanel('queue')} aria-label={t('globalMediaPlayer.toggleQueue', 'Toggle queue')} title={t('globalMediaPlayer.queueAndHistory', 'Queue & history')} type="button"
           style={{ opacity: panel !== null ? 1 : 0.5, color: panel !== null ? 'var(--accent, #ff5029)' : 'inherit', fontSize: '0.85rem', position: 'relative' }}>
           ≡
           {upcomingTracks.length > 0 && (

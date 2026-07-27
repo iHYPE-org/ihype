@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getStationState } from '@/lib/radioStation';
 import { AlwaysOnStation } from '@/components/AlwaysOnStation';
 import type { Metadata } from 'next';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,23 +13,23 @@ export const metadata: Metadata = {
 
 export default async function StationPage() {
   const state = await getStationState();
+  const t = getT(await getLocale());
 
   return (
     <div className="station-page">
       <style>{STATION_PAGE_CSS}</style>
       <header className="station-page-head">
-        <span className="station-page-eyebrow">IHYPE RADIO</span>
-        <h1 className="station-page-title">The station never stops.</h1>
+        <span className="station-page-eyebrow">{t('radioStationPage.eyebrow', 'IHYPE RADIO')}</span>
+        <h1 className="station-page-title">{t('radioStationPage.title', 'The station never stops.')}</h1>
         <p className="station-page-sub">
-          A round-the-clock auto-DJ spinning free-use tracks from independent artists — everyone&apos;s
-          tuned to the same moment. When a DJ goes live, you&apos;ll hear them here first.
+          {t('radioStationPage.subtitle', "A round-the-clock auto-DJ spinning free-use tracks from independent artists — everyone's tuned to the same moment. When a DJ goes live, you'll hear them here first.")}
         </p>
       </header>
 
       <AlwaysOnStation initial={state} />
 
       <p className="station-page-foot">
-        Want your tracks in rotation? <Link href="/pages">Set up your page</Link> and enable free-use.
+        {t('radioStationPage.footPrefix', 'Want your tracks in rotation?')} <Link href="/pages">{t('radioStationPage.footLink', 'Set up your page')}</Link> {t('radioStationPage.footSuffix', 'and enable free-use.')}
       </p>
     </div>
   );

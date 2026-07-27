@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import type { Metadata } from 'next';
 import { TicketCardActions } from '@/components/TicketCardActions';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,7 @@ function fmtCents(cents: number) {
 }
 
 export default async function MyTicketsPage() {
+  const t = getT(await getLocale());
   const session = await auth();
   if (!session?.user?.id) redirect('/login?callbackUrl=/me/tickets');
 
@@ -49,17 +51,17 @@ export default async function MyTicketsPage() {
   return (
     <div className="tickets-container">
       <div className="tickets-header">
-        <h1>My Tickets</h1>
-        <p style={{ fontSize: 14, color: 'var(--ink-a70)' }}>Your upcoming shows</p>
+        <h1>{t('ticketsPage.title', 'My Tickets')}</h1>
+        <p style={{ fontSize: 14, color: 'var(--ink-a70)' }}>{t('ticketsPage.subtitle', 'Your upcoming shows')}</p>
       </div>
 
       {orders.length === 0 ? (
         <div className="ihype-empty-state">
           <div className="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 9a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v1a1 1 0 0 0 0 2v1a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-1a1 1 0 0 1 0-2V9Z" /><line x1="10" y1="7" x2="10" y2="17" /></svg></div>
-          <h3>No tickets yet</h3>
-          <p>Browse upcoming shows and grab your first ticket.</p>
+          <h3>{t('ticketsPage.emptyTitle', 'No tickets yet')}</h3>
+          <p>{t('ticketsPage.emptyBody', 'Browse upcoming shows and grab your first ticket.')}</p>
           <Link className="ihype-btn-primary" href="/shows" style={{ display: 'inline-block', textDecoration: 'none' }}>
-            Browse shows →
+            {t('ticketsPage.browseShows', 'Browse shows →')}
           </Link>
         </div>
       ) : (
@@ -85,21 +87,21 @@ export default async function MyTicketsPage() {
                     </Link>
                     <p className="ticket-meta">{dateStr} · {timeStr}</p>
                   </div>
-                  <span className="ticket-status">Valid</span>
+                  <span className="ticket-status">{t('ticketsPage.statusValid', 'Valid')}</span>
                 </div>
 
                 <div className="ticket-details">
                   <div className="detail-item">
-                    <div className="detail-label">Ticket #</div>
+                    <div className="detail-label">{t('ticketsPage.ticketNumberLabel', 'Ticket #')}</div>
                     <div className="detail-value">{order.tickets[0]?.serializedId ?? order.confirmationCode}</div>
                   </div>
                   <div className="detail-item">
-                    <div className="detail-label">Price</div>
+                    <div className="detail-label">{t('ticketsPage.priceLabel', 'Price')}</div>
                     <div className="detail-value">{fmtCents(unitPriceCents)}</div>
                   </div>
                   <div className="detail-item">
-                    <div className="detail-label">Seat</div>
-                    <div className="detail-value">GA</div>
+                    <div className="detail-label">{t('ticketsPage.seatLabel', 'Seat')}</div>
+                    <div className="detail-value">{t('ticketsPage.seatValueGa', 'GA')}</div>
                   </div>
                 </div>
 

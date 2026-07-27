@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 async function postSupportRequest(body: unknown) {
   const response = await fetch('/api/support', {
@@ -19,14 +20,14 @@ async function postSupportRequest(body: unknown) {
 
 // Design's category labels, mapped to the backend's fixed `type` enum
 // (src/app/api/support/route.ts) since there's no per-category schema change here.
-const CATEGORIES: { label: string; type: string }[] = [
-  { label: 'Ticket issue', type: 'ticketing' },
-  { label: 'Payment / Payout', type: 'general' },
-  { label: 'Account / Login', type: 'login' },
-  { label: 'Verification', type: 'verification' },
-  { label: 'Privacy / Data', type: 'privacy' },
-  { label: 'Bug report', type: 'general' },
-  { label: 'Other', type: 'general' },
+const CATEGORIES: { label: string; labelKey: string; type: string }[] = [
+  { label: 'Ticket issue', labelKey: 'supportForm.categoryTicketIssue', type: 'ticketing' },
+  { label: 'Payment / Payout', labelKey: 'supportForm.categoryPaymentPayout', type: 'general' },
+  { label: 'Account / Login', labelKey: 'supportForm.categoryAccountLogin', type: 'login' },
+  { label: 'Verification', labelKey: 'supportForm.categoryVerification', type: 'verification' },
+  { label: 'Privacy / Data', labelKey: 'supportForm.categoryPrivacyData', type: 'privacy' },
+  { label: 'Bug report', labelKey: 'supportForm.categoryBugReport', type: 'general' },
+  { label: 'Other', labelKey: 'supportForm.categoryOther', type: 'general' },
 ];
 
 const CATEGORY_FOR_TYPE: Record<string, string> = {
@@ -40,6 +41,7 @@ const CATEGORY_FOR_TYPE: Record<string, string> = {
 };
 
 export function SupportForm({ initialType = 'general', initialSubject = '' }: { initialType?: string; initialSubject?: string } = {}) {
+  const { t } = useI18n();
   const [category, setCategory] = useState(CATEGORY_FOR_TYPE[initialType] ?? '');
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState(initialSubject);
@@ -54,7 +56,7 @@ export function SupportForm({ initialType = 'general', initialSubject = '' }: { 
     setError('');
 
     if (!email || !subject || !details) {
-      setError('Please fill in all fields.');
+      setError(t('supportForm.fillAllFields', 'Please fill in all fields.'));
       return;
     }
 
@@ -64,7 +66,7 @@ export function SupportForm({ initialType = 'general', initialSubject = '' }: { 
       await postSupportRequest({ type, email, subject, details, company });
       setSent(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not send request.');
+      setError(err instanceof Error ? err.message : t('supportForm.couldNotSendRequest', 'Could not send request.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -74,8 +76,8 @@ export function SupportForm({ initialType = 'general', initialSubject = '' }: { 
     return (
       <div style={{ textAlign: 'center', padding: '40px 0' }}>
         <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
-        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 800, marginBottom: 8 }}>Message sent</h2>
-        <p style={{ fontSize: 14, color: 'var(--ink-a65)' }}>We&apos;ll reply to {email} within 24h.</p>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 800, marginBottom: 8 }}>{t('supportForm.messageSentTitle', 'Message sent')}</h2>
+        <p style={{ fontSize: 14, color: 'var(--ink-a65)' }}>{t('supportForm.replyWithin24h', "We'll reply to")} {email} {t('supportForm.within24h', 'within 24h.')}</p>
       </div>
     );
   }
@@ -83,38 +85,38 @@ export function SupportForm({ initialType = 'general', initialSubject = '' }: { 
   return (
     <form className="form support-form" onSubmit={submit}>
       <label className="field">
-        <span>Category</span>
+        <span>{t('supportForm.categoryLabel', 'Category')}</span>
         <select onChange={(event) => setCategory(event.target.value)} value={category}>
-          <option value="">Select a topic…</option>
+          <option value="">{t('supportForm.selectTopicPlaceholder', 'Select a topic…')}</option>
           {CATEGORIES.map((c) => (
-            <option key={c.label} value={c.label}>{c.label}</option>
+            <option key={c.label} value={c.label}>{t(c.labelKey, c.label)}</option>
           ))}
         </select>
       </label>
 
       <label className="field">
-        <span>Email</span>
+        <span>{t('supportForm.emailLabel', 'Email')}</span>
         <input autoComplete="email" onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" type="email" value={email} />
       </label>
 
       <label className="field">
-        <span>Subject</span>
-        <input onChange={(event) => setSubject(event.target.value)} placeholder="Brief summary" type="text" value={subject} />
+        <span>{t('supportForm.subjectLabel', 'Subject')}</span>
+        <input onChange={(event) => setSubject(event.target.value)} placeholder={t('supportForm.subjectPlaceholder', 'Brief summary')} type="text" value={subject} />
       </label>
 
       <label className="field">
-        <span>Message</span>
+        <span>{t('supportForm.messageLabel', 'Message')}</span>
         <textarea
           maxLength={2500}
           onChange={(event) => setDetails(event.target.value)}
-          placeholder="Tell us what's happening…"
+          placeholder={t('supportForm.messagePlaceholder', "Tell us what's happening…")}
           rows={7}
           value={details}
         />
       </label>
 
       <label className="bot-field" aria-hidden="true">
-        <span>Company</span>
+        <span>{t('supportForm.companyLabel', 'Company')}</span>
         <input
           autoComplete="off"
           onChange={(event) => setCompany(event.target.value)}
@@ -125,7 +127,7 @@ export function SupportForm({ initialType = 'general', initialSubject = '' }: { 
       </label>
 
       <button className="button" disabled={isSubmitting} type="submit">
-        {isSubmitting ? 'Sending…' : 'Send Message'}
+        {isSubmitting ? t('supportForm.sending', 'Sending…') : t('supportForm.sendMessage', 'Send Message')}
       </button>
       {error ? <p className="status-note status-note-error">{error}</p> : null}
     </form>

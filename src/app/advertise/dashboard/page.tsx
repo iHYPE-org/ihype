@@ -3,10 +3,12 @@ import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 import Link from 'next/link';
 import { CampaignCancelButton } from '@/components/CampaignCancelButton';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdvertiserDashboard() {
+  const t = getT(await getLocale());
   const session = await auth();
   if (!session?.user?.id) redirect('/login?callbackUrl=/advertise/dashboard');
 
@@ -63,7 +65,7 @@ export default async function AdvertiserDashboard() {
     <div className="container ad-dash" style={{ paddingTop: 24, paddingBottom: 60 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
-          <h1>My Ad Campaigns</h1>
+          <h1>{t('advertiseDashboardPage.title', 'My Ad Campaigns')}</h1>
           {advertiserAccount && (
             <p className="meta" style={{ marginTop: 4 }}>
               {advertiserAccount.companyName}
@@ -76,41 +78,41 @@ export default async function AdvertiserDashboard() {
             </p>
           )}
         </div>
-        <Link href="/advertise" className="button small">+ New Campaign</Link>
+        <Link href="/advertise" className="button small">{t('advertiseDashboardPage.newCampaign', '+ New Campaign')}</Link>
       </div>
 
       {campaigns.length > 0 && (
         <div className="ad-dash-stats">
           <div className="ad-dash-stat-card">
-            <div className="ad-dash-stat-label">Spend</div>
+            <div className="ad-dash-stat-label">{t('advertiseDashboardPage.spend', 'Spend')}</div>
             <div className="ad-dash-stat-val" style={{ color: 'var(--accent, #ff5029)' }}>${(totalSpentCents / 100).toFixed(2)}</div>
-            <div className="ad-dash-stat-sub">Across {campaigns.length} campaign{campaigns.length === 1 ? '' : 's'}</div>
+            <div className="ad-dash-stat-sub">{t('advertiseDashboardPage.acrossCampaigns', 'Across')} {campaigns.length} {campaigns.length === 1 ? t('advertiseDashboardPage.campaignSingular', 'campaign') : t('advertiseDashboardPage.campaignPlural', 'campaigns')}</div>
           </div>
           <div className="ad-dash-stat-card">
-            <div className="ad-dash-stat-label">Impressions</div>
+            <div className="ad-dash-stat-label">{t('advertiseDashboardPage.impressions', 'Impressions')}</div>
             <div className="ad-dash-stat-val">{totalImpressions.toLocaleString()}</div>
-            <div className="ad-dash-stat-sub">Lifetime</div>
+            <div className="ad-dash-stat-sub">{t('advertiseDashboardPage.lifetime', 'Lifetime')}</div>
           </div>
           <div className="ad-dash-stat-card">
-            <div className="ad-dash-stat-label">Effective CPM</div>
+            <div className="ad-dash-stat-label">{t('advertiseDashboardPage.effectiveCpm', 'Effective CPM')}</div>
             <div className="ad-dash-stat-val">{effectiveCpmCents !== null ? `$${(effectiveCpmCents / 100).toFixed(2)}` : '—'}</div>
-            <div className="ad-dash-stat-sub">Real spend ÷ impressions</div>
+            <div className="ad-dash-stat-sub">{t('advertiseDashboardPage.effectiveCpmSub', 'Real spend ÷ impressions')}</div>
           </div>
           <div className="ad-dash-stat-card">
-            <div className="ad-dash-stat-label">Active Campaigns</div>
+            <div className="ad-dash-stat-label">{t('advertiseDashboardPage.activeCampaigns', 'Active Campaigns')}</div>
             <div className="ad-dash-stat-val">{activeCampaigns}</div>
-            <div className="ad-dash-stat-sub">${(totalBudgetCents / 100 - totalSpentCents / 100).toFixed(2)} budget remaining</div>
+            <div className="ad-dash-stat-sub">${(totalBudgetCents / 100 - totalSpentCents / 100).toFixed(2)} {t('advertiseDashboardPage.budgetRemaining', 'budget remaining')}</div>
           </div>
         </div>
       )}
 
       {campaigns.length === 0 && (
-        <p className="meta">No campaigns yet. <Link href="/advertise">Submit your first ad</Link>.</p>
+        <p className="meta">{t('advertiseDashboardPage.noCampaigns', 'No campaigns yet.')} <Link href="/advertise">{t('advertiseDashboardPage.submitFirstAd', 'Submit your first ad')}</Link>.</p>
       )}
 
       {campaigns.length > 0 && (
         <div className="panel" style={{ padding: '16px 20px', marginBottom: 24 }}>
-          <div style={{ fontWeight: 600, marginBottom: 12 }}>Impressions, last {DAYS} days</div>
+          <div style={{ fontWeight: 600, marginBottom: 12 }}>{t('advertiseDashboardPage.impressionsLastDays', 'Impressions, last')} {DAYS} {t('advertiseDashboardPage.days', 'days')}</div>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 80 }}>
             {dailyRows.map(([day, count]) => (
               <div key={day} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }} title={`${day}: ${count} impressions`}>
@@ -131,7 +133,7 @@ export default async function AdvertiserDashboard() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
               <div>
                 <div style={{ fontWeight: 600, fontSize: 16 }}>{campaign.title}</div>
-                <div className="meta">{campaign.slot?.name ?? 'Unknown slot'} · Submitted {new Date(campaign.createdAt).toLocaleDateString()}</div>
+                <div className="meta">{campaign.slot?.name ?? t('advertiseDashboardPage.unknownSlot', 'Unknown slot')} · {t('advertiseDashboardPage.submitted', 'Submitted')} {new Date(campaign.createdAt).toLocaleDateString()}</div>
                 {campaign.clickUrl && (
                   <div className="meta" style={{ marginTop: 4 }}>
                     <a href={campaign.clickUrl} target="_blank" rel="noreferrer noopener">{campaign.clickUrl}</a>
@@ -139,21 +141,21 @@ export default async function AdvertiserDashboard() {
                 )}
               </div>
               <span className={`badge ${campaign.status === 'APPROVED' ? 'success' : campaign.status === 'PENDING' || campaign.status === 'PAUSED' || campaign.status === 'AWAITING_PAYMENT' ? 'warning' : campaign.status === 'REJECTED' ? 'error' : ''}`}>
-                {campaign.status === 'AWAITING_PAYMENT' ? 'AWAITING PAYMENT' : campaign.status}
+                {campaign.status === 'AWAITING_PAYMENT' ? t('advertiseDashboardPage.awaitingPayment', 'AWAITING PAYMENT') : campaign.status}
               </span>
             </div>
             <div style={{ display: 'flex', gap: 24 }}>
-              <div><div style={{ fontWeight: 700 }}>{campaign.impressions.toLocaleString()}</div><div className="meta">Impressions</div></div>
+              <div><div style={{ fontWeight: 700 }}>{campaign.impressions.toLocaleString()}</div><div className="meta">{t('advertiseDashboardPage.impressions', 'Impressions')}</div></div>
               <div>
                 <div style={{ fontWeight: 700 }}>${((campaign.budgetCents - campaign.spentCents) / 100).toFixed(2)}</div>
-                <div className="meta">Budget remaining</div>
+                <div className="meta">{t('advertiseDashboardPage.budgetRemainingLabel', 'Budget remaining')}</div>
               </div>
             </div>
             {(campaign.startsAt || campaign.endsAt) && (
               <div className="meta" style={{ marginTop: 8 }}>
-                {campaign.startsAt && `Starts: ${new Date(campaign.startsAt).toLocaleDateString()}`}
+                {campaign.startsAt && `${t('advertiseDashboardPage.starts', 'Starts')}: ${new Date(campaign.startsAt).toLocaleDateString()}`}
                 {campaign.startsAt && campaign.endsAt && ' · '}
-                {campaign.endsAt && `Ends: ${new Date(campaign.endsAt).toLocaleDateString()}`}
+                {campaign.endsAt && `${t('advertiseDashboardPage.ends', 'Ends')}: ${new Date(campaign.endsAt).toLocaleDateString()}`}
               </div>
             )}
             {(campaign.status === 'APPROVED' || campaign.status === 'PENDING' || campaign.status === 'PAUSED' || campaign.status === 'AWAITING_PAYMENT') && (

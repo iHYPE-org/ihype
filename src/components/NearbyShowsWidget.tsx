@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useI18n } from '@/components/I18nProvider';
 
 type NearbyShow = {
   id: string;
@@ -28,6 +29,7 @@ function fmtWhen(iso: string): string {
  * IP-based list already covers the no-permission case.
  */
 export function NearbyShowsWidget() {
+  const { t } = useI18n();
   const [status, setStatus] = useState<Status>('idle');
   const [shows, setShows] = useState<NearbyShow[]>([]);
 
@@ -61,16 +63,16 @@ export function NearbyShowsWidget() {
   if (status === 'idle') {
     return (
       <div className="weekend-empty" style={{ marginBottom: 24 }}>
-        <p>Turn on precise location for shows within 50km of exactly where you are right now.</p>
+        <p>{t('nearbyShowsWidget.prompt', 'Turn on precise location for shows within 50km of exactly where you are right now.')}</p>
         <button type="button" onClick={handleClick} className="weekend-cta" style={{ border: 'none', cursor: 'pointer' }}>
-          Use my location
+          {t('nearbyShowsWidget.useMyLocation', 'Use my location')}
         </button>
       </div>
     );
   }
 
   if (status === 'loading') {
-    return <p className="weekend-foot">Finding shows near you…</p>;
+    return <p className="weekend-foot">{t('nearbyShowsWidget.finding', 'Finding shows near you…')}</p>;
   }
 
   if (status === 'denied' || status === 'error') {
@@ -78,12 +80,12 @@ export function NearbyShowsWidget() {
   }
 
   if (shows.length === 0) {
-    return <p className="weekend-foot">No ticketed shows within 50km right now.</p>;
+    return <p className="weekend-foot">{t('nearbyShowsWidget.empty', 'No ticketed shows within 50km right now.')}</p>;
   }
 
   return (
     <section style={{ marginBottom: 24 }}>
-      <span className="weekend-eyebrow">NEAR YOU · WITHIN 50KM</span>
+      <span className="weekend-eyebrow">{t('nearbyShowsWidget.eyebrow', 'NEAR YOU · WITHIN 50KM')}</span>
       <ul className="weekend-list" style={{ marginTop: 10 }}>
         {shows.map((s) => (
           <li key={s.id} className="weekend-card">
@@ -92,14 +94,14 @@ export function NearbyShowsWidget() {
               <div className="weekend-card-body">
                 <div className="weekend-card-title">{s.title}</div>
                 <div className="weekend-card-meta">
-                  {s.venueName ?? 'Venue TBA'}{s.venueCity ? ` · ${s.venueCity}` : ''}
+                  {s.venueName ?? t('nearbyShowsWidget.venueTba', 'Venue TBA')}{s.venueCity ? ` · ${s.venueCity}` : ''}
                 </div>
                 <div className="weekend-card-tags">
-                  <span className="weekend-tag weekend-tag-local">Near you</span>
-                  {s.hypeCount > 0 && <span className="weekend-tag">{s.hypeCount} HYPE</span>}
+                  <span className="weekend-tag weekend-tag-local">{t('nearbyShowsWidget.nearYouTag', 'Near you')}</span>
+                  {s.hypeCount > 0 && <span className="weekend-tag">{s.hypeCount} {t('nearbyShowsWidget.hypeTag', 'HYPE')}</span>}
                 </div>
               </div>
-              <div className="weekend-card-cta">View</div>
+              <div className="weekend-card-cta">{t('nearbyShowsWidget.viewCta', 'View')}</div>
             </Link>
           </li>
         ))}

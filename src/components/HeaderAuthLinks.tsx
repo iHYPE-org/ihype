@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { useI18n } from '@/components/I18nProvider';
 
 /**
  * Right side of the site header. Signed out: Sign in / Join free. Signed in:
@@ -10,17 +11,18 @@ import { useSession } from 'next-auth/react';
  */
 export function HeaderAuthLinks() {
   const { data: session, status } = useSession();
+  const { t } = useI18n();
 
   if (status === 'loading') return null;
 
   if (session?.user) {
-    const display = session.user.name || session.user.email?.split('@')[0] || 'Account';
+    const display = session.user.name || session.user.email?.split('@')[0] || t('headerAuthLinks.account', 'Account');
     const initial = display.charAt(0).toUpperCase();
     return (
       <Link
-        aria-label={`Signed in as ${display} — open settings`}
+        aria-label={`${t('headerAuthLinks.signedInAs', 'Signed in as')} ${display} — ${t('headerAuthLinks.openSettings', 'open settings')}`}
         href="/me/settings"
-        title={`Signed in as ${display}`}
+        title={`${t('headerAuthLinks.signedInAs', 'Signed in as')} ${display}`}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -70,7 +72,7 @@ export function HeaderAuthLinks() {
               color: '#22e5d4',
             }}
           >
-            Signed in
+            {t('headerAuthLinks.signedIn', 'Signed in')}
           </span>
           <span
             style={{
@@ -92,10 +94,10 @@ export function HeaderAuthLinks() {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
       <Link href="/login" className="button secondary small nav-auth-button">
-        Sign in
+        {t('headerAuthLinks.signIn', 'Sign in')}
       </Link>
       <Link href="/register" className="button small nav-join-button">
-        Join free
+        {t('headerAuthLinks.joinFree', 'Join free')}
       </Link>
     </div>
   );

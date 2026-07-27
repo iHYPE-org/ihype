@@ -12,6 +12,7 @@ import {
   getPasskeyDiagnostics,
   trackSignupFunnel,
 } from '@/components/AuthShared';
+import { useI18n } from '@/components/I18nProvider';
 
 type LoginTab = 'passkey' | 'magic';
 
@@ -22,6 +23,7 @@ export function LoginScreen({
   initialIdentifier?: string;
   justRegistered?: boolean;
 }) {
+  const { t } = useI18n();
   const [tab, setTab] = useState<LoginTab>('passkey');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,7 +52,7 @@ export function LoginScreen({
       trackSignupFunnel('login_passkey_success', { method: 'passkey', step: 'login', ...getPasskeyDiagnostics() });
       window.location.href = resolvePostAuthRedirect(payload.redirect);
     } catch (err) {
-      const reason = getErrorMessage(err, 'Passkey sign-in failed. Try again or use magic link.');
+      const reason = getErrorMessage(err, t('authLogin.passkeyFailed', 'Passkey sign-in failed. Try again or use magic link.'));
       trackSignupFunnel('login_passkey_failed', { method: 'passkey', step: 'login', reason, ...getPasskeyDiagnostics(err) });
       setError(reason);
     } finally {
@@ -66,7 +68,7 @@ export function LoginScreen({
       setMlSent(true);
       trackSignupFunnel('login_magic_link_sent', { method: 'email', step: 'login' });
     } catch (err) {
-      setError(getErrorMessage(err, 'Could not send link. Try again.'));
+      setError(getErrorMessage(err, t('authLogin.sendLinkFailed', 'Could not send link. Try again.')));
     } finally {
       setIsSubmitting(false);
     }
@@ -79,62 +81,62 @@ export function LoginScreen({
 
   return (
     <AuthCardShell
-      eyebrow="WELCOME BACK"
+      eyebrow={t('authLogin.eyebrow', 'WELCOME BACK')}
       mode="signin"
       subtitle={
         tab === 'passkey'
-          ? 'Use Face ID, Touch ID, or your device PIN.'
-          : 'Enter your email and we\'ll send a one-tap sign-in link.'
+          ? t('authLogin.passkeySubtitle', 'Use Face ID, Touch ID, or your device PIN.')
+          : t('authLogin.magicSubtitle', "Enter your email and we'll send a one-tap sign-in link.")
       }
-      title="Sign in."
+      title={t('authLogin.title', 'Sign in.')}
     >
       {justRegistered && (
-        <p className="authcard-status">Account created — check your inbox for your sign-in link, then add a passkey from Settings.</p>
+        <p className="authcard-status">{t('authLogin.justRegistered', 'Account created — check your inbox for your sign-in link, then add a passkey from Settings.')}</p>
       )}
 
       {tab === 'passkey' ? (
         <>
           <button className="authcard-btn-primary" disabled={isSubmitting} onClick={signInWithPasskey} type="button">
-            {isSubmitting ? 'Checking passkey…' : 'Sign in with passkey'}
+            {isSubmitting ? t('authLogin.checkingPasskey', 'Checking passkey…') : t('authLogin.signInWithPasskey', 'Sign in with passkey')}
           </button>
-          <div className="authcard-divider">or</div>
+          <div className="authcard-divider">{t('authLogin.or', 'or')}</div>
           <button className="authcard-btn-ghost" onClick={() => { setTab('magic'); setError(''); }} type="button">
-            Email me a magic link
+            {t('authLogin.emailMagicLink', 'Email me a magic link')}
           </button>
         </>
       ) : mlSent ? (
         <div className="authcard-magic-sent">
           <div aria-hidden="true" className="authcard-icon-badge authcard-icon-badge-teal">✉️</div>
-          <h2 className="authcard-magic-heading">Check your email</h2>
-          <p className="authcard-magic-body">We sent a sign-in link to <b>{mlEmail}</b>. It works once and expires in 15 minutes.</p>
+          <h2 className="authcard-magic-heading">{t('authLogin.checkEmail', 'Check your email')}</h2>
+          <p className="authcard-magic-body">{t('authLogin.sentLinkPrefix', 'We sent a sign-in link to')} <b>{mlEmail}</b>. {t('authLogin.sentLinkSuffix', 'It works once and expires in 15 minutes.')}</p>
           <button className="authcard-resend-btn" disabled={isSubmitting} onClick={submitMagicLink} type="button">
-            {isSubmitting ? 'Resending…' : 'Resend link'}
+            {isSubmitting ? t('authLogin.resending', 'Resending…') : t('authLogin.resendLink', 'Resend link')}
           </button>
         </div>
       ) : (
         <>
           <form onSubmit={sendMagicLink}>
             <div className="authcard-field">
-              <label>Email</label>
+              <label>{t('authLogin.emailLabel', 'Email')}</label>
               <input
                 autoComplete="email"
                 inputMode="email"
                 onChange={(e: { target: HTMLInputElement }) => setMlEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder={t('authLogin.emailPlaceholder', 'you@example.com')}
                 required
                 type="email"
                 value={mlEmail}
               />
             </div>
             <button className="authcard-btn-primary" disabled={isSubmitting} type="submit">
-              {isSubmitting ? 'Sending…' : 'Send sign-in link'}
+              {isSubmitting ? t('authLogin.sending', 'Sending…') : t('authLogin.sendSignInLink', 'Send sign-in link')}
             </button>
           </form>
           {webauthnAvailable && (
             <>
-              <div className="authcard-divider">or</div>
+              <div className="authcard-divider">{t('authLogin.or', 'or')}</div>
               <button className="authcard-btn-ghost" onClick={() => { setTab('passkey'); setError(''); }} type="button">
-                Use passkey instead
+                {t('authLogin.usePasskeyInstead', 'Use passkey instead')}
               </button>
             </>
           )}
@@ -143,7 +145,7 @@ export function LoginScreen({
 
       {error && <p className="authcard-status authcard-status-error">{error}</p>}
 
-      <p className="authcard-fine">New to iHYPE? <Link href="/register">Create an account</Link></p>
+      <p className="authcard-fine">{t('authLogin.newToIhype', 'New to iHYPE?')} <Link href="/register">{t('authLogin.createAccount', 'Create an account')}</Link></p>
     </AuthCardShell>
   );
 }

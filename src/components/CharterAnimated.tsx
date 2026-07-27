@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 /** Fades/rises a section in once it scrolls into view (matches Charter.dc.html's `.ch-reveal`). */
 export function Reveal({ children, delayMs = 0 }: { children: ReactNode; delayMs?: number }) {
@@ -41,6 +42,7 @@ export function Reveal({ children, delayMs = 0 }: { children: ReactNode; delayMs
 
 /** Animated 70/20/10/0 split bar with count-up percentages (matches Charter.dc.html). */
 export function SplitBar() {
+  const { t } = useI18n();
   const [pct, setPct] = useState({ artist: 0, venue: 0, promoter: 0 });
   const ref = useRef<HTMLDivElement>(null);
   const started = useRef(false);
@@ -86,10 +88,10 @@ export function SplitBar() {
       </div>
 
       <p className="charter-split-display">
-        <span className="charter-accent">{pct.artist}%</span> artist ·{' '}
-        <span className="charter-venue">{pct.venue}%</span> venue ·{' '}
-        <span className="charter-fan">{pct.promoter}%</span> promoters ·{' '}
-        0% iHYPE.
+        <span className="charter-accent">{pct.artist}%</span> {t('charterAnimated.artist', 'artist')} ·{' '}
+        <span className="charter-venue">{pct.venue}%</span> {t('charterAnimated.venue', 'venue')} ·{' '}
+        <span className="charter-fan">{pct.promoter}%</span> {t('charterAnimated.promoters', 'promoters')} ·{' '}
+        {t('charterAnimated.zeroPercentIhype', '0% iHYPE.')}
       </p>
     </div>
   );

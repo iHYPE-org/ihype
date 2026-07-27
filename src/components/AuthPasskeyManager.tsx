@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { startRegistration } from '@simplewebauthn/browser';
 import { postJson } from '@/lib/api-client';
 import { getErrorMessage } from '@/components/AuthShared';
+import { useI18n } from '@/components/I18nProvider';
 
 type PasskeyEntry = {
   id: string;
@@ -13,6 +14,7 @@ type PasskeyEntry = {
 };
 
 export function PasskeyManager() {
+  const { t } = useI18n();
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -52,10 +54,10 @@ export function PasskeyManager() {
       }
       const attestation = await startRegistration({ optionsJSON: options });
       await postJson('/api/auth/passkey/register', attestation);
-      setStatus('Passkey added. You can now sign in without a password.');
+      setStatus(t('authPasskeyManager.registeredStatus', 'Passkey added. You can now sign in without a password.'));
       void loadPasskeys();
     } catch (err) {
-      setError(getErrorMessage(err, 'Could not register passkey.'));
+      setError(getErrorMessage(err, t('authPasskeyManager.registerError', 'Could not register passkey.')));
     } finally {
       setBusy(false);
     }
@@ -68,11 +70,11 @@ export function PasskeyManager() {
       const res = await fetch(`/api/auth/passkey/${id}`, { method: 'DELETE' });
       if (!res.ok) {
         const payload = await res.json().catch(() => ({}));
-        throw new Error(typeof payload.error === 'string' ? payload.error : 'Could not remove passkey.');
+        throw new Error(typeof payload.error === 'string' ? payload.error : t('authPasskeyManager.removeError', 'Could not remove passkey.'));
       }
       void loadPasskeys();
     } catch (err) {
-      setError(getErrorMessage(err, 'Could not remove passkey.'));
+      setError(getErrorMessage(err, t('authPasskeyManager.removeError', 'Could not remove passkey.')));
     } finally {
       setRemovingId(null);
     }
@@ -86,7 +88,7 @@ export function PasskeyManager() {
   return (
     <div>
       <button disabled={busy} onClick={registerPasskey} style={{ ...ghostButton, background: 'var(--accent)', color: '#fff', opacity: busy ? 0.7 : 1 }} type="button">
-        {busy ? 'Registering...' : 'Add a passkey'}
+        {busy ? t('authPasskeyManager.registering', 'Registering...') : t('authPasskeyManager.addPasskey', 'Add a passkey')}
       </button>
       {status ? <p style={{ marginTop: 8, fontSize: 13, color: 'var(--accent)' }}>{status}</p> : null}
       {error ? <p style={{ marginTop: 8, fontSize: 13, color: '#ef4444' }}>{error}</p> : null}
@@ -94,14 +96,14 @@ export function PasskeyManager() {
       {!loadingList && passkeys && passkeys.length > 0 ? (
         <div style={{ marginTop: 20 }}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--ink-a50)', marginBottom: 10 }}>
-            Registered passkeys
+            {t('authPasskeyManager.registeredPasskeys', 'Registered passkeys')}
           </div>
           <div style={{ border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
             {passkeys.map((pk, i) => (
               <div key={pk.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderBottom: i === passkeys.length - 1 ? 'none' : '1px solid var(--line)' }}>
                 <span style={{ flex: 1, fontSize: 13, color: 'var(--ink)' }}>
                   <span style={{ textTransform: 'capitalize' }}>{pk.deviceType.replace(/-/g, ' ')}</span>
-                  {pk.backedUp ? ' · synced' : ' · single device'}
+                  {pk.backedUp ? ` · ${t('authPasskeyManager.synced', 'synced')}` : ` · ${t('authPasskeyManager.singleDevice', 'single device')}`}
                   {' · '}
                   {new Date(pk.createdAt).toLocaleDateString()}
                 </span>
@@ -111,7 +113,7 @@ export function PasskeyManager() {
                   style={{ ...ghostButton, padding: '6px 14px', fontSize: 12, opacity: removingId === pk.id ? 0.7 : 1 }}
                   type="button"
                 >
-                  {removingId === pk.id ? 'Removing...' : 'Remove'}
+                  {removingId === pk.id ? t('authPasskeyManager.removing', 'Removing...') : t('authPasskeyManager.remove', 'Remove')}
                 </button>
               </div>
             ))}
