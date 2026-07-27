@@ -1905,7 +1905,7 @@
   "tpDMS1T": "How the process works",
   "tpDMTitle": "Copyright Takedown",
   "tpDescInfringement": "Description of infringement",
-  "tpDmcaNote": "For DMCA takedown requests, email <a href=\"mailto:dmca@ihype.org\">dmca@ihype.org</a> with subject \"DMCA Takedown Request\". We respond within 5 business days.",
+  "tpDmcaNote": "For DMCA takedown requests, email <a href=\"mailto:admin@ihype.org\">admin@ihype.org</a> with subject \"DMCA Takedown Request\". We respond within 5 business days.",
   "tpInfringingUrl": "Infringing URL",
   "tpRequiredNote": "Name, email, and infringing URL are required.",
   "tpSubmitAnother": "Submit another request",
