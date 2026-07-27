@@ -1,10 +1,17 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import en from '@/lib/i18n/dictionaries/en.json';
-import { SUPPORTED_LOCALES, RTL_LOCALES, isSupportedLocale, type Locale } from '@/lib/i18n/locales';
+import { SUPPORTED_LOCALES, RTL_LOCALES, isSupportedLocale, LOCALE_COOKIE, type Locale } from '@/lib/i18n/locales';
 
 const STORAGE_KEY = 'ihype-locale';
+
+function writeLocaleCookie(locale: Locale) {
+  // 1 year, readable by getLocale() (src/lib/i18n/server.ts) for every server
+  // component — localStorage alone is invisible to server-rendered pages.
+  document.cookie = `${LOCALE_COOKIE}=${locale}; path=/; max-age=31536000; SameSite=Lax`;
+}
 
 type Dictionary = Record<string, string>;
 
@@ -49,12 +56,14 @@ const I18nContext = createContext<I18nContextValue | null>(null);
  * locale changes, without a full page reload.
  */
 export function I18nProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const [locale, setLocaleState] = useState<Locale>('en');
   const [dict, setDict] = useState<Dictionary>(en as Dictionary);
 
   useEffect(() => {
     const initial = detectInitialLocale();
     setLocaleState(initial);
+    writeLocaleCookie(initial);
     if (initial !== 'en') {
       loadDictionary(initial).then(setDict).catch(() => {});
     }
@@ -68,7 +77,12 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   function setLocale(next: Locale) {
     setLocaleState(next);
     window.localStorage.setItem(STORAGE_KEY, next);
+    writeLocaleCookie(next);
     loadDictionary(next).then(setDict).catch(() => {});
+    // Server components read the locale cookie at render time, so they need
+    // a fresh server render to pick up the change — a client-side re-render
+    // alone would leave all their already-rendered strings in the old locale.
+    router.refresh();
   }
 
   function t(key: string, fallback?: string): string {

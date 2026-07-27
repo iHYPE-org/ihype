@@ -1,17 +1,19 @@
 import '../marketing.css';
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'About | iHYPE.org',
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const t = getT(await getLocale());
   return (
     <div className="lp-wrap">
       <section className="lp-hero" style={{ paddingBottom: '20px' }}>
         <p className="lp-hype-eyebrow">NOT-FOR-PROFIT · BUILT FOR THE SCENE</p>
-        <h1 className="lp-hero-h" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)' }}>About iHYPE</h1>
+        <h1 className="lp-hero-h" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)' }}>{t('aboutHeroTitle', 'About iHYPE')}</h1>
         <p className="lp-hero-sub">
           iHYPE exists because fans, not fees, should decide who rises. We give independent artists, venues, and
           DJs a platform that doesn&apos;t take a cut — but none of it means anything without fans showing up to
@@ -99,8 +101,8 @@ export default function AboutPage() {
           Whether you hype from the crowd or play from the stage, this only works if you&apos;re in it.
         </p>
         <div className="lp-hero-actions" style={{ justifyContent: 'center' }}>
-          <Link href="/register" className="lp-btn-primary">Join as a fan — free</Link>
-          <Link href="/charter" className="lp-btn-ghost">Read the charter →</Link>
+          <Link href="/register" className="lp-btn-primary">{t('aboutJoinFan', 'Join as a fan — free')}</Link>
+          <Link href="/charter" className="lp-btn-ghost">{t('aboutReadCharter', 'Read the charter →')}</Link>
         </div>
       </section>
     </div>

@@ -1,3 +1,6 @@
+/** Shared between the client I18nProvider (writes it) and the server getLocale() (reads it) — kept in this dependency-light module since server.ts imports next/headers, which can't be pulled into a client bundle. */
+export const LOCALE_COOKIE = 'ihype_locale';
+
 export const SUPPORTED_LOCALES = ['en', 'es', 'fr', 'pt', 'ar', 'de', 'ja', 'zh', 'it', 'ko', 'hi', 'ru'] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
 
