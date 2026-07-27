@@ -35,13 +35,13 @@ export function PayoutConnectButton({ profileId, state }: { profileId: string; s
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.onboardingUrl) {
-        setError(data.error ?? t('poConnectFailed'));
+        setError(data.error ?? t('poConnectFailed', 'Connection failed — try again.'));
         setBusy(false);
         return;
       }
       window.location.href = data.onboardingUrl;
     } catch {
-      setError(t('poConnectFailed'));
+      setError(t('poConnectFailed', 'Connection failed — try again.'));
       setBusy(false);
     }
   }
@@ -49,7 +49,7 @@ export function PayoutConnectButton({ profileId, state }: { profileId: string; s
   return (
     <div className="pcb">
       <button className="pcb-btn" disabled={busy} onClick={connect} type="button">
-        {busy ? t('poConnecting') : label}
+        {busy ? t('poConnecting', 'Connecting…') : label}
       </button>
       {error && <p className="pcb-error">{error}</p>}
 
