@@ -31,6 +31,34 @@ if (!batchPath || (!apply && !process.argv.includes('--dry-run'))) {
   process.exit(1);
 }
 
+// Per-locale writing systems. A translation containing characters from a
+// script its language never uses is almost always a corrupted generation —
+// a stray glyph substituted mid-word. It reads as a plausible typo to anyone
+// who doesn't know the language and is effectively invisible in review.
+//
+// This is not hypothetical: an Arabic string here once came through as
+// "لا يمкан التراجع" — Cyrillic к/а/н spliced into the middle of the Arabic
+// word يمكن. Latin script is allowed everywhere, since brand terms (iHYPE,
+// HYPE, DJ, QR, DELETE) and placeholders legitimately stay in Latin.
+const SCRIPTS = {
+  cyrillic: /[Ѐ-ӿ]/,
+  arabic: /[؀-ۿ]/,
+  devanagari: /[ऀ-ॿ]/,
+  cjk: /[一-鿿]/,
+  kana: /[぀-ヿ]/,
+  hangul: /[가-힯]/,
+};
+
+const ALLOWED_SCRIPTS = {
+  es: [], fr: [], pt: [], de: [], it: [],
+  ru: ['cyrillic'],
+  ar: ['arabic'],
+  hi: ['devanagari'],
+  ja: ['cjk', 'kana'],
+  ko: ['hangul', 'cjk'],
+  zh: ['cjk'],
+};
+
 const batch = JSON.parse(readFileSync(batchPath, 'utf8'));
 const english = JSON.parse(
   execFileSync('node', ['scripts/extract-i18n-keys.mjs'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }),
@@ -66,6 +94,17 @@ for (const [locale, entries] of Object.entries(batch)) {
     }
     if (key in dict) {
       problems.push(`[${locale}] ${key} — already present, left unchanged`);
+      skipped++;
+      continue;
+    }
+    // Refuse, don't warn: a stray script means the string is corrupted, and
+    // nobody reviewing a language they don't read would catch it later.
+    const allowed = ALLOWED_SCRIPTS[locale] ?? [];
+    const stray = Object.entries(SCRIPTS)
+      .filter(([name, re]) => !allowed.includes(name) && re.test(value))
+      .map(([name]) => name);
+    if (stray.length > 0) {
+      problems.push(`[${locale}] ${key} — contains ${stray.join('/')} characters, refusing: ${JSON.stringify(value)}`);
       skipped++;
       continue;
     }
