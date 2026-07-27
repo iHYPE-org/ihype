@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { AccessibilityControls } from '@/components/AccessibilityControls';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 const ico = {
   fill: 'none' as const,
@@ -200,6 +201,9 @@ export function NavDrawer({
             </ul>
             <div style={{ borderTop: '1px solid var(--line)', padding: '12px 16px' }}>
               <AccessibilityControls />
+            </div>
+            <div style={{ padding: '12px 16px' }}>
+              <LanguageSwitcher />
             </div>
             <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: 13, opacity: 0.5 }}>Theme</span>

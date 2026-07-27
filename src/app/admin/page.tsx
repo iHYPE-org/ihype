@@ -518,7 +518,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           </div>
           <div className="admin-signup-actions">
             <AdminSignupTestPanel />
-            <Link className="button small secondary" href="/register?role=ARTIST">
+            <Link className="button small secondary" href="/for-artists">
               Test signup UI
             </Link>
           </div>

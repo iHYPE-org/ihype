@@ -63,7 +63,7 @@ export function PayoutSettingsPanel({ profiles, stripeReady }: { profiles: Setti
                 {stripeReady && (
                   <PayoutConnectButton
                     profileId={p.id}
-                    label={p.stripeConnectOnboarded ? 'Reconnect' : p.stripeConnectAccountId ? 'Finish setup' : 'Connect'}
+                    state={p.stripeConnectOnboarded ? 'reconnect' : p.stripeConnectAccountId ? 'finish-setup' : 'connect'}
                   />
                 )}
               </div>
