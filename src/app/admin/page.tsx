@@ -1018,22 +1018,23 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
                 <span>{ad.slot?.name}</span>
                 <small>{ad.advertiser?.username ?? ad.advertiser?.email}</small>
                 <small>{ad.createdAt.toISOString().slice(0, 10)}</small>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <form method="POST" action={`/api/admin/ads/${ad.id}`} style={{ display: 'inline' }}>
-                    <input type="hidden" name="status" value="APPROVED" />
-                    <button type="submit" className="button small" style={{ fontSize: 12 }}>Approve</button>
-                  </form>
-                  <form method="POST" action={`/api/admin/ads/${ad.id}`} style={{ display: 'inline' }}>
-                    <input type="hidden" name="status" value="REJECTED" />
-                    <button type="submit" className="button small secondary" style={{ fontSize: 12 }}>Reject</button>
-                  </form>
-                </div>
+                {/* These used to be two HTML forms POSTing to
+                    /api/admin/ads/[adId], which only exports PATCH — a form
+                    can't send PATCH, so both buttons always 405'd and no
+                    campaign was ever decided from this page. Approving also
+                    opens a real Stripe authorization and now needs a
+                    step-up passkey check, so rather than duplicate that
+                    flow a third time this links to /admin/ads, where
+                    AdminAdsClient already does it properly. */}
+                <Link className="button small" href={`/admin/ads?status=PENDING&q=${encodeURIComponent(ad.title)}`} style={{ fontSize: 12 }}>
+                  Review
+                </Link>
               </div>
             ))}
           </div>
         )}
         <p className="meta" style={{ marginTop: 8 }}>
-          Manage via <code>PATCH /api/admin/ads/[adId]</code> with <code>{`{status: "APPROVED"|"REJECTED"}`}</code>.
+          Approve or reject campaigns in the <Link href="/admin/ads">Ads queue</Link>.
         </p>
       </section>
     </div>

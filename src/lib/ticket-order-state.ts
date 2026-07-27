@@ -17,30 +17,56 @@ type Tx = Pick<
  * one billed act, its artist share is split across ACCEPTED
  * ShowLineupSlot rows (each act's splitPercent, siblings summing to
  * Show.artistPayoutPercent) instead of paying 100% to headlinerProfileId.
- * The last slot absorbs the rounding remainder so the sum of per-act
- * payouts always equals order.artistPayoutCents exactly — no cent ever
- * goes unaccounted for or gets double-paid.
+ *
+ * Each act is paid strictly its own contracted share
+ * (splitPercent / artistPayoutPercent) of the order's artist payout, and the
+ * last act absorbs only the sub-cent rounding drift between those shares —
+ * so in the normal case (every slot ACCEPTED, splitPercents summing to
+ * artistPayoutPercent) the per-act payouts sum to artistPayoutCents exactly,
+ * with no cent unaccounted for or double-paid.
+ *
+ * The caller filters to ACCEPTED slots defensively, even though a show can't
+ * reach SCHEDULED with a pending/declined slot. This function has to stay
+ * defensive in the same direction: if that filter ever *does* drop a slot,
+ * the accepted splitPercents sum to less than artistPayoutPercent, and the
+ * undistributed portion must NOT be handed to whichever act happens to sort
+ * last — it simply goes unallocated. Overpaying a real person is far harder
+ * to claw back than under-distributing into the platform balance, which an
+ * admin can settle manually against the logged warning.
  */
-function splitArtistPayoutAcrossLineup(
+export function splitArtistPayoutAcrossLineup(
   artistPayoutCents: number,
   artistPayoutPercent: number | null,
   lineupSlots: { profileId: string; splitPercent: number }[],
 ): { profileId: string; amountCents: number }[] {
-  const totalPercent = artistPayoutPercent ?? lineupSlots.reduce((sum, s) => sum + s.splitPercent, 0);
+  const acceptedPercent = lineupSlots.reduce((sum, s) => sum + s.splitPercent, 0);
+  const totalPercent = artistPayoutPercent ?? acceptedPercent;
   if (totalPercent <= 0) return [];
+
+  // The pot actually owed to the acts present here. Equals artistPayoutCents
+  // whenever the slots sum to the show's full artist share, which is the only
+  // state a ticketed show is supposed to be able to reach.
+  const distributable = Math.round(artistPayoutCents * (Math.min(acceptedPercent, totalPercent) / totalPercent));
+
+  if (distributable !== artistPayoutCents) {
+    console.warn(
+      '[ticket-order-state] lineup splits do not cover the full artist share',
+      { artistPayoutCents, distributable, totalPercent, acceptedPercent, slots: lineupSlots.length },
+    );
+  }
 
   let allocated = 0;
   return lineupSlots.map((slot, i) => {
     const isLast = i === lineupSlots.length - 1;
     const amountCents = isLast
-      ? artistPayoutCents - allocated
+      ? distributable - allocated
       : Math.round(artistPayoutCents * (slot.splitPercent / totalPercent));
     allocated += amountCents;
     return { profileId: slot.profileId, amountCents };
   });
 }
 
-function buildPayableEntries(
+export function buildPayableEntries(
   show: { id: string; venueProfileId: string | null; headlinerProfileId: string | null; artistPayoutPercent: number | null },
   order: {
     id: string;

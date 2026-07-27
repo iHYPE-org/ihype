@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
+import { requireRecentAdminReauth } from '@/lib/admin-confirmation';
 
 /**
  * Takes real enforcement action against the flagged content, keyed by
@@ -47,9 +48,28 @@ async function enforceRemoval(targetType: string, targetId: string, reason: stri
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
-    if (!isAdminSession(session)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!isAdminSession(session) || !session?.user?.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    // Step-up auth: `approve` takes real, largely irreversible enforcement
+    // action (cancels a show, unpublishes a track, soft-deletes a comment,
+    // rejects an ad, clears a profile image). Gate it the same way the
+    // sibling content-reports route already gates its own moderation
+    // decisions — a stolen admin session shouldn't be able to tear down
+    // content without a fresh passkey check.
+    const reauthed = await requireRecentAdminReauth(session.user.id);
+    if (!reauthed) {
+      return NextResponse.json({ requiresReauth: true }, { status: 401 });
+    }
+
     const { id } = await params;
-    const { action } = await request.json() as { action: 'approve' | 'dismiss' };
+    const { action } = await request.json() as { action?: unknown };
+    if (action !== 'approve' && action !== 'dismiss') {
+      // Previously any unrecognised value silently fell through to DISMISSED,
+      // quietly closing a report nobody had actually decided on.
+      return NextResponse.json({ error: 'action must be "approve" or "dismiss".' }, { status: 400 });
+    }
 
     const report = await db.contentReport.findUnique({ where: { id }, select: { targetType: true, targetId: true, reason: true } });
     if (!report) return NextResponse.json({ error: 'Not found' }, { status: 404 });

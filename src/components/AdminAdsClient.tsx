@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { AdminReauthPrompt } from '@/components/AdminReauthPrompt';
 
 interface Ad {
   id: string;
@@ -42,6 +43,8 @@ export function AdminAdsClient({ ads: initial, status, q, page, total, pageSize 
   const router = useRouter();
   const [ads, setAds] = useState(initial);
   const [loading, setLoading] = useState<string | null>(null);
+  const [reauth, setReauth] = useState<{ id: string; status: 'APPROVED' | 'REJECTED' } | null>(null);
+  const [error, setError] = useState('');
 
   const pages = Math.ceil(total / pageSize);
 
@@ -52,17 +55,44 @@ export function AdminAdsClient({ ads: initial, status, q, page, total, pageSize 
 
   async function updateStatus(id: string, newStatus: 'APPROVED' | 'REJECTED') {
     setLoading(id);
+    setReauth(null);
+    setError('');
+
     const res = await fetch('/api/admin/ads', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, status: newStatus }),
     });
-    if (res.ok) setAds(prev => prev.map(a => a.id === id ? { ...a, status: newStatus } : a));
+    const payload = await res.json().catch(() => ({}));
+
+    if (res.ok) {
+      // Approving stores AWAITING_PAYMENT, not APPROVED — the campaign only
+      // goes live once the advertiser authorizes the Stripe hold. Reflect
+      // what the server actually stored rather than the requested status.
+      const stored = typeof payload?.ad?.status === 'string' ? payload.ad.status : newStatus;
+      setAds(prev => prev.map(a => a.id === id ? { ...a, status: stored } : a));
+    } else if (payload.requiresReauth) {
+      setReauth({ id, status: newStatus });
+    } else {
+      setError(typeof payload.error === 'string' ? payload.error : 'Action failed.');
+    }
+
     setLoading(null);
   }
 
   return (
     <div>
+      {reauth ? (
+        <AdminReauthPrompt
+          onCancel={() => setReauth(null)}
+          onSuccess={() => {
+            const pending = reauth;
+            setReauth(null);
+            void updateStatus(pending.id, pending.status);
+          }}
+        />
+      ) : null}
+      {error ? <small className="status-note status-note-error">{error}</small> : null}
       {/* Filters */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <input

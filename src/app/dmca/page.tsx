@@ -48,7 +48,7 @@ export default function DmcaPage() {
 
       <p style={{ marginTop: 12, padding: '10px 14px', background: 'var(--hair-40)', borderRadius: 8, fontSize: 14 }}>
         For DMCA takedown requests, email{' '}
-        <a href="mailto:dmca@ihype.org?subject=DMCA%20Takedown%20Request">dmca@ihype.org</a>{' '}
+        <a href="mailto:admin@ihype.org?subject=DMCA%20Takedown%20Request">admin@ihype.org</a>{' '}
         with subject &ldquo;DMCA Takedown Request&rdquo;. We respond within 5 business days.
       </p>
 
