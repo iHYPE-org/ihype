@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import en from '@/lib/i18n/dictionaries/en.json';
 import { SUPPORTED_LOCALES, RTL_LOCALES, isSupportedLocale, LOCALE_COOKIE, type Locale } from '@/lib/i18n/locales';
 
 const STORAGE_KEY = 'ihype-locale';
@@ -15,7 +14,22 @@ function writeLocaleCookie(locale: Locale) {
 
 type Dictionary = Record<string, string>;
 
-const dictionaryCache = new Map<Locale, Dictionary>([['en', en as Dictionary]]);
+// English is deliberately an EMPTY dictionary rather than an import of
+// en.json. Every t() call carries its own inline English fallback, so for
+// an English visitor `t(key, fallback)` already returns exactly the string
+// en.json would have supplied — the file is pure redundancy on the client.
+//
+// This matters for payload, not tidiness: I18nProvider mounts at the app
+// root, so a static `import en from '.../en.json'` is bundled into the
+// first-load JS of every page. en.json grew from 71KB to 124KB as
+// translations were recovered, and that 53KB of duplicate English text
+// pushed the Lighthouse budget check over its LCP/TBT limit in CI.
+//
+// Keep it this way: never statically import a dictionary here, and never
+// add a t() call without an inline fallback (scripts/extract-i18n-keys.mjs
+// reports any that are missing one — a key with no fallback would render
+// its raw key to an English visitor now that en.json is not loaded).
+const dictionaryCache = new Map<Locale, Dictionary>([['en', {}]]);
 
 async function loadDictionary(locale: Locale): Promise<Dictionary> {
   const cached = dictionaryCache.get(locale);
@@ -58,7 +72,7 @@ const I18nContext = createContext<I18nContextValue | null>(null);
 export function I18nProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [locale, setLocaleState] = useState<Locale>('en');
-  const [dict, setDict] = useState<Dictionary>(en as Dictionary);
+  const [dict, setDict] = useState<Dictionary>({});
 
   useEffect(() => {
     const initial = detectInitialLocale();
@@ -86,7 +100,11 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }
 
   function t(key: string, fallback?: string): string {
-    return dict[key] ?? (en as Dictionary)[key] ?? fallback ?? key;
+    // No English tier: `dict` is empty for 'en' (see dictionaryCache above),
+    // so an English visitor resolves straight to the inline fallback, which
+    // is the same text en.json held. A non-English visitor still falls back
+    // to English via the inline fallback when their locale lacks the key.
+    return dict[key] ?? fallback ?? key;
   }
 
   return (

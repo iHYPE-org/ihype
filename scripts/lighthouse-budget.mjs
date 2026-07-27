@@ -41,9 +41,35 @@ import { writeFileSync } from 'node:fs';
 // consistently slower and noisier (dev-mode isolate/module overhead has no
 // equivalent in a Node process), observed here at up to ~4400-4770ms LCP and
 // 776-911ms TBT even on the lightest pages, across many repeated runs. These
-// budgets sit with real headroom above THAT observed floor. Revisit after
-// this runs a few times in real CI — that's the first environment this has
-// never actually been measured against.
+// budgets sit with real headroom above THAT observed floor.
+//
+// RECALIBRATED 2026-07-27 against real CI, which the note above asked for and
+// which had never happened before. Two consecutive runs on the same branch,
+// measured on GitHub-hosted runners (LCP, median of the script's own runs):
+//
+//     page        run 1     run 2     old budget
+//     /           4606ms    5296ms    5200
+//     /login      4453ms    4354ms    4800
+//     /about      4518ms    4279ms    4500
+//     /discover   4455ms    4307ms    4800
+//     /shows      4414ms    4243ms    4800
+//
+// A DIFFERENT page failed each run, each by a hair — /about by 18ms, then /
+// by 96ms — while the same code moved four of five pages by -99 to -238ms.
+// That is run-to-run noise on shared CI runners, not a regression signal, and
+// '/' alone swung 690ms between runs. Budgets that fail ~half the time train
+// people to ignore them, so '/' and '/about' now sit above the highest value
+// actually observed in CI rather than above a local estimate:
+//
+//   '/'      5200 -> 5800  (~10% over the 5296ms worst case seen)
+//   '/about' 4500 -> 4800  (matches its sibling marketing pages)
+//
+// Everything else is unchanged — those three pages have >340ms of headroom
+// against their worst observed CI value and are not flaking. These are
+// workerd DEV-server numbers on a shared runner, so this gate is a relative
+// regression detector, not a statement about production user experience. If a
+// change pushes a page past these, that is worth investigating rather than
+// raising again.
 const PAGES = [
   // '/' CLS budget is 0.15 (web-vitals' "needs improvement" boundary, one
   // notch under "good"), not 0.1 like the others: measured CLS on this page
@@ -53,9 +79,9 @@ const PAGES = [
   // guess-fix without the design context for what's actually on it. Tracked
   // as a follow-up; 0.15 catches a real regression without flaking on this
   // known, already-observed variance.
-  { path: '/', budget: { performance: 0.55, lcp: 5200, cls: 0.15, tbt: 1200 } },
+  { path: '/', budget: { performance: 0.55, lcp: 5800, cls: 0.15, tbt: 1200 } },
   { path: '/login', budget: { performance: 0.7, lcp: 4800, cls: 0.1, tbt: 550 } },
-  { path: '/about', budget: { performance: 0.75, lcp: 4500, cls: 0.1, tbt: 450 } },
+  { path: '/about', budget: { performance: 0.75, lcp: 4800, cls: 0.1, tbt: 450 } },
   { path: '/discover', budget: { performance: 0.65, lcp: 4800, cls: 0.1, tbt: 550 } },
   { path: '/shows', budget: { performance: 0.65, lcp: 4800, cls: 0.1, tbt: 550 } }
 ];
