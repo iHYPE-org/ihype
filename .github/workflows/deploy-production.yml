@@ -119,6 +119,13 @@ jobs:
           path: workerd-smoke.log
           if-no-files-found: ignore
 
+      - name: Gated migration guard
+        # Last line of defence before production schema changes. Everything in
+        # prisma/migrations/ is applied by the step below the moment it reaches
+        # main, so a migration still carrying a gate marker must stop the
+        # deploy here rather than ship. See prisma/migrations-pending/README.md.
+        run: npm run guard:migrations
+
       - name: Run migrations
         # Build (and now the Workerd smoke test above) run first so neither a
         # compilation failure nor a workerd-only crash can advance production

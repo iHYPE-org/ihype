@@ -76,6 +76,9 @@ jobs:
       - name: Design guard
         run: npm run guard:design
 
+      - name: Gated migration guard
+        run: npm run guard:migrations
+
       - name: Unit tests
         run: npm test
 
