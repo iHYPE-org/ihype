@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { getSafeImageUrl } from '@/lib/asset-safety';
 import { getCspNonce } from '@/lib/csp-nonce';
 import { parsePressKit } from '@/lib/press-kit';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
@@ -40,6 +41,7 @@ export default async function EpkPage({ params }: { params: Promise<{ slug: stri
 
   if (!profile || (profile.type !== 'ARTIST' && profile.type !== 'DJ')) return notFound();
 
+  const t = getT(await getLocale());
   const nonce = await getCspNonce();
   const avatarUrl = getSafeImageUrl(profile.avatarImage);
   const galleryUrl = getSafeImageUrl(profile.galleryImage);
@@ -55,7 +57,7 @@ export default async function EpkPage({ params }: { params: Promise<{ slug: stri
             handler with the same inline-script pattern the sibling presskit
             page already uses. */}
         <button id="epk-print-btn" type="button" style={{ padding: '8px 18px', cursor: 'pointer' }}>
-          Print / Save PDF
+          {t('artistsSlugEpkPage.printSavePdf', 'Print / Save PDF')}
         </button>
         <script dangerouslySetInnerHTML={{ __html: `document.getElementById('epk-print-btn').onclick=()=>window.print()` }} nonce={nonce} />
       </div>
@@ -85,7 +87,7 @@ export default async function EpkPage({ params }: { params: Promise<{ slug: stri
 
       {pressKit.quotes.length > 0 && (
         <section style={{ marginTop: 32 }}>
-          <h2 style={{ fontSize: 18, borderBottom: '1px solid #ddd', paddingBottom: 6 }}>Press</h2>
+          <h2 style={{ fontSize: 18, borderBottom: '1px solid #ddd', paddingBottom: 6 }}>{t('artistsSlugEpkPage.press', 'Press')}</h2>
           {pressKit.quotes.map((q, i) => (
             <blockquote key={i} style={{ margin: '0 0 14px', paddingLeft: 16, borderLeft: '3px solid #ddd' }}>
               <p style={{ margin: 0, fontStyle: 'italic', lineHeight: 1.6 }}>&ldquo;{q.quote}&rdquo;</p>
@@ -97,7 +99,7 @@ export default async function EpkPage({ params }: { params: Promise<{ slug: stri
 
       {pressKit.achievements.length > 0 && (
         <section style={{ marginTop: 32 }}>
-          <h2 style={{ fontSize: 18, borderBottom: '1px solid #ddd', paddingBottom: 6 }}>Highlights</h2>
+          <h2 style={{ fontSize: 18, borderBottom: '1px solid #ddd', paddingBottom: 6 }}>{t('artistsSlugEpkPage.highlights', 'Highlights')}</h2>
           <ul style={{ margin: 0, paddingLeft: 20, lineHeight: 1.8 }}>
             {pressKit.achievements.map((a, i) => (
               <li key={i}>{a}</li>
@@ -108,7 +110,7 @@ export default async function EpkPage({ params }: { params: Promise<{ slug: stri
 
       {galleryUrl && (
         <section style={{ marginTop: 32 }}>
-          <h2 style={{ fontSize: 18, borderBottom: '1px solid #ddd', paddingBottom: 6 }}>Press Photo</h2>
+          <h2 style={{ fontSize: 18, borderBottom: '1px solid #ddd', paddingBottom: 6 }}>{t('artistsSlugEpkPage.pressPhoto', 'Press Photo')}</h2>
           <img
             alt={`${profile.name} press photo`}
             src={galleryUrl}
@@ -120,7 +122,7 @@ export default async function EpkPage({ params }: { params: Promise<{ slug: stri
 
       {profile.bio && (
         <section style={{ marginTop: 32 }}>
-          <h2 style={{ fontSize: 18, borderBottom: '1px solid #ddd', paddingBottom: 6 }}>Bio</h2>
+          <h2 style={{ fontSize: 18, borderBottom: '1px solid #ddd', paddingBottom: 6 }}>{t('artistsSlugEpkPage.bio', 'Bio')}</h2>
           <p style={{ lineHeight: 1.7, whiteSpace: 'pre-line' }}>{profile.bio}</p>
         </section>
       )}
@@ -142,7 +144,7 @@ export default async function EpkPage({ params }: { params: Promise<{ slug: stri
         if (!techRider) return null;
         return (
           <section style={{ marginTop: 32 }}>
-            <h2 style={{ fontSize: 18, borderBottom: '1px solid #ddd', paddingBottom: 6 }}>Technical Rider</h2>
+            <h2 style={{ fontSize: 18, borderBottom: '1px solid #ddd', paddingBottom: 6 }}>{t('artistsSlugEpkPage.technicalRider', 'Technical Rider')}</h2>
             <p style={{ lineHeight: 1.7, whiteSpace: 'pre-line' }}>{techRider}</p>
           </section>
         );
@@ -150,10 +152,10 @@ export default async function EpkPage({ params }: { params: Promise<{ slug: stri
 
       {(profile.contactInfo || profile.links || pressKit.contactEmail) && (
         <section style={{ marginTop: 32 }}>
-          <h2 style={{ fontSize: 18, borderBottom: '1px solid #ddd', paddingBottom: 6 }}>Contact &amp; Links</h2>
+          <h2 style={{ fontSize: 18, borderBottom: '1px solid #ddd', paddingBottom: 6 }}>{t('artistsSlugEpkPage.contactAndLinks', 'Contact & Links')}</h2>
           {pressKit.contactEmail && (
             <p style={{ margin: '0 0 8px' }}>
-              Booking / press: <a href={`mailto:${pressKit.contactEmail}`}>{pressKit.contactEmail}</a>
+              {t('artistsSlugEpkPage.bookingPress', 'Booking / press:')} <a href={`mailto:${pressKit.contactEmail}`}>{pressKit.contactEmail}</a>
             </p>
           )}
           {profile.contactInfo && <p style={{ margin: '0 0 8px' }}>{profile.contactInfo}</p>}
@@ -162,7 +164,7 @@ export default async function EpkPage({ params }: { params: Promise<{ slug: stri
       )}
 
       <section style={{ marginTop: 32, fontSize: 12, color: '#aaa' }}>
-        <p>Generated via iHYPE · ihype.org</p>
+        <p>{t('artistsSlugEpkPage.generatedVia', 'Generated via iHYPE · ihype.org')}</p>
       </section>
     </div>
   );

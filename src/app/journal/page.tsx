@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { db } from '@/lib/db';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const metadata = { title: 'Journal · iHYPE' };
 export const dynamic = 'force-dynamic';
@@ -14,6 +15,7 @@ type EditorialMeta = {
 };
 
 export default async function JournalIndex() {
+  const t = getT(await getLocale());
   const rows = await db.auditLog.findMany({
     where: { action: 'editorial_post' },
     orderBy: { createdAt: 'desc' },
@@ -35,16 +37,16 @@ export default async function JournalIndex() {
           letterSpacing: '-.04em'
         }}
       >
-        Journal
+        {t('journalPage.heading', 'Journal')}
       </h1>
       <p
         className="meta"
         style={{ fontFamily: 'var(--f-m)', fontSize: '.72rem', letterSpacing: '.1em', margin: '10px 0 36px' }}
       >
-        Editorial coverage of the local scene from the iHYPE team.
+        {t('journalPage.subheading', 'Editorial coverage of the local scene from the iHYPE team.')}
       </p>
       {posts.length === 0 ? (
-        <p className="meta">No journal posts yet.</p>
+        <p className="meta">{t('journalPage.empty', 'No journal posts yet.')}</p>
       ) : (
         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 12 }}>
           {posts.map((p) => (

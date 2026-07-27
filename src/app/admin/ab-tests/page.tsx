@@ -5,6 +5,7 @@ import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
 import { AdminAbTestsClient } from '@/components/AdminAbTestsClient';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'A/B tests | iHYPE Admin',
@@ -17,13 +18,14 @@ export default async function AdminAbTestsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
   if (!isAdminSession(session)) redirect(WORKBENCH_PATH);
+  const t = getT(await getLocale());
 
   const tests = await db.aBTest.findMany({ orderBy: { createdAt: 'desc' } });
 
   return (
     <div className="container section admin-console">
       <section className="panel admin-console-panel">
-        <h1 style={{ fontSize: 20, marginBottom: 16 }}>A/B tests <span className="meta">({tests.length})</span></h1>
+        <h1 style={{ fontSize: 20, marginBottom: 16 }}>{t('adminAbTestsPage.title', 'A/B tests')} <span className="meta">({tests.length})</span></h1>
         <AdminAbTestsClient initialTests={tests} />
       </section>
     </div>

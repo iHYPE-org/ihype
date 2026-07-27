@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { cache } from 'react';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const revalidate = 30;
 import Image from 'next/image';
@@ -111,6 +112,7 @@ export default async function ShowDetailPage({
   searchParams?: Promise<{ affiliate?: string | string[]; ref?: string | string[] }>;
 }) {
   const session = await auth();
+  const t = getT(await getLocale());
   const { slug } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const affiliateId =
@@ -371,9 +373,9 @@ export default async function ShowDetailPage({
             ) : show.isTicketed && !canWatch ? (
               <div className="empty" style={{ minHeight: 160, display: 'grid', placeItems: 'center', padding: 24, textAlign: 'center' }}>
                 <div>
-                  <strong>Ticket required for playback</strong>
+                  <strong>{t('showsSlugPage.ticketRequiredForPlayback', 'Ticket required for playback')}</strong>
                   <p className="meta" style={{ marginTop: 8 }}>
-                    Sign in with the ticket holder account or purchase a ticket to unlock this show.
+                    {t('showsSlugPage.ticketRequiredForPlaybackBody', 'Sign in with the ticket holder account or purchase a ticket to unlock this show.')}
                   </p>
                 </div>
               </div>
@@ -381,7 +383,7 @@ export default async function ShowDetailPage({
               <div style={{ minHeight: 160, position: 'relative', overflow: 'hidden', borderRadius: 12, background: 'var(--hair-40)' }}>
                 {show.posterImage
                   ? <Image alt={show.title} src={show.posterImage} fill sizes="(max-width: 768px) 100vw, 50vw" style={{ objectFit: 'cover' }} priority />
-                  : <span className="meta" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 160 }}>No audio uploaded yet</span>}
+                  : <span className="meta" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 160 }}>{t('showsSlugPage.noAudioUploadedYet', 'No audio uploaded yet')}</span>}
               </div>
             )}
           </div>
@@ -390,8 +392,8 @@ export default async function ShowDetailPage({
 
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center', marginBottom: 20, fontSize: 14, color: 'var(--ink-a75)' }}>
             <span className="badge">{show.status}</span>
-            {show.venueProfile && <span className="badge" style={{ color: 'var(--venue)' }}>Venue</span>}
-            {show.headlinerProfile && <span className="badge" style={{ color: 'var(--accent)' }}>Artist</span>}
+            {show.venueProfile && <span className="badge" style={{ color: 'var(--venue)' }}>{t('showsSlugPage.venueBadge', 'Venue')}</span>}
+            {show.headlinerProfile && <span className="badge" style={{ color: 'var(--accent)' }}>{t('showsSlugPage.artistBadge', 'Artist')}</span>}
             {date && (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                 <svg fill="none" height="14" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="14"><rect height="18" rx="2" width="18" x="3" y="4" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /></svg>
@@ -404,12 +406,12 @@ export default async function ShowDetailPage({
                 {show.venueProfile.city}
               </span>
             )}
-            {show.isTicketed && <span>{sold.toLocaleString()} tickets sold</span>}
+            {show.isTicketed && <span>{sold.toLocaleString()} {t('showsSlugPage.ticketsSold', 'tickets sold')}</span>}
           </div>
 
           <div style={{ marginBottom: 4 }}>
             <a className="button small secondary" download href={`/shows/${slug}/poster?download=1`} style={{ marginBottom: 8, display: 'inline-block' }}>
-              Download poster
+              {t('showsSlugPage.downloadPoster', 'Download poster')}
             </a>{' '}
             <ShareButton className="button small secondary" path={`/shows/${slug}`} title={show.title} />
             {session?.user?.id ? (
@@ -431,23 +433,23 @@ export default async function ShowDetailPage({
               <HypeButton entityLabel="show" initialCount={show.hypeCount} initiallyHyped={!!userShowHype} targetId={show.id} targetType="show" />
             </div>
           ) : (
-            <p className="meta">Draft previews stay private until the promoter broadcasts the show live.</p>
+            <p className="meta">{t('showsSlugPage.draftPreviewNotice', 'Draft previews stay private until the promoter broadcasts the show live.')}</p>
           )}
 
           {show.isTicketed && show.venuePayoutPercent !== null && show.artistPayoutPercent !== null && (
             <div style={{ display: 'flex', gap: 0, borderRadius: 10, overflow: 'hidden', marginTop: 24 }}>
               <div style={{ flex: Math.max(show.artistPayoutPercent, 1), padding: 16, textAlign: 'center', background: 'rgba(255,80,41,.15)' }}>
                 <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent)' }}>${(price * (show.artistPayoutPercent / 100)).toFixed(2)}</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--accent)' }}>Artist · {show.artistPayoutPercent}%</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--accent)' }}>{t('showsSlugPage.artistSplitLabel', 'Artist')} · {show.artistPayoutPercent}%</div>
               </div>
               <div style={{ flex: Math.max(show.venuePayoutPercent, 1), padding: 16, textAlign: 'center', background: 'rgba(34,229,212,.15)' }}>
                 <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--venue)' }}>${(price * (show.venuePayoutPercent / 100)).toFixed(2)}</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--venue)' }}>Venue · {show.venuePayoutPercent}%</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--venue)' }}>{t('showsSlugPage.venueSplitLabel', 'Venue')} · {show.venuePayoutPercent}%</div>
               </div>
               {show.promoterPayoutPercent > 0 && (
                 <div style={{ flex: Math.max(show.promoterPayoutPercent, 1), padding: 16, textAlign: 'center', background: 'rgba(255,62,154,.15)' }}>
                   <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--promoter)' }}>${(price * (show.promoterPayoutPercent / 100)).toFixed(2)}</div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--promoter)' }}>Promoters · {show.promoterPayoutPercent}%</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--promoter)' }}>{t('showsSlugPage.promotersSplitLabel', 'Promoters')} · {show.promoterPayoutPercent}%</div>
                 </div>
               )}
             </div>
@@ -466,9 +468,9 @@ export default async function ShowDetailPage({
           >
             <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span className="badge" style={{ color: 'var(--accent)' }}>● LIVE</span>
-              <strong>The show is live — vote on the setlist and shape what plays next.</strong>
+              <strong>{t('showsSlugPage.liveVoteBanner', 'The show is live — vote on the setlist and shape what plays next.')}</strong>
             </span>
-            <span className="button small">Vote on the setlist</span>
+            <span className="button small">{t('showsSlugPage.voteOnSetlist', 'Vote on the setlist')}</span>
           </a>
         ) : null}
 
@@ -477,22 +479,22 @@ export default async function ShowDetailPage({
           <ShowTabs
             venueTab={
               <div>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a35)', marginBottom: 8 }}>Venue</p>
-                <p style={{ fontSize: 18, fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 8 }}>{show.venueProfile?.name ?? 'TBA'}</p>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a35)', marginBottom: 8 }}>{t('showsSlugPage.venueTabLabel', 'Venue')}</p>
+                <p style={{ fontSize: 18, fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 8 }}>{show.venueProfile?.name ?? t('showsSlugPage.tba', 'TBA')}</p>
                 {show.venueProfile && (
                   <p style={{ fontSize: 14, color: 'var(--ink-a70)' }}>
-                    Capacity: {(show.ticketCapacity ?? 'Open').toLocaleString?.() ?? show.ticketCapacity ?? 'Open'} · {show.venueProfile.city}
+                    {t('showsSlugPage.capacityLabel', 'Capacity')}: {(show.ticketCapacity ?? t('showsSlugPage.openCapacity', 'Open')).toLocaleString?.() ?? show.ticketCapacity ?? t('showsSlugPage.openCapacity', 'Open')} · {show.venueProfile.city}
                   </p>
                 )}
                 {show.venueProfile?.slug && (
                   <div style={{ marginTop: 16 }}>
-                    <Link className="button small secondary" href={`/venues/${show.venueProfile.slug}`}>View Venue Page →</Link>
+                    <Link className="button small secondary" href={`/venues/${show.venueProfile.slug}`}>{t('showsSlugPage.viewVenuePage', 'View Venue Page →')}</Link>
                   </div>
                 )}
                 {venueComps.length > 0 && (
                   <div style={{ marginTop: 24 }}>
-                    <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 17, marginBottom: 4 }}>How this show comps</h2>
-                    <p className="meta" style={{ marginBottom: 14 }}>Demand vs. other shows at {show.venueProfile?.name ?? 'this venue'} this season.</p>
+                    <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 17, marginBottom: 4 }}>{t('showsSlugPage.howThisShowComps', 'How this show comps')}</h2>
+                    <p className="meta" style={{ marginBottom: 14 }}>{t('showsSlugPage.demandVsOtherShows', 'Demand vs. other shows at')} {show.venueProfile?.name ?? t('showsSlugPage.thisVenue', 'this venue')} {t('showsSlugPage.thisSeason', 'this season.')}</p>
                     {venueComps.map((vc) => (
                       <div key={vc.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid var(--hair-80)' }}>
                         <span style={{ flex: 1, fontSize: 14, color: 'var(--ink-a85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{vc.title}</span>
@@ -510,56 +512,56 @@ export default async function ShowDetailPage({
             }
             lineupTab={
               <div>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a35)', marginBottom: 8 }}>Headliner</p>
-                <p style={{ fontSize: 18, fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 16 }}>{show.headlinerProfile?.name ?? 'TBA'}</p>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a35)', marginBottom: 8 }}>Promoter</p>
-                <p style={{ fontSize: 14 }}>{show.promoterProfile?.name ?? 'Promoter pool unassigned'}</p>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a35)', marginBottom: 8 }}>{t('showsSlugPage.headlinerLabel', 'Headliner')}</p>
+                <p style={{ fontSize: 18, fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 16 }}>{show.headlinerProfile?.name ?? t('showsSlugPage.tba', 'TBA')}</p>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a35)', marginBottom: 8 }}>{t('showsSlugPage.promoterLabel', 'Promoter')}</p>
+                <p style={{ fontSize: 14 }}>{show.promoterProfile?.name ?? t('showsSlugPage.promoterPoolUnassigned', 'Promoter pool unassigned')}</p>
               </div>
             }
           >
             {/* ABOUT tab content */}
             <p style={{ fontSize: 15, lineHeight: 1.7, color: 'var(--ink-a85)' }}>
-              {show.description || `Presented through iHYPE — face value pricing, zero fees, and every split locked by charter before a single ticket is sold.`}
+              {show.description || t('showsSlugPage.defaultDescription', 'Presented through iHYPE — face value pricing, zero fees, and every split locked by charter before a single ticket is sold.')}
             </p>
 
             <div className="panel" style={{ padding: '1.25rem', marginTop: 24 }}>
-              <h2>Show details</h2>
+              <h2>{t('showsSlugPage.showDetails', 'Show details')}</h2>
               <div className="tag-row">
                 {show.tags.map((tag) => <span className="tag" key={tag}>{tag}</span>)}
               </div>
               <table className="table">
                 <tbody>
-                  <tr><th>Status</th><td>{show.status}</td></tr>
-                  <tr><th>Venue</th><td>{show.venueProfile?.name ?? 'TBA'}</td></tr>
-                  <tr><th>Headliner</th><td>{show.headlinerProfile?.name ?? 'TBA'}</td></tr>
-                  <tr><th>Promoter</th><td>{show.promoterProfile?.name ?? 'Promoter pool unassigned'}</td></tr>
-                  <tr><th>Ticketing</th><td>{show.isTicketed ? 'Enabled' : 'Not enabled'}</td></tr>
+                  <tr><th>{t('showsSlugPage.statusLabel', 'Status')}</th><td>{show.status}</td></tr>
+                  <tr><th>{t('showsSlugPage.venueTableLabel', 'Venue')}</th><td>{show.venueProfile?.name ?? t('showsSlugPage.tba', 'TBA')}</td></tr>
+                  <tr><th>{t('showsSlugPage.headlinerTableLabel', 'Headliner')}</th><td>{show.headlinerProfile?.name ?? t('showsSlugPage.tba', 'TBA')}</td></tr>
+                  <tr><th>{t('showsSlugPage.promoterTableLabel', 'Promoter')}</th><td>{show.promoterProfile?.name ?? t('showsSlugPage.promoterPoolUnassigned', 'Promoter pool unassigned')}</td></tr>
+                  <tr><th>{t('showsSlugPage.ticketingLabel', 'Ticketing')}</th><td>{show.isTicketed ? t('showsSlugPage.enabled', 'Enabled') : t('showsSlugPage.notEnabled', 'Not enabled')}</td></tr>
                   {show.isTicketed ? (
                     <>
-                      <tr><th>Ticket price</th><td>{formatCurrencyFromCents(show.ticketPriceCents)}</td></tr>
-                      <tr><th>Tickets sold</th><td>{show.ticketsSoldCount}</td></tr>
-                      <tr><th>Capacity</th><td>{show.ticketCapacity ?? 'Open'}</td></tr>
-                      <tr><th>Gross sales</th><td>{formatCurrencyFromCents(show.ticketPriceCents * show.ticketsSoldCount)}</td></tr>
-                      <tr><th>Artist split</th><td>{show.artistPayoutPercent ?? 0}%</td></tr>
-                      <tr><th>Venue split</th><td>{show.venuePayoutPercent ?? 0}%</td></tr>
-                      <tr><th>Promoter pool</th><td>{show.promoterPayoutPercent}%</td></tr>
-                      <tr><th>Event officially opens</th><td>{show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt) : 'Venue-controlled'}</td></tr>
+                      <tr><th>{t('showsSlugPage.ticketPriceLabel', 'Ticket price')}</th><td>{formatCurrencyFromCents(show.ticketPriceCents)}</td></tr>
+                      <tr><th>{t('showsSlugPage.ticketsSoldLabel', 'Tickets sold')}</th><td>{show.ticketsSoldCount}</td></tr>
+                      <tr><th>{t('showsSlugPage.capacityTableLabel', 'Capacity')}</th><td>{show.ticketCapacity ?? t('showsSlugPage.openCapacity', 'Open')}</td></tr>
+                      <tr><th>{t('showsSlugPage.grossSalesLabel', 'Gross sales')}</th><td>{formatCurrencyFromCents(show.ticketPriceCents * show.ticketsSoldCount)}</td></tr>
+                      <tr><th>{t('showsSlugPage.artistSplitLabel2', 'Artist split')}</th><td>{show.artistPayoutPercent ?? 0}%</td></tr>
+                      <tr><th>{t('showsSlugPage.venueSplitLabel2', 'Venue split')}</th><td>{show.venuePayoutPercent ?? 0}%</td></tr>
+                      <tr><th>{t('showsSlugPage.promoterPoolLabel', 'Promoter pool')}</th><td>{show.promoterPayoutPercent}%</td></tr>
+                      <tr><th>{t('showsSlugPage.eventOpensLabel', 'Event officially opens')}</th><td>{show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt) : t('showsSlugPage.venueControlled', 'Venue-controlled')}</td></tr>
                     </>
                   ) : null}
-                  <tr><th>Hype</th><td>{show.hypeCount}</td></tr>
-                  <tr><th>Heuristics</th><td>{visibility.version}</td></tr>
+                  <tr><th>{t('showsSlugPage.hypeLabel', 'Hype')}</th><td>{show.hypeCount}</td></tr>
+                  <tr><th>{t('showsSlugPage.heuristicsLabel', 'Heuristics')}</th><td>{visibility.version}</td></tr>
                 </tbody>
               </table>
 
               <div className="explanation-block">
-                <h3>Why you&apos;re seeing this</h3>
+                <h3>{t('showsSlugPage.whySeeingThis', "Why you're seeing this")}</h3>
                 <ul className="launch-list">
                   {visibility.reasons.map((reason) => <li key={reason}>{reason}</li>)}
                 </ul>
               </div>
               {show.bookingLegalNotes ? (
                 <div className="explanation-block">
-                  <h3>Legal booking snapshot</h3>
+                  <h3>{t('showsSlugPage.legalBookingSnapshot', 'Legal booking snapshot')}</h3>
                   <p>{show.bookingLegalNotes}</p>
                 </div>
               ) : null}
@@ -569,10 +571,10 @@ export default async function ShowDetailPage({
               <div className="panel composer-plan-panel" style={{ marginTop: 24 }}>
                 <div className="composer-header">
                   <div>
-                    <div className="badge">Production plan</div>
-                    <h2>Promoter run of show</h2>
+                    <div className="badge">{t('showsSlugPage.productionPlanBadge', 'Production plan')}</div>
+                    <h2>{t('showsSlugPage.promoterRunOfShow', 'Promoter run of show')}</h2>
                     <p className="kicker">
-                      This show was assembled from artist songs and videos, recorded voice-over overdubs, sampler pads, and ad breaks inserted after every three media slots.
+                      {t('showsSlugPage.productionPlanDesc', 'This show was assembled from artist songs and videos, recorded voice-over overdubs, sampler pads, and ad breaks inserted after every three media slots.')}
                     </p>
                   </div>
                 </div>
@@ -580,7 +582,7 @@ export default async function ShowDetailPage({
                 <div className="composer-grid">
                   <div className="composer-column">
                     <div className="composer-card">
-                      <h3>Artist media</h3>
+                      <h3>{t('showsSlugPage.artistMedia', 'Artist media')}</h3>
                       {productionPlan.mediaItems.length ? (
                         <div className="composer-library-list">
                           {productionPlan.mediaItems.map((item) => (
@@ -591,58 +593,58 @@ export default async function ShowDetailPage({
                                 <p className="meta">{item.artistName}{item.notes ? ` | ${item.notes}` : ''}</p>
                               </div>
                               <div className="composer-media-actions">
-                                <a className="button small secondary" href={item.url} rel="noreferrer" target="_blank">Open media</a>
+                                <a className="button small secondary" href={item.url} rel="noreferrer" target="_blank">{t('showsSlugPage.openMedia', 'Open media')}</a>
                               </div>
                             </div>
                           ))}
                         </div>
-                      ) : <div className="empty">No artist media is attached to this show.</div>}
+                      ) : <div className="empty">{t('showsSlugPage.noArtistMedia', 'No artist media is attached to this show.')}</div>}
                     </div>
                   </div>
 
                   <div className="composer-column">
                     <div className="composer-card">
-                      <h3>Voice-over cues</h3>
+                      <h3>{t('showsSlugPage.voiceOverCues', 'Voice-over cues')}</h3>
                       {productionPlan.voiceOvers.length ? (
                         <div className="composer-voice-list">
                           {productionPlan.voiceOvers.map((voiceCue) => (
                             <div className="composer-voice-card" key={voiceCue.id}>
                               <strong>{voiceCue.title}</strong>
                               <p className="meta">
-                                {voiceCue.durationSeconds ? `${voiceCue.durationSeconds}s` : 'Open duration'}
+                                {voiceCue.durationSeconds ? `${voiceCue.durationSeconds}s` : t('showsSlugPage.openDuration', 'Open duration')}
                                 {voiceCue.cueAfterMediaId ? ` | cue after ${voiceCue.cueAfterMediaId}` : ''}
                               </p>
-                              {voiceCue.script ? <p>{voiceCue.script}</p> : <p className="meta">Recorded take with no text notes.</p>}
+                              {voiceCue.script ? <p>{voiceCue.script}</p> : <p className="meta">{t('showsSlugPage.recordedTakeNoNotes', 'Recorded take with no text notes.')}</p>}
                               {voiceCue.recordingDataUrl ? <audio className="composer-audio-preview" controls src={voiceCue.recordingDataUrl} /> : null}
                             </div>
                           ))}
                         </div>
-                      ) : <div className="empty">No voice-over cues were saved for this show.</div>}
+                      ) : <div className="empty">{t('showsSlugPage.noVoiceOverCues', 'No voice-over cues were saved for this show.')}</div>}
                     </div>
 
                     <div className="composer-card">
-                      <h3>Sample pad assignments</h3>
+                      <h3>{t('showsSlugPage.samplePadAssignments', 'Sample pad assignments')}</h3>
                       {productionPlan.samplePads.length ? (
                         <div className="composer-sample-grid">
                           {productionPlan.samplePads.slice().sort((left, right) => (left.assignedPad ?? 99) - (right.assignedPad ?? 99)).map((sample) => (
                             <div className="composer-sample-card" key={`${sample.sampleId}-${sample.assignedPad ?? 'open'}`}>
                               <div>
-                                {sample.assignedPad ? <div className="composer-media-code">Pad {String(sample.assignedPad).padStart(2, '0')}</div> : null}
+                                {sample.assignedPad ? <div className="composer-media-code">{t('showsSlugPage.padLabel', 'Pad')} {String(sample.assignedPad).padStart(2, '0')}</div> : null}
                                 <strong>{sample.title}</strong>
-                                <p className="meta">{sample.notes ?? 'Royalty-free sample.'}</p>
+                                <p className="meta">{sample.notes ?? t('showsSlugPage.royaltyFreeSample', 'Royalty-free sample.')}</p>
                                 <div className="composer-media-code">{sample.sampleId}</div>
                               </div>
-                              <a className="button small secondary" href={sample.url}>Open sample</a>
+                              <a className="button small secondary" href={sample.url}>{t('showsSlugPage.openSample', 'Open sample')}</a>
                             </div>
                           ))}
                         </div>
-                      ) : <div className="empty">No sample pads were saved for this show.</div>}
+                      ) : <div className="empty">{t('showsSlugPage.noSamplePads', 'No sample pads were saved for this show.')}</div>}
                     </div>
                   </div>
 
                   <div className="composer-column">
                     <div className="composer-card">
-                      <h3>Show sequence</h3>
+                      <h3>{t('showsSlugPage.showSequence', 'Show sequence')}</h3>
                       {productionPlan.sequence.length ? (
                         <div className="composer-sequence-list">
                           {productionPlan.sequence.map((item, index) => (
@@ -655,7 +657,7 @@ export default async function ShowDetailPage({
                             </div>
                           ))}
                         </div>
-                      ) : <div className="empty">No run-of-show sequence was saved.</div>}
+                      ) : <div className="empty">{t('showsSlugPage.noRunOfShowSequence', 'No run-of-show sequence was saved.')}</div>}
                     </div>
                   </div>
                 </div>
@@ -665,12 +667,12 @@ export default async function ShowDetailPage({
             {isShowOwner || isAdminSession(session) ? (
               <div className="panel" style={{ padding: '1.25rem', marginTop: 24 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-                  <h2 style={{ margin: 0 }}>Recent ticket order totals</h2>
+                  <h2 style={{ margin: 0 }}>{t('showsSlugPage.recentTicketOrderTotals', 'Recent ticket order totals')}</h2>
                   <div style={{ display: 'flex', gap: 16 }}>
-                    <Link href={`/payout/${show.slug}`} className="meta">Full payout breakdown →</Link>
-                    <Link href={`/shows/${show.slug}/scan`} className="meta">Scan tickets at the door →</Link>
+                    <Link href={`/payout/${show.slug}`} className="meta">{t('showsSlugPage.fullPayoutBreakdown', 'Full payout breakdown →')}</Link>
+                    <Link href={`/shows/${show.slug}/scan`} className="meta">{t('showsSlugPage.scanTicketsAtDoor', 'Scan tickets at the door →')}</Link>
                     {(show.status === 'DRAFT' || show.status === 'SCHEDULED') && (
-                      <Link href={`/shows/${show.slug}/cancel`} className="meta" style={{ color: 'var(--accent, #ff5029)' }}>Cancel event →</Link>
+                      <Link href={`/shows/${show.slug}/cancel`} className="meta" style={{ color: 'var(--accent, #ff5029)' }}>{t('showsSlugPage.cancelEvent', 'Cancel event →')}</Link>
                     )}
                   </div>
                 </div>
@@ -678,8 +680,8 @@ export default async function ShowDetailPage({
                   <table className="table">
                     <thead>
                       <tr>
-                        <th>Status</th><th>Tax</th><th>Qty</th><th>Total</th><th>Venue</th><th>Artist</th><th>Promoter</th>
-                        <th title="Total reassignments across all tickets in this order">Passed</th>
+                        <th>{t('showsSlugPage.orderStatusCol', 'Status')}</th><th>{t('showsSlugPage.orderTaxCol', 'Tax')}</th><th>{t('showsSlugPage.orderQtyCol', 'Qty')}</th><th>{t('showsSlugPage.orderTotalCol', 'Total')}</th><th>{t('showsSlugPage.orderVenueCol', 'Venue')}</th><th>{t('showsSlugPage.orderArtistCol', 'Artist')}</th><th>{t('showsSlugPage.orderPromoterCol', 'Promoter')}</th>
+                        <th title={t('showsSlugPage.passedColTitle', 'Total reassignments across all tickets in this order')}>{t('showsSlugPage.passedCol', 'Passed')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -703,24 +705,24 @@ export default async function ShowDetailPage({
                     </tbody>
                   </table>
                 ) : (
-                  <p className="meta">No ticket orders yet.</p>
+                  <p className="meta">{t('showsSlugPage.noTicketOrdersYet', 'No ticket orders yet.')}</p>
                 )}
 
                 <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--hair-80)', display: 'flex', gap: 20, alignItems: 'center', flexWrap: 'wrap' }}>
                   <img
-                    alt="Door check-in QR code for this show"
+                    alt={t('showsSlugPage.doorCheckinQrAlt', 'Door check-in QR code for this show')}
                     src={`/api/shows/${show.id}/qr`}
                     style={{ width: 96, height: 96, background: '#fff', borderRadius: 8, padding: 6 }}
                   />
                   <div>
                     <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a50)', marginBottom: 4 }}>
-                      Show door QR
+                      {t('showsSlugPage.showDoorQr', 'Show door QR')}
                     </p>
                     <p className="meta" style={{ margin: 0, marginBottom: 8 }}>
-                      Scan or print for door staff — links straight to this show&apos;s public page.
+                      {t('showsSlugPage.scanOrPrintForDoorStaff', "Scan or print for door staff — links straight to this show's public page.")}
                     </p>
                     <a className="button small secondary" download href={`/api/shows/${show.id}/qr`}>
-                      Download QR (SVG)
+                      {t('showsSlugPage.downloadQrSvg', 'Download QR (SVG)')}
                     </a>
                   </div>
                 </div>
@@ -731,9 +733,9 @@ export default async function ShowDetailPage({
 
             {show.isTicketed && canWatch && currentFan?.role === 'FAN' && (
               <div className="panel" style={{ padding: '1.25rem', marginTop: 24 }}>
-                <h2>Transfer your ticket</h2>
-                <p className="subtitle" style={{ marginBottom: '1rem' }}>Can&apos;t make it? You can transfer your ticket to a friend without a fee.</p>
-                <p className="meta">Use the secure link in your ticket email, or go to <Link href="/home">your dashboard</Link> to manage your orders.</p>
+                <h2>{t('showsSlugPage.transferYourTicket', 'Transfer your ticket')}</h2>
+                <p className="subtitle" style={{ marginBottom: '1rem' }}>{t('showsSlugPage.transferTicketDesc', "Can't make it? You can transfer your ticket to a friend without a fee.")}</p>
+                <p className="meta">{t('showsSlugPage.useSecureLinkPrefix', 'Use the secure link in your ticket email, or go to')} <Link href="/home">{t('showsSlugPage.yourDashboard', 'your dashboard')}</Link> {t('showsSlugPage.toManageOrders', 'to manage your orders.')}</p>
               </div>
             )}
 
@@ -752,8 +754,8 @@ export default async function ShowDetailPage({
               return (
                 <div className="panel" style={{ padding: '1.25rem', marginTop: 24 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <h2 style={{ margin: 0 }}>Tracklist</h2>
-                    {totalDuration && <span className="meta">{show.radioTracks.length} tracks · {totalDuration}</span>}
+                    <h2 style={{ margin: 0 }}>{t('showsSlugPage.tracklist', 'Tracklist')}</h2>
+                    {totalDuration && <span className="meta">{show.radioTracks.length} {t('showsSlugPage.tracksCount', 'tracks')} · {totalDuration}</span>}
                   </div>
                   <div style={{ display: 'grid', gap: '1rem' }}>
                     {blocks.map((block, bi) => (
@@ -778,7 +780,7 @@ export default async function ShowDetailPage({
                                   </span>
                                 )}
                                 {track.externalUrl && (
-                                  <a className="button small secondary" href={track.externalUrl} rel="noreferrer" style={{ fontSize: '0.75rem' }} target="_blank">Play ↗</a>
+                                  <a className="button small secondary" href={track.externalUrl} rel="noreferrer" style={{ fontSize: '0.75rem' }} target="_blank">{t('showsSlugPage.playTrack', 'Play ↗')}</a>
                                 )}
                               </div>
                             </li>
@@ -793,7 +795,7 @@ export default async function ShowDetailPage({
 
             {setlistTracks.length ? (
               <div className="panel" style={{ padding: '1rem 1.25rem', marginTop: 24 }}>
-                <h2 style={{ marginTop: 0 }}>Setlist</h2>
+                <h2 style={{ marginTop: 0 }}>{t('showsSlugPage.setlist', 'Setlist')}</h2>
                 <ol style={{ paddingLeft: '1.2rem', lineHeight: 1.7, margin: 0 }}>
                   {setlistTracks.map((t, i) => <li key={i}>{t}</li>)}
                 </ol>
@@ -807,13 +809,13 @@ export default async function ShowDetailPage({
 
             {show.recapText && (
               <div className="panel" style={{ padding: '1.25rem', marginTop: 24 }}>
-                <h2>Show recap</h2>
+                <h2>{t('showsSlugPage.showRecap', 'Show recap')}</h2>
                 <p style={{ whiteSpace: 'pre-wrap' }}>{show.recapText}</p>
               </div>
             )}
             {isShowOwner && show.status === 'ENDED' && (
               <div className="panel" style={{ padding: '1.25rem', marginTop: 24 }}>
-                <h2 style={{ marginTop: 0 }}>Write a recap</h2>
+                <h2 style={{ marginTop: 0 }}>{t('showsSlugPage.writeARecap', 'Write a recap')}</h2>
                 <ShowRecapForm initialRecap={show.recapText} showId={show.id} />
               </div>
             )}
@@ -823,22 +825,22 @@ export default async function ShowDetailPage({
           {show.isTicketed && show.venueProfile && show.headlinerProfile && show.venuePayoutPercent !== null && show.artistPayoutPercent !== null ? (
             <aside style={{ border: '1px solid var(--hair-80)', borderRadius: 12, padding: 28, background: 'var(--bg2)', position: 'sticky', top: 80, alignSelf: 'flex-start' }}>
               <div style={{ fontSize: 36, fontWeight: 800, color: 'var(--accent)', marginBottom: 4, fontFamily: 'var(--font-display)' }}>${price.toFixed(2)}</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a50)', marginBottom: 20 }}>$0 fees · face value only</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a50)', marginBottom: 20 }}>{t('showsSlugPage.zeroFeesFaceValueOnly', '$0 fees · face value only')}</div>
 
               {cap !== null && (
                 <>
                   <div style={{ height: 6, borderRadius: 3, background: 'var(--hair-100)', margin: '16px 0', overflow: 'hidden' }}>
                     <div style={{ height: '100%', borderRadius: 3, background: 'var(--accent)', width: `${pct}%` }} />
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--ink-a60)', marginBottom: 16 }}>{sold} / {cap} sold · {cap - sold} remaining</div>
+                  <div style={{ fontSize: 12, color: 'var(--ink-a60)', marginBottom: 16 }}>{sold} / {cap} {t('showsSlugPage.soldLabel', 'sold')} · {cap - sold} {t('showsSlugPage.remainingLabel', 'remaining')}</div>
                 </>
               )}
 
               <div style={{ marginBottom: 18 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a40)' }}>Demand — last 12h</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a40)' }}>{t('showsSlugPage.demandLast12h', 'Demand — last 12h')}</span>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: demandLabelColor }}>
-                    {demandLabel === 'Fire' ? '🔥 Fire' : demandLabel}
+                    {demandLabel === 'Fire' ? t('showsSlugPage.fireEmojiLabel', '🔥 Fire') : demandLabel}
                   </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 26 }}>
@@ -859,12 +861,10 @@ export default async function ShowDetailPage({
               {!isPaymentProcessingConfigured() ? (
                 <div style={{ border: '1px solid rgba(34,229,212,.3)', borderRadius: 10, padding: 16, background: 'rgba(34,229,212,.06)' }}>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--venue)', marginBottom: 8 }}>
-                    Paid tickets · Coming soon
+                    {t('showsSlugPage.paidTicketsComingSoon', 'Paid tickets · Coming soon')}
                   </div>
                   <p style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--ink-a80)', margin: 0 }}>
-                    Ticket sales haven&apos;t opened on iHYPE yet. RSVP free above to hold your spot —
-                    we&apos;ll remind you before the show, and face-value pricing with the locked
-                    70/20/10 split kicks in the moment sales open.
+                    {t('showsSlugPage.ticketSalesNotOpenNotice', "Ticket sales haven't opened on iHYPE yet. RSVP free above to hold your spot — we'll remind you before the show, and face-value pricing with the locked 70/20/10 split kicks in the moment sales open.")}
                   </p>
                 </div>
               ) : (
@@ -911,15 +911,15 @@ export default async function ShowDetailPage({
               )}
 
               <div style={{ background: 'var(--hair-40)', borderRadius: 8, padding: 14, marginTop: 16 }}>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a50)', marginBottom: 10 }}>vs. Ticketmaster</p>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}><span>Face value</span><span>${price.toFixed(2)}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6, color: 'var(--ink-a50)' }}><span>Service fees (27%)</span><span>+${tmFees.toFixed(2)}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6, color: 'var(--ink-a50)' }}><span>TM total</span><span>${tmTotal.toFixed(2)}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, color: 'var(--venue)' }}><span>iHYPE total</span><span>${price.toFixed(2)}</span></div>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a50)', marginBottom: 10 }}>{t('showsSlugPage.vsTicketmaster', 'vs. Ticketmaster')}</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}><span>{t('showsSlugPage.faceValue', 'Face value')}</span><span>${price.toFixed(2)}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6, color: 'var(--ink-a50)' }}><span>{t('showsSlugPage.serviceFees27', 'Service fees (27%)')}</span><span>+${tmFees.toFixed(2)}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6, color: 'var(--ink-a50)' }}><span>{t('showsSlugPage.tmTotal', 'TM total')}</span><span>${tmTotal.toFixed(2)}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, color: 'var(--venue)' }}><span>{t('showsSlugPage.ihypeTotal', 'iHYPE total')}</span><span>${price.toFixed(2)}</span></div>
               </div>
 
               <div style={{ marginTop: 16, fontSize: 11, color: 'var(--ink-a50)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', lineHeight: 1.5 }}>
-                Split locked by charter · iHYPE takes 0%
+                {t('showsSlugPage.splitLockedByCharter', 'Split locked by charter · iHYPE takes 0%')}
               </div>
             </aside>
           ) : null}

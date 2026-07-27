@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { db } from '@/lib/db';
 import { CommunityVoteBoard } from '@/components/CommunityVoteBoard';
 import { NewsletterSignup } from '@/components/NewsletterSignup';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const metadata = { title: 'Community · iHYPE', description: 'Platform updates, announcements, and a vote on what we build next.' };
 export const dynamic = 'force-dynamic';
@@ -26,6 +27,20 @@ const COMMUNITY_CHANNELS = [
 ];
 
 export default async function CommunityPage() {
+  const t = getT(await getLocale());
+  const categoryLabel = (key: string) => t(`communityPage.category.${key}`, CATEGORY_LABEL[key] ?? key);
+  const channelTitles = [
+    t('communityPage.channel0Title', 'You get a vote'),
+    t('communityPage.channel1Title', 'Radio shows'),
+    t('communityPage.channel2Title', 'Hype honestly'),
+    t('communityPage.channel3Title', 'Look out for each other'),
+  ];
+  const channelBodies = [
+    t('communityPage.channel0Body', 'Platform changes ship with a feedback window. The split and moderation heuristics are published for public audit — check our work.'),
+    t('communityPage.channel1Body', 'Every DJ and promoter gets the same hosting tools, free. No tier unlocks anything — the scene decides what gets heard.'),
+    t('communityPage.channel2Body', 'No bots, no paid manipulation, no hidden incentives. Hype is the demand signal venues book from — keep it real.'),
+    t('communityPage.channel3Body', 'Report unsafe content, fraud, or impersonation. Every report is tracked to a resolution in the public trust & safety report.'),
+  ];
   const rows = await db.auditLog.findMany({
     where: { action: 'community_update' },
     orderBy: { createdAt: 'desc' },
@@ -40,21 +55,21 @@ export default async function CommunityPage() {
   return (
     <div className="community-page">
       <div className="community-hero">
-        <span className="community-page-badge">Community</span>
-        <h1>The scene runs this place.</h1>
+        <span className="community-page-badge">{t('communityPage.badge', 'Community')}</span>
+        <h1>{t('communityPage.heroTitle', 'The scene runs this place.')}</h1>
         <p className="community-lede">
-          Users of iHYPE are stakeholders, not just customers. Meaningful changes — the split, moderation rules, new fees of any kind — are put to the people who use it.
+          {t('communityPage.lede', 'Users of iHYPE are stakeholders, not just customers. Meaningful changes — the split, moderation rules, new fees of any kind — are put to the people who use it.')}
         </p>
       </div>
 
       <div className="community-content">
         <section className="community-section community-channels">
-          {COMMUNITY_CHANNELS.map((c) => (
+          {COMMUNITY_CHANNELS.map((c, i) => (
             <div className="community-channel-card" key={c.title}>
               <div className="community-channel-icon">{c.icon}</div>
               <div>
-                <h2>{c.title}</h2>
-                <p>{c.body}</p>
+                <h2>{channelTitles[i]}</h2>
+                <p>{channelBodies[i]}</p>
               </div>
             </div>
           ))}
@@ -62,10 +77,10 @@ export default async function CommunityPage() {
 
         <section className="community-section">
           <div className="community-section-head">
-            <span className="community-eyebrow">Vote &amp; suggest</span>
-            <h2>What should we build next?</h2>
+            <span className="community-eyebrow">{t('communityPage.voteEyebrow', 'Vote & suggest')}</span>
+            <h2>{t('communityPage.voteTitle', 'What should we build next?')}</h2>
             <p className="community-section-copy">
-              Every idea here is a real, counted vote — the charter promise &ldquo;you get a vote&rdquo; points at this board.
+              {t('communityPage.voteCopy', 'Every idea here is a real, counted vote — the charter promise "you get a vote" points at this board.')}
             </p>
           </div>
           <div className="community-card">
@@ -75,30 +90,30 @@ export default async function CommunityPage() {
 
         <section className="community-section">
           <div className="community-section-head">
-            <span className="community-eyebrow">Collab board</span>
-            <h2>Find your people</h2>
+            <span className="community-eyebrow">{t('communityPage.collabEyebrow', 'Collab board')}</span>
+            <h2>{t('communityPage.collabTitle', 'Find your people')}</h2>
             <p className="community-section-copy">
-              Musician classifieds — post what you&apos;re looking for, or what you have to offer, and browse what the rest of the scene has posted.
+              {t('communityPage.collabCopy', "Musician classifieds — post what you're looking for, or what you have to offer, and browse what the rest of the scene has posted.")}
             </p>
           </div>
           <div className="community-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
             <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-a70)', maxWidth: '48ch' }}>
-              Drummers, vocalists, producers, venues, DJs — post a listing or browse what&apos;s open.
+              {t('communityPage.collabSub', "Drummers, vocalists, producers, venues, DJs — post a listing or browse what's open.")}
             </p>
             <Link className="ihype-btn-primary" href="/collab-board" style={{ flexShrink: 0, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
-              Open the collab board →
+              {t('communityPage.collabLink', 'Open the collab board →')}
             </Link>
           </div>
         </section>
 
         <section className="community-section">
           <div className="community-section-head">
-            <span className="community-eyebrow">Updates</span>
-            <h2>What&apos;s changed</h2>
+            <span className="community-eyebrow">{t('communityPage.updatesEyebrow', 'Updates')}</span>
+            <h2>{t('communityPage.updatesTitle', "What's changed")}</h2>
           </div>
           {posts.length === 0 ? (
             <div className="community-card community-empty">
-              <p>No community updates yet.</p>
+              <p>{t('communityPage.updatesEmpty', 'No community updates yet.')}</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -109,7 +124,7 @@ export default async function CommunityPage() {
                       className="community-badge"
                       style={{ color: CATEGORY_COLOR[p.meta.category ?? 'update'], borderColor: `${CATEGORY_COLOR[p.meta.category ?? 'update']}40`, background: `${CATEGORY_COLOR[p.meta.category ?? 'update']}12` }}
                     >
-                      {CATEGORY_LABEL[p.meta.category ?? 'update'] ?? 'Update'}
+                      {categoryLabel(p.meta.category ?? 'update')}
                     </span>
                     <span className="community-post-date">{p.createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                   </div>
@@ -125,10 +140,10 @@ export default async function CommunityPage() {
 
         <section className="community-section">
           <div className="community-section-head">
-            <span className="community-eyebrow">Stay in the loop</span>
-            <h2>Get updates from the scene</h2>
+            <span className="community-eyebrow">{t('communityPage.newsletterEyebrow', 'Stay in the loop')}</span>
+            <h2>{t('communityPage.newsletterTitle', 'Get updates from the scene')}</h2>
             <p className="community-section-copy">
-              Follow a specific artist, venue, or DJ by email — we send a one-click confirm link, and only that profile&apos;s updates land in your inbox.
+              {t('communityPage.newsletterCopy', "Follow a specific artist, venue, or DJ by email — we send a one-click confirm link, and only that profile's updates land in your inbox.")}
             </p>
           </div>
           <div className="community-card">
@@ -138,11 +153,11 @@ export default async function CommunityPage() {
 
         <section className="community-cta">
           <div>
-            <h2>Every vote and every dollar, on the record.</h2>
-            <p>The 70/20/10 split and the vote you just cast are both spelled out in the charter — not a marketing promise.</p>
+            <h2>{t('communityPage.ctaTitle', 'Every vote and every dollar, on the record.')}</h2>
+            <p>{t('communityPage.ctaBody', 'The 70/20/10 split and the vote you just cast are both spelled out in the charter — not a marketing promise.')}</p>
           </div>
           <Link className="ihype-btn-primary" href="/charter" style={{ flexShrink: 0, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
-            Read the charter →
+            {t('communityPage.ctaLink', 'Read the charter →')}
           </Link>
         </section>
       </div>

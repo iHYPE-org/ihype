@@ -6,6 +6,7 @@ import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { PromoteShareButton } from '@/components/PromoteShareButton';
 import { getBaseUrl } from '@/lib/utils';
 import type { Metadata } from 'next';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,12 +16,13 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-function fmtDate(iso: string | null): string {
-  if (!iso) return 'TBD';
+function fmtDate(iso: string | null, t: (key: string, fallback?: string) => string): string {
+  if (!iso) return t('mePromotePage.tbd', 'TBD');
   return new Date(iso).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 }
 
 export default async function PromotePage() {
+  const t = getT(await getLocale());
   const session = await auth();
   if (!session?.user?.id) {
     redirect('/login?callbackUrl=/me/promote');
@@ -34,65 +36,65 @@ export default async function PromotePage() {
       <div className="promo-page-header">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
           <div>
-            <h1>Promoter Dashboard</h1>
-            <p>Your HYPE Link, click stats, and 10% pool earnings</p>
+            <h1>{t('mePromotePage.title', 'Promoter Dashboard')}</h1>
+            <p>{t('mePromotePage.subtitle', 'Your HYPE Link, click stats, and 10% pool earnings')}</p>
           </div>
-          <Link href="/me/promote/analytics" className="promo-analytics-link">View analytics →</Link>
+          <Link href="/me/promote/analytics" className="promo-analytics-link">{t('mePromotePage.viewAnalytics', 'View analytics →')}</Link>
         </div>
       </div>
 
       <div className="promo-stats-grid">
         <div className="promo-stat-card">
-          <div className="promo-stat-label">Total Earned</div>
+          <div className="promo-stat-label">{t('mePromotePage.totalEarned', 'Total Earned')}</div>
           <div className="promo-stat-value">{formatCurrencyFromCents(d.earnedCents)}</div>
-          <div className="promo-stat-sub">Pending settlement · {d.ordersDriven} order{d.ordersDriven === 1 ? '' : 's'}</div>
+          <div className="promo-stat-sub">{t('mePromotePage.pendingSettlement', 'Pending settlement')} · {d.ordersDriven} {d.ordersDriven === 1 ? t('mePromotePage.order', 'order') : t('mePromotePage.orders', 'orders')}</div>
         </div>
         <div className="promo-stat-card">
-          <div className="promo-stat-label">Gate Driven</div>
+          <div className="promo-stat-label">{t('mePromotePage.gateDriven', 'Gate Driven')}</div>
           <div className="promo-stat-value">{formatCurrencyFromCents(d.grossRevenueCents)}</div>
-          <div className="promo-stat-sub">Total ticket revenue via your link</div>
+          <div className="promo-stat-sub">{t('mePromotePage.gateDrivenSub', 'Total ticket revenue via your link')}</div>
         </div>
         <div className="promo-stat-card">
-          <div className="promo-stat-label">HYPE Link Clicks</div>
+          <div className="promo-stat-label">{t('mePromotePage.hypeLinkClicks', 'HYPE Link Clicks')}</div>
           <div className="promo-stat-value">{d.clicks.toLocaleString()}</div>
-          <div className="promo-stat-sub">Lifetime clicks</div>
+          <div className="promo-stat-sub">{t('mePromotePage.lifetimeClicks', 'Lifetime clicks')}</div>
         </div>
         <div className="promo-stat-card">
-          <div className="promo-stat-label">Tickets Driven</div>
+          <div className="promo-stat-label">{t('mePromotePage.ticketsDriven', 'Tickets Driven')}</div>
           <div className="promo-stat-value">{d.ticketsSold.toLocaleString()}</div>
-          <div className="promo-stat-sub">Across all events</div>
+          <div className="promo-stat-sub">{t('mePromotePage.acrossAllEvents', 'Across all events')}</div>
         </div>
       </div>
 
       {d.refHexId ? (
         <div className="promo-referral-box">
-          <div className="promo-referral-label">Your HYPE Link</div>
+          <div className="promo-referral-label">{t('mePromotePage.yourHypeLink', 'Your HYPE Link')}</div>
           <div className="promo-referral-url">{`${baseUrl}/h/${d.refHexId}`}</div>
           <PromoteShareButton link={`${baseUrl}/h/${d.refHexId}`} slug="referral" title="iHYPE" />
           <p className="promo-split-explainer">
-            Your HYPE Link is your unique fan ID. When someone buys a ticket through it, you earn a proportional share of the 10% promoter pool — based on how much of the total gate your HYPE Link drove.
+            {t('mePromotePage.hypeLinkExplainer', 'Your HYPE Link is your unique fan ID. When someone buys a ticket through it, you earn a proportional share of the 10% promoter pool — based on how much of the total gate your HYPE Link drove.')}
           </p>
         </div>
       ) : (
         <div className="promo-referral-box">
-          <div className="promo-referral-label">Your HYPE Link</div>
-          <p className="promo-split-explainer" style={{ margin: 0 }}>Create a page to get your HYPE Link.</p>
+          <div className="promo-referral-label">{t('mePromotePage.yourHypeLink', 'Your HYPE Link')}</div>
+          <p className="promo-split-explainer" style={{ margin: 0 }}>{t('mePromotePage.createPageForLink', 'Create a page to get your HYPE Link.')}</p>
         </div>
       )}
 
       <div className="promo-section">
-        <div className="promo-section-title">Shows you can promote</div>
+        <div className="promo-section-title">{t('mePromotePage.showsYouCanPromote', 'Shows you can promote')}</div>
         {d.shows.length === 0 ? (
           <div className="promo-empty">
-            <p>No upcoming ticketed shows to promote right now.</p>
-            <Link className="promo-cta" href="/discover">Browse the scene</Link>
+            <p>{t('mePromotePage.noUpcomingShows', 'No upcoming ticketed shows to promote right now.')}</p>
+            <Link className="promo-cta" href="/discover">{t('mePromotePage.browseScene', 'Browse the scene')}</Link>
           </div>
         ) : (
           d.shows.map((s) => (
             <div className="promo-event-row" key={s.slug}>
               <div>
                 <h3><Link href={`/shows/${s.slug}`} style={{ color: 'inherit', textDecoration: 'none' }}>{s.title}</Link></h3>
-                <p>{fmtDate(s.startsAt)}{s.venueName ? ` · ${s.venueName}` : ''} · {s.promoterPayoutPercent}% pool</p>
+                <p>{fmtDate(s.startsAt, t)}{s.venueName ? ` · ${s.venueName}` : ''} · {s.promoterPayoutPercent}% {t('mePromotePage.pool', 'pool')}</p>
               </div>
               <PromoteShareButton link={s.promoLink} slug={s.slug} title={s.title} />
             </div>
@@ -101,7 +103,7 @@ export default async function PromotePage() {
       </div>
 
       <p className="promo-foot">
-        Earnings settle to your payout account once it&apos;s connected. Splits are locked at 70% artist / 20% venue / 10% promoters.
+        {t('mePromotePage.footer', "Earnings settle to your payout account once it's connected. Splits are locked at 70% artist / 20% venue / 10% promoters.")}
       </p>
 
       <style>{`

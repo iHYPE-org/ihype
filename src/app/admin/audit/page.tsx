@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'Audit log | iHYPE Admin',
@@ -21,6 +22,7 @@ export default async function AdminAuditPage({ searchParams }: { searchParams?: 
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
   if (!isAdminSession(session)) redirect(WORKBENCH_PATH);
+  const t = getT(await getLocale());
 
   const sp = searchParams ? await searchParams : {};
   const action = sp.action?.trim() || undefined;
@@ -57,51 +59,51 @@ export default async function AdminAuditPage({ searchParams }: { searchParams?: 
   return (
     <div className="container section admin-console">
       <section className="panel">
-        <h1>Audit log <span className="meta">({total.toLocaleString()} events)</span></h1>
+        <h1>{t('adminAuditPage.title', 'Audit log')} <span className="meta">({total.toLocaleString()} {t('adminAuditPage.eventsSuffix', 'events')})</span></h1>
         <form method="get" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end', margin: '12px 0' }}>
           <label style={{ display: 'grid', gap: 4 }}>
-            <span className="meta">Action contains</span>
+            <span className="meta">{t('adminAuditPage.filterActionLabel', 'Action contains')}</span>
             <input className="input" name="action" defaultValue={action ?? ''} />
           </label>
           <label style={{ display: 'grid', gap: 4 }}>
-            <span className="meta">Actor email/username</span>
+            <span className="meta">{t('adminAuditPage.filterActorLabel', 'Actor email/username')}</span>
             <input className="input" name="actor" defaultValue={actor ?? ''} />
           </label>
           <label style={{ display: 'grid', gap: 4 }}>
-            <span className="meta">Entity type</span>
+            <span className="meta">{t('adminAuditPage.filterEntityLabel', 'Entity type')}</span>
             <input className="input" name="entity" defaultValue={entity ?? ''} />
           </label>
           <label style={{ display: 'grid', gap: 4 }}>
-            <span className="meta">From</span>
+            <span className="meta">{t('adminAuditPage.filterFromLabel', 'From')}</span>
             <input className="input" type="date" name="from" defaultValue={sp.from ?? ''} />
           </label>
           <label style={{ display: 'grid', gap: 4 }}>
-            <span className="meta">To</span>
+            <span className="meta">{t('adminAuditPage.filterToLabel', 'To')}</span>
             <input className="input" type="date" name="to" defaultValue={sp.to ?? ''} />
           </label>
           <input type="hidden" name="page" value="1" />
-          <button className="button small" type="submit">Search</button>
-          <Link className="button small secondary" href={`/api/admin/audit/export?${exportUrl.toString()}`}>Export CSV</Link>
+          <button className="button small" type="submit">{t('adminAuditPage.searchButton', 'Search')}</button>
+          <Link className="button small secondary" href={`/api/admin/audit/export?${exportUrl.toString()}`}>{t('adminAuditPage.exportCsv', 'Export CSV')}</Link>
         </form>
 
         <table className="table">
           <thead>
             <tr>
-              <th>Time</th><th>Actor</th><th>Action</th><th>Entity</th><th>Entity ID</th><th>Meta</th>
+              <th>{t('adminAuditPage.colTime', 'Time')}</th><th>{t('adminAuditPage.colActor', 'Actor')}</th><th>{t('adminAuditPage.colAction', 'Action')}</th><th>{t('adminAuditPage.colEntity', 'Entity')}</th><th>{t('adminAuditPage.colEntityId', 'Entity ID')}</th><th>{t('adminAuditPage.colMeta', 'Meta')}</th>
             </tr>
           </thead>
           <tbody>
             {rows.length ? rows.map((r) => (
               <tr key={r.id}>
                 <td style={{ whiteSpace: 'nowrap' }}>{r.createdAt.toISOString().replace('T', ' ').slice(0, 19)}</td>
-                <td>{r.actor?.username ?? r.actor?.email ?? 'system'}</td>
+                <td>{r.actor?.username ?? r.actor?.email ?? t('adminAuditPage.systemActor', 'system')}</td>
                 <td>{r.action}</td>
                 <td>{r.entityType}</td>
                 <td style={{ fontFamily: 'monospace', fontSize: 11 }}>{r.entityId ? r.entityId.slice(0, 12) + '…' : '—'}</td>
                 <td>
                   {r.metadata ? (
                     <details style={{ cursor: 'pointer' }}>
-                      <summary style={{ fontSize: 11, opacity: 0.6 }}>view</summary>
+                      <summary style={{ fontSize: 11, opacity: 0.6 }}>{t('adminAuditPage.viewDetails', 'view')}</summary>
                       <pre style={{ fontSize: 10, maxWidth: 300, overflow: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
                         {JSON.stringify(r.metadata, null, 2)}
                       </pre>
@@ -110,16 +112,16 @@ export default async function AdminAuditPage({ searchParams }: { searchParams?: 
                 </td>
               </tr>
             )) : (
-              <tr><td colSpan={6}><div className="empty">No matching events.</div></td></tr>
+              <tr><td colSpan={6}><div className="empty">{t('adminAuditPage.noMatches', 'No matching events.')}</div></td></tr>
             )}
           </tbody>
         </table>
 
         {pages > 1 && (
           <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center' }}>
-            {page > 1 && <Link className="button small secondary" href={qs(page - 1)}>← Prev</Link>}
-            <span className="meta">Page {page} of {pages} · {total.toLocaleString()} events</span>
-            {page < pages && <Link className="button small secondary" href={qs(page + 1)}>Next →</Link>}
+            {page > 1 && <Link className="button small secondary" href={qs(page - 1)}>{t('adminAuditPage.prevPage', '← Prev')}</Link>}
+            <span className="meta">{t('adminAuditPage.pageSummary', 'Page')} {page} {t('adminAuditPage.pageOf', 'of')} {pages} · {total.toLocaleString()} {t('adminAuditPage.eventsSuffix', 'events')}</span>
+            {page < pages && <Link className="button small secondary" href={qs(page + 1)}>{t('adminAuditPage.nextPage', 'Next →')}</Link>}
           </div>
         )}
       </section>

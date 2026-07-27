@@ -24,6 +24,7 @@ import { canManageOwnedResource } from '@/lib/permissions';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
 import { getBaseUrl } from '@/lib/utils';
 import { ConnectPayoutButton } from '@/components/ConnectPayoutButton';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const revalidate = 60;
 
@@ -63,6 +64,7 @@ export default async function ArtistPage({
   searchParams?: Promise<{ section?: string | string[] }>;
 }) {
   const session = await auth();
+  const t = getT(await getLocale());
   const { slug } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const activeSection = getActiveSection(resolvedSearchParams.section);
@@ -125,8 +127,8 @@ export default async function ArtistPage({
             <div className="artist-name">{profile.name}</div>
             <div className="artist-sub">{profile.genres.join(' · ')}{profile.city ? ` · ${profile.city}` : ''}</div>
             <div className="artist-hero-badges">
-              <span className="artist-badge" style={{ background: 'rgba(255,80,41,.15)', color: 'var(--accent)' }}>Artist</span>
-              {profile.verificationStatus === 'VERIFIED' && <span className="artist-badge" style={{ background: 'rgba(34,229,212,.15)', color: 'var(--role-venue, #22e5d4)' }}>✓ Verified</span>}
+              <span className="artist-badge" style={{ background: 'rgba(255,80,41,.15)', color: 'var(--accent)' }}>{t('artistsSlugPage.artistBadge', 'Artist')}</span>
+              {profile.verificationStatus === 'VERIFIED' && <span className="artist-badge" style={{ background: 'rgba(34,229,212,.15)', color: 'var(--role-venue, #22e5d4)' }}>{t('artistsSlugPage.verifiedBadge', '✓ Verified')}</span>}
             </div>
             <div className="artist-hero-actions">
               <HypeButton entityLabel="artist" initialCount={profile.hypeCount} initiallyHyped={!!userHype} targetId={profile.id} targetType="profile" />
@@ -138,18 +140,18 @@ export default async function ArtistPage({
               {isOwner && (
                 <>
                   <FanMailButton profileId={profile.id} triggerClassName="artist-hero-btn" />
-                  <Link className="artist-hero-btn" href="/pages">Customize</Link>
-                  <Link className="artist-hero-btn" href="/settings">Settings</Link>
+                  <Link className="artist-hero-btn" href="/pages">{t('artistsSlugPage.customize', 'Customize')}</Link>
+                  <Link className="artist-hero-btn" href="/settings">{t('artistsSlugPage.settings', 'Settings')}</Link>
                 </>
               )}
             </div>
           </div>
         </div>
         <div className="artist-stats">
-          <div><div className="artist-stat-val">{totalPlays.toLocaleString()}</div><div className="artist-stat-label">Total Plays</div></div>
-          <div><div className="artist-stat-val">{profile.hypeCount.toLocaleString()}</div><div className="artist-stat-label">Total Hypes</div></div>
-          <div><div className="artist-stat-val">{shows.length}</div><div className="artist-stat-label">Shows</div></div>
-          <div><div className="artist-stat-val">{profile._count.followers.toLocaleString()}</div><div className="artist-stat-label">Followers</div></div>
+          <div><div className="artist-stat-val">{totalPlays.toLocaleString()}</div><div className="artist-stat-label">{t('artistsSlugPage.totalPlays', 'Total Plays')}</div></div>
+          <div><div className="artist-stat-val">{profile.hypeCount.toLocaleString()}</div><div className="artist-stat-label">{t('artistsSlugPage.totalHypes', 'Total Hypes')}</div></div>
+          <div><div className="artist-stat-val">{shows.length}</div><div className="artist-stat-label">{t('artistsSlugPage.shows', 'Shows')}</div></div>
+          <div><div className="artist-stat-val">{profile._count.followers.toLocaleString()}</div><div className="artist-stat-label">{t('artistsSlugPage.followers', 'Followers')}</div></div>
         </div>
       </div>
 
@@ -157,32 +159,32 @@ export default async function ArtistPage({
         <div className="artist-tabs">
           {artistSections.filter((section) => section !== 'insights' || isOwner).map((section) => (
             <Link className={section === activeSection ? 'artist-tab active' : 'artist-tab'} href={`/artists/${profile.slug}?section=${section}`} key={section}>
-              {SECTION_LABEL[section]}
+              {t(`artistsSlugPage.section.${section}`, SECTION_LABEL[section])}
             </Link>
           ))}
         </div>
 
         {activeSection === 'about' && (
           <div>
-            <p className="artist-about-text">{profile.aboutContent || profile.bio || 'This artist has not filled out the About section yet.'}</p>
+            <p className="artist-about-text">{profile.aboutContent || profile.bio || t('artistsSlugPage.noAbout', 'This artist has not filled out the About section yet.')}</p>
             <PinnedStatTiles accent="var(--profile-accent, var(--accent))" stats={pinnedStats} />
             <div className="artist-split-card">
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>Charter Split · Every ticket</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>{t('artistsSlugPage.charterSplit', 'Charter Split · Every ticket')}</div>
               <div className="artist-split-bar">
                 <div className="artist-split-seg" style={{ flex: 7, background: 'rgba(255,80,41,.15)' }}>
                   <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent)' }}>70%</div>
-                  <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: 'var(--accent)', marginTop: 4 }}>Artist</div>
+                  <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: 'var(--accent)', marginTop: 4 }}>{t('artistsSlugPage.splitArtist', 'Artist')}</div>
                 </div>
                 <div className="artist-split-seg" style={{ flex: 2, background: 'rgba(34,229,212,.15)' }}>
                   <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--role-venue, #22e5d4)' }}>20%</div>
-                  <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: 'var(--role-venue, #22e5d4)', marginTop: 4 }}>Venue</div>
+                  <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: 'var(--role-venue, #22e5d4)', marginTop: 4 }}>{t('artistsSlugPage.splitVenue', 'Venue')}</div>
                 </div>
                 <div className="artist-split-seg" style={{ flex: 1, background: 'rgba(255,62,154,.15)' }}>
                   <div style={{ fontSize: 18, fontWeight: 700, color: '#ff3e9a' }}>10%</div>
-                  <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: '#ff3e9a', marginTop: 4 }}>Promoters</div>
+                  <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: '#ff3e9a', marginTop: 4 }}>{t('artistsSlugPage.splitPromoters', 'Promoters')}</div>
                 </div>
               </div>
-              <p style={{ fontSize: 12, color: 'var(--ink-a55)', marginTop: 12 }}>iHYPE takes 0% · locked in the charter</p>
+              <p style={{ fontSize: 12, color: 'var(--ink-a55)', marginTop: 12 }}>{t('artistsSlugPage.zeroFeeCharter', 'iHYPE takes 0% · locked in the charter')}</p>
             </div>
             <SimilarArtistsRow accent="var(--profile-hero, linear-gradient(135deg,#ff5029,#b983ff))" artists={similarArtists} />
           </div>
@@ -204,7 +206,7 @@ export default async function ArtistPage({
             ) : (
               <div className="artist-empty">
                 <svg fill="none" height="34" stroke="var(--ink-a30)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="34"><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg>
-                <p>No tracks yet.</p>
+                <p>{t('artistsSlugPage.noTracks', 'No tracks yet.')}</p>
               </div>
             )}
           </>
@@ -213,7 +215,7 @@ export default async function ArtistPage({
         {activeSection === 'shows' && (
           <div>
             {upcomingShows.length === 0 ? (
-              <div className="artist-empty"><p>No upcoming shows.</p></div>
+              <div className="artist-empty"><p>{t('artistsSlugPage.noUpcomingShows', 'No upcoming shows.')}</p></div>
             ) : (
               upcomingShows.map((show) => {
                 const date = show.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
@@ -224,8 +226,8 @@ export default async function ArtistPage({
                       <div className="artist-show-meta">{date}{show.venueProfile?.city ? ` · ${show.venueProfile.city}` : ''}</div>
                     </div>
                     <div style={{ flexShrink: 0 }}>
-                      <div className="artist-show-price">{show.isTicketed && show.ticketPriceCents ? `$${(show.ticketPriceCents / 100).toFixed(0)}` : 'Free'}</div>
-                      <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: 'var(--ink-a50)', textAlign: 'right' }}>$0 fees</div>
+                      <div className="artist-show-price">{show.isTicketed && show.ticketPriceCents ? `$${(show.ticketPriceCents / 100).toFixed(0)}` : t('artistsSlugPage.free', 'Free')}</div>
+                      <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: 'var(--ink-a50)', textAlign: 'right' }}>{t('artistsSlugPage.zeroFees', '$0 fees')}</div>
                     </div>
                   </Link>
                 );

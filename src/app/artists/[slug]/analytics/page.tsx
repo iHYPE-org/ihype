@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { getDemoCreatorExclusion } from '@/lib/runtime-flags';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -110,6 +111,7 @@ export default async function ArtistAnalyticsPage({
   searchParams: Promise<{ range?: string }>;
 }) {
   const session = await auth();
+  const t = getT(await getLocale());
   const { slug } = await params;
   const resolvedSearchParams = await searchParams;
 
@@ -209,7 +211,7 @@ export default async function ArtistAnalyticsPage({
     <div className="aa-page">
       <div className="aa-header">
         <div>
-          <div className="aa-eyebrow">Analytics</div>
+          <div className="aa-eyebrow">{t('artistsSlugAnalyticsPage.eyebrow', 'Analytics')}</div>
           <h1 className="aa-title">{profile.name}</h1>
         </div>
       </div>
@@ -217,42 +219,42 @@ export default async function ArtistAnalyticsPage({
       <div className="aa-tabs">
         {RANGES.map((r) => (
           <Link className={r === range ? 'aa-tab active' : 'aa-tab'} href={`/artists/${profile.slug}/analytics?range=${r}`} key={r}>
-            {RANGE_LABEL[r]}
+            {t(`artistsSlugAnalyticsPage.range.${r}`, RANGE_LABEL[r])}
           </Link>
         ))}
       </div>
 
       <div className="aa-stats-grid">
         <div className="aa-stat-card">
-          <div className="aa-stat-label">Listeners</div>
+          <div className="aa-stat-label">{t('artistsSlugAnalyticsPage.listenersLabel', 'Listeners')}</div>
           <div className="aa-stat-val">{distinctCurrentListeners.toLocaleString()}</div>
           <div className="aa-stat-sub" style={listenersDelta != null ? { color: 'var(--role-venue, #22e5d4)' } : undefined}>
-            {listenersDelta != null ? `${listenersDelta >= 0 ? '+' : ''}${listenersDelta}% this period` : 'Distinct listeners'}
+            {listenersDelta != null ? `${listenersDelta >= 0 ? '+' : ''}${listenersDelta}% ${t('artistsSlugAnalyticsPage.thisPeriod', 'this period')}` : t('artistsSlugAnalyticsPage.distinctListeners', 'Distinct listeners')}
           </div>
         </div>
         <div className="aa-stat-card">
-          <div className="aa-stat-label">Tickets Sold</div>
+          <div className="aa-stat-label">{t('artistsSlugAnalyticsPage.ticketsSoldLabel', 'Tickets Sold')}</div>
           <div className="aa-stat-val">{currentTicketsSold.toLocaleString()}</div>
           <div className="aa-stat-sub" style={ticketsDelta != null ? { color: 'var(--role-venue, #22e5d4)' } : undefined}>
-            {ticketsDelta != null ? `${ticketsDelta >= 0 ? '+' : ''}${ticketsDelta}% this period` : 'CAPTURED orders'}
+            {ticketsDelta != null ? `${ticketsDelta >= 0 ? '+' : ''}${ticketsDelta}% ${t('artistsSlugAnalyticsPage.thisPeriod', 'this period')}` : t('artistsSlugAnalyticsPage.capturedOrders', 'CAPTURED orders')}
           </div>
         </div>
         <div className="aa-stat-card">
-          <div className="aa-stat-label">Hype Cast</div>
+          <div className="aa-stat-label">{t('artistsSlugAnalyticsPage.hypeCastLabel', 'Hype Cast')}</div>
           <div className="aa-stat-val">{currentHypeCount.toLocaleString()}</div>
           <div className="aa-stat-sub" style={hypeDelta != null ? { color: 'var(--role-venue, #22e5d4)' } : undefined}>
-            {hypeDelta != null ? `${hypeDelta >= 0 ? '+' : ''}${hypeDelta}% this period` : 'Total hypes'}
+            {hypeDelta != null ? `${hypeDelta >= 0 ? '+' : ''}${hypeDelta}% ${t('artistsSlugAnalyticsPage.thisPeriod', 'this period')}` : t('artistsSlugAnalyticsPage.totalHypes', 'Total hypes')}
           </div>
         </div>
         <div className="aa-stat-card">
-          <div className="aa-stat-label">Gross (70% share)</div>
+          <div className="aa-stat-label">{t('artistsSlugAnalyticsPage.grossLabel', 'Gross (70% share)')}</div>
           <div className="aa-stat-val" style={{ color: 'var(--accent)' }}>{formatCurrencyFromCents(grossArtistShareCents)}</div>
-          <div className="aa-stat-sub">$0 iHYPE fee</div>
+          <div className="aa-stat-sub">{t('artistsSlugAnalyticsPage.zeroFee', '$0 iHYPE fee')}</div>
         </div>
       </div>
 
       <div className="aa-eyebrow-row">
-        <span className="aa-eyebrow-sm" style={{ color: 'var(--accent)' }}>Listeners over time</span>
+        <span className="aa-eyebrow-sm" style={{ color: 'var(--accent)' }}>{t('artistsSlugAnalyticsPage.listenersOverTime', 'Listeners over time')}</span>
       </div>
       {hasChartActivity ? (
         <div className="aa-chart">
@@ -261,14 +263,14 @@ export default async function ArtistAnalyticsPage({
           ))}
         </div>
       ) : (
-        <div className="aa-empty" style={{ marginBottom: 32 }}><p>No listens yet in this period.</p></div>
+        <div className="aa-empty" style={{ marginBottom: 32 }}><p>{t('artistsSlugAnalyticsPage.noListens', 'No listens yet in this period.')}</p></div>
       )}
 
       <div className="aa-eyebrow-row">
-        <span className="aa-eyebrow-sm">Top Events</span>
+        <span className="aa-eyebrow-sm">{t('artistsSlugAnalyticsPage.topEvents', 'Top Events')}</span>
       </div>
       {topEvents.length === 0 ? (
-        <div className="aa-empty"><p>No events in this period yet.</p></div>
+        <div className="aa-empty"><p>{t('artistsSlugAnalyticsPage.noEvents', 'No events in this period yet.')}</p></div>
       ) : (
         <div className="aa-events-list">
           {topEvents.map((event) => {
@@ -278,7 +280,7 @@ export default async function ArtistAnalyticsPage({
                 <div style={{ minWidth: 0 }}>
                   <div className="aa-event-title">{event.title} · {date}</div>
                   <div className="aa-event-meta">
-                    {event.ticketsSold.toLocaleString()} tickets{event.ticketCapacity ? ` · ${event.ticketCapacity.toLocaleString()} cap` : ''}
+                    {event.ticketsSold.toLocaleString()} {t('artistsSlugAnalyticsPage.ticketsLabel', 'tickets')}{event.ticketCapacity ? ` · ${event.ticketCapacity.toLocaleString()} ${t('artistsSlugAnalyticsPage.capLabel', 'cap')}` : ''}
                   </div>
                 </div>
                 <span className="aa-event-gross">{formatCurrencyFromCents(event.grossCents)}</span>

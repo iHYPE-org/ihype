@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { isInviteCodeRequiredRuntime } from '@/lib/runtime-flags';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'Join iHYPE',
@@ -16,24 +17,24 @@ const ROLES = [
 
 export default async function JoinChooserPage() {
   const inviteOnly = await isInviteCodeRequiredRuntime();
+  const t = getT(await getLocale());
   return (
     <div className="join-wrap">
-      <div className="join-eyebrow">{inviteOnly ? 'Request Beta' : 'Join iHYPE'}</div>
-      <h1 className="join-h1">Every account starts as a fan.</h1>
+      <div className="join-eyebrow">{inviteOnly ? t('joinPage.requestBeta', 'Request Beta') : t('joinPage.joinIhype', 'Join iHYPE')}</div>
+      <h1 className="join-h1">{t('joinPage.heading', 'Every account starts as a fan.')}</h1>
       <p className="join-sub">
-        You can always add an Artist, DJ, or Venue page later from Settings — but if you already know
-        what you&rsquo;re here for, pick it below and see the tools built for it.
+        {t('joinPage.subheading', "You can always add an Artist, DJ, or Venue page later from Settings — but if you already know what you're here for, pick it below and see the tools built for it.")}
       </p>
       <div className="join-grid">
-        {ROLES.map((r) => (
+        {ROLES.map((r, i) => (
           <Link className="join-card" href={r.href} key={r.label} style={{ ['--jc-color' as string]: r.color }}>
             <span className="join-card-icon">{r.icon}</span>
-            <span className="join-card-label">{r.label}</span>
-            <span className="join-card-help">{r.help}</span>
+            <span className="join-card-label">{t(`joinPage.roleLabel${i}`, r.label)}</span>
+            <span className="join-card-help">{t(`joinPage.roleHelp${i}`, r.help)}</span>
           </Link>
         ))}
       </div>
-      <Link className="join-skip" href="/register">Just sign up as a fan →</Link>
+      <Link className="join-skip" href="/register">{t('joinPage.skipCta', 'Just sign up as a fan →')}</Link>
 
       <style>{`
         .join-wrap { max-width: 720px; margin: 0 auto; padding: 80px 24px 100px; text-align: center; }

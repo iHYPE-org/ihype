@@ -5,6 +5,7 @@ import { getSceneWrapped, type SceneWrapped } from '@/lib/sceneWrapped';
 import { WrappedShareButton } from '@/components/WrappedShareButton';
 import { MyStatsPanel } from '@/components/MyStatsPanel';
 import type { Metadata } from 'next';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,24 +24,25 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-function buildShareText(w: SceneWrapped): string {
+function buildShareText(w: SceneWrapped, t: (key: string, fallback?: string) => string): string {
   const loc = w.city ? ` in ${w.city}` : '';
   const bits = [
-    w.showsAttended > 0 ? `${w.showsAttended} show${w.showsAttended === 1 ? '' : 's'}` : null,
-    w.hypesGiven > 0 ? `${w.hypesGiven} hypes` : null,
-    w.discoveries > 0 ? `${w.discoveries} new artist${w.discoveries === 1 ? '' : 's'}` : null,
+    w.showsAttended > 0 ? `${w.showsAttended} ${w.showsAttended === 1 ? t('meWrappedPage.show', 'show') : t('meWrappedPage.shows', 'shows')}` : null,
+    w.hypesGiven > 0 ? `${w.hypesGiven} ${t('meWrappedPage.hypes', 'hypes')}` : null,
+    w.discoveries > 0 ? `${w.discoveries} ${w.discoveries === 1 ? t('meWrappedPage.newArtist', 'new artist') : t('meWrappedPage.newArtists', 'new artists')}` : null,
   ].filter(Boolean);
-  return `My ${w.monthLabel}${loc} on iHYPE: ${bits.join(' · ') || 'just getting started'}.`;
+  return `${t('meWrappedPage.shareTextPrefix', 'My')} ${w.monthLabel}${loc} ${t('meWrappedPage.shareTextOnIhype', 'on iHYPE')}: ${bits.join(' · ') || t('meWrappedPage.justGettingStarted', 'just getting started')}.`;
 }
 
 export default async function WrappedPage() {
+  const t = getT(await getLocale());
   const session = await auth();
   if (!session?.user?.id) {
     redirect('/login?callbackUrl=/me/wrapped');
   }
 
   const w = await getSceneWrapped(session.user.id);
-  const shareText = buildShareText(w);
+  const shareText = buildShareText(w, t);
 
   return (
     <div className="wrapped-page">
@@ -51,38 +53,38 @@ export default async function WrappedPage() {
         <div className="wrapped-orb wrapped-orb-b" aria-hidden="true" />
 
         <header className="wrapped-head">
-          <span className="wrapped-eyebrow">MY SCENE · {w.monthLabel.toUpperCase()} {w.year}</span>
+          <span className="wrapped-eyebrow">{t('meWrappedPage.myScene', 'MY SCENE')} · {w.monthLabel.toUpperCase()} {w.year}</span>
           <h1 className="wrapped-title">
-            {w.city ? <>{w.city}<br />in {w.monthLabel}</> : <>Your {w.monthLabel}<br />in the scene</>}
+            {w.city ? <>{w.city}<br />{t('meWrappedPage.inMonth', 'in')} {w.monthLabel}</> : <>{t('meWrappedPage.yourPrefix', 'Your')} {w.monthLabel}<br />{t('meWrappedPage.inTheScene', 'in the scene')}</>}
           </h1>
         </header>
 
         {w.isEmpty ? (
           <div className="wrapped-empty">
-            <p>Your scene is quiet so far this month.</p>
-            <p className="wrapped-empty-sub">Hype an artist or RSVP a show — your card fills in as you go.</p>
-            <Link href="/discover" className="wrapped-cta">Discover artists</Link>
+            <p>{t('meWrappedPage.sceneQuiet', 'Your scene is quiet so far this month.')}</p>
+            <p className="wrapped-empty-sub">{t('meWrappedPage.sceneQuietSub', 'Hype an artist or RSVP a show — your card fills in as you go.')}</p>
+            <Link href="/discover" className="wrapped-cta">{t('meWrappedPage.discoverArtists', 'Discover artists')}</Link>
           </div>
         ) : (
           <>
             <div className="wrapped-grid">
-              <Stat value={w.showsAttended} label="Shows" color="#22e5d4" />
-              <Stat value={w.hypesGiven} label="Hypes given" color="#ff5029" />
-              <Stat value={w.discoveries} label="New artists" color="#b983ff" />
-              <Stat value={w.streak} label="Day streak" color="#ff3e9a" />
+              <Stat value={w.showsAttended} label={t('meWrappedPage.statShows', 'Shows')} color="#22e5d4" />
+              <Stat value={w.hypesGiven} label={t('meWrappedPage.statHypesGiven', 'Hypes given')} color="#ff5029" />
+              <Stat value={w.discoveries} label={t('meWrappedPage.statNewArtists', 'New artists')} color="#b983ff" />
+              <Stat value={w.streak} label={t('meWrappedPage.statDayStreak', 'Day streak')} color="#ff3e9a" />
             </div>
 
             <div className="wrapped-highlights">
-              {w.topArtist && <Highlight label="Most played" value={w.topArtist} />}
-              {w.topVenue && <Highlight label="Top venue" value={w.topVenue} />}
-              {w.topGenre && <Highlight label="Your sound" value={w.topGenre} />}
+              {w.topArtist && <Highlight label={t('meWrappedPage.mostPlayed', 'Most played')} value={w.topArtist} />}
+              {w.topVenue && <Highlight label={t('meWrappedPage.topVenue', 'Top venue')} value={w.topVenue} />}
+              {w.topGenre && <Highlight label={t('meWrappedPage.yourSound', 'Your sound')} value={w.topGenre} />}
             </div>
           </>
         )}
 
         <footer className="wrapped-foot">
           <span className="wrapped-foot-brand">iHYPE</span>
-          <span className="wrapped-foot-meta">0% fees · 70/20/10</span>
+          <span className="wrapped-foot-meta">{t('meWrappedPage.feesSplit', '0% fees · 70/20/10')}</span>
         </footer>
       </div>
 
@@ -90,7 +92,7 @@ export default async function WrappedPage() {
 
       <div className="wrapped-actions">
         <WrappedShareButton shareText={shareText} monthLabel={w.monthLabel} />
-        <Link href="/home" className="wrapped-back">Back to workbench</Link>
+        <Link href="/home" className="wrapped-back">{t('meWrappedPage.backToWorkbench', 'Back to workbench')}</Link>
       </div>
     </div>
   );

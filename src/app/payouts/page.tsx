@@ -7,6 +7,7 @@ import { isStripeConfigured } from '@/lib/stripe';
 import { PayoutsHistoryPanel } from '@/components/payouts/PayoutsHistoryPanel';
 import { PayoutSettingsPanel } from '@/components/payouts/PayoutSettingsPanel';
 import { PayoutShowsPanel } from '@/components/payouts/PayoutShowsPanel';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,6 +39,7 @@ export default async function PayoutsHubPage({
 }: {
   searchParams?: Promise<{ tab?: string }>;
 }) {
+  const t = getT(await getLocale());
   const session = await auth();
   if (!session?.user?.id) {
     redirect('/login?callbackUrl=/payouts');
@@ -86,19 +88,19 @@ export default async function PayoutsHubPage({
 
   return (
     <div className="container" style={{ paddingTop: 24, paddingBottom: 60, maxWidth: 640 }}>
-      <h1>Payouts</h1>
+      <h1>{t('payoutsPage.heading', 'Payouts')}</h1>
       <div style={{ display: 'flex', gap: 8, margin: '16px 0 24px', borderBottom: '1px solid var(--line)' }}>
-        {TABS.map((t) => (
+        {TABS.map((tabDef) => (
           <Link
-            key={t.id}
-            href={`/payouts?tab=${t.id}`}
+            key={tabDef.id}
+            href={`/payouts?tab=${tabDef.id}`}
             style={{
               padding: '10px 4px', marginRight: 16, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14,
-              textDecoration: 'none', color: tab === t.id ? 'var(--accent)' : 'var(--ink-a55)',
-              borderBottom: tab === t.id ? '2px solid var(--accent)' : '2px solid transparent',
+              textDecoration: 'none', color: tab === tabDef.id ? 'var(--accent)' : 'var(--ink-a55)',
+              borderBottom: tab === tabDef.id ? '2px solid var(--accent)' : '2px solid transparent',
             }}
           >
-            {t.label}
+            {t(`payoutsPage.tab.${tabDef.id}`, tabDef.label)}
           </Link>
         ))}
       </div>

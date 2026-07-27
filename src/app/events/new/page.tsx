@@ -4,6 +4,7 @@ import type { CSSProperties } from 'react';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useI18n } from '@/components/I18nProvider';
 
 type Step = 0 | 1 | 2 | 3 | 4;
 type TicketType = 'ga' | 'vip';
@@ -29,6 +30,7 @@ function ProfilePicker({
   value: ProfileHit | null;
   onChange: (p: ProfileHit | null) => void;
 }) {
+  const { t } = useI18n();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<ProfileHit[]>([]);
   const [open, setOpen] = useState(false);
@@ -83,7 +85,7 @@ function ProfilePicker({
         value={query}
         onChange={e => setQuery(e.target.value)}
         onFocus={() => results.length > 0 && setOpen(true)}
-        placeholder={`Search ${label.toLowerCase()}…`}
+        placeholder={`${t('eventsNewPage.searchPlaceholderPrefix', 'Search')} ${label.toLowerCase()}…`}
       />
       {open && results.length > 0 && (
         <div style={{
@@ -115,6 +117,7 @@ function ProfilePicker({
 const wrapStyle: CSSProperties = { width: '100%', maxWidth: 520, margin: '0 auto' };
 
 export default function EventsNewPage() {
+  const { t } = useI18n();
   const router = useRouter();
   const [step, setStep] = useState<Step>(0);
 
@@ -193,7 +196,12 @@ export default function EventsNewPage() {
         {step < 4 && (
           <>
             <div className="label" style={{ marginBottom: 10 }}>
-              {['Step 1 of 4 · Basics', 'Step 2 of 4 · Tickets', 'Step 3 of 4 · Details', 'Step 4 of 4 · Review'][step]}
+              {[
+                t('eventsNewPage.stepLabelBasics', 'Step 1 of 4 · Basics'),
+                t('eventsNewPage.stepLabelTickets', 'Step 2 of 4 · Tickets'),
+                t('eventsNewPage.stepLabelDetails', 'Step 3 of 4 · Details'),
+                t('eventsNewPage.stepLabelReview', 'Step 4 of 4 · Review'),
+              ][step]}
             </div>
             <div className="progress-wrap"><div className="progress-fill" style={{ width: `${progressPct}%` }} /></div>
           </>
@@ -202,46 +210,46 @@ export default function EventsNewPage() {
         {/* Step 0: Basics */}
         {step === 0 && (
           <>
-            <div className="cover-slot">Event cover art</div>
-            <h1>Create an event.</h1>
-            <p className="sub">Fill in the details. The 70/20/10 split is automatic — no configuration needed.</p>
+            <div className="cover-slot">{t('eventsNewPage.coverArtSlot', 'Event cover art')}</div>
+            <h1>{t('eventsNewPage.basicsTitle', 'Create an event.')}</h1>
+            <p className="sub">{t('eventsNewPage.basicsSubtitle', 'Fill in the details. The 70/20/10 split is automatic — no configuration needed.')}</p>
             <div className="field">
-              <label htmlFor="event-title">Event title</label>
-              <input id="event-title" onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Midnight Echo — Live at The Echo" value={title} />
+              <label htmlFor="event-title">{t('eventsNewPage.eventTitleLabel', 'Event title')}</label>
+              <input id="event-title" onChange={(e) => setTitle(e.target.value)} placeholder={t('eventsNewPage.eventTitlePlaceholder', 'e.g. Midnight Echo — Live at The Echo')} value={title} />
             </div>
             <div className="grid2">
               <div className="field">
-                <label htmlFor="event-date">Date</label>
+                <label htmlFor="event-date">{t('eventsNewPage.dateLabel', 'Date')}</label>
                 <input id="event-date" onChange={(e) => setDate(e.target.value)} type="date" value={date} />
               </div>
               <div className="field">
-                <label htmlFor="event-time">Doors time</label>
+                <label htmlFor="event-time">{t('eventsNewPage.doorsTimeLabel', 'Doors time')}</label>
                 <input id="event-time" onChange={(e) => setTime(e.target.value)} type="time" value={time} />
               </div>
             </div>
-            <ProfilePicker label="Venue" onChange={setVenueProfile} types={['VENUE']} value={venueProfile} />
-            <ProfilePicker label="Artist(s)" onChange={setHeadliner} types={['ARTIST', 'DJ']} value={headliner} />
-            <button className="btn-primary" disabled={!s0Valid} onClick={() => setStep(1)} type="button">Continue →</button>
+            <ProfilePicker label={t('eventsNewPage.venueLabel', 'Venue')} onChange={setVenueProfile} types={['VENUE']} value={venueProfile} />
+            <ProfilePicker label={t('eventsNewPage.artistsLabel', 'Artist(s)')} onChange={setHeadliner} types={['ARTIST', 'DJ']} value={headliner} />
+            <button className="btn-primary" disabled={!s0Valid} onClick={() => setStep(1)} type="button">{t('eventsNewPage.continueCta', 'Continue →')}</button>
           </>
         )}
 
         {/* Step 1: Ticketing */}
         {step === 1 && (
           <>
-            <h1>Ticketing.</h1>
-            <p className="sub">Set face value and capacity. The split is fixed: 70% artist · 20% venue · 10% promoters · $0 iHYPE.</p>
+            <h1>{t('eventsNewPage.ticketingTitle', 'Ticketing.')}</h1>
+            <p className="sub">{t('eventsNewPage.ticketingSubtitle', 'Set face value and capacity. The split is fixed: 70% artist · 20% venue · 10% promoters · $0 iHYPE.')}</p>
             <div className="grid2">
               <div className="field">
-                <label htmlFor="event-price">Face value ($)</label>
+                <label htmlFor="event-price">{t('eventsNewPage.faceValueLabel', 'Face value ($)')}</label>
                 <input id="event-price" max={500} min={5} onChange={(e) => setPrice(e.target.value)} type="number" value={price} />
               </div>
               <div className="field">
-                <label htmlFor="event-capacity">Capacity</label>
+                <label htmlFor="event-capacity">{t('eventsNewPage.capacityLabel', 'Capacity')}</label>
                 <input id="event-capacity" max={5000} min={10} onChange={(e) => setCapacity(e.target.value)} type="number" value={capacity} />
               </div>
             </div>
             <div className="card">
-              <div className="label" style={{ marginBottom: 10 }}>If it sells out</div>
+              <div className="label" style={{ marginBottom: 10 }}>{t('eventsNewPage.ifSellsOut', 'If it sells out')}</div>
               <div className="split-bar" style={{ marginBottom: 14 }}>
                 <div style={{ flex: 70, background: '#ff5029', borderRadius: '999px 0 0 999px' }} />
                 <div style={{ flex: 20, background: '#22e5d4' }} />
@@ -250,49 +258,49 @@ export default function EventsNewPage() {
               <div style={{ display: 'flex', gap: 0 }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', color: '#ff5029' }}>{fmt$(gross * .7)}</div>
-                  <div className="label" style={{ marginTop: 3 }}>70% Artist</div>
+                  <div className="label" style={{ marginTop: 3 }}>{t('eventsNewPage.splitArtist', '70% Artist')}</div>
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', color: '#22e5d4' }}>{fmt$(gross * .2)}</div>
-                  <div className="label" style={{ marginTop: 3 }}>20% Venue</div>
+                  <div className="label" style={{ marginTop: 3 }}>{t('eventsNewPage.splitVenue', '20% Venue')}</div>
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', color: '#b983ff' }}>{fmt$(gross * .1)}</div>
-                  <div className="label" style={{ marginTop: 3 }}>10% Promoters</div>
+                  <div className="label" style={{ marginTop: 3 }}>{t('eventsNewPage.splitPromoters', '10% Promoters')}</div>
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', color: 'var(--ink-3)' }}>$0</div>
-                  <div className="label" style={{ marginTop: 3 }}>iHYPE</div>
+                  <div className="label" style={{ marginTop: 3 }}>{t('eventsNewPage.splitIhype', 'iHYPE')}</div>
                 </div>
               </div>
             </div>
             <div className="card">
-              <div className="label" style={{ marginBottom: 12 }}>Payout preview · per ticket</div>
+              <div className="label" style={{ marginBottom: 12 }}>{t('eventsNewPage.payoutPreviewLabel', 'Payout preview · per ticket')}</div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.88rem', padding: '6px 0' }}>
-                <span style={{ color: '#ff5029' }}>Artist · 70%</span><b>{fmtCents(priceDollars * .7)}</b>
+                <span style={{ color: '#ff5029' }}>{t('eventsNewPage.payoutArtist', 'Artist · 70%')}</span><b>{fmtCents(priceDollars * .7)}</b>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.88rem', padding: '6px 0' }}>
-                <span style={{ color: '#22e5d4' }}>Venue · 20%</span><b>{fmtCents(priceDollars * .2)}</b>
+                <span style={{ color: '#22e5d4' }}>{t('eventsNewPage.payoutVenue', 'Venue · 20%')}</span><b>{fmtCents(priceDollars * .2)}</b>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.88rem', padding: '6px 0' }}>
-                <span style={{ color: '#b983ff' }}>Promoter pool · 10%</span><b>{fmtCents(priceDollars * .1)}</b>
+                <span style={{ color: '#b983ff' }}>{t('eventsNewPage.payoutPromoterPool', 'Promoter pool · 10%')}</span><b>{fmtCents(priceDollars * .1)}</b>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.88rem', padding: '6px 0', borderTop: '1px solid var(--hair-50)', marginTop: 4 }}>
-                <span style={{ color: 'var(--ink-3)' }}>iHYPE · 0%</span><b style={{ color: 'var(--ink-3)' }}>$0.00</b>
+                <span style={{ color: 'var(--ink-3)' }}>{t('eventsNewPage.payoutIhype', 'iHYPE · 0%')}</span><b style={{ color: 'var(--ink-3)' }}>$0.00</b>
               </div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '.62rem', color: 'var(--ink-3)', marginTop: 10, lineHeight: 1.6 }}>
-                Buyer pays face value + card processing at cost (2.9% + $0.30; AMEX 3.5% + $0.30). Tax estimate shown at checkout. Sell-out gross: {fmt$(gross)}.
+                {t('eventsNewPage.payoutFinePrint', 'Buyer pays face value + card processing at cost (2.9% + $0.30; AMEX 3.5% + $0.30). Tax estimate shown at checkout. Sell-out gross:')} {fmt$(gross)}.
               </div>
             </div>
-            <div className="field"><label>Ticket types</label></div>
+            <div className="field"><label>{t('eventsNewPage.ticketTypesLabel', 'Ticket types')}</label></div>
             <div
               className={`ticket-type-btn${ticketType === 'ga' ? ' selected' : ''}`}
               onClick={() => setTicketType('ga')}
             >
               <span style={{ fontSize: 20 }}>🎟</span>
               <div>
-                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '.9rem' }}>General Admission</div>
-                <div style={{ fontSize: '.78rem', color: 'var(--ink-3)' }}>Single entry, face value</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '.9rem' }}>{t('eventsNewPage.gaTitle', 'General Admission')}</div>
+                <div style={{ fontSize: '.78rem', color: 'var(--ink-3)' }}>{t('eventsNewPage.gaSubtitle', 'Single entry, face value')}</div>
               </div>
             </div>
             <div
@@ -301,50 +309,50 @@ export default function EventsNewPage() {
             >
               <span style={{ fontSize: 20 }}>⭐</span>
               <div>
-                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '.9rem' }}>VIP</div>
-                <div style={{ fontSize: '.78rem', color: 'var(--ink-3)' }}>Early entry + extras (custom price)</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '.9rem' }}>{t('eventsNewPage.vipTitle', 'VIP')}</div>
+                <div style={{ fontSize: '.78rem', color: 'var(--ink-3)' }}>{t('eventsNewPage.vipSubtitle', 'Early entry + extras (custom price)')}</div>
               </div>
             </div>
-            <button className="btn-primary" onClick={() => setStep(2)} style={{ marginTop: 12 }} type="button">Continue →</button>
-            <button className="btn-ghost" onClick={() => setStep(0)} type="button">Back</button>
+            <button className="btn-primary" onClick={() => setStep(2)} style={{ marginTop: 12 }} type="button">{t('eventsNewPage.continueCta', 'Continue →')}</button>
+            <button className="btn-ghost" onClick={() => setStep(0)} type="button">{t('eventsNewPage.backCta', 'Back')}</button>
           </>
         )}
 
         {/* Step 2: Details */}
         {step === 2 && (
           <>
-            <h1>Details.</h1>
-            <p className="sub">Add a description and any requirements. This appears on the public event page.</p>
+            <h1>{t('eventsNewPage.detailsTitle', 'Details.')}</h1>
+            <p className="sub">{t('eventsNewPage.detailsSubtitle', 'Add a description and any requirements. This appears on the public event page.')}</p>
             <div className="field">
-              <label htmlFor="event-description">Description</label>
-              <textarea id="event-description" onChange={(e) => setDescription(e.target.value)} placeholder="Tell fans what to expect…" value={description} />
+              <label htmlFor="event-description">{t('eventsNewPage.descriptionLabel', 'Description')}</label>
+              <textarea id="event-description" onChange={(e) => setDescription(e.target.value)} placeholder={t('eventsNewPage.descriptionPlaceholder', 'Tell fans what to expect…')} value={description} />
             </div>
             <div className="field">
-              <label htmlFor="event-age-requirement">Age requirement</label>
+              <label htmlFor="event-age-requirement">{t('eventsNewPage.ageRequirementLabel', 'Age requirement')}</label>
               <select id="event-age-requirement" onChange={(e) => setAgeRequirement(e.target.value)} value={ageRequirement}>
-                <option>All ages</option>
-                <option>18+</option>
-                <option>21+</option>
+                <option value="All ages">{t('eventsNewPage.ageAllAges', 'All ages')}</option>
+                <option value="18+">18+</option>
+                <option value="21+">21+</option>
               </select>
             </div>
             <div className="field">
-              <label htmlFor="event-notes">Dress code / notes (optional)</label>
-              <input id="event-notes" onChange={(e) => setNotes(e.target.value)} placeholder="e.g. Smart casual, no photography" type="text" value={notes} />
+              <label htmlFor="event-notes">{t('eventsNewPage.notesLabel', 'Dress code / notes (optional)')}</label>
+              <input id="event-notes" onChange={(e) => setNotes(e.target.value)} placeholder={t('eventsNewPage.notesPlaceholder', 'e.g. Smart casual, no photography')} type="text" value={notes} />
             </div>
-            <button className="btn-primary" onClick={() => setStep(3)} type="button">Continue →</button>
-            <button className="btn-ghost" onClick={() => setStep(1)} type="button">Back</button>
+            <button className="btn-primary" onClick={() => setStep(3)} type="button">{t('eventsNewPage.continueCta', 'Continue →')}</button>
+            <button className="btn-ghost" onClick={() => setStep(1)} type="button">{t('eventsNewPage.backCta', 'Back')}</button>
           </>
         )}
 
         {/* Step 3: Review */}
         {step === 3 && (
           <>
-            <h1>Review &amp; publish.</h1>
-            <p className="sub">Once published, your event goes live and tickets are available immediately.</p>
+            <h1>{t('eventsNewPage.reviewTitle', 'Review & publish.')}</h1>
+            <p className="sub">{t('eventsNewPage.reviewSubtitle', 'Once published, your event goes live and tickets are available immediately.')}</p>
             <div className="card">
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', marginBottom: 4 }}>{title || 'Untitled Event'}</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', marginBottom: 4 }}>{title || t('eventsNewPage.untitledEvent', 'Untitled Event')}</div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '.72rem', color: 'var(--ink-3)', marginBottom: 14 }}>
-                {date || 'TBD'} · {venueProfile?.name ?? 'TBD'} · ${priceDollars || 0} · {cap || 0} cap
+                {date || t('eventsNewPage.tbd', 'TBD')} · {venueProfile?.name ?? t('eventsNewPage.tbd', 'TBD')} · ${priceDollars || 0} · {cap || 0} {t('eventsNewPage.capAbbrev', 'cap')}
               </div>
               <div className="split-bar" style={{ marginBottom: 12 }}>
                 <div style={{ flex: 70, background: '#ff5029', borderRadius: '999px 0 0 999px' }} />
@@ -352,27 +360,27 @@ export default function EventsNewPage() {
                 <div style={{ flex: 10, background: '#b983ff', borderRadius: '0 999px 999px 0' }} />
               </div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '.72rem', color: 'var(--ink-3)' }}>
-                {fmt$(gross * .7)} artist · {fmt$(gross * .2)} venue · {fmt$(gross * .1)} promoters · $0 iHYPE
+                {fmt$(gross * .7)} {t('eventsNewPage.artistWord', 'artist')} · {fmt$(gross * .2)} {t('eventsNewPage.venueWord', 'venue')} · {fmt$(gross * .1)} {t('eventsNewPage.promotersWord', 'promoters')} · $0 iHYPE
               </div>
             </div>
             <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(255,184,74,.25)', background: 'rgba(255,184,74,.06)', marginBottom: 14 }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '.68rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--warning)', marginBottom: 8 }}>
-                ⚠ Review before you lock
+                ⚠ {t('eventsNewPage.reviewWarningTitle', 'Review before you lock')}
               </div>
               <div style={{ fontSize: '.85rem', color: 'var(--ink-2)', lineHeight: 1.6 }}>
-                Publishing freezes the charter: <b style={{ color: 'var(--ink)' }}>70% artist · 20% venue · 10% promoters · 0% iHYPE</b> at <b style={{ color: 'var(--ink)' }}>${priceDollars || 0}</b> face value, {cap || 0} serialized QR tickets. The split can never change after the first sale. Resale is limited to face value — see the <Link href="/ticket-policy" style={{ color: '#ff5029' }}>ticket policy</Link> for refund and transfer terms.
+                {t('eventsNewPage.reviewWarningLead', 'Publishing freezes the charter:')} <b style={{ color: 'var(--ink)' }}>{t('eventsNewPage.chartersSplit', '70% artist · 20% venue · 10% promoters · 0% iHYPE')}</b> {t('eventsNewPage.reviewWarningAt', 'at')} <b style={{ color: 'var(--ink)' }}>${priceDollars || 0}</b> {t('eventsNewPage.reviewWarningFaceValue', 'face value,')} {cap || 0} {t('eventsNewPage.reviewWarningTickets', 'serialized QR tickets. The split can never change after the first sale. Resale is limited to face value — see the')} <Link href="/ticket-policy" style={{ color: '#ff5029' }}>{t('eventsNewPage.ticketPolicyLink', 'ticket policy')}</Link> {t('eventsNewPage.reviewWarningTerms', 'for refund and transfer terms.')}
               </div>
             </div>
             <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(34,229,212,.2)', background: 'rgba(34,229,212,.04)', marginBottom: 14 }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '.72rem', color: '#22e5d4', lineHeight: 1.5 }}>
-                iHYPE takes $0 · 70/20/10 split locked in charter · tickets go on sale immediately
+                {t('eventsNewPage.ihypeChip', 'iHYPE takes $0 · 70/20/10 split locked in charter · tickets go on sale immediately')}
               </div>
             </div>
             {error && <p style={{ color: '#ff5029', fontSize: 13, marginBottom: 12 }}>{error}</p>}
             <button className="btn-primary" disabled={submitting} onClick={publish} type="button">
-              {submitting ? 'Publishing…' : 'Publish event & lock charter 🔒'}
+              {submitting ? t('eventsNewPage.publishing', 'Publishing…') : t('eventsNewPage.publishCta', 'Publish event & lock charter 🔒')}
             </button>
-            <button className="btn-ghost" onClick={() => setStep(2)} type="button">Back</button>
+            <button className="btn-ghost" onClick={() => setStep(2)} type="button">{t('eventsNewPage.backCta', 'Back')}</button>
           </>
         )}
 
@@ -382,17 +390,17 @@ export default function EventsNewPage() {
             <div style={{ width: 60, height: 60, borderRadius: 16, background: 'rgba(34,229,212,.12)', border: '2px solid #22e5d4', display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
               <svg fill="none" height="28" stroke="#22e5d4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" viewBox="0 0 24 24" width="28"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z" /><path d="M13 5v2M13 11v2M13 17v2" /></svg>
             </div>
-            <h1 style={{ marginBottom: '.5rem' }}>Event published.</h1>
+            <h1 style={{ marginBottom: '.5rem' }}>{t('eventsNewPage.publishedTitle', 'Event published.')}</h1>
             <p className="sub" style={{ textAlign: 'center', maxWidth: '34ch', margin: '0 auto 1.5rem' }}>
-              Your event is live. Tickets are on sale. Fans who hyped the artist will get notified first.
+              {t('eventsNewPage.publishedSubtitle', 'Your event is live. Tickets are on sale. Fans who hyped the artist will get notified first.')}
             </p>
             {publishedSlug && (
               <Link className="btn-primary" href={`/shows/${publishedSlug}`} style={{ display: 'block', textAlign: 'center', textDecoration: 'none', marginBottom: 10 }}>
-                View event page →
+                {t('eventsNewPage.viewEventPage', 'View event page →')}
               </Link>
             )}
             <Link className="btn-ghost" href="/home" style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>
-              Back to dashboard
+              {t('eventsNewPage.backToDashboard', 'Back to dashboard')}
             </Link>
           </div>
         )}

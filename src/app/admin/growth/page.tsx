@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { isAdminSession } from '@/lib/permissions';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { db } from '@/lib/db';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const metadata = {
   title: 'Growth | Admin | iHYPE',
@@ -10,6 +11,7 @@ export const metadata = {
 };
 
 export default async function AdminGrowthPage() {
+  const t = getT(await getLocale());
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
   if (!isAdminSession(session)) redirect(WORKBENCH_PATH);
@@ -46,18 +48,18 @@ export default async function AdminGrowthPage() {
   ]);
 
   const funnelSteps = [
-    { label: 'Total users', value: userCount },
-    { label: 'Total profiles', value: profileCount },
-    { label: 'Artists with media', value: artistsWithMedia },
-    { label: 'Artists with shows', value: artistsWithShows },
+    { label: t('adminGrowthPage.totalUsers', 'Total users'), value: userCount },
+    { label: t('adminGrowthPage.totalProfiles', 'Total profiles'), value: profileCount },
+    { label: t('adminGrowthPage.artistsWithMedia', 'Artists with media'), value: artistsWithMedia },
+    { label: t('adminGrowthPage.artistsWithShows', 'Artists with shows'), value: artistsWithShows },
   ];
 
   return (
     <div className="container section admin-console">
       <section className="panel admin-console-panel">
-        <h1 style={{ fontSize: 20, marginBottom: 16 }}>Growth</h1>
+        <h1 style={{ fontSize: 20, marginBottom: 16 }}>{t('adminGrowthPage.title', 'Growth')}</h1>
 
-        <h2 style={{ fontSize: 15, marginBottom: 10 }}>Artist Funnel</h2>
+        <h2 style={{ fontSize: 15, marginBottom: 10 }}>{t('adminGrowthPage.artistFunnelHeading', 'Artist Funnel')}</h2>
         <div className="admin-health-grid" style={{ marginBottom: 24 }}>
           {funnelSteps.map(({ label, value }) => (
             <div className="admin-health-card" key={label}>
@@ -67,47 +69,47 @@ export default async function AdminGrowthPage() {
           ))}
         </div>
 
-        <h2 style={{ fontSize: 15, marginBottom: 10 }}>Dropoff Points</h2>
+        <h2 style={{ fontSize: 15, marginBottom: 10 }}>{t('adminGrowthPage.dropoffPointsHeading', 'Dropoff Points')}</h2>
         <div className="admin-health-grid" style={{ marginBottom: 24 }}>
           <div className="admin-health-card">
-            <span>No uploads yet</span>
+            <span>{t('adminGrowthPage.noUploadsYet', 'No uploads yet')}</span>
             <strong style={{ color: funnelStage1 > 0 ? '#e74c3c' : 'inherit' }}>{funnelStage1}</strong>
           </div>
           <div className="admin-health-card">
-            <span>Uploads, no shows</span>
+            <span>{t('adminGrowthPage.uploadsNoShows', 'Uploads, no shows')}</span>
             <strong style={{ color: funnelStage2 > 0 ? '#f39c12' : 'inherit' }}>{funnelStage2}</strong>
           </div>
           <div className="admin-health-card">
-            <span>Shows with 0 hypes</span>
+            <span>{t('adminGrowthPage.showsWithZeroHypes', 'Shows with 0 hypes')}</span>
             <strong>{funnelStage3}</strong>
           </div>
         </div>
 
-        <h2 style={{ fontSize: 15, marginBottom: 10 }}>Top Hyped Profiles</h2>
+        <h2 style={{ fontSize: 15, marginBottom: 10 }}>{t('adminGrowthPage.topHypedProfilesHeading', 'Top Hyped Profiles')}</h2>
         {topHypedProfiles.length === 0 ? (
-          <div className="empty">No profiles with hypes yet.</div>
+          <div className="empty">{t('adminGrowthPage.noProfilesWithHypes', 'No profiles with hypes yet.')}</div>
         ) : (
           <div className="admin-list" style={{ marginBottom: 24 }}>
             {topHypedProfiles.map(p => (
               <div className="admin-list-row" key={p.slug}>
                 <span>{p.name}</span>
-                <strong>{p.hypeCount} hypes</strong>
+                <strong>{p.hypeCount} {t('adminGrowthPage.hypes', 'hypes')}</strong>
                 <small>{p.type} · /{p.slug}</small>
               </div>
             ))}
           </div>
         )}
 
-        <h2 style={{ fontSize: 15, marginBottom: 10 }}>Recent Artists</h2>
+        <h2 style={{ fontSize: 15, marginBottom: 10 }}>{t('adminGrowthPage.recentArtistsHeading', 'Recent Artists')}</h2>
         {recentArtists.length === 0 ? (
-          <div className="empty">No artists yet.</div>
+          <div className="empty">{t('adminGrowthPage.noArtistsYet', 'No artists yet.')}</div>
         ) : (
           <div className="admin-list">
             {recentArtists.map(p => (
               <div className="admin-list-row" key={p.slug}>
                 <span>{p.name}</span>
                 <small>/{p.slug}</small>
-                <small>{p.hypeCount} hypes</small>
+                <small>{p.hypeCount} {t('adminGrowthPage.hypes', 'hypes')}</small>
                 <small>{p.createdAt.toISOString().slice(0, 10)}</small>
               </div>
             ))}

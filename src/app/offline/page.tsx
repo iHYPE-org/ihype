@@ -2,28 +2,29 @@
 
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-
-const MESSAGES: Record<string, { title: string; subtitle: string; code: string }> = {
-  offline: {
-    title: "You're offline.",
-    subtitle: "No connection — common at venues. Your tickets, hypes, and crate are safe; we'll sync the moment you're back.",
-    code: 'ERR · OFFLINE',
-  },
-  '503': {
-    title: 'Back in a moment.',
-    subtitle: "The server is catching its breath. We'll retry in a few seconds.",
-    code: 'HTTP 503 · SERVICE UNAVAILABLE',
-  },
-  '500': {
-    title: 'Something broke.',
-    subtitle: 'An unexpected error occurred. If it keeps happening, email admin@ihype.org.',
-    code: 'HTTP 500 · INTERNAL SERVER ERROR',
-  },
-};
+import { useI18n } from '@/components/I18nProvider';
 
 const RETRY_INTERVALS_MS = [8000, 15000, 30000];
 
 function OfflinePageInner() {
+  const { t } = useI18n();
+  const MESSAGES: Record<string, { title: string; subtitle: string; code: string }> = {
+    offline: {
+      title: t('offlinePage.offlineTitle', "You're offline."),
+      subtitle: t('offlinePage.offlineSubtitle', "No connection — common at venues. Your tickets, hypes, and crate are safe; we'll sync the moment you're back."),
+      code: t('offlinePage.offlineCode', 'ERR · OFFLINE'),
+    },
+    '503': {
+      title: t('offlinePage.serviceUnavailableTitle', 'Back in a moment.'),
+      subtitle: t('offlinePage.serviceUnavailableSubtitle', "The server is catching its breath. We'll retry in a few seconds."),
+      code: t('offlinePage.serviceUnavailableCode', 'HTTP 503 · SERVICE UNAVAILABLE'),
+    },
+    '500': {
+      title: t('offlinePage.serverErrorTitle', 'Something broke.'),
+      subtitle: t('offlinePage.serverErrorSubtitle', 'An unexpected error occurred. If it keeps happening, email admin@ihype.org.'),
+      code: t('offlinePage.serverErrorCode', 'HTTP 500 · INTERNAL SERVER ERROR'),
+    },
+  };
   const searchParams = useSearchParams();
   const code = searchParams.get('code') ?? 'offline';
   const msg = MESSAGES[code] ?? MESSAGES.offline;
@@ -36,7 +37,7 @@ function OfflinePageInner() {
 
   const doRetry = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    setRetryMessage('Checking…');
+    setRetryMessage(t('offlinePage.checking', 'Checking…'));
     setRetrying(true);
     setTimeout(() => {
       fetch('/api/health', { method: 'HEAD', cache: 'no-store' })
@@ -57,13 +58,13 @@ function OfflinePageInner() {
     setBarWidth(0);
     setBarDurationMs(ms);
     requestAnimationFrame(() => setBarWidth(100));
-    setRetryMessage(`Auto-retry in ${Math.round(ms / 1000)}s`);
+    setRetryMessage(`${t('offlinePage.autoRetryIn', 'Auto-retry in')} ${Math.round(ms / 1000)}s`);
     timerRef.current = setTimeout(doRetry, ms);
   };
 
   useEffect(() => {
     const handleOnline = () => {
-      setRetryMessage('Connection restored — retrying…');
+      setRetryMessage(t('offlinePage.connectionRestored', 'Connection restored — retrying…'));
       setTimeout(() => {
         window.location.href = '/';
       }, 800);
@@ -104,9 +105,9 @@ function OfflinePageInner() {
 
       <div className="offline-actions">
         <button className="offline-btn-primary" disabled={retrying} onClick={handleManualRetry} type="button">
-          {retrying ? 'Connecting…' : 'Try again'}
+          {retrying ? t('offlinePage.connecting', 'Connecting…') : t('offlinePage.tryAgain', 'Try again')}
         </button>
-        <a className="offline-btn-ghost" href="/">Back to home</a>
+        <a className="offline-btn-ghost" href="/">{t('offlinePage.backToHome', 'Back to home')}</a>
       </div>
 
       <div className="offline-retry-msg">{retryMessage}</div>

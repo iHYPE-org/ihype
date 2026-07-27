@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useI18n } from '@/components/I18nProvider';
 
 export default function AdminDeviceRegisterPage() {
+  const { t } = useI18n();
   const params = useSearchParams();
   const router = useRouter();
   const token = params.get('token') ?? '';
@@ -14,7 +16,7 @@ export default function AdminDeviceRegisterPage() {
   useEffect(() => {
     if (!token) {
       setStatus('error');
-      setErrorMsg('No token provided.');
+      setErrorMsg(t('adminDeviceRegisterPage.noToken', 'No token provided.'));
       return;
     }
     setStatus('registering');
@@ -33,20 +35,20 @@ export default function AdminDeviceRegisterPage() {
           setTimeout(() => router.replace('/admin'), 1500);
         } else {
           setStatus('error');
-          setErrorMsg(data.error ?? 'Registration failed.');
+          setErrorMsg(data.error ?? t('adminDeviceRegisterPage.registrationFailed', 'Registration failed.'));
         }
       })
-      .catch(() => { setStatus('error'); setErrorMsg('Network error.'); });
+      .catch(() => { setStatus('error'); setErrorMsg(t('adminDeviceRegisterPage.networkError', 'Network error.')); });
   }, [token, mode, router]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', fontFamily: 'system-ui', color: '#111' }}>
-      {status === 'registering' && <p>Registering this device…</p>}
-      {status === 'done' && <p style={{ color: 'green' }}>Device registered. Redirecting to admin…</p>}
+      {status === 'registering' && <p>{t('adminDeviceRegisterPage.registering', 'Registering this device…')}</p>}
+      {status === 'done' && <p style={{ color: 'green' }}>{t('adminDeviceRegisterPage.done', 'Device registered. Redirecting to admin…')}</p>}
       {status === 'error' && (
         <>
-          <p style={{ color: 'red' }}>Error: {errorMsg}</p>
-          <p style={{ fontSize: 14, color: '#666' }}>Request a new setup link from admin@ihype.org.</p>
+          <p style={{ color: 'red' }}>{t('adminDeviceRegisterPage.errorPrefix', 'Error:')} {errorMsg}</p>
+          <p style={{ fontSize: 14, color: '#666' }}>{t('adminDeviceRegisterPage.requestNewLink', 'Request a new setup link from admin@ihype.org.')}</p>
         </>
       )}
     </div>

@@ -19,6 +19,7 @@ import { getCspNonce } from '@/lib/csp-nonce';
 import { MobileShellProvider } from '@/lib/MobileShellContext';
 import { MobileAppShellLoader } from '@/components/MobileAppShellLoader';
 import { AppSplash } from '@/components/AppSplash';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 const syne = Syne({ subsets: ['latin'], weight: ['700', '800'], variable: '--font-syne', display: 'swap' });
 const dmSans = DM_Sans({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-dm', display: 'swap' });
@@ -61,13 +62,14 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const nonce = await getCspNonce();
+  const t = getT(await getLocale());
   return (
     <html lang="en" suppressHydrationWarning className={`${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} ${forum.variable}`}>
       <body>
         <AppProviders>
           <MobileShellProvider>
             <AppSplash />
-            <a href="#main-content" className="skip-to-content">Skip to main content</a>
+            <a href="#main-content" className="skip-to-content">{t('layout.skipToContent', 'Skip to main content')}</a>
             <WebVitals />
             <OfflineBanner />
             <div aria-hidden="true" className="site-background">
@@ -76,7 +78,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               <span className="site-background-grid" />
             </div>
             {/* Marketing nav — hidden when .wb-shell is present via CSS */}
-            <header aria-label="Primary site header" className="nav site-nav" style={{ height: 56 }}>
+            <header aria-label={t('layout.primarySiteHeader', 'Primary site header')} className="nav site-nav" style={{ height: 56 }}>
               <div className="container" style={{ display: 'flex', alignItems: 'stretch', height: '100%', gap: '1rem' }}>
                 <HeaderLogo />
                 <div style={{ flex: 1, display: 'flex', alignItems: 'stretch' }}>

@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { useI18n } from '@/components/I18nProvider';
 
 type ResultType = 'artist' | 'venue' | 'promoter' | 'song' | 'show' | 'genre';
 type Filter = 'all' | 'artists' | 'shows' | 'tracks';
@@ -47,6 +48,7 @@ function resultColor(r: ResultItem): string {
 const API_TYPE: Record<Filter, string> = { all: 'all', artists: 'artist', shows: 'show', tracks: 'song' };
 
 function SearchPageInner() {
+  const { t } = useI18n();
   const searchParams = useSearchParams();
   const [q, setQ] = useState(searchParams.get('q') || '');
   const [filter, setFilter] = useState<Filter>('all');
@@ -79,6 +81,13 @@ function SearchPageInner() {
     if (q) runSearch(q, f);
   }
 
+  const FILTER_LABEL: Record<Filter, string> = {
+    all: t('searchPage.filterAll', 'All'),
+    artists: t('searchPage.filterArtists', 'Artists'),
+    shows: t('searchPage.filterShows', 'Shows'),
+    tracks: t('searchPage.filterTracks', 'Tracks'),
+  };
+
   const results = data?.results ?? [];
   const artists = results.filter((r) => r.type === 'artist' || r.type === 'venue' || r.type === 'promoter');
   const shows = results.filter((r) => r.type === 'show');
@@ -96,7 +105,7 @@ function SearchPageInner() {
           ref={inputRef}
           value={q}
           onChange={(e) => handleSearch(e.target.value)}
-          placeholder="Artists, shows, tracks…"
+          placeholder={t('searchPage.searchPlaceholder', 'Artists, shows, tracks…')}
           style={{
             width: '100%', padding: '14px 16px 14px 46px', border: '1px solid var(--hair-120)',
             borderRadius: 10, background: 'var(--bg2)', color: 'var(--ink)', fontSize: 16, transition: 'all 150ms',
@@ -117,26 +126,26 @@ function SearchPageInner() {
               fontSize: 13, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms',
             }}
           >
-            {f.charAt(0).toUpperCase() + f.slice(1)}
+            {FILTER_LABEL[f]}
           </div>
         ))}
       </div>
 
       {isPending && (
-        <p style={{ color: 'var(--ink-a35)', fontSize: 13, fontFamily: 'var(--font-mono)' }}>Searching…</p>
+        <p style={{ color: 'var(--ink-a35)', fontSize: 13, fontFamily: 'var(--font-mono)' }}>{t('searchPage.searching', 'Searching…')}</p>
       )}
 
       {!q && (
         <div>
-          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginBottom: 14, marginTop: 32 }}>Trending</p>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginBottom: 14, marginTop: 32 }}>{t('searchPage.trending', 'Trending')}</p>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {TRENDING.map((t) => (
+            {TRENDING.map((term) => (
               <div
-                key={t}
-                onClick={() => handleSearch(t)}
+                key={term}
+                onClick={() => handleSearch(term)}
                 style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--bg2)', border: '1px solid var(--line)', fontSize: 13, color: 'var(--ink-a75)', cursor: 'pointer', transition: 'all 150ms' }}
               >
-                {t}
+                {term}
               </div>
             ))}
           </div>
@@ -148,7 +157,7 @@ function SearchPageInner() {
           <div style={{ fontSize: 40, marginBottom: 12 }}>
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--ink-a30)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
           </div>
-          <p>No results for &quot;{q}&quot;</p>
+          <p>{t('searchPage.noResultsPrefix', 'No results for')} &quot;{q}&quot;</p>
         </div>
       )}
 
@@ -156,7 +165,7 @@ function SearchPageInner() {
         <div>
           {show('artists') && artists.length > 0 && (
             <div>
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginBottom: 14, marginTop: 32 }}>Artists</p>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginBottom: 14, marginTop: 32 }}>{FILTER_LABEL.artists}</p>
               {artists.map((r) => {
                 const c = resultColor(r);
                 return (
@@ -176,7 +185,7 @@ function SearchPageInner() {
 
           {show('shows') && shows.length > 0 && (
             <div>
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginBottom: 14, marginTop: 32 }}>Shows</p>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginBottom: 14, marginTop: 32 }}>{FILTER_LABEL.shows}</p>
               {shows.map((r) => {
                 const c = resultColor(r);
                 return (
@@ -196,7 +205,7 @@ function SearchPageInner() {
 
           {show('tracks') && tracks.length > 0 && (
             <div>
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginBottom: 14, marginTop: 32 }}>Tracks</p>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginBottom: 14, marginTop: 32 }}>{FILTER_LABEL.tracks}</p>
               {tracks.map((r) => {
                 const c = resultColor(r);
                 return (

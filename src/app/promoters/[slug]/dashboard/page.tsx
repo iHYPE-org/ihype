@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getProfileInsights } from '@/lib/profile-insights';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'DJ Dashboard · iHYPE',
@@ -18,22 +19,23 @@ function startOfMonth(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), 1);
 }
 
-function formatShowMeta(startsAt: Date, status: string) {
-  if (status === 'LIVE') return 'Live now';
+function formatShowMeta(startsAt: Date, status: string, t: (key: string, fallback: string) => string) {
+  if (status === 'LIVE') return t('promotersSlugDashboardPage.liveNow', 'Live now');
   return startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
-function timeAgo(date: Date) {
+function timeAgo(date: Date, t: (key: string, fallback: string) => string) {
   const diffMs = Date.now() - date.getTime();
   const days = Math.floor(diffMs / 86400000);
-  if (days <= 0) return 'today';
-  if (days === 1) return '1 day ago';
-  if (days < 7) return `${days} days ago`;
+  if (days <= 0) return t('promotersSlugDashboardPage.timeAgoToday', 'today');
+  if (days === 1) return t('promotersSlugDashboardPage.timeAgoOneDay', '1 day ago');
+  if (days < 7) return `${days} ${t('promotersSlugDashboardPage.timeAgoDaysAgo', 'days ago')}`;
   const weeks = Math.floor(days / 7);
-  return weeks === 1 ? '1 week ago' : `${weeks} weeks ago`;
+  return weeks === 1 ? t('promotersSlugDashboardPage.timeAgoOneWeek', '1 week ago') : `${weeks} ${t('promotersSlugDashboardPage.timeAgoWeeksAgo', 'weeks ago')}`;
 }
 
 export default async function DJDashboardPage({ params }: { params: Promise<{ slug: string }> }) {
+  const t = getT(await getLocale());
   const { slug } = await params;
   const session = await auth();
   if (!session?.user?.id) {
@@ -119,18 +121,18 @@ export default async function DJDashboardPage({ params }: { params: Promise<{ sl
       const latestHype = s.hypes.reduce((a, b) => (b.createdAt > a ? b.createdAt : a), s.hypes[0].createdAt);
       activity.push({
         key: `hype-${s.title}`,
-        text: `${s.hypes.length} hype${s.hypes.length === 1 ? '' : 's'} on ${s.title}`,
+        text: `${s.hypes.length} ${s.hypes.length === 1 ? t('promotersSlugDashboardPage.hypeSingular', 'hype') : t('promotersSlugDashboardPage.hypePlural', 'hypes')} ${t('promotersSlugDashboardPage.onShow', 'on')} ${s.title}`,
         color: 'var(--profile-accent, #ff3e9a)',
         date: latestHype,
       });
     }
   }
-  for (const t of recentTracks) {
+  for (const track of recentTracks) {
     activity.push({
-      key: `track-${t.title}-${t.createdAt.toISOString()}`,
-      text: `"${t.title}" cleared vetting and joined your crate`,
+      key: `track-${track.title}-${track.createdAt.toISOString()}`,
+      text: `"${track.title}" ${t('promotersSlugDashboardPage.clearedVetting', 'cleared vetting and joined your crate')}`,
       color: 'var(--role-venue, #22e5d4)',
-      date: t.createdAt,
+      date: track.createdAt,
     });
   }
   if (recentTicketOrders.length > 0) {
@@ -138,7 +140,7 @@ export default async function DJDashboardPage({ params }: { params: Promise<{ sl
     const latest = recentTicketOrders.reduce((a, b) => (b.createdAt > a ? b.createdAt : a), recentTicketOrders[0].createdAt);
     activity.push({
       key: 'ticket-sales',
-      text: `${totalQty} ticket${totalQty === 1 ? '' : 's'} sold via your HYPE Links in the last 30 days`,
+      text: `${totalQty} ${totalQty === 1 ? t('promotersSlugDashboardPage.ticketSingular', 'ticket') : t('promotersSlugDashboardPage.ticketPlural', 'tickets')} ${t('promotersSlugDashboardPage.soldViaHypeLinks', 'sold via your HYPE Links in the last 30 days')}`,
       color: 'var(--role-fan, #b983ff)',
       date: latest,
     });
@@ -148,24 +150,24 @@ export default async function DJDashboardPage({ params }: { params: Promise<{ sl
 
   const stats = [
     {
-      label: 'Promoter Earnings',
+      label: t('promotersSlugDashboardPage.statPromoterEarnings', 'Promoter Earnings'),
       value: formatCurrencyFromCents(earningsThisMonthCents),
-      sub: '10% pool share this month',
+      sub: t('promotersSlugDashboardPage.poolShareThisMonth', '10% pool share this month'),
     },
     {
-      label: 'Listeners',
+      label: t('promotersSlugDashboardPage.statListeners', 'Listeners'),
       value: (insights.listeners?.distinctListeners ?? 0).toLocaleString(),
-      sub: `${(insights.listeners?.totalPlays ?? 0).toLocaleString()} total plays`,
+      sub: `${(insights.listeners?.totalPlays ?? 0).toLocaleString()} ${t('promotersSlugDashboardPage.totalPlays', 'total plays')}`,
     },
     {
-      label: 'Shows Aired',
+      label: t('promotersSlugDashboardPage.statShowsAired', 'Shows Aired'),
       value: showsAiredTotal.toLocaleString(),
-      sub: `${showsAiredThisMonth} this month`,
+      sub: `${showsAiredThisMonth} ${t('promotersSlugDashboardPage.thisMonth', 'this month')}`,
     },
     {
-      label: 'Crate Size',
+      label: t('promotersSlugDashboardPage.statCrateSize', 'Crate Size'),
       value: crateSize.toLocaleString(),
-      sub: 'tracks cleared',
+      sub: t('promotersSlugDashboardPage.tracksCleared', 'tracks cleared'),
     },
   ];
 
@@ -173,12 +175,12 @@ export default async function DJDashboardPage({ params }: { params: Promise<{ sl
     <div className="djd-page">
       <div className="djd-header">
         <div>
-          <div className="djd-eyebrow">Welcome back</div>
+          <div className="djd-eyebrow">{t('promotersSlugDashboardPage.welcomeBack', 'Welcome back')}</div>
           <h1 className="djd-title">{profile.name}</h1>
         </div>
         <div className="djd-header-actions">
-          <Link className="djd-btn djd-btn-outline" href={`/promoters/${profile.slug}?section=crate`}>My Crate</Link>
-          <Link className="djd-btn djd-btn-solid" href="/radio/studio">+ Schedule a Show</Link>
+          <Link className="djd-btn djd-btn-outline" href={`/promoters/${profile.slug}?section=crate`}>{t('promotersSlugDashboardPage.myCrateLink', 'My Crate')}</Link>
+          <Link className="djd-btn djd-btn-solid" href="/radio/studio">{t('promotersSlugDashboardPage.scheduleShowLink', '+ Schedule a Show')}</Link>
         </div>
       </div>
 
@@ -195,10 +197,10 @@ export default async function DJDashboardPage({ params }: { params: Promise<{ sl
       <div className="djd-columns">
         <div>
           <div className="djd-eyebrow-row">
-            <span className="djd-section-eyebrow">Upcoming Shows</span>
+            <span className="djd-section-eyebrow">{t('promotersSlugDashboardPage.upcomingShows', 'Upcoming Shows')}</span>
           </div>
           {upcomingShows.length === 0 ? (
-            <div className="djd-empty"><p>No shows scheduled — create one to get started.</p></div>
+            <div className="djd-empty"><p>{t('promotersSlugDashboardPage.noShowsScheduled', 'No shows scheduled — create one to get started.')}</p></div>
           ) : (
             <div className="djd-show-list">
               {upcomingShows.map((s) => {
@@ -213,17 +215,17 @@ export default async function DJDashboardPage({ params }: { params: Promise<{ sl
                     <div>
                       <div className="djd-show-title">{s.title}</div>
                       <div className="djd-show-meta">
-                        {formatShowMeta(s.startsAt, s.status)}
-                        {isLineupBooking && myLineupStatus === 'PENDING' && ' · Lineup invite — review split'}
-                        {isLineupBooking && myLineupStatus === 'ACCEPTED' && ' · Booked as lineup act'}
+                        {formatShowMeta(s.startsAt, s.status, t)}
+                        {isLineupBooking && myLineupStatus === 'PENDING' && ` · ${t('promotersSlugDashboardPage.lineupInviteReview', 'Lineup invite — review split')}`}
+                        {isLineupBooking && myLineupStatus === 'ACCEPTED' && ` · ${t('promotersSlugDashboardPage.bookedAsLineupAct', 'Booked as lineup act')}`}
                       </div>
                     </div>
                     {s.status === 'LIVE' ? (
-                      <span className="djd-live-pill"><span className="djd-live-dot" />Live</span>
+                      <span className="djd-live-pill"><span className="djd-live-dot" />{t('promotersSlugDashboardPage.liveLabel', 'Live')}</span>
                     ) : s.status === 'DRAFT' ? (
-                      <span className="djd-scheduled-pill">Draft</span>
+                      <span className="djd-scheduled-pill">{t('promotersSlugDashboardPage.draftLabel', 'Draft')}</span>
                     ) : (
-                      <span className="djd-scheduled-pill">Scheduled</span>
+                      <span className="djd-scheduled-pill">{t('promotersSlugDashboardPage.scheduledLabel', 'Scheduled')}</span>
                     )}
                   </Link>
                 );
@@ -231,16 +233,16 @@ export default async function DJDashboardPage({ params }: { params: Promise<{ sl
             </div>
           )}
 
-          <div className="djd-section-eyebrow" style={{ marginTop: 28 }}>Activity</div>
+          <div className="djd-section-eyebrow" style={{ marginTop: 28 }}>{t('promotersSlugDashboardPage.activity', 'Activity')}</div>
           {activityFeed.length === 0 ? (
-            <div className="djd-empty"><p>No activity yet.</p></div>
+            <div className="djd-empty"><p>{t('promotersSlugDashboardPage.noActivity', 'No activity yet.')}</p></div>
           ) : (
             <div className="djd-activity-list">
               {activityFeed.map((item) => (
                 <div className="djd-activity-row" key={item.key}>
                   <div className="djd-activity-dot" style={{ background: item.color }} />
                   <div className="djd-activity-text">{item.text}</div>
-                  <div className="djd-activity-time">{timeAgo(item.date)}</div>
+                  <div className="djd-activity-time">{timeAgo(item.date, t)}</div>
                 </div>
               ))}
             </div>
@@ -248,13 +250,13 @@ export default async function DJDashboardPage({ params }: { params: Promise<{ sl
         </div>
 
         <div>
-          <div className="djd-section-eyebrow">Quick Actions</div>
+          <div className="djd-section-eyebrow">{t('promotersSlugDashboardPage.quickActions', 'Quick Actions')}</div>
           <div className="djd-actions-list">
-            <Link className="djd-action-btn" href={`/promoters/${profile.slug}?section=crate`}>Add to crate</Link>
-            <Link className="djd-action-btn" href="/radio">Show archive</Link>
-            <Link className="djd-action-btn" href={`/promoters/${profile.slug}/analytics`}>View insights</Link>
-            <Link className="djd-action-btn" href={`/promoters/${profile.slug}`}>Edit my page</Link>
-            <Link className="djd-action-btn" href="/radio/studio">Radio Show Creator</Link>
+            <Link className="djd-action-btn" href={`/promoters/${profile.slug}?section=crate`}>{t('promotersSlugDashboardPage.addToCrateLink', 'Add to crate')}</Link>
+            <Link className="djd-action-btn" href="/radio">{t('promotersSlugDashboardPage.showArchiveLink', 'Show archive')}</Link>
+            <Link className="djd-action-btn" href={`/promoters/${profile.slug}/analytics`}>{t('promotersSlugDashboardPage.viewInsightsLink', 'View insights')}</Link>
+            <Link className="djd-action-btn" href={`/promoters/${profile.slug}`}>{t('promotersSlugDashboardPage.editMyPageLink', 'Edit my page')}</Link>
+            <Link className="djd-action-btn" href="/radio/studio">{t('promotersSlugDashboardPage.radioShowCreatorLink', 'Radio Show Creator')}</Link>
           </div>
         </div>
       </div>

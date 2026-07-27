@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +41,7 @@ export async function generateMetadata(
 }
 
 export default async function PlaylistPage({ params }: { params: Promise<{ slug: string }> }) {
+  const t = getT(await getLocale());
   const { slug } = await params;
 
   const playlist = await db.fanPlaylist.findUnique({
@@ -56,14 +58,14 @@ export default async function PlaylistPage({ params }: { params: Promise<{ slug:
     <div className="container" style={{ paddingTop: 24, paddingBottom: 60 }}>
       <div style={{ marginBottom: 24 }}>
         <div className="meta" style={{ marginBottom: 4 }}>
-          Playlist by <strong>@{playlist.user.username}</strong>
+          {t('playlistSlugPage.byLabel', 'Playlist by')} <strong>@{playlist.user.username}</strong>
         </div>
         <h1 style={{ marginBottom: 4 }}>{playlist.name}</h1>
-        <p className="meta">{playlist.items.length} tracks</p>
+        <p className="meta">{playlist.items.length} {t('playlistSlugPage.trackCount', 'tracks')}</p>
       </div>
 
       {playlist.items.length === 0 && (
-        <p className="meta">This playlist is empty.</p>
+        <p className="meta">{t('playlistSlugPage.emptyState', 'This playlist is empty.')}</p>
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -86,7 +88,7 @@ export default async function PlaylistPage({ params }: { params: Promise<{ slug:
       </div>
 
       <div style={{ marginTop: 32, textAlign: 'center' }}>
-        <Link href="/" className="button">Explore iHYPE</Link>
+        <Link href="/" className="button">{t('playlistSlugPage.exploreCta', 'Explore iHYPE')}</Link>
       </div>
     </div>
   );
