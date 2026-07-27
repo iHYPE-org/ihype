@@ -14,33 +14,34 @@ function fmtCents(cents: number) {
 }
 
 /** Extracted verbatim from the former standalone `/me/payouts` page (DESIGN_SYNC row 245) — same real data, same markup, now reusable from the `/payouts` tabbed hub. */
-export function PayoutsHistoryPanel({ released, pending }: { released: PayableEntry[]; pending: PayableEntry[] }) {
+export async function PayoutsHistoryPanel({ released, pending }: { released: PayableEntry[]; pending: PayableEntry[] }) {
+  const t = getT(await getLocale());
   const totalReleasedCents = released.reduce((sum, e) => sum + e.amountCents, 0);
 
   return (
     <div>
       <p className="meta" style={{ marginBottom: 24 }}>
-        Every payout your profiles have actually received — real Stripe transfers, not a projection.
+        {t('payoutsHistoryPanel.subtitle', 'Every payout your profiles have actually received — real Stripe transfers, not a projection.')}
       </p>
 
       <div className="panel" style={{ padding: '14px 20px', marginBottom: 24, display: 'flex', gap: 24 }}>
         <div>
           <div style={{ fontWeight: 700, fontSize: 24 }}>{fmtCents(totalReleasedCents)}</div>
-          <div className="meta">Total received</div>
+          <div className="meta">{t('payoutsHistoryPanel.totalReceived', 'Total received')}</div>
         </div>
         <div>
           <div style={{ fontWeight: 700, fontSize: 24 }}>{released.length}</div>
-          <div className="meta">Payouts</div>
+          <div className="meta">{t('payoutsHistoryPanel.payoutsCount', 'Payouts')}</div>
         </div>
       </div>
 
       {released.length === 0 && pending.length === 0 && (
-        <p className="meta">No payouts yet. They&apos;re released automatically once a ticketed show you&apos;re booked on ends.</p>
+        <p className="meta">{t('payoutsHistoryPanel.emptyState', "No payouts yet. They're released automatically once a ticketed show you're booked on ends.")}</p>
       )}
 
       {released.length > 0 && (
         <>
-          <h2 style={{ fontSize: '1.1rem', marginBottom: 12 }}>Received</h2>
+          <h2 style={{ fontSize: '1.1rem', marginBottom: 12 }}>{t('payoutsHistoryPanel.receivedHeading', 'Received')}</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
             {released.map((entry) => (
               <div key={entry.id} className="panel" style={{ padding: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -59,9 +60,9 @@ export function PayoutsHistoryPanel({ released, pending }: { released: PayableEn
 
       {pending.length > 0 && (
         <>
-          <h2 style={{ fontSize: '1.1rem', marginBottom: 12 }}>Pending</h2>
+          <h2 style={{ fontSize: '1.1rem', marginBottom: 12 }}>{t('payoutsHistoryPanel.pendingHeading', 'Pending')}</h2>
           <p className="meta" style={{ marginBottom: 12 }}>
-            Released automatically once the show ends.
+            {t('payoutsHistoryPanel.pendingNote', 'Released automatically once the show ends.')}
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {pending.map((entry) => (

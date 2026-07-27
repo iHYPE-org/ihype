@@ -408,54 +408,57 @@ function Slide07Ticket() {
 }
 
 function Slide08Referral() {
+  const { t } = useI18n();
   return (
     <section style={{ ...SLIDE_STYLE, background: '#0a0805', padding: 88, flexDirection: 'column', justifyContent: 'center' }}>
-      <Num>05 / 06 · PROMOTER</Num>
-      <H size={64} style={{ marginTop: 18 }}>Sharing pays the fan back.</H>
+      <Num>{t('walkthroughDeck.slide08Num', '05 / 06 · PROMOTER')}</Num>
+      <H size={64} style={{ marginTop: 18 }}>{t('walkthroughDeck.slide08Title', 'Sharing pays the fan back.')}</H>
       <Body style={{ fontSize: 21, maxWidth: '58ch', marginTop: 22 }}>
-        Any fan who shares their link earns the 10% promoter cut on every ticket it sells. Fans become the marketing — and get paid for it.
+        {t('walkthroughDeck.slide08Body', 'Any fan who shares their link earns the 10% promoter cut on every ticket it sells. Fans become the marketing — and get paid for it.')}
       </Body>
       <div style={{ marginTop: 40, display: 'flex', gap: 16 }}>
-        <StatTile value="$1.80" label="Per ticket referred" color="var(--role-fan)" />
-        <StatTile value="0%" label="Skimmed by iHYPE" color="var(--success)" />
+        <StatTile value="$1.80" label={t('walkthroughDeck.slide08Stat1', 'Per ticket referred')} color="var(--role-fan)" />
+        <StatTile value="0%" label={t('walkthroughDeck.slide08Stat2', 'Skimmed by iHYPE')} color="var(--success)" />
       </div>
     </section>
   );
 }
 
 function Slide09Payout() {
+  const { t } = useI18n();
   return (
     <section style={{ ...SLIDE_STYLE, background: '#0a0805', padding: 88, flexDirection: 'column', justifyContent: 'center' }}>
-      <Num>06 / 06 · EVERYONE</Num>
-      <H size={60} style={{ marginTop: 18 }}>Paid out. Then the doors open.</H>
+      <Num>{t('walkthroughDeck.slide09Num', '06 / 06 · EVERYONE')}</Num>
+      <H size={60} style={{ marginTop: 18 }}>{t('walkthroughDeck.slide09Title', 'Paid out. Then the doors open.')}</H>
       <Body style={{ fontSize: 21, maxWidth: '60ch', marginTop: 22 }}>
-        Payouts hit automatically — artist and fan see the same receipt. On the night, show-night mode checks fans in, counts live crowd hype, and surfaces the QR at the door.
+        {t('walkthroughDeck.slide09Body', 'Payouts hit automatically — artist and fan see the same receipt. On the night, show-night mode checks fans in, counts live crowd hype, and surfaces the QR at the door.')}
       </Body>
       <div style={{ display: 'flex', gap: 16, marginTop: 40 }}>
-        <StatTile value="$2,912" label="Artist 70%" color="var(--role-artist)" />
-        <StatTile value="$832" label="Venue 20%" color="var(--role-venue)" />
-        <StatTile value="$0" label="iHYPE fee" color="var(--success)" />
+        <StatTile value="$2,912" label={t('walkthroughDeck.slide09Stat1', 'Artist 70%')} color="var(--role-artist)" />
+        <StatTile value="$832" label={t('walkthroughDeck.slide09Stat2', 'Venue 20%')} color="var(--role-venue)" />
+        <StatTile value="$0" label={t('walkthroughDeck.slide09Stat3', 'iHYPE fee')} color="var(--success)" />
       </div>
     </section>
   );
 }
 
 function Slide10Surfaces() {
+  const { t } = useI18n();
   const surfaces = [
-    { title: 'Web', body: 'Marketing → role-aware home → shows → artist → radio' },
-    { title: 'Mobile', body: 'Native iOS + Android app — Seeds, show-night, wallet' },
-    { title: 'Studio', body: 'Creator workbench, demand radar, payout receipts' },
-    { title: 'Ticketing', body: '0%-fee checkout → QR pass' },
-    { title: 'Design system', body: '31 components, 112 tokens, 5 templates' },
-    { title: 'Brand', body: 'Warm-dark, Syne display, the 70/20/10 promise' },
+    { key: 'web', title: t('walkthroughDeck.slide10SurfaceWebTitle', 'Web'), body: t('walkthroughDeck.slide10SurfaceWebBody', 'Marketing → role-aware home → shows → artist → radio') },
+    { key: 'mobile', title: t('walkthroughDeck.slide10SurfaceMobileTitle', 'Mobile'), body: t('walkthroughDeck.slide10SurfaceMobileBody', 'Native iOS + Android app — Seeds, show-night, wallet') },
+    { key: 'studio', title: t('walkthroughDeck.slide10SurfaceStudioTitle', 'Studio'), body: t('walkthroughDeck.slide10SurfaceStudioBody', 'Creator workbench, demand radar, payout receipts') },
+    { key: 'ticketing', title: t('walkthroughDeck.slide10SurfaceTicketingTitle', 'Ticketing'), body: t('walkthroughDeck.slide10SurfaceTicketingBody', '0%-fee checkout → QR pass') },
+    { key: 'designSystem', title: t('walkthroughDeck.slide10SurfaceDesignSystemTitle', 'Design system'), body: t('walkthroughDeck.slide10SurfaceDesignSystemBody', '31 components, 112 tokens, 5 templates') },
+    { key: 'brand', title: t('walkthroughDeck.slide10SurfaceBrandTitle', 'Brand'), body: t('walkthroughDeck.slide10SurfaceBrandBody', 'Warm-dark, Syne display, the 70/20/10 promise') },
   ];
   return (
     <section style={{ ...SLIDE_STYLE, background: '#100d09', padding: 88, flexDirection: 'column', justifyContent: 'center' }}>
-      <Kick>What ships today</Kick>
-      <H size={54} style={{ marginTop: 26, marginBottom: 40 }}>Every surface, designed.</H>
+      <Kick>{t('walkthroughDeck.slide10Kick', 'What ships today')}</Kick>
+      <H size={54} style={{ marginTop: 26, marginBottom: 40 }}>{t('walkthroughDeck.slide10Title', 'Every surface, designed.')}</H>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 18 }}>
         {surfaces.map(s => (
-          <StepCard key={s.title} style={{ padding: 26 }}>
+          <StepCard key={s.key} style={{ padding: 26 }}>
             <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 22, letterSpacing: '-.04em', color: 'var(--ink)', lineHeight: .95 }}>{s.title}</div>
             <Body style={{ fontSize: 16, marginTop: 8 }}>{s.body}</Body>
           </StepCard>
@@ -466,25 +469,27 @@ function Slide10Surfaces() {
 }
 
 function Slide11Quote() {
+  const { t } = useI18n();
   return (
     <section style={{ ...SLIDE_STYLE, background: 'linear-gradient(135deg,#ff5029,#ff3e9a 55%,#b983ff)', padding: 96, flexDirection: 'column', justifyContent: 'center' }}>
       <div style={{ fontFamily: 'var(--f-s)', fontSize: 62, lineHeight: 1.18, color: '#fff', maxWidth: '24ch' }}>
-        &ldquo;70% to the artist, 20% to the venue, 10% to whoever brought the fan. iHYPE takes nothing.&rdquo;
+        &ldquo;{t('walkthroughDeck.slide11Quote', '70% to the artist, 20% to the venue, 10% to whoever brought the fan. iHYPE takes nothing.')}&rdquo;
       </div>
       <div style={{ fontFamily: 'var(--f-m)', fontSize: 18, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,.8)', marginTop: 40 }}>
-        Locked in the charter
+        {t('walkthroughDeck.slide11Caption', 'Locked in the charter')}
       </div>
     </section>
   );
 }
 
 function Slide12Close() {
+  const { t } = useI18n();
   return (
     <section style={{ ...SLIDE_STYLE, background: '#0a0805', padding: 88, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg,#ff5029,#ff3e9a,#b983ff)' }} />
       <Logo size="lg" gradient />
       <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, letterSpacing: '-.04em', color: 'var(--ink)', lineHeight: .95, margin: '32px 0 0', fontSize: 80 }}>
-        For the scene,<br />not the algorithm.
+        {t('walkthroughDeck.slide12TitleLine1', 'For the scene,')}<br />{t('walkthroughDeck.slide12TitleLine2', 'not the algorithm.')}
       </h2>
       <Body style={{ fontSize: 22, marginTop: 24 }}>ihype.org</Body>
     </section>
@@ -500,6 +505,7 @@ const SLIDES = [
 ];
 
 export function WalkthroughDeck() {
+  const { t } = useI18n();
   const [index, setIndex] = useState(0);
   const stageRef = useRef<HTMLDivElement>(null);
 
@@ -550,9 +556,9 @@ export function WalkthroughDeck() {
           <CurrentSlide />
         </div>
         <div id="wt-nav">
-          <button onClick={() => show(index - 1)} aria-label="Previous slide" disabled={index === 0} style={{ opacity: index === 0 ? 0.3 : 1 }}>←</button>
+          <button onClick={() => show(index - 1)} aria-label={t('walkthroughDeck.previousSlide', 'Previous slide')} disabled={index === 0} style={{ opacity: index === 0 ? 0.3 : 1 }}>←</button>
           <span id="wt-count">{index + 1} / {SLIDES.length}</span>
-          <button onClick={() => show(index + 1)} aria-label="Next slide" disabled={index === SLIDES.length - 1} style={{ opacity: index === SLIDES.length - 1 ? 0.3 : 1 }}>→</button>
+          <button onClick={() => show(index + 1)} aria-label={t('walkthroughDeck.nextSlide', 'Next slide')} disabled={index === SLIDES.length - 1} style={{ opacity: index === SLIDES.length - 1 ? 0.3 : 1 }}>→</button>
         </div>
       </div>
     </>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 /**
  * Purely decorative "check off your next steps" ring + toggleable step rows
@@ -9,6 +10,7 @@ import { useState } from 'react';
  * a faithful translation, not a shortcut.
  */
 export function WelcomeStepsChecklist({ steps, tint }: { steps: { title: string; desc: string }[]; tint: string }) {
+  const { t } = useI18n();
   const [done, setDone] = useState<boolean[]>(() => steps.map(() => false));
   const doneCount = done.filter(Boolean).length;
   const pct = steps.length ? (doneCount / steps.length) * 100 : 0;
@@ -20,7 +22,7 @@ export function WelcomeStepsChecklist({ steps, tint }: { steps: { title: string;
   return (
     <>
       <div className="welcome-steps-head">
-        <div className="welcome-steps-label">Next steps</div>
+        <div className="welcome-steps-label">{t('welcomeStepsChecklist.nextSteps', 'Next steps')}</div>
         <div
           className="welcome-ring"
           style={{ background: `conic-gradient(${tint} ${pct}%, var(--line) ${pct}%)` }}
