@@ -23,6 +23,7 @@ import {
   isInviteCodeRequiredRuntime,
   shouldHideDemoContentRuntime
 } from '@/lib/runtime-flags';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 
 export const metadata: Metadata = {
@@ -54,6 +55,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
     redirect(WORKBENCH_PATH);
   }
 
+  const t = getT(await getLocale());
   const { userSearch } = searchParams ? await searchParams : {};
   const funnelSince = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const [
@@ -305,62 +307,61 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
     <div className="container section admin-console">
       <section className="panel admin-console-hero">
         <div>
-          <div className="badge">Admin beta console</div>
-          <h1>Admin Console</h1>
+          <div className="badge">{t('adminPage.betaBadge', 'Admin beta console')}</div>
+          <h1>{t('adminPage.title', 'Admin Console')}</h1>
           <p className="subtitle">
-            Platform management · iH/OPS — account growth, verification, email/MFA delivery, reports, tickets,
-            media, and audit events during beta.
+            {t('adminPage.subtitle', 'Platform management · iH/OPS — account growth, verification, email/MFA delivery, reports, tickets, media, and audit events during beta.')}
           </p>
         </div>
         <div className="cta-row">
           <Link className="button" href="/admin/users">
-            User management
+            {t('adminPage.userManagement', 'User management')}
           </Link>
           <Link className="button" href="/admin/broadcast">
-            Broadcast email
+            {t('adminPage.broadcastEmail', 'Broadcast email')}
           </Link>
           <Link className="button secondary" href="/admin/community">
-            Community editor
+            {t('adminPage.communityEditor', 'Community editor')}
           </Link>
           <Link className="button secondary" href="/transparency">
-            Transparency
+            {t('adminPage.transparency', 'Transparency')}
           </Link>
           <Link className="button secondary" href="/about">
-            About iHYPE
+            {t('adminPage.aboutIhype', 'About iHYPE')}
           </Link>
         </div>
       </section>
 
       <section className="panel admin-console-panel">
         <div className="admin-console-panel-head">
-          <h2>Needs attention</h2>
+          <h2>{t('adminPage.needsAttention', 'Needs attention')}</h2>
         </div>
         <div className="admin-health-grid">
           <Link className="admin-health-card" href="/admin/review?tab=verifications">
-            <span>Pending verifications</span>
+            <span>{t('adminPage.pendingVerifications', 'Pending verifications')}</span>
             <strong className={pendingVerificationCount > 0 ? 'admin-health-status warn' : 'admin-health-status ok'}>{pendingVerificationCount}</strong>
           </Link>
           <Link className="admin-health-card" href="/admin/review?tab=reports">
-            <span>Open reports</span>
+            <span>{t('adminPage.openReports', 'Open reports')}</span>
             <strong className={openReportCount > 0 ? 'admin-health-status warn' : 'admin-health-status ok'}>{openReportCount}</strong>
           </Link>
           <Link className="admin-health-card" href="/admin#support-requests">
-            <span>Open support requests</span>
+            <span>{t('adminPage.openSupportRequests', 'Open support requests')}</span>
             <strong className={openSupportCount > 0 ? 'admin-health-status warn' : 'admin-health-status ok'}>{openSupportCount}</strong>
           </Link>
           <Link className="admin-health-card" href="/admin/ads">
-            <span>Ads awaiting approval</span>
+            <span>{t('adminPage.adsAwaitingApproval', 'Ads awaiting approval')}</span>
             <strong className={pendingAds.length > 0 ? 'admin-health-status warn' : 'admin-health-status ok'}>{pendingAds.length}</strong>
           </Link>
         </div>
         {healthOperations && healthOperations.reservedTicketOrders > 0 && (
           <div className="admin-alert-row">
-            <span>{healthOperations.reservedTicketOrders} ticket order{healthOperations.reservedTicketOrders === 1 ? '' : 's'} reserved (unpaid) — check Finance if this stays high</span>
+            <span>{healthOperations.reservedTicketOrders} {healthOperations.reservedTicketOrders === 1 ? t('adminPage.ticketOrderSingular', 'ticket order') : t('adminPage.ticketOrderPlural', 'ticket orders')} {t('adminPage.reservedUnpaidWarning', 'reserved (unpaid) — check Finance if this stays high')}</span>
           </div>
         )}
         {pendingVerificationCount === 0 && openReportCount === 0 && openSupportCount === 0 && pendingAds.length === 0 && (
           <div className="admin-alert-row admin-alert-row-ok">
-            <span>Nothing needs review right now.</span>
+            <span>{t('adminPage.nothingNeedsReview', 'Nothing needs review right now.')}</span>
           </div>
         )}
       </section>
@@ -368,19 +369,19 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
       <section className="panel admin-console-panel">
         <div className="admin-console-panel-head">
           <div>
-            <h2>User search</h2>
-            <p className="meta">Search by email or username.</p>
+            <h2>{t('adminPage.userSearch', 'User search')}</h2>
+            <p className="meta">{t('adminPage.userSearchDesc', 'Search by email or username.')}</p>
           </div>
         </div>
         <form method="GET" style={{ display: 'flex', gap: 8, marginBottom: userSearchResults.length ? 16 : 0 }}>
           <input
             name="userSearch"
             defaultValue={userSearch ?? ''}
-            placeholder="Email or username…"
+            placeholder={t('adminPage.userSearchPlaceholder', 'Email or username…')}
             style={{ flex: 1, padding: '8px 12px', borderRadius: 7, border: '1px solid var(--line2, #333)', background: 'var(--bg2, #111)', color: 'inherit', fontSize: 14 }}
           />
-          <button type="submit" className="button small secondary">Search</button>
-          {userSearch && <Link className="button small secondary" href="/admin">Clear</Link>}
+          <button type="submit" className="button small secondary">{t('adminPage.search', 'Search')}</button>
+          {userSearch && <Link className="button small secondary" href="/admin">{t('adminPage.clear', 'Clear')}</Link>}
         </form>
         {userSearchResults.length > 0 && (
           <div className="admin-list">
@@ -389,33 +390,33 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
                 <span>{u.username ?? u.email}</span>
                 <strong>{u.role}</strong>
                 <small>{u.email}</small>
-                <small>{u.profiles.map(p => p.type).join(', ') || 'no profiles'}</small>
+                <small>{u.profiles.map(p => p.type).join(', ') || t('adminPage.noProfiles', 'no profiles')}</small>
                 <small>{u.createdAt.toISOString().slice(0, 10)}</small>
               </div>
             ))}
           </div>
         )}
         {userSearch && userSearchResults.length === 0 && (
-          <div className="empty">No users found for &ldquo;{userSearch}&rdquo;.</div>
+          <div className="empty">{t('adminPage.noUsersFound', 'No users found for')} &ldquo;{userSearch}&rdquo;.</div>
         )}
       </section>
 
       <section className="admin-metric-grid">
         <article className="card admin-metric-card">
-          <span>Revenue (captured)</span>
+          <span>{t('adminPage.revenueCaptured', 'Revenue (captured)')}</span>
           <strong>{revenueLabel}</strong>
         </article>
       </section>
 
       <section className="admin-metric-grid">
         {[
-          ['Users', userCount],
-          ['Profiles', profileCount],
-          ['Pending verification', pendingVerificationCount],
-          ['Open reports', openReportCount],
-          ['Support requests', openSupportCount],
-          ['Media assets', mediaCount],
-          ['Ticket orders', ticketOrderCount]
+          [t('adminPage.metricUsers', 'Users'), userCount],
+          [t('adminPage.metricProfiles', 'Profiles'), profileCount],
+          [t('adminPage.metricPendingVerification', 'Pending verification'), pendingVerificationCount],
+          [t('adminPage.metricOpenReports', 'Open reports'), openReportCount],
+          [t('adminPage.metricSupportRequests', 'Support requests'), openSupportCount],
+          [t('adminPage.metricMediaAssets', 'Media assets'), mediaCount],
+          [t('adminPage.metricTicketOrders', 'Ticket orders'), ticketOrderCount]
         ].map(([label, value]) => (
           <article className="card admin-metric-card" key={label}>
             <span>{label}</span>
@@ -427,9 +428,9 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
       <section className="panel admin-console-panel admin-health-panel">
         <div className="admin-console-panel-head">
           <div>
-            <h2>Launch health</h2>
+            <h2>{t('adminPage.launchHealth', 'Launch health')}</h2>
             <p className="meta">
-              Public uptime endpoint: <Link className="text-link" href="/api/health">/api/health</Link>
+              {t('adminPage.publicUptimeEndpoint', 'Public uptime endpoint:')} <Link className="text-link" href="/api/health">/api/health</Link>
             </p>
           </div>
           <strong className={health.status === 'ok' ? 'admin-health-status ok' : 'admin-health-status warn'}>
@@ -438,20 +439,20 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
         </div>
         <div className="admin-health-grid">
           <div className="admin-health-card">
-            <span>DB latency</span>
+            <span>{t('adminPage.dbLatency', 'DB latency')}</span>
             <strong>{health.latencyMs}ms</strong>
           </div>
           <div className="admin-health-card">
-            <span>Failed email 24h</span>
-            <strong>{healthOperations ? healthOperations.failedEmails24h : 'n/a'}</strong>
+            <span>{t('adminPage.failedEmail24h', 'Failed email 24h')}</span>
+            <strong>{healthOperations ? healthOperations.failedEmails24h : t('adminPage.notApplicable', 'n/a')}</strong>
           </div>
           <div className="admin-health-card">
-            <span>Reserved tickets</span>
-            <strong>{healthOperations ? healthOperations.reservedTicketOrders : 'n/a'}</strong>
+            <span>{t('adminPage.reservedTickets', 'Reserved tickets')}</span>
+            <strong>{healthOperations ? healthOperations.reservedTicketOrders : t('adminPage.notApplicable2', 'n/a')}</strong>
           </div>
           <div className="admin-health-card">
-            <span>Payment capture</span>
-            <strong>{healthIntegrations?.ticketPaymentCapture ? 'Ready' : 'Blocked'}</strong>
+            <span>{t('adminPage.paymentCapture', 'Payment capture')}</span>
+            <strong>{healthIntegrations?.ticketPaymentCapture ? t('adminPage.ready', 'Ready') : t('adminPage.blocked', 'Blocked')}</strong>
           </div>
         </div>
       </section>
@@ -460,47 +461,46 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
         <section className="panel admin-console-panel">
           <div className="admin-console-panel-head">
             <div>
-              <h2>Beta metrics</h2>
+              <h2>{t('adminPage.betaMetrics', 'Beta metrics')}</h2>
               <p className="meta">
-                Real activity only — activation means the user has hyped, RSVP&rsquo;d, or listened at least once.
-                Demo accounts excluded.
+                {t('adminPage.betaMetricsDesc', "Real activity only — activation means the user has hyped, RSVP'd, or listened at least once. Demo accounts excluded.")}
               </p>
             </div>
           </div>
           <div className="admin-health-grid">
             <div className="admin-health-card">
-              <span>Signups (7d)</span>
+              <span>{t('adminPage.signups7d', 'Signups (7d)')}</span>
               <strong>{betaMetrics.signups7d}</strong>
             </div>
             <div className="admin-health-card">
-              <span>Activation</span>
+              <span>{t('adminPage.activation', 'Activation')}</span>
               <strong>
                 {Math.round(betaMetrics.activationRate * 100)}%
                 {' '}({betaMetrics.activatedUsers}/{betaMetrics.totalUsers})
               </strong>
             </div>
             <div className="admin-health-card">
-              <span>Weekly active</span>
+              <span>{t('adminPage.weeklyActive', 'Weekly active')}</span>
               <strong>
                 {Math.round(betaMetrics.weeklyActiveRate * 100)}%
                 {' '}({betaMetrics.weeklyActiveUsers}/{betaMetrics.totalUsers})
               </strong>
             </div>
             <div className="admin-health-card">
-              <span>DJs on radio (30d)</span>
-              <strong>{betaMetrics.recurringDjs30d}/{betaMetrics.radioDjs30d} recurring</strong>
+              <span>{t('adminPage.djsOnRadio30d', 'DJs on radio (30d)')}</span>
+              <strong>{betaMetrics.recurringDjs30d}/{betaMetrics.radioDjs30d} {t('adminPage.recurring', 'recurring')}</strong>
             </div>
           </div>
-          <h3 style={{ margin: '1rem 0 .5rem' }}>Invite conversion (30d)</h3>
+          <h3 style={{ margin: '1rem 0 .5rem' }}>{t('adminPage.inviteConversion30d', 'Invite conversion (30d)')}</h3>
           {betaMetrics.inviteChannels.length === 0 ? (
-            <p className="meta">No signups recorded in the last 30 days.</p>
+            <p className="meta">{t('adminPage.noSignups30d', 'No signups recorded in the last 30 days.')}</p>
           ) : (
             <div className="admin-list">
               {betaMetrics.inviteChannels.map((channel) => (
                 <div className="admin-list-row" key={channel.code}>
                   <code style={{ fontFamily: 'monospace', letterSpacing: 1 }}>{channel.code}</code>
                   <small>
-                    {channel.signups} signup{channel.signups === 1 ? '' : 's'}
+                    {channel.signups} {channel.signups === 1 ? t('adminPage.signupSingular', 'signup') : t('adminPage.signupPlural', 'signups')}
                     {channel.kind !== '—' ? ` | ${channel.kind}` : ''}
                   </small>
                 </div>
@@ -513,13 +513,13 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
       <section className="panel admin-console-panel">
         <div className="admin-console-panel-head">
           <div>
-            <h2>Signup funnel</h2>
-            <p className="meta">Last 7 days from audit events. Use this to spot passkey/email dropoff.</p>
+            <h2>{t('adminPage.signupFunnel', 'Signup funnel')}</h2>
+            <p className="meta">{t('adminPage.signupFunnelDesc', 'Last 7 days from audit events. Use this to spot passkey/email dropoff.')}</p>
           </div>
           <div className="admin-signup-actions">
             <AdminSignupTestPanel />
-            <Link className="button small secondary" href="/register?role=ARTIST">
-              Test signup UI
+            <Link className="button small secondary" href="/for-artists">
+              {t('adminPage.testSignupUi', 'Test signup UI')}
             </Link>
           </div>
         </div>
@@ -528,7 +528,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
             {funnelAlerts.map((alert) => <span key={alert}>{alert}</span>)}
           </div>
         ) : (
-          <div className="admin-alert-row admin-alert-row-ok"><span>No signup alerts in the 7d funnel window.</span></div>
+          <div className="admin-alert-row admin-alert-row-ok"><span>{t('adminPage.noSignupAlerts', 'No signup alerts in the 7d funnel window.')}</span></div>
         )}
         <div className="admin-health-grid">
           {funnelDropoff.map(([label, value]) => (
@@ -549,22 +549,22 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           </div>
         ) : null}
         <div className="admin-diagnostic-list">
-          <strong>Passkey diagnostics</strong>
+          <strong>{t('adminPage.passkeyDiagnostics', 'Passkey diagnostics')}</strong>
           {passkeyDiagnostics.length ? passkeyDiagnostics.map(({ action, meta }, index) => (
             <div className="admin-diagnostic-row" key={`${action}-${index}`}>
               <span>{action}</span>
               <small>{metaText(meta, 'browser')} / {metaText(meta, 'platform')} / {metaText(meta, 'webauthn')} / {metaText(meta, 'errorName')}</small>
               <em>{metaText(meta, 'reason')}</em>
             </div>
-          )) : <p className="meta">No recent passkey failures captured.</p>}
+          )) : <p className="meta">{t('adminPage.noPasskeyFailures', 'No recent passkey failures captured.')}</p>}
         </div>
       </section>
 
       <section className="panel admin-console-panel">
         <div className="admin-console-panel-head">
           <div>
-            <h2>Rate limit hits (1h)</h2>
-            <p className="meta">Top buckets that returned 429 in the last hour.</p>
+            <h2>{t('adminPage.rateLimitHits1h', 'Rate limit hits (1h)')}</h2>
+            <p className="meta">{t('adminPage.rateLimitHitsDesc', 'Top buckets that returned 429 in the last hour.')}</p>
           </div>
         </div>
         <div className="admin-list">
@@ -576,18 +576,18 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
               </div>
             ))
           ) : (
-            <div className="empty">No rate limit hits in the last hour.</div>
+            <div className="empty">{t('adminPage.noRateLimitHits', 'No rate limit hits in the last hour.')}</div>
           )}
         </div>
       </section>
 
       <section className="grid grid-2 admin-console-grid">
         <article className="panel admin-console-panel">
-          <h2>Feature flags</h2>
-          <div className="admin-export-row" aria-label="Admin CSV exports">
+          <h2>{t('adminPage.featureFlags', 'Feature flags')}</h2>
+          <div className="admin-export-row" aria-label={t('adminPage.adminCsvExportsAriaLabel', 'Admin CSV exports')}>
             {(['reports', 'support', 'verifications', 'tickets', 'audits'] as const).map((kind) => (
               <Link className="button small secondary" href={`/api/admin/export/${kind}`} key={kind}>
-                Export {kind}
+                {t('adminPage.export', 'Export')} {kind}
               </Link>
             ))}
           </div>
@@ -595,24 +595,24 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
         </article>
 
         <article className="panel admin-console-panel">
-          <h2>Ticket orders</h2>
+          <h2>{t('adminPage.ticketOrders', 'Ticket orders')}</h2>
           <div className="admin-list">
             {recentTicketOrders.length ? (
               recentTicketOrders.map((order) => (
                 <div className="admin-list-row" key={order.id}>
-                  <span>{order.show?.title ?? 'Unknown show'}</span>
+                  <span>{order.show?.title ?? t('adminPage.unknownShow', 'Unknown show')}</span>
                   <strong>{order.status}</strong>
                   <small>{order.buyerEmail} · ${(order.totalChargeCents / 100).toFixed(2)}</small>
                 </div>
               ))
             ) : (
-              <div className="empty">No ticket orders yet.</div>
+              <div className="empty">{t('adminPage.noTicketOrders', 'No ticket orders yet.')}</div>
             )}
           </div>
         </article>
 
         <article className="panel admin-console-panel">
-          <h2>Recent shows</h2>
+          <h2>{t('adminPage.recentShows', 'Recent shows')}</h2>
           <div className="admin-list">
             {recentShows.length ? (
               recentShows.map((show) => (
@@ -620,18 +620,18 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
                   <span style={{ flex: 1 }}>{show.title}</span>
                   <small>{show.venueProfile?.name ?? '—'}</small>
                   <small>{show.startsAt.toISOString().slice(0, 10)}</small>
-                  <small>{show._count.tickets} tix</small>
+                  <small>{show._count.tickets} {t('adminPage.tix', 'tix')}</small>
                   <FeatureToggle showId={show.id} initialFeatured={show.featured} />
                 </div>
               ))
             ) : (
-              <div className="empty">No shows yet.</div>
+              <div className="empty">{t('adminPage.noShowsYet', 'No shows yet.')}</div>
             )}
           </div>
         </article>
 
         <article className="panel admin-console-panel">
-          <h2>Recent users</h2>
+          <h2>{t('adminPage.recentUsers', 'Recent users')}</h2>
           <div className="admin-list">
             {recentUsers.map((user) => (
               <div className="admin-list-row" key={user.email}>
@@ -643,7 +643,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
         </article>
 
         <article className="panel admin-console-panel">
-          <h2>Content reports</h2>
+          <h2>{t('adminPage.contentReports', 'Content reports')}</h2>
           <div className="admin-list">
             {recentReports.length ? (
               recentReports.map((report) => (
@@ -651,19 +651,19 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
                   <span>{report.reason}</span>
                   <strong>{report.status}</strong>
                   <small>
-                    {report.targetType}:{report.targetId} by {report.reporter?.username ?? report.reporter?.email ?? 'unknown'}
+                    {report.targetType}:{report.targetId} {t('adminPage.by', 'by')} {report.reporter?.username ?? report.reporter?.email ?? t('adminPage.unknown', 'unknown')}
                   </small>
                   <AdminReportActions reportId={report.id} />
                 </div>
               ))
             ) : (
-              <div className="empty">No reports yet.</div>
+              <div className="empty">{t('adminPage.noReportsYet', 'No reports yet.')}</div>
             )}
           </div>
         </article>
 
         <article className="panel admin-console-panel" id="support-requests">
-          <h2>Support requests</h2>
+          <h2>{t('adminPage.supportRequests', 'Support requests')}</h2>
           <div className="admin-list">
             {recentSupport.length ? (
               recentSupport.map((request) => (
@@ -671,7 +671,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
                   <span>{request.subject}</span>
                   <strong>{request.priority}</strong>
                   <small>
-                    {request.type} | {request.status} | {request.email ?? request.name ?? 'anonymous'}
+                    {request.type} | {request.status} | {request.email ?? request.name ?? t('adminPage.anonymous', 'anonymous')}
                   </small>
                   {request.type.startsWith('PRIVACY_') && request.status === 'OPEN' ? (
                     <AdminPrivacyRequestActions requestId={request.id} requestType={request.type} />
@@ -679,31 +679,31 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
                 </div>
               ))
             ) : (
-              <div className="empty">No support requests yet.</div>
+              <div className="empty">{t('adminPage.noSupportRequestsYet', 'No support requests yet.')}</div>
             )}
           </div>
         </article>
 
         <article className="panel admin-console-panel">
-          <h2>Verification queue</h2>
+          <h2>{t('adminPage.verificationQueue', 'Verification queue')}</h2>
           <div className="admin-list">
             {pendingVerifications.length ? (
               pendingVerifications.map((profile) => (
                 <div className="admin-list-row" key={profile.id}>
                   <span>{profile.name}</span>
                   <strong>{profile.type === 'DJ' ? 'PROMOTER' : profile.type}</strong>
-                  <small>{profile.contactInfo || profile.verificationNotes || 'No details provided'}</small>
+                  <small>{profile.contactInfo || profile.verificationNotes || t('adminPage.noDetailsProvided', 'No details provided')}</small>
                   <AdminVerificationActions profileId={profile.id} />
                 </div>
               ))
             ) : (
-              <div className="empty">No pending verification requests.</div>
+              <div className="empty">{t('adminPage.noPendingVerificationRequests', 'No pending verification requests.')}</div>
             )}
           </div>
         </article>
 
         <article className="panel admin-console-panel">
-          <h2>Email/MFA delivery</h2>
+          <h2>{t('adminPage.emailMfaDelivery', 'Email/MFA delivery')}</h2>
           <div className="admin-list">
             {recentEmails.length ? (
               recentEmails.map((email) => (
@@ -714,24 +714,24 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
                 </div>
               ))
             ) : (
-              <div className="empty">No email delivery records yet.</div>
+              <div className="empty">{t('adminPage.noEmailDeliveryRecordsYet', 'No email delivery records yet.')}</div>
             )}
           </div>
         </article>
 
         <article className="panel admin-console-panel admin-console-panel-wide">
-          <h2>Audit log</h2>
+          <h2>{t('adminPage.auditLog', 'Audit log')}</h2>
           <div className="admin-list">
             {recentAudits.length ? (
               recentAudits.map((audit) => (
                 <div className="admin-list-row" key={audit.id}>
                   <span>{audit.action}</span>
                   <strong>{audit.entityType}</strong>
-                  <small>{audit.actor?.username ?? audit.actor?.email ?? 'system'} | {audit.entityId ?? 'no id'}</small>
+                  <small>{audit.actor?.username ?? audit.actor?.email ?? t('adminPage.system', 'system')} | {audit.entityId ?? t('adminPage.noId', 'no id')}</small>
                 </div>
               ))
             ) : (
-              <div className="empty">No audit events yet.</div>
+              <div className="empty">{t('adminPage.noAuditEventsYet', 'No audit events yet.')}</div>
             )}
           </div>
         </article>
@@ -740,17 +740,17 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
       <section className="panel admin-console-panel">
         <div className="admin-console-panel-head">
           <div>
-            <h2>Security</h2>
-            <p className="meta">Spam flags and login activity in the last 24 hours.</p>
+            <h2>{t('adminPage.security', 'Security')}</h2>
+            <p className="meta">{t('adminPage.securityDesc', 'Spam flags and login activity in the last 24 hours.')}</p>
           </div>
         </div>
         <div className="admin-metric-grid" style={{ marginBottom: '1rem' }}>
           <article className="card admin-metric-card">
-            <span>Spam flags (24h)</span>
+            <span>{t('adminPage.spamFlags24h', 'Spam flags (24h)')}</span>
             <strong>{recentSpamFlags.length}</strong>
           </article>
           <article className="card admin-metric-card">
-            <span>Logins (24h)</span>
+            <span>{t('adminPage.logins24h', 'Logins (24h)')}</span>
             <strong>{recentLoginsCount}</strong>
           </article>
         </div>
@@ -770,31 +770,31 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
       <section className="panel admin-console-panel">
         <div className="admin-console-panel-head">
           <div>
-            <h2>Artist Funnel</h2>
-            <p className="meta">Where artists drop off before their first show.</p>
+            <h2>{t('adminPage.artistFunnel', 'Artist Funnel')}</h2>
+            <p className="meta">{t('adminPage.artistFunnelDesc', 'Where artists drop off before their first show.')}</p>
           </div>
         </div>
         <div className="admin-health-grid">
           <div className="admin-health-card">
-            <span>No uploads yet</span>
+            <span>{t('adminPage.noUploadsYet', 'No uploads yet')}</span>
             <strong style={{ color: funnelStage1 > 0 ? '#e74c3c' : 'inherit' }}>{funnelStage1}</strong>
           </div>
           <div className="admin-health-card">
-            <span>Uploads, no shows</span>
+            <span>{t('adminPage.uploadsNoShows', 'Uploads, no shows')}</span>
             <strong style={{ color: funnelStage2 > 0 ? '#f39c12' : 'inherit' }}>{funnelStage2}</strong>
           </div>
           <div className="admin-health-card">
-            <span>Shows with 0 hypes</span>
+            <span>{t('adminPage.showsWithZeroHypes', 'Shows with 0 hypes')}</span>
             <strong>{funnelStage3}</strong>
           </div>
         </div>
         {funnelStage1Recent.length > 0 && (
           <div className="admin-list" style={{ marginTop: 12 }}>
-            <strong style={{ fontSize: 13, marginBottom: 6, display: 'block' }}>Recent stage-1 artists (no uploads)</strong>
+            <strong style={{ fontSize: 13, marginBottom: 6, display: 'block' }}>{t('adminPage.recentStage1Artists', 'Recent stage-1 artists (no uploads)')}</strong>
             {funnelStage1Recent.map((p) => (
               <div className="admin-list-row" key={p.slug}>
                 <span>{p.name}</span>
-                <small>{p.slug} · joined {p.createdAt.toISOString().slice(0, 10)}</small>
+                <small>{p.slug} · {t('adminPage.joined', 'joined')} {p.createdAt.toISOString().slice(0, 10)}</small>
               </div>
             ))}
           </div>
@@ -809,12 +809,12 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
       <section className="panel admin-console-panel">
         <div className="admin-console-panel-head">
           <div>
-            <h2>Social Posts</h2>
-            <p className="meta">Recent auto-generated social digest posts.</p>
+            <h2>{t('adminPage.socialPosts', 'Social Posts')}</h2>
+            <p className="meta">{t('adminPage.socialPostsDesc', 'Recent auto-generated social digest posts.')}</p>
           </div>
         </div>
         {recentSocialPosts.length === 0 ? (
-          <div className="empty">No social posts yet. Monday digest will generate them.</div>
+          <div className="empty">{t('adminPage.noSocialPostsYet', 'No social posts yet. Monday digest will generate them.')}</div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {recentSocialPosts.map((post) => (
@@ -834,12 +834,12 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
       <section className="panel admin-console-panel">
         <div className="admin-console-panel-head">
           <div>
-            <h2>Upcoming Calendar</h2>
-            <p className="meta">Scheduled shows in the next 30 days.</p>
+            <h2>{t('adminPage.upcomingCalendar', 'Upcoming Calendar')}</h2>
+            <p className="meta">{t('adminPage.upcomingCalendarDesc', 'Scheduled shows in the next 30 days.')}</p>
           </div>
         </div>
         {calendarShows.length === 0 ? (
-          <div className="empty">No scheduled shows in the next 30 days.</div>
+          <div className="empty">{t('adminPage.noScheduledShows30d', 'No scheduled shows in the next 30 days.')}</div>
         ) : (
           <div>
             {Object.entries(
@@ -857,7 +857,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
                     <span style={{ flex: 1 }}>{show.title}</span>
                     <small>{show.venueProfile?.name ?? '—'}</small>
                     <small>{show.headlinerProfile?.name ?? '—'}</small>
-                    <small>{show.ticketsSoldCount}/{show.ticketCapacity ?? '∞'} tix</small>
+                    <small>{show.ticketsSoldCount}/{show.ticketCapacity ?? '∞'} {t('adminPage.tix2', 'tix')}</small>
                     <FeatureToggle showId={show.id} initialFeatured={show.featured} />
                   </div>
                 ))}
@@ -868,25 +868,25 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
       </section>
 
       <section className="section">
-        <h2>Invite Codes</h2>
+        <h2>{t('adminPage.inviteCodes', 'Invite Codes')}</h2>
         <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
           <a className="button" href="/api/admin/invite-codes" target="_blank" rel="noopener noreferrer" style={{ fontSize: 13 }}>
-            View all via API
+            {t('adminPage.viewAllViaApi', 'View all via API')}
           </a>
           <a className="button" href="/api/admin/test-email" target="_blank" rel="noopener noreferrer" style={{ fontSize: 13 }}>
-            Send test email
+            {t('adminPage.sendTestEmail', 'Send test email')}
           </a>
         </div>
         {recentInviteCodes.length === 0 ? (
-          <p className="meta">No invite codes yet. POST to /api/admin/invite-codes to generate some.</p>
+          <p className="meta">{t('adminPage.noInviteCodesYet', 'No invite codes yet. POST to /api/admin/invite-codes to generate some.')}</p>
         ) : (
           <div className="admin-list">
             {recentInviteCodes.map((code) => (
               <div className="admin-list-row" key={code.id}>
                 <code style={{ fontFamily: 'monospace', letterSpacing: 1 }}>{code.code}</code>
                 <small>
-                  {code.usedAt ? `Used ${code.usedAt.toISOString()}` : code.expiresAt && code.expiresAt < new Date() ? 'Expired' : 'Available'}
-                  {' | '}created {code.createdAt.toISOString()}
+                  {code.usedAt ? `${t('adminPage.used', 'Used')} ${code.usedAt.toISOString()}` : code.expiresAt && code.expiresAt < new Date() ? t('adminPage.expired', 'Expired') : t('adminPage.available', 'Available')}
+                  {' | '}{t('adminPage.created', 'created')} {code.createdAt.toISOString()}
                 </small>
               </div>
             ))}
@@ -895,51 +895,49 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
       </section>
 
       <section className="section">
-        <h2>Backups</h2>
+        <h2>{t('adminPage.backups', 'Backups')}</h2>
         <article className="panel" style={{ padding: '1rem 1.25rem' }}>
           <p className="meta" style={{ marginTop: 0 }}>
-            iHYPE does not currently run an automated database backup job. Postgres backups should be
-            taken from the managed provider dashboard on a regular cadence (daily for production).
+            {t('adminPage.backupsDesc', 'iHYPE does not currently run an automated database backup job. Postgres backups should be taken from the managed provider dashboard on a regular cadence (daily for production).')}
           </p>
           <ul style={{ paddingLeft: '1.2rem', margin: '0.5rem 0', lineHeight: 1.6 }}>
             <li>
-              <strong>Supabase:</strong>{' '}
+              <strong>{t('adminPage.supabaseLabel', 'Supabase:')}</strong>{' '}
               <a href="https://supabase.com/dashboard" rel="noopener noreferrer" target="_blank">
                 supabase.com/dashboard
               </a>{' '}
-              — branch the production database for point-in-time snapshots.
+              — {t('adminPage.supabaseDesc', 'branch the production database for point-in-time snapshots.')}
             </li>
             <li>
-              <strong>Cloudflare:</strong>{' '}
+              <strong>{t('adminPage.cloudflareLabel', 'Cloudflare:')}</strong>{' '}
               <a href="https://dash.cloudflare.com/" rel="noopener noreferrer" target="_blank">
                 dash.cloudflare.com
               </a>{' '}
-              — review Workers logs, R2 storage, and analytics.
+              — {t('adminPage.cloudflareDesc', 'review Workers logs, R2 storage, and analytics.')}
             </li>
             <li>
-              For ad-hoc exports run <code>pg_dump &quot;$DATABASE_URL&quot; &gt; ihype-backup.sql</code>{' '}
-              from a trusted workstation.
+              {t('adminPage.adHocExports', 'For ad-hoc exports run')} <code>pg_dump &quot;$DATABASE_URL&quot; &gt; ihype-backup.sql</code>{' '}
+              {t('adminPage.fromTrustedWorkstation', 'from a trusted workstation.')}
             </li>
           </ul>
           <p className="meta" style={{ marginBottom: 0 }}>
-            Note: an R2/S3-backed automated rotation job is planned but intentionally not wired up yet —
-            this section is informational so admins know where to look.
+            {t('adminPage.backupsNote', 'Note: an R2/S3-backed automated rotation job is planned but intentionally not wired up yet — this section is informational so admins know where to look.')}
           </p>
         </article>
       </section>
 
       {/* ── Revenue Dashboard ──────────────────────────────────── */}
       <section className="section">
-        <h2>Revenue</h2>
+        <h2>{t('adminPage.revenue', 'Revenue')}</h2>
         <div className="admin-list" style={{ marginBottom: 16 }}>
-          <div className="admin-list-row"><strong>Total ticket revenue (CAPTURED)</strong><span>{`$${(revenueCents / 100).toFixed(2)}`}</span></div>
-          <div className="admin-list-row"><strong>Platform fee est. (10%)</strong><span>{`$${(platformFeeTotal / 100).toFixed(2)}`}</span></div>
-          <div className="admin-list-row"><strong>Payouts paid</strong><span>{`$${(payoutPaid / 100).toFixed(2)}`}</span></div>
-          <div className="admin-list-row"><strong>Payouts pending</strong><span>{`$${(payoutPending / 100).toFixed(2)}`}</span></div>
+          <div className="admin-list-row"><strong>{t('adminPage.totalTicketRevenue', 'Total ticket revenue (CAPTURED)')}</strong><span>{`$${(revenueCents / 100).toFixed(2)}`}</span></div>
+          <div className="admin-list-row"><strong>{t('adminPage.platformFeeEst', 'Platform fee est. (10%)')}</strong><span>{`$${(platformFeeTotal / 100).toFixed(2)}`}</span></div>
+          <div className="admin-list-row"><strong>{t('adminPage.payoutsPaid', 'Payouts paid')}</strong><span>{`$${(payoutPaid / 100).toFixed(2)}`}</span></div>
+          <div className="admin-list-row"><strong>{t('adminPage.payoutsPending', 'Payouts pending')}</strong><span>{`$${(payoutPending / 100).toFixed(2)}`}</span></div>
         </div>
         {monthlyRows.length > 0 && (
           <>
-            <h3 style={{ fontSize: 14, marginBottom: 8 }}>Monthly revenue (last 12 months)</h3>
+            <h3 style={{ fontSize: 14, marginBottom: 8 }}>{t('adminPage.monthlyRevenue12mo', 'Monthly revenue (last 12 months)')}</h3>
             <div className="admin-list">
               {monthlyRows.map(([month, cents]) => (
                 <div className="admin-list-row" key={month}>
@@ -952,11 +950,11 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
         )}
         {topEarners.length > 0 && (
           <>
-            <h3 style={{ fontSize: 14, marginBottom: 8, marginTop: 16 }}>Top earners (by profile)</h3>
+            <h3 style={{ fontSize: 14, marginBottom: 8, marginTop: 16 }}>{t('adminPage.topEarnersByProfile', 'Top earners (by profile)')}</h3>
             <div className="admin-list">
               {topEarners.map((e) => (
                 <div className="admin-list-row" key={e.profileId}>
-                  <span>{e.profileId ?? 'unknown'}</span>
+                  <span>{e.profileId ?? t('adminPage.unknown2', 'unknown')}</span>
                   <strong>{`$${((e._sum.amountCents ?? 0) / 100).toFixed(2)}`}</strong>
                 </div>
               ))}
@@ -967,9 +965,9 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
 
       {/* ── Rate Limits ───────────────────────────────────────── */}
       <section className="section">
-        <h2>Rate Limits (last 24h)</h2>
+        <h2>{t('adminPage.rateLimitsLast24h', 'Rate Limits (last 24h)')}</h2>
         {recentSpamFlags.length === 0 ? (
-          <p className="meta">No SPAM_FLAG notifications in the last 24 hours.</p>
+          <p className="meta">{t('adminPage.noSpamFlagNotifications', 'No SPAM_FLAG notifications in the last 24 hours.')}</p>
         ) : (
           <div className="admin-list">
             {recentSpamFlags.map((n) => (
@@ -985,31 +983,31 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
 
       {/* ── A/B Tests ─────────────────────────────────────────── */}
       <section className="section">
-        <h2>A/B Tests</h2>
+        <h2>{t('adminPage.abTests', 'A/B Tests')}</h2>
         {abTests.length === 0 ? (
-          <p className="meta">No A/B tests configured. POST to /api/admin/ab-tests to create one.</p>
+          <p className="meta">{t('adminPage.noAbTestsConfigured', 'No A/B tests configured. POST to /api/admin/ab-tests to create one.')}</p>
         ) : (
           <div className="admin-list">
-            {abTests.map((t) => (
-              <div className="admin-list-row" key={t.key}>
-                <code>{t.key}</code>
-                <span>{t.description ?? '—'}</span>
-                <strong style={{ color: t.enabled ? 'var(--teal, #22e5d4)' : 'var(--ink3, #666)' }}>{t.enabled ? 'ENABLED' : 'DISABLED'}</strong>
-                <small>{t.createdAt.toISOString().slice(0, 10)}</small>
+            {abTests.map((test) => (
+              <div className="admin-list-row" key={test.key}>
+                <code>{test.key}</code>
+                <span>{test.description ?? '—'}</span>
+                <strong style={{ color: test.enabled ? 'var(--teal, #22e5d4)' : 'var(--ink3, #666)' }}>{test.enabled ? t('adminPage.enabled', 'ENABLED') : t('adminPage.disabled', 'DISABLED')}</strong>
+                <small>{test.createdAt.toISOString().slice(0, 10)}</small>
               </div>
             ))}
           </div>
         )}
         <p className="meta" style={{ marginTop: 8 }}>
-          Manage via <code>POST /api/admin/ab-tests</code> with <code>{`{key, description, enabled}`}</code>.
+          {t('adminPage.manageViaAbTests', 'Manage via')} <code>POST /api/admin/ab-tests</code> {t('adminPage.withParams', 'with')} <code>{`{key, description, enabled}`}</code>.
         </p>
       </section>
 
       {/* ── Ads ───────────────────────────────────────────────── */}
       <section className="section">
-        <h2>Ads — Pending Review</h2>
+        <h2>{t('adminPage.adsPendingReview', 'Ads — Pending Review')}</h2>
         {pendingAds.length === 0 ? (
-          <p className="meta">No pending ads.</p>
+          <p className="meta">{t('adminPage.noPendingAds', 'No pending ads.')}</p>
         ) : (
           <div className="admin-list">
             {pendingAds.map((ad) => (
@@ -1025,16 +1023,19 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
                     opens a real Stripe authorization and now needs a
                     step-up passkey check, so rather than duplicate that
                     flow a third time this links to /admin/ads, where
-                    AdminAdsClient already does it properly. */}
+                    AdminAdsClient already does it properly. The i18n pass
+                    wrapped the old forms' labels; those strings went with
+                    the forms. */}
                 <Link className="button small" href={`/admin/ads?status=PENDING&q=${encodeURIComponent(ad.title)}`} style={{ fontSize: 12 }}>
-                  Review
+                  {t('adminPage.review', 'Review')}
                 </Link>
               </div>
             ))}
           </div>
         )}
         <p className="meta" style={{ marginTop: 8 }}>
-          Approve or reject campaigns in the <Link href="/admin/ads">Ads queue</Link>.
+          {t('adminPage.manageViaAdsQueue', 'Approve or reject campaigns in the')}{' '}
+          <Link href="/admin/ads">{t('adminPage.adsQueue', 'Ads queue')}</Link>.
         </p>
       </section>
     </div>

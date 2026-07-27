@@ -4,6 +4,7 @@ import { detectRequestLocation } from '@/lib/request-location';
 import { getRecommendations } from '@/lib/recommendations';
 import { enhanceRecommendationsWithAI } from '@/lib/ai-recommendations';
 import type { Metadata } from 'next';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +23,7 @@ const REASON_COLOR: Record<string, string> = {
 };
 
 export default async function ForYouPage() {
+  const t = getT(await getLocale());
   const [session, location] = await Promise.all([auth(), detectRequestLocation()]);
   const result = await getRecommendations(session?.user?.id ?? null, location, { type: null, limit: 30 });
   const { meta } = result;
@@ -37,19 +39,19 @@ export default async function ForYouPage() {
       <style>{FORYOU_CSS}</style>
 
       <header className="foryou-head">
-        <span className="foryou-eyebrow">FOR YOU</span>
-        <h1 className="foryou-title">Picked for your taste</h1>
+        <span className="foryou-eyebrow">{t('forYouPage.eyebrow', 'FOR YOU')}</span>
+        <h1 className="foryou-title">{t('forYouPage.title', 'Picked for your taste')}</h1>
         <p className="foryou-sub">
           {meta.viewerHasHypeHistory
-            ? 'Ranked from who you hype, who fans like you hype, your scene, and what’s rising.'
-            : 'Hype a few artists and these get personal — each pick will show exactly why.'}
+            ? t('forYouPage.subWithHistory', 'Ranked from who you hype, who fans like you hype, your scene, and what’s rising.')
+            : t('forYouPage.subWithoutHistory', 'Hype a few artists and these get personal — each pick will show exactly why.')}
         </p>
       </header>
 
       {profiles.length === 0 ? (
         <div className="foryou-empty">
-          <p>Nothing to recommend yet.</p>
-          <Link href="/discover" className="foryou-cta">Browse artists</Link>
+          <p>{t('forYouPage.emptyState', 'Nothing to recommend yet.')}</p>
+          <Link href="/discover" className="foryou-cta">{t('forYouPage.browseArtists', 'Browse artists')}</Link>
         </div>
       ) : (
         <ul className="foryou-list">
@@ -62,13 +64,13 @@ export default async function ForYouPage() {
                 <div className="foryou-body">
                   <div className="foryou-name">{p.name}{p.verified && <span className="foryou-verified">✓</span>}</div>
                   <div className="foryou-meta">
-                    {(p.genres.slice(0, 2).join(' · ') || 'Artist')}{p.city ? ` · ${p.city}` : ''}
+                    {(p.genres.slice(0, 2).join(' · ') || t('forYouPage.artistFallback', 'Artist'))}{p.city ? ` · ${p.city}` : ''}
                   </div>
                   <div className="foryou-reason" style={{ color: REASON_COLOR[p.reason.kind] ?? REASON_COLOR.social }}>
                     {p.reason.text}
                   </div>
                 </div>
-                {p.hypeCount > 0 && <span className="foryou-hype">{p.hypeCount} HYPE</span>}
+                {p.hypeCount > 0 && <span className="foryou-hype">{p.hypeCount} {t('forYouPage.hypeUnit', 'HYPE')}</span>}
               </Link>
             </li>
           ))}
@@ -76,7 +78,7 @@ export default async function ForYouPage() {
       )}
 
       {!session?.user?.id && profiles.length > 0 && (
-        <p className="foryou-foot"><Link href="/register">Sign up</Link> to make these personal.</p>
+        <p className="foryou-foot"><Link href="/register">{t('forYouPage.signUp', 'Sign up')}</Link> {t('forYouPage.signUpSuffix', 'to make these personal.')}</p>
       )}
     </div>
   );

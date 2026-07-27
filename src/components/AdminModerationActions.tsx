@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { AdminReauthPrompt } from '@/components/AdminReauthPrompt';
+import { useI18n } from '@/components/I18nProvider';
 
 type ReportStatus = 'OPEN' | 'REVIEWED' | 'RESOLVED' | 'DISMISSED' | 'HIDDEN';
 type VerificationStatus = 'PENDING' | 'VERIFIED' | 'REJECTED' | 'UNVERIFIED';
@@ -32,6 +33,7 @@ async function patchJson(url: string, body: unknown) {
 }
 
 export function AdminReportActions({ reportId }: { reportId: string }) {
+  const { t } = useI18n();
   const router = useRouter();
   const [pendingStatus, setPendingStatus] = useState<ReportStatus | null>(null);
   const [reauthStatus, setReauthStatus] = useState<ReportStatus | null>(null);
@@ -49,7 +51,7 @@ export function AdminReportActions({ reportId }: { reportId: string }) {
       if (err instanceof ReauthRequiredError) {
         setReauthStatus(status);
       } else {
-        setError(err instanceof Error ? err.message : 'Action failed.');
+        setError(err instanceof Error ? err.message : t('adminModerationActions.actionFailed', 'Action failed.'));
       }
     } finally {
       setPendingStatus(null);
@@ -66,7 +68,7 @@ export function AdminReportActions({ reportId }: { reportId: string }) {
           onClick={() => run(status)}
           type="button"
         >
-          {pendingStatus === status ? 'Saving...' : status}
+          {pendingStatus === status ? t('adminModerationActions.saving', 'Saving...') : status}
         </button>
       ))}
       {reauthStatus ? (
@@ -85,6 +87,7 @@ export function AdminReportActions({ reportId }: { reportId: string }) {
 }
 
 export function AdminVerificationActions({ profileId }: { profileId: string }) {
+  const { t } = useI18n();
   const router = useRouter();
   const [pendingStatus, setPendingStatus] = useState<VerificationStatus | null>(null);
   const [reauthStatus, setReauthStatus] = useState<VerificationStatus | null>(null);
@@ -102,7 +105,7 @@ export function AdminVerificationActions({ profileId }: { profileId: string }) {
       if (err instanceof ReauthRequiredError) {
         setReauthStatus(status);
       } else {
-        setError(err instanceof Error ? err.message : 'Action failed.');
+        setError(err instanceof Error ? err.message : t('adminModerationActions.actionFailed', 'Action failed.'));
       }
     } finally {
       setPendingStatus(null);
@@ -112,10 +115,10 @@ export function AdminVerificationActions({ profileId }: { profileId: string }) {
   return (
     <div className="admin-action-row">
       <button className="button small secondary" disabled={Boolean(pendingStatus)} onClick={() => run('VERIFIED')} type="button">
-        {pendingStatus === 'VERIFIED' ? 'Saving...' : 'Approve'}
+        {pendingStatus === 'VERIFIED' ? t('adminModerationActions.saving', 'Saving...') : t('adminModerationActions.approve', 'Approve')}
       </button>
       <button className="button small danger" disabled={Boolean(pendingStatus)} onClick={() => run('REJECTED')} type="button">
-        {pendingStatus === 'REJECTED' ? 'Saving...' : 'Reject'}
+        {pendingStatus === 'REJECTED' ? t('adminModerationActions.saving', 'Saving...') : t('adminModerationActions.reject', 'Reject')}
       </button>
       {reauthStatus ? (
         <AdminReauthPrompt

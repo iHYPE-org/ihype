@@ -21,6 +21,7 @@ import { resolveProfileThemeVars } from '@/lib/profile-design';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
 import { ConnectPayoutButton } from '@/components/ConnectPayoutButton';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const revalidate = 60;
 
@@ -55,6 +56,7 @@ export default async function DJProfilePage({
   params: Promise<{ slug: string }>;
   searchParams?: Promise<{ section?: string | string[] }>;
 }) {
+  const t = getT(await getLocale());
   const session = await auth();
   const { slug } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : {};
@@ -122,30 +124,30 @@ export default async function DJProfilePage({
             <div className="dj-name">{profile.name}</div>
             <div className="dj-handle">{profile.owner?.username ? `@${profile.owner.username}` : profile.hexId}{profile.city ? ` · ${profile.city}` : ''}</div>
             <div className="dj-hero-badges">
-              <span className="dj-badge" style={{ background: 'rgba(255,62,154,.15)', color: '#ff3e9a' }}>DJ</span>
-              {profile.verificationStatus === 'VERIFIED' && <span className="dj-badge" style={{ background: 'rgba(34,229,212,.15)', color: 'var(--role-venue, #22e5d4)' }}>✓ Verified</span>}
+              <span className="dj-badge" style={{ background: 'rgba(255,62,154,.15)', color: '#ff3e9a' }}>{t('promotersSlugPage.djBadge', 'DJ')}</span>
+              {profile.verificationStatus === 'VERIFIED' && <span className="dj-badge" style={{ background: 'rgba(34,229,212,.15)', color: 'var(--role-venue, #22e5d4)' }}>{t('promotersSlugPage.verifiedBadge', '✓ Verified')}</span>}
             </div>
             <div className="dj-hero-actions">
               <FollowButton profileId={profile.id} variant="hero" />
-              <Link className="dj-hero-btn" href="/radio">Tune In →</Link>
+              <Link className="dj-hero-btn" href="/radio">{t('promotersSlugPage.tuneInLink', 'Tune In →')}</Link>
               {!isOwner && session?.user?.id && (
                 <ReportButton className="dj-hero-btn" entityLabel="profile" targetId={profile.id} targetType="profile" />
               )}
               {isOwner && (
                 <>
-                  {profile.type === 'DJ' && <Link className="dj-hero-btn" href="/radio/studio">Radio Studio</Link>}
+                  {profile.type === 'DJ' && <Link className="dj-hero-btn" href="/radio/studio">{t('promotersSlugPage.radioStudioLink', 'Radio Studio')}</Link>}
                   <FanMailButton profileId={profile.id} triggerClassName="dj-hero-btn" />
-                  <Link className="dj-hero-btn" href="/pages">Customize</Link>
-                  <Link className="dj-hero-btn" href="/settings">Settings</Link>
+                  <Link className="dj-hero-btn" href="/pages">{t('promotersSlugPage.customizeLink', 'Customize')}</Link>
+                  <Link className="dj-hero-btn" href="/settings">{t('promotersSlugPage.settingsLink', 'Settings')}</Link>
                 </>
               )}
             </div>
           </div>
         </div>
         <div className="dj-stats">
-          <div><div className="dj-stat-val">{shows.length}</div><div className="dj-stat-label">Shows</div></div>
-          <div><div className="dj-stat-val">{profile.hypeCount.toLocaleString()}</div><div className="dj-stat-label">Hypes</div></div>
-          {isOwner && <div><div className="dj-stat-val">${(totalEarnedCents / 100).toFixed(0)}</div><div className="dj-stat-label">Referral Earned</div></div>}
+          <div><div className="dj-stat-val">{shows.length}</div><div className="dj-stat-label">{t('promotersSlugPage.statShows', 'Shows')}</div></div>
+          <div><div className="dj-stat-val">{profile.hypeCount.toLocaleString()}</div><div className="dj-stat-label">{t('promotersSlugPage.statHypes', 'Hypes')}</div></div>
+          {isOwner && <div><div className="dj-stat-val">${(totalEarnedCents / 100).toFixed(0)}</div><div className="dj-stat-label">{t('promotersSlugPage.statReferralEarned', 'Referral Earned')}</div></div>}
         </div>
         <PinnedStatTiles accent="#ff3e9a" stats={pinnedStats} />
       </div>
@@ -154,7 +156,7 @@ export default async function DJProfilePage({
         <div className="dj-tabs">
           {djSections.filter((s) => (s !== 'earnings' && s !== 'insights') || isOwner).map((section) => (
             <Link className={section === activeSection ? 'dj-tab active' : 'dj-tab'} href={`/promoters/${profile.slug}?section=${section}`} key={section}>
-              {SECTION_LABEL[section]}
+              {t(`promotersSlugPage.section.${section}`, SECTION_LABEL[section])}
             </Link>
           ))}
         </div>
@@ -162,21 +164,21 @@ export default async function DJProfilePage({
         {activeSection === 'shows' && (
           <div>
             {relevantShows.length === 0 ? (
-              <div className="dj-empty"><p>No shows yet.</p></div>
+              <div className="dj-empty"><p>{t('promotersSlugPage.noShowsYet', 'No shows yet.')}</p></div>
             ) : (
               relevantShows.map((s) => (
                 <Link className="dj-show-card" href={`/shows/${s.slug}`} key={s.id}>
                   <div>
                     <div className="dj-show-title">{s.title}</div>
                     <div className="dj-show-meta">
-                      {s.status === 'LIVE' ? 'Live now' : s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                      {s.status === 'LIVE' ? t('promotersSlugPage.liveNow', 'Live now') : s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                     </div>
                   </div>
-                  {s.status === 'LIVE' && <span className="dj-live-pill">Live</span>}
+                  {s.status === 'LIVE' && <span className="dj-live-pill">{t('promotersSlugPage.liveLabel', 'Live')}</span>}
                 </Link>
               ))
             )}
-            <SimilarArtistsRow accent="var(--profile-hero, linear-gradient(135deg,#ff3e9a,#b983ff))" artists={similarArtists} heading="Similar DJs & Artists" />
+            <SimilarArtistsRow accent="var(--profile-hero, linear-gradient(135deg,#ff3e9a,#b983ff))" artists={similarArtists} heading={t('promotersSlugPage.similarArtistsHeading', 'Similar DJs & Artists')} />
           </div>
         )}
 
@@ -193,7 +195,7 @@ export default async function DJProfilePage({
                 profileId={profile.id}
               />
             ) : (
-              <div className="dj-empty"><p>No free-use tracks in the crate yet.</p></div>
+              <div className="dj-empty"><p>{t('promotersSlugPage.noFreeUseTracks', 'No free-use tracks in the crate yet.')}</p></div>
             )}
           </>
         )}
@@ -201,10 +203,10 @@ export default async function DJProfilePage({
         {activeSection === 'earnings' && isOwner && (
           <div>
             <p style={{ fontSize: 12, color: 'var(--ink-a50)', marginBottom: 16 }}>
-              Earnings are a proportional share of the 10% promoter pool per event, based on gate driven.
+              {t('promotersSlugPage.earningsExplainer', 'Earnings are a proportional share of the 10% promoter pool per event, based on gate driven.')}
             </p>
             {earningsByShow.size === 0 ? (
-              <div className="dj-empty"><p>No referral earnings yet.</p></div>
+              <div className="dj-empty"><p>{t('promotersSlugPage.noReferralEarnings', 'No referral earnings yet.')}</p></div>
             ) : (
               <div className="dj-earn-list">
                 {[...earningsByShow.entries()].map(([title, cents]) => (

@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 type ScanLayer = {
   layer: 0 | 1 | 2 | 3;
@@ -25,6 +26,7 @@ export function TrackUploadPanel({
   profileType: 'ARTIST' | 'DJ';
   onUploaded?: () => void;
 }) {
+  const { t } = useI18n();
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
@@ -38,7 +40,7 @@ export function TrackUploadPanel({
   const [finalMessage, setFinalMessage] = useState<string | null>(null);
 
   const isDj = profileType === 'DJ';
-  const submitLabel = isDj ? 'Add to crate' : 'Upload track';
+  const submitLabel = isDj ? t('trackUploadPanel.addToCrateButton', 'Add to crate') : t('trackUploadPanel.uploadTrackButton', 'Upload track');
 
   // Sequentially reveal each layer's already-known result on a stagger, so
   // the scan reads as a live gate pass rather than an instant dump of JSON.
@@ -62,15 +64,15 @@ export function TrackUploadPanel({
     timers.push(setTimeout(() => {
       const flagged = scanLayers.find((l) => l.configured && (!l.cleared || l.requiresManualReview));
       setFinalMessage(flagged
-        ? `Flagged for review: ${flagged.reasoning}`
-        : 'All checks cleared — live now.');
+        ? `${t('trackUploadPanel.flaggedForReviewPrefix', 'Flagged for review:')} ${flagged.reasoning}`
+        : t('trackUploadPanel.allChecksClearedMessage', 'All checks cleared — live now.'));
     }, totalMs));
     return () => timers.forEach(clearTimeout);
   }, [scanLayers]);
 
   async function submit() {
-    if (!file) { setError('Choose an audio file first.'); return; }
-    if (!title.trim()) { setError('Give the track a title.'); return; }
+    if (!file) { setError(t('trackUploadPanel.chooseAudioFileError', 'Choose an audio file first.')); return; }
+    if (!title.trim()) { setError(t('trackUploadPanel.giveTrackTitleError', 'Give the track a title.')); return; }
     setSubmitting(true);
     setError(null);
     setScanLayers(null);
@@ -88,7 +90,7 @@ export function TrackUploadPanel({
       const response = await fetch('/api/artist-media', { method: 'POST', body: formData });
       const data = await response.json();
       if (!response.ok) {
-        setError(data.error ?? 'Could not upload this track.');
+        setError(data.error ?? t('trackUploadPanel.uploadErrorFallback', 'Could not upload this track.'));
         setSubmitting(false);
         return;
       }
@@ -102,7 +104,7 @@ export function TrackUploadPanel({
       onUploaded?.();
       router.refresh();
     } catch {
-      setError('Could not upload this track. Check your connection and try again.');
+      setError(t('trackUploadPanel.uploadNetworkErrorFallback', 'Could not upload this track. Check your connection and try again.'));
     } finally {
       setSubmitting(false);
     }
@@ -112,17 +114,17 @@ export function TrackUploadPanel({
     <div className="artist-media-upload-panel">
       <div className="artist-media-upload-header">
         <div>
-          <h3>{isDj ? 'Add to crate' : 'Upload track'}</h3>
+          <h3>{isDj ? t('trackUploadPanel.addToCrateHeading', 'Add to crate') : t('trackUploadPanel.uploadTrackHeading', 'Upload track')}</h3>
           <p className="meta">
             {isDj
-              ? 'Audio only (MP3/WAV/FLAC) — nothing airs until it clears the scan below.'
-              : 'Audio only (MP3/WAV/FLAC). Every upload runs an automated scan before it\u2019s marked cleared.'}
+              ? t('trackUploadPanel.djAudioOnlyNotice', 'Audio only (MP3/WAV/FLAC) — nothing airs until it clears the scan below.')
+              : t('trackUploadPanel.artistAudioOnlyNotice', 'Audio only (MP3/WAV/FLAC). Every upload runs an automated scan before it’s marked cleared.')}
           </p>
           {isDj && (
             <p className="meta">
-              Need free-use samples?{' '}
+              {t('trackUploadPanel.freeUseSamplesPrompt', 'Need free-use samples?')}{' '}
               <a href="https://pixabay.com/" rel="noopener noreferrer" target="_blank">
-                Browse Pixabay&apos;s free audio library &rarr;
+                {t('trackUploadPanel.browsePixabayLink', "Browse Pixabay's free audio library →")}
               </a>
             </p>
           )}
@@ -138,7 +140,7 @@ export function TrackUploadPanel({
           type="file"
         />
         <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: '0.8rem' }}>
-          Cover art (optional)
+          {t('trackUploadPanel.coverArtLabel', 'Cover art (optional)')}
           <input
             accept="image/jpeg,image/png,image/gif,image/webp"
             disabled={submitting}
@@ -151,7 +153,7 @@ export function TrackUploadPanel({
           disabled={submitting}
           maxLength={160}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Track title"
+          placeholder={t('trackUploadPanel.trackTitlePlaceholder', 'Track title')}
           type="text"
           value={title}
         />
@@ -159,7 +161,7 @@ export function TrackUploadPanel({
           disabled={submitting}
           maxLength={1000}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="Notes (optional)"
+          placeholder={t('trackUploadPanel.notesPlaceholder', 'Notes (optional)')}
           rows={2}
           value={notes}
         />
@@ -170,10 +172,10 @@ export function TrackUploadPanel({
             onChange={(e) => setFreeUseEnabled(e.target.checked)}
             type="checkbox"
           />
-          Allow free use (promoters/DJs can add this to shows and playlists)
+          {t('trackUploadPanel.allowFreeUseLabel', 'Allow free use (promoters/DJs can add this to shows and playlists)')}
         </label>
         <button className="button small" disabled={submitting} onClick={submit} type="button">
-          {submitting ? 'Uploading…' : submitLabel}
+          {submitting ? t('trackUploadPanel.uploadingButton', 'Uploading…') : submitLabel}
         </button>
       </div>
 
@@ -189,7 +191,7 @@ export function TrackUploadPanel({
                 </span>
                 <span className="track-scan-layer-name">{layer.name}</span>
                 {state === 'done' && !layer.configured && (
-                  <span className="track-scan-layer-note">Not configured</span>
+                  <span className="track-scan-layer-note">{t('trackUploadPanel.notConfiguredLabel', 'Not configured')}</span>
                 )}
                 {state === 'done' && layer.configured && flaggedHere && (
                   <span className="track-scan-layer-note track-scan-layer-note-flag">{layer.reasoning}</span>

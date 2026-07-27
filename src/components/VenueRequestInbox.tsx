@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 type VenueRequest = {
   id: string;
@@ -13,6 +14,7 @@ type VenueRequest = {
 };
 
 export function VenueRequestInbox() {
+  const { t } = useI18n();
   const [requests, setRequests] = useState<VenueRequest[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -24,10 +26,10 @@ export function VenueRequestInbox() {
       .then((data) => {
         if (cancelled) return;
         if (Array.isArray(data.requests)) setRequests(data.requests);
-        else setError(data.error ?? 'Could not load requests.');
+        else setError(data.error ?? t('venueRequestInbox.errorCouldNotLoad', 'Could not load requests.'));
       })
       .catch(() => {
-        if (!cancelled) setError('Could not load requests.');
+        if (!cancelled) setError(t('venueRequestInbox.errorCouldNotLoad', 'Could not load requests.'));
       });
     return () => { cancelled = true; };
   }, []);
@@ -43,7 +45,7 @@ export function VenueRequestInbox() {
       setRequests((prev) => (prev ?? []).filter((r) => r.id !== id));
     } else {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? 'Could not update this request.');
+      setError(data.error ?? t('venueRequestInbox.errorCouldNotUpdate', 'Could not update this request.'));
     }
     setBusyId(null);
   }
@@ -53,11 +55,11 @@ export function VenueRequestInbox() {
   }
 
   if (requests === null) {
-    return <p style={{ color: 'var(--ink-a50)' }}>Loading requests…</p>;
+    return <p style={{ color: 'var(--ink-a50)' }}>{t('venueRequestInbox.loading', 'Loading requests…')}</p>;
   }
 
   if (requests.length === 0) {
-    return <p style={{ color: 'var(--ink-a50)' }}>No pending booking requests right now.</p>;
+    return <p style={{ color: 'var(--ink-a50)' }}>{t('venueRequestInbox.empty', 'No pending booking requests right now.')}</p>;
   }
 
   return (
@@ -68,7 +70,7 @@ export function VenueRequestInbox() {
             <div>
               <div className="venue-request-artist">{r.artistName}</div>
               <div className="venue-request-meta">
-                {r.requesterType === 'PROMOTER' ? 'Suggested by a promoter' : 'Suggested by a fan'}
+                {r.requesterType === 'PROMOTER' ? t('venueRequestInbox.suggestedByPromoter', 'Suggested by a promoter') : t('venueRequestInbox.suggestedByFan', 'Suggested by a fan')}
                 {' · '}
                 {new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </div>
@@ -82,7 +84,7 @@ export function VenueRequestInbox() {
               onClick={() => act(r.id, 'BOOKED')}
               type="button"
             >
-              {busyId === r.id ? 'Working…' : 'Approve'}
+              {busyId === r.id ? t('venueRequestInbox.working', 'Working…') : t('venueRequestInbox.approve', 'Approve')}
             </button>
             <button
               className="venue-request-btn venue-request-deny"
@@ -90,7 +92,7 @@ export function VenueRequestInbox() {
               onClick={() => act(r.id, 'DISMISSED')}
               type="button"
             >
-              {busyId === r.id ? 'Working…' : 'Deny'}
+              {busyId === r.id ? t('venueRequestInbox.working', 'Working…') : t('venueRequestInbox.deny', 'Deny')}
             </button>
           </div>
         </div>

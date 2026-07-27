@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useMemo, useRef, useState } from 'react';
 import { useMediaPlayer, type MediaTrack } from '@/components/GlobalMediaPlayer';
 import type { ArtistMediaEntry } from '@/lib/media';
+import { useI18n } from '@/components/I18nProvider';
 
 type ArtistMediaPlaylistProps = {
   artistName: string;
@@ -27,6 +28,7 @@ export function ArtistMediaPlaylist({
   playCountMap = {}
 }: ArtistMediaPlaylistProps) {
   const router = useRouter();
+  const { t } = useI18n();
   const { currentTrack, isPlaying, playTrack, togglePlayback } = useMediaPlayer();
   const [message, setMessage] = useState<string | null>(null);
   const [entries, setEntries] = useState(initialEntries);
@@ -62,22 +64,22 @@ export function ArtistMediaPlaylist({
           : new URL(value, window.location.origin).toString()
         : value;
       await navigator.clipboard.writeText(normalizedValue);
-      setMessage(`${label} copied.`);
+      setMessage(`${label} ${t('artistMediaPlaylist.copied', 'copied.')}`);
     } catch {
-      setMessage(`Could not copy ${label.toLowerCase()}.`);
+      setMessage(`${t('artistMediaPlaylist.couldNotCopy', 'Could not copy')} ${label.toLowerCase()}.`);
     }
   }
 
   async function removeUpload(entry: ArtistMediaEntry) {
-    if (!window.confirm(`Remove ${entry.title} from your artist page?`)) return;
+    if (!window.confirm(`${t('artistMediaPlaylist.confirmRemove', 'Remove')} ${entry.title} ${t('artistMediaPlaylist.confirmRemoveSuffix', 'from your artist page?')}`)) return;
     try {
       const response = await fetch(`/api/artist-media/${entry.hexId}`, { method: 'DELETE' });
       const data = await response.json();
-      if (!response.ok) { setMessage(data.error ?? 'Could not remove this upload.'); return; }
-      setMessage(`${entry.title} removed.`);
+      if (!response.ok) { setMessage(data.error ?? t('artistMediaPlaylist.couldNotRemove', 'Could not remove this upload.')); return; }
+      setMessage(`${entry.title} ${t('artistMediaPlaylist.removed', 'removed.')}`);
       router.refresh();
     } catch {
-      setMessage('Could not remove this upload.');
+      setMessage(t('artistMediaPlaylist.couldNotRemove', 'Could not remove this upload.'));
     }
   }
 
@@ -100,12 +102,12 @@ export function ArtistMediaPlaylist({
         body: JSON.stringify({ title: state.title, notes: state.notes })
       });
       const data = await response.json();
-      if (!response.ok) { setMessage(data.error ?? 'Could not save changes.'); setEditing((prev) => ({ ...prev, [hexId]: { ...state, saving: false } })); return; }
+      if (!response.ok) { setMessage(data.error ?? t('artistMediaPlaylist.couldNotSave', 'Could not save changes.')); setEditing((prev) => ({ ...prev, [hexId]: { ...state, saving: false } })); return; }
       cancelEdit(hexId);
-      setMessage('Track updated.');
+      setMessage(t('artistMediaPlaylist.trackUpdated', 'Track updated.'));
       router.refresh();
     } catch {
-      setMessage('Could not save changes.');
+      setMessage(t('artistMediaPlaylist.couldNotSave', 'Could not save changes.'));
       setEditing((prev) => ({ ...prev, [hexId]: { ...state, saving: false } }));
     }
   }
@@ -121,13 +123,13 @@ export function ArtistMediaPlaylist({
       });
       if (!response.ok) {
         setFreeUse((prev) => ({ ...prev, [hexId]: !next }));
-        setMessage('Could not update free-use status.');
+        setMessage(t('artistMediaPlaylist.couldNotUpdateFreeUse', 'Could not update free-use status.'));
       } else {
-        setMessage(next ? 'Free use enabled — promoters can add this to playlists.' : 'Free use disabled.');
+        setMessage(next ? t('artistMediaPlaylist.freeUseEnabled', 'Free use enabled — promoters can add this to playlists.') : t('artistMediaPlaylist.freeUseDisabled', 'Free use disabled.'));
       }
     } catch {
       setFreeUse((prev) => ({ ...prev, [hexId]: !next }));
-      setMessage('Could not update free-use status.');
+      setMessage(t('artistMediaPlaylist.couldNotUpdateFreeUse', 'Could not update free-use status.'));
     }
   }
 
@@ -167,7 +169,7 @@ export function ArtistMediaPlaylist({
         body: JSON.stringify({ profileId, order: uploadOrder })
       });
     } catch {
-      setMessage('Could not save track order.');
+      setMessage(t('artistMediaPlaylist.couldNotSaveOrder', 'Could not save track order.'));
     }
   }
 
@@ -204,7 +206,7 @@ export function ArtistMediaPlaylist({
               {canDrag && (
                 <span
                   className="artist-media-drag-handle"
-                  title="Drag to reorder"
+                  title={t('artistMediaPlaylist.dragToReorder', 'Drag to reorder')}
                   style={{ cursor: 'grab', opacity: 0.4, paddingRight: 6, userSelect: 'none', fontSize: '1rem' }}
                 >
                   ⠿
@@ -230,24 +232,24 @@ export function ArtistMediaPlaylist({
                       className="field"
                       disabled={editState.saving}
                       onChange={(e) => setEditing((prev) => ({ ...prev, [entry.hexId]: { ...editState, title: e.target.value } }))}
-                      placeholder="Track title"
+                      placeholder={t('artistMediaPlaylist.trackTitlePlaceholder', 'Track title')}
                       style={{ fontSize: '0.875rem', padding: '4px 8px' }}
                       value={editState.title}
                     />
                     <textarea
                       disabled={editState.saving}
                       onChange={(e) => setEditing((prev) => ({ ...prev, [entry.hexId]: { ...editState, notes: e.target.value } }))}
-                      placeholder="Version notes, live room details, release context…"
+                      placeholder={t('artistMediaPlaylist.notesPlaceholder', 'Version notes, live room details, release context…')}
                       rows={2}
                       style={{ fontSize: '0.8rem', padding: '4px 8px', resize: 'vertical' }}
                       value={editState.notes}
                     />
                     <div style={{ display: 'flex', gap: 6 }}>
                       <button className="button small" disabled={editState.saving || !editState.title.trim()} onClick={() => saveEdit(entry.hexId)} type="button">
-                        {editState.saving ? 'Saving…' : 'Save'}
+                        {editState.saving ? t('artistMediaPlaylist.saving', 'Saving…') : t('artistMediaPlaylist.save', 'Save')}
                       </button>
                       <button className="button small secondary" disabled={editState.saving} onClick={() => cancelEdit(entry.hexId)} type="button">
-                        Cancel
+                        {t('artistMediaPlaylist.cancel', 'Cancel')}
                       </button>
                     </div>
                   </div>
@@ -257,10 +259,10 @@ export function ArtistMediaPlaylist({
                     <p className="meta">
                       {artistName}
                       {track.notes ? ` | ${track.notes}` : ''}
-                      {playCount ? ` · ${playCount} play${playCount === 1 ? '' : 's'}` : ''}
+                      {playCount ? ` · ${playCount} ${playCount === 1 ? t('artistMediaPlaylist.play', 'play') : t('artistMediaPlaylist.plays', 'plays')}` : ''}
                     </p>
                     {canEdit && freeUse[entry.hexId] && (
-                      <span className="meta" style={{ fontSize: '0.7rem', opacity: 0.6 }}>Free use on</span>
+                      <span className="meta" style={{ fontSize: '0.7rem', opacity: 0.6 }}>{t('artistMediaPlaylist.freeUseOn', 'Free use on')}</span>
                     )}
                   </>
                 )}
@@ -274,29 +276,29 @@ export function ArtistMediaPlaylist({
                   onClick={() => { if (isCurrentTrack) { togglePlayback(); return; } playTrack(track, queue); }}
                   type="button"
                 >
-                  {isCurrentAndPlaying ? 'Pause' : isCurrentTrack ? 'Resume' : 'Play in dock'}
+                  {isCurrentAndPlaying ? t('artistMediaPlaylist.pause', 'Pause') : isCurrentTrack ? t('artistMediaPlaylist.resume', 'Resume') : t('artistMediaPlaylist.playInDock', 'Play in dock')}
                 </button>
               )}
               {!isEditingThis && (
                 <>
-                  <button className="button small secondary" onClick={() => copyToClipboard(entry.hexId, 'Media ID')} type="button">Copy ID</button>
-                  <button className="button small secondary" onClick={() => copyToClipboard(entry.shareUrl, 'Share link', { treatAsLink: true })} type="button">Copy link</button>
-                  <a className="button small secondary" href={track.url} rel="noreferrer" target="_blank">Open audio</a>
+                  <button className="button small secondary" onClick={() => copyToClipboard(entry.hexId, t('artistMediaPlaylist.mediaId', 'Media ID'))} type="button">{t('artistMediaPlaylist.copyId', 'Copy ID')}</button>
+                  <button className="button small secondary" onClick={() => copyToClipboard(entry.shareUrl, t('artistMediaPlaylist.shareLink', 'Share link'), { treatAsLink: true })} type="button">{t('artistMediaPlaylist.copyLink', 'Copy link')}</button>
+                  <a className="button small secondary" href={track.url} rel="noreferrer" target="_blank">{t('artistMediaPlaylist.openAudio', 'Open audio')}</a>
                   {canEdit && (
-                    <button className="button small secondary" onClick={() => startEdit(entry)} type="button">Edit</button>
+                    <button className="button small secondary" onClick={() => startEdit(entry)} type="button">{t('artistMediaPlaylist.edit', 'Edit')}</button>
                   )}
                   {canEdit && (
                     <button
                       className={`button small${freeUse[entry.hexId] ? '' : ' secondary'}`}
                       onClick={() => toggleFreeUse(entry.hexId)}
-                      title={freeUse[entry.hexId] ? 'Disable free use' : 'Allow promoters to add this to playlists'}
+                      title={freeUse[entry.hexId] ? t('artistMediaPlaylist.disableFreeUse', 'Disable free use') : t('artistMediaPlaylist.allowFreeUse', 'Allow promoters to add this to playlists')}
                       type="button"
                     >
-                      {freeUse[entry.hexId] ? 'Free use ✓' : 'Free use'}
+                      {freeUse[entry.hexId] ? t('artistMediaPlaylist.freeUseChecked', 'Free use ✓') : t('artistMediaPlaylist.freeUse', 'Free use')}
                     </button>
                   )}
                   {canEdit && (
-                    <button className="button small secondary" onClick={() => removeUpload(entry)} type="button">Delete</button>
+                    <button className="button small secondary" onClick={() => removeUpload(entry)} type="button">{t('artistMediaPlaylist.delete', 'Delete')}</button>
                   )}
                 </>
               )}

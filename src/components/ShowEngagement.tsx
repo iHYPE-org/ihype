@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { useI18n } from '@/components/I18nProvider';
 
 type Attendee = { name: string | null; avatar: string | null };
 
@@ -22,6 +23,7 @@ export function ShowEngagement({
   initialReminded: boolean;
   showEnded: boolean;
 }) {
+  const { t } = useI18n();
   const [count, setCount] = useState(initialCount);
   const [going, setGoing] = useState(initialGoing);
   const [rsvpBusy, setRsvpBusy] = useState(false);
@@ -77,12 +79,12 @@ export function ShowEngagement({
       } else {
         setGoing(prevGoing);
         setCount(prevCount);
-        setRsvpError(json.error ?? 'Could not update RSVP');
+        setRsvpError(json.error ?? t('showEngagement.rsvpErrorGeneric', 'Could not update RSVP'));
       }
     } catch {
       setGoing(prevGoing);
       setCount(prevCount);
-      setRsvpError('Could not update RSVP (network error)');
+      setRsvpError(t('showEngagement.rsvpErrorNetwork', 'Could not update RSVP (network error)'));
     } finally {
       setRsvpBusy(false);
     }
@@ -102,11 +104,11 @@ export function ShowEngagement({
         setReminded(Boolean(data.reminded));
       } else {
         setReminded(prevReminded);
-        setRemindError('Could not update reminder');
+        setRemindError(t('showEngagement.remindErrorGeneric', 'Could not update reminder'));
       }
     } catch {
       setReminded(prevReminded);
-      setRemindError('Could not update reminder (network error)');
+      setRemindError(t('showEngagement.remindErrorNetwork', 'Could not update reminder (network error)'));
     } finally {
       setRemindLoading(false);
     }
@@ -139,13 +141,13 @@ export function ShowEngagement({
         setOptedIn(prevOptedIn);
         setAttendees(prevAttendees);
         setAttendeeCount(prevAttendeeCount);
-        setAttendeeError('Could not update attendance');
+        setAttendeeError(t('showEngagement.attendanceErrorGeneric', 'Could not update attendance'));
       }
     } catch {
       setOptedIn(prevOptedIn);
       setAttendees(prevAttendees);
       setAttendeeCount(prevAttendeeCount);
-      setAttendeeError('Could not update attendance (network error)');
+      setAttendeeError(t('showEngagement.attendanceErrorNetwork', 'Could not update attendance (network error)'));
     } finally {
       setAttendeeLoading(false);
     }
@@ -163,10 +165,10 @@ export function ShowEngagement({
           disabled={!canRsvp || rsvpBusy}
           className={`button small ${going ? '' : 'secondary'}`}
           aria-pressed={going}
-          aria-label={going ? 'Cancel RSVP' : 'RSVP to this show'}
-          title={canRsvp ? 'Toggle RSVP' : 'Sign in to RSVP'}
+          aria-label={going ? t('showEngagement.cancelRsvpAria', 'Cancel RSVP') : t('showEngagement.rsvpAria', 'RSVP to this show')}
+          title={canRsvp ? t('showEngagement.toggleRsvpTitle', 'Toggle RSVP') : t('showEngagement.signInToRsvpTitle', 'Sign in to RSVP')}
         >
-          {going ? '✓ Going' : 'Going?'} ({count})
+          {going ? t('showEngagement.goingConfirmed', '✓ Going') : t('showEngagement.goingPrompt', 'Going?')} ({count})
         </button>
 
         {canRemind && !showEnded && (
@@ -176,9 +178,9 @@ export function ShowEngagement({
             disabled={remindLoading}
             type="button"
             aria-pressed={reminded}
-            aria-label={reminded ? 'Remove reminder for this show' : 'Set reminder for this show'}
+            aria-label={reminded ? t('showEngagement.removeReminderAria', 'Remove reminder for this show') : t('showEngagement.setReminderAria', 'Set reminder for this show')}
           >
-            {reminded ? 'Reminder set ✓' : 'Remind me'}
+            {reminded ? t('showEngagement.reminderSet', 'Reminder set ✓') : t('showEngagement.remindMe', 'Remind me')}
           </button>
         )}
       </div>
@@ -191,7 +193,7 @@ export function ShowEngagement({
           {visible.map((a, i) => (
             <div
               key={i}
-              title={a.name ?? 'Fan'}
+              title={a.name ?? t('showEngagement.fanFallbackName', 'Fan')}
               style={{
                 width: 32, height: 32, borderRadius: '50%', position: 'relative',
                 background: 'var(--accent, #ff3e9a)', border: '2px solid var(--bg, #0a0a14)',
@@ -201,7 +203,7 @@ export function ShowEngagement({
               }}
             >
               {a.avatar ? (
-                <Image alt={a.name ?? 'Fan'} src={a.avatar} fill sizes="32px" style={{ objectFit: 'cover' }} />
+                <Image alt={a.name ?? t('showEngagement.fanFallbackName', 'Fan')} src={a.avatar} fill sizes="32px" style={{ objectFit: 'cover' }} />
               ) : (
                 (a.name?.[0] ?? '?').toUpperCase()
               )}
@@ -210,7 +212,7 @@ export function ShowEngagement({
         </div>
         {attendeeCount > 0 && (
           <span className="meta">
-            {attendeeCount} fan{attendeeCount !== 1 ? 's' : ''} going{attendeeCount > 8 ? ` (+${attendeeCount - 8} more)` : ''}
+            {attendeeCount} {attendeeCount !== 1 ? t('showEngagement.fansGoingPlural', 'fans going') : t('showEngagement.fansGoingSingular', 'fan going')}{attendeeCount > 8 ? ` (+${attendeeCount - 8} ${t('showEngagement.more', 'more')})` : ''}
           </span>
         )}
         <button
@@ -219,10 +221,10 @@ export function ShowEngagement({
           onClick={toggleAttendee}
           type="button"
           aria-pressed={optedIn ?? false}
-          aria-label={optedIn ? 'Remove yourself from attendee list' : 'Add yourself to attendee list'}
+          aria-label={optedIn ? t('showEngagement.removeAttendeeAria', 'Remove yourself from attendee list') : t('showEngagement.addAttendeeAria', 'Add yourself to attendee list')}
           style={{ marginLeft: 4 }}
         >
-          {optedIn === true ? "I'm going ✓" : optedIn === false ? 'Not going' : "I'm going!"}
+          {optedIn === true ? t('showEngagement.imGoingConfirmed', "I'm going ✓") : optedIn === false ? t('showEngagement.notGoing', 'Not going') : t('showEngagement.imGoing', "I'm going!")}
         </button>
       </div>
       {attendeeError ? <span className="meta">{attendeeError}</span> : null}

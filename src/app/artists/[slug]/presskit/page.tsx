@@ -5,6 +5,7 @@ import { getBaseUrl } from '@/lib/utils';
 import { getCspNonce } from '@/lib/csp-nonce';
 import { parsePressKit } from '@/lib/press-kit';
 import type { Metadata } from 'next';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
@@ -50,6 +51,7 @@ export default async function PressKitPage({ params }: { params: Promise<{ slug:
   });
   if (!profile) notFound();
 
+  const t = getT(await getLocale());
   const nonce = await getCspNonce();
   const baseUrl = getBaseUrl();
   const profileUrl = `${baseUrl}/artists/${slug}`;
@@ -58,21 +60,21 @@ export default async function PressKitPage({ params }: { params: Promise<{ slug:
   return (
     <div className="container" style={{ maxWidth: 700, paddingTop: 40, paddingBottom: 60 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h1 style={{ margin: 0 }}>{profile.name} — Press Kit</h1>
-        <Link href={`/artists/${slug}`} className="button small secondary">← Back</Link>
+        <h1 style={{ margin: 0 }}>{profile.name} — {t('artistsSlugPresskitPage.pressKit', 'Press Kit')}</h1>
+        <Link href={`/artists/${slug}`} className="button small secondary">{t('artistsSlugPresskitPage.back', '← Back')}</Link>
       </div>
       {profile.avatarImage && <img src={profile.avatarImage} alt={profile.name} loading="lazy" style={{ width: 120, height: 120, borderRadius: '50%', objectFit: 'cover', marginBottom: 16 }} />}
       {pressKit.tagline && <p style={{ fontSize: 19, fontStyle: 'italic', opacity: 0.85 }}>{pressKit.tagline}</p>}
       {profile.headline && <p style={{ fontSize: 18, fontWeight: 600 }}>{profile.headline}</p>}
       {profile.bio && <p style={{ lineHeight: 1.7 }}>{profile.bio}</p>}
-      <p><strong>Genres:</strong> {(profile.genres as string[]).join(', ')}</p>
-      <p><strong>Profile:</strong> <a href={profileUrl}>{profileUrl}</a></p>
+      <p><strong>{t('artistsSlugPresskitPage.genres', 'Genres:')}</strong> {(profile.genres as string[]).join(', ')}</p>
+      <p><strong>{t('artistsSlugPresskitPage.profile', 'Profile:')}</strong> <a href={profileUrl}>{profileUrl}</a></p>
       {pressKit.contactEmail && (
-        <p><strong>Booking / press:</strong> <a href={`mailto:${pressKit.contactEmail}`}>{pressKit.contactEmail}</a></p>
+        <p><strong>{t('artistsSlugPresskitPage.bookingPress', 'Booking / press:')}</strong> <a href={`mailto:${pressKit.contactEmail}`}>{pressKit.contactEmail}</a></p>
       )}
       {pressKit.quotes.length > 0 && (
         <section style={{ marginTop: 24 }}>
-          <h2>Press</h2>
+          <h2>{t('artistsSlugPresskitPage.press', 'Press')}</h2>
           {pressKit.quotes.map((q, i) => (
             <blockquote key={i} style={{ margin: '0 0 14px', paddingLeft: 16, borderLeft: '3px solid rgba(255,80,41,.5)' }}>
               <p style={{ margin: 0, fontStyle: 'italic', lineHeight: 1.6 }}>&ldquo;{q.quote}&rdquo;</p>
@@ -83,7 +85,7 @@ export default async function PressKitPage({ params }: { params: Promise<{ slug:
       )}
       {pressKit.achievements.length > 0 && (
         <section style={{ marginTop: 24 }}>
-          <h2>Highlights</h2>
+          <h2>{t('artistsSlugPresskitPage.highlights', 'Highlights')}</h2>
           <ul style={{ margin: 0, paddingLeft: 20, lineHeight: 1.8 }}>
             {pressKit.achievements.map((a, i) => (
               <li key={i}>{a}</li>
@@ -93,14 +95,14 @@ export default async function PressKitPage({ params }: { params: Promise<{ slug:
       )}
       {profile.headlinerShows.length > 0 && (
         <section style={{ marginTop: 24 }}>
-          <h2>Upcoming Shows</h2>
+          <h2>{t('artistsSlugPresskitPage.upcomingShows', 'Upcoming Shows')}</h2>
           {profile.headlinerShows.map((s, i) => (
             <p key={i}>{s.title} — {s.venueProfile?.name}, {s.venueProfile?.city} — {s.startsAt ? new Date(s.startsAt).toLocaleDateString() : ''}</p>
           ))}
         </section>
       )}
       <div style={{ marginTop: 32, display: 'flex', gap: 12 }}>
-        <button className="button" onClick={undefined} type="button" id="print-btn" suppressHydrationWarning>Print / Save PDF</button>
+        <button className="button" onClick={undefined} type="button" id="print-btn" suppressHydrationWarning>{t('artistsSlugPresskitPage.printSavePdf', 'Print / Save PDF')}</button>
       </div>
       <script dangerouslySetInnerHTML={{ __html: `document.getElementById('print-btn').onclick=()=>window.print()` }} nonce={nonce} />
     </div>

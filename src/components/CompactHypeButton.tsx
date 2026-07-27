@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { haptic } from '@/lib/haptics';
+import { useI18n } from '@/components/I18nProvider';
 
 type CompactHypeButtonProps = {
   targetType: 'show' | 'profile';
@@ -11,6 +12,7 @@ type CompactHypeButtonProps = {
 };
 
 export function CompactHypeButton({ targetType, targetId, initialCount, initiallyHyped }: CompactHypeButtonProps) {
+  const { t } = useI18n();
   const storageKey = `hyped:${targetType}:${targetId}`;
   const [count, setCount] = useState(initialCount);
   const [hyped, setHyped] = useState(initiallyHyped ?? false);
@@ -71,8 +73,8 @@ export function CompactHypeButton({ targetType, targetId, initialCount, initiall
       disabled={pending}
       type="button"
       aria-pressed={hyped}
-      aria-label={hyped ? 'Remove hype' : 'Hype this'}
-      title={hyped ? 'Remove hype' : 'Hype this'}
+      aria-label={hyped ? t('compactHypeButton.removeHype', 'Remove hype') : t('compactHypeButton.hypeThis', 'Hype this')}
+      title={hyped ? t('compactHypeButton.removeHype', 'Remove hype') : t('compactHypeButton.hypeThis', 'Hype this')}
       style={{
         display: 'inline-flex',
         alignItems: 'center',

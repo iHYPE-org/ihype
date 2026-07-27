@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { db } from '@/lib/db';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -9,6 +10,7 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
+  const t = getT(await getLocale());
   const show = await db.show.findUnique({
     where: { slug },
     include: {
@@ -26,7 +28,7 @@ export async function GET(
         hour: 'numeric',
         minute: '2-digit'
       })
-    : 'TBA';
+    : t('showsSlugPosterRoute.tba', 'TBA');
 
   const isDownload = new URL(request.url).searchParams.get('download') === '1';
 
@@ -52,13 +54,13 @@ export async function GET(
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, fontSize: 38 }}>
           {show.headlinerProfile?.name ? (
             <div style={{ display: 'flex' }}>
-              <span style={{ opacity: 0.6, marginRight: 12 }}>FEAT</span>
+              <span style={{ opacity: 0.6, marginRight: 12 }}>{t('showsSlugPosterRoute.feat', 'FEAT')}</span>
               <strong>{show.headlinerProfile.name}</strong>
             </div>
           ) : null}
           {show.venueProfile?.name ? (
             <div style={{ display: 'flex' }}>
-              <span style={{ opacity: 0.6, marginRight: 12 }}>AT</span>
+              <span style={{ opacity: 0.6, marginRight: 12 }}>{t('showsSlugPosterRoute.at', 'AT')}</span>
               <strong>
                 {show.venueProfile.name}
                 {show.venueProfile.city ? `, ${show.venueProfile.city}` : ''}
@@ -66,13 +68,13 @@ export async function GET(
             </div>
           ) : null}
           <div style={{ display: 'flex' }}>
-            <span style={{ opacity: 0.6, marginRight: 12 }}>ON</span>
+            <span style={{ opacity: 0.6, marginRight: 12 }}>{t('showsSlugPosterRoute.on', 'ON')}</span>
             <strong>{dateLabel}</strong>
           </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 22, opacity: 0.6 }}>
           <span>ihype.org/shows/{show.slug}</span>
-          <span>HYPE THE LOCAL SCENE</span>
+          <span>{t('showsSlugPosterRoute.hypeTheLocalScene', 'HYPE THE LOCAL SCENE')}</span>
         </div>
       </div>
     ),

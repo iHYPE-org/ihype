@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const metadata = {
   title: 'Founding Scene Launch | iHYPE',
@@ -11,21 +12,21 @@ const cohorts = [
     title: 'Artists',
     target: '25 founding artists',
     copy: 'Publish music, join coordinated discovery drops, and turn listener response into visible demand for bookings.',
-    href: '/register?role=ARTIST',
+    href: '/for-artists',
     cta: 'Join as an artist',
   },
   {
     title: 'Venues',
     target: '5 founding venues',
     copy: 'Scout emerging acts with better local signal, list events without buyer fees, and help shape the venue workflow.',
-    href: '/register?role=VENUE',
+    href: '/for-venues',
     cta: 'Join as a venue',
   },
   {
     title: 'DJs & promoters',
     target: '10 scene builders',
     copy: 'Curate shows, share referral links, host radio, and help independent artists reach audiences beyond an algorithm.',
-    href: '/register?role=DJ',
+    href: '/for-djs',
     cta: 'Join as a promoter',
   },
   {
@@ -47,7 +48,8 @@ const sprint = [
   ['Day 7', 'Publish the signal', 'iHYPE shares the first scene chart, results, clips, and booking-interest report.'],
 ];
 
-export default function LaunchPage() {
+export default async function LaunchPage() {
+  const t = getT(await getLocale());
   return (
     <div style={{ paddingBottom: '6rem' }}>
       <section style={{ padding: 'clamp(4rem, 10vw, 8rem) 0 3rem' }}>
@@ -62,7 +64,7 @@ export default function LaunchPage() {
               marginBottom: '0.8rem',
             }}
           >
-            Founding scene launch
+            {t('launchPage.eyebrow', 'Founding scene launch')}
           </p>
           <h1
             style={{
@@ -76,7 +78,7 @@ export default function LaunchPage() {
               maxWidth: '12ch',
             }}
           >
-            Help independent music travel farther, faster.
+            {t('launchPage.heroTitle', 'Help independent music travel farther, faster.')}
           </h1>
           <p
             style={{
@@ -88,9 +90,7 @@ export default function LaunchPage() {
               margin: '0 0 2rem',
             }}
           >
-            iHYPE is assembling a concentrated launch cohort in Maine: 25 artists, 5 venues,
-            10 DJs or promoters, and 5 distribution partners. The goal is not empty national reach.
-            It is enough local activity to turn discovery into attendance, demand, and paid bookings.
+            {t('launchPage.heroBody', 'iHYPE is assembling a concentrated launch cohort in Maine: 25 artists, 5 venues, 10 DJs or promoters, and 5 distribution partners. The goal is not empty national reach. It is enough local activity to turn discovery into attendance, demand, and paid bookings.')}
           </p>
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             <Link
@@ -106,7 +106,7 @@ export default function LaunchPage() {
                 textDecoration: 'none',
               }}
             >
-              Join the founding cohort →
+              {t('launchPage.joinCta', 'Join the founding cohort →')}
             </Link>
             <Link
               href="/support"
@@ -121,7 +121,7 @@ export default function LaunchPage() {
                 textDecoration: 'none',
               }}
             >
-              Partner with iHYPE
+              {t('launchPage.partnerCta', 'Partner with iHYPE')}
             </Link>
           </div>
         </div>
@@ -130,7 +130,7 @@ export default function LaunchPage() {
       <section style={{ padding: '2rem 0 3rem' }}>
         <div className="container">
           <div className="grid grid-2" style={{ gap: '1rem' }}>
-            {cohorts.map((cohort) => (
+            {cohorts.map((cohort, i) => (
               <article
                 key={cohort.title}
                 style={{
@@ -150,7 +150,7 @@ export default function LaunchPage() {
                     margin: '0 0 0.55rem',
                   }}
                 >
-                  {cohort.target}
+                  {t(`launchPage.cohortTarget${i}`, cohort.target)}
                 </p>
                 <h2
                   style={{
@@ -160,7 +160,7 @@ export default function LaunchPage() {
                     margin: '0 0 0.65rem',
                   }}
                 >
-                  {cohort.title}
+                  {t(`launchPage.cohortTitle${i}`, cohort.title)}
                 </h2>
                 <p
                   style={{
@@ -170,10 +170,10 @@ export default function LaunchPage() {
                     margin: '0 0 1rem',
                   }}
                 >
-                  {cohort.copy}
+                  {t(`launchPage.cohortCopy${i}`, cohort.copy)}
                 </p>
                 <Link href={cohort.href} style={{ color: 'var(--accent)', fontFamily: 'var(--f-d)', fontWeight: 700 }}>
-                  {cohort.cta} →
+                  {t(`launchPage.cohortCta${i}`, cohort.cta)} →
                 </Link>
               </article>
             ))}
@@ -193,7 +193,7 @@ export default function LaunchPage() {
               marginBottom: '0.6rem',
             }}
           >
-            Seven-day activation
+            {t('launchPage.sprintEyebrow', 'Seven-day activation')}
           </p>
           <h2
             style={{
@@ -205,10 +205,10 @@ export default function LaunchPage() {
               margin: '0 0 1.5rem',
             }}
           >
-            One coordinated signal beats a month of random posting.
+            {t('launchPage.sprintTitle', 'One coordinated signal beats a month of random posting.')}
           </h2>
           <div style={{ display: 'grid', gap: '0.75rem' }}>
-            {sprint.map(([day, title, copy]) => (
+            {sprint.map(([day, title, copy], i) => (
               <div
                 key={day}
                 style={{
@@ -221,11 +221,11 @@ export default function LaunchPage() {
                   background: 'var(--hair-25)',
                 }}
               >
-                <strong style={{ fontFamily: 'var(--f-m)', color: 'var(--accent)', fontSize: '0.8rem' }}>{day}</strong>
+                <strong style={{ fontFamily: 'var(--f-m)', color: 'var(--accent)', fontSize: '0.8rem' }}>{t(`launchPage.sprintDay${i}`, day)}</strong>
                 <div>
-                  <strong style={{ fontFamily: 'var(--f-d)', color: 'var(--ink)' }}>{title}</strong>
+                  <strong style={{ fontFamily: 'var(--f-d)', color: 'var(--ink)' }}>{t(`launchPage.sprintStepTitle${i}`, title)}</strong>
                   <p style={{ fontFamily: 'var(--f-b)', color: 'var(--ink-2)', margin: '0.25rem 0 0', lineHeight: 1.5 }}>
-                    {copy}
+                    {t(`launchPage.sprintStepCopy${i}`, copy)}
                   </p>
                 </div>
               </div>
@@ -253,12 +253,10 @@ export default function LaunchPage() {
                 margin: '0 0 0.9rem',
               }}
             >
-              Bring one useful resource.
+              {t('launchPage.closingTitle', 'Bring one useful resource.')}
             </h2>
             <p style={{ fontFamily: 'var(--f-b)', color: 'var(--ink-2)', lineHeight: 1.65, maxWidth: '62ch' }}>
-              A newsletter placement, calendar listing, artist introduction, venue slot, interview,
-              sponsorship, volunteer hour, or donation can move the launch forward. Specific help travels
-              faster than ceremonial enthusiasm, humanity's most renewable but least convertible resource.
+              {t('launchPage.closingBody', "A newsletter placement, calendar listing, artist introduction, venue slot, interview, sponsorship, volunteer hour, or donation can move the launch forward. Specific help travels faster than ceremonial enthusiasm, humanity's most renewable but least convertible resource.")}
             </p>
             <Link
               href="/support"
@@ -274,7 +272,7 @@ export default function LaunchPage() {
                 textDecoration: 'none',
               }}
             >
-              Offer support or partnership →
+              {t('launchPage.closingCta', 'Offer support or partnership →')}
             </Link>
           </div>
         </div>

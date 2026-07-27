@@ -162,15 +162,26 @@ model User {
 // have no public-facing page, so none of Profile's public-profile fields
 // (bio, avatar, verification, etc.) apply. Ad.advertiserId still points at
 // User directly and is untouched by this model's existence.
+enum AdvertiserCategory {
+  LABEL
+  VENUE_PROMOTER
+  GEAR
+  TICKETING
+  MERCH
+  TOUR
+}
+
 model AdvertiserAccount {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String              @id @default(cuid())
+  userId      String              @unique
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   companyName String
   contactName String?
   website     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  category    AdvertiserCategory?
+  pitch       String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
 }
 
 model Profile {

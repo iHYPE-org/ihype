@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 export function OfflineBanner() {
+  const { t } = useI18n();
   const [offline, setOffline] = useState(false);
 
   useEffect(() => {
@@ -33,7 +35,7 @@ export function OfflineBanner() {
         fontSize: 13,
       }}
     >
-      No internet connection — showing cached content
+      {t('offlineBanner.message', 'No internet connection — showing cached content')}
     </div>
   );
 }

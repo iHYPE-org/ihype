@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { timeAgo } from '@/lib/utils';
+import { useI18n } from '@/components/I18nProvider';
 
 type Notification = {
   id: string;
@@ -50,6 +51,7 @@ function colorForType(type: string) {
 }
 
 export function NotificationsList({ initialNotifications }: { initialNotifications: Notification[] }) {
+  const { t } = useI18n();
   const [notifications, setNotifications] = useState(initialNotifications);
   const [tab, setTab] = useState<'all' | 'unread'>('all');
   const router = useRouter();
@@ -93,11 +95,11 @@ export function NotificationsList({ initialNotifications }: { initialNotificatio
     <div className="notifications-page">
       <div className="notifications-header">
         <div>
-          <h1>Notifications</h1>
-          {unreadCount > 0 && <div className="notifications-unread-sub">{unreadCount} unread</div>}
+          <h1>{t('notificationsList.title', 'Notifications')}</h1>
+          {unreadCount > 0 && <div className="notifications-unread-sub">{unreadCount} {t('notificationsList.unreadSuffix', 'unread')}</div>}
         </div>
         {unreadCount > 0 && (
-          <button className="button ghost small" onClick={markAllRead} type="button">Mark all read</button>
+          <button className="button ghost small" onClick={markAllRead} type="button">{t('notificationsList.markAllRead', 'Mark all read')}</button>
         )}
       </div>
 
@@ -107,14 +109,14 @@ export function NotificationsList({ initialNotifications }: { initialNotificatio
           onClick={() => setTab('all')}
           type="button"
         >
-          All
+          {t('notificationsList.tabAll', 'All')}
         </button>
         <button
           className={`notifications-tab${tab === 'unread' ? ' active' : ''}`}
           onClick={() => setTab('unread')}
           type="button"
         >
-          Unread{unreadCount > 0 ? ` (${unreadCount})` : ''}
+          {t('notificationsList.tabUnread', 'Unread')}{unreadCount > 0 ? ` (${unreadCount})` : ''}
         </button>
       </div>
 
@@ -124,7 +126,7 @@ export function NotificationsList({ initialNotifications }: { initialNotificatio
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
             <path d="M13.73 21a2 2 0 0 1-3.46 0" />
           </svg>
-          <p>{tab === 'unread' ? "You're all caught up." : 'No notifications yet.'}</p>
+          <p>{tab === 'unread' ? t('notificationsList.caughtUp', "You're all caught up.") : t('notificationsList.emptyState', 'No notifications yet.')}</p>
         </div>
       ) : (
         filtered.map((n) => {

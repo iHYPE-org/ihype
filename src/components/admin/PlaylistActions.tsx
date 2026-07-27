@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 interface PlaylistActionsProps {
   id: string;
@@ -10,6 +11,7 @@ interface PlaylistActionsProps {
 
 export function PlaylistActions({ id, published: initialPublished }: PlaylistActionsProps) {
   const router = useRouter();
+  const { t } = useI18n();
   const [published, setPublished] = useState(initialPublished);
   const [loading, setLoading] = useState(false);
 
@@ -30,7 +32,7 @@ export function PlaylistActions({ id, published: initialPublished }: PlaylistAct
   }
 
   async function deletePlaylist() {
-    if (!confirm('Delete this playlist? This cannot be undone.')) return;
+    if (!confirm(t('playlistActions.confirmDelete', 'Delete this playlist? This cannot be undone.'))) return;
     setLoading(true);
     try {
       const res = await fetch(`/api/admin/playlists/${id}`, { method: 'DELETE' });
@@ -45,10 +47,10 @@ export function PlaylistActions({ id, published: initialPublished }: PlaylistAct
   return (
     <div style={{ display: 'flex', gap: 6 }}>
       <button className="button small secondary" onClick={togglePublished} disabled={loading} type="button">
-        {published ? 'Unpublish' : 'Publish'}
+        {published ? t('playlistActions.unpublish', 'Unpublish') : t('playlistActions.publish', 'Publish')}
       </button>
       <button className="button small secondary" onClick={deletePlaylist} disabled={loading} type="button">
-        Delete
+        {t('playlistActions.delete', 'Delete')}
       </button>
     </div>
   );

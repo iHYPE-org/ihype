@@ -3,24 +3,28 @@ import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { PiAdminButton } from '@/components/PiAdminButton';
+import { isInviteCodeRequiredRuntime } from '@/lib/runtime-flags';
 import { db } from '@/lib/db';
 import { IndexTabsShowcase } from '@/components/IndexTabsShowcase';
 import { IndexStickyCta } from '@/components/IndexStickyCta';
 import { getBaseUrl } from '@/lib/utils';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 const TITLE = 'iHYPE — Your local music scene, completely free';
 const DESCRIPTION = 'iHYPE is your local music scene in one app. Discover the artists, DJs, and live shows happening near you, hype the moments you love, and grab tickets with zero fees. Completely free — no subscription, no catch.';
 const SOCIAL_DESCRIPTION = 'Your local music scene in one app. Discover artists and live shows near you, hype the moments you love, and get tickets with zero fees. Completely free.';
 
-const COMPARISON_ROWS: [string, string, string, string][] = [
-  ['Service fees on tickets', '✗ up to 27%', '—', '✓ 0%'],
-  ['Dynamic / surge pricing', '✗ yes', '—', '✓ never'],
-  ['Payola / pay-to-play algorithms', '—', '✗ yes', '✓ never'],
-  ['Takes a cut of artist revenue', '—', '✗ ~70% kept', '✓ 0%'],
-  ['Sells fan data to advertisers', '✗ yes', '✗ yes', '✓ never'],
-  ['Locks artists into exclusivity', '✗ some deals', '✗ some deals', '✓ no lock-in'],
-  ['Charges for platform access', '✗ yes', '✗ yes', '✓ completely free'],
-];
+function getComparisonRows(t: (key: string, fallback?: string) => string): [string, string, string, string][] {
+  return [
+    [t('page.compareServiceFees', 'Service fees on tickets'), t('page.compareServiceFeesTm', '✗ up to 27%'), '—', t('page.compareServiceFeesIhype', '✓ 0%')],
+    [t('page.compareSurgePricing', 'Dynamic / surge pricing'), t('page.compareSurgePricingTm', '✗ yes'), '—', t('page.compareSurgePricingIhype', '✓ never')],
+    [t('page.comparePayola', 'Payola / pay-to-play algorithms'), '—', t('page.comparePayolaSp', '✗ yes'), t('page.comparePayolaIhype', '✓ never')],
+    [t('page.compareArtistCut', 'Takes a cut of artist revenue'), '—', t('page.compareArtistCutSp', '✗ ~70% kept'), t('page.compareArtistCutIhype', '✓ 0%')],
+    [t('page.compareFanData', 'Sells fan data to advertisers'), t('page.compareFanDataTm', '✗ yes'), t('page.compareFanDataSp', '✗ yes'), t('page.compareFanDataIhype', '✓ never')],
+    [t('page.compareExclusivity', 'Locks artists into exclusivity'), t('page.compareExclusivityTm', '✗ some deals'), t('page.compareExclusivitySp', '✗ some deals'), t('page.compareExclusivityIhype', '✓ no lock-in')],
+    [t('page.comparePlatformAccess', 'Charges for platform access'), t('page.comparePlatformAccessTm', '✗ yes'), t('page.comparePlatformAccessSp', '✗ yes'), t('page.comparePlatformAccessIhype', '✓ completely free')],
+  ];
+}
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -41,15 +45,23 @@ export const metadata: Metadata = {
 };
 
 export default async function RootPage() {
+  const t = getT(await getLocale());
+  const COMPARISON_ROWS = getComparisonRows(t);
   const session = await auth();
   if (session?.user?.id) redirect('/home');
 
-  const [artistCount, fanCount, totalHypes, showCount] = await Promise.all([
+  const [artistCount, fanCount, totalHypes, showCount, inviteOnly] = await Promise.all([
     db.profile.count({ where: { type: 'ARTIST' } }).catch(() => 0),
     db.profile.count({ where: { type: 'LISTENER' } }).catch(() => 0),
     db.profileHypeEvent.count().catch(() => 0),
     db.show.count({ where: { status: { in: ['SCHEDULED', 'LIVE'] } } }).catch(() => 0),
+    isInviteCodeRequiredRuntime(),
   ]);
+
+  // Matches the reasoning behind removing hardcoded "beta" copy elsewhere
+  // (row 235-era fix): "beta" framing only makes sense while signup is
+  // actually invite-gated, and self-corrects the moment that flag flips off.
+  const primaryCtaLabel = inviteOnly ? t('page.requestBeta', 'Request Beta') : t('page.getStarted', 'Get started');
 
   const fmt = (n: number) => n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}K` : String(n);
 
@@ -62,15 +74,15 @@ export default async function RootPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '3rem', alignItems: 'center' }}>
             <div style={{ minWidth: 0 }}>
               <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.2em', color: 'var(--accent)', textTransform: 'uppercase', margin: '0 0 1rem' }}>
-                Completely free · your local scene
+                {t('page.heroEyebrow', 'Completely free · your local scene')}
               </p>
               {/* Live stats bar */}
               <div className="idx-hero-stats" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
                 {[
-                  { value: fmt(artistCount), label: 'artists' },
-                  { value: fmt(fanCount), label: 'fans' },
-                  { value: fmt(totalHypes), label: 'hypes' },
-                  { value: fmt(showCount), label: 'shows live' },
+                  { value: fmt(artistCount), label: t('page.statArtists', 'artists') },
+                  { value: fmt(fanCount), label: t('page.statFans', 'fans') },
+                  { value: fmt(totalHypes), label: t('page.statHypes', 'hypes') },
+                  { value: fmt(showCount), label: t('page.statShowsLive', 'shows live') },
                 ].map((s, i) => (
                   <div className="idx-hero-pill" key={i} style={{
                     display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
@@ -94,14 +106,14 @@ export default async function RootPage() {
                 color: 'var(--ink)',
                 overflowWrap: 'break-word',
               }}>
-                The gate<br />
-                belongs to<br />
+                {t('page.heroLine1', 'The gate')}<br />
+                {t('page.heroLine2', 'belongs to')}<br />
                 <span style={{
                   background: 'linear-gradient(90deg, var(--accent), #ff3e9a)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
-                }}>the artists.</span>
+                }}>{t('page.heroLine3', 'the artists.')}</span>
               </h1>
               <p className="idx-hero-sub" style={{
                 fontFamily: 'var(--f-b)',
@@ -111,17 +123,14 @@ export default async function RootPage() {
                 lineHeight: 1.65,
                 margin: '0 0 2rem',
               }}>
-                iHYPE is your local scene built for the people who make it.
-                Hype who you believe in, grab tickets with zero fees, and earn
-                by spreading the word — with 70% of every ticket locked to the
-                artist, forever.
+                {t('page.heroSub', 'iHYPE is your local scene built for the people who make it. Hype who you believe in, grab tickets with zero fees, and earn by spreading the word — with 70% of every ticket locked to the artist, forever.')}
               </p>
 
               {/* Mobile-only: the pitch has to convert without a scroll — desktop
                   relies on the final CTA section further down the page. */}
               <div className="idx-hero-cta">
-                <Link href="/register" className="idx-hero-cta-primary">Join Beta — it&apos;s free →</Link>
-                <Link href="/login" className="idx-hero-cta-secondary">Already have an account? <u>Sign in</u></Link>
+                <Link href="/join" className="idx-hero-cta-primary">{primaryCtaLabel} — {t('page.itsFree', "it's free →")}</Link>
+                <Link href="/login" className="idx-hero-cta-secondary">{t('page.alreadyHaveAccount', 'Already have an account?')} <u>{t('page.signIn', 'Sign in')}</u></Link>
               </div>
             </div>
 
@@ -161,27 +170,27 @@ export default async function RootPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', alignItems: 'start' }} className="why-grid-inner">
             <div>
               <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.2em', color: 'var(--accent)', textTransform: 'uppercase', marginBottom: '0.6rem' }}>
-                WHY IHYPE EXISTS
+                {t('page.whyExistsEyebrow', 'WHY IHYPE EXISTS')}
               </p>
               <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 'clamp(1.8rem, 4vw, 3rem)', letterSpacing: '-0.03em', color: 'var(--ink)', margin: '0 0 1.25rem', lineHeight: 1.02 }}>
-                Pay-to-play was never the deal.
+                {t('page.whyExistsTitle', 'Pay-to-play was never the deal.')}
               </h2>
               <p style={{ fontFamily: 'var(--f-b)', fontSize: '1.05rem', lineHeight: 1.65, color: 'var(--ink-a72)', maxWidth: '42ch', margin: '0 0 1rem' }}>
-                Venues book artists people will actually show up for — but have no way to know that on their own, so they lean on promoters chasing their own cut, and ticket platforms tack on fees on top of that. What&apos;s left barely covers the room.
+                {t('page.whyExistsP1', "Venues book artists people will actually show up for — but have no way to know that on their own, so they lean on promoters chasing their own cut, and ticket platforms tack on fees on top of that. What's left barely covers the room.")}
               </p>
               <p style={{ fontFamily: 'var(--f-b)', fontSize: '1.05rem', lineHeight: 1.65, color: 'var(--ink-a72)', maxWidth: '42ch', margin: 0 }}>
-                Fans never hear the new stuff. Artists can&apos;t afford to keep making it. Venues stop booking. iHYPE exists to break that cycle — by taking nothing out of it.
+                {t('page.whyExistsP2', "Fans never hear the new stuff. Artists can't afford to keep making it. Venues stop booking. iHYPE exists to break that cycle — by taking nothing out of it.")}
               </p>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {[
-                { color: '#ff5029', name: 'Completely free', desc: 'No ticket fees, no subscription, no cost to host an artist, DJ, or venue page — for anyone.' },
-                { color: '#b983ff', name: 'Anyone can get paid to promote', desc: 'Real word-of-mouth income for whoever brings the fan — not payola, not an algorithm.' },
-                { color: '#22e5d4', name: 'Open for public audit', desc: 'Our code and our heuristics are published. Anyone can check that the split does what we say.' },
-                { color: '#ffb84a', name: 'Your data is never for sale', desc: 'No aggregating it, no selling it, no exceptions — not now, not after an acquisition.' },
-                { color: '#ff3e9a', name: 'You get a vote', desc: 'Users are stakeholders. Real changes to the platform go to the people who use it.' },
-                { color: '#22e5d4', name: 'Funded like radio, not like Big Tech', desc: 'Advertising only, restricted to music sources — never your data.' },
+                { color: '#ff5029', name: t('page.whyPoint1Name', 'Completely free'), desc: t('page.whyPoint1Desc', 'No ticket fees, no subscription, no cost to host an artist, DJ, or venue page — for anyone.') },
+                { color: '#b983ff', name: t('page.whyPoint2Name', 'Anyone can get paid to promote'), desc: t('page.whyPoint2Desc', 'Real word-of-mouth income for whoever brings the fan — not payola, not an algorithm.') },
+                { color: '#22e5d4', name: t('page.whyPoint3Name', 'Open for public audit'), desc: t('page.whyPoint3Desc', 'Our code and our heuristics are published. Anyone can check that the split does what we say.') },
+                { color: '#ffb84a', name: t('page.whyPoint4Name', 'Your data is never for sale'), desc: t('page.whyPoint4Desc', 'No aggregating it, no selling it, no exceptions — not now, not after an acquisition.') },
+                { color: '#ff3e9a', name: t('page.whyPoint5Name', 'You get a vote'), desc: t('page.whyPoint5Desc', 'Users are stakeholders. Real changes to the platform go to the people who use it.') },
+                { color: '#22e5d4', name: t('page.whyPoint6Name', 'Funded like radio, not like Big Tech'), desc: t('page.whyPoint6Desc', 'Advertising only, restricted to music sources — never your data.') },
               ].map(item => (
                 <div key={item.name} style={{ display: 'flex', gap: 14, padding: 16, background: 'var(--hair-30)', border: '1px solid var(--hair-70)', borderRadius: 10 }}>
                   <span style={{ width: 8, height: 8, borderRadius: '50%', background: item.color, marginTop: 6, flexShrink: 0 }} />
@@ -195,7 +204,7 @@ export default async function RootPage() {
           </div>
 
           <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.8rem', letterSpacing: '.04em', color: 'var(--ink-3)', marginTop: '2rem', maxWidth: '60ch' }}>
-            Two people run the whole thing, leaning on AI automation to keep costs near zero — on purpose. There&apos;s no boardroom to talk us out of the charter. Made for the scene, powered by the people who love it. <a href="/legal?tab=charter" style={{ color: 'var(--ink-2)' }}>Read the full charter →</a>
+            {t('page.charterBlurb', "Two people run the whole thing, leaning on AI automation to keep costs near zero — on purpose. There's no boardroom to talk us out of the charter. Made for the scene, powered by the people who love it.")} <a href="/legal?tab=charter" style={{ color: 'var(--ink-2)' }}>{t('page.readFullCharter', 'Read the full charter →')}</a>
           </p>
         </div>
         <style>{`
@@ -207,10 +216,10 @@ export default async function RootPage() {
       <section style={{ padding: '3rem 0 2rem' }}>
         <div className="container">
           <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.2em', color: 'var(--accent)', textTransform: 'uppercase', marginBottom: '0.6rem' }}>
-            THE APP
+            {t('page.theAppEyebrow', 'THE APP')}
           </p>
           <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 'clamp(1.8rem, 4vw, 3rem)', letterSpacing: '-0.03em', color: 'var(--ink)', margin: '0 0 1.5rem' }}>
-            Everything in three taps.
+            {t('page.theAppTitle', 'Everything in three taps.')}
           </h2>
           <IndexTabsShowcase />
         </div>
@@ -223,27 +232,27 @@ export default async function RootPage() {
             {/* Left: intro */}
             <div>
               <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.2em', color: 'var(--accent)', textTransform: 'uppercase', marginBottom: '0.6rem' }}>
-                THE MECHANIC
+                {t('page.mechanicEyebrow', 'THE MECHANIC')}
               </p>
               <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 'clamp(1.8rem, 4vw, 3rem)', letterSpacing: '-0.03em', color: 'var(--ink)', margin: '0 0 1.25rem' }}>
-                What&apos;s a HYPE?
+                {t('page.whatsAHype', "What's a HYPE?")}
               </h2>
               <p style={{ fontFamily: 'var(--f-b)', fontSize: '1.05rem', lineHeight: 1.6, color: 'var(--ink-a72)', maxWidth: '38ch', margin: '0 0 1.5rem' }}>
-                A HYPE is a vote on a <em style={{ color: 'var(--accent)', fontStyle: 'italic' }}>moment</em>. While a track plays, you fire a hype at the exact second it hits — the drop, the verse, the breakdown. Those timestamps stack into real demand signals that artists and venues use to build setlists and book shows.
+                {t('page.hypeExplainerPre', 'A HYPE is a vote on a')} <em style={{ color: 'var(--accent)', fontStyle: 'italic' }}>{t('page.hypeExplainerMoment', 'moment')}</em>. {t('page.hypeExplainerPost', 'While a track plays, you fire a hype at the exact second it hits — the drop, the verse, the breakdown. Those timestamps stack into real demand signals that artists and venues use to build setlists and book shows.')}
               </p>
               {/* Hype fire chip */}
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 14px', borderRadius: 9999, background: 'rgba(255,80,41,.1)', border: '1px solid rgba(255,80,41,.28)' }}>
                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ff5029', boxShadow: '0 0 0 4px rgba(255,80,41,.18)', display: 'inline-block', animation: 'hype-dot-pulse 1.4s ease-in-out infinite' }} />
-                <span style={{ fontFamily: 'var(--f-m)', fontSize: '0.7rem', letterSpacing: '0.18em', color: '#ff5029', textTransform: 'uppercase' }}>HYPE FIRES AT 3:38</span>
+                <span style={{ fontFamily: 'var(--f-m)', fontSize: '0.7rem', letterSpacing: '0.18em', color: '#ff5029', textTransform: 'uppercase' }}>{t('page.hypeFiresAt', 'HYPE FIRES AT 3:38')}</span>
               </div>
             </div>
 
             {/* Right: steps */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {[
-                { num: '01', color: '#ff5029', name: 'Hit the moment', desc: 'Tap to hype while a track plays. Your vote lands on the timestamp — not the whole song.' },
-                { num: '02', color: '#b983ff', name: 'One member, one vote', desc: 'Every hype counts the same, regardless of spend. No pay-to-rank, no payola, no algorithm.' },
-                { num: '03', color: '#22e5d4', name: 'It feeds the radar', desc: 'Hypes roll up into the demand radar — telling artists what to play and venues who to book near you.' },
+                { num: '01', color: '#ff5029', name: t('page.step1Name', 'Hit the moment'), desc: t('page.step1Desc', 'Tap to hype while a track plays. Your vote lands on the timestamp — not the whole song.') },
+                { num: '02', color: '#b983ff', name: t('page.step2Name', 'One member, one vote'), desc: t('page.step2Desc', 'Every hype counts the same, regardless of spend. No pay-to-rank, no payola, no algorithm.') },
+                { num: '03', color: '#22e5d4', name: t('page.step3Name', 'It feeds the radar'), desc: t('page.step3Desc', 'Hypes roll up into the demand radar — telling artists what to play and venues who to book near you.') },
               ].map(step => (
                 <div key={step.num} style={{ display: 'flex', gap: 16, padding: 18, background: 'var(--hair-30)', border: '1px solid var(--hair-70)', borderRadius: 10 }}>
                   <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 18, flexShrink: 0, width: 28, color: step.color }}>{step.num}</div>
@@ -254,7 +263,7 @@ export default async function RootPage() {
                 </div>
               ))}
               <Link href="/walkthrough" className="text-link" style={{ fontSize: 13, alignSelf: 'flex-start' }}>
-                See the full walkthrough: how a hype becomes a paid show →
+                {t('page.seeWalkthrough', 'See the full walkthrough: how a hype becomes a paid show →')}
               </Link>
             </div>
           </div>
@@ -269,14 +278,14 @@ export default async function RootPage() {
       <section style={{ padding: '3rem 0' }}>
         <div className="container">
           <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 'clamp(1.8rem, 4vw, 3rem)', letterSpacing: '-0.03em', color: 'var(--ink)', margin: '0 0 1.5rem' }}>
-            Built for everyone in the room.
+            {t('page.builtForEveryone', 'Built for everyone in the room.')}
           </h2>
           <div className="grid grid-2 idx-roles-grid" style={{ gap: '0.75rem' }}>
             {[
-              { role: 'Artists', color: '#ff5029', icon: '🎤', href: '/register?role=ARTIST', items: ['70% of every ticket you sell', 'Upload music as swipeable Seeds', 'Build your public page and catalog', 'See who\'s hyping your work'] },
-              { role: 'Fans', color: '#b983ff', icon: '🎧', href: '/register?role=FAN', items: ['Discover new music before it blows up', 'Buy tickets with no fees', 'Earn 10% on tickets you refer', 'Track your scene with hype streaks'] },
-              { role: 'Promoters / DJs', color: '#ffb84a', icon: '🎛️', href: '/register?role=DJ', items: ['10% referral on every ticket you drive', 'Host radio shows on the platform', 'Build a following and grow your scene', 'Referral links for every event'] },
-              { role: 'Venues', color: '#22e5d4', icon: '🏛️', href: '/register?role=VENUE', items: ['20% of every show you host', 'Zero ticketing fees for buyers', 'Demand radar shows what\'s trending', 'Connect with artists and promoters'] },
+              { role: t('page.roleArtists', 'Artists'), color: '#ff5029', icon: '🎤', href: '/for-artists', items: [t('page.roleArtistsItem1', '70% of every ticket you sell'), t('page.roleArtistsItem2', 'Upload music as swipeable Seeds'), t('page.roleArtistsItem3', 'Build your public page and catalog'), t('page.roleArtistsItem4', "See who's hyping your work")] },
+              { role: t('page.roleFans', 'Fans'), color: '#b983ff', icon: '🎧', href: '/for-fans', items: [t('page.roleFansItem1', 'Discover new music before it blows up'), t('page.roleFansItem2', 'Buy tickets with no fees'), t('page.roleFansItem3', 'Earn 10% on tickets you refer'), t('page.roleFansItem4', 'Track your scene with hype streaks')] },
+              { role: t('page.rolePromoters', 'Promoters / DJs'), color: '#ffb84a', icon: '🎛️', href: '/for-djs', items: [t('page.rolePromotersItem1', '10% referral on every ticket you drive'), t('page.rolePromotersItem2', 'Host radio shows on the platform'), t('page.rolePromotersItem3', 'Build a following and grow your scene'), t('page.rolePromotersItem4', 'Referral links for every event')] },
+              { role: t('page.roleVenues', 'Venues'), color: '#22e5d4', icon: '🏛️', href: '/for-venues', items: [t('page.roleVenuesItem1', '20% of every show you host'), t('page.roleVenuesItem2', 'Zero ticketing fees for buyers'), t('page.roleVenuesItem3', "Demand radar shows what's trending"), t('page.roleVenuesItem4', 'Connect with artists and promoters')] },
             ].map(r => (
               <div className="idx-role-card" key={r.role} style={{
                 padding: '1.5rem', borderRadius: 18,
@@ -297,7 +306,7 @@ export default async function RootPage() {
                     border: `1px solid ${r.color}40`, borderRadius: 999,
                     padding: '0.3rem 0.75rem', textDecoration: 'none',
                   }}>
-                    Join free →
+                    {t('page.joinFree', 'Join free →')}
                   </Link>
                 </div>
                 <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: '0.5rem' }}>
@@ -339,23 +348,23 @@ export default async function RootPage() {
           }}>
             <div style={{ maxWidth: '42ch', position: 'relative' }}>
               <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.2em', color: 'var(--accent)', textTransform: 'uppercase', margin: '0 0 0.6rem' }}>
-                For artists
+                {t('page.forArtistsEyebrow', 'For artists')}
               </p>
               <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 'clamp(1.8rem, 4vw, 3rem)', letterSpacing: '-0.03em', color: 'var(--ink)', margin: '0 0 1rem', lineHeight: 1.06 }}>
-                Your music. Your gate. Your fans.
+                {t('page.forArtistsTitle', 'Your music. Your gate. Your fans.')}
               </h2>
               <p style={{ fontFamily: 'var(--f-b)', fontSize: '1.05rem', color: 'var(--ink-2)', lineHeight: 1.6, margin: '0 0 1.5rem' }}>
-                The 70% split to you is locked into our charter, before a single ticket sells. No agent required.
+                {t('page.forArtistsBody', 'The 70% split to you is locked into our charter, before a single ticket sells. No agent required.')}
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.55rem', marginBottom: '1.5rem' }}>
-                {['70% split · locked', 'Direct fan data', 'Zero ticket fees', 'Live show hosting', 'No agent needed'].map(chip => (
+                {[t('page.chip70Split', '70% split · locked'), t('page.chipDirectFanData', 'Direct fan data'), t('page.chipZeroFees', 'Zero ticket fees'), t('page.chipLiveShowHosting', 'Live show hosting'), t('page.chipNoAgentNeeded', 'No agent needed')].map(chip => (
                   <span key={chip} style={{ fontFamily: 'var(--f-m)', fontSize: '0.76rem', color: 'var(--ink)', background: 'var(--hair-40)', border: '1px solid var(--hair-80)', borderRadius: 999, padding: '0.4rem 0.85rem' }}>
                     {chip}
                   </span>
                 ))}
               </div>
               <Link
-                href="/register?role=ARTIST"
+                href="/for-artists"
                 style={{
                   display: 'inline-block',
                   padding: '0.75rem 1.75rem', borderRadius: 12,
@@ -364,7 +373,7 @@ export default async function RootPage() {
                   textDecoration: 'none',
                 }}
               >
-                Join as an artist →
+                {t('page.joinAsArtist', 'Join as an artist →')}
               </Link>
             </div>
           </div>
@@ -376,10 +385,10 @@ export default async function RootPage() {
         <div className="container">
           <div style={{ marginBottom: '2rem' }}>
             <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.2em', color: 'var(--accent)', textTransform: 'uppercase', marginBottom: '0.6rem' }}>
-              The model
+              {t('page.theModelEyebrow', 'The model')}
             </p>
             <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 'clamp(1.8rem, 4vw, 3rem)', letterSpacing: '-0.03em', color: 'var(--ink)', margin: 0 }}>
-              Every ticket, every time.
+              {t('page.everyTicketEveryTime', 'Every ticket, every time.')}
             </h2>
           </div>
 
@@ -387,21 +396,21 @@ export default async function RootPage() {
           <div className="idx-split-bar" style={{ display: 'flex', height: 80, borderRadius: 14, overflow: 'hidden' }}>
             <div style={{ width: '70%', background: '#ff5029', display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: 20, color: '#0a0805' }}>
               <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.6rem' }}>70%</div>
-              <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.62rem', letterSpacing: '.08em' }}>ARTIST</div>
+              <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.62rem', letterSpacing: '.08em' }}>{t('page.splitBarArtist', 'ARTIST')}</div>
             </div>
             <div style={{ width: '20%', background: '#22e5d4', display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: 18, color: '#0a0805' }}>
               <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.5rem' }}>20%</div>
-              <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.62rem', letterSpacing: '.08em' }}>VENUE</div>
+              <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.62rem', letterSpacing: '.08em' }}>{t('page.splitBarVenue', 'VENUE')}</div>
             </div>
             <div style={{ width: '10%', background: '#b983ff', display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: 14, color: '#0a0805' }}>
               <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.3rem' }}>10%</div>
-              <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.58rem', letterSpacing: '.06em' }}>PROMO</div>
+              <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.58rem', letterSpacing: '.06em' }}>{t('page.splitBarPromo', 'PROMO')}</div>
             </div>
           </div>
 
           <div style={{ marginTop: '1rem', padding: '1rem 1.5rem', borderRadius: 14, border: '1px solid var(--line)', background: 'var(--hair-25)', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <span style={{ fontFamily: 'var(--f-m)', fontSize: '0.8rem', color: 'var(--ink-3)', letterSpacing: '.06em', lineHeight: 1.6 }}>
-              iHYPE → 0% · this is locked in our charter. Ticketmaster charges up to 27% on top of face value — the only charge here above face value is the card-processing fee, passed through at cost. <a href="/transparency" style={{ color: 'var(--ink-2)' }}>Read our transparency page →</a>
+              {t('page.splitFooter', 'iHYPE → 0% · this is locked in our charter. Ticketmaster charges up to 27% on top of face value — the only charge here above face value is the card-processing fee, passed through at cost.')} <a href="/transparency" style={{ color: 'var(--ink-2)' }}>{t('page.readTransparency', 'Read our transparency page →')}</a>
             </span>
           </div>
         </div>
@@ -411,10 +420,10 @@ export default async function RootPage() {
       <section style={{ padding: '3rem 0' }}>
         <div className="container">
           <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.2em', color: 'var(--ink-3)', textTransform: 'uppercase', marginBottom: '0.6rem' }}>
-            The platform that takes nothing
+            {t('page.compareEyebrow', 'The platform that takes nothing')}
           </p>
           <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 'clamp(1.8rem, 4vw, 3rem)', letterSpacing: '-0.03em', color: 'var(--ink)', margin: '0 0 2rem' }}>
-            What iHYPE will never do.
+            {t('page.compareTitle', 'What iHYPE will never do.')}
           </h2>
 
           {/* Comparison table (desktop) / stacked practice cards (mobile —
@@ -423,7 +432,7 @@ export default async function RootPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--f-b)', fontSize: '0.9rem' }}>
               <thead>
                 <tr>
-                  <th style={{ padding: '0.75rem 1rem', textAlign: 'left', color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.1em', fontWeight: 400, borderBottom: '1px solid var(--hair-80)' }}>PRACTICE</th>
+                  <th style={{ padding: '0.75rem 1rem', textAlign: 'left', color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.1em', fontWeight: 400, borderBottom: '1px solid var(--hair-80)' }}>{t('page.tablePractice', 'PRACTICE')}</th>
                   <th style={{ padding: '0.75rem 1rem', textAlign: 'center', color: '#ff5029', fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.1em', fontWeight: 700, borderBottom: '1px solid var(--hair-80)' }}>Ticketmaster</th>
                   <th style={{ padding: '0.75rem 1rem', textAlign: 'center', color: 'var(--ink-3)', fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.1em', fontWeight: 400, borderBottom: '1px solid var(--hair-80)' }}>Spotify</th>
                   <th style={{ padding: '0.75rem 1rem', textAlign: 'center', color: '#22e5d4', fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.1em', fontWeight: 700, borderBottom: '1px solid var(--hair-80)' }}>iHYPE</th>
@@ -506,16 +515,16 @@ export default async function RootPage() {
           }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, var(--accent), #ff3e9a, #b983ff)' }} />
             <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.2em', color: 'var(--accent)', textTransform: 'uppercase', margin: '0 0 0.75rem' }}>
-              Completely free
+              {t('page.finalCtaEyebrow', 'Completely free')}
             </p>
             <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 'clamp(2rem, 5vw, 4rem)', letterSpacing: '-0.04em', color: 'var(--ink)', margin: '0 0 1rem', lineHeight: 1 }}>
-              Join your scene.
+              {t('page.finalCtaTitle', 'Join your scene.')}
             </h2>
             <p style={{ fontFamily: 'var(--f-b)', fontSize: '1rem', color: 'var(--ink-2)', margin: '0 0 2rem', maxWidth: '44ch', marginInline: 'auto', lineHeight: 1.65 }}>
-              No subscription. No fees. Just music, community, and a platform that&apos;s actually on your side.
+              {t('page.finalCtaBody', "No subscription. No fees. Just music, community, and a platform that's actually on your side.")}
             </p>
             <Link
-              href="/register"
+              href="/join"
               style={{
                 display: 'inline-block',
                 padding: '0.9rem 2.5rem', borderRadius: 999,
@@ -525,11 +534,11 @@ export default async function RootPage() {
                 textDecoration: 'none',
               }}
             >
-              Join Beta →
+              {primaryCtaLabel} →
             </Link>
             <div style={{ marginTop: '1.25rem' }}>
               <Link href="/login" style={{ fontFamily: 'var(--f-b)', fontSize: '0.9rem', color: 'var(--ink-3)', textDecoration: 'none' }}>
-                Already have an account? <span style={{ color: 'var(--ink-2)', textDecoration: 'underline' }}>Sign in</span>
+                {t('page.alreadyHaveAccount', 'Already have an account?')} <span style={{ color: 'var(--ink-2)', textDecoration: 'underline' }}>{t('page.signIn', 'Sign in')}</span>
               </Link>
             </div>
           </div>

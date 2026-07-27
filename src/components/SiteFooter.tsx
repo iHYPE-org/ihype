@@ -1,6 +1,8 @@
 import Link from 'next/link';
+import { getLocale, getT } from '@/lib/i18n/server';
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const t = getT(await getLocale());
   return (
     <footer
       aria-label="Site footer"
@@ -20,11 +22,11 @@ export function SiteFooter() {
         color: 'var(--ink-3, #7a7060)',
       }}
     >
-      <Link href="/advertise" style={{ color: 'inherit', textDecoration: 'none' }}>Advertise</Link>
-      <Link href="/legal" style={{ color: 'inherit', textDecoration: 'none' }}>Legal</Link>
-      <Link href="/support" style={{ color: 'inherit', textDecoration: 'none' }}>Support</Link>
-      <span className="site-footer-nonprofit">A 501(c)(3) nonprofit</span>
-      <span className="site-footer-rights">© 2026 ihype.org<span className="site-footer-rights-suffix"> — all rights reserved</span></span>
+      <Link href="/advertise" style={{ color: 'inherit', textDecoration: 'none' }}>{t('siteFooter.advertise', 'Advertise')}</Link>
+      <Link href="/legal" style={{ color: 'inherit', textDecoration: 'none' }}>{t('siteFooter.legal', 'Legal')}</Link>
+      <Link href="/support" style={{ color: 'inherit', textDecoration: 'none' }}>{t('siteFooter.support', 'Support')}</Link>
+      <span className="site-footer-nonprofit">{t('siteFooter.nonprofit', 'A 501(c)(3) nonprofit')}</span>
+      <span className="site-footer-rights">{t('siteFooter.copyright', '© 2026 ihype.org')}<span className="site-footer-rights-suffix"> {t('siteFooter.allRightsReserved', '— all rights reserved')}</span></span>
     </footer>
   );
 }

@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getPromoterDashboard } from '@/lib/promoterDashboard';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +25,7 @@ export default async function FanDashboardPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/login?callbackUrl=/me/dashboard');
 
+  const t = getT(await getLocale());
   const userId = session.user.id;
   const now = new Date();
 
@@ -80,8 +82,8 @@ export default async function FanDashboardPage() {
       color: 'var(--role-fan, #b983ff)',
       text: (
         <>
-          You hyped <strong style={{ color: 'var(--ink)' }}>{h.show.title}</strong>
-          {h.show.headlinerProfile?.name ? ` by ${h.show.headlinerProfile.name}` : ''}
+          {t('meDashboardPage.youHyped', 'You hyped')} <strong style={{ color: 'var(--ink)' }}>{h.show.title}</strong>
+          {h.show.headlinerProfile?.name ? ` ${t('meDashboardPage.byArtist', 'by')} ${h.show.headlinerProfile.name}` : ''}
         </>
       ),
       at: h.createdAt,
@@ -93,8 +95,8 @@ export default async function FanDashboardPage() {
             color: 'var(--role-venue, #22e5d4)',
             text: (
               <>
-                Someone bought a ticket to <strong style={{ color: 'var(--ink)' }}>{recentReferralOrder.show.title}</strong> via
-                your HYPE Link — <strong style={{ color: 'var(--ink)' }}>+{formatCurrencyFromCents(recentReferralOrder.promoterPayoutCents)}</strong>
+                {t('meDashboardPage.someoneBoughtTicketTo', 'Someone bought a ticket to')} <strong style={{ color: 'var(--ink)' }}>{recentReferralOrder.show.title}</strong> {t('meDashboardPage.viaYourHypeLink', 'via your HYPE Link')} —{' '}
+                <strong style={{ color: 'var(--ink)' }}>+{formatCurrencyFromCents(recentReferralOrder.promoterPayoutCents)}</strong>
               </>
             ),
             at: recentReferralOrder.createdAt,
@@ -115,11 +117,11 @@ export default async function FanDashboardPage() {
     <div className="fan-dash-container">
       <div className="fan-dash-header">
         <div>
-          <div className="fan-dash-eyebrow">Welcome back</div>
+          <div className="fan-dash-eyebrow">{t('meDashboardPage.welcomeBack', 'Welcome back')}</div>
           <h1>{displayName}</h1>
         </div>
         <div className="fan-dash-header-actions">
-          <Link className="ihype-btn-outline" href="/listen">Find a show</Link>
+          <Link className="ihype-btn-outline" href="/listen">{t('meDashboardPage.findAShow', 'Find a show')}</Link>
         </div>
       </div>
 
@@ -128,19 +130,19 @@ export default async function FanDashboardPage() {
             listen streaks (no field/model for it). Per this codebase's
             convention, that card is omitted rather than fabricated. */}
         <Link className="fan-dash-stat-card" href="/tickets">
-          <div className="fan-dash-stat-label">Hype Cast</div>
+          <div className="fan-dash-stat-label">{t('meDashboardPage.hypeCastLabel', 'Hype Cast')}</div>
           <div className="fan-dash-stat-value">{hypeCastCount}</div>
-          <div className="fan-dash-stat-sub">Shows you&apos;ve hyped</div>
+          <div className="fan-dash-stat-sub">{t('meDashboardPage.showsYouveHyped', 'Shows you’ve hyped')}</div>
         </Link>
         <div className="fan-dash-stat-card">
-          <div className="fan-dash-stat-label">Referral Earned</div>
+          <div className="fan-dash-stat-label">{t('meDashboardPage.referralEarnedLabel', 'Referral Earned')}</div>
           <div className="fan-dash-stat-value" style={{ color: 'var(--role-fan, #b983ff)' }}>
             {formatCurrencyFromCents(promoterDashboard.earnedCents)}
           </div>
-          <div className="fan-dash-stat-sub">From your HYPE Link (pending settlement)</div>
+          <div className="fan-dash-stat-sub">{t('meDashboardPage.referralEarnedSub', 'From your HYPE Link (pending settlement)')}</div>
         </div>
         <div className="fan-dash-stat-card">
-          <div className="fan-dash-stat-label">Next Show</div>
+          <div className="fan-dash-stat-label">{t('meDashboardPage.nextShowLabel', 'Next Show')}</div>
           {nextShow ? (
             <>
               <div className="fan-dash-stat-value">
@@ -153,7 +155,7 @@ export default async function FanDashboardPage() {
           ) : (
             <>
               <div className="fan-dash-stat-value">—</div>
-              <div className="fan-dash-stat-sub">No upcoming tickets</div>
+              <div className="fan-dash-stat-sub">{t('meDashboardPage.noUpcomingTickets', 'No upcoming tickets')}</div>
             </>
           )}
         </div>
@@ -162,11 +164,11 @@ export default async function FanDashboardPage() {
       <div className="fan-dash-grid">
         <div>
           <div className="fan-dash-section-head">
-            <span className="fan-dash-eyebrow-sm">Upcoming Shows</span>
+            <span className="fan-dash-eyebrow-sm">{t('meDashboardPage.upcomingShows', 'Upcoming Shows')}</span>
           </div>
           {upcomingShows.length === 0 ? (
             <div className="fan-dash-empty">
-              <p>No upcoming shows — find one to attend.</p>
+              <p>{t('meDashboardPage.noUpcomingShows', 'No upcoming shows — find one to attend.')}</p>
             </div>
           ) : (
             <div className="fan-dash-show-list">
@@ -179,17 +181,17 @@ export default async function FanDashboardPage() {
                       {show.startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                     </div>
                   </div>
-                  <span className="fan-dash-pill">Attending</span>
+                  <span className="fan-dash-pill">{t('meDashboardPage.attendingPill', 'Attending')}</span>
                 </Link>
               ))}
             </div>
           )}
 
           <div className="fan-dash-section-head" style={{ marginTop: 28 }}>
-            <span className="fan-dash-eyebrow-sm">Activity</span>
+            <span className="fan-dash-eyebrow-sm">{t('meDashboardPage.activity', 'Activity')}</span>
           </div>
           {activity.length === 0 ? (
-            <div className="fan-dash-empty"><p>No activity yet.</p></div>
+            <div className="fan-dash-empty"><p>{t('meDashboardPage.noActivityYet', 'No activity yet.')}</p></div>
           ) : (
             <div className="fan-dash-activity-list">
               {activity.map((item) => (
@@ -204,17 +206,17 @@ export default async function FanDashboardPage() {
 
         <div>
           <div className="fan-dash-section-head">
-            <span className="fan-dash-eyebrow-sm">Quick Actions</span>
+            <span className="fan-dash-eyebrow-sm">{t('meDashboardPage.quickActions', 'Quick Actions')}</span>
           </div>
           <div className="fan-dash-actions">
-            <Link className="ihype-btn-outline fan-dash-action" href="/listen">Browse events</Link>
-            <Link className="ihype-btn-outline fan-dash-action" href="/tickets">View my tickets</Link>
+            <Link className="ihype-btn-outline fan-dash-action" href="/listen">{t('meDashboardPage.browseEvents', 'Browse events')}</Link>
+            <Link className="ihype-btn-outline fan-dash-action" href="/tickets">{t('meDashboardPage.viewMyTickets', 'View my tickets')}</Link>
             {ownFanProfile ? (
-              <Link className="ihype-btn-outline fan-dash-action" href={`/fans/${ownFanProfile.slug}`}>View my page</Link>
+              <Link className="ihype-btn-outline fan-dash-action" href={`/fans/${ownFanProfile.slug}`}>{t('meDashboardPage.viewMyPage', 'View my page')}</Link>
             ) : (
-              <Link className="ihype-btn-outline fan-dash-action" href="/pages">Set up my page</Link>
+              <Link className="ihype-btn-outline fan-dash-action" href="/pages">{t('meDashboardPage.setUpMyPage', 'Set up my page')}</Link>
             )}
-            <Link className="ihype-btn-outline fan-dash-action" href="/radio">Tune into radio</Link>
+            <Link className="ihype-btn-outline fan-dash-action" href="/radio">{t('meDashboardPage.tuneIntoRadio', 'Tune into radio')}</Link>
           </div>
         </div>
       </div>

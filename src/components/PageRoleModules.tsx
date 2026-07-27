@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { ProfileInsights } from '@/components/ProfileInsights';
+import { useI18n } from '@/components/I18nProvider';
 
 type ModuleProfile = { id: string; type: string; name: string; slug: string };
 
@@ -97,6 +98,7 @@ function LoadNote({ text }: { text: string }) {
  * plus an AI-routed itinerary when the AI binding is up.
  */
 function TourRecsBody() {
+  const { t } = useI18n();
   const [data, setData] = useState<TourData | null>(null);
   const [error, setError] = useState(false);
 
@@ -107,16 +109,16 @@ function TourRecsBody() {
       .catch(() => setError(true));
   }, []);
 
-  if (error) return <LoadNote text="Couldn't load tour recommendations right now." />;
-  if (!data) return <LoadNote text="Reading the demand radar…" />;
-  if (data.stops.length === 0) return <LoadNote text="Not enough demand data yet — tour recommendations fill in as fans hype shows and venues." />;
+  if (error) return <LoadNote text={t('pageRoleModules.tourLoadError', "Couldn't load tour recommendations right now.")} />;
+  if (!data) return <LoadNote text={t('pageRoleModules.tourLoading', 'Reading the demand radar…')} />;
+  if (data.stops.length === 0) return <LoadNote text={t('pageRoleModules.tourEmpty', 'Not enough demand data yet — tour recommendations fill in as fans hype shows and venues.')} />;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       {data.aiPlan && (
         <div style={{ borderLeft: '2px solid #ff5029', paddingLeft: 12 }}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.14em', textTransform: 'uppercase', color: '#ff5029', marginBottom: 6 }}>
-            AI ROUTE
+            {t('pageRoleModules.aiRouteLabel', 'AI ROUTE')}
           </div>
           <p style={{ fontSize: 13, color: 'var(--ink-a75)', margin: '0 0 10px', lineHeight: 1.5 }}>{data.aiPlan.summary}</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -138,7 +140,7 @@ function TourRecsBody() {
       )}
       <div>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a40)', marginBottom: 8 }}>
-          DEMAND-RANKED CITIES
+          {t('pageRoleModules.demandRankedCitiesLabel', 'DEMAND-RANKED CITIES')}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {data.stops.slice(0, 6).map((s) => (
@@ -148,7 +150,7 @@ function TourRecsBody() {
                 {s.venues[0] && <span style={{ fontSize: 12, color: 'var(--ink-a50)' }}> · {s.venues.map((v) => v.name).slice(0, 2).join(', ')}</span>}
               </div>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-a55)', flexShrink: 0 }}>
-                {s.score} · {s.reach} reach
+                {s.score} · {s.reach} {t('pageRoleModules.reachSuffix', 'reach')}
               </span>
             </div>
           ))}
@@ -163,6 +165,7 @@ function TourRecsBody() {
  * /api/page-builder/ad-recs engine for the selected page.
  */
 function AdRecsBody({ profileId }: { profileId: string }) {
+  const { t } = useI18n();
   const [recs, setRecs] = useState<AdRec[] | null>(null);
   const [error, setError] = useState(false);
 
@@ -173,9 +176,9 @@ function AdRecsBody({ profileId }: { profileId: string }) {
       .catch(() => setError(true));
   }, [profileId]);
 
-  if (error) return <LoadNote text="Couldn't load ad recommendations right now." />;
-  if (!recs) return <LoadNote text="Drafting campaign ideas…" />;
-  if (recs.length === 0) return <LoadNote text="No recommendations yet." />;
+  if (error) return <LoadNote text={t('pageRoleModules.adRecsLoadError', "Couldn't load ad recommendations right now.")} />;
+  if (!recs) return <LoadNote text={t('pageRoleModules.adRecsLoading', 'Drafting campaign ideas…')} />;
+  if (recs.length === 0) return <LoadNote text={t('pageRoleModules.adRecsEmpty', 'No recommendations yet.')} />;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -192,7 +195,7 @@ function AdRecsBody({ profileId }: { profileId: string }) {
         </div>
       ))}
       <Link href="/advertise" style={{ fontSize: 12, color: 'var(--ink-a55)', textDecoration: 'underline', textUnderlineOffset: 3 }}>
-        Run a campaign on iHYPE →
+        {t('pageRoleModules.runCampaignCta', 'Run a campaign on iHYPE →')}
       </Link>
     </div>
   );
@@ -259,6 +262,7 @@ const analyticsHref = (profile: ModuleProfile): string | null => {
  * creator + ad recommendations.
  */
 export function PageRoleModules({ profile, color }: { profile: ModuleProfile; color: string }) {
+  const { t } = useI18n();
   const isArtist = profile.type === 'ARTIST';
   const isVenue = profile.type === 'VENUE';
   const isDj = profile.type === 'DJ';
@@ -268,7 +272,7 @@ export function PageRoleModules({ profile, color }: { profile: ModuleProfile; co
   return (
     <div style={{ marginBottom: 36 }}>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a35)', marginBottom: 14 }}>
-        PAGE TOOLKIT
+        {t('pageRoleModules.pageToolkitLabel', 'PAGE TOOLKIT')}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {dashHref && (
@@ -276,8 +280,8 @@ export function PageRoleModules({ profile, color }: { profile: ModuleProfile; co
             color={color}
             href={dashHref}
             icon={icons.dashboard(color)}
-            sub="Earnings, activity & quick actions"
-            title="Dashboard"
+            sub={t('pageRoleModules.dashboardSub', 'Earnings, activity & quick actions')}
+            title={t('pageRoleModules.dashboardTitle', 'Dashboard')}
           />
         )}
 
@@ -286,16 +290,16 @@ export function PageRoleModules({ profile, color }: { profile: ModuleProfile; co
             color={color}
             href={analyticsUrl}
             icon={icons.analytics(color)}
-            sub="Listeners, sales & hype trends over time"
-            title="Analytics"
+            sub={t('pageRoleModules.analyticsSub', 'Listeners, sales & hype trends over time')}
+            title={t('pageRoleModules.analyticsTitle', 'Analytics')}
           />
         )}
 
         <ExpandModule
           color={color}
           icon={icons.stats(color)}
-          sub="Your hypes, followers & listeners"
-          title="Stats"
+          sub={t('pageRoleModules.statsSub', 'Your hypes, followers & listeners')}
+          title={t('pageRoleModules.statsTitle', 'Stats')}
         >
           <ProfileInsights profileId={profile.id} profileType={profile.type} />
         </ExpandModule>
@@ -305,8 +309,8 @@ export function PageRoleModules({ profile, color }: { profile: ModuleProfile; co
             color={color}
             href="/events/new"
             icon={icons.event(color)}
-            sub={isVenue ? 'Book your room — keep 20%' : 'Sell tickets direct — keep 70%'}
-            title="Event creator"
+            sub={isVenue ? t('pageRoleModules.eventCreatorSubVenue', 'Book your room — keep 20%') : t('pageRoleModules.eventCreatorSubArtist', 'Sell tickets direct — keep 70%')}
+            title={t('pageRoleModules.eventCreatorTitle', 'Event creator')}
           />
         )}
 
@@ -315,8 +319,8 @@ export function PageRoleModules({ profile, color }: { profile: ModuleProfile; co
             color={color}
             href={`/venues/${profile.slug}/booking-inbox`}
             icon={icons.event(color)}
-            sub="Accept or decline artist & DJ requests"
-            title="Booking inbox"
+            sub={t('pageRoleModules.bookingInboxSub', 'Accept or decline artist & DJ requests')}
+            title={t('pageRoleModules.bookingInboxTitle', 'Booking inbox')}
           />
         )}
 
@@ -325,8 +329,8 @@ export function PageRoleModules({ profile, color }: { profile: ModuleProfile; co
             color={color}
             href="/radio/studio"
             icon={icons.radio(color)}
-            sub="Go live or schedule a show"
-            title="Radio show"
+            sub={t('pageRoleModules.radioShowSub', 'Go live or schedule a show')}
+            title={t('pageRoleModules.radioShowTitle', 'Radio show')}
           />
         )}
 
@@ -334,8 +338,8 @@ export function PageRoleModules({ profile, color }: { profile: ModuleProfile; co
           <ExpandModule
             color={color}
             icon={icons.tour(color)}
-            sub="Cities fans want you to play"
-            title="Tour picks"
+            sub={t('pageRoleModules.tourPicksSub', 'Cities fans want you to play')}
+            title={t('pageRoleModules.tourPicksTitle', 'Tour picks')}
           >
             <TourRecsBody />
           </ExpandModule>
@@ -345,8 +349,8 @@ export function PageRoleModules({ profile, color }: { profile: ModuleProfile; co
           <ExpandModule
             color={color}
             icon={icons.ads(color)}
-            sub="AI ad ideas for this page"
-            title="Ad ideas"
+            sub={t('pageRoleModules.adIdeasSub', 'AI ad ideas for this page')}
+            title={t('pageRoleModules.adIdeasTitle', 'Ad ideas')}
           >
             <AdRecsBody profileId={profile.id} />
           </ExpandModule>

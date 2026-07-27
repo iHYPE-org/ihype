@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { AdminReauthPrompt } from '@/components/AdminReauthPrompt';
+import { useI18n } from '@/components/I18nProvider';
 
 type Action = 'execute' | 'close';
 
@@ -37,6 +38,7 @@ export function AdminPrivacyRequestActions({
   requestId: string;
   requestType: string;
 }) {
+  const { t } = useI18n();
   const router = useRouter();
   const [pendingAction, setPendingAction] = useState<Action | null>(null);
   const [reauthAction, setReauthAction] = useState<Action | null>(null);
@@ -48,7 +50,7 @@ export function AdminPrivacyRequestActions({
     if (
       action === 'execute' &&
       isDeletion &&
-      !confirm('Execute permanent account erasure for this user? This cannot be undone.')
+      !confirm(t('adminPrivacyRequestActions.confirmErasure', 'Execute permanent account erasure for this user? This cannot be undone.'))
     ) {
       return;
     }
@@ -61,7 +63,7 @@ export function AdminPrivacyRequestActions({
       const needsReview: string[] | undefined = result?.summary?.stripeConnectNeedsManualReview;
       if (needsReview?.length) {
         alert(
-          `Erasure completed, but Stripe would not deauthorize ${needsReview.length} Connect account(s) (${needsReview.join(', ')}) — likely a pending balance. Resolve manually in the Stripe dashboard.`
+          `${t('adminPrivacyRequestActions.erasureWarningPrefix', 'Erasure completed, but Stripe would not deauthorize')} ${needsReview.length} ${t('adminPrivacyRequestActions.erasureWarningMiddle', 'Connect account(s)')} (${needsReview.join(', ')}) — ${t('adminPrivacyRequestActions.erasureWarningSuffix', 'likely a pending balance. Resolve manually in the Stripe dashboard.')}`
         );
       }
       router.refresh();
@@ -69,7 +71,7 @@ export function AdminPrivacyRequestActions({
       if (err instanceof ReauthRequiredError) {
         setReauthAction(action);
       } else {
-        setError(err instanceof Error ? err.message : 'Action failed.');
+        setError(err instanceof Error ? err.message : t('adminPrivacyRequestActions.actionFailed', 'Action failed.'));
       }
     } finally {
       setPendingAction(null);
@@ -84,7 +86,11 @@ export function AdminPrivacyRequestActions({
         onClick={() => run('execute')}
         type="button"
       >
-        {pendingAction === 'execute' ? 'Executing...' : isDeletion ? 'Execute erasure' : 'Execute'}
+        {pendingAction === 'execute'
+          ? t('adminPrivacyRequestActions.executing', 'Executing...')
+          : isDeletion
+            ? t('adminPrivacyRequestActions.executeErasure', 'Execute erasure')
+            : t('adminPrivacyRequestActions.execute', 'Execute')}
       </button>
       <button
         className="button small secondary"
@@ -92,7 +98,7 @@ export function AdminPrivacyRequestActions({
         onClick={() => run('close')}
         type="button"
       >
-        {pendingAction === 'close' ? 'Closing...' : 'Close'}
+        {pendingAction === 'close' ? t('adminPrivacyRequestActions.closing', 'Closing...') : t('adminPrivacyRequestActions.close', 'Close')}
       </button>
       {reauthAction ? (
         <AdminReauthPrompt

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useI18n } from '@/components/I18nProvider';
 
 type VerificationStatus = 'UNVERIFIED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
 
@@ -27,6 +28,7 @@ export function DJOnboardingWizard({
   initialLink,
   initialVerificationStatus,
 }: Props) {
+  const { t } = useI18n();
   // Already verified/pending DJs land straight on a status screen instead of
   // re-running a wizard whose steps 1/2 would just re-save the same fields.
   const [step, setStep] = useState(initialVerificationStatus === 'PENDING' || initialVerificationStatus === 'VERIFIED' ? 4 : 0);
@@ -61,11 +63,11 @@ export function DJOnboardingWizard({
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || 'Could not save — try again.');
+        throw new Error(body.error || t('djOnboardingWizard.saveError', 'Could not save — try again.'));
       }
       setStep(1);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save — try again.');
+      setError(e instanceof Error ? e.message : t('djOnboardingWizard.saveError', 'Could not save — try again.'));
     } finally {
       setSaving(false);
     }
@@ -86,11 +88,11 @@ export function DJOnboardingWizard({
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || 'Could not save — try again.');
+        throw new Error(body.error || t('djOnboardingWizard.saveError', 'Could not save — try again.'));
       }
       setStep(2);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save — try again.');
+      setError(e instanceof Error ? e.message : t('djOnboardingWizard.saveError', 'Could not save — try again.'));
     } finally {
       setSaving(false);
     }
@@ -110,14 +112,14 @@ export function DJOnboardingWizard({
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
         setSubmitState('error');
-        setError(body.error || 'Submission failed — try again.');
+        setError(body.error || t('djOnboardingWizard.submitError', 'Submission failed — try again.'));
         return;
       }
       setSubmitState('submitted');
       setStep(4);
     } catch {
       setSubmitState('error');
-      setError('Submission failed — try again.');
+      setError(t('djOnboardingWizard.submitError', 'Submission failed — try again.'));
     } finally {
       setSaving(false);
     }
@@ -129,7 +131,7 @@ export function DJOnboardingWizard({
     <div className="djo-page">
       {step < 4 && (
         <>
-          <div className="djo-eyebrow">Step {step + 1} of 4 · DJ setup</div>
+          <div className="djo-eyebrow">{t('djOnboardingWizard.stepEyebrow', 'Step')} {step + 1} {t('djOnboardingWizard.stepOf', 'of 4 · DJ setup')}</div>
           <div className="djo-progress-track">
             <div className="djo-progress-fill" style={{ width: `${pct}%` }} />
           </div>
@@ -140,19 +142,19 @@ export function DJOnboardingWizard({
 
       {step === 0 && (
         <div className="djo-step">
-          <div className="djo-h1">Set up your DJ page.</div>
-          <p className="djo-sub">Host radio shows, build a crate, and earn promoter cuts on every ticket you drive.</p>
+          <div className="djo-h1">{t('djOnboardingWizard.step0Title', 'Set up your DJ page.')}</div>
+          <p className="djo-sub">{t('djOnboardingWizard.step0Sub', 'Host radio shows, build a crate, and earn promoter cuts on every ticket you drive.')}</p>
           <label className="djo-field">
-            <span className="djo-label">DJ / stage name</span>
-            <input className="djo-input" onChange={(e) => setName(e.target.value)} placeholder="e.g. Nyla Park" value={name} />
+            <span className="djo-label">{t('djOnboardingWizard.nameLabel', 'DJ / stage name')}</span>
+            <input className="djo-input" onChange={(e) => setName(e.target.value)} placeholder={t('djOnboardingWizard.namePlaceholder', 'e.g. Nyla Park')} value={name} />
           </label>
           <label className="djo-field">
-            <span className="djo-label">City</span>
-            <input className="djo-input" onChange={(e) => setCity(e.target.value)} placeholder="e.g. San Francisco, CA" value={city} />
+            <span className="djo-label">{t('djOnboardingWizard.cityLabel', 'City')}</span>
+            <input className="djo-input" onChange={(e) => setCity(e.target.value)} placeholder={t('djOnboardingWizard.cityPlaceholder', 'e.g. San Francisco, CA')} value={city} />
           </label>
           <div className="djo-actions">
             <button className="djo-btn djo-btn-solid" disabled={noBasics || saving} onClick={saveBasics}>
-              {saving ? 'Saving…' : 'Continue →'}
+              {saving ? t('djOnboardingWizard.saving', 'Saving…') : t('djOnboardingWizard.continue', 'Continue →')}
             </button>
           </div>
         </div>
@@ -160,40 +162,40 @@ export function DJOnboardingWizard({
 
       {step === 1 && (
         <div className="djo-step">
-          <div className="djo-h1">Your sound.</div>
-          <p className="djo-sub">Helps fans and other DJs find you. You can add tracks to your crate later.</p>
+          <div className="djo-h1">{t('djOnboardingWizard.step1Title', 'Your sound.')}</div>
+          <p className="djo-sub">{t('djOnboardingWizard.step1Sub', 'Helps fans and other DJs find you. You can add tracks to your crate later.')}</p>
           <label className="djo-field">
-            <span className="djo-label">Primary genre</span>
+            <span className="djo-label">{t('djOnboardingWizard.genreLabel', 'Primary genre')}</span>
             <select className="djo-input" onChange={(e) => setGenre(e.target.value)} value={genre}>
               {GENRE_OPTIONS.map((g) => (
-                <option key={g || 'none'} value={g}>{g || 'Select a genre'}</option>
+                <option key={g || 'none'} value={g}>{g || t('djOnboardingWizard.genreSelectPlaceholder', 'Select a genre')}</option>
               ))}
             </select>
           </label>
           <label className="djo-field">
-            <span className="djo-label">SoundCloud, Mixcloud, or website</span>
+            <span className="djo-label">{t('djOnboardingWizard.linkLabel', 'SoundCloud, Mixcloud, or website')}</span>
             <input className="djo-input" onChange={(e) => setLink(e.target.value)} placeholder="https://" value={link} />
           </label>
-          <div className="djo-crate-label">Your crate</div>
+          <div className="djo-crate-label">{t('djOnboardingWizard.crateLabel', 'Your crate')}</div>
           <div className="djo-crate-empty">
             <svg fill="none" height="26" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" viewBox="0 0 24 24" width="26">
               <path d="M9 18V5l12-2v13" />
               <circle cx="6" cy="18" r="3" />
               <circle cx="18" cy="16" r="3" />
             </svg>
-            <div>Your crate is empty. Add tracks once your page is verified — you can upload or pull cleared free-use samples.</div>
+            <div>{t('djOnboardingWizard.crateEmpty', 'Your crate is empty. Add tracks once your page is verified — you can upload or pull cleared free-use samples.')}</div>
           </div>
           <div className="djo-actions">
-            <button className="djo-btn djo-btn-solid" disabled={saving} onClick={saveSound}>{saving ? 'Saving…' : 'Continue →'}</button>
-            <button className="djo-btn djo-btn-outline" disabled={saving} onClick={() => setStep(0)}>Back</button>
+            <button className="djo-btn djo-btn-solid" disabled={saving} onClick={saveSound}>{saving ? t('djOnboardingWizard.saving', 'Saving…') : t('djOnboardingWizard.continue', 'Continue →')}</button>
+            <button className="djo-btn djo-btn-outline" disabled={saving} onClick={() => setStep(0)}>{t('djOnboardingWizard.back', 'Back')}</button>
           </div>
         </div>
       )}
 
       {step === 2 && (
         <div className="djo-step">
-          <div className="djo-h1">Radio schedule.</div>
-          <p className="djo-sub">How often do you want to host live radio shows? You can change this anytime.</p>
+          <div className="djo-h1">{t('djOnboardingWizard.step2Title', 'Radio schedule.')}</div>
+          <p className="djo-sub">{t('djOnboardingWizard.step2Sub', 'How often do you want to host live radio shows? You can change this anytime.')}</p>
           {(['weekly', 'occasional'] as const).map((opt) => (
             <div
               className={`djo-choice ${schedule === opt ? 'djo-choice-on' : ''}`}
@@ -205,33 +207,33 @@ export function DJOnboardingWizard({
             >
               <div className="djo-choice-dot" />
               <div>
-                <div className="djo-choice-title">{schedule === opt ? '✓ ' : ''}{opt === 'weekly' ? 'Weekly' : 'Occasional'}</div>
-                <div className="djo-choice-sub">{opt === 'weekly' ? 'One regular slot, every week' : 'Whenever it fits, no fixed slot'}</div>
+                <div className="djo-choice-title">{schedule === opt ? '✓ ' : ''}{opt === 'weekly' ? t('djOnboardingWizard.scheduleWeekly', 'Weekly') : t('djOnboardingWizard.scheduleOccasional', 'Occasional')}</div>
+                <div className="djo-choice-sub">{opt === 'weekly' ? t('djOnboardingWizard.scheduleWeeklySub', 'One regular slot, every week') : t('djOnboardingWizard.scheduleOccasionalSub', 'Whenever it fits, no fixed slot')}</div>
               </div>
             </div>
           ))}
           <div className="djo-actions">
             {/* Deliberate no-op: this preference has no backing schema field and
                 nothing in the app reads it — Continue only advances local state. */}
-            <button className="djo-btn djo-btn-solid" onClick={() => setStep(3)}>Continue →</button>
-            <button className="djo-btn djo-btn-outline" onClick={() => setStep(1)}>Back</button>
+            <button className="djo-btn djo-btn-solid" onClick={() => setStep(3)}>{t('djOnboardingWizard.continue', 'Continue →')}</button>
+            <button className="djo-btn djo-btn-outline" onClick={() => setStep(1)}>{t('djOnboardingWizard.back', 'Back')}</button>
           </div>
         </div>
       )}
 
       {step === 3 && (
         <div className="djo-step">
-          <div className="djo-h1">Verify your DJ page.</div>
-          <p className="djo-sub">DJ accounts require verification — protects everyone in the 70/20/10 ecosystem. Reviewed within 48 hours.</p>
+          <div className="djo-h1">{t('djOnboardingWizard.step3Title', 'Verify your DJ page.')}</div>
+          <p className="djo-sub">{t('djOnboardingWizard.step3Sub', 'DJ accounts require verification — protects everyone in the 70/20/10 ecosystem. Reviewed within 48 hours.')}</p>
           <div className="djo-card">
-            <div className="djo-card-eyebrow">What counts as proof</div>
-            <div className="djo-card-body">A SoundCloud or Mixcloud profile with at least one public mix &middot; A past event poster or booking confirmation &middot; Social media profile showing DJ work</div>
+            <div className="djo-card-eyebrow">{t('djOnboardingWizard.proofEyebrow', 'What counts as proof')}</div>
+            <div className="djo-card-body">{t('djOnboardingWizard.proofBody', 'A SoundCloud or Mixcloud profile with at least one public mix · A past event poster or booking confirmation · Social media profile showing DJ work')}</div>
           </div>
           <div className="djo-actions">
             <button className="djo-btn djo-btn-solid" disabled={saving} onClick={submitVerification}>
-              {saving ? 'Submitting…' : 'Submit for review →'}
+              {saving ? t('djOnboardingWizard.submitting', 'Submitting…') : t('djOnboardingWizard.submitForReview', 'Submit for review →')}
             </button>
-            <button className="djo-btn djo-btn-outline" disabled={saving} onClick={() => setStep(2)}>Back</button>
+            <button className="djo-btn djo-btn-outline" disabled={saving} onClick={() => setStep(2)}>{t('djOnboardingWizard.back', 'Back')}</button>
           </div>
         </div>
       )}
@@ -241,28 +243,28 @@ export function DJOnboardingWizard({
           {submitState === 'error' ? (
             <>
               <div className="djo-icon djo-icon-err">!</div>
-              <div className="djo-h1">Submission failed.</div>
-              <p className="djo-sub">{error || 'Something went wrong submitting for review.'}</p>
-              <button className="djo-btn djo-btn-solid" onClick={() => setStep(3)}>Try again</button>
+              <div className="djo-h1">{t('djOnboardingWizard.failedTitle', 'Submission failed.')}</div>
+              <p className="djo-sub">{error || t('djOnboardingWizard.failedSub', 'Something went wrong submitting for review.')}</p>
+              <button className="djo-btn djo-btn-solid" onClick={() => setStep(3)}>{t('djOnboardingWizard.tryAgain', 'Try again')}</button>
             </>
           ) : submitState === 'already' ? (
             <>
               <div className="djo-icon">
                 <svg fill="none" height="26" stroke="#22e5d4" strokeLinecap="round" strokeWidth="2.5" viewBox="0 0 24 24" width="26"><polyline points="20 6 9 17 4 12" /></svg>
               </div>
-              <div className="djo-h1">Already verified.</div>
-              <p className="djo-sub">{name || 'Your page'} is already a verified DJ page.</p>
-              <Link className="djo-btn djo-btn-solid" href={`/promoters/${slug}/dashboard`}>Go to dashboard →</Link>
+              <div className="djo-h1">{t('djOnboardingWizard.alreadyTitle', 'Already verified.')}</div>
+              <p className="djo-sub">{name || t('djOnboardingWizard.yourPageSentenceStart', 'Your page')} {t('djOnboardingWizard.alreadySub', 'is already a verified DJ page.')}</p>
+              <Link className="djo-btn djo-btn-solid" href={`/promoters/${slug}/dashboard`}>{t('djOnboardingWizard.goToDashboard', 'Go to dashboard →')}</Link>
             </>
           ) : (
             <>
               <div className="djo-icon">
                 <svg fill="none" height="26" stroke="#22e5d4" strokeLinecap="round" strokeWidth="2.5" viewBox="0 0 24 24" width="26"><polyline points="20 6 9 17 4 12" /></svg>
               </div>
-              <div className="djo-h1">Submitted.</div>
-              <p className="djo-sub">We&rsquo;ll review {name || 'your page'} within 48 hours and email you. You can start building your crate meanwhile.</p>
-              <div className="djo-badge">Verified DJ · Pending</div>
-              <Link className="djo-btn djo-btn-solid" href={`/promoters/${slug}/dashboard`}>Build your crate →</Link>
+              <div className="djo-h1">{t('djOnboardingWizard.submittedTitle', 'Submitted.')}</div>
+              <p className="djo-sub">{t('djOnboardingWizard.submittedSubPrefix', "We'll review")} {name || t('djOnboardingWizard.yourPage', 'your page')} {t('djOnboardingWizard.submittedSubSuffix', 'within 48 hours and email you. You can start building your crate meanwhile.')}</p>
+              <div className="djo-badge">{t('djOnboardingWizard.pendingBadge', 'Verified DJ · Pending')}</div>
+              <Link className="djo-btn djo-btn-solid" href={`/promoters/${slug}/dashboard`}>{t('djOnboardingWizard.buildCrate', 'Build your crate →')}</Link>
             </>
           )}
         </div>

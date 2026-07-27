@@ -6,14 +6,17 @@ import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getVenueAnalyticsData, type VenueAnalyticsRange } from '@/lib/venue-analytics';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
-const RANGE_TABS: { id: VenueAnalyticsRange; label: string }[] = [
-  { id: '7d', label: '7 Days' },
-  { id: '30d', label: '30 Days' },
-  { id: 'ytd', label: 'YTD' },
-];
+function getRangeTabs(t: (key: string, fallback?: string) => string): { id: VenueAnalyticsRange; label: string }[] {
+  return [
+    { id: '7d', label: t('venuesSlugAnalyticsPage.range7d', '7 Days') },
+    { id: '30d', label: t('venuesSlugAnalyticsPage.range30d', '30 Days') },
+    { id: 'ytd', label: t('venuesSlugAnalyticsPage.rangeYtd', 'YTD') },
+  ];
+}
 
 function getActiveRange(range: string | string[] | undefined): VenueAnalyticsRange {
   const value = Array.isArray(range) ? range[0] : range;
@@ -37,6 +40,8 @@ export default async function VenueAnalyticsPage({
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ range?: string }>;
 }) {
+  const t = getT(await getLocale());
+  const RANGE_TABS = getRangeTabs(t);
   const { slug } = await params;
   const { range: rangeParam } = await searchParams;
   const range = getActiveRange(rangeParam);
@@ -61,7 +66,7 @@ export default async function VenueAnalyticsPage({
   return (
     <div className="vaa">
       <header className="vaa-head">
-        <h1>Analytics</h1>
+        <h1>{t('venuesSlugAnalyticsPage.title', 'Analytics')}</h1>
       </header>
 
       <div className="vaa-tabs">
@@ -78,40 +83,40 @@ export default async function VenueAnalyticsPage({
 
       <div className="vaa-stats">
         <div className="vaa-card">
-          <div className="vaa-card-label">Total Attendance</div>
+          <div className="vaa-card-label">{t('venuesSlugAnalyticsPage.totalAttendance', 'Total Attendance')}</div>
           <div className="vaa-card-val">{data.totalAttendance.toLocaleString()}</div>
           <div className="vaa-card-sub vaa-card-sub-accent">
             {data.totalAttendanceDeltaPct !== null
-              ? `${data.totalAttendanceDeltaPct >= 0 ? '+' : ''}${data.totalAttendanceDeltaPct}% this period`
-              : 'Tickets sold across shows in range'}
+              ? `${data.totalAttendanceDeltaPct >= 0 ? '+' : ''}${data.totalAttendanceDeltaPct}% ${t('venuesSlugAnalyticsPage.thisPeriodSuffix', 'this period')}`
+              : t('venuesSlugAnalyticsPage.ticketsSoldAcrossShows', 'Tickets sold across shows in range')}
           </div>
         </div>
         <div className="vaa-card">
-          <div className="vaa-card-label">Sellout Rate</div>
+          <div className="vaa-card-label">{t('venuesSlugAnalyticsPage.selloutRate', 'Sellout Rate')}</div>
           <div className="vaa-card-val">{data.selloutRatePct !== null ? `${data.selloutRatePct}%` : '—'}</div>
           <div className="vaa-card-sub vaa-card-sub-accent">
             {data.selloutRateDeltaPts !== null
-              ? `${data.selloutRateDeltaPts >= 0 ? '+' : ''}${data.selloutRateDeltaPts}pt this period`
+              ? `${data.selloutRateDeltaPts >= 0 ? '+' : ''}${data.selloutRateDeltaPts}pt ${t('venuesSlugAnalyticsPage.thisPeriodSuffix', 'this period')}`
               : data.selloutRatePct !== null
-                ? 'Sold / capacity across ticketed shows'
-                : 'No ticketed shows with capacity yet'}
+                ? t('venuesSlugAnalyticsPage.soldOverCapacity', 'Sold / capacity across ticketed shows')
+                : t('venuesSlugAnalyticsPage.noTicketedShowsYet', 'No ticketed shows with capacity yet')}
           </div>
         </div>
         <div className="vaa-card">
-          <div className="vaa-card-label">Shows Booked</div>
+          <div className="vaa-card-label">{t('venuesSlugAnalyticsPage.showsBooked', 'Shows Booked')}</div>
           <div className="vaa-card-val">{data.showsBookedCount}</div>
-          <div className="vaa-card-sub">{data.upcomingShowsCount} upcoming</div>
+          <div className="vaa-card-sub">{data.upcomingShowsCount} {t('venuesSlugAnalyticsPage.upcomingSuffix', 'upcoming')}</div>
         </div>
         <div className="vaa-card">
-          <div className="vaa-card-label">Gross (20% share)</div>
+          <div className="vaa-card-label">{t('venuesSlugAnalyticsPage.grossShare', 'Gross (20% share)')}</div>
           <div className="vaa-card-val vaa-card-val-accent">{formatCurrencyFromCents(data.grossCents)}</div>
-          <div className="vaa-card-sub">$0 iHYPE fee</div>
+          <div className="vaa-card-sub">{t('venuesSlugAnalyticsPage.zeroFee', '$0 iHYPE fee')}</div>
         </div>
       </div>
 
-      <div className="vaa-eyebrow">Attendance over time</div>
+      <div className="vaa-eyebrow">{t('venuesSlugAnalyticsPage.attendanceOverTime', 'Attendance over time')}</div>
       {data.buckets.length === 0 ? (
-        <div className="vaa-empty">No shows in this period yet.</div>
+        <div className="vaa-empty">{t('venuesSlugAnalyticsPage.noShowsThisPeriod', 'No shows in this period yet.')}</div>
       ) : (
         <div className="vaa-chart">
           {data.buckets.map((b, i) => (
@@ -124,23 +129,23 @@ export default async function VenueAnalyticsPage({
       )}
 
       <div className="vaa-section-head">
-        <span className="vaa-eyebrow-sm">Top Events</span>
+        <span className="vaa-eyebrow-sm">{t('venuesSlugAnalyticsPage.topEvents', 'Top Events')}</span>
       </div>
       {data.topEvents.length === 0 ? (
-        <div className="vaa-empty">No events in this period yet.</div>
+        <div className="vaa-empty">{t('venuesSlugAnalyticsPage.noEventsThisPeriod', 'No events in this period yet.')}</div>
       ) : (
         <div className="vaa-events">
           {data.topEvents.map((event) => {
             const date = event.startsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             const soldLabel = event.ticketCapacity
-              ? `${event.ticketsSoldCount.toLocaleString()} / ${event.ticketCapacity.toLocaleString()} cap sold${event.soldOut ? ' · Sold out' : ''}`
-              : `${event.ticketsSoldCount.toLocaleString()} sold`;
+              ? `${event.ticketsSoldCount.toLocaleString()} / ${event.ticketCapacity.toLocaleString()} ${t('venuesSlugAnalyticsPage.capSold', 'cap sold')}${event.soldOut ? ` · ${t('venuesSlugAnalyticsPage.soldOut', 'Sold out')}` : ''}`
+              : `${event.ticketsSoldCount.toLocaleString()} ${t('venuesSlugAnalyticsPage.sold', 'sold')}`;
             return (
               <Link className="vaa-event-row" href={`/shows/${event.slug}`} key={event.id}>
                 <div>
                   <div className="vaa-event-title">
                     {event.title}
-                    {event.status === 'LIVE' ? ' — Live' : ''} · {date}
+                    {event.status === 'LIVE' ? ` — ${t('venuesSlugAnalyticsPage.live', 'Live')}` : ''} · {date}
                   </div>
                   <div className="vaa-event-meta">{soldLabel}</div>
                 </div>

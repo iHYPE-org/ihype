@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { haptic } from '@/lib/haptics';
+import { useI18n } from '@/components/I18nProvider';
 
 type HypeButtonProps = {
   targetType: 'show' | 'profile';
@@ -12,6 +13,7 @@ type HypeButtonProps = {
 };
 
 export function HypeButton({ targetType, targetId, initialCount, initiallyHyped, entityLabel }: HypeButtonProps) {
+  const { t } = useI18n();
   const storageKey = `hyped:${targetType}:${targetId}`;
   const [count, setCount] = useState(initialCount);
   const [hyped, setHyped] = useState(initiallyHyped ?? false);
@@ -56,7 +58,11 @@ export function HypeButton({ targetType, targetId, initialCount, initiallyHyped,
       // Network failure — roll back.
       setHyped(wasHyped);
       setCount((c) => wasHyped ? c + 1 : Math.max(0, c - 1));
-      setMessage(`Could not ${wasHyped ? 'unhype' : 'hype'} this ${noun} (network error)`);
+      setMessage(
+        wasHyped
+          ? t('hypeButton.unhypeNetworkError', 'Could not unhype this {noun} (network error)').replace('{noun}', noun)
+          : t('hypeButton.hypeNetworkError', 'Could not hype this {noun} (network error)').replace('{noun}', noun)
+      );
       setPending(false);
       return;
     }
@@ -70,12 +76,23 @@ export function HypeButton({ targetType, targetId, initialCount, initiallyHyped,
         if (isHyped) localStorage.setItem(storageKey, '1');
         else localStorage.removeItem(storageKey);
       } catch {}
-      setMessage(isHyped ? `Hyped! You've hyped ${(data.hypeCount ?? count).toLocaleString()} total on this ${noun}.` : null);
+      setMessage(
+        isHyped
+          ? t('hypeButton.hypedSuccess', "Hyped! You've hyped {count} total on this {noun}.")
+              .replace('{count}', (data.hypeCount ?? count).toLocaleString())
+              .replace('{noun}', noun)
+          : null
+      );
     } else {
       // Roll back the optimistic update.
       setHyped(wasHyped);
       setCount((c) => wasHyped ? c + 1 : Math.max(0, c - 1));
-      setMessage((data.error as string | undefined) ?? `Could not ${wasHyped ? 'unhype' : 'hype'} this ${noun}`);
+      setMessage(
+        (data.error as string | undefined) ??
+          (wasHyped
+            ? t('hypeButton.unhypeFailed', 'Could not unhype this {noun}').replace('{noun}', noun)
+            : t('hypeButton.hypeFailed', 'Could not hype this {noun}').replace('{noun}', noun))
+      );
     }
 
     setPending(false);
@@ -89,15 +106,15 @@ export function HypeButton({ targetType, targetId, initialCount, initiallyHyped,
         disabled={pending}
         type="button"
         aria-pressed={hyped}
-        aria-label={hyped ? `Remove hype from this ${noun}` : `Hype this ${noun}`}
-        title={hyped ? `Remove hype from this ${noun}` : `Hype this ${noun}`}
+        aria-label={hyped ? t('hypeButton.removeHypeAria', 'Remove hype from this {noun}').replace('{noun}', noun) : t('hypeButton.hypeAria', 'Hype this {noun}').replace('{noun}', noun)}
+        title={hyped ? t('hypeButton.removeHypeAria', 'Remove hype from this {noun}').replace('{noun}', noun) : t('hypeButton.hypeAria', 'Hype this {noun}').replace('{noun}', noun)}
         style={{ position: 'relative', overflow: 'visible' }}
       >
         {pending
-          ? 'Updating…'
+          ? t('hypeButton.updating', 'Updating…')
           : hyped
-            ? `✓ Hyped ${count.toLocaleString()}`
-            : `Hype ${count.toLocaleString()}`}
+            ? `${t('hypeButton.hypedCount', '✓ Hyped')} ${count.toLocaleString()}`
+            : `${t('hypeButton.hypeCount', 'Hype')} ${count.toLocaleString()}`}
         {bursting && (
           <span ref={burstRef} aria-hidden="true" style={{
             position: 'absolute', inset: 0, borderRadius: 'inherit',

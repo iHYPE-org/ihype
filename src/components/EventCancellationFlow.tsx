@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 const REASONS = [
   { value: 'artist', label: 'Artist can no longer perform' },
@@ -37,6 +38,7 @@ export function EventCancellationFlow({
   ticketsSoldCount: number;
   dashboardHref: string;
 }) {
+  const { t } = useI18n();
   const router = useRouter();
   const [reason, setReason] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -45,7 +47,7 @@ export function EventCancellationFlow({
 
   async function confirm() {
     if (!reason) return;
-    if (!window.confirm('Cancel this event and refund every ticket holder? This cannot be undone.')) return;
+    if (!window.confirm(t('eventCancellationFlow.confirmPrompt', 'Cancel this event and refund every ticket holder? This cannot be undone.'))) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -56,13 +58,13 @@ export function EventCancellationFlow({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error ?? 'Could not cancel the event — try again.');
+        setError(data.error ?? t('eventCancellationFlow.cancelError', 'Could not cancel the event — try again.'));
         setSubmitting(false);
         return;
       }
       setResult(data);
     } catch {
-      setError('Network error — try again.');
+      setError(t('eventCancellationFlow.networkError', 'Network error — try again.'));
       setSubmitting(false);
     }
   }
@@ -72,13 +74,13 @@ export function EventCancellationFlow({
       <div className="ecf-page">
         <div className="ecf-done">
           <div className="ecf-done-icon">✕</div>
-          <h1 className="ecf-done-title">Event cancelled.</h1>
+          <h1 className="ecf-done-title">{t('eventCancellationFlow.doneTitle', 'Event cancelled.')}</h1>
           <p className="ecf-done-body">
-            {result.ordersRefunded.toLocaleString()} order{result.ordersRefunded === 1 ? '' : 's'} refunded in full — face value plus Stripe's processing fee.
-            {result.ordersSkippedAlreadyScanned > 0 && ` ${result.ordersSkippedAlreadyScanned.toLocaleString()} order${result.ordersSkippedAlreadyScanned === 1 ? '' : 's'} already scanned in and were left untouched.`}
-            {result.ordersFailed > 0 && ` ${result.ordersFailed.toLocaleString()} refund${result.ordersFailed === 1 ? '' : 's'} failed and will need manual follow-up — check Stripe.`}
+            {result.ordersRefunded.toLocaleString()} order{result.ordersRefunded === 1 ? '' : 's'} {t('eventCancellationFlow.refundedSummary', "refunded in full — face value plus Stripe's processing fee.")}
+            {result.ordersSkippedAlreadyScanned > 0 && ` ${result.ordersSkippedAlreadyScanned.toLocaleString()} order${result.ordersSkippedAlreadyScanned === 1 ? '' : 's'} ${t('eventCancellationFlow.skippedSummary', 'already scanned in and were left untouched.')}`}
+            {result.ordersFailed > 0 && ` ${result.ordersFailed.toLocaleString()} refund${result.ordersFailed === 1 ? '' : 's'} ${t('eventCancellationFlow.failedSummary', 'failed and will need manual follow-up — check Stripe.')}`}
           </p>
-          <Link className="ecf-btn ecf-btn-solid" href={dashboardHref}>Back to dashboard →</Link>
+          <Link className="ecf-btn ecf-btn-solid" href={dashboardHref}>{t('eventCancellationFlow.backToDashboard', 'Back to dashboard →')}</Link>
         </div>
       </div>
     );
@@ -86,37 +88,40 @@ export function EventCancellationFlow({
 
   return (
     <div className="ecf-page">
-      <div className="ecf-eyebrow">Cancel Event</div>
-      <h1 className="ecf-title">Cancel this event?</h1>
+      <div className="ecf-eyebrow">{t('eventCancellationFlow.eyebrow', 'Cancel Event')}</div>
+      <h1 className="ecf-title">{t('eventCancellationFlow.title', 'Cancel this event?')}</h1>
 
       <div className="ecf-card">
         <div className="ecf-card-title">{showTitle}{venueName ? ` @ ${venueName}` : ''}</div>
-        <div className="ecf-card-meta">{startsAtLabel} · {ticketsSoldCount.toLocaleString()} ticket{ticketsSoldCount === 1 ? '' : 's'} sold</div>
+        <div className="ecf-card-meta">{startsAtLabel} · {ticketsSoldCount.toLocaleString()} {t('eventCancellationFlow.ticketsSoldLabel', 'ticket{s} sold').replace('{s}', ticketsSoldCount === 1 ? '' : 's')}</div>
       </div>
 
       <div className="ecf-reasons">
         {REASONS.map((r) => (
           <label className="ecf-reason-row" key={r.value}>
             <input checked={reason === r.value} name="reason" onChange={() => setReason(r.value)} type="radio" />
-            {r.label}
+            {t(`eventCancellationFlow.reason.${r.value}`, r.label)}
           </label>
         ))}
       </div>
 
       <div className="ecf-warning">
-        <div className="ecf-warning-label">This can't be undone</div>
+        <div className="ecf-warning-label">{t('eventCancellationFlow.warningLabel', "This can't be undone")}</div>
         <p>
-          All {ticketsSoldCount.toLocaleString()} ticket{ticketsSoldCount === 1 ? '' : 's'} {ticketsSoldCount === 1 ? 'is' : 'are'} refunded in full automatically — face value and Stripe's processing fee both. Fans are notified immediately.
+          {t('eventCancellationFlow.warningBody', 'All {count} ticket{s} {verb} refunded in full automatically — face value and Stripe\'s processing fee both. Fans are notified immediately.')
+            .replace('{count}', ticketsSoldCount.toLocaleString())
+            .replace('{s}', ticketsSoldCount === 1 ? '' : 's')
+            .replace('{verb}', ticketsSoldCount === 1 ? 'is' : 'are')}
         </p>
       </div>
 
       {error && <p className="ecf-error">{error}</p>}
 
       <button className="ecf-btn ecf-btn-danger" disabled={!reason || submitting} onClick={confirm} type="button">
-        {submitting ? 'Cancelling…' : 'Cancel event & refund everyone →'}
+        {submitting ? t('eventCancellationFlow.cancelling', 'Cancelling…') : t('eventCancellationFlow.confirmButton', 'Cancel event & refund everyone →')}
       </button>
       <Link className="ecf-btn ecf-btn-outline" href={`/shows/${showSlug}`}>
-        Keep the event
+        {t('eventCancellationFlow.keepEvent', 'Keep the event')}
       </Link>
 
       <style>{`

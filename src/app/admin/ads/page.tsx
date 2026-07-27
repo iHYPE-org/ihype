@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
 import { AdminAdsClient } from '@/components/AdminAdsClient';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 const PAGE_SIZE = 20;
 
@@ -17,6 +18,7 @@ export default async function AdminAdsPage({
 }) {
   const session = await auth();
   if (!isAdminSession(session)) redirect('/');
+  const t = getT(await getLocale());
 
   const sp = searchParams ? await searchParams : {};
   const status = sp.status ?? '';
@@ -43,7 +45,7 @@ export default async function AdminAdsPage({
 
   return (
     <div className="container section">
-      <h1 className="title">Radio Ad Campaigns <span className="meta">({total})</span></h1>
+      <h1 className="title">{t('adminAdsPage.title', 'Radio Ad Campaigns')} <span className="meta">({total})</span></h1>
       <AdminAdsClient ads={ads} status={status} q={q} page={page} total={total} pageSize={PAGE_SIZE} />
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useI18n } from '@/components/I18nProvider';
 
 export default function VerifyEmailPage() {
   return (
@@ -12,6 +13,7 @@ export default function VerifyEmailPage() {
 }
 
 function VerifyEmailForm() {
+  const { t } = useI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
@@ -80,7 +82,7 @@ function VerifyEmailForm() {
           color: 'var(--ink)',
           margin: '0 0 12px',
         }}>
-          Check your email
+          {t('verifyEmailPage.heading', 'Check your email')}
         </h1>
         <p style={{
           fontFamily: 'var(--f-m)',
@@ -89,16 +91,16 @@ function VerifyEmailForm() {
           lineHeight: 1.65,
           margin: '0 0 28px',
         }}>
-          We sent a 6-digit verification code to your email address. Enter it below to verify your account and continue.
+          {t('verifyEmailPage.body', 'We sent a 6-digit verification code to your email address. Enter it below to verify your account and continue.')}
         </p>
         {status === 'sent' && (
           <p style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: '#22e5d4', marginBottom: 16 }}>
-            Verification code sent! Check your inbox.
+            {t('verifyEmailPage.codeSent', 'Verification code sent! Check your inbox.')}
           </p>
         )}
         {status === 'error' && (
           <p style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--accent)', marginBottom: 16 }}>
-            Something went wrong. Please try again.
+            {t('verifyEmailPage.genericError', 'Something went wrong. Please try again.')}
           </p>
         )}
         <form onSubmit={handleConfirm} style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 12 }}>
@@ -107,7 +109,7 @@ function VerifyEmailForm() {
             onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
             inputMode="numeric"
             autoComplete="one-time-code"
-            placeholder="000000"
+            placeholder={t('verifyEmailPage.codePlaceholder', '000000')}
             maxLength={6}
             required
             style={{
@@ -124,7 +126,7 @@ function VerifyEmailForm() {
           />
           {confirmStatus === 'error' && (
             <p style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--accent)', margin: 0 }}>
-              That code is invalid or expired. Request a new one below.
+              {t('verifyEmailPage.codeInvalid', 'That code is invalid or expired. Request a new one below.')}
             </p>
           )}
           <button
@@ -144,7 +146,7 @@ function VerifyEmailForm() {
               width: '100%',
             }}
           >
-            {confirmStatus === 'confirming' ? 'Verifying…' : 'Verify code'}
+            {confirmStatus === 'confirming' ? t('verifyEmailPage.verifying', 'Verifying…') : t('verifyEmailPage.verifyCode', 'Verify code')}
           </button>
         </form>
         <button
@@ -164,7 +166,7 @@ function VerifyEmailForm() {
             width: '100%',
           }}
         >
-          {status === 'sending' ? 'Sending…' : status === 'sent' ? 'Code sent!' : 'Resend code'}
+          {status === 'sending' ? t('verifyEmailPage.sending', 'Sending…') : status === 'sent' ? t('verifyEmailPage.codeSentShort', 'Code sent!') : t('verifyEmailPage.resendCode', 'Resend code')}
         </button>
         <a
           href="/login"
@@ -176,7 +178,7 @@ function VerifyEmailForm() {
             color: 'var(--ink-3)',
           }}
         >
-          Back to login
+          {t('verifyEmailPage.backToLogin', 'Back to login')}
         </a>
       </div>
     </div>

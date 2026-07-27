@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useI18n } from '@/components/I18nProvider';
 
 type VerificationStatus = 'UNVERIFIED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
 
@@ -32,6 +33,7 @@ export default function VenueOnboardingWizard({
   // land straight on the done screen instead of re-litigating steps 0-3.
   const alreadyVerifiedOrPending = initialVerificationStatus === 'PENDING' || initialVerificationStatus === 'VERIFIED';
 
+  const { t } = useI18n();
   const [step, setStep] = useState(alreadyVerifiedOrPending ? 4 : 0);
   const [name, setName] = useState(initialName || '');
   const [city, setCity] = useState(initialCity || '');
@@ -63,12 +65,12 @@ export default function VenueOnboardingWizard({
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setBasicsError(json.error || 'Could not save — try again.');
+        setBasicsError(json.error || t('venueOnboardingWizard.errorCouldNotSave', 'Could not save — try again.'));
         return;
       }
       setStep(1);
     } catch {
-      setBasicsError('Network error — try again.');
+      setBasicsError(t('venueOnboardingWizard.errorNetwork', 'Network error — try again.'));
     } finally {
       setSavingBasics(false);
     }
@@ -86,12 +88,12 @@ export default function VenueOnboardingWizard({
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setRoomError(json.error || 'Could not save — try again.');
+        setRoomError(json.error || t('venueOnboardingWizard.errorCouldNotSave', 'Could not save — try again.'));
         return;
       }
       setStep(2);
     } catch {
-      setRoomError('Network error — try again.');
+      setRoomError(t('venueOnboardingWizard.errorNetwork', 'Network error — try again.'));
     } finally {
       setSavingRoom(false);
     }
@@ -111,13 +113,13 @@ export default function VenueOnboardingWizard({
       const res = await fetch('/api/verify', { method: 'POST', body: formData });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setSubmitError(json.error || 'Could not submit — try again.');
+        setSubmitError(json.error || t('venueOnboardingWizard.errorCouldNotSubmit', 'Could not submit — try again.'));
         return;
       }
       setSubmitted(true);
       setStep(4);
     } catch {
-      setSubmitError('Network error — try again.');
+      setSubmitError(t('venueOnboardingWizard.errorNetwork', 'Network error — try again.'));
     } finally {
       setSubmitting(false);
     }
@@ -129,30 +131,30 @@ export default function VenueOnboardingWizard({
 
   return (
     <div className="von-page">
-      <div className="von-eyebrow">Step {Math.min(step + 1, 4)} of 4 · Venue setup</div>
+      <div className="von-eyebrow">{t('venueOnboardingWizard.eyebrowStep', 'Step')} {Math.min(step + 1, 4)} {t('venueOnboardingWizard.eyebrowOf4', 'of 4 · Venue setup')}</div>
       <div className="von-progress">
         <div className="von-progress-fill" style={{ width: `${pct}%` }} />
       </div>
 
       {step === 0 && (
         <div className="von-step">
-          <h1 className="von-title">Set up your venue.</h1>
-          <p className="von-sub">This becomes your public venue page. Keep 20% of every ticket — locked in the charter.</p>
+          <h1 className="von-title">{t('venueOnboardingWizard.step0Title', 'Set up your venue.')}</h1>
+          <p className="von-sub">{t('venueOnboardingWizard.step0Sub', 'This becomes your public venue page. Keep 20% of every ticket — locked in the charter.')}</p>
 
-          <label className="von-label" htmlFor="von-name">Venue name</label>
+          <label className="von-label" htmlFor="von-name">{t('venueOnboardingWizard.venueNameLabel', 'Venue name')}</label>
           <input
             id="von-name"
             className="von-input"
-            placeholder="e.g. The Fillmore"
+            placeholder={t('venueOnboardingWizard.venueNamePlaceholder', 'e.g. The Fillmore')}
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
 
-          <label className="von-label" htmlFor="von-city">City</label>
+          <label className="von-label" htmlFor="von-city">{t('venueOnboardingWizard.cityLabel', 'City')}</label>
           <input
             id="von-city"
             className="von-input"
-            placeholder="e.g. San Francisco, CA"
+            placeholder={t('venueOnboardingWizard.cityPlaceholder', 'e.g. San Francisco, CA')}
             value={city}
             onChange={(e) => setCity(e.target.value)}
           />
@@ -160,28 +162,28 @@ export default function VenueOnboardingWizard({
           {basicsError && <div className="von-error">{basicsError}</div>}
 
           <button className="von-btn von-btn-solid" disabled={noBasics || savingBasics} onClick={saveBasics}>
-            {savingBasics ? 'Saving…' : 'Continue →'}
+            {savingBasics ? t('venueOnboardingWizard.saving', 'Saving…') : t('venueOnboardingWizard.continue', 'Continue →')}
           </button>
         </div>
       )}
 
       {step === 1 && (
         <div className="von-step">
-          <h1 className="von-title">Room details.</h1>
-          <p className="von-sub">Helps artists and fans know what to expect.</p>
+          <h1 className="von-title">{t('venueOnboardingWizard.step1Title', 'Room details.')}</h1>
+          <p className="von-sub">{t('venueOnboardingWizard.step1Sub', 'Helps artists and fans know what to expect.')}</p>
 
-          <label className="von-label" htmlFor="von-capacity">Capacity</label>
+          <label className="von-label" htmlFor="von-capacity">{t('venueOnboardingWizard.capacityLabel', 'Capacity')}</label>
           <input
             id="von-capacity"
             className="von-input"
             type="number"
             min={1}
-            placeholder="e.g. 300"
+            placeholder={t('venueOnboardingWizard.capacityPlaceholder', 'e.g. 300')}
             value={capacity}
             onChange={(e) => setCapacity(e.target.value)}
           />
 
-          <label className="von-label" htmlFor="von-room-type">Room type</label>
+          <label className="von-label" htmlFor="von-room-type">{t('venueOnboardingWizard.roomTypeLabel', 'Room type')}</label>
           <select
             id="von-room-type"
             className="von-input von-select"
@@ -189,68 +191,68 @@ export default function VenueOnboardingWizard({
             onChange={(e) => setRoomType(e.target.value)}
           >
             {ROOM_TYPES.map((opt) => (
-              <option key={opt} value={opt}>{opt || 'Select a room type'}</option>
+              <option key={opt} value={opt}>{opt || t('venueOnboardingWizard.selectRoomType', 'Select a room type')}</option>
             ))}
           </select>
 
           {roomError && <div className="von-error">{roomError}</div>}
 
           <button className="von-btn von-btn-solid" disabled={noCapacity || savingRoom} onClick={saveRoomDetails}>
-            {savingRoom ? 'Saving…' : 'Continue →'}
+            {savingRoom ? t('venueOnboardingWizard.saving', 'Saving…') : t('venueOnboardingWizard.continue', 'Continue →')}
           </button>
-          <button className="von-btn von-btn-outline" onClick={() => setStep(0)}>Back</button>
+          <button className="von-btn von-btn-outline" onClick={() => setStep(0)}>{t('venueOnboardingWizard.back', 'Back')}</button>
         </div>
       )}
 
       {step === 2 && (
         <div className="von-step">
-          <h1 className="von-title">Booking preferences.</h1>
-          <p className="von-sub">You&rsquo;ll see matching artists in your demand radar and booking inbox.</p>
+          <h1 className="von-title">{t('venueOnboardingWizard.step2Title', 'Booking preferences.')}</h1>
+          <p className="von-sub">{t('venueOnboardingWizard.step2Sub', "You'll see matching artists in your demand radar and booking inbox.")}</p>
 
           <div className="von-card">
-            <div className="von-card-label">If it sells out ({capacityOrDefault} cap · $18)</div>
+            <div className="von-card-label">{t('venueOnboardingWizard.sellsOutLabel', 'If it sells out')} ({capacityOrDefault} {t('venueOnboardingWizard.capUnit', 'cap · $18')})</div>
             <div className="von-split-bar">
               <div className="von-split-artist" />
               <div className="von-split-venue" />
               <div className="von-split-promoter" />
             </div>
             <div className="von-split-legend">
-              70% artist · <span className="von-split-venue-text">20% your venue</span> · 10% promoters · 0% iHYPE
+              {t('venueOnboardingWizard.splitArtist', '70% artist')} · <span className="von-split-venue-text">{t('venueOnboardingWizard.splitVenue', '20% your venue')}</span> · {t('venueOnboardingWizard.splitPromoters', '10% promoters')} · {t('venueOnboardingWizard.splitIhype', '0% iHYPE')}
             </div>
           </div>
 
-          <div className="von-sublabel">Booking inbox</div>
+          <div className="von-sublabel">{t('venueOnboardingWizard.bookingInboxLabel', 'Booking inbox')}</div>
           <div className="von-empty">
             <div className="von-empty-text">
-              No booking requests yet. Once verified, matching artists start showing up here and in your demand radar.
+              {t('venueOnboardingWizard.emptyBookingRequests', 'No booking requests yet. Once verified, matching artists start showing up here and in your demand radar.')}
             </div>
           </div>
 
-          <button className="von-btn von-btn-solid" onClick={() => setStep(3)}>Continue →</button>
-          <button className="von-btn von-btn-outline" onClick={() => setStep(1)}>Back</button>
+          <button className="von-btn von-btn-solid" onClick={() => setStep(3)}>{t('venueOnboardingWizard.continue', 'Continue →')}</button>
+          <button className="von-btn von-btn-outline" onClick={() => setStep(1)}>{t('venueOnboardingWizard.back', 'Back')}</button>
         </div>
       )}
 
       {step === 3 && (
         <div className="von-step">
-          <h1 className="von-title">Verify your venue.</h1>
+          <h1 className="von-title">{t('venueOnboardingWizard.step3Title', 'Verify your venue.')}</h1>
           <p className="von-sub">
-            Venue accounts require verification — protects everyone in the 70/20/10 ecosystem. Reviewed within 48 hours.
+            {t('venueOnboardingWizard.step3Sub', 'Venue accounts require verification — protects everyone in the 70/20/10 ecosystem. Reviewed within 48 hours.')}
           </p>
 
           <div className="von-card">
-            <div className="von-card-label von-card-label-accent">What counts as proof</div>
+            <div className="von-card-label von-card-label-accent">{t('venueOnboardingWizard.proofLabel', 'What counts as proof')}</div>
             <div className="von-proof-text">
-              Business license or permits for the venue · Official venue website or Google Maps listing · A recent event poster or booking invoice
+              {t('venueOnboardingWizard.proofText', 'Business license or permits for the venue · Official venue website or Google Maps listing · A recent event poster or booking invoice')}
             </div>
           </div>
 
           {submitError && <div className="von-error">{submitError}</div>}
 
           <button className="von-btn von-btn-solid" disabled={submitting} onClick={submitForReview}>
-            {submitting ? 'Submitting…' : 'Submit for review →'}
+            {submitting ? t('venueOnboardingWizard.submitting', 'Submitting…') : t('venueOnboardingWizard.submitForReview', 'Submit for review →')}
           </button>
-          <button className="von-btn von-btn-outline" disabled={submitting} onClick={() => setStep(2)}>Back</button>
+          <button className="von-btn von-btn-outline" disabled={submitting} onClick={() => setStep(2)}>{t('venueOnboardingWizard.back', 'Back')}</button>
         </div>
       )}
 
@@ -261,15 +263,15 @@ export default function VenueOnboardingWizard({
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
-          <h1 className="von-title">{submitted ? 'Submitted.' : 'Almost there.'}</h1>
+          <h1 className="von-title">{submitted ? t('venueOnboardingWizard.doneTitleSubmitted', 'Submitted.') : t('venueOnboardingWizard.doneTitlePending', 'Almost there.')}</h1>
           <p className="von-sub von-sub-center">
             {submitted
-              ? `We'll review ${nameOrVenue} within 48 hours and email you. You can start browsing the demand radar meanwhile.`
-              : `Submit ${nameOrVenue} for review to finish setup.`}
+              ? `${t('venueOnboardingWizard.doneSubSubmitted', "We'll review")} ${nameOrVenue} ${t('venueOnboardingWizard.doneSubSubmittedSuffix', 'within 48 hours and email you. You can start browsing the demand radar meanwhile.')}`
+              : `${t('venueOnboardingWizard.doneSubPending', 'Submit')} ${nameOrVenue} ${t('venueOnboardingWizard.doneSubPendingSuffix', 'for review to finish setup.')}`}
           </p>
-          {submitted && <div className="von-badge">Verified Venue · Pending</div>}
+          {submitted && <div className="von-badge">{t('venueOnboardingWizard.badgeVerifiedPending', 'Verified Venue · Pending')}</div>}
           <Link className="von-btn von-btn-solid von-btn-link" href={`/venues/${slug}/dashboard`}>
-            Explore demand radar →
+            {t('venueOnboardingWizard.exploreDemandRadar', 'Explore demand radar →')}
           </Link>
         </div>
       )}

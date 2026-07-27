@@ -2,8 +2,15 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useI18n } from '@/components/I18nProvider';
 
 type Kind = 'deletion' | 'detach' | 'hype-wipe';
+
+const DONE_LABEL_KEY: Record<Kind, string> = {
+  deletion: 'supportPrivacyPanel.doneDeletion',
+  detach: 'supportPrivacyPanel.doneDetach',
+  'hype-wipe': 'supportPrivacyPanel.doneHypeWipe',
+};
 
 const DONE_LABEL: Record<Kind, string> = {
   deletion: 'Account deletion requested — our team will confirm by email and complete it within 30 days.',
@@ -12,6 +19,7 @@ const DONE_LABEL: Record<Kind, string> = {
 };
 
 export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () => void }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [done, setDone] = useState<Kind | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -35,12 +43,12 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(data.error ?? 'Request failed');
+        setError(data.error ?? t('supportPrivacyPanel.requestFailed', 'Request failed'));
         return;
       }
       setDone(kind);
     } catch {
-      setError('Network error');
+      setError(t('supportPrivacyPanel.networkError', 'Network error'));
     } finally {
       setSubmitting(false);
     }
@@ -59,7 +67,7 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      setError('Export failed — try again or contact support.');
+      setError(t('supportPrivacyPanel.exportFailed', 'Export failed — try again or contact support.'));
     } finally {
       setExporting(false);
     }
@@ -78,8 +86,8 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
         tabIndex={0}
       >
         <div aria-hidden="true" style={{ fontSize: 24, marginBottom: 8 }}>🔒</div>
-        <div style={{ fontSize: 14, fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 4 }}>Privacy</div>
-        <div style={{ fontSize: 12, color: 'var(--ink-a55)' }}>Report a problem, data deletion, identity detachment</div>
+        <div style={{ fontSize: 14, fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 4 }}>{t('supportPrivacyPanel.privacy', 'Privacy')}</div>
+        <div style={{ fontSize: 12, color: 'var(--ink-a55)' }}>{t('supportPrivacyPanel.privacyDescription', 'Report a problem, data deletion, identity detachment')}</div>
       </div>
 
       {open && (
@@ -91,16 +99,16 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
         >
           <div className="ihype-sheet-panel" style={{ maxWidth: 460 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 6 }}>
-              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 800 }}>Privacy &amp; your data</h2>
-              <button onClick={close} aria-label="Close" style={{ background: 'none', border: 'none', color: 'var(--ink-a50)', fontSize: 22, cursor: 'pointer', lineHeight: 1, padding: 0 }}>×</button>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 800 }}>{t('supportPrivacyPanel.dialogTitle', 'Privacy & your data')}</h2>
+              <button onClick={close} aria-label={t('supportPrivacyPanel.closeAriaLabel', 'Close')} style={{ background: 'none', border: 'none', color: 'var(--ink-a50)', fontSize: 22, cursor: 'pointer', lineHeight: 1, padding: 0 }}>×</button>
             </div>
             <p style={{ fontSize: 13, color: 'var(--ink-a55)', marginBottom: 20 }}>
-              You control your data. iHYPE never sells PII — locked in our charter.
+              {t('supportPrivacyPanel.dialogIntro', 'You control your data. iHYPE never sells PII — locked in our charter.')}
             </p>
 
             {done ? (
               <div style={{ fontSize: 13, color: '#22e5d4', padding: '10px 14px', background: 'rgba(34,229,212,.08)', borderRadius: 8 }}>
-                ✓ {DONE_LABEL[done]}
+                ✓ {t(DONE_LABEL_KEY[done], DONE_LABEL[done])}
               </div>
             ) : (
               <div>
@@ -111,8 +119,8 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
                 >
                   <span style={{ fontSize: 20, flexShrink: 0 }} aria-hidden="true">🚩</span>
                   <span>
-                    <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 800, marginBottom: 2 }}>Report a problem</span>
-                    <span style={{ fontSize: 12, color: 'var(--ink-a50)' }}>Flag a privacy or data-handling concern</span>
+                    <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 800, marginBottom: 2 }}>{t('supportPrivacyPanel.reportProblem', 'Report a problem')}</span>
+                    <span style={{ fontSize: 12, color: 'var(--ink-a50)' }}>{t('supportPrivacyPanel.reportProblemDescription', 'Flag a privacy or data-handling concern')}</span>
                   </span>
                 </button>
 
@@ -124,16 +132,16 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
                 >
                   <span style={{ fontSize: 20, flexShrink: 0 }} aria-hidden="true">🗑️</span>
                   <span>
-                    <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 800, marginBottom: 2 }}>Request data deletion</span>
-                    <span style={{ fontSize: 12, color: 'var(--ink-a50)' }}>Permanently erase your account and all data</span>
+                    <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 800, marginBottom: 2 }}>{t('supportPrivacyPanel.requestDataDeletion', 'Request data deletion')}</span>
+                    <span style={{ fontSize: 12, color: 'var(--ink-a50)' }}>{t('supportPrivacyPanel.requestDataDeletionDescription', 'Permanently erase your account and all data')}</span>
                   </span>
                 </button>
 
                 <button onClick={() => submitKind('detach')} disabled={submitting} className="priv-opt" style={privOptStyle}>
                   <span style={{ fontSize: 20, flexShrink: 0 }} aria-hidden="true">⛓️</span>
                   <span>
-                    <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 800, marginBottom: 2 }}>Detach identity early</span>
-                    <span style={{ fontSize: 12, color: 'var(--ink-a50)' }}>Remove IP &amp; location from your activity log now instead of after 30 days</span>
+                    <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 800, marginBottom: 2 }}>{t('supportPrivacyPanel.detachIdentity', 'Detach identity early')}</span>
+                    <span style={{ fontSize: 12, color: 'var(--ink-a50)' }}>{t('supportPrivacyPanel.detachIdentityDescription', 'Remove IP & location from your activity log now instead of after 30 days')}</span>
                   </span>
                 </button>
 
@@ -142,24 +150,24 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
                   </span>
                   <span>
-                    <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 800, marginBottom: 2 }}>{exporting ? 'Preparing export…' : 'Download my data'}</span>
-                    <span style={{ fontSize: 12, color: 'var(--ink-a50)' }}>Export everything iHYPE holds about you</span>
+                    <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 800, marginBottom: 2 }}>{exporting ? t('supportPrivacyPanel.preparingExport', 'Preparing export…') : t('supportPrivacyPanel.downloadMyData', 'Download my data')}</span>
+                    <span style={{ fontSize: 12, color: 'var(--ink-a50)' }}>{t('supportPrivacyPanel.downloadMyDataDescription', 'Export everything iHYPE holds about you')}</span>
                   </span>
                 </button>
 
                 <button onClick={() => submitKind('hype-wipe')} disabled={submitting} className="priv-opt" style={privOptStyle}>
                   <span style={{ fontSize: 20, flexShrink: 0 }} aria-hidden="true">🣭</span>
                   <span>
-                    <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 800, marginBottom: 2 }}>Wipe hype history</span>
-                    <span style={{ fontSize: 12, color: 'var(--ink-a50)' }}>Clear your past hype votes without deleting your account</span>
+                    <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 800, marginBottom: 2 }}>{t('supportPrivacyPanel.wipeHypeHistory', 'Wipe hype history')}</span>
+                    <span style={{ fontSize: 12, color: 'var(--ink-a50)' }}>{t('supportPrivacyPanel.wipeHypeHistoryDescription', 'Clear your past hype votes without deleting your account')}</span>
                   </span>
                 </button>
 
                 <Link href="/legal?tab=privacy" className="priv-opt" style={{ ...privOptStyle, textDecoration: 'none', color: 'inherit', display: 'flex' }}>
                   <span style={{ fontSize: 20, flexShrink: 0 }} aria-hidden="true">📄</span>
                   <span>
-                    <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 800, marginBottom: 2 }}>Read the privacy policy</span>
-                    <span style={{ fontSize: 12, color: 'var(--ink-a50)' }}>How we collect, use, and protect your data</span>
+                    <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 800, marginBottom: 2 }}>{t('supportPrivacyPanel.readPrivacyPolicy', 'Read the privacy policy')}</span>
+                    <span style={{ fontSize: 12, color: 'var(--ink-a50)' }}>{t('supportPrivacyPanel.readPrivacyPolicyDescription', 'How we collect, use, and protect your data')}</span>
                   </span>
                 </Link>
 

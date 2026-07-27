@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 interface FeatureToggleProps {
   showId: string;
@@ -8,6 +9,7 @@ interface FeatureToggleProps {
 }
 
 export function FeatureToggle({ showId, initialFeatured }: FeatureToggleProps) {
+  const { t } = useI18n();
   const [featured, setFeatured] = useState(initialFeatured);
   const [loading, setLoading] = useState(false);
 
@@ -28,7 +30,7 @@ export function FeatureToggle({ showId, initialFeatured }: FeatureToggleProps) {
     <button
       onClick={toggle}
       disabled={loading}
-      title={featured ? 'Unfeature show' : 'Feature show'}
+      title={featured ? t('featureToggle.unfeatureShow', 'Unfeature show') : t('featureToggle.featureShow', 'Feature show')}
       style={{
         background: 'none',
         border: 'none',

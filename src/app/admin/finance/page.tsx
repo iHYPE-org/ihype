@@ -4,6 +4,7 @@ import { isAdminSession } from '@/lib/permissions';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { db } from '@/lib/db';
 import Link from 'next/link';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const metadata = {
   title: 'Finance | Admin | iHYPE',
@@ -17,6 +18,7 @@ export default async function AdminFinancePage({
 }: {
   searchParams?: Promise<{ tab?: string; from?: string; to?: string; promoStatus?: string; payoutStatus?: string; ticketStatus?: string; page?: string }>;
 }) {
+  const t = getT(await getLocale());
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
   if (!isAdminSession(session)) redirect(WORKBENCH_PATH);
@@ -106,16 +108,16 @@ export default async function AdminFinancePage({
   };
 
   const TABS = [
-    { key: 'revenue', label: 'Revenue' },
-    { key: 'payouts', label: 'Payouts' },
-    { key: 'tickets', label: 'Tickets' },
-    { key: 'promo-codes', label: 'Promo Codes' },
+    { key: 'revenue', label: t('adminFinancePage.tabRevenue', 'Revenue') },
+    { key: 'payouts', label: t('adminFinancePage.tabPayouts', 'Payouts') },
+    { key: 'tickets', label: t('adminFinancePage.tabTickets', 'Tickets') },
+    { key: 'promo-codes', label: t('adminFinancePage.tabPromoCodes', 'Promo Codes') },
   ];
 
   return (
     <div className="container section admin-console">
       <section className="panel admin-console-panel">
-        <h1 style={{ fontSize: 20, marginBottom: 16 }}>Finance</h1>
+        <h1 style={{ fontSize: 20, marginBottom: 16 }}>{t('adminFinancePage.title', 'Finance')}</h1>
         <div className="admin-export-row" style={{ marginBottom: 20 }}>
           {TABS.map(t => (
             <Link key={t.key} href={tabHref(t.key)} className={`button small ${activeTab === t.key ? '' : 'secondary'}`}>{t.label}</Link>
@@ -128,28 +130,28 @@ export default async function AdminFinancePage({
             <form method="get" style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'flex-end' }}>
               <input type="hidden" name="tab" value="revenue" />
               <label style={{ display: 'grid', gap: 4 }}>
-                <span className="meta">From</span>
+                <span className="meta">{t('adminFinancePage.fromLabel', 'From')}</span>
                 <input className="input" type="date" name="from" defaultValue={sp.from ?? defaultFrom.toISOString().slice(0, 10)} />
               </label>
               <label style={{ display: 'grid', gap: 4 }}>
-                <span className="meta">To</span>
+                <span className="meta">{t('adminFinancePage.toLabel', 'To')}</span>
                 <input className="input" type="date" name="to" defaultValue={sp.to ?? new Date().toISOString().slice(0, 10)} />
               </label>
-              <button className="button small" type="submit" style={{ alignSelf: 'flex-end' }}>Apply</button>
+              <button className="button small" type="submit" style={{ alignSelf: 'flex-end' }}>{t('adminFinancePage.apply', 'Apply')}</button>
             </form>
             <div className="admin-metric-grid" style={{ marginBottom: 20 }}>
               {[
-                ['Total revenue (CAPTURED)', `$${(revenueCents / 100).toFixed(2)}`],
-                ['Platform fee est. (10%)', `$${(platformFee / 100).toFixed(2)}`],
-                ['Payouts paid', `$${(payoutPaid / 100).toFixed(2)}`],
-                ['Payouts pending', `$${(payoutPending / 100).toFixed(2)}`],
+                [t('adminFinancePage.metricTotalRevenue', 'Total revenue (CAPTURED)'), `$${(revenueCents / 100).toFixed(2)}`],
+                [t('adminFinancePage.metricPlatformFee', 'Platform fee est. (10%)'), `$${(platformFee / 100).toFixed(2)}`],
+                [t('adminFinancePage.metricPayoutsPaid', 'Payouts paid'), `$${(payoutPaid / 100).toFixed(2)}`],
+                [t('adminFinancePage.metricPayoutsPending', 'Payouts pending'), `$${(payoutPending / 100).toFixed(2)}`],
               ].map(([label, value]) => (
                 <article className="card admin-metric-card" key={label}><span>{label}</span><strong>{value}</strong></article>
               ))}
             </div>
-            <h3 style={{ fontSize: 14, marginBottom: 8 }}>Monthly revenue ({monthlyRows.length} months in range)</h3>
+            <h3 style={{ fontSize: 14, marginBottom: 8 }}>{t('adminFinancePage.monthlyRevenueHeading', 'Monthly revenue')} ({monthlyRows.length} {t('adminFinancePage.monthsInRange', 'months in range')})</h3>
             {monthlyRows.length === 0 ? (
-              <div className="empty">No captured orders in this range.</div>
+              <div className="empty">{t('adminFinancePage.noCapturedOrders', 'No captured orders in this range.')}</div>
             ) : (
               <div className="admin-list">
                 {monthlyRows.map(([month, cents]) => (
@@ -168,19 +170,19 @@ export default async function AdminFinancePage({
             <form method="get" style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'flex-end' }}>
               <input type="hidden" name="tab" value="payouts" />
               <select name="payoutStatus" defaultValue={payoutStatus} className="input" style={{ width: 140 }}>
-                <option value="">All statuses</option>
-                <option value="PENDING">Pending</option>
-                <option value="RELEASED">Released</option>
+                <option value="">{t('adminFinancePage.allStatuses', 'All statuses')}</option>
+                <option value="PENDING">{t('adminFinancePage.statusPending', 'Pending')}</option>
+                <option value="RELEASED">{t('adminFinancePage.statusReleased', 'Released')}</option>
               </select>
               <input type="hidden" name="page" value="1" />
-              <button className="button small" type="submit">Filter</button>
+              <button className="button small" type="submit">{t('adminFinancePage.filter', 'Filter')}</button>
             </form>
-            <h3 style={{ fontSize: 14, marginBottom: 8 }}>Accounts Payable ({payoutTotal})</h3>
-            {payoutEntries.length === 0 ? <div className="empty">No payout entries.</div> : (
+            <h3 style={{ fontSize: 14, marginBottom: 8 }}>{t('adminFinancePage.accountsPayableHeading', 'Accounts Payable')} ({payoutTotal})</h3>
+            {payoutEntries.length === 0 ? <div className="empty">{t('adminFinancePage.noPayoutEntries', 'No payout entries.')}</div> : (
               <div className="admin-list">
                 {payoutEntries.map(e => (
                   <div className="admin-list-row" key={e.id}>
-                    <span>{e.profile?.name ?? e.profileId ?? 'unknown'}</span>
+                    <span>{e.profile?.name ?? e.profileId ?? t('adminFinancePage.unknown', 'unknown')}</span>
                     <strong>{e.status}</strong>
                     <small>${(e.amountCents / 100).toFixed(2)}</small>
                     <small>{e.createdAt.toISOString().slice(0, 10)}</small>
@@ -190,9 +192,9 @@ export default async function AdminFinancePage({
             )}
             {payoutPages > 1 && (
               <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center' }}>
-                {page > 1 && <Link className="button small secondary" href={pageHref(page - 1)}>← Prev</Link>}
-                <span className="meta">Page {page} of {payoutPages}</span>
-                {page < payoutPages && <Link className="button small secondary" href={pageHref(page + 1)}>Next →</Link>}
+                {page > 1 && <Link className="button small secondary" href={pageHref(page - 1)}>{t('adminFinancePage.prev', '← Prev')}</Link>}
+                <span className="meta">{t('adminFinancePage.pageOf', 'Page')} {page} {t('adminFinancePage.of', 'of')} {payoutPages}</span>
+                {page < payoutPages && <Link className="button small secondary" href={pageHref(page + 1)}>{t('adminFinancePage.next', 'Next →')}</Link>}
               </div>
             )}
           </>
@@ -203,34 +205,34 @@ export default async function AdminFinancePage({
             <form method="get" style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'flex-end' }}>
               <input type="hidden" name="tab" value="tickets" />
               <select name="ticketStatus" defaultValue={ticketStatus} className="input" style={{ width: 160 }}>
-                <option value="">All statuses</option>
-                <option value="RESERVED">Reserved (unpaid)</option>
-                <option value="CAPTURED">Captured</option>
-                <option value="VOID">Void</option>
+                <option value="">{t('adminFinancePage.allStatuses', 'All statuses')}</option>
+                <option value="RESERVED">{t('adminFinancePage.ticketStatusReserved', 'Reserved (unpaid)')}</option>
+                <option value="CAPTURED">{t('adminFinancePage.ticketStatusCaptured', 'Captured')}</option>
+                <option value="VOID">{t('adminFinancePage.ticketStatusVoid', 'Void')}</option>
               </select>
               <input type="hidden" name="page" value="1" />
-              <button className="button small" type="submit">Filter</button>
+              <button className="button small" type="submit">{t('adminFinancePage.filter', 'Filter')}</button>
             </form>
-            <h3 style={{ fontSize: 14, marginBottom: 8 }}>Ticket Orders ({ticketOrderTotal})</h3>
-            {ticketOrders.length === 0 ? <div className="empty">No ticket orders match this filter.</div> : (
+            <h3 style={{ fontSize: 14, marginBottom: 8 }}>{t('adminFinancePage.ticketOrdersHeading', 'Ticket Orders')} ({ticketOrderTotal})</h3>
+            {ticketOrders.length === 0 ? <div className="empty">{t('adminFinancePage.noTicketOrders', 'No ticket orders match this filter.')}</div> : (
               <div className="admin-list">
                 {ticketOrders.map(o => (
                   <div className="admin-list-row" key={o.id}>
                     <span>{o.show.title}</span>
                     <small>{o.buyerName} · {o.buyerEmail}</small>
                     <strong>{o.status}</strong>
-                    <small>{o.quantity} ticket{o.quantity === 1 ? '' : 's'} · ${(o.totalChargeCents / 100).toFixed(2)}</small>
+                    <small>{o.quantity} {o.quantity === 1 ? t('adminFinancePage.ticketSingular', 'ticket') : t('adminFinancePage.ticketPlural', 'tickets')} · ${(o.totalChargeCents / 100).toFixed(2)}</small>
                     <small>{o.createdAt.toISOString().slice(0, 10)}</small>
-                    <Link className="button small secondary" href={`/shows/${o.show.slug}`}>View show</Link>
+                    <Link className="button small secondary" href={`/shows/${o.show.slug}`}>{t('adminFinancePage.viewShow', 'View show')}</Link>
                   </div>
                 ))}
               </div>
             )}
             {ticketPages > 1 && (
               <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center' }}>
-                {page > 1 && <Link className="button small secondary" href={pageHref(page - 1)}>← Prev</Link>}
-                <span className="meta">Page {page} of {ticketPages}</span>
-                {page < ticketPages && <Link className="button small secondary" href={pageHref(page + 1)}>Next →</Link>}
+                {page > 1 && <Link className="button small secondary" href={pageHref(page - 1)}>{t('adminFinancePage.prev', '← Prev')}</Link>}
+                <span className="meta">{t('adminFinancePage.pageOf', 'Page')} {page} {t('adminFinancePage.of', 'of')} {ticketPages}</span>
+                {page < ticketPages && <Link className="button small secondary" href={pageHref(page + 1)}>{t('adminFinancePage.next', 'Next →')}</Link>}
               </div>
             )}
           </>
@@ -241,24 +243,24 @@ export default async function AdminFinancePage({
             <form method="get" style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'flex-end' }}>
               <input type="hidden" name="tab" value="promo-codes" />
               <select name="promoStatus" defaultValue={promoStatus} className="input" style={{ width: 140 }}>
-                <option value="">All codes</option>
-                <option value="active">Active</option>
-                <option value="expired">Expired</option>
+                <option value="">{t('adminFinancePage.allCodes', 'All codes')}</option>
+                <option value="active">{t('adminFinancePage.promoActive', 'Active')}</option>
+                <option value="expired">{t('adminFinancePage.promoExpired', 'Expired')}</option>
               </select>
               <input type="hidden" name="page" value="1" />
-              <button className="button small" type="submit">Filter</button>
+              <button className="button small" type="submit">{t('adminFinancePage.filter', 'Filter')}</button>
             </form>
-            <h3 style={{ fontSize: 14, marginBottom: 8 }}>Promo Codes ({promoTotal})</h3>
-            {recentPromos.length === 0 ? <div className="empty">No promo codes.</div> : (
+            <h3 style={{ fontSize: 14, marginBottom: 8 }}>{t('adminFinancePage.promoCodesHeading', 'Promo Codes')} ({promoTotal})</h3>
+            {recentPromos.length === 0 ? <div className="empty">{t('adminFinancePage.noPromoCodes', 'No promo codes.')}</div> : (
               <div className="admin-list">
                 {recentPromos.map(p => (
                   <div className="admin-list-row" key={p.id}>
                     <code style={{ fontFamily: 'monospace' }}>{p.code}</code>
                     <strong>{p.discountType}</strong>
-                    <small>{p.discountValue}% off</small>
-                    <small>{p.useCount}/{p.maxUses ?? '∞'} uses</small>
+                    <small>{p.discountValue}% {t('adminFinancePage.off', 'off')}</small>
+                    <small>{p.useCount}/{p.maxUses ?? '∞'} {t('adminFinancePage.uses', 'uses')}</small>
                     <small style={{ color: p.expiresAt && p.expiresAt < new Date() ? 'var(--ink3,#666)' : 'var(--teal,#22e5d4)' }}>
-                      {p.expiresAt && p.expiresAt < new Date() ? 'EXPIRED' : 'ACTIVE'}
+                      {p.expiresAt && p.expiresAt < new Date() ? t('adminFinancePage.expired', 'EXPIRED') : t('adminFinancePage.active', 'ACTIVE')}
                     </small>
                   </div>
                 ))}
@@ -266,9 +268,9 @@ export default async function AdminFinancePage({
             )}
             {promoPages > 1 && (
               <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center' }}>
-                {page > 1 && <Link className="button small secondary" href={pageHref(page - 1)}>← Prev</Link>}
-                <span className="meta">Page {page} of {promoPages}</span>
-                {page < promoPages && <Link className="button small secondary" href={pageHref(page + 1)}>Next →</Link>}
+                {page > 1 && <Link className="button small secondary" href={pageHref(page - 1)}>{t('adminFinancePage.prev', '← Prev')}</Link>}
+                <span className="meta">{t('adminFinancePage.pageOf', 'Page')} {page} {t('adminFinancePage.of', 'of')} {promoPages}</span>
+                {page < promoPages && <Link className="button small secondary" href={pageHref(page + 1)}>{t('adminFinancePage.next', 'Next →')}</Link>}
               </div>
             )}
           </>

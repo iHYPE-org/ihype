@@ -5,10 +5,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { NavDrawer } from '@/components/NavDrawer';
+import { useI18n } from '@/components/I18nProvider';
 
 const TABS = [
   {
-    id: 'listen', label: 'Listen', href: '/listen', color: '#ff5029',
+    id: 'listen', labelKey: 'siteNavTabs.listen', label: 'Listen', href: '/listen', color: '#ff5029',
     icon: (
       <svg fill="none" height="17" viewBox="0 0 24 24" width="17" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8">
         <path d="M4 15v-3a8 8 0 0 1 16 0v3" />
@@ -17,7 +18,7 @@ const TABS = [
     ),
   },
   {
-    id: 'events', label: 'Events', href: '/shows', color: '#22e5d4',
+    id: 'events', labelKey: 'siteNavTabs.events', label: 'Events', href: '/shows', color: '#22e5d4',
     icon: (
       <svg fill="none" height="17" viewBox="0 0 24 24" width="17" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8">
         <rect height="16" rx="3" width="18" x="3" y="5" />
@@ -27,7 +28,7 @@ const TABS = [
     ),
   },
   {
-    id: 'pages', label: 'Pages', href: '/pages', color: '#b983ff',
+    id: 'pages', labelKey: 'siteNavTabs.pages', label: 'Pages', href: '/pages', color: '#b983ff',
     icon: (
       <svg fill="none" height="17" viewBox="0 0 24 24" width="17" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8">
         <circle cx="12" cy="8" r="4" />
@@ -45,6 +46,7 @@ function matchTab(pathname: string): string {
 }
 
 export function SiteNavTabs() {
+  const { t } = useI18n();
   const pathname = usePathname();
   const active = matchTab(pathname);
   const { data: session, status } = useSession();
@@ -56,21 +58,21 @@ export function SiteNavTabs() {
   if (status === 'loading' || !session?.user) return null;
 
   return (
-    <nav aria-label="Main navigation tabs" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, height: '100%' }}>
-      {TABS.map(t => {
-        const isActive = active === t.id;
+    <nav aria-label={t('siteNavTabs.mainNavAriaLabel', 'Main navigation tabs')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, height: '100%' }}>
+      {TABS.map(tabDef => {
+        const isActive = active === tabDef.id;
         return (
           <Link
-            key={t.id}
-            href={t.href}
+            key={tabDef.id}
+            href={tabDef.href}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: 10,
               padding: '8px 16px 8px 8px',
               borderRadius: 999,
-              border: `1px solid ${t.color}${isActive ? '59' : '28'}`,
-              background: `${t.color}${isActive ? '18' : '08'}`,
+              border: `1px solid ${tabDef.color}${isActive ? '59' : '28'}`,
+              background: `${tabDef.color}${isActive ? '18' : '08'}`,
               textDecoration: 'none',
               transition: 'background 150ms cubic-bezier(0.2,0.7,0.3,1), border-color 150ms cubic-bezier(0.2,0.7,0.3,1)',
               whiteSpace: 'nowrap',
@@ -85,11 +87,11 @@ export function SiteNavTabs() {
                 height: 34,
                 borderRadius: 12,
                 flexShrink: 0,
-                background: `${t.color}${isActive ? '2e' : '16'}`,
-                color: t.color,
+                background: `${tabDef.color}${isActive ? '2e' : '16'}`,
+                color: tabDef.color,
               }}
             >
-              {t.icon}
+              {tabDef.icon}
             </span>
             <span
               style={{
@@ -100,14 +102,14 @@ export function SiteNavTabs() {
                 color: isActive ? 'var(--ink)' : 'var(--ink-a75)',
               }}
             >
-              {t.label}
+              {t(tabDef.labelKey, tabDef.label)}
             </span>
           </Link>
         );
       })}
       <button
         aria-expanded={menuOpen}
-        aria-label="Open menu"
+        aria-label={t('siteNavTabs.openMenuAriaLabel', 'Open menu')}
         className="nav-menu-trigger"
         onClick={() => setMenuOpen(true)}
         style={{
@@ -152,7 +154,7 @@ export function SiteNavTabs() {
             color: menuOpen ? 'var(--ink)' : 'var(--ink-a75)',
           }}
         >
-          Menu
+          {t('siteNavTabs.menu', 'Menu')}
         </span>
       </button>
       <NavDrawer open={menuOpen} onOpenChange={setMenuOpen} showTrigger={false} />

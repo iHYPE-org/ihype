@@ -15,6 +15,7 @@ import { getDemoShowRelationExclusion, isDemoUser, shouldHideDemoContent } from 
 import { getPromoterDashboard } from '@/lib/promoterDashboard';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { getBaseUrl } from '@/lib/utils';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const revalidate = 60;
 
@@ -27,6 +28,12 @@ function getActiveSection(section: string | string[] | undefined): FanSection {
 }
 
 const SECTION_LABEL: Record<FanSection, string> = { taste: 'Taste', top5: 'Top 5', shows: 'Shows', referrals: 'Referrals' };
+const SECTION_LABEL_KEY: Record<FanSection, string> = {
+  taste: 'fansSlugPage.tabTaste',
+  top5: 'fansSlugPage.tabTop5',
+  shows: 'fansSlugPage.tabShows',
+  referrals: 'fansSlugPage.tabReferrals',
+};
 
 function getTopFiveItems(content: string | null) {
   if (!content) return [];
@@ -58,6 +65,7 @@ export default async function FanProfilePage({
   params: Promise<{ slug: string }>;
   searchParams?: Promise<{ section?: string | string[] }>;
 }) {
+  const t = getT(await getLocale());
   const session = await auth();
   const { slug } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : {};
@@ -111,28 +119,28 @@ export default async function FanProfilePage({
             <div className="fan-display-name">{profile.name}</div>
             <div className="fan-handle">{profile.owner?.username ? `@${profile.owner.username}` : profile.hexId}{profile.city ? ` · ${profile.city}` : ''}</div>
             <div className="fan-hero-badges">
-              <span className="fan-badge" style={{ background: 'rgba(185,131,255,.15)', color: 'var(--role-fan, #b983ff)' }}>Fan</span>
-              {profile.verificationStatus === 'VERIFIED' && <span className="fan-badge" style={{ background: 'rgba(34,229,212,.15)', color: 'var(--role-venue, #22e5d4)' }}>✓ Verified</span>}
+              <span className="fan-badge" style={{ background: 'rgba(185,131,255,.15)', color: 'var(--role-fan, #b983ff)' }}>{t('fansSlugPage.fanBadge', 'Fan')}</span>
+              {profile.verificationStatus === 'VERIFIED' && <span className="fan-badge" style={{ background: 'rgba(34,229,212,.15)', color: 'var(--role-venue, #22e5d4)' }}>{t('fansSlugPage.verifiedBadge', '✓ Verified')}</span>}
             </div>
             <div className="fan-hero-actions">
               {isOwner ? (
                 <>
-                  <Link className="fan-hero-btn" href="/pages">Edit Profile</Link>
-                  <Link className="fan-hero-btn" href="/settings">Settings</Link>
+                  <Link className="fan-hero-btn" href="/pages">{t('fansSlugPage.editProfile', 'Edit Profile')}</Link>
+                  <Link className="fan-hero-btn" href="/settings">{t('fansSlugPage.settings', 'Settings')}</Link>
                 </>
               ) : (
                 <>
                   <FollowButton profileId={profile.id} variant="hero" />
-                  <ShareButton className="fan-hero-btn" label="Share" path={`/fans/${profile.slug}`} title={profile.name} />
+                  <ShareButton className="fan-hero-btn" label={t('fansSlugPage.shareLabel', 'Share')} path={`/fans/${profile.slug}`} title={profile.name} />
                 </>
               )}
             </div>
           </div>
         </div>
         <div className="fan-stats">
-          <div><div className="fan-stat-val">{shows.length}</div><div className="fan-stat-label">Hypes Cast</div></div>
-          <div><div className="fan-stat-val">{upcomingShows.length}</div><div className="fan-stat-label">Shows Attending</div></div>
-          <div><div className="fan-stat-val">{profile._count.followers.toLocaleString()}</div><div className="fan-stat-label">Followers</div></div>
+          <div><div className="fan-stat-val">{shows.length}</div><div className="fan-stat-label">{t('fansSlugPage.hypesCastLabel', 'Hypes Cast')}</div></div>
+          <div><div className="fan-stat-val">{upcomingShows.length}</div><div className="fan-stat-label">{t('fansSlugPage.showsAttendingLabel', 'Shows Attending')}</div></div>
+          <div><div className="fan-stat-val">{profile._count.followers.toLocaleString()}</div><div className="fan-stat-label">{t('fansSlugPage.followersLabel', 'Followers')}</div></div>
         </div>
         <PinnedStatTiles accent="var(--profile-accent, var(--role-fan, #b983ff))" stats={pinnedStats} />
       </div>
@@ -141,14 +149,14 @@ export default async function FanProfilePage({
         <div className="fan-tabs">
           {fanSections.filter((s) => s !== 'referrals' || isOwner).map((section) => (
             <Link className={section === activeSection ? 'fan-tab active' : 'fan-tab'} href={`/fans/${profile.slug}?section=${section}`} key={section}>
-              {SECTION_LABEL[section]}
+              {t(SECTION_LABEL_KEY[section], SECTION_LABEL[section])}
             </Link>
           ))}
         </div>
 
         {activeSection === 'taste' && (
           profile.genres.length === 0 ? (
-            <div className="fan-empty"><p>No taste data yet.</p></div>
+            <div className="fan-empty"><p>{t('fansSlugPage.noTasteData', 'No taste data yet.')}</p></div>
           ) : (
             <div className="fan-chip-row">
               {profile.genres.map((g) => <span className="fan-chip" key={g}>{g}</span>)}
@@ -158,7 +166,7 @@ export default async function FanProfilePage({
 
         {activeSection === 'top5' && (
           topFiveItems.length === 0 ? (
-            <div className="fan-empty"><p>No top 5 list yet.</p></div>
+            <div className="fan-empty"><p>{t('fansSlugPage.noTop5List', 'No top 5 list yet.')}</p></div>
           ) : (
             <ol className="fan-top5-list">
               {topFiveItems.map((item, i) => (
@@ -173,7 +181,7 @@ export default async function FanProfilePage({
 
         {activeSection === 'shows' && (
           upcomingShows.length === 0 ? (
-            <div className="fan-empty"><p>No upcoming shows. <Link href="/shows" style={{ color: 'var(--accent)' }}>Browse events →</Link></p></div>
+            <div className="fan-empty"><p>{t('fansSlugPage.noUpcomingShows', 'No upcoming shows.')} <Link href="/shows" style={{ color: 'var(--accent)' }}>{t('fansSlugPage.browseEvents', 'Browse events →')}</Link></p></div>
           ) : (
             <div className="fan-show-list">
               {upcomingShows.map((show) => (
@@ -182,7 +190,7 @@ export default async function FanProfilePage({
                     <h4>{show.title}</h4>
                     <p>{show.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}{show.venueProfile?.city ? ` · ${show.venueProfile.city}` : ''}</p>
                   </div>
-                  <span style={{ fontSize: 12, color: 'var(--profile-accent, var(--role-fan, #b983ff))', fontWeight: 600 }}>Hyped ✓</span>
+                  <span style={{ fontSize: 12, color: 'var(--profile-accent, var(--role-fan, #b983ff))', fontWeight: 600 }}>{t('fansSlugPage.hypedBadge', 'Hyped ✓')}</span>
                 </Link>
               ))}
             </div>
@@ -193,20 +201,20 @@ export default async function FanProfilePage({
           <div>
             {promoterDashboard.refHexId && (
               <div className="fan-ref-box">
-                <div className="fan-ref-label">Referral Link</div>
+                <div className="fan-ref-label">{t('fansSlugPage.referralLinkLabel', 'Referral Link')}</div>
                 <div className="fan-ref-url">{`${baseUrl}/h/${promoterDashboard.refHexId}`}</div>
                 <PromoteShareButton link={`${baseUrl}/h/${promoterDashboard.refHexId}`} slug="referral" title="iHYPE" />
                 <p style={{ fontSize: 12, color: 'var(--ink-a50)', marginTop: 12 }}>
-                  Earn a proportional share of the 10% promoter pool for every ticket your link drives.
+                  {t('fansSlugPage.referralExplainer', 'Earn a proportional share of the 10% promoter pool for every ticket your link drives.')}
                 </p>
               </div>
             )}
             {promoterDashboard.earnedCents === 0 ? (
-              <div className="fan-empty"><p>No earnings yet — share your link!</p></div>
+              <div className="fan-empty"><p>{t('fansSlugPage.noEarningsYet', 'No earnings yet — share your link!')}</p></div>
             ) : (
               <div className="fan-payout-list">
                 <div className="fan-payout-row">
-                  <span>Total earned (pending settlement)</span>
+                  <span>{t('fansSlugPage.totalEarnedLabel', 'Total earned (pending settlement)')}</span>
                   <span style={{ fontWeight: 700, color: 'var(--profile-accent, var(--role-fan, #b983ff))' }}>{formatCurrencyFromCents(promoterDashboard.earnedCents)}</span>
                 </div>
               </div>
@@ -216,7 +224,7 @@ export default async function FanProfilePage({
       </div>
 
       <div style={{ padding: '0 32px' }}>
-        <HypeButton entityLabel="fan page" initialCount={profile.hypeCount} initiallyHyped={!!userHype} targetId={profile.id} targetType="profile" />
+        <HypeButton entityLabel={t('fansSlugPage.hypeEntityLabel', 'fan page')} initialCount={profile.hypeCount} initiallyHyped={!!userHype} targetId={profile.id} targetType="profile" />
       </div>
 
       <style>{`

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 type ProfileHit = { id: string; name: string; type: string };
 
@@ -14,6 +15,7 @@ type ProfileHit = { id: string; name: string; type: string };
  * creator's ProfilePicker (src/app/events/new/page.tsx) already queries.
  */
 export function NewsletterSignup() {
+  const { t } = useI18n();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<ProfileHit[]>([]);
   const [open, setOpen] = useState(false);
@@ -52,8 +54,8 @@ export function NewsletterSignup() {
     event.preventDefault();
     setError('');
 
-    if (!profile) { setError('Pick an artist, venue, or DJ first.'); return; }
-    if (!email.trim()) { setError('Enter your email.'); return; }
+    if (!profile) { setError(t('newsletterSignup.pickProfileError', 'Pick an artist, venue, or DJ first.')); return; }
+    if (!email.trim()) { setError(t('newsletterSignup.enterEmailError', 'Enter your email.')); return; }
 
     setIsSubmitting(true);
     try {
@@ -63,10 +65,10 @@ export function NewsletterSignup() {
         body: JSON.stringify({ email: email.trim(), profileId: profile.id }),
       });
       const payload = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(typeof payload.error === 'string' ? payload.error : 'Could not subscribe.');
+      if (!res.ok) throw new Error(typeof payload.error === 'string' ? payload.error : t('newsletterSignup.subscribeFailed', 'Could not subscribe.'));
       setSent(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not subscribe.');
+      setError(err instanceof Error ? err.message : t('newsletterSignup.subscribeFailed', 'Could not subscribe.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -75,7 +77,7 @@ export function NewsletterSignup() {
   if (sent) {
     return (
       <div style={{ fontSize: 13, color: '#22e5d4', padding: '12px 16px', background: 'rgba(34,229,212,.08)', borderRadius: 8 }}>
-        ✓ Check {email} for a confirm link — you&apos;re one click from updates on {profile?.name}.
+        ✓ {t('newsletterSignup.confirmPrefix', 'Check')} {email} {t('newsletterSignup.confirmSuffix', "for a confirm link — you're one click from updates on")} {profile?.name}.
       </div>
     );
   }
@@ -83,7 +85,7 @@ export function NewsletterSignup() {
   return (
     <form className="form" onSubmit={submit}>
       <div className="field" ref={containerRef} style={{ position: 'relative' }}>
-        <span>Artist, venue, or DJ</span>
+        <span>{t('newsletterSignup.profileFieldLabel', 'Artist, venue, or DJ')}</span>
         {profile ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(255,80,41,.07)', border: '1px solid rgba(255,80,41,.2)', borderRadius: 10 }}>
             <div style={{ flex: 1, fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}>{profile.name}</div>
@@ -93,7 +95,7 @@ export function NewsletterSignup() {
           <input
             onChange={(event) => setQuery(event.target.value)}
             onFocus={() => results.length > 0 && setOpen(true)}
-            placeholder="Search for who you want updates from…"
+            placeholder={t('newsletterSignup.searchPlaceholder', 'Search for who you want updates from…')}
             type="text"
             value={query}
           />
@@ -120,18 +122,18 @@ export function NewsletterSignup() {
       </div>
 
       <label className="field">
-        <span>Email</span>
+        <span>{t('newsletterSignup.emailFieldLabel', 'Email')}</span>
         <input
           autoComplete="email"
           onChange={(event) => setEmail(event.target.value)}
-          placeholder="you@example.com"
+          placeholder={t('newsletterSignup.emailPlaceholder', 'you@example.com')}
           type="email"
           value={email}
         />
       </label>
 
       <button className="button" disabled={isSubmitting} type="submit">
-        {isSubmitting ? 'Subscribing…' : 'Get Updates'}
+        {isSubmitting ? t('newsletterSignup.submitting', 'Subscribing…') : t('newsletterSignup.submit', 'Get Updates')}
       </button>
       {error ? <p className="status-note status-note-error">{error}</p> : null}
     </form>

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { VerificationProfile } from '@/lib/types/admin';
 import { AdminReauthPrompt } from '@/components/AdminReauthPrompt';
+import { useI18n } from '@/components/I18nProvider';
 
 function formatDate(value: Date | string | null) {
   if (!value) return '—';
@@ -22,6 +23,7 @@ function profileTypePath(type: string, slug: string) {
 
 function VerificationCard({ profile }: { profile: VerificationProfile }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [adminNote, setAdminNote] = useState('');
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -49,7 +51,7 @@ function VerificationCard({ profile }: { profile: VerificationProfile }) {
       return;
     }
     setDecided(true);
-    setMessage(decision === 'VERIFIED' ? 'Verified ✓' : 'Rejected.');
+    setMessage(decision === 'VERIFIED' ? t('adminVerificationsAdminVerificationQueue.verified', 'Verified ✓') : t('adminVerificationsAdminVerificationQueue.rejected', 'Rejected.'));
     setPending(false);
     router.refresh();
   }
@@ -92,8 +94,8 @@ function VerificationCard({ profile }: { profile: VerificationProfile }) {
         </div>
 
         <div style={{ textAlign: 'right' }}>
-          <p className="meta" style={{ margin: '0 0 0.15rem' }}>Hype: <strong>{profile.hypeCount}</strong></p>
-          <p className="meta" style={{ margin: 0 }}>Submitted {formatDate(profile.verificationSubmittedAt)}</p>
+          <p className="meta" style={{ margin: '0 0 0.15rem' }}>{t('adminVerificationsAdminVerificationQueue.hype', 'Hype')}: <strong>{profile.hypeCount}</strong></p>
+          <p className="meta" style={{ margin: 0 }}>{t('adminVerificationsAdminVerificationQueue.submitted', 'Submitted')} {formatDate(profile.verificationSubmittedAt)}</p>
         </div>
       </div>
 
@@ -102,17 +104,17 @@ function VerificationCard({ profile }: { profile: VerificationProfile }) {
         style={{ margin: '0.85rem 0', padding: '0.9rem 1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '16px' }}
       >
         <p className="meta" style={{ margin: '0 0 0.5rem' }}>
-          <strong>Owner:</strong> {profile.owner.username} ({profile.owner.email})
-          {' · '}Joined {formatDate(profile.owner.createdAt)}
+          <strong>{t('adminVerificationsAdminVerificationQueue.owner', 'Owner')}:</strong> {profile.owner.username} ({profile.owner.email})
+          {' · '}{t('adminVerificationsAdminVerificationQueue.joined', 'Joined')} {formatDate(profile.owner.createdAt)}
         </p>
         {profile.contactInfo && (
           <p className="meta" style={{ margin: '0 0 0.4rem' }}>
-            <strong>Contact:</strong> {profile.contactInfo}
+            <strong>{t('adminVerificationsAdminVerificationQueue.contact', 'Contact')}:</strong> {profile.contactInfo}
           </p>
         )}
         {profile.verificationNotes && (
           <p className="meta" style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
-            <strong>Notes:</strong> {profile.verificationNotes}
+            <strong>{t('adminVerificationsAdminVerificationQueue.notes', 'Notes')}:</strong> {profile.verificationNotes}
           </p>
         )}
       </div>
@@ -120,12 +122,12 @@ function VerificationCard({ profile }: { profile: VerificationProfile }) {
       {!decided && (
         <>
           <div className="field" style={{ marginBottom: '0.75rem' }}>
-            <label className="field-label" htmlFor={`note-${profile.id}`}>Admin note (optional)</label>
+            <label className="field-label" htmlFor={`note-${profile.id}`}>{t('adminVerificationsAdminVerificationQueue.adminNoteLabel', 'Admin note (optional)')}</label>
             <div className="field-input">
               <textarea
                 id={`note-${profile.id}`}
                 rows={2}
-                placeholder="Reason for decision, instructions for resubmission, etc."
+                placeholder={t('adminVerificationsAdminVerificationQueue.adminNotePlaceholder', 'Reason for decision, instructions for resubmission, etc.')}
                 value={adminNote}
                 onChange={(e) => setAdminNote(e.target.value)}
                 disabled={pending}
@@ -141,7 +143,7 @@ function VerificationCard({ profile }: { profile: VerificationProfile }) {
               onClick={() => decide('VERIFIED')}
               style={{ background: 'rgba(35,208,216,0.15)', borderColor: 'rgba(35,208,216,0.4)', color: '#d8f8ff' }}
             >
-              Verify
+              {t('adminVerificationsAdminVerificationQueue.verifyButton', 'Verify')}
             </button>
             <button
               className="button secondary"
@@ -149,10 +151,10 @@ function VerificationCard({ profile }: { profile: VerificationProfile }) {
               onClick={() => decide('REJECTED')}
               style={{ borderColor: 'rgba(248,113,113,0.4)', color: '#fca5a5' }}
             >
-              Reject
+              {t('adminVerificationsAdminVerificationQueue.rejectButton', 'Reject')}
             </button>
             <Link className="button secondary" href={publicPath} target="_blank">
-              View public page ↗
+              {t('adminVerificationsAdminVerificationQueue.viewPublicPage', 'View public page ↗')}
             </Link>
           </div>
 
@@ -181,10 +183,12 @@ function VerificationCard({ profile }: { profile: VerificationProfile }) {
 }
 
 export function AdminVerificationQueue({ profiles }: { profiles: VerificationProfile[] }) {
+  const { t } = useI18n();
+
   if (profiles.length === 0) {
     return (
       <div className="panel" style={{ padding: '2.5rem', textAlign: 'center' }}>
-        <p className="meta">No profiles are waiting for verification review.</p>
+        <p className="meta">{t('adminVerificationsAdminVerificationQueue.noProfiles', 'No profiles are waiting for verification review.')}</p>
       </div>
     );
   }
@@ -197,7 +201,7 @@ export function AdminVerificationQueue({ profiles }: { profiles: VerificationPro
       {pending.length > 0 && (
         <>
           <h2 style={{ margin: '0.5rem 0 0', fontSize: '1rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            Pending ({pending.length})
+            {t('adminVerificationsAdminVerificationQueue.pendingHeading', 'Pending')} ({pending.length})
           </h2>
           {pending.map(p => <VerificationCard key={p.id} profile={p} />)}
         </>
@@ -206,7 +210,7 @@ export function AdminVerificationQueue({ profiles }: { profiles: VerificationPro
       {rejected.length > 0 && (
         <>
           <h2 style={{ margin: '1rem 0 0', fontSize: '1rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            Rejected — awaiting resubmission ({rejected.length})
+            {t('adminVerificationsAdminVerificationQueue.rejectedHeading', 'Rejected — awaiting resubmission')} ({rejected.length})
           </h2>
           {rejected.map(p => <VerificationCard key={p.id} profile={p} />)}
         </>

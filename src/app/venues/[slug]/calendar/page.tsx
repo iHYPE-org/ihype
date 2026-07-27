@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -23,6 +24,7 @@ function getFirstDayOfMonth(year: number, month: number) {
 }
 
 export default async function VenueCalendarPage({ params }: Props) {
+  const t = getT(await getLocale());
   const { slug } = await params;
 
   const profile = await db.profile.findUnique({
@@ -64,19 +66,27 @@ export default async function VenueCalendarPage({ params }: Props) {
   for (let i = 0; i < firstDay; i++) cells.push(null);
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
 
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dayNames = [
+    t('venuesSlugCalendarPage.daySun', 'Sun'),
+    t('venuesSlugCalendarPage.dayMon', 'Mon'),
+    t('venuesSlugCalendarPage.dayTue', 'Tue'),
+    t('venuesSlugCalendarPage.dayWed', 'Wed'),
+    t('venuesSlugCalendarPage.dayThu', 'Thu'),
+    t('venuesSlugCalendarPage.dayFri', 'Fri'),
+    t('venuesSlugCalendarPage.daySat', 'Sat'),
+  ];
 
   return (
     <div className="container section" style={{ maxWidth: 900 }}>
       <div style={{ marginBottom: 16 }}>
         <Link href={`/venues/${slug}`} className="text-link" style={{ fontSize: 13 }}>
-          ← Back to {profile.name}
+          {t('venuesSlugCalendarPage.backToPrefix', '← Back to')} {profile.name}
         </Link>
       </div>
       <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 28, marginBottom: 4 }}>
         {profile.name}
       </h1>
-      <p className="meta" style={{ marginBottom: 24 }}>{monthName} — {shows.length} show{shows.length !== 1 ? 's' : ''}</p>
+      <p className="meta" style={{ marginBottom: 24 }}>{monthName} — {shows.length} {shows.length !== 1 ? t('venuesSlugCalendarPage.showsPlural', 'shows') : t('venuesSlugCalendarPage.showSingular', 'show')}</p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 8 }}>
         {dayNames.map((d) => (
@@ -138,7 +148,7 @@ export default async function VenueCalendarPage({ params }: Props) {
 
       {shows.length > 0 && (
         <div style={{ marginTop: 32 }}>
-          <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 18, marginBottom: 12 }}>Upcoming shows</h2>
+          <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 18, marginBottom: 12 }}>{t('venuesSlugCalendarPage.upcomingShowsHeading', 'Upcoming shows')}</h2>
           {shows.map((s) => (
             <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 0', borderBottom: '1px solid var(--line)' }}>
               <div style={{ minWidth: 60, fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 20, color: 'var(--accent)' }}>

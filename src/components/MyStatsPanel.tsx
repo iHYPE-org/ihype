@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { timeAgo } from '@/lib/utils';
+import { useI18n } from '@/components/I18nProvider';
 
 type StreakData = { streak: number; daysActive: number };
 
@@ -46,6 +47,7 @@ function Tile({ value, label, color }: { value: number; label: string; color: st
  * fetch just hides the section rather than blanking the whole wrapped page.
  */
 export function MyStatsPanel() {
+  const { t } = useI18n();
   const [streak, setStreak] = useState<StreakData | null>(null);
   const [stats, setStats] = useState<StatsMeData | null>(null);
   const [history, setHistory] = useState<HistoryItem[] | null>(null);
@@ -76,7 +78,7 @@ export function MyStatsPanel() {
   if (!streak || !stats || !history) {
     return (
       <div className="mystats-section">
-        <p className="mystats-empty">Loading your stats…</p>
+        <p className="mystats-empty">{t('myStatsPanel.loading', 'Loading your stats…')}</p>
       </div>
     );
   }
@@ -85,21 +87,21 @@ export function MyStatsPanel() {
 
   return (
     <div className="mystats-section">
-      <div className="mystats-eyebrow">MY STATS</div>
+      <div className="mystats-eyebrow">{t('myStatsPanel.eyebrow', 'MY STATS')}</div>
 
       <div className="mystats-grid">
-        <Tile value={streak.streak} label="Day streak" color="#ff3e9a" />
-        <Tile value={stats.hype.given} label="Hypes given" color="#ff5029" />
-        <Tile value={stats.hype.received} label="Hypes received" color="#b983ff" />
+        <Tile value={streak.streak} label={t('myStatsPanel.dayStreak', 'Day streak')} color="#ff3e9a" />
+        <Tile value={stats.hype.given} label={t('myStatsPanel.hypesGiven', 'Hypes given')} color="#ff5029" />
+        <Tile value={stats.hype.received} label={t('myStatsPanel.hypesReceived', 'Hypes received')} color="#b983ff" />
         {fan ? (
-          <Tile value={fan.showsAttended} label="Shows attended" color="#22e5d4" />
+          <Tile value={fan.showsAttended} label={t('myStatsPanel.showsAttended', 'Shows attended')} color="#22e5d4" />
         ) : (
-          <Tile value={streak.daysActive} label="Active days" color="#22e5d4" />
+          <Tile value={streak.daysActive} label={t('myStatsPanel.activeDays', 'Active days')} color="#22e5d4" />
         )}
       </div>
 
       <div className="mystats-listening">
-        <div className="mystats-subhead">Listening history</div>
+        <div className="mystats-subhead">{t('myStatsPanel.listeningHistory', 'Listening history')}</div>
         {history.length > 0 ? (
           <div className="mystats-track-list">
             {history.map((h) => (
@@ -113,7 +115,7 @@ export function MyStatsPanel() {
             ))}
           </div>
         ) : (
-          <p className="mystats-empty">No listens yet — tracks you play will show up here.</p>
+          <p className="mystats-empty">{t('myStatsPanel.noListensYet', 'No listens yet — tracks you play will show up here.')}</p>
         )}
       </div>
     </div>

@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 import { HypeButton } from '@/components/HypeButton';
 import { TrackPlayMainButton, MoreFromArtistList } from './TrackPlayer';
 import type { MediaTrack } from '@/components/GlobalMediaPlayer';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,6 +30,7 @@ async function getTrack(hexId: string) {
       artworkUrl: true,
       createdAt: true,
       profileId: true,
+      freeUseEnabled: true,
       profile: {
         select: {
           id: true,
@@ -55,6 +57,7 @@ export async function generateMetadata({ params }: { params: Promise<{ hexId: st
 }
 
 export default async function TrackDetailPage({ params }: { params: Promise<{ hexId: string }> }) {
+  const t = getT(await getLocale());
   const { hexId } = await params;
   const session = await auth();
 
@@ -90,11 +93,11 @@ export default async function TrackDetailPage({ params }: { params: Promise<{ he
   // not a hardcoded "Cleared" label. A track that reaches this public page is
   // always isPublished — an ACTIONED (removed) report would have unpublished
   // it — so only OPEN/DISMISSED/no-report states are reachable here.
-  let copyrightStatus: { label: string; tone: 'ok' | 'pending' } = { label: 'Cleared · no flags at upload', tone: 'ok' };
+  let copyrightStatus: { label: string; tone: 'ok' | 'pending' } = { label: t('tracksHexIdPage.copyrightClearedNoFlags', 'Cleared · no flags at upload'), tone: 'ok' };
   if (latestReport?.status === 'OPEN') {
-    copyrightStatus = { label: 'Flagged · pending manual review', tone: 'pending' };
+    copyrightStatus = { label: t('tracksHexIdPage.copyrightFlaggedPending', 'Flagged · pending manual review'), tone: 'pending' };
   } else if (latestReport?.status === 'DISMISSED') {
-    copyrightStatus = { label: 'Cleared · reviewed by moderator', tone: 'ok' };
+    copyrightStatus = { label: t('tracksHexIdPage.copyrightClearedReviewed', 'Cleared · reviewed by moderator'), tone: 'ok' };
   }
 
   const duration = fmtDuration(asset.durationSecs);
@@ -119,7 +122,7 @@ export default async function TrackDetailPage({ params }: { params: Promise<{ he
             style={asset.artworkUrl ? { backgroundImage: `url(${asset.artworkUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
           />
           <div className="track-hero-info">
-            <div className="track-eyebrow">Track</div>
+            <div className="track-eyebrow">{t('tracksHexIdPage.eyebrowTrack', 'Track')}</div>
             <h1 className="track-title">{asset.title}</h1>
             <div className="track-meta-line">
               <Link href={artistHref}>{asset.profile.name}</Link>
@@ -140,45 +143,59 @@ export default async function TrackDetailPage({ params }: { params: Promise<{ he
                 initiallyHyped={Boolean(hypedByMe)}
                 entityLabel={asset.profile.name}
               />
-              <Link className="button secondary" href={artistHref}>View artist</Link>
+              <Link className="button secondary" href={artistHref}>{t('tracksHexIdPage.viewArtist', 'View artist')}</Link>
             </div>
-            <div className="track-hype-hint">Hype {asset.profile.name} — not a per-track counter (none exists yet).</div>
+            <div className="track-hype-hint">{t('tracksHexIdPage.hypeHintPrefix', 'Hype')} {asset.profile.name} {t('tracksHexIdPage.hypeHintSuffix', '— not a per-track counter (none exists yet).')}</div>
           </div>
         </div>
 
         <div className="track-stats-row">
           <div>
             <div className="track-stat-val">{playCount.toLocaleString()}</div>
-            <div className="track-stat-label">Plays</div>
+            <div className="track-stat-label">{t('tracksHexIdPage.statPlays', 'Plays')}</div>
           </div>
           <div>
             <div className="track-stat-val">{asset.profile.hypeCount.toLocaleString()}</div>
-            <div className="track-stat-label">Artist Hypes</div>
+            <div className="track-stat-label">{t('tracksHexIdPage.statArtistHypes', 'Artist Hypes')}</div>
           </div>
           <div>
             <div className="track-stat-val">{asset.createdAt.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
-            <div className="track-stat-label">Uploaded</div>
+            <div className="track-stat-label">{t('tracksHexIdPage.statUploaded', 'Uploaded')}</div>
           </div>
         </div>
 
-        <div className="track-eyebrow-sm">Credits</div>
+        <div className="track-eyebrow-sm">{t('tracksHexIdPage.creditsHeading', 'Credits')}</div>
         <div className="track-credits">
           <div className="track-credit-row">
-            <span>Artist</span>
+            <span>{t('tracksHexIdPage.creditArtist', 'Artist')}</span>
             <span><Link href={artistHref}>{asset.profile.name}</Link></span>
           </div>
           <div className="track-credit-row">
-            <span>Genre</span>
+            <span>{t('tracksHexIdPage.creditGenre', 'Genre')}</span>
             <span>{genre || '—'}</span>
           </div>
           <div className="track-credit-row">
-            <span>Copyright status</span>
+            <span>{t('tracksHexIdPage.creditCopyrightStatus', 'Copyright status')}</span>
             <span className={copyrightStatus.tone === 'ok' ? 'track-status-ok' : 'track-status-pending'}>{copyrightStatus.label}</span>
           </div>
         </div>
 
+        <div className="track-radio-status">
+          {asset.freeUseEnabled ? (
+            <>
+              <div className="track-radio-status-label track-radio-status-eligible">{t('tracksHexIdPage.radioEligible', 'Radio-eligible')}</div>
+              <p className="track-radio-status-body">{t('tracksHexIdPage.radioEligibleBody', 'The artist opted this track into DJ crates and radio play. No sync licensing required for on-platform spins.')}</p>
+            </>
+          ) : (
+            <>
+              <div className="track-radio-status-label track-radio-status-not-eligible">{t('tracksHexIdPage.radioNotEligible', 'Not in radio shows')}</div>
+              <p className="track-radio-status-body">{t('tracksHexIdPage.radioNotEligibleBody', "The artist has opted this track out of DJ crates and radio play for now. It won't appear in any show's crate.")}</p>
+            </>
+          )}
+        </div>
+
         <div className="track-section-head">
-          <span className="track-eyebrow-sm">More from {asset.profile.name}</span>
+          <span className="track-eyebrow-sm">{t('tracksHexIdPage.moreFromArtistPrefix', 'More from')} {asset.profile.name}</span>
         </div>
         <MoreFromArtistList
           track={mainTrack}
@@ -219,6 +236,11 @@ export default async function TrackDetailPage({ params }: { params: Promise<{ he
         .track-credit-row a { color: inherit; }
         .track-status-ok { color: var(--role-venue, #22e5d4) !important; }
         .track-status-pending { color: var(--accent) !important; }
+        .track-radio-status { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg3, var(--bg2)); padding: 14px 18px; margin-bottom: 28px; }
+        .track-radio-status-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
+        .track-radio-status-eligible { color: var(--ink-a55); }
+        .track-radio-status-not-eligible { color: #ffb84a; }
+        .track-radio-status-body { font-size: 12.5px; color: var(--ink-a55); line-height: 1.6; margin: 0; }
         .track-section-head { display: flex; justify-content: space-between; align-items: baseline; margin-top: 8px; }
         .track-empty { text-align: center; padding: 30px 24px; color: var(--ink-a50); }
         .track-more-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }

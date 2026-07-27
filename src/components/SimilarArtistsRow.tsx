@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import type { SimilarArtist } from '@/lib/sounds-like';
+import { getLocale, getT } from '@/lib/i18n/server';
 
-export function SimilarArtistsRow({
+export async function SimilarArtistsRow({
   artists,
   accent,
-  heading = 'Similar Artists',
+  heading,
 }: {
   artists: SimilarArtist[];
   accent: string;
@@ -12,9 +13,12 @@ export function SimilarArtistsRow({
 }) {
   if (!artists.length) return null;
 
+  const t = getT(await getLocale());
+  const resolvedHeading = heading ?? t('similarArtistsRow.heading', 'Similar Artists');
+
   return (
     <div className="similar-artists">
-      <div className="similar-artists-label">{heading}</div>
+      <div className="similar-artists-label">{resolvedHeading}</div>
       <div className="similar-artists-row">
         {artists.map((a) => (
           <Link

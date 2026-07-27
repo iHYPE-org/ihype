@@ -6,6 +6,7 @@ import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
 import { promoteToAdminAction, suspendUserAction } from './actions';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'User management | iHYPE Admin',
@@ -21,6 +22,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams?: 
   if (!session?.user?.id) redirect('/login');
   if (!isAdminSession(session)) redirect(WORKBENCH_PATH);
 
+  const t = getT(await getLocale());
   const sp = (await searchParams) ?? {};
   const q = (sp.q ?? '').trim();
   const role = sp.role ?? '';
@@ -51,43 +53,43 @@ export default async function AdminUsersPage({ searchParams }: { searchParams?: 
     <div className="container section admin-console">
       <section className="panel admin-console-hero">
         <div>
-          <div className="badge">User management</div>
-          <h1>Users <span className="meta">({total.toLocaleString()} total)</span></h1>
+          <div className="badge">{t('adminUsersPage.badge', 'User management')}</div>
+          <h1>{t('adminUsersPage.title', 'Users')} <span className="meta">({total.toLocaleString()} {t('adminUsersPage.total', 'total')})</span></h1>
         </div>
       </section>
 
       <section className="panel admin-console-panel">
         <form method="get" style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <input name="q" defaultValue={q} placeholder="Search email or username…" className="input" style={{ flex: 1, minWidth: 180 }} />
+          <input name="q" defaultValue={q} placeholder={t('adminUsersPage.searchPlaceholder', 'Search email or username…')} className="input" style={{ flex: 1, minWidth: 180 }} />
           <select name="role" defaultValue={role} className="input" style={{ width: 130 }}>
-            <option value="">All roles</option>
+            <option value="">{t('adminUsersPage.allRoles', 'All roles')}</option>
             <option value="USER">USER</option>
             <option value="ADMIN">ADMIN</option>
           </select>
           <input type="hidden" name="page" value="1" />
-          <button className="button" type="submit">Filter</button>
-          {(q || role) && <Link className="button secondary" href="/admin/users">Clear</Link>}
+          <button className="button" type="submit">{t('adminUsersPage.filter', 'Filter')}</button>
+          {(q || role) && <Link className="button secondary" href="/admin/users">{t('adminUsersPage.clear', 'Clear')}</Link>}
         </form>
 
         <div className="admin-list">
           {users.length === 0 ? (
-            <div className="empty">No users found.</div>
+            <div className="empty">{t('adminUsersPage.noUsers', 'No users found.')}</div>
           ) : users.map((user) => (
             <div className="admin-list-row" key={user.id} style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               <span style={{ minWidth: 140 }}>{user.username || '—'}</span>
               <strong style={{ minWidth: 220 }}>{user.email || '—'}</strong>
               <small>{user.role}</small>
               <small>{user.createdAt.toISOString().slice(0, 10)}</small>
-              <small>{user._count.passkeys} passkey{user._count.passkeys === 1 ? '' : 's'}</small>
+              <small>{user._count.passkeys} {t('adminUsersPage.passkeyLabel', 'passkey')}{user._count.passkeys === 1 ? '' : 's'}</small>
               <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
                 <form action={suspendUserAction}>
                   <input type="hidden" name="userId" value={user.id} />
-                  <button className="button small secondary" type="submit">Suspend</button>
+                  <button className="button small secondary" type="submit">{t('adminUsersPage.suspend', 'Suspend')}</button>
                 </form>
                 {user.role !== 'ADMIN' && (
                   <form action={promoteToAdminAction}>
                     <input type="hidden" name="userId" value={user.id} />
-                    <button className="button small" type="submit">Make Admin</button>
+                    <button className="button small" type="submit">{t('adminUsersPage.makeAdmin', 'Make Admin')}</button>
                   </form>
                 )}
               </div>
@@ -97,9 +99,9 @@ export default async function AdminUsersPage({ searchParams }: { searchParams?: 
 
         {pages > 1 && (
           <div style={{ display: 'flex', gap: 8, marginTop: 16, alignItems: 'center' }}>
-            {page > 1 && <Link className="button small secondary" href={qs({ page: String(page - 1) })}>← Prev</Link>}
-            <span className="meta">Page {page} of {pages}</span>
-            {page < pages && <Link className="button small secondary" href={qs({ page: String(page + 1) })}>Next →</Link>}
+            {page > 1 && <Link className="button small secondary" href={qs({ page: String(page - 1) })}>{t('adminUsersPage.prev', '← Prev')}</Link>}
+            <span className="meta">{t('adminUsersPage.pageOf', 'Page')} {page} {t('adminUsersPage.of', 'of')} {pages}</span>
+            {page < pages && <Link className="button small secondary" href={qs({ page: String(page + 1) })}>{t('adminUsersPage.next', 'Next →')}</Link>}
           </div>
         )}
       </section>

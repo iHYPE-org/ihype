@@ -16,6 +16,7 @@ import { PinnedStatTiles } from '@/components/PinnedStatTiles';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
 import { resolveProfileThemeVars } from '@/lib/profile-design';
 import { ConnectPayoutButton } from '@/components/ConnectPayoutButton';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const revalidate = 60;
 
@@ -27,13 +28,6 @@ function getActiveSection(section: string | string[] | undefined): VenueSection 
   return 'about';
 }
 
-const SECTION_LABEL: Record<VenueSection, string> = {
-  about: 'About',
-  shows: 'Upcoming Shows',
-  request: 'Request Artist',
-  insights: 'Insights',
-};
-
 const getVenueMeta = cache((slug: string) =>
   db.profile.findUnique({
     where: { slug },
@@ -44,11 +38,12 @@ const getVenueMeta = cache((slug: string) =>
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const profile = await getVenueMeta(slug);
-  if (!profile) return { title: 'Venue · iHYPE' };
+  const t = getT(await getLocale());
+  if (!profile) return { title: t('venuesSlugPage.metaTitleFallback', 'Venue · iHYPE') };
   const loc = [profile.city, profile.stateRegion].filter(Boolean).join(', ');
   return {
     title: `${profile.name} · iHYPE`,
-    description: ['Venue', loc || null, profile.headline || null].filter(Boolean).join(' · '),
+    description: [t('venuesSlugPage.metaVenueLabel', 'Venue'), loc || null, profile.headline || null].filter(Boolean).join(' · '),
   };
 }
 
@@ -61,6 +56,13 @@ export default async function VenuePage({
 }) {
   const session = await auth();
   const { slug } = await params;
+  const t = getT(await getLocale());
+  const SECTION_LABEL: Record<VenueSection, string> = {
+    about: t('venuesSlugPage.tabAbout', 'About'),
+    shows: t('venuesSlugPage.tabShows', 'Upcoming Shows'),
+    request: t('venuesSlugPage.tabRequest', 'Request Artist'),
+    insights: t('venuesSlugPage.tabInsights', 'Insights'),
+  };
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const activeSection = getActiveSection(resolvedSearchParams.section);
 
@@ -109,17 +111,17 @@ export default async function VenuePage({
           <h1>{profile.name}</h1>
           <p>{[profile.addressLine1, [profile.city, profile.stateRegion].filter(Boolean).join(', ')].filter(Boolean).join(' · ')}</p>
           <div className="venue-badges">
-            <span className="venue-badge venue-badge-venue">Venue</span>
-            {profile.verificationStatus === 'VERIFIED' && <span className="venue-badge venue-badge-verified">✓ Verified</span>}
+            <span className="venue-badge venue-badge-venue">{t('venuesSlugPage.badgeVenue', 'Venue')}</span>
+            {profile.verificationStatus === 'VERIFIED' && <span className="venue-badge venue-badge-verified">{t('venuesSlugPage.badgeVerified', '✓ Verified')}</span>}
           </div>
           <div className="venue-stats">
-            <div className="venue-stat"><div className="venue-stat-val">{shows.length}</div><div className="venue-stat-label">Shows hosted</div></div>
-            <div className="venue-stat"><div className="venue-stat-val">{totalTicketsSold.toLocaleString()}</div><div className="venue-stat-label">Tickets sold</div></div>
-            <div className="venue-stat"><div className="venue-stat-val">20%</div><div className="venue-stat-label">Your cut, always</div></div>
+            <div className="venue-stat"><div className="venue-stat-val">{shows.length}</div><div className="venue-stat-label">{t('venuesSlugPage.statShowsHosted', 'Shows hosted')}</div></div>
+            <div className="venue-stat"><div className="venue-stat-val">{totalTicketsSold.toLocaleString()}</div><div className="venue-stat-label">{t('venuesSlugPage.statTicketsSold', 'Tickets sold')}</div></div>
+            <div className="venue-stat"><div className="venue-stat-val">20%</div><div className="venue-stat-label">{t('venuesSlugPage.statYourCut', 'Your cut, always')}</div></div>
           </div>
           {shows.length > 0 && (
             <div className="venue-capacity-row">
-              <div className="venue-capacity-label"><span>Avg capacity fill</span><b>{avgFillPct}%</b></div>
+              <div className="venue-capacity-label"><span>{t('venuesSlugPage.avgCapacityFill', 'Avg capacity fill')}</span><b>{avgFillPct}%</b></div>
               <div className="venue-capacity-track"><div className="venue-capacity-bar" style={{ width: `${avgFillPct}%` }} /></div>
             </div>
           )}
@@ -131,9 +133,9 @@ export default async function VenuePage({
             {isOwner && (
               <>
                 <FanMailButton profileId={profile.id} triggerClassName="venue-hero-btn" />
-                <Link className="venue-hero-btn" href="/me/booking">Book artists</Link>
-                <Link className="venue-hero-btn" href="/pages">Customize</Link>
-                <Link className="venue-hero-btn" href="/settings">Settings</Link>
+                <Link className="venue-hero-btn" href="/me/booking">{t('venuesSlugPage.bookArtists', 'Book artists')}</Link>
+                <Link className="venue-hero-btn" href="/pages">{t('venuesSlugPage.customize', 'Customize')}</Link>
+                <Link className="venue-hero-btn" href="/settings">{t('venuesSlugPage.settings', 'Settings')}</Link>
               </>
             )}
           </div>
@@ -152,7 +154,7 @@ export default async function VenuePage({
         {activeSection === 'about' && (
           <div>
             <p style={{ fontSize: 15, lineHeight: 1.7, color: 'var(--ink-a85)', marginBottom: 28 }}>
-              {profile.aboutContent || profile.bio || 'This venue has not filled out the About section yet.'}
+              {profile.aboutContent || profile.bio || t('venuesSlugPage.aboutEmpty', 'This venue has not filled out the About section yet.')}
             </p>
             {(venueAddress || profile.hoursText) && (
               <p style={{ fontSize: 13, color: 'var(--ink-a60)', marginBottom: 28 }}>
@@ -161,13 +163,13 @@ export default async function VenuePage({
             )}
             <PinnedStatTiles accent="var(--profile-accent, var(--role-venue, #22e5d4))" stats={pinnedStats} />
             <div className="venue-split-card">
-              <div className="venue-split-title">How every ticket is split here</div>
+              <div className="venue-split-title">{t('venuesSlugPage.splitTitle', 'How every ticket is split here')}</div>
               <div className="venue-split-bar">
-                <div className="venue-split-seg venue-artist-seg" style={{ flex: 70 }}><div className="venue-seg-pct" style={{ color: '#ff5029' }}>70%</div><div className="venue-seg-label" style={{ color: '#ff5029' }}>Artist</div></div>
+                <div className="venue-split-seg venue-artist-seg" style={{ flex: 70 }}><div className="venue-seg-pct" style={{ color: '#ff5029' }}>70%</div><div className="venue-seg-label" style={{ color: '#ff5029' }}>{t('venuesSlugPage.splitArtist', 'Artist')}</div></div>
                 <div className="venue-split-seg venue-venue-seg" style={{ flex: 20 }}><div className="venue-seg-pct" style={{ color: 'var(--role-venue)' }}>20%</div><div className="venue-seg-label" style={{ color: 'var(--role-venue)' }}>{profile.name}</div></div>
-                <div className="venue-split-seg venue-promoter-seg" style={{ flex: 10 }}><div className="venue-seg-pct" style={{ color: '#ff3e9a' }}>10%</div><div className="venue-seg-label" style={{ color: '#ff3e9a' }}>Promoters</div></div>
+                <div className="venue-split-seg venue-promoter-seg" style={{ flex: 10 }}><div className="venue-seg-pct" style={{ color: '#ff3e9a' }}>10%</div><div className="venue-seg-label" style={{ color: '#ff3e9a' }}>{t('venuesSlugPage.splitPromoters', 'Promoters')}</div></div>
               </div>
-              <p style={{ fontSize: 12, color: 'var(--ink-a50)', marginTop: 12 }}>$0 fees for ticket buyers. iHYPE takes nothing — locked in the charter.</p>
+              <p style={{ fontSize: 12, color: 'var(--ink-a50)', marginTop: 12 }}>{t('venuesSlugPage.splitFooter', '$0 fees for ticket buyers. iHYPE takes nothing — locked in the charter.')}</p>
             </div>
           </div>
         )}
@@ -176,11 +178,11 @@ export default async function VenuePage({
           <div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
               <Link href={`/venues/${profile.slug}/calendar`} className="text-link" style={{ fontSize: 13 }}>
-                Full calendar →
+                {t('venuesSlugPage.fullCalendar', 'Full calendar →')}
               </Link>
             </div>
             {upcomingShows.length === 0 ? (
-              <p style={{ color: 'var(--ink-a50)' }}>No upcoming shows yet.</p>
+              <p style={{ color: 'var(--ink-a50)' }}>{t('venuesSlugPage.noUpcomingShows', 'No upcoming shows yet.')}</p>
             ) : (
               upcomingShows.map((show) => {
                 const date = show.startsAt.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
@@ -189,11 +191,11 @@ export default async function VenuePage({
                   <Link className="venue-show-card" href={`/shows/${show.slug}`} key={show.id}>
                     <div className="venue-show-info">
                       <h3>{show.headlinerProfile?.name ?? show.title}</h3>
-                      <p className="venue-show-meta">{date} · {time} · {show.ticketsSoldCount.toLocaleString()} tickets sold</p>
+                      <p className="venue-show-meta">{date} · {time} · {show.ticketsSoldCount.toLocaleString()} {t('venuesSlugPage.ticketsSoldSuffix', 'tickets sold')}</p>
                     </div>
                     <div className="venue-show-price">
-                      {show.isTicketed && show.ticketPriceCents ? `$${(show.ticketPriceCents / 100).toFixed(0)}` : 'Free'}
-                      <small>$0 fees</small>
+                      {show.isTicketed && show.ticketPriceCents ? `$${(show.ticketPriceCents / 100).toFixed(0)}` : t('venuesSlugPage.free', 'Free')}
+                      <small>{t('venuesSlugPage.zeroFees', '$0 fees')}</small>
                     </div>
                   </Link>
                 );
@@ -207,19 +209,19 @@ export default async function VenuePage({
             {isOwner ? (
               <>
                 <p style={{ fontSize: 14, color: 'var(--ink-a70)', marginBottom: 24 }}>
-                  Pending artist booking recommendations from fans and promoters. Approving marks the request booked; denying dismisses it.
+                  {t('venuesSlugPage.requestOwnerBody', 'Pending artist booking recommendations from fans and promoters. Approving marks the request booked; denying dismisses it.')}
                 </p>
                 <VenueRequestInbox />
               </>
             ) : (
               <>
                 <p style={{ fontSize: 14, color: 'var(--ink-a70)', marginBottom: 24 }}>
-                  We use the iHYPE demand radar to book artists. Fill this out and we&apos;ll reach out if there&apos;s a fit.
+                  {t('venuesSlugPage.requestFanBody', "We use the iHYPE demand radar to book artists. Fill this out and we'll reach out if there's a fit.")}
                 </p>
                 {session?.user ? (
                   <VenueRequestForm venueProfileId={profile.id} />
                 ) : (
-                  <p style={{ color: 'var(--ink-a50)' }}>Log in to recommend booking an artist for this venue.</p>
+                  <p style={{ color: 'var(--ink-a50)' }}>{t('venuesSlugPage.requestLoginPrompt', 'Log in to recommend booking an artist for this venue.')}</p>
                 )}
               </>
             )}

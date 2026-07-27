@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useI18n } from '@/components/I18nProvider';
 
 type ReceivedRequest = {
   id: string;
@@ -17,12 +18,6 @@ type ReceivedRequest = {
 
 type Tab = 'pending' | 'accepted' | 'declined';
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'pending', label: 'Pending' },
-  { id: 'accepted', label: 'Accepted' },
-  { id: 'declined', label: 'Declined' },
-];
-
 /**
  * Dedicated Booking Inbox page (DESIGN_SYNC row 224) — a fuller view than the
  * pending-only BookingRequestInbox.tsx embedded on the venue profile's own
@@ -32,10 +27,17 @@ const TABS: { id: Tab; label: string }[] = [
  * PATCH used everywhere else in the app.
  */
 export function VenueBookingInboxTabs({ profileId }: { profileId: string }) {
+  const { t } = useI18n();
   const [requests, setRequests] = useState<ReceivedRequest[] | null>(null);
   const [error, setError] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('pending');
+
+  const TABS: { id: Tab; label: string }[] = [
+    { id: 'pending', label: t('venueBookingInboxTabs.pendingTab', 'Pending') },
+    { id: 'accepted', label: t('venueBookingInboxTabs.acceptedTab', 'Accepted') },
+    { id: 'declined', label: t('venueBookingInboxTabs.declinedTab', 'Declined') },
+  ];
 
   useEffect(() => {
     fetch('/api/booking-requests')
@@ -60,8 +62,8 @@ export function VenueBookingInboxTabs({ profileId }: { profileId: string }) {
     }
   }
 
-  if (error) return <p className="vbi-empty">Couldn't load booking requests right now.</p>;
-  if (!requests) return <p className="vbi-empty">Loading booking requests…</p>;
+  if (error) return <p className="vbi-empty">{t('venueBookingInboxTabs.loadErrorMessage', "Couldn't load booking requests right now.")}</p>;
+  if (!requests) return <p className="vbi-empty">{t('venueBookingInboxTabs.loadingMessage', 'Loading booking requests…')}</p>;
 
   const counts = {
     pending: requests.filter((r) => r.status === 'pending').length,
@@ -73,14 +75,14 @@ export function VenueBookingInboxTabs({ profileId }: { profileId: string }) {
   return (
     <div>
       <div className="vbi-tabs">
-        {TABS.map((t) => (
+        {TABS.map((tabDef) => (
           <button
-            key={t.id}
-            className={`vbi-tab${tab === t.id ? ' vbi-tab-active' : ''}`}
-            onClick={() => setTab(t.id)}
+            key={tabDef.id}
+            className={`vbi-tab${tab === tabDef.id ? ' vbi-tab-active' : ''}`}
+            onClick={() => setTab(tabDef.id)}
             type="button"
           >
-            {t.label} {t.id === 'pending' ? `(${counts.pending})` : ''}
+            {tabDef.label} {tabDef.id === 'pending' ? `(${counts.pending})` : ''}
           </button>
         ))}
       </div>
@@ -88,9 +90,9 @@ export function VenueBookingInboxTabs({ profileId }: { profileId: string }) {
       {shown.length === 0 ? (
         <div className="vbi-empty-card">
           <p>
-            {tab === 'pending' && 'No pending requests right now.'}
-            {tab === 'accepted' && 'No accepted bookings yet.'}
-            {tab === 'declined' && "Nothing declined — good sign."}
+            {tab === 'pending' && t('venueBookingInboxTabs.noPendingMessage', 'No pending requests right now.')}
+            {tab === 'accepted' && t('venueBookingInboxTabs.noAcceptedMessage', 'No accepted bookings yet.')}
+            {tab === 'declined' && t('venueBookingInboxTabs.noDeclinedMessage', 'Nothing declined — good sign.')}
           </p>
         </div>
       ) : (
@@ -101,7 +103,7 @@ export function VenueBookingInboxTabs({ profileId }: { profileId: string }) {
               <div className="vbi-card" key={r.id}>
                 <div className="vbi-card-head">
                   <div>
-                    <div className="vbi-name">{r.fromUser.name ?? r.fromUser.username ?? 'A user'}</div>
+                    <div className="vbi-name">{r.fromUser.name ?? r.fromUser.username ?? t('venueBookingInboxTabs.aUserFallback', 'A user')}</div>
                     {requesterProfile && (
                       <div className="vbi-meta">
                         {[requesterProfile.genres[0], requesterProfile.city].filter(Boolean).join(' · ')}
@@ -109,7 +111,11 @@ export function VenueBookingInboxTabs({ profileId }: { profileId: string }) {
                     )}
                   </div>
                   <span className={`vbi-pill vbi-pill-${r.status}`}>
-                    {r.status === 'pending' ? 'Pending' : r.status === 'accepted' ? 'Booked' : 'Declined'}
+                    {r.status === 'pending'
+                      ? t('venueBookingInboxTabs.pendingPill', 'Pending')
+                      : r.status === 'accepted'
+                        ? t('venueBookingInboxTabs.bookedPill', 'Booked')
+                        : t('venueBookingInboxTabs.declinedPill', 'Declined')}
                   </span>
                 </div>
                 <p className="vbi-message">{r.message}</p>
@@ -119,17 +125,17 @@ export function VenueBookingInboxTabs({ profileId }: { profileId: string }) {
                 {r.status === 'pending' && (
                   <div className="vbi-actions">
                     <button className="vbi-btn vbi-btn-accept" disabled={busyId === r.id} onClick={() => act(r.id, 'accepted')} type="button">
-                      Accept
+                      {t('venueBookingInboxTabs.acceptButton', 'Accept')}
                     </button>
                     <button className="vbi-btn vbi-btn-decline" disabled={busyId === r.id} onClick={() => act(r.id, 'declined')} type="button">
-                      Decline
+                      {t('venueBookingInboxTabs.declineButton', 'Decline')}
                     </button>
                     {requesterProfile && (
                       <Link
                         className="vbi-btn vbi-btn-outline"
                         href={requesterProfile.type === 'DJ' ? `/promoters/${requesterProfile.slug}` : `/artists/${requesterProfile.slug}`}
                       >
-                        View profile
+                        {t('venueBookingInboxTabs.viewProfileLink', 'View profile')}
                       </Link>
                     )}
                   </div>

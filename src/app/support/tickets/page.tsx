@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { SupportTicketComposer } from '@/components/SupportTicketComposer';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,6 +37,7 @@ function fmtDate(d: Date) {
  * submitted ticket and its status).
  */
 export default async function SupportTicketsPage() {
+  const tr = getT(await getLocale());
   const session = await auth();
   if (!session?.user?.id) {
     redirect('/login?callbackUrl=/support/tickets');
@@ -59,7 +62,7 @@ export default async function SupportTicketsPage() {
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="15 18 9 12 15 6" />
         </svg>
-        Back to Support
+        {tr('supportTicketsPage.backToSupport', 'Back to Support')}
       </Link>
 
       <span style={{
@@ -67,22 +70,24 @@ export default async function SupportTicketsPage() {
         letterSpacing: '.14em', color: '#22e5d4', border: '1px solid rgba(34,229,212,.3)',
         background: 'rgba(34,229,212,.07)', borderRadius: 999, padding: '5px 13px', marginBottom: 14,
       }}>
-        Support
+        {tr('supportTicketsPage.badge', 'Support')}
       </span>
       <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 800, letterSpacing: '-.02em', margin: '18px 0 8px', color: 'var(--ink)' }}>
-        My tickets
+        {tr('supportTicketsPage.title', 'My tickets')}
       </h1>
       <p style={{ fontSize: 14, color: 'var(--ink-a65)', marginBottom: 32 }}>
-        Every support request you&apos;ve sent us, and where it stands.
+        {tr('supportTicketsPage.intro', "Every support request you've sent us, and where it stands.")}
       </p>
+
+      <SupportTicketComposer />
 
       {tickets.length === 0 ? (
         <div style={{
           border: '1px solid var(--line)', borderRadius: 'var(--radius-lg)', background: 'var(--bg2)',
           padding: '30px 24px', textAlign: 'center', color: 'var(--ink-a65)', fontSize: 13.5,
         }}>
-          You haven&apos;t sent us anything yet.{' '}
-          <Link href="/support" style={{ color: '#22e5d4' }}>Contact support</Link>.
+          {tr('supportTicketsPage.emptyState', "You haven't sent us anything yet.")}{' '}
+          <Link href="/support" style={{ color: '#22e5d4' }}>{tr('supportTicketsPage.contactSupport', 'Contact support')}</Link>.
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -109,7 +114,7 @@ export default async function SupportTicketsPage() {
                 </span>
               </div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>
-                {t.type} · {t.priority} priority · Opened {fmtDate(t.createdAt)}
+                {t.type} · {t.priority} {tr('supportTicketsPage.priorityLabel', 'priority')} · {tr('supportTicketsPage.openedLabel', 'Opened')} {fmtDate(t.createdAt)}
               </div>
             </Link>
           ))}

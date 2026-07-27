@@ -9,6 +9,7 @@ import { AdminVerificationQueue } from '@/app/admin/verifications/AdminVerificat
 import { ReportPageBulkButtons } from '@/components/admin/ReportPageBulkButtons';
 import type { VerificationProfile } from '@/lib/types/admin';
 import React from 'react';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'Review Queue | Admin | iHYPE.org',
@@ -29,11 +30,11 @@ async function resolveReport(reportId: string) {
   await db.contentReport.update({ where: { id: reportId }, data: { status: 'RESOLVED' } });
 }
 
-function ResolveButton({ reportId }: { reportId: string }) {
+function ResolveButton({ reportId, label }: { reportId: string; label: string }) {
   return (
     <form action={resolveReport.bind(null, reportId)}>
       <button type="submit" style={{ background: 'rgba(34,229,212,.12)', color: '#22e5d4', border: '1px solid rgba(34,229,212,.2)', borderRadius: 6, padding: '4px 12px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--f-m)', letterSpacing: '.04em' }}>
-        Resolve
+        {label}
       </button>
     </form>
   );
@@ -60,6 +61,7 @@ export default async function AdminReviewPage({
   if (!session?.user?.id) redirect('/login');
   if (!isAdminSession(session)) redirect(WORKBENCH_PATH);
 
+  const t = getT(await getLocale());
   const resolved = searchParams ? await searchParams : {};
   const rawTab = resolved.tab;
   const tab: Tab = rawTab === 'verifications' || rawTab === 'duplicates' ? rawTab : 'reports';
@@ -158,12 +160,12 @@ export default async function AdminReviewPage({
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px' }}>
-      <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 28, letterSpacing: '-.02em', color: 'var(--ink)', marginBottom: 8 }}>Review Queue</h1>
+      <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 28, letterSpacing: '-.02em', color: 'var(--ink)', marginBottom: 8 }}>{t('adminReviewPage.title', 'Review Queue')}</h1>
 
       <nav style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-        <Link href="/admin/review?tab=reports" className={`button small${tab === 'reports' ? '' : ' secondary'}`}>Reports</Link>
-        <Link href="/admin/review?tab=verifications" className={`button small${tab === 'verifications' ? '' : ' secondary'}`}>Verifications</Link>
-        <Link href="/admin/review?tab=duplicates" className={`button small${tab === 'duplicates' ? '' : ' secondary'}`}>Duplicates</Link>
+        <Link href="/admin/review?tab=reports" className={`button small${tab === 'reports' ? '' : ' secondary'}`}>{t('adminReviewPage.tabReports', 'Reports')}</Link>
+        <Link href="/admin/review?tab=verifications" className={`button small${tab === 'verifications' ? '' : ' secondary'}`}>{t('adminReviewPage.tabVerifications', 'Verifications')}</Link>
+        <Link href="/admin/review?tab=duplicates" className={`button small${tab === 'duplicates' ? '' : ' secondary'}`}>{t('adminReviewPage.tabDuplicates', 'Duplicates')}</Link>
       </nav>
 
       {tab === 'reports' && (() => {
@@ -177,53 +179,53 @@ export default async function AdminReviewPage({
           <form method="get" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16, alignItems: 'flex-end' }}>
             <input type="hidden" name="tab" value="reports" />
             <select name="status" defaultValue={rStatus} className="input" style={{ width: 130 }}>
-              <option value="OPEN">Open</option>
-              <option value="RESOLVED">Resolved</option>
-              <option value="DISMISSED">Dismissed</option>
+              <option value="OPEN">{t('adminReviewPage.statusOpen', 'Open')}</option>
+              <option value="RESOLVED">{t('adminReviewPage.statusResolved', 'Resolved')}</option>
+              <option value="DISMISSED">{t('adminReviewPage.statusDismissed', 'Dismissed')}</option>
             </select>
             <select name="type" defaultValue={rType} className="input" style={{ width: 130 }}>
-              <option value="">All types</option>
-              <option value="profile">Profile</option>
-              <option value="show">Show</option>
-              <option value="comment">Comment</option>
-              <option value="track">Track</option>
+              <option value="">{t('adminReviewPage.typeAll', 'All types')}</option>
+              <option value="profile">{t('adminReviewPage.typeProfile', 'Profile')}</option>
+              <option value="show">{t('adminReviewPage.typeShow', 'Show')}</option>
+              <option value="comment">{t('adminReviewPage.typeComment', 'Comment')}</option>
+              <option value="track">{t('adminReviewPage.typeTrack', 'Track')}</option>
             </select>
             <label style={{ display: 'grid', gap: 2 }}>
-              <span className="meta" style={{ fontSize: 10 }}>From</span>
+              <span className="meta" style={{ fontSize: 10 }}>{t('adminReviewPage.from', 'From')}</span>
               <input className="input" type="date" name="from" defaultValue={resolved.from ?? ''} />
             </label>
             <label style={{ display: 'grid', gap: 2 }}>
-              <span className="meta" style={{ fontSize: 10 }}>To</span>
+              <span className="meta" style={{ fontSize: 10 }}>{t('adminReviewPage.to', 'To')}</span>
               <input className="input" type="date" name="to" defaultValue={resolved.to ?? ''} />
             </label>
             <input type="hidden" name="page" value="1" />
-            <button className="button small" type="submit">Filter</button>
+            <button className="button small" type="submit">{t('adminReviewPage.filter', 'Filter')}</button>
             {(rStatus !== 'OPEN' || rType || resolved.from || resolved.to) && (
-              <Link className="button small secondary" href="/admin/review?tab=reports">Reset</Link>
+              <Link className="button small secondary" href="/admin/review?tab=reports">{t('adminReviewPage.reset', 'Reset')}</Link>
             )}
           </form>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <p style={{ fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-2)', margin: 0 }}>{reportsTotal} {rStatus.toLowerCase()} report{reportsTotal !== 1 ? 's' : ''}</p>
+            <p style={{ fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-2)', margin: 0 }}>{reportsTotal} {rStatus.toLowerCase()} {reportsTotal !== 1 ? t('adminReviewPage.reportsPlural', 'reports') : t('adminReviewPage.reportSingular', 'report')}</p>
             {rStatus === 'OPEN' && reports.length > 0 && (
               <ReportPageBulkButtons ids={reports.map(r => r.id)} />
             )}
           </div>
 
           {reports.length === 0 ? (
-            <p style={{ fontFamily: 'var(--f-m)', fontSize: 14, color: 'var(--ink-3)' }}>No reports found.</p>
+            <p style={{ fontFamily: 'var(--f-m)', fontSize: 14, color: 'var(--ink-3)' }}>{t('adminReviewPage.noReports', 'No reports found.')}</p>
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--f-m)', fontSize: 12 }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--line-2)', color: 'var(--ink-3)', letterSpacing: '.08em', textTransform: 'uppercase' }}>
-                    <th style={thStyle}>Date</th>
-                    <th style={thStyle}>Reason</th>
-                    <th style={thStyle}>Target type</th>
-                    <th style={thStyle}>Target</th>
-                    <th style={thStyle}>Reporter</th>
-                    <th style={thStyle}>Status</th>
-                    <th style={thStyle}>Action</th>
+                    <th style={thStyle}>{t('adminReviewPage.colDate', 'Date')}</th>
+                    <th style={thStyle}>{t('adminReviewPage.colReason', 'Reason')}</th>
+                    <th style={thStyle}>{t('adminReviewPage.colTargetType', 'Target type')}</th>
+                    <th style={thStyle}>{t('adminReviewPage.colTarget', 'Target')}</th>
+                    <th style={thStyle}>{t('adminReviewPage.colReporter', 'Reporter')}</th>
+                    <th style={thStyle}>{t('adminReviewPage.colStatus', 'Status')}</th>
+                    <th style={thStyle}>{t('adminReviewPage.colAction', 'Action')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -243,13 +245,13 @@ export default async function AdminReviewPage({
                         <td style={{ ...tdStyle, fontSize: 12 }}>
                           {entityHref ? <Link href={entityHref} style={{ color: 'var(--accent)', textDecoration: 'none' }} target="_blank">{entityLabel}</Link> : <span style={{ fontFamily: 'monospace', fontSize: 11, color: 'var(--ink-3)' }}>{entityLabel}</span>}
                         </td>
-                        <td style={tdStyle}>{r.reporter ? <span title={r.reporter.email ?? ''}>{r.reporter.name ?? r.reporter.email}</span> : <span style={{ color: 'var(--ink-3)' }}>Anonymous</span>}</td>
+                        <td style={tdStyle}>{r.reporter ? <span title={r.reporter.email ?? ''}>{r.reporter.name ?? r.reporter.email}</span> : <span style={{ color: 'var(--ink-3)' }}>{t('adminReviewPage.anonymous', 'Anonymous')}</span>}</td>
                         <td style={tdStyle}>
                           <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, letterSpacing: '.08em', background: r.status === 'OPEN' ? 'rgba(255,80,41,.15)' : 'rgba(34,229,212,.1)', color: r.status === 'OPEN' ? 'var(--accent)' : '#22e5d4' }}>{r.status}</span>
                         </td>
                         <td style={tdStyle}>
-                          {entityHref && <Link href={entityHref} target="_blank" style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-2)', textDecoration: 'none', marginRight: 8 }}>View ↗</Link>}
-                          {r.status === 'OPEN' && <ResolveButton reportId={r.id} />}
+                          {entityHref && <Link href={entityHref} target="_blank" style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-2)', textDecoration: 'none', marginRight: 8 }}>{t('adminReviewPage.viewLink', 'View ↗')}</Link>}
+                          {r.status === 'OPEN' && <ResolveButton reportId={r.id} label={t('adminReviewPage.resolve', 'Resolve')} />}
                         </td>
                       </tr>
                     );
@@ -260,9 +262,9 @@ export default async function AdminReviewPage({
           )}
           {reportPages > 1 && (
             <div style={{ display: 'flex', gap: 8, marginTop: 16, alignItems: 'center' }}>
-              {rPage > 1 && <Link className="button small secondary" href={rpHref({ page: String(rPage - 1) })}>← Prev</Link>}
-              <span style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)' }}>Page {rPage} of {reportPages}</span>
-              {rPage < reportPages && <Link className="button small secondary" href={rpHref({ page: String(rPage + 1) })}>Next →</Link>}
+              {rPage > 1 && <Link className="button small secondary" href={rpHref({ page: String(rPage - 1) })}>{t('adminReviewPage.prev', '← Prev')}</Link>}
+              <span style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)' }}>{t('adminReviewPage.pageOf', 'Page')} {rPage} {t('adminReviewPage.of', 'of')} {reportPages}</span>
+              {rPage < reportPages && <Link className="button small secondary" href={rpHref({ page: String(rPage + 1) })}>{t('adminReviewPage.next', 'Next →')}</Link>}
             </div>
           )}
         </>
@@ -274,14 +276,14 @@ export default async function AdminReviewPage({
           <div className="panel" style={{ padding: '1.5rem', marginBottom: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
               <div>
-                <div className="badge">Admin</div>
-                <h2 style={{ margin: '0.5rem 0 0.25rem', fontSize: '1.5rem' }}>Verification Queue</h2>
-                <p className="meta">Review artist and venue ownership claims.</p>
+                <div className="badge">{t('adminReviewPage.adminBadge', 'Admin')}</div>
+                <h2 style={{ margin: '0.5rem 0 0.25rem', fontSize: '1.5rem' }}>{t('adminReviewPage.verificationQueueTitle', 'Verification Queue')}</h2>
+                <p className="meta">{t('adminReviewPage.verificationQueueDesc', 'Review artist and venue ownership claims.')}</p>
               </div>
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                <div className="stat" style={{ minWidth: '120px', textAlign: 'center' }}><strong>{pendingProfiles.filter(p => p.verificationStatus === 'PENDING').length}</strong><span>Pending</span></div>
-                <div className="stat" style={{ minWidth: '120px', textAlign: 'center' }}><strong>{pendingProfiles.filter(p => p.verificationStatus === 'REJECTED').length}</strong><span>Rejected</span></div>
-                <div className="stat" style={{ minWidth: '120px', textAlign: 'center' }}><strong>{verifiedCount}</strong><span>Verified total</span></div>
+                <div className="stat" style={{ minWidth: '120px', textAlign: 'center' }}><strong>{pendingProfiles.filter(p => p.verificationStatus === 'PENDING').length}</strong><span>{t('adminReviewPage.pending', 'Pending')}</span></div>
+                <div className="stat" style={{ minWidth: '120px', textAlign: 'center' }}><strong>{pendingProfiles.filter(p => p.verificationStatus === 'REJECTED').length}</strong><span>{t('adminReviewPage.rejected', 'Rejected')}</span></div>
+                <div className="stat" style={{ minWidth: '120px', textAlign: 'center' }}><strong>{verifiedCount}</strong><span>{t('adminReviewPage.verifiedTotal', 'Verified total')}</span></div>
               </div>
             </div>
           </div>
@@ -291,28 +293,28 @@ export default async function AdminReviewPage({
 
       {tab === 'duplicates' && (
         <>
-          <h2 style={{ marginBottom: 8 }}>Email domain concentrations</h2>
-          <p className="meta">Domains with more than 5 registered accounts:</p>
-          {domainGroups.length === 0 ? <p className="meta">None found.</p> : (
+          <h2 style={{ marginBottom: 8 }}>{t('adminReviewPage.domainConcentrationsTitle', 'Email domain concentrations')}</h2>
+          <p className="meta">{t('adminReviewPage.domainConcentrationsDesc', 'Domains with more than 5 registered accounts:')}</p>
+          {domainGroups.length === 0 ? <p className="meta">{t('adminReviewPage.noneFound', 'None found.')}</p> : (
             <table className="table" style={{ marginTop: 12, marginBottom: 32 }}>
-              <thead><tr><th>Domain</th><th>Accounts</th></tr></thead>
+              <thead><tr><th>{t('adminReviewPage.colDomain', 'Domain')}</th><th>{t('adminReviewPage.colAccounts', 'Accounts')}</th></tr></thead>
               <tbody>{domainGroups.map((row) => <tr key={row.domain}><td style={{ fontFamily: 'var(--font-jb, monospace)' }}>@{row.domain}</td><td>{Number(row.user_count)}</td></tr>)}</tbody>
             </table>
           )}
-          <h2 style={{ marginBottom: 8 }}>Duplicate profile names</h2>
-          <p className="meta">Profiles sharing the same name:</p>
-          {profilesByName.size === 0 ? <p className="meta">None found.</p> : (
+          <h2 style={{ marginBottom: 8 }}>{t('adminReviewPage.duplicateNamesTitle', 'Duplicate profile names')}</h2>
+          <p className="meta">{t('adminReviewPage.duplicateNamesDesc', 'Profiles sharing the same name:')}</p>
+          {profilesByName.size === 0 ? <p className="meta">{t('adminReviewPage.noneFound2', 'None found.')}</p> : (
             <div style={{ display: 'grid', gap: 16, marginTop: 12 }}>
               {[...profilesByName.entries()].map(([name, profiles]) => (
                 <div key={name} className="panel" style={{ padding: '1rem' }}>
-                  <h3 style={{ marginBottom: 8 }}>&ldquo;{profiles[0].name}&rdquo; — {profiles.length} profiles</h3>
+                  <h3 style={{ marginBottom: 8 }}>&ldquo;{profiles[0].name}&rdquo; — {profiles.length} {t('adminReviewPage.profilesLabel', 'profiles')}</h3>
                   <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 4 }}>
                     {profiles.map((p) => (
                       <li key={p.id} style={{ display: 'flex', gap: 12, alignItems: 'center', fontSize: 13 }}>
                         <Link href={`/artists/${p.slug}`} target="_blank">{p.name}</Link>
                         <span className="badge" style={{ fontSize: 10 }}>{p.type}</span>
-                        <span className="meta">{p.owner?.email ?? 'no email'}</span>
-                        <span className="meta"><Link href={`/admin/users?q=${encodeURIComponent(p.owner?.id ?? '')}`}>admin</Link></span>
+                        <span className="meta">{p.owner?.email ?? t('adminReviewPage.noEmail', 'no email')}</span>
+                        <span className="meta"><Link href={`/admin/users?q=${encodeURIComponent(p.owner?.id ?? '')}`}>{t('adminReviewPage.adminLink', 'admin')}</Link></span>
                         <span className="meta">{new Date(p.createdAt).toLocaleDateString()}</span>
                       </li>
                     ))}

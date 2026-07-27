@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 type Flag = { key: string; label: string; enabled: boolean };
 
 export function AdminFeatureFlags({ initialFlags }: { initialFlags: Flag[] }) {
+  const { t } = useI18n();
   const [flags, setFlags] = useState<Flag[]>(initialFlags);
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -21,11 +23,11 @@ export function AdminFeatureFlags({ initialFlags }: { initialFlags: Flag[] }) {
       });
       if (!res.ok) {
         const payload = await res.json().catch(() => ({}));
-        throw new Error(typeof payload.error === 'string' ? payload.error : 'Update failed.');
+        throw new Error(typeof payload.error === 'string' ? payload.error : t('adminFeatureFlags.updateFailed', 'Update failed.'));
       }
       setFlags((prev) => prev.map((f) => (f.key === flag.key ? { ...f, enabled: next } : f)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Update failed.');
+      setError(err instanceof Error ? err.message : t('adminFeatureFlags.updateFailed', 'Update failed.'));
     } finally {
       setPending(null);
     }
@@ -42,7 +44,7 @@ export function AdminFeatureFlags({ initialFlags }: { initialFlags: Flag[] }) {
             disabled={pending === flag.key}
             onClick={() => toggle(flag)}
           >
-            {pending === flag.key ? '...' : flag.enabled ? 'Enabled' : 'Off'}
+            {pending === flag.key ? '...' : flag.enabled ? t('adminFeatureFlags.enabled', 'Enabled') : t('adminFeatureFlags.off', 'Off')}
           </button>
         </div>
       ))}

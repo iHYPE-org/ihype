@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 type ReceivedRequest = {
   id: string;
@@ -28,6 +29,7 @@ const btnBase: React.CSSProperties = {
  * pages — BookingRequest.toProfileId is not restricted to any one profile type.
  */
 export function BookingRequestInbox({ profileId }: { profileId: string }) {
+  const { t } = useI18n();
   const [requests, setRequests] = useState<ReceivedRequest[] | null>(null);
   const [error, setError] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -59,7 +61,7 @@ export function BookingRequestInbox({ profileId }: { profileId: string }) {
 
   if (error) return null;
   if (!requests) {
-    return <p style={{ fontSize: 13, color: 'var(--ink-a45)', margin: 0 }}>Loading booking requests…</p>;
+    return <p style={{ fontSize: 13, color: 'var(--ink-a45)', margin: 0 }}>{t('bookingRequestInbox.loading', 'Loading booking requests…')}</p>;
   }
 
   const pending = requests.filter((r) => r.status === 'pending');
@@ -67,17 +69,17 @@ export function BookingRequestInbox({ profileId }: { profileId: string }) {
   return (
     <div>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 12 }}>
-        Booking requests — inbox
+        {t('bookingRequestInbox.heading', 'Booking requests — inbox')}
       </div>
       {pending.length === 0 ? (
-        <p style={{ fontSize: 13, color: 'var(--ink-a45)', margin: 0 }}>No pending booking requests right now.</p>
+        <p style={{ fontSize: 13, color: 'var(--ink-a45)', margin: 0 }}>{t('bookingRequestInbox.empty', 'No pending booking requests right now.')}</p>
       ) : (
         <div>
           {pending.map((r) => (
             <div key={r.id} style={rowStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
                 <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}>
-                  {r.fromUser.name ?? r.fromUser.username ?? 'A user'}
+                  {r.fromUser.name ?? r.fromUser.username ?? t('bookingRequestInbox.aUser', 'A user')}
                 </span>
                 <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--ink-a45)', whiteSpace: 'nowrap' }}>
                   {new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
@@ -91,7 +93,7 @@ export function BookingRequestInbox({ profileId }: { profileId: string }) {
                   onClick={() => act(r.id, 'accepted')}
                   style={{ ...btnBase, background: '#22e5d4', color: '#0a0805', opacity: busyId === r.id ? 0.6 : 1 }}
                 >
-                  Accept
+                  {t('bookingRequestInbox.accept', 'Accept')}
                 </button>
                 <button
                   type="button"
@@ -99,7 +101,7 @@ export function BookingRequestInbox({ profileId }: { profileId: string }) {
                   onClick={() => act(r.id, 'declined')}
                   style={{ ...btnBase, background: 'transparent', color: 'var(--ink-a55)', border: '1px solid var(--line)', opacity: busyId === r.id ? 0.6 : 1 }}
                 >
-                  Decline
+                  {t('bookingRequestInbox.decline', 'Decline')}
                 </button>
               </div>
             </div>

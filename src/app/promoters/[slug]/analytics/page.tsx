@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
+import { getLocale, getT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'DJ Analytics · iHYPE',
@@ -42,12 +43,12 @@ function getRangeBounds(range: Range, now: Date) {
   return { start, prevStart: null, prevEnd: null };
 }
 
-function pctDelta(current: number, prior: number | null): string | null {
+function pctDelta(current: number, prior: number | null, t: (key: string, fallback: string) => string): string | null {
   if (prior === null) return null;
-  if (prior === 0) return current > 0 ? '+new activity this period' : null;
+  if (prior === 0) return current > 0 ? t('promotersSlugAnalyticsPage.newActivity', '+new activity this period') : null;
   const pct = Math.round(((current - prior) / prior) * 100);
   if (pct === 0) return null;
-  return `${pct > 0 ? '+' : ''}${pct}% this period`;
+  return `${pct > 0 ? '+' : ''}${pct}${t('promotersSlugAnalyticsPage.pctThisPeriod', '% this period')}`;
 }
 
 /** Buckets a list of dates into evenly-spaced bars across [start, now) for the "listeners over time" chart. */
@@ -70,6 +71,7 @@ export default async function DJAnalyticsPage({
   params: Promise<{ slug: string }>;
   searchParams?: Promise<{ range?: string }>;
 }) {
+  const t = getT(await getLocale());
   const { slug } = await params;
   const session = await auth();
   if (!session?.user?.id) {
@@ -154,14 +156,14 @@ export default async function DJAnalyticsPage({
   ]);
 
   const distinctCurrentListeners = new Set(currentListens.map((l) => l.userId)).size;
-  const listenersDelta = pctDelta(distinctCurrentListeners, priorListenerCount ? priorListenerCount.length : null);
+  const listenersDelta = pctDelta(distinctCurrentListeners, priorListenerCount ? priorListenerCount.length : null, t);
 
-  const showsAiredDelta = pctDelta(showsAiredCurrent, showsAiredPrior);
-  const hypeCastDelta = pctDelta(hypeCastCurrent, hypeCastPrior);
+  const showsAiredDelta = pctDelta(showsAiredCurrent, showsAiredPrior, t);
+  const hypeCastDelta = pctDelta(hypeCastCurrent, hypeCastPrior, t);
 
   const earningsCurrentCents = earningsCurrentAgg._sum.promoterPayoutCents ?? 0;
   const earningsPriorCents = earningsPriorAgg ? earningsPriorAgg._sum.promoterPayoutCents ?? 0 : null;
-  const earningsDelta = pctDelta(earningsCurrentCents, earningsPriorCents);
+  const earningsDelta = pctDelta(earningsCurrentCents, earningsPriorCents, t);
 
   const listenerChartBuckets = bucketDates(
     currentListens.map((l) => l.createdAt),
@@ -172,10 +174,10 @@ export default async function DJAnalyticsPage({
   const maxBucket = Math.max(1, ...listenerChartBuckets);
 
   const stats = [
-    { label: 'Listeners', value: distinctCurrentListeners.toLocaleString(), delta: listenersDelta },
-    { label: 'Shows Aired', value: showsAiredCurrent.toLocaleString(), delta: showsAiredDelta },
-    { label: 'Hype Cast', value: hypeCastCurrent.toLocaleString(), delta: hypeCastDelta },
-    { label: 'Promoter Earnings', value: formatCurrencyFromCents(earningsCurrentCents), delta: earningsDelta, sub: '10% pool share', accent: true },
+    { label: t('promotersSlugAnalyticsPage.statListeners', 'Listeners'), value: distinctCurrentListeners.toLocaleString(), delta: listenersDelta },
+    { label: t('promotersSlugAnalyticsPage.statShowsAired', 'Shows Aired'), value: showsAiredCurrent.toLocaleString(), delta: showsAiredDelta },
+    { label: t('promotersSlugAnalyticsPage.statHypeCast', 'Hype Cast'), value: hypeCastCurrent.toLocaleString(), delta: hypeCastDelta },
+    { label: t('promotersSlugAnalyticsPage.statPromoterEarnings', 'Promoter Earnings'), value: formatCurrencyFromCents(earningsCurrentCents), delta: earningsDelta, sub: t('promotersSlugAnalyticsPage.poolShareSub', '10% pool share'), accent: true },
   ];
 
   return (
@@ -183,11 +185,11 @@ export default async function DJAnalyticsPage({
       <div className="dja-header">
         <div>
           <div className="dja-eyebrow">{profile.name}</div>
-          <h1 className="dja-title">Analytics</h1>
+          <h1 className="dja-title">{t('promotersSlugAnalyticsPage.heading', 'Analytics')}</h1>
         </div>
         <div className="dja-header-actions">
-          <Link className="dja-btn" href={`/promoters/${profile.slug}/dashboard`}>Dashboard</Link>
-          <Link className="dja-btn" href={`/promoters/${profile.slug}`}>My Page</Link>
+          <Link className="dja-btn" href={`/promoters/${profile.slug}/dashboard`}>{t('promotersSlugAnalyticsPage.dashboardLink', 'Dashboard')}</Link>
+          <Link className="dja-btn" href={`/promoters/${profile.slug}`}>{t('promotersSlugAnalyticsPage.myPageLink', 'My Page')}</Link>
         </div>
       </div>
 
@@ -198,7 +200,7 @@ export default async function DJAnalyticsPage({
             href={`/promoters/${profile.slug}/analytics?range=${r}`}
             key={r}
           >
-            {RANGE_LABEL[r]}
+            {t(`promotersSlugAnalyticsPage.range.${r}`, RANGE_LABEL[r])}
           </Link>
         ))}
       </div>
@@ -213,27 +215,27 @@ export default async function DJAnalyticsPage({
         ))}
       </div>
 
-      <div className="dja-section-eyebrow" style={{ color: '#ff3e9a' }}>Listeners over time</div>
+      <div className="dja-section-eyebrow" style={{ color: '#ff3e9a' }}>{t('promotersSlugAnalyticsPage.listenersOverTime', 'Listeners over time')}</div>
       {distinctCurrentListeners > 0 ? (
         <div className="dja-chart">
           {listenerChartBuckets.map((count, i) => (
             <div
               className="dja-bar"
               key={i}
-              title={`${count} listen${count === 1 ? '' : 's'}`}
+              title={`${count} ${count === 1 ? t('promotersSlugAnalyticsPage.listenSingular', 'listen') : t('promotersSlugAnalyticsPage.listenPlural', 'listens')}`}
               style={{ height: `${Math.max(4, (count / maxBucket) * 100)}%`, opacity: count > 0 ? 0.9 : 0.15 }}
             />
           ))}
         </div>
       ) : (
-        <div className="dja-empty"><p>No listens yet in this period.</p></div>
+        <div className="dja-empty"><p>{t('promotersSlugAnalyticsPage.noListens', 'No listens yet in this period.')}</p></div>
       )}
 
       <div className="dja-eyebrow-row">
-        <span className="dja-section-eyebrow">Top Shows</span>
+        <span className="dja-section-eyebrow">{t('promotersSlugAnalyticsPage.topShows', 'Top Shows')}</span>
       </div>
       {topShows.length === 0 ? (
-        <div className="dja-empty"><p>No shows aired in this period yet.</p></div>
+        <div className="dja-empty"><p>{t('promotersSlugAnalyticsPage.noShowsAired', 'No shows aired in this period yet.')}</p></div>
       ) : (
         <div className="dja-show-list">
           {topShows.map((s) => (
@@ -243,20 +245,19 @@ export default async function DJAnalyticsPage({
                   {s.title} · {s.startsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 </div>
                 <div className="dja-show-meta">
-                  {s._count.showListens} listener{s._count.showListens === 1 ? '' : 's'} · {s.radioTracks.length} track{s.radioTracks.length === 1 ? '' : 's'}
+                  {s._count.showListens} {s._count.showListens === 1 ? t('promotersSlugAnalyticsPage.listenerSingular', 'listener') : t('promotersSlugAnalyticsPage.listenerPlural', 'listeners')} · {s.radioTracks.length} {s.radioTracks.length === 1 ? t('promotersSlugAnalyticsPage.trackSingular', 'track') : t('promotersSlugAnalyticsPage.trackPlural', 'tracks')}
                 </div>
               </div>
-              <span className="dja-show-hypes">{s.hypeCount.toLocaleString()} hypes</span>
+              <span className="dja-show-hypes">{s.hypeCount.toLocaleString()} {t('promotersSlugAnalyticsPage.hypesLabel', 'hypes')}</span>
             </Link>
           ))}
         </div>
       )}
 
       <div className="dja-note">
-        <div className="dja-note-eyebrow">Where your promoter earnings come from</div>
+        <div className="dja-note-eyebrow">{t('promotersSlugAnalyticsPage.noteEyebrow', 'Where your promoter earnings come from')}</div>
         <p>
-          Your share of the 10% promoter pool scales with how much of an event&apos;s ticket sales trace back to
-          your HYPE Links — locked in our charter.
+          {t('promotersSlugAnalyticsPage.noteBody', "Your share of the 10% promoter pool scales with how much of an event's ticket sales trace back to your HYPE Links — locked in our charter.")}
         </p>
       </div>
 

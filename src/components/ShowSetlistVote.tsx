@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 type VoteTrack = {
   mediaId: string;
@@ -18,6 +19,7 @@ export function ShowSetlistVote({
   canVote: boolean;
   isLive: boolean;
 }) {
+  const { t } = useI18n();
   const [tracks, setTracks] = useState<VoteTrack[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -64,20 +66,20 @@ export function ShowSetlistVote({
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: '0.75rem' }}>
-          <h2 style={{ margin: 0 }}>Vote on the setlist</h2>
+          <h2 style={{ margin: 0 }}>{t('showSetlistVote.title', 'Vote on the setlist')}</h2>
           {isLive ? (
-            <span className="badge" style={{ color: 'var(--accent)' }}>● LIVE</span>
+            <span className="badge" style={{ color: 'var(--accent)' }}>{t('showSetlistVote.liveBadge', '● LIVE')}</span>
           ) : null}
         </div>
         <p className="meta" style={{ marginTop: 0 }}>
           {isLive
-            ? 'The show is live — vote for the tracks you want to hear next.'
-            : 'Vote for the tracks you want on the setlist before the show.'}
+            ? t('showSetlistVote.liveDescription', 'The show is live — vote for the tracks you want to hear next.')
+            : t('showSetlistVote.preShowDescription', 'Vote for the tracks you want on the setlist before the show.')}
         </p>
         {loading ? (
-          <p className="meta">Loading tracks…</p>
+          <p className="meta">{t('showSetlistVote.loadingTracks', 'Loading tracks…')}</p>
         ) : tracks.length === 0 ? (
-          <p className="meta">No tracks are available to vote on yet.</p>
+          <p className="meta">{t('showSetlistVote.noTracks', 'No tracks are available to vote on yet.')}</p>
         ) : (
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: '0.35rem' }}>
             {tracks.map((track) => (
@@ -96,23 +98,23 @@ export function ShowSetlistVote({
                 <strong>{track.title}</strong>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                   <span className="meta" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                    {track.voteCount} {track.voteCount === 1 ? 'vote' : 'votes'}
+                    {track.voteCount} {track.voteCount === 1 ? t('showSetlistVote.voteSingular', 'vote') : t('showSetlistVote.votePlural', 'votes')}
                   </span>
                   <button
                     className={track.userVoted ? 'button small' : 'button small secondary'}
                     type="button"
                     disabled={!canVote}
-                    title={canVote ? undefined : 'Sign in to vote'}
+                    title={canVote ? undefined : t('showSetlistVote.signInToVoteTitle', 'Sign in to vote')}
                     onClick={() => void toggleVote(track.mediaId)}
                   >
-                    {track.userVoted ? 'Voted ✓' : 'Vote'}
+                    {track.userVoted ? t('showSetlistVote.voted', 'Voted ✓') : t('showSetlistVote.vote', 'Vote')}
                   </button>
                 </div>
               </li>
             ))}
           </ul>
         )}
-        {!canVote ? <p className="meta" style={{ marginBottom: 0 }}>Sign in to cast your vote.</p> : null}
+        {!canVote ? <p className="meta" style={{ marginBottom: 0 }}>{t('showSetlistVote.signInToCastVote', 'Sign in to cast your vote.')}</p> : null}
       </div>
     </section>
   );
