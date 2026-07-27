@@ -253,7 +253,7 @@ export function DJOnboardingWizard({
                 <svg fill="none" height="26" stroke="#22e5d4" strokeLinecap="round" strokeWidth="2.5" viewBox="0 0 24 24" width="26"><polyline points="20 6 9 17 4 12" /></svg>
               </div>
               <div className="djo-h1">{t('djOnboardingWizard.alreadyTitle', 'Already verified.')}</div>
-              <p className="djo-sub">{name || t('djOnboardingWizard.yourPage', 'Your page')} {t('djOnboardingWizard.alreadySub', 'is already a verified DJ page.')}</p>
+              <p className="djo-sub">{name || t('djOnboardingWizard.yourPageSentenceStart', 'Your page')} {t('djOnboardingWizard.alreadySub', 'is already a verified DJ page.')}</p>
               <Link className="djo-btn djo-btn-solid" href={`/promoters/${slug}/dashboard`}>{t('djOnboardingWizard.goToDashboard', 'Go to dashboard →')}</Link>
             </>
           ) : (
