@@ -93,7 +93,9 @@ export function EventCancellationFlow({
 
       <div className="ecf-card">
         <div className="ecf-card-title">{showTitle}{venueName ? ` @ ${venueName}` : ''}</div>
-        <div className="ecf-card-meta">{startsAtLabel} · {ticketsSoldCount.toLocaleString()} {t('eventCancellationFlow.ticketsSoldLabel', 'ticket{s} sold').replace('{s}', ticketsSoldCount === 1 ? '' : 's')}</div>
+        <div className="ecf-card-meta">{startsAtLabel} · {ticketsSoldCount.toLocaleString()} {ticketsSoldCount === 1
+          ? t('eventCancellationFlow.ticketsSoldLabelOne', 'ticket sold')
+          : t('eventCancellationFlow.ticketsSoldLabelOther', 'tickets sold')}</div>
       </div>
 
       <div className="ecf-reasons">
@@ -108,10 +110,14 @@ export function EventCancellationFlow({
       <div className="ecf-warning">
         <div className="ecf-warning-label">{t('eventCancellationFlow.warningLabel', "This can't be undone")}</div>
         <p>
-          {t('eventCancellationFlow.warningBody', 'All {count} ticket{s} {verb} refunded in full automatically — face value and Stripe\'s processing fee both. Fans are notified immediately.')
-            .replace('{count}', ticketsSoldCount.toLocaleString())
-            .replace('{s}', ticketsSoldCount === 1 ? '' : 's')
-            .replace('{verb}', ticketsSoldCount === 1 ? 'is' : 'are')}
+          {/* Two whole sentences rather than one with {s}/{verb} slots: the slots
+              were filled with English "s"/"is"/"are", which leaked into every
+              non-English locale and cannot express Slavic, CJK or Arabic number
+              agreement at all. */}
+          {(ticketsSoldCount === 1
+            ? t('eventCancellationFlow.warningBodyOne', 'All {count} ticket is refunded in full automatically — face value and Stripe\'s processing fee both. Fans are notified immediately.')
+            : t('eventCancellationFlow.warningBodyOther', 'All {count} tickets are refunded in full automatically — face value and Stripe\'s processing fee both. Fans are notified immediately.')
+          ).replace('{count}', ticketsSoldCount.toLocaleString())}
         </p>
       </div>
 
