@@ -133,7 +133,26 @@ jobs:
         # secret under that exact name for migration commands.
         run: |
           for i in 1 2 3; do
-            npx prisma migrate deploy && exit 0
+            set +e
+            out=$(npx prisma migrate deploy 2>&1)
+            code=$?
+            set -e
+            echo "$out"
+            [ $code -eq 0 ] && exit 0
+
+            # P3009 means a row in _prisma_migrations has finished_at = NULL.
+            # That is a permanent state, not a flaky connection: retrying it
+            # burns 45s and then reports a generic failure that says nothing
+            # about the actual remedy. Stop immediately and name the fix.
+            # This blocks the Cloudflare deploy too, since every step below
+            # is skipped when this one fails -- so production stops shipping
+            # entirely until someone resolves it.
+            if echo "$out" | grep -q 'P3009'; then
+              name=$(echo "$out" | sed -n 's/.*The `\([^`]*\)` migration started at.*/\1/p' | head -1)
+              echo "::error::P3009: a previously failed migration is blocking every deploy${name:+ (}${name}${name:+)}. Confirm whether its DDL is already in the database, then run the 'Resolve a failed migration' workflow (Actions tab) with that name. See scripts/resolve-failed-migration.mjs."
+              exit 1
+            fi
+
             echo "Migration attempt $i failed, retrying in 15s..."
             sleep 15
           done

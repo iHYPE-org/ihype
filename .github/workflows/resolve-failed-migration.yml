@@ -1,0 +1,55 @@
+# Manual recovery for Prisma P3009 — a failed row in _prisma_migrations that
+# blocks `prisma migrate deploy`, and therefore blocks every production deploy,
+# since the deploy workflow skips all remaining steps when the migrate step
+# fails.
+#
+# Deliberately manual (workflow_dispatch only, never on push). Marking a
+# migration as applied tells Prisma its DDL is already in the database; doing
+# that automatically would let a genuinely broken migration be skipped forever
+# and silently. A human has to confirm the schema really is in the intended
+# state first.
+#
+# The script this calls refuses to act unless `prisma migrate status` itself
+# reports the named migration as failed, so a typo cannot mark an unrelated
+# migration as applied.
+name: Resolve a failed migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      migration_name:
+        description: 'Exact failed migration directory name (from the P3009 error in the deploy log)'
+        required: true
+        type: string
+      confirm:
+        description: 'Type RESOLVE to confirm the DDL is already present in the database'
+        required: true
+        type: string
+
+jobs:
+  resolve:
+    name: Mark migration as applied
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check confirmation
+        if: inputs.confirm != 'RESOLVE'
+        run: |
+          echo "::error::Confirmation input must be exactly RESOLVE. Nothing was changed."
+          exit 1
+
+      - uses: actions/checkout@e8d4307400f9427dba7cb98e488d6ab85f1cec5f
+
+      - uses: actions/setup-node@04be95cf3511ea51ebf9f224ddfb99cc7ab87cd4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Resolve
+        # DIRECT_URL, not DATABASE_URL: migrate commands must bypass the
+        # connection pooler, same as the deploy workflow's migrate step.
+        run: node scripts/resolve-failed-migration.mjs "${{ inputs.migration_name }}"
+        env:
+          DATABASE_URL: ${{ secrets.DIRECT_URL }}
