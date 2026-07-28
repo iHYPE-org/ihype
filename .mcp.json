@@ -3,6 +3,11 @@
     "supabase": {
       "type": "http",
       "url": "https://mcp.supabase.com/mcp?project_ref=bjkabtzvgfshsrmjhrkx"
+    },
+    "prisma": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "prisma", "mcp"]
     }
   }
 }
