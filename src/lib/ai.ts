@@ -78,21 +78,70 @@ export async function runVisionAI(
 }
 
 /**
- * Speech-to-text (Whisper) for audio content vetting — radio ad spots,
- * which the text-only `runAI` and vision-only `runVisionAI` above can't
- * inspect. Returns null when the AI binding is unavailable (local dev),
- * the call fails, or the clip has no discernible speech; every caller must
- * degrade to its fail-open default, matching the existing vetting
- * convention.
+ * Whisper takes the audio as an array of byte values, which is an expensive
+ * representation: a JS array of N smis costs roughly 8N bytes before the
+ * binding serialises it, against the Worker's hard 128 MB memory ceiling.
+ * The ad-audio upload route accepts files up to 10 MB, so an unbounded
+ * `Array.from()` here could allocate ~80 MB in one go and take the isolate
+ * down — a crash, not a fail-open.
+ *
+ * 3 MB is ~3 minutes of 128 kbps MP3. Ad spots are seconds long, so they are
+ * never truncated. A full track (the media-vetting caller) may be, and that
+ * is acceptable for its purpose: it is looking for recognisable lyrics, and
+ * a song's vocals start well inside the first three minutes.
  */
-export async function runTranscription(audioBytes: Uint8Array): Promise<string | null> {
+const MAX_TRANSCRIBE_BYTES = 3 * 1024 * 1024;
+
+/**
+ * Outcome of a speech-to-text attempt.
+ *
+ * The three cases are deliberately distinct. The previous `string | null`
+ * signature collapsed "the model ran and heard no speech" into the same
+ * value as "the binding is missing" and "the call threw", which made it
+ * impossible for a caller to fail safely: `vetAdAudioContent` treated all
+ * three as "nothing objectionable was said" and approved the spot, so a
+ * Workers AI outage silently cleared every ad on the platform.
+ */
+export type TranscriptionOutcome =
+  | { status: 'ok'; text: string }
+  | { status: 'no-speech' }
+  | { status: 'unavailable'; detail: string };
+
+/**
+ * Speech-to-text (Whisper) for audio content vetting — radio ad spots and
+ * uploaded tracks, which the text-only `runAI` and vision-only `runVisionAI`
+ * above can't inspect.
+ *
+ * Callers must handle all three outcomes explicitly. `unavailable` is not a
+ * pass: it means nothing inspected the audio.
+ */
+export async function runTranscription(audioBytes: Uint8Array): Promise<TranscriptionOutcome> {
   const ai = getAiBinding();
-  if (!ai) return null;
+  if (!ai) return { status: 'unavailable', detail: 'Workers AI binding unavailable' };
+
+  const sample =
+    audioBytes.byteLength > MAX_TRANSCRIBE_BYTES
+      ? audioBytes.subarray(0, MAX_TRANSCRIBE_BYTES)
+      : audioBytes;
+  if (audioBytes.byteLength > MAX_TRANSCRIBE_BYTES) {
+    log.warn(
+      `[ai] audio truncated for transcription: ${audioBytes.byteLength} -> ${MAX_TRANSCRIBE_BYTES} bytes`,
+    );
+  }
+
   try {
-    const result = await ai.run(WHISPER_MODEL, { audio: Array.from(audioBytes) });
-    return typeof result.text === 'string' ? result.text : null;
-  } catch {
-    return null;
+    const result = await ai.run(WHISPER_MODEL, { audio: Array.from(sample) });
+    if (typeof result.text !== 'string') {
+      // The model answered in a shape we don't recognise. That is a failure
+      // to inspect the audio, not a clean silent clip.
+      log.warn(`[ai] Whisper returned no text field (keys: ${Object.keys(result).join(',')})`);
+      return { status: 'unavailable', detail: 'Whisper returned an unrecognised response shape' };
+    }
+    return result.text.trim() ? { status: 'ok', text: result.text } : { status: 'no-speech' };
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    log.error('[ai]', error instanceof Error ? error : null, 'Whisper transcription failed');
+    return { status: 'unavailable', detail };
   }
 }
 

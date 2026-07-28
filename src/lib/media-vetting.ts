@@ -128,10 +128,23 @@ export function vetId3Metadata(fileBytes: Uint8Array, declaredArtistName: string
  * Fail-open by design, same as every vetting function in this codebase.
  */
 export async function vetTrackAudioContent(audioBytes: Uint8Array, title: string, artistName: string): Promise<SampleVettingResult> {
-  const transcript = await runTranscription(audioBytes);
-  if (!transcript || !transcript.trim()) {
-    return { cleared: true, requiresManualReview: false, reasoning: 'No transcribable lyrics/vocals detected or transcription unavailable; allowed by default.' };
+  const transcription = await runTranscription(audioBytes);
+  if (transcription.status !== 'ok') {
+    // Track uploads stay fail-open (unlike ad spots, which now fail to a
+    // human — see vetAdAudioContent). The posture differs because the stakes
+    // do: an upload is high-volume and layer 1's fingerprint scan covers the
+    // same ground, whereas clearing an ad spot authorises a real charge. The
+    // reasoning below still distinguishes the two cases so a reviewer can
+    // tell "instrumental track" from "nothing ran".
+    return {
+      cleared: true,
+      requiresManualReview: false,
+      reasoning: transcription.status === 'no-speech'
+        ? 'No transcribable lyrics/vocals detected (instrumental or non-vocal); allowed by default.'
+        : `Transcription unavailable (${transcription.detail}); lyrics were not inspected, allowed by default.`,
+    };
   }
+  const transcript = transcription.text;
 
   const result = await runAIJson<RawVetting>({
     system: `You are the automated content-vetting officer for iHYPE.org. You are given a speech-to-text transcript of an uploaded track's lyrics/vocals, from an uploader claiming the artist name "${artistName}" and title "${title}".
