@@ -14,13 +14,22 @@ export class RateLimiterDO extends DurableObject {
   async consume(limit, windowMs) {
     const now = Date.now();
     let record = await this.ctx.storage.get('bucket');
-    if (!record || record.resetAt <= now) {
+    const newWindow = !record || record.resetAt <= now;
+    if (newWindow) {
       record = { count: 0, resetAt: now + windowMs };
     }
     record.count += 1;
+    // Wipe storage after the window so idle buckets don't accumulate. Only
+    // worth writing when the window actually opens: the alarm time doesn't
+    // change within a window, so re-setting it on every call was a third
+    // storage op per request that always wrote the value already stored.
+    // Under a burst on one key — every request for that key serializes
+    // through this single instance — that overhead is what pushed calls past
+    // the caller's deadline.
+    if (newWindow) {
+      this.ctx.storage.setAlarm(record.resetAt);
+    }
     await this.ctx.storage.put('bucket', record);
-    // Wipe storage after the window so idle buckets don't accumulate.
-    await this.ctx.storage.setAlarm(record.resetAt);
     return {
       allowed: record.count <= limit,
       remaining: Math.max(0, limit - record.count),
@@ -83,6 +92,26 @@ export default Sentry.withSentry(
       'Non-Error promise rejection captured',
       'AbortError',
     ],
+    // A local `wrangler dev` run loads this same wrangler.toml, so it picks up
+    // the real SENTRY_DSN and reports itself as environment "production" (the
+    // built Worker's NODE_ENV) — two issues in the production project turned
+    // out to be one developer's miniflare session on 127.0.0.1:8787, not the
+    // live site. Drop anything whose request never left a local machine.
+    beforeSend(event) {
+      const url = event.request?.url ?? '';
+      if (!url) return event;
+      try {
+        const { hostname } = new URL(url);
+        const local = hostname === 'localhost'
+          || hostname === '127.0.0.1'
+          || hostname === '0.0.0.0'
+          || hostname === '[::1]'
+          || hostname.endsWith('.localhost');
+        return local ? null : event;
+      } catch {
+        return event;
+      }
+    },
   } : undefined,
   handler,
 );

@@ -52,6 +52,16 @@ interface AcrIdentifyResponse {
   };
 }
 
+/**
+ * Whether the fingerprint layer can actually run. Exported so the admin
+ * status page can say so out loud: an unconfigured ACRCloud silently reduces
+ * both the track-upload scan and the ad-audio scan to their remaining layers,
+ * and nothing outside the scan result itself ever surfaced that.
+ */
+export function isAcrCloudConfigured(): boolean {
+  return readCreds() !== null;
+}
+
 function readCreds() {
   const host = process.env.ACRCLOUD_HOST?.trim();
   const accessKey = process.env.ACRCLOUD_ACCESS_KEY?.trim();

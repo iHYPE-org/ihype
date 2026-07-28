@@ -10,6 +10,7 @@ vi.mock('@/lib/db', () => {
       findFirst: vi.fn().mockResolvedValue(null),
       create: vi.fn().mockResolvedValue({}),
       update: vi.fn().mockResolvedValue({}),
+      updateMany: vi.fn().mockResolvedValue({ count: 1 }),
     };
   }
   const db = new Proxy({} as Record<string, unknown>, {
@@ -48,6 +49,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockRate.mockResolvedValue({ allowed: true, retryAfterSeconds: 0 });
   mockDb.ad.findUnique.mockResolvedValue(null);
+  mockDb.ad.updateMany.mockResolvedValue({ count: 1 });
 });
 
 describe('POST /api/ads/impression — only servable ads spend budget', () => {
@@ -55,8 +57,11 @@ describe('POST /api/ads/impression — only servable ads spend budget', () => {
     mockDb.ad.findUnique.mockResolvedValue(ad());
     const res = await post({ adId: 'a1' });
     expect(await res.json()).toEqual({ ok: true });
-    expect(mockDb.ad.update).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: 'a1' }, data: expect.objectContaining({ spentCents: { increment: 9 } }) }),
+    expect(mockDb.ad.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ id: 'a1', status: 'APPROVED' }),
+        data: expect.objectContaining({ spentCents: { increment: 9 } }),
+      }),
     );
     expect(mockDb.adImpression.create).toHaveBeenCalledTimes(1);
   });
@@ -66,7 +71,7 @@ describe('POST /api/ads/impression — only servable ads spend budget', () => {
     const res = await post({ adId: 'ghost' });
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true, skipped: true, reason: 'unknown_ad' });
-    expect(mockDb.ad.update).not.toHaveBeenCalled();
+    expect(mockDb.ad.updateMany).not.toHaveBeenCalled();
     expect(mockDb.adImpression.create).not.toHaveBeenCalled();
   });
 
@@ -74,35 +79,57 @@ describe('POST /api/ads/impression — only servable ads spend budget', () => {
     mockDb.ad.findUnique.mockResolvedValue(ad({ status: 'PAUSED' }));
     const res = await post({ adId: 'a1' });
     expect((await res.json()).reason).toBe('not_active');
-    expect(mockDb.ad.update).not.toHaveBeenCalled();
+    expect(mockDb.ad.updateMany).not.toHaveBeenCalled();
   });
 
   it('does not charge before the run window starts', async () => {
     mockDb.ad.findUnique.mockResolvedValue(ad({ startsAt: new Date(Date.now() + HOUR) }));
     const res = await post({ adId: 'a1' });
     expect((await res.json()).reason).toBe('not_active');
-    expect(mockDb.ad.update).not.toHaveBeenCalled();
+    expect(mockDb.ad.updateMany).not.toHaveBeenCalled();
   });
 
   it('does not charge after the run window ends', async () => {
     mockDb.ad.findUnique.mockResolvedValue(ad({ endsAt: new Date(Date.now() - HOUR) }));
     const res = await post({ adId: 'a1' });
     expect((await res.json()).reason).toBe('not_active');
-    expect(mockDb.ad.update).not.toHaveBeenCalled();
+    expect(mockDb.ad.updateMany).not.toHaveBeenCalled();
   });
 
   it('does not charge once the budget is exhausted', async () => {
     mockDb.ad.findUnique.mockResolvedValue(ad({ budgetCents: 100, spentCents: 100 }));
     const res = await post({ adId: 'a1' });
     expect((await res.json()).reason).toBe('budget_exhausted');
-    expect(mockDb.ad.update).not.toHaveBeenCalled();
+    expect(mockDb.ad.updateMany).not.toHaveBeenCalled();
   });
 
   it('treats budgetCents 0 as unlimited and still charges', async () => {
     mockDb.ad.findUnique.mockResolvedValue(ad({ budgetCents: 0, spentCents: 999999 }));
     const res = await post({ adId: 'a1' });
     expect(await res.json()).toEqual({ ok: true });
-    expect(mockDb.ad.update).toHaveBeenCalled();
+    expect(mockDb.ad.updateMany).toHaveBeenCalled();
+  });
+
+  it('does not record an impression when the conditional spend loses the race', async () => {
+    // The pre-read said the campaign was servable, but by the time the write
+    // ran another concurrent impression had exhausted the budget (or the
+    // campaign was paused). The guard lives in the WHERE clause, so the
+    // update matches nothing — and the impression row must not be written
+    // either, or spentCents and the impression count would disagree.
+    mockDb.ad.findUnique.mockResolvedValue(ad({ budgetCents: 100, spentCents: 91 }));
+    mockDb.ad.updateMany.mockResolvedValue({ count: 0 });
+    const res = await post({ adId: 'a1' });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true, skipped: true, reason: 'not_active' });
+    expect(mockDb.adImpression.create).not.toHaveBeenCalled();
+  });
+
+  it('guards the budget in the query, not only in the pre-read', async () => {
+    mockDb.ad.findUnique.mockResolvedValue(ad({ budgetCents: 5000, spentCents: 10 }));
+    await post({ adId: 'a1' });
+    expect(mockDb.ad.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ spentCents: { lt: 5000 } }) }),
+    );
   });
 
   it('rejects with 429 when rate limited (before any DB work)', async () => {

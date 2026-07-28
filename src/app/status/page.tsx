@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { isAdminSession } from '@/lib/permissions';
 import { db } from '@/lib/db';
+import { isAcrCloudConfigured } from '@/lib/acrcloud';
 import { getHealthSnapshot } from '@/lib/health';
 import { kvPut } from '@/lib/kv';
 import { getRateLimitMetrics } from '@/lib/rate-limit';
@@ -98,6 +99,13 @@ export default async function StatusPage() {
   }));
 
   const stripePresent = Boolean(process.env.STRIPE_SECRET_KEY);
+  // Both of these degrade silently when absent — copyright fingerprinting
+  // falls back to the remaining scan layers, and the rate limiter falls back
+  // to a non-atomic KV counter at half the configured limit. Neither state was
+  // visible anywhere before; you had to read a scan result or find the error
+  // in Sentry. They are reported, not counted toward allOk: the site runs
+  // correctly without either, just with less protection than intended.
+  const fingerprintConfigured = isAcrCloudConfigured();
 
   const allOk =
     dbOk &&
@@ -174,6 +182,19 @@ export default async function StatusPage() {
             <div className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.66rem', marginTop: 2 }}>{t('statusPage.aiMeta', 'Cloudflare Workers AI')}</div>
           </div>
           <span className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.62rem', letterSpacing: '.1em', textTransform: 'uppercase' }}>{t('statusPage.builtInBinding', 'Built-in binding')}</span>
+        </div>
+
+        <div className="panel" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px' }}>
+          <StatusDot ok={fingerprintConfigured} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{t('statusPage.fingerprinting', 'Copyright fingerprinting')}</div>
+            <div className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.66rem', marginTop: 2 }}>{t('statusPage.fingerprintingMeta', 'ACRCLOUD_HOST / ACCESS_KEY / ACCESS_SECRET · ACRCloud')}</div>
+          </div>
+          <span className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.62rem', letterSpacing: '.1em', textTransform: 'uppercase' }}>
+            {fingerprintConfigured
+              ? t('statusPage.labelConfigured', 'Configured')
+              : t('statusPage.labelScanLayerOff', 'Not configured · scan layer off')}
+          </span>
         </div>
 
         <div className="panel" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px' }}>

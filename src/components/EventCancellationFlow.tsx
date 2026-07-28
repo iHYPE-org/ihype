@@ -12,7 +12,16 @@ const REASONS = [
   { value: 'other', label: 'Other' },
 ] as const;
 
-type Result = { ordersRefunded: number; ordersSkippedAlreadyScanned: number; ordersFailed: number };
+type Result = {
+  ordersRefunded: number;
+  ordersSkippedAlreadyScanned: number;
+  ordersFailed: number;
+  message?: string | null;
+};
+
+// Mirrors MAX_MESSAGE_LENGTH in the cancel route. The server is the one that
+// enforces it; this only stops the counter from lying to the organizer.
+const MAX_MESSAGE_LENGTH = 400;
 
 /**
  * Event Cancellation Flow (DESIGN_SYNC row 227) — real POST to
@@ -41,6 +50,7 @@ export function EventCancellationFlow({
   const { t } = useI18n();
   const router = useRouter();
   const [reason, setReason] = useState<string | null>(null);
+  const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
@@ -54,7 +64,7 @@ export function EventCancellationFlow({
       const res = await fetch(`/api/shows/${showId}/cancel`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason }),
+        body: JSON.stringify({ reason, message: message.trim() || undefined }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -95,6 +105,12 @@ export function EventCancellationFlow({
               : t('eventCancellationFlow.failedSummaryOther', '{count} refunds failed and will need manual follow-up — check Stripe.')
             ).replace('{count}', result.ordersFailed.toLocaleString())}`}
           </p>
+          {result.message && (
+            <div className="ecf-done-message">
+              <div className="ecf-done-message-label">{t('eventCancellationFlow.messageSentLabel', 'Sent to ticket holders')}</div>
+              <p className="ecf-done-message-body">{result.message}</p>
+            </div>
+          )}
           <Link className="ecf-btn ecf-btn-solid" href={dashboardHref}>{t('eventCancellationFlow.backToDashboard', 'Back to dashboard →')}</Link>
         </div>
       </div>
@@ -120,6 +136,26 @@ export function EventCancellationFlow({
             {t(`eventCancellationFlow.reason.${r.value}`, r.label)}
           </label>
         ))}
+      </div>
+
+      <div className="ecf-message">
+        <label className="ecf-message-label" htmlFor="ecf-message">
+          {t('eventCancellationFlow.messageLabel', 'Add details for ticket holders')}
+          <span className="ecf-message-optional">{t('eventCancellationFlow.messageOptional', 'Optional')}</span>
+        </label>
+        <textarea
+          className="ecf-message-input"
+          id="ecf-message"
+          maxLength={MAX_MESSAGE_LENGTH}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder={t('eventCancellationFlow.messagePlaceholder', 'What happened, and anything fans should know — a rescheduled date, where to ask questions.')}
+          rows={3}
+          value={message}
+        />
+        <div className="ecf-message-foot">
+          <span>{t('eventCancellationFlow.messageHelp', 'Sent to everyone holding a ticket, alongside their refund notice.')}</span>
+          <span className="ecf-message-count">{message.length}/{MAX_MESSAGE_LENGTH}</span>
+        </div>
       </div>
 
       <div className="ecf-warning">
@@ -154,6 +190,16 @@ export function EventCancellationFlow({
         .ecf-card-meta { font-size: 12px; color: var(--ink-a55); margin-top: 3px; }
         .ecf-reasons { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
         .ecf-reason-row { display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--ink); padding: 10px 4px; }
+        .ecf-message { margin-bottom: 18px; }
+        .ecf-message-label { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a70); margin-bottom: 8px; }
+        .ecf-message-optional { color: var(--ink-a45); letter-spacing: .06em; }
+        .ecf-message-input { width: 100%; box-sizing: border-box; resize: vertical; font-family: var(--font-body, inherit); font-size: 13.5px; line-height: 1.55; color: var(--ink); background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 12px 14px; }
+        .ecf-message-input:focus { outline: none; border-color: var(--accent, #ff5029); }
+        .ecf-message-foot { display: flex; justify-content: space-between; gap: 12px; margin-top: 6px; font-size: 11.5px; color: var(--ink-a45); }
+        .ecf-message-count { font-family: var(--font-mono); flex-shrink: 0; }
+        .ecf-done-message { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg2); padding: 14px 16px; margin: 0 auto 24px; max-width: 34ch; text-align: left; }
+        .ecf-done-message-label { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a45); margin-bottom: 6px; }
+        .ecf-done-message-body { font-size: 13px; color: var(--ink-a75); line-height: 1.6; margin: 0; white-space: pre-wrap; }
         .ecf-warning { margin-top: 4px; margin-bottom: 20px; padding: 14px 16px; border-radius: var(--radius-md); border: 1px solid rgba(255,80,41,.25); background: rgba(255,80,41,.06); }
         .ecf-warning-label { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent, #ff5029); margin-bottom: 4px; }
         .ecf-warning p { font-size: 12.5px; color: var(--ink-a60); line-height: 1.6; margin: 0; }

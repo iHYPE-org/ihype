@@ -20,7 +20,13 @@ export async function POST(request: Request) {
   const clientAddress = readClientAddress(request);
   const rateLimit = await consumeRateLimit(`analytics-track:${clientAddress}`, {
     limit: 120,
-    windowMs: 60 * 1000
+    windowMs: 60 * 1000,
+    // Highest-volume bucket on the site, and the only consequence of an
+    // over-count is a dropped analytics event (this route already returns
+    // ok on refusal). Not worth a serialized Durable Object round-trip in
+    // front of every page interaction — KV's approximate counter is the
+    // right tool here.
+    atomic: false
   });
 
   if (!rateLimit.allowed) {
