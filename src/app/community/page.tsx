@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { db } from '@/lib/db';
 import { CommunityVoteBoard } from '@/components/CommunityVoteBoard';
 import { NewsletterSignup } from '@/components/NewsletterSignup';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const metadata = { title: 'Community · iHYPE', description: 'Platform updates, announcements, and a vote on what we build next.' };
 export const dynamic = 'force-dynamic';
@@ -27,7 +27,7 @@ const COMMUNITY_CHANNELS = [
 ];
 
 export default async function CommunityPage() {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const categoryLabel = (key: string) => t(`communityPage.category.${key}`, CATEGORY_LABEL[key] ?? key);
   const channelTitles = [
     t('communityPage.channel0Title', 'You get a vote'),

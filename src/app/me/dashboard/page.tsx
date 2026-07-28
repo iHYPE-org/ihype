@@ -5,7 +5,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getPromoterDashboard } from '@/lib/promoterDashboard';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +25,7 @@ export default async function FanDashboardPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/login?callbackUrl=/me/dashboard');
 
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const userId = session.user.id;
   const now = new Date();
 

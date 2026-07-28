@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import type { Metadata } from 'next';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,7 +64,7 @@ export default async function JournalPost({
   const { slug } = await params;
   const found = await findEditorialPost(slug);
   if (!found) return notFound();
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const meta = (found.metadata ?? {}) as EditorialMeta;
   const paragraphs = meta.body ? meta.body.split(/\n{2,}/).filter(Boolean) : [];
 

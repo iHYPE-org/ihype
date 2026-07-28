@@ -4,7 +4,7 @@ import { detectRequestLocation } from '@/lib/request-location';
 import { getRecommendations } from '@/lib/recommendations';
 import { enhanceRecommendationsWithAI } from '@/lib/ai-recommendations';
 import type { Metadata } from 'next';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,7 +23,7 @@ const REASON_COLOR: Record<string, string> = {
 };
 
 export default async function ForYouPage() {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const [session, location] = await Promise.all([auth(), detectRequestLocation()]);
   const result = await getRecommendations(session?.user?.id ?? null, location, { type: null, limit: 30 });
   const { meta } = result;

@@ -8,7 +8,7 @@ import { db } from '@/lib/db';
 import { IndexTabsShowcase } from '@/components/IndexTabsShowcase';
 import { IndexStickyCta } from '@/components/IndexStickyCta';
 import { getBaseUrl } from '@/lib/utils';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 const TITLE = 'iHYPE — Your local music scene, completely free';
 const DESCRIPTION = 'iHYPE is your local music scene in one app. Discover the artists, DJs, and live shows happening near you, hype the moments you love, and grab tickets with zero fees. Completely free — no subscription, no catch.';
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RootPage() {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const COMPARISON_ROWS = getComparisonRows(t);
   const session = await auth();
   if (session?.user?.id) redirect('/home');

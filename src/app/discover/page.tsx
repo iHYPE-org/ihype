@@ -6,7 +6,7 @@ import { db } from '@/lib/db';
 import { getDemoCreatorExclusion, getDemoOwnerExclusion } from '@/lib/runtime-flags';
 import { FollowButton } from '@/components/FollowButton';
 import { CompactHypeButton } from '@/components/CompactHypeButton';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +30,7 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 export default async function DiscoverPage({ searchParams }: { searchParams?: Promise<{ city?: string; genre?: string; page?: string }> }) {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const session = await auth().catch(() => null);
   const params = searchParams ? await searchParams : {};
   const cityFilter = params.city?.trim() || null;

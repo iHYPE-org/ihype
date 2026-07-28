@@ -5,7 +5,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { VenueBookingInboxTabs } from '@/components/VenueBookingInboxTabs';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function VenueBookingInboxPage({ params }: { params: Promise<{ slug: string }> }) {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const session = await auth();
   const { slug } = await params;
 

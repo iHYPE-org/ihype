@@ -19,7 +19,7 @@ import { getCspNonce } from '@/lib/csp-nonce';
 import { MobileShellProvider } from '@/lib/MobileShellContext';
 import { MobileAppShellLoader } from '@/components/MobileAppShellLoader';
 import { AppSplash } from '@/components/AppSplash';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 const syne = Syne({ subsets: ['latin'], weight: ['700', '800'], variable: '--font-syne', display: 'swap' });
 const dmSans = DM_Sans({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-dm', display: 'swap' });
@@ -62,7 +62,7 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const nonce = await getCspNonce();
-  const t = getT(await getLocale());
+  const t = await getServerT();
   return (
     <html lang="en" suppressHydrationWarning className={`${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} ${forum.variable}`}>
       <body>

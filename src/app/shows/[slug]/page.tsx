@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { cache } from 'react';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const revalidate = 30;
 import Image from 'next/image';
@@ -112,7 +112,7 @@ export default async function ShowDetailPage({
   searchParams?: Promise<{ affiliate?: string | string[]; ref?: string | string[] }>;
 }) {
   const session = await auth();
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const { slug } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const affiliateId =

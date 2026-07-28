@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og';
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { getBaseUrl } from '@/lib/utils';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -12,7 +12,7 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const show = await db.show.findUnique({ where: { slug }, select: { title: true } });
   const title = show?.title ?? t('showsSlugQrRoute.ihypeShow', 'iHYPE Show');
   const base = getBaseUrl();

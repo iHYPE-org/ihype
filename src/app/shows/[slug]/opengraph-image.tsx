@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { db } from '@/lib/db';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const runtime = 'nodejs';
 export const alt = 'Show on iHYPE';
@@ -9,7 +9,7 @@ export const contentType = 'image/png';
 
 export default async function OgImage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const show = await db.show.findUnique({
     where: { slug },
     select: {

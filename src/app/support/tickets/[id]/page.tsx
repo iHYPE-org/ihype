@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,7 +39,7 @@ function fmtDateTime(d: Date) {
  * (back link, subject + status pill, mono meta line, message card).
  */
 export default async function SupportTicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const session = await auth();
   const { id } = await params;
 

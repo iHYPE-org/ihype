@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getStationState } from '@/lib/radioStation';
 import { AlwaysOnStation } from '@/components/AlwaysOnStation';
 import type { Metadata } from 'next';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 export default async function StationPage() {
   const state = await getStationState();
-  const t = getT(await getLocale());
+  const t = await getServerT();
 
   return (
     <div className="station-page">

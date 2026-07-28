@@ -8,7 +8,7 @@ import { getProfileInsights } from '@/lib/profile-insights';
 import { getArtistDashboardStats } from '@/lib/artist-dashboard';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { getDemoCreatorExclusion } from '@/lib/runtime-flags';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,7 +27,7 @@ function fmtDate(d: Date) {
 
 export default async function ArtistDashboardPage({ params }: { params: Promise<{ slug: string }> }) {
   const session = await auth();
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const { slug } = await params;
 
   if (!session?.user?.id) {

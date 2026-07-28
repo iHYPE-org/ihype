@@ -3,12 +3,12 @@ import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 import Link from 'next/link';
 import { CampaignCancelButton } from '@/components/CampaignCancelButton';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdvertiserDashboard() {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const session = await auth();
   if (!session?.user?.id) redirect('/login?callbackUrl=/advertise/dashboard');
 

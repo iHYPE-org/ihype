@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { db } from '@/lib/db';
 import type { Show } from '@prisma/client';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 type ShowWithVenue = Show & {
   venueProfile: {
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function ShowsMapPage() {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const shows = await db.show.findMany({
     where: {
       status: { in: ['SCHEDULED', 'LIVE'] },

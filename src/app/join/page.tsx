@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { isInviteCodeRequiredRuntime } from '@/lib/runtime-flags';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'Join iHYPE',
@@ -17,7 +17,7 @@ const ROLES = [
 
 export default async function JoinChooserPage() {
   const inviteOnly = await isInviteCodeRequiredRuntime();
-  const t = getT(await getLocale());
+  const t = await getServerT();
   return (
     <div className="join-wrap">
       <div className="join-eyebrow">{inviteOnly ? t('joinPage.requestBeta', 'Request Beta') : t('joinPage.joinIhype', 'Join iHYPE')}</div>

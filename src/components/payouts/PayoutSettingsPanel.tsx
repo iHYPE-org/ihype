@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { getProfilePathForType } from '@/lib/profile-paths';
 import { PayoutConnectButton } from '@/components/PayoutConnectButton';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 type SettingsProfile = {
   id: string;
@@ -12,7 +12,7 @@ type SettingsProfile = {
   stripeConnectOnboarded: boolean;
 };
 
-function roleLabel(type: string, t: Awaited<ReturnType<typeof getT>>) {
+function roleLabel(type: string, t: Awaited<ReturnType<typeof getServerT>>) {
   if (type === 'DJ') return t('payoutSettingsPanel.rolePromoterDj', 'Promoter/DJ');
   if (type === 'VENUE') return t('payoutSettingsPanel.roleVenue', 'Venue');
   return t('payoutSettingsPanel.roleArtist', 'Artist');
@@ -20,7 +20,7 @@ function roleLabel(type: string, t: Awaited<ReturnType<typeof getT>>) {
 
 /** Extracted verbatim from the former standalone `/me/payout-settings` page (DESIGN_SYNC row 245), now reused from the `/payouts` tabbed hub. Its "deliberately omitted" notes (multi-account, payout schedule, email toggle) still apply — see the original page's history in DESIGN_SYNC.md. */
 export async function PayoutSettingsPanel({ profiles, stripeReady }: { profiles: SettingsProfile[]; stripeReady: boolean }) {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   return (
     <div className="pset-panel">
       <p className="pset-sub">{t('payoutSettingsPanel.autoPayoutNote', 'Your share is paid out automatically after each show, split 70% artist / 20% venue / 10% promoters per the charter.')}</p>

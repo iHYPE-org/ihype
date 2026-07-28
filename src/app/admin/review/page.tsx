@@ -9,7 +9,7 @@ import { AdminVerificationQueue } from '@/app/admin/verifications/AdminVerificat
 import { ReportPageBulkButtons } from '@/components/admin/ReportPageBulkButtons';
 import type { VerificationProfile } from '@/lib/types/admin';
 import React from 'react';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'Review Queue | Admin | iHYPE.org',
@@ -61,7 +61,7 @@ export default async function AdminReviewPage({
   if (!session?.user?.id) redirect('/login');
   if (!isAdminSession(session)) redirect(WORKBENCH_PATH);
 
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const resolved = searchParams ? await searchParams : {};
   const rawTab = resolved.tab;
   const tab: Tab = rawTab === 'verifications' || rawTab === 'duplicates' ? rawTab : 'reports';

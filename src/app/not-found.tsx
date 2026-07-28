@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export default async function NotFound() {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   return (
     <div style={{
       minHeight: '100vh',

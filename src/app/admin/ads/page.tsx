@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
 import { AdminAdsClient } from '@/components/AdminAdsClient';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 const PAGE_SIZE = 20;
 
@@ -18,7 +18,7 @@ export default async function AdminAdsPage({
 }) {
   const session = await auth();
   if (!isAdminSession(session)) redirect('/');
-  const t = getT(await getLocale());
+  const t = await getServerT();
 
   const sp = searchParams ? await searchParams : {};
   const status = sp.status ?? '';

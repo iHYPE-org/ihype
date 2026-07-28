@@ -1,10 +1,10 @@
 import { db } from '@/lib/db';
 import { notFound } from 'next/navigation';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export default async function AuxPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const queue = await db.auxQueue.findUnique({
     where: { slug },
     include: { items: { orderBy: { position: 'asc' } } },

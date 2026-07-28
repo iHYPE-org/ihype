@@ -5,7 +5,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { CollabBoardPostForm } from '@/components/CollabBoardPostForm';
 import { DeleteCollabPostButton } from '@/components/DeleteCollabPostButton';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,7 +44,7 @@ export default async function CollabBoardPage({
     redirect('/login?callbackUrl=/collab-board');
   }
 
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const params = searchParams ? await searchParams : {};
   const typeFilter = TYPES.some(t => t.value === params.type) ? (params.type as string) : null;
   const roleFilter = ROLES.some(r => r.value === params.role) ? (params.role as string) : null;

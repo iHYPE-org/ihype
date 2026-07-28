@@ -4,7 +4,7 @@ import { isAdminSession } from '@/lib/permissions';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { db } from '@/lib/db';
 import Link from 'next/link';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const metadata = {
   title: 'Finance | Admin | iHYPE',
@@ -18,7 +18,7 @@ export default async function AdminFinancePage({
 }: {
   searchParams?: Promise<{ tab?: string; from?: string; to?: string; promoStatus?: string; payoutStatus?: string; ticketStatus?: string; page?: string }>;
 }) {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
   if (!isAdminSession(session)) redirect(WORKBENCH_PATH);

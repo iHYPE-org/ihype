@@ -1,14 +1,14 @@
 import '../marketing.css';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'About | iHYPE.org',
 };
 
 export default async function AboutPage() {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   return (
     <div className="lp-wrap">
       <section className="lp-hero" style={{ paddingBottom: '20px' }}>

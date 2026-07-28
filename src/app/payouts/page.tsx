@@ -7,7 +7,7 @@ import { isStripeConfigured } from '@/lib/stripe';
 import { PayoutsHistoryPanel } from '@/components/payouts/PayoutsHistoryPanel';
 import { PayoutSettingsPanel } from '@/components/payouts/PayoutSettingsPanel';
 import { PayoutShowsPanel } from '@/components/payouts/PayoutShowsPanel';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,7 +39,7 @@ export default async function PayoutsHubPage({
 }: {
   searchParams?: Promise<{ tab?: string }>;
 }) {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const session = await auth();
   if (!session?.user?.id) {
     redirect('/login?callbackUrl=/payouts');

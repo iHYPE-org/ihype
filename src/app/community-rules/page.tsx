@@ -1,10 +1,10 @@
 import { TrustPolicyPage } from '@/components/TrustPolicyPage';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const metadata = { title: 'Community Rules | iHYPE.org' };
 
 export default async function CommunityRulesPage() {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   return (
     <TrustPolicyPage
       badge={t('communityRulesPage.badge', 'Community')}

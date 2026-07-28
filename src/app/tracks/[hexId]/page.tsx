@@ -6,7 +6,7 @@ import { db } from '@/lib/db';
 import { HypeButton } from '@/components/HypeButton';
 import { TrackPlayMainButton, MoreFromArtistList } from './TrackPlayer';
 import type { MediaTrack } from '@/components/GlobalMediaPlayer';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,7 +57,7 @@ export async function generateMetadata({ params }: { params: Promise<{ hexId: st
 }
 
 export default async function TrackDetailPage({ params }: { params: Promise<{ hexId: string }> }) {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const { hexId } = await params;
   const session = await auth();
 

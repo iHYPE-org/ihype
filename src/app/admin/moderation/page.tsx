@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 import { ModerationActions } from '@/components/ModerationActions';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +15,7 @@ export default async function ModerationPage({ searchParams }: { searchParams?: 
   const session = await auth();
   if (session?.user?.role !== 'ADMIN') redirect('/');
 
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const sp = (await searchParams) ?? {};
   const status = sp.status ?? 'OPEN';
   const type = sp.type ?? '';

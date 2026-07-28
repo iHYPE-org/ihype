@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -24,7 +24,7 @@ function getFirstDayOfMonth(year: number, month: number) {
 }
 
 export default async function VenueCalendarPage({ params }: Props) {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const { slug } = await params;
 
   const profile = await db.profile.findUnique({

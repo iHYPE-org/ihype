@@ -6,7 +6,7 @@ import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getVenueDashboardData } from '@/lib/venue-dashboard';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function VenueDashboardPage({ params }: { params: Promise<{ slug: string }> }) {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const { slug } = await params;
   const session = await auth();
   if (!session?.user?.id) {

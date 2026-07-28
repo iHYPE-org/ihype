@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { getVenueBookingRecommendations } from '@/lib/venueBooking';
 import { SendBookingRequestButton } from '@/components/SendBookingRequestButton';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
@@ -21,7 +21,7 @@ export default async function BookingPage() {
   }
 
   const feed = await getVenueBookingRecommendations(session.user.id);
-  const t = getT(await getLocale());
+  const t = await getServerT();
 
   return (
     <div className="booking-page">

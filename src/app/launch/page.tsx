@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const metadata = {
   title: 'Founding Scene Launch | iHYPE',
@@ -49,7 +49,7 @@ const sprint = [
 ];
 
 export default async function LaunchPage() {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   return (
     <div style={{ paddingBottom: '6rem' }}>
       <section style={{ padding: 'clamp(4rem, 10vw, 8rem) 0 3rem' }}>

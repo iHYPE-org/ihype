@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { Reveal, SplitBar } from '@/components/CharterAnimated';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'The Charter · iHYPE',
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default async function CharterPage() {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   return (
     <div className="charter-wrap">
       <div className="charter-glow" aria-hidden="true" />
