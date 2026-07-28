@@ -904,6 +904,28 @@ body:has(.standalone-page) .site-shell { padding-top: 0; }
   min-height: 2.15rem;
   padding: 0.58rem 0.92rem;
 }
+/* Header join CTA — matches templates/landing/Landing.dc.html's header anchor
+   exactly (solid --accent, Syne 800, .88rem, 9px/18px, pill, accent glow).
+   Scoped to .nav-join-button rather than changed on .button, because .button's
+   cyan-to-amber gradient is used across the app and is not this button's
+   business. Without this override the header CTA inherits that gradient, which
+   is off-brand for the marketing nav. */
+.nav-join-button.button {
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font-display, 'Syne', sans-serif);
+  font-weight: 800;
+  font-size: 0.88rem;
+  padding: 9px 18px;
+  min-height: 0;
+  border-radius: 999px;
+  box-shadow: 0 4px 18px rgba(255, 80, 41, 0.3);
+}
+.nav-join-button.button:hover,
+.nav-join-button.button:focus-visible {
+  background: var(--accent);
+  box-shadow: 0 6px 22px rgba(255, 80, 41, 0.42);
+}
 .stat { padding: 1rem; border-radius: 18px; background: var(--hair-30); }
 .stat strong { display: block; font-size: 1.6rem; }
 .profile-header { padding: 2rem 0 1rem; }

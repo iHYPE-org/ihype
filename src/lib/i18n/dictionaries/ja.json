@@ -1249,6 +1249,7 @@
   "globalMediaPlayer.unmuteShortcut": "ミュート解除（M）",
   "globalMediaPlayer.volume": "音量",
   "headerAuthLinks.account": "アカウント",
+  "headerAuthLinks.joinBeta": "ベータに参加",
   "headerAuthLinks.joinFree": "無料で参加",
   "headerAuthLinks.openSettings": "設定を開く",
   "headerAuthLinks.signIn": "サインイン",
