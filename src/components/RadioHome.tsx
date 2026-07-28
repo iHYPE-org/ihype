@@ -65,19 +65,27 @@ function scheduleChip(startsAt: string): 'tonight' | 'tomorrow' | 'week' {
   return 'week';
 }
 
-function scheduleTime(startsAt: string) {
-  return new Date(startsAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+function scheduleTime(startsAt: string, locale: string) {
+  return new Date(startsAt).toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' });
 }
 
-function nextUpLabel(s: Show) {
+// Takes t/locale as arguments rather than reading them from a hook: this is a
+// module-level helper, so it had no access to useI18n() and its output was
+// hardcoded English. It renders straight after a translated "Next:" label,
+// which made the line read "Siguiente: Midnight Echo · Tonight 8:00 PM".
+function nextUpLabel(s: Show, t: (key: string, fallback?: string) => string, locale: string) {
   if (!s.startsAt) return s.title;
   const chip = scheduleChip(s.startsAt);
-  const when = chip === 'tonight' ? 'Tonight' : chip === 'tomorrow' ? 'Tomorrow' : new Date(s.startsAt).toLocaleDateString('en-US', { weekday: 'short' });
-  return `${s.title} · ${when} ${scheduleTime(s.startsAt)}`;
+  const when = chip === 'tonight'
+    ? t('radioHome.chipTonight', 'Tonight')
+    : chip === 'tomorrow'
+      ? t('radioHome.chipTomorrow', 'Tomorrow')
+      : new Date(s.startsAt).toLocaleDateString(locale, { weekday: 'short' });
+  return `${s.title} · ${when} ${scheduleTime(s.startsAt, locale)}`;
 }
 
 export function RadioHome() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [shows, setShows] = useState<Show[] | null>(null);
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -522,7 +530,7 @@ export function RadioHome() {
                   <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>{s.title}</div>
                   <div style={{ fontSize: 11, color: 'var(--ink-a42)' }}>{s.dj} · {s.genre}</div>
                 </div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-a32)', flexShrink: 0 }}>{s.startsAt ? scheduleTime(s.startsAt) : ''}</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-a32)', flexShrink: 0 }}>{s.startsAt ? scheduleTime(s.startsAt, locale) : ''}</div>
                 <button
                   onClick={e => toggleNotify(s.id, e)}
                   style={{
@@ -551,7 +559,7 @@ export function RadioHome() {
           {upcoming[0] && (
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 9999, background: 'rgba(185,131,255,.09)', border: '1px solid rgba(185,131,255,.22)', fontSize: 13, color: '#b983ff', marginBottom: 18 }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#b983ff', display: 'inline-block' }} />
-              {t('radioHome.next', 'Next:')} {nextUpLabel(upcoming[0])}
+              {t('radioHome.next', 'Next:')} {nextUpLabel(upcoming[0], t, locale)}
             </div>
           )}
         </div>
@@ -597,7 +605,7 @@ export function RadioHome() {
                 )}
                 {s.status === 'upcoming' && (
                   <span style={{ padding: '3px 8px', borderRadius: 4, fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.12em', background: 'var(--line)', color: 'var(--ink-a55)' }}>
-                    {t('radioHome.starts', 'Starts')} {s.startsAt ? nextUpLabel(s).split('· ')[1] ?? '' : t('radioHome.soon', 'soon')}
+                    {t('radioHome.starts', 'Starts')} {s.startsAt ? nextUpLabel(s, t, locale).split('· ')[1] ?? '' : t('radioHome.soon', 'soon')}
                   </span>
                 )}
                 {s.status !== 'upcoming' && (

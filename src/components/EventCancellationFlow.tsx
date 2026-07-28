@@ -76,9 +76,24 @@ export function EventCancellationFlow({
           <div className="ecf-done-icon">✕</div>
           <h1 className="ecf-done-title">{t('eventCancellationFlow.doneTitle', 'Event cancelled.')}</h1>
           <p className="ecf-done-body">
-            {result.ordersRefunded.toLocaleString()} order{result.ordersRefunded === 1 ? '' : 's'} {t('eventCancellationFlow.refundedSummary', "refunded in full — face value plus Stripe's processing fee.")}
-            {result.ordersSkippedAlreadyScanned > 0 && ` ${result.ordersSkippedAlreadyScanned.toLocaleString()} order${result.ordersSkippedAlreadyScanned === 1 ? '' : 's'} ${t('eventCancellationFlow.skippedSummary', 'already scanned in and were left untouched.')}`}
-            {result.ordersFailed > 0 && ` ${result.ordersFailed.toLocaleString()} refund${result.ordersFailed === 1 ? '' : 's'} ${t('eventCancellationFlow.failedSummary', 'failed and will need manual follow-up — check Stripe.')}`}
+            {/* Whole sentences per plural form. These used to read
+                `{n} order{s} {t(predicate)}`, which left the noun hardcoded in
+                English while the predicate was translated — Spanish rendered
+                "3 orders reembolsadas por completo…". Splitting on the noun
+                also breaks gender agreement, since the predicate has to agree
+                with a noun the translator cannot see. */}
+            {(result.ordersRefunded === 1
+              ? t('eventCancellationFlow.refundedSummaryOne', "{count} order refunded in full — face value plus Stripe's processing fee.")
+              : t('eventCancellationFlow.refundedSummaryOther', "{count} orders refunded in full — face value plus Stripe's processing fee.")
+            ).replace('{count}', result.ordersRefunded.toLocaleString())}
+            {result.ordersSkippedAlreadyScanned > 0 && ` ${(result.ordersSkippedAlreadyScanned === 1
+              ? t('eventCancellationFlow.skippedSummaryOne', '{count} order was already scanned in and was left untouched.')
+              : t('eventCancellationFlow.skippedSummaryOther', '{count} orders were already scanned in and were left untouched.')
+            ).replace('{count}', result.ordersSkippedAlreadyScanned.toLocaleString())}`}
+            {result.ordersFailed > 0 && ` ${(result.ordersFailed === 1
+              ? t('eventCancellationFlow.failedSummaryOne', '{count} refund failed and will need manual follow-up — check Stripe.')
+              : t('eventCancellationFlow.failedSummaryOther', '{count} refunds failed and will need manual follow-up — check Stripe.')
+            ).replace('{count}', result.ordersFailed.toLocaleString())}`}
           </p>
           <Link className="ecf-btn ecf-btn-solid" href={dashboardHref}>{t('eventCancellationFlow.backToDashboard', 'Back to dashboard →')}</Link>
         </div>
