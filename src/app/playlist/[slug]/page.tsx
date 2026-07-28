@@ -2,7 +2,7 @@ import { db } from '@/lib/db';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +41,7 @@ export async function generateMetadata(
 }
 
 export default async function PlaylistPage({ params }: { params: Promise<{ slug: string }> }) {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const { slug } = await params;
 
   const playlist = await db.fanPlaylist.findUnique({

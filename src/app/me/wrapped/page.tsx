@@ -5,7 +5,7 @@ import { getSceneWrapped, type SceneWrapped } from '@/lib/sceneWrapped';
 import { WrappedShareButton } from '@/components/WrappedShareButton';
 import { MyStatsPanel } from '@/components/MyStatsPanel';
 import type { Metadata } from 'next';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +35,7 @@ function buildShareText(w: SceneWrapped, t: (key: string, fallback?: string) => 
 }
 
 export default async function WrappedPage() {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const session = await auth();
   if (!session?.user?.id) {
     redirect('/login?callbackUrl=/me/wrapped');

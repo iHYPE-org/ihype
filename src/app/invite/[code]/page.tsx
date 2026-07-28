@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { db } from '@/lib/db';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function InviteLandingPage({ params }: Props) {
   const { code } = await params;
-  const t = getT(await getLocale());
+  const t = await getServerT();
 
   const profile = await db.profile.findFirst({
     where: { hexId: code },

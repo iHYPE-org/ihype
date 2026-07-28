@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 type PayableEntry = {
   id: string;
@@ -15,7 +15,7 @@ function fmtCents(cents: number) {
 
 /** Extracted verbatim from the former standalone `/me/payouts` page (DESIGN_SYNC row 245) — same real data, same markup, now reusable from the `/payouts` tabbed hub. */
 export async function PayoutsHistoryPanel({ released, pending }: { released: PayableEntry[]; pending: PayableEntry[] }) {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const totalReleasedCents = released.reduce((sum, e) => sum + e.amountCents, 0);
 
   return (

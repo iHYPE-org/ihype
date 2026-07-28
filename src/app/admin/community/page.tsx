@@ -5,7 +5,7 @@ import { auth } from '@/lib/auth';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'Community · iHYPE Admin',
@@ -17,7 +17,7 @@ export default async function AdminCommunityPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
   if (!isAdminSession(session)) redirect(WORKBENCH_PATH);
-  const t = getT(await getLocale());
+  const t = await getServerT();
 
   const posts = await db.auditLog.findMany({
     where: { action: 'community_update' },

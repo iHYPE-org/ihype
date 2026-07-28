@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth';
 import { isAdminSession } from '@/lib/permissions';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { db } from '@/lib/db';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const metadata = {
   title: 'Growth | Admin | iHYPE',
@@ -11,7 +11,7 @@ export const metadata = {
 };
 
 export default async function AdminGrowthPage() {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
   if (!isAdminSession(session)) redirect(WORKBENCH_PATH);

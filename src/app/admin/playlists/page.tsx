@@ -5,7 +5,7 @@ import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
 import { PlaylistCreateForm } from '@/components/admin/PlaylistCreateForm';
 import { PlaylistActions } from '@/components/admin/PlaylistActions';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = { title: 'Curated Playlists · Admin · iHYPE' };
 export const dynamic = 'force-dynamic';
@@ -14,7 +14,7 @@ export default async function AdminPlaylistsPage() {
   const session = await auth();
   if (!isAdminSession(session)) redirect('/login');
 
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const playlists = await db.curatedPlaylist.findMany({
     orderBy: { createdAt: 'desc' }
   });

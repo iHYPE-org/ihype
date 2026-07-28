@@ -21,7 +21,7 @@ import { resolveProfileThemeVars } from '@/lib/profile-design';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
 import { ConnectPayoutButton } from '@/components/ConnectPayoutButton';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const revalidate = 60;
 
@@ -56,7 +56,7 @@ export default async function DJProfilePage({
   params: Promise<{ slug: string }>;
   searchParams?: Promise<{ section?: string | string[] }>;
 }) {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const session = await auth();
   const { slug } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : {};

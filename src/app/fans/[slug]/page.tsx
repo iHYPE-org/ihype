@@ -15,7 +15,7 @@ import { getDemoShowRelationExclusion, isDemoUser, shouldHideDemoContent } from 
 import { getPromoterDashboard } from '@/lib/promoterDashboard';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { getBaseUrl } from '@/lib/utils';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const revalidate = 60;
 
@@ -65,7 +65,7 @@ export default async function FanProfilePage({
   params: Promise<{ slug: string }>;
   searchParams?: Promise<{ section?: string | string[] }>;
 }) {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const session = await auth();
   const { slug } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : {};

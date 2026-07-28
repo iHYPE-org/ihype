@@ -3,12 +3,12 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
 import { FeedbackStatusSelect } from '@/components/admin/FeedbackStatusSelect';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminFeedbackPage() {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const session = await auth();
   if (!isAdminSession(session)) redirect('/');
   const requests = await db.featureRequest.findMany({ orderBy: [{ votes: 'desc' }, { createdAt: 'desc' }] });

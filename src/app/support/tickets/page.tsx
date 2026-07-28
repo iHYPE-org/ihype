@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { SupportTicketComposer } from '@/components/SupportTicketComposer';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,7 +37,7 @@ function fmtDate(d: Date) {
  * submitted ticket and its status).
  */
 export default async function SupportTicketsPage() {
-  const tr = getT(await getLocale());
+  const tr = await getServerT();
   const session = await auth();
   if (!session?.user?.id) {
     redirect('/login?callbackUrl=/support/tickets');

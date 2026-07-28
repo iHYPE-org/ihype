@@ -24,7 +24,7 @@ import { canManageOwnedResource } from '@/lib/permissions';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
 import { getBaseUrl } from '@/lib/utils';
 import { ConnectPayoutButton } from '@/components/ConnectPayoutButton';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const revalidate = 60;
 
@@ -64,7 +64,7 @@ export default async function ArtistPage({
   searchParams?: Promise<{ section?: string | string[] }>;
 }) {
   const session = await auth();
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const { slug } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const activeSection = getActiveSection(resolvedSearchParams.section);

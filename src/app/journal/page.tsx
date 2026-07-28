@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { db } from '@/lib/db';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const metadata = { title: 'Journal · iHYPE' };
 export const dynamic = 'force-dynamic';
@@ -15,7 +15,7 @@ type EditorialMeta = {
 };
 
 export default async function JournalIndex() {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const rows = await db.auditLog.findMany({
     where: { action: 'editorial_post' },
     orderBy: { createdAt: 'desc' },

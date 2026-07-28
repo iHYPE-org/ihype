@@ -123,4 +123,45 @@ describe('i18n invariants', () => {
     }
     expect(defects).toEqual([]);
   });
+
+  it('leaves admin surfaces untranslated — they are English-only by decision', () => {
+    // Product decision (2026-07-28): the admin/ops console serves staff, not
+    // users, and ships in English only. Its t() calls stay put and resolve to
+    // their inline English fallbacks, which costs nothing at runtime.
+    //
+    // This guard exists because translating them is otherwise an easy and
+    // expensive mistake to make by accident: ~469 keys x 11 locales, and the
+    // dictionaries ship to every visitor as static assets. 697 admin entries
+    // had already accumulated before the decision and were removed with it.
+    //
+    // If admin should be translated later, delete this test — do not work
+    // around it.
+    const ADMIN_PREFIXED = /^(admin|ops)/;
+    // Components under src/components/admin/ whose namespaces are not
+    // admin-prefixed. Each is mounted only from an /admin/* route.
+    const ADMIN_ONLY_NAMESPACES = new Set([
+      'bulkActions',
+      'moderationActions',
+      'reportPageBulkButtons',
+      'featureToggle',
+      'socialPostCopy',
+      'playlistActions',
+      'playlistCreateForm',
+    ]);
+    const isAdminKey = (key: string) => {
+      const ns = key.split('.')[0];
+      return ADMIN_PREFIXED.test(ns) || ADMIN_ONLY_NAMESPACES.has(ns);
+    };
+
+    // en.json is exempt: it is the extracted English source that the
+    // "never disagrees with an inline fallback" test above checks against,
+    // not a translation shipped to a visitor.
+    const defects: string[] = [];
+    for (const locale of locales.filter((l) => l !== 'en')) {
+      for (const key of Object.keys(dict(locale))) {
+        if (isAdminKey(key)) defects.push(`${locale}/${key}`);
+      }
+    }
+    expect(defects).toEqual([]);
+  });
 });

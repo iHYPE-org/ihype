@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { WelcomeStepsChecklist } from '@/components/WelcomeStepsChecklist';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'Welcome · iHYPE',
@@ -16,7 +16,7 @@ export default async function WelcomePage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/register');
 
-  const t = getT(await getLocale());
+  const t = await getServerT();
 
   const CONFIG: Record<Role, {
     name: string; roleLabel: string; tint: string; pendingNote: string;

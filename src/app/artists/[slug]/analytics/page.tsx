@@ -6,7 +6,7 @@ import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { getDemoCreatorExclusion } from '@/lib/runtime-flags';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -111,7 +111,7 @@ export default async function ArtistAnalyticsPage({
   searchParams: Promise<{ range?: string }>;
 }) {
   const session = await auth();
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const { slug } = await params;
   const resolvedSearchParams = await searchParams;
 

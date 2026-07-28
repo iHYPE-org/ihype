@@ -6,7 +6,7 @@ import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { PromoteShareButton } from '@/components/PromoteShareButton';
 import { getBaseUrl } from '@/lib/utils';
 import type { Metadata } from 'next';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,7 +22,7 @@ function fmtDate(iso: string | null, t: (key: string, fallback?: string) => stri
 }
 
 export default async function PromotePage() {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const session = await auth();
   if (!session?.user?.id) {
     redirect('/login?callbackUrl=/me/promote');

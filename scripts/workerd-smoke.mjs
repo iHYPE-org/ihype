@@ -366,6 +366,30 @@ async function run() {
       check(`GET ${path} returns 200`, page.status === 200, `status=${page.status}`);
     }
 
+    // 6b. Server-rendered translations must actually resolve INSIDE workerd.
+    //
+    // The dictionaries are not bundled into the Worker — they are fetched from
+    // the ASSETS binding (see src/lib/i18n/server.ts). That is what keeps the
+    // script under Cloudflare's size limit, but it means a bundling or asset
+    // path regression breaks translation at runtime while every other check
+    // still passes. Exactly that nearly shipped: an `await import()` version of
+    // this module typechecked, linted and passed all 345 unit tests while
+    // silently serving English on every server-rendered page, because the split
+    // chunks were never uploaded.
+    //
+    // /discover is a server component that renders discoverPage.kicker
+    // unconditionally, so asking for it with the locale cookie set is a direct
+    // test of the asset fetch path.
+    const spanishDiscover = await probe('/discover', {
+      headers: { cookie: 'ihype_locale=es' },
+    });
+    check(
+      'server-rendered page resolves a real translation from the ASSETS binding',
+      spanishDiscover.status === 200 && spanishDiscover.text.includes('DESCUBRIR'),
+      `status=${spanishDiscover.status} — expected the Spanish discoverPage.kicker ("DESCUBRIR") in server HTML. ` +
+        'Seeing the English "DISCOVER" instead means the dictionary fetch failed and every locale is falling back to English.',
+    );
+
     // 7. Session-gated API routes reject cleanly (401, not a 500 crash).
     const notifications = await probe('/api/me/notifications');
     check(

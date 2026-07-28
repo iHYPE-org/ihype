@@ -16,7 +16,7 @@ import { PinnedStatTiles } from '@/components/PinnedStatTiles';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
 import { resolveProfileThemeVars } from '@/lib/profile-design';
 import { ConnectPayoutButton } from '@/components/ConnectPayoutButton';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const revalidate = 60;
 
@@ -38,7 +38,7 @@ const getVenueMeta = cache((slug: string) =>
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const profile = await getVenueMeta(slug);
-  const t = getT(await getLocale());
+  const t = await getServerT();
   if (!profile) return { title: t('venuesSlugPage.metaTitleFallback', 'Venue · iHYPE') };
   const loc = [profile.city, profile.stateRegion].filter(Boolean).join(', ');
   return {
@@ -56,7 +56,7 @@ export default async function VenuePage({
 }) {
   const session = await auth();
   const { slug } = await params;
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const SECTION_LABEL: Record<VenueSection, string> = {
     about: t('venuesSlugPage.tabAbout', 'About'),
     shows: t('venuesSlugPage.tabShows', 'Upcoming Shows'),

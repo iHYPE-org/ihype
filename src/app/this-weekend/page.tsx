@@ -4,7 +4,7 @@ import { detectRequestLocation } from '@/lib/request-location';
 import { getWeekendShows } from '@/lib/weekendShows';
 import { NearbyShowsWidget } from '@/components/NearbyShowsWidget';
 import type { Metadata } from 'next';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,7 +26,7 @@ function fmtWhen(iso: string): string {
 }
 
 export default async function ThisWeekendPage() {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const [session, location] = await Promise.all([auth(), detectRequestLocation()]);
   const feed = await getWeekendShows(session?.user?.id ?? null, location);
 

@@ -6,7 +6,7 @@ import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getProfileInsights } from '@/lib/profile-insights';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'DJ Dashboard · iHYPE',
@@ -35,7 +35,7 @@ function timeAgo(date: Date, t: (key: string, fallback: string) => string) {
 }
 
 export default async function DJDashboardPage({ params }: { params: Promise<{ slug: string }> }) {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const { slug } = await params;
   const session = await auth();
   if (!session?.user?.id) {

@@ -6,7 +6,7 @@ import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
 import { promoteToAdminAction, suspendUserAction } from './actions';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'User management | iHYPE Admin',
@@ -22,7 +22,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams?: 
   if (!session?.user?.id) redirect('/login');
   if (!isAdminSession(session)) redirect(WORKBENCH_PATH);
 
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const sp = (await searchParams) ?? {};
   const q = (sp.q ?? '').trim();
   const role = sp.role ?? '';

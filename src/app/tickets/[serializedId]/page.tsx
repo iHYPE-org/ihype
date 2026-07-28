@@ -8,14 +8,14 @@ import { canManageOwnedResource } from '@/lib/permissions';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { buildTicketQrCodeDataUrl, formatTicketStatus } from '@/lib/tickets';
 import { formatShowTime } from '@/lib/utils';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export default async function TicketPage({
   params
 }: {
   params: Promise<{ serializedId: string }>;
 }) {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const session = await auth();
   const { serializedId } = await params;
 

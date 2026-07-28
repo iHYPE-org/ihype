@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 type ShowRow = { id: string; slug: string; title: string; status: string; startsAt: Date; isTicketed: boolean };
 
@@ -11,7 +11,7 @@ type ShowRow = { id: string; slug: string; title: string; status: string; starts
  * existing, unchanged `/payout/[id]` page for the full breakdown.
  */
 export async function PayoutShowsPanel({ shows }: { shows: ShowRow[] }) {
-  const t = getT(await getLocale());
+  const t = await getServerT();
 
   if (shows.length === 0) {
     return <p className="meta">{t('payoutShowsPanel.noShowsYet', "You haven't created any shows yet.")}</p>;

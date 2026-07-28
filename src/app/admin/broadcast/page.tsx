@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { isAdminSession } from '@/lib/permissions';
 import { AdminBroadcastForm } from '@/components/AdminBroadcastForm';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'Broadcast email | iHYPE Admin',
@@ -15,7 +15,7 @@ export default async function AdminBroadcastPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
   if (!isAdminSession(session)) redirect(WORKBENCH_PATH);
-  const t = getT(await getLocale());
+  const t = await getServerT();
 
   return (
     <div className="container section admin-console">

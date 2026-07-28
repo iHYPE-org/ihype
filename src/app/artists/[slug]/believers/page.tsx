@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth';
 import { getEarlyBelievers } from '@/lib/earlyBelievers';
 import { BelieverShareButton } from '@/components/BelieverShareButton';
 import type { Metadata } from 'next';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,7 +31,7 @@ export async function generateMetadata(
 export default async function BelieversPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const session = await auth();
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const data = await getEarlyBelievers(slug, session?.user?.id ?? null);
   if (!data) notFound();
 

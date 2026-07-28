@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { RadioShowCreator } from '@/components/RadioShowCreator';
 import type { Metadata } from 'next';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'Radio Show Creator',
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RadioStudioPage() {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const session = await auth();
   if (!session?.user?.id) {
     redirect('/login?callbackUrl=/radio/studio');

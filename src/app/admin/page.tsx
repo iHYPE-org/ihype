@@ -23,7 +23,7 @@ import {
   isInviteCodeRequiredRuntime,
   shouldHideDemoContentRuntime
 } from '@/lib/runtime-flags';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 
 export const metadata: Metadata = {
@@ -55,7 +55,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
     redirect(WORKBENCH_PATH);
   }
 
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const { userSearch } = searchParams ? await searchParams : {};
   const funnelSince = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const [

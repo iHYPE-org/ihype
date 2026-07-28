@@ -6,7 +6,7 @@ import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getVenueAnalyticsData, type VenueAnalyticsRange } from '@/lib/venue-analytics';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,7 +40,7 @@ export default async function VenueAnalyticsPage({
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ range?: string }>;
 }) {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const RANGE_TABS = getRangeTabs(t);
   const { slug } = await params;
   const { range: rangeParam } = await searchParams;

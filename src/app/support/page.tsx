@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { SupportPageClient } from '@/components/SupportPageClient';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'Support · iHYPE',
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default async function SupportPage() {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   return (
     <div style={{ maxWidth: 680, margin: '0 auto', padding: '40px 24px 100px' }}>
       <span style={{

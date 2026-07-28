@@ -5,7 +5,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'DJ Analytics · iHYPE',
@@ -71,7 +71,7 @@ export default async function DJAnalyticsPage({
   params: Promise<{ slug: string }>;
   searchParams?: Promise<{ range?: string }>;
 }) {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const { slug } = await params;
   const session = await auth();
   if (!session?.user?.id) {

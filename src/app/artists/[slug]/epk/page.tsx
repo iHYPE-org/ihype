@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import { getSafeImageUrl } from '@/lib/asset-safety';
 import { getCspNonce } from '@/lib/csp-nonce';
 import { parsePressKit } from '@/lib/press-kit';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
@@ -41,7 +41,7 @@ export default async function EpkPage({ params }: { params: Promise<{ slug: stri
 
   if (!profile || (profile.type !== 'ARTIST' && profile.type !== 'DJ')) return notFound();
 
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const nonce = await getCspNonce();
   const avatarUrl = getSafeImageUrl(profile.avatarImage);
   const galleryUrl = getSafeImageUrl(profile.galleryImage);

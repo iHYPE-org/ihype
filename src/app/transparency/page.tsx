@@ -2,7 +2,7 @@ import '../marketing.css';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { db } from '@/lib/db';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TransparencyPage() {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const [artistCount, showCount, mediaCount, ticketCount, totalTicketCents] = await Promise.all([
     db.profile.count({ where: { type: 'ARTIST' } }),
     db.show.count({ where: { status: { not: 'CANCELED' } } }),

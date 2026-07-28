@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import type { Metadata } from 'next';
 import { VerifyForm } from '@/components/VerifyForm';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,7 +23,7 @@ export default async function VerifyPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/login?callbackUrl=/verify');
 
-  const t = getT(await getLocale());
+  const t = await getServerT();
 
   const TYPE_LABEL: Record<string, string> = {
     ARTIST: t('verifyPage.typeArtist', 'Artist'),

@@ -2,7 +2,7 @@ import '../marketing.css';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { db } from '@/lib/db';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,7 +26,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 export default async function AuditPage() {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const [
     reportsTotal,
     reportsOpen,

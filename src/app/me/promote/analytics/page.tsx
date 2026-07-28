@@ -9,7 +9,7 @@ import {
 } from '@/lib/promoterDashboard';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { getBaseUrl } from '@/lib/utils';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
@@ -40,7 +40,7 @@ export default async function PromoterAnalyticsPage({
     redirect('/login?callbackUrl=/me/promote/analytics');
   }
 
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const { range: rangeParam } = await searchParams;
   const range: PromoterAnalyticsRange = isValidRange(rangeParam) ? rangeParam : '30d';
 

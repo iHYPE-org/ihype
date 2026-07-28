@@ -6,7 +6,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { PayoutFanView } from '@/components/PayoutFanView';
 import { PayoutActions } from '@/components/PayoutActions';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,7 +27,7 @@ function fmtCents(cents: number) {
 }
 
 export default async function PayoutPage({ params }: { params: Promise<{ id: string }> }) {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const session = await auth();
   if (!session?.user?.id) {
     const { id } = await params;

@@ -1,10 +1,10 @@
 import { TrustPolicyPage } from '@/components/TrustPolicyPage';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const metadata = { title: 'Copyright | iHYPE.org' };
 
 export default async function CopyrightPage() {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   return (
     <TrustPolicyPage
       badge={t('copyrightPage.badge', 'Copyright')}

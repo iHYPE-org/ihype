@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { SimilarArtist } from '@/lib/sounds-like';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export async function SimilarArtistsRow({
   artists,
@@ -13,7 +13,7 @@ export async function SimilarArtistsRow({
 }) {
   if (!artists.length) return null;
 
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const resolvedHeading = heading ?? t('similarArtistsRow.heading', 'Similar Artists');
 
   return (

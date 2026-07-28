@@ -1,14 +1,14 @@
 import type { Metadata } from 'next';
 import { RecruitingKitPage, type RecruitingKitConfig } from '@/components/RecruitingKitPage';
 import { getCityHeatForRole } from '@/lib/recruiting-kit';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'For Artists · iHYPE',
   description: '70% of every ticket, your fans’ contact info, and tools to run your own shows.',
 };
 
-function buildConfig(t: Awaited<ReturnType<typeof getT>>): RecruitingKitConfig {
+function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitConfig {
   return {
   role: 'ARTIST',
   tint: 'var(--accent)',
@@ -55,7 +55,7 @@ function buildConfig(t: Awaited<ReturnType<typeof getT>>): RecruitingKitConfig {
 }
 
 export default async function ForArtistsPage() {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const config = buildConfig(t);
   const cityHeat = await getCityHeatForRole(['ARTIST']);
   return <RecruitingKitPage config={config} cityHeat={cityHeat} />;

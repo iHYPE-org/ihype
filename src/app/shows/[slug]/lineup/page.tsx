@@ -6,7 +6,7 @@ import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { LineupSplitResponder } from '@/components/LineupSplitResponder';
 import { VenueLineupComposer } from '@/components/VenueLineupComposer';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +25,7 @@ function fmtDate(d: Date) {
 
 export default async function LineupSplitPage({ params }: { params: Promise<{ slug: string }> }) {
   const session = await auth();
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const { slug } = await params;
 
   if (!session?.user?.id) {

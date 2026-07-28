@@ -7,7 +7,7 @@ import { db } from '@/lib/db';
 import { getHealthSnapshot } from '@/lib/health';
 import { kvPut } from '@/lib/kv';
 import { getRateLimitMetrics } from '@/lib/rate-limit';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -68,7 +68,7 @@ function StatusDot({ ok }: { ok: boolean }) {
 }
 
 export default async function StatusPage() {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
   if (!isAdminSession(session)) redirect(WORKBENCH_PATH);

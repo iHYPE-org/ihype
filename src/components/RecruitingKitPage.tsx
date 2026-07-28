@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 type Stat = { value: string; label: string };
 type Feature = { emoji: string; title: string; body: string };
@@ -41,7 +41,7 @@ const HEAT_COLOR = ['#ff1f3d', 'var(--accent)', '#ffb84a', '#3a4a5a'];
  * already collect it for real.
  */
 export async function RecruitingKitPage({ config, cityHeat }: { config: RecruitingKitConfig; cityHeat: CityHeat[] }) {
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const maxScore = Math.max(...cityHeat.map((c) => c.score), 1);
 
   return (

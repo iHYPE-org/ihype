@@ -5,7 +5,7 @@ import { getBaseUrl } from '@/lib/utils';
 import { getCspNonce } from '@/lib/csp-nonce';
 import { parsePressKit } from '@/lib/press-kit';
 import type { Metadata } from 'next';
-import { getLocale, getT } from '@/lib/i18n/server';
+import { getServerT } from '@/lib/i18n/server';
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
@@ -51,7 +51,7 @@ export default async function PressKitPage({ params }: { params: Promise<{ slug:
   });
   if (!profile) notFound();
 
-  const t = getT(await getLocale());
+  const t = await getServerT();
   const nonce = await getCspNonce();
   const baseUrl = getBaseUrl();
   const profileUrl = `${baseUrl}/artists/${slug}`;
