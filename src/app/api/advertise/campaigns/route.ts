@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { vetAdvertisement, vetAdAudioContent, adCampaignStatusFromVetting } from '@/lib/ad-vetting';
+import { vetAdvertisement, vetAdAudioContent, adCampaignStatusFromVetting, type AdAudioVettingResult } from '@/lib/ad-vetting';
 import { isTrustedStorageUrl } from '@/lib/object-storage';
 import { recordAuditEvent } from '@/lib/audit';
 import { notifyAdvertiser } from '@/lib/ad-campaign-notify';
@@ -88,24 +88,40 @@ export async function POST(request: NextRequest) {
   let status = adCampaignStatusFromVetting(vetting);
   let reasoning = vetting.reasoning;
 
-  // Also screen what's actually said in the spot — vetAdvertisement above
-  // only judges the declared title, never the audio content itself.
+  // Also screen what's actually said and played in the spot — vetAdvertisement
+  // above only judges the declared title, which the advertiser writes.
   // audioUrl is already confirmed trusted-storage-only above (SSRF guard),
-  // so fetching it back is safe. Best-effort beyond that: a fetch failure
-  // (e.g. the inline data: URL fallback used when object storage isn't
-  // configured) fails open, same as every other vetting call in this
-  // codebase.
-  let audioVetting: { isApproved: boolean; reasoning: string; requiresManualReview: boolean } | null = null;
+  // so fetching it back is safe.
+  //
+  // A fetch failure is NOT a pass. It used to be silently swallowed, leaving
+  // audioVetting null and the campaign free to clear on its title alone —
+  // and clearing is what authorises the budget on Stripe. If we cannot read
+  // the file back, nobody has heard it, so it goes to /admin/ads.
+  let audioVetting: AdAudioVettingResult;
   try {
     const audioRes = await fetch(audioUrl);
     if (audioRes.ok) {
       const audioBytes = new Uint8Array(await audioRes.arrayBuffer());
       audioVetting = await vetAdAudioContent(audioBytes);
+    } else {
+      audioVetting = {
+        isApproved: false,
+        requiresManualReview: true,
+        reasoning: `Uploaded audio could not be read back for screening (HTTP ${audioRes.status}); it was never inspected.`,
+        layers: [],
+      };
     }
-  } catch {
-    // Fail open — audio vetting is best-effort, not a hard gate.
+  } catch (error) {
+    audioVetting = {
+      isApproved: false,
+      requiresManualReview: true,
+      reasoning: `Uploaded audio could not be read back for screening (${
+        error instanceof Error ? error.message : 'unknown error'
+      }); it was never inspected.`,
+      layers: [],
+    };
   }
-  if (audioVetting && (!audioVetting.isApproved || audioVetting.requiresManualReview) && status !== 'REJECTED') {
+  if ((!audioVetting.isApproved || audioVetting.requiresManualReview) && status !== 'REJECTED') {
     status = 'PENDING';
     reasoning = `${reasoning} Audio spot flagged: ${audioVetting.reasoning}`;
   }
@@ -169,13 +185,18 @@ export async function POST(request: NextRequest) {
     metadata: { reasoning, quote },
   }).catch(() => {});
 
-  if (audioVetting && (!audioVetting.isApproved || audioVetting.requiresManualReview)) {
+  if (!audioVetting.isApproved || audioVetting.requiresManualReview) {
     await db.contentReport.create({
       data: {
         targetType: 'ad-audio',
         targetId: ad.id,
         reason: 'auto_flag_audio',
-        details: audioVetting.reasoning,
+        // Per-layer breakdown, not just the verdict: a reviewer needs to know
+        // whether a layer objected or simply never ran.
+        details: [
+          audioVetting.reasoning,
+          ...audioVetting.layers.map((l) => `[${l.name}] ${l.reasoning}`),
+        ].join('\n').slice(0, 2000),
       },
     }).catch(() => {});
   }
