@@ -56,7 +56,14 @@ export default async function ShowsMapPage() {
       </div>
 
       <p className="meta" style={{ marginBottom: 32 }}>
-        {shows.length} {t('showsMapPage.upcomingShowPrefix', 'upcoming show')}{shows.length !== 1 ? 's' : ''} {t('showsMapPage.acrossPrefix', 'across')} {cities.length} {t('showsMapPage.cityPrefix', 'cit')}{cities.length !== 1 ? 'ies' : 'y'}.
+        {/* Whole words per plural form, not a stem plus a hardcoded English
+            suffix: the old 'cit' + 'ies'/'y' split only spells a word in
+            English, and appending it to a translation spells nothing anywhere. */}
+        {shows.length} {shows.length === 1
+          ? t('showsMapPage.upcomingShowOne', 'upcoming show')
+          : t('showsMapPage.upcomingShowOther', 'upcoming shows')} {t('showsMapPage.acrossPrefix', 'across')} {cities.length} {cities.length === 1
+          ? t('showsMapPage.cityOne', 'city')
+          : t('showsMapPage.cityOther', 'cities')}.
       </p>
 
       {cities.length === 0 ? (
