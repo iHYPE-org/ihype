@@ -70,6 +70,24 @@ describe('consumeRateLimit', () => {
     expect(result.allowed).toBe(true);
   });
 
+  it('enforces the full configured limit for a bucket that opts out of the atomic backend', async () => {
+    // atomic: false routes to the KV counter on purpose. It must still count
+    // to the number the caller wrote down — the halving that guards a
+    // *degraded* limiter would silently enforce 1 here instead of 3.
+    const k = key();
+    const opts = { limit: 3, windowMs: 60_000, atomic: false as const };
+    expect((await consumeRateLimit(k, opts)).allowed).toBe(true);
+    expect((await consumeRateLimit(k, opts)).allowed).toBe(true);
+    expect((await consumeRateLimit(k, opts)).allowed).toBe(true);
+    expect((await consumeRateLimit(k, opts)).allowed).toBe(false);
+  });
+
+  it('opt-out buckets are still isolated from one another', async () => {
+    const opts = { limit: 1, windowMs: 60_000, atomic: false as const };
+    await consumeRateLimit(key('opt-a'), opts);
+    expect((await consumeRateLimit(key('opt-b'), opts)).allowed).toBe(true);
+  });
+
   it('remaining is never negative', async () => {
     const k = key();
     const opts = { limit: 1, windowMs: 60_000 };

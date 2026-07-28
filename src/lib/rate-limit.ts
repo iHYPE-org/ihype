@@ -10,6 +10,15 @@ type RateLimitRecord = {
 type RateLimitOptions = {
   limit: number;
   windowMs: number;
+  /**
+   * Whether this bucket needs the exact, serialized Durable Object counter.
+   * Defaults to true. Set false for high-volume buckets that only exist to
+   * protect a downstream pipeline and already degrade harmlessly when a few
+   * extra requests slip through — those pay the DO round-trip on every call
+   * for accuracy nobody consumes, and one hot key funnels every request for
+   * it through a single DO instance.
+   */
+  atomic?: boolean;
 };
 
 export type RateLimitResult = {
@@ -32,13 +41,27 @@ export function rateLimitKey(prefix: string, userId: string | undefined, ip: str
 
 const DEFAULT_KV_TIMEOUT_MS = 1500;
 
+/**
+ * The DO deadline is deliberately much shorter than the KV one. A rate-limit
+ * check sits in front of the request it guards, so its cost is added to every
+ * response; waiting 1.5s for a counter and *then* still having to run the KV
+ * fallback meant a degraded limiter could add ~3s of latency to a request that
+ * was going to be allowed anyway. 750ms is far above a healthy DO round-trip
+ * (single-digit to low-hundreds of ms) while leaving room for the fallback.
+ */
+const DEFAULT_DO_TIMEOUT_MS = 750;
+
 function getKvTimeoutMs() {
   const parsed = Number.parseInt(process.env.RATE_LIMIT_KV_TIMEOUT_MS ?? '', 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_KV_TIMEOUT_MS;
 }
 
-async function withKvTimeout<T>(operation: Promise<T>, label: string): Promise<T> {
-  const timeoutMs = getKvTimeoutMs();
+function getDoTimeoutMs() {
+  const parsed = Number.parseInt(process.env.RATE_LIMIT_DO_TIMEOUT_MS ?? '', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_DO_TIMEOUT_MS;
+}
+
+async function withTimeout<T>(operation: Promise<T>, label: string, timeoutMs: number): Promise<T> {
   let timeout: ReturnType<typeof setTimeout> | undefined;
   try {
     return await Promise.race([
@@ -50,6 +73,10 @@ async function withKvTimeout<T>(operation: Promise<T>, label: string): Promise<T
   } finally {
     if (timeout) clearTimeout(timeout);
   }
+}
+
+function withKvTimeout<T>(operation: Promise<T>, label: string): Promise<T> {
+  return withTimeout(operation, label, getKvTimeoutMs());
 }
 
 async function consumeKvUnsafe(key: string, options: RateLimitOptions): Promise<RateLimitResult> {
@@ -160,40 +187,67 @@ function getRateLimiterStub(key: string): RateLimiterStub | null {
   }
 }
 
-async function consumeDurableObject(key: string, options: RateLimitOptions): Promise<RateLimitResult | null> {
+/**
+ * Three outcomes, kept distinct on purpose. Collapsing "there is no binding"
+ * and "the call failed" into a single null is what made the production
+ * degradation unreadable: every failed call logged BOTH an error at the call
+ * site and a "RATE_LIMITER_DO unavailable" line from the fallback, so Sentry
+ * showed two unrelated-looking issues with different counts describing one
+ * fault, and the louder of the two named the wrong cause.
+ */
+type AtomicOutcome =
+  | { kind: 'ok'; result: RateLimitResult }
+  | { kind: 'unavailable' }
+  | { kind: 'error' };
+
+async function consumeDurableObject(key: string, options: RateLimitOptions): Promise<AtomicOutcome> {
   const stub = getRateLimiterStub(key);
-  if (!stub) return null;
+  if (!stub) return { kind: 'unavailable' };
 
   try {
-    const result = await withKvTimeout(stub.consume(options.limit, options.windowMs), 'DO rate limit');
+    const result = await withTimeout(
+      stub.consume(options.limit, options.windowMs),
+      'DO rate limit',
+      getDoTimeoutMs()
+    );
     if (!result.allowed) {
       deferWork(kvIncr(`rate-limit-hits:${key}`, 3600), 'rate-limit');
     }
-    return result;
+    return { kind: 'ok', result };
   } catch (error) {
     // log.error so a DO outage reaches Sentry — console.error only lands in
-    // Worker logs, which nobody tails.
-    log.error('[rate-limit]', error instanceof Error ? error : { error: String(error) }, 'atomic backend error');
-    return null;
+    // Worker logs, which nobody tails. This is the only line logged for a
+    // failed call; the fallback below stays silent so one fault is one issue.
+    log.error('[rate-limit]', error instanceof Error ? error : { error: String(error) }, 'atomic backend error, falling back to KV');
+    return { kind: 'error' };
   }
 }
 
 export async function consumeRateLimit(key: string, options: RateLimitOptions): Promise<RateLimitResult> {
-  const atomic = await consumeDurableObject(key, options);
-  if (atomic) return atomic;
+  const optedOut = options.atomic === false;
+  const atomic: AtomicOutcome = optedOut ? { kind: 'unavailable' } : await consumeDurableObject(key, options);
+  if (atomic.kind === 'ok') return atomic.result;
 
   if (process.env.NODE_ENV === 'production') {
     // Degraded mode: a DO hiccup must not become a sitewide write outage.
     // KV increments aren't atomic (concurrent requests can race the counter),
     // so run at half the normal limit to keep abuse headroom. Only if KV is
     // also down do we fail closed.
-    log.error('[rate-limit]', { key }, 'RATE_LIMITER_DO unavailable in production; using KV fallback at half limit');
-    const degraded: RateLimitOptions = {
-      limit: Math.max(1, Math.floor(options.limit / 2)),
-      windowMs: options.windowMs
-    };
+    //
+    // A bucket that opted out of the DO is not degraded — KV is its intended
+    // backend — so it keeps its full configured limit and logs nothing.
+    // Halving an opt-out bucket would silently enforce half the number the
+    // caller wrote down.
+    if (!optedOut && atomic.kind === 'unavailable') {
+      // Only a genuinely absent binding is reported here; a failed call
+      // already logged its own error above, so one fault stays one issue.
+      log.error('[rate-limit]', { key }, 'RATE_LIMITER_DO binding missing in production; using KV fallback at half limit');
+    }
+    const effective: RateLimitOptions = optedOut
+      ? options
+      : { limit: Math.max(1, Math.floor(options.limit / 2)), windowMs: options.windowMs };
     try {
-      return await withKvTimeout(consumeKvUnsafe(key, degraded), 'KV rate limit fallback');
+      return await withKvTimeout(consumeKvUnsafe(key, effective), 'KV rate limit fallback');
     } catch (error) {
       log.error('[rate-limit]', error instanceof Error ? error : { error: String(error) }, 'KV fallback also failed; denying request');
       return {

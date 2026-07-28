@@ -505,6 +505,11 @@ model Show {
   // Organizer-initiated cancellation (Event Cancellation Flow) — distinct
   // from the admin-moderation CANCELED path, which has no reason recorded.
   cancellationReason     String?
+  // Optional free text the organizer writes for their own ticket holders on
+  // cancellation. Kept separate from cancellationReason, which only ever
+  // holds one of four fixed labels — folding them together would make it
+  // impossible to tell an organizer's words from the platform's.
+  cancellationMessage    String?
   canceledAt             DateTime?
 
   @@index([startsAt, status])
@@ -1227,7 +1232,11 @@ model Ad {
   budgetCents   Int            @default(0)
   spentCents    Int            @default(0)
   impressions   Int            @default(0)
-  clicks        Int            @default(0)
+  // Ad.clicks removed: an audio spot has no click-through surface, so nothing
+  // ever incremented it. The column drop is parked in
+  // prisma/migrations-pending/20260728201000_drop_ad_clicks — this field goes
+  // first so the deployed code has stopped selecting it before the column
+  // disappears.
   // Purchased run length — set at creation, before payment is authorized.
   // startsAt/endsAt aren't resolved to real dates until authorization
   // succeeds (see stripePaymentIntentId), so a campaign stuck awaiting

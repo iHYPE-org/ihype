@@ -409,6 +409,25 @@ export default async function ShowDetailPage({
             {show.isTicketed && <span>{sold.toLocaleString()} {t('showsSlugPage.ticketsSold', 'tickets sold')}</span>}
           </div>
 
+          {/* A cancelled show used to render as a bare CANCELED badge: both the
+              reason and the organizer's note to ticket holders were stored and
+              never shown to anyone who came to the page to find out what
+              happened. Rendered as plain text — the note is organizer-authored
+              free text, normalised server-side, and is never treated as markup. */}
+          {show.status === 'CANCELED' && (show.cancellationReason || show.cancellationMessage) && (
+            <div style={{ marginBottom: 20, padding: '14px 16px', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,80,41,.25)', background: 'rgba(255,80,41,.06)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 6 }}>
+                {t('showsSlugPage.canceledLabel', 'Event cancelled')}
+                {show.cancellationReason ? ` · ${show.cancellationReason}` : ''}
+              </div>
+              {show.cancellationMessage && (
+                <p style={{ fontSize: 13, color: 'var(--ink-a75)', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>
+                  {show.cancellationMessage}
+                </p>
+              )}
+            </div>
+          )}
+
           <div style={{ marginBottom: 4 }}>
             <a className="button small secondary" download href={`/shows/${slug}/poster?download=1`} style={{ marginBottom: 8, display: 'inline-block' }}>
               {t('showsSlugPage.downloadPoster', 'Download poster')}

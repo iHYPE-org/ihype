@@ -56,10 +56,34 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, skipped: true, reason: 'budget_exhausted' });
   }
 
-  await Promise.all([
-    db.adImpression.create({ data: { adId, userId: session?.user?.id ?? undefined } }),
-    db.ad.update({ where: { id: adId }, data: { impressions: { increment: 1 }, spentCents: { increment: 9 } } }),
-  ]);
+  // Spend the budget with the guard in the WHERE clause, not in JS above it.
+  // The read-then-update shape could let concurrent impressions all pass the
+  // budget check before any increment landed, overspending an advertiser's
+  // authorized hold — the settlement cron has to cap spentCents at
+  // budgetCents precisely because this could drift past it. updateMany with
+  // the same conditions makes the check and the increment one statement, so
+  // the last impression that fits is the last one charged. The pre-read above
+  // stays: it answers "why was this skipped" for the response body, which a
+  // conditional update alone cannot.
+  const charged = await db.ad.updateMany({
+    where: {
+      id: adId,
+      status: 'APPROVED',
+      OR: [{ startsAt: null }, { startsAt: { lte: now } }],
+      AND: [{ OR: [{ endsAt: null }, { endsAt: { gte: now } }] }],
+      ...(ad.budgetCents > 0 ? { spentCents: { lt: ad.budgetCents } } : {}),
+    },
+    data: { impressions: { increment: 1 }, spentCents: { increment: 9 } },
+  });
+
+  if (charged.count === 0) {
+    // Lost the race — the campaign was exhausted, paused, or expired between
+    // the read and the write. Not an error: the ad still played, it just
+    // doesn't get charged twice.
+    return NextResponse.json({ ok: true, skipped: true, reason: 'not_active' });
+  }
+
+  await db.adImpression.create({ data: { adId, userId: session?.user?.id ?? undefined } });
 
   return NextResponse.json({ ok: true });
 }

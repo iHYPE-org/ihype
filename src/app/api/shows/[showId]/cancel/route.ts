@@ -10,7 +10,35 @@ import { refundCapturedTicketOrder, voidReservedTicketOrder } from '@/lib/ticket
 export const dynamic = 'force-dynamic';
 
 const REASONS = ['artist', 'venue', 'low-sales', 'other'] as const;
-const schema = z.object({ reason: z.enum(REASONS) });
+
+/**
+ * The optional organizer note is capped and normalised rather than stored
+ * verbatim. It is the only free text on this route that reaches other
+ * people's inboxes and lock screens, and the author is an organizer, not a
+ * moderator: 400 chars fits the "what happened / what's next" note the
+ * design asks for, control characters and long runs of whitespace are
+ * stripped so a note can't reflow or spoof the surrounding notification
+ * copy, and it is always rendered as plain text (never HTML, never
+ * auto-linkified) so it cannot smuggle a "claim your refund here" link into
+ * a message fans already expect to be about money.
+ */
+const MAX_MESSAGE_LENGTH = 400;
+
+const schema = z.object({
+  reason: z.enum(REASONS),
+  message: z.string().max(MAX_MESSAGE_LENGTH * 2).optional(),
+});
+
+function normalizeMessage(raw: string | undefined): string | null {
+  if (!raw) return null;
+  const cleaned = raw
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\u0000-\u001f\u007f]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, MAX_MESSAGE_LENGTH);
+  return cleaned.length > 0 ? cleaned : null;
+}
 
 const REASON_LABEL: Record<(typeof REASONS)[number], string> = {
   artist: 'Artist can no longer perform',
@@ -73,6 +101,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
     include: { tickets: { select: { status: true } } },
   });
 
+  const organizerMessage = normalizeMessage(body.message);
+
   let refunded = 0;
   let skippedScanned = 0;
   let failed = 0;
@@ -101,7 +131,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
         await notifyUser(order.buyerUserId, {
           type: 'show_canceled_refunded',
           title: `"${show.title}" was cancelled`,
-          body: 'The organizer cancelled this event — your order has been refunded in full.',
+          // The platform's own sentence stays first and unconditional, so the
+          // refund fact is never displaced by whatever the organizer wrote —
+          // and the organizer's words are attributed, not blended into it.
+          body: organizerMessage
+            ? `The organizer cancelled this event — your order has been refunded in full. From the organizer: “${organizerMessage}”`
+            : 'The organizer cancelled this event — your order has been refunded in full.',
           link: '/tickets',
         });
       }
@@ -113,8 +148,22 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
 
   await db.show.update({
     where: { id: showId },
-    data: { status: 'CANCELED', cancellationReason: REASON_LABEL[body.reason as (typeof REASONS)[number]], canceledAt: new Date() },
+    data: {
+      status: 'CANCELED',
+      cancellationReason: REASON_LABEL[body.reason as (typeof REASONS)[number]],
+      cancellationMessage: organizerMessage,
+      canceledAt: new Date(),
+    },
   });
 
-  return NextResponse.json({ canceled: true, ordersRefunded: refunded, ordersSkippedAlreadyScanned: skippedScanned, ordersFailed: failed });
+  return NextResponse.json({
+    canceled: true,
+    ordersRefunded: refunded,
+    ordersSkippedAlreadyScanned: skippedScanned,
+    ordersFailed: failed,
+    // Echoed back so the confirmation screen shows the stored, normalised
+    // text — what ticket holders actually received — rather than the raw
+    // textarea contents the browser still has in state.
+    message: organizerMessage,
+  });
 }

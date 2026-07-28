@@ -14,7 +14,6 @@ interface Ad {
   clickUrl: string | null;
   status: string;
   impressions: number;
-  clicks: number;
   budgetCents: number;
   spentCents: number;
   createdAt: Date;
@@ -146,8 +145,12 @@ export function AdminAdsClient({ ads: initial, status, q, page, total, pageSize 
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <span className="meta">{new Date(ad.createdAt).toLocaleString()}</span>
               {typeof ad.audioDurationSecs === 'number' && <span className="meta">:{ad.audioDurationSecs}</span>}
+              {/* No clicks stat: an audio spot has no click-through, nothing in
+                  the codebase ever incremented Ad.clicks, and this rendered a
+                  permanent 0 next to a real impression count — which reads as
+                  "nobody clicked", not "there is nothing to click".
+                  /advertise/dashboard dropped it for the same reason. */}
               <span className="meta">{ad.impressions.toLocaleString()} {t('adminAdsClient.impressions', 'impressions')}</span>
-              <span className="meta">{ad.clicks.toLocaleString()} {t('adminAdsClient.clicks', 'clicks')}</span>
               <span className="meta">${((ad.budgetCents - ad.spentCents) / 100).toFixed(2)} {t('adminAdsClient.budgetRemaining', 'budget remaining')}</span>
             </div>
             {ad.status === 'PENDING' && (

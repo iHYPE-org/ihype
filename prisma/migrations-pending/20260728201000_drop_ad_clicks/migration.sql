@@ -1,0 +1,28 @@
+-- @gated
+--
+-- Drops Ad.clicks, which no code path has ever incremented.
+--
+-- Why it is dead: the column is a holdover from the retired AdSubmission
+-- banner system, which had a real click-through redirect
+-- (/api/ads/[id]/click) behind a clickable tile. The live ad product is an
+-- audio spot played inside a DJ show — there is nothing to click, so nothing
+-- writes this column and every row reads 0. /advertise/dashboard already
+-- stopped showing clicks/CTR for exactly this reason rather than display a
+-- permanently-zero stat.
+--
+-- Before applying:
+--   1. Confirm no row has a non-zero value, i.e. that nothing outside this
+--      repo (a manual backfill, an old import) ever populated it:
+--        SELECT count(*) FROM "Ad" WHERE "clicks" <> 0;
+--      Expect 0. A non-zero result means real data would be destroyed and
+--      this migration should be reconsidered, not just re-run.
+--   2. Confirm the application code that drops the field from schema.prisma
+--      is already deployed. A running Worker built against the old client
+--      selects "clicks" on every Ad query and will error once the column is
+--      gone.
+--
+-- Then move it into prisma/migrations/ in its own commit, per
+-- prisma/migrations-pending/README.md.
+
+-- AlterTable
+ALTER TABLE "Ad" DROP COLUMN "clicks";
