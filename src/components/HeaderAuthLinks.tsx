@@ -5,11 +5,18 @@ import { useSession } from 'next-auth/react';
 import { useI18n } from '@/components/I18nProvider';
 
 /**
- * Right side of the site header. Signed out: Sign in / Join free. Signed in:
+ * Right side of the site header. Signed out: Sign in / Join Beta. Signed in:
  * a compact account chip (avatar initial + name) so it's always visible that
  * you're logged in — links to Settings.
+ *
+ * `inviteOnly` comes from isInviteCodeRequiredRuntime() in the root layout.
+ * The join CTA reads "Join Beta" only while signup is actually invite-gated
+ * and falls back to "Join free" the moment that flag flips — the same
+ * self-correction the homepage's own primary CTA uses (src/app/page.tsx),
+ * and the reason the row 235-era fix removed hardcoded "beta" copy
+ * elsewhere. Calling the platform a beta after it opens is a stale promise.
  */
-export function HeaderAuthLinks() {
+export function HeaderAuthLinks({ inviteOnly = false }: { inviteOnly?: boolean }) {
   const { data: session, status } = useSession();
   const { t } = useI18n();
 
@@ -97,7 +104,9 @@ export function HeaderAuthLinks() {
         {t('headerAuthLinks.signIn', 'Sign in')}
       </Link>
       <Link href="/register" className="button small nav-join-button">
-        {t('headerAuthLinks.joinFree', 'Join free')}
+        {inviteOnly
+          ? t('headerAuthLinks.joinBeta', 'Join Beta')
+          : t('headerAuthLinks.joinFree', 'Join free')}
       </Link>
     </div>
   );

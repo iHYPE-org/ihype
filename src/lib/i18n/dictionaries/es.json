@@ -1254,6 +1254,7 @@
   "globalMediaPlayer.unmuteShortcut": "Quitar silencio (M)",
   "globalMediaPlayer.volume": "Volumen",
   "headerAuthLinks.account": "Cuenta",
+  "headerAuthLinks.joinBeta": "Únete a la beta",
   "headerAuthLinks.joinFree": "Únete gratis",
   "headerAuthLinks.openSettings": "abrir ajustes",
   "headerAuthLinks.signIn": "Iniciar sesión",

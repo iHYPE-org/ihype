@@ -1249,6 +1249,7 @@
   "globalMediaPlayer.unmuteShortcut": "取消静音（M）",
   "globalMediaPlayer.volume": "音量",
   "headerAuthLinks.account": "账户",
+  "headerAuthLinks.joinBeta": "加入内测",
   "headerAuthLinks.joinFree": "免费加入",
   "headerAuthLinks.openSettings": "打开设置",
   "headerAuthLinks.signIn": "登录",

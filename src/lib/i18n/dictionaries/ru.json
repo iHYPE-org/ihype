@@ -1254,6 +1254,7 @@
   "globalMediaPlayer.unmuteShortcut": "Включить звук (M)",
   "globalMediaPlayer.volume": "Громкость",
   "headerAuthLinks.account": "Аккаунт",
+  "headerAuthLinks.joinBeta": "В бету",
   "headerAuthLinks.joinFree": "Присоединиться бесплатно",
   "headerAuthLinks.openSettings": "открыть настройки",
   "headerAuthLinks.signIn": "Войти",

@@ -20,6 +20,7 @@ import { MobileShellProvider } from '@/lib/MobileShellContext';
 import { MobileAppShellLoader } from '@/components/MobileAppShellLoader';
 import { AppSplash } from '@/components/AppSplash';
 import { getServerT } from '@/lib/i18n/server';
+import { isInviteCodeRequiredRuntime } from '@/lib/runtime-flags';
 
 const syne = Syne({ subsets: ['latin'], weight: ['700', '800'], variable: '--font-syne', display: 'swap' });
 const dmSans = DM_Sans({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-dm', display: 'swap' });
@@ -63,6 +64,11 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const nonce = await getCspNonce();
   const t = await getServerT();
+  // Drives the header join CTA's "Join Beta" vs "Join free" copy. Read here
+  // rather than in HeaderAuthLinks because that is a client component and this
+  // flag lives in KV. One extra KV read per render, alongside the nonce and
+  // dictionary reads this layout already does.
+  const inviteOnly = await isInviteCodeRequiredRuntime();
   return (
     <html lang="en" suppressHydrationWarning className={`${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} ${forum.variable}`}>
       <body>
@@ -86,7 +92,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
                   <SearchBar />
-                  <HeaderAuthLinks />
+                  <HeaderAuthLinks inviteOnly={inviteOnly} />
                 </div>
               </div>
             </header>
