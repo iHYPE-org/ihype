@@ -41,6 +41,7 @@
  */
 
 import { spawnSync } from 'node:child_process';
+import pg from 'pg';
 
 const migrationName = process.argv[2]?.trim();
 
@@ -69,48 +70,47 @@ const statusText = `${status.stdout ?? ''}${status.stderr ?? ''}`;
 console.log(statusText.trim());
 
 /**
- * `migrate status` exits non-zero whenever anything is off — including the
- * ordinary "migrations not yet applied" case — so the exit code is not the
- * signal. Parse the names instead. Prisma states this two different ways
- * depending on the command, and both were confirmed against a real Postgres
- * reproducing this exact failure:
+ * The failed set comes from `_prisma_migrations` directly, not from parsing
+ * `migrate status`.
  *
- *   migrate status:  Following migration have failed:
- *                    <name>
- *                    <name>
+ * The first version of this script did parse that output, and it was wrong in
+ * exactly the situation it exists for. `migrate status` prints a
+ * "Following migration have failed:" block only when nothing else is
+ * outstanding — when unapplied migrations ALSO exist (the normal case while a
+ * failed row is blocking deploys, since work keeps merging behind it) it
+ * reports just "Following migrations have not yet been applied" and never
+ * mentions the failure at all. The guard therefore refused a legitimate
+ * recovery on the first real run.
  *
- *   migrate deploy:  The `<name>` migration started at <ts> failed
- *
- * (The "migration have" grammar is Prisma's, and it varies by version — hence
- * the tolerant `migrations?` match.)
+ * The table is unambiguous and version-independent: a migration is failed
+ * exactly when it has a row with finished_at IS NULL and no rolled_back_at.
+ * That is the same condition Prisma itself uses to raise P3009.
  */
-function collectFailedMigrations(text) {
-  const failed = new Set();
-
-  const block = text.match(/Following migrations? have failed:\s*\n([\s\S]*?)\n\s*\n/i);
-  if (block) {
-    for (const line of block[1].split('\n')) {
-      const name = line.trim();
-      if (name) failed.add(name);
-    }
+async function collectFailedMigrations() {
+  const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
+  await client.connect();
+  try {
+    const { rows } = await client.query(
+      `SELECT migration_name
+         FROM _prisma_migrations
+        WHERE finished_at IS NULL
+          AND rolled_back_at IS NULL`
+    );
+    return new Set(rows.map((r) => r.migration_name));
+  } finally {
+    await client.end();
   }
-
-  for (const m of text.matchAll(/The `([^`]+)` migration started at [^\n]*failed/g)) {
-    failed.add(m[1]);
-  }
-
-  return failed;
 }
 
-const failedMigrations = collectFailedMigrations(statusText);
+const failedMigrations = await collectFailedMigrations();
 const failedHere = failedMigrations.has(migrationName);
 
 if (!failedHere) {
   console.error(`\nRefusing to resolve: "${migrationName}" is not reported as failed above.`);
   console.error(
     failedMigrations.size > 0
-      ? `Prisma reports these as failed: ${[...failedMigrations].join(', ')}`
-      : 'Prisma reports no failed migrations at all — there is nothing to recover.'
+      ? `_prisma_migrations reports these as failed: ${[...failedMigrations].join(', ')}`
+      : '_prisma_migrations holds no failed rows at all — there is nothing to recover.'
   );
   console.error('This script only recovers a migration that Prisma itself says is stuck.');
   console.error('Marking a migration applied when it is not would silently skip its DDL forever.');
