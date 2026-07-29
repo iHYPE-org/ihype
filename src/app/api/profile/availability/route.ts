@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
+import { log } from '@/lib/logger';
 
 // GET ?profileId=xxx — public, returns future dates
 export async function GET(request: NextRequest) {
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ dates });
   } catch (err) {
-    console.error('[api/profile/availability] error', err);
+    log.error('[api/profile/availability]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ date: entry }, { status: 201 });
   } catch (err) {
-    console.error('[api/profile/availability] error', err);
+    log.error('[api/profile/availability]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -89,7 +90,7 @@ export async function DELETE(request: NextRequest) {
     await db.availabilityDate.delete({ where: { id: parsed.data.id } });
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error('[api/profile/availability] error', err);
+    log.error('[api/profile/availability]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

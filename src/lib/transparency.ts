@@ -1,6 +1,7 @@
 import { db, withDbRetry } from '@/lib/db';
 import { FEED_HEURISTICS_VERSION, feedHeuristicsLedger } from '@/lib/integrity';
 import { unstable_cache } from 'next/cache';
+import { log } from '@/lib/logger';
 
 const getTransparencySnapshotCached = unstable_cache(
   async () => {
@@ -107,7 +108,7 @@ const getTransparencySnapshotCached = unstable_cache(
         ]
       };
     } catch (error) {
-      console.error('Falling back to empty transparency snapshot', error);
+      log.error('[transparency]', error instanceof Error ? error : { error: String(error) }, 'falling back to empty snapshot');
 
       return {
         generatedAt: new Date().toISOString(),

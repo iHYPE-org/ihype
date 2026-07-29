@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getDemoProfileRelationExclusion } from '@/lib/runtime-flags';
+import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -78,7 +79,7 @@ export async function GET(request: Request) {
       limit
     });
   } catch (err) {
-    console.error('[api/artist-media/free-use] error', err);
+    log.error('[api/artist-media/free-use]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

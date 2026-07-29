@@ -12,6 +12,7 @@ import {
 } from '@/lib/passkey-bootstrap';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
+import { log } from '@/lib/logger';
 
 class PasskeyAlreadyRegisteredError extends Error {}
 
@@ -122,7 +123,7 @@ export async function POST(request: Request) {
       record.challenge,
     );
   } catch (error) {
-    console.error('[passkey/register-first] verification threw:', error);
+    log.error('[passkey/register-first]', error instanceof Error ? error : { error: String(error) }, 'verification threw');
     verified = null;
   }
   if (!verified) {
@@ -167,7 +168,7 @@ export async function POST(request: Request) {
         NextResponse.json({ error: 'Passkey already registered. Please sign in instead.' }, { status: 403 }),
       );
     }
-    console.error('[passkey/register-first] persistence failed:', error);
+    log.error('[passkey/register-first]', error instanceof Error ? error : { error: String(error) }, 'persistence failed');
     return NextResponse.json({ error: 'Could not save this passkey.' }, { status: 500 });
   }
 

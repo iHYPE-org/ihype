@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
 import { requireRecentAdminReauth } from '@/lib/admin-confirmation';
+import { log } from '@/lib/logger';
 
 /**
  * Takes real enforcement action against the flagged content, keyed by
@@ -81,7 +82,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     await db.contentReport.update({ where: { id }, data: { status: action === 'approve' ? 'ACTIONED' : 'DISMISSED' } });
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error('[api/admin/moderation] error', err);
+    log.error('[api/admin/moderation]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -8,6 +8,7 @@ import {
 } from '@/lib/passkey-bootstrap';
 import { readClientAddress } from '@/lib/request-meta';
 import { verifyBearerToken } from '@/lib/secret-compare';
+import { log } from '@/lib/logger';
 
 export async function POST(request: Request) {
   try {
@@ -105,7 +106,7 @@ export async function POST(request: Request) {
     response.cookies.delete('pk_reg_first_challenge');
     return response;
   } catch (error) {
-    console.error('[api/admin/setup] error', error);
+    log.error('[api/admin/setup]', error instanceof Error ? error : { error: String(error) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db, withDbRetry } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
+import { log } from '@/lib/logger';
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -39,7 +40,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ reordered: true });
   } catch (error) {
-    console.error('Artist media reorder failed', error);
+    log.error('[api/artist-media/reorder]', error instanceof Error ? error : { error: String(error) }, 'reorder failed');
     return NextResponse.json({ error: 'Could not reorder tracks.' }, { status: 500 });
   }
 }

@@ -5,6 +5,7 @@ import { markAdminReauth } from '@/lib/admin-confirmation';
 import { isAdminSession } from '@/lib/permissions';
 import { recordAuditEvent } from '@/lib/audit';
 import { readClientAddress } from '@/lib/request-meta';
+import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,7 +29,7 @@ export async function GET() {
     });
     return resp;
   } catch (err) {
-    console.error('[api/admin/reauth] error', err);
+    log.error('[api/admin/reauth]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest) {
     });
     return resp({ ok: true });
   } catch (err) {
-    console.error('[api/admin/reauth] error', err);
+    log.error('[api/admin/reauth]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

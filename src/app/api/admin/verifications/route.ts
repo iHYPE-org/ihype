@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
+import { log } from '@/lib/logger';
 
 /**
  * GET /api/admin/verifications
@@ -51,7 +52,7 @@ export async function GET() {
 
     return NextResponse.json({ profiles });
   } catch (err) {
-    console.error('[api/admin/verifications] error', err);
+    log.error('[api/admin/verifications]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

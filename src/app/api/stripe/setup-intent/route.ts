@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getOrCreateStripeCustomer, getStripe, isStripeConfigured } from '@/lib/stripe';
+import { log } from '@/lib/logger';
 
 /**
  * POST /api/stripe/setup-intent
@@ -57,7 +58,7 @@ export async function POST() {
 
     return NextResponse.json({ clientSecret: setupIntent.client_secret });
   } catch (err) {
-    console.error('[api/stripe/setup-intent] error', err);
+    log.error('[api/stripe/setup-intent]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

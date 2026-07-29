@@ -1,5 +1,6 @@
 import { runAI, runTranscription } from '@/lib/ai';
 import { identifyAudio } from '@/lib/acrcloud';
+import { log } from '@/lib/logger';
 
 export interface AdData {
   advertiserName: string;
@@ -120,7 +121,7 @@ Respond ONLY in valid JSON with exactly these keys:
       requiresManualReview: !!result.requiresManualReview,
     };
   } catch (error) {
-    console.error('[ad-vetting] AI vetting failure:', error);
+    log.error('[ad-vetting]', error instanceof Error ? error : { error: String(error) }, 'AI vetting failure');
     return {
       isApproved: false,
       reasoning: 'Vetting system error. Routing to manual review queue.',

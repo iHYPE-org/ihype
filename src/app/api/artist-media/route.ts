@@ -15,6 +15,7 @@ import { vetImageUpload } from '@/lib/image-vetting';
 import { recordAuditEvent } from '@/lib/audit';
 import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
+import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -321,7 +322,7 @@ export async function POST(request: Request) {
     } catch (error) {
       if (storedMedia?.key) {
         await deleteArtistMediaFromBlob(storedMedia.key).catch((cleanupError) => {
-          console.error('[artist-media] failed to remove orphaned R2 object', cleanupError);
+          log.error('[artist-media]', cleanupError instanceof Error ? cleanupError : { error: String(cleanupError) }, 'failed to remove orphaned R2 object');
         });
       }
       if (reservedAssetId) {
@@ -336,7 +337,7 @@ export async function POST(request: Request) {
             });
           }
         }).catch((cleanupError) => {
-          console.error('[artist-media] failed to release upload reservation', cleanupError);
+          log.error('[artist-media]', cleanupError instanceof Error ? cleanupError : { error: String(cleanupError) }, 'failed to release upload reservation');
         });
       }
       throw error;
@@ -394,7 +395,7 @@ export async function POST(request: Request) {
     if (error instanceof MediaQuotaError) {
       return NextResponse.json({ error: error.message }, { status: 413 });
     }
-    console.error('Artist media upload failed', error);
+    log.error('[api/artist-media]', error instanceof Error ? error : { error: String(error) }, 'upload failed');
     return NextResponse.json({ error: 'Could not upload this media item.' }, { status: 500 });
   }
 }

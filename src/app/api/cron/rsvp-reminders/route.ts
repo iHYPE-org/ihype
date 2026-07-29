@@ -3,6 +3,7 @@ import { isCronRequestAuthorized } from '@/lib/cron-auth';
 import { db } from '@/lib/db';
 import { sendPushNotification } from '@/lib/push-notify';
 import { sendOperationalEmail } from '@/lib/mailer';
+import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -191,7 +192,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ ok: true, sent24h: sent24, sent1h: sent1 });
   } catch (err) {
-    console.error('[cron/rsvp-reminders] error', err);
+    log.error('[cron/rsvp-reminders]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

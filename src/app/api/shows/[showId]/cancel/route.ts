@@ -6,6 +6,7 @@ import { canManageOwnedResource } from '@/lib/permissions';
 import { notifyUser } from '@/lib/notify';
 import { cancelTicketPaymentIntent, refundTicketPaymentIntent } from '@/lib/stripe';
 import { refundCapturedTicketOrder, voidReservedTicketOrder } from '@/lib/ticket-order-state';
+import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -141,7 +142,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
         });
       }
     } catch (error) {
-      console.error('[shows/cancel] refund failed for order', order.id, error);
+      log.error('[shows/cancel]', error instanceof Error ? error : { error: String(error) }, `refund failed for order ${order.id}`);
       failed += 1;
     }
   }

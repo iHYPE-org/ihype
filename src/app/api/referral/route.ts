@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getBaseUrl } from '@/lib/utils';
+import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -91,7 +92,7 @@ export async function GET() {
 
     return NextResponse.json({ referralLink, referralCount, referrals, shareText, artistLink, venueLink, djLink });
   } catch (err) {
-    console.error('[api/referral] error', err);
+    log.error('[api/referral]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

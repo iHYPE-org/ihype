@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -86,7 +87,7 @@ export async function GET() {
       profiles: profiles.map((p) => ({ id: p.id, hexId: p.hexId, name: p.name, type: p.type }))
     });
   } catch (err) {
-    console.error('[api/referrals/stats] error', err);
+    log.error('[api/referrals/stats]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

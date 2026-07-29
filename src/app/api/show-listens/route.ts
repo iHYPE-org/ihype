@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { log } from '@/lib/logger';
 
 const schema = z.object({
   showId: z.string().min(1).max(128),
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ recorded: true });
   } catch (err) {
-    console.error('[show-listens]', err);
+    log.error('[show-listens]', err instanceof Error ? err : { error: String(err) });
     return NextResponse.json({ error: 'Invalid show listen payload' }, { status: 400 });
   }
 }

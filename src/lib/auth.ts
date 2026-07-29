@@ -12,6 +12,7 @@ import NextAuth from 'next-auth';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import { db } from '@/lib/db';
 import { authConfig } from '@/lib/auth.config';
+import { log } from '@/lib/logger';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
@@ -29,7 +30,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           if (!dbUser) return null;
           token.securityVersion = dbUser.userSecurityVersion;
         } catch (err) {
-          console.error('[auth] Unable to read user security version during sign-in:', err);
+          log.error('[auth]', err instanceof Error ? err : { error: String(err) }, 'Unable to read user security version during sign-in');
           return null;
         }
       } else if (token.sub) {
@@ -42,7 +43,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           });
           if (!dbUser || dbUser.userSecurityVersion !== (token.securityVersion ?? 0)) return null;
         } catch (err) {
-          console.error('[auth] Unable to validate user security version:', err);
+          log.error('[auth]', err instanceof Error ? err : { error: String(err) }, 'Unable to validate user security version');
           return null;
         }
       }

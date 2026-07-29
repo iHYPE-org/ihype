@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
+import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const count = await db.showRsvp.count({ where: { showId: show.id } });
     return NextResponse.json({ going: !existing, count });
   } catch (err) {
-    console.error('[api/shows/[showId]/rsvp] error', err);
+    log.error('[api/shows/[showId]', err instanceof Error ? err : { error: String(err) }, '/rsvp] error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ going: Boolean(rsvp), count });
   } catch (err) {
-    console.error('[api/shows/[showId]/rsvp] error', err);
+    log.error('[api/shows/[showId]', err instanceof Error ? err : { error: String(err) }, '/rsvp] error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

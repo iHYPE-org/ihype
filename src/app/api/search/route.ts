@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { consumeRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
+import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -184,7 +185,7 @@ export async function GET(request: NextRequest) {
     headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' }
   });
   } catch (err) {
-    console.error('[api/search] error', err);
+    log.error('[api/search]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

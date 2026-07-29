@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
+import { log } from '@/lib/logger';
 
 const supportSchema = z.object({
   type: z.enum(['login', 'verification', 'copyright', 'ticketing', 'safety', 'privacy', 'general']),
@@ -86,7 +87,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.issues[0]?.message ?? 'Invalid support request.' }, { status: 400 });
     }
 
-    console.error('Support request failed', error);
+    log.error('[api/support]', error instanceof Error ? error : { error: String(error) }, 'support request failed');
     return NextResponse.json({ error: 'Could not send support request.' }, { status: 500 });
   }
 }

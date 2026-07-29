@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
+import { log } from '@/lib/logger';
 
 const schema = z.object({
   resalePriceCents: z.coerce.number().int().positive(),
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     return NextResponse.json({ ok: true, message: 'Ticket listed for resale. Buyers will be notified.' });
   } catch (err) {
-    console.error('[api/tickets/[serializedId]/list-resale] error', err);
+    log.error('[api/tickets/[serializedId]', err instanceof Error ? err : { error: String(err) }, '/list-resale] error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

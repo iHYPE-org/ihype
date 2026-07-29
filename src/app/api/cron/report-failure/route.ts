@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isCronRequestAuthorized } from '@/lib/cron-auth';
 import { ADMIN_EMAIL } from '@/lib/env';
 import { kvDel, kvGet, kvIncr, kvPut } from '@/lib/kv';
+import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
           text: `The cron job ${path} has failed ${streak} consecutive times (latest status: ${status}).\n\nCheck the worker logs and the route handler. This alert will not repeat for 24h or until the job succeeds.`,
           html: `<p>The cron job <strong>${path}</strong> has failed <strong>${streak}</strong> consecutive times (latest status: ${status}).</p><p>Check the worker logs and the route handler. This alert will not repeat for 24h or until the job succeeds.</p>`
         }).catch((err) => {
-          console.error('[cron/report-failure] alert email failed', err);
+          log.error('[cron/report-failure]', err instanceof Error ? err : { error: String(err) }, 'alert email failed');
         });
         await kvPut(alertedKey, Date.now(), { ex: FAIL_TTL });
       }
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true, streak });
   } catch (err) {
-    console.error('[cron/report-failure] error', err);
+    log.error('[cron/report-failure]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

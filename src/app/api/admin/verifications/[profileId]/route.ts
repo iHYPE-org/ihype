@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
 import { requireRecentAdminReauth } from '@/lib/admin-confirmation';
+import { log } from '@/lib/logger';
 
 const schema = z.object({
   decision: z.enum(['VERIFIED', 'REJECTED']),
@@ -34,7 +35,7 @@ export async function PATCH(
   try {
     body = schema.parse(await request.json());
   } catch (err) {
-    console.error('[admin/verifications/[profileId]]', err);
+    log.error('[admin/verifications/[profileId]', err instanceof Error ? err : { error: String(err) }, ']');
     return NextResponse.json({ error: 'Invalid request.' }, { status: 400 });
   }
 

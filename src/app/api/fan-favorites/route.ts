@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { log } from '@/lib/logger';
 
 const favoriteSchema = z.object({
   mediaId: z.string().trim().min(1),
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(favorite, { status: 201 });
   } catch (err) {
-    console.error('[fan-favorites]', err);
+    log.error('[fan-favorites]', err instanceof Error ? err : { error: String(err) });
     return NextResponse.json({ error: 'Invalid loved-media payload' }, { status: 400 });
   }
 }
@@ -87,7 +88,7 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error('[fan-favorites]', err);
+    log.error('[fan-favorites]', err instanceof Error ? err : { error: String(err) });
     return NextResponse.json({ error: 'Invalid loved-media payload' }, { status: 400 });
   }
 }

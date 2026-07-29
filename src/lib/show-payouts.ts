@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
 import { ADMIN_EMAIL } from '@/lib/env';
 import { createPayoutTransfer, isStripeConfigured } from '@/lib/stripe';
+import { log } from '@/lib/logger';
 
 // Only these three categories are ever paid out via a Stripe Connect
 // transfer — tax entries (TAX_LOCAL/STATE/COUNTRY/INTERNATIONAL) have no
@@ -76,7 +77,7 @@ export async function triggerShowPayouts(): Promise<{ released: number; skipped:
 
       released++;
     } catch (error) {
-      console.error('[show-payouts] transfer failed', entry.id, error);
+      log.error('[show-payouts]', error instanceof Error ? error : { error: String(error) }, `transfer failed for entry ${entry.id}`);
       await sendGenericEmail({
         to: ADMIN_EMAIL,
         subject: `[iHYPE] Payout transfer failed: ${entry.show.title}`,

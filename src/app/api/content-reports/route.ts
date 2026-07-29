@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { readClientAddress } from '@/lib/request-meta';
 import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
+import { log } from '@/lib/logger';
 
 const reportSchema = z.object({
   targetType: z.enum(['profile', 'show', 'media', 'ticket']),
@@ -68,7 +69,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.issues[0]?.message ?? 'Invalid report.' }, { status: 400 });
     }
 
-    console.error('Content report failed', error);
+    log.error('[api/content-reports]', error instanceof Error ? error : { error: String(error) }, 'content report failed');
     return NextResponse.json({ error: 'Could not submit report.' }, { status: 500 });
   }
 }

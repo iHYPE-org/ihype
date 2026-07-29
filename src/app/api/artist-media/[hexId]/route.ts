@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db, withDbRetry } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
+import { log } from '@/lib/logger';
 
 export async function PATCH(
   request: Request,
@@ -46,7 +47,7 @@ export async function PATCH(
 
     return NextResponse.json(updated);
   } catch (error) {
-    console.error('Artist media patch failed', error);
+    log.error('[api/artist-media/[hexId]]', error instanceof Error ? error : { error: String(error) }, 'patch failed');
     return NextResponse.json({ error: 'Could not update track.' }, { status: 500 });
   }
 }
@@ -99,7 +100,7 @@ export async function DELETE(
 
     return NextResponse.json({ deleted: true, hexId });
   } catch (error) {
-    console.error('Artist media delete failed', error);
+    log.error('[api/artist-media/[hexId]]', error instanceof Error ? error : { error: String(error) }, 'delete failed');
     return NextResponse.json({ error: 'Could not remove this upload.' }, { status: 500 });
   }
 }

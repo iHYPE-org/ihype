@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { hasRuntimeEnvContext, readRuntimeEnv, runtimeEnvSource } from '@/lib/runtime-env';
+import { log } from '@/lib/logger';
 
 // Treat empty strings the same as undefined for optional env vars.
 const blank = (v: string | undefined) => (v && v.length > 0 ? v : undefined);
@@ -65,7 +66,7 @@ export const env = new Proxy({} as Env, {
       try {
         parsed = envSchema.parse(source);
       } catch (e) {
-        console.error('[env] Invalid server configuration:', e);
+        log.error('[env]', e instanceof Error ? e : { error: String(e) }, 'Invalid server configuration');
         throw new Error('Server misconfiguration.');
       }
 

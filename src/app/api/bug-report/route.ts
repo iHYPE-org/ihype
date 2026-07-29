@@ -3,6 +3,7 @@ import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { recordAuditEvent } from '@/lib/audit';
 import { auth } from '@/lib/auth';
+import { log } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest) {
     await recordAuditEvent({ actorUserId: session?.user?.id, action: 'bug_report', entityType: 'bug_report', ipAddress: ip, metadata: { description: description.trim(), url, errors, viewport } });
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error('[api/bug-report] error', err);
+    log.error('[api/bug-report]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdminApi } from '@/lib/admin-api';
 import { sendGenericEmail } from '@/lib/mailer';
+import { log } from '@/lib/logger';
 
 export async function GET() {
   try {
@@ -34,7 +35,7 @@ export async function GET() {
 
     return NextResponse.json({ sent: true, to });
   } catch (err) {
-    console.error('[api/admin/test-email] error', err);
+    log.error('[api/admin/test-email]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

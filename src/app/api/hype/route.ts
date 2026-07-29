@@ -9,6 +9,7 @@ import { checkAndAwardBadges } from '@/lib/badges';
 import { getBaseUrl } from '@/lib/utils';
 import { sendPushNotification } from '@/lib/push-notify';
 import { notifyUser } from '@/lib/notify';
+import { log } from '@/lib/logger';
 
 const HYPE_MILESTONES = [10, 50, 100, 500, 1000];
 const SHOW_HYPE_MILESTONES = [10, 25, 50, 100, 250, 500];
@@ -314,7 +315,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ action: 'hyped', hypeCount: updatedProfile.hypeCount });
   } catch (err) {
-    console.error('[hype]', err);
+    log.error('[hype]', err instanceof Error ? err : { error: String(err) });
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { log } from '@/lib/logger';
 
 const createPlaylistSchema = z.object({
   name: z.string().trim().min(1).max(60)
@@ -96,7 +97,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(playlist, { status: 201 });
   } catch (err) {
-    console.error('[fan-playlists]', err);
+    log.error('[fan-playlists]', err instanceof Error ? err : { error: String(err) });
     return NextResponse.json({ error: 'Invalid playlist payload' }, { status: 400 });
   }
 }

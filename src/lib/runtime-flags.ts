@@ -1,4 +1,5 @@
 import { kvGet } from '@/lib/kv';
+import { log } from '@/lib/logger';
 
 function parseBooleanFlag(value: unknown, defaultValue: boolean) {
   if (value == null) return defaultValue;
@@ -29,7 +30,7 @@ async function readRuntimeOverride(key: RuntimeFlagKey) {
     if (value == null) return null;
     return parseBooleanFlag(value, false);
   } catch (error) {
-    console.error('Runtime flag read failed', error);
+    log.error('[runtime-flags]', error instanceof Error ? error : { error: String(error) }, 'flag read failed');
     return null;
   }
 }
@@ -65,8 +66,10 @@ function getConfiguredInviteCodes() {
 
   const strongCodes = codes.filter(isStrongInviteCode);
   if (strongCodes.length !== codes.length) {
-    console.error(
-      '[invite-codes] Ignoring weak production invite codes. Use at least 16 random characters per code.',
+    log.error(
+      '[invite-codes]',
+      { rejected: codes.length - strongCodes.length },
+      'ignoring weak production invite codes; use at least 16 random characters per code',
     );
   }
   return strongCodes;
