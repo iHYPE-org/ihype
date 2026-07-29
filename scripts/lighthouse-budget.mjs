@@ -88,20 +88,26 @@ import {
 // twice — which is a budget set exactly at a page's median, not a flake. Two
 // consecutive CI runs (median of 5, GitHub-hosted runner):
 //
-//     page        run 1                     run 2
-//     /           0.76 4441ms 0.003 378ms   0.71 4573ms 0.000 474ms
-//     /login      0.75 4474ms 0.000 403ms   0.79 4486ms 0.000 281ms
-//     /info       0.74 (over budget)        0.74 (over budget)
-//     /discover   0.74 4282ms 0.000 458ms   0.79 4113ms 0.000 354ms
-//     /shows      0.78 4264ms 0.000 360ms   0.79 4168ms 0.000 288ms
+//     page        run 1                     run 2                     run 3
+//     /           0.76 4441ms 0.003 378ms   0.71 4573ms 0.000 474ms   0.84 4139ms 0.000 178ms
+//     /login      0.75 4474ms 0.000 403ms   0.79 4486ms 0.000 281ms   0.81 4290ms 0.000 242ms
+//     /info       0.74 (over budget)        0.74 (over budget)        0.79 4390ms 0.000 263ms
+//     /discover   0.74 4282ms 0.000 458ms   0.79 4113ms 0.000 354ms   0.83 4013ms 0.000 226ms
+//     /shows      0.78 4264ms 0.000 360ms   0.79 4168ms 0.000 288ms   0.85 4059ms 0.000 180ms
 //
 // '/info' inherited 0.75 from '/about' when that page was retired into it, and
 // that was the mistake: '/about' was thin marketing prose, while '/info' is a
-// six-panel hub with a client tab strip and two live Prisma aggregates. It
-// belongs in the data-backed tier ('/discover', '/shows'), so it now carries
-// that tier's budget rather than a marketing page's. Note only its failing
-// metric was ever logged — LCP/CLS/TBT for '/info' are still unmeasured, which
-// is exactly what the job-summary table added below fixes.
+// six-panel hub with a client tab strip and two live Prisma aggregates. Run 3
+// is the first time its LCP/CLS/TBT were ever recorded — before the job-summary
+// table below, a failing page logged only the metric that broke — and they land
+// squarely between '/discover' and '/shows'. Its score range across the three
+// runs (0.74-0.79) is theirs too. It belongs in the data-backed tier, so it now
+// carries that tier's budget rather than a marketing page's.
+//
+// Run 3 landed on a much quieter runner: every page scored 0.79-0.85, above the
+// best value either earlier run produced. Calibrate against runs 1-2, not this
+// one — the floor is what a budget has to clear, and a fast runner does not
+// raise it.
 //
 // '/' went the other way. It was a nine-section marketing page when its
 // budget was set; it is now a single non-scrolling screen, and it measures
