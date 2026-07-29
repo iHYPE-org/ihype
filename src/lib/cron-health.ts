@@ -11,7 +11,8 @@ export async function pingCronAlive(jobName: string, ttlSeconds = DAILY_TTL): Pr
 
 export async function checkCronHealth(): Promise<{ stale: string[] }> {
   const jobs = [
-    'digest', 'show-reminders', 'db-health', 'new-to-scene',
+    'digest', 'show-reminders', 'db-health', 'new-to-scene', 'workbench-digest',
+    'held-track-notice',
     'onboarding', 'feature-shows', 'stripe-connect-health',
     'artist-onboarding', 'show-payouts', 'ad-settlement', 'close-stale-bookings',
     'weekly-picks', 'follow-digest', 'audit-log-rotate',

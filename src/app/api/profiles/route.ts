@@ -78,7 +78,9 @@ export async function POST(request: Request) {
         name: trimmedName,
         ownerId: session.user.id,
         verificationStatus: getVerificationStatusForType(profileType),
-        verificationSubmittedAt: new Date(),
+        // Not stamped here either — see the note in POST /api/register. This
+        // field means "a submission arrived"; only POST /api/verify sets it.
+        verificationSubmittedAt: null,
         ...getProfileCopy(profileType, trimmedName),
       },
       select: { id: true, slug: true, name: true, type: true, hexId: true },

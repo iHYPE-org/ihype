@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isCronRequestAuthorized } from '@/lib/cron-auth';
-import { ADMIN_EMAIL } from '@/lib/env';
+import { getAdminAlertRecipients } from '@/lib/env';
 import { kvDel, kvGet, kvIncr, kvPut } from '@/lib/kv';
 import { log } from '@/lib/logger';
 
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
         const status = typeof body?.status === 'number' ? body.status : 'unknown';
         const { sendGenericEmail } = await import('@/lib/mailer');
         await sendGenericEmail({
-          to: ADMIN_EMAIL,
+          to: getAdminAlertRecipients(),
           subject: `[iHYPE] Cron job failing: ${path}`,
           text: `The cron job ${path} has failed ${streak} consecutive times (latest status: ${status}).\n\nCheck the worker logs and the route handler. This alert will not repeat for 24h or until the job succeeds.`,
           html: `<p>The cron job <strong>${path}</strong> has failed <strong>${streak}</strong> consecutive times (latest status: ${status}).</p><p>Check the worker logs and the route handler. This alert will not repeat for 24h or until the job succeeds.</p>`

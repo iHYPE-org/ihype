@@ -32,7 +32,10 @@ export function DJOnboardingWizard({
   const { t } = useI18n();
   // Already verified/pending DJs land straight on a status screen instead of
   // re-running a wizard whose steps 1/2 would just re-save the same fields.
-  const [step, setStep] = useState(initialVerificationStatus === 'PENDING' || initialVerificationStatus === 'VERIFIED' ? 4 : 0);
+  // Only VERIFIED skips the wizard. It used to skip on PENDING as well, and
+  // registration stamped every new DJ PENDING before anything was submitted,
+  // so a brand-new DJ landed on the done screen and never saw a step of this.
+  const [step, setStep] = useState(initialVerificationStatus === 'VERIFIED' ? 4 : 0);
   const [name, setName] = useState(initialName);
   const [city, setCity] = useState(initialCity);
   const [genre, setGenre] = useState(initialGenre);
@@ -49,6 +52,7 @@ export function DJOnboardingWizard({
   const [submitState, setSubmitState] = useState<'idle' | 'submitted' | 'already' | 'error'>(
     initialVerificationStatus === 'PENDING' ? 'submitted' : initialVerificationStatus === 'VERIFIED' ? 'already' : 'idle'
   );
+  const [proofFile, setProofFile] = useState<File | null>(null);
 
   // Step 4 renders three different things. A failed submission is still
   // sitting on the verification step behind a "Try again" button, so only the
@@ -114,6 +118,7 @@ export function DJOnboardingWizard({
       form.set('city', city.trim());
       if (genre) form.set('genres', genre);
       if (link.trim()) form.set('link', link.trim());
+      if (proofFile) form.set('file', proofFile);
       const res = await fetch('/api/verify', { method: 'POST', body: form });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -235,8 +240,33 @@ export function DJOnboardingWizard({
             <div className="djo-card-eyebrow">{t('djOnboardingWizard.proofEyebrow', 'What counts as proof')}</div>
             <div className="djo-card-body">{t('djOnboardingWizard.proofBody', 'A SoundCloud or Mixcloud profile with at least one public mix · A past event poster or booking confirmation · Social media profile showing DJ work')}</div>
           </div>
+          {/* The proof card above described what counts as evidence and this
+              step collected none of it — the submission was name and city.
+              The link carries over from step 1 and is editable here, because
+              for a DJ a public mix page is usually the stronger proof. */}
+          <label className="djo-label" htmlFor="dj-proof-link">{t('djOnboardingWizard.proofLinkLabel', 'SoundCloud, Mixcloud, or website')}</label>
+          <input
+            className="djo-input"
+            id="dj-proof-link"
+            inputMode="url"
+            onChange={(e) => setLink(e.target.value)}
+            placeholder="https://"
+            value={link}
+          />
+
+          <label className="djo-label" htmlFor="dj-proof-file" style={{ marginTop: 14 }}>{t('djOnboardingWizard.proofFileLabel', 'Or attach a document (JPEG, PNG or PDF, max 8 MB)')}</label>
+          <input
+            accept="image/jpeg,image/png,application/pdf"
+            className="djo-input"
+            id="dj-proof-file"
+            onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
+            type="file"
+          />
+
+          <p className="djo-proof-hint">{t('djOnboardingWizard.proofHint', 'One of the two is enough — whichever shows this is you.')}</p>
+
           <div className="djo-actions">
-            <button className="djo-btn djo-btn-solid" disabled={saving} onClick={submitVerification}>
+            <button className="djo-btn djo-btn-solid" disabled={saving || (!proofFile && !link.trim())} onClick={submitVerification}>
               {saving ? t('djOnboardingWizard.submitting', 'Submitting…') : t('djOnboardingWizard.submitForReview', 'Submit for review →')}
             </button>
             <button className="djo-btn djo-btn-outline" disabled={saving} onClick={() => setStep(2)}>{t('djOnboardingWizard.back', 'Back')}</button>
@@ -286,6 +316,7 @@ export function DJOnboardingWizard({
         .djo-h1 { font-family: var(--font-display); font-weight: 800; font-size: 27px; letter-spacing: -.03em; margin-bottom: 8px; }
         .djo-sub { font-size: 14px; color: var(--ink-a55); line-height: 1.65; margin: 0 0 24px; }
         .djo-field { display: block; margin-bottom: 14px; }
+        .djo-proof-hint { font-size: 12.5px; color: var(--ink-a50); line-height: 1.55; margin: 10px 0 0; }
         .djo-label { display: block; font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-a50); margin-bottom: 6px; }
         .djo-input { width: 100%; box-sizing: border-box; min-height: 44px; padding: 10px 14px; border-radius: var(--radius-md); border: 1px solid var(--line-2); background: var(--bg2); color: var(--ink); font-size: 14px; font-family: inherit; }
         .djo-crate-label { margin-top: 20px; margin-bottom: 4px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-a50); }

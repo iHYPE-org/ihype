@@ -283,3 +283,72 @@
   border-color: rgba(255,80,41,.3);
   color: #ffd0c2;
 }
+
+/* ── Workbench ─────────────────────────────────────────────────────────
+   The "what needs me today" board at the top of /admin. Cards are links,
+   so the whole tile is the target rather than a small chevron. */
+.admin-workbench-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.admin-workbench-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 10px;
+}
+.admin-workbench-card {
+  display: block;
+  padding: 14px 16px;
+  border: 1px solid var(--hair-70);
+  border-radius: 14px;
+  background: var(--hair-30);
+  color: inherit;
+  text-decoration: none;
+  transition: background .18s ease, border-color .18s ease, transform .18s ease;
+}
+.admin-workbench-card:hover { background: var(--hair-50); border-color: var(--hair-100); transform: translateY(-1px); }
+.admin-workbench-card-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.admin-workbench-count {
+  font-family: var(--font-display, 'Syne', sans-serif);
+  font-weight: 800;
+  font-size: 1.7rem;
+  line-height: 1;
+  letter-spacing: -.03em;
+  color: var(--ink);
+}
+.admin-workbench-age {
+  font-family: var(--font-mono, monospace);
+  font-size: .68rem;
+  letter-spacing: .06em;
+  color: var(--ink-a50);
+}
+.admin-workbench-label { font-size: .88rem; font-weight: 700; color: var(--ink); }
+.admin-workbench-detail {
+  margin-top: 3px;
+  font-size: .74rem;
+  line-height: 1.45;
+  color: var(--ink-a50);
+}
+/* Overdue is the only state that gets colour. If everything is tinted,
+   nothing reads as urgent. */
+.admin-workbench-overdue {
+  border-color: rgba(255,80,41,.45);
+  background: rgba(255,80,41,.07);
+}
+.admin-workbench-overdue .admin-workbench-count,
+.admin-workbench-overdue .admin-workbench-age { color: #ff5029; }
+.admin-workbench-clear { opacity: .55; }
+.admin-workbench-clear .admin-workbench-count { color: var(--ink-a50); }
+@media (prefers-reduced-motion: reduce) {
+  .admin-workbench-card { transition: none; }
+  .admin-workbench-card:hover { transform: none; }
+}

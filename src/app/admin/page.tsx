@@ -8,6 +8,7 @@ import { AdminFeatureFlags } from '@/components/AdminFeatureFlags';
 import { FeatureToggle } from '@/components/admin/FeatureToggle';
 import { BulkActions } from '@/components/admin/BulkActions';
 import { SocialPostCopy } from '@/components/admin/SocialPostCopy';
+import { AdminWorkbench } from '@/components/admin/AdminWorkbench';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getBetaMetrics } from '@/lib/beta-metrics';
@@ -90,7 +91,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
   ] = await Promise.all([
     db.user.count().catch(() => 0),
     db.profile.count().catch(() => 0),
-    db.profile.count({ where: { verificationStatus: 'PENDING' } }).catch(() => 0),
+    db.profile.count({ where: { verificationStatus: 'PENDING', verificationRequested: true } }).catch(() => 0),
     db.contentReport.count({ where: { status: 'OPEN' } }).catch(() => 0),
     db.supportRequest.count({ where: { status: 'OPEN' } }).catch(() => 0),
     db.artistMediaAsset.count().catch(() => 0),
@@ -105,7 +106,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
       take: 6
     }).catch(() => []),
     db.profile.findMany({
-      where: { verificationStatus: 'PENDING' },
+      where: { verificationStatus: 'PENDING', verificationRequested: true },
       orderBy: { verificationSubmittedAt: 'desc' },
       take: 6,
       select: {
@@ -326,6 +327,10 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           </Link>
         </div>
       </section>
+
+      {/* Everything waiting on a human, before anything else on the page.
+          The stats below are for reading; this is for doing. */}
+      <AdminWorkbench />
 
       <section className="panel admin-console-panel">
         <div className="admin-console-panel-head">

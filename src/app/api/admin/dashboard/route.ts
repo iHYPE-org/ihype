@@ -48,7 +48,7 @@ export async function GET() {
     ] = await Promise.all([
       db.user.count().catch(() => 0),
       db.profile.count().catch(() => 0),
-      db.profile.count({ where: { verificationStatus: 'PENDING' } }).catch(() => 0),
+      db.profile.count({ where: { verificationStatus: 'PENDING', verificationRequested: true } }).catch(() => 0),
       db.contentReport.count({ where: { status: 'OPEN' } }).catch(() => 0),
       db.supportRequest.count({ where: { status: 'OPEN' } }).catch(() => 0),
       db.artistMediaAsset.count().catch(() => 0),
@@ -60,7 +60,7 @@ export async function GET() {
       }).catch(() => []),
       db.supportRequest.findMany({ orderBy: { createdAt: 'desc' }, take: 6 }).catch(() => []),
       db.profile.findMany({
-        where: { verificationStatus: 'PENDING' },
+        where: { verificationStatus: 'PENDING', verificationRequested: true },
         orderBy: { verificationSubmittedAt: 'desc' },
         take: 6,
         select: {

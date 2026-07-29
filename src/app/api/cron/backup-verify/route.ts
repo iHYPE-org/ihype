@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isCronRequestAuthorized } from '@/lib/cron-auth';
 import { db } from '@/lib/db';
-import { ADMIN_EMAIL } from '@/lib/env';
+import { getAdminAlertRecipients } from '@/lib/env';
 import { sendGenericEmail } from '@/lib/mailer';
 import { log } from '@/lib/logger';
 
@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
     </div>
   `;
 
-    await sendGenericEmail({ to: ADMIN_EMAIL, subject, text, html }).catch((err) => {
+    await sendGenericEmail({ to: getAdminAlertRecipients(), subject, text, html }).catch((err) => {
       log.error('[cron/backup-verify]', err instanceof Error ? err : { error: String(err) }, 'Failed to send email');
     });
 

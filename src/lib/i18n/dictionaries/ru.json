@@ -2902,7 +2902,6 @@
   "trackUploadPanel.chooseAudioFileError": "Сначала выберите аудиофайл.",
   "trackUploadPanel.coverArtLabel": "Обложка (необязательно)",
   "trackUploadPanel.djAudioOnlyNotice": "Только аудио (MP3/WAV/FLAC) — ничего не выйдет в эфир, пока не пройдёт проверку ниже.",
-  "trackUploadPanel.flaggedForReviewPrefix": "Отмечено для проверки:",
   "trackUploadPanel.freeUseSamplesPrompt": "Нужны сэмплы свободного использования?",
   "trackUploadPanel.giveTrackTitleError": "Дайте треку название.",
   "trackUploadPanel.notConfiguredLabel": "Не настроено",

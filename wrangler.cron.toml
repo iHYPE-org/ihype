@@ -10,6 +10,13 @@ APP_BASE_URL = "https://ihype.org"
 
 # CRON_SECRET must be set as a secret:
 #   wrangler secret put CRON_SECRET --config wrangler.cron.toml
+#
+# HEARTBEAT_URL is optional but strongly recommended — it is the only alarm
+# that lives outside this system. Create a check on any dead-man's-switch
+# service (Healthchecks.io has a free tier), set its expected period to
+# 10 minutes and its grace to 10, then:
+#   wrangler secret put HEARTBEAT_URL --config wrangler.cron.toml
+# See docs/monitoring.md.
 
 [triggers]
 crons = [
@@ -23,7 +30,7 @@ crons = [
   "0 9 * * 1",    # weekly-picks, artist-digest, admin-report, follow-digest (Monday)
   "0 10 * * *",   # new-to-scene
   "0 11 * * *",   # artist-onboarding
-  "0 12 * * *",   # show-reminders
+  "0 12 * * *",   # show-reminders, workbench-digest, held-track-notice
   "0 13 * * *",   # show-payouts, ad-settlement
   "0 14 * * *",   # onboarding
   "0 15 * * *",   # welcome-sequence

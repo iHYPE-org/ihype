@@ -63,8 +63,12 @@ export function TrackUploadPanel({
     const totalMs = scanLayers.length * STAGGER_MS + 400;
     timers.push(setTimeout(() => {
       const flagged = scanLayers.find((l) => l.configured && (!l.cleared || l.requiresManualReview));
+      // "Held" not "flagged for review", because a flagged track is now
+      // actually withheld from the page rather than published alongside a
+      // report. Telling someone their track is live when it is not is the
+      // kind of thing they only discover from a listener.
       setFinalMessage(flagged
-        ? `${t('trackUploadPanel.flaggedForReviewPrefix', 'Flagged for review:')} ${flagged.reasoning}`
+        ? `${t('trackUploadPanel.heldForReviewPrefix', 'Held for review:')} ${flagged.reasoning} ${t('trackUploadPanel.heldForReviewSuffix', 'It stays off your page until someone checks it, usually within 48 hours.')}`
         : t('trackUploadPanel.allChecksClearedMessage', 'All checks cleared — live now.'));
     }, totalMs));
     return () => timers.forEach(clearTimeout);

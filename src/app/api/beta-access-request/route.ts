@@ -5,7 +5,7 @@ import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { sendGenericEmail } from '@/lib/mailer';
 import { deferWork } from '@/lib/defer-work';
-import { ADMIN_EMAIL } from '@/lib/env';
+import { getAdminAlertRecipients } from '@/lib/env';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
   ].filter((line): line is string => line !== null);
 
   deferWork(sendGenericEmail({
-    to: ADMIN_EMAIL,
+    to: getAdminAlertRecipients(),
     subject: `Beta access request — ${body.email}`,
     text: textLines.join('\n'),
     html: textLines.map((line) => `<p>${line}</p>`).join('\n')

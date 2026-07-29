@@ -48,11 +48,23 @@ export function getProfileCopy(type: ProfileType, name: string) {
   };
 }
 
-export function getVerificationStatusForType(type: ProfileType) {
-  if (type === 'ARTIST' || type === 'VENUE' || type === 'DJ') {
-    return 'PENDING' as const;
-  }
-
+/**
+ * Every new profile starts UNVERIFIED, including the three creator types.
+ *
+ * This used to return PENDING for ARTIST/VENUE/DJ, which was wrong in three
+ * compounding ways. PENDING is the state the admin queue at
+ * /admin/verifications treats as "someone submitted evidence, go look at it" —
+ * so stamping it at signup filled that queue with profiles that had no proof
+ * attached and nothing to review. The venue and DJ onboarding wizards read
+ * PENDING as "already submitted" and jumped straight to their done screen, so
+ * a brand-new venue never saw a single step of its own wizard, verification
+ * included. And POST /api/verify refuses a profile that is already VERIFIED
+ * but happily accepted a PENDING one, so nothing downstream noticed.
+ *
+ * PENDING now means what the queue always assumed: evidence has been
+ * submitted and is waiting on a human.
+ */
+export function getVerificationStatusForType(_type: ProfileType) {
   return 'UNVERIFIED' as const;
 }
 

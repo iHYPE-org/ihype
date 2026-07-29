@@ -2904,7 +2904,6 @@
   "trackUploadPanel.chooseAudioFileError": "Elige primero un archivo de audio.",
   "trackUploadPanel.coverArtLabel": "Portada (opcional)",
   "trackUploadPanel.djAudioOnlyNotice": "Solo audio (MP3/WAV/FLAC): nada se emite hasta que supera el análisis de abajo.",
-  "trackUploadPanel.flaggedForReviewPrefix": "Marcado para revisión:",
   "trackUploadPanel.freeUseSamplesPrompt": "¿Necesitas muestras de uso libre?",
   "trackUploadPanel.giveTrackTitleError": "Ponle un título al tema.",
   "trackUploadPanel.notConfiguredLabel": "Sin configurar",

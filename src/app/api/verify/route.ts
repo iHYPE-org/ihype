@@ -32,6 +32,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Name is required' }, { status: 400 });
   }
 
+  // Evidence is mandatory. Until now `file` was optional and no wizard sent
+  // one — the venue and DJ onboarding steps rendered a "what counts as proof"
+  // card and then POSTed name and city, so the entire verification flow was a
+  // status flip with nothing for a reviewer to look at. A queue of claims with
+  // no evidence is worse than no queue: it looks like diligence.
+  //
+  // Either a document or a link is enough. A link is often the stronger proof
+  // for an artist or DJ (a Bandcamp page with published tracks says more than
+  // a screenshot), and requiring a file upload would push people into
+  // fabricating one.
+  const hasFile = Boolean(file && file.size > 0);
+  const hasLink = Boolean(link);
+  if (!hasFile && !hasLink) {
+    return NextResponse.json(
+      { error: 'Attach a document or provide a link so we can verify this account.' },
+      { status: 400 },
+    );
+  }
+
   const profile = await db.profile.findUnique({
     where: { id: profileId },
     select: { id: true, ownerId: true, type: true, verificationStatus: true },

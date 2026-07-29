@@ -115,7 +115,14 @@ export default async function AdminReviewPage({
   if (tab === 'verifications') {
     [pendingProfiles, verifiedCount] = await Promise.all([
       db.profile.findMany({
-        where: { verificationStatus: { in: ['PENDING', 'REJECTED'] } },
+        // verificationRequested is the discriminator between a real
+        // submission and a legacy auto-stamp. Until today, registration set
+        // every new ARTIST/VENUE/DJ to PENDING at signup, so this queue filled
+        // with profiles that had never submitted anything and had no proof
+        // attached to look at. Only POST /api/verify sets this flag, and it
+        // defaults false, so filtering on it leaves exactly the rows a human
+        // can actually act on.
+        where: { verificationStatus: { in: ['PENDING', 'REJECTED'] }, verificationRequested: true },
         select: {
           id: true, slug: true, hexId: true, name: true, type: true, city: true, stateRegion: true, country: true,
           contactInfo: true, verificationNotes: true, verificationStatus: true, verificationSubmittedAt: true,

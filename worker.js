@@ -45,9 +45,44 @@ export class RateLimiterDO extends DurableObject {
   }
 }
 
+function isLocalHostname(hostname) {
+  return hostname === 'localhost'
+    || hostname === '127.0.0.1'
+    || hostname === '0.0.0.0'
+    || hostname === '[::1]'
+    || hostname === '::1'
+    || hostname.endsWith('.localhost');
+}
+
+/**
+ * Set on the first request of a `wrangler dev` session and never cleared.
+ *
+ * beforeSend can only inspect event.request.url, and a great many events do
+ * not have one: anything captured by src/lib/logger.ts's log.error from
+ * library code arrives with culprit "?(worker)" and no request attached, so
+ * the hostname check below has nothing to test and lets it through. That was
+ * tolerable when 14 routes used log.error. As of the sweep that moved all 98
+ * server error sites onto it, most captured events take that path.
+ *
+ * A local run loads this same wrangler.toml, so it has the real SENTRY_DSN
+ * and reports itself as environment "production" — which is exactly how a
+ * developer's miniflare session previously showed up as two production
+ * issues. Remembering that we have seen a local request lets the filter work
+ * on events that carry no URL of their own.
+ *
+ * Module scope is deliberate: it lives as long as the isolate, which for a
+ * local session is the session. In production it is only ever set by a
+ * request that genuinely arrived on localhost, which cannot happen through
+ * Cloudflare's edge.
+ */
+let sawLocalRequest = false;
+
 const handler = {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    if (isLocalHostname(url.hostname)) {
+      sawLocalRequest = true;
+    }
     if (url.hostname === 'www.ihype.org') {
       url.hostname = 'ihype.org';
       return Response.redirect(url.toString(), 308);
@@ -99,15 +134,14 @@ export default Sentry.withSentry(
     // live site. Drop anything whose request never left a local machine.
     beforeSend(event) {
       const url = event.request?.url ?? '';
-      if (!url) return event;
+      // No request URL to judge by — which is the common case for anything
+      // log.error captured from library code. Fall back to whether this
+      // isolate has ever served a local request. Without this the filter only
+      // caught events that happened to carry a URL, and every other local
+      // error still shipped as production.
+      if (!url) return sawLocalRequest ? null : event;
       try {
-        const { hostname } = new URL(url);
-        const local = hostname === 'localhost'
-          || hostname === '127.0.0.1'
-          || hostname === '0.0.0.0'
-          || hostname === '[::1]'
-          || hostname.endsWith('.localhost');
-        return local ? null : event;
+        return isLocalHostname(new URL(url).hostname) ? null : event;
       } catch {
         return event;
       }

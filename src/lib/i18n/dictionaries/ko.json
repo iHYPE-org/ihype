@@ -2900,7 +2900,6 @@
   "trackUploadPanel.chooseAudioFileError": "먼저 오디오 파일을 고르세요.",
   "trackUploadPanel.coverArtLabel": "커버 이미지 (선택)",
   "trackUploadPanel.djAudioOnlyNotice": "오디오만 가능합니다(MP3/WAV/FLAC) — 아래 검사를 통과하기 전에는 아무것도 방송되지 않습니다.",
-  "trackUploadPanel.flaggedForReviewPrefix": "검토 대상으로 표시됨:",
   "trackUploadPanel.freeUseSamplesPrompt": "자유 이용 샘플이 필요하신가요?",
   "trackUploadPanel.giveTrackTitleError": "트랙 제목을 입력하세요.",
   "trackUploadPanel.notConfiguredLabel": "설정되지 않음",
