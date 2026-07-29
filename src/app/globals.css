@@ -6632,6 +6632,14 @@ h1, h2 {
      bug, but from the underlying flow collapsing rather than a hydration
      timing gap. */
   #main-content { min-height: 100dvh; }
+  /* ...except on the landing page, which renders no app shell and therefore
+     has nothing to guard against. It is deliberately one screen tall, and
+     inheriting a 100dvh floor on top of body's 68px bottom padding pushes the
+     document past the viewport no matter what the page itself does — the one
+     outcome this page must avoid. Scoped with :has() rather than by relaxing
+     the rule above, because that rule is load-bearing for /listen, /shows and
+     /pages. */
+  #main-content:has(.idx-one) { min-height: 0; }
 }
 .mas-track {
   position: relative;
@@ -6647,4 +6655,179 @@ h1, h2 {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   will-change: transform;
+}
+
+/* ── Index: one screen ───────────────────────────────────────────────────
+   The landing page fits the viewport without scrolling. Sizing accounts for
+   the real chrome the layout puts around it: a 56px header always, plus the
+   60px fixed mobile nav under 768px (where .ihype-footer is already hidden).
+
+   min-height, never height, and no overflow:hidden anywhere. If a viewport is
+   genuinely too short — a landscape phone, a large accessibility text size,
+   the "Larger text" toggle — the page scrolls rather than clipping. A hidden
+   call-to-action is a worse outcome than a scrollbar. */
+.idx-one {
+  /* Chrome this page has to share the viewport with. Named rather than
+     inlined because getting it wrong is invisible until something is cut off:
+     the mobile value does NOT subtract the 60px nav directly, because
+     `body { padding-bottom: 68px }` under 768px already reserves that space —
+     subtracting both, which the first version did, cost 68px twice and put
+     every phone into a scroll. */
+  --idx-chrome: 56px;
+  min-height: calc(100dvh - var(--idx-chrome));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(0.75rem, 2.5vh, 2rem) 1.25rem;
+  box-sizing: border-box;
+}
+@media (min-width: 769px) {
+  /* 56px header + the site footer, which is only rendered above 768px. */
+  .idx-one { --idx-chrome: 154px; }
+}
+@media (max-width: 768px) {
+  /* 56px header + the body padding that already clears the fixed nav.
+     Written straight into min-height rather than through --idx-chrome: an
+     env() inside a custom property does not resolve here, the declaration is
+     dropped, and the element silently falls back to the 56px base — which
+     reads as "the fix didn't work" rather than as a syntax problem. */
+  .idx-one {
+    /* No header term: .site-nav is display:none under 768px — the bottom nav
+       replaces it. Only body's 68px bottom padding, which clears that nav,
+       needs subtracting. Measuring rather than assuming a 56px header is what
+       caught this; the assumption cost exactly one nav's worth of scroll. */
+    min-height: calc(100dvh - 68px - env(safe-area-inset-bottom, 0px));
+  }
+}
+.idx-one-inner {
+  width: 100%;
+  max-width: 640px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.6rem, 1.6vh, 1.1rem);
+}
+.idx-one-eyebrow {
+  margin: 0;
+  font-family: var(--f-m);
+  font-size: clamp(0.6rem, 1.6vw, 0.72rem);
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+/* Every size here is viewport-relative so the whole composition shrinks
+   together on a short screen instead of the note pushing the CTA off. */
+.idx-note {
+  width: clamp(96px, 17vh, 156px);
+  height: auto;
+  display: block;
+}
+.idx-one-h1 {
+  margin: 0;
+  font-family: var(--f-d);
+  font-weight: 800;
+  font-size: clamp(1.9rem, 6vw, 3.4rem);
+  line-height: 1.02;
+  letter-spacing: -.04em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.idx-one-sub {
+  margin: 0;
+  max-width: 44ch;
+  font-size: clamp(0.92rem, 2.4vw, 1.05rem);
+  line-height: 1.55;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+.idx-one-points {
+  list-style: none;
+  margin: clamp(0.2rem, 1vh, 0.6rem) 0 0;
+  padding: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(0.5rem, 1.4vh, 0.9rem) 1.25rem;
+  text-align: left;
+}
+@media (max-width: 430px) {
+  /* One column below ~430px: two columns of 2-line blurbs at this size
+     produces four-line cells that cost more height than the column saves. */
+  .idx-one-points { grid-template-columns: minmax(0, 1fr); }
+}
+.idx-one-point {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 9px;
+  row-gap: 1px;
+  align-items: baseline;
+  min-width: 0;
+}
+.idx-one-point-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  grid-row: 1;
+  align-self: center;
+}
+.idx-one-point-head {
+  grid-column: 2;
+  font-size: clamp(0.83rem, 2.1vw, 0.94rem);
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.25;
+}
+.idx-one-point-body {
+  grid-column: 2;
+  font-size: clamp(0.75rem, 1.9vw, 0.84rem);
+  line-height: 1.4;
+  color: var(--ink-3);
+}
+.idx-one-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: clamp(0.2rem, 1vh, 0.5rem);
+}
+.idx-one-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0 2.2rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--f-d);
+  font-weight: 700;
+  font-size: 1rem;
+  text-decoration: none;
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+.idx-one-cta:hover { transform: translateY(-1px); box-shadow: 0 8px 26px rgba(255,80,41,.32); }
+.idx-one-alt {
+  font-size: .9rem;
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.idx-one-stats,
+.idx-one-foot {
+  margin: 0;
+  font-family: var(--f-m);
+  font-size: clamp(0.62rem, 1.6vw, 0.72rem);
+  letter-spacing: .08em;
+  color: var(--ink-3);
+}
+.idx-one-foot a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.idx-one-foot a:hover { color: var(--ink-2); }
+@media (prefers-reduced-motion: reduce) {
+  .idx-one-cta { transition: none; }
+  .idx-one-cta:hover { transform: none; }
 }
