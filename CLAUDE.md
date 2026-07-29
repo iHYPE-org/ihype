@@ -140,10 +140,10 @@ If a UI detail is unclear → ask Claude Design to clarify in the .dc.html. Neve
 | Index.dc.html | / | src/app/page.tsx |
 | About.dc.html | /about | src/app/about/page.tsx |
 | Charter.dc.html | /charter | src/app/charter/page.tsx |
-| Legal.dc.html | /legal | src/app/legal/page.tsx |
-| Privacy.dc.html | /privacy | src/app/privacy/page.tsx |
+| Legal.dc.html | /info | src/components/InfoTabs.tsx (rendered by `src/app/info/page.tsx`) — **Trust & Safety, Transparency, Privacy and Legal were merged into one `/info` hub (2026-07-29)**. `/legal`, `/privacy`, `/transparency` and `/audit` are now thin redirects into the matching `?tab=`, kept because those URLs appear in signup consent copy, the cookie banner, emails and app-store listings. `/info` stays a **server** component so the two data-driven panels keep running their Prisma aggregates; only the tab strip is client-side and receives them as rendered slots (same pattern as the `/payouts` hub). |
+| Privacy.dc.html | /info?tab=privacy | redirect from `src/app/privacy/page.tsx` |
 | Terms.dc.html | /terms | src/app/terms/page.tsx |
-| Transparency.dc.html | /transparency | src/app/transparency/page.tsx |
+| Transparency.dc.html | /info?tab=transparency | `src/components/info/TransparencyPanel.tsx` (moved verbatim from the old route; redirect left behind) |
 
 ### Auth & Onboarding
 | .dc.html | Route | src/app path |
@@ -159,7 +159,7 @@ If a UI detail is unclear → ask Claude Design to clarify in the .dc.html. Neve
 | FanHome.dc.html | /listen | src/app/listen/page.tsx (renders `ListenHome.tsx`) |
 | Discover.dc.html | /discover | src/app/discover/page.tsx |
 | Search.dc.html | /search | src/app/search/page.tsx |
-| Notifications.dc.html | /me/notifications | src/app/me/notifications/page.tsx (renders `NotificationsList.tsx`) |
+| Notifications.dc.html | /me/dashboard | **Merged into the fan dashboard (2026-07-29)** — `NotificationsList.tsx` is now a section of `src/app/me/dashboard/page.tsx`, using the same query. `/me/notifications` stays a redirect because the link ships inside real notification emails and push payloads already delivered. `/api/me/notifications` (GET feed, POST mark-read) is unchanged. |
 | FanProfile.dc.html | /fans/[slug] | src/app/fans/[slug]/page.tsx |
 | Tickets.dc.html | /tickets | src/app/tickets/page.tsx (`/me/tickets` is a thin redirect alias to this) |
 | Settings.dc.html | /settings | src/app/settings/page.tsx (`/me/settings` is a thin redirect alias to this) |
@@ -228,7 +228,7 @@ If a UI detail is unclear → ask Claude Design to clarify in the .dc.html. Neve
 | /community | src/app/community/page.tsx | Platform updates, announcements, roadmap voting |
 | /community-rules | src/app/community-rules/page.tsx | Community guidelines |
 | /status | src/app/status/page.tsx | System status page |
-| /audit | src/app/audit/page.tsx | Public Trust & Safety report — aggregate moderation/verification/ad-vetting counts, k-anonymity floor of 5. No `.dc.html` source (built ahead of design, explicit user request). |
+| /info?tab=trust | src/components/info/TrustSafetyPanel.tsx | Public Trust & Safety report — aggregate moderation/verification/ad-vetting counts, k-anonymity floor of 5. Moved verbatim out of `/audit`, which is now a redirect. |
 | /launch | src/app/launch/page.tsx | Founding-cohort recruitment landing page |
 | /walkthrough | src/app/walkthrough/page.tsx | "How a hype becomes a paid show" explainer |
 | /copyright | src/app/copyright/page.tsx | Copyright policy |
@@ -243,7 +243,6 @@ If a UI detail is unclear → ask Claude Design to clarify in the .dc.html. Neve
 | /djs/[slug] | src/app/djs/[slug]/page.tsx | Redirect alias → `/promoters/[slug]` (DJ profiles live there — see below) |
 | /promoters/[slug] | src/app/promoters/[slug]/page.tsx | DJ/promoter profile hero — despite the route name, this is the live DJ profile page (`dj-hero-actions`, radio tie-in) |
 | /me/booking | src/app/me/booking/page.tsx | Venue's "demand radar" — artist booking recommendations |
-| /me/wrapped | src/app/me/wrapped/page.tsx | "My Scene" — Spotify-Wrapped-style yearly recap |
 | /advertise/register | src/app/advertise/register/page.tsx | Advertiser Profile signup (5th account type, private-only, no Profile row) — explicit user request, no `.dc.html` source. Since 2026-07-26 (DESIGN_SYNC row 248) also collects a real `category`/`pitch` (AdvertiserSignup.dc.html) — **migration written but not applied to the live DB**, needs a real `prisma migrate deploy` run |
 | /join | src/app/join/page.tsx | Role chooser (JoinChooserPage) — DESIGN_SYNC row 248. Every account starts as a fan; picking Artist/DJ/Venue routes to the matching kit page below. Linked from the homepage's primary CTA ("Request Beta"/"Get started", self-corrects on `isInviteCodeRequiredRuntime()`) |
 | /for-artists, /for-djs, /for-venues, /for-fans | src/app/for-artists, for-djs, for-venues, for-fans/page.tsx | Recruiting/kit pages (ArtistKit/DJKit/VenueKit/FanKit.dc.html, DESIGN_SYNC row 248) — real city-hype data (`src/lib/recruiting-kit.ts`), no fabricated numbers. Apply/Join CTA links straight into the real `/register?role=X` flow rather than a separate custom form |

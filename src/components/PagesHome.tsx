@@ -322,8 +322,8 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                       {initials}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, letterSpacing: '-.01em', display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
-                        <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</span>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, letterSpacing: '-.01em', display: 'flex', alignItems: 'center', gap: 7, minWidth: 0, flexWrap: 'wrap', rowGap: 4 }}>
+                        <span style={{ flex: '1 1 auto', minWidth: '7ch', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</span>
                         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, color, background: hexA(color, 0.14), flexShrink: 0 }}>
                           {label}
                         </span>
@@ -522,8 +522,8 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                       {initials}
                     </Link>
                     <Link href={profileRoute(p.type, p.slug)} style={{ flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
-                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, letterSpacing: '-.01em', display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
-                        <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, letterSpacing: '-.01em', display: 'flex', alignItems: 'center', gap: 7, minWidth: 0, flexWrap: 'wrap', rowGap: 4 }}>
+                        <span style={{ flex: '1 1 auto', minWidth: '7ch', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
                         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, color, background: hexA(color, 0.14), flexShrink: 0 }}>
                           {typeLabel(p.type)}
                         </span>
@@ -564,8 +564,8 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                       {initials}
                     </Link>
                     <Link href={profileRoute(p.type, p.slug)} style={{ flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
-                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, letterSpacing: '-.01em', display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
-                        <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, letterSpacing: '-.01em', display: 'flex', alignItems: 'center', gap: 7, minWidth: 0, flexWrap: 'wrap', rowGap: 4 }}>
+                        <span style={{ flex: '1 1 auto', minWidth: '7ch', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
                         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, color, background: hexA(color, 0.14), flexShrink: 0 }}>
                           {typeLabel(p.type)}
                         </span>

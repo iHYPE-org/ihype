@@ -23,7 +23,7 @@ export async function SiteFooter() {
       }}
     >
       <Link href="/advertise" style={{ color: 'inherit', textDecoration: 'none' }}>{t('siteFooter.advertise', 'Advertise')}</Link>
-      <Link href="/legal" style={{ color: 'inherit', textDecoration: 'none' }}>{t('siteFooter.legal', 'Legal')}</Link>
+      <Link href="/info" style={{ color: 'inherit', textDecoration: 'none' }}>{t('siteFooter.info', 'Info')}</Link>
       <Link href="/support" style={{ color: 'inherit', textDecoration: 'none' }}>{t('siteFooter.support', 'Support')}</Link>
       <span className="site-footer-nonprofit">{t('siteFooter.nonprofit', 'A 501(c)(3) nonprofit')}</span>
       <span className="site-footer-rights">{t('siteFooter.copyright', '© 2026 ihype.org')}<span className="site-footer-rights-suffix"> {t('siteFooter.allRightsReserved', '— all rights reserved')}</span></span>

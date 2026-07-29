@@ -326,47 +326,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ ok: true, issues: issues.length });
     }
 
-    case 'scene-wrapped': {
-      // Month-end re-engagement: nudge users who were active this month that
-      // their shareable Scene Wrapped card is ready. Deduped to once per user
-      // per calendar month via the WRAPPED_READY notification.
-      const { db } = await import('@/lib/db');
-      const { notifyUser } = await import('@/lib/notify');
-      const now = new Date();
-      const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-
-      const activeUserRows = await db.profileHypeEvent.findMany({
-        where: { createdAt: { gte: monthStart } },
-        select: { userId: true },
-        distinct: ['userId'],
-        take: 5000,
-      });
-
-      const alreadyNotified = await db.notification.findMany({
-        where: {
-          userId: { in: activeUserRows.map((r) => r.userId) },
-          type: 'WRAPPED_READY',
-          createdAt: { gte: monthStart },
-        },
-        select: { userId: true },
-      });
-      const alreadyNotifiedIds = new Set(alreadyNotified.map((n) => n.userId));
-
-      let notified = 0;
-      for (const { userId } of activeUserRows) {
-        if (alreadyNotifiedIds.has(userId)) continue;
-        await notifyUser(userId, {
-          type: 'WRAPPED_READY',
-          title: 'Your month in the scene',
-          body: 'Your Scene Wrapped is ready — see your shows, hypes, and discoveries.',
-          link: '/me/wrapped',
-        });
-        notified++;
-      }
-      await pingCronAlive('scene-wrapped', WEEKLY_TTL);
-      return NextResponse.json({ ok: true, notified });
-    }
-
     default:
       return NextResponse.json({ error: 'Unknown job.' }, { status: 400 });
   }

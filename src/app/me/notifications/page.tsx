@@ -1,30 +1,17 @@
 import { redirect } from 'next/navigation';
-import type { Metadata } from 'next';
-import { auth } from '@/lib/auth';
-import { db } from '@/lib/db';
-import { NotificationsList } from '@/components/NotificationsList';
 
-export const dynamic = 'force-dynamic';
-
-export const metadata: Metadata = {
-  title: 'Notifications · iHYPE',
-  robots: { index: false, follow: false },
-};
-
-export default async function NotificationsPage() {
-  const session = await auth();
-  if (!session?.user?.id) redirect('/login?callbackUrl=/me/notifications');
-
-  const notifications = await db.notification.findMany({
-    where: { userId: session.user.id },
-    orderBy: { createdAt: 'desc' },
-    take: 50,
-    select: { id: true, type: true, body: true, read: true, link: true, createdAt: true },
-  });
-
-  return (
-    <NotificationsList
-      initialNotifications={notifications.map((n) => ({ ...n, createdAt: n.createdAt.toISOString() }))}
-    />
-  );
+/**
+ * Notifications were merged into the fan dashboard — they are a section of
+ * /me/dashboard now rather than a page of their own.
+ *
+ * This stays as a redirect rather than being deleted: the link ships inside
+ * real notification emails and push payloads that are already in people's
+ * inboxes and on their lock screens, so removing the route would 404 anyone
+ * tapping a notification sent before this change.
+ *
+ * The API is untouched — `/api/me/notifications` (GET feed, POST mark-read)
+ * still backs the list component in its new home.
+ */
+export default function NotificationsRedirect() {
+  redirect('/me/dashboard');
 }

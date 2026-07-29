@@ -169,9 +169,19 @@ async function main() {
     }
   });
 
+  // The seed track is created UNPUBLISHED on purpose.
+  //
+  // storageUrl points at https://ihype.org/seed/static-bloom-demo.mp3, and no
+  // such file has ever been uploaded — it returns 404. Published, it was the
+  // only track in the entire catalogue, so the one thing a visitor could press
+  // play on was guaranteed to fail. An empty catalogue is honest; a catalogue
+  // of one broken link reads as "this site doesn't work".
+  //
+  // Publish it by uploading a real file to that path (or repointing
+  // storageUrl at R2) and flipping isPublished.
   await prisma.artistMediaAsset.upsert({
     where: { hexId: '0xlaunch000000000000000000000000000010' },
-    update: {},
+    update: { isPublished: false },
     create: {
       hexId: '0xlaunch000000000000000000000000000010',
       title: 'Static Bloom — Demo Track',
@@ -181,7 +191,7 @@ async function main() {
       storageProvider: 'external',
       storageUrl: 'https://ihype.org/seed/static-bloom-demo.mp3',
       freeUseEnabled: true,
-      isPublished: true,
+      isPublished: false,
       profileId: artist.id
     }
   });
