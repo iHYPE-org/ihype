@@ -69,6 +69,12 @@ export function FollowButton({ profileId, variant = 'chip' }: { profileId: strin
     fontSize: 11,
     fontFamily: 'var(--font-mono)',
     letterSpacing: '.06em',
+    // The label is "+ Follow" or "✓ Following · 128". Left to wrap it makes
+    // the chip two lines tall and knocks the row it sits in out of
+    // alignment; clipping one glyph is the better failure.
+    whiteSpace: 'nowrap' as const,
+    overflow: 'hidden' as const,
+    textOverflow: 'ellipsis' as const,
   };
 
   return (

@@ -298,6 +298,19 @@
 }
 html {
   scroll-behavior: smooth;
+  /* Without this, iOS Safari defaults to text-size-adjust: auto and inflates
+     text in blocks it judges too narrow for the viewport. It is why the
+     suggested-connections cards on /pages render names truncated to "Static
+     B…" and a "+ Follow" chip wider than its own 100px column on an iPhone
+     while measuring correctly in every desktop engine — the boxes are sized
+     in px and stay put, so only the text grows and then clips.
+     100%, not none: this disables Safari's automatic inflation heuristic
+     only. Pinch-zoom and the reader's own Dynamic Type still work, and the
+     site's "Larger text" toggle (html.a11y-large-text) is unaffected. Every
+     mainstream reset — normalize.css, modern-normalize, Tailwind preflight —
+     carries this line; this stylesheet simply never had one. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: var(--f-b, 'DM Sans', 'Segoe UI', sans-serif); }
 ::selection { background: rgba(255,80,41,.22); color: var(--ink); }
@@ -4619,7 +4632,14 @@ html.high-contrast p {
 }
 
 @media (max-width: 720px) {
-  .a11y-panel {
+  /* :not(.a11y-panel-inline) matters. This rule turns the panel into a
+     viewport-pinned sheet, which is right for the popover form it was written
+     for and wrong for the inline form, which is laid out inside the nav
+     drawer's Settings disclosure. Without the exclusion the inline panel goes
+     position: fixed on mobile, escapes the 300px drawer, spans the viewport
+     and gets clipped by the drawer's own edge — and because a fixed element
+     is out of flow, nothing reports it as overflow. */
+  .a11y-panel:not(.a11y-panel-inline) {
     position: fixed;
     top: 76px;
     right: 12px;
