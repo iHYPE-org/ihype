@@ -2797,7 +2797,6 @@
   "ticketSaleCard.openNowLabel": "مفتوحة الآن",
   "ticketSaleCard.openVerificationLink": "فتح التحقق",
   "ticketSaleCard.orderPreviewLabel": "معاينة الطلب",
-  "ticketSaleCard.paymentMethodRequiredBody": "تحتاج حسابات المعجبين إلى وسيلة دفع محفوظة قبل حجز التذاكر. يجري إعداد الدفع لإطلاق النسخة التجريبية، وسنُعلم حسابك عند توفّره.",
   "ticketSaleCard.paymentMethodRequiredTitle": "وسيلة الدفع مطلوبة",
   "ticketSaleCard.paymentSourceLabel": "مصدر الدفع",
   "ticketSaleCard.perTicket": "لكل تذكرة",

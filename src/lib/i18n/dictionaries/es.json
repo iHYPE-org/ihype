@@ -2824,7 +2824,6 @@
   "ticketSaleCard.openNowLabel": "Abierto ahora",
   "ticketSaleCard.openVerificationLink": "Abrir verificación",
   "ticketSaleCard.orderPreviewLabel": "Vista previa del pedido",
-  "ticketSaleCard.paymentMethodRequiredBody": "Las cuentas de fan necesitan un método de pago guardado antes de reservar entradas. La configuración de pagos se está finalizando para el lanzamiento beta y te avisaremos cuando esté disponible.",
   "ticketSaleCard.paymentMethodRequiredTitle": "Método de pago obligatorio",
   "ticketSaleCard.paymentSourceLabel": "Origen del pago",
   "ticketSaleCard.perTicket": "por entrada",

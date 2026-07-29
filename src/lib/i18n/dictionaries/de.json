@@ -2821,7 +2821,6 @@
   "ticketSaleCard.openNowLabel": "Jetzt geöffnet",
   "ticketSaleCard.openVerificationLink": "Verifizierung öffnen",
   "ticketSaleCard.orderPreviewLabel": "Bestellvorschau",
-  "ticketSaleCard.paymentMethodRequiredBody": "Fan-Konten brauchen ein gespeichertes Zahlungsmittel, bevor sie Tickets reservieren können. Das Zahlungs-Onboarding wird für den Beta-Start finalisiert; dein Konto wird benachrichtigt, sobald es verfügbar ist.",
   "ticketSaleCard.paymentMethodRequiredTitle": "Zahlungsmittel erforderlich",
   "ticketSaleCard.paymentSourceLabel": "Zahlungsquelle",
   "ticketSaleCard.perTicket": "pro Ticket",

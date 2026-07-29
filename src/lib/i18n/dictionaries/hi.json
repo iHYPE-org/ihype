@@ -2822,7 +2822,6 @@
   "ticketSaleCard.openNowLabel": "अभी खुला",
   "ticketSaleCard.openVerificationLink": "सत्यापन खोलें",
   "ticketSaleCard.orderPreviewLabel": "ऑर्डर पूर्वावलोकन",
-  "ticketSaleCard.paymentMethodRequiredBody": "टिकट आरक्षित करने से पहले फ़ैन खातों में सहेजा गया भुगतान माध्यम आवश्यक है। बीटा लॉन्च के लिए भुगतान सेटअप को अंतिम रूप दिया जा रहा है, और उपलब्ध होने पर आपके खाते को सूचित किया जाएगा।",
   "ticketSaleCard.paymentMethodRequiredTitle": "भुगतान माध्यम आवश्यक",
   "ticketSaleCard.paymentSourceLabel": "भुगतान स्रोत",
   "ticketSaleCard.perTicket": "प्रति टिकट",

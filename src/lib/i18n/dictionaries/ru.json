@@ -2822,7 +2822,6 @@
   "ticketSaleCard.openNowLabel": "Открыто сейчас",
   "ticketSaleCard.openVerificationLink": "Открыть проверку",
   "ticketSaleCard.orderPreviewLabel": "Предпросмотр заказа",
-  "ticketSaleCard.paymentMethodRequiredBody": "Для бронирования билетов аккаунту фаната нужен сохранённый способ оплаты. Подключение платежей дорабатывается к бета-запуску — мы уведомим вас, когда оно откроется.",
   "ticketSaleCard.paymentMethodRequiredTitle": "Требуется способ оплаты",
   "ticketSaleCard.paymentSourceLabel": "Источник оплаты",
   "ticketSaleCard.perTicket": "за билет",

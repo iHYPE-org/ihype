@@ -1,0 +1,32 @@
+-- @gated
+--
+-- Drops the ABTest table. The A/B testing feature was never finished: an
+-- admin could create rows, and nothing in the application ever read one.
+--
+-- What existed: /admin/ab-tests and POST /api/admin/ab-tests wrote ABTest
+-- rows, and the admin console listed them. What never existed: any code that
+-- assigned a user to a variant, or that branched on one. The two endpoints
+-- that would have done it — POST /api/experiments/expose and
+-- /api/experiments/convert — had no caller anywhere and were deleted in the
+-- dead-code sweep. So every row this table has ever held was configuration
+-- for an experiment that could not run.
+--
+-- The admin surface is removed in the same commit as this file, which is why
+-- the table can go: nothing writes it either now.
+--
+-- Before applying:
+--   1. Confirm there is nothing worth keeping:
+--        SELECT count(*) FROM "ABTest";
+--      A non-zero result is not a blocker — the rows are inert either way —
+--      but they record which experiments someone intended to run, which is
+--      worth reading once before discarding.
+--   2. Confirm the application code that drops the model from schema.prisma
+--      is already deployed. A running Worker built against the old client
+--      does not query this table anywhere, so the risk is low, but the
+--      ordering rule holds.
+--
+-- Then move it into prisma/migrations/ in its own commit, per
+-- prisma/migrations-pending/README.md.
+
+-- DropTable
+DROP TABLE "ABTest";
