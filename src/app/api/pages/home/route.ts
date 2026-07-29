@@ -21,7 +21,7 @@ export async function GET() {
     where: { ownerId: session.user.id },
     orderBy: { createdAt: 'asc' },
     select: {
-      id: true, slug: true, name: true, type: true, hexId: true,
+      id: true, slug: true, name: true, type: true, hexId: true, onboardedAt: true,
       owner: { select: { username: true } },
     },
   });

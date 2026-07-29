@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
+import { useMarkOnboarded } from '@/lib/use-mark-onboarded';
 
 type Step = 0 | 1 | 2 | 3;
 
@@ -28,6 +29,10 @@ export function ArtistOnboardingWizard({
 
   const [payoutBusy, setPayoutBusy] = useState(false);
   const [payoutError, setPayoutError] = useState<string | null>(null);
+
+  // Step 3 is the done screen, reached either by connecting payouts or by the
+  // explicit Skip. Both count: skipping an optional step is still finishing.
+  useMarkOnboarded(profileId, step === 3);
 
   async function goStep1() {
     if (!name.trim() || !genre.trim() || saving) return;

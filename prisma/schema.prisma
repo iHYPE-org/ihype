@@ -203,6 +203,11 @@ model Profile {
   // rendered on /artists/[slug]/epk.
   pressKitContent               String?
   topFiveContent                String?
+  // Set once, when a creator reaches the end of their onboarding wizard
+  // (including via Skip — skipping a step is still finishing). NULL means the
+  // "Finish setup" prompt should still show. See
+  // src/app/api/profile/onboarding-complete/route.ts.
+  onboardedAt                   DateTime?
   pageDraft                     String?
   pageDraftUpdatedAt            DateTime?
   pagePublished                 String?
@@ -625,25 +630,25 @@ model Ticket {
 }
 
 model AccountsPayableEntry {
-  id            String                  @id @default(cuid())
-  ticketOrderId String
-  showId        String
-  profileId     String?
-  category      AccountsPayableCategory
-  status        AccountsPayableStatus   @default(PENDING)
-  amountCents   Int
-  payeeLabel    String
-  note          String?
-  paidAt        DateTime?
+  id               String                  @id @default(cuid())
+  ticketOrderId    String
+  showId           String
+  profileId        String?
+  category         AccountsPayableCategory
+  status           AccountsPayableStatus   @default(PENDING)
+  amountCents      Int
+  payeeLabel       String
+  note             String?
+  paidAt           DateTime?
   // Set when status transitions to RELEASED via a real Stripe transfer
   // (src/lib/stripe.ts's createPayoutTransfer) — also the idempotency key,
   // so a retried payout run can never double-pay this entry.
   stripeTransferId String?
-  createdAt     DateTime                @default(now())
-  updatedAt     DateTime                @updatedAt
-  ticketOrder   TicketOrder             @relation(fields: [ticketOrderId], references: [id], onDelete: Cascade)
-  show          Show                    @relation(fields: [showId], references: [id], onDelete: Cascade)
-  profile       Profile?                @relation(fields: [profileId], references: [id], onDelete: SetNull)
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  ticketOrder      TicketOrder             @relation(fields: [ticketOrderId], references: [id], onDelete: Cascade)
+  show             Show                    @relation(fields: [showId], references: [id], onDelete: Cascade)
+  profile          Profile?                @relation(fields: [profileId], references: [id], onDelete: SetNull)
 
   @@index([ticketOrderId, category])
   @@index([showId, category])
@@ -921,21 +926,21 @@ model PremiumInterest {
 }
 
 model NotificationPreference {
-  id             String   @id @default(cuid())
-  userId         String   @unique
-  newShows       Boolean  @default(true)
-  journalPosts   Boolean  @default(true)
-  milestones     Boolean  @default(true)
-  weeklyDigest   Boolean  @default(true)
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  newShows        Boolean  @default(true)
+  journalPosts    Boolean  @default(true)
+  milestones      Boolean  @default(true)
+  weeklyDigest    Boolean  @default(true)
   // Added for the per-role settings pages (Artist/DJ/Venue/Fan/Promoter
   // Settings.dc.html templates) — categories with no honest match among the
   // 4 fields above. Everything else in those templates reuses the fields
   // above with role-contextual copy rather than growing this table further.
-  radioLive      Boolean  @default(true) // a followed DJ goes live
-  crateUploads   Boolean  @default(true) // your own track/crate upload clears vetting
-  bookingRequests Boolean @default(true) // a venue receives a new booking request
-  updatedAt      DateTime @updatedAt
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  radioLive       Boolean  @default(true) // a followed DJ goes live
+  crateUploads    Boolean  @default(true) // your own track/crate upload clears vetting
+  bookingRequests Boolean  @default(true) // a venue receives a new booking request
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ProcessedWebhookEvent {
@@ -1214,23 +1219,23 @@ model AdSlot {
 }
 
 model Ad {
-  id            String         @id @default(cuid())
-  slotId        String
-  advertiserId  String
-  title         String
-  audioUrl      String?
+  id                    String         @id @default(cuid())
+  slotId                String
+  advertiserId          String
+  title                 String
+  audioUrl              String?
   // Server-computed at upload time (src/lib/audio-duration.ts) — lets the
   // radio ad-interjection module (RadioShowCreator's ad breaks) size a real
   // spot into a timeline the same way it already does for placeholder clips.
-  audioDurationSecs Int?
-  clickUrl      String?
-  status        String         @default("PENDING")
+  audioDurationSecs     Int?
+  clickUrl              String?
+  status                String         @default("PENDING")
   // Coverage tier the campaign was purchased at — LOCAL | REGIONAL | NATIONAL | GLOBAL.
   // Drives per-spot pricing and reach; separate from slotId (the placement).
-  scope         String         @default("REGIONAL")
-  budgetCents   Int            @default(0)
-  spentCents    Int            @default(0)
-  impressions   Int            @default(0)
+  scope                 String         @default("REGIONAL")
+  budgetCents           Int            @default(0)
+  spentCents            Int            @default(0)
+  impressions           Int            @default(0)
   // Ad.clicks removed: an audio spot has no click-through surface, so nothing
   // ever incremented it. The column drop is parked in
   // prisma/migrations-pending/20260728201000_drop_ad_clicks — this field goes
@@ -1240,24 +1245,24 @@ model Ad {
   // startsAt/endsAt aren't resolved to real dates until authorization
   // succeeds (see stripePaymentIntentId), so a campaign stuck awaiting
   // manual review or payment never loses run length to the wait.
-  runDays       Int?
-  startsAt      DateTime?
-  endsAt        DateTime?
+  runDays               Int?
+  startsAt              DateTime?
+  endsAt                DateTime?
   // Set while status is PAUSED — on resume, endsAt shifts forward by
   // (now - pausedAt) so a pause never eats into the run length the
   // advertiser actually paid for.
-  pausedAt      DateTime?
+  pausedAt              DateTime?
   // Pre-auth-then-capture billing (DESIGN_SYNC row 234): a manual-capture
   // Stripe PaymentIntent (via Checkout Session) authorizes the full quoted
   // budget once vetting clears; only the actual spentCents at campaign end
   // (or early cancellation) is ever captured — never the full hold.
-  stripePaymentIntentId String?  @unique
+  stripePaymentIntentId String?        @unique
   authorizedAt          DateTime?
   settledAt             DateTime?
-  createdAt     DateTime       @default(now())
-  slot          AdSlot         @relation(fields: [slotId], references: [id])
-  advertiser    User           @relation(fields: [advertiserId], references: [id])
-  impressionLog AdImpression[]
+  createdAt             DateTime       @default(now())
+  slot                  AdSlot         @relation(fields: [slotId], references: [id])
+  advertiser            User           @relation(fields: [advertiserId], references: [id])
+  impressionLog         AdImpression[]
 
   @@index([slotId, status])
   @@index([advertiserId])
@@ -1281,17 +1286,17 @@ model ABTest {
 }
 
 model NewsletterSubscription {
-  id                     String    @id @default(cuid())
-  email                  String
-  profileId              String
+  id                    String    @id @default(cuid())
+  email                 String
+  profileId             String
   // Double opt-in: row is written on subscribe but only actioned once
   // confirmedAt is set via the emailed confirm link. confirmToken is
   // single-use and time-boxed; both are cleared once confirmed.
-  confirmedAt            DateTime?
-  confirmToken           String?   @unique
-  confirmTokenExpiresAt  DateTime?
-  createdAt              DateTime  @default(now())
-  profile                Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  confirmedAt           DateTime?
+  confirmToken          String?   @unique
+  confirmTokenExpiresAt DateTime?
+  createdAt             DateTime  @default(now())
+  profile               Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@unique([email, profileId])
   @@index([profileId])

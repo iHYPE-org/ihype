@@ -100,7 +100,7 @@ function hexA(hex: string, a: number) {
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
 }
 
-type Profile = { id: string; slug: string; name: string; type: string; hexId: string; owner?: { username: string | null } };
+type Profile = { id: string; slug: string; name: string; type: string; hexId: string; onboardedAt?: string | null; owner?: { username: string | null } };
 type NetProfile = { id: string; slug: string; name: string; type: string; city: string | null; genres: string[] };
 
 type PagesData = {

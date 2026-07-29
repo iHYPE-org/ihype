@@ -29,7 +29,7 @@ export default async function WelcomePage() {
   const profile = await db.profile.findFirst({
     where: { ownerId: session.user.id },
     orderBy: { createdAt: 'asc' },
-    select: { slug: true, type: true, verificationStatus: true },
+    select: { slug: true, type: true, verificationStatus: true, onboardedAt: true },
   });
 
   // Prefer the profile's own type over session.user.role: the profile is what
@@ -49,8 +49,12 @@ export default async function WelcomePage() {
 
   // Only the three creator roles have a wizard. A fan does not need one, and
   // without a profile row there is no slug to build a URL from.
+  //
+  // Skipped once the wizard has reported finishing: /welcome is normally seen
+  // once at signup, but it is a plain URL anyone can return to, and sending a
+  // set-up creator back through setup would undo the point of tracking it.
   const onboardingPath =
-    profile && role !== 'FAN'
+    profile && role !== 'FAN' && !profile.onboardedAt
       ? `${getProfilePathForType(profile.type, profile.slug)}/onboarding`
       : null;
 
