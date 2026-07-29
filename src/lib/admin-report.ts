@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
 import { getBaseUrl } from '@/lib/utils';
-import { ADMIN_EMAIL } from '@/lib/env';
+import { getAdminAlertRecipients } from '@/lib/env';
 import type { AdCampaignStatus } from '@/lib/ad-vetting';
 
 export async function sendAdminWeeklyReport(): Promise<{ ok: boolean }> {
@@ -38,6 +38,6 @@ export async function sendAdminWeeklyReport(): Promise<{ ok: boolean }> {
 
   const text = `iHYPE Weekly Report\n\nNew users: ${newUsers}\nNew profiles: ${newProfiles}\nNew shows: ${newShows}\nRadio ad campaigns awaiting manual review: ${pendingAdCampaigns}\nRadio uploads AI-flagged out of the free-use crate (7d): ${aiFlaggedRadioUploads}\nOpen feature requests: ${openFeatureRequests}\nBug reports: ${bugReports}`;
 
-  await sendGenericEmail({ to: ADMIN_EMAIL, subject: '[iHYPE] Weekly Admin Report', html, text });
+  await sendGenericEmail({ to: getAdminAlertRecipients(), subject: '[iHYPE] Weekly Admin Report', html, text });
   return { ok: true };
 }

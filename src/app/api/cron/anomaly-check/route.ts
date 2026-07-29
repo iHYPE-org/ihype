@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isCronRequestAuthorized } from '@/lib/cron-auth';
 import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
-import { ADMIN_EMAIL } from '@/lib/env';
+import { getAdminAlertRecipients } from '@/lib/env';
 import { checkPaymentFailures } from '@/lib/anomaly-detect';
 
 export const dynamic = 'force-dynamic';
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     const text = `iHYPE Anomaly Alert\n\n${alerts.join('\n')}`;
     const html = `<h2>iHYPE Anomaly Alert</h2><ul>${alerts.map((a) => `<li>${a}</li>`).join('')}</ul>`;
     await sendGenericEmail({
-      to: ADMIN_EMAIL,
+      to: getAdminAlertRecipients(),
       subject: '[iHYPE] ALERT: Anomaly detected',
       text,
       html,

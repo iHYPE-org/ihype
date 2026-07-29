@@ -40,7 +40,8 @@ export function getEmailDeliveryReadiness() {
 }
 
 type ConfiguredEmailInput = {
-  to: string;
+  /** One address, or several — Resend's `to` accepts an array directly. */
+  to: string | string[];
   subject: string;
   text: string;
   html: string;

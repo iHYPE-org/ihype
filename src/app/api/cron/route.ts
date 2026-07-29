@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isCronRequestAuthorized } from '@/lib/cron-auth';
-import { ADMIN_EMAIL } from '@/lib/env';
+import { getAdminAlertRecipients } from '@/lib/env';
 import { pingCronAlive, WEEKLY_TTL } from '@/lib/cron-health';
 import { log } from '@/lib/logger';
 
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
         try {
           const summary = JSON.stringify(snapshot, null, 2);
           await sendGenericEmail({
-            to: ADMIN_EMAIL,
+            to: getAdminAlertRecipients(),
             subject: '[iHYPE] Health check failure',
             text: `iHYPE health check returned non-ok status.\n\n${summary}`,
             html: `<p>iHYPE health check returned non-ok status.</p><pre style="font-family:monospace;font-size:12px;background:#0a0805;color:#f0ebe5;padding:12px;border-radius:6px;white-space:pre-wrap;">${summary.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</pre>`
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
           const shouldAlert = !lastAlert || Date.now() - lastAlert > 24 * 60 * 60 * 1000;
           if (shouldAlert) {
             await sendGenericEmail({
-              to: ADMIN_EMAIL,
+              to: getAdminAlertRecipients(),
               subject: '[iHYPE] Launch readiness blockers',
               text: snapshot.launchReadiness.blockers.join('\n'),
               html: `<ul>${snapshot.launchReadiness.blockers.map((item) => `<li>${item}</li>`).join('')}</ul>`
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
           const lastCronAlert = await kvGet<number>('health-alert:stale-crons');
           const shouldAlert = !lastCronAlert || Date.now() - lastCronAlert > 24 * 60 * 60 * 1000;
           if (shouldAlert) {
-            await sendOperationalEmail({ to: ADMIN_EMAIL, subject: '[iHYPE] Stale cron jobs detected', text: `These cron jobs haven't run in their expected window: ${cronHealth.stale.join(', ')}`, html: `<p>Stale crons: <strong>${cronHealth.stale.join(', ')}</strong></p>` }, 'stale-crons');
+            await sendOperationalEmail({ to: getAdminAlertRecipients(), subject: '[iHYPE] Stale cron jobs detected', text: `These cron jobs haven't run in their expected window: ${cronHealth.stale.join(', ')}`, html: `<p>Stale crons: <strong>${cronHealth.stale.join(', ')}</strong></p>` }, 'stale-crons');
             await kvPut('health-alert:stale-crons', Date.now(), { ex: 24 * 60 * 60 });
           }
         } catch { /* KV unavailable */ }
@@ -156,7 +156,7 @@ export async function GET(request: NextRequest) {
         await kvPut('db-health:profile-count', profileCount);
       } catch { /* KV not available */ }
       if (alerts.length > 0) {
-        await sendOperationalEmail({ to: ADMIN_EMAIL, subject: '[iHYPE] DB health alert', text: alerts.join('\n\n') + `\n\nCurrent counts: users=${userCount}, profiles=${profileCount}`, html: `<p>${alerts.map(a => `<strong>${a}</strong>`).join('<br/><br/>')}</p>` }, 'db-health');
+        await sendOperationalEmail({ to: getAdminAlertRecipients(), subject: '[iHYPE] DB health alert', text: alerts.join('\n\n') + `\n\nCurrent counts: users=${userCount}, profiles=${profileCount}`, html: `<p>${alerts.map(a => `<strong>${a}</strong>`).join('<br/><br/>')}</p>` }, 'db-health');
       }
       await pingCronAlive('db-health');
       return NextResponse.json({ ok: alerts.length === 0, userCount, profileCount, alerts, checkedAt: new Date().toISOString() });
@@ -167,6 +167,13 @@ export async function GET(request: NextRequest) {
       const result = await sendWeeklyPicksEmails();
       await pingCronAlive('weekly-picks', WEEKLY_TTL);
       return NextResponse.json({ ok: true, ...result });
+    }
+
+    case 'held-track-notice': {
+      const { notifyStaleHeldTracks } = await import('@/lib/held-track-notice');
+      const result = await notifyStaleHeldTracks();
+      await pingCronAlive('held-track-notice');
+      return NextResponse.json(result);
     }
 
     case 'workbench-digest': {
@@ -327,7 +334,7 @@ export async function GET(request: NextRequest) {
         select: { name: true, slug: true, stripeConnectOnboarded: true, stripeConnectAccountId: true }
       });
       if (issues.length > 0) {
-        await sendOperationalEmail({ to: ADMIN_EMAIL, subject: `[iHYPE] Stripe Connect issues (${issues.length})`, text: issues.map(i => `${i.name}: onboarded=${i.stripeConnectOnboarded}, accountId=${i.stripeConnectAccountId ?? 'null'}`).join('\n'), html: `<p>${issues.map(i => `<strong>${i.name}</strong>: onboarded=${i.stripeConnectOnboarded}, accountId=${i.stripeConnectAccountId ?? 'null'}`).join('<br/>')}</p>` }, 'stripe-connect-health');
+        await sendOperationalEmail({ to: getAdminAlertRecipients(), subject: `[iHYPE] Stripe Connect issues (${issues.length})`, text: issues.map(i => `${i.name}: onboarded=${i.stripeConnectOnboarded}, accountId=${i.stripeConnectAccountId ?? 'null'}`).join('\n'), html: `<p>${issues.map(i => `<strong>${i.name}</strong>: onboarded=${i.stripeConnectOnboarded}, accountId=${i.stripeConnectAccountId ?? 'null'}`).join('<br/>')}</p>` }, 'stripe-connect-health');
       }
       await pingCronAlive('stripe-connect-health');
       return NextResponse.json({ ok: true, issues: issues.length });

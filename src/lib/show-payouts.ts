@@ -1,7 +1,7 @@
 import { AccountsPayableCategory, AccountsPayableStatus } from '@prisma/client/edge';
 import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
-import { ADMIN_EMAIL } from '@/lib/env';
+import { getAdminAlertRecipients } from '@/lib/env';
 import { createPayoutTransfer, isStripeConfigured } from '@/lib/stripe';
 import { log } from '@/lib/logger';
 
@@ -79,7 +79,7 @@ export async function triggerShowPayouts(): Promise<{ released: number; skipped:
     } catch (error) {
       log.error('[show-payouts]', error instanceof Error ? error : { error: String(error) }, `transfer failed for entry ${entry.id}`);
       await sendGenericEmail({
-        to: ADMIN_EMAIL,
+        to: getAdminAlertRecipients(),
         subject: `[iHYPE] Payout transfer failed: ${entry.show.title}`,
         text: `Payout for "${entry.payeeLabel}" on show "${entry.show.title}" (entry ${entry.id}) failed: ${error instanceof Error ? error.message : String(error)}`,
         html: `<p>Payout for <strong>${entry.payeeLabel}</strong> on show <strong>${entry.show.title}</strong> (entry ${entry.id}) failed. Needs manual attention.</p>`,

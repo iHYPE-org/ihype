@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isCronRequestAuthorized } from '@/lib/cron-auth';
 import { db } from '@/lib/db';
 import { sendOperationalEmail } from '@/lib/mailer';
-import { ADMIN_EMAIL } from '@/lib/env';
+import { getAdminAlertRecipients } from '@/lib/env';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     </table>
   `;
 
-  const emailed = await sendOperationalEmail({ to: ADMIN_EMAIL, subject: '[iHYPE] Daily ops report', text, html }, 'daily-ops');
+  const emailed = await sendOperationalEmail({ to: getAdminAlertRecipients(), subject: '[iHYPE] Daily ops report', text, html }, 'daily-ops');
 
   // `emailed` is part of the response on purpose: the job previously
   // returned ok:true whether or not the report actually left the building,

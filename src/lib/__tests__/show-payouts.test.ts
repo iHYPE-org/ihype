@@ -26,7 +26,7 @@ vi.mock('@/lib/stripe', () => ({
   createPayoutTransfer: vi.fn().mockResolvedValue('tr_default'),
 }));
 vi.mock('@/lib/mailer', () => ({ sendGenericEmail: vi.fn().mockResolvedValue(undefined) }));
-vi.mock('@/lib/env', () => ({ ADMIN_EMAIL: 'admin@ihype.org' }));
+vi.mock('@/lib/env', () => ({ getAdminAlertRecipients: () => ['admin@ihype.org'] }));
 
 import { db } from '@/lib/db';
 import { createPayoutTransfer, isStripeConfigured } from '@/lib/stripe';
@@ -134,7 +134,9 @@ describe('triggerShowPayouts', () => {
     // RELEASED, or the money is owed but the ledger says it was paid.
     expect(mockDb.accountsPayableEntry.update).not.toHaveBeenCalled();
     expect(mockSendEmail).toHaveBeenCalledWith(
-      expect.objectContaining({ to: 'admin@ihype.org' }),
+      // Now a list: ADMIN_ALERT_EMAIL accepts several comma-separated
+      // addresses so an alert is not a bus factor of one.
+      expect.objectContaining({ to: ['admin@ihype.org'] }),
     );
   });
 

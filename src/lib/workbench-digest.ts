@@ -1,7 +1,7 @@
 import { formatAge, getWorkbenchQueues, orderByUrgency, type WorkbenchQueue } from '@/lib/admin-workbench';
 import { sendOperationalEmail } from '@/lib/mailer';
 import { getBaseUrl } from '@/lib/utils';
-import { ADMIN_EMAIL } from '@/lib/env';
+import { getAdminAlertRecipients } from '@/lib/env';
 
 /**
  * The morning half of the admin workbench.
@@ -119,7 +119,7 @@ export async function sendWorkbenchDigest(): Promise<{ ok: boolean; sent: boolea
   // against.
   const sent = await sendOperationalEmail(
     {
-      to: ADMIN_EMAIL,
+      to: getAdminAlertRecipients(),
       subject,
       html: renderDigestHtml(decision, baseUrl),
       text: renderDigestText(decision, baseUrl),
