@@ -34,24 +34,8 @@ export const menuLinks = [
     icon: <svg {...ico}><circle cx="12" cy="12" r="9" /><path d="M12 11v5" /><path d="M12 8h.01" /></svg>,
   },
   {
-    href: '/transparency', label: 'Transparency',
-    icon: <svg {...ico}><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z" /><circle cx="12" cy="12" r="2.5" /></svg>,
-  },
-  {
-    href: '/audit', label: 'Trust & Safety',
-    icon: <svg {...ico}><path d="M12 3 4 6v6c0 4.4 3.4 8.2 8 9 4.6-.8 8-4.6 8-9V6Z" /><path d="m9 12 2 2 4-4" /></svg>,
-  },
-  {
-    href: '/legal', label: 'Legal',
-    icon: <svg {...ico}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z" /><path d="M14 3v5h5" /><path d="M9 13h6M9 17h6" /></svg>,
-  },
-  {
-    href: '/privacy', label: 'Privacy',
-    icon: <svg {...ico}><rect height="10" rx="2" width="14" x="5" y="11" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>,
-  },
-  {
-    href: '/dmca', label: 'DMCA',
-    icon: <svg {...ico}><path d="M12 3 4 6v6c0 4.4 3.4 8.2 8 9 4.6-.8 8-4.6 8-9V6Z" /></svg>,
+    href: '/info', label: 'Info',
+    icon: <svg {...ico}><circle cx="12" cy="12" r="9" /><path d="M12 11v5" /><path d="M12 8h.01" /></svg>,
   },
 ];
 
@@ -160,26 +144,6 @@ export function NavDrawer({
                   >
                     <svg {...ico}><rect height="8" rx="1.5" width="8" x="3" y="3" /><rect height="4" rx="1.5" width="8" x="13" y="3" /><rect height="4" rx="1.5" width="8" x="13" y="11" /><rect height="8" rx="1.5" width="8" x="3" y="13" /></svg>
                     {t('navDrawer.myDashboard', 'My Dashboard')}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/me/notifications"
-                    className={`nav-drawer-link${pathname === '/me/notifications' ? ' active' : ''}`}
-                    onClick={() => setOpen(false)}
-                  >
-                    <svg {...ico}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
-                    {t('navDrawer.notifications', 'Notifications')}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/me/wrapped"
-                    className={`nav-drawer-link${pathname === '/me/wrapped' ? ' active' : ''}`}
-                    onClick={() => setOpen(false)}
-                  >
-                    <svg {...ico}><path d="M12 3l2.5 5.7 6 .5-4.5 4 1.4 6-5.4-3.2L6.6 19l1.4-6-4.5-4 6-.5L12 3Z" /></svg>
-                    {t('navDrawer.myScene', 'My Scene')}
                   </Link>
                 </li>
               </ul>

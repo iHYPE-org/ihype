@@ -77,39 +77,11 @@ export default async function CommunityPage() {
 
         <section className="community-section">
           <div className="community-section-head">
-            <span className="community-eyebrow">{t('communityPage.voteEyebrow', 'Vote & suggest')}</span>
-            <h2>{t('communityPage.voteTitle', 'What should we build next?')}</h2>
+            <span className="community-eyebrow">{t('communityPage.updatesEyebrow', 'Newsroom')}</span>
+            <h2>{t('communityPage.updatesTitle', 'What we shipped, and what changed')}</h2>
             <p className="community-section-copy">
-              {t('communityPage.voteCopy', 'Every idea here is a real, counted vote — the charter promise "you get a vote" points at this board.')}
+              {t('communityPage.updatesCopy', 'Every platform change, split decision and moderation-rule update gets written up here — the running public record of how iHYPE is run.')}
             </p>
-          </div>
-          <div className="community-card">
-            <CommunityVoteBoard />
-          </div>
-        </section>
-
-        <section className="community-section">
-          <div className="community-section-head">
-            <span className="community-eyebrow">{t('communityPage.collabEyebrow', 'Collab board')}</span>
-            <h2>{t('communityPage.collabTitle', 'Find your people')}</h2>
-            <p className="community-section-copy">
-              {t('communityPage.collabCopy', "Musician classifieds — post what you're looking for, or what you have to offer, and browse what the rest of the scene has posted.")}
-            </p>
-          </div>
-          <div className="community-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-            <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-a70)', maxWidth: '48ch' }}>
-              {t('communityPage.collabSub', "Drummers, vocalists, producers, venues, DJs — post a listing or browse what's open.")}
-            </p>
-            <Link className="ihype-btn-primary" href="/collab-board" style={{ flexShrink: 0, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
-              {t('communityPage.collabLink', 'Open the collab board →')}
-            </Link>
-          </div>
-        </section>
-
-        <section className="community-section">
-          <div className="community-section-head">
-            <span className="community-eyebrow">{t('communityPage.updatesEyebrow', 'Updates')}</span>
-            <h2>{t('communityPage.updatesTitle', "What's changed")}</h2>
           </div>
           {posts.length === 0 ? (
             <div className="community-card community-empty">
@@ -136,6 +108,37 @@ export default async function CommunityPage() {
               ))}
             </div>
           )}
+        </section>
+
+        <section className="community-section">
+          <div className="community-section-head">
+            <span className="community-eyebrow">{t('communityPage.voteEyebrow', 'Vote & suggest')}</span>
+            <h2>{t('communityPage.voteTitle', 'Open votes on where iHYPE goes next')}</h2>
+            <p className="community-section-copy">
+              {t('communityPage.voteCopy', 'When a direction change comes up it is posted here for a vote, and any signed-in account gets one. Every vote is real and counted — the charter promise "you get a vote" points at this board.')}
+            </p>
+          </div>
+          <div className="community-card">
+            <CommunityVoteBoard />
+          </div>
+        </section>
+
+        <section className="community-section">
+          <div className="community-section-head">
+            <span className="community-eyebrow">{t('communityPage.collabEyebrow', 'Collab board')}</span>
+            <h2>{t('communityPage.collabTitle', 'Find your people')}</h2>
+            <p className="community-section-copy">
+              {t('communityPage.collabCopy', "Musician classifieds — post what you're looking for, or what you have to offer, and browse what the rest of the scene has posted.")}
+            </p>
+          </div>
+          <div className="community-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-a70)', maxWidth: '48ch' }}>
+              {t('communityPage.collabSub', "Drummers, vocalists, producers, venues, DJs — post a listing or browse what's open.")}
+            </p>
+            <Link className="ihype-btn-primary" href="/collab-board" style={{ flexShrink: 0, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+              {t('communityPage.collabLink', 'Open the collab board →')}
+            </Link>
+          </div>
         </section>
 
         <section className="community-section">

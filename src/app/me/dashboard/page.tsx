@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 import { getPromoterDashboard } from '@/lib/promoterDashboard';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { getServerT } from '@/lib/i18n/server';
+import { NotificationsList } from '@/components/NotificationsList';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +25,13 @@ type ActivityItem = {
 export default async function FanDashboardPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/login?callbackUrl=/me/dashboard');
+
+  const notifications = await db.notification.findMany({
+    where: { userId: session.user.id },
+    orderBy: { createdAt: 'desc' },
+    take: 50,
+    select: { id: true, type: true, body: true, read: true, link: true, createdAt: true },
+  });
 
   const t = await getServerT();
   const userId = session.user.id;
@@ -221,7 +229,21 @@ export default async function FanDashboardPage() {
         </div>
       </div>
 
+      {/* Notifications live here rather than on their own /me/notifications
+          page — the standalone route is now a redirect alias. Same query and
+          same component, so read/mark-read still POST to
+          /api/me/notifications unchanged. */}
+      <div className="fan-dash-notifications">
+        <div className="fan-dash-section-head">
+          <span className="fan-dash-eyebrow-sm">{t('meDashboardPage.notifications', 'Notifications')}</span>
+        </div>
+        <NotificationsList
+          initialNotifications={notifications.map((n) => ({ ...n, createdAt: n.createdAt.toISOString() }))}
+        />
+      </div>
+
       <style>{`
+        .fan-dash-notifications { margin-top: 36px; }
         .fan-dash-container { max-width: 1000px; margin: 0 auto; padding: 40px 24px 80px; }
         .fan-dash-header { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px; margin-bottom: 28px; }
         .fan-dash-eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a50); margin-bottom: 6px; }
