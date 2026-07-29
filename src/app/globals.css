@@ -5594,6 +5594,12 @@ html.high-contrast p {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  /* The Settings disclosure can push the drawer past the viewport on a short
+     screen; without this the accessibility toggles at the bottom are simply
+     unreachable. overscroll-behavior keeps the scroll from chaining to the
+     page underneath once the drawer hits its end. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
   animation: drawer-slide-in .28s cubic-bezier(.32,.72,.24,1);
 }
 @keyframes drawer-slide-in {
@@ -5647,6 +5653,64 @@ html.high-contrast p {
 .nav-drawer-link.active { color: var(--accent, #ff5029); background: rgba(255,80,41,.07); }
 .nav-drawer-link.active svg { opacity: 1; }
 
+/* Settings disclosure. A <button> styled as a drawer link, so the row it
+   opens reads as part of the same list rather than a separate control block. */
+.nav-drawer-disclosure {
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+}
+.nav-drawer-chevron { transition: transform .18s ease; }
+.nav-drawer-settings {
+  display: grid;
+  gap: 10px;
+  padding: 10px 12px 4px;
+}
+.nav-drawer-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--ink-a70);
+}
+/* The inline accessibility panel already carries its own border and padding,
+   so it needs none added here — only its heading scaled to the drawer. */
+.nav-drawer-settings .a11y-panel-inline { padding: 12px; gap: 10px; }
+.nav-drawer-settings .a11y-panel-head strong { font-size: .88rem; }
+.nav-drawer-settings-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--hair-70);
+  border-radius: 12px;
+  background: var(--hair-30);
+  color: var(--ink);
+  text-decoration: none;
+  transition: background .18s ease, border-color .18s ease;
+}
+.nav-drawer-settings-action:hover { background: var(--hair-50); border-color: var(--hair-100); }
+.nav-drawer-settings-action strong { display: block; font-size: .83rem; font-weight: 700; }
+.nav-drawer-settings-action small {
+  display: block;
+  margin-top: 3px;
+  color: var(--ink-a50);
+  font-size: .73rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.nav-drawer-settings-action svg { flex-shrink: 0; opacity: .5; }
+.nav-drawer-signout { color: #ff5029; }
+.nav-drawer-signout small { color: var(--ink-a50); }
+
 @media (max-width: 768px) {
   .nav-drawer-trigger { display: inline-flex; }
   /* Keep the 44px touch-target rule on mobile */
@@ -5654,7 +5718,7 @@ html.high-contrast p {
 }
 @media (prefers-reduced-motion: reduce) {
   .nav-drawer, .nav-drawer-backdrop { animation: none; }
-  .nav-drawer-link, .nav-drawer-close { transition: none; }
+  .nav-drawer-link, .nav-drawer-close, .nav-drawer-chevron, .nav-drawer-settings-action { transition: none; }
 }
 
 /* Shared pill sub-tab — the sub-menu strips on Listen / Events / Pages /

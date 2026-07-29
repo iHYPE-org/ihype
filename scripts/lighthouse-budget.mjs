@@ -81,7 +81,10 @@ const PAGES = [
   // known, already-observed variance.
   { path: '/', budget: { performance: 0.55, lcp: 5800, cls: 0.15, tbt: 1200 } },
   { path: '/login', budget: { performance: 0.7, lcp: 4800, cls: 0.1, tbt: 550 } },
-  { path: '/about', budget: { performance: 0.75, lcp: 4800, cls: 0.1, tbt: 450 } },
+  // Was '/about' until that page was retired into /info. Measuring a redirect
+  // would score the destination while attributing it to the wrong URL, so this
+  // slot moved to the hub that actually renders the marketing prose now.
+  { path: '/info', budget: { performance: 0.75, lcp: 4800, cls: 0.1, tbt: 450 } },
   { path: '/discover', budget: { performance: 0.65, lcp: 4800, cls: 0.1, tbt: 550 } },
   { path: '/shows', budget: { performance: 0.65, lcp: 4800, cls: 0.1, tbt: 550 } }
 ];

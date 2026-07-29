@@ -1,8 +1,10 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
+import { db } from '@/lib/db';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { WelcomeStepsChecklist } from '@/components/WelcomeStepsChecklist';
+import { getProfilePathForType } from '@/lib/profile-paths';
 import { getServerT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
@@ -18,14 +20,50 @@ export default async function WelcomePage() {
 
   const t = await getServerT();
 
+  // POST /api/register creates the Profile in the same transaction as the User,
+  // so by the time anyone lands here it exists. First-created wins if the
+  // account has since grown more than one, matching how /settings picks the
+  // invite link's profile. Null is still handled: an ADVERTISER account has no
+  // Profile row at all (it gets routed to /advertise/dashboard instead, but
+  // nothing structurally stops it reaching this URL).
+  const profile = await db.profile.findFirst({
+    where: { ownerId: session.user.id },
+    orderBy: { createdAt: 'asc' },
+    select: { slug: true, type: true, verificationStatus: true },
+  });
+
+  // Prefer the profile's own type over session.user.role: the profile is what
+  // the onboarding wizard is keyed to, and getProfilePathForType already owns
+  // the type -> URL-prefix mapping (ARTIST -> /artists, DJ -> /promoters,
+  // VENUE -> /venues), so there is no second copy of it here to drift.
+  const profileRole: Role | null =
+    profile?.type === 'ARTIST' || profile?.type === 'VENUE' || profile?.type === 'DJ'
+      ? profile.type
+      : profile
+        ? 'FAN'
+        : null;
+  const sessionRole = (session.user as { role?: string }).role;
+  const role: Role =
+    profileRole
+    ?? (sessionRole === 'ARTIST' || sessionRole === 'VENUE' || sessionRole === 'DJ' ? sessionRole : 'FAN');
+
+  // Only the three creator roles have a wizard. A fan does not need one, and
+  // without a profile row there is no slug to build a URL from.
+  const onboardingPath =
+    profile && role !== 'FAN'
+      ? `${getProfilePathForType(profile.type, profile.slug)}/onboarding`
+      : null;
+
   const CONFIG: Record<Role, {
-    name: string; roleLabel: string; tint: string; pendingNote: string;
+    roleLabel: string; tint: string;
     sub: string; cta: string; ctaHref: string;
     steps: { title: string; desc: string }[];
   }> = {
     FAN: {
-      name: 'Jess R.', roleLabel: t('welcomePage.roleFan', 'Fan'), tint: '#b983ff', pendingNote: t('welcomePage.pendingActiveNow', ' · Active now'),
+      roleLabel: t('welcomePage.roleFan', 'Fan'), tint: '#b983ff',
       sub: t('welcomePage.subFan', 'Your account is live. Start hyping the artists you believe in — your listens and hypes shape who gets discovered.'),
+      // No fan setup wizard exists, and none is needed — a fan account is
+      // complete at signup. Listening is the first thing to do.
       cta: t('welcomePage.ctaFan', 'Start listening →'), ctaHref: '/listen',
       steps: [
         { title: t('welcomePage.fanStep1Title', 'Hype your first artist'), desc: t('welcomePage.fanStep1Desc', 'Listen to a track all the way through or tap the flame — every hype is a demand signal venues can see.') },
@@ -34,9 +72,9 @@ export default async function WelcomePage() {
       ],
     },
     ARTIST: {
-      name: 'Nyla', roleLabel: t('welcomePage.roleArtist', 'Artist'), tint: '#ff5029', pendingNote: t('welcomePage.pendingVerification', ' · Verification pending (~48h)'),
+      roleLabel: t('welcomePage.roleArtist', 'Artist'), tint: '#ff5029',
       sub: t('welcomePage.subArtist', 'Welcome to the platform where 70% of every ticket is yours — locked by charter, before a single ticket sells.'),
-      cta: t('welcomePage.ctaArtist', 'Set up your page →'), ctaHref: '/pages',
+      cta: t('welcomePage.ctaArtist', 'Set up your page →'), ctaHref: onboardingPath ?? '/pages',
       steps: [
         { title: t('welcomePage.artistStep1Title', 'Complete verification'), desc: t('welcomePage.artistStep1Desc', 'Link your catalog and confirm identity — the 70% split activates the moment you’re verified.') },
         { title: t('welcomePage.artistStep2Title', 'Upload your first track'), desc: t('welcomePage.artistStep2Desc', 'Choose all-rights or free-use licensing per track; free-use tracks can be crated by DJs for radio shows.') },
@@ -44,9 +82,9 @@ export default async function WelcomePage() {
       ],
     },
     VENUE: {
-      name: 'Port City Music Hall', roleLabel: t('welcomePage.roleVenue', 'Venue'), tint: '#22e5d4', pendingNote: t('welcomePage.pendingVerification', ' · Verification pending (~48h)'),
+      roleLabel: t('welcomePage.roleVenue', 'Venue'), tint: '#22e5d4',
       sub: t('welcomePage.subVenue', 'A guaranteed 20% of every gate, by charter — plus real demand data on who fans actually want to see.'),
-      cta: t('welcomePage.ctaVenue', 'List your room →'), ctaHref: '/pages',
+      cta: t('welcomePage.ctaVenue', 'List your room →'), ctaHref: onboardingPath ?? '/pages',
       steps: [
         { title: t('welcomePage.venueStep1Title', 'Verify your room'), desc: t('welcomePage.venueStep1Desc', 'Confirm capacity and address so events can go live with serialized, QR-verified tickets.') },
         { title: t('welcomePage.venueStep2Title', 'Check the demand radar'), desc: t('welcomePage.venueStep2Desc', 'See which artists your city is hyping before you book — no promoter guesswork.') },
@@ -54,9 +92,9 @@ export default async function WelcomePage() {
       ],
     },
     DJ: {
-      name: 'DJ Caro', roleLabel: t('welcomePage.roleDj', 'DJ'), tint: '#ff3e9a', pendingNote: t('welcomePage.pendingVerification', ' · Verification pending (~48h)'),
+      roleLabel: t('welcomePage.roleDj', 'DJ'), tint: '#ff3e9a',
       sub: t('welcomePage.subDj', 'Your studio is waiting. Build radio shows from the free-use library and get paid to promote the shows you play.'),
-      cta: t('welcomePage.ctaDj', 'Open the studio →'), ctaHref: '/radio',
+      cta: t('welcomePage.ctaDj', 'Open the studio →'), ctaHref: onboardingPath ?? '/radio',
       steps: [
         { title: t('welcomePage.djStep1Title', 'Crate some tracks'), desc: t('welcomePage.djStep1Desc', 'Browse the free-use library and add tracks to your crate — they’re licensed for your radio shows.') },
         { title: t('welcomePage.djStep2Title', 'Record your first show'), desc: t('welcomePage.djStep2Desc', 'Mix crated tracks with your voice and royalty-free SFX, right from your phone.') },
@@ -65,10 +103,32 @@ export default async function WelcomePage() {
     },
   };
 
-  const sessionRole = (session.user as { role?: string }).role;
-  const role: Role = sessionRole === 'ARTIST' || sessionRole === 'VENUE' || sessionRole === 'DJ' ? sessionRole : 'FAN';
   const c = CONFIG[role];
-  const initial = c.name.charAt(0);
+
+  // The account's own name, not a mockup's. This block used to render one of
+  // four hardcoded placeholders from Welcome.dc.html — 'Nyla', 'DJ Caro',
+  // 'Port City Music Hall', 'Jess R.' — so every real signup was greeted by
+  // somebody else's name and initial. session.user.name is the right source
+  // rather than profile.name: registration stores the raw hexId as a fan
+  // profile's name, while User.name holds their chosen username.
+  const displayName =
+    session.user.name?.trim()
+    || session.user.email?.split('@')[0]
+    || t('welcomePage.fallbackName', 'Your account');
+  const initial = displayName.charAt(0).toUpperCase();
+
+  // Was hardcoded to "Verification pending (~48h)" for all three creator roles
+  // regardless of the real column, so a verified venue was still told it was
+  // waiting. Fans are UNVERIFIED by design and are simply active.
+  const status = profile?.verificationStatus;
+  const pendingNote =
+    status === 'PENDING'
+      ? t('welcomePage.pendingVerification', ' · Verification pending (~48h)')
+      : status === 'VERIFIED'
+        ? t('welcomePage.pendingVerified', ' · Verified')
+        : status === 'REJECTED'
+          ? t('welcomePage.pendingNeedsAttention', ' · Verification needs attention')
+          : t('welcomePage.pendingActiveNow', ' · Active now');
 
   return (
     <div className="welcome-body">
@@ -81,8 +141,8 @@ export default async function WelcomePage() {
           <div className="welcome-identity">
             <div className="welcome-avatar" style={{ background: `linear-gradient(135deg, ${c.tint}, #b983ff)` }}>{initial}</div>
             <div>
-              <div className="welcome-name">{c.name}</div>
-              <div className="welcome-role" style={{ color: c.tint }}>{c.roleLabel}{c.pendingNote}</div>
+              <div className="welcome-name">{displayName}</div>
+              <div className="welcome-role" style={{ color: c.tint }}>{c.roleLabel}{pendingNote}</div>
             </div>
           </div>
           <WelcomeStepsChecklist steps={c.steps} tint={c.tint} />

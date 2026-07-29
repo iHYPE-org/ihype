@@ -24,12 +24,12 @@ export function TrustPolicyPage({ badge, title, intro, lastUpdated, sections }: 
           <p style={{ fontSize: 13, opacity: 0.6, marginTop: 8 }}>{t('trustPolicyPage.lastUpdatedLabel', 'Last updated:')} {lastUpdated}</p>
         )}
         <div className="trust-policy-links">
-          <Link className="text-link" href="/legal?tab=privacy">{t('trustPolicyPage.privacyLink', 'Privacy')}</Link>
-          <Link className="text-link" href="/legal?tab=terms">{t('trustPolicyPage.termsLink', 'Terms')}</Link>
+          <Link className="text-link" href="/info?tab=privacy">{t('trustPolicyPage.privacyLink', 'Privacy')}</Link>
+          <Link className="text-link" href="/info?tab=terms">{t('trustPolicyPage.termsLink', 'Terms')}</Link>
           <Link className="text-link" href="/copyright">{t('trustPolicyPage.copyrightLink', 'Copyright')}</Link>
           <Link className="text-link" href="/ticket-policy">{t('trustPolicyPage.ticketPolicyLink', 'Ticket policy')}</Link>
           <Link className="text-link" href="/community-rules">{t('trustPolicyPage.communityRulesLink', 'Community rules')}</Link>
-          <Link className="text-link" href="/about">{t('trustPolicyPage.aboutLink', 'About iHYPE')}</Link>
+          <Link className="text-link" href="/info?tab=charter">{t('trustPolicyPage.charterLink', 'The Charter')}</Link>
           <Link className="text-link" href="/support">{t('trustPolicyPage.supportLink', 'Support')}</Link>
         </div>
       </section>

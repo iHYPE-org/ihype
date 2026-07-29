@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useI18n } from '@/components/I18nProvider';
@@ -28,9 +28,19 @@ type InfoTabsProps = { trustPanel: ReactNode; transparencyPanel: ReactNode };
 
 function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
   const searchParams = useSearchParams();
-  const initialTab = TABS.some((tb) => tb.id === searchParams.get('tab')) ? (searchParams.get('tab') as TabId) : 'trust';
+  const paramTab = searchParams.get('tab');
+  const initialTab = TABS.some((tb) => tb.id === paramTab) ? (paramTab as TabId) : 'trust';
   const [tab, setTab] = useState<TabId>(initialTab);
   const { t } = useI18n();
+
+  // Arriving at /info?tab=privacy from somewhere else on /info is a soft nav:
+  // the route is unchanged, so React keeps this component mounted and the
+  // useState initialiser above never runs again. Without this the tab silently
+  // stays where it was — which is what the charter tab's own "Privacy Policy"
+  // link did.
+  useEffect(() => {
+    if (TABS.some((tb) => tb.id === paramTab)) setTab(paramTab as TabId);
+  }, [paramTab]);
 
   return (
     <div className="legal-wrap">
@@ -113,22 +123,51 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         <h2>{t('legalPage.charter.constraintTitle', 'The founding constraint')}</h2>
         <p>{t('legalPage.charter.constraintBody', "iHYPE was incorporated with a single non-negotiable structural commitment: the platform takes nothing from ticket sales. This commitment is embedded in the company's founding documents and cannot be amended by management, board resolution, investor pressure, or acquisition.")}</p>
         <h2>{t('legalPage.charter.splitTitle', 'The split')}</h2>
+        {/* Static bar and static percentages, unlike the standalone /charter
+            page this was folded in from. That version counted up from 0 when an
+            IntersectionObserver fired — inside a tab panel that starts hidden,
+            a missed observer would leave the platform's defining number reading
+            "0% artist · 0% venue · 0% promoters". Not a trade worth an
+            animation. */}
+        <div className="charter-split-bar" aria-hidden="true">
+          <div style={{ flex: 70, background: 'linear-gradient(90deg, var(--accent), var(--accent-2))' }} />
+          <div style={{ flex: 20, background: 'var(--role-venue)' }} />
+          <div style={{ flex: 10, background: 'var(--role-fan)' }} />
+        </div>
         <p className="legal-split-display">{t('legalPage.charter.splitDisplay', '70% artist · 20% venue · 10% promoters · 0% iHYPE.')}</p>
-        <p>{t('legalPage.charter.splitBody', 'This is not a pricing strategy. It is a constraint. We built the business model around it, not the other way around. Anyone can get paid to promote a show through their own referral link — real word-of-mouth income, not payola.')}</p>
+        <div className="charter-callout">
+          <p>{t('legalPage.charter.splitBody', 'This is not a pricing strategy. It is a constraint. We built the business model around it, not the other way around. Anyone can get paid to promote a show through their own referral link — real word-of-mouth income, not payola.')}</p>
+        </div>
+        <h2>{t('charterPage.promotersHead', 'Promoters and the 10%')}</h2>
+        <p>{t('charterPage.promotersBody', "The 10% promoter pool is distributed to everyone who shared a referral link that contributed to ticket sales for an event. There's no separate promoter account — any Fan, Artist, DJ, or Venue earns from the links they already share.")}</p>
+        <p><Link href="/me/promote" className="charter-inline-link">{t('charterPage.promoteDashboardLink', 'See a promoting dashboard →')}</Link></p>
         <h2>{t('legalPage.charter.openTitle', 'Open by design')}</h2>
         <p>{t('legalPage.charter.openBody', 'Our code and our moderation heuristics are published for public audit. Nothing about how the split is calculated, how uploads are screened, or how the platform ranks anything is a secret — anyone can check that it does exactly what we say.')}</p>
         <h2>{t('legalPage.charter.dataTitle', 'Your data is never for sale')}</h2>
-        <p>{t('legalPage.charter.dataBodyIntro', 'iHYPE does not aggregate user data for resale and never sells it to advertisers or anyone else — not now, not after an acquisition. This is a charter commitment, not a policy that can be quietly reversed. See our')} <Link href="/legal?tab=privacy">{t('legalPage.charter.privacyPolicyLink', 'Privacy Policy')}</Link> {t('legalPage.charter.dataBodyOutro', 'for exactly what we collect and why.')}</p>
+        <p>{t('legalPage.charter.dataBodyIntro', 'iHYPE does not aggregate user data for resale and never sells it to advertisers or anyone else — not now, not after an acquisition. This is a charter commitment, not a policy that can be quietly reversed. See our')} <Link href="/info?tab=privacy">{t('legalPage.charter.privacyPolicyLink', 'Privacy Policy')}</Link> {t('legalPage.charter.dataBodyOutro', 'for exactly what we collect and why.')}</p>
         <h2>{t('legalPage.charter.voteTitle', 'You get a vote')}</h2>
         <p>{t('legalPage.charter.voteBody', 'Users of iHYPE are treated as stakeholders, not just customers. Meaningful changes to the platform — the split, moderation rules, new fees of any kind — are put to the people who use it, with feedback built into every release.')}</p>
         <h2>{t('legalPage.charter.fundedTitle', 'Funded like radio, not like Big Tech')}</h2>
         <p>{t('legalPage.charter.fundedBody', 'iHYPE is funded entirely by advertising, the same way terrestrial radio has always worked — and those ads are restricted to music-related sources only, forever. No user-data resale funds this platform, and no other category of advertiser will ever be let in to change that.')}</p>
+        {/* Only the part /charter said that this tab did not. Its full
+            paragraph opened with the same sentence as fundedBody above, so
+            folding it in verbatim would have printed that sentence twice. */}
+        <p>{t('legalPage.charter.processingFeeBody', 'None of it touches the ticket split. Tickets are processed directly through Stripe; the card-processing fee (2.9% + $0.30; AMEX 3.5% + $0.30) is the only charge above face value, passed through at cost.')}</p>
+        <p><Link href="/advertise" className="charter-inline-link">{t('charterPage.advertisingLink', 'See how advertising works →')}</Link></p>
         <h2>{t('legalPage.charter.leanTitle', 'Why so few people run this')}</h2>
         <p>{t('legalPage.charter.leanBody', "iHYPE is run by two people, leaning on AI automation to keep operating costs at the absolute minimum. That's deliberate: a lean operation is a sustainable operation, and there's no boardroom of investors around to talk us into breaking any of the above.")}</p>
         <h2>{t('legalPage.charter.whyLockTitle', 'Why lock it in?')}</h2>
         <p>{t('legalPage.charter.whyLockBody', 'Because every platform that started with good intentions eventually faced a board meeting where fees made sense. We wanted to make that conversation impossible. The charter is the answer to "what if the company needs revenue?" — the answer is: find another way. Not this.')}</p>
         <h2>{t('legalPage.charter.lockedMeansTitle', 'What "locked in" means')}</h2>
         <p>{t('legalPage.charter.lockedMeansBody', 'The 70/20/10 split is a condition of incorporation. Changing it would require dissolving the company and re-incorporating under a different structure. No board vote, no shareholder approval, no acquisition clause overrides it.')}</p>
+        <h2>{t('charterPage.makesRealHead', 'What actually makes this real')}</h2>
+        <p>{t('charterPage.makesRealBody', 'A charter is just a promise on paper until a fan buys a ticket. Every dollar that hits this split exists because someone hyped an artist, showed up, and paid face value instead of going through a scalper. Artists write the songs, venues open the doors — but fans are the ones who make the 70/20/10 mean anything at all.')}</p>
+        <p><Link href="/info?tab=transparency" className="charter-inline-link">{t('charterPage.transparencyLink', 'See it in the live numbers →')}</Link></p>
+        <h2>{t('legalPage.terms.contactTitle', 'Contact')}</h2>
+        <p>
+          {t('charterPage.questionsPrefix', 'Questions about the charter:')} <a href="mailto:admin@ihype.org">admin@ihype.org</a><br />
+          {t('charterPage.footerCompanyLine', 'iHYPE Inc. · Founded Portland, ME · 2026 ·')} <a href="https://ihype.org">ihype.org</a>
+        </p>
       </div>
 
       <div className={`legal-doc${tab === 'dmca' ? ' active' : ''}`}>
@@ -157,7 +196,14 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         .legal-seg-btn { padding: 9px 20px; border: none; background: transparent; color: var(--ink-2); font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; font-size: .82rem; cursor: pointer; transition: all .15s; white-space: nowrap; flex-shrink: 0; }
         @media (max-width: 480px) {
           .legal-seg { width: 100%; border-radius: 10px; }
-          .legal-seg-btn { flex: 1; padding: 8px 6px; font-size: .68rem; line-height: 1.25; text-align: center; white-space: normal; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+          /* Six tabs, not the four this was written for: flex:1 divided the
+             strip into six ~60px columns and the labels overlapped into an
+             unreadable smear. Keep each tab its natural width and let the
+             strip scroll horizontally — the container already has
+             overflow-x:auto. */
+          .legal-seg-btn { flex: 0 0 auto; padding: 10px 14px; font-size: .7rem; line-height: 1.25; text-align: center; white-space: nowrap; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+          .legal-seg { scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+          .legal-seg::-webkit-scrollbar { display: none; }
         }
         .legal-seg-btn.active { background: rgba(255,80,41,.1); color: var(--accent); }
         .legal-doc { display: none; }
@@ -166,6 +212,13 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         .legal-doc p { font-size: .9rem; color: var(--ink-2); line-height: 1.75; margin-bottom: .85rem; }
         .legal-doc a { color: var(--accent); }
         .legal-split-display { font-family: var(--f-d, 'Syne', sans-serif) !important; font-weight: 800; font-size: 1.5rem; letter-spacing: -.03em; color: var(--ink) !important; line-height: 1.3; margin: 1rem 0 !important; }
+        /* Carried over from the standalone /charter page's own <style> block
+           when it was folded into this tab. */
+        .charter-split-bar { display: flex; height: 14px; border-radius: var(--radius-pill, 9999px); overflow: hidden; margin: 1.5rem 0 0; gap: 4px; }
+        .charter-split-bar div { border-radius: var(--radius-pill, 9999px); }
+        .charter-callout { background: rgba(255,80,41,.06); border: 1px solid rgba(255,80,41,.15); border-radius: 16px; padding: 20px 24px; margin: 0 0 1rem; }
+        .charter-callout p { margin: 0 !important; color: var(--ink) !important; font-family: var(--f-s, 'Instrument Serif', serif); font-style: italic; font-size: 1.12rem !important; line-height: 1.55 !important; }
+        .charter-inline-link { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: .72rem; letter-spacing: .04em; border-bottom: 1px solid currentColor; }
         @media print {
           .legal-seg { display: none !important; }
           .legal-print-btn { display: none !important; }
@@ -174,6 +227,10 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
           .legal-h1, .legal-doc h2 { color: #111 !important; }
           .legal-doc p { color: #333 !important; }
           .legal-doc a { color: #111 !important; text-decoration: underline; }
+          .charter-callout p { color: #111 !important; }
+          /* A flat bar prints as three grey blocks with no legend — the
+             percentages beside it already carry the number. */
+          .charter-split-bar { display: none !important; }
         }
       `}</style>
     </div>

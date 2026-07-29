@@ -323,7 +323,6 @@ export async function executeAccountErasure(
         recommendContent: null,
         pressKitContent: null,
         topFiveContent: null,
-        widgetConfig: null,
         pageDraft: null,
         pagePublished: null,
         addressLine1: null,

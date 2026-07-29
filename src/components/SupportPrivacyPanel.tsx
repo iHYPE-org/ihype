@@ -163,7 +163,7 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
                   </span>
                 </button>
 
-                <Link href="/legal?tab=privacy" className="priv-opt" style={{ ...privOptStyle, textDecoration: 'none', color: 'inherit', display: 'flex' }}>
+                <Link href="/info?tab=privacy" className="priv-opt" style={{ ...privOptStyle, textDecoration: 'none', color: 'inherit', display: 'flex' }}>
                   <span style={{ fontSize: 20, flexShrink: 0 }} aria-hidden="true">📄</span>
                   <span>
                     <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 800, marginBottom: 2 }}>{t('supportPrivacyPanel.readPrivacyPolicy', 'Read the privacy policy')}</span>

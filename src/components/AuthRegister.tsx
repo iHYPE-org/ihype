@@ -481,8 +481,8 @@ export function RegisterScreen({
               : t('authRegister.createAccountMagicLink', 'Create account with magic link')}
           </button>
           <div className="authcard-trust-row" aria-label="Signup trust links">
-            <Link href="/privacy">{t('authRegister.privacyLink', 'Privacy')}</Link>
-            <Link href="/terms">{t('authRegister.termsLink', 'Terms')}</Link>
+            <Link href="/info?tab=privacy">{t('authRegister.privacyLink', 'Privacy')}</Link>
+            <Link href="/info?tab=terms">{t('authRegister.termsLink', 'Terms')}</Link>
             <Link href="/community-rules">{t('authRegister.communityRulesLink', 'Community rules')}</Link>
           </div>
           <label className="bot-field" aria-hidden="true">

@@ -159,7 +159,7 @@ export default async function CommunityPage() {
             <h2>{t('communityPage.ctaTitle', 'Every vote and every dollar, on the record.')}</h2>
             <p>{t('communityPage.ctaBody', 'The 70/20/10 split and the vote you just cast are both spelled out in the charter — not a marketing promise.')}</p>
           </div>
-          <Link className="ihype-btn-primary" href="/charter" style={{ flexShrink: 0, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+          <Link className="ihype-btn-primary" href="/info?tab=charter" style={{ flexShrink: 0, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
             {t('communityPage.ctaLink', 'Read the charter →')}
           </Link>
         </section>
