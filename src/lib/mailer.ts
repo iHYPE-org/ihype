@@ -1,5 +1,6 @@
 import { recordEmailDelivery } from '@/lib/audit';
 import { env } from '@/lib/env';
+import { log } from '@/lib/logger';
 import { db } from '@/lib/db';
 import { enqueueEmail } from '@/lib/email-queue';
 import { createUnsubscribeToken } from '@/lib/unsubscribe';
@@ -120,6 +121,42 @@ export async function sendGenericEmail(input: ConfiguredEmailInput) {
   }
   const provider = await sendConfiguredEmail(input);
   return { mode: provider };
+}
+
+/**
+ * Operational/alerting email: must never break its caller, and must never
+ * fail silently either.
+ *
+ * Every operational send used to be written as
+ * `sendGenericEmail(...).catch(() => {})`. The intent was right — a failed
+ * ops report should not fail the cron job — but the effect was that a total
+ * email outage produced no signal anywhere. Production sent nothing at all
+ * for 35 days (verified against the provider's own API logs: zero requests)
+ * while every cron job kept returning 200, because the only thing that would
+ * have reported it was itself an email.
+ *
+ * Failures are reported through the logger, which routes to Sentry. That
+ * matters specifically because it is an INDEPENDENT channel: email cannot be
+ * the thing that tells you email is down.
+ *
+ * Returns whether the send actually happened, so callers can include it in
+ * their own JSON response rather than implying success.
+ */
+export async function sendOperationalEmail(
+  input: ConfiguredEmailInput,
+  context: string
+): Promise<boolean> {
+  try {
+    await sendGenericEmail(input);
+    return true;
+  } catch (error) {
+    log.error(
+      '[email]',
+      error instanceof Error ? error : { error: String(error) },
+      `operational email failed (${context}) — recipient will not receive it`
+    );
+    return false;
+  }
 }
 
 async function sendConfiguredEmail(input: ConfiguredEmailInput) {
