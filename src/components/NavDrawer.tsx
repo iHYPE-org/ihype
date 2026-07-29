@@ -30,12 +30,12 @@ export const menuLinks = [
     icon: <svg {...ico}><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6l-5 4H4a1 1 0 0 0-1 1Z" /><path d="M15 9.5a4 4 0 0 1 0 5" /><path d="M17.5 7a8 8 0 0 1 0 10" /></svg>,
   },
   {
-    href: '/support', label: 'Support',
-    icon: <svg {...ico}><circle cx="12" cy="12" r="9" /><path d="M9.4 9.2a2.7 2.7 0 0 1 5.2.9c0 1.8-2.6 2.2-2.6 3.9" /><path d="M12 17.5h.01" /></svg>,
-  },
-  {
     href: '/info', label: 'Info',
     icon: <svg {...ico}><circle cx="12" cy="12" r="9" /><path d="M12 11v5" /><path d="M12 8h.01" /></svg>,
+  },
+  {
+    href: '/support', label: 'Support',
+    icon: <svg {...ico}><circle cx="12" cy="12" r="9" /><path d="M9.4 9.2a2.7 2.7 0 0 1 5.2.9c0 1.8-2.6 2.2-2.6 3.9" /><path d="M12 17.5h.01" /></svg>,
   },
 ];
 
