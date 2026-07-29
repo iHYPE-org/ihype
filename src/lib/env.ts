@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { hasRuntimeEnvContext, readRuntimeEnv, runtimeEnvSource } from '@/lib/runtime-env';
 
 // Treat empty strings the same as undefined for optional env vars.
 const blank = (v: string | undefined) => (v && v.length > 0 ? v : undefined);
@@ -35,6 +36,14 @@ const envSchema = z.object({
   ADMIN_ALERT_EMAIL: optEmail
 });
 
+// Resolved on access, not at module load: module scope runs before any
+// Cloudflare request context exists, so a dashboard/secret ADMIN_ALERT_EMAIL
+// was invisible here and every alert silently went to the default address.
+export function getAdminEmail(): string {
+  return readRuntimeEnv('ADMIN_ALERT_EMAIL') ?? 'admin@ihype.org';
+}
+
+/** @deprecated Prefer getAdminEmail() — this is fixed at module-load time. */
 export const ADMIN_EMAIL = process.env.ADMIN_ALERT_EMAIL ?? 'admin@ihype.org';
 
 type Env = z.infer<typeof envSchema>;
@@ -45,12 +54,29 @@ let _env: Env | undefined;
 export const env = new Proxy({} as Env, {
   get(_target, prop: string) {
     if (!_env) {
+      // Source is process.env overlaid with the Cloudflare Worker env, because
+      // Worker *secrets* (RESEND_API_KEY, STRIPE_SECRET_KEY, AUTH_SECRET…)
+      // never appear on process.env in workerd. Parsing process.env alone made
+      // every secret-backed subsystem report itself unconfigured — which is
+      // how transactional email silently stopped sending for 35 days while
+      // every cron job still returned 200.
+      const source = runtimeEnvSource();
+      let parsed: Env;
       try {
-        _env = envSchema.parse(process.env);
+        parsed = envSchema.parse(source);
       } catch (e) {
         console.error('[env] Invalid server configuration:', e);
         throw new Error('Server misconfiguration.');
       }
+
+      // Only memoise once the Worker env was actually readable. The first
+      // access can happen at module init or during the build, before any
+      // request context exists — caching that snapshot would pin every secret
+      // to undefined for the whole isolate, long after they became available.
+      if (hasRuntimeEnvContext()) {
+        _env = parsed;
+      }
+      return parsed[prop as keyof Env];
     }
     return _env[prop as keyof Env];
   },
