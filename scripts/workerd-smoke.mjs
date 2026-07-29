@@ -482,8 +482,15 @@ async function run() {
     // `next start` Node server, because the production Prisma configuration is
     // only representative inside workerd.
     if (process.env.SKIP_LIGHTHOUSE_BUDGET !== '1') {
-      const { anyFailed } = await runLighthouseBudget({ baseUrl: BASE });
-      check('Lighthouse performance budget', !anyFailed, 'see per-page output above');
+      const { report, anyFailed } = await runLighthouseBudget({ baseUrl: BASE });
+      // Name the page and the metric in this line. It is the one line that
+      // ends up in the smoke summary, and "see per-page output above" meant
+      // scrolling a few hundred KB of wrangler request logs to learn that one
+      // page missed one budget by one hundredth.
+      const over = report
+        .flatMap((entry) => entry.failures.map((failure) => `${entry.path}: ${failure.message}`))
+        .join('; ');
+      check('Lighthouse performance budget', !anyFailed, over || 'see per-page output above');
     } else {
       console.log('[workerd-smoke] SKIP_LIGHTHOUSE_BUDGET=1 — skipping performance budget');
     }

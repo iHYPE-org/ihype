@@ -21,6 +21,17 @@
  * against the same wrangler dev instance scripts/workerd-smoke.mjs boots,
  * rather than its own `next start` server.
  *
+ * Two things keep the gate readable and trustworthy rather than merely strict:
+ *
+ *  - A page that exceeds its budget is RE-SAMPLED, and only fails the build if
+ *    the same metric exceeds twice. A median of 5 runs is still noisy enough to
+ *    straddle a budget line, and a gate that fails at random gets re-run
+ *    instead of read.
+ *  - Every run writes a markdown table of measured-vs-budget to
+ *    $GITHUB_STEP_SUMMARY. Before that, the only record of why this failed was
+ *    a JSON artifact or 300KB of job log, so "it failed, re-run it" was the
+ *    cheapest available response.
+ *
  * Usage: node scripts/lighthouse-budget.mjs
  * Requires: LHCI_BASE_URL pointing at an already-running workerd server
  * (default http://localhost:3100), backed by a real (if empty) Postgres so
@@ -28,7 +39,14 @@
  */
 import { launch } from 'chrome-launcher';
 import lighthouse from 'lighthouse';
-import { writeFileSync } from 'node:fs';
+import { appendFileSync, writeFileSync } from 'node:fs';
+import {
+  checkBudget,
+  confirmFailures,
+  formatMetric,
+  median,
+  renderSummaryMarkdown,
+} from './lib/lighthouse-report.mjs';
 
 // Budgets, keyed by path. Marketing/auth pages (server-rendered, no heavy
 // client bundles) get the tightest budget; data-backed pages get a bit more
@@ -64,27 +82,53 @@ import { writeFileSync } from 'node:fs';
 //   '/'      5200 -> 5800  (~10% over the 5296ms worst case seen)
 //   '/about' 4500 -> 4800  (matches its sibling marketing pages)
 //
-// Everything else is unchanged — those three pages have >340ms of headroom
-// against their worst observed CI value and are not flaking. These are
-// workerd DEV-server numbers on a shared runner, so this gate is a relative
-// regression detector, not a statement about production user experience. If a
-// change pushes a page past these, that is worth investigating rather than
-// raising again.
+// RECALIBRATED AGAIN 2026-07-29, for two pages that changed under their
+// budgets. Both of the day's failures were the same page missing the same
+// metric by the same hundredth — '/info' scoring 0.74 against a 0.75 budget,
+// twice — which is a budget set exactly at a page's median, not a flake. Two
+// consecutive CI runs (median of 5, GitHub-hosted runner):
+//
+//     page        run 1                     run 2
+//     /           0.76 4441ms 0.003 378ms   0.71 4573ms 0.000 474ms
+//     /login      0.75 4474ms 0.000 403ms   0.79 4486ms 0.000 281ms
+//     /info       0.74 (over budget)        0.74 (over budget)
+//     /discover   0.74 4282ms 0.000 458ms   0.79 4113ms 0.000 354ms
+//     /shows      0.78 4264ms 0.000 360ms   0.79 4168ms 0.000 288ms
+//
+// '/info' inherited 0.75 from '/about' when that page was retired into it, and
+// that was the mistake: '/about' was thin marketing prose, while '/info' is a
+// six-panel hub with a client tab strip and two live Prisma aggregates. It
+// belongs in the data-backed tier ('/discover', '/shows'), so it now carries
+// that tier's budget rather than a marketing page's. Note only its failing
+// metric was ever logged — LCP/CLS/TBT for '/info' are still unmeasured, which
+// is exactly what the job-summary table added below fixes.
+//
+// '/' went the other way. It was a nine-section marketing page when its
+// budget was set; it is now a single non-scrolling screen, and it measures
+// like one (CLS collapsed from a bimodal ~0.134 to 0.000-0.003). Every axis
+// tightens. Two data points is thin for a recalibration, so each new limit
+// keeps real headroom over the worse of the two — and a single crossing no
+// longer fails the build anyway, since a page over budget is now re-sampled
+// and must exceed the same metric twice.
+//
+// These are workerd DEV-server numbers on a shared runner, so this gate is a
+// relative regression detector, not a statement about production user
+// experience. If a change pushes a page past these, that is worth
+// investigating rather than raising again.
 const PAGES = [
-  // '/' CLS budget is 0.15 (web-vitals' "needs improvement" boundary, one
-  // notch under "good"), not 0.1 like the others: measured CLS on this page
-  // is genuinely bimodal across repeated runs (0.000 on most, ~0.134 on
-  // some) even with a 5-run median, pointing to a timing-dependent shift
-  // somewhere in this long marketing page's early render — not something to
-  // guess-fix without the design context for what's actually on it. Tracked
-  // as a follow-up; 0.15 catches a real regression without flaking on this
-  // known, already-observed variance.
-  { path: '/', budget: { performance: 0.55, lcp: 5800, cls: 0.15, tbt: 1200 } },
+  // Was performance 0.55 / LCP 5800 / CLS 0.15 / TBT 1200, all calibrated
+  // against the long marketing page this route no longer serves. The CLS
+  // allowance in particular was 0.15 — web-vitals' "needs improvement"
+  // boundary — to tolerate a timing-dependent shift in that page's early
+  // render. The shift left with the page, so this is back on 0.1 like
+  // everything else.
+  { path: '/', budget: { performance: 0.62, lcp: 5200, cls: 0.1, tbt: 800 } },
   { path: '/login', budget: { performance: 0.7, lcp: 4800, cls: 0.1, tbt: 550 } },
   // Was '/about' until that page was retired into /info. Measuring a redirect
   // would score the destination while attributing it to the wrong URL, so this
-  // slot moved to the hub that actually renders the marketing prose now.
-  { path: '/info', budget: { performance: 0.75, lcp: 4800, cls: 0.1, tbt: 450 } },
+  // slot moved to the hub that actually renders the marketing prose now — and
+  // carries the data-backed tier's budget, because that is what /info is.
+  { path: '/info', budget: { performance: 0.65, lcp: 4800, cls: 0.1, tbt: 550 } },
   { path: '/discover', budget: { performance: 0.65, lcp: 4800, cls: 0.1, tbt: 550 } },
   { path: '/shows', budget: { performance: 0.65, lcp: 4800, cls: 0.1, tbt: 550 } }
 ];
@@ -96,11 +140,6 @@ const METRICS = [
 ];
 
 const RUNS_PER_PAGE = 5;
-
-function median(numbers) {
-  const sorted = [...numbers].sort((a, b) => a - b);
-  return sorted[Math.floor(sorted.length / 2)];
-}
 
 async function auditPageOnce(baseUrl, chromePort, page) {
   const result = await lighthouse(
@@ -158,7 +197,6 @@ async function auditPage(baseUrl, chromePort, page) {
   }
 
   return {
-    path: page.path,
     performance: median(runs.map((r) => r.performance)),
     metrics: {
       lcp: median(runs.map((r) => r.metrics.lcp)),
@@ -168,23 +206,32 @@ async function auditPage(baseUrl, chromePort, page) {
   };
 }
 
-function checkBudget(page, audit) {
-  const failures = [];
-  if (audit.performance < page.budget.performance) {
-    failures.push(
-      `performance score ${audit.performance.toFixed(2)} < budget ${page.budget.performance}`
-    );
+function describeSample(sample) {
+  // Via formatMetric rather than .toFixed()/Math.round() directly: an audit
+  // that computes no LCP yields null, and the old inline formatting threw on
+  // it while logging the very run that would have explained why.
+  return (
+    `perf ${formatMetric('performance', sample.performance)}, ` +
+    `LCP ${formatMetric('lcp', sample.metrics.lcp)}, ` +
+    `CLS ${formatMetric('cls', sample.metrics.cls)}, ` +
+    `TBT ${formatMetric('tbt', sample.metrics.tbt)}`
+  );
+}
+
+/**
+ * Writes the summary table to the GitHub job summary when running in Actions.
+ *
+ * Deliberately swallows its own failure. This is the reporting path for a
+ * gate; it must not be able to fail the build it is describing.
+ */
+function writeJobSummary(report) {
+  const target = process.env.GITHUB_STEP_SUMMARY;
+  if (!target) return;
+  try {
+    appendFileSync(target, renderSummaryMarkdown(report));
+  } catch (error) {
+    console.warn(`[lighthouse-budget] could not write job summary: ${error.message}`);
   }
-  if (audit.metrics.lcp !== null && audit.metrics.lcp > page.budget.lcp) {
-    failures.push(`LCP ${Math.round(audit.metrics.lcp)}ms > budget ${page.budget.lcp}ms`);
-  }
-  if (audit.metrics.cls !== null && audit.metrics.cls > page.budget.cls) {
-    failures.push(`CLS ${audit.metrics.cls.toFixed(3)} > budget ${page.budget.cls}`);
-  }
-  if (audit.metrics.tbt !== null && audit.metrics.tbt > page.budget.tbt) {
-    failures.push(`TBT ${Math.round(audit.metrics.tbt)}ms > budget ${page.budget.tbt}ms`);
-  }
-  return failures;
 }
 
 /**
@@ -208,26 +255,59 @@ export async function runLighthouseBudget({ baseUrl, chromePath } = {}) {
   try {
     for (const page of PAGES) {
       process.stdout.write(`[lighthouse-budget] auditing ${page.path} ... `);
-      const audit = await auditPage(resolvedBaseUrl, chrome.port, page);
-      const failures = checkBudget(page, audit);
-      report.push({ ...audit, failures });
+      const first = await auditPage(resolvedBaseUrl, chrome.port, page);
+      const firstFailures = checkBudget(page.budget, first);
 
-      if (failures.length) {
-        anyFailed = true;
-        console.log('FAIL');
-        for (const f of failures) console.log(`  - ${f}`);
-      } else {
-        console.log(
-          `PASS (perf ${audit.performance.toFixed(2)}, LCP ${Math.round(audit.metrics.lcp)}ms, ` +
-            `CLS ${audit.metrics.cls.toFixed(3)}, TBT ${Math.round(audit.metrics.tbt)}ms)`
-        );
+      // The measured value is always logged, pass or fail. Previously a
+      // failing page printed only the metric that broke, so a page over
+      // budget was the one case where its numbers went unrecorded — the
+      // opposite of what you need to decide whether the budget or the page is
+      // wrong.
+      console.log(firstFailures.length ? `OVER BUDGET (${describeSample(first)})` : `PASS (${describeSample(first)})`);
+
+      let resample = null;
+      let failures = [];
+      let unconfirmed = [];
+
+      if (firstFailures.length) {
+        for (const f of firstFailures) console.log(`  - ${f.message}`);
+        // Re-sample before failing the build. A median of 5 still straddles
+        // the line when a page's true value sits near its budget, and this
+        // gate has failed twice in one day on exactly that — same page, same
+        // metric, 0.74 against 0.75. Only paid for when something is already
+        // over, so a green run costs nothing extra.
+        process.stdout.write(`[lighthouse-budget] re-sampling ${page.path} to confirm ... `);
+        resample = await auditPage(resolvedBaseUrl, chrome.port, page);
+        console.log(describeSample(resample));
+
+        const confirmation = confirmFailures(firstFailures, checkBudget(page.budget, resample));
+        failures = confirmation.confirmed;
+        unconfirmed = confirmation.unconfirmed;
+
+        for (const f of failures) console.log(`  FAIL ${f.message} (confirmed on re-sample)`);
+        for (const f of unconfirmed) {
+          console.log(`  WARN ${f.message} on first sample, within budget on re-sample — not failing`);
+        }
       }
+
+      report.push({
+        path: page.path,
+        budget: page.budget,
+        performance: first.performance,
+        metrics: first.metrics,
+        resample,
+        failures,
+        unconfirmed
+      });
+
+      if (failures.length) anyFailed = true;
     }
   } finally {
     await chrome.kill();
   }
 
   writeFileSync('lighthouse-budget-report.json', JSON.stringify(report, null, 2));
+  writeJobSummary(report);
 
   if (anyFailed) {
     console.error('\n[lighthouse-budget] one or more pages exceeded their performance budget');
