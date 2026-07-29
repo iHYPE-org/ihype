@@ -2882,7 +2882,6 @@
   "trackUploadPanel.chooseAudioFileError": "请先选择一个音频文件。",
   "trackUploadPanel.coverArtLabel": "封面图（选填）",
   "trackUploadPanel.djAudioOnlyNotice": "仅限音频（MP3／WAV／FLAC）——在通过下面的扫描之前，任何内容都不会播出。",
-  "trackUploadPanel.flaggedForReviewPrefix": "已标记待人工复核：",
   "trackUploadPanel.freeUseSamplesPrompt": "需要可自由使用的素材吗？",
   "trackUploadPanel.giveTrackTitleError": "请给这首曲子取个名字。",
   "trackUploadPanel.notConfiguredLabel": "未配置",

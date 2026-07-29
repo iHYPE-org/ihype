@@ -2902,7 +2902,6 @@
   "trackUploadPanel.chooseAudioFileError": "Choisissez d'abord un fichier audio.",
   "trackUploadPanel.coverArtLabel": "Pochette (facultatif)",
   "trackUploadPanel.djAudioOnlyNotice": "Audio uniquement (MP3/WAV/FLAC) — rien n'est diffusé tant que l'analyse ci-dessous n'est pas passée.",
-  "trackUploadPanel.flaggedForReviewPrefix": "Signalé pour examen :",
   "trackUploadPanel.freeUseSamplesPrompt": "Besoin de samples libres de droits ?",
   "trackUploadPanel.giveTrackTitleError": "Donnez un titre au morceau.",
   "trackUploadPanel.notConfiguredLabel": "Non configuré",

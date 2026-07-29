@@ -5,23 +5,39 @@ import { useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
 import { useMarkOnboarded } from '@/lib/use-mark-onboarded';
 
-type Step = 0 | 1 | 2 | 3;
+// Step 2 is verification. Artists previously had no such step at all, while
+// the DJ and venue wizards both did — an artist claimed a stage name and the
+// account was live against it, which for a platform whose whole proposition
+// is paying the right person 70% is the wrong asymmetry.
+type Step = 0 | 1 | 2 | 3 | 4;
 
-const PROGRESS: Record<Step, number> = { 0: 25, 1: 50, 2: 75, 3: 100 };
+const PROGRESS: Record<Step, number> = { 0: 20, 1: 40, 2: 60, 3: 80, 4: 100 };
 
 export function ArtistOnboardingWizard({
   profileId,
   slug,
   initialName,
   initialGenre,
+  initialLink,
+  initialVerificationStatus,
 }: {
   profileId: string;
   slug: string;
   initialName: string;
   initialGenre: string;
+  initialLink: string;
+  initialVerificationStatus: string;
 }) {
   const { t } = useI18n();
+  const alreadyVerified = initialVerificationStatus === 'VERIFIED';
   const [step, setStep] = useState<Step>(0);
+  const [proofLink, setProofLink] = useState(initialLink);
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [verifySubmitting, setVerifySubmitting] = useState(false);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
+  const [verifySubmitted, setVerifySubmitted] = useState(
+    initialVerificationStatus === 'PENDING' || alreadyVerified,
+  );
   const [name, setName] = useState(initialName);
   const [genre, setGenre] = useState(initialGenre);
   const [saving, setSaving] = useState(false);
@@ -30,9 +46,36 @@ export function ArtistOnboardingWizard({
   const [payoutBusy, setPayoutBusy] = useState(false);
   const [payoutError, setPayoutError] = useState<string | null>(null);
 
-  // Step 3 is the done screen, reached either by connecting payouts or by the
+  // Step 4 is the done screen, reached either by connecting payouts or by the
   // explicit Skip. Both count: skipping an optional step is still finishing.
-  useMarkOnboarded(profileId, step === 3);
+  useMarkOnboarded(profileId, step === 4);
+
+  async function submitVerification() {
+    if (verifySubmitting) return;
+    setVerifySubmitting(true);
+    setVerifyError(null);
+    try {
+      const form = new FormData();
+      form.set('profileId', profileId);
+      form.set('name', name.trim());
+      if (genre.trim()) form.set('genres', genre.trim());
+      if (proofLink.trim()) form.set('link', proofLink.trim());
+      if (proofFile) form.set('file', proofFile);
+
+      const res = await fetch('/api/verify', { method: 'POST', body: form });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setVerifyError(body.error ?? t('artistOnboardingWizard.verifyFailed', 'Submission failed — try again.'));
+        return;
+      }
+      setVerifySubmitted(true);
+      setStep(3);
+    } catch {
+      setVerifyError(t('artistOnboardingWizard.networkError', 'Network error — try again.'));
+    } finally {
+      setVerifySubmitting(false);
+    }
+  }
 
   async function goStep1() {
     if (!name.trim() || !genre.trim() || saving) return;
@@ -70,7 +113,7 @@ export function ArtistOnboardingWizard({
     }
   }
 
-  function goStep2() {
+  function goVerify() {
     setStep(2);
   }
 
@@ -103,7 +146,7 @@ export function ArtistOnboardingWizard({
   }
 
   function skipPayouts() {
-    setStep(3);
+    setStep(4);
   }
 
   return (
@@ -115,7 +158,7 @@ export function ArtistOnboardingWizard({
 
         {step === 0 && (
           <div>
-            <div className="aow-eyebrow">{t('artistOnboardingWizard.step1Eyebrow', 'Step 1 of 3')}</div>
+            <div className="aow-eyebrow">{t('artistOnboardingWizard.step1Eyebrow', 'Step 1 of 4')}</div>
             <h1 className="aow-title">{t('artistOnboardingWizard.step1Title', 'Set up your page.')}</h1>
             <p className="aow-sub">{t('artistOnboardingWizard.step1Sub', 'This becomes your public artist page — fans find you here.')}</p>
 
@@ -158,7 +201,7 @@ export function ArtistOnboardingWizard({
 
         {step === 1 && (
           <div>
-            <div className="aow-eyebrow">{t('artistOnboardingWizard.step2Eyebrow', 'Step 2 of 3')}</div>
+            <div className="aow-eyebrow">{t('artistOnboardingWizard.step2Eyebrow', 'Step 2 of 4')}</div>
             <h1 className="aow-title">{t('artistOnboardingWizard.step2Title', 'List your first event.')}</h1>
             <p className="aow-sub">{t('artistOnboardingWizard.step2Sub', 'Optional — you can always add this later from Event Creator.')}</p>
 
@@ -172,7 +215,7 @@ export function ArtistOnboardingWizard({
             <Link className="aow-btn aow-btn-solid" href="/events/new">
               {t('artistOnboardingWizard.createEvent', 'Create an event →')}
             </Link>
-            <button className="aow-btn aow-btn-ghost" onClick={goStep2} type="button">
+            <button className="aow-btn aow-btn-ghost" onClick={goVerify} type="button">
               {t('artistOnboardingWizard.skipForNow', 'Skip for now')}
             </button>
           </div>
@@ -180,7 +223,75 @@ export function ArtistOnboardingWizard({
 
         {step === 2 && (
           <div>
-            <div className="aow-eyebrow">{t('artistOnboardingWizard.step3Eyebrow', 'Step 3 of 3')}</div>
+            <div className="aow-eyebrow">{t('artistOnboardingWizard.step3Eyebrow', 'Step 3 of 4')}</div>
+            <h1 className="aow-title">{t('artistOnboardingWizard.verifyTitle', 'Verify your identity.')}</h1>
+            <p className="aow-sub">
+              {t('artistOnboardingWizard.verifySub', 'Artist accounts are verified before payouts are released — 70% of a ticket has to reach the person who actually played. Reviewed within 48 hours.')}
+            </p>
+
+            <div className="aow-reminder-card" style={{ marginBottom: 18 }}>
+              <div className="aow-reminder-label">{t('artistOnboardingWizard.proofLabel', 'What counts as proof')}</div>
+              <div className="aow-reminder-text">
+                {t('artistOnboardingWizard.proofText', 'A Spotify, Bandcamp or SoundCloud profile with at least one published track · A screenshot of a past booking or contract · A social profile showing your music')}
+              </div>
+            </div>
+
+            <label className="aow-field">
+              <span className="aow-label">{t('artistOnboardingWizard.proofLinkLabel', 'Website, Bandcamp, or SoundCloud')}</span>
+              <input
+                className="aow-input"
+                inputMode="url"
+                onChange={(e) => setProofLink(e.target.value)}
+                placeholder="https://"
+                value={proofLink}
+              />
+            </label>
+
+            <label className="aow-field">
+              <span className="aow-label">{t('artistOnboardingWizard.proofFileLabel', 'Or attach a document (JPEG, PNG or PDF, max 8 MB)')}</span>
+              <input
+                accept="image/jpeg,image/png,application/pdf"
+                className="aow-input"
+                onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
+                type="file"
+              />
+            </label>
+
+            <p className="aow-alt-link" style={{ textAlign: 'left', marginTop: 0 }}>
+              {t('artistOnboardingWizard.proofHint', 'One of the two is enough — whichever shows the music is yours.')}
+            </p>
+
+            {verifyError && <p className="aow-error">{verifyError}</p>}
+
+            {verifySubmitted ? (
+              <>
+                <p className="aow-sub" style={{ marginBottom: 0 }}>
+                  {alreadyVerified
+                    ? t('artistOnboardingWizard.verifyAlready', 'This page is already verified.')
+                    : t('artistOnboardingWizard.verifyPending', 'Submitted — a human is reviewing it. You can carry on setting up meanwhile.')}
+                </p>
+                <button className="aow-btn aow-btn-solid" onClick={() => setStep(3)} type="button">
+                  {t('artistOnboardingWizard.continue', 'Continue →')}
+                </button>
+              </>
+            ) : (
+              <button
+                className="aow-btn aow-btn-solid"
+                disabled={verifySubmitting || (!proofFile && !proofLink.trim())}
+                onClick={submitVerification}
+                type="button"
+              >
+                {verifySubmitting
+                  ? t('artistOnboardingWizard.submitting', 'Submitting…')
+                  : t('artistOnboardingWizard.submitForReview', 'Submit for review →')}
+              </button>
+            )}
+          </div>
+        )}
+
+        {step === 3 && (
+          <div>
+            <div className="aow-eyebrow">{t('artistOnboardingWizard.step4Eyebrow', 'Step 4 of 4')}</div>
             <h1 className="aow-title">{t('artistOnboardingWizard.step3Title', 'Connect payouts.')}</h1>
             <p className="aow-sub">
               {t('artistOnboardingWizard.step3Sub', 'Your 70% share pays out automatically after each show, via Stripe Connect.')}
@@ -202,7 +313,7 @@ export function ArtistOnboardingWizard({
           </div>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <div className="aow-done">
             <div className="aow-done-icon">
               <svg fill="none" height="28" stroke="var(--accent)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" viewBox="0 0 24 24" width="28">

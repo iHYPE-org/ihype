@@ -280,8 +280,10 @@ export async function POST(request: Request) {
           city: body.city || body.hometown || null,
           postalCode: body.postalCode || null,
           verificationStatus: getVerificationStatusForType(profileType),
-          verificationSubmittedAt:
-            profileType === 'ARTIST' || profileType === 'VENUE' ? new Date() : null,
+          // Not stamped at signup. This field records when a real submission
+          // arrived; POST /api/verify sets it. Filling it in here claimed a
+          // review had been requested when nothing had been sent.
+          verificationSubmittedAt: null,
           ...getProfileCopy(profileType, profileCopyName),
           ...(profileType === 'VENUE' ? getVenueProfileOverrides(body) : {}),
         },

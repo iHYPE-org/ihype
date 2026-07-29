@@ -151,7 +151,7 @@ export async function POST(request: Request) {
     const profile = await withDbRetry(() =>
       db.profile.findUnique({
         where: { id: profileId },
-        select: { id: true, ownerId: true, type: true, name: true },
+        select: { id: true, ownerId: true, type: true, name: true, verificationStatus: true },
       }),
     );
 
@@ -160,6 +160,25 @@ export async function POST(request: Request) {
     }
     if (!canManageOwnedResource(session, profile.ownerId)) {
       return NextResponse.json({ error: 'Only the profile owner can upload media.' }, { status: 403 });
+    }
+
+    // Uploading requires having submitted identity evidence. Not full
+    // verification — waiting out a 48-hour human review before you can put a
+    // single track up would strand every new artist — but an account that has
+    // never told us who it is does not get to publish recordings under a name
+    // it merely claimed. UNVERIFIED is exactly that state now that
+    // registration no longer stamps PENDING at signup.
+    if (profile.verificationStatus === 'UNVERIFIED' || profile.verificationStatus === 'REJECTED') {
+      return NextResponse.json(
+        {
+          error:
+            profile.verificationStatus === 'REJECTED'
+              ? 'This page could not be verified. Contact admin@ihype.org before uploading.'
+              : 'Verify this page before uploading. It takes a link or a document.',
+          verificationRequired: true,
+        },
+        { status: 403 },
+      );
     }
 
     const title = (requestedTitle || deriveTitleFromFileName(file.name)).slice(0, 160);
@@ -186,8 +205,17 @@ export async function POST(request: Request) {
     // freeUseEnabled uploads; now every upload (Artist or DJ) is scanned.
     // Layers 1 & 2 are honestly unconfigured (no fingerprinting service
     // exists in this codebase) and never block a track — only layers 0
-    // and 3 can. Fail-open, same as before: a flagged track still goes
-    // live but raises a ContentReport into /admin/moderation.
+    // and 3 can.
+    //
+    // No longer fail-open at the publish step. A flagged track used to go
+    // live immediately and merely raise a ContentReport, so the window
+    // between "our own scan says this may be someone else's recording" and a
+    // human looking at it was a window in which it was playable by everyone.
+    // For a platform whose licensing story is the product, that is the wrong
+    // default. A flag now holds the track unpublished until /admin/moderation
+    // clears it. The scan still fails OPEN in the other direction: if a layer
+    // errors or is unconfigured it does not flag, so an outage cannot silently
+    // freeze every upload.
     const scan = await runTrackScanPipeline(fileBytes, {
       title,
       notes: notesValue || null,
@@ -305,7 +333,7 @@ export async function POST(request: Request) {
             storageProvider: storedMedia?.provider ?? 'database',
             storageKey: storedMedia?.key ?? null,
             storageUrl: storedMedia?.url ?? null,
-            isPublished: true,
+            isPublished: vetting.cleared,
           },
           select: {
             hexId: true,
@@ -355,12 +383,14 @@ export async function POST(request: Request) {
       },
     }).catch(() => {});
 
-    // Fail-open by design (matches vetFreeUseSample's own doc comment): a
-    // flagged track still goes live immediately rather than blocking a
-    // legitimate artist on an automated call that can't hear the actual
-    // audio. It now also raises a ContentReport into the existing admin
-    // moderation queue (/admin/moderation?type=track) so a human sees it —
-    // previously a flagged non-free-use upload left zero trace anywhere.
+    // A flag holds the track: it is stored and owned by the uploader, but
+    // isPublished stays false until a human clears it in the existing admin
+    // moderation queue (/admin/moderation?type=track). The ContentReport
+    // below is what puts it in front of that human.
+    //
+    // The cost is a legitimate artist waiting on a false positive, which is
+    // why the scan itself still fails open — an unconfigured or erroring
+    // layer never flags, so only a positive identification holds anything.
     if (!vetting.cleared) {
       await db.contentReport.create({
         data: {
@@ -379,14 +409,19 @@ export async function POST(request: Request) {
         shareUrl: `/api/media/${asset.hexId}`,
       },
       scan: scan.layers,
+      published: vetting.cleared,
       ...(!vetting.cleared
         ? {
             vetting: {
               freeUseWithheld: freeUseEnabled,
+              held: true,
               reasoning: vetting.reasoning,
-              message: freeUseEnabled
-                ? 'Uploaded, but automated vetting kept it out of the shared free-use radio crate. It stays available on your own page.'
-                : 'Uploaded — automated vetting flagged this track for a closer look. It stays live while that review happens.',
+              // Says held, because it is held. The previous copy told the
+              // uploader the track "stays live while that review happens",
+              // which was true then and is not now — a flagged track is
+              // stored but unpublished until a human clears it.
+              message:
+                'Uploaded and held. Our scan flagged this track, so it stays off your page until someone reviews it — usually within 48 hours.',
             },
           }
         : {}),

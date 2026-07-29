@@ -2893,7 +2893,6 @@
   "trackUploadPanel.chooseAudioFileError": "先に音声ファイルを選んでください。",
   "trackUploadPanel.coverArtLabel": "ジャケット画像（任意）",
   "trackUploadPanel.djAudioOnlyNotice": "音声のみ（MP3／WAV／FLAC）——下のスキャンを通るまで、何も放送されません。",
-  "trackUploadPanel.flaggedForReviewPrefix": "要確認としてマークされました：",
   "trackUploadPanel.freeUseSamplesPrompt": "自由に使える素材をお探しですか？",
   "trackUploadPanel.giveTrackTitleError": "曲名を入れてください。",
   "trackUploadPanel.notConfiguredLabel": "未設定",

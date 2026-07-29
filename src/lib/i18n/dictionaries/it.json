@@ -2903,7 +2903,6 @@
   "trackUploadPanel.chooseAudioFileError": "Scegli prima un file audio.",
   "trackUploadPanel.coverArtLabel": "Copertina (facoltativa)",
   "trackUploadPanel.djAudioOnlyNotice": "Solo audio (MP3/WAV/FLAC): nulla va in onda finché non supera la scansione qui sotto.",
-  "trackUploadPanel.flaggedForReviewPrefix": "Segnalato per revisione:",
   "trackUploadPanel.freeUseSamplesPrompt": "Ti servono sample a uso libero?",
   "trackUploadPanel.giveTrackTitleError": "Dai un titolo al pezzo.",
   "trackUploadPanel.notConfiguredLabel": "Non configurato",

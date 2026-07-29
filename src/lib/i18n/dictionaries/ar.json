@@ -2876,7 +2876,6 @@
   "trackUploadPanel.chooseAudioFileError": "اختر ملفًا صوتيًا أولًا.",
   "trackUploadPanel.coverArtLabel": "صورة الغلاف (اختياري)",
   "trackUploadPanel.djAudioOnlyNotice": "صوت فقط (MP3/WAV/FLAC) — لا يُبثّ شيء قبل أن يجتاز الفحص أدناه.",
-  "trackUploadPanel.flaggedForReviewPrefix": "موسوم للمراجعة:",
   "trackUploadPanel.freeUseSamplesPrompt": "أتحتاج عيّنات حرّة الاستخدام؟",
   "trackUploadPanel.giveTrackTitleError": "أعطِ المقطع عنوانًا.",
   "trackUploadPanel.notConfiguredLabel": "غير مُهيّأ",

@@ -30,12 +30,17 @@ export default function VenueOnboardingWizard({
   initialRoomType,
   initialVerificationStatus,
 }: Props) {
-  // If verification already went through before onboarding was (re)opened,
-  // land straight on the done screen instead of re-litigating steps 0-3.
-  const alreadyVerifiedOrPending = initialVerificationStatus === 'PENDING' || initialVerificationStatus === 'VERIFIED';
+  // Only a completed verification skips the wizard. This used to skip on
+  // PENDING too, and registration stamped every new venue PENDING before it
+  // had submitted anything — so a brand-new venue opened its wizard straight
+  // onto the done screen and never saw room details, booking preferences or
+  // the verification step at all. Registration no longer stamps that, and
+  // PENDING now means a real submission is under review; a venue in that
+  // state can still reach the step to add more evidence.
+  const alreadyVerified = initialVerificationStatus === 'VERIFIED';
 
   const { t } = useI18n();
-  const [step, setStep] = useState(alreadyVerifiedOrPending ? 4 : 0);
+  const [step, setStep] = useState(alreadyVerified ? 4 : 0);
   const [name, setName] = useState(initialName || '');
   const [city, setCity] = useState(initialCity || '');
   const [capacity, setCapacity] = useState(initialCapacity ? String(initialCapacity) : '');
@@ -49,7 +54,9 @@ export default function VenueOnboardingWizard({
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitted, setSubmitted] = useState(initialVerificationStatus === 'PENDING' || initialVerificationStatus === 'VERIFIED');
+  const [submitted, setSubmitted] = useState(initialVerificationStatus === 'VERIFIED');
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [proofLink, setProofLink] = useState('');
 
   // Venue's step 4 says "Almost there — submit for review to finish setup"
   // when nothing was submitted, so unlike the other two wizards reaching the
@@ -114,6 +121,8 @@ export default function VenueOnboardingWizard({
       formData.set('profileId', profileId);
       formData.set('name', name.trim() || initialName);
       formData.set('city', city.trim() || initialCity);
+      formData.set('link', proofLink.trim());
+      if (proofFile) formData.set('file', proofFile);
       // Venues don't have genres — deliberately omitted, /api/verify doesn't require it.
 
       const res = await fetch('/api/verify', { method: 'POST', body: formData });
@@ -253,9 +262,34 @@ export default function VenueOnboardingWizard({
             </div>
           </div>
 
+          {/* This step used to render the proof card above and then submit
+              name and city — it described what counted as proof and collected
+              none of it. These two inputs are what /api/verify has always
+              accepted and no caller ever sent. */}
+          <label className="von-label" htmlFor="venue-proof-link">{t('venueOnboardingWizard.proofLinkLabel', 'Venue website or Google Maps URL')}</label>
+          <input
+            className="von-input"
+            id="venue-proof-link"
+            inputMode="url"
+            onChange={(e) => setProofLink(e.target.value)}
+            placeholder="https://"
+            value={proofLink}
+          />
+
+          <label className="von-label" htmlFor="venue-proof-file">{t('venueOnboardingWizard.proofFileLabel', 'Or attach a document (JPEG, PNG or PDF, max 8 MB)')}</label>
+          <input
+            accept="image/jpeg,image/png,application/pdf"
+            className="von-input"
+            id="venue-proof-file"
+            onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
+            type="file"
+          />
+
+          <p className="von-proof-hint">{t('venueOnboardingWizard.proofHint', 'One of the two is enough — whichever shows this is your room.')}</p>
+
           {submitError && <div className="von-error">{submitError}</div>}
 
-          <button className="von-btn von-btn-solid" disabled={submitting} onClick={submitForReview}>
+          <button className="von-btn von-btn-solid" disabled={submitting || (!proofFile && !proofLink.trim())} onClick={submitForReview}>
             {submitting ? t('venueOnboardingWizard.submitting', 'Submitting…') : t('venueOnboardingWizard.submitForReview', 'Submit for review →')}
           </button>
           <button className="von-btn von-btn-outline" disabled={submitting} onClick={() => setStep(2)}>{t('venueOnboardingWizard.back', 'Back')}</button>
@@ -292,6 +326,7 @@ export default function VenueOnboardingWizard({
         .von-title { font-family: var(--font-display); font-weight: 800; font-size: 27px; letter-spacing: -.03em; margin: 0 0 8px; }
         .von-sub { font-size: 14px; color: var(--ink-a55); line-height: 1.65; margin: 0 0 24px; }
         .von-sub-center { max-width: 34ch; margin-left: auto; margin-right: auto; }
+        .von-proof-hint { font-size: 12.5px; color: var(--ink-a50); line-height: 1.55; margin: -4px 0 16px; }
         .von-label { display: block; font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a50); margin: 0 0 6px; }
         .von-input { width: 100%; box-sizing: border-box; padding: 14px 16px; border-radius: var(--radius-md); border: 1px solid var(--line-2); background: var(--bg3, rgba(255,255,255,.03)); color: var(--ink); font-size: 15px; margin-bottom: 14px; }
         .von-select { appearance: auto; }

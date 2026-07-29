@@ -2901,7 +2901,6 @@
   "trackUploadPanel.chooseAudioFileError": "Wähl zuerst eine Audiodatei.",
   "trackUploadPanel.coverArtLabel": "Cover (optional)",
   "trackUploadPanel.djAudioOnlyNotice": "Nur Audio (MP3/WAV/FLAC) — nichts geht auf Sendung, bevor der Scan unten durch ist.",
-  "trackUploadPanel.flaggedForReviewPrefix": "Zur Prüfung markiert:",
   "trackUploadPanel.freeUseSamplesPrompt": "Brauchst du Free-Use-Samples?",
   "trackUploadPanel.giveTrackTitleError": "Gib dem Track einen Titel.",
   "trackUploadPanel.notConfiguredLabel": "Nicht konfiguriert",
