@@ -82,6 +82,11 @@ describe('runtimeEnvSource', () => {
 
   it('never removes or overwrites an existing process.env value', () => {
     process.env.DATABASE_URL = 'postgres://from-process';
+    // AUTH_SECRET must be cleared explicitly: CI exports one, and without this
+    // the assertion below silently tested the opposite branch. It passed
+    // locally (where the var is unset) and failed in CI for exactly that
+    // reason — the environment, not the code, decided which branch ran.
+    delete (process.env as Record<string, string | undefined>).AUTH_SECRET;
     cloudflareEnv.value = { DATABASE_URL: 'postgres://from-worker', AUTH_SECRET: 's'.repeat(32) };
 
     const source = runtimeEnvSource();
