@@ -15,7 +15,7 @@ export async function getHealthSnapshot() {
         db.contentReport.count({ where: { status: 'OPEN' } }),
         db.supportRequest.count({ where: { status: 'OPEN' } }),
         db.emailDeliveryLog.count({ where: { status: 'FAILED', createdAt: { gte: since } } }),
-        db.profile.count({ where: { verificationStatus: 'PENDING' } }),
+        db.profile.count({ where: { verificationStatus: 'PENDING', verificationRequested: true } }),
         db.ticketOrder.count({ where: { status: 'RESERVED' } })
       ]);
 
