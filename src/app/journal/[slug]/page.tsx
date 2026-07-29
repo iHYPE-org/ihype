@@ -136,7 +136,7 @@ export default async function JournalPost({
         }}
       >
         {t('journalSlugPage.splitNote', 'Every show covered in the Journal splits 70/20/10 — and iHYPE takes 0%.')}{' '}
-        <Link href="/charter" style={{ color: 'var(--accent)' }}>
+        <Link href="/info?tab=charter" style={{ color: 'var(--accent)' }}>
           {t('journalSlugPage.charterLink', 'See the charter →')}
         </Link>
       </div>
