@@ -12,6 +12,7 @@
  */
 
 import { deferWork } from '@/lib/defer-work';
+import { readRuntimeEnv } from '@/lib/runtime-env';
 
 type Level = 'debug' | 'info' | 'warn' | 'error';
 
@@ -26,7 +27,15 @@ const minLevel: Level = (process.env.LOG_LEVEL as Level) ?? (isProd ? 'info' : '
 // fallbacks that logged to stdout and nowhere else. Best-effort: any Sentry
 // failure must never break the code path that was merely trying to log.
 function reportToSentry(prefix: string, meta: Record<string, unknown> | Error | null, message?: string) {
-  if (!process.env.SENTRY_DSN) return;
+  // readRuntimeEnv, not process.env. SENTRY_DSN is supplied by the Worker
+  // (wrangler.toml [vars]), and Worker-provided values are not reliably
+  // visible on process.env inside the Next.js runtime — that gap is what had
+  // transactional email silently dead for 36 days and Stripe reading as
+  // unconfigured, and is why runtime-env.ts exists. payments.ts, db.ts and
+  // env.ts were all moved onto it; this file was missed, which is the worst
+  // place to miss it: a bad read here does not fail loudly, it just means
+  // every log.error stops becoming a Sentry event and nobody finds out.
+  if (!readRuntimeEnv('SENTRY_DSN')) return;
   deferWork(
     // @sentry/cloudflare, not @sentry/nextjs — worker.js's withSentry() wrap
     // is the actual init; this only needs the shared capture functions.

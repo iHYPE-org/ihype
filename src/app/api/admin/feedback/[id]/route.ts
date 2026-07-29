@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
+import { log } from '@/lib/logger';
 
 const ALLOWED_STATUSES = ['open', 'planned', 'shipped', 'declined'] as const;
 
@@ -17,7 +18,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     await db.featureRequest.update({ where: { id }, data: { status } });
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error('[api/admin/feedback] error', err);
+    log.error('[api/admin/feedback]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

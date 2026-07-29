@@ -2822,7 +2822,6 @@
   "ticketSaleCard.openNowLabel": "Ouvert maintenant",
   "ticketSaleCard.openVerificationLink": "Ouvrir la vérification",
   "ticketSaleCard.orderPreviewLabel": "Aperçu de la commande",
-  "ticketSaleCard.paymentMethodRequiredBody": "Les comptes fan doivent enregistrer un moyen de paiement avant de réserver des billets. La configuration des paiements est en cours de finalisation pour la bêta, et votre compte sera notifié à son ouverture.",
   "ticketSaleCard.paymentMethodRequiredTitle": "Moyen de paiement requis",
   "ticketSaleCard.paymentSourceLabel": "Source de paiement",
   "ticketSaleCard.perTicket": "par billet",

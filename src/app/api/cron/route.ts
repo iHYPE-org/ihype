@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
             html: `<p>iHYPE health check returned non-ok status.</p><pre style="font-family:monospace;font-size:12px;background:#0a0805;color:#f0ebe5;padding:12px;border-radius:6px;white-space:pre-wrap;">${summary.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</pre>`
           });
         } catch (err) {
-          console.error('[cron/health-check] alert email failed', err);
+          log.error('[cron/health-check]', err instanceof Error ? err : { error: String(err) }, 'alert email failed');
         }
       }
       if (snapshot.status === 'ok' && !snapshot.launchReadiness.ready && isEmailDeliveryConfigured()) {
@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
             await kvPut('health-alert:launch-readiness', Date.now(), { ex: 24 * 60 * 60 });
           }
         } catch (err) {
-          console.error('[cron/health-check] launch readiness alert failed', err);
+          log.error('[cron/health-check]', err instanceof Error ? err : { error: String(err) }, 'launch readiness alert failed');
         }
       }
       const cronHealth = await checkCronHealth();

@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client/edge';
 import { db } from '@/lib/db';
+import { log } from '@/lib/logger';
 
 type AuditInput = {
   actorUserId?: string | null;
@@ -38,7 +39,7 @@ export async function recordAuditEvent({
       }
     });
   } catch (error) {
-    console.error('Audit log write failed', error);
+    log.error('[audit]', error instanceof Error ? error : { error: String(error) }, 'audit log write failed');
   }
 }
 
@@ -60,6 +61,6 @@ export async function recordEmailDelivery({
       }
     });
   } catch (logError) {
-    console.error('Email delivery log write failed', logError);
+    log.error('[audit]', logError instanceof Error ? logError : { error: String(logError) }, 'email delivery log write failed');
   }
 }

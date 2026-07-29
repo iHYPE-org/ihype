@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { log } from '@/lib/logger';
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -21,7 +22,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
     await db.passkey.update({ where: { id }, data: { name } });
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error('[api/auth/passkey/[id]] error', err);
+    log.error('[api/auth/passkey/[id]', err instanceof Error ? err : { error: String(err) }, '] error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -39,7 +40,7 @@ export async function DELETE(_request: Request, { params }: Ctx) {
     await db.passkey.delete({ where: { id } });
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error('[api/auth/passkey/[id]] error', err);
+    log.error('[api/auth/passkey/[id]', err instanceof Error ? err : { error: String(err) }, '] error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

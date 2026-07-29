@@ -1,4 +1,5 @@
 import { kvGet, kvPut } from '@/lib/kv';
+import { log } from '@/lib/logger';
 
 // Tracks recent admin re-authentication (via passkey or other strong
 // challenge) in KV so we can require fresh credentials before destructive
@@ -23,7 +24,7 @@ export async function markAdminReauth(userId: string): Promise<void> {
   try {
     await kvPut(key(userId), Date.now(), { ex: REAUTH_TTL_SECONDS });
   } catch (err) {
-    console.error('[admin-confirmation] markAdminReauth failed', err);
+    log.error('[admin-confirmation]', err instanceof Error ? err : { error: String(err) }, 'markAdminReauth failed');
   }
 }
 
@@ -32,7 +33,7 @@ export async function hasRecentAdminReauth(userId: string): Promise<boolean> {
     const value = await kvGet<number>(key(userId));
     return Boolean(value);
   } catch (err) {
-    console.error('[admin-confirmation] hasRecentAdminReauth failed', err);
+    log.error('[admin-confirmation]', err instanceof Error ? err : { error: String(err) }, 'hasRecentAdminReauth failed');
     return false;
   }
 }

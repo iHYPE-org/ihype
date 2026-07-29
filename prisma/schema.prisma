@@ -1278,13 +1278,6 @@ model AdImpression {
   @@index([adId, createdAt])
 }
 
-model ABTest {
-  key         String   @id
-  description String?
-  enabled     Boolean  @default(false)
-  createdAt   DateTime @default(now())
-}
-
 model NewsletterSubscription {
   id                    String    @id @default(cuid())
   email                 String

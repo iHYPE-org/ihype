@@ -3,6 +3,7 @@ import { isCronRequestAuthorized } from '@/lib/cron-auth';
 import { db } from '@/lib/db';
 import { ADMIN_EMAIL } from '@/lib/env';
 import { sendGenericEmail } from '@/lib/mailer';
+import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -99,7 +100,7 @@ export async function GET(request: NextRequest) {
   `;
 
     await sendGenericEmail({ to: ADMIN_EMAIL, subject, text, html }).catch((err) => {
-      console.error('[cron/backup-verify] Failed to send email:', err);
+      log.error('[cron/backup-verify]', err instanceof Error ? err : { error: String(err) }, 'Failed to send email');
     });
 
     return NextResponse.json({
@@ -113,7 +114,7 @@ export async function GET(request: NextRequest) {
       warnings: warningLines,
     });
   } catch (err) {
-    console.error('[cron/backup-verify] error', err);
+    log.error('[cron/backup-verify]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

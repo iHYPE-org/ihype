@@ -14,6 +14,7 @@ import { consumeRateLimit, rateLimitHeaders, rateLimitKey } from '@/lib/rate-lim
 import { sanitizeShowInput } from '@/lib/sanitize';
 import { checkContent } from '@/lib/auto-mod';
 import { readClientAddress } from '@/lib/request-meta';
+import { log } from '@/lib/logger';
 
 const radioTrackSchema = z.object({
   hexId: z.string().min(1),
@@ -412,7 +413,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(show, { status: 201 });
   } catch (err) {
-    console.error('[shows]', err);
+    log.error('[shows]', err instanceof Error ? err : { error: String(err) });
     const msg = err instanceof Error && (err.message.includes('unavailable') || err.message.includes('timeout') || err.message.includes('connect'))
       ? 'Database unavailable — please try again in a moment.'
       : 'Invalid show payload';

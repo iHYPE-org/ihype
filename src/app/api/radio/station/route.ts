@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getStationState } from '@/lib/radioStation';
+import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,7 @@ export async function GET() {
       headers: { 'Cache-Control': 'public, s-maxage=5, stale-while-revalidate=15' },
     });
   } catch (err) {
-    console.error('[api/radio/station] error', err);
+    log.error('[api/radio/station]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -7,6 +7,7 @@ import { consumeRateLimit } from '@/lib/rate-limit';
 import { sendGenericEmail } from '@/lib/mailer';
 import { readClientAddress } from '@/lib/request-meta';
 import { requireRecentAdminReauth } from '@/lib/admin-confirmation';
+import { log } from '@/lib/logger';
 
 const ROLES = ['FAN', 'ARTIST', 'DJ', 'VENUE', 'ALL'] as const;
 type TargetRole = (typeof ROLES)[number];
@@ -79,7 +80,7 @@ export async function POST(request: Request) {
       sent += 1;
     } catch (err) {
       failed += 1;
-      console.error('Broadcast send failed', err);
+      log.error('[api/admin/broadcast]', err instanceof Error ? err : { error: String(err) }, 'broadcast send failed');
     }
   }
 

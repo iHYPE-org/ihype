@@ -3,6 +3,8 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { vetAdvertisement, vetAdAudioContent, adCampaignStatusFromVetting, type AdAudioVettingResult } from '@/lib/ad-vetting';
 import { isTrustedStorageUrl } from '@/lib/object-storage';
+import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
+import { readClientAddress } from '@/lib/request-meta';
 import { recordAuditEvent } from '@/lib/audit';
 import { notifyAdvertiser } from '@/lib/ad-campaign-notify';
 import { createAdCampaignCheckoutSession, settleAdCampaignAuthorization } from '@/lib/stripe';
@@ -30,6 +32,27 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+
+  // The most expensive request in the application. A submission fetches the
+  // spot's audio and runs vetAdAudioContent(): an ACRCloud identify call — a
+  // paid, metered third-party API — plus Whisper transcription and a Llama
+  // policy screen. /api/advertise/audio-upload is rate limited, but that only
+  // caps how many files exist; a campaign can be submitted repeatedly against
+  // the same already-uploaded, already-trusted URL, and each submission pays
+  // for the whole pipeline again.
+  //
+  // 10/hour is generous for the real workflow — nobody legitimately files ten
+  // campaigns in an hour — while leaving room to correct a rejected one.
+  const rateLimit = await consumeRateLimit(
+    rateLimitKey('advertise-campaign-create', session.user.id, readClientAddress(request)),
+    { limit: 10, windowMs: 60 * 60 * 1000 },
+  );
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'Too many campaign submissions. Try again later.' },
+      { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } },
+    );
+  }
 
   let body: {
     scope?: unknown; spotsPerDay?: unknown; runDays?: unknown;

@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
 import { getHealthSnapshot } from '@/lib/health';
 import { verifyBearerToken } from '@/lib/secret-compare';
+import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,7 +57,7 @@ export async function GET(request: NextRequest) {
       headers: { 'Cache-Control': 'no-store, private' },
     });
   } catch (error) {
-    console.error('[api/health] error', error);
+    log.error('[api/health]', error instanceof Error ? error : { error: String(error) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

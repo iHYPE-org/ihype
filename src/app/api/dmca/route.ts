@@ -4,6 +4,7 @@ import { recordAuditEvent } from '@/lib/audit';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { db } from '@/lib/db';
+import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
       }
     }
   } catch (err) {
-    console.error('[dmca] post-audit notification failed', err);
+    log.error('[dmca]', err instanceof Error ? err : { error: String(err) }, 'post-audit notification failed');
   }
 
   return NextResponse.json({ ok: true });

@@ -4,6 +4,7 @@ import { isAdminSession } from '@/lib/permissions';
 import { recordAuditEvent } from '@/lib/audit';
 import { readClientAddress } from '@/lib/request-meta';
 import { kvPut } from '@/lib/kv';
+import { log } from '@/lib/logger';
 
 const ALLOWED_FLAGS = new Set([
   'demo_logins',
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
     await kvPut(`flags:${flag}`, enabled ? '1' : '0');
     storedInKv = true;
   } catch (error) {
-    console.error('KV flag write failed', error);
+    log.error('[api/admin/flags]', error instanceof Error ? error : { error: String(error) }, 'KV flag write failed');
   }
 
   await recordAuditEvent({

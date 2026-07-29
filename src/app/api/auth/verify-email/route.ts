@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
+import { log } from '@/lib/logger';
 import {
   createEmailVerificationCode,
   sendVerificationEmail,
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
   try {
     body = schema.parse(await request.json());
   } catch (err) {
-    console.error('[auth/verify-email]', err);
+    log.error('[auth/verify-email]', err instanceof Error ? err : { error: String(err) });
     return NextResponse.json({ error: 'Invalid request.' }, { status: 400 });
   }
 

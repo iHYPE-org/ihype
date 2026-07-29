@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { log } from '@/lib/logger';
 
 export async function GET() {
   try {
@@ -89,7 +90,7 @@ export async function GET() {
 
     return NextResponse.json({ artists, venues, djs });
   } catch (err) {
-    console.error('[api/discover] error', err);
+    log.error('[api/discover]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

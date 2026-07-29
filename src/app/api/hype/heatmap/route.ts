@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { consumeRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
+import { log } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -45,7 +46,7 @@ export async function GET(request: NextRequest) {
       },
     );
   } catch (err) {
-    console.error('[api/hype/heatmap] error', err);
+    log.error('[api/hype/heatmap]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -1,6 +1,8 @@
 // Enqueues email jobs to Cloudflare Queues for async delivery with retries.
 // Falls back to immediate send if queue binding unavailable.
 
+import { log } from '@/lib/logger';
+
 type CFQueue = { send(body: unknown): Promise<void> };
 
 async function getEmailQueue(): Promise<CFQueue | null> {
@@ -26,7 +28,7 @@ export async function enqueueEmail(
     await queue.send({ type, payload, enqueuedAt: Date.now() });
     return true;
   } catch (err) {
-    console.error('[email-queue] Failed to enqueue email', { type, err });
+    log.error('[email-queue]', err instanceof Error ? err : { error: String(err), type }, 'failed to enqueue email');
     return false;
   }
 }

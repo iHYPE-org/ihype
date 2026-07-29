@@ -6,6 +6,7 @@ import { checkAndRecordLogin } from '@/lib/login-security';
 import { getPasskeyAuthenticationOptions, verifyPasskeyAuthentication } from '@/lib/passkey';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
+import { log } from '@/lib/logger';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -43,7 +44,7 @@ export async function GET(request: Request) {
 
     return resp;
   } catch (err) {
-    console.error('[passkey/auth] GET error:', err);
+    log.error('[passkey/auth]', err instanceof Error ? err : { error: String(err) }, 'GET error');
     return NextResponse.json({ error: 'Could not start passkey sign-in.' }, { status: 500 });
   }
 }
@@ -73,7 +74,7 @@ export async function POST(request: Request) {
     try {
       userId = await verifyPasskeyAuthentication(body, challenge);
     } catch (err) {
-      console.error('[passkey/auth] verification threw:', err);
+      log.error('[passkey/auth]', err instanceof Error ? err : { error: String(err) }, 'verification threw');
       return clearChallenge(NextResponse.json({ error: 'Passkey verification failed.' }, { status: 401 }));
     }
 
@@ -92,7 +93,7 @@ export async function POST(request: Request) {
     clearChallenge(resp);
     return resp;
   } catch (err) {
-    console.error('[passkey/auth] unhandled error:', err);
+    log.error('[passkey/auth]', err instanceof Error ? err : { error: String(err) }, 'unhandled error');
     return NextResponse.json({ error: 'Sign-in failed. Please try again.' }, { status: 500 });
   }
 }

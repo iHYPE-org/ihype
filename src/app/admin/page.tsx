@@ -198,7 +198,6 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
     topEarners,
     payoutTotals,
     pendingAds,
-    abTests,
   ] = await Promise.all([
     // Monthly revenue: last 12 months
     db.ticketOrder.findMany({
@@ -226,7 +225,6 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
       take: 20,
     }).catch(() => []),
     // A/B tests
-    db.aBTest.findMany({ orderBy: { createdAt: 'desc' } }).catch(() => []),
   ]);
 
   const [
@@ -978,27 +976,6 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
         )}
       </section>
 
-      {/* ── A/B Tests ─────────────────────────────────────────── */}
-      <section className="section">
-        <h2>{t('adminPage.abTests', 'A/B Tests')}</h2>
-        {abTests.length === 0 ? (
-          <p className="meta">{t('adminPage.noAbTestsConfigured', 'No A/B tests configured. POST to /api/admin/ab-tests to create one.')}</p>
-        ) : (
-          <div className="admin-list">
-            {abTests.map((test) => (
-              <div className="admin-list-row" key={test.key}>
-                <code>{test.key}</code>
-                <span>{test.description ?? '—'}</span>
-                <strong style={{ color: test.enabled ? 'var(--teal, #22e5d4)' : 'var(--ink3, #666)' }}>{test.enabled ? t('adminPage.enabled', 'ENABLED') : t('adminPage.disabled', 'DISABLED')}</strong>
-                <small>{test.createdAt.toISOString().slice(0, 10)}</small>
-              </div>
-            ))}
-          </div>
-        )}
-        <p className="meta" style={{ marginTop: 8 }}>
-          {t('adminPage.manageViaAbTests', 'Manage via')} <code>POST /api/admin/ab-tests</code> {t('adminPage.withParams', 'with')} <code>{`{key, description, enabled}`}</code>.
-        </p>
-      </section>
 
       {/* ── Ads ───────────────────────────────────────────────── */}
       <section className="section">

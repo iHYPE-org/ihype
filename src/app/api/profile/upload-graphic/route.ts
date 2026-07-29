@@ -3,6 +3,8 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { storeMediaFile, isObjectStorageConfigured } from '@/lib/object-storage';
 import { vetImageUpload } from '@/lib/image-vetting';
+import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
+import { readClientAddress } from '@/lib/request-meta';
 
 const MAX_BYTES = 8 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -26,6 +28,27 @@ export async function POST(request: Request) {
     select: { id: true },
   });
   if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+
+  // Every accepted upload runs vetImageUpload(), which calls a Workers AI
+  // vision model, and then writes to R2. Both cost money per request, and
+  // neither was metered — a signed-in account could loop 8 MB uploads
+  // indefinitely. The sibling upload route (/api/artist-media) has always had
+  // this guard; its absence here was an oversight, not a decision, so the
+  // budget matches: 20/hour.
+  //
+  // Checked before request.formData() on purpose. Reading the body first
+  // would mean buffering up to 8 MB before deciding to refuse it, which hands
+  // back most of the protection.
+  const rateLimit = await consumeRateLimit(
+    rateLimitKey('profile-graphic-upload', session.user.id, readClientAddress(request)),
+    { limit: 20, windowMs: 60 * 60 * 1000 },
+  );
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'Too many uploads. Try again later.' },
+      { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } },
+    );
+  }
 
   const formData = await request.formData();
   const file = formData.get('file') as File | null;

@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 import { refundTicketPaymentIntent, cancelTicketPaymentIntent } from '@/lib/stripe';
 import { refundCapturedTicketOrder, voidReservedTicketOrder } from '@/lib/ticket-order-state';
+import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,7 +67,7 @@ export async function POST(
       if (!ok) throw new Error('Order changed state before the cancellation could be recorded.');
     }
   } catch (error) {
-    console.error('[tickets/refund] failed', order.id, error);
+    log.error('[tickets/refund]', error instanceof Error ? error : { error: String(error) }, `failed for order ${order.id}`);
     return NextResponse.json({ error: 'Could not process the refund. Please try again or contact support.' }, { status: 502 });
   }
 

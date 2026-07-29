@@ -32,7 +32,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ ads });
   } catch (err) {
-    console.error('[api/admin/ads] error', err);
+    log.error('[api/admin/ads]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -100,7 +100,7 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ ad });
   } catch (err) {
-    console.error('[api/admin/ads] error', err);
+    log.error('[api/admin/ads]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

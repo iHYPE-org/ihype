@@ -6,6 +6,7 @@ import { sortShowsForFeed } from '@/lib/integrity';
 import { detectRequestLocation } from '@/lib/request-location';
 import { getShowRecommendations } from '@/lib/show-recommendations';
 import { enhanceShowRecommendationsWithAI } from '@/lib/ai-show-recommendations';
+import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,7 +72,7 @@ export async function GET() {
     forYouShows = enhanced.shows;
     aiEnhanced = enhanced.aiEnhanced;
   } catch (error) {
-    console.error('[api/shows/directory] For You recommendation error, falling back to deterministic order', error);
+    log.error('[api/shows/directory]', error instanceof Error ? error : { error: String(error) }, 'For You recommendation error, falling back to deterministic order');
   }
 
   return NextResponse.json(

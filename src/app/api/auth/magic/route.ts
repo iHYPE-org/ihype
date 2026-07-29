@@ -4,6 +4,7 @@ import { buildAuthSessionCookie } from '@/lib/auth-session';
 import { checkAndRecordLogin } from '@/lib/login-security';
 import { resolvePostAuthRedirect } from '@/lib/auth-redirects';
 import { hashMagicLinkToken } from '@/lib/magic-link-token';
+import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -68,7 +69,7 @@ export async function GET(request: NextRequest) {
       return foundUser;
     });
   } catch (error) {
-    console.error('[magic-link] atomic token consumption failed:', error);
+    log.error('[magic-link]', error instanceof Error ? error : { error: String(error) }, 'atomic token consumption failed');
     return NextResponse.redirect(new URL('/login?error=ml_db_error', request.url));
   }
 
@@ -77,17 +78,16 @@ export async function GET(request: NextRequest) {
   }
 
   if (!process.env.AUTH_SECRET) {
-    console.error('[magic-link] AUTH_SECRET is not set');
+    log.error('[magic-link]', null, 'AUTH_SECRET is not set');
     return NextResponse.redirect(new URL('/login?error=ml_no_secret', request.url));
   }
 
   const sessionCookie = await buildAuthSessionCookie(user);
   if (!sessionCookie) {
-    console.error(
-      '[magic-link] buildAuthSessionCookie returned null for user',
-      user.id,
-      'securityVersion:',
-      user.userSecurityVersion,
+    log.error(
+      '[magic-link]',
+      { userId: user.id, securityVersion: user.userSecurityVersion },
+      'buildAuthSessionCookie returned null',
     );
     return NextResponse.redirect(new URL('/login?error=ml_cookie_error', request.url));
   }

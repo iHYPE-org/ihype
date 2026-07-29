@@ -1,5 +1,6 @@
 import { encode } from 'next-auth/jwt';
 import { db } from '@/lib/db';
+import { log } from '@/lib/logger';
 import {
   AUTH_SESSION_MAX_AGE_SECONDS,
   getAuthSessionCookieName,
@@ -33,7 +34,7 @@ async function readUserSecurityVersion(user: AuthSessionUser) {
     });
     return dbUser?.userSecurityVersion ?? null;
   } catch (error) {
-    console.error('[auth-session] Unable to read user security version:', error);
+    log.error('[auth-session]', error instanceof Error ? error : { error: String(error) }, 'Unable to read user security version');
     return null;
   }
 }

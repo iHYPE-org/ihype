@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { log } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -34,7 +35,7 @@ export async function GET() {
 
     return NextResponse.json({ streak, daysActive: days.size });
   } catch (err) {
-    console.error('[api/hype-streak] error', err);
+    log.error('[api/hype-streak]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -2802,7 +2802,6 @@
   "ticketSaleCard.openNowLabel": "现已开售",
   "ticketSaleCard.openVerificationLink": "打开验证",
   "ticketSaleCard.orderPreviewLabel": "订单预览",
-  "ticketSaleCard.paymentMethodRequiredBody": "粉丝账户需先保存支付方式才能预留门票。支付接入正在为公测做最后准备，开放后会通知你的账户。",
   "ticketSaleCard.paymentMethodRequiredTitle": "需要支付方式",
   "ticketSaleCard.paymentSourceLabel": "支付来源",
   "ticketSaleCard.perTicket": "每张",

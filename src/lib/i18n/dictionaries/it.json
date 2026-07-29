@@ -2823,7 +2823,6 @@
   "ticketSaleCard.openNowLabel": "Aperto ora",
   "ticketSaleCard.openVerificationLink": "Apri verifica",
   "ticketSaleCard.orderPreviewLabel": "Anteprima ordine",
-  "ticketSaleCard.paymentMethodRequiredBody": "Gli account fan devono avere un metodo di pagamento salvato prima di riservare biglietti. La configurazione dei pagamenti è in fase di completamento per il lancio beta e il tuo account riceverà una notifica all'apertura.",
   "ticketSaleCard.paymentMethodRequiredTitle": "Metodo di pagamento richiesto",
   "ticketSaleCard.paymentSourceLabel": "Fonte di pagamento",
   "ticketSaleCard.perTicket": "a biglietto",

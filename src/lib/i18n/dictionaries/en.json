@@ -1,7 +1,4 @@
 {
-  "adminAbTestsClient.descriptionLabel": "Description",
-  "adminAbTestsClient.tableDescription": "Description",
-  "adminAbTestsClient.tableStatus": "Status",
   "adminAdsClient.approve": "Approve",
   "adminAdsClient.reject": "Reject",
   "adminAuditPage.exportCsv": "Export CSV",

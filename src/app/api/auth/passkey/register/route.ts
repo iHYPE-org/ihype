@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { getPasskeyRegistrationOptions, verifyPasskeyRegistration } from '@/lib/passkey';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
+import { log } from '@/lib/logger';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
   try {
     ok = await verifyPasskeyRegistration(session.user.id, raw as unknown as import('@simplewebauthn/server').RegistrationResponseJSON, challenge, name);
   } catch (err) {
-    console.error('[passkey/register] verification threw:', err);
+    log.error('[passkey/register]', err instanceof Error ? err : { error: String(err) }, 'verification threw');
     const resp = NextResponse.json({ error: 'Passkey registration failed.' }, { status: 400 });
     resp.cookies.delete('pk_reg_challenge');
     return resp;

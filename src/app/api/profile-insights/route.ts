@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getProfileInsights } from '@/lib/profile-insights';
+import { log } from '@/lib/logger';
 
 export async function GET(req: NextRequest) {
   try {
@@ -27,7 +28,7 @@ export async function GET(req: NextRequest) {
     const insights = await getProfileInsights(profileId, profile.type);
     return NextResponse.json(insights);
   } catch (err) {
-    console.error('[api/profile-insights] error', err);
+    log.error('[api/profile-insights]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

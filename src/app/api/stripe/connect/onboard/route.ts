@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { log } from '@/lib/logger';
 import {
   createConnectOnboardingUrl,
   createStripeConnectAccount,
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
   try {
     body = schema.parse(await request.json());
   } catch (err) {
-    console.error('[stripe/connect/onboard]', err);
+    log.error('[stripe/connect/onboard]', err instanceof Error ? err : { error: String(err) });
     return NextResponse.json({ error: 'Invalid request.' }, { status: 400 });
   }
 

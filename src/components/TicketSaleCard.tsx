@@ -234,9 +234,28 @@ export function TicketSaleCard({
       ) : !currentFan.hasStoredPaymentToken ? (
         <div className="empty">
           <strong style={{ display: 'block', marginBottom: '0.5rem' }}>{t('ticketSaleCard.paymentMethodRequiredTitle', 'Payment method required')}</strong>
+          {/* The previous copy here promised two things nothing backs: a
+              delivery date ("being finalised for beta launch") and a
+              notification ("your account will be notified when it opens") that
+              no code path sends. Saying less is the honest option until the
+              flow exists.
+
+              What it needs: POST /api/stripe/setup-intent is written and
+              correct, but it returns a clientSecret for Stripe.js, and there
+              is deliberately no Stripe.js or Elements anywhere in this
+              codebase. The route to finish this is the one ad billing already
+              took — a hosted Stripe Checkout session in mode: 'setup' (see
+              createAdCampaignCheckoutSession in src/lib/stripe.ts), plus a
+              checkout.session.completed branch in the Stripe webhook to store
+              the resulting payment method on User.storedPaymentTokenRef. That
+              needs no new client dependency. It is deliberately not built yet:
+              the Stripe integration has never executed against Stripe at all
+              (live mode holds zero PaymentIntents and zero connected
+              accounts), so scripts/stripe-payout-rehearsal.mjs should run
+              first. */}
           {t(
             'ticketSaleCard.paymentMethodRequiredBody',
-            'Fan accounts need a saved payment method before reserving tickets. Payment onboarding is being finalised for beta launch, and your account will be notified when it opens.'
+            'Saving a payment method is not open yet, so tickets cannot be reserved from this account. Nothing is charged and nothing is held in the meantime.'
           )}
           <div className="cta-row" style={{ marginTop: '1rem' }}>
             <Link className="button small secondary" href="/tickets">

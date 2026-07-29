@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
 import { readClientAddress } from '@/lib/request-meta';
 import { requireRecentAdminReauth } from '@/lib/admin-confirmation';
+import { log } from '@/lib/logger';
 import {
   executeAccountErasure,
   executeHypeWipe,
@@ -96,7 +97,7 @@ export async function PATCH(
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.issues[0]?.message ?? 'Invalid action' }, { status: 400 });
     }
-    console.error('Privacy request execution failed', error);
+    log.error('[api/admin/privacy-requests]', error instanceof Error ? error : { error: String(error) }, 'privacy request execution failed');
     const message = error instanceof Error ? error.message : 'Could not process the privacy request';
     return NextResponse.json({ error: message }, { status: 500 });
   }

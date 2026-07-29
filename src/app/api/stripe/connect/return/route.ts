@@ -3,6 +3,7 @@ import { type NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
 import { getProfilePathForType } from '@/lib/profile-paths';
+import { log } from '@/lib/logger';
 
 /**
  * GET /api/stripe/connect/return?profileId=<cuid>
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     // Re-throw redirect errors (Next.js redirect() throws internally)
     if (err instanceof Error && err.message === 'NEXT_REDIRECT') throw err;
-    console.error('[api/stripe/connect/return] error', err);
+    log.error('[api/stripe/connect/return]', err instanceof Error ? err : { error: String(err) }, 'error');
     redirect(fallback);
   }
 }

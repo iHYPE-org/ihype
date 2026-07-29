@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { sendGenericEmail } from '@/lib/mailer';
 import { getBaseUrl } from '@/lib/utils';
+import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -75,7 +76,7 @@ export async function POST(request: Request) {
 
   const confirmUrl = `${getBaseUrl()}/api/newsletter/confirm?token=${encodeURIComponent(confirmToken)}`;
   await sendGenericEmail({ to: body.email, ...buildConfirmEmail(confirmUrl, profile.name) }).catch((err) => {
-    console.error('[newsletter/subscribe] confirm email failed', err);
+    log.error('[newsletter/subscribe]', err instanceof Error ? err : { error: String(err) }, 'confirm email failed');
   });
 
   return NextResponse.json({ ok: true, status: 'confirmation-sent' });

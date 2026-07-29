@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db, withDbRetry } from '@/lib/db';
 import { consumeRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
+import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,7 +49,7 @@ export async function GET(req: NextRequest) {
       { headers: { 'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30' } }
     );
   } catch (err) {
-    console.error('[api/hype/counts] error', err);
+    log.error('[api/hype/counts]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

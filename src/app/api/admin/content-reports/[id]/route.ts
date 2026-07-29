@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
 import { readClientAddress } from '@/lib/request-meta';
 import { requireRecentAdminReauth } from '@/lib/admin-confirmation';
+import { log } from '@/lib/logger';
 
 const schema = z.object({
   status: z.enum(['OPEN', 'REVIEWED', 'RESOLVED', 'DISMISSED', 'HIDDEN']),
@@ -99,7 +100,7 @@ export async function PATCH(
       return NextResponse.json({ error: error.issues[0]?.message ?? 'Invalid moderation action' }, { status: 400 });
     }
 
-    console.error('Content report moderation failed', error);
+    log.error('[api/admin/content-reports]', error instanceof Error ? error : { error: String(error) }, 'moderation failed');
     return NextResponse.json({ error: 'Could not update report' }, { status: 500 });
   }
 }

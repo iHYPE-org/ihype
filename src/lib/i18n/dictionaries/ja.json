@@ -2813,7 +2813,6 @@
   "ticketSaleCard.openNowLabel": "受付中",
   "ticketSaleCard.openVerificationLink": "認証を開く",
   "ticketSaleCard.orderPreviewLabel": "注文のプレビュー",
-  "ticketSaleCard.paymentMethodRequiredBody": "チケットを予約するには、ファンアカウントに保存済みの決済手段が必要です。決済の登録機能はベータ公開に向けて準備中で、利用可能になり次第お知らせします。",
   "ticketSaleCard.paymentMethodRequiredTitle": "決済手段が必要です",
   "ticketSaleCard.paymentSourceLabel": "支払い元",
   "ticketSaleCard.perTicket": "1枚あたり",

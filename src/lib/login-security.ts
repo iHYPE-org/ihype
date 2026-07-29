@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { deferWork } from '@/lib/defer-work';
 import { sendGenericEmail } from '@/lib/mailer';
 import { readClientAddress } from '@/lib/request-meta';
+import { log } from '@/lib/logger';
 
 type LoginUser = {
   id: string;
@@ -49,7 +50,7 @@ function notifyAdminLogin(user: LoginUser, request: Request) {
         <p style="color:#5b657a;font-size:12px;">Automated audit notification — no action needed if this was expected.</p>
       </div>
     `
-  }).catch((e: unknown) => { console.error('[login-security] admin-login alert failed', e); }), 'login-security');
+  }).catch((e: unknown) => { log.error('[login-security]', e instanceof Error ? e : { error: String(e) }, 'admin-login alert failed'); }), 'login-security');
 }
 
 // Alerts a user by email when a login comes from a different country than
@@ -86,7 +87,7 @@ export async function checkAndRecordLogin(user: LoginUser, request: Request) {
           <p style="color:#5b657a;font-size:12px;">— iHYPE</p>
         </div>
       `
-    }).catch((e: unknown) => { console.error('[login-security] country-change email failed', e); }), 'login-security');
+    }).catch((e: unknown) => { log.error('[login-security]', e instanceof Error ? e : { error: String(e) }, 'country-change email failed'); }), 'login-security');
   }
 
   deferWork(db.user.update({
@@ -95,5 +96,5 @@ export async function checkAndRecordLogin(user: LoginUser, request: Request) {
       lastLoginCountry: currentCountry ?? undefined,
       lastLoginAt: new Date()
     }
-  }).catch((e: unknown) => { console.error('[login-security] last-login update failed', e); }), 'login-security');
+  }).catch((e: unknown) => { log.error('[login-security]', e instanceof Error ? e : { error: String(e) }, 'last-login update failed'); }), 'login-security');
 }
