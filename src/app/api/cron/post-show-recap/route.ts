@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isCronRequestAuthorized } from '@/lib/cron-auth';
 import { db } from '@/lib/db';
 import { sendPushNotification } from '@/lib/push-notify';
-import { sendGenericEmail } from '@/lib/mailer';
+import { sendOperationalEmail } from '@/lib/mailer';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,7 +43,7 @@ async function deliver(tasks: RecapTask[]): Promise<number> {
       chunk.map(async (task) => {
         await sendPushNotification(task.userId, task.push).catch(() => {});
         if (task.email) {
-          await sendGenericEmail(task.email).catch(() => {});
+          await sendOperationalEmail(task.email, 'post-show-recap');
         }
       })
     );

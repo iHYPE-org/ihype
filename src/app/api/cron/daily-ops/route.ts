@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isCronRequestAuthorized } from '@/lib/cron-auth';
 import { db } from '@/lib/db';
-import { sendGenericEmail } from '@/lib/mailer';
+import { sendOperationalEmail } from '@/lib/mailer';
 import { ADMIN_EMAIL } from '@/lib/env';
 
 export const dynamic = 'force-dynamic';
@@ -47,7 +47,10 @@ export async function GET(request: NextRequest) {
     </table>
   `;
 
-  await sendGenericEmail({ to: ADMIN_EMAIL, subject: '[iHYPE] Daily ops report', text, html }).catch(() => {});
+  const emailed = await sendOperationalEmail({ to: ADMIN_EMAIL, subject: '[iHYPE] Daily ops report', text, html }, 'daily-ops');
 
-  return NextResponse.json({ ok: true, newSignups, revenue, openSupport, openModFlags });
+  // `emailed` is part of the response on purpose: the job previously
+  // returned ok:true whether or not the report actually left the building,
+  // so a cron dashboard showing 200s proved nothing about delivery.
+  return NextResponse.json({ ok: true, emailed, newSignups, revenue, openSupport, openModFlags });
 }

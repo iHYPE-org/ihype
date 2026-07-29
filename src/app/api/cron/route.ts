@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isCronRequestAuthorized } from '@/lib/cron-auth';
 import { ADMIN_EMAIL } from '@/lib/env';
 import { pingCronAlive, WEEKLY_TTL } from '@/lib/cron-health';
+import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -35,8 +36,24 @@ export async function GET(request: NextRequest) {
 
     case 'health-check': {
       const { getHealthSnapshot } = await import('@/lib/health');
-      const { isEmailDeliveryConfigured, sendGenericEmail } = await import('@/lib/mailer');
+      const { isEmailDeliveryConfigured, getEmailDeliveryReadiness, sendGenericEmail, sendOperationalEmail } = await import('@/lib/mailer');
       const { checkCronHealth } = await import('@/lib/cron-health');
+
+      // Email cannot be the channel that reports email being down. Every
+      // alert below is an email, and each one is individually guarded on
+      // isEmailDeliveryConfigured() — so a misconfigured mailer made this
+      // whole job a silent no-op. Production sent zero emails for 35 days
+      // that way. Report it through the logger (Sentry) instead, which does
+      // not depend on the subsystem being reported on.
+      const emailReady = isEmailDeliveryConfigured();
+      if (!emailReady) {
+        log.error(
+          '[cron/health-check]',
+          { blockers: getEmailDeliveryReadiness().blockers },
+          'email delivery is NOT configured in production — every alert, magic link and ticket email is failing'
+        );
+      }
+
       const snapshot = await getHealthSnapshot();
       if (snapshot.status !== 'ok' && isEmailDeliveryConfigured()) {
         try {
@@ -76,7 +93,7 @@ export async function GET(request: NextRequest) {
           const lastCronAlert = await kvGet<number>('health-alert:stale-crons');
           const shouldAlert = !lastCronAlert || Date.now() - lastCronAlert > 24 * 60 * 60 * 1000;
           if (shouldAlert) {
-            await sendGenericEmail({ to: ADMIN_EMAIL, subject: '[iHYPE] Stale cron jobs detected', text: `These cron jobs haven't run in their expected window: ${cronHealth.stale.join(', ')}`, html: `<p>Stale crons: <strong>${cronHealth.stale.join(', ')}</strong></p>` }).catch(() => {});
+            await sendOperationalEmail({ to: ADMIN_EMAIL, subject: '[iHYPE] Stale cron jobs detected', text: `These cron jobs haven't run in their expected window: ${cronHealth.stale.join(', ')}`, html: `<p>Stale crons: <strong>${cronHealth.stale.join(', ')}</strong></p>` }, 'stale-crons');
             await kvPut('health-alert:stale-crons', Date.now(), { ex: 24 * 60 * 60 });
           }
         } catch { /* KV unavailable */ }
@@ -119,7 +136,7 @@ export async function GET(request: NextRequest) {
 
     case 'db-health': {
       const { db } = await import('@/lib/db');
-      const { sendGenericEmail } = await import('@/lib/mailer');
+      const { sendOperationalEmail } = await import('@/lib/mailer');
       const [userCountResult, profileCountResult] = await Promise.all([
         db.$queryRaw<Array<{ count: bigint }>>`SELECT COUNT(*) as count FROM "User"`,
         db.$queryRaw<Array<{ count: bigint }>>`SELECT COUNT(*) as count FROM "Profile"`
@@ -139,7 +156,7 @@ export async function GET(request: NextRequest) {
         await kvPut('db-health:profile-count', profileCount);
       } catch { /* KV not available */ }
       if (alerts.length > 0) {
-        await sendGenericEmail({ to: ADMIN_EMAIL, subject: '[iHYPE] DB health alert', text: alerts.join('\n\n') + `\n\nCurrent counts: users=${userCount}, profiles=${profileCount}`, html: `<p>${alerts.map(a => `<strong>${a}</strong>`).join('<br/><br/>')}</p>` }).catch(() => {});
+        await sendOperationalEmail({ to: ADMIN_EMAIL, subject: '[iHYPE] DB health alert', text: alerts.join('\n\n') + `\n\nCurrent counts: users=${userCount}, profiles=${profileCount}`, html: `<p>${alerts.map(a => `<strong>${a}</strong>`).join('<br/><br/>')}</p>` }, 'db-health');
       }
       await pingCronAlive('db-health');
       return NextResponse.json({ ok: alerts.length === 0, userCount, profileCount, alerts, checkedAt: new Date().toISOString() });
@@ -292,7 +309,7 @@ export async function GET(request: NextRequest) {
 
     case 'stripe-connect-health': {
       const { db } = await import('@/lib/db');
-      const { sendGenericEmail } = await import('@/lib/mailer');
+      const { sendOperationalEmail } = await import('@/lib/mailer');
       const issues = await db.profile.findMany({
         where: {
           OR: [
@@ -303,7 +320,7 @@ export async function GET(request: NextRequest) {
         select: { name: true, slug: true, stripeConnectOnboarded: true, stripeConnectAccountId: true }
       });
       if (issues.length > 0) {
-        await sendGenericEmail({ to: ADMIN_EMAIL, subject: `[iHYPE] Stripe Connect issues (${issues.length})`, text: issues.map(i => `${i.name}: onboarded=${i.stripeConnectOnboarded}, accountId=${i.stripeConnectAccountId ?? 'null'}`).join('\n'), html: `<p>${issues.map(i => `<strong>${i.name}</strong>: onboarded=${i.stripeConnectOnboarded}, accountId=${i.stripeConnectAccountId ?? 'null'}`).join('<br/>')}</p>` }).catch(() => {});
+        await sendOperationalEmail({ to: ADMIN_EMAIL, subject: `[iHYPE] Stripe Connect issues (${issues.length})`, text: issues.map(i => `${i.name}: onboarded=${i.stripeConnectOnboarded}, accountId=${i.stripeConnectAccountId ?? 'null'}`).join('\n'), html: `<p>${issues.map(i => `<strong>${i.name}</strong>: onboarded=${i.stripeConnectOnboarded}, accountId=${i.stripeConnectAccountId ?? 'null'}`).join('<br/>')}</p>` }, 'stripe-connect-health');
       }
       await pingCronAlive('stripe-connect-health');
       return NextResponse.json({ ok: true, issues: issues.length });
