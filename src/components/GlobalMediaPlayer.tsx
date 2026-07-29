@@ -15,6 +15,7 @@ import { FanPlaylistManager } from '@/components/FanPlaylistManager';
 import { PlayerQueuePanel } from '@/components/PlayerQueuePanel';
 import { usePlayerKeyboard } from '@/lib/usePlayerKeyboard';
 import { useI18n } from '@/components/I18nProvider';
+import { resolvePlaybackFailure } from '@/lib/player-recovery';
 
 export type MediaTrack = {
   id: string;
@@ -69,13 +70,17 @@ type MediaPlayerVolatileValue = {
   isPlaying: boolean;
   volume: number;
   sleepRemainingSeconds: number | null;
+  /** Set when a track's audio failed to load; cleared once anything decodes. */
+  playbackError: string | null;
+  isBuffering: boolean;
 };
 
 type MediaPlayerContextValue = MediaPlayerStableValue & MediaPlayerVolatileValue;
 
 const MediaPlayerStableCtx = createContext<MediaPlayerStableValue | null>(null);
 const MediaPlayerVolatileCtx = createContext<MediaPlayerVolatileValue>({
-  currentTime: 0, duration: 0, isPlaying: false, volume: 0.85, sleepRemainingSeconds: null
+  currentTime: 0, duration: 0, isPlaying: false, volume: 0.85, sleepRemainingSeconds: null,
+  playbackError: null, isBuffering: false
 });
 const MediaPlayerContext = createContext<MediaPlayerContextValue | null>(null);
 
@@ -107,6 +112,16 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const preloadRef = useRef<HTMLAudioElement | null>(null);
   const completedMediaIdsRef = useRef<Set<string>>(new Set());
+  // A track whose audio fails to load used to do nothing at all: no `error`
+  // listener existed, so the UI kept showing "playing", the position never
+  // moved, and the queue never advanced. One dead URL silently ended the
+  // listening session. These three drive the recovery below.
+  const [playbackError, setPlaybackError] = useState<string | null>(null);
+  const [isBuffering, setIsBuffering] = useState(false);
+  // Guards against spinning through an entire queue of broken URLs: after
+  // this many consecutive failures we stop and surface it instead of
+  // skipping forever. Reset by any track that actually starts playing.
+  const consecutiveErrorsRef = useRef(0);
   const originalQueueRef = useRef<MediaTrack[]>([]);
   const preMuteVolumeRef = useRef(0.85);
   const autoplayFetchingRef = useRef(false);
@@ -374,17 +389,74 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
       });
     };
 
+    // Buffering: without this, a slow start on mobile data is visually
+    // identical to a hang.
+    const onWaiting = () => setIsBuffering(true);
+    const onPlayable = () => {
+      setIsBuffering(false);
+      // Something actually decoded, so the run of failures is over.
+      consecutiveErrorsRef.current = 0;
+      setPlaybackError(null);
+    };
+
+    // A 404, a CORS rejection, or an undecodable file all land here.
+    const onError = () => {
+      setIsBuffering(false);
+      consecutiveErrorsRef.current += 1;
+
+      const failed = currentTrack?.title;
+      setIsPlaying(false);
+
+      // Decision lives in src/lib/player-recovery.ts so it can be unit-tested
+      // — skipping forever through a broken queue is as wrong as never
+      // skipping at all.
+      setCurrentIndex(index => {
+        const decision = resolvePlaybackFailure({
+          consecutiveErrors: consecutiveErrorsRef.current,
+          queueLength: queue.length,
+          index,
+          repeatMode,
+        });
+
+        if (decision.action === 'stop') {
+          setPlaybackError(
+            failed
+              ? `Couldn't play "${failed}". The audio file is unavailable.`
+              : "Couldn't play this track. The audio file is unavailable."
+          );
+          return index;
+        }
+
+        setPlaybackError(failed ? `Skipped "${failed}" — audio unavailable.` : 'Skipped a track — audio unavailable.');
+        // Advance like a natural end, minus the listen credit: a track that
+        // never played is not a play.
+        setCurrentTrack(queue[decision.nextIndex] ?? null);
+        setIsPlaying(true);
+        return decision.nextIndex;
+      });
+    };
+
     audio.addEventListener('timeupdate', syncTime);
     audio.addEventListener('loadedmetadata', syncDuration);
     audio.addEventListener('play', syncPlay);
     audio.addEventListener('pause', syncPause);
     audio.addEventListener('ended', onEnded);
+    audio.addEventListener('error', onError);
+    audio.addEventListener('waiting', onWaiting);
+    audio.addEventListener('stalled', onWaiting);
+    audio.addEventListener('canplay', onPlayable);
+    audio.addEventListener('playing', onPlayable);
     return () => {
       audio.removeEventListener('timeupdate', syncTime);
       audio.removeEventListener('loadedmetadata', syncDuration);
       audio.removeEventListener('play', syncPlay);
       audio.removeEventListener('pause', syncPause);
       audio.removeEventListener('ended', onEnded);
+      audio.removeEventListener('error', onError);
+      audio.removeEventListener('waiting', onWaiting);
+      audio.removeEventListener('stalled', onWaiting);
+      audio.removeEventListener('canplay', onPlayable);
+      audio.removeEventListener('playing', onPlayable);
     };
   }, [currentTrack, queue, repeatMode, isAutoplay]);
 
@@ -573,16 +645,20 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
   );
 
   const volatileValue = useMemo<MediaPlayerVolatileValue>(
-    () => ({ currentTime, duration, isPlaying, volume, sleepRemainingSeconds }),
-    [currentTime, duration, isPlaying, volume, sleepRemainingSeconds]
+    () => ({ currentTime, duration, isPlaying, volume, sleepRemainingSeconds, playbackError, isBuffering }),
+    [currentTime, duration, isPlaying, volume, sleepRemainingSeconds, playbackError, isBuffering]
   );
 
   return (
     <MediaPlayerStableCtx.Provider value={stableValue}>
       <MediaPlayerVolatileCtx.Provider value={volatileValue}>
         {children}
-        <audio ref={audioRef} preload="metadata" />
-        <audio ref={preloadRef} preload="auto" style={{ display: 'none' }} />
+        {/* crossOrigin is set now rather than later: adding it after launch
+            would require the R2/CDN CORS headers to already be right, and
+            without it the Web Audio API can never read these buffers (no
+            waveforms, no visualisers). It is inert for same-origin media. */}
+        <audio crossOrigin="anonymous" preload="metadata" ref={audioRef} />
+        <audio crossOrigin="anonymous" preload="auto" ref={preloadRef} style={{ display: 'none' }} />
       </MediaPlayerVolatileCtx.Provider>
     </MediaPlayerStableCtx.Provider>
   );
@@ -646,7 +722,7 @@ export function SitePlayerDock() {
     togglePlayback, playNext, playPrevious, seekTo, playTrack, setVolume,
     removeFromQueue, cycleRepeat, toggleShuffle, cycleSpeed,
     toggleMute, toggleAutoplay, cycleSleepTimer, cancelSleepTimer,
-    volume
+    volume, playbackError, isBuffering
   } = useMediaPlayer();
 
   const [panel, setPanel] = useState<DockPanel>(null);
@@ -713,7 +789,17 @@ export function SitePlayerDock() {
         </div>
         <div className="site-dock-meta">
           <div className="site-dock-title">{currentTrack?.title ?? t('globalMediaPlayer.nothingPlaying', 'Nothing playing')}</div>
-          <div className="site-dock-artist">{currentTrack?.artistName ?? t('globalMediaPlayer.pickTrackToStart', 'Pick a track to start')}</div>
+          {/* The status line replaces the artist name only while something is
+              actually wrong or loading — an unheard error is the same bug as
+              no error handling at all. role="status" so screen readers
+              announce it without stealing focus. */}
+          {playbackError ? (
+            <div className="site-dock-artist site-dock-error" role="status">{playbackError}</div>
+          ) : isBuffering ? (
+            <div className="site-dock-artist" role="status">{t('globalMediaPlayer.buffering', 'Buffering…')}</div>
+          ) : (
+            <div className="site-dock-artist">{currentTrack?.artistName ?? t('globalMediaPlayer.pickTrackToStart', 'Pick a track to start')}</div>
+          )}
         </div>
         <svg className="site-dock-expand-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <polyline points="18 15 12 9 6 15" />

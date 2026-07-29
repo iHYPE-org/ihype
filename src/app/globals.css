@@ -5346,6 +5346,9 @@ html.high-contrast p {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* Playback failure state for the dock's status line. Uses the accent rather
+   than a new colour token so it reads as "attention" in both themes. */
+.site-dock-artist.site-dock-error { color: var(--accent, #ff5029); }
 .site-dock-artist {
   font-size: 10px;
   color: rgba(242,237,232,.45);
