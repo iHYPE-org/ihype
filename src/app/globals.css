@@ -4619,7 +4619,14 @@ html.high-contrast p {
 }
 
 @media (max-width: 720px) {
-  .a11y-panel {
+  /* :not(.a11y-panel-inline) matters. This rule turns the panel into a
+     viewport-pinned sheet, which is right for the popover form it was written
+     for and wrong for the inline form, which is laid out inside the nav
+     drawer's Settings disclosure. Without the exclusion the inline panel goes
+     position: fixed on mobile, escapes the 300px drawer, spans the viewport
+     and gets clipped by the drawer's own edge — and because a fixed element
+     is out of flow, nothing reports it as overflow. */
+  .a11y-panel:not(.a11y-panel-inline) {
     position: fixed;
     top: 76px;
     right: 12px;
