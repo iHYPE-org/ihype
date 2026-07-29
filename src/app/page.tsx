@@ -110,29 +110,37 @@ export default async function RootPage() {
     totalHypes > 0 ? `${fmt(totalHypes)} ${t('page.statHypes', 'hypes')}` : null,
   ].filter((entry): entry is string => entry !== null);
 
+  // Written for a fan, in the order a fan cares about. Artists, venues and
+  // DJs get /for-artists, /for-djs and /for-venues, which argue in their
+  // terms; this page has one audience and does not hedge between four.
+  //
+  // Note what that changes about the split: it is stated as where a fan's
+  // money lands, not as a revenue-share table. "70/20/10" is a supply-side
+  // fact; "none of it stops here" is the part a ticket buyer is actually
+  // choosing between.
   const points = [
     {
+      k: 'near',
+      head: t('page.pointNearHead', 'Shows near you'),
+      body: t('page.pointNearBody', 'Your city\u2019s scene, in one place.'),
+      tone: 'var(--role-fan)',
+    },
+    {
       k: 'fee',
-      head: t('page.pointFeeHead', 'Zero ticket fees'),
-      body: t('page.pointFeeBody', 'Face value is face value. iHYPE takes nothing.'),
+      head: t('page.pointFeeHead2', 'No fees, ever'),
+      body: t('page.pointFeeBody2', 'You pay face value. That is the whole price.'),
       tone: 'var(--accent)',
     },
     {
       k: 'split',
-      head: t('page.pointSplitHead', '70 / 20 / 10, locked'),
-      body: t('page.pointSplitBody', 'Artist, venue, promoter — a condition of incorporation.'),
+      head: t('page.pointSplitHead2', 'It reaches the band'),
+      body: t('page.pointSplitBody2', 'Every ticket splits 70/20/10. None of it stops here.'),
       tone: 'var(--role-venue)',
     },
     {
       k: 'hype',
-      head: t('page.pointHypeHead', 'No pay-to-play'),
-      body: t('page.pointHypeBody', 'A hype is a real signal. It cannot be bought.'),
-      tone: 'var(--role-fan)',
-    },
-    {
-      k: 'data',
-      head: t('page.pointDataHead', 'Your data is not for sale'),
-      body: t('page.pointDataBody', 'Music ads fund this, the way radio always did.'),
+      head: t('page.pointHypeHead2', 'Nothing is paid placement'),
+      body: t('page.pointHypeBody2', 'What is rising is actually rising.'),
       tone: 'var(--accent-2)',
     },
   ];
@@ -146,7 +154,7 @@ export default async function RootPage() {
 
         <h1 className="idx-one-h1">{t('page.oneHeadline', 'Your local scene, completely free.')}</h1>
         <p className="idx-one-sub">
-          {t('page.oneSub', 'Find the artists and shows near you, hype what you love, and buy tickets at face value.')}
+          {t('page.oneSub2', 'Find the shows happening near you, hype the artists you love, and buy tickets at face value.')}
         </p>
 
         <ul className="idx-one-points">
@@ -159,17 +167,23 @@ export default async function RootPage() {
           ))}
         </ul>
 
+        {/* Straight to /register, not /join. /join is a role chooser whose
+            Fan card leads to another page before anything is created — a
+            detour that only makes sense for someone deciding what they are.
+            A fan already knows, and every account starts as a fan anyway, so
+            the chooser is friction on the one path this page is selling.
+            Creators still get in, one line down. */}
         <div className="idx-one-actions">
-          <Link className="idx-one-cta" href="/join">{primaryCtaLabel}</Link>
+          <Link className="idx-one-cta" href="/register">{primaryCtaLabel}</Link>
           <Link className="idx-one-alt" href="/login">{t('page.signIn', 'Sign in')}</Link>
         </div>
 
         {stats.length > 0 && <p className="idx-one-stats">{stats.join(' · ')}</p>}
 
         <p className="idx-one-foot">
-          <Link href="/info?tab=charter">{t('page.readCharter', 'Read the charter')}</Link>
+          <Link href="/join">{t('page.creatorDoor', 'Artist, DJ or venue?')}</Link>
           <span aria-hidden="true"> · </span>
-          <Link href="/info?tab=transparency">{t('page.seeNumbers', 'See the numbers')}</Link>
+          <Link href="/info?tab=charter">{t('page.readCharter', 'Read the charter')}</Link>
         </p>
       </section>
       <PiAdminButton />
