@@ -56,6 +56,10 @@ export async function GET(request: Request) {
   const rl = await consumeRateLimit(`pk-reg-first-opt:${clientAddress}`, {
     limit: 10,
     windowMs: 5 * 60 * 1000,
+    // See the note in passkey/auth: a per-IP key on a rarely-hit endpoint
+    // means an almost always cold Durable Object, and the 750ms default
+    // turns that into a halved limit on the sign-up path.
+    timeoutMs: 2500,
   });
   if (!rl.allowed) {
     return NextResponse.json({ error: 'Too many attempts. Wait a minute and try again.' }, { status: 429 });
@@ -96,6 +100,9 @@ export async function POST(request: Request) {
   const rl = await consumeRateLimit(`pk-reg-first:${clientAddress}`, {
     limit: 5,
     windowMs: 5 * 60 * 1000,
+    // Halved by a fallback this would be 2 attempts in five minutes on the
+    // very first passkey a new account ever registers.
+    timeoutMs: 2500,
   });
   if (!rl.allowed) {
     return NextResponse.json({ error: 'Too many attempts. Wait a minute and try again.' }, { status: 429 });

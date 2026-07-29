@@ -14,7 +14,14 @@ export async function GET(request: Request) {
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const clientAddress = readClientAddress(request);
-  const rlGet = await consumeRateLimit(`pk-reg-opts:${clientAddress}`, { limit: 10, windowMs: 5 * 60 * 1000 });
+        // Longer DO deadline than the default. This bucket is keyed per client
+    // IP on an endpoint one person hits a few times a week, so its Durable
+    // Object is evicted between uses and nearly every call pays a cold
+    // start — that produced 67 timeouts against the 750ms default, each one
+    // dropping sign-in to the halved KV limit. Sign-in already takes a
+    // moment; an extra second on a cold object is invisible next to being
+    // rate-limited out of your own account.
+      const rlGet = await consumeRateLimit(`pk-reg-opts:${clientAddress}`, { limit: 10, windowMs: 5 * 60 * 1000, timeoutMs: 2500 });
   if (!rlGet.allowed) return NextResponse.json({ error: "Too many attempts — wait a minute and try again." }, { status: 429 });
 
   const user = await db.user.findUnique({ where: { id: session.user.id }, select: { username: true } });
@@ -39,7 +46,7 @@ export async function POST(request: Request) {
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const clientAddress = readClientAddress(request);
-  const rl = await consumeRateLimit(`pk-register:${clientAddress}`, { limit: 5, windowMs: 5 * 60 * 1000 });
+  const rl = await consumeRateLimit(`pk-register:${clientAddress}`, { limit: 5, windowMs: 5 * 60 * 1000, timeoutMs: 2500 });
   if (!rl.allowed) return NextResponse.json({ error: "Too many attempts — wait a minute and try again." }, { status: 429 });
 
   const { cookies } = await import('next/headers');

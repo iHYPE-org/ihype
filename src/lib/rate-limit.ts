@@ -19,6 +19,16 @@ type RateLimitOptions = {
    * it through a single DO instance.
    */
   atomic?: boolean;
+  /**
+   * Override the Durable Object deadline for this bucket.
+   *
+   * The default suits a warm instance. It does not suit a bucket keyed per
+   * client IP on a low-traffic endpoint, where the object is evicted between
+   * uses and almost every call pays a cold start — there, a timeout is the
+   * expected case rather than a fault, and the KV fallback it triggers runs
+   * at half the configured limit.
+   */
+  timeoutMs?: number;
 };
 
 export type RateLimitResult = {
@@ -56,9 +66,20 @@ function getKvTimeoutMs() {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_KV_TIMEOUT_MS;
 }
 
-function getDoTimeoutMs() {
-  const parsed = Number.parseInt(process.env.RATE_LIMIT_DO_TIMEOUT_MS ?? '', 10);
+/**
+ * Resolves the Durable Object deadline: per-bucket override, then the env
+ * override, then the default. Exported so the precedence is testable — a
+ * bucket silently running on a deadline it did not ask for is exactly what
+ * produced 67 cold-start timeouts on the sign-in path.
+ */
+export function resolveDoTimeoutMs(override?: number, envValue?: string): number {
+  if (override && override > 0) return override;
+  const parsed = Number.parseInt(envValue ?? '', 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_DO_TIMEOUT_MS;
+}
+
+function getDoTimeoutMs(override?: number) {
+  return resolveDoTimeoutMs(override, process.env.RATE_LIMIT_DO_TIMEOUT_MS);
 }
 
 async function withTimeout<T>(operation: Promise<T>, label: string, timeoutMs: number): Promise<T> {
@@ -208,7 +229,7 @@ async function consumeDurableObject(key: string, options: RateLimitOptions): Pro
     const result = await withTimeout(
       stub.consume(options.limit, options.windowMs),
       'DO rate limit',
-      getDoTimeoutMs()
+      getDoTimeoutMs(options.timeoutMs)
     );
     if (!result.allowed) {
       deferWork(kvIncr(`rate-limit-hits:${key}`, 3600), 'rate-limit');
@@ -218,7 +239,19 @@ async function consumeDurableObject(key: string, options: RateLimitOptions): Pro
     // log.error so a DO outage reaches Sentry — console.error only lands in
     // Worker logs, which nobody tails. This is the only line logged for a
     // failed call; the fallback below stays silent so one fault is one issue.
-    log.error('[rate-limit]', error instanceof Error ? error : { error: String(error) }, 'atomic backend error, falling back to KV');
+    // Timeout and "the DO threw" are the same outcome but not the same
+    // problem: the first is usually a cold instance on a rarely-used key, the
+    // second means the object itself is failing. They were indistinguishable
+    // in Sentry, which is why 67 cold-start timeouts on /api/auth/passkey/auth
+    // read as an ongoing backend fault.
+    const timedOut = error instanceof Error && error.message.includes('timed out');
+    log.error(
+      '[rate-limit]',
+      error instanceof Error ? error : { error: String(error) },
+      timedOut
+        ? `atomic backend timed out after ${getDoTimeoutMs(options.timeoutMs)}ms, falling back to KV at half limit`
+        : 'atomic backend error, falling back to KV at half limit',
+    );
     return { kind: 'error' };
   }
 }
