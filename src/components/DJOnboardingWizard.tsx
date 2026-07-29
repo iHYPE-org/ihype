@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useI18n } from '@/components/I18nProvider';
+import { useMarkOnboarded } from '@/lib/use-mark-onboarded';
 
 type VerificationStatus = 'UNVERIFIED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
 
@@ -48,6 +49,11 @@ export function DJOnboardingWizard({
   const [submitState, setSubmitState] = useState<'idle' | 'submitted' | 'already' | 'error'>(
     initialVerificationStatus === 'PENDING' ? 'submitted' : initialVerificationStatus === 'VERIFIED' ? 'already' : 'idle'
   );
+
+  // Step 4 renders three different things. A failed submission is still
+  // sitting on the verification step behind a "Try again" button, so only the
+  // submitted and already-verified outcomes count as finished.
+  useMarkOnboarded(profileId, step === 4 && submitState !== 'error');
 
   const noBasics = !name.trim() || !city.trim();
 

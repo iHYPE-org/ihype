@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ProfileInsights } from '@/components/ProfileInsights';
 import { useI18n } from '@/components/I18nProvider';
 
-type ModuleProfile = { id: string; type: string; name: string; slug: string };
+type ModuleProfile = { id: string; type: string; name: string; slug: string; onboardedAt?: string | null };
 
 type TourData = {
   stops: { city: string; score: number; reach: string; showCount: number; venues: { id: string; name: string }[] }[];
@@ -233,6 +233,11 @@ const icons = {
       <rect height="4" rx="1.5" width="8" x="13" y="11" /><rect height="8" rx="1.5" width="8" x="3" y="13" />
     </svg>
   ),
+  setup: (color: string) => (
+    <svg fill="none" height="18" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="18">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  ),
   analytics: (color: string) => (
     <svg fill="none" height="18" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="18">
       <polyline points="3 17 9 11 13 15 21 6" /><polyline points="15 6 21 6 21 12" />
@@ -254,6 +259,13 @@ const analyticsHref = (profile: ModuleProfile): string | null => {
   return null;
 };
 
+const onboardingHref = (profile: ModuleProfile): string | null => {
+  if (profile.type === 'ARTIST') return `/artists/${profile.slug}/onboarding`;
+  if (profile.type === 'DJ') return `/promoters/${profile.slug}/onboarding`;
+  if (profile.type === 'VENUE') return `/venues/${profile.slug}/onboarding`;
+  return null;
+};
+
 /**
  * Role-specific toolkit rendered under the selected page on Pages → My Page.
  * Every page type gets real stats (ProfileInsights aggregates); creator roles
@@ -268,6 +280,11 @@ export function PageRoleModules({ profile, color }: { profile: ModuleProfile; co
   const isDj = profile.type === 'DJ';
   const dashHref = dashboardHref(profile);
   const analyticsUrl = analyticsHref(profile);
+  // Only while the wizard has never reported finishing. Profiles that predate
+  // onboardedAt were backfilled with their createdAt by the migration, so this
+  // prompt does not appear retroactively for accounts that were never offered
+  // a wizard in the first place.
+  const setupHref = profile.onboardedAt ? null : onboardingHref(profile);
 
   return (
     <div style={{ marginBottom: 36 }}>
@@ -275,6 +292,16 @@ export function PageRoleModules({ profile, color }: { profile: ModuleProfile; co
         {t('pageRoleModules.pageToolkitLabel', 'PAGE TOOLKIT')}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {setupHref && (
+          <LinkModule
+            color={color}
+            href={setupHref}
+            icon={icons.setup(color)}
+            sub={t('pageRoleModules.finishSetupSub', 'Pick up where you left off — takes a couple of minutes')}
+            title={t('pageRoleModules.finishSetupTitle', 'Finish setup')}
+          />
+        )}
+
         {dashHref && (
           <LinkModule
             color={color}

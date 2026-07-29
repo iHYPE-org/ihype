@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useI18n } from '@/components/I18nProvider';
+import { useMarkOnboarded } from '@/lib/use-mark-onboarded';
 
 type VerificationStatus = 'UNVERIFIED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
 
@@ -49,6 +50,11 @@ export default function VenueOnboardingWizard({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(initialVerificationStatus === 'PENDING' || initialVerificationStatus === 'VERIFIED');
+
+  // Venue's step 4 says "Almost there — submit for review to finish setup"
+  // when nothing was submitted, so unlike the other two wizards reaching the
+  // last step is not on its own a finish. Only the submitted branch is.
+  useMarkOnboarded(profileId, step === 4 && submitted);
 
   const noBasics = !name.trim() || !city.trim();
   const noCapacity = !capacity || Number(capacity) <= 0;
