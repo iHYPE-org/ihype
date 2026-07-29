@@ -414,8 +414,8 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Privacy */}
-          <div className="settings-section">
+          {/* Privacy — id is the "Data controls" deep-link target in NavDrawer. */}
+          <div className="settings-section" id="privacy">
             <div className="settings-section-title">{t('settingsPage.privacy', 'Privacy')}</div>
             <div className="settings-group">
               {isCreator && (

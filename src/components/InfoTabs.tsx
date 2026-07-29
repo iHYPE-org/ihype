@@ -157,7 +157,14 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         .legal-seg-btn { padding: 9px 20px; border: none; background: transparent; color: var(--ink-2); font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; font-size: .82rem; cursor: pointer; transition: all .15s; white-space: nowrap; flex-shrink: 0; }
         @media (max-width: 480px) {
           .legal-seg { width: 100%; border-radius: 10px; }
-          .legal-seg-btn { flex: 1; padding: 8px 6px; font-size: .68rem; line-height: 1.25; text-align: center; white-space: normal; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+          /* Six tabs, not the four this was written for: flex:1 divided the
+             strip into six ~60px columns and the labels overlapped into an
+             unreadable smear. Keep each tab its natural width and let the
+             strip scroll horizontally — the container already has
+             overflow-x:auto. */
+          .legal-seg-btn { flex: 0 0 auto; padding: 10px 14px; font-size: .7rem; line-height: 1.25; text-align: center; white-space: nowrap; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+          .legal-seg { scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+          .legal-seg::-webkit-scrollbar { display: none; }
         }
         .legal-seg-btn.active { background: rgba(255,80,41,.1); color: var(--accent); }
         .legal-doc { display: none; }

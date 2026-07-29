@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -30,8 +30,8 @@ export const menuLinks = [
     icon: <svg {...ico}><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6l-5 4H4a1 1 0 0 0-1 1Z" /><path d="M15 9.5a4 4 0 0 1 0 5" /><path d="M17.5 7a8 8 0 0 1 0 10" /></svg>,
   },
   {
-    href: '/about', label: 'About',
-    icon: <svg {...ico}><circle cx="12" cy="12" r="9" /><path d="M12 11v5" /><path d="M12 8h.01" /></svg>,
+    href: '/support', label: 'Support',
+    icon: <svg {...ico}><circle cx="12" cy="12" r="9" /><path d="M9.4 9.2a2.7 2.7 0 0 1 5.2.9c0 1.8-2.6 2.2-2.6 3.9" /><path d="M12 17.5h.01" /></svg>,
   },
   {
     href: '/info', label: 'Info',
@@ -56,6 +56,8 @@ export function NavDrawer({
 } = {}) {
   const { t } = useI18n();
   const [internalOpen, setInternalOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsPanelId = useId();
   const open = openProp ?? internalOpen;
   const setOpen = onOpenChange ?? setInternalOpen;
   const pathname = usePathname();
@@ -95,7 +97,9 @@ export function NavDrawer({
             </button>
             <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--line)' }}>
               {accountName ? (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  {/* Sign out used to sit here; it now lives under Settings
+                      below, alongside the other account-level controls. */}
                   <Link
                     href="/me/settings"
                     onClick={() => setOpen(false)}
@@ -121,7 +125,6 @@ export function NavDrawer({
                       </span>
                     </span>
                   </Link>
-                  <a href="/api/auth/signout" style={{ fontSize: 12, opacity: 0.6, flexShrink: 0 }}>{t('navDrawer.signOut', 'Sign out')}</a>
                 </div>
               ) : (
                 <div style={{ display: 'flex', gap: 10 }}>
@@ -165,17 +168,65 @@ export function NavDrawer({
                   </li>
                 );
               })}
+              <li>
+                {/* Settings is a disclosure, not a link: appearance, language and
+                    accessibility are device-local preferences with no page of
+                    their own, and burying them behind a navigation would mean a
+                    round trip just to flip a toggle. */}
+                <button
+                  type="button"
+                  className="nav-drawer-link nav-drawer-disclosure"
+                  aria-expanded={settingsOpen}
+                  aria-controls={settingsPanelId}
+                  onClick={() => setSettingsOpen((current) => !current)}
+                >
+                  <svg {...ico}><circle cx="12" cy="12" r="3.2" /><path d="M12 2.5l1.5 2.6 3-.4.4 3 2.6 1.5-1.4 2.7 1.4 2.7-2.6 1.5-.4 3-3-.4-1.5 2.6-1.5-2.6-3 .4-.4-3L4.5 14.6 5.9 12 4.5 9.2l2.6-1.5.4-3 3 .4Z" /></svg>
+                  <span style={{ flex: 1 }}>{t('navDrawer.settings', 'Settings')}</span>
+                  <svg {...ico} aria-hidden="true" className="nav-drawer-chevron" style={{ transform: settingsOpen ? 'rotate(180deg)' : 'none' }}>
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </button>
+                {settingsOpen && (
+                  <div className="nav-drawer-settings" id={settingsPanelId}>
+                    <div className="nav-drawer-settings-row">
+                      <span>{t('navDrawer.theme', 'Theme')}</span>
+                      <ThemeToggle />
+                    </div>
+                    <div className="nav-drawer-settings-row">
+                      <LanguageSwitcher />
+                    </div>
+                    <AccessibilityControls inline />
+                    {accountName && (
+                      <>
+                        {/* Data controls live on the real settings page — export,
+                            identity detachment and account deletion all need the
+                            server, so this deep-links rather than duplicating them. */}
+                        <Link
+                          href="/settings#privacy"
+                          className="nav-drawer-settings-action"
+                          onClick={() => setOpen(false)}
+                        >
+                          <span>
+                            <strong>{t('navDrawer.dataControls', 'Data controls')}</strong>
+                            <small>{t('navDrawer.dataControlsDesc', 'Download your data, detach your identity, delete your account.')}</small>
+                          </span>
+                          <svg {...ico} aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+                        </Link>
+                        {/* Plain <a>: /api/auth/signout is an API route, so it needs a
+                            real navigation — a soft client-side nav won't hit it. */}
+                        <a href="/api/auth/signout" className="nav-drawer-settings-action nav-drawer-signout">
+                          <span>
+                            <strong>{t('navDrawer.signOut', 'Sign out')}</strong>
+                            <small>{t('navDrawer.signOutDesc', 'Sign out of iHYPE on this device.')}</small>
+                          </span>
+                          <svg {...ico} aria-hidden="true"><path d="M15 17l5-5-5-5" /><path d="M20 12H9" /><path d="M12 20H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6" /></svg>
+                        </a>
+                      </>
+                    )}
+                  </div>
+                )}
+              </li>
             </ul>
-            <div style={{ borderTop: '1px solid var(--line)', padding: '12px 16px' }}>
-              <AccessibilityControls />
-            </div>
-            <div style={{ padding: '12px 16px' }}>
-              <LanguageSwitcher />
-            </div>
-            <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 13, opacity: 0.5 }}>{t('navDrawer.theme', 'Theme')}</span>
-              <ThemeToggle />
-            </div>
           </nav>
         </>
       )}
