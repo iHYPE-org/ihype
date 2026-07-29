@@ -169,6 +169,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ ok: true, ...result });
     }
 
+    case 'workbench-digest': {
+      const { sendWorkbenchDigest } = await import('@/lib/workbench-digest');
+      const result = await sendWorkbenchDigest();
+      await pingCronAlive('workbench-digest');
+      return NextResponse.json(result);
+    }
+
     case 'admin-report': {
       const { sendAdminWeeklyReport } = await import('@/lib/admin-report');
       const result = await sendAdminWeeklyReport();

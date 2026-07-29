@@ -44,6 +44,7 @@ const JOBS: CronJob[] = [
   // Weekly jobs — Monday morning
   { path: '/api/cron?job=weekly-picks',       schedule: '0 9 * * 1'   },
   { path: '/api/cron?job=artist-digest',      schedule: '0 9 * * 1'   },
+  { path: '/api/cron?job=workbench-digest',   schedule: '0 12 * * *'  },
   { path: '/api/cron?job=admin-report',       schedule: '0 9 * * 1'   },
   { path: '/api/cron?job=follow-digest',      schedule: '0 9 * * 1'   },
   { path: '/api/cron/weekly-digest',           schedule: '0 9 * * 1'   },

@@ -23,7 +23,7 @@ crons = [
   "0 9 * * 1",    # weekly-picks, artist-digest, admin-report, follow-digest (Monday)
   "0 10 * * *",   # new-to-scene
   "0 11 * * *",   # artist-onboarding
-  "0 12 * * *",   # show-reminders
+  "0 12 * * *",   # show-reminders, workbench-digest
   "0 13 * * *",   # show-payouts, ad-settlement
   "0 14 * * *",   # onboarding
   "0 15 * * *",   # welcome-sequence
