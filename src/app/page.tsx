@@ -204,7 +204,7 @@ export default async function RootPage() {
           </div>
 
           <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.8rem', letterSpacing: '.04em', color: 'var(--ink-3)', marginTop: '2rem', maxWidth: '60ch' }}>
-            {t('page.charterBlurb', "Two people run the whole thing, leaning on AI automation to keep costs near zero — on purpose. There's no boardroom to talk us out of the charter. Made for the scene, powered by the people who love it.")} <a href="/legal?tab=charter" style={{ color: 'var(--ink-2)' }}>{t('page.readFullCharter', 'Read the full charter →')}</a>
+            {t('page.charterBlurb', "Two people run the whole thing, leaning on AI automation to keep costs near zero — on purpose. There's no boardroom to talk us out of the charter. Made for the scene, powered by the people who love it.")} <a href="/info?tab=charter" style={{ color: 'var(--ink-2)' }}>{t('page.readFullCharter', 'Read the full charter →')}</a>
           </p>
         </div>
         <style>{`
@@ -410,7 +410,7 @@ export default async function RootPage() {
 
           <div style={{ marginTop: '1rem', padding: '1rem 1.5rem', borderRadius: 14, border: '1px solid var(--line)', background: 'var(--hair-25)', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <span style={{ fontFamily: 'var(--f-m)', fontSize: '0.8rem', color: 'var(--ink-3)', letterSpacing: '.06em', lineHeight: 1.6 }}>
-              {t('page.splitFooter', 'iHYPE → 0% · this is locked in our charter. Ticketmaster charges up to 27% on top of face value — the only charge here above face value is the card-processing fee, passed through at cost.')} <a href="/transparency" style={{ color: 'var(--ink-2)' }}>{t('page.readTransparency', 'Read our transparency page →')}</a>
+              {t('page.splitFooter', 'iHYPE → 0% · this is locked in our charter. Ticketmaster charges up to 27% on top of face value — the only charge here above face value is the card-processing fee, passed through at cost.')} <a href="/info?tab=transparency" style={{ color: 'var(--ink-2)' }}>{t('page.readTransparency', 'Read our transparency page →')}</a>
             </span>
           </div>
         </div>

@@ -1,6 +1,6 @@
 // Shared shape for Profile.pressKitContent (a JSON string column). Written by
-// the PageEditor "Press kit" section, rendered by /artists/[slug]/epk and
-// /artists/[slug]/presskit. Parsing is defensive: the column is user-supplied
+// the PageEditor "Press kit" section, rendered by /artists/[slug]/epk
+// (/artists/[slug]/presskit redirects there). Parsing is defensive: the column is user-supplied
 // JSON, so anything malformed degrades to an empty kit instead of throwing.
 
 export interface PressKitQuote {

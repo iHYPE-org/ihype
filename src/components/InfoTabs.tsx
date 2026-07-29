@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useI18n } from '@/components/I18nProvider';
@@ -28,9 +28,19 @@ type InfoTabsProps = { trustPanel: ReactNode; transparencyPanel: ReactNode };
 
 function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
   const searchParams = useSearchParams();
-  const initialTab = TABS.some((tb) => tb.id === searchParams.get('tab')) ? (searchParams.get('tab') as TabId) : 'trust';
+  const paramTab = searchParams.get('tab');
+  const initialTab = TABS.some((tb) => tb.id === paramTab) ? (paramTab as TabId) : 'trust';
   const [tab, setTab] = useState<TabId>(initialTab);
   const { t } = useI18n();
+
+  // Arriving at /info?tab=privacy from somewhere else on /info is a soft nav:
+  // the route is unchanged, so React keeps this component mounted and the
+  // useState initialiser above never runs again. Without this the tab silently
+  // stays where it was — which is what the charter tab's own "Privacy Policy"
+  // link did.
+  useEffect(() => {
+    if (TABS.some((tb) => tb.id === paramTab)) setTab(paramTab as TabId);
+  }, [paramTab]);
 
   return (
     <div className="legal-wrap">
@@ -118,7 +128,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         <h2>{t('legalPage.charter.openTitle', 'Open by design')}</h2>
         <p>{t('legalPage.charter.openBody', 'Our code and our moderation heuristics are published for public audit. Nothing about how the split is calculated, how uploads are screened, or how the platform ranks anything is a secret — anyone can check that it does exactly what we say.')}</p>
         <h2>{t('legalPage.charter.dataTitle', 'Your data is never for sale')}</h2>
-        <p>{t('legalPage.charter.dataBodyIntro', 'iHYPE does not aggregate user data for resale and never sells it to advertisers or anyone else — not now, not after an acquisition. This is a charter commitment, not a policy that can be quietly reversed. See our')} <Link href="/legal?tab=privacy">{t('legalPage.charter.privacyPolicyLink', 'Privacy Policy')}</Link> {t('legalPage.charter.dataBodyOutro', 'for exactly what we collect and why.')}</p>
+        <p>{t('legalPage.charter.dataBodyIntro', 'iHYPE does not aggregate user data for resale and never sells it to advertisers or anyone else — not now, not after an acquisition. This is a charter commitment, not a policy that can be quietly reversed. See our')} <Link href="/info?tab=privacy">{t('legalPage.charter.privacyPolicyLink', 'Privacy Policy')}</Link> {t('legalPage.charter.dataBodyOutro', 'for exactly what we collect and why.')}</p>
         <h2>{t('legalPage.charter.voteTitle', 'You get a vote')}</h2>
         <p>{t('legalPage.charter.voteBody', 'Users of iHYPE are treated as stakeholders, not just customers. Meaningful changes to the platform — the split, moderation rules, new fees of any kind — are put to the people who use it, with feedback built into every release.')}</p>
         <h2>{t('legalPage.charter.fundedTitle', 'Funded like radio, not like Big Tech')}</h2>

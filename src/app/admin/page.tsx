@@ -323,11 +323,8 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           <Link className="button secondary" href="/admin/community">
             {t('adminPage.communityEditor', 'Community editor')}
           </Link>
-          <Link className="button secondary" href="/transparency">
+          <Link className="button secondary" href="/info?tab=transparency">
             {t('adminPage.transparency', 'Transparency')}
-          </Link>
-          <Link className="button secondary" href="/about">
-            {t('adminPage.aboutIhype', 'About iHYPE')}
           </Link>
         </div>
       </section>

@@ -199,7 +199,7 @@ export async function TrustSafetyPanel() {
       {/* CTA */}
       <section className="lp-footer-cta">
         <div className="lp-hero-actions" style={{ justifyContent: 'center' }}>
-          <Link href="/transparency" className="lp-btn-primary">{t('auditPage.financialTransparencyLink', 'Financial transparency →')}</Link>
+          <Link href="/info?tab=transparency" className="lp-btn-primary">{t('auditPage.financialTransparencyLink', 'Financial transparency →')}</Link>
           <Link href="/community-rules" className="lp-btn-ghost">{t('auditPage.communityRulesLink', 'Community rules')}</Link>
         </div>
       </section>

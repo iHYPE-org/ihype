@@ -1,0 +1,43 @@
+-- @gated
+--
+-- Drops Profile.widgetConfig, the last remnant of a profile-widgets feature
+-- that was never finished.
+--
+-- Why it is dead: the only code that ever touched this column was
+-- GET/PATCH /api/widgets/[profileId], which nothing in the app called — no
+-- page, no component, no fetch anywhere. The eight widget types it supported
+-- (now_spinning, gear_list, influences, press_quotes, merch_shelf,
+-- tour_banner, collab_wishlist, listening_stats) were typed in
+-- src/lib/widgets.ts and rendered by nothing. Both the route and the lib were
+-- deleted; this column is what is left.
+--
+-- Note the overlap with features that DID ship: press quotes live in
+-- Profile.pressKitContent (rendered on /artists/[slug]/epk) and a "top five"
+-- lives in Profile.topFiveContent. So the widget system was superseded, not
+-- merely abandoned.
+--
+-- One consequence to be aware of in the meantime: the field was listed in
+-- eraseAccount()'s Profile update (src/lib/privacy-actions.ts), which nulls
+-- every user-authored column. Removing it from schema.prisma removes it from
+-- that update too, so between this commit and this migration being applied,
+-- account erasure no longer clears the column. That is only a real gap if the
+-- column ever held anything — which is exactly what check 1 below establishes.
+-- If it comes back non-zero, clear those rows by hand before doing anything
+-- else.
+--
+-- Before applying:
+--   1. Confirm nothing outside this repo ever wrote it:
+--        SELECT count(*) FROM "Profile" WHERE "widgetConfig" IS NOT NULL;
+--      Expect 0. A non-zero result means a profile is carrying real
+--      user-authored JSON that would be destroyed — export it first and
+--      decide where it should live, rather than re-running this.
+--   2. Confirm the application code that drops the field from schema.prisma
+--      is already deployed. A running Worker built against the old client
+--      selects "widgetConfig" on every Profile query and will error once the
+--      column is gone.
+--
+-- Then move it into prisma/migrations/ in its own commit, per
+-- prisma/migrations-pending/README.md.
+
+-- AlterTable
+ALTER TABLE "Profile" DROP COLUMN "widgetConfig";

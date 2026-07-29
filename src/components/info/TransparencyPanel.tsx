@@ -106,8 +106,10 @@ export async function TransparencyPanel() {
       {/* CTA */}
       <section className="lp-footer-cta">
         <div className="lp-hero-actions" style={{ justifyContent: 'center' }}>
-          <Link href="/about" className="lp-btn-primary">{t('transparencyPage.aboutIhype', 'About iHYPE')}</Link>
-          <Link href="/register" className="lp-btn-ghost">{t('transparencyPage.joinFree', 'Join free →')}</Link>
+          {/* The "About iHYPE" button that sat here pointed at /about, which is
+              now a redirect back into this same hub — a button that reloads the
+              page you are on. Join is the only CTA left that goes anywhere. */}
+          <Link href="/register" className="lp-btn-primary">{t('transparencyPage.joinFree', 'Join free →')}</Link>
         </div>
       </section>
     </div>

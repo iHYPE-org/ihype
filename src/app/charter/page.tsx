@@ -13,7 +13,7 @@ export default async function CharterPage() {
   return (
     <div className="charter-wrap">
       <div className="charter-glow" aria-hidden="true" />
-      <Link href="/legal" className="charter-back">{t('charterPage.backToLegal', '← Legal')}</Link>
+      <Link href="/info" className="charter-back">{t('charterPage.backToLegal', '← Legal')}</Link>
       <div className="charter-label">{t('charterPage.label', 'The iHYPE Charter')}</div>
       <h1 className="charter-h1">{t('charterPage.heroLine1', 'We take')}<br /><span className="charter-shimmer">{t('charterPage.heroLine2', 'nothing.')}</span></h1>
       <Reveal delayMs={200}>
@@ -57,7 +57,7 @@ export default async function CharterPage() {
       <Reveal>
         <h2 className="charter-h2"><span className="charter-dot charter-dot-pulse" style={{ background: 'var(--role-fan)' }} />{t('charterPage.makesRealHead', 'What actually makes this real')}</h2>
         <p className="charter-p charter-p-tight">{t('charterPage.makesRealBody', 'A charter is just a promise on paper until a fan buys a ticket. Every dollar that hits this split exists because someone hyped an artist, showed up, and paid face value instead of going through a scalper. Artists write the songs, venues open the doors — but fans are the ones who make the 70/20/10 mean anything at all.')}</p>
-        <Link href="/transparency" className="charter-inline-link" style={{ color: 'var(--role-venue)', borderBottomColor: 'rgba(34,229,212,.35)' }}>{t('charterPage.transparencyLink', 'See it in the live numbers →')}</Link>
+        <Link href="/info?tab=transparency" className="charter-inline-link" style={{ color: 'var(--role-venue)', borderBottomColor: 'rgba(34,229,212,.35)' }}>{t('charterPage.transparencyLink', 'See it in the live numbers →')}</Link>
       </Reveal>
 
       <hr className="charter-hr" />

@@ -25,19 +25,13 @@
     {
       "name": "My Workbench",
       "short_name": "Workbench",
-      "url": "/home",
+      "url": "/listen",
       "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }]
     },
     {
       "name": "My Tickets",
       "short_name": "Tickets",
       "url": "/tickets",
-      "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }]
-    },
-    {
-      "name": "About iHYPE",
-      "short_name": "About",
-      "url": "/about",
       "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }]
     }
   ],

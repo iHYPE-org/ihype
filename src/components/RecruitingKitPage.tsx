@@ -134,7 +134,7 @@ export async function RecruitingKitPage({ config, cityHeat }: { config: Recruiti
           <Link className="rk-logo" href="/">iHYPE</Link>
           <div className="rk-footer-links">
             <Link href="/advertise">{t('recruitingKitPage.footerAdvertise', 'Advertise')}</Link>
-            <Link href="/about">{t('recruitingKitPage.footerAbout', 'About')}</Link>
+            <Link href="/info">{t('recruitingKitPage.footerInfo', 'Info')}</Link>
             <Link href="/support">{t('recruitingKitPage.footerSupport', 'Support')}</Link>
           </div>
         </div>

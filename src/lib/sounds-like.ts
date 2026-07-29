@@ -10,8 +10,11 @@ export type SimilarArtist = {
 };
 
 /**
- * AI-assisted "similar artists" lookup shared by GET /api/artists/[slug]/sounds-like
- * and the "Similar artists" section on /artists/[slug] and /promoters/[slug].
+ * AI-assisted "similar artists" lookup behind the "Similar artists" section on
+ * /artists/[slug] and /promoters/[slug], which call this directly as server
+ * components. There used to be a GET /api/artists/[slug]/sounds-like wrapper
+ * too; nothing ever fetched it, so it was removed rather than left as a second,
+ * unauthenticated way into the same query.
  *
  * Narrows candidates to same-genre ARTIST/DJ profiles via a DB query, then asks the
  * model to pick the best few matches. Falls back to the top genre-matched candidates
