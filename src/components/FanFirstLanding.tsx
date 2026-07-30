@@ -12,6 +12,7 @@ export function FanFirstLanding() {
         priority
         sizes="100vw"
         src="/brand/approved-index.png"
+        unoptimized
         width={1672}
       />
 
