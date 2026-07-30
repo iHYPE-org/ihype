@@ -46,6 +46,8 @@ type ConfiguredEmailInput = {
   text: string;
   html: string;
   headers?: Record<string, string>;
+  /** Provider-level deduplication for retried transactional sends. */
+  idempotencyKey?: string;
 };
 
 /**
@@ -174,7 +176,8 @@ async function sendConfiguredEmail(input: ConfiguredEmailInput) {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${env.RESEND_API_KEY}`,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      ...(input.idempotencyKey ? { 'Idempotency-Key': input.idempotencyKey } : {}),
     },
     body: JSON.stringify({
       from,
@@ -204,6 +207,7 @@ async function sendConfiguredEmail(input: ConfiguredEmailInput) {
 }
 
 type IssuedTicketEmailInput = {
+  idempotencyKey?: string;
   email: string;
   name?: string | null;
   showTitle: string;
@@ -222,6 +226,7 @@ type IssuedTicketEmailInput = {
 };
 
 export async function sendIssuedTicketEmail({
+  idempotencyKey,
   email,
   name,
   showTitle,
@@ -249,6 +254,7 @@ export async function sendIssuedTicketEmail({
 
   try {
     const provider = await sendConfiguredEmail({
+      idempotencyKey,
       to: email,
       subject: `iHYPE tickets for ${showTitle}`,
       text: [

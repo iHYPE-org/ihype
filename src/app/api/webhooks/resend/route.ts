@@ -3,9 +3,10 @@ import { Prisma } from '@prisma/client/edge';
 import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
 import { verifyResendSignature } from '@/lib/resend-webhook';
+import { readRuntimeEnv } from '@/lib/runtime-env';
 
 export async function POST(request: NextRequest) {
-  const secret = process.env.RESEND_WEBHOOK_SECRET;
+  const secret = readRuntimeEnv('RESEND_WEBHOOK_SECRET');
   if (!secret) {
     return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 });
   }

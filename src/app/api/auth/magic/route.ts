@@ -5,6 +5,8 @@ import { checkAndRecordLogin } from '@/lib/login-security';
 import { resolvePostAuthRedirect } from '@/lib/auth-redirects';
 import { hashMagicLinkToken } from '@/lib/magic-link-token';
 import { log } from '@/lib/logger';
+import { readRuntimeEnv } from '@/lib/runtime-env';
+import { deferWork } from '@/lib/defer-work';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,7 +79,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/login?error=expired_magic_link', request.url));
   }
 
-  if (!process.env.AUTH_SECRET) {
+  if (!readRuntimeEnv('AUTH_SECRET')) {
     log.error('[magic-link]', null, 'AUTH_SECRET is not set');
     return NextResponse.redirect(new URL('/login?error=ml_no_secret', request.url));
   }
@@ -92,7 +94,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/login?error=ml_cookie_error', request.url));
   }
 
-  void checkAndRecordLogin(user, request);
+  deferWork(checkAndRecordLogin(user, request), 'magic-link-login-security');
 
   const rawCallback = searchParams.get('callbackUrl');
   const defaultDest = user.role === 'ADMIN' ? '/admin' : user.role === 'ADVERTISER' ? '/advertise/dashboard' : undefined;

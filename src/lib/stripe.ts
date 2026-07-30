@@ -1,10 +1,11 @@
 import Stripe from 'stripe';
+import { readRuntimeEnv } from '@/lib/runtime-env';
 
 let _stripe: Stripe | null = null;
 
 export function getStripe(): Stripe {
   if (!_stripe) {
-    const key = process.env.STRIPE_SECRET_KEY?.trim();
+    const key = readRuntimeEnv('STRIPE_SECRET_KEY');
     if (!key?.startsWith('sk_')) throw new Error('STRIPE_SECRET_KEY is not configured with a valid secret key.');
     _stripe = new Stripe(key, { apiVersion: '2026-06-24.dahlia' });
   }
@@ -12,7 +13,7 @@ export function getStripe(): Stripe {
 }
 
 export function isStripeConfigured(): boolean {
-  return Boolean(process.env.STRIPE_SECRET_KEY?.trim().startsWith('sk_'));
+  return Boolean(readRuntimeEnv('STRIPE_SECRET_KEY')?.startsWith('sk_'));
 }
 
 export async function getOrCreateStripeCustomer({
@@ -289,7 +290,7 @@ export async function deauthorizeStripeConnectAccount(connectAccountId: string):
 
 export function constructWebhookEvent(payload: string, signature: string): Stripe.Event {
   const stripe = getStripe();
-  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  const secret = readRuntimeEnv('STRIPE_WEBHOOK_SECRET');
   if (!secret) throw new Error('STRIPE_WEBHOOK_SECRET is not configured.');
   return stripe.webhooks.constructEvent(payload, signature, secret);
 }

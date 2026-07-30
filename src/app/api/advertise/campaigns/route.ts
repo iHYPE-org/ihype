@@ -9,6 +9,7 @@ import { recordAuditEvent } from '@/lib/audit';
 import { notifyAdvertiser } from '@/lib/ad-campaign-notify';
 import { createAdCampaignCheckoutSession, settleAdCampaignAuthorization } from '@/lib/stripe';
 import { log } from '@/lib/logger';
+import { deferWork } from '@/lib/defer-work';
 import {
   isAdScope, isAdRunLengthDays, quoteAdCampaign,
   AD_SCOPE_LABELS, MIN_SPOTS_PER_DAY, MAX_SPOTS_PER_DAY,
@@ -224,14 +225,14 @@ export async function POST(request: NextRequest) {
     }).catch(() => {});
   }
 
-  notifyAdvertiser(
+  deferWork(notifyAdvertiser(
     session.user.id,
     session.user.email,
     title,
     storedStatus,
     reasoning,
     checkoutUrl ?? undefined,
-  );
+  ), 'advertiser-campaign-notification');
 
   return NextResponse.json({
     ad,

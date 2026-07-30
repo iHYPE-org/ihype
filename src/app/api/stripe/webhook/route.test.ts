@@ -23,17 +23,9 @@ vi.mock('@/lib/ticket-order-state', () => ({
   voidReservedTicketOrder: (...args: unknown[]) => voidReservedTicketOrder(...args),
 }));
 
-const sendIssuedTicketEmail = vi.fn().mockResolvedValue(undefined);
-vi.mock('@/lib/mailer', () => ({ sendIssuedTicketEmail: (...a: unknown[]) => sendIssuedTicketEmail(...a) }));
-
-const notifyAdvertiser = vi.fn();
-vi.mock('@/lib/ad-campaign-notify', () => ({ notifyAdvertiser: (...a: unknown[]) => notifyAdvertiser(...a) }));
-
-vi.mock('@/lib/ticketing', () => ({ formatCurrencyFromCents: (c: number) => `$${(c / 100).toFixed(2)}` }));
-vi.mock('@/lib/tickets', () => ({
-  buildTicketQrCodeDataUrl: vi.fn().mockResolvedValue('data:image/png;base64,stub'),
-  buildTicketVerificationUrl: vi.fn().mockReturnValue('https://ihype.org/verify/stub'),
-  formatTicketStatus: vi.fn().mockReturnValue('Captured'),
+const processNotificationJobs = vi.fn().mockResolvedValue({ selected: 1, completed: 1, failed: 0 });
+vi.mock('@/lib/notification-jobs', () => ({
+  processNotificationJobs: (...args: unknown[]) => processNotificationJobs(...args),
 }));
 vi.mock('@/lib/logger', () => ({ log: { error: vi.fn() } }));
 
@@ -75,6 +67,7 @@ vi.mock('@/lib/db', () => ({
         ad: { findUnique: (...a: unknown[]) => adFindUnique(...a), update: vi.fn().mockResolvedValue({}) },
         ticketOrder: { findUnique: (...a: unknown[]) => ticketOrderFindUnique(...a), findMany: (...a: unknown[]) => ticketOrderFindMany(...a) },
         profile: { updateMany: (...a: unknown[]) => profileUpdateMany(...a) },
+        notificationJob: { upsert: vi.fn().mockResolvedValue({}) },
       };
       return cb(tx);
     }),
@@ -160,7 +153,7 @@ describe('POST /api/stripe/webhook', () => {
     const first = await POST(makeRequest(event));
     expect((await first.json()).duplicate).toBe(false);
     expect(finalizeCapturedTicketOrder).toHaveBeenCalledTimes(1);
-    expect(sendIssuedTicketEmail).toHaveBeenCalledTimes(1);
+    expect(processNotificationJobs).toHaveBeenCalledTimes(1);
 
     // Stripe resends webhooks on any non-2xx or timeout — a real retry
     // looks exactly like this: same event.id, sent again.
@@ -171,7 +164,7 @@ describe('POST /api/stripe/webhook', () => {
     expect(secondJson.duplicate).toBe(true);
     // The core assertion: replay must not double-issue tickets or emails.
     expect(finalizeCapturedTicketOrder).toHaveBeenCalledTimes(1);
-    expect(sendIssuedTicketEmail).toHaveBeenCalledTimes(1);
+    expect(processNotificationJobs).toHaveBeenCalledTimes(2);
   });
 
   it('treats a raced duplicate insert (P2002) the same as an already-seen event', async () => {

@@ -6,6 +6,7 @@ import {
   getAuthSessionCookieName,
   getAuthSessionCookieOptions,
 } from '@/lib/auth-cookie';
+import { readRuntimeEnv } from '@/lib/runtime-env';
 
 export { AUTH_SESSION_MAX_AGE_SECONDS, getAuthSessionCookieName } from '@/lib/auth-cookie';
 
@@ -40,7 +41,7 @@ async function readUserSecurityVersion(user: AuthSessionUser) {
 }
 
 export async function buildAuthSessionCookie(user: AuthSessionUser) {
-  const secret = process.env.AUTH_SECRET;
+  const secret = readRuntimeEnv('AUTH_SECRET');
   if (!secret) return null;
 
   const cookieName = getAuthSessionCookieName();

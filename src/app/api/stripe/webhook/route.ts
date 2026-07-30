@@ -3,20 +3,14 @@ import { Prisma } from '@prisma/client/edge';
 import { db } from '@/lib/db';
 import { constructWebhookEvent, isStripeConfigured } from '@/lib/stripe';
 import { log } from '@/lib/logger';
+import { readRuntimeEnv } from '@/lib/runtime-env';
 import { finalizeCapturedTicketOrder, voidReservedTicketOrder } from '@/lib/ticket-order-state';
-import { sendIssuedTicketEmail } from '@/lib/mailer';
-import { formatCurrencyFromCents } from '@/lib/ticketing';
-import { notifyAdvertiser } from '@/lib/ad-campaign-notify';
-import {
-  buildTicketQrCodeDataUrl,
-  buildTicketVerificationUrl,
-  formatTicketStatus,
-} from '@/lib/tickets';
+import { processNotificationJobs } from '@/lib/notification-jobs';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
-  if (process.env.NODE_ENV === 'production' && process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_')) {
+  if (process.env.NODE_ENV === 'production' && readRuntimeEnv('STRIPE_SECRET_KEY')?.startsWith('sk_test_')) {
     log.error('[stripe/webhook]', null, 'WARNING: Using test Stripe key in production!');
   }
 
@@ -133,6 +127,28 @@ export async function POST(request: NextRequest) {
           break;
       }
 
+      if (capturedOrderId) {
+        await tx.notificationJob.upsert({
+          where: { dedupeKey: `ticket-issued:${capturedOrderId}` },
+          create: { type: 'TICKET_ISSUED', dedupeKey: `ticket-issued:${capturedOrderId}`, entityId: capturedOrderId },
+          update: {},
+        });
+      }
+      if (authorizedAdId) {
+        await tx.notificationJob.upsert({
+          where: { dedupeKey: `ad-approved:${authorizedAdId}` },
+          create: { type: 'AD_APPROVED', dedupeKey: `ad-approved:${authorizedAdId}`, entityId: authorizedAdId },
+          update: {},
+        });
+      }
+      if (cancelledAdId) {
+        await tx.notificationJob.upsert({
+          where: { dedupeKey: `ad-payment-failed:${cancelledAdId}` },
+          create: { type: 'AD_PAYMENT_FAILED', dedupeKey: `ad-payment-failed:${cancelledAdId}`, entityId: cancelledAdId },
+          update: {},
+        });
+      }
+
       await tx.processedWebhookEvent.create({
         data: { source: 'stripe', eventId: event.id },
       });
@@ -152,66 +168,12 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  if (finalizedOrderId) {
-    try {
-      const order = await db.ticketOrder.findUnique({
-        where: { id: finalizedOrderId },
-        include: {
-          tickets: true,
-          show: {
-            select: {
-              title: true,
-              ticketingOpensAt: true,
-              venueProfile: { select: { name: true } },
-            },
-          },
-        },
-      });
-
-      if (order) {
-        const tickets = await Promise.all(
-          order.tickets.map(async (ticket, index) => ({
-            id: ticket.id,
-            serializedId: ticket.serializedId,
-            status: formatTicketStatus(ticket.status),
-            verificationUrl: buildTicketVerificationUrl(ticket.serializedId),
-            qrCodeDataUrl: await buildTicketQrCodeDataUrl(ticket.serializedId),
-            label: `Ticket ${index + 1}`,
-          })),
-        );
-        await sendIssuedTicketEmail({
-          email: order.buyerEmail,
-          name: order.buyerName,
-          showTitle: order.show.title,
-          venueName: order.show.venueProfile?.name,
-          eventOpensAtLabel: order.show.ticketingOpensAt?.toLocaleString('en-US') ?? null,
-          totalChargeLabel: formatCurrencyFromCents(order.totalChargeCents),
-          tickets,
-        });
-      }
-    } catch (error) {
-      log.error('[stripe/webhook]', error instanceof Error ? error : null, `Ticket email failed for ${finalizedOrderId}`);
-    }
-  }
-
-  if (authorizedAdId || cancelledAdId) {
-    try {
-      const ad = await db.ad.findUnique({
-        where: { id: (authorizedAdId ?? cancelledAdId)! },
-        select: { title: true, advertiserId: true, advertiser: { select: { email: true } } },
-      });
-      if (ad) {
-        notifyAdvertiser(
-          ad.advertiserId,
-          ad.advertiser.email,
-          ad.title,
-          authorizedAdId ? 'APPROVED' : 'PAYMENT_FAILED',
-          authorizedAdId ? 'Payment authorized.' : 'The card was declined or the checkout was abandoned.',
-        );
-      }
-    } catch (error) {
-      log.error('[stripe/webhook]', error instanceof Error ? error : null, `Advertiser notification failed for ad ${authorizedAdId ?? cancelledAdId}`);
-    }
+  // Delivery is backed by a transactional job written alongside the payment
+  // state above. Try immediately for low latency; the cron worker retries any
+  // transient failure without asking Stripe to replay an already-processed
+  // business event.
+  if (finalizedOrderId || authorizedAdId || cancelledAdId || duplicate) {
+    await processNotificationJobs(5);
   }
 
   return NextResponse.json({ received: true, duplicate });

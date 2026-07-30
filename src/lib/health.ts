@@ -3,10 +3,12 @@ import { getEmailDeliveryReadiness, isEmailDeliveryConfigured, isSmtpEmailConfig
 import { isBlobMediaStorageConfigured } from '@/lib/media-storage';
 import { getPaymentProcessingReadiness, isPaymentProcessingConfigured } from '@/lib/payments';
 import { areDemoLoginsEnabledRuntime, isInviteCodeRequiredRuntime, shouldHideDemoContentRuntime } from '@/lib/runtime-flags';
+import { readRuntimeEnv } from '@/lib/runtime-env';
 
 export async function getHealthSnapshot() {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const startedAt = Date.now();
+  const stripeSecretKey = readRuntimeEnv('STRIPE_SECRET_KEY');
 
   try {
     const [userCount, openReportCount, openSupportCount, failedEmailCount, pendingVerificationCount, reservedTicketCount] =
@@ -27,10 +29,18 @@ export async function getHealthSnapshot() {
 
     const emailReadiness = getEmailDeliveryReadiness();
     const paymentReadiness = getPaymentProcessingReadiness();
+    const runtimeBlockers = [
+      !readRuntimeEnv('AUTH_SECRET') && 'Set AUTH_SECRET for session signing.',
+      !readRuntimeEnv('CRON_SECRET') && 'Set CRON_SECRET before enabling scheduled operations.',
+      !readRuntimeEnv('TURNSTILE_SECRET_KEY') && 'Set TURNSTILE_SECRET_KEY so production signup abuse checks fail closed.',
+      !readRuntimeEnv('RESEND_WEBHOOK_SECRET') && 'Set RESEND_WEBHOOK_SECRET so bounce and complaint events can be verified.',
+      !readRuntimeEnv('ADMIN_DEVICE_SECRET') && 'Set ADMIN_DEVICE_SECRET for protected admin-device registration.',
+    ].filter(Boolean) as string[];
     const launchBlockers = [
       ...(userCount === 0 ? ['Seed launch content so public discovery is not empty.'] : []),
       ...emailReadiness.blockers,
-      ...paymentReadiness.blockers
+      ...paymentReadiness.blockers,
+      ...runtimeBlockers,
     ];
 
     return {
@@ -59,10 +69,10 @@ export async function getHealthSnapshot() {
         inviteOnlySignup,
         demoContentHidden
       },
-      sentryConfigured: !!process.env.NEXT_PUBLIC_SENTRY_DSN,
-      stripeMode: process.env.STRIPE_SECRET_KEY?.startsWith('sk_live_')
+      sentryConfigured: Boolean(readRuntimeEnv('SENTRY_DSN') ?? readRuntimeEnv('NEXT_PUBLIC_SENTRY_DSN')),
+      stripeMode: stripeSecretKey?.startsWith('sk_live_')
         ? 'live'
-        : process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_')
+        : stripeSecretKey?.startsWith('sk_test_')
           ? 'test'
           : 'not_configured',
       launchReadiness: {
@@ -71,12 +81,12 @@ export async function getHealthSnapshot() {
       },
       warnings: process.env.NODE_ENV === 'production'
         ? [
-            !process.env.VAPID_PUBLIC_KEY && 'VAPID_PUBLIC_KEY is not set (push notifications disabled)',
-            !process.env.VAPID_PRIVATE_KEY && 'VAPID_PRIVATE_KEY is not set (push notifications disabled)',
-            !process.env.VAPID_SUBJECT && 'VAPID_SUBJECT is not set (push notifications disabled)',
-            !process.env.RESEND_API_KEY && 'RESEND_API_KEY is not set (email delivery disabled)',
-            !process.env.CRON_SECRET && 'CRON_SECRET is not set (cron jobs unprotected)',
-            !process.env.NEXT_PUBLIC_SENTRY_DSN && 'NEXT_PUBLIC_SENTRY_DSN is not set (error tracking disabled)',
+            !readRuntimeEnv('VAPID_PUBLIC_KEY') && 'VAPID_PUBLIC_KEY is not set (push notifications disabled)',
+            !readRuntimeEnv('VAPID_PRIVATE_KEY') && 'VAPID_PRIVATE_KEY is not set (push notifications disabled)',
+            !readRuntimeEnv('VAPID_SUBJECT') && 'VAPID_SUBJECT is not set (push notifications disabled)',
+            !readRuntimeEnv('RESEND_API_KEY') && 'RESEND_API_KEY is not set (email delivery disabled)',
+            !readRuntimeEnv('CRON_SECRET') && 'CRON_SECRET is not set (cron jobs unprotected)',
+            !(readRuntimeEnv('SENTRY_DSN') ?? readRuntimeEnv('NEXT_PUBLIC_SENTRY_DSN')) && 'SENTRY_DSN is not set (error tracking disabled)',
           ].filter(Boolean) as string[]
         : []
     };
