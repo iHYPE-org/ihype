@@ -32,7 +32,7 @@ export default async function RootPage() {
   if (session?.user?.id) redirect(WORKBENCH_PATH);
 
   const now = new Date();
-  const [trackRows, showRows, artistCount, fanCount, totalHypes, inviteOnly] = await Promise.all([
+  const [trackRows, showRows, inviteOnly] = await Promise.all([
     db.artistMediaAsset.findMany({
       where: {
         isPublished: true,
@@ -40,7 +40,7 @@ export default async function RootPage() {
         OR: [{ publishAt: null }, { publishAt: { lte: now } }],
       },
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
-      take: 8,
+      take: 4,
       select: {
         id: true,
         hexId: true,
@@ -57,7 +57,7 @@ export default async function RootPage() {
         moderationStatus: 'APPROVED',
       },
       orderBy: [{ featured: 'desc' }, { startsAt: 'asc' }],
-      take: 6,
+      take: 3,
       select: {
         slug: true,
         title: true,
@@ -66,9 +66,6 @@ export default async function RootPage() {
         venueProfile: { select: { name: true, city: true } },
       },
     }).catch(() => []),
-    db.profile.count({ where: { type: 'ARTIST', discoverable: true } }).catch(() => 0),
-    db.profile.count({ where: { type: 'LISTENER' } }).catch(() => 0),
-    db.profileHypeEvent.count().catch(() => 0),
     isInviteCodeRequiredRuntime(),
   ]);
 
@@ -92,20 +89,12 @@ export default async function RootPage() {
     city: show.venueProfile?.city ?? null,
   }));
 
-  const fmt = (value: number) => value >= 1000 ? `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}K` : String(value);
-  const stats = [
-    artistCount > 0 ? `${fmt(artistCount)} artists` : null,
-    fanCount > 0 ? `${fmt(fanCount)} fans` : null,
-    totalHypes > 0 ? `${fmt(totalHypes)} hypes` : null,
-  ].filter((entry): entry is string => entry !== null);
-
   return (
     <>
       <FanFirstLanding
         tracks={tracks}
         shows={shows}
         primaryCtaLabel={inviteOnly ? t('page.requestBeta', 'Request Alpha') : t('page.getStarted', 'Get started')}
-        stats={stats}
       />
       <PiAdminButton />
     </>

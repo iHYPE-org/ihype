@@ -6888,7 +6888,7 @@ h1, h2 {
 .fan-home-primary, .fan-home-secondary { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; padding: 0 22px; border-radius: 999px; font-weight: 800; text-decoration: none; }
 .fan-home-primary { color: #080706; background: var(--accent-3, #22e5d4); }
 .fan-home-secondary { color: var(--ink); border: 1px solid var(--line-2); background: var(--hair-50); }
-.fan-home-stats { margin-top: 20px; color: var(--ink-3); font: 500 11px/1.4 var(--f-m); letter-spacing: .08em; }
+.fan-home-assurance { margin-top: 20px !important; color: var(--ink-3) !important; font: 500 10px/1.5 var(--f-m) !important; letter-spacing: .06em; }
 .fan-home-feature { min-height: clamp(390px, 52vw, 650px); position: relative; overflow: hidden; border: 1px solid var(--line-2); border-radius: clamp(20px, 3vw, 34px); background: var(--bg-3); box-shadow: 0 34px 90px rgba(0,0,0,.35); }
 .fan-home-feature-art { position: absolute; inset: 0; }
 .fan-home-feature-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 35%, rgba(5,5,5,.92)); }
@@ -6900,7 +6900,13 @@ h1, h2 {
 .fan-home-feature-overlay button { margin-top: 22px; min-height: 44px; padding: 0 18px; border: 1px solid rgba(255,255,255,.45); border-radius: 999px; color: #fff; background: rgba(0,0,0,.4); backdrop-filter: blur(10px); cursor: pointer; font-weight: 800; }
 .fan-home-feature-empty { display: grid; place-items: center; align-content: center; gap: 18px; text-align: center; color: var(--ink-2); }
 .fan-home-feature-empty a { color: var(--accent-3); }
-.fan-home-section { margin-top: clamp(64px, 9vw, 124px); }
+.fan-home-promise { margin-top: clamp(42px,6vw,76px); display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); border-block: 1px solid var(--line); }
+.fan-home-promise > div { padding: 28px clamp(18px,3vw,36px); display: grid; grid-template-columns: auto 1fr; gap: 7px 12px; }
+.fan-home-promise > div + div { border-left: 1px solid var(--line); }
+.fan-home-promise span { grid-row: 1 / span 2; color: var(--accent-3,#22e5d4); font: 700 10px var(--f-m); }
+.fan-home-promise strong { color: var(--ink); font: 800 16px var(--f-d); }
+.fan-home-promise p { grid-column: 2; margin: 0; color: var(--ink-3); font-size: 13px; line-height: 1.45; }
+.fan-home-section { margin-top: clamp(52px, 7vw, 92px); }
 .fan-home-section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
 .fan-home-section-head h2 { margin: 8px 0 0; color: var(--ink); font: 800 clamp(1.7rem,3vw,3rem)/1 var(--f-d); letter-spacing: -.035em; }
 .fan-home-section-head > a { color: var(--accent-3); text-decoration: none; font: 600 12px var(--f-m); }
@@ -6919,9 +6925,9 @@ h1, h2 {
 .fan-show-date strong { color: var(--accent-3); font: 700 9px var(--f-m); text-transform: uppercase; }
 .fan-show-card > strong { margin-top: 12px; font: 800 16px var(--f-d); }
 .fan-show-card > small { margin-top: 4px; color: var(--ink-3); }
-.fan-home-close { margin-top: clamp(70px,10vw,140px); padding: 36px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border: 1px solid var(--line); border-radius: 20px; background: var(--hair-50); }
-.fan-home-close p { margin: 0; color: var(--ink-2); }
-.fan-home-close a { color: var(--accent-3); font-weight: 800; white-space: nowrap; }
+.fan-home-close { margin-top: clamp(64px,8vw,108px); padding: clamp(28px,5vw,56px); display: flex; align-items: center; justify-content: space-between; gap: 28px; border: 1px solid var(--line); border-radius: 24px; background: radial-gradient(circle at 85% 20%, rgba(34,229,212,.1), transparent 35%), var(--hair-50); }
+.fan-home-close h2 { max-width: 18ch; margin: 10px 0 0; color: var(--ink); font: 800 clamp(1.8rem,3.4vw,3.5rem)/1 var(--f-d); letter-spacing: -.04em; }
+.fan-home-close .fan-home-primary { flex: 0 0 auto; white-space: nowrap; }
 
 .site-dock { height: 82px; padding: 0 clamp(14px,2.4vw,34px); background: rgba(9,8,6,.96); box-shadow: 0 -16px 42px rgba(0,0,0,.24); }
 .site-dock-l { min-width: min(30vw,340px); }
@@ -6949,6 +6955,8 @@ h1, h2 {
   .fan-home-hero-copy h1 { font-size: clamp(2.6rem,13vw,5rem); }
   .fan-home-feature { min-height: 430px; }
   .fan-track-grid { grid-template-columns: 1fr; }
+  .fan-home-promise { grid-template-columns: 1fr; }
+  .fan-home-promise > div + div { border-left: 0; border-top: 1px solid var(--line); }
   .fan-show-grid { grid-auto-columns: 76vw; }
   .fan-home-close { align-items: flex-start; flex-direction: column; }
   .site-dock { height: 70px; padding: 0 12px; }

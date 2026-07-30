@@ -17,12 +17,10 @@ export function FanFirstLanding({
   tracks,
   shows,
   primaryCtaLabel,
-  stats,
 }: {
   tracks: MediaTrack[];
   shows: ShowCard[];
   primaryCtaLabel: string;
-  stats: string[];
 }) {
   const { currentTrack, isPlaying, playTrack, togglePlayback } = useMediaPlayer();
   const featured = tracks[0];
@@ -36,14 +34,14 @@ export function FanFirstLanding({
     <div className="fan-home">
       <section className="fan-home-hero">
         <div className="fan-home-hero-copy">
-          <p className="fan-home-kicker">Independent music · near you</p>
-          <h1>Find the track you&apos;ll tell everyone about.</h1>
-          <p>Listen locally, HYPE what hits, and see the artists live before the rest of the world catches up.</p>
+          <p className="fan-home-kicker">Your local music scene, in one place</p>
+          <h1>Hear what&apos;s happening near you.</h1>
+          <p>Discover independent artists from your area, save the songs that hit, and find their next show.</p>
           <div className="fan-home-actions">
             <Link className="fan-home-primary" href="/register">{primaryCtaLabel}</Link>
-            <Link className="fan-home-secondary" href="/shows">See live shows</Link>
+            <Link className="fan-home-secondary" href="/listen">Start listening</Link>
           </div>
-          {stats.length > 0 && <p className="fan-home-stats">{stats.join(' · ')}</p>}
+          <p className="fan-home-assurance">Free to listen · Built for independent music · No algorithm paywall</p>
         </div>
 
         {featured ? (
@@ -54,7 +52,7 @@ export function FanFirstLanding({
               ) : <span aria-hidden="true">iHYPE</span>}
             </div>
             <div className="fan-home-feature-overlay">
-              <p>Featured right now</p>
+              <p>Start here</p>
               <h2>{featured.title}</h2>
               <span>{featured.artistName}</span>
               <button type="button" onClick={() => play(featured)}>
@@ -70,10 +68,16 @@ export function FanFirstLanding({
         )}
       </section>
 
+      <section className="fan-home-promise" aria-label="Why fans use iHYPE">
+        <div><span>01</span><strong>Find local artists</strong><p>Music connected to places you can actually go.</p></div>
+        <div><span>02</span><strong>HYPE what hits</strong><p>Your reaction helps great artists become visible.</p></div>
+        <div><span>03</span><strong>See them live</strong><p>Move from discovery to the next nearby show.</p></div>
+      </section>
+
       {tracks.length > 0 && (
         <section className="fan-home-section" aria-labelledby="fan-tracks-title">
           <div className="fan-home-section-head">
-            <div><p>For you</p><h2 id="fan-tracks-title">Press play somewhere new.</h2></div>
+            <div><p>Local discovery</p><h2 id="fan-tracks-title">A few tracks to start with.</h2></div>
             <Link href="/listen">View all</Link>
           </div>
           <div className="fan-track-grid">
@@ -93,7 +97,7 @@ export function FanFirstLanding({
       {shows.length > 0 && (
         <section className="fan-home-section" aria-labelledby="fan-shows-title">
           <div className="fan-home-section-head">
-            <div><p>Live near you</p><h2 id="fan-shows-title">Turn a listen into a night out.</h2></div>
+            <div><p>Next step</p><h2 id="fan-shows-title">Hear them in the room.</h2></div>
             <Link href="/shows">View all</Link>
           </div>
           <div className="fan-show-grid">
@@ -115,8 +119,11 @@ export function FanFirstLanding({
       )}
 
       <section className="fan-home-close">
-        <p>Artists, DJs, venues, and promoters have their own tools—fans get the front door.</p>
-        <Link href="/join">Build your place in the scene</Link>
+        <div>
+          <p className="fan-home-kicker">Music discovery should lead somewhere</p>
+          <h2>Know your scene before everyone else does.</h2>
+        </div>
+        <Link className="fan-home-primary" href="/register">{primaryCtaLabel}</Link>
       </section>
     </div>
   );
