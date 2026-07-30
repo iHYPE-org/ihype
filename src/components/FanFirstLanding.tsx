@@ -37,13 +37,13 @@ export function FanFirstLanding({
       <section className="fan-home-hero">
         <div className="fan-home-hero-copy">
           <p className="fan-home-kicker">Free local music discovery</p>
-          <h1>Discover music. Earn HYPE. Lift up your scene.</h1>
-          <p>Listen to songs and radio, attend events, and bring friends into the scene. You earn HYPE as you go—then use it to support everything you love.</p>
+          <h1>Your HYPE can move local music forward.</h1>
+          <p>Discover artists, DJs, venues, songs, radio, and shows near you. When real people HYPE what they love, local attention becomes real demand, real tickets, and real money for the scene.</p>
           <div className="fan-home-actions">
             <Link className="fan-home-primary" href="/register">{primaryCtaLabel}</Link>
             <Link className="fan-home-secondary" href="/listen">Start listening</Link>
           </div>
-          <p className="fan-home-assurance">Everything is free · Supported only by music-related audio ads</p>
+          <p className="fan-home-assurance">Everything is free · Real fans · Real local signal · Real-world impact</p>
         </div>
 
         {featured ? (
@@ -82,9 +82,17 @@ export function FanFirstLanding({
       )}
 
       <section className="fan-home-promise" aria-label="Why fans use iHYPE">
-        <div><span>01</span><strong>Free means free</strong><p>No subscription or ticket fees. Music-only audio ads keep iHYPE open.</p></div>
-        <div><span>02</span><strong>Earn and use HYPE</strong><p>Listening, radio, events, and referrals earn the signal you give back.</p></div>
-        <div><span>03</span><strong>Plant a Seed</strong><p>Swipe left to skip or right to grow a discovery playlist: 75% your taste, 25% pure surprise.</p></div>
+        <div><span>01</span><strong>Discover real local music</strong><p>Seed mixes your taste with surprise so overlooked music can reach real people.</p></div>
+        <div><span>02</span><strong>Turn taste into signal</strong><p>Listening, radio, events, and referrals earn HYPE you give to what deserves attention.</p></div>
+        <div><span>03</span><strong>Make attention pay</strong><p>Local demand drives bookings and ticket sales that pay artists, venues, and DJs.</p></div>
+      </section>
+
+      <section className="fan-home-cycle" aria-label="How HYPE strengthens local music">
+        <span>Real discovery</span><i aria-hidden="true">→</i>
+        <span>Genuine HYPE</span><i aria-hidden="true">→</i>
+        <span>Visible local demand</span><i aria-hidden="true">→</i>
+        <span>Bookings + ticket sales</span><i aria-hidden="true">→</i>
+        <span>Paid, provable momentum</span>
       </section>
 
       {tracks.length > 0 && (
@@ -133,8 +141,9 @@ export function FanFirstLanding({
 
       <section className="fan-home-close">
         <div>
-          <p className="fan-home-kicker">Listen · attend · invite · HYPE · discover</p>
-          <h2>Your local music life should count for something.</h2>
+          <p className="fan-home-kicker">Local listening can build real careers</p>
+          <h2>Help great music earn the crowd, income, and proof it deserves.</h2>
+          <p className="fan-home-close-copy">Strong local HYPE and ticket history give artists credible stats they can take to labels, bookers, and bigger stages.</p>
         </div>
         <Link className="fan-home-primary" href="/register">{primaryCtaLabel}</Link>
       </section>

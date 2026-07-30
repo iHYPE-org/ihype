@@ -6911,6 +6911,8 @@ h1, h2 {
 .fan-home-promise span { grid-row: 1 / span 2; color: var(--accent-3,#22e5d4); font: 700 10px var(--f-m); }
 .fan-home-promise strong { color: var(--ink); font: 800 16px var(--f-d); }
 .fan-home-promise p { grid-column: 2; margin: 0; color: var(--ink-3); font-size: 13px; line-height: 1.45; }
+.fan-home-cycle { margin-top: 16px; padding: 18px clamp(14px,2.5vw,30px); display: flex; align-items: center; justify-content: center; gap: clamp(8px,1.6vw,20px); flex-wrap: wrap; border: 1px solid rgba(34,229,212,.2); border-radius: 999px; color: var(--ink-2); background: rgba(34,229,212,.035); font: 700 clamp(9px,1vw,11px)/1.3 var(--f-m); letter-spacing: .06em; text-transform: uppercase; }
+.fan-home-cycle i { color: var(--accent-3,#22e5d4); font-style: normal; }
 .fan-home-section { margin-top: clamp(52px, 7vw, 92px); }
 .fan-home-section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
 .fan-home-section-head h2 { margin: 8px 0 0; color: var(--ink); font: 800 clamp(1.7rem,3vw,3rem)/1 var(--f-d); letter-spacing: -.035em; }
@@ -6932,6 +6934,7 @@ h1, h2 {
 .fan-show-card > small { margin-top: 4px; color: var(--ink-3); }
 .fan-home-close { margin-top: clamp(64px,8vw,108px); padding: clamp(28px,5vw,56px); display: flex; align-items: center; justify-content: space-between; gap: 28px; border: 1px solid var(--line); border-radius: 24px; background: radial-gradient(circle at 85% 20%, rgba(34,229,212,.1), transparent 35%), var(--hair-50); }
 .fan-home-close h2 { max-width: 18ch; margin: 10px 0 0; color: var(--ink); font: 800 clamp(1.8rem,3.4vw,3.5rem)/1 var(--f-d); letter-spacing: -.04em; }
+.fan-home-close-copy { max-width: 58ch; margin: 16px 0 0; color: var(--ink-3); font-size: 14px; line-height: 1.55; }
 .fan-home-close .fan-home-primary { flex: 0 0 auto; white-space: nowrap; }
 
 .site-dock { height: 82px; padding: 0 clamp(14px,2.4vw,34px); background: rgba(9,8,6,.96); box-shadow: 0 -16px 42px rgba(0,0,0,.24); }
@@ -6967,6 +6970,8 @@ h1, h2 {
   .fan-home-stats > div:nth-child(n+3) { border-top: 1px solid var(--line); }
   .fan-home-promise { grid-template-columns: 1fr; }
   .fan-home-promise > div + div { border-left: 0; border-top: 1px solid var(--line); }
+  .fan-home-cycle { align-items: flex-start; flex-direction: column; border-radius: 18px; }
+  .fan-home-cycle i { transform: rotate(90deg); align-self: center; }
   .fan-show-grid { grid-auto-columns: 76vw; }
   .fan-home-close { align-items: flex-start; flex-direction: column; }
   .site-dock { height: 70px; padding: 0 12px; }
