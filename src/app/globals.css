@@ -6903,6 +6903,24 @@ h1, h2 {
 .theme-toggle:hover { background: var(--hair-100); border-color: var(--hair-220); transform: translateY(-1px); }
 .theme-toggle:focus-visible { outline: 2px solid var(--accent-3, #22e5d4); outline-offset: 3px; }
 
+.approved-index { width: 100vw; position: relative; overflow: hidden; background: #020708; }
+.approved-index-image { width: 100vw; height: auto; display: block; }
+.approved-index-theme,.approved-index-signin,.approved-index-join { position: absolute; z-index: 5; display: block; border-radius: 999px; }
+.approved-index-theme { width: 3.2%; height: 5.2%; left: 78.2%; top: 1.1%; }
+.approved-index-theme .theme-toggle { width: 100%; height: 100%; opacity: 0; }
+.approved-index-signin { width: 5.2%; height: 5.2%; left: 82.6%; top: 1.1%; }
+.approved-index-join { width: 9.8%; height: 5.2%; left: 88.5%; top: 1.1%; }
+.approved-index-signin:focus-visible,.approved-index-join:focus-visible,.approved-index-theme:focus-within { outline: 2px solid #22e5d4; outline-offset: 2px; }
+html[data-theme="light"] .approved-index-image { filter: invert(.91) hue-rotate(180deg); }
+body:has(.approved-index) { background: #020708; }
+body:has(.approved-index) .adaptive-site-header,
+body:has(.approved-index) .site-background,
+body:has(.approved-index) .mobile-bottom-nav,
+body:has(.approved-index) .ihype-cookie-consent,
+body:has(.approved-index) .site-shell > footer { display: none !important; }
+body:has(.approved-index) .site-shell { padding: 0 !important; }
+body:has(.approved-index) #main-content { width: 100%; }
+
 .listen-stage { width: min(1180px,calc(100% - 40px)); margin: 0 auto; padding: clamp(32px,5vw,70px) 0 120px; }
 .listen-stage-hero { min-height: 330px; position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; margin-bottom: 18px; padding: clamp(28px,5vw,58px); overflow: hidden; border: 1px solid var(--line); border-radius: 28px; background: radial-gradient(circle at 83% 32%,rgba(255,80,41,.42),transparent 28%),radial-gradient(circle at 70% 84%,rgba(185,131,255,.18),transparent 34%),linear-gradient(145deg,var(--hair-50),transparent); }
 .listen-stage-hero::after { content: ""; width: 290px; aspect-ratio: 1; position: absolute; right: 7%; top: -27%; border: 1px solid rgba(34,229,212,.22); border-radius: 50%; box-shadow: 0 0 0 42px rgba(34,229,212,.035),0 0 0 84px rgba(255,80,41,.025); }

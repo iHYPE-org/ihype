@@ -1,46 +1,31 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
-export function FanFirstLanding({
-  primaryCtaLabel,
-  stats,
-}: {
-  primaryCtaLabel: string;
-  stats: Array<{ value: string; label: string }>;
-}) {
+export function FanFirstLanding() {
   return (
-    <div className="fan-home">
-      <section className="fan-home-hero">
-        <div className="fan-home-hero-copy">
-          <h1>Free<br />local<br />music.</h1>
-          <p>Hear the artists playing around you. HYPE what you love. Help your scene get heard.</p>
-          <div className="fan-home-actions">
-            <Link className="fan-home-primary" href="/register">{primaryCtaLabel} — start listening</Link>
-          </div>
-          <p className="fan-home-assurance">No subscription · No paywall · We never sell your data</p>
-        </div>
+    <div className="approved-index">
+      <Image
+        alt=""
+        className="approved-index-image"
+        height={941}
+        priority
+        sizes="100vw"
+        src="/brand/approved-index.png"
+        width={1672}
+      />
 
-        <div className="fan-home-approved-art" aria-hidden="true">
-          <Image
-            alt=""
-            fill
-            priority
-            sizes="(max-width: 768px) 100vw, 58vw"
-            src="/brand/local-music-signal.png"
-          />
-        </div>
-      </section>
+      <div className="approved-index-theme">
+        <ThemeToggle />
+      </div>
+      <Link aria-label="Sign in" className="approved-index-signin" href="/login" />
+      <Link aria-label="Join free" className="approved-index-join" href="/register" />
 
-      {stats.length > 0 && (
-        <section className="fan-home-stats" aria-label="iHYPE community activity">
-          {stats.map((stat) => (
-            <div key={stat.label}>
-              <strong>{stat.value}</strong>
-              <span>{stat.label}</span>
-            </div>
-          ))}
-        </section>
-      )}
+      <div className="sr-only">
+        <h1>Free local music.</h1>
+        <p>Hear the artists playing around you. HYPE what you love. Help your scene get heard.</p>
+        <p>Join free and start listening.</p>
+      </div>
     </div>
   );
 }
