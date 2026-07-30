@@ -11,6 +11,11 @@ Every alarm iHYPE has is downstream of the thing it watches:
 | Alarm | Runs where |
 |---|---|
 | `checkCronHealth()` — reports stale jobs | Inside `/api/cron?job=health-check`, a cron job |
+
+The detailed health snapshot also reports pending and terminally failed
+`NotificationJob` records. A terminal failure or a pending job older than 30
+minutes blocks launch readiness. The notification worker records its own
+heartbeat with a 30-minute TTL after every successful scheduled run.
 | Workbench digest — emails overdue queues | A cron job |
 | `report-failure` — tracks consecutive job failures | Authenticated with the same `CRON_SECRET` as the jobs it watches |
 | Sentry | Only hears about errors a *running* Worker manages to report |

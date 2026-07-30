@@ -13,6 +13,7 @@ export async function checkCronHealth(): Promise<{ stale: string[] }> {
   const jobs = [
     'digest', 'show-reminders', 'db-health', 'new-to-scene', 'workbench-digest',
     'held-track-notice',
+    'notification-jobs',
     'onboarding', 'feature-shows', 'stripe-connect-health',
     'artist-onboarding', 'show-payouts', 'ad-settlement', 'close-stale-bookings',
     'weekly-picks', 'follow-digest', 'audit-log-rotate',

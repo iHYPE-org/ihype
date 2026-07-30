@@ -11,14 +11,31 @@ export async function getHealthSnapshot() {
   const stripeSecretKey = readRuntimeEnv('STRIPE_SECRET_KEY');
 
   try {
-    const [userCount, openReportCount, openSupportCount, failedEmailCount, pendingVerificationCount, reservedTicketCount] =
+    const [
+      userCount,
+      openReportCount,
+      openSupportCount,
+      failedEmailCount,
+      pendingVerificationCount,
+      reservedTicketCount,
+      pendingNotificationCount,
+      failedNotificationCount,
+      oldestPendingNotification,
+    ] =
       await Promise.all([
         db.user.count(),
         db.contentReport.count({ where: { status: 'OPEN' } }),
         db.supportRequest.count({ where: { status: 'OPEN' } }),
         db.emailDeliveryLog.count({ where: { status: 'FAILED', createdAt: { gte: since } } }),
         db.profile.count({ where: { verificationStatus: 'PENDING', verificationRequested: true } }),
-        db.ticketOrder.count({ where: { status: 'RESERVED' } })
+        db.ticketOrder.count({ where: { status: 'RESERVED' } }),
+        db.notificationJob.count({ where: { status: 'PENDING' } }),
+        db.notificationJob.count({ where: { status: 'FAILED' } }),
+        db.notificationJob.findFirst({
+          where: { status: 'PENDING' },
+          orderBy: { createdAt: 'asc' },
+          select: { createdAt: true },
+        }),
       ]);
 
     const [demoLogins, inviteOnlySignup, demoContentHidden] = await Promise.all([
@@ -29,6 +46,9 @@ export async function getHealthSnapshot() {
 
     const emailReadiness = getEmailDeliveryReadiness();
     const paymentReadiness = getPaymentProcessingReadiness();
+    const oldestPendingNotificationAgeMinutes = oldestPendingNotification
+      ? Math.floor((Date.now() - oldestPendingNotification.createdAt.getTime()) / 60_000)
+      : null;
     const runtimeBlockers = [
       !readRuntimeEnv('AUTH_SECRET') && 'Set AUTH_SECRET for session signing.',
       !readRuntimeEnv('CRON_SECRET') && 'Set CRON_SECRET before enabling scheduled operations.',
@@ -41,6 +61,12 @@ export async function getHealthSnapshot() {
       ...emailReadiness.blockers,
       ...paymentReadiness.blockers,
       ...runtimeBlockers,
+      ...(failedNotificationCount > 0
+        ? [`Resolve ${failedNotificationCount} permanently failed notification job(s).`]
+        : []),
+      ...(oldestPendingNotificationAgeMinutes !== null && oldestPendingNotificationAgeMinutes > 30
+        ? [`Notification delivery is backlogged; oldest pending job is ${oldestPendingNotificationAgeMinutes} minutes old.`]
+        : []),
     ];
 
     return {
@@ -56,7 +82,12 @@ export async function getHealthSnapshot() {
         openSupportRequests: openSupportCount,
         failedEmails24h: failedEmailCount,
         pendingVerifications: pendingVerificationCount,
-        reservedTicketOrders: reservedTicketCount
+        reservedTicketOrders: reservedTicketCount,
+        notificationJobs: {
+          pending: pendingNotificationCount,
+          failed: failedNotificationCount,
+          oldestPendingAgeMinutes: oldestPendingNotificationAgeMinutes,
+        },
       },
       integrations: {
         emailDelivery: isEmailDeliveryConfigured(),
