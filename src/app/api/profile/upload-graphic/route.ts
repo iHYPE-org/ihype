@@ -5,6 +5,8 @@ import { storeMediaFile, isObjectStorageConfigured } from '@/lib/object-storage'
 import { vetImageUpload } from '@/lib/image-vetting';
 import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
+import { areUploadsEnabledRuntime } from '@/lib/runtime-flags';
+import { exceedsDeclaredRequestSize } from '@/lib/request-size';
 
 const MAX_BYTES = 8 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -22,6 +24,12 @@ function validateMagicBytes(buf: Buffer, mime: string): boolean {
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Login required' }, { status: 401 });
+  if (!(await areUploadsEnabledRuntime())) {
+    return NextResponse.json({ error: 'Uploads are temporarily paused.' }, { status: 503 });
+  }
+  if (exceedsDeclaredRequestSize(request, MAX_BYTES + 1024 * 1024)) {
+    return NextResponse.json({ error: 'Upload request is limited to 9MB.' }, { status: 413 });
+  }
 
   const profile = await db.profile.findFirst({
     where: { ownerId: session.user.id },

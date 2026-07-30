@@ -29,14 +29,34 @@ export async function GET(request: NextRequest) {
     const actionedIds = new Set(actioned.map(s => s.mediaId));
 
     // --- Collaborative filtering (v2) with time-decay scoring --------
-    let cfMedia: Array<{ id: string; title: string; profile: { name: string; genres: string[]; nowPlaying: string | null; journalContent: string | null } | null }> = [];
+    type SeedMedia = { id: string; title: string; profile: { name: string; genres: string[]; nowPlaying: string | null; journalContent: string | null } | null };
+    let cfMedia: SeedMedia[] = [];
     if (genres.length === 0) {
-      const hypedByMe = await db.profileHypeEvent.findMany({
-        where: { userId: session.user.id },
-        select: { profileId: true },
-        take: 100
-      });
-      const myProfileIds = hypedByMe.map((r) => r.profileId);
+      const [hypedByMe, playlistItems] = await Promise.all([
+        db.profileHypeEvent.findMany({
+          where: { userId: session.user.id },
+          select: { profileId: true },
+          take: 100,
+        }),
+        db.fanPlaylistItem.findMany({
+          where: { playlist: { userId: session.user.id } },
+          select: { artistProfileSlug: true },
+          take: 200,
+        }),
+      ]);
+      const playlistSlugs = [...new Set(
+        playlistItems.map((item) => item.artistProfileSlug).filter((slug): slug is string => Boolean(slug)),
+      )];
+      const playlistProfiles = playlistSlugs.length > 0
+        ? await db.profile.findMany({
+            where: { slug: { in: playlistSlugs } },
+            select: { id: true },
+          })
+        : [];
+      const myProfileIds = [...new Set([
+        ...hypedByMe.map((row) => row.profileId),
+        ...playlistProfiles.map((profile) => profile.id),
+      ])];
       if (myProfileIds.length > 0) {
         const fellowFans = await db.profileHypeEvent.findMany({
           where: { profileId: { in: myProfileIds }, userId: { not: session.user.id } },
@@ -68,9 +88,10 @@ export async function GET(request: NextRequest) {
               where: {
                 profileId: { in: rankedProfileIds },
                 id: { notIn: [...actionedIds] },
+                isPublished: true,
                 profile: { discoverable: true }
               },
-              take: 20,
+              take: 15,
               orderBy: { createdAt: 'desc' },
               select: {
                 id: true,
@@ -83,14 +104,15 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const media = cfMedia.length
+    const personalizedMedia = cfMedia.length
       ? cfMedia
       : await db.artistMediaAsset.findMany({
           where: {
             id: { notIn: [...actionedIds] },
+            isPublished: true,
             profile: genres.length > 0 ? { genres: { hasSome: genres }, discoverable: true } : { discoverable: true }
           },
-          take: 20,
+          take: 15,
           orderBy: { createdAt: 'desc' },
           select: {
             id: true,
@@ -98,6 +120,28 @@ export async function GET(request: NextRequest) {
             profile: { select: { name: true, genres: true, nowPlaying: true, journalContent: true } }
           },
         });
+    const personalizedIds = new Set(personalizedMedia.map((item) => item.id));
+    const randomPool = await db.artistMediaAsset.findMany({
+      where: {
+        id: { notIn: [...actionedIds, ...personalizedIds] },
+        isPublished: true,
+        profile: { discoverable: true },
+      },
+      take: 100,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        profile: { select: { name: true, genres: true, nowPlaying: true, journalContent: true } },
+      },
+    });
+    for (let index = randomPool.length - 1; index > 0; index -= 1) {
+      const swapWith = Math.floor(Math.random() * (index + 1));
+      [randomPool[index], randomPool[swapWith]] = [randomPool[swapWith], randomPool[index]];
+    }
+    const randomMedia = randomPool.slice(0, 5);
+    const randomIds = new Set(randomMedia.map((item) => item.id));
+    const media = [...personalizedMedia, ...randomMedia];
 
     // Hype count per track — use findMany for per-record decay weights
     const mediaIds = media.map(m => m.id);
@@ -130,9 +174,11 @@ export async function GET(request: NextRequest) {
         journalContent: m.profile?.journalContent ?? null,
         reason: genres.length
           ? `Matches ${genres.join(', ')}`
+          : randomIds.has(m.id)
+            ? 'A completely random discovery'
           : cfMedia.length
             ? 'Fans like you also hype this'
-            : 'Recommended based on your hypes',
+            : 'Fresh music for your Seed mix',
       })),
     });
   } catch (error) {

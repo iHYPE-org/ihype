@@ -736,8 +736,6 @@ export function SitePlayerDock() {
   const upcomingTracks = queue.slice(currentIndex + 1);
   const rLabel = repeatLabel(repeatMode);
 
-  if (!currentTrack) return null;
-
   function togglePanel(p: DockPanel) {
     setPanel(prev => prev === p ? null : p);
   }
@@ -759,7 +757,7 @@ export function SitePlayerDock() {
   const btnBase: React.CSSProperties = { background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '2px 4px' };
 
   return (
-    <div className={`site-dock${mobileExpanded ? ' site-dock-expanded' : ''}`} role="region" aria-label={t('globalMediaPlayer.mediaPlayerRegion', 'Media player')}>
+    <div className={`site-dock${mobileExpanded ? ' site-dock-expanded' : ''}${currentTime > 8 ? ' site-dock-settled' : ''}`} role="region" aria-label={t('globalMediaPlayer.mediaPlayerRegion', 'Media player')}>
 
       {/* ── Queue / history popover ───────────────────────────────────────── */}
       <PlayerQueuePanel
@@ -788,7 +786,8 @@ export function SitePlayerDock() {
           {currentTrack?.artworkUrl && <Image src={currentTrack.artworkUrl} alt={currentTrack.title} fill sizes="42px" style={{ objectFit: 'cover', borderRadius: 5 }} />}
         </div>
         <div className="site-dock-meta">
-          <div className="site-dock-title">{currentTrack?.title ?? t('globalMediaPlayer.nothingPlaying', 'Nothing playing')}</div>
+          <div className="site-dock-now-playing">{t('globalMediaPlayer.nowPlaying', 'Now playing')}</div>
+          <div className="site-dock-title"><span>{currentTrack?.title ?? t('globalMediaPlayer.nothingPlaying', 'Nothing playing')}</span></div>
           {/* The status line replaces the artist name only while something is
               actually wrong or loading — an unheard error is the same bug as
               no error handling at all. role="status" so screen readers
@@ -798,7 +797,7 @@ export function SitePlayerDock() {
           ) : isBuffering ? (
             <div className="site-dock-artist" role="status">{t('globalMediaPlayer.buffering', 'Buffering…')}</div>
           ) : (
-            <div className="site-dock-artist">{currentTrack?.artistName ?? t('globalMediaPlayer.pickTrackToStart', 'Pick a track to start')}</div>
+            <div className="site-dock-artist"><span>{currentTrack?.artistName ?? t('globalMediaPlayer.pickTrackToStart', 'Pick a track to start')}</span></div>
           )}
         </div>
         <svg className="site-dock-expand-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

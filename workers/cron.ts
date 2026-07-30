@@ -93,18 +93,16 @@ const JOBS: CronJob[] = [
   { path: '/api/cron/post-show-recap',    schedule: '0 16 * * *'  },  // morning-after recap for attendees at 4pm UTC
 ];
 
-/**
- * Tell the outside world this Worker ran. Deliberately fire-and-forget and
- * deliberately unconditional on job outcome: this answers "is the scheduler
- * alive", not "did the jobs succeed" — the latter already has
- * reportOutcome() and the workbench digest. Conflating them would mean one
- * failing job suppresses the liveness signal and turns a small problem into
- * an apparent total outage.
- */
 async function heartbeat(env: Env): Promise<void> {
   if (!env.HEARTBEAT_URL) return;
   try {
-    await fetch(env.HEARTBEAT_URL, { method: 'POST' });
+    const response = await fetch(env.HEARTBEAT_URL, {
+      method: 'POST',
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!response.ok) {
+      console.error(`[cron] heartbeat returned ${response.status}`);
+    }
   } catch (err) {
     // Never let the watchdog break the thing it watches.
     console.error('[cron] heartbeat failed:', err);
@@ -121,6 +119,7 @@ async function reportOutcome(env: Env, path: string, outcome: { ok: true } | { s
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ path, ...outcome }),
+      signal: AbortSignal.timeout(15_000),
     });
   } catch (err) {
     console.error(`[cron] outcome report for ${path} failed:`, err);
@@ -131,18 +130,12 @@ export default {
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
     const matched = JOBS.filter((job) => job.schedule === event.cron);
 
-    // Before the early return below, not after it. An unmatched schedule
-    // still proves the Worker is being invoked, and suppressing the ping
-    // there would page someone about a liveness failure that is really a
-    // config typo.
-    ctx.waitUntil(heartbeat(env));
-
     if (matched.length === 0) {
       console.warn(`[cron] No job matched schedule: ${event.cron}`);
       return;
     }
 
-    await Promise.all(
+    const outcomes = await Promise.all(
       matched.map(async (job) => {
         const url = `${env.APP_BASE_URL}${job.path}`;
         console.log('[cron] Firing:', job.path, 'at', new Date().toISOString());
@@ -150,20 +143,32 @@ export default {
           const res = await fetch(url, {
             method: 'GET',
             headers: { Authorization: `Bearer ${env.CRON_SECRET}` },
+            signal: AbortSignal.timeout(55_000),
           });
           if (!res.ok) {
             const body = await res.text().catch(() => '');
             console.error(`[cron] ${job.path} → ${res.status}: ${body}`);
             ctx.waitUntil(reportOutcome(env, job.path, { status: res.status }));
+            return false;
           } else {
             console.log(`[cron] ${job.path} → ${res.status}`);
             ctx.waitUntil(reportOutcome(env, job.path, { ok: true }));
+            return true;
           }
         } catch (err) {
           console.error(`[cron] ${job.path} fetch failed:`, err);
           ctx.waitUntil(reportOutcome(env, job.path, { status: 0 }));
+          return false;
         }
       })
     );
+
+    // A dead-man's-switch ping means the entire scheduled batch completed.
+    // Per-job outcomes still identify which route failed.
+    if (outcomes.every(Boolean)) {
+      ctx.waitUntil(heartbeat(env));
+    } else {
+      console.error(`[cron] ${outcomes.filter((ok) => !ok).length}/${outcomes.length} jobs failed; heartbeat suppressed`);
+    }
   },
 };

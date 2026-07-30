@@ -6,7 +6,7 @@ import { createHexId } from '@/lib/hex-id';
 import { validateArtistMediaUpload } from '@/lib/media-validation';
 import { deleteArtistMediaFromBlob, isBlobMediaStorageAvailable, uploadArtistMediaToBlob } from '@/lib/media-storage';
 import { canManageOwnedResource } from '@/lib/permissions';
-import { areDatabaseMediaUploadsEnabledRuntime } from '@/lib/runtime-flags';
+import { areDatabaseMediaUploadsEnabledRuntime, areUploadsEnabledRuntime } from '@/lib/runtime-flags';
 import { validateAudioMagicBytes } from '@/lib/validate-upload';
 import { parseAudioDuration } from '@/lib/audio-duration';
 import { runTrackScanPipeline } from '@/lib/media-vetting';
@@ -97,6 +97,13 @@ export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Login required' }, { status: 401 });
+  }
+
+  if (!(await areUploadsEnabledRuntime())) {
+    return NextResponse.json(
+      { error: 'Media uploads are temporarily paused. Existing music remains available.' },
+      { status: 503, headers: { 'Retry-After': '900' } },
+    );
   }
 
   // Reject declared oversized bodies before request.formData() can buffer

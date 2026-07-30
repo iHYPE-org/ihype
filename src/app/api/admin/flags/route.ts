@@ -11,7 +11,11 @@ const ALLOWED_FLAGS = new Set([
   'invite_only_signup',
   'hide_demo_content',
   'blob_media_storage',
-  'ticket_payment_capture'
+  'ticket_payment_capture',
+  'registrations_enabled',
+  'uploads_enabled',
+  'outbound_email_enabled',
+  'advertising_enabled',
 ]);
 
 export async function POST(request: Request) {

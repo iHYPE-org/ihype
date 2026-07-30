@@ -22,7 +22,11 @@ type RuntimeFlagKey =
   | 'invite_only_signup'
   | 'hide_demo_content'
   | 'blob_media_storage'
-  | 'ticket_payment_capture';
+  | 'ticket_payment_capture'
+  | 'registrations_enabled'
+  | 'uploads_enabled'
+  | 'outbound_email_enabled'
+  | 'advertising_enabled';
 
 async function readRuntimeOverride(key: RuntimeFlagKey) {
   try {
@@ -39,6 +43,11 @@ export async function getRuntimeFlag(key: RuntimeFlagKey, fallback: boolean) {
   const override = await readRuntimeOverride(key);
   return override ?? fallback;
 }
+
+export const areRegistrationsEnabledRuntime = () => getRuntimeFlag('registrations_enabled', true);
+export const areUploadsEnabledRuntime = () => getRuntimeFlag('uploads_enabled', true);
+export const isOutboundEmailEnabledRuntime = () => getRuntimeFlag('outbound_email_enabled', true);
+export const isAdvertisingEnabledRuntime = () => getRuntimeFlag('advertising_enabled', true);
 
 const demoIdentifiers = new Set([
   'fan',

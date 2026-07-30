@@ -2,7 +2,15 @@ import { db } from '@/lib/db';
 import { getEmailDeliveryReadiness, isEmailDeliveryConfigured, isSmtpEmailConfigured } from '@/lib/mailer';
 import { isBlobMediaStorageConfigured } from '@/lib/media-storage';
 import { getPaymentProcessingReadiness, isPaymentProcessingConfigured } from '@/lib/payments';
-import { areDemoLoginsEnabledRuntime, isInviteCodeRequiredRuntime, shouldHideDemoContentRuntime } from '@/lib/runtime-flags';
+import {
+  areDemoLoginsEnabledRuntime,
+  areRegistrationsEnabledRuntime,
+  areUploadsEnabledRuntime,
+  isAdvertisingEnabledRuntime,
+  isInviteCodeRequiredRuntime,
+  isOutboundEmailEnabledRuntime,
+  shouldHideDemoContentRuntime,
+} from '@/lib/runtime-flags';
 import { readRuntimeEnv } from '@/lib/runtime-env';
 
 export async function getHealthSnapshot() {
@@ -38,10 +46,22 @@ export async function getHealthSnapshot() {
         }),
       ]);
 
-    const [demoLogins, inviteOnlySignup, demoContentHidden] = await Promise.all([
+    const [
+      demoLogins,
+      inviteOnlySignup,
+      demoContentHidden,
+      registrationsEnabled,
+      uploadsEnabled,
+      outboundEmailEnabled,
+      advertisingEnabled,
+    ] = await Promise.all([
       areDemoLoginsEnabledRuntime(),
       isInviteCodeRequiredRuntime(),
-      shouldHideDemoContentRuntime()
+      shouldHideDemoContentRuntime(),
+      areRegistrationsEnabledRuntime(),
+      areUploadsEnabledRuntime(),
+      isOutboundEmailEnabledRuntime(),
+      isAdvertisingEnabledRuntime(),
     ]);
 
     const emailReadiness = getEmailDeliveryReadiness();
@@ -61,6 +81,9 @@ export async function getHealthSnapshot() {
       ...emailReadiness.blockers,
       ...paymentReadiness.blockers,
       ...runtimeBlockers,
+      ...(!registrationsEnabled ? ['New registrations are paused by the runtime safety switch.'] : []),
+      ...(!uploadsEnabled ? ['Media uploads are paused by the runtime safety switch.'] : []),
+      ...(!outboundEmailEnabled ? ['Outbound email is paused by the runtime safety switch.'] : []),
       ...(failedNotificationCount > 0
         ? [`Resolve ${failedNotificationCount} permanently failed notification job(s).`]
         : []),
@@ -98,7 +121,11 @@ export async function getHealthSnapshot() {
       safety: {
         demoLogins,
         inviteOnlySignup,
-        demoContentHidden
+        demoContentHidden,
+        registrationsEnabled,
+        uploadsEnabled,
+        outboundEmailEnabled,
+        advertisingEnabled,
       },
       sentryConfigured: Boolean(readRuntimeEnv('SENTRY_DSN') ?? readRuntimeEnv('NEXT_PUBLIC_SENTRY_DSN')),
       stripeMode: stripeSecretKey?.startsWith('sk_live_')

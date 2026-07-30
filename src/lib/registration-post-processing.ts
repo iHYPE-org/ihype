@@ -5,6 +5,7 @@ import { log } from '@/lib/logger';
 import { sendGenericEmail } from '@/lib/mailer';
 import { sendDay1Email } from '@/lib/onboarding-emails';
 import { checkForSpam } from '@/lib/spam-detection';
+import { awardHype } from '@/lib/hype-ledger';
 
 type RegistrationUser = {
   id: string;
@@ -100,6 +101,17 @@ async function processReferral(user: RegistrationUser, refValue: string) {
     metadata: { referrer: resolvedUsername, referrerHexId: refValue },
   });
 
+  await awardHype({
+    userId: referrerId,
+    amount: 10,
+    source: 'FAN_REFERRED',
+    idempotencyKey: `fan-referred:${user.id}`,
+    targetType: 'user',
+    targetId: user.id,
+    dailyLimit: 50,
+    metadata: { referredUsername: user.username },
+  });
+
   if (referrerProfileId) {
     await db.$transaction([
       db.profileHypeEvent.create({ data: { userId: user.id, profileId: referrerProfileId } }),
@@ -145,7 +157,17 @@ export async function runRegistrationPostProcessing({
   spamText: string;
   referral?: string;
 }) {
-  const tasks: Array<Promise<unknown>> = [sendDay1Email(user.id)];
+  const tasks: Array<Promise<unknown>> = [
+    sendDay1Email(user.id),
+    awardHype({
+      userId: user.id,
+      amount: 3,
+      source: 'WELCOME',
+      idempotencyKey: `welcome:${user.id}`,
+      targetType: 'user',
+      targetId: user.id,
+    }),
+  ];
   if (spamText.length > 20) tasks.push(checkRegistrationSpam({ user, clientAddress, text: spamText }));
   if (referral) tasks.push(processReferral(user, referral));
 

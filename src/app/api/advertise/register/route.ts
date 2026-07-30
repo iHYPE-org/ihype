@@ -7,7 +7,7 @@ import { sendMagicLinkEmail } from '@/lib/magic-link';
 import { normalizeUsername, isValidUsername } from '@/lib/usernames';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
-import { isReservedPlatformEmail } from '@/lib/runtime-flags';
+import { isAdvertisingEnabledRuntime, isReservedPlatformEmail } from '@/lib/runtime-flags';
 import { recordAuditEvent } from '@/lib/audit';
 
 const ADVERTISER_CATEGORIES = ['LABEL', 'VENUE_PROMOTER', 'GEAR', 'TICKETING', 'MERCH', 'TOUR'] as const;
@@ -33,6 +33,9 @@ const schema = z.object({
  */
 export async function POST(request: Request) {
   try {
+    if (!(await isAdvertisingEnabledRuntime())) {
+      return NextResponse.json({ error: 'Advertiser registration is temporarily paused.' }, { status: 503 });
+    }
     const clientAddress = readClientAddress(request);
     const rateLimit = await consumeRateLimit(`advertise-register:${clientAddress}`, {
       limit: 8,

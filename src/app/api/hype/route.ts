@@ -10,6 +10,7 @@ import { getBaseUrl } from '@/lib/utils';
 import { sendPushNotification } from '@/lib/push-notify';
 import { notifyUser } from '@/lib/notify';
 import { log } from '@/lib/logger';
+import { applyHypeEntry, InsufficientHypeError } from '@/lib/hype-ledger';
 
 const HYPE_MILESTONES = [10, 50, 100, 500, 1000];
 const SHOW_HYPE_MILESTONES = [10, 25, 50, 100, 250, 500];
@@ -183,25 +184,70 @@ export async function POST(request: NextRequest) {
     const payload = schema.parse(await request.json());
 
     if (payload.targetType === 'show') {
+      const targetShow = await db.show.findFirst({
+        where: {
+          id: payload.targetId,
+          moderationStatus: 'APPROVED',
+          status: { in: ['SCHEDULED', 'LIVE', 'ENDED'] },
+        },
+        select: { creatorId: true },
+      });
+      if (!targetShow) {
+        return NextResponse.json({ error: 'Published show not found' }, { status: 404 });
+      }
+      if (targetShow.creatorId === session.user.id) {
+        return NextResponse.json({ error: 'You cannot HYPE your own show.' }, { status: 409 });
+      }
       const existing = await withDbRetry(() => db.hypeEvent.findUnique({
         where: { userId_showId: { userId: session.user.id, showId: payload.targetId } }
       }));
 
       if (existing) {
         // Toggle off: unhype the show.
-        const [, updatedShow] = await withDbRetry(() => db.$transaction([
-          db.hypeEvent.delete({ where: { userId_showId: { userId: session.user.id, showId: payload.targetId } } }),
-          db.show.update({ where: { id: payload.targetId }, data: { hypeCount: { decrement: 1 } } })
-        ]));
-        return NextResponse.json({ action: 'unhyped', hypeCount: Math.max(0, updatedShow.hypeCount) });
+        const result = await withDbRetry(() => db.$transaction(async (tx) => {
+          await tx.hypeEvent.delete({
+            where: { userId_showId: { userId: session.user.id, showId: payload.targetId } },
+          });
+          const refund = await applyHypeEntry(tx, {
+            userId: session.user.id,
+            amount: 1,
+            source: 'HYPE_REFUND',
+            idempotencyKey: `show-unhype:${existing.id}`,
+            targetType: 'show',
+            targetId: payload.targetId,
+          });
+          const updatedShow = await tx.show.update({
+            where: { id: payload.targetId },
+            data: { hypeCount: { decrement: 1 } },
+          });
+          return { updatedShow, balance: refund.entry?.balanceAfter };
+        }));
+        return NextResponse.json({
+          action: 'unhyped',
+          hypeCount: Math.max(0, result.updatedShow.hypeCount),
+          hypeBalance: result.balance,
+        });
       }
 
-      const [, updatedShow] = await withDbRetry(() => db.$transaction([
-        db.hypeEvent.create({
+      const result = await withDbRetry(() => db.$transaction(async (tx) => {
+        const hype = await tx.hypeEvent.create({
           data: { userId: session.user.id, showId: payload.targetId, positionSeconds: payload.positionSeconds }
-        }),
-        db.show.update({ where: { id: payload.targetId }, data: { hypeCount: { increment: 1 } } })
-      ]));
+        });
+        const spend = await applyHypeEntry(tx, {
+          userId: session.user.id,
+          amount: -1,
+          source: 'HYPE_GIVEN',
+          idempotencyKey: `show-hype:${hype.id}`,
+          targetType: 'show',
+          targetId: payload.targetId,
+        });
+        const updatedShow = await tx.show.update({
+          where: { id: payload.targetId },
+          data: { hypeCount: { increment: 1 } },
+        });
+        return { updatedShow, balance: spend.entry?.balanceAfter };
+      }));
+      const updatedShow = result.updatedShow;
 
       await recordAuditEvent({
         actorUserId: session.user.id,
@@ -244,33 +290,80 @@ export async function POST(request: NextRequest) {
         })
         .catch(() => {});
 
-      return NextResponse.json({ action: 'hyped', hypeCount: updatedShow.hypeCount });
+      return NextResponse.json({
+        action: 'hyped',
+        hypeCount: updatedShow.hypeCount,
+        hypeBalance: result.balance,
+      });
     }
 
     // Profile hype — toggle on/off
+    const targetProfile = await db.profile.findFirst({
+      where: { id: payload.targetId, discoverable: true },
+      select: { ownerId: true },
+    });
+    if (!targetProfile) {
+      return NextResponse.json({ error: 'Public profile not found' }, { status: 404 });
+    }
+    if (targetProfile.ownerId === session.user.id) {
+      return NextResponse.json({ error: 'You cannot HYPE your own profile.' }, { status: 409 });
+    }
     const existing = await db.profileHypeEvent.findUnique({
       where: { userId_profileId: { userId: session.user.id, profileId: payload.targetId } }
     });
 
     if (existing) {
       // Toggle off: unhype the profile.
-      const [, updatedProfile] = await db.$transaction([
-        db.profileHypeEvent.delete({ where: { userId_profileId: { userId: session.user.id, profileId: payload.targetId } } }),
-        db.profile.update({ where: { id: payload.targetId }, data: { hypeCount: { decrement: 1 } } })
-      ]);
+      const result = await db.$transaction(async (tx) => {
+        await tx.profileHypeEvent.delete({
+          where: { userId_profileId: { userId: session.user.id, profileId: payload.targetId } },
+        });
+        const refund = await applyHypeEntry(tx, {
+          userId: session.user.id,
+          amount: 1,
+          source: 'HYPE_REFUND',
+          idempotencyKey: `profile-unhype:${existing.id}`,
+          targetType: 'profile',
+          targetId: payload.targetId,
+        });
+        const updatedProfile = await tx.profile.update({
+          where: { id: payload.targetId },
+          data: { hypeCount: { decrement: 1 } },
+        });
+        return { updatedProfile, balance: refund.entry?.balanceAfter };
+      });
       await recordAuditEvent({
         actorUserId: session.user.id,
         action: 'profile_unhyped',
         entityType: 'profile',
         entityId: payload.targetId
       });
-      return NextResponse.json({ action: 'unhyped', hypeCount: Math.max(0, updatedProfile.hypeCount) });
+      return NextResponse.json({
+        action: 'unhyped',
+        hypeCount: Math.max(0, result.updatedProfile.hypeCount),
+        hypeBalance: result.balance,
+      });
     }
 
-    const [, updatedProfile] = await db.$transaction([
-      db.profileHypeEvent.create({ data: { userId: session.user.id, profileId: payload.targetId } }),
-      db.profile.update({ where: { id: payload.targetId }, data: { hypeCount: { increment: 1 } } })
-    ]);
+    const result = await db.$transaction(async (tx) => {
+      const hype = await tx.profileHypeEvent.create({
+        data: { userId: session.user.id, profileId: payload.targetId },
+      });
+      const spend = await applyHypeEntry(tx, {
+        userId: session.user.id,
+        amount: -1,
+        source: 'HYPE_GIVEN',
+        idempotencyKey: `profile-hype:${hype.id}`,
+        targetType: 'profile',
+        targetId: payload.targetId,
+      });
+      const updatedProfile = await tx.profile.update({
+        where: { id: payload.targetId },
+        data: { hypeCount: { increment: 1 } },
+      });
+      return { updatedProfile, balance: spend.entry?.balanceAfter };
+    });
+    const updatedProfile = result.updatedProfile;
 
     await recordAuditEvent({
       actorUserId: session.user.id,
@@ -313,8 +406,15 @@ export async function POST(request: NextRequest) {
       })
       .catch(() => {});
 
-    return NextResponse.json({ action: 'hyped', hypeCount: updatedProfile.hypeCount });
+    return NextResponse.json({
+      action: 'hyped',
+      hypeCount: updatedProfile.hypeCount,
+      hypeBalance: result.balance,
+    });
   } catch (err) {
+    if (err instanceof InsufficientHypeError) {
+      return NextResponse.json({ error: err.message, code: 'INSUFFICIENT_HYPE' }, { status: 409 });
+    }
     log.error('[hype]', err instanceof Error ? err : { error: String(err) });
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }

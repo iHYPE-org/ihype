@@ -119,7 +119,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
 
       <div className={`legal-doc${tab === 'charter' ? ' active' : ''}`}>
         <h2>{t('legalPage.charter.problemTitle', 'The problem we built this to fix')}</h2>
-        <p>{t('legalPage.charter.problemBody', "Pay-to-play has quietly broken live music. Venues need to book artists people will actually pay to see — but have no way to know that themselves, so they lean on promoters chasing their own cut, and ticket platforms tack fees on top of that. What's left barely covers the room, or loses money outright. Fans never hear about new artists. Artists can't afford to keep making music. Venues stop booking altogether. iHYPE exists to break that cycle.")}</p>
+        <p>{t('legalPage.charter.problemBody', "We built iHYPE after living this problem as a band that went to New York City to try to make it. We had to pay to play, accept exposure-only gigs, find fans ourselves, find venues ourselves, and watch everyone take a piece. That system asks musicians to do every job except make music, while fans still struggle to discover them. iHYPE connects local discovery, genuine fan demand, booking, and ticket income so artists, venues, and DJs can spend less time fighting the system and more time building the scene.")}</p>
         <h2>{t('legalPage.charter.constraintTitle', 'The founding constraint')}</h2>
         <p>{t('legalPage.charter.constraintBody', "iHYPE was incorporated with a single non-negotiable structural commitment: the platform takes nothing from ticket sales. This commitment is embedded in the company's founding documents and cannot be amended by management, board resolution, investor pressure, or acquisition.")}</p>
         <h2>{t('legalPage.charter.splitTitle', 'The split')}</h2>
@@ -146,9 +146,21 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         <h2>{t('legalPage.charter.dataTitle', 'Your data is never for sale')}</h2>
         <p>{t('legalPage.charter.dataBodyIntro', 'iHYPE does not aggregate user data for resale and never sells it to advertisers or anyone else — not now, not after an acquisition. This is a charter commitment, not a policy that can be quietly reversed. See our')} <Link href="/info?tab=privacy">{t('legalPage.charter.privacyPolicyLink', 'Privacy Policy')}</Link> {t('legalPage.charter.dataBodyOutro', 'for exactly what we collect and why.')}</p>
         <h2>{t('legalPage.charter.voteTitle', 'You get a vote')}</h2>
-        <p>{t('legalPage.charter.voteBody', 'Users of iHYPE are treated as stakeholders, not just customers. Meaningful changes to the platform — the split, moderation rules, new fees of any kind — are put to the people who use it, with feedback built into every release.')}</p>
+        <p>{t('legalPage.charter.voteBody', 'Fan users are treated as stakeholders, not just customers. Every proposed product feature change is put through a vote on the Community page, where every fan account gets a voice. The result becomes part of the public product record so platform direction cannot be quietly rewritten behind closed doors.')}</p>
+        <p><Link href="/community" className="charter-inline-link">{t('legalPage.charter.communityVoteLink', 'See Community proposals and votes →')}</Link></p>
+        <h2>{t('legalPage.charter.boardTitle', 'Independent annual oversight')}</h2>
+        <p>{t('legalPage.charter.boardBody', 'A three-person corporate board, whose members are unrelated to the two founders, performs annual checks and balances over the organization. The board reviews governance, finances, compensation, compliance, and mission alignment. It retains the fiduciary responsibilities required of a nonprofit board; community feature votes govern product direction without replacing those legal duties.')}</p>
         <h2>{t('legalPage.charter.fundedTitle', 'Funded like radio, not like Big Tech')}</h2>
         <p>{t('legalPage.charter.fundedBody', 'iHYPE is funded entirely by advertising, the same way terrestrial radio has always worked — and those ads are restricted to music-related sources only, forever. No user-data resale funds this platform, and no other category of advertiser will ever be let in to change that.')}</p>
+        <h2>{t('legalPage.charter.nonprofitTitle', 'A scene-run 501(c)(3)')}</h2>
+        <p>{t('legalPage.charter.nonprofitBody', 'iHYPE is a certified 501(c)(3) philanthropic platform. It has no outside owners waiting for a return and no investor distribution hiding behind the mission. Revenue exists to keep the infrastructure working, compensate the small team fairly, and advance the local-music mission.')}</p>
+        <h2>{t('legalPage.charter.revenueTitle', 'Where advertising revenue goes')}</h2>
+        <ol>
+          <li>{t('legalPage.charter.revenueInfrastructure', 'First: infrastructure and necessary operating vendors — hosting, storage, email, payments, security, monitoring, and the tools required to keep iHYPE reliable.')}</li>
+          <li>{t('legalPage.charter.revenueCompensation', 'Second, only when sustainably affordable: fair, fully disclosed compensation for the two employees who operate the platform. iHYPE may never be large enough to become their only employment; the goal is eventually to let both founders focus on it full-time so its systems, privacy, and local-scene mission remain protected for the long term. The intended all-in ceiling is $100,000 per employee per year, including benefits, and actual compensation must still be reasonable for the work and the organization’s circumstances.')}</li>
+          <li>{t('legalPage.charter.revenueMission', 'Then: remaining resources stay with the mission — improving the platform and strengthening local scenes. They are not distributed to founders, investors, or private owners.')}</li>
+        </ol>
+        <p>{t('legalPage.charter.compensationGovernance', 'The ceiling is not a target, entitlement, or promise of payment. Founder compensation will not be self-approved. It must be approved in advance by conflict-free members of the independent three-person board using appropriate comparable compensation data, documented at the time of approval, reviewed through the board’s annual checks and balances, and published through iHYPE’s transparency reporting.')}</p>
         {/* Only the part /charter said that this tab did not. Its full
             paragraph opened with the same sentence as fundedBody above, so
             folding it in verbatim would have printed that sentence twice. */}
@@ -210,6 +222,8 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         .legal-doc.active { display: block; }
         .legal-doc h2 { font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; font-size: 1.15rem; letter-spacing: -.02em; margin: 2.5rem 0 .6rem; color: var(--ink); }
         .legal-doc p { font-size: .9rem; color: var(--ink-2); line-height: 1.75; margin-bottom: .85rem; }
+        .legal-doc ol { color: var(--ink-2); font-size: .9rem; line-height: 1.75; padding-left: 1.25rem; }
+        .legal-doc li + li { margin-top: .65rem; }
         .legal-doc a { color: var(--accent); }
         .legal-split-display { font-family: var(--f-d, 'Syne', sans-serif) !important; font-weight: 800; font-size: 1.5rem; letter-spacing: -.03em; color: var(--ink) !important; line-height: 1.3; margin: 1rem 0 !important; }
         /* Carried over from the standalone /charter page's own <style> block

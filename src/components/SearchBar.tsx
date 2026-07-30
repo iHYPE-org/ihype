@@ -2,15 +2,13 @@
 
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
 import { useI18n } from '@/components/I18nProvider';
 
-export function SearchBar() {
+export function SearchBar({ compact = false }: { compact?: boolean }) {
   const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-  const { data: session, status } = useSession();
 
   function handleIconClick() {
     setExpanded(true);
@@ -30,37 +28,24 @@ export function SearchBar() {
     setExpanded(false);
   }
 
-  // Search is an app feature, not marketing chrome — matches SiteNavTabs
-  // hiding Listen/Events/Pages for logged-out desktop visitors.
-  if (status === 'loading' || !session?.user) return null;
-
   return (
     <>
       {/* Desktop: always visible inline form */}
       <form
         action="/search"
         method="get"
-        className="search-bar-desktop"
+        className={`search-bar-desktop${compact ? ' is-compact' : ''}`}
       >
         <input
           name="q"
           placeholder={t('searchBar.placeholder', 'Search artists, shows…')}
           type="search"
-          style={{
-            background: 'var(--bg-3)',
-            border: '1px solid var(--line-2)',
-            borderRadius: 6,
-            color: 'var(--ink)',
-            fontSize: 13,
-            padding: '5px 10px',
-            width: '100%'
-          }}
         />
       </form>
 
       {/* Mobile: icon button that expands to overlay */}
       <button
-        className="search-bar-mobile-trigger"
+        className={`search-bar-mobile-trigger${compact ? ' is-visible' : ''}`}
         aria-label={t('searchBar.searchAriaLabel', 'Search')}
         onClick={handleIconClick}
       >

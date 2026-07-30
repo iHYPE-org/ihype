@@ -125,11 +125,11 @@ export default async function FanDashboardPage() {
     <div className="fan-dash-container">
       <div className="fan-dash-header">
         <div>
-          <div className="fan-dash-eyebrow">{t('meDashboardPage.welcomeBack', 'Welcome back')}</div>
-          <h1>{displayName}</h1>
+          <div className="fan-dash-eyebrow">{t('meDashboardPage.welcomeBack', 'Welcome back')}, {displayName}</div>
+          <h1>{t('meDashboardPage.sceneAmplified', 'Your scene, amplified.')}</h1>
         </div>
         <div className="fan-dash-header-actions">
-          <Link className="ihype-btn-outline" href="/listen">{t('meDashboardPage.findAShow', 'Find a show')}</Link>
+          <Link className="ihype-btn-outline" href="/listen?tab=seeds">{t('meDashboardPage.startSeed', 'Start Seed')}</Link>
         </div>
       </div>
 
@@ -217,8 +217,10 @@ export default async function FanDashboardPage() {
             <span className="fan-dash-eyebrow-sm">{t('meDashboardPage.quickActions', 'Quick Actions')}</span>
           </div>
           <div className="fan-dash-actions">
-            <Link className="ihype-btn-outline fan-dash-action" href="/listen">{t('meDashboardPage.browseEvents', 'Browse events')}</Link>
+            <Link className="ihype-btn-outline fan-dash-action" href="/shows">{t('meDashboardPage.browseEvents', 'Browse events')}</Link>
             <Link className="ihype-btn-outline fan-dash-action" href="/tickets">{t('meDashboardPage.viewMyTickets', 'View my tickets')}</Link>
+            <Link className="ihype-btn-outline fan-dash-action" href="/community">{t('meDashboardPage.communityVotes', 'Community votes')}</Link>
+            <Link className="ihype-btn-outline fan-dash-action" href="/me/promote">{t('meDashboardPage.hypeLinkEarnings', 'HYPE Link earnings')}</Link>
             {ownFanProfile ? (
               <Link className="ihype-btn-outline fan-dash-action" href={`/fans/${ownFanProfile.slug}`}>{t('meDashboardPage.viewMyPage', 'View my page')}</Link>
             ) : (

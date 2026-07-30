@@ -7,8 +7,12 @@ import { isAdminSession } from '@/lib/permissions';
 import { getRateLimitMetrics } from '@/lib/rate-limit';
 import {
   areDemoLoginsEnabledRuntime,
+  areRegistrationsEnabledRuntime,
+  areUploadsEnabledRuntime,
   getRuntimeFlag,
+  isAdvertisingEnabledRuntime,
   isInviteCodeRequiredRuntime,
+  isOutboundEmailEnabledRuntime,
   shouldHideDemoContentRuntime,
 } from '@/lib/runtime-flags';
 import { isBlobMediaStorageConfigured } from '@/lib/media-storage';
@@ -115,12 +119,20 @@ export async function GET() {
       demoContentHidden,
       blobMediaStorageEnabled,
       ticketPaymentCaptureEnabled,
+      registrationsEnabled,
+      uploadsEnabled,
+      outboundEmailEnabled,
+      advertisingEnabled,
     ] = await Promise.all([
       areDemoLoginsEnabledRuntime(),
       isInviteCodeRequiredRuntime(),
       shouldHideDemoContentRuntime(),
       getRuntimeFlag('blob_media_storage', isBlobMediaStorageConfigured()),
       getRuntimeFlag('ticket_payment_capture', isPaymentProcessingConfigured()),
+      areRegistrationsEnabledRuntime(),
+      areUploadsEnabledRuntime(),
+      isOutboundEmailEnabledRuntime(),
+      isAdvertisingEnabledRuntime(),
     ]);
 
     const rateLimitMetrics = await getRateLimitMetrics(10);
@@ -154,6 +166,10 @@ export async function GET() {
         { key: 'hide_demo_content', label: 'Hide demo content', enabled: demoContentHidden },
         { key: 'blob_media_storage', label: 'Blob media storage', enabled: blobMediaStorageEnabled },
         { key: 'ticket_payment_capture', label: 'Ticket payment capture', enabled: ticketPaymentCaptureEnabled },
+        { key: 'registrations_enabled', label: 'New registrations', enabled: registrationsEnabled },
+        { key: 'uploads_enabled', label: 'Media uploads', enabled: uploadsEnabled },
+        { key: 'outbound_email_enabled', label: 'Outbound email', enabled: outboundEmailEnabled },
+        { key: 'advertising_enabled', label: 'Advertising', enabled: advertisingEnabled },
       ],
       rateLimitMetrics,
     });

@@ -3,11 +3,8 @@ import type { Metadata, Viewport } from 'next';
 import { ReactNode } from 'react';
 import { Syne, DM_Sans, JetBrains_Mono, Instrument_Serif, Forum } from 'next/font/google';
 import { AppProviders } from '@/components/AppProviders';
-import { HeaderAuthLinks } from '@/components/HeaderAuthLinks';
-import { HeaderLogo } from '@/components/HeaderLogo';
+import { AdaptiveSiteHeader } from '@/components/AdaptiveSiteHeader';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
-import { SearchBar } from '@/components/SearchBar';
-import { SiteNavTabs } from '@/components/SiteNavTabs';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { SitePlayerDock } from '@/components/GlobalMediaPlayer';
@@ -69,8 +66,12 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   // flag lives in KV. One extra KV read per render, alongside the nonce and
   // dictionary reads this layout already does.
   const inviteOnly = await isInviteCodeRequiredRuntime();
+  const themeBootstrap = `(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}document.documentElement.setAttribute('data-theme',t)}catch(e){}})();`;
   return (
     <html lang="en" suppressHydrationWarning className={`${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} ${forum.variable}`}>
+      <head>
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
+      </head>
       <body>
         <AppProviders>
           <MobileShellProvider>
@@ -84,18 +85,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               <span className="site-background-grid" />
             </div>
             {/* Marketing nav — hidden when .wb-shell is present via CSS */}
-            <header aria-label={t('layout.primarySiteHeader', 'Primary site header')} className="nav site-nav" style={{ height: 56 }}>
-              <div className="container" style={{ display: 'flex', alignItems: 'stretch', height: '100%', gap: '1rem' }}>
-                <HeaderLogo />
-                <div style={{ flex: 1, display: 'flex', alignItems: 'stretch' }}>
-                  <SiteNavTabs />
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                  <SearchBar />
-                  <HeaderAuthLinks inviteOnly={inviteOnly} />
-                </div>
-              </div>
-            </header>
+            <AdaptiveSiteHeader
+              inviteOnly={inviteOnly}
+              label={t('layout.primarySiteHeader', 'Primary site header')}
+            />
             <MobileBottomNav />
             <MobileAppShellLoader />
             <div className="site-shell">

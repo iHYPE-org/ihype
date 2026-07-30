@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { enqueueEmail } from '@/lib/email-queue';
 import { createUnsubscribeToken } from '@/lib/unsubscribe';
 import { getBaseUrl } from '@/lib/utils';
+import { isOutboundEmailEnabledRuntime } from '@/lib/runtime-flags';
 
 function getEmailFrom() {
   return env.EMAIL_FROM;
@@ -115,6 +116,10 @@ export async function sendMarketingEmail(
 }
 
 export async function sendGenericEmail(input: ConfiguredEmailInput) {
+  if (!(await isOutboundEmailEnabledRuntime())) {
+    log.warn('[email]', { subject: input.subject }, 'outbound email disabled by runtime flag');
+    throw new Error('Outbound email is temporarily disabled.');
+  }
   if (!isEmailDeliveryConfigured()) {
     if (process.env.NODE_ENV !== 'production') {
       console.info(`[generic-email] ${input.to} :: ${input.subject}`);

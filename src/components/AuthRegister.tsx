@@ -286,9 +286,9 @@ export function RegisterScreen({
           ? t('authRegister.subtitlePasskey', 'Retry the device prompt or finish with a magic link. Your account is not stranded.')
           : step === 'magic-link-sent'
           ? t('authRegister.subtitleMagicLinkSent', 'Check your inbox for a one-tap link to finish signing in. You can add a passkey later from Settings.')
-          : t('authRegister.subtitleDefault', 'Zero fees. 70/20/10. iHYPE takes nothing.')
+          : t('authRegister.subtitleDefault', 'A free fan account for discovering, supporting, and strengthening local music.')
       }
-      title={t('authRegister.title', 'Create account.')}
+      title={t('authRegister.title', 'Join your local scene.')}
     >
       {step === 'gate' ? (
         <div className="authcard-gate">
@@ -316,6 +316,9 @@ export function RegisterScreen({
               {gateChecking ? t('authRegister.checking', 'Checking…') : t('authRegister.continueBtn', 'Continue')}
             </button>
           </form>
+          <p className="authcard-privacy-promise">
+            <span aria-hidden="true">◇</span> {t('authRegister.privacyPromise', 'Free forever. We never sell your data.')}
+          </p>
           {gateError ? <p className="authcard-status authcard-status-error">{gateError}</p> : null}
           <RequestBetaAccessForm role={role} />
         </div>
@@ -473,6 +476,9 @@ export function RegisterScreen({
             onToken={setTurnstileToken}
             onExpire={() => setTurnstileToken('')}
           />
+          <p className="authcard-privacy-promise">
+            <span aria-hidden="true">◇</span> {t('authRegister.privacyPromise', 'Free forever. We never sell your data.')}
+          </p>
           <button className="authcard-btn-primary" disabled={isSubmitting} type="submit">
             {isSubmitting
               ? t('authRegister.settingUp', 'Setting up...')

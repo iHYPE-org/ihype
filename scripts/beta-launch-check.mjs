@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Validates required configuration before beta launch.
+ * Validates required configuration before alpha or beta launch.
  *
  * Usage:
  *   node -r dotenv/config scripts/beta-launch-check.mjs
@@ -13,9 +13,11 @@ const REQUIRED = [
   { key: 'DATABASE_URL', hint: 'Runtime Postgres connection URL' },
   { key: 'RESEND_API_KEY', hint: 'Required for OTP login and account email' },
   { key: 'RESEND_WEBHOOK_SECRET', hint: 'Verifies bounce, complaint, and delivery webhooks' },
+  { key: 'EMAIL_FROM', hint: 'Verified Resend sender address' },
   { key: 'CRON_SECRET', hint: 'Protects /api/cron/* routes; generate with: openssl rand -hex 32' },
   { key: 'TURNSTILE_SECRET_KEY', hint: 'Required for production signup abuse protection' },
   { key: 'ADMIN_DEVICE_SECRET', hint: 'Protects admin-device registration; generate with: openssl rand -hex 32' },
+  { key: 'ADMIN_ALERT_EMAIL', hint: 'Comma-separated operational alert recipients' },
   { key: 'VAPID_PUBLIC_KEY', hint: 'Generate with: node scripts/generate-vapid-keys.mjs' },
   { key: 'VAPID_PRIVATE_KEY', hint: 'Generate with: node scripts/generate-vapid-keys.mjs' },
   { key: 'VAPID_SUBJECT', hint: 'e.g. mailto:hello@ihype.org' },
@@ -42,7 +44,7 @@ const OPTIONAL = [
 ];
 
 let failed = false;
-console.log('\n=== iHYPE Beta Launch Configuration Check ===\n');
+console.log('\n=== iHYPE Alpha Launch Configuration Check ===\n');
 console.log(`  Paid ticketing: ${paymentEnabled ? 'ENABLED' : 'DISABLED'}\n`);
 
 for (const { key, hint } of REQUIRED) {
@@ -104,4 +106,4 @@ if (failed) {
   process.exit(1);
 }
 
-console.log('\nPASSED: required beta configuration is present.\n');
+console.log('\nPASSED: required alpha configuration is present.\n');

@@ -1,5 +1,5 @@
 name = "ihype-cron"
-compatibility_date = "2026-05-29"
+compatibility_date = "2026-07-30"
 main = "workers/cron.ts"
 
 [build]
@@ -7,6 +7,10 @@ command = ""
 
 [vars]
 APP_BASE_URL = "https://ihype.org"
+
+[observability]
+enabled = true
+head_sampling_rate = 1
 
 # CRON_SECRET must be set as a secret:
 #   wrangler secret put CRON_SECRET --config wrangler.cron.toml
