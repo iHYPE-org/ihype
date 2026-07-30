@@ -16,6 +16,7 @@ import { recordAuditEvent } from '@/lib/audit';
 import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { log } from '@/lib/logger';
+import { exceedsDeclaredRequestSize } from '@/lib/request-size';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +25,7 @@ const MAX_ARTWORK_FILE_SIZE_BYTES = 8 * 1024 * 1024;
 const ARTWORK_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 const MAX_PROFILE_STORAGE_BYTES = 250 * 1024 * 1024;
 const MAX_PROFILE_TRACKS = 100;
+const MAX_UPLOAD_REQUEST_SIZE_BYTES = 20 * 1024 * 1024;
 
 class MediaQuotaError extends Error {}
 
@@ -95,6 +97,12 @@ export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Login required' }, { status: 401 });
+  }
+
+  // Reject declared oversized bodies before request.formData() can buffer
+  // them. Edge/WAF limits remain necessary for chunked or dishonest clients.
+  if (exceedsDeclaredRequestSize(request, MAX_UPLOAD_REQUEST_SIZE_BYTES)) {
+    return NextResponse.json({ error: 'Upload request is limited to 20MB.' }, { status: 413 });
   }
 
   const rateLimit = await consumeRateLimit(
