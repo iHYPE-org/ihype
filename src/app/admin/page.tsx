@@ -20,8 +20,12 @@ import { isAdminSession } from '@/lib/permissions';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import {
   areDemoLoginsEnabledRuntime,
+  areRegistrationsEnabledRuntime,
+  areUploadsEnabledRuntime,
   getRuntimeFlag,
+  isAdvertisingEnabledRuntime,
   isInviteCodeRequiredRuntime,
+  isOutboundEmailEnabledRuntime,
   shouldHideDemoContentRuntime
 } from '@/lib/runtime-flags';
 import { getServerT } from '@/lib/i18n/server';
@@ -233,20 +237,32 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
     inviteOnlySignupEnabled,
     demoContentHidden,
     blobMediaStorageEnabled,
-    ticketPaymentCaptureEnabled
+    ticketPaymentCaptureEnabled,
+    registrationsEnabled,
+    uploadsEnabled,
+    outboundEmailEnabled,
+    advertisingEnabled,
   ] = await Promise.all([
     areDemoLoginsEnabledRuntime(),
     isInviteCodeRequiredRuntime(),
     shouldHideDemoContentRuntime(),
     getRuntimeFlag('blob_media_storage', isBlobMediaStorageConfigured()),
-    getRuntimeFlag('ticket_payment_capture', isPaymentProcessingConfigured())
+    getRuntimeFlag('ticket_payment_capture', isPaymentProcessingConfigured()),
+    areRegistrationsEnabledRuntime(),
+    areUploadsEnabledRuntime(),
+    isOutboundEmailEnabledRuntime(),
+    isAdvertisingEnabledRuntime(),
   ]);
   const featureFlags = [
     { key: 'demo_logins', label: 'Demo logins', enabled: demoLoginsEnabled },
     { key: 'invite_only_signup', label: 'Invite-only signup', enabled: inviteOnlySignupEnabled },
     { key: 'hide_demo_content', label: 'Hide demo content', enabled: demoContentHidden },
     { key: 'blob_media_storage', label: 'Blob media storage', enabled: blobMediaStorageEnabled },
-    { key: 'ticket_payment_capture', label: 'Ticket payment capture', enabled: ticketPaymentCaptureEnabled }
+    { key: 'ticket_payment_capture', label: 'Ticket payment capture', enabled: ticketPaymentCaptureEnabled },
+    { key: 'registrations_enabled', label: 'New registrations', enabled: registrationsEnabled },
+    { key: 'uploads_enabled', label: 'Media uploads', enabled: uploadsEnabled },
+    { key: 'outbound_email_enabled', label: 'Outbound email', enabled: outboundEmailEnabled },
+    { key: 'advertising_enabled', label: 'Advertising', enabled: advertisingEnabled },
   ];
   const rateLimitMetrics = await getRateLimitMetrics(10);
   const betaMetrics = await getBetaMetrics().catch(() => null);

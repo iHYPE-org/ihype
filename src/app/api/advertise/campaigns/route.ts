@@ -14,12 +14,16 @@ import {
   isAdScope, isAdRunLengthDays, quoteAdCampaign,
   AD_SCOPE_LABELS, MIN_SPOTS_PER_DAY, MAX_SPOTS_PER_DAY,
 } from '@/lib/ad-pricing';
+import { isAdvertisingEnabledRuntime } from '@/lib/runtime-flags';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+  if (!(await isAdvertisingEnabledRuntime())) {
+    return NextResponse.json({ error: 'New advertising campaigns are temporarily paused.' }, { status: 503 });
+  }
 
   const campaigns = await db.ad.findMany({
     where: { advertiserId: session.user.id },

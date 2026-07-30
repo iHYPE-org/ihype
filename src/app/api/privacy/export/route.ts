@@ -132,6 +132,14 @@ export async function GET() {
         },
       },
       hypeEvents: true,
+      hypeLedgerEntries: true,
+      featureVotes: {
+        include: {
+          featureRequest: {
+            select: { id: true, title: true, status: true, resultPublishedAt: true },
+          },
+        },
+      },
       mediaListens: true,
       showListens: true,
       profileHypeEvents: true,

@@ -15,7 +15,7 @@ import { profileAccentToneIds, profileBackdropToneIds, profileDesignPresetIds } 
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { verifyTurnstileToken } from '@/lib/turnstile';
-import { isInviteCodeRequiredRuntime, isReservedPlatformEmail, isValidInviteCode } from '@/lib/runtime-flags';
+import { areRegistrationsEnabledRuntime, isInviteCodeRequiredRuntime, isReservedPlatformEmail, isValidInviteCode } from '@/lib/runtime-flags';
 import { getUsernameValidationMessage, isValidUsername, normalizeUsername } from '@/lib/usernames';
 import { generateUniqueNonwordSlug } from '@/lib/nonword-slug';
 import { log } from '@/lib/logger';
@@ -95,6 +95,13 @@ function getVenueProfileOverrides(body: z.infer<typeof schema>) {
 
 export async function POST(request: Request) {
   try {
+    if (!(await areRegistrationsEnabledRuntime())) {
+      return NextResponse.json(
+        { error: 'New registrations are temporarily paused. Please try again soon.' },
+        { status: 503, headers: { 'Retry-After': '900' } },
+      );
+    }
+
     const clientAddress = readClientAddress(request);
     const rateLimit = await consumeRateLimit(`register:${clientAddress}`, {
       limit: 8,

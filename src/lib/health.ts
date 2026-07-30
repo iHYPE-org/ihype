@@ -2,7 +2,15 @@ import { db } from '@/lib/db';
 import { getEmailDeliveryReadiness, isEmailDeliveryConfigured, isSmtpEmailConfigured } from '@/lib/mailer';
 import { isBlobMediaStorageConfigured } from '@/lib/media-storage';
 import { getPaymentProcessingReadiness, isPaymentProcessingConfigured } from '@/lib/payments';
-import { areDemoLoginsEnabledRuntime, isInviteCodeRequiredRuntime, shouldHideDemoContentRuntime } from '@/lib/runtime-flags';
+import {
+  areDemoLoginsEnabledRuntime,
+  areRegistrationsEnabledRuntime,
+  areUploadsEnabledRuntime,
+  isAdvertisingEnabledRuntime,
+  isInviteCodeRequiredRuntime,
+  isOutboundEmailEnabledRuntime,
+  shouldHideDemoContentRuntime,
+} from '@/lib/runtime-flags';
 import { readRuntimeEnv } from '@/lib/runtime-env';
 
 export async function getHealthSnapshot() {
@@ -11,20 +19,49 @@ export async function getHealthSnapshot() {
   const stripeSecretKey = readRuntimeEnv('STRIPE_SECRET_KEY');
 
   try {
-    const [userCount, openReportCount, openSupportCount, failedEmailCount, pendingVerificationCount, reservedTicketCount] =
+    const [
+      userCount,
+      openReportCount,
+      openSupportCount,
+      failedEmailCount,
+      pendingVerificationCount,
+      reservedTicketCount,
+      pendingNotificationCount,
+      failedNotificationCount,
+      oldestPendingNotification,
+    ] =
       await Promise.all([
         db.user.count(),
         db.contentReport.count({ where: { status: 'OPEN' } }),
         db.supportRequest.count({ where: { status: 'OPEN' } }),
         db.emailDeliveryLog.count({ where: { status: 'FAILED', createdAt: { gte: since } } }),
         db.profile.count({ where: { verificationStatus: 'PENDING', verificationRequested: true } }),
-        db.ticketOrder.count({ where: { status: 'RESERVED' } })
+        db.ticketOrder.count({ where: { status: 'RESERVED' } }),
+        db.notificationJob.count({ where: { status: 'PENDING' } }),
+        db.notificationJob.count({ where: { status: 'FAILED' } }),
+        db.notificationJob.findFirst({
+          where: { status: 'PENDING' },
+          orderBy: { createdAt: 'asc' },
+          select: { createdAt: true },
+        }),
       ]);
 
-    const [demoLogins, inviteOnlySignup, demoContentHidden] = await Promise.all([
+    const [
+      demoLogins,
+      inviteOnlySignup,
+      demoContentHidden,
+      registrationsEnabled,
+      uploadsEnabled,
+      outboundEmailEnabled,
+      advertisingEnabled,
+    ] = await Promise.all([
       areDemoLoginsEnabledRuntime(),
       isInviteCodeRequiredRuntime(),
-      shouldHideDemoContentRuntime()
+      shouldHideDemoContentRuntime(),
+      areRegistrationsEnabledRuntime(),
+      areUploadsEnabledRuntime(),
+      isOutboundEmailEnabledRuntime(),
+      isAdvertisingEnabledRuntime(),
     ]);
 
     const emailReadiness = getEmailDeliveryReadiness();
@@ -56,7 +93,10 @@ export async function getHealthSnapshot() {
         openSupportRequests: openSupportCount,
         failedEmails24h: failedEmailCount,
         pendingVerifications: pendingVerificationCount,
-        reservedTicketOrders: reservedTicketCount
+        reservedTicketOrders: reservedTicketCount,
+        pendingNotifications: pendingNotificationCount,
+        failedNotifications: failedNotificationCount,
+        oldestPendingNotificationAt: oldestPendingNotification?.createdAt.toISOString() ?? null,
       },
       integrations: {
         emailDelivery: isEmailDeliveryConfigured(),
@@ -67,7 +107,11 @@ export async function getHealthSnapshot() {
       safety: {
         demoLogins,
         inviteOnlySignup,
-        demoContentHidden
+        demoContentHidden,
+        registrationsEnabled,
+        uploadsEnabled,
+        outboundEmailEnabled,
+        advertisingEnabled,
       },
       sentryConfigured: Boolean(readRuntimeEnv('SENTRY_DSN') ?? readRuntimeEnv('NEXT_PUBLIC_SENTRY_DSN')),
       stripeMode: stripeSecretKey?.startsWith('sk_live_')

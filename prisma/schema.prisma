@@ -112,6 +112,8 @@ model User {
   shows                   Show[]                   @relation("CreatedShows")
   ticketOrders            TicketOrder[]            @relation("BuyerTicketOrders")
   hypeEvents              HypeEvent[]
+  hypeLedgerEntries       HypeLedgerEntry[]
+  featureVotes            FeatureVote[]
   mediaListens            MediaListen[]
   showListens             ShowListen[]
   profileHypeEvents       ProfileHypeEvent[]
@@ -153,6 +155,7 @@ model User {
   adminDeviceSetAt        DateTime?
   earningsSummarySentAt   DateTime?
   advertiserAccount       AdvertiserAccount?
+  hypeBalance             Int                      @default(0)
 }
 
 // A private, non-public account for a non-"app-user" advertiser (e.g. a gear
@@ -768,6 +771,27 @@ model HypeEvent {
   @@index([showId])
 }
 
+/// Append-only accounting for HYPE earned and used. `idempotencyKey` makes
+/// every reward/spend safe to retry, while `balanceAfter` makes disputes and
+/// privacy exports explainable without reconstructing historical state.
+model HypeLedgerEntry {
+  id             String   @id @default(cuid())
+  userId         String
+  amount         Int
+  balanceAfter   Int
+  source         String
+  targetType     String?
+  targetId       String?
+  idempotencyKey String   @unique
+  metadata       Json?
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([source, createdAt])
+  @@index([targetType, targetId])
+}
+
 model SetlistVote {
   id        String   @id @default(cuid())
   showId    String
@@ -1147,16 +1171,37 @@ model CollabBoardPost {
 }
 
 model FeatureRequest {
-  id          String   @id @default(cuid())
-  userId      String?
-  title       String
-  description String
-  votes       Int      @default(0)
-  status      String   @default("open")
-  createdAt   DateTime @default(now())
+  id                    String        @id @default(cuid())
+  userId                String?
+  title                 String
+  description           String
+  votes                 Int           @default(0)
+  status                String        @default("open")
+  votingOpensAt         DateTime       @default(now())
+  votingClosesAt        DateTime?
+  quorumRequired        Int            @default(1)
+  resultPublishedAt     DateTime?
+  securityException     Boolean        @default(false)
+  securityExceptionNote String?
+  createdAt             DateTime       @default(now())
+  featureVotes          FeatureVote[]
 
   @@index([status, votes])
   @@index([createdAt])
+  @@index([status, votingClosesAt])
+}
+
+model FeatureVote {
+  id               String         @id @default(cuid())
+  featureRequestId String
+  userId           String
+  createdAt        DateTime       @default(now())
+  featureRequest   FeatureRequest @relation(fields: [featureRequestId], references: [id], onDelete: Cascade)
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([featureRequestId, userId])
+  @@index([userId, createdAt])
+  @@index([featureRequestId, createdAt])
 }
 
 model AuxQueue {

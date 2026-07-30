@@ -4,6 +4,8 @@ import { consumeRateLimit } from '@/lib/rate-limit';
 import { validateAudioMagicBytes } from '@/lib/validate-upload';
 import { parseAudioDuration } from '@/lib/audio-duration';
 import { storeMediaFile, isObjectStorageConfigured } from '@/lib/object-storage';
+import { areUploadsEnabledRuntime, isAdvertisingEnabledRuntime } from '@/lib/runtime-flags';
+import { exceedsDeclaredRequestSize } from '@/lib/request-size';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,6 +27,12 @@ const ALLOWED_TYPES = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'a
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Login required' }, { status: 401 });
+  if (!(await isAdvertisingEnabledRuntime()) || !(await areUploadsEnabledRuntime())) {
+    return NextResponse.json({ error: 'Advertising uploads are temporarily paused.' }, { status: 503 });
+  }
+  if (exceedsDeclaredRequestSize(request, MAX_AUDIO_FILE_BYTES + 1024 * 1024)) {
+    return NextResponse.json({ error: 'Upload request is limited to 11MB.' }, { status: 413 });
+  }
 
   const rl = await consumeRateLimit(`ad-audio-upload:${session.user.id}`, { limit: 10, windowMs: 60 * 60 * 1000 });
   if (!rl.allowed) {
