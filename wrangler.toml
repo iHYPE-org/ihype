@@ -3,6 +3,9 @@ main = "worker.js"
 compatibility_date = "2026-05-29"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public", "no_handle_cross_request_promise_resolution"]
 find_additional_modules = true
+rules = [
+  { type = "CompiledWasm", globs = ["**/*.wasm"], fallthrough = true }
+]
 base_dir = ".open-next/server-functions/default"
 # Production routes for ihype.org and www.ihype.org are managed in the Cloudflare dashboard.
 workers_dev = false
@@ -20,10 +23,6 @@ invocation_logs = true
 
 [observability.traces]
 enabled = true
-
-rules = [
-  { type = "CompiledWasm", globs = ["**/*.wasm"], fallthrough = true }
-]
 
 [assets]
 directory = ".open-next/assets"
