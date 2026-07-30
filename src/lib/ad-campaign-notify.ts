@@ -15,25 +15,27 @@ const STATUS_EMAIL_COPY: Record<NotifyStatus, { subject: string; body: string }>
 /**
  * Transactional email on a self-serve radio ad campaign's status change —
  * fired both from the initial AI vetting (POST /api/advertise/campaigns)
- * and an admin's manual decision (PATCH /api/admin/ads). Fire-and-forget;
- * callers should not await failure here to block the response.
+ * and an admin's manual decision (PATCH /api/admin/ads). Callers that do not
+ * block on delivery must register this promise with deferWork().
  */
-export function notifyAdvertiser(
+export async function notifyAdvertiser(
   userId: string,
   email: string | null | undefined,
   title: string,
   status: NotifyStatus,
   reasoning: string,
   checkoutUrl?: string,
+  idempotencyKey?: string,
 ) {
   if (!email) return;
   const copy = STATUS_EMAIL_COPY[status];
   const ctaUrl = status === 'AWAITING_PAYMENT' && checkoutUrl ? checkoutUrl : `${getBaseUrl()}/advertise/dashboard`;
   const ctaLabel = status === 'AWAITING_PAYMENT' && checkoutUrl ? 'Authorize payment' : 'View your campaigns';
-  sendEmailToUser(userId, {
+  await sendEmailToUser(userId, {
+    idempotencyKey,
     to: email,
     subject: copy.subject,
     text: `Your campaign "${title}" ${copy.body}\n\nReasoning: ${reasoning}\n\n${ctaLabel}: ${ctaUrl}`,
     html: `<p>Your campaign <strong>${title}</strong> ${copy.body}</p><p>Reasoning: ${reasoning}</p><p><a href="${ctaUrl}">${ctaLabel}</a></p>`,
-  }).catch(() => {});
+  });
 }

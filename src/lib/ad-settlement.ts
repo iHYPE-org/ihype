@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { settleAdCampaignAuthorization, isStripeConfigured } from '@/lib/stripe';
 import { notifyAdvertiser } from '@/lib/ad-campaign-notify';
 import { log } from '@/lib/logger';
+import { deferWork } from '@/lib/defer-work';
 
 /**
  * Pre-auth-then-capture settlement (DESIGN_SYNC row 234) — the other half
@@ -40,13 +41,13 @@ export async function settleEndedAdCampaigns(): Promise<{ settled: number; skipp
       const captureAmount = Math.min(ad.spentCents, ad.budgetCents);
       await settleAdCampaignAuthorization(ad.stripePaymentIntentId!, captureAmount);
       await db.ad.update({ where: { id: ad.id }, data: { settledAt: new Date() } });
-      notifyAdvertiser(
+      deferWork(notifyAdvertiser(
         ad.advertiserId,
         ad.advertiser.email,
         ad.title,
         'SETTLED',
         `Charged $${(captureAmount / 100).toFixed(2)} for actual delivered spend — the rest of your authorized budget was released.`,
-      );
+      ), 'ad-settlement-notification');
       settled += 1;
     } catch (error) {
       log.error('[ad-settlement]', error instanceof Error ? error : null, `Settlement failed for ad ${ad.id}`);

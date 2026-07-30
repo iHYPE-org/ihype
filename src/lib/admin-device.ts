@@ -1,10 +1,11 @@
 import crypto from 'crypto';
+import { readRuntimeEnv } from '@/lib/runtime-env';
 
 const COOKIE_NAME = 'admin_device_token';
 const OTP_EXPIRY_SEC = 20 * 60;
 
 function secret(): string {
-  const s = process.env.ADMIN_DEVICE_SECRET;
+  const s = readRuntimeEnv('ADMIN_DEVICE_SECRET');
   if (!s) throw new Error('ADMIN_DEVICE_SECRET is not set');
   return s;
 }

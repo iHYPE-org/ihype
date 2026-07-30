@@ -41,6 +41,7 @@ const JOBS: CronJob[] = [
   // Infrastructure — every 5 min
   { path: '/api/cron/show-lifecycle',       schedule: '*/5 * * * *'  },
   { path: '/api/cron/expire-reservations',  schedule: '*/5 * * * *'  },
+  { path: '/api/cron/notification-jobs',    schedule: '*/5 * * * *'  },
 
   // Health & monitoring — every 6 hours
   { path: '/api/cron?job=health-check',     schedule: '0 */6 * * *'  },

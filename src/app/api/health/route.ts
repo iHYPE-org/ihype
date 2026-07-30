@@ -5,6 +5,7 @@ import { isAdminSession } from '@/lib/permissions';
 import { getHealthSnapshot } from '@/lib/health';
 import { verifyBearerToken } from '@/lib/secret-compare';
 import { log } from '@/lib/logger';
+import { readRuntimeEnv } from '@/lib/runtime-env';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest) {
   try {
     const hasValidBearer = verifyBearerToken(
       request.headers.get('authorization'),
-      process.env.CRON_SECRET,
+      readRuntimeEnv('CRON_SECRET'),
     );
 
     if (!hasValidBearer) {

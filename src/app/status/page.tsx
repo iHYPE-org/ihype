@@ -9,6 +9,7 @@ import { getHealthSnapshot } from '@/lib/health';
 import { kvPut } from '@/lib/kv';
 import { getRateLimitMetrics } from '@/lib/rate-limit';
 import { getServerT } from '@/lib/i18n/server';
+import { readRuntimeEnv } from '@/lib/runtime-env';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const REQUIRED_ENV_VARS = ['RESEND_API_KEY', 'AUTH_SECRET', 'DATABASE_URL'] as const;
+const REQUIRED_ENV_VARS = ['RESEND_API_KEY', 'AUTH_SECRET'] as const;
 
 async function checkDb(): Promise<boolean> {
   try {
@@ -29,11 +30,13 @@ async function checkDb(): Promise<boolean> {
 }
 
 async function checkResend(): Promise<{ ok: boolean; label: string }> {
-  if (!process.env.RESEND_API_KEY) return { ok: false, label: 'API key missing' };
+  const apiKey = readRuntimeEnv('RESEND_API_KEY');
+  if (!apiKey) return { ok: false, label: 'API key missing' };
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'GET',
-      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` }
+      headers: { Authorization: `Bearer ${apiKey}` },
+      signal: AbortSignal.timeout(5_000),
     });
     // 200 or 405 both mean the key is valid
     return { ok: res.status < 500, label: res.status < 500 ? 'Reachable' : `HTTP ${res.status}` };
@@ -95,10 +98,10 @@ export default async function StatusPage() {
 
   const envChecks = REQUIRED_ENV_VARS.map((key) => ({
     key,
-    ok: Boolean(process.env[key]),
+    ok: Boolean(readRuntimeEnv(key)),
   }));
 
-  const stripePresent = Boolean(process.env.STRIPE_SECRET_KEY);
+  const stripePresent = Boolean(readRuntimeEnv('STRIPE_SECRET_KEY'));
   // Both of these degrade silently when absent — copyright fingerprinting
   // falls back to the remaining scan layers, and the rate limiter falls back
   // to a non-atomic KV counter at half the configured limit. Neither state was

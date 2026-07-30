@@ -7,6 +7,7 @@ import { AD_CAMPAIGN_STATUSES, type AdCampaignStatus } from '@/lib/ad-vetting';
 import { notifyAdvertiser } from '@/lib/ad-campaign-notify';
 import { createAdCampaignCheckoutSession } from '@/lib/stripe';
 import { log } from '@/lib/logger';
+import { deferWork } from '@/lib/defer-work';
 
 export async function GET(request: Request) {
   try {
@@ -89,14 +90,14 @@ export async function PATCH(request: Request) {
       }
     }
 
-    notifyAdvertiser(
+    deferWork(notifyAdvertiser(
       ad.advertiser.id,
       ad.advertiser.email,
       ad.title,
       storedStatus,
       'Reviewed by an iHYPE admin.',
       checkoutUrl,
-    );
+    ), 'admin-advertiser-notification');
 
     return NextResponse.json({ ad });
   } catch (err) {
