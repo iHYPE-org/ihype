@@ -47,8 +47,9 @@ serving perfectly while every scheduled job silently stops. That is the more
 dangerous failure, because payouts, settlement, reminders and the digest all
 live there.
 
-`workers/cron.ts` pings an outbound URL on **every** scheduled invocation,
-before it dispatches anything. A missing ping is the alert.
+`workers/cron.ts` pings an outbound URL only after **every job in the matched
+scheduled batch succeeds**. A missing ping therefore detects both a stopped
+scheduler and a failed or timed-out cron route.
 
 1. Create a check on any dead-man's-switch service — [Healthchecks.io] has a
    free tier that is more than adequate.
@@ -65,11 +66,9 @@ before it dispatches anything. A missing ping is the alert.
 If `HEARTBEAT_URL` is unset the ping is skipped silently, so this is safe to
 leave unconfigured — you simply have no scheduler alarm until you set it.
 
-The ping fires regardless of whether the jobs themselves succeeded. That is
-deliberate: this answers "is the scheduler alive", not "did the work
-succeed". Job outcomes already have `report-failure` and the workbench
-digest, and conflating them would let one failing job masquerade as a total
-outage.
+Individual job outcomes are also sent to `report-failure`, so the admin
+health view identifies the failing route while the missing heartbeat provides
+the independent external alert.
 
 [Healthchecks.io]: https://healthchecks.io
 

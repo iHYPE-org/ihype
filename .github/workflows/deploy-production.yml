@@ -39,6 +39,15 @@ jobs:
     steps:
       - uses: actions/checkout@e8d4307400f9427dba7cb98e488d6ab85f1cec5f
 
+      - name: Verify deployment credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${CLOUDFLARE_API_TOKEN:-}" || -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
+            echo "::error::Cloudflare deployment credentials are missing; production deployment cannot be skipped."
+            exit 1
+          fi
+
       - uses: actions/setup-node@04be95cf3511ea51ebf9f224ddfb99cc7ab87cd4
         with:
           node-version: '24'
@@ -171,6 +180,19 @@ jobs:
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4AAAAAADSF8WNxaeBIRmR7"
           FEATURE_ENABLE_TICKET_PAYMENTS: 'true'
 
+      - name: Verify cron Worker secrets
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          secrets="$(npx wrangler secret list --config wrangler.cron.toml)"
+          for required in CRON_SECRET HEARTBEAT_URL; do
+            if ! echo "$secrets" | jq -e --arg name "$required" 'any(.[]; .name == $name)' >/dev/null; then
+              echo "::error::The ihype-cron Worker is missing required secret $required."
+              exit 1
+            fi
+          done
+
       - name: Deploy cron Worker
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
         run: npx wrangler deploy --config wrangler.cron.toml
@@ -182,7 +204,7 @@ jobs:
           SMOKE_BASE_URL: https://ihype.org
           SMOKE_BYPASS_TOKEN: ${{ secrets.SMOKE_BYPASS_TOKEN }}
           SMOKE_HEALTH_BEARER: ${{ secrets.CRON_SECRET }}
-          SMOKE_ALLOW_EDGE_BLOCK: '1'
+          SMOKE_REQUIRE_LAUNCH_READY: '1'
 
       - name: Purge Cloudflare cache
         if: env.CLOUDFLARE_CACHE_PURGE_TOKEN != '' && env.CLOUDFLARE_ZONE_ID != ''

@@ -66,6 +66,9 @@ export async function getHealthSnapshot() {
 
     const emailReadiness = getEmailDeliveryReadiness();
     const paymentReadiness = getPaymentProcessingReadiness();
+    const oldestPendingNotificationAgeMinutes = oldestPendingNotification
+      ? Math.floor((Date.now() - oldestPendingNotification.createdAt.getTime()) / 60_000)
+      : 0;
     const runtimeBlockers = [
       !readRuntimeEnv('AUTH_SECRET') && 'Set AUTH_SECRET for session signing.',
       !readRuntimeEnv('CRON_SECRET') && 'Set CRON_SECRET before enabling scheduled operations.',
@@ -78,6 +81,15 @@ export async function getHealthSnapshot() {
       ...emailReadiness.blockers,
       ...paymentReadiness.blockers,
       ...runtimeBlockers,
+      ...(!registrationsEnabled ? ['New registrations are paused by the runtime safety switch.'] : []),
+      ...(!uploadsEnabled ? ['Media uploads are paused by the runtime safety switch.'] : []),
+      ...(!outboundEmailEnabled ? ['Outbound email is paused by the runtime safety switch.'] : []),
+      ...(failedNotificationCount > 0
+        ? [`Retry or resolve ${failedNotificationCount} failed notification job(s).`]
+        : []),
+      ...(oldestPendingNotificationAgeMinutes > 30
+        ? [`Notification delivery is ${oldestPendingNotificationAgeMinutes} minutes behind.`]
+        : []),
     ];
 
     return {
@@ -97,6 +109,7 @@ export async function getHealthSnapshot() {
         pendingNotifications: pendingNotificationCount,
         failedNotifications: failedNotificationCount,
         oldestPendingNotificationAt: oldestPendingNotification?.createdAt.toISOString() ?? null,
+        oldestPendingNotificationAgeMinutes,
       },
       integrations: {
         emailDelivery: isEmailDeliveryConfigured(),

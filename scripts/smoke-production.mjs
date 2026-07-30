@@ -4,6 +4,7 @@ import { promisify } from 'node:util';
 const execFileAsync = promisify(execFile);
 const baseUrl = (process.env.SMOKE_BASE_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://ihype.org').replace(/\/$/, '');
 const smokeBypassToken = process.env.SMOKE_BYPASS_TOKEN?.trim();
+const requireLaunchReady = process.env.SMOKE_REQUIRE_LAUNCH_READY === '1';
 
 const checks = [
   { path: '/', expect: [200] },
@@ -75,6 +76,13 @@ for (const check of checks) {
         console.error(`[smoke] ${check.path} health failed: ${JSON.stringify(payload)}`);
         continue;
       }
+      if (requireLaunchReady && payload.launchReadiness?.ready !== true) {
+        failed = true;
+        console.error(
+          `[smoke] ${check.path} launch readiness failed: ${JSON.stringify(payload.launchReadiness?.blockers ?? [])}`,
+        );
+        continue;
+      }
     }
 
     console.log(`[smoke] ${check.path} ${response.status} ${elapsed}ms`);
@@ -97,7 +105,7 @@ if (failed) {
     } else {
       console.warn(message);
     }
-    process.exit(0);
+    process.exit(1);
   }
 
   process.exit(1);
