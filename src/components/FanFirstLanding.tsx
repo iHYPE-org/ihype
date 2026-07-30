@@ -37,8 +37,8 @@ export function FanFirstLanding({
       <section className="fan-home-hero">
         <div className="fan-home-hero-copy">
           <p className="fan-home-kicker">Free local music discovery</p>
-          <h1>Your HYPE can move local music forward.</h1>
-          <p>Discover artists, DJs, venues, songs, radio, and shows near you. When real people HYPE what they love, local attention becomes real demand, real tickets, and real money for the scene.</p>
+          <h1>Support the scene. Be the signal. Your voice matters.</h1>
+          <p>Discover artists, DJs, venues, songs, radio, and shows near you. HYPE what you love, and your voice helps turn local attention into real demand, real tickets, and real money for the scene.</p>
           <div className="fan-home-actions">
             <Link className="fan-home-primary" href="/register">{primaryCtaLabel}</Link>
             <Link className="fan-home-secondary" href="/listen">Start listening</Link>
