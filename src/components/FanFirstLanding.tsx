@@ -97,15 +97,16 @@ export function FanFirstLanding({
 
       <section className="fan-home-trust" aria-labelledby="fan-trust-title">
         <div className="fan-home-trust-lead">
-          <p className="fan-home-kicker">Built for trust, not extraction</p>
+          <p className="fan-home-kicker">Built by musicians who lived the problem</p>
           <h2 id="fan-trust-title">Your data is not the product. Music is the point.</h2>
+          <p>We took a band to New York City and faced the old system ourselves: pay to play, work for “exposure,” find every fan and venue alone, then watch everyone take a piece. iHYPE connects discovery, real fan demand, booking, and fair ticket income so making music does not have to mean doing every other job alone.</p>
           <p>iHYPE is a 501(c)(3) scene-run philanthropic platform, operated by two brothers with AI helping route the work—not replace human accountability. Our goal is to steward it full-time when sustainable, keeping it private, future-proof, and locally focused forever.</p>
         </div>
         <ul>
           <li><strong>Never sold</strong><span>We never sell user data. Ever.</span></li>
           <li><strong>Music-only support</strong><span>Only radio-style ads connected to music.</span></li>
           <li><strong>Revenue stays on mission</strong><span>Ads fund infrastructure, transparent reasonable wages, and the scene—not owners or investors.</span></li>
-          <li><strong>Open by default</strong><span><Link href="/transparency">Transparency</Link>, <Link href="/privacy">privacy</Link>, and the <Link href="/audit">public audit</Link> stay visible.</span></li>
+          <li><strong>Scene-governed</strong><span>A three-person independent board provides oversight, and every fan gets a voice on feature changes through <Link href="/community">Community</Link>.</span></li>
         </ul>
       </section>
 
