@@ -486,7 +486,7 @@ export function ListenHome({
   ];
 
   return (
-    <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 24px 100px' }}>
+    <div className="listen-stage">
       <style>{`@keyframes ihype-blink { 0%,100% { opacity: 1 } 50% { opacity: .25 } }`}</style>
 
       {toast && (
@@ -512,9 +512,19 @@ export function ListenHome({
         {t('listenHome.backButton', 'Listen')}
       </button>
 
-      <h1 className="sr-only">{t('listenHome.heading', 'Listen')}</h1>
+      <section className="listen-stage-hero">
+        <div>
+          <p className="listen-stage-kicker">{t('listenHome.heroKicker', 'Your scene · free forever')}</p>
+          <h1>{t('listenHome.heroTitle', 'What do you want to hear?')}</h1>
+          <p>{t('listenHome.heroBody', 'Start with a Seed, tune into local radio, or follow the HYPE moving through your scene.')}</p>
+        </div>
+        <Link className="listen-stage-dashboard" href="/me/dashboard">
+          <span>{t('listenHome.heroDashboardLabel', 'Your HYPE')}</span>
+          <strong>{t('listenHome.heroDashboardCta', 'Open dashboard')} →</strong>
+        </Link>
+      </section>
 
-      <div className="mqg-tabstrip" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 26 }}>
+      <div className="mqg-tabstrip listen-stage-tabs">
         {TABS.map((tabDef) => (
           <button
             key={tabDef.id}

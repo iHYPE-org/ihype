@@ -127,6 +127,7 @@ export default async function FanDashboardPage() {
         <div>
           <div className="fan-dash-eyebrow">{t('meDashboardPage.welcomeBack', 'Welcome back')}, {displayName}</div>
           <h1>{t('meDashboardPage.sceneAmplified', 'Your scene, amplified.')}</h1>
+          <p className="fan-dash-intro">{t('meDashboardPage.intro', 'Everything you HYPE, attend, share, and discover becomes part of the signal.')}</p>
         </div>
         <div className="fan-dash-header-actions">
           <Link className="ihype-btn-outline" href="/listen?tab=seeds">{t('meDashboardPage.startSeed', 'Start Seed')}</Link>
@@ -245,23 +246,27 @@ export default async function FanDashboardPage() {
       </div>
 
       <style>{`
-        .fan-dash-notifications { margin-top: 36px; }
-        .fan-dash-container { max-width: 1000px; margin: 0 auto; padding: 40px 24px 80px; }
-        .fan-dash-header { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px; margin-bottom: 28px; }
-        .fan-dash-eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a50); margin-bottom: 6px; }
-        .fan-dash-header h1 { font-family: var(--font-display); font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin: 0; color: var(--ink); }
+        .fan-dash-notifications { margin-top: 54px; padding-top: 28px; border-top: 1px solid var(--line); }
+        .fan-dash-container { max-width: 1240px; margin: 0 auto; padding: clamp(42px,6vw,82px) 24px 120px; }
+        .fan-dash-header { min-height: 280px; position: relative; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 28px; margin-bottom: 34px; padding: clamp(30px,5vw,64px); overflow: hidden; border: 1px solid var(--line); border-radius: 28px; background: radial-gradient(circle at 82% 18%,rgba(255,80,41,.34),transparent 30%),radial-gradient(circle at 68% 72%,rgba(34,229,212,.17),transparent 35%),var(--hair-30); }
+        .fan-dash-header::after { content: ""; width: 310px; height: 310px; position: absolute; right: 4%; top: -34%; border: 1px solid rgba(34,229,212,.2); border-radius: 50%; box-shadow: 0 0 0 46px rgba(34,229,212,.035),0 0 0 92px rgba(255,80,41,.025); pointer-events: none; }
+        .fan-dash-header > * { position: relative; z-index: 1; }
+        .fan-dash-eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--accent-3,#22e5d4); margin-bottom: 10px; }
+        .fan-dash-header h1 { max-width: 8ch; font-family: var(--font-display); font-size: clamp(3.2rem,7vw,6.8rem); line-height: .86; font-weight: 800; letter-spacing: -.07em; margin: 0; color: var(--ink); }
+        .fan-dash-intro { max-width: 48ch; margin: 20px 0 0; color: var(--ink-a60); font-size: 14px; line-height: 1.6; }
         .fan-dash-header-actions { display: flex; gap: 10px; }
-        .fan-dash-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
-        .fan-dash-stat-card { display: block; text-decoration: none; padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--radius-md, 12px); background: var(--bg2); color: inherit; }
+        .fan-dash-stats { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; margin-bottom: 48px; }
+        .fan-dash-stat-card { min-height: 150px; display: flex; flex-direction: column; justify-content: flex-end; text-decoration: none; padding: 24px; border: 1px solid var(--line); border-radius: 20px; background: linear-gradient(145deg,var(--hair-50),transparent); color: inherit; transition: transform .18s ease,border-color .18s ease; }
+        .fan-dash-stat-card:hover { transform: translateY(-3px); border-color: var(--line-2); }
         .fan-dash-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a50); margin-bottom: 6px; }
-        .fan-dash-stat-value { font-family: var(--font-display); font-weight: 800; font-size: 24px; color: var(--ink); }
+        .fan-dash-stat-value { font-family: var(--font-display); font-weight: 800; font-size: clamp(2rem,4vw,3.6rem); line-height: 1; letter-spacing: -.05em; color: var(--ink); }
         .fan-dash-stat-sub { font-size: 11.5px; color: var(--ink-a50); margin-top: 2px; }
-        .fan-dash-grid { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
-        @media (max-width: 760px) { .fan-dash-grid { grid-template-columns: 1fr; } }
+        .fan-dash-grid { display: grid; grid-template-columns: minmax(0,1.4fr) minmax(280px,.6fr); gap: 38px; }
+        @media (max-width: 760px) { .fan-dash-header { min-height: 360px; align-items: flex-end; } .fan-dash-stats,.fan-dash-grid { grid-template-columns: 1fr; } }
         .fan-dash-section-head { display: flex; justify-content: space-between; align-items: baseline; }
         .fan-dash-eyebrow-sm { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a50); }
         .fan-dash-empty { text-align: center; padding: 40px 24px; color: var(--ink-a50); border: 1px solid var(--line); border-radius: var(--radius-md, 10px); background: var(--bg2); margin-top: 12px; margin-bottom: 28px; }
-        .fan-dash-show-list { border: 1px solid var(--line); border-radius: var(--radius-md, 10px); background: var(--bg2); margin-top: 12px; margin-bottom: 28px; }
+        .fan-dash-show-list { overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: var(--hair-30); margin-top: 12px; margin-bottom: 28px; }
         .fan-dash-show-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; text-decoration: none; color: inherit; border-bottom: 1px solid var(--line); }
         .fan-dash-show-row:last-child { border-bottom: none; }
         .fan-dash-show-row:hover { background: var(--bg3); }
@@ -273,8 +278,8 @@ export default async function FanDashboardPage() {
         .fan-dash-activity-row:last-child { border-bottom: none; }
         .fan-dash-activity-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
         .fan-dash-activity-text { font-size: 13px; color: var(--ink-a80, var(--ink)); }
-        .fan-dash-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
-        .fan-dash-action { text-align: center; }
+        .fan-dash-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; margin-top: 12px; }
+        .fan-dash-action { min-height: 76px; display: flex; align-items: flex-end; justify-content: flex-start; padding: 14px; text-align: left; border-radius: 14px; }
         .ihype-btn-outline { display: inline-block; padding: 10px 16px; border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: var(--radius-sm, 8px); cursor: pointer; font-size: 13px; text-decoration: none; transition: background 150ms; }
         .ihype-btn-outline:hover { background: var(--hair-50, rgba(255,255,255,.05)); }
       `}</style>
