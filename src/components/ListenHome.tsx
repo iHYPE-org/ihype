@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { MobileQuickGrid, type QuickGridItem } from '@/components/MobileQuickGrid';
+import Image from 'next/image';
 import { PullToRefresh } from '@/components/PullToRefresh';
-import { useMobileShell } from '@/lib/MobileShellContext';
 import { useI18n } from '@/components/I18nProvider';
+import { useMediaPlayer, type MediaTrack } from '@/components/GlobalMediaPlayer';
 
 const PALETTE = ['#ff5029', '#b983ff', '#22e5d4', '#ff3e9a', '#ffb84a', '#7fb3ff'];
 
@@ -33,6 +33,16 @@ type RadioShow = {
   status: string;
   startsAt: string | null;
   headlinerProfile?: { name: string } | null;
+};
+
+type DiscoveryShow = {
+  id: string;
+  slug: string;
+  title: string;
+  startsAt: string | null;
+  posterImage?: string | null;
+  headlinerProfile?: { name: string; avatarImage?: string | null } | null;
+  venueProfile?: { name: string; city?: string | null; stateRegion?: string | null } | null;
 };
 
 type ChartTrack = {
@@ -85,6 +95,80 @@ type SavedSeed = {
   artistProfileSlug: string;
   artistProfileType: string;
 };
+
+const PLACEHOLDER_SHOWS = [
+  '/brand/alpha-show-1.png',
+  '/brand/alpha-show-2.png',
+  '/brand/alpha-show-3.png',
+  '/brand/alpha-show-4.png',
+];
+
+function DiscoveryHome({
+  charts,
+  shows,
+  onOpen,
+  onPlay,
+}: {
+  charts: ChartTrack[] | null;
+  shows: DiscoveryShow[] | null;
+  onOpen: (tab: ListenTab) => void;
+  onPlay: (track: ChartTrack, queue: ChartTrack[]) => void;
+}) {
+  const tracks = charts ?? [];
+  const displayTracks: Array<ChartTrack | null> = tracks.length ? tracks.slice(0, 4) : [null, null, null, null];
+  const featured = tracks[0];
+  const localShows = (shows ?? []).filter((show) => show.startsAt && new Date(show.startsAt) >= new Date()).slice(0, 4);
+  const displayShows: Array<DiscoveryShow | null> = localShows.length ? localShows : [null, null, null, null];
+  const artistNames = [...new Set(tracks.map((track) => track.artistName))].slice(0, 5);
+
+  return (
+    <div className="discovery-home">
+      <section className="discovery-section">
+        <div className="discovery-heading"><div><h1>For you</h1><p>Fresh independent sounds, picked for you.</p></div><button onClick={() => onOpen('charts')} type="button">View all →</button></div>
+        <div className="discovery-feature-grid">
+          <article className="discovery-feature">
+            <Image alt="" fill priority sizes="(max-width: 760px) 100vw, 55vw" src="/brand/alpha-featured.png" />
+            <div><span>NEW MUSIC</span><h2>{featured?.artistName ?? 'Your local scene'}</h2><strong>{featured?.title ?? 'Fresh independent music'}</strong><button disabled={!featured} onClick={() => featured && onPlay(featured, tracks)} type="button">▶ Play now</button></div>
+          </article>
+          <div className="discovery-track-list">
+            {displayTracks.map((track, index) => (
+              <div className="discovery-track-row" key={track?.id ?? index}>
+                <Image alt="" height={54} src={PLACEHOLDER_SHOWS[index]} width={64} />
+                <div><strong>{track?.title ?? 'New local track'}</strong><span>{track?.artistName ?? 'Independent artist'}</span></div>
+                {track ? <><button aria-label={`Play ${track.title}`} onClick={() => onPlay(track, tracks)} type="button">▶</button><span>{Math.floor(track.durationSec / 60)}:{String(track.durationSec % 60).padStart(2, '0')}</span></> : null}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="discovery-section">
+        <div className="discovery-heading"><div><h2>Live near you</h2><p>Upcoming shows from independent artists.</p></div><Link href="/shows">View all →</Link></div>
+        <div className="discovery-show-grid">
+          {displayShows.map((realShow, index) => {
+            const date = realShow?.startsAt ? new Date(realShow.startsAt) : null;
+            return (
+              <article className="discovery-show-card" key={realShow?.id ?? index}>
+                <div className="discovery-show-art">
+                  <Image alt="" fill sizes="(max-width: 760px) 46vw, 22vw" src={realShow?.posterImage ?? PLACEHOLDER_SHOWS[index]} />
+                  <span>{date ? date.toLocaleDateString('en-US', { month: 'short', day: '2-digit' }) : 'COMING SOON'}</span>
+                </div>
+                <strong>{realShow?.headlinerProfile?.name ?? realShow?.title ?? 'Local artist'}</strong>
+                <small>{[realShow?.venueProfile?.name, realShow?.venueProfile?.city].filter(Boolean).join(' · ') || 'Your local scene'}</small>
+                <Link href={realShow ? `/shows/${realShow.slug}` : '/shows'}>Tickets</Link>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="discovery-section discovery-artists">
+        <div className="discovery-heading"><div><h2>Because you listen local</h2><p>More independent artists in your orbit.</p></div><button onClick={() => onOpen('seeds')} type="button">More like this →</button></div>
+        <div>{(artistNames.length ? artistNames : ['New artists', 'Local voices', 'Fresh sounds', 'Your scene', 'Next up']).map((name, index) => <button key={name} onClick={() => onOpen('seeds')} type="button"><Image alt="" height={112} src={index < 4 ? `/brand/alpha-artist-${Math.max(2, index + 1)}.png` : '/brand/alpha-show-2.png'} width={112} /><span>{name}</span></button>)}</div>
+      </section>
+    </div>
+  );
+}
 
 function profileHref(type: string, slug: string) {
   return type === 'VENUE' ? `/venues/${slug}` : type === 'DJ' ? `/promoters/${slug}` : `/artists/${slug}`;
@@ -295,7 +379,7 @@ export function ListenHome({
   resetToken?: number;
 } = {}) {
   const { t } = useI18n();
-  const shell = useMobileShell();
+  const { playTrack } = useMediaPlayer();
   const validInitialTab = TABS.some((tabDef) => tabDef.id === initialTab) ? (initialTab as ListenTab) : null;
   const [tab, setTab] = useState<ListenTab>(validInitialTab ?? 'seeds');
   const [gridMode, setGridMode] = useState(!validInitialTab);
@@ -312,6 +396,7 @@ export function ListenHome({
   const [q, setQ] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[] | null>(null);
   const [radio, setRadio] = useState<RadioShow[] | null>(null);
+  const [discoveryShows, setDiscoveryShows] = useState<DiscoveryShow[] | null>(null);
   const [charts, setCharts] = useState<{ national: ChartTrack[]; local: ChartTrack[]; forYou: ChartTrack[] } | null>(null);
   const [chartScope, setChartScope] = useState<'local' | 'forYou' | 'national'>('forYou');
   const [chartGenre, setChartGenre] = useState('All');
@@ -338,6 +423,7 @@ export function ListenHome({
     return Promise.all([
       fetch('/api/discover/seeds').then((r) => r.json()).then((d) => setSeeds(d.seeds ?? [])).catch(() => setSeeds([])),
       fetch('/api/shows?radioShows=1').then((r) => (r.ok ? r.json() : [])).then((d) => setRadio(Array.isArray(d) ? d : [])).catch(() => setRadio([])),
+      fetch('/api/shows').then((r) => (r.ok ? r.json() : [])).then((d) => setDiscoveryShows(Array.isArray(d) ? d : [])).catch(() => setDiscoveryShows([])),
       fetch('/api/charts').then((r) => r.json()).then((d) => setCharts(d)).catch(() => setCharts({ national: [], local: [], forYou: [] })),
       fetch('/api/fan-playlists').then((r) => (r.ok ? r.json() : null)).then((d) => {
         if (d) { setPlaylists(d.playlists ?? []); setFavorites(d.favorites ?? []); setSavedSeeds(d.savedSeeds ?? []); }
@@ -442,6 +528,18 @@ export function ListenHome({
     showToast('Share link copied');
   }
 
+  function playChartTrack(track: ChartTrack, queue: ChartTrack[]) {
+    const toMediaTrack = (item: ChartTrack): MediaTrack => ({
+      id: item.id,
+      mediaId: item.id,
+      title: item.title,
+      artistName: item.artistName,
+      artistProfileSlug: item.artistSlug,
+      url: item.mediaUrl,
+    });
+    playTrack(toMediaTrack(track), queue.map(toMediaTrack));
+  }
+
   const genres = useMemo(() => {
     const set = new Set<string>();
     (seeds ?? []).forEach((s) => s.genres.forEach((g) => set.add(g)));
@@ -466,25 +564,6 @@ export function ListenHome({
 
   const openPlaylist = (playlists ?? []).find((p) => p.id === openPl) ?? null;
 
-  const gridItems: QuickGridItem[] = [
-    {
-      id: 'seeds', label: t('listenHome.grid.seedsLabel', 'Seeds'), color: '#ff5029', sublabel: t('listenHome.grid.seedsSublabel', 'Swipe to explore'),
-      icon: <svg fill="none" height="30" stroke="#ff5029" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><rect height="7" rx="1.5" width="7" x="3" y="3" /><rect height="7" rx="1.5" width="7" x="14" y="3" /><rect height="7" rx="1.5" width="7" x="3" y="14" /><rect height="7" rx="1.5" width="7" x="14" y="14" /></svg>,
-    },
-    {
-      id: 'radio', label: t('listenHome.grid.radioLabel', 'Radio'), color: '#22e5d4', sublabel: liveShow ? t('listenHome.grid.radioLiveNow', 'Live now') : upcomingShows.length > 0 ? t('listenHome.grid.radioComingUp', 'Coming up') : t('listenHome.grid.radioNothingLive', 'Nothing live'),
-      icon: <svg fill="none" height="30" stroke="#22e5d4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><circle cx="12" cy="14" r="4" /><path d="M4 14a8 8 0 0 1 16 0" /><path d="M2 14a10 10 0 0 1 20 0" /></svg>,
-    },
-    {
-      id: 'charts', label: t('listenHome.grid.chartsLabel', 'Charts'), color: '#ff3e9a', sublabel: t('listenHome.grid.chartsSublabel', 'Top this week'),
-      icon: <svg fill="none" height="30" stroke="#ff3e9a" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><line x1="6" x2="6" y1="20" y2="12" /><line x1="12" x2="12" y1="20" y2="6" /><line x1="18" x2="18" y1="20" y2="15" /></svg>,
-    },
-    {
-      id: 'playlists', label: t('listenHome.grid.playlistsLabel', 'Playlists'), color: '#b983ff', sublabel: `${playlists?.length ?? 0} ${t('listenHome.grid.playlistsSublabelSuffix', 'saved')}`,
-      icon: <svg fill="none" height="30" stroke="#b983ff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><line x1="8" x2="21" y1="6" y2="6" /><line x1="8" x2="21" y1="12" y2="12" /><line x1="8" x2="21" y1="18" y2="18" /><circle cx="4" cy="6" fill="#b983ff" r="1.5" stroke="none" /><circle cx="4" cy="12" fill="#b983ff" r="1.5" stroke="none" /><circle cx="4" cy="18" fill="#b983ff" r="1.5" stroke="none" /></svg>,
-    },
-  ];
-
   return (
     <div className="listen-stage">
       <style>{`@keyframes ihype-blink { 0%,100% { opacity: 1 } 50% { opacity: .25 } }`}</style>
@@ -495,14 +574,14 @@ export function ListenHome({
         </div>
       )}
 
-      <MobileQuickGrid
-        active={gridMode && isShellForeground}
-        items={gridItems}
-        onSearchTap={() => { setGridMode(false); setTab('search'); }}
-        onSelect={(id) => { setGridMode(false); setTab(id as typeof tab); }}
-        onSwipeSection={shell?.swipeSection}
-        searchPlaceholder={t('listenHome.searchPlaceholder', 'Search artists, venues, shows…')}
-      />
+      {gridMode && isShellForeground ? (
+        <DiscoveryHome
+          charts={charts?.forYou ?? charts?.local ?? null}
+          onOpen={(nextTab) => { setGridMode(false); setTab(nextTab); }}
+          onPlay={playChartTrack}
+          shows={discoveryShows}
+        />
+      ) : null}
 
       <PullToRefresh onRefresh={refreshAll}>
       <div className={`mqg-content${gridMode ? ' is-hidden' : ''}`}>
