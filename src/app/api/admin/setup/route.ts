@@ -9,13 +9,15 @@ import {
 import { readClientAddress } from '@/lib/request-meta';
 import { verifyBearerToken } from '@/lib/secret-compare';
 import { log } from '@/lib/logger';
+import { readRuntimeEnv } from '@/lib/runtime-env';
+import { consumeAdminSetupRateLimit } from '@/lib/admin-setup-rate-limit';
 
 export async function POST(request: Request) {
   try {
     // Uses bearer token auth because this endpoint runs before any admin
     // session exists. The bearer secret gates setup; a separate one-time,
     // random capability gates the passkey ceremony itself.
-    if (process.env.ALLOW_ADMIN_SETUP !== 'true') {
+    if (readRuntimeEnv('ALLOW_ADMIN_SETUP') !== 'true') {
       await recordAuditEvent({
         action: 'admin_setup_blocked',
         entityType: 'admin-setup',
@@ -25,7 +27,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Admin setup is disabled.' }, { status: 410 });
     }
 
-    const secret = process.env.ADMIN_SETUP_SECRET;
+    const rateLimit = await consumeAdminSetupRateLimit(request);
+    if (!rateLimit.allowed) {
+      await recordAuditEvent({
+        action: 'admin_setup_rate_limited',
+        entityType: 'admin-setup',
+        ipAddress: readClientAddress(request),
+      });
+      return NextResponse.json(
+        { error: 'Too many setup attempts. Try again later.' },
+        { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } },
+      );
+    }
+
+    const secret = readRuntimeEnv('ADMIN_SETUP_SECRET');
     if (!secret) {
       return NextResponse.json({ error: 'Admin setup is not configured.' }, { status: 500 });
     }

@@ -4,6 +4,10 @@ import { db } from '@/lib/db';
 import { createDeviceOtp } from '@/lib/admin-device';
 import { sendGenericEmail } from '@/lib/mailer';
 import { getBaseUrl } from '@/lib/utils';
+import { readRuntimeEnv } from '@/lib/runtime-env';
+import { consumeAdminSetupRateLimit } from '@/lib/admin-setup-rate-limit';
+import { recordAuditEvent } from '@/lib/audit';
+import { readClientAddress } from '@/lib/request-meta';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,16 +15,29 @@ export const dynamic = 'force-dynamic';
 // Clears any existing device registration and sends a one-time setup link
 // to admin@ihype.org. The link itself is never logged.
 export async function POST(request: NextRequest) {
-  if (process.env.ALLOW_ADMIN_SETUP !== 'true') {
+  if (readRuntimeEnv('ALLOW_ADMIN_SETUP') !== 'true') {
     return NextResponse.json({ error: 'Setup disabled.' }, { status: 410 });
   }
 
-  const secret = process.env.ADMIN_SETUP_SECRET;
+  const rateLimit = await consumeAdminSetupRateLimit(request);
+  if (!rateLimit.allowed) {
+    await recordAuditEvent({
+      action: 'admin_device_setup_rate_limited',
+      entityType: 'admin-setup',
+      ipAddress: readClientAddress(request),
+    });
+    return NextResponse.json(
+      { error: 'Too many setup attempts. Try again later.' },
+      { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } },
+    );
+  }
+
+  const secret = readRuntimeEnv('ADMIN_SETUP_SECRET');
   if (!secret || !verifyBearerToken(request.headers.get('authorization'), secret)) {
     return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
   }
 
-  if (!process.env.ADMIN_DEVICE_SECRET) {
+  if (!readRuntimeEnv('ADMIN_DEVICE_SECRET')) {
     return NextResponse.json({ error: 'ADMIN_DEVICE_SECRET is not configured.' }, { status: 500 });
   }
 

@@ -16,15 +16,6 @@ on:
       - 'capacitor.config.ts'
       - 'capacitor-shell/**'
       - 'package.json'
-  push:
-    branches:
-      - main
-    paths:
-      - 'ios/**'
-      - 'android/**'
-      - 'capacitor.config.ts'
-      - 'capacitor-shell/**'
-      - 'package.json'
   workflow_dispatch: {}
 
 permissions:
@@ -37,9 +28,9 @@ jobs:
     name: iOS — debug build (unsigned)
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: '24'
           cache: 'npm'
@@ -64,14 +55,14 @@ jobs:
     name: Android — debug build (unsigned)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: '24'
           cache: 'npm'
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5
         with:
           distribution: 'temurin'
           java-version: '21'
@@ -96,15 +87,13 @@ jobs:
   ios-release-build:
     name: iOS — signed release build
     runs-on: macos-15
-    # Same trigger as the Android release job — a push to main or a manual
-    # "Run workflow" click. Skips cleanly until the iOS signing secrets exist.
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    # Store publication is an explicit release action, never a side effect of
+    # merging an otherwise routine native or dependency change.
+    if: github.event_name == 'workflow_dispatch'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: '24'
           cache: 'npm'
@@ -254,21 +243,18 @@ jobs:
   android-release-build:
     name: Android — signed release build
     runs-on: ubuntu-latest
-    # Runs on a push to main that touches the native shell, AND on a manual
-    # "Run workflow" click (workflow_dispatch) — the latter is the one-click
-    # release button: Actions → "Native shell build" → Run workflow.
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    # Store publication is an explicit release action, never a side effect of
+    # merging an otherwise routine native or dependency change.
+    if: github.event_name == 'workflow_dispatch'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: '24'
           cache: 'npm'
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5
         with:
           distribution: 'temurin'
           java-version: '21'
