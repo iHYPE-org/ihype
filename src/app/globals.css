@@ -6882,6 +6882,7 @@ h1, h2 {
 .adaptive-site-header.is-scrolled .search-bar-desktop { max-width: 0; opacity: 0; overflow: hidden; pointer-events: none; }
 .adaptive-site-header.is-scrolled .search-bar-mobile-trigger { display: inline-flex; }
 .adaptive-site-header-tabs { margin-left: auto; min-width: 0; }
+.adaptive-site-header-spacer { flex: 1 1 auto; }
 .adaptive-site-header.is-scrolled .adaptive-site-header-tabs { display: none; }
 .adaptive-site-header-auth { flex: 0 0 auto; }
 .theme-toggle {
@@ -6902,17 +6903,17 @@ h1, h2 {
 .theme-toggle:hover { background: var(--hair-100); border-color: var(--hair-220); transform: translateY(-1px); }
 .theme-toggle:focus-visible { outline: 2px solid var(--accent-3, #22e5d4); outline-offset: 3px; }
 
-.fan-home { width: min(1320px, calc(100% - 40px)); margin: 0 auto; padding: clamp(28px, 5vw, 72px) 0 110px; }
+.fan-home { width: min(1240px, calc(100% - 40px)); margin: 0 auto; padding: clamp(28px, 5vw, 64px) 0 clamp(48px, 7vw, 84px); }
 .fan-home-hero { display: grid; grid-template-columns: minmax(280px,.82fr) minmax(420px,1.18fr); gap: clamp(28px, 5vw, 76px); align-items: center; }
-.fan-home-hero-copy h1 { margin: 10px 0 18px; max-width: 12ch; color: var(--ink); font: 800 clamp(2.8rem, 6.4vw, 6.5rem)/.92 var(--f-d); letter-spacing: -.065em; text-wrap: balance; }
+.fan-home-hero-copy h1 { margin: 12px 0 20px; max-width: 11ch; color: var(--ink); font: 800 clamp(2.8rem, 6vw, 5.9rem)/.94 var(--f-d); letter-spacing: -.06em; text-wrap: balance; }
 .fan-home-hero-copy > p:not(.fan-home-kicker):not(.fan-home-stats) { max-width: 52ch; color: var(--ink-2); font-size: clamp(1rem, 1.6vw, 1.2rem); line-height: 1.65; }
 .fan-home-kicker, .fan-home-section-head p { margin: 0; color: var(--accent-3, #22e5d4); font: 700 11px/1 var(--f-m); letter-spacing: .18em; text-transform: uppercase; }
 .fan-home-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
-.fan-home-primary, .fan-home-secondary { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; padding: 0 22px; border-radius: 999px; font-weight: 800; text-decoration: none; }
+.fan-home-primary, .fan-home-secondary { min-height: 50px; display: inline-flex; align-items: center; justify-content: center; padding: 0 28px; border-radius: 999px; font-weight: 800; text-decoration: none; }
 .fan-home-primary { color: #080706; background: var(--accent-3, #22e5d4); }
 .fan-home-secondary { color: var(--ink); border: 1px solid var(--line-2); background: var(--hair-50); }
 .fan-home-assurance { margin-top: 20px !important; color: var(--ink-3) !important; font: 500 10px/1.5 var(--f-m) !important; letter-spacing: .06em; }
-.fan-home-feature { min-height: clamp(390px, 52vw, 650px); position: relative; overflow: hidden; border: 1px solid var(--line-2); border-radius: clamp(20px, 3vw, 34px); background: var(--bg-3); box-shadow: 0 34px 90px rgba(0,0,0,.35); }
+.fan-home-feature { min-height: clamp(380px, 44vw, 560px); position: relative; overflow: hidden; border: 1px solid var(--line-2); border-radius: clamp(20px, 3vw, 34px); background: var(--bg-3); box-shadow: 0 34px 90px rgba(0,0,0,.35); }
 .fan-home-feature-art { position: absolute; inset: 0; }
 .fan-home-feature-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 35%, rgba(5,5,5,.92)); }
 .fan-home-feature-art > span { height: 100%; display: grid; place-items: center; color: var(--ink-3); font: 800 clamp(3rem,8vw,8rem)/1 var(--f-d); background: radial-gradient(circle at 30% 25%, rgba(255,80,41,.32), transparent 35%), radial-gradient(circle at 75% 65%, rgba(34,229,212,.2), transparent 40%), #100e0c; }
@@ -6920,8 +6921,9 @@ h1, h2 {
 .fan-home-feature-overlay p { margin: 0 0 10px; color: var(--accent-3); font: 700 10px/1 var(--f-m); letter-spacing: .16em; text-transform: uppercase; }
 .fan-home-feature-overlay h2 { margin: 0; color: #fff; font: 800 clamp(2rem,4vw,4.5rem)/.95 var(--f-d); letter-spacing: -.04em; }
 .fan-home-feature-overlay > span { display: block; margin-top: 8px; color: rgba(255,255,255,.68); }
-.fan-home-feature-overlay button { margin-top: 22px; min-height: 44px; padding: 0 18px; border: 1px solid rgba(255,255,255,.45); border-radius: 999px; color: #fff; background: rgba(0,0,0,.4); backdrop-filter: blur(10px); cursor: pointer; font-weight: 800; }
-.fan-home-feature-empty { display: grid; place-items: center; align-content: center; gap: 18px; text-align: center; color: var(--ink-2); }
+.fan-home-feature-overlay button, .fan-home-feature-overlay a { display: inline-flex; align-items: center; margin-top: 22px; min-height: 44px; padding: 0 18px; border: 1px solid rgba(255,255,255,.45); border-radius: 999px; color: #fff; background: rgba(0,0,0,.4); backdrop-filter: blur(10px); cursor: pointer; font-weight: 800; text-decoration: none; }
+.fan-home-feature-empty { display: grid; place-items: center; align-content: center; gap: 10px; padding: 32px; text-align: center; color: var(--ink-2); }
+.fan-home-feature-empty strong { color: var(--ink); font: 800 clamp(2rem, 5vw, 4.5rem)/1 var(--f-d); letter-spacing: -.04em; }
 .fan-home-feature-empty a { color: var(--accent-3); }
 .fan-home-stats { margin-top: clamp(36px,5vw,64px); padding: 22px 0; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); border-block: 1px solid var(--line); }
 .fan-home-stats > div { min-width: 0; padding: 0 clamp(14px,3vw,34px); display: flex; flex-direction: column; text-align: center; }
@@ -6949,7 +6951,7 @@ h1, h2 {
 .fan-home-section-head h2 { margin: 8px 0 0; color: var(--ink); font: 800 clamp(1.7rem,3vw,3rem)/1 var(--f-d); letter-spacing: -.035em; }
 .fan-home-section-head > a { color: var(--accent-3); text-decoration: none; font: 600 12px var(--f-m); }
 .fan-track-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; }
-.fan-track-card { min-width: 0; min-height: 88px; padding: 10px; display: flex; align-items: center; gap: 12px; text-align: left; color: var(--ink); border: 1px solid var(--line); border-radius: 14px; background: var(--hair-50); cursor: pointer; transition: transform .16s ease, border-color .16s ease; }
+.fan-track-card { min-width: 0; min-height: 88px; padding: 10px; display: flex; align-items: center; gap: 12px; text-align: left; color: var(--ink); border: 1px solid var(--line); border-radius: 14px; background: var(--hair-50); cursor: pointer; text-decoration: none; transition: transform .16s ease, border-color .16s ease; }
 .fan-track-card:hover { transform: translateY(-2px); border-color: var(--line-2); }
 .fan-track-art { width: 66px; height: 66px; position: relative; flex: 0 0 auto; display: grid; place-items: center; overflow: hidden; border-radius: 9px; color: var(--accent-3); background: var(--bg-3); }
 .fan-track-copy { min-width: 0; display: flex; flex: 1; flex-direction: column; }

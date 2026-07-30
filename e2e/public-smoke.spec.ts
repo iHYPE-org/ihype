@@ -15,6 +15,14 @@ test.describe('Public application smoke', () => {
     await expect(page).toHaveURL(/\/login(?:\?|$)/, { timeout: 8_000 });
   });
 
+  test('anonymous landing does not expose playback controls', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('.site-dock')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /play now|pause/i })).toHaveCount(0);
+    await expect(page.locator('main a[href="/register"]').first()).toBeVisible();
+    await expect(page.locator('.search-bar-desktop')).toHaveCount(0);
+  });
+
   test('public health endpoint reports a truthful liveness probe', async ({ request }) => {
     // The endpoint runs a real DB check for unauthenticated callers (a
     // hardcoded 200 previously let a real production outage go undetected —

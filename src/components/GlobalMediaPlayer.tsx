@@ -11,6 +11,7 @@ import {
   type ReactNode
 } from 'react';
 import Image from 'next/image';
+import { useSession } from 'next-auth/react';
 import { FanPlaylistManager } from '@/components/FanPlaylistManager';
 import { PlayerQueuePanel } from '@/components/PlayerQueuePanel';
 import { usePlayerKeyboard } from '@/lib/usePlayerKeyboard';
@@ -714,6 +715,7 @@ function fmtSleep(seconds: number) {
 type DockPanel = 'queue' | 'history' | null;
 
 export function SitePlayerDock() {
+  const { status: sessionStatus } = useSession();
   const { t } = useI18n();
   const {
     currentTrack, isPlaying, currentTime, duration,
@@ -755,6 +757,11 @@ export function SitePlayerDock() {
   }
 
   const btnBase: React.CSSProperties = { background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '2px 4px' };
+
+  // Playback is an authenticated app feature. Keeping the provider mounted
+  // preserves navigation state after sign-in, while the dock itself never
+  // appears on the public landing or other signed-out pages.
+  if (sessionStatus !== 'authenticated') return null;
 
   return (
     <div className={`site-dock${mobileExpanded ? ' site-dock-expanded' : ''}${currentTime > 8 ? ' site-dock-settled' : ''}`} role="region" aria-label={t('globalMediaPlayer.mediaPlayerRegion', 'Media player')}>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { HeaderAuthLinks } from '@/components/HeaderAuthLinks';
 import { HeaderLogo } from '@/components/HeaderLogo';
 import { SearchBar } from '@/components/SearchBar';
@@ -14,7 +15,9 @@ export function AdaptiveSiteHeader({
   inviteOnly: boolean;
   label: string;
 }) {
+  const { status: sessionStatus } = useSession();
   const [scrolled, setScrolled] = useState(false);
+  const signedIn = sessionStatus === 'authenticated';
 
   useEffect(() => {
     let scheduled = false;
@@ -40,10 +43,12 @@ export function AdaptiveSiteHeader({
     >
       <div className="adaptive-site-header-inner">
         <HeaderLogo />
-        <SearchBar compact={scrolled} />
-        <div className="adaptive-site-header-tabs">
-          <SiteNavTabs />
-        </div>
+        {signedIn ? <SearchBar compact={scrolled} /> : null}
+        {signedIn ? (
+          <div className="adaptive-site-header-tabs">
+            <SiteNavTabs />
+          </div>
+        ) : <div className="adaptive-site-header-spacer" />}
         <ThemeToggle />
         <div className="adaptive-site-header-auth">
           <HeaderAuthLinks inviteOnly={inviteOnly} />
