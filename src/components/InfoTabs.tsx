@@ -149,6 +149,15 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         <p>{t('legalPage.charter.voteBody', 'Users of iHYPE are treated as stakeholders, not just customers. Meaningful changes to the platform — the split, moderation rules, new fees of any kind — are put to the people who use it, with feedback built into every release.')}</p>
         <h2>{t('legalPage.charter.fundedTitle', 'Funded like radio, not like Big Tech')}</h2>
         <p>{t('legalPage.charter.fundedBody', 'iHYPE is funded entirely by advertising, the same way terrestrial radio has always worked — and those ads are restricted to music-related sources only, forever. No user-data resale funds this platform, and no other category of advertiser will ever be let in to change that.')}</p>
+        <h2>{t('legalPage.charter.nonprofitTitle', 'A scene-run 501(c)(3)')}</h2>
+        <p>{t('legalPage.charter.nonprofitBody', 'iHYPE is a certified 501(c)(3) philanthropic platform. It has no outside owners waiting for a return and no investor distribution hiding behind the mission. Revenue exists to keep the infrastructure working, compensate the small team fairly, and advance the local-music mission.')}</p>
+        <h2>{t('legalPage.charter.revenueTitle', 'Where advertising revenue goes')}</h2>
+        <ol>
+          <li>{t('legalPage.charter.revenueInfrastructure', 'First: infrastructure and necessary operating vendors — hosting, storage, email, payments, security, monitoring, and the tools required to keep iHYPE reliable.')}</li>
+          <li>{t('legalPage.charter.revenueCompensation', 'Second, only when sustainably affordable: fair, fully disclosed compensation for the two employees who operate the platform. iHYPE may never be large enough to become their only employment; the goal is eventually to let both founders focus on it full-time so its systems, privacy, and local-scene mission remain protected for the long term. The intended all-in ceiling is $100,000 per employee per year, including benefits, and actual compensation must still be reasonable for the work and the organization’s circumstances.')}</li>
+          <li>{t('legalPage.charter.revenueMission', 'Then: remaining resources stay with the mission — improving the platform and strengthening local scenes. They are not distributed to founders, investors, or private owners.')}</li>
+        </ol>
+        <p>{t('legalPage.charter.compensationGovernance', 'The ceiling is not a target, entitlement, or promise of payment. Founder compensation will not be self-approved. It must be approved in advance by conflict-free members of the governing body using appropriate comparable compensation data, documented at the time of approval, and published through iHYPE’s transparency reporting.')}</p>
         {/* Only the part /charter said that this tab did not. Its full
             paragraph opened with the same sentence as fundedBody above, so
             folding it in verbatim would have printed that sentence twice. */}
@@ -210,6 +219,8 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         .legal-doc.active { display: block; }
         .legal-doc h2 { font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; font-size: 1.15rem; letter-spacing: -.02em; margin: 2.5rem 0 .6rem; color: var(--ink); }
         .legal-doc p { font-size: .9rem; color: var(--ink-2); line-height: 1.75; margin-bottom: .85rem; }
+        .legal-doc ol { color: var(--ink-2); font-size: .9rem; line-height: 1.75; padding-left: 1.25rem; }
+        .legal-doc li + li { margin-top: .65rem; }
         .legal-doc a { color: var(--accent); }
         .legal-split-display { font-family: var(--f-d, 'Syne', sans-serif) !important; font-weight: 800; font-size: 1.5rem; letter-spacing: -.03em; color: var(--ink) !important; line-height: 1.3; margin: 1rem 0 !important; }
         /* Carried over from the standalone /charter page's own <style> block

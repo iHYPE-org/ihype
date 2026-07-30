@@ -99,12 +99,12 @@ export function FanFirstLanding({
         <div className="fan-home-trust-lead">
           <p className="fan-home-kicker">Built for trust, not extraction</p>
           <h2 id="fan-trust-title">Your data is not the product. Music is the point.</h2>
-          <p>iHYPE is run by two brothers with AI helping route the work—not replace human accountability. We keep the platform light, private, and answerable to the scene.</p>
+          <p>iHYPE is a 501(c)(3) scene-run philanthropic platform, operated by two brothers with AI helping route the work—not replace human accountability. Our goal is to steward it full-time when sustainable, keeping it private, future-proof, and locally focused forever.</p>
         </div>
         <ul>
           <li><strong>Never sold</strong><span>We never sell user data. Ever.</span></li>
           <li><strong>Music-only support</strong><span>Only radio-style ads connected to music.</span></li>
-          <li><strong>Two humans accountable</strong><span>Every human decision points back to the two people running iHYPE.</span></li>
+          <li><strong>Revenue stays on mission</strong><span>Ads fund infrastructure, transparent reasonable wages, and the scene—not owners or investors.</span></li>
           <li><strong>Open by default</strong><span><Link href="/transparency">Transparency</Link>, <Link href="/privacy">privacy</Link>, and the <Link href="/audit">public audit</Link> stay visible.</span></li>
         </ul>
       </section>
