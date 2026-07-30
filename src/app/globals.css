@@ -6904,13 +6904,15 @@ h1, h2 {
 .theme-toggle:focus-visible { outline: 2px solid var(--accent-3, #22e5d4); outline-offset: 3px; }
 
 .fan-home { width: min(1240px, calc(100% - 40px)); margin: 0 auto; padding: clamp(28px, 5vw, 64px) 0 clamp(48px, 7vw, 84px); }
-.fan-home-hero { display: grid; grid-template-columns: minmax(280px,.82fr) minmax(420px,1.18fr); gap: clamp(28px, 5vw, 76px); align-items: center; }
-.fan-home-hero-copy h1 { margin: 12px 0 20px; max-width: 11ch; color: var(--ink); font: 800 clamp(2.8rem, 6vw, 5.9rem)/.94 var(--f-d); letter-spacing: -.06em; text-wrap: balance; }
+.fan-home-hero { min-height: min(680px, calc(100svh - 150px)); display: grid; grid-template-columns: minmax(340px,1fr) minmax(360px,.82fr); gap: clamp(36px, 7vw, 110px); align-items: center; }
+.fan-home-hero-copy { position: relative; z-index: 2; }
+.fan-home-hero-copy h1 { margin: 14px 0 22px; max-width: 10ch; color: var(--ink); font: 800 clamp(3.2rem, 7vw, 7.2rem)/.88 var(--f-d); letter-spacing: -.07em; text-wrap: balance; }
 .fan-home-hero-copy > p:not(.fan-home-kicker):not(.fan-home-stats) { max-width: 52ch; color: var(--ink-2); font-size: clamp(1rem, 1.6vw, 1.2rem); line-height: 1.65; }
-.fan-home-kicker, .fan-home-section-head p { margin: 0; color: var(--accent-3, #22e5d4); font: 700 11px/1 var(--f-m); letter-spacing: .18em; text-transform: uppercase; }
+.fan-home-kicker, .fan-home-section-head p { margin: 0; color: var(--accent-3, #22e5d4); font: 700 11px/1 var(--f-m); letter-spacing: .22em; text-transform: uppercase; }
 .fan-home-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
 .fan-home-primary, .fan-home-secondary { min-height: 50px; display: inline-flex; align-items: center; justify-content: center; padding: 0 28px; border-radius: 999px; font-weight: 800; text-decoration: none; }
 .fan-home-primary { color: #080706; background: var(--accent-3, #22e5d4); }
+.fan-home-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 34px rgba(34,229,212,.2); }
 .fan-home-secondary { color: var(--ink); border: 1px solid var(--line-2); background: var(--hair-50); }
 .fan-home-assurance { margin-top: 20px !important; color: var(--ink-3) !important; font: 500 10px/1.5 var(--f-m) !important; letter-spacing: .06em; }
 .fan-home-feature { min-height: clamp(380px, 44vw, 560px); position: relative; overflow: hidden; border: 1px solid var(--line-2); border-radius: clamp(20px, 3vw, 34px); background: var(--bg-3); box-shadow: 0 34px 90px rgba(0,0,0,.35); }
@@ -6925,6 +6927,18 @@ h1, h2 {
 .fan-home-feature-empty { display: grid; place-items: center; align-content: center; gap: 10px; padding: 32px; text-align: center; color: var(--ink-2); }
 .fan-home-feature-empty strong { color: var(--ink); font: 800 clamp(2rem, 5vw, 4.5rem)/1 var(--f-d); letter-spacing: -.04em; }
 .fan-home-feature-empty a { color: var(--accent-3); }
+.fan-home-signal { min-height: 500px; position: relative; display: grid; place-items: center; isolation: isolate; }
+.fan-home-signal::before { content: ""; width: min(42vw,520px); aspect-ratio: 1; position: absolute; z-index: -2; border-radius: 50%; background: radial-gradient(circle at 36% 34%, rgba(255,80,41,.95) 0 7%, rgba(255,80,41,.32) 24%, rgba(185,131,255,.14) 48%, transparent 70%); filter: blur(1px); }
+.fan-home-signal::after { content: ""; width: min(34vw,430px); height: min(34vw,430px); position: absolute; z-index: -3; border: 1px solid rgba(34,229,212,.18); border-radius: 50%; box-shadow: 0 0 80px rgba(34,229,212,.08), 0 0 0 54px rgba(34,229,212,.025), 0 0 0 108px rgba(34,229,212,.012); }
+.fan-home-signal-disc { width: min(27vw,340px); aspect-ratio: 1; position: absolute; display: grid; place-items: center; overflow: hidden; border: 1px solid rgba(255,255,255,.16); border-radius: 50%; background: repeating-radial-gradient(circle, #111 0 3px, #1c1917 4px 6px); box-shadow: 0 28px 90px rgba(0,0,0,.5); transform: translate(20%,-4%) rotate(-8deg); }
+.fan-home-signal-ring { position: absolute; border: 1px solid rgba(255,255,255,.1); border-radius: 50%; }
+.fan-home-signal-ring-a { inset: 20%; }
+.fan-home-signal-ring-b { inset: 34%; }
+.fan-home-signal-center { width: 30%; aspect-ratio: 1; display: grid; place-items: center; border-radius: 50%; color: #080706; background: var(--accent-3,#22e5d4); font: 800 clamp(.65rem,1.2vw,1rem)/1 var(--f-d); letter-spacing: -.04em; }
+.fan-home-signal-words { position: absolute; z-index: 2; left: 2%; bottom: 12%; display: flex; flex-direction: column; color: var(--ink); font: 800 clamp(3.2rem,6vw,6.8rem)/.73 var(--f-d); letter-spacing: -.075em; }
+.fan-home-signal-words span:nth-child(2) { color: var(--accent-3,#22e5d4); transform: translateX(12%); }
+.fan-home-signal-words span:nth-child(3) { transform: translateX(24%); }
+.fan-home-signal > p { position: absolute; right: 3%; bottom: 3%; margin: 0; color: var(--ink-3); font: 700 9px/1 var(--f-m); letter-spacing: .13em; text-transform: uppercase; }
 .fan-home-stats { margin-top: clamp(36px,5vw,64px); padding: 22px 0; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); border-block: 1px solid var(--line); }
 .fan-home-stats > div { min-width: 0; padding: 0 clamp(14px,3vw,34px); display: flex; flex-direction: column; text-align: center; }
 .fan-home-stats > div + div { border-left: 1px solid var(--line); }
@@ -6992,8 +7006,13 @@ h1, h2 {
   .adaptive-site-header-auth { display: none; }
   .adaptive-site-header.is-scrolled .search-bar-desktop { display: none; }
   .fan-home { width: min(100% - 24px, 680px); padding-top: 24px; }
-  .fan-home-hero { grid-template-columns: 1fr; }
+  .fan-home-hero { min-height: auto; grid-template-columns: 1fr; gap: 16px; }
   .fan-home-hero-copy h1 { font-size: clamp(2.6rem,13vw,5rem); }
+  .fan-home-signal { min-height: 380px; }
+  .fan-home-signal::before { width: min(92vw,430px); }
+  .fan-home-signal::after { width: min(72vw,340px); height: min(72vw,340px); }
+  .fan-home-signal-disc { width: min(62vw,290px); transform: translate(16%,-7%) rotate(-8deg); }
+  .fan-home-signal-words { left: 3%; bottom: 15%; font-size: clamp(3rem,17vw,5.8rem); }
   .fan-home-feature { min-height: 430px; }
   .fan-track-grid { grid-template-columns: 1fr; }
   .fan-home-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
