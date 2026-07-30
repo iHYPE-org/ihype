@@ -12,11 +12,11 @@ const REQUIRED = [
   { key: 'AUTH_SECRET', hint: 'Generate with: openssl rand -hex 32' },
   { key: 'DATABASE_URL', hint: 'Runtime Postgres connection URL' },
   { key: 'RESEND_API_KEY', hint: 'Required for OTP login and account email' },
-  { key: 'RESEND_WEBHOOK_SECRET', hint: 'Verifies bounce and complaint webhooks' },
+  { key: 'RESEND_WEBHOOK_SECRET', hint: 'Verifies bounce, complaint, and delivery webhooks' },
   { key: 'EMAIL_FROM', hint: 'Verified Resend sender address' },
   { key: 'CRON_SECRET', hint: 'Protects /api/cron/* routes; generate with: openssl rand -hex 32' },
-  { key: 'TURNSTILE_SECRET_KEY', hint: 'Server-side signup abuse protection' },
-  { key: 'ADMIN_DEVICE_SECRET', hint: 'Protects first-party admin-device enrollment' },
+  { key: 'TURNSTILE_SECRET_KEY', hint: 'Required for production signup abuse protection' },
+  { key: 'ADMIN_DEVICE_SECRET', hint: 'Protects admin-device registration; generate with: openssl rand -hex 32' },
   { key: 'ADMIN_ALERT_EMAIL', hint: 'Comma-separated operational alert recipients' },
   { key: 'VAPID_PUBLIC_KEY', hint: 'Generate with: node scripts/generate-vapid-keys.mjs' },
   { key: 'VAPID_PRIVATE_KEY', hint: 'Generate with: node scripts/generate-vapid-keys.mjs' },
@@ -69,6 +69,26 @@ if (weakInviteCodes.length > 0) {
   console.error('  WEAK     BETA_INVITE_CODES contains short or predictable values.');
   console.error('           Replace every code with at least 16 random characters.\n');
   failed = true;
+}
+
+for (const key of ['AUTH_SECRET', 'CRON_SECRET', 'ADMIN_DEVICE_SECRET']) {
+  const value = process.env[key]?.trim() ?? '';
+  if (value && value.length < 32) {
+    console.error(`  WEAK     ${key} must contain at least 32 characters.`);
+    failed = true;
+  }
+}
+
+if (paymentEnabled) {
+  const stripeKey = process.env.STRIPE_SECRET_KEY?.trim() ?? '';
+  if (!stripeKey.startsWith('sk_live_')) {
+    console.error('  INVALID  STRIPE_SECRET_KEY must be a live key when paid ticketing is enabled.');
+    failed = true;
+  }
+  if (!(process.env.STRIPE_WEBHOOK_SECRET?.trim() ?? '').startsWith('whsec_')) {
+    console.error('  INVALID  STRIPE_WEBHOOK_SECRET must be a Stripe webhook signing secret.');
+    failed = true;
+  }
 }
 
 console.log('\n--- Optional ---\n');

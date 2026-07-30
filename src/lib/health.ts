@@ -68,7 +68,7 @@ export async function getHealthSnapshot() {
     const paymentReadiness = getPaymentProcessingReadiness();
     const oldestPendingNotificationAgeMinutes = oldestPendingNotification
       ? Math.floor((Date.now() - oldestPendingNotification.createdAt.getTime()) / 60_000)
-      : 0;
+      : null;
     const runtimeBlockers = [
       !readRuntimeEnv('AUTH_SECRET') && 'Set AUTH_SECRET for session signing.',
       !readRuntimeEnv('CRON_SECRET') && 'Set CRON_SECRET before enabling scheduled operations.',
@@ -85,10 +85,10 @@ export async function getHealthSnapshot() {
       ...(!uploadsEnabled ? ['Media uploads are paused by the runtime safety switch.'] : []),
       ...(!outboundEmailEnabled ? ['Outbound email is paused by the runtime safety switch.'] : []),
       ...(failedNotificationCount > 0
-        ? [`Retry or resolve ${failedNotificationCount} failed notification job(s).`]
+        ? [`Resolve ${failedNotificationCount} permanently failed notification job(s).`]
         : []),
-      ...(oldestPendingNotificationAgeMinutes > 30
-        ? [`Notification delivery is ${oldestPendingNotificationAgeMinutes} minutes behind.`]
+      ...(oldestPendingNotificationAgeMinutes !== null && oldestPendingNotificationAgeMinutes > 30
+        ? [`Notification delivery is backlogged; oldest pending job is ${oldestPendingNotificationAgeMinutes} minutes old.`]
         : []),
     ];
 
@@ -106,10 +106,11 @@ export async function getHealthSnapshot() {
         failedEmails24h: failedEmailCount,
         pendingVerifications: pendingVerificationCount,
         reservedTicketOrders: reservedTicketCount,
-        pendingNotifications: pendingNotificationCount,
-        failedNotifications: failedNotificationCount,
-        oldestPendingNotificationAt: oldestPendingNotification?.createdAt.toISOString() ?? null,
-        oldestPendingNotificationAgeMinutes,
+        notificationJobs: {
+          pending: pendingNotificationCount,
+          failed: failedNotificationCount,
+          oldestPendingAgeMinutes: oldestPendingNotificationAgeMinutes,
+        },
       },
       integrations: {
         emailDelivery: isEmailDeliveryConfigured(),
