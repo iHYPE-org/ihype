@@ -95,6 +95,20 @@ export function FanFirstLanding({
         <span>Paid, provable momentum</span>
       </section>
 
+      <section className="fan-home-trust" aria-labelledby="fan-trust-title">
+        <div className="fan-home-trust-lead">
+          <p className="fan-home-kicker">Built for trust, not extraction</p>
+          <h2 id="fan-trust-title">Your data is not the product. Music is the point.</h2>
+          <p>iHYPE is run by two brothers with AI helping route the work—not replace human accountability. We keep the platform light, private, and answerable to the scene.</p>
+        </div>
+        <ul>
+          <li><strong>Never sold</strong><span>We never sell user data. Ever.</span></li>
+          <li><strong>Music-only support</strong><span>Only radio-style ads connected to music.</span></li>
+          <li><strong>Two humans accountable</strong><span>Every human decision points back to the two people running iHYPE.</span></li>
+          <li><strong>Open by default</strong><span><Link href="/transparency">Transparency</Link>, <Link href="/privacy">privacy</Link>, and the <Link href="/audit">public audit</Link> stay visible.</span></li>
+        </ul>
+      </section>
+
       {tracks.length > 0 && (
         <section className="fan-home-section" aria-labelledby="fan-tracks-title">
           <div className="fan-home-section-head">
@@ -141,7 +155,7 @@ export function FanFirstLanding({
 
       <section className="fan-home-close">
         <div>
-          <p className="fan-home-kicker">Local listening can build real careers</p>
+          <p className="fan-home-kicker">Local listening can build real careers—without selling out</p>
           <h2>Help great music earn the crowd, income, and proof it deserves.</h2>
           <p className="fan-home-close-copy">Strong local HYPE and ticket history give artists credible stats they can take to labels, bookers, and bigger stages.</p>
         </div>
