@@ -84,7 +84,7 @@ export function FanFirstLanding({
       <section className="fan-home-promise" aria-label="Why fans use iHYPE">
         <div><span>01</span><strong>Discover real local music</strong><p>Seed mixes your taste with surprise so overlooked music can reach real people.</p></div>
         <div><span>02</span><strong>Turn taste into signal</strong><p>Listening, radio, events, and referrals earn HYPE you give to what deserves attention.</p></div>
-        <div><span>03</span><strong>Make attention pay</strong><p>Local demand drives bookings and ticket sales that pay artists, venues, and DJs.</p></div>
+        <div><span>03</span><strong>Share in what you build</strong><p>Share an event with your HYPE link. When it sells tickets, you earn part of the 10% promoter payout.</p></div>
       </section>
 
       <section className="fan-home-cycle" aria-label="How HYPE strengthens local music">
@@ -92,7 +92,7 @@ export function FanFirstLanding({
         <span>Genuine HYPE</span><i aria-hidden="true">→</i>
         <span>Visible local demand</span><i aria-hidden="true">→</i>
         <span>Bookings + ticket sales</span><i aria-hidden="true">→</i>
-        <span>Paid, provable momentum</span>
+        <span>Artists, venues, DJs + fans get paid</span>
       </section>
 
       <section className="fan-home-trust" aria-labelledby="fan-trust-title">
