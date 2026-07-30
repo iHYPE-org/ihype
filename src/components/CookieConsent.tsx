@@ -37,24 +37,23 @@ export function CookieConsent() {
       className="ihype-cookie-consent"
       style={{
         position: 'fixed',
-        left: '50%',
+        right: 16,
         bottom: 'max(16px, env(safe-area-inset-bottom))',
-        transform: 'translateX(-50%)',
         zIndex: 400,
-        width: 'min(560px, calc(100vw - 32px))',
+        width: 'min(430px, calc(100vw - 32px))',
         display: 'flex',
         flexWrap: 'wrap',
         alignItems: 'center',
         gap: '0.75rem 1rem',
-        padding: '1rem 1.25rem',
-        borderRadius: 16,
+        padding: '0.75rem 0.875rem',
+        borderRadius: 12,
         background: 'var(--bg-3, #1a1612)',
         border: '1px solid var(--line-2, var(--line-2))',
         boxShadow: '0 12px 40px rgba(0,0,0,0.4)',
         fontFamily: "var(--font-body, 'DM Sans', sans-serif)",
       }}
     >
-      <p style={{ flex: '1 1 260px', margin: 0, fontSize: 13, color: 'var(--ink-2, #9e9080)', lineHeight: 1.5 }}>
+      <p style={{ flex: '1 1 230px', margin: 0, fontSize: 11, color: 'var(--ink-2, #9e9080)', lineHeight: 1.45 }}>
         {t('cookieConsent.description', 'We use essential cookies to keep you signed in, and optional analytics cookies to understand usage in aggregate.')}{' '}
         <Link href="/info?tab=privacy" style={{ color: 'var(--accent, #ff5029)', textDecoration: 'underline' }}>{t('cookieConsent.privacyLink', 'Read our privacy policy')}</Link>.
       </p>
@@ -62,14 +61,14 @@ export function CookieConsent() {
         <button
           onClick={() => choose('essential')}
           className="ihype-btn-ghost"
-          style={{ fontSize: 13 }}
+          style={{ minHeight: 36, fontSize: 11 }}
         >
           {t('cookieConsent.essentialOnly', 'Essential only')}
         </button>
         <button
           onClick={() => choose('all')}
           className="ihype-btn-primary"
-          style={{ fontSize: 13, padding: '10px 18px' }}
+          style={{ minHeight: 36, fontSize: 11, padding: '8px 14px' }}
         >
           {t('cookieConsent.acceptAll', 'Accept all')}
         </button>
