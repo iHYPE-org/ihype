@@ -17,10 +17,12 @@ export function FanFirstLanding({
   tracks,
   shows,
   primaryCtaLabel,
+  stats,
 }: {
   tracks: MediaTrack[];
   shows: ShowCard[];
   primaryCtaLabel: string;
+  stats: Array<{ value: string; label: string }>;
 }) {
   const { currentTrack, isPlaying, playTrack, togglePlayback } = useMediaPlayer();
   const featured = tracks[0];
@@ -34,14 +36,14 @@ export function FanFirstLanding({
     <div className="fan-home">
       <section className="fan-home-hero">
         <div className="fan-home-hero-copy">
-          <p className="fan-home-kicker">Your local music scene, in one place</p>
-          <h1>Hear what&apos;s happening near you.</h1>
-          <p>Discover independent artists from your area, save the songs that hit, and find their next show.</p>
+          <p className="fan-home-kicker">Free local music discovery</p>
+          <h1>Discover music. Earn HYPE. Lift up your scene.</h1>
+          <p>Listen to songs and radio, attend events, and bring friends into the scene. You earn HYPE as you go—then use it to support everything you love.</p>
           <div className="fan-home-actions">
             <Link className="fan-home-primary" href="/register">{primaryCtaLabel}</Link>
             <Link className="fan-home-secondary" href="/listen">Start listening</Link>
           </div>
-          <p className="fan-home-assurance">Free to listen · Built for independent music · No algorithm paywall</p>
+          <p className="fan-home-assurance">Everything is free · Supported only by music-related audio ads</p>
         </div>
 
         {featured ? (
@@ -68,16 +70,27 @@ export function FanFirstLanding({
         )}
       </section>
 
+      {stats.length > 0 && (
+        <section className="fan-home-stats" aria-label="iHYPE community activity">
+          {stats.map((stat) => (
+            <div key={stat.label}>
+              <strong>{stat.value}</strong>
+              <span>{stat.label}</span>
+            </div>
+          ))}
+        </section>
+      )}
+
       <section className="fan-home-promise" aria-label="Why fans use iHYPE">
-        <div><span>01</span><strong>Find local artists</strong><p>Music connected to places you can actually go.</p></div>
-        <div><span>02</span><strong>HYPE what hits</strong><p>Your reaction helps great artists become visible.</p></div>
-        <div><span>03</span><strong>See them live</strong><p>Move from discovery to the next nearby show.</p></div>
+        <div><span>01</span><strong>Free means free</strong><p>No subscription or ticket fees. Music-only audio ads keep iHYPE open.</p></div>
+        <div><span>02</span><strong>Earn and use HYPE</strong><p>Listening, radio, events, and referrals earn the signal you give back.</p></div>
+        <div><span>03</span><strong>Plant a Seed</strong><p>Swipe left to skip or right to grow a discovery playlist: 75% your taste, 25% pure surprise.</p></div>
       </section>
 
       {tracks.length > 0 && (
         <section className="fan-home-section" aria-labelledby="fan-tracks-title">
           <div className="fan-home-section-head">
-            <div><p>Local discovery</p><h2 id="fan-tracks-title">A few tracks to start with.</h2></div>
+            <div><p>Listen · earn HYPE</p><h2 id="fan-tracks-title">A few tracks to start with.</h2></div>
             <Link href="/listen">View all</Link>
           </div>
           <div className="fan-track-grid">
@@ -97,7 +110,7 @@ export function FanFirstLanding({
       {shows.length > 0 && (
         <section className="fan-home-section" aria-labelledby="fan-shows-title">
           <div className="fan-home-section-head">
-            <div><p>Next step</p><h2 id="fan-shows-title">Hear them in the room.</h2></div>
+            <div><p>Attend · earn HYPE</p><h2 id="fan-shows-title">Hear them in the room.</h2></div>
             <Link href="/shows">View all</Link>
           </div>
           <div className="fan-show-grid">
@@ -120,8 +133,8 @@ export function FanFirstLanding({
 
       <section className="fan-home-close">
         <div>
-          <p className="fan-home-kicker">Music discovery should lead somewhere</p>
-          <h2>Know your scene before everyone else does.</h2>
+          <p className="fan-home-kicker">Listen · attend · invite · HYPE · discover</p>
+          <h2>Your local music life should count for something.</h2>
         </div>
         <Link className="fan-home-primary" href="/register">{primaryCtaLabel}</Link>
       </section>

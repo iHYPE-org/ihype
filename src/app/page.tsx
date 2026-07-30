@@ -3,7 +3,6 @@ import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { PiAdminButton } from '@/components/PiAdminButton';
 import { FanFirstLanding } from '@/components/FanFirstLanding';
-import { isInviteCodeRequiredRuntime } from '@/lib/runtime-flags';
 import { db } from '@/lib/db';
 import { getBaseUrl } from '@/lib/utils';
 import { getServerT } from '@/lib/i18n/server';
@@ -32,7 +31,7 @@ export default async function RootPage() {
   if (session?.user?.id) redirect(WORKBENCH_PATH);
 
   const now = new Date();
-  const [trackRows, showRows, inviteOnly] = await Promise.all([
+  const [trackRows, showRows, artistCount, fanCount, totalHypes, showCount] = await Promise.all([
     db.artistMediaAsset.findMany({
       where: {
         isPublished: true,
@@ -66,7 +65,16 @@ export default async function RootPage() {
         venueProfile: { select: { name: true, city: true } },
       },
     }).catch(() => []),
-    isInviteCodeRequiredRuntime(),
+    db.profile.count({ where: { type: 'ARTIST', discoverable: true } }).catch(() => 0),
+    db.profile.count({ where: { type: 'LISTENER' } }).catch(() => 0),
+    db.profileHypeEvent.count().catch(() => 0),
+    db.show.count({
+      where: {
+        status: { in: ['SCHEDULED', 'LIVE'] },
+        startsAt: { gte: now },
+        moderationStatus: 'APPROVED',
+      },
+    }).catch(() => 0),
   ]);
 
   const tracks = trackRows.map((track) => ({
@@ -88,13 +96,23 @@ export default async function RootPage() {
     venueName: show.venueProfile?.name ?? null,
     city: show.venueProfile?.city ?? null,
   }));
+  const fmt = (value: number) => value >= 1000
+    ? `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}K`
+    : String(value);
+  const stats = [
+    artistCount > 0 ? { value: fmt(artistCount), label: 'local artists' } : null,
+    showCount > 0 ? { value: fmt(showCount), label: 'upcoming shows' } : null,
+    fanCount > 0 ? { value: fmt(fanCount), label: 'music fans' } : null,
+    totalHypes > 0 ? { value: fmt(totalHypes), label: 'HYPEs sent' } : null,
+  ].filter((entry): entry is { value: string; label: string } => entry !== null);
 
   return (
     <>
       <FanFirstLanding
         tracks={tracks}
         shows={shows}
-        primaryCtaLabel={inviteOnly ? t('page.requestBeta', 'Request Alpha') : t('page.getStarted', 'Get started')}
+        primaryCtaLabel={t('page.joinFree', 'Join free')}
+        stats={stats}
       />
       <PiAdminButton />
     </>

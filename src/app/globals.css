@@ -6900,6 +6900,11 @@ h1, h2 {
 .fan-home-feature-overlay button { margin-top: 22px; min-height: 44px; padding: 0 18px; border: 1px solid rgba(255,255,255,.45); border-radius: 999px; color: #fff; background: rgba(0,0,0,.4); backdrop-filter: blur(10px); cursor: pointer; font-weight: 800; }
 .fan-home-feature-empty { display: grid; place-items: center; align-content: center; gap: 18px; text-align: center; color: var(--ink-2); }
 .fan-home-feature-empty a { color: var(--accent-3); }
+.fan-home-stats { margin-top: clamp(36px,5vw,64px); padding: 22px 0; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); border-block: 1px solid var(--line); }
+.fan-home-stats > div { min-width: 0; padding: 0 clamp(14px,3vw,34px); display: flex; flex-direction: column; text-align: center; }
+.fan-home-stats > div + div { border-left: 1px solid var(--line); }
+.fan-home-stats strong { color: var(--ink); font: 800 clamp(1.55rem,3vw,2.8rem)/1 var(--f-d); letter-spacing: -.04em; }
+.fan-home-stats span { margin-top: 7px; color: var(--ink-3); font: 600 9px/1.3 var(--f-m); letter-spacing: .1em; text-transform: uppercase; }
 .fan-home-promise { margin-top: clamp(42px,6vw,76px); display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); border-block: 1px solid var(--line); }
 .fan-home-promise > div { padding: 28px clamp(18px,3vw,36px); display: grid; grid-template-columns: auto 1fr; gap: 7px 12px; }
 .fan-home-promise > div + div { border-left: 1px solid var(--line); }
@@ -6955,6 +6960,11 @@ h1, h2 {
   .fan-home-hero-copy h1 { font-size: clamp(2.6rem,13vw,5rem); }
   .fan-home-feature { min-height: 430px; }
   .fan-track-grid { grid-template-columns: 1fr; }
+  .fan-home-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .fan-home-stats > div { padding: 18px 10px; }
+  .fan-home-stats > div + div { border-left: 0; }
+  .fan-home-stats > div:nth-child(even) { border-left: 1px solid var(--line); }
+  .fan-home-stats > div:nth-child(n+3) { border-top: 1px solid var(--line); }
   .fan-home-promise { grid-template-columns: 1fr; }
   .fan-home-promise > div + div { border-left: 0; border-top: 1px solid var(--line); }
   .fan-show-grid { grid-auto-columns: 76vw; }
