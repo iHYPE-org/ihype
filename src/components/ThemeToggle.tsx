@@ -8,9 +8,12 @@ export function ThemeToggle() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
   useEffect(() => {
-    const stored = (localStorage.getItem('theme') as 'dark' | 'light') ?? 'dark';
-    setTheme(stored);
-    document.documentElement.setAttribute('data-theme', stored);
+    const stored = localStorage.getItem('theme');
+    const resolved = stored === 'dark' || stored === 'light'
+      ? stored
+      : window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    setTheme(resolved);
+    document.documentElement.setAttribute('data-theme', resolved);
   }, []);
 
   function toggle() {
@@ -22,19 +25,17 @@ export function ThemeToggle() {
 
   return (
     <button
-      aria-label={t('themeToggle.ariaLabel', 'Toggle theme')}
+      aria-label={theme === 'dark'
+        ? t('themeToggle.useLight', 'Use light mode')
+        : t('themeToggle.useDark', 'Use dark mode')}
+      className="theme-toggle"
       onClick={toggle}
-      style={{
-        background: 'none',
-        border: 'none',
-        cursor: 'pointer',
-        fontSize: 18,
-        padding: '4px 8px',
-        color: 'var(--ink)',
-        opacity: 0.7
-      }}
+      title={theme === 'dark'
+        ? t('themeToggle.useLight', 'Use light mode')
+        : t('themeToggle.useDark', 'Use dark mode')}
+      type="button"
     >
-      {theme === 'dark' ? '☀️' : '🌙'}
+      <span aria-hidden="true">{theme === 'dark' ? '☀' : '☾'}</span>
     </button>
   );
 }

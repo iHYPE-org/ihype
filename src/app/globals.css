@@ -1315,6 +1315,12 @@ fieldset.authcard-field { border: 0; padding: 0; }
 }
 .authcard-trust-row a { color: var(--ink-3); text-decoration: none; }
 .authcard-trust-row a:hover { color: var(--ink); text-decoration: underline; }
+.authcard-privacy-promise {
+  margin: 4px 0 14px;
+  color: var(--success);
+  font: 600 12px/1.5 var(--font-mono);
+  text-align: center;
+}
 
 .authcard-fine {
   text-align: center;
@@ -6878,6 +6884,23 @@ h1, h2 {
 .adaptive-site-header-tabs { margin-left: auto; min-width: 0; }
 .adaptive-site-header.is-scrolled .adaptive-site-header-tabs { display: none; }
 .adaptive-site-header-auth { flex: 0 0 auto; }
+.theme-toggle {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  color: var(--ink);
+  background: var(--hair-50);
+  cursor: pointer;
+  font-size: 17px;
+  transition: background .16s ease, border-color .16s ease, transform .16s ease;
+}
+.theme-toggle:hover { background: var(--hair-100); border-color: var(--hair-220); transform: translateY(-1px); }
+.theme-toggle:focus-visible { outline: 2px solid var(--accent-3, #22e5d4); outline-offset: 3px; }
 
 .fan-home { width: min(1320px, calc(100% - 40px)); margin: 0 auto; padding: clamp(28px, 5vw, 72px) 0 110px; }
 .fan-home-hero { display: grid; grid-template-columns: minmax(280px,.82fr) minmax(420px,1.18fr); gap: clamp(28px, 5vw, 76px); align-items: center; }
