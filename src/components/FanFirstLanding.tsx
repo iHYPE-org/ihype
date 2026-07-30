@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 
 export function FanFirstLanding({
@@ -11,25 +12,22 @@ export function FanFirstLanding({
     <div className="fan-home">
       <section className="fan-home-hero">
         <div className="fan-home-hero-copy">
-          <p className="fan-home-kicker">Your scene. No subscription.</p>
-          <h1>Free local music.</h1>
-          <p>Hear the artists playing around you. Discover something unexpected. HYPE what you love and help your scene get heard.</p>
+          <h1>Free<br />local<br />music.</h1>
+          <p>Hear the artists playing around you. HYPE what you love. Help your scene get heard.</p>
           <div className="fan-home-actions">
             <Link className="fan-home-primary" href="/register">{primaryCtaLabel} — start listening</Link>
           </div>
           <p className="fan-home-assurance">No subscription · No paywall · We never sell your data</p>
         </div>
 
-        <div className="fan-home-brand-art" aria-hidden="true">
-          <span className="fan-home-brand-echo fan-home-brand-echo-a">HYPE</span>
-          <span className="fan-home-brand-echo fan-home-brand-echo-b">HYPE</span>
-          <div className="fan-home-brand-wordmark">
-            <span>i</span><strong>HYPE</strong>
-          </div>
-          <div className="fan-home-brand-signal">
-            <i /><i /><i /><i /><i /><i /><i />
-          </div>
-          <p>SUPPORT THE SCENE · BE THE SIGNAL</p>
+        <div className="fan-home-approved-art" aria-hidden="true">
+          <Image
+            alt=""
+            fill
+            priority
+            sizes="(max-width: 768px) 100vw, 58vw"
+            src="/brand/local-music-signal.png"
+          />
         </div>
       </section>
 
