@@ -31,24 +31,7 @@ export default async function RootPage() {
   if (session?.user?.id) redirect(WORKBENCH_PATH);
 
   const now = new Date();
-  const [trackRows, artistCount, fanCount, totalHypes, showCount] = await Promise.all([
-    db.artistMediaAsset.findMany({
-      where: {
-        isPublished: true,
-        profile: { discoverable: true },
-        OR: [{ publishAt: null }, { publishAt: { lte: now } }],
-      },
-      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
-      take: 1,
-      select: {
-        id: true,
-        hexId: true,
-        title: true,
-        notes: true,
-        artworkUrl: true,
-        profile: { select: { name: true, slug: true, avatarImage: true, heroImage: true } },
-      },
-    }).catch(() => []),
+  const [artistCount, fanCount, totalHypes, showCount] = await Promise.all([
     db.profile.count({ where: { type: 'ARTIST', discoverable: true } }).catch(() => 0),
     db.profile.count({ where: { type: 'LISTENER' } }).catch(() => 0),
     db.profileHypeEvent.count().catch(() => 0),
@@ -61,17 +44,6 @@ export default async function RootPage() {
     }).catch(() => 0),
   ]);
 
-  const tracks = trackRows.map((track) => ({
-    id: track.id,
-    mediaId: track.id,
-    title: track.title,
-    artistName: track.profile.name,
-    artistProfileSlug: track.profile.slug,
-    notes: track.notes,
-    artworkUrl: track.artworkUrl ?? track.profile.avatarImage ?? track.profile.heroImage,
-    url: `/api/public-media/${encodeURIComponent(track.hexId)}`,
-    shareUrl: `/tracks/${encodeURIComponent(track.hexId)}`,
-  }));
   const fmt = (value: number) => value >= 1000
     ? `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}K`
     : String(value);
@@ -85,7 +57,6 @@ export default async function RootPage() {
   return (
     <>
       <FanFirstLanding
-        tracks={tracks}
         primaryCtaLabel={t('page.joinFree', 'Join free')}
         stats={stats}
       />
