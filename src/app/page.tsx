@@ -31,7 +31,7 @@ export default async function RootPage() {
   if (session?.user?.id) redirect(WORKBENCH_PATH);
 
   const now = new Date();
-  const [trackRows, showRows, artistCount, fanCount, totalHypes, showCount] = await Promise.all([
+  const [trackRows, artistCount, fanCount, totalHypes, showCount] = await Promise.all([
     db.artistMediaAsset.findMany({
       where: {
         isPublished: true,
@@ -39,7 +39,7 @@ export default async function RootPage() {
         OR: [{ publishAt: null }, { publishAt: { lte: now } }],
       },
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
-      take: 4,
+      take: 1,
       select: {
         id: true,
         hexId: true,
@@ -47,22 +47,6 @@ export default async function RootPage() {
         notes: true,
         artworkUrl: true,
         profile: { select: { name: true, slug: true, avatarImage: true, heroImage: true } },
-      },
-    }).catch(() => []),
-    db.show.findMany({
-      where: {
-        status: { in: ['SCHEDULED', 'LIVE'] },
-        startsAt: { gte: now },
-        moderationStatus: 'APPROVED',
-      },
-      orderBy: [{ featured: 'desc' }, { startsAt: 'asc' }],
-      take: 3,
-      select: {
-        slug: true,
-        title: true,
-        startsAt: true,
-        posterImage: true,
-        venueProfile: { select: { name: true, city: true } },
       },
     }).catch(() => []),
     db.profile.count({ where: { type: 'ARTIST', discoverable: true } }).catch(() => 0),
@@ -88,14 +72,6 @@ export default async function RootPage() {
     url: `/api/public-media/${encodeURIComponent(track.hexId)}`,
     shareUrl: `/tracks/${encodeURIComponent(track.hexId)}`,
   }));
-  const shows = showRows.map((show) => ({
-    slug: show.slug,
-    title: show.title,
-    startsAt: show.startsAt.toISOString(),
-    posterImage: show.posterImage,
-    venueName: show.venueProfile?.name ?? null,
-    city: show.venueProfile?.city ?? null,
-  }));
   const fmt = (value: number) => value >= 1000
     ? `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}K`
     : String(value);
@@ -110,7 +86,6 @@ export default async function RootPage() {
     <>
       <FanFirstLanding
         tracks={tracks}
-        shows={shows}
         primaryCtaLabel={t('page.joinFree', 'Join free')}
         stats={stats}
       />
