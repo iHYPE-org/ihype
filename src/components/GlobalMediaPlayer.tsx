@@ -781,7 +781,21 @@ export function SitePlayerDock() {
   if (sessionStatus !== 'authenticated') return null;
 
   return (
-    <div className={`site-dock${mobileExpanded ? ' site-dock-expanded' : ''}${playerSettled ? ' site-dock-settled' : ''}`} role="region" aria-label={t('globalMediaPlayer.mediaPlayerRegion', 'Media player')}>
+    <div
+      className={`site-dock${mobileExpanded ? ' site-dock-expanded' : ''}${playerSettled ? ' site-dock-settled' : ''}`}
+      role="region"
+      aria-label={t('globalMediaPlayer.mediaPlayerRegion', 'Media player')}
+      style={{ '--dock-progress': `${Math.round(progress * 1000) / 10}%` } as React.CSSProperties}
+    >
+      {/* Progress hairline across the very top edge — the app shell's dock
+          spec. Decorative and aria-hidden: the real, keyboard-operable
+          position slider is the waveform scrubber below, and announcing the
+          same value twice is worse than not announcing it here. Hidden by CSS
+          outside the shell, where it would double that scrubber. */}
+      <div aria-hidden="true" className="site-dock-hairline">
+        <span className="site-dock-hairline-fill" />
+        <span className="site-dock-hairline-thumb" />
+      </div>
 
       {/* ── Queue / history popover ───────────────────────────────────────── */}
       <PlayerQueuePanel

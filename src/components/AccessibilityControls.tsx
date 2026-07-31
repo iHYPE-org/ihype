@@ -10,16 +10,38 @@ type AccessibilitySettings = {
   reduceMotion: boolean;
   underlineLinks: boolean;
   readableFont: boolean;
+  /**
+   * Content scale, 0.85–1.4, stepped by 0.05 — the app shell's "Text size"
+   * card (A − / A + / Reset, label shows %). Distinct from `largeText`, which
+   * is the existing single on/off toggle and stays for the surfaces already
+   * built against `html.a11y-large-text`. This one applies as a root font
+   * scale (a CSS custom property), never a transform, so text reflows instead
+   * of being magnified.
+   */
+  textScale: number;
 };
 
 const STORAGE_KEY = 'ihype-accessibility-settings';
+
+export const TEXT_SCALE_MIN = 0.85;
+export const TEXT_SCALE_MAX = 1.4;
+export const TEXT_SCALE_STEP = 0.05;
+
+/** Keeps a restored/typed value inside the designed range and on the step. */
+export function clampTextScale(value: unknown): number {
+  const numeric = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(numeric)) return 1;
+  const bounded = Math.min(TEXT_SCALE_MAX, Math.max(TEXT_SCALE_MIN, numeric));
+  return Number(bounded.toFixed(2));
+}
 
 const defaultSettings: AccessibilitySettings = {
   highContrast: false,
   largeText: false,
   reduceMotion: false,
   underlineLinks: false,
-  readableFont: false
+  readableFont: false,
+  textScale: 1
 };
 
 function getStoredSettings() {
@@ -33,9 +55,13 @@ function getStoredSettings() {
   }
 
   try {
+    const parsed = JSON.parse(storedValue) as Partial<AccessibilitySettings>;
     return {
       ...defaultSettings,
-      ...(JSON.parse(storedValue) as Partial<AccessibilitySettings>)
+      ...parsed,
+      // A stored value predating this field, or one edited by hand, must not
+      // be able to shrink the UI to nothing or blow it past the design range.
+      textScale: clampTextScale(parsed.textScale ?? defaultSettings.textScale)
     };
   } catch {
     window.localStorage.removeItem(STORAGE_KEY);
@@ -81,6 +107,7 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
     applyClass('a11y-reduce-motion', settings.reduceMotion);
     applyClass('a11y-underline-links', settings.underlineLinks);
     applyClass('a11y-readable-font', settings.readableFont);
+    document.documentElement.style.setProperty('--ihype-text-scale', String(settings.textScale));
 
     if (hasLoaded) {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
@@ -104,6 +131,16 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
       {children}
     </AccessibilityContext.Provider>
   );
+}
+
+/**
+ * Read/write the shared preference record. Returns inert defaults outside the
+ * provider so a component can never crash on a missing context — the same
+ * defensive shape `AccessibilityControls` already used inline.
+ */
+export function useAccessibilitySettings(): AccessibilityContextValue {
+  const ctx = useContext(AccessibilityContext);
+  return ctx ?? { settings: defaultSettings, updateSetting: () => {}, resetSettings: () => {} };
 }
 
 export function AccessibilityControls({ inline = false }: { inline?: boolean } = {}) {

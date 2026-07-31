@@ -6,8 +6,19 @@ import Image from 'next/image';
 import { PullToRefresh } from '@/components/PullToRefresh';
 import { useI18n } from '@/components/I18nProvider';
 import { useMediaPlayer, type MediaTrack } from '@/components/GlobalMediaPlayer';
+import { useAppShellActive } from '@/components/shell/AppShellContext';
 
 const PALETTE = ['#ff5029', '#b983ff', '#22e5d4', '#ff3e9a', '#ffb84a', '#7fb3ff'];
+
+/**
+ * The tab ids the app shell's persistent context strip already carries for
+ * LISTEN (Discover · Radio · Charts · Playlists). Inside the shell this
+ * component drops them from its own strip so the two rows are not stacked one
+ * on top of the other — but it keeps every tab the strip does NOT carry
+ * ('search'), because hiding the whole strip would strand that destination
+ * with nothing linking to it.
+ */
+const SHELL_TABS: readonly string[] = ['seeds', 'radio', 'charts', 'playlists'];
 
 const TABS = [
   { id: 'search', label: 'Search' },
@@ -407,6 +418,18 @@ export function ListenHome({
   const validInitialTab = TABS.some((tabDef) => tabDef.id === initialTab) ? (initialTab as ListenTab) : null;
   const [tab, setTab] = useState<ListenTab>(validInitialTab ?? 'seeds');
   const [gridMode, setGridMode] = useState(!validInitialTab);
+  // The app shell's context strip navigates between these tabs with real
+  // links (/listen?tab=charts). Same route, different query = a soft nav, so
+  // this component never remounts and the useState initialiser above never
+  // re-runs — without this the pill would light up and the content would sit
+  // still. Identical fix to the one InfoTabs needed for `/info?tab=`.
+  useEffect(() => {
+    if (!validInitialTab) return;
+    setTab(validInitialTab);
+    setGridMode(false);
+  }, [validInitialTab]);
+  const shellDrivesTabs = useAppShellActive();
+  const visibleTabs = shellDrivesTabs ? TABS.filter((d) => !SHELL_TABS.includes(d.id)) : TABS;
   const prevResetToken = useRef(resetToken);
   useEffect(() => {
     if (resetToken !== undefined && resetToken !== prevResetToken.current) {
@@ -629,7 +652,7 @@ export function ListenHome({
       </section>
 
       <div className="mqg-tabstrip listen-stage-tabs">
-        {TABS.map((tabDef) => (
+        {visibleTabs.map((tabDef) => (
           <button
             key={tabDef.id}
             className={tab === tabDef.id ? 'sub-tab active' : 'sub-tab'}
