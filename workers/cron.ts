@@ -37,6 +37,8 @@ type CronJob = {
   schedule: string;
 };
 
+const PRODUCTION_SMOKE_PATHS = ['/', '/login', '/shows', '/listen', '/pages', '/status'] as const;
+
 const JOBS: CronJob[] = [
   // Infrastructure — every 5 min
   { path: '/api/cron/show-lifecycle',       schedule: '*/5 * * * *'  },
@@ -126,7 +128,85 @@ async function reportOutcome(env: Env, path: string, outcome: { ok: true } | { s
   }
 }
 
+/**
+ * Validate the live custom domain from Cloudflare's own network. GitHub-hosted
+ * runners are occasionally blocked by Bot Fight Mode before their requests
+ * reach the app; this authenticated relay preserves the post-deploy check
+ * without adding a public WAF bypass.
+ */
+async function productionSmoke(env: Env): Promise<Response> {
+  const pageChecks = await Promise.all(
+    PRODUCTION_SMOKE_PATHS.map(async (path) => {
+      try {
+        const response = await fetch(`${env.APP_BASE_URL}${path}`, {
+          headers: { Accept: 'text/html,application/xhtml+xml' },
+          redirect: 'follow',
+          signal: AbortSignal.timeout(20_000),
+        });
+        return { path, status: response.status, ok: response.status === 200 };
+      } catch {
+        return { path, status: 0, ok: false };
+      }
+    }),
+  );
+
+  let health: {
+    status: number;
+    ok: boolean;
+    databaseOk: boolean;
+    launchReady: boolean;
+    blockers: unknown[];
+  };
+  try {
+    const response = await fetch(`${env.APP_BASE_URL}/api/health`, {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${env.CRON_SECRET}`,
+      },
+      signal: AbortSignal.timeout(20_000),
+    });
+    const payload = await response.json() as {
+      status?: string;
+      database?: { ok?: boolean };
+      launchReadiness?: { ready?: boolean; blockers?: unknown[] };
+    };
+    health = {
+      status: response.status,
+      ok: response.status === 200 && payload.status === 'ok',
+      databaseOk: payload.database?.ok === true,
+      launchReady: payload.launchReadiness?.ready === true,
+      blockers: payload.launchReadiness?.blockers ?? [],
+    };
+  } catch {
+    health = { status: 0, ok: false, databaseOk: false, launchReady: false, blockers: [] };
+  }
+
+  const ok = pageChecks.every((check) => check.ok)
+    && health.ok
+    && health.databaseOk
+    && health.launchReady;
+  return Response.json(
+    { ok, checks: [...pageChecks, { path: '/api/health', ...health }] },
+    {
+      status: ok ? 200 : 503,
+      headers: { 'Cache-Control': 'no-store' },
+    },
+  );
+}
+
 export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+    if (url.pathname !== '/smoke') return new Response('Not found', { status: 404 });
+    if (request.method !== 'POST') {
+      return new Response('Method not allowed', { status: 405, headers: { Allow: 'POST' } });
+    }
+    if (request.headers.get('Authorization') !== `Bearer ${env.CRON_SECRET}`) {
+      return new Response('Unauthorized', { status: 401 });
+    }
+    return productionSmoke(env);
+  },
+
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
     const matched = JOBS.filter((job) => job.schedule === event.cron);
 
