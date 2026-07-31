@@ -1,0 +1,644 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   iHYPE app shell — subpage surfaces
+   ──────────────────────────────────────────────────────────────────────────
+   The shell handoff describes ~20 routes as one small vocabulary repeated:
+   a card, a row, a stat card, an eyebrow, a Syne 800 title, a tile grid, a
+   pill, an empty state. The product had already built all twenty routes —
+   but each one invented its own names for those primitives (`promo-stat-card`,
+   `pa-stat-card`, `fan-dash-stat-card`, `ad-dash-stat-card`, `aa-stat-card`,
+   … nine of them for one component). 607 distinct class names across 63 pages,
+   ~208 of which are one of these nine primitives wearing a different prefix.
+
+   This file defines each primitive ONCE, from the handoff's own values, and
+   points every existing name at it. That is why the conversion is a
+   stylesheet rather than 63 rewritten components: the markup already has the
+   right shape, so re-authoring it would risk the auth gates and Prisma queries
+   those pages carry for no visual gain.
+
+   Two rules make it work:
+
+   1. Every selector is scoped under `.shell-content`, so nothing outside the
+      signed-in shell is touched — marketing, auth and the phone shell keep
+      exactly what they had.
+   2. That scope is also what makes it WIN. 29 of the 63 pages carry their own
+      inline `<style>` block, which sits later in the document than any
+      stylesheet. `.shell-content .promo-stat-card` is (0,2,0) against the
+      page's own `.promo-stat-card` at (0,1,0), and specificity beats document
+      order — so the conversion applies without deleting a single page's CSS.
+
+   Deliberately paint-only: colour, surface, border, radius, type, spacing.
+   No `display`, no `grid-template`, no `position`. Those carry each page's
+   real layout, and overriding them from here would break pages sight-unseen.
+
+   Regenerate the alias lists with scripts/audit-shell-classes.mjs.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Primitive: Eyebrow ──────────────────────────────────────────────────
+   JetBrains Mono, 10px, 0.16em, uppercase. Colour stays whatever the page
+   set — the handoff tints eyebrows per route (accent on Charts and the
+   dashboards, --role-venue on Near Me, --role-dj on Radio and Promote). */
+
+.shell-content .aa-eyebrow,
+.shell-content .ad-eyebrow,
+.shell-content .believers-eyebrow,
+.shell-content .booking-eyebrow,
+.shell-content .community-eyebrow,
+.shell-content .dja-eyebrow,
+.shell-content .dja-note-eyebrow,
+.shell-content .dja-section-eyebrow,
+.shell-content .djd-eyebrow,
+.shell-content .djd-section-eyebrow,
+.shell-content .fa-eyebrow,
+.shell-content .fan-dash-eyebrow,
+.shell-content .fan-ref-label,
+.shell-content .foryou-eyebrow,
+.shell-content .kicker,
+.shell-content .lsp-eyebrow,
+.shell-content .promo-referral-label,
+.shell-content .station-page-eyebrow,
+.shell-content .track-eyebrow,
+.shell-content .track-radio-status-label,
+.shell-content .vaa-card-label,
+.shell-content .vaa-eyebrow,
+.shell-content .vdash-card-label,
+.shell-content .vdash-eyebrow,
+.shell-content .venue-seg-label,
+.shell-content .weekend-eyebrow {
+  font-family: var(--f-m);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+
+/* ── Primitive: Title ────────────────────────────────────────────────────
+   Syne 800, -0.02em. Size is left to the element (h1 32px / h2 26px / h3
+   below), set by the element rules further down, so a card title does not
+   become a page title. */
+.shell-content .aa-event-title,
+.shell-content .aa-title,
+.shell-content .ad-event-title,
+.shell-content .ad-title,
+.shell-content .artist-show-title,
+.shell-content .believers-title,
+.shell-content .booking-title,
+.shell-content .dj-show-title,
+.shell-content .dja-show-title,
+.shell-content .dja-title,
+.shell-content .djd-show-title,
+.shell-content .djd-title,
+.shell-content .fa-title,
+.shell-content .fan-dash-show-title,
+.shell-content .foryou-title,
+.shell-content .ihype-hero-heading,
+.shell-content .lsp-title,
+.shell-content .pa-chart-title,
+.shell-content .promo-section-title,
+.shell-content .settings-section-title,
+.shell-content .station-page-title,
+.shell-content .ticket-title,
+.shell-content .track-more-title,
+.shell-content .track-title,
+.shell-content .vaa-event-title,
+.shell-content .vdash-show-title,
+.shell-content .venue-split-title,
+.shell-content .weekend-card-title,
+.shell-content .weekend-title {
+  font-family: var(--f-d);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink-1);
+}
+
+
+/* ── Primitive: Card ─────────────────────────────────────────────────────
+   radius 12px, 1px solid var(--line), background var(--bg-surface). */
+.shell-content .artist-show-card,
+.shell-content .artist-split-card,
+.shell-content .believers-cta-card,
+.shell-content .community-card,
+.shell-content .community-channel-card,
+.shell-content .composer-card,
+.shell-content .composer-media-card,
+.shell-content .composer-plan-panel,
+.shell-content .composer-sample-card,
+.shell-content .composer-sequence-card,
+.shell-content .composer-voice-card,
+.shell-content .dj-show-card,
+.shell-content .dja-card,
+.shell-content .djd-card,
+.shell-content .fan-ref-box,
+.shell-content .foryou-card,
+.shell-content .ihype-card,
+.shell-content .lsp-card,
+.shell-content .pa-chart-card,
+.shell-content .pa-links-card,
+.shell-content .payout-card,
+.shell-content .promo-referral-box,
+.shell-content .settings-payout-card,
+.shell-content .ticket-card,
+.shell-content .ticket-verification-panel,
+.shell-content .track-card,
+.shell-content .vaa-card,
+.shell-content .vdash-card,
+.shell-content .venue-show-card,
+.shell-content .venue-split-card,
+.shell-content .community-cta {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-surface);
+}
+
+
+/* ── Primitive: Row ──────────────────────────────────────────────────────
+   Same surface as a card, tighter padding — the shape Charts, the radio
+   schedule, My Tickets, settlements, notifications and Top Tracks all use. */
+.shell-content .aa-event-row,
+.shell-content .ad-activity-row,
+.shell-content .ad-event-row,
+.shell-content .dj-earn-row,
+.shell-content .dja-show-row,
+.shell-content .djd-activity-row,
+.shell-content .djd-show-row,
+.shell-content .fa-artist-row,
+.shell-content .fan-dash-activity-row,
+.shell-content .fan-dash-show-row,
+.shell-content .fan-payout-row,
+.shell-content .fan-show-row,
+.shell-content .fan-top5-row,
+.shell-content .pa-link-row,
+.shell-content .promo-event-row,
+.shell-content .settings-row,
+.shell-content .track-credit-row,
+.shell-content .track-more-row,
+.shell-content .vaa-event-row,
+.shell-content .vdash-activity-row,
+.shell-content .vdash-show-row,
+.shell-content .venue-capacity-row {
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-surface);
+}
+.shell-content a.aa-event-row,
+.shell-content a.ad-activity-row,
+.shell-content a.ad-event-row,
+.shell-content a.dj-earn-row,
+.shell-content a.dja-show-row,
+.shell-content a.djd-activity-row,
+.shell-content a.djd-show-row,
+.shell-content a.fa-artist-row,
+.shell-content a.fan-dash-activity-row,
+.shell-content a.fan-dash-show-row,
+.shell-content a.fan-payout-row,
+.shell-content a.fan-show-row,
+.shell-content a.fan-top5-row,
+.shell-content a.pa-link-row,
+.shell-content a.promo-event-row,
+.shell-content a.settings-row,
+.shell-content a.track-credit-row,
+.shell-content a.track-more-row,
+.shell-content a.vaa-event-row,
+.shell-content a.vdash-activity-row,
+.shell-content a.vdash-show-row,
+.shell-content a.venue-capacity-row {
+  color: var(--ink-1);
+}
+
+
+/* ── Primitive: StatCard ─────────────────────────────────────────────────
+   Centred, per screenshot 06: value in Syne 800 --accent, label in mono
+   uppercase --ink-2, delta below in --accent. */
+.shell-content .aa-stat-card,
+.shell-content .ad-dash-stat-card,
+.shell-content .ad-stat-card,
+.shell-content .fa-stat-card,
+.shell-content .fan-dash-stat-card,
+.shell-content .pa-stat-card,
+.shell-content .promo-stat-card,
+.shell-content .stat,
+.shell-content .venue-stat {
+  padding: 18px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-surface);
+  text-align: center;
+}
+.shell-content .aa-stat-val,
+.shell-content .ad-dash-stat-val,
+.shell-content .ad-stat-val,
+.shell-content .artist-stat-val,
+.shell-content .dj-stat-val,
+.shell-content .dja-stat-value,
+.shell-content .djd-stat-value,
+.shell-content .fa-stat-val,
+.shell-content .fan-dash-stat-value,
+.shell-content .fan-stat-val,
+.shell-content .pa-stat-value,
+.shell-content .promo-stat-value,
+.shell-content .track-stat-val,
+.shell-content .venue-stat-val {
+  font-family: var(--f-d);
+  font-weight: 800;
+  font-size: clamp(24px, 2.6vw, 30px);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--accent);
+}
+.shell-content .aa-stat-label,
+.shell-content .ad-dash-stat-label,
+.shell-content .ad-stat-label,
+.shell-content .artist-stat-label,
+.shell-content .dj-stat-label,
+.shell-content .dja-stat-label,
+.shell-content .djd-stat-label,
+.shell-content .fa-stat-label,
+.shell-content .fan-dash-stat-label,
+.shell-content .fan-stat-label,
+.shell-content .pa-stat-label,
+.shell-content .promo-stat-label,
+.shell-content .track-stat-label,
+.shell-content .venue-stat-label {
+  margin-top: 6px;
+  font-family: var(--f-m);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.shell-content .aa-stat-sub,
+.shell-content .ad-dash-stat-sub,
+.shell-content .ad-stat-sub,
+.shell-content .dja-stat-sub,
+.shell-content .djd-stat-sub,
+.shell-content .fa-stat-sub,
+.shell-content .fan-dash-stat-sub,
+.shell-content .pa-stat-sub,
+.shell-content .promo-stat-sub {
+  /* The handoff's StatCard tints this line --accent because there it is a
+     short delta ("+38%", "+22%"). In this codebase the same slot carries a
+     descriptive sentence ("Total ticket revenue via your link"), and 10px
+     uppercase mono in accent turns a sentence into a wrapped orange ribbon.
+     Kept as quiet supporting copy; a page that wants the delta treatment can
+     add .is-delta. */
+  margin-top: 4px;
+  font-family: var(--f-b);
+  font-size: 12.5px;
+  line-height: 1.35;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-2);
+}
+
+
+/* ── Primitive: section head ─────────────────────────────────────────────
+   A title beside a "View all ›" affordance. These are containers, so only
+   the heading inside them is typed — setting Syne 800 on the container
+   itself would swallow the link sitting next to it. */
+.shell-content .ad-section-head > :is(h1,h2,h3,strong),
+.shell-content .believers-head > :is(h1,h2,h3,strong),
+.shell-content .booking-head > :is(h1,h2,h3,strong),
+.shell-content .community-post-head > :is(h1,h2,h3,strong),
+.shell-content .community-section-head > :is(h1,h2,h3,strong),
+.shell-content .fa-section-head > :is(h1,h2,h3,strong),
+.shell-content .fan-dash-section-head > :is(h1,h2,h3,strong),
+.shell-content .foryou-head > :is(h1,h2,h3,strong),
+.shell-content .pa-chart-head > :is(h1,h2,h3,strong),
+.shell-content .pa-links-head > :is(h1,h2,h3,strong),
+.shell-content .station-page-head > :is(h1,h2,h3,strong),
+.shell-content .track-section-head > :is(h1,h2,h3,strong),
+.shell-content .vaa-head > :is(h1,h2,h3,strong),
+.shell-content .vaa-section-head > :is(h1,h2,h3,strong),
+.shell-content .vdash-head > :is(h1,h2,h3,strong),
+.shell-content .vdash-section-head > :is(h1,h2,h3,strong),
+.shell-content .weekend-head > :is(h1,h2,h3,strong) {
+  font-family: var(--f-d);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink-1);
+}
+.shell-content .ad-section-head :is(a,button),
+.shell-content .believers-head :is(a,button),
+.shell-content .booking-head :is(a,button),
+.shell-content .community-post-head :is(a,button),
+.shell-content .community-section-head :is(a,button),
+.shell-content .fa-section-head :is(a,button),
+.shell-content .fan-dash-section-head :is(a,button),
+.shell-content .foryou-head :is(a,button),
+.shell-content .pa-chart-head :is(a,button),
+.shell-content .pa-links-head :is(a,button),
+.shell-content .station-page-head :is(a,button),
+.shell-content .track-section-head :is(a,button),
+.shell-content .vaa-head :is(a,button),
+.shell-content .vaa-section-head :is(a,button),
+.shell-content .vdash-head :is(a,button),
+.shell-content .vdash-section-head :is(a,button),
+.shell-content .weekend-head :is(a,button) {
+  color: var(--role-venue);
+  font-family: var(--f-b);
+  font-size: 13.5px;
+}
+
+
+/* ── Primitive: Pill / badge ─────────────────────────────────────────────
+   Radius 9999px, 1px var(--line-2). A page that set its own colour keeps it
+   — role tints on these are meaningful (LIVE, SCHEDULED, verification). */
+.shell-content .ad-pill,
+.shell-content .artist-badge,
+.shell-content .believers-early-tag,
+.shell-content .believers-you-tag,
+.shell-content .community-badge,
+.shell-content .community-page-badge,
+.shell-content .dj-badge,
+.shell-content .dj-live-pill,
+.shell-content .djd-live-pill,
+.shell-content .djd-scheduled-pill,
+.shell-content .fan-badge,
+.shell-content .fan-chip,
+.shell-content .fan-dash-pill,
+.shell-content .vdash-pill,
+.shell-content .venue-badge,
+.shell-content .weekend-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1px solid var(--line-2);
+  border-radius: 9999px;
+  font-family: var(--f-m);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+
+/* ── Primitive: EmptyState ───────────────────────────────────────────────
+   Backlog item 5 asks for empty states everywhere; the product already had
+   22 of them under 22 names. This makes them one component. */
+.shell-content .aa-empty,
+.shell-content .ad-empty,
+.shell-content .artist-empty,
+.shell-content .booking-empty,
+.shell-content .community-empty,
+.shell-content .dj-empty,
+.shell-content .dja-empty,
+.shell-content .djd-empty,
+.shell-content .empty,
+.shell-content .fa-empty,
+.shell-content .fan-dash-empty,
+.shell-content .fan-empty,
+.shell-content .foryou-empty,
+.shell-content .ihype-empty-state,
+.shell-content .lsp-empty,
+.shell-content .pa-chart-empty,
+.shell-content .pa-links-empty,
+.shell-content .promo-empty,
+.shell-content .track-empty,
+.shell-content .vaa-empty,
+.shell-content .vdash-empty,
+.shell-content .weekend-empty {
+  padding: 40px 24px;
+  border: 1px dashed var(--line-2);
+  border-radius: 12px;
+  background: transparent;
+  text-align: center;
+  color: var(--ink-2);
+}
+.shell-content .aa-empty :is(h2,h3,strong),
+.shell-content .ad-empty :is(h2,h3,strong),
+.shell-content .artist-empty :is(h2,h3,strong),
+.shell-content .booking-empty :is(h2,h3,strong),
+.shell-content .community-empty :is(h2,h3,strong),
+.shell-content .dj-empty :is(h2,h3,strong),
+.shell-content .dja-empty :is(h2,h3,strong),
+.shell-content .djd-empty :is(h2,h3,strong),
+.shell-content .empty :is(h2,h3,strong),
+.shell-content .fa-empty :is(h2,h3,strong),
+.shell-content .fan-dash-empty :is(h2,h3,strong),
+.shell-content .fan-empty :is(h2,h3,strong),
+.shell-content .foryou-empty :is(h2,h3,strong),
+.shell-content .ihype-empty-state :is(h2,h3,strong),
+.shell-content .lsp-empty :is(h2,h3,strong),
+.shell-content .pa-chart-empty :is(h2,h3,strong),
+.shell-content .pa-links-empty :is(h2,h3,strong),
+.shell-content .promo-empty :is(h2,h3,strong),
+.shell-content .track-empty :is(h2,h3,strong),
+.shell-content .vaa-empty :is(h2,h3,strong),
+.shell-content .vdash-empty :is(h2,h3,strong),
+.shell-content .weekend-empty :is(h2,h3,strong) {
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--f-d);
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+  color: var(--ink-1);
+}
+.shell-content .aa-empty p,
+.shell-content .ad-empty p,
+.shell-content .artist-empty p,
+.shell-content .booking-empty p,
+.shell-content .community-empty p,
+.shell-content .dj-empty p,
+.shell-content .dja-empty p,
+.shell-content .djd-empty p,
+.shell-content .empty p,
+.shell-content .fa-empty p,
+.shell-content .fan-dash-empty p,
+.shell-content .fan-empty p,
+.shell-content .foryou-empty p,
+.shell-content .ihype-empty-state p,
+.shell-content .lsp-empty p,
+.shell-content .pa-chart-empty p,
+.shell-content .pa-links-empty p,
+.shell-content .promo-empty p,
+.shell-content .track-empty p,
+.shell-content .vaa-empty p,
+.shell-content .vdash-empty p,
+.shell-content .weekend-empty p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+/* ── Element ramp ────────────────────────────────────────────────────────
+   "Each non-Discover route opens with a back pill, an Eyebrow, and a Syne
+   800 32px h1." Every shell page already writes a real <h1>, so the ramp is
+   applied to the page's own heading rather than a second one being injected
+   from the chrome — a duplicate h1 would be a real accessibility regression.
+
+   Prefixed `.shell-root` on purpose. Nine pages style their heading through
+   a descendant selector (`.promo-page-header h1`, `.fan-dash-header h1`,
+   `.settings-page h1`), which is (0,1,1) — exactly what `.shell-content h1`
+   scores. A tie goes to whichever comes later in the document, and those
+   rules live in an inline <style> block inside the page, so they would all
+   win. `.shell-root .shell-content h1` is (0,2,1) and settles it. */
+.shell-root .shell-content h1 {
+  font-family: var(--f-d);
+  font-weight: 800;
+  font-size: 32px;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: var(--ink-1);
+  margin: 8px 0 18px;
+}
+.shell-root .shell-content h2 {
+  font-family: var(--f-d);
+  font-weight: 800;
+  font-size: 26px;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  color: var(--ink-1);
+}
+.shell-root .shell-content h3 {
+  font-family: var(--f-d);
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+  color: var(--ink-1);
+}
+
+/* A heading INSIDE a row or card is not a section heading — the handoff types
+   it 15px/500 DM Sans with the supporting line at 13px --ink-2 (Charts, the
+   radio schedule, settlements, Top Tracks all read this way). Without this the
+   ramp above would turn every row into a stack of 18px Syne. */
+.shell-root .shell-content :is(.artist-show-card, .artist-split-card, .community-card, .community-channel-card, .composer-card, .composer-media-card, .composer-plan-panel, .composer-sample-card, .composer-sequence-card, .composer-voice-card, .dj-show-card, .dja-card, .djd-card, .fan-ref-box, .foryou-card, .ihype-card, .lsp-card, .pa-chart-card, .pa-links-card, .payout-card, .promo-referral-box, .settings-payout-card, .ticket-card, .ticket-verification-panel, .track-card, .vaa-card, .vdash-card, .venue-show-card, .venue-split-card, .community-cta) :is(h2, h3, h4),
+.shell-root .shell-content :is(.aa-event-row, .ad-activity-row, .ad-event-row, .dj-earn-row, .dja-show-row, .djd-activity-row, .djd-show-row, .fa-artist-row, .fan-dash-activity-row, .fan-dash-show-row, .fan-payout-row, .fan-show-row, .fan-top5-row, .pa-link-row, .promo-event-row, .settings-row, .track-credit-row, .track-more-row, .vaa-event-row, .vdash-activity-row, .vdash-show-row, .venue-capacity-row) :is(h2, h3, h4) {
+  font-family: var(--f-b);
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: 0;
+  line-height: 1.3;
+  margin: 0;
+}
+.shell-root .shell-content :is(.artist-show-card, .artist-split-card, .community-card, .community-channel-card, .composer-card, .composer-media-card, .composer-plan-panel, .composer-sample-card, .composer-sequence-card, .composer-voice-card, .dj-show-card, .dja-card, .djd-card, .fan-ref-box, .foryou-card, .ihype-card, .lsp-card, .pa-chart-card, .pa-links-card, .payout-card, .promo-referral-box, .settings-payout-card, .ticket-card, .ticket-verification-panel, .track-card, .vaa-card, .vdash-card, .venue-show-card, .venue-split-card, .community-cta) p,
+.shell-root .shell-content :is(.aa-event-row, .ad-activity-row, .ad-event-row, .dj-earn-row, .dja-show-row, .djd-activity-row, .djd-show-row, .fa-artist-row, .fan-dash-activity-row, .fan-dash-show-row, .fan-payout-row, .fan-show-row, .fan-top5-row, .pa-link-row, .promo-event-row, .settings-row, .track-credit-row, .track-more-row, .vaa-event-row, .vdash-activity-row, .vdash-show-row, .venue-capacity-row) p {
+  margin: 2px 0 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.shell-root .shell-content h1 + p { color: var(--ink-2); font-size: 14.5px; }
+.shell-content :is(.meta, .small) { color: var(--ink-2); }
+
+/* ── Controls ────────────────────────────────────────────────────────────
+   Three tones. Solid = accent fill; outline = 1px accent at 10–14% fill on
+   hover; ghost = no border. Page-specific gradients are replaced: the design
+   system has no gradient buttons. */
+.shell-content :is(.ihype-btn-primary, .promo-cta, .promote-share-btn, .believers-cta,
+  .foryou-cta, .weekend-cta, .booking-cta) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 11px 20px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--f-b);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+.shell-content :is(.ihype-btn-outline, .settings-btn, .vdash-btn, .djd-btn, .dja-btn,
+  .ad-btn, .artist-hero-btn, .dj-hero-btn, .venue-hero-btn, .fan-hero-btn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-1);
+  font-family: var(--f-b);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+.shell-content :is(.ihype-btn-outline, .settings-btn, .vdash-btn, .djd-btn, .dja-btn,
+  .ad-btn, .artist-hero-btn, .dj-hero-btn, .venue-hero-btn, .fan-hero-btn):hover {
+  background: rgba(var(--surface-tint-rgb), 0.06);
+}
+.shell-content :is(.settings-btn-ghost, .text-link, .promo-analytics-link,
+  .weekend-card-link, .foryou-card-link, .believers-artist-link) {
+  border: 0;
+  background: transparent;
+  color: var(--role-venue);
+  font-family: var(--f-b);
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+/* ── Inputs ──────────────────────────────────────────────────────────────
+   Per screenshot 07: mono uppercase label above a radius-8 field with a
+   var(--line-2) hairline on the page surface. */
+.shell-content :is(input[type="text"], input[type="email"], input[type="url"],
+  input[type="search"], input[type="number"], input[type="tel"], input[type="password"],
+  input[type="date"], input[type="time"], input[type="datetime-local"], select, textarea) {
+  padding: 12px 14px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-sm);
+  background: var(--bg-base);
+  color: var(--ink-1);
+  font-family: var(--f-b);
+  font-size: 14px;
+}
+.shell-content :is(input, select, textarea)::placeholder { color: var(--ink-3); }
+.shell-content :is(input, select, textarea):focus-visible {
+  border-color: var(--role-venue);
+  outline: 2px solid var(--role-venue);
+  outline-offset: 2px;
+}
+
+/* ── Route back pill ─────────────────────────────────────────────────────
+   Rendered by the shell, not by each page: it is pure navigation and no page
+   knows what it is a sub-route of. Suppressed on the section-home routes
+   (Discover, Near Me, My Dashboard…), which the strip already reaches. */
+.shell-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 8px 14px 8px 10px;
+  border: 1px solid var(--line-2);
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--f-b);
+  font-size: 13.5px;
+}
+.shell-back:hover { color: var(--ink-1); background: rgba(var(--surface-tint-rgb), 0.05); }
+
+/* ── Page containers ─────────────────────────────────────────────────────
+   Every page wrote its own max-width and outer padding against the document
+   scroller. Inside the shell the content region already supplies both
+   (max-width 1620px, padding 26px), so a second one nests a narrow column
+   inside a narrow column and pushes the first card below the fold. */
+.shell-content :is(.container, .promo-page, .tickets-container, .settings-page,
+  .community-page, .fan-dash, .weekend-page, .foryou-page, .payout-page,
+  .track-page, .booking-page, .believers-page, .lsp-page) {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding-left: 0;
+  padding-right: 0;
+  padding-top: 0;
+}
+
+/* Opt-in delta treatment, for the short +38%/+22% form the handoff shows. */
+.shell-content .is-delta {
+  font-family: var(--f-m);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}

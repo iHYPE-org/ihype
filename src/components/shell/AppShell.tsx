@@ -10,6 +10,7 @@ import { AppShellHeader } from '@/components/shell/AppShellHeader';
 import { AppShellContextStrip } from '@/components/shell/AppShellContextStrip';
 import { AppShellDrawer } from '@/components/shell/AppShellDrawer';
 import { AppShellActiveProvider } from '@/components/shell/AppShellContext';
+import { ShellBackPill } from '@/components/shell/ShellBackPill';
 import {
   buildShellNav, isShellRoute, resolveActiveItemId, resolveSection,
   type ShellAccount, type ShellNavItem, type ShellSectionId,
@@ -169,7 +170,12 @@ export function AppShell({
       </Suspense>
 
       <main className="shell-content" id="main-content" ref={contentRef}>
-        <div className="shell-content-inner">{children}</div>
+        <div className="shell-content-inner">
+          <Suspense fallback={null}>
+            <ShellBackPill items={items} />
+          </Suspense>
+          {children}
+        </div>
       </main>
     </div>
     </AppShellActiveProvider>

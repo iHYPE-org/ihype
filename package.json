@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "node scripts/lint-source.mjs",
     "guard:migrations": "node scripts/check-gated-migrations.mjs",
+    "audit:shell": "node scripts/audit-shell-classes.mjs",
     "check:alpha": "node --import dotenv/config scripts/beta-launch-check.mjs",
     "check": "npm run typecheck && npm run lint && npm test",
     "test": "vitest run",

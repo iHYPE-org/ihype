@@ -1,5 +1,6 @@
 import './globals.css';
 import './shell.css';
+import './shell-surfaces.css';
 import type { Metadata, Viewport } from 'next';
 import { ReactNode } from 'react';
 import { Syne, DM_Sans, JetBrains_Mono, Instrument_Serif, Forum } from 'next/font/google';
