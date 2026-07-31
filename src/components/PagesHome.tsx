@@ -8,6 +8,7 @@ import { PageEditor } from '@/components/PageEditor';
 import { PageRoleModules } from '@/components/PageRoleModules';
 import { PullToRefresh } from '@/components/PullToRefresh';
 import { useMobileShell } from '@/lib/MobileShellContext';
+import { useAppShellActive } from '@/components/shell/AppShellContext';
 import { useI18n } from '@/components/I18nProvider';
 
 const TYPE_COLOR: Record<string, string> = {
@@ -26,6 +27,13 @@ const TYPE_LABEL: Record<string, string> = {
 
 const profileRoute = (type: string, slug: string) =>
   type === 'VENUE' ? `/venues/${slug}` : type === 'DJ' ? `/promoters/${slug}` : `/artists/${slug}`;
+
+/**
+ * Tab ids the app shell's context strip already carries for PAGES ('mypage' via
+ * Tour Creator, 'creator' via Page Creator). Inside the shell they come off this
+ * strip; 'search' and 'network' stay, because the strip does not carry them.
+ */
+const SHELL_TABS: readonly string[] = ['mypage', 'creator'];
 
 const TABS = [
   { id: 'search', label: 'Search' },
@@ -131,6 +139,17 @@ export function PagesHome({
   const validInitialTab = TABS.some((t) => t.id === initialTab) ? (initialTab as TabId) : null;
   const [tab, setTab] = useState<TabId>(validInitialTab ?? 'mypage');
   const [gridMode, setGridMode] = useState(!validInitialTab);
+  // The app shell's context strip navigates between these tabs with real
+  // links (/pages?tab=creator). Same route, different query = a soft nav, so
+  // the useState initialiser above never re-runs and the tab would otherwise
+  // stay put while its pill lit up.
+  useEffect(() => {
+    if (!validInitialTab) return;
+    setTab(validInitialTab);
+    setGridMode(false);
+  }, [validInitialTab]);
+  const shellDrivesTabs = useAppShellActive();
+  const visibleTabs = shellDrivesTabs ? TABS.filter((d) => !SHELL_TABS.includes(d.id)) : TABS;
   const prevResetToken = useRef(resetToken);
   useEffect(() => {
     if (resetToken !== undefined && resetToken !== prevResetToken.current) {
@@ -287,7 +306,7 @@ export function PagesHome({
       <h1 className="sr-only">{t('pagesHome.pagesHeading', 'Pages')}</h1>
 
       <nav className="mqg-tabstrip" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 26 }} aria-label={t('pagesHome.tabstripAriaLabel', 'Pages sections')}>
-        {TABS.map((tabItem) => (
+        {visibleTabs.map((tabItem) => (
           <button
             key={tabItem.id}
             className={tab === tabItem.id ? 'sub-tab active' : 'sub-tab'}

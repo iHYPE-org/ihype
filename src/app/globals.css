@@ -86,6 +86,16 @@
   --role-artist:   #ff5029;
   --role-venue:    #22e5d4;
   --role-promoter: #ffb84a;
+  /* Backlog item 3 of the app-shell handoff: "Add --role-advertiser to the
+     design system instead of borrowing --warn, and document which surfaces
+     tint by role." Advertiser is the 5th account type (Role.ADVERTISER +
+     AdvertiserAccount, no Profile row). It keeps the amber the prototype
+     borrowed, but as its own token — so a future change to the warning colour
+     cannot silently repaint every advertiser surface.
+     Surfaces that tint by role: drawer row badges and context-strip creator
+     entries (src/lib/app-nav.ts's badgeToneVar), the Ad Creator nav item, and
+     the advertiser dashboard's eyebrow. */
+  --role-advertiser: #ffb84a;
 
   /* ── Status ──────────────────────────────────────────────────────── */
   --live:    #ff3c3c;
@@ -107,6 +117,34 @@
   /* ── Legacy aliases (referenced throughout existing CSS) ──────────── */
   --text:  var(--ink);
   --muted: var(--ink-3);
+
+  /* ── iHYPE design-system alias names ─────────────────────────────────
+     The bound design system (and every .dc.html handoff written against it)
+     names these tokens --bg-base / --bg-surface / --ink-1. This codebase has
+     always called the same values --bg / --bg-2 / --ink. Aliasing rather than
+     renaming keeps ~7,800 lines of existing CSS working while letting new
+     work be written verbatim against the handoff — and, critically, means the
+     light theme only has to override ONE set of values (below) for both names
+     to follow. Never assign a raw colour to an alias; always point it at the
+     canonical token. */
+  --bg-base:    var(--bg);
+  --bg-surface: var(--bg-2);
+  --bg-raised:  var(--bg-3);
+  --bg-overlay: var(--bg-4);
+  --ink-1: var(--ink);
+  /* --ink-2/--ink-3/--ink-4 already carry the design-system names. */
+
+  /* RGB triplets, for composed alpha (`rgba(var(--bg-base-rgb), 0.9)`).
+     A custom property cannot be decomposed in CSS, so these are maintained
+     alongside their hex counterparts above and re-stated per theme. */
+  --bg-base-rgb:      10, 8, 5;      /* #0a0805 */
+  --ink-1-rgb:        240, 235, 229; /* #f0ebe5 */
+  --surface-tint-rgb: 255, 255, 255; /* the tint that lifts a surface on hover */
+
+  /* Semantic success surface — the charter card and the player's transport
+     hover both paint from it. */
+  --color-success:    var(--success);
+  --color-success-bg: rgba(34, 229, 212, .10);
 
   /* ── Font families ───────────────────────────────────────────────── */
   --f-d: var(--font-syne,  'Syne', sans-serif);
@@ -257,6 +295,14 @@
   --hair-220: rgba(0,0,0,.22);
   --hair-250: rgba(0,0,0,.25);
   --hair-280: rgba(0,0,0,.28);
+
+  /* The alias names above resolve through --bg/--ink and so follow this theme
+     automatically. The RGB triplets cannot — they are literals — so they are
+     re-stated here. Missing these is what makes a "light mode" shell paint a
+     near-black scrim and a near-black header blur over light content. */
+  --bg-base-rgb:      245, 242, 237; /* #f5f2ed */
+  --ink-1-rgb:        26, 20, 16;    /* #1a1410 */
+  --surface-tint-rgb: 0, 0, 0;
 }
 
 /* The default `body` rule hardcodes a dark gradient (see far below), which

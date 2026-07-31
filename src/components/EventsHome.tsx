@@ -8,9 +8,17 @@ import { PagesReferralTab } from '@/components/PagesReferralTab';
 import { MobileQuickGrid, type QuickGridItem } from '@/components/MobileQuickGrid';
 import { PullToRefresh } from '@/components/PullToRefresh';
 import { useMobileShell } from '@/lib/MobileShellContext';
+import { useAppShellActive } from '@/components/shell/AppShellContext';
 import { useI18n } from '@/components/I18nProvider';
 
 type Tab = 'search' | 'local' | 'foryou' | 'tickets' | 'referral';
+/**
+ * Tab ids the app shell's context strip already carries for EVENTS. Inside the
+ * shell they come off this strip; 'search' and 'referral' stay, because the
+ * strip does not carry them and nothing else links to them from here.
+ */
+const SHELL_TABS: readonly string[] = ['local', 'foryou', 'tickets'];
+
 const TABS: { id: Tab; label: string }[] = [
   { id: 'search', label: 'Search' },
   { id: 'local', label: 'Local Events' },
@@ -139,6 +147,17 @@ export function EventsHome({
   const validInitialTab = TABS.some((t) => t.id === initialTab) ? (initialTab as Tab) : null;
   const [tab, setTab] = useState<Tab>(validInitialTab ?? 'local');
   const [gridMode, setGridMode] = useState(!validInitialTab);
+  // The app shell's context strip navigates between these tabs with real
+  // links (/shows?tab=tickets). Same route, different query = a soft nav, so
+  // the useState initialiser above never re-runs and the tab would otherwise
+  // stay put while its pill lit up.
+  useEffect(() => {
+    if (!validInitialTab) return;
+    setTab(validInitialTab);
+    setGridMode(false);
+  }, [validInitialTab]);
+  const shellDrivesTabs = useAppShellActive();
+  const visibleTabs = shellDrivesTabs ? TABS.filter((d) => !SHELL_TABS.includes(d.id)) : TABS;
   const prevResetToken = useRef(resetToken);
   useEffect(() => {
     if (resetToken !== undefined && resetToken !== prevResetToken.current) {
@@ -257,7 +276,7 @@ export function EventsHome({
       <h1 className="sr-only">{t('eventsHome.pageHeading', 'Events')}</h1>
 
       <div className="mqg-tabstrip" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
-        {TABS.map((tabItem) => (
+        {visibleTabs.map((tabItem) => (
           <button
             key={tabItem.id}
             className={tab === tabItem.id ? 'sub-tab active' : 'sub-tab'}
