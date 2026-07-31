@@ -156,7 +156,7 @@ export async function POST(request: Request) {
 
     if ((body.role === 'ARTIST' || body.role === 'DJ') && !body.acceptedArtistUploadPolicy) {
       return NextResponse.json(
-        { error: 'Artists and promoters must accept the iHYPE artist upload and limited use license policy.' },
+        { error: 'Artists and DJs must accept the iHYPE artist upload and limited use license policy.' },
         { status: 400 },
       );
     }

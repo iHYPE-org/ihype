@@ -25,7 +25,7 @@ export type SignupFunnelMetadata = {
 export const roleOptions: Array<{ value: RoleOption; label: string; help: string }> = [
   { value: 'FAN', label: 'Fan', help: 'Discover, hype, playlist, and track your music life.' },
   { value: 'ARTIST', label: 'Artist', help: 'Publish your page, media, shows, and growth signals.' },
-  { value: 'DJ', label: 'Promoter', help: 'Create radio-style shows and connect scenes.' },
+  { value: 'DJ', label: 'DJ', help: 'Create radio-style shows, connect scenes, and promote with HYPE Links.' },
   { value: 'VENUE', label: 'Venue', help: 'Manage events, ticketing, and demand signals.' }
 ];
 

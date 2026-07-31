@@ -56,6 +56,7 @@ type ChartTrack = {
   color: string;
   mediaUrl: string;
   durationSec: number;
+  artworkUrl: string | null;
 };
 
 type SearchResult = {
@@ -127,13 +128,13 @@ function DiscoveryHome({
         <div className="discovery-heading"><div><h1>For you</h1><p>Fresh independent sounds, picked for you.</p></div><button onClick={() => onOpen('charts')} type="button">View all →</button></div>
         <div className="discovery-feature-grid">
           <article className="discovery-feature">
-            <Image alt="" fill priority sizes="(max-width: 760px) 100vw, 55vw" src="/brand/alpha-featured.png" />
+            <Image alt="" fill priority sizes="(max-width: 760px) 100vw, 55vw" src={featured?.artworkUrl ?? '/brand/alpha-featured.png'} />
             <div><span>NEW MUSIC</span><h2>{featured?.artistName ?? 'Your local scene'}</h2><strong>{featured?.title ?? 'Fresh independent music'}</strong><button disabled={!featured} onClick={() => featured && onPlay(featured, tracks)} type="button">▶ Play now</button></div>
           </article>
           <div className="discovery-track-list">
             {displayTracks.map((track, index) => (
               <div className="discovery-track-row" key={track?.id ?? index}>
-                <Image alt="" height={54} src={PLACEHOLDER_SHOWS[index]} width={64} />
+                <Image alt="" height={54} src={track?.artworkUrl ?? PLACEHOLDER_SHOWS[index]} width={64} />
                 <div><strong>{track?.title ?? 'New local track'}</strong><span>{track?.artistName ?? 'Independent artist'}</span></div>
                 {track ? <><button aria-label={`Play ${track.title}`} onClick={() => onPlay(track, tracks)} type="button">▶</button><span>{Math.floor(track.durationSec / 60)}:{String(track.durationSec % 60).padStart(2, '0')}</span></> : null}
               </div>
@@ -165,6 +166,29 @@ function DiscoveryHome({
       <section className="discovery-section discovery-artists">
         <div className="discovery-heading"><div><h2>Because you listen local</h2><p>More independent artists in your orbit.</p></div><button onClick={() => onOpen('seeds')} type="button">More like this →</button></div>
         <div>{(artistNames.length ? artistNames : ['New artists', 'Local voices', 'Fresh sounds', 'Your scene', 'Next up']).map((name, index) => <button key={name} onClick={() => onOpen('seeds')} type="button"><Image alt="" height={112} src={index < 4 ? `/brand/alpha-artist-${Math.max(2, index + 1)}.png` : '/brand/alpha-show-2.png'} width={112} /><span>{name}</span></button>)}</div>
+      </section>
+
+      <section className="discovery-section discovery-rising">
+        <div className="discovery-heading"><div><h2>HYPE rising</h2><p>The strongest real signal moving through nearby scenes.</p></div><button onClick={() => onOpen('charts')} type="button">View charts →</button></div>
+        <div className="discovery-rising-grid">
+          {(tracks.length ? tracks.slice(0, 3) : [null, null, null]).map((track, index) => (
+            <button
+              className="discovery-rising-card"
+              disabled={!track}
+              key={track?.id ?? index}
+              onClick={() => track && onPlay(track, tracks)}
+              type="button"
+            >
+              <Image alt="" fill sizes="(max-width: 760px) 80vw, 30vw" src={track?.artworkUrl ?? PLACEHOLDER_SHOWS[index]} />
+              <span className="discovery-rising-rank">0{index + 1}</span>
+              <span className="discovery-rising-copy">
+                <strong>{track?.title ?? 'Your scene is warming up'}</strong>
+                <small>{track?.artistName ?? 'Fresh local HYPE will appear here'}</small>
+              </span>
+              <span className="discovery-rising-hype">{track ? `${track.hypeCount.toLocaleString()} HYPE` : 'LOCAL SIGNAL'}</span>
+            </button>
+          ))}
+        </div>
       </section>
     </div>
   );
@@ -536,6 +560,7 @@ export function ListenHome({
       artistName: item.artistName,
       artistProfileSlug: item.artistSlug,
       url: item.mediaUrl,
+      artworkUrl: item.artworkUrl,
     });
     playTrack(toMediaTrack(track), queue.map(toMediaTrack));
   }

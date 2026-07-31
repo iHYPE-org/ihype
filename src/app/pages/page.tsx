@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default async function PagesPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ tab?: string }>;
+  searchParams?: Promise<{ tab?: string; profile?: string; editor?: string; tool?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -23,5 +23,14 @@ export default async function PagesPage({
   }
 
   const resolvedSearchParams = searchParams ? await searchParams : {};
-  return <RouteShellSlot><PagesHome initialTab={resolvedSearchParams.tab} /></RouteShellSlot>;
+  return (
+    <RouteShellSlot>
+      <PagesHome
+        initialEditorSection={resolvedSearchParams.editor}
+        initialProfileId={resolvedSearchParams.profile}
+        initialTab={resolvedSearchParams.tab}
+        initialTool={resolvedSearchParams.tool}
+      />
+    </RouteShellSlot>
+  );
 }

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { NavDrawer } from '@/components/NavDrawer';
 import { useMobileShell } from '@/lib/MobileShellContext';
 import type { ShellSection } from '@/lib/mobileShell';
@@ -80,10 +81,13 @@ export function MobileBottomNav() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const shell = useMobileShell();
+  const { status: sessionStatus } = useSession();
 
   // Index (the marketing/pitch page) and every auth-flow page: no app chrome
   // before someone's actually signed up.
-  if (pathname === '/' || AUTH_PATHS.some(p => pathname.startsWith(p))) return null;
+  // Authenticated navigation now lives behind the compact logo menu in the
+  // top app header, matching the same shell on every viewport.
+  if (sessionStatus !== 'unauthenticated' || pathname === '/' || AUTH_PATHS.some(p => pathname.startsWith(p))) return null;
 
   // While the shell is active, its own section state is the source of truth
   // for which tab is "active" — window.history.pushState (used to update the

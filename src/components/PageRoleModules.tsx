@@ -48,10 +48,10 @@ function ModuleHead({ icon, color, title, sub, trailing }: {
   );
 }
 
-function ExpandModule({ icon, color, title, sub, children }: {
-  icon: ReactNode; color: string; title: string; sub: string; children: ReactNode;
+function ExpandModule({ icon, color, title, sub, children, defaultOpen = false }: {
+  icon: ReactNode; color: string; title: string; sub: string; children: ReactNode; defaultOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   return (
     <div style={cardBase}>
       <button onClick={() => setOpen((o) => !o)} style={headBase} type="button">
@@ -273,7 +273,7 @@ const onboardingHref = (profile: ModuleProfile): string | null => {
  * recommendations; Venue: event creation + ad recommendations; DJ: radio show
  * creator + ad recommendations.
  */
-export function PageRoleModules({ profile, color }: { profile: ModuleProfile; color: string }) {
+export function PageRoleModules({ profile, color, initialTool }: { profile: ModuleProfile; color: string; initialTool?: string }) {
   const { t } = useI18n();
   const isArtist = profile.type === 'ARTIST';
   const isVenue = profile.type === 'VENUE';
@@ -364,9 +364,10 @@ export function PageRoleModules({ profile, color }: { profile: ModuleProfile; co
         {isArtist && (
           <ExpandModule
             color={color}
+            defaultOpen={initialTool === 'tour'}
             icon={icons.tour(color)}
-            sub={t('pageRoleModules.tourPicksSub', 'Cities fans want you to play')}
-            title={t('pageRoleModules.tourPicksTitle', 'Tour picks')}
+            sub={t('pageRoleModules.tourPicksSub', 'HYPE, play, and request interest by city')}
+            title={t('pageRoleModules.tourPicksTitle', 'Tour creator')}
           >
             <TourRecsBody />
           </ExpandModule>

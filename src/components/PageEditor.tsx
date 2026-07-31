@@ -137,10 +137,13 @@ function ImageField({ label, value, onUpload, uploading }: { label: string; valu
  * long form since the full field set is large; role-specific fields
  * (tour dates vs. venue hours) only show for the relevant profile type.
  */
-export function PageEditor({ profileId }: { profileId: string }) {
+export function PageEditor({ profileId, initialSection }: { profileId: string; initialSection?: string }) {
   const { t } = useI18n();
   const [data, setData] = useState<EditorProfile | null>(null);
-  const [section, setSection] = useState<SectionId>('basics');
+  const resolvedInitialSection = SECTIONS.some((item) => item.id === initialSection)
+    ? initialSection as SectionId
+    : 'basics';
+  const [section, setSection] = useState<SectionId>(resolvedInitialSection);
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -181,6 +184,10 @@ export function PageEditor({ profileId }: { profileId: string }) {
   // Recent activity — read-only feed from /api/profile/activity (who hyped
   // this profile recently); there's nothing to edit, just to show.
   const [hypers, setHypers] = useState<RecentHyper[] | null>(null);
+
+  useEffect(() => {
+    setSection(resolvedInitialSection);
+  }, [resolvedInitialSection]);
 
   useEffect(() => {
     setData(null);
@@ -601,7 +608,9 @@ export function PageEditor({ profileId }: { profileId: string }) {
       {section === 'details' && isArtistOrDj && (
         <div className="sub-panel">
           <Field label={t('pageEditor.upcomingLabel', 'Upcoming')}><TextAreaField maxLength={5000} onChange={(v) => set('upcomingContent', v)} rows={4} value={data.upcomingContent ?? ''} /></Field>
-          <Field label={t('pageEditor.tourDatesLabel', 'Tour dates')}><TextAreaField maxLength={5000} onChange={(v) => set('tourContent', v)} rows={4} value={data.tourContent ?? ''} /></Field>
+          <div id="tour-creator" className="page-editor-anchor-target">
+            <Field label={t('pageEditor.tourDatesLabel', 'Tour dates')}><TextAreaField maxLength={5000} onChange={(v) => set('tourContent', v)} rows={4} value={data.tourContent ?? ''} /></Field>
+          </div>
           <Field hint={t('pageEditor.requestsHint', 'What fans can request from you')} label={t('pageEditor.requestsLabel', 'Requests')}><TextAreaField maxLength={5000} onChange={(v) => set('requestContent', v)} rows={3} value={data.requestContent ?? ''} /></Field>
           <Field label={t('pageEditor.previousShowHighlightsLabel', 'Previous show highlights')}><TextAreaField maxLength={5000} onChange={(v) => set('previousShowHighlights', v)} rows={4} value={data.previousShowHighlights ?? ''} /></Field>
           <Field label={t('pageEditor.merchLinkLabel', 'Merch link')}><TextField onChange={(v) => set('merchUrl', v)} placeholder="https://…" value={data.merchUrl ?? ''} /></Field>

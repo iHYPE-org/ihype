@@ -19,7 +19,7 @@ const TYPE_COLOR: Record<string, string> = {
 
 const TYPE_LABEL: Record<string, string> = {
   ARTIST: 'Artist',
-  DJ: 'Promoter / DJ',
+  DJ: 'DJ',
   VENUE: 'Venue',
   LISTENER: 'Fan',
 };
@@ -111,7 +111,21 @@ type PagesData = {
   mutualCount: number;
 };
 
-export function PagesHome({ initialTab, isShellForeground = true, resetToken }: { initialTab?: string; isShellForeground?: boolean; resetToken?: number } = {}) {
+export function PagesHome({
+  initialTab,
+  initialProfileId,
+  initialEditorSection,
+  initialTool,
+  isShellForeground = true,
+  resetToken,
+}: {
+  initialTab?: string;
+  initialProfileId?: string;
+  initialEditorSection?: string;
+  initialTool?: string;
+  isShellForeground?: boolean;
+  resetToken?: number;
+} = {}) {
   const { t } = useI18n();
   const shell = useMobileShell();
   const validInitialTab = TABS.some((t) => t.id === initialTab) ? (initialTab as TabId) : null;
@@ -125,7 +139,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
     }
   }, [resetToken]);
   const [netFilter, setNetFilter] = useState<(typeof NET_FILTERS)[number]['id']>('all');
-  const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
+  const [selectedPageId, setSelectedPageId] = useState<string | null>(initialProfileId ?? null);
   const [data, setData] = useState<PagesData | null>(null);
   const [signedOut, setSignedOut] = useState(false);
   const [q, setQ] = useState('');
@@ -140,6 +154,10 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
   useEffect(() => {
     contentTopRef.current?.scrollIntoView({ block: 'start' });
   }, [tab]);
+
+  useEffect(() => {
+    if (initialProfileId) setSelectedPageId(initialProfileId);
+  }, [initialProfileId]);
 
   const refreshAll = useCallback(() => {
     return fetch('/api/pages/home')
@@ -452,6 +470,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
                 <PageRoleModules
                   key={selectedProfile.id}
                   color={TYPE_COLOR[selectedProfile.type] ?? '#ff5029'}
+                  initialTool={initialTool}
                   profile={selectedProfile}
                 />
               )}
@@ -601,7 +620,7 @@ export function PagesHome({ initialTab, isShellForeground = true, resetToken }: 
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a35)', marginBottom: 14 }}>
                 {t('pagesHome.editingLabel', 'EDITING')} · {typeLabel(selectedProfile.type).toUpperCase()}
               </div>
-              <PageEditor key={selectedProfile.id} profileId={selectedProfile.id} />
+              <PageEditor initialSection={initialEditorSection} key={selectedProfile.id} profileId={selectedProfile.id} />
               <div style={{ borderTop: '1px solid var(--hair-70)', margin: '36px 0 22px' }} />
             </>
           )}

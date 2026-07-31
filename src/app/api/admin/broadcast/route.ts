@@ -9,7 +9,7 @@ import { readClientAddress } from '@/lib/request-meta';
 import { requireRecentAdminReauth } from '@/lib/admin-confirmation';
 import { log } from '@/lib/logger';
 
-const ROLES = ['FAN', 'ARTIST', 'DJ', 'VENUE', 'ALL'] as const;
+const ROLES = ['FAN', 'ARTIST', 'DJ', 'VENUE', 'ADVERTISER', 'ALL'] as const;
 type TargetRole = (typeof ROLES)[number];
 
 export async function POST(request: Request) {

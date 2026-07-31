@@ -7,6 +7,7 @@ import { PromoteShareButton } from '@/components/PromoteShareButton';
 import { getBaseUrl } from '@/lib/utils';
 import type { Metadata } from 'next';
 import { getServerT } from '@/lib/i18n/server';
+import { canPromoteWithHypeLink } from '@/lib/role-capabilities';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +27,9 @@ export default async function PromotePage() {
   const session = await auth();
   if (!session?.user?.id) {
     redirect('/login?callbackUrl=/me/promote');
+  }
+  if (!canPromoteWithHypeLink(session.user.role)) {
+    redirect('/me/dashboard');
   }
 
   const d = await getPromoterDashboard(session.user.id);
