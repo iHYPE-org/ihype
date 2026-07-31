@@ -59,6 +59,18 @@ html.ihype-shell-locked body {
   overscroll-behavior: none;
 }
 
+/* Modal scroll lock. `acquireScrollLock()` (src/lib/scrollLock.ts) locks
+   `html`/`body` — which, inside the shell, no longer scroll. The real scroller
+   is the content region, so without this every overlay in the app (report
+   dialog, fan mail, the radio composer, the quick grid) leaves the page
+   scrolling behind it. Kept ref-counted by that helper; this only extends the
+   class it already sets to the element that actually scrolls, and applies at
+   every width because modals are not a phone-only affordance. */
+html.mqg-scroll-lock .shell-content {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 /* The shell replaces the marketing chrome entirely — it is the whole screen. */
 html.ihype-shell-locked .adaptive-site-header,
 html.ihype-shell-locked .site-background,
@@ -439,7 +451,7 @@ html.ihype-shell-locked .mqg-tabstrip:empty { display: none; }
 .shell-route-narrow { max-width: 760px; }
 .shell-route-title {
   margin: 8px 0 20px;
-  font: 800 32px var(--f-d);
+  font: 800 2rem var(--f-d);
   letter-spacing: -0.02em;
   color: var(--ink-1);
 }
@@ -473,8 +485,8 @@ html.ihype-shell-locked .mqg-tabstrip:empty { display: none; }
   flex-wrap: wrap;
 }
 .shell-card-split > div { min-width: 220px; }
-.shell-card-title { margin: 0; font: 500 15px var(--f-b); color: var(--ink-1); }
-.shell-card-hint { margin: 4px 0 0; font-size: 13px; color: var(--ink-2); }
+.shell-card-title { margin: 0; font: 500 0.9375rem var(--f-b); color: var(--ink-1); }
+.shell-card-hint { margin: 4px 0 0; font-size: 0.8125rem; color: var(--ink-2); }
 .shell-card-controls { margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; }
 .shell-card-split .shell-card-controls { margin-top: 0; }
 
@@ -548,8 +560,16 @@ html.a11y-reduce-motion .shell-root *::after {
 }
 
 /* ── Text scaling (Accessibility settings, 85–140%) ─────────────────────── */
-/* "In code: root font scale, not a transform." Applied to the content region
-   only, so the chrome's fixed 82/52px geometry — which the whole contract is
-   built on — cannot be pushed out from under itself. */
-.shell-content { font-size: calc(1rem * var(--ihype-text-scale, 1)); }
-.shell-content .shell-content-inner { zoom: var(--ihype-text-scale, 1); }
+/* "Content scale 85–140% (in code: root font scale, not a transform)."
+   Taken literally, because the alternative was worse: this used to be a `zoom`
+   on the content wrapper, which is a transform in all but name — it disturbs
+   `position: fixed` descendants (every modal in the app) and it scaled the
+   layout rather than the type.
+   A root font-size percentage is the real thing. It leaves the chrome alone by
+   construction — the header, context strip, drawer and player are sized in px
+   precisely because the geometry table depends on them not moving — while the
+   shell's content primitives (shell.css's route body and all of
+   shell-surfaces.css) are authored in rem and follow it. `100%` rather than a
+   px base so the reader's own browser font-size setting is still respected and
+   multiplied, not overridden. */
+:root { font-size: calc(100% * var(--ihype-text-scale, 1)); }

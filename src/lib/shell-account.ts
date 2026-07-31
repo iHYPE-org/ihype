@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
@@ -17,12 +18,16 @@ const SIGNED_OUT: ShellViewer = { account: null, unreadCount: 0 };
  * already, and a fetch would only add a round trip and a loading flash to
  * chrome that is supposed to be there before anything else.
  *
+ * Wrapped in React's `cache()` so the root layout's three queries run once per
+ * request rather than once per render pass — this is on the hot path for every
+ * signed-in page view, and the layout re-renders on every navigation.
+ *
  * Every query is independently caught, following the AdminWorkbench precedent:
  * one failing count must degrade a badge, never the whole navigation. A count
  * that could not be read comes back undefined (badge hidden) rather than 0,
  * because "no tickets" and "we could not check" are different claims.
  */
-export async function getShellViewer(): Promise<ShellViewer> {
+export const getShellViewer = cache(async function getShellViewer(): Promise<ShellViewer> {
   const session = await auth().catch(() => null);
   const userId = session?.user?.id;
   if (!userId) return SIGNED_OUT;
@@ -74,4 +79,4 @@ export async function getShellViewer(): Promise<ShellViewer> {
     },
     unreadCount,
   };
-}
+});

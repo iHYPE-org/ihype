@@ -130,6 +130,53 @@ export function AppShell({
     };
   }, [active, pathname]);
 
+  // ── Scroll position across navigation ────────────────────────────────
+  // The content region is the scroll container, but Next's scroll handling
+  // moves the WINDOW — which no longer scrolls here. Without this, scrolling
+  // halfway down Charts and then opening Near Me lands you halfway down a page
+  // you have never seen, on every single navigation.
+  //
+  // Forward navigation goes to the top (or to the #hash target, which the bell
+  // relies on to reach the notifications section). Back/forward restores what
+  // the browser would have restored, keyed by URL and driven by a popstate
+  // flag, because losing your place on Back is the same bug in the other
+  // direction.
+  const scrollMemory = useRef(new Map<string, number>());
+  const poppedRef = useRef(false);
+  const previousKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const onPopState = () => { poppedRef.current = true; };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  useEffect(() => {
+    if (!active) return;
+    const node = contentRef.current;
+    if (!node) return;
+
+    const previousKey = previousKeyRef.current;
+    if (previousKey && previousKey !== pathname) {
+      scrollMemory.current.set(previousKey, node.scrollTop);
+    }
+    previousKeyRef.current = pathname;
+
+    if (poppedRef.current) {
+      poppedRef.current = false;
+      node.scrollTop = scrollMemory.current.get(pathname) ?? 0;
+      return;
+    }
+
+    const hash = window.location.hash.slice(1);
+    const target = hash ? node.querySelector(`#${CSS.escape(hash)}`) : null;
+    if (target) {
+      target.scrollIntoView({ block: 'start' });
+    } else {
+      node.scrollTop = 0;
+    }
+  }, [active, pathname]);
+
   const toggleSection = useCallback((section: ShellSectionId) => {
     setSectionOverride((current) => {
       const shown = current === undefined ? activeSection : current;

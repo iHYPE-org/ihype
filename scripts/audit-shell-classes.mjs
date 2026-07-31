@@ -91,7 +91,11 @@ for (const [name, owners] of used) {
   if (hit) drift.push({ name, role: hit.role, files: [...owners] });
 }
 
-const dead = [...covered].filter((name) => !used.has(name) && !name.startsWith('shell-'));
+/** Utilities offered for pages to opt into; not expected in markup yet. */
+const OPT_IN = new Set(['is-delta']);
+const dead = [...covered].filter(
+  (name) => !used.has(name) && !name.startsWith('shell-') && !OPT_IN.has(name),
+);
 
 console.log(`Scanned ${files.length} shell files · ${used.size} distinct class names · ${covered.size} aliased.`);
 
