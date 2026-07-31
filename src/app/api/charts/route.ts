@@ -17,6 +17,7 @@ export type ChartTrack = {
   color: string;
   mediaUrl: string;
   durationSec: number;
+  artworkUrl: string | null;
 };
 
 export async function GET(request: NextRequest) {
@@ -54,6 +55,7 @@ export async function GET(request: NextRequest) {
       title: true,
       durationSecs: true,
       storageUrl: true,
+      artworkUrl: true,
       profile: { select: { name: true, slug: true, city: true, genres: true } },
     },
   });
@@ -69,6 +71,7 @@ export async function GET(request: NextRequest) {
     color: PALETTE[i % PALETTE.length],
     mediaUrl: m.storageUrl ?? '',
     durationSec: m.durationSecs ?? 0,
+    artworkUrl: m.artworkUrl,
   });
 
   const sorted = [...media].sort((a, b) => (hypeCount.get(b.id) ?? 0) - (hypeCount.get(a.id) ?? 0));

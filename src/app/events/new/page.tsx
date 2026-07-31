@@ -148,6 +148,21 @@ export default function EventsNewPage() {
 
   const s0Valid = Boolean(title.trim() && date && venueProfile);
 
+  useEffect(() => {
+    const venueId = new URLSearchParams(window.location.search).get('venue');
+    if (!venueId) return;
+    let cancelled = false;
+    fetch('/api/pages/home')
+      .then((response) => response.ok ? response.json() : null)
+      .then((data: { myProfiles?: ProfileHit[] } | null) => {
+        if (cancelled) return;
+        const ownedVenue = data?.myProfiles?.find((profile) => profile.id === venueId && profile.type === 'VENUE');
+        if (ownedVenue) setVenueProfile(ownedVenue);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
   async function publish() {
     setSubmitting(true);
     setError(null);
