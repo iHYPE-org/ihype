@@ -204,6 +204,7 @@ jobs:
           SMOKE_BASE_URL: https://ihype.org
           SMOKE_BYPASS_TOKEN: ${{ secrets.SMOKE_BYPASS_TOKEN }}
           SMOKE_HEALTH_BEARER: ${{ secrets.CRON_SECRET }}
+          SMOKE_RELAY_URL: https://ihype-cron.colinatwood.workers.dev/smoke
           SMOKE_REQUIRE_LAUNCH_READY: '1'
 
       - name: Purge Cloudflare cache

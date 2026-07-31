@@ -4,6 +4,7 @@ import { promisify } from 'node:util';
 const execFileAsync = promisify(execFile);
 const baseUrl = (process.env.SMOKE_BASE_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://ihype.org').replace(/\/$/, '');
 const smokeBypassToken = process.env.SMOKE_BYPASS_TOKEN?.trim();
+const smokeRelayUrl = process.env.SMOKE_RELAY_URL?.trim();
 const requireLaunchReady = process.env.SMOKE_REQUIRE_LAUNCH_READY === '1';
 
 const checks = [
@@ -53,6 +54,35 @@ async function curl(url, json = false) {
   };
 }
 
+async function relaySmoke() {
+  if (!smokeRelayUrl || !process.env.SMOKE_HEALTH_BEARER?.trim()) return false;
+  const { stdout } = await execFileAsync('curl', [
+    '-sS',
+    '--compressed',
+    '--max-time',
+    '45',
+    '-X',
+    'POST',
+    '-H',
+    'Accept: application/json',
+    '-H',
+    `Authorization: Bearer ${process.env.SMOKE_HEALTH_BEARER.trim()}`,
+    '-w',
+    '\n%{http_code}',
+    smokeRelayUrl,
+  ], { maxBuffer: 5 * 1024 * 1024 });
+  const marker = stdout.lastIndexOf('\n');
+  const body = stdout.slice(0, marker);
+  const status = Number(stdout.slice(marker + 1));
+  const payload = JSON.parse(body);
+  if (status !== 200 || payload.ok !== true) {
+    console.error(`[smoke] Cloudflare relay failed (${status}): ${body}`);
+    return false;
+  }
+  console.log(`[smoke] Cloudflare relay passed ${payload.checks?.length ?? 0} live checks`);
+  return true;
+}
+
 let failed = false;
 const statuses = [];
 
@@ -94,6 +124,16 @@ for (const check of checks) {
 
 if (failed) {
   const allEdgeBlocked = statuses.length === checks.length && statuses.every((status) => status === 403);
+  if (allEdgeBlocked) {
+    try {
+      if (await relaySmoke()) {
+        console.warn('[smoke] GitHub runner was edge-blocked; authenticated Cloudflare relay verified production.');
+        process.exit(0);
+      }
+    } catch (error) {
+      console.error('[smoke] Cloudflare relay request failed:', error);
+    }
+  }
   if (process.env.SMOKE_ALLOW_EDGE_BLOCK === '1' && allEdgeBlocked) {
     const message =
       '[smoke] PRODUCTION WAS NOT VALIDATED. Every check returned 403 — Cloudflare edge security blocks this runner, ' +
