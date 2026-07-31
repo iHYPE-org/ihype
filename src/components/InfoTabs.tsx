@@ -102,7 +102,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         <h2>{t('legalPage.terms.splitTitle', 'The 70/20/10 split')}</h2>
         <p>{t('legalPage.terms.splitBody', 'Every ticket sold through iHYPE splits as follows: 70% to the artist, 20% to the venue, 10% to the promoter pool (distributed proportionally among referrers). iHYPE receives 0%. This is a founding constraint, not a policy — it cannot be altered by management, the board, or investors.')}</p>
         <h2>{t('legalPage.terms.referralsTitle', 'Promoter referrals')}</h2>
-        <p>{t('legalPage.terms.referralsBody', 'Any user may share a referral link to any event. If a ticket is purchased through your link, you receive your proportional share of the 10% promoter pool. Manipulating referral tracking (e.g. purchasing through your own link) is prohibited and will result in account termination.')}</p>
+        <p>{t('legalPage.terms.referralsBody', 'Fans and DJs may share a HYPE Link to any event. If a ticket is purchased through your link, you receive your proportional share of the 10% promoter pool. Manipulating referral tracking (e.g. purchasing through your own link) is prohibited and will result in account termination.')}</p>
         <h2>{t('legalPage.terms.contentTitle', 'Content')}</h2>
         <p>{t('legalPage.terms.contentBody', 'You are responsible for content you post (artist pages, radio shows, event listings). You grant iHYPE a non-exclusive license to display this content within the platform. iHYPE does not claim ownership of your music, images, or likeness.')}</p>
         <h2>{t('legalPage.terms.refundsTitle', 'Refunds')}</h2>
@@ -139,7 +139,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
           <p>{t('legalPage.charter.splitBody', 'This is not a pricing strategy. It is a constraint. We built the business model around it, not the other way around. Anyone can get paid to promote a show through their own referral link — real word-of-mouth income, not payola.')}</p>
         </div>
         <h2>{t('charterPage.promotersHead', 'Promoters and the 10%')}</h2>
-        <p>{t('charterPage.promotersBody', "The 10% promoter pool is distributed to everyone who shared a referral link that contributed to ticket sales for an event. There's no separate promoter account — any Fan, Artist, DJ, or Venue earns from the links they already share.")}</p>
+        <p>{t('charterPage.promotersBody', "The 10% promoter pool is distributed among Fans and DJs whose HYPE Links contributed to ticket sales for an event. There is no separate promoter role: promotion is a capability of the Fan and DJ roles.")}</p>
         <p><Link href="/me/promote" className="charter-inline-link">{t('charterPage.promoteDashboardLink', 'See a promoting dashboard →')}</Link></p>
         <h2>{t('legalPage.charter.openTitle', 'Open by design')}</h2>
         <p>{t('legalPage.charter.openBody', 'Our code and our moderation heuristics are published for public audit. Nothing about how the split is calculated, how uploads are screened, or how the platform ranks anything is a secret — anyone can check that it does exactly what we say.')}</p>

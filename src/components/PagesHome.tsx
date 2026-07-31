@@ -19,7 +19,7 @@ const TYPE_COLOR: Record<string, string> = {
 
 const TYPE_LABEL: Record<string, string> = {
   ARTIST: 'Artist',
-  DJ: 'Promoter / DJ',
+  DJ: 'DJ',
   VENUE: 'Venue',
   LISTENER: 'Fan',
 };
@@ -115,12 +115,14 @@ export function PagesHome({
   initialTab,
   initialProfileId,
   initialEditorSection,
+  initialTool,
   isShellForeground = true,
   resetToken,
 }: {
   initialTab?: string;
   initialProfileId?: string;
   initialEditorSection?: string;
+  initialTool?: string;
   isShellForeground?: boolean;
   resetToken?: number;
 } = {}) {
@@ -468,6 +470,7 @@ export function PagesHome({
                 <PageRoleModules
                   key={selectedProfile.id}
                   color={TYPE_COLOR[selectedProfile.type] ?? '#ff5029'}
+                  initialTool={initialTool}
                   profile={selectedProfile}
                 />
               )}

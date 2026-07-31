@@ -7486,6 +7486,8 @@ body:has(.scene-landing) #main-content { width: 100%; }
 /* Scene menu — intentionally richer than a utility drawer so the automatic
    first-sign-in reveal teaches the information architecture in one glance. */
 .app-nav-drawer {
+  left: 0;
+  right: auto;
   width: min(410px, 94vw);
   height: 100dvh;
   min-height: 0;
@@ -7493,19 +7495,26 @@ body:has(.scene-landing) #main-content { width: 100%; }
   padding: 18px 16px 24px;
   gap: 12px;
   overflow-x: hidden;
-  border-left-color: rgba(34,229,212,.2);
-  border-radius: 28px 0 0 28px;
+  border-right: 1px solid rgba(34,229,212,.2);
+  border-left: 0;
+  border-radius: 0 28px 28px 0;
+  box-shadow: 24px 0 60px rgba(0,0,0,.35);
+  animation-name: app-drawer-slide-in;
   background:
     radial-gradient(circle at 82% 4%, rgba(255,80,41,.18), transparent 25%),
     radial-gradient(circle at 10% 28%, rgba(34,229,212,.09), transparent 26%),
     color-mix(in srgb,var(--bg) 97%,#080604);
+}
+@keyframes app-drawer-slide-in {
+  from { transform: translateX(-40px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 .app-nav-drawer::before {
   content: "";
   width: 260px;
   height: 260px;
   position: absolute;
-  right: -80px;
+  left: -80px;
   top: 84px;
   pointer-events: none;
   border: 1px solid rgba(34,229,212,.08);
@@ -7568,15 +7577,58 @@ body:has(.scene-landing) #main-content { width: 100%; }
   white-space: nowrap;
 }
 .app-nav-signed-out { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.app-nav-groups { display: grid; gap: 18px; padding: 4px 0 8px; }
-.app-nav-group h2 {
-  margin: 0 0 7px;
-  padding: 0 8px;
-  color: var(--menu-group-color);
-  font: 700 9px/1 var(--font-mono);
-  letter-spacing: .2em;
+.app-nav-groups { display: grid; gap: 7px; padding: 4px 0 8px; }
+.app-nav-group {
+  animation: app-nav-capital-drop .42s calc(var(--menu-group-index) * 70ms) var(--ease-out) both;
 }
+@keyframes app-nav-capital-drop {
+  from { opacity: 0; transform: translateY(-18px) scale(.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.app-nav-group-toggle {
+  width: 100%;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb,var(--menu-group-color) 18%,var(--line));
+  border-radius: 13px;
+  color: var(--menu-group-color);
+  background: color-mix(in srgb,var(--menu-group-color) 5%,var(--hair-30));
+  cursor: pointer;
+  transition: min-height .26s var(--ease-out),opacity .2s ease,transform .26s var(--ease-out),background .2s ease;
+}
+.app-nav-group-toggle span {
+  color: var(--menu-group-color);
+  font: 800 12px/1 var(--font-mono);
+  letter-spacing: .22em;
+}
+.app-nav-group-toggle svg { transition: transform .24s var(--ease-out); }
+.app-nav-group.is-expanded .app-nav-group-toggle {
+  background: color-mix(in srgb,var(--menu-group-color) 11%,var(--hair-30));
+}
+.app-nav-group.is-expanded .app-nav-group-toggle svg { transform: rotate(180deg); }
+.app-nav-groups.has-expanded .app-nav-group:not(.is-expanded) .app-nav-group-toggle {
+  min-height: 38px;
+  opacity: .55;
+  transform: scale(.97);
+}
+.app-nav-group-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: grid-template-rows .3s var(--ease-out),opacity .2s ease,transform .3s var(--ease-out);
+}
+.app-nav-group.is-expanded .app-nav-group-panel {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: translateY(0);
+}
+.app-nav-group-panel > ul { min-height: 0; overflow: hidden; }
 .app-nav-group ul { display: grid; gap: 3px; margin: 0; padding: 0; list-style: none; }
+.app-nav-group.is-expanded ul { padding-top: 6px; }
 .app-nav-link {
   min-height: 58px;
   display: grid;
@@ -7716,7 +7768,7 @@ body:has(.scene-landing) #main-content { width: 100%; }
   .adaptive-site-header.is-scrolled .search-bar-desktop { display: none; }
   .adaptive-site-header .theme-toggle { width: 40px; height: 40px; }
   .app-menu-demo-label { top: calc(100% + 8px); }
-  .app-nav-drawer { width: min(390px,96vw); border-radius: 22px 0 0 22px; }
+  .app-nav-drawer { width: min(390px,96vw); border-radius: 0 22px 22px 0; }
   body:not(:has(.ihype-mobile-nav)) .site-dock { bottom: 0; }
   body:not(:has(.ihype-mobile-nav)) .site-shell { padding-bottom: 82px; }
   .site-dock,
@@ -7747,7 +7799,10 @@ body:has(.scene-landing) #main-content { width: 100%; }
 @media (prefers-reduced-motion: reduce) {
   .app-menu-logo.is-demoing,
   .app-menu-demo-label,
+  .app-nav-group,
   .site-dock-marquee-track { animation: none; }
+  .app-nav-group-panel,
+  .app-nav-group-toggle { transition: none; }
   .app-nav-link:hover,
   .app-nav-link.active { transform: none; }
 }

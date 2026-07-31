@@ -11,6 +11,7 @@ import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { getBaseUrl } from '@/lib/utils';
 import { getServerT } from '@/lib/i18n/server';
 import type { Metadata } from 'next';
+import { canPromoteWithHypeLink } from '@/lib/role-capabilities';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,6 +39,9 @@ export default async function PromoterAnalyticsPage({
   const session = await auth();
   if (!session?.user?.id) {
     redirect('/login?callbackUrl=/me/promote/analytics');
+  }
+  if (!canPromoteWithHypeLink(session.user.role)) {
+    redirect('/me/dashboard');
   }
 
   const t = await getServerT();

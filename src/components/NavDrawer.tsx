@@ -8,6 +8,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { AccessibilityControls } from '@/components/AccessibilityControls';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { useI18n } from '@/components/I18nProvider';
+import { canPromoteWithHypeLink } from '@/lib/role-capabilities';
 
 type OwnedProfile = {
   id: string;
@@ -25,6 +26,7 @@ type MenuItem = {
 };
 
 type MenuGroup = {
+  id: 'listen' | 'events' | 'pages' | 'settings';
   label: string;
   color: string;
   items: MenuItem[];
@@ -45,7 +47,6 @@ type IconName =
   | 'event'
   | 'tour'
   | 'settings'
-  | 'advertise'
   | 'community'
   | 'info'
   | 'legal';
@@ -78,7 +79,6 @@ function MenuIcon({ name }: { name: IconName }) {
     event: <><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 10h18M8 3v4M16 3v4" /><circle cx="12" cy="15" r="2" /></>,
     tour: <><path d="M4 18c2-5 5-8 9-8h7" /><path d="m17 7 3 3-3 3" /><circle cx="5" cy="18" r="2" /><path d="M5 3v7" /><path d="m2 6 3-3 3 3" /></>,
     settings: <><circle cx="12" cy="12" r="3" /><path d="M12 2.5 13.5 5l3-.3.4 2.9 2.6 1.5-1.4 2.7 1.4 2.7-2.6 1.5-.4 3-3-.4L12 21.5l-1.5-2.9-3 .4-.4-3-2.6-1.5 1.4-2.7-1.4-2.7 2.6-1.5.4-2.9 3 .3L12 2.5Z" /></>,
-    advertise: <><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6l-5 4H4a1 1 0 0 0-1 1Z" /><path d="M15 9.5a4 4 0 0 1 0 5M17.5 7a8 8 0 0 1 0 10" /></>,
     community: <><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c0-3.3 2.9-5.5 6.5-5.5s6.5 2.2 6.5 5.5" /><circle cx="17" cy="9" r="2.5" /><path d="M16.5 14.6c2.9.3 5 2.2 5 5.4" /></>,
     info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></>,
     legal: <><path d="M6 3h9l4 4v14H6V3Z" /><path d="M14 3v5h5M9 13h6M9 17h4" /></>,
@@ -111,6 +111,7 @@ export function NavDrawer({
   const { t } = useI18n();
   const [internalOpen, setInternalOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [expandedGroup, setExpandedGroup] = useState<MenuGroup['id'] | null>(null);
   const [profiles, setProfiles] = useState<OwnedProfile[]>([]);
   const settingsPanelId = useId();
   const pathname = usePathname();
@@ -140,6 +141,7 @@ export function NavDrawer({
 
   useEffect(() => {
     if (!open) return;
+    setExpandedGroup(null);
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setOpen(false);
     };
@@ -151,10 +153,11 @@ export function NavDrawer({
     const artist = profiles.find((profile) => profile.type === 'ARTIST');
     const dj = profiles.find((profile) => profile.type === 'DJ');
     const venue = profiles.find((profile) => profile.type === 'VENUE');
-    const creatorFallback = '/pages?tab=creator';
+    const canPromote = canPromoteWithHypeLink(session?.user?.role);
 
     return [
       {
+        id: 'listen',
         label: 'LISTEN',
         color: '#ff5029',
         items: [
@@ -165,63 +168,61 @@ export function NavDrawer({
         ],
       },
       {
+        id: 'events',
         label: 'EVENTS',
         color: '#22e5d4',
         items: [
           { href: '/shows?tab=local', label: 'Near Me', icon: 'pin', description: 'Shows happening around you' },
           { href: '/shows?tab=foryou', label: 'Recommended', icon: 'spark', description: 'Built from your HYPE' },
           { href: '/shows?tab=tickets', label: 'My Tickets', icon: 'ticket', description: 'Upcoming and past entry' },
-          { href: '/me/promote', label: 'Promote', icon: 'promote', description: 'Share HYPE links and earn' },
+          ...(canPromote
+            ? [{ href: '/me/promote', label: 'Promote', icon: 'promote' as const, description: 'Fans and DJs share HYPE links and earn' }]
+            : []),
         ],
       },
       {
+        id: 'pages',
         label: 'PAGES',
         color: '#b983ff',
         items: [
           { href: '/me/dashboard', label: 'My Dashboard', icon: 'dashboard', description: 'Your activity and impact' },
           { href: '/pages?tab=creator', label: 'Page Creator', icon: 'page', description: 'Build an artist, DJ, or venue page' },
-          {
-            href: dj ? '/radio/studio' : creatorFallback,
+          ...(dj ? [{
+            href: '/radio/studio',
             label: 'Show Creator',
             badge: 'DJs',
-            icon: 'show',
-            description: dj ? `Create as ${dj.name}` : 'Create a DJ page to unlock',
-          },
-          {
-            href: venue ? `/events/new?venue=${encodeURIComponent(venue.id)}` : creatorFallback,
-            label: 'Event Creator',
-            badge: 'Venues',
-            icon: 'event',
-            description: venue ? `Create as ${venue.name}` : 'Create a venue page to unlock',
-          },
-          {
-            href: artist ? `/pages?tab=creator&profile=${encodeURIComponent(artist.id)}&editor=details#tour-creator` : creatorFallback,
+            icon: 'show' as const,
+            description: `Build a radio show as ${dj.name}`,
+          }] : []),
+          ...(artist ? [{
+            href: `/pages?tab=mypage&profile=${encodeURIComponent(artist.id)}&tool=tour`,
             label: 'Tour Creator',
             badge: 'Artists',
-            icon: 'tour',
-            description: artist ? `Plan dates for ${artist.name}` : 'Create an artist page to unlock',
-          },
+            icon: 'tour' as const,
+            description: 'HYPE, play, and request interest by city',
+          }] : []),
+          ...(venue ? [{
+            href: `/events/new?venue=${encodeURIComponent(venue.id)}`,
+            label: 'Event Creator',
+            badge: 'Venues',
+            icon: 'event' as const,
+            description: `Create events as ${venue.name}`,
+          }] : []),
         ],
       },
       {
+        id: 'settings',
         label: 'SETTINGS',
         color: '#ffb84a',
         items: [
           { href: '/me/settings', label: 'Settings', icon: 'settings', description: 'Account, privacy, and access' },
-        ],
-      },
-      {
-        label: 'ABOUT',
-        color: '#ff3e9a',
-        items: [
-          { href: '/advertise', label: 'Advertise', icon: 'advertise', description: 'Music-only support for the scene' },
           { href: '/community', label: 'Community', icon: 'community', description: 'Vote on what iHYPE becomes' },
           { href: '/info', label: 'Info', icon: 'info', description: 'How the nonprofit works' },
           { href: '/legal', label: 'Legal', icon: 'legal', description: 'Terms, privacy, and policies' },
         ],
       },
     ];
-  }, [profiles]);
+  }, [profiles, session?.user?.role]);
 
   return (
     <>
@@ -276,10 +277,37 @@ export function NavDrawer({
               </div>
             )}
 
-            <div className="app-nav-groups">
-              {groups.map((group) => (
-                <section className="app-nav-group" key={group.label} style={{ '--menu-group-color': group.color } as CSSProperties}>
-                  <h2>{group.label}</h2>
+            <div className={`app-nav-groups${expandedGroup ? ' has-expanded' : ''}`}>
+              {groups.map((group, groupIndex) => {
+                const expanded = expandedGroup === group.id;
+                const panelId = `app-menu-${group.id}`;
+                return (
+                <section
+                  className={`app-nav-group${expanded ? ' is-expanded' : ''}`}
+                  key={group.label}
+                  style={{
+                    '--menu-group-color': group.color,
+                    '--menu-group-index': groupIndex,
+                  } as CSSProperties}
+                >
+                  <button
+                    aria-controls={panelId}
+                    aria-expanded={expanded}
+                    className="app-nav-group-toggle"
+                    onClick={() => setExpandedGroup((current) => current === group.id ? null : group.id)}
+                    type="button"
+                  >
+                    <span>{group.label}</span>
+                    <svg aria-hidden="true" fill="none" height="16" viewBox="0 0 24 24" width="16" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2">
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </button>
+                  <div
+                    aria-hidden={!expanded}
+                    className="app-nav-group-panel"
+                    id={panelId}
+                    inert={!expanded}
+                  >
                   <ul>
                     {group.items.map((item) => {
                       const active = isActivePath(pathname, item.href);
@@ -289,6 +317,7 @@ export function NavDrawer({
                             href={item.href}
                             className={`app-nav-link${active ? ' active' : ''}`}
                             onClick={() => setOpen(false)}
+                            tabIndex={expanded ? undefined : -1}
                           >
                             <span className="app-nav-link-icon"><MenuIcon name={item.icon} /></span>
                             <span className="app-nav-link-copy">
@@ -301,8 +330,9 @@ export function NavDrawer({
                       );
                     })}
                   </ul>
+                  </div>
                 </section>
-              ))}
+              )})}
             </div>
 
             <button

@@ -24,7 +24,7 @@ const TYPE_COLOR: Record<string, string> = {
 
 const TYPE_LABEL: Record<string, string> = {
   ARTIST: 'Artist',
-  DJ: 'Promoter',
+  DJ: 'DJ',
   VENUE: 'Venue',
   FAN: 'Fan',
 };

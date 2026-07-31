@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getBaseUrl } from '@/lib/utils';
 import { log } from '@/lib/logger';
+import { canPromoteWithHypeLink } from '@/lib/role-capabilities';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,6 +11,9 @@ export async function GET() {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!canPromoteWithHypeLink(session.user.role)) {
+      return NextResponse.json({ error: 'HYPE Link promotion is available to Fans and DJs.' }, { status: 403 });
+    }
 
     const user = await db.user.findUnique({
       where: { id: session.user.id },
