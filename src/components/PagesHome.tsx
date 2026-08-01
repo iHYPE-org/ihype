@@ -170,9 +170,15 @@ export function PagesHome({
   const [justCreatedName, setJustCreatedName] = useState<string | null>(null);
   const contentTopRef = useRef<HTMLDivElement>(null);
 
+  // Inside the app shell the shell owns scroll position across navigation
+  // (ShellScrollManager) — the context strip's pills ARE the tab switch, so a
+  // second owner here fights it and wins by running later, leaving the region
+  // parked 141px down. Verified by e2e: expected 0, got 141. Outside the shell
+  // (phone swipe shell, marketing) this is still the only thing that resets it.
   useEffect(() => {
+    if (shellDrivesTabs) return;
     contentTopRef.current?.scrollIntoView({ block: 'start' });
-  }, [tab]);
+  }, [tab, shellDrivesTabs]);
 
   useEffect(() => {
     if (initialProfileId) setSelectedPageId(initialProfileId);

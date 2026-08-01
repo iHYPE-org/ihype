@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useId, useRef } from 'react';
+import { useCallback, useEffect, useId, useRef } from 'react';
 import { useI18n } from '@/components/I18nProvider';
 import { NavRow } from '@/components/shell/NavRow';
 import { nextTrapFocus } from '@/lib/focus-trap';
@@ -74,6 +74,21 @@ export function AppShellDrawer({
   const { t } = useI18n();
   const panelIdBase = useId();
   const panelRef = useRef<HTMLElement | null>(null);
+  /** Whatever had focus when the drawer opened — the logo tile, in practice. */
+  const openerRef = useRef<HTMLElement | null>(null);
+
+  // Dismissing (Escape, scrim) returns focus to the opener; SELECTING a row
+  // does not, because that navigates and yanking focus back would undo the
+  // move the user just made. Deciding here, at close time, rather than in the
+  // effect's cleanup: React has already detached `panelRef` by the time a
+  // cleanup for an unmounting subtree runs, so a "was focus still inside?"
+  // check there always reads null and never restores. Caught by e2e — the
+  // trap passed, the return did not.
+  const dismiss = useCallback(() => {
+    const opener = openerRef.current;
+    onClose();
+    opener?.focus?.();
+  }, [onClose]);
 
   // The drawer covers the page behind a scrim, so it has to behave like the
   // modal it looks like: focus moves in on open, is trapped while it is open,
@@ -81,8 +96,12 @@ export function AppShellDrawer({
   // keyboard or screen-reader user tabs straight past the scrim into content
   // they cannot see.
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      openerRef.current = null;
+      return;
+    }
     const opener = document.activeElement as HTMLElement | null;
+    openerRef.current = opener;
 
     const focusables = () => Array.from(
       panelRef.current?.querySelectorAll<HTMLElement>(
@@ -94,7 +113,7 @@ export function AppShellDrawer({
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        onClose();
+        dismiss();
         return;
       }
       if (event.key !== 'Tab') return;
@@ -109,20 +128,14 @@ export function AppShellDrawer({
     };
 
     document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-      // Only reclaim focus if it is still inside the drawer being torn down —
-      // selecting a row navigates, and stealing focus back to the menu button
-      // afterwards would undo the move the user just made.
-      if (panelRef.current?.contains(document.activeElement)) opener?.focus?.();
-    };
-  }, [open, onClose]);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open, dismiss]);
 
   if (!open) return null;
 
   return (
     <>
-      <div aria-hidden="true" className="shell-scrim" onClick={onClose} />
+      <div aria-hidden="true" className="shell-scrim" onClick={dismiss} />
       <nav
         aria-label={t('appShell.drawerAriaLabel', 'iHYPE menu')}
         aria-modal="true"

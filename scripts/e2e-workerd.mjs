@@ -169,7 +169,11 @@ async function run() {
   writeStrippedConfig();
 
   const child = spawn(
-    'npx.cmd',
+    // 'npx', not 'npx.cmd'. The .cmd shim exists only on Windows, so this
+    // spawn died with ENOENT on any Linux host — including CI, where this
+    // whole step sits behind `vars.E2E_ENABLED == 'true'` and so had evidently
+    // never actually run. The Playwright spawn below always used plain 'npx'.
+    'npx',
     ['wrangler', 'dev', '--config', TMP_CONFIG, '--port', String(PORT), '--show-interactive-dev-session=false'],
     {
       stdio: ['ignore', 'inherit', 'inherit'],
