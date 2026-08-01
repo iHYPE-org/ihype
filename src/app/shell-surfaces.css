@@ -337,7 +337,7 @@
 .shell-content .vdash-head :is(a,button),
 .shell-content .vdash-section-head :is(a,button),
 .shell-content .weekend-head :is(a,button) {
-  color: var(--role-venue);
+  color: var(--role-venue-text);
   font-family: var(--f-b);
   font-size: 0.8438rem;
 }
@@ -572,7 +572,7 @@
   .weekend-card-link, .foryou-card-link, .believers-artist-link) {
   border: 0;
   background: transparent;
-  color: var(--role-venue);
+  color: var(--role-venue-text);
   font-family: var(--f-b);
   font-size: 0.8438rem;
   cursor: pointer;

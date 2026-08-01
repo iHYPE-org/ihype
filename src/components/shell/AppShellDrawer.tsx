@@ -199,7 +199,7 @@ export function AppShellDrawer({
 
         {/* The charter card. Routes to Legal, per the handoff. */}
         <Link className="shell-charter-card" href="/legal" onClick={onClose}>
-          <span className="shell-eyebrow" style={{ color: 'var(--role-venue)' }}>
+          <span className="shell-eyebrow" style={{ color: 'var(--role-venue-text)' }}>
             {t('appShell.charterEyebrow', 'THE CHARTER · 70/20/10')}
           </span>
           <span className="shell-charter-card-body">
