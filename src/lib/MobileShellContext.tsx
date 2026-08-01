@@ -37,8 +37,9 @@ const MobileShellCtx = createContext<MobileShellValue | null>(null);
 
 /**
  * Lives in the root layout (persists across navigation, unlike page.tsx
- * content) so Listen/Events/Pages can stay mounted in MobileAppShell
- * regardless of which of the 3 routes is currently active, and swiping
+ * content) so Events/Pages can stay mounted in MobileAppShell. Listen now
+ * owns the dedicated full-screen module deck and deliberately bypasses this
+ * older three-panel shell. Swiping
  * between them never triggers a real Next.js navigation once the shell
  * has taken over.
  */
@@ -82,7 +83,8 @@ export function MobileShellProvider({ children }: { children: ReactNode }) {
     setSection(SHELL_SECTIONS[nextIdx]);
   }, [section, setSection]);
 
-  const active = isMobile && pathToSection(pathname) !== null;
+  const routedSection = pathToSection(pathname);
+  const active = isMobile && routedSection !== null && routedSection !== 'listen';
 
   const value = useMemo(
     () => ({ active, section, setSection, swipeSection, resetTokens, goToSectionHome }),

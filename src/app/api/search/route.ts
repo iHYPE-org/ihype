@@ -73,6 +73,8 @@ export async function GET(request: NextRequest) {
       ? db.artistMediaAsset.findMany({
           where: {
             freeUseEnabled: true,
+            isPublished: true,
+            profile: { discoverable: true },
             OR: [
               { title:   { contains: q, mode: 'insensitive' } },
               { notes:   { contains: q, mode: 'insensitive' } },
@@ -101,7 +103,7 @@ export async function GET(request: NextRequest) {
           orderBy: [{ startsAt: 'asc' }],
           take: limit,
           select: {
-            id: true, title: true, status: true, startsAt: true,
+            id: true, slug: true, title: true, status: true, startsAt: true,
             isRadioShow: true, tags: true, isTicketed: true,
             venueProfile:     { select: { name: true, slug: true, city: true } },
             headlinerProfile: { select: { name: true, slug: true } },
@@ -163,7 +165,7 @@ export async function GET(request: NextRequest) {
       s.isTicketed ? 'Ticketed' : null
     ].filter(Boolean).join(' · ');
     results.push({ type: 'show', id: s.id, name: s.title, subtitle: sub,
-                   status: s.status, isRadioShow: s.isRadioShow ?? false });
+                   slug: s.slug, status: s.status, isRadioShow: s.isRadioShow ?? false });
   });
 
   genreMatches.forEach(g => {

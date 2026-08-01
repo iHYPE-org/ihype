@@ -114,8 +114,10 @@ function publicShowWhere() {
 }
 
 function sanitizePublicProfile(profile: PublicProfileRow): PublicProfile {
+  const hideListenerLocation = profile.type === ProfileType.LISTENER;
   return {
     ...profile,
+    ...(hideListenerLocation ? { city: null, stateRegion: null, country: null, hometown: null } : {}),
     contactInfo: null,
     addressLine1: null,
     postalCode: null,

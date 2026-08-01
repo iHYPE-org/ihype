@@ -33,7 +33,7 @@
     "cf:preview": "opennextjs-cloudflare preview",
     "cf:dev": "wrangler dev",
     "cf:deploy": "wrangler deploy worker.js --autoconfig=false",
-    "cap:sync": "cap sync",
+    "cap:sync": "cap sync && node scripts/normalize-capacitor-spm.mjs",
     "cap:open:ios": "cap open ios",
     "cap:open:android": "cap open android"
   },
@@ -52,6 +52,7 @@
     "@simplewebauthn/browser": "^13.0.0",
     "@simplewebauthn/server": "^13.3.2",
     "bcryptjs": "^3.0.3",
+    "maplibre-gl": "^5.24.0",
     "next": "16.2.11",
     "next-auth": "5.0.0-beta.32",
     "pg": "^8.22.0",

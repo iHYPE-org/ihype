@@ -7,8 +7,8 @@ import { RouteShellSlot } from '@/components/RouteShellSlot';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Pages · iHYPE',
-  description: 'Your public page, the creator, and every artist, venue, and DJ on iHYPE.',
+  title: 'Dashboard · iHYPE',
+  description: 'Your pages, creator tools, audience signal, and local music network.',
   robots: { index: false, follow: false },
 };
 

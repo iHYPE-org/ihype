@@ -306,10 +306,10 @@ export function PagesHome({
       <div ref={contentTopRef} />
       <button className="mqg-back" onClick={() => setGridMode(true)} type="button">
         <svg fill="none" height="18" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="18"><polyline points="15 18 9 12 15 6" /></svg>
-        {t('pagesHome.backToPages', 'Pages')}
+        {t('pagesHome.backToPages', 'Dashboard')}
       </button>
 
-      <h1 className="sr-only">{t('pagesHome.pagesHeading', 'Pages')}</h1>
+      <h1 className="sr-only">{t('pagesHome.pagesHeading', 'Dashboard')}</h1>
 
       <nav className="mqg-tabstrip" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 26 }} aria-label={t('pagesHome.tabstripAriaLabel', 'Pages sections')}>
         {visibleTabs.map((tabItem) => (

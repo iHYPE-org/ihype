@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
+import { isPublicVenueCoordinate } from '@/lib/public-location';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,9 +25,18 @@ export async function GET(request: NextRequest) {
         where: { status: 'SCHEDULED', startsAt: { gte: new Date() } },
         orderBy: [{ hypeCount: 'desc' }, { startsAt: 'asc' }],
         take: 10,
-        select: { id: true, slug: true, title: true, startsAt: true, hypeCount: true, venueProfile: { select: { name: true, city: true, stateRegion: true } } }
+        select: { id: true, slug: true, title: true, startsAt: true, hypeCount: true, venueProfile: { select: { type: true, discoverable: true, name: true, city: true, stateRegion: true, latitude: true, longitude: true } } }
       });
-      return NextResponse.json({ shows }, { headers: cacheHeaders });
+      return NextResponse.json({
+        shows: shows.map(({ venueProfile, ...show }) => ({
+          ...show,
+          venueName: venueProfile?.name ?? null,
+          venueCity: venueProfile?.city ?? null,
+          latitude: venueProfile && isPublicVenueCoordinate(venueProfile) ? venueProfile.latitude : null,
+          longitude: venueProfile && isPublicVenueCoordinate(venueProfile) ? venueProfile.longitude : null,
+          locationPrecision: venueProfile && isPublicVenueCoordinate(venueProfile) ? 'exact-venue' : 'none',
+        })),
+      }, { headers: cacheHeaders });
     }
 
     // Cheap bounding box so the (latitude, longitude) index prunes rows
@@ -37,15 +47,18 @@ export async function GET(request: NextRequest) {
     const lngDelta = radiusKm / (111.32 * Math.max(Math.cos((lat * Math.PI) / 180), 0.01));
 
     // Use Haversine via raw query for proximity
-    const shows = await db.$queryRaw<Array<{ id: string; slug: string; title: string; startsAt: Date; hypeCount: number; venueName: string | null; venueCity: string | null }>>`
+    const shows = await db.$queryRaw<Array<{ id: string; slug: string; title: string; startsAt: Date; hypeCount: number; venueName: string | null; venueCity: string | null; latitude: number; longitude: number }>>`
       SELECT s.id, s.slug, s.title, s."startsAt", s."hypeCount",
-             p.name as "venueName", p.city as "venueCity"
+             p.name as "venueName", p.city as "venueCity",
+             p.latitude, p.longitude
       FROM "Show" s
       LEFT JOIN "Profile" p ON s."venueProfileId" = p.id
       WHERE s.status = 'SCHEDULED'
         AND s."startsAt" >= NOW()
         AND p.latitude IS NOT NULL
         AND p.longitude IS NOT NULL
+        AND p.type = 'VENUE'
+        AND p.discoverable = TRUE
         AND p.latitude BETWEEN ${lat - latDelta} AND ${lat + latDelta}
         AND p.longitude BETWEEN ${lng - lngDelta} AND ${lng + lngDelta}
         AND (
@@ -59,7 +72,9 @@ export async function GET(request: NextRequest) {
       LIMIT 20
     `;
 
-    return NextResponse.json({ shows }, { headers: cacheHeaders });
+    return NextResponse.json({
+      shows: shows.map((show) => ({ ...show, locationPrecision: 'exact-venue' })),
+    }, { headers: cacheHeaders });
   } catch (err) {
     log.error('[api/shows/nearby]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

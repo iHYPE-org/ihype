@@ -33,8 +33,11 @@ const TicketIcon = ({ c }: { c: string }) => (
 
 function resultHref(r: ResultItem): string {
   if (r.type === 'venue') return r.slug ? `/venues/${r.slug}` : '#';
-  if (r.type === 'artist' || r.type === 'promoter') return r.slug ? `/artists/${r.slug}` : '#';
+  if (r.type === 'promoter') return r.slug ? `/promoters/${r.slug}` : '#';
+  if (r.type === 'artist') return r.slug ? `/artists/${r.slug}` : '#';
   if (r.type === 'show') return r.slug ? `/shows/${r.slug}` : '#';
+  if (r.type === 'song') return `/tracks/${r.id}`;
+  if (r.type === 'genre') return `/listen?genre=${encodeURIComponent(r.name)}`;
   return '#';
 }
 

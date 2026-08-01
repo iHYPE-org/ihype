@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { ShowStatus } from '@prisma/client';
 import { db } from '@/lib/db';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
+import { sanitizePublicLocation } from '@/lib/public-location';
 
 export const revalidate = 300; // 5-minute cache for public profile data
 
@@ -34,6 +35,7 @@ export async function GET(
       genres: true,
       hypeCount: true,
       verified: true,
+      discoverable: true,
       avatarImage: true,
       heroImage: true,
       logoImage: true,
@@ -50,7 +52,8 @@ export async function GET(
     return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
   }
 
-  const { owner: _owner, ...safeProfile } = profile;
+  const { owner: _owner, ...profileWithoutOwner } = profile;
+  const safeProfile = sanitizePublicLocation(profileWithoutOwner);
   const now = new Date();
   const publicShowStatuses: ShowStatus[] = ['SCHEDULED', 'LIVE'];
   const showWhere = {

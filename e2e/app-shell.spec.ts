@@ -70,7 +70,7 @@ test.describe('App shell — chrome contract', () => {
   });
 
   test('rule 2: the content region is the only scroll container', async ({ page }) => {
-    await page.goto('/listen?tab=seeds');
+    await page.goto('/shows?tab=local');
     await waitForShell(page);
 
     const overflow = await page.evaluate(() => ({
@@ -87,7 +87,7 @@ test.describe('App shell — chrome contract', () => {
 
   test('the vertical geometry table holds', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto('/listen?tab=seeds');
+    await page.goto('/shows?tab=local');
     await waitForShell(page);
 
     const header = await box(page, '.shell-header');
@@ -114,15 +114,15 @@ test.describe('App shell — chrome contract', () => {
     // AppShell out of the root layout into a route-group layout would break it
     // while every other check stayed green. Tag the live DOM nodes, navigate,
     // and see whether the same nodes are still there.
-    await page.goto('/listen?tab=seeds');
+    await page.goto('/shows?tab=local');
     await waitForShell(page);
     await page.evaluate(() => {
       document.querySelector('.shell-header')!.setAttribute('data-e2e-probe', 'header');
       document.querySelector('.shell-content')!.setAttribute('data-e2e-probe', 'content');
     });
 
-    await page.locator('.shell-context-strip a', { hasText: 'Charts' }).click();
-    await expect(page).toHaveURL(/tab=charts/, { timeout: 15000 });
+    await page.locator('.shell-context-strip a', { hasText: 'Recommended' }).click();
+    await expect(page).toHaveURL(/tab=foryou/, { timeout: 15000 });
 
     // The header must be the very same element. The content region is allowed
     // to keep its identity too — only `children` inside it may be replaced.
@@ -131,7 +131,7 @@ test.describe('App shell — chrome contract', () => {
   });
 
   test('scroll resets on forward navigation and restores on Back', async ({ page }) => {
-    await page.goto('/listen?tab=charts');
+    await page.goto('/shows?tab=foryou');
     await waitForShell(page);
 
     // Give the region something to scroll on EVERY route, so the assertion is
@@ -143,14 +143,14 @@ test.describe('App shell — chrome contract', () => {
     await page.evaluate(() => { document.querySelector('.shell-content')!.scrollTop = 900; });
     expect(await page.evaluate(() => document.querySelector('.shell-content')!.scrollTop)).toBe(900);
 
-    await page.locator('.shell-context-strip a', { hasText: 'Playlists' }).click();
-    await expect(page).toHaveURL(/tab=playlists/, { timeout: 15000 });
+    await page.locator('.shell-context-strip a', { hasText: 'My Tickets' }).click();
+    await expect(page).toHaveURL(/tab=tickets/, { timeout: 15000 });
     await expect
       .poll(() => page.evaluate(() => document.querySelector('.shell-content')!.scrollTop), { timeout: 5000 })
       .toBe(0);
 
     await page.goBack();
-    await expect(page).toHaveURL(/tab=charts/, { timeout: 15000 });
+    await expect(page).toHaveURL(/tab=foryou/, { timeout: 15000 });
     // Back restores the remembered offset for that URL exactly.
     await expect
       .poll(() => page.evaluate(() => document.querySelector('.shell-content')!.scrollTop), { timeout: 5000 })
@@ -195,7 +195,7 @@ test.describe('App shell — drawer', () => {
   });
 
   test('the logo tile is the only menu affordance, and mirrors drawer state', async ({ page }) => {
-    await page.goto('/listen?tab=seeds');
+    await page.goto('/shows?tab=local');
     await waitForShell(page);
 
     const tile = page.locator('.shell-logo-tile');
@@ -210,7 +210,7 @@ test.describe('App shell — drawer', () => {
 
   test('rules 5 + 6: overlay edges line up with the strip and clear the player', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto('/listen?tab=seeds');
+    await page.goto('/shows?tab=local');
     await waitForShell(page);
     await page.locator('.shell-logo-tile').click();
     await expect(page.locator('.shell-drawer')).toBeVisible();
@@ -228,7 +228,7 @@ test.describe('App shell — drawer', () => {
   });
 
   test('traps focus, and returns it to the logo tile on Escape', async ({ page }) => {
-    await page.goto('/listen?tab=seeds');
+    await page.goto('/shows?tab=local');
     await waitForShell(page);
     await page.locator('.shell-logo-tile').click();
     await expect(page.locator('.shell-drawer')).toBeVisible();
@@ -249,7 +249,7 @@ test.describe('App shell — drawer', () => {
   });
 
   test('the scrim dismisses it', async ({ page }) => {
-    await page.goto('/listen?tab=seeds');
+    await page.goto('/shows?tab=local');
     await waitForShell(page);
     await page.locator('.shell-logo-tile').click();
     await expect(page.locator('.shell-drawer')).toBeVisible();
@@ -313,16 +313,16 @@ test.describe('App shell — navigation manifest', () => {
 
   test('the context strip marks the active route with aria-current', async ({ page, context }) => {
     await signIn(context, FAN_EMAIL);
-    await page.goto('/listen?tab=charts');
+    await page.goto('/shows?tab=foryou');
     await waitForShell(page);
 
     const strip = page.locator('.shell-context-strip');
-    await expect(strip.getByText('Listen')).toBeVisible();
-    await expect(strip.locator('[aria-current="page"]')).toHaveText('Charts');
+    await expect(strip.getByText('Events')).toBeVisible();
+    await expect(strip.locator('[aria-current="page"]')).toHaveText('Recommended');
 
-    await strip.locator('a', { hasText: 'Radio' }).click();
-    await expect(page).toHaveURL(/tab=radio/, { timeout: 15000 });
-    await expect(strip.locator('[aria-current="page"]')).toHaveText('Radio');
+    await strip.locator('a', { hasText: 'My Tickets' }).click();
+    await expect(page).toHaveURL(/tab=tickets/, { timeout: 15000 });
+    await expect(strip.locator('[aria-current="page"]')).toHaveText('My Tickets');
   });
 });
 
@@ -333,7 +333,10 @@ test.describe('App shell — scope', () => {
     // `/` redirects an authenticated member to WORKBENCH_PATH, so a signed-in
     // visitor never sees the marketing landing page at all.
     await expect(page).toHaveURL(/\/listen/, { timeout: 15000 });
-    await waitForShell(page);
+    await expect(page.locator('.module-deck-preview')).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('.shell-root')).toHaveCount(0);
+    await expect(page.locator('.mas-root.is-active')).toHaveCount(0);
+    await expect(page.locator('.site-dock')).toBeHidden();
   });
 
   test('a marketing route keeps the marketing chrome even when signed in', async ({ page, context }) => {
