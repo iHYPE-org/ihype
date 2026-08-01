@@ -16,7 +16,10 @@
   /* ── Ink (warm off-white → muted taupe) ──────────────────────────── */
   --ink:         #f0ebe5;
   --ink-2:       #9e9080;
-  --ink-3:       #7a7060;
+  /* Was #7a7060, measured by axe at 3.98:1 behind the design system's 10px
+     eyebrows — below the 4.5:1 AA floor. Lightened until it passes on every
+     dark surface it lands on (4.77:1 worst case, on --bg-4). */
+  --ink-3:       #918779;
   --ink-4:       #3a342e;
   --ink-on-tint: #b3a899;
   /* Alpha-ink scale — foreground ink at fixed opacities, theme-aware so
@@ -78,6 +81,12 @@
   /* ── Brand accents ───────────────────────────────────────────────── */
   --accent:      #ff5029;
   --accent-2:    #ff3e9a;
+  /* The accent as TEXT. On dark it is the accent itself (5.5:1 on --bg-3), but
+     on the light theme it measures 2.46:1 against --bg-3 — a WCAG AA failure
+     found by axe on the cookie banner's privacy link, not by eye. The brand
+     fill is unchanged everywhere; this token exists only for accent-coloured
+     copy, which is the case the brand colour cannot serve. */
+  --accent-text: var(--accent);
   --accent-grad: linear-gradient(90deg, var(--accent), var(--accent-2) 40%, #b983ff);
 
   /* ── Role colors ─────────────────────────────────────────────────── */
@@ -85,6 +94,10 @@
   --role-dj:       #5b8cff;  /* azure — radio-show curators */
   --role-artist:   #ff5029;
   --role-venue:    #22e5d4;
+  /* The venue teal as TEXT. It is 10.6:1 on the dark charter card but 1.26:1
+     on the light one, whose surface is that same teal at 10% over a light
+     page — the colour and its background converge. Fills keep --role-venue. */
+  --role-venue-text: var(--role-venue);
   --role-promoter: #ffb84a;
   /* Backlog item 3 of the app-shell handoff: "Add --role-advertiser to the
      design system instead of borrowing --warn, and document which surfaces
@@ -246,7 +259,11 @@
   --bg-4:  #d8d0c6;
   --ink:   #1a1410;
   --ink-2: #4a3f35;
-  --ink-3: #7a6e64;
+  /* Was #7a6e64, which measures 3.24:1 against the darkest light surface —
+     below the 4.5:1 AA floor for the 10px eyebrows the design system uses it
+     for. Darkened until it passes on every light surface (4.70:1 worst case).
+     Dark theme's --ink-3 is unchanged. */
+  --ink-3: #5f564e;
   --ink-4: #b0a898;
   --line:   rgba(0,0,0,.08);
   --line-2: rgba(0,0,0,.16);
@@ -266,7 +283,7 @@
   --ink-a45: rgba(26,20,16,.45);
   --ink-a50: rgba(26,20,16,.5);
   --ink-a55: rgba(26,20,16,.55);
-  --ink-a60: rgba(26,20,16,.6);
+  --ink-a60: rgba(26,20,16,.7);  /* .6 composited to 4.11:1 on light surfaces — under the AA floor for the ghost-button label. */
   --ink-a65: rgba(26,20,16,.65);
   --ink-a70: rgba(26,20,16,.7);
   --ink-a72: rgba(26,20,16,.72);
@@ -303,6 +320,10 @@
   --bg-base-rgb:      245, 242, 237; /* #f5f2ed */
   --ink-1-rgb:        26, 20, 16;    /* #1a1410 */
   --surface-tint-rgb: 0, 0, 0;
+
+  /* See --accent-text above: the brand orange is unreadable as copy here. */
+  --accent-text: #9c2707;
+  --role-venue-text: #0b6f67;
 }
 
 /* The default `body` rule hardcodes a dark gradient (see far below), which
@@ -5380,6 +5401,12 @@ html.high-contrast p {
 /* ── Mobile bottom navigation bar ──────────────────────────────── */
 
 /* ── Site Player Dock ─────────────────────────────────────────── */
+/* The dock's own palette. These were hardcoded #f2ede8 / #090806 — the dark
+   theme's ink and background as literals — so on the light theme the "now
+   playing" title rendered near-white on a near-white surface and read as a
+   ghost. Found by screenshotting the shell against an empty database in light
+   theme, which is also the alpha condition. Rule 8 of the chrome contract:
+   never hardcode a colour. */
 .site-dock {
   position: fixed;
   bottom: 0; left: 0; right: 0;
@@ -5389,7 +5416,7 @@ html.high-contrast p {
   align-items: center;
   gap: 18px;
   padding: 0 24px;
-  background: #090806;
+  background: var(--bg-surface);
   border-top: 1px solid var(--hair-80);
   backdrop-filter: blur(12px);
   font-family: var(--f-m);
@@ -5413,7 +5440,7 @@ html.high-contrast p {
   font-family: var(--f-d, 'Syne', sans-serif);
   font-weight: 700;
   font-size: 13px;
-  color: #f2ede8;
+  color: var(--ink-1);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -5456,13 +5483,13 @@ html.high-contrast p {
   border-radius: 4px;
   transition: color .15s;
 }
-.site-dock-btn:hover { color: #f2ede8; }
+.site-dock-btn:hover { color: var(--ink-1); }
 .site-dock-play {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: #f2ede8;
-  color: #090806;
+  background: var(--ink-1);
+  color: var(--bg-base);
   border: none;
   cursor: pointer;
   display: flex;
@@ -5470,7 +5497,7 @@ html.high-contrast p {
   justify-content: center;
   transition: background .15s;
 }
-.site-dock-play:hover { background: #fff; }
+.site-dock-play:hover { background: var(--ink-1); }
 .site-dock-scrub {
   display: flex;
   align-items: center;

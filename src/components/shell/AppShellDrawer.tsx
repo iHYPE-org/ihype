@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useId } from 'react';
+import { useCallback, useEffect, useId, useRef } from 'react';
 import { useI18n } from '@/components/I18nProvider';
 import { NavRow } from '@/components/shell/NavRow';
+import { nextTrapFocus } from '@/lib/focus-trap';
 import {
   SHELL_SECTIONS, sectionRows,
   type ShellNavItem, type ShellSectionId,
@@ -72,22 +73,76 @@ export function AppShellDrawer({
 }) {
   const { t } = useI18n();
   const panelIdBase = useId();
+  const panelRef = useRef<HTMLElement | null>(null);
+  /** Whatever had focus when the drawer opened — the logo tile, in practice. */
+  const openerRef = useRef<HTMLElement | null>(null);
 
+  // Dismissing (Escape, scrim) returns focus to the opener; SELECTING a row
+  // does not, because that navigates and yanking focus back would undo the
+  // move the user just made. Deciding here, at close time, rather than in the
+  // effect's cleanup: React has already detached `panelRef` by the time a
+  // cleanup for an unmounting subtree runs, so a "was focus still inside?"
+  // check there always reads null and never restores. Caught by e2e — the
+  // trap passed, the return did not.
+  const dismiss = useCallback(() => {
+    const opener = openerRef.current;
+    onClose();
+    opener?.focus?.();
+  }, [onClose]);
+
+  // The drawer covers the page behind a scrim, so it has to behave like the
+  // modal it looks like: focus moves in on open, is trapped while it is open,
+  // and returns to whatever opened it (the logo tile) on close. Without this a
+  // keyboard or screen-reader user tabs straight past the scrim into content
+  // they cannot see.
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      openerRef.current = null;
+      return;
+    }
+    const opener = document.activeElement as HTMLElement | null;
+    openerRef.current = opener;
+
+    const focusables = () => Array.from(
+      panelRef.current?.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ) ?? [],
+    ).filter((node) => node.offsetParent !== null);
+
+    focusables()[0]?.focus();
+
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') {
+        dismiss();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const nodes = focusables();
+      const decision = nextTrapFocus({
+        count: nodes.length,
+        activeIndex: nodes.indexOf(document.activeElement as HTMLElement),
+        shiftKey: event.shiftKey,
+      });
+      if (decision.preventDefault) event.preventDefault();
+      if (decision.focusIndex !== null) nodes[decision.focusIndex]?.focus();
     };
+
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [open, onClose]);
+  }, [open, dismiss]);
 
   if (!open) return null;
 
   return (
     <>
-      <div aria-hidden="true" className="shell-scrim" onClick={onClose} />
-      <nav aria-label={t('appShell.drawerAriaLabel', 'iHYPE menu')} className="shell-drawer">
+      <div aria-hidden="true" className="shell-scrim" onClick={dismiss} />
+      <nav
+        aria-label={t('appShell.drawerAriaLabel', 'iHYPE menu')}
+        aria-modal="true"
+        className="shell-drawer"
+        ref={panelRef}
+        role="dialog"
+      >
         <div className="shell-drawer-sections">
           {SHELL_SECTIONS.map((section) => {
             const rows = sectionRows(items, section);
@@ -144,7 +199,7 @@ export function AppShellDrawer({
 
         {/* The charter card. Routes to Legal, per the handoff. */}
         <Link className="shell-charter-card" href="/legal" onClick={onClose}>
-          <span className="shell-eyebrow" style={{ color: 'var(--role-venue)' }}>
+          <span className="shell-eyebrow" style={{ color: 'var(--role-venue-text)' }}>
             {t('appShell.charterEyebrow', 'THE CHARTER · 70/20/10')}
           </span>
           <span className="shell-charter-card-body">

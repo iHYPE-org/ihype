@@ -55,7 +55,7 @@ export function CookieConsent() {
     >
       <p style={{ flex: '1 1 230px', margin: 0, fontSize: 11, color: 'var(--ink-2, #9e9080)', lineHeight: 1.45 }}>
         {t('cookieConsent.description', 'We use essential cookies to keep you signed in, and optional analytics cookies to understand usage in aggregate.')}{' '}
-        <Link href="/info?tab=privacy" style={{ color: 'var(--accent, #ff5029)', textDecoration: 'underline' }}>{t('cookieConsent.privacyLink', 'Read our privacy policy')}</Link>.
+        <Link href="/info?tab=privacy" style={{ color: 'var(--accent-text, #ff5029)', textDecoration: 'underline' }}>{t('cookieConsent.privacyLink', 'Read our privacy policy')}</Link>.
       </p>
       <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
         <button

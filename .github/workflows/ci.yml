@@ -79,6 +79,12 @@ jobs:
       - name: Gated migration guard
         run: npm run guard:migrations
 
+      - name: App shell conversion audit
+        # Fails when a page inside the signed-in shell grows a card/row/stat/
+        # eyebrow of its own instead of using the design system's primitive.
+        # Strict is safe to enable because the drift set is currently zero.
+        run: npm run audit:shell -- --strict
+
       - name: Unit tests
         run: npm test
 

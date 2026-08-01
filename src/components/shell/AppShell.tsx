@@ -11,6 +11,7 @@ import { AppShellContextStrip } from '@/components/shell/AppShellContextStrip';
 import { AppShellDrawer } from '@/components/shell/AppShellDrawer';
 import { AppShellActiveProvider } from '@/components/shell/AppShellContext';
 import { ShellBackPill } from '@/components/shell/ShellBackPill';
+import { ShellScrollManager } from '@/components/shell/ShellScrollManager';
 import {
   buildShellNav, isShellRoute, resolveActiveItemId, resolveSection,
   type ShellAccount, type ShellNavItem, type ShellSectionId,
@@ -167,6 +168,7 @@ export function AppShell({
           openSection={openSection}
           unreadCount={unreadCount}
         />
+        <ShellScrollManager contentRef={contentRef} />
       </Suspense>
 
       <main className="shell-content" id="main-content" ref={contentRef}>
