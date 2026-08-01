@@ -116,7 +116,7 @@ function TourRecsBody() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       {data.aiPlan && (
-        <div style={{ borderLeft: '2px solid #ff5029', paddingLeft: 12 }}>
+        <div style={{ borderLeft: '2px solid var(--accent)', paddingLeft: 12 }}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 6 }}>
             {t('pageRoleModules.aiRouteLabel', 'AI ROUTE')}
           </div>

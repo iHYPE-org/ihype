@@ -146,6 +146,10 @@ const TOKENED = new Map(Object.entries({
   '#9e9080': '--ink-2', '#918779': '--ink-3', '#3a342e': '--ink-4',
   '#100d09': '--bg-2', '#1a1612': '--bg-3', '#221c16': '--bg-4', '#0a0805': '--bg',
   '#ff1f3d': '--heat-fire', '#3a4a5a': '--heat-cold',
+  // Superseded values, kept here on purpose: these are what --ink-3 was
+  // before it was raised to clear AA. A hardcoded copy keeps the failing
+  // contrast forever and looks correct next to the token name.
+  '#7a7060': '--ink-3', '#7a6e64': '--ink-3',
   '255,80,41': '--accent-rgb', '255,62,154': '--accent-2-rgb',
   '185,131,255': '--role-fan-rgb', '34,229,212': '--role-venue-rgb',
   '255,184,74': '--role-promoter-rgb',
@@ -153,8 +157,18 @@ const TOKENED = new Map(Object.entries({
 /** Theme-inverting literals: correct on one theme, wrong on the other. */
 const THEME_UNSAFE = /#fff(?:fff)?\b|#000(?:000)?\b|rgba?\(\s*255\s*,\s*255\s*,\s*255|rgba?\(\s*0\s*,\s*0\s*,\s*0/i;
 
+/*
+ * Colour is audited over src/components as well as the shell's own pages.
+ * The class check above is deliberately page-scoped — the primitives are
+ * page markup — but a page's colour mostly lives in the components it
+ * renders. ListenHome.tsx carried a hardcoded #fff, #22e5d4 and a black
+ * scrim straight through the first colour sweep because it is not under
+ * src/app, which made the sweep's "zero literals" result read better than
+ * it was.
+ */
+const colourFiles = [...files, ...walkStyled('src/components')];
 const colourHits = [];
-for (const file of files) {
+for (const file of colourFiles) {
   if (COLOUR_EXEMPT.some((x) => file.includes(x))) continue;
   const lines = readFileSync(file, 'utf8').split('\n');
   let inBlock = false;
@@ -178,11 +192,19 @@ for (const file of files) {
     // back over the whole contiguous comment above, not just one line — the
     // reason is usually a sentence and wraps.
     if (/design-exempt:/.test(line)) return;
+    // Walk back over the comment above, stepping over pure-syntax lines
+    // (`return (`, a lone brace) so the marker can sit where it reads
+    // naturally — above the function's return rather than wedged inside JSX,
+    // where a // comment is not valid before an element anyway.
+    const isComment = (s) => /^\s*(\/\/|\*|\/\*)/.test(s);
+    /** Blank, or syntax with no content of its own — `return (`, a lone brace. */
+    const isSyntaxOnly = (s) => /^\s*(return\s*\(|[({})\]]|<>)?\s*$/.test(s);
     let back = i - 1;
     let exempt = false;
-    while (back >= 0 && /^\s*(\/\/|\*|\/\*)/.test(lines[back])) {
-      if (/design-exempt:/.test(lines[back])) { exempt = true; break; }
-      back -= 1;
+    for (let hops = 0; back >= 0 && hops < 8; back -= 1, hops += 1) {
+      const prev = lines[back];
+      if (/design-exempt:/.test(prev)) { exempt = true; break; }
+      if (!isComment(prev) && !isSyntaxOnly(prev)) break;
     }
     if (exempt) return;
 
@@ -272,7 +294,12 @@ for (const f of allFiles) {
     const c = (line.match(/\*\//g) || []).length;
     if (o > c) inBlock = true; else if (c > o) inBlock = false;
     if (was || /^\s*(\/\/|\*|\/\*)/.test(line)) return;  // prose names tokens too
-    for (const m of line.matchAll(/var\(\s*(--[a-z0-9-]+)/gi)) {
+    // Only a BARE var(--x) is a defect. `var(--x, fallback)` renders the
+    // fallback, which is exactly what a fallback is for — flagging those
+    // buried the handful of real ones (--wb-*, --accent-3) in ~20 false
+    // positives and made the whole check easy to wave away.
+    for (const m of line.matchAll(/var\(\s*(--[a-z0-9-]+)\s*([,)])/gi)) {
+      if (m[2] !== ')') continue;
       if (!referenced.has(m[1])) referenced.set(m[1], new Set());
       referenced.get(m[1]).add(f);
     }
@@ -294,4 +321,6 @@ if (undefinedTokens.length) {
   console.log('\nEvery var() reference resolves to a defined token.');
 }
 
-if (process.argv.includes('--strict') && (drift.length || colourHits.length)) process.exit(1);
+if (process.argv.includes('--strict') && (drift.length || colourHits.length || undefinedTokens.length)) {
+  process.exit(1);
+}

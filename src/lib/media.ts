@@ -30,7 +30,7 @@ export type ArtistMediaUploadRecord = {
   artworkUrl?: string | null;
 };
 
-function getArtistMediaApiPath(hexId: string) {
+export function getArtistMediaApiPath(hexId: string) {
   return `/api/media/${hexId}`;
 }
 

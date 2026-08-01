@@ -12,7 +12,7 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
   return {
   role: 'DJ',
   tint: 'var(--role-dj, var(--accent-2))',
-  glow: '#ff3e9a',
+  glow: 'var(--accent-2)',
   navCta: t('forDjsPage.navCta', 'Apply as a DJ →'),
   eyebrow: t('forDjsPage.eyebrow', 'For DJs'),
   headline: <>{t('forDjsPage.headlineLine1', 'Your crate.')}<br />{t('forDjsPage.headlineLine2', 'Your show.')}<br /><span style={{ color: 'var(--role-dj, var(--accent-2))' }}>{t('forDjsPage.headlineLine3', 'Your cut.')}</span></>,

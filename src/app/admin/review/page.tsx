@@ -254,7 +254,7 @@ export default async function AdminReviewPage({
                         </td>
                         <td style={tdStyle}>{r.reporter ? <span title={r.reporter.email ?? ''}>{r.reporter.name ?? r.reporter.email}</span> : <span style={{ color: 'var(--ink-3)' }}>{t('adminReviewPage.anonymous', 'Anonymous')}</span>}</td>
                         <td style={tdStyle}>
-                          <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, letterSpacing: '.08em', background: r.status === 'OPEN' ? 'rgba(var(--accent-rgb),.15)' : 'rgba(var(--role-venue-rgb),.1)', color: r.status === 'OPEN' ? 'var(--accent)' : '#22e5d4' }}>{r.status}</span>
+                          <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, letterSpacing: '.08em', background: r.status === 'OPEN' ? 'rgba(var(--accent-rgb),.15)' : 'rgba(var(--role-venue-rgb),.1)', color: r.status === 'OPEN' ? 'var(--accent)' : 'var(--role-venue)' }}>{r.status}</span>
                         </td>
                         <td style={tdStyle}>
                           {entityHref && <Link href={entityHref} target="_blank" style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-2)', textDecoration: 'none', marginRight: 8 }}>{t('adminReviewPage.viewLink', 'View ↗')}</Link>}

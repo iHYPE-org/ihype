@@ -118,7 +118,7 @@ export function SiteNavTabs() {
           gap: 10,
           padding: '8px 16px 8px 8px',
           borderRadius: 999,
-          border: `1px solid #ff3e9a${menuOpen ? '59' : '28'}`,
+          border: `1px solid var(--accent-2)${menuOpen ? '59' : '28'}`,
           background: `var(--accent-2)${menuOpen ? '18' : '08'}`,
           cursor: 'pointer',
           whiteSpace: 'nowrap',

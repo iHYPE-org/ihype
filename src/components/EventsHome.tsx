@@ -80,7 +80,7 @@ function EventList({ shows, emptyTitle, emptyBody }: { shows: Show[]; emptyTitle
               <div className="ev-price" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, color: 'rgba(var(--accent-rgb),.35)', letterSpacing: '-.02em' }}>—</div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a20)' }}>{t('eventsHome.zeroFees', '$0 fees')}</div>
             </div>
-            <span className="ev-pill" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, borderRadius: 8, background: 'rgba(var(--accent-rgb),.2)', color: 'rgba(255,255,255,.4)', whiteSpace: 'nowrap' }}>{t('eventsHome.getTicket', 'Get ticket')}</span>
+            <span className="ev-pill" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, borderRadius: 8, background: 'rgba(var(--accent-rgb),.2)', color: 'rgba(var(--accent-rgb),.4)', whiteSpace: 'nowrap' }}>{t('eventsHome.getTicket', 'Get ticket')}</span>
           </div>
         </div>
         <div style={{ ...emptyStyle, padding: '28px 24px' }}>
@@ -397,7 +397,7 @@ export function EventsHome({
                     const unitPriceCents = order.quantity > 0 ? Math.round((order.totalChargeCents || order.subtotalCents) / order.quantity) : (order.totalChargeCents || order.subtotalCents);
                     return (
                       <div key={order.id} style={{ border: '1px solid var(--hair-80)', borderRadius: 16, padding: 20, background: 'var(--hair-30)', opacity: ticketView === 'archive' ? 0.6 : 1 }}>
-                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.14em', textTransform: 'uppercase', color: order.status === 'VOID' ? 'var(--accent)' : '#22e5d4', marginBottom: 6 }}>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.14em', textTransform: 'uppercase', color: order.status === 'VOID' ? 'var(--accent)' : 'var(--role-venue)', marginBottom: 6 }}>
                           ● {order.status === 'VOID' ? t('eventsHome.statusCancelled', 'CANCELLED') : ticketView === 'archive' ? t('eventsHome.statusUsed', 'USED') : t('eventsHome.statusValid', 'VALID')} · {formatCurrencyFromCents(unitPriceCents)} {t('eventsHome.faceValue', 'FACE VALUE')}
                         </div>
                         <Link href={`/shows/${order.show.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>

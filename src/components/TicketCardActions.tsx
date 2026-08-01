@@ -194,7 +194,7 @@ export function TicketCardActions({
         )}
       </div>
       {(resendDone || resendError) && (
-        <p style={{ fontSize: 12, marginTop: 8, color: resendError ? '#ff5029' : '#22e5d4' }}>{resendError ?? resendDone}</p>
+        <p style={{ fontSize: 12, marginTop: 8, color: resendError ? 'var(--accent)' : 'var(--role-venue)' }}>{resendError ?? resendDone}</p>
       )}
 
       {showQr && (

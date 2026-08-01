@@ -19,7 +19,7 @@ export async function SiteFooter() {
         fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
         fontSize: '0.75rem',
         letterSpacing: '0.04em',
-        color: 'var(--ink-3, #7a7060)',
+        color: 'var(--ink-3)',
       }}
     >
       <Link href="/advertise" style={{ color: 'inherit', textDecoration: 'none' }}>{t('siteFooter.advertise', 'Advertise')}</Link>

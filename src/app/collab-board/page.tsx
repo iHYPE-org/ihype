@@ -144,7 +144,7 @@ export default async function CollabBoardPage({
                       style={{
                         fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase',
                         padding: '4px 10px', borderRadius: 999,
-                        color: p.type === 'looking-for' ? 'var(--accent)' : '#22e5d4',
+                        color: p.type === 'looking-for' ? 'var(--accent)' : 'var(--role-venue)',
                         background: p.type === 'looking-for' ? 'rgba(var(--accent-rgb),.1)' : 'rgba(var(--role-venue-rgb),.1)',
                         border: `1px solid ${p.type === 'looking-for' ? 'rgba(var(--accent-rgb),.3)' : 'rgba(var(--role-venue-rgb),.3)'}`,
                       }}

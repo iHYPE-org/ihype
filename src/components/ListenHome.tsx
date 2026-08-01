@@ -8,7 +8,7 @@ import { useI18n } from '@/components/I18nProvider';
 import { useMediaPlayer, type MediaTrack } from '@/components/GlobalMediaPlayer';
 import { useAppShellActive } from '@/components/shell/AppShellContext';
 
-const PALETTE = ['#ff5029', 'var(--role-fan)', 'var(--role-venue)', 'var(--accent-2)', 'var(--role-promoter)', '#7fb3ff'];
+const PALETTE = ['var(--accent)', 'var(--role-fan)', 'var(--role-venue)', 'var(--accent-2)', 'var(--role-promoter)', '#7fb3ff'];
 
 /**
  * The tab ids the app shell's persistent context strip already carries for
@@ -349,21 +349,21 @@ function SeedDeck({ seeds, onAct }: { seeds: Seed[]; onAct: (seed: Seed, action:
             transition: drag.active ? 'none' : 'transform .28s cubic-bezier(.34,1.2,.4,1), box-shadow .28s ease',
           }}
         >
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,.72) 0%, rgba(0,0,0,.06) 48%, rgba(0,0,0,.2) 100%)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(var(--scrim-rgb),.72) 0%, rgba(var(--scrim-rgb),.06) 48%, rgba(var(--scrim-rgb),.2) 100%)' }} />
 
           <div style={{
             position: 'absolute', top: 16, left: 16, display: 'flex', alignItems: 'center', gap: 7,
-            fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,.92)',
-            background: 'rgba(0,0,0,.28)', border: '1px solid var(--hair-220)', padding: '5px 11px', borderRadius: 9999,
+            fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.16em', textTransform: 'uppercase', color: 'rgba(var(--ink-on-media-rgb),.92)',
+            background: 'rgba(var(--scrim-rgb),.28)', border: '1px solid var(--hair-220)', padding: '5px 11px', borderRadius: 9999,
           }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', display: 'inline-block' }} /> {t('listenHome.seedDeckNewSeedBadge', 'New seed')}
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--ink-on-media)', display: 'inline-block' }} /> {t('listenHome.seedDeckNewSeedBadge', 'New seed')}
           </div>
           <button
             onClick={(e) => { e.stopPropagation(); onAct(card, 'hype'); }}
             style={{
               position: 'absolute', top: 16, right: 16, display: 'flex', alignItems: 'center', gap: 5,
-              fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 12, color: '#fff', cursor: 'pointer',
-              background: 'rgba(0,0,0,.3)', border: '1px solid var(--hair-200)', padding: '5px 11px', borderRadius: 9999,
+              fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 12, color: 'var(--ink-on-media)', cursor: 'pointer',
+              background: 'rgba(var(--scrim-rgb),.3)', border: '1px solid var(--hair-200)', padding: '5px 11px', borderRadius: 9999,
             }}
             type="button"
           >
@@ -371,20 +371,20 @@ function SeedDeck({ seeds, onAct }: { seeds: Seed[]; onAct: (seed: Seed, action:
           </button>
 
           {flash === 'add' && (
-            <div style={{ position: 'absolute', top: '50%', right: 24, zIndex: 5, transform: `translateY(-50%) scale(${Math.min(1.15, 0.85 + Math.abs(drag.x) / 320)})`, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 26, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--ink-on-accent)', padding: '10px 22px', borderRadius: 14, border: '3px solid #22e5d4', background: 'rgba(var(--role-venue-rgb),.34)', boxShadow: '0 0 30px rgba(var(--role-venue-rgb),.5)' }}>{t('listenHome.seedDeckFlashSeed', 'Seed')}</div>
+            <div style={{ position: 'absolute', top: '50%', right: 24, zIndex: 5, transform: `translateY(-50%) scale(${Math.min(1.15, 0.85 + Math.abs(drag.x) / 320)})`, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 26, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--ink-on-accent)', padding: '10px 22px', borderRadius: 14, border: '3px solid var(--role-venue)', background: 'rgba(var(--role-venue-rgb),.34)', boxShadow: '0 0 30px rgba(var(--role-venue-rgb),.5)' }}>{t('listenHome.seedDeckFlashSeed', 'Add')}</div>
           )}
           {flash === 'skip' && (
-            <div style={{ position: 'absolute', top: '50%', left: 24, zIndex: 5, transform: `translateY(-50%) scale(${Math.min(1.15, 0.85 + Math.abs(drag.x) / 320)})`, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 26, letterSpacing: '.04em', textTransform: 'uppercase', color: '#fff', padding: '10px 22px', borderRadius: 14, border: '3px solid #fff', background: 'rgba(0,0,0,.42)' }}>{t('listenHome.seedDeckFlashSkip', 'Skip')}</div>
+            <div style={{ position: 'absolute', top: '50%', left: 24, zIndex: 5, transform: `translateY(-50%) scale(${Math.min(1.15, 0.85 + Math.abs(drag.x) / 320)})`, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 26, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--ink-on-media)', padding: '10px 22px', borderRadius: 14, border: '3px solid var(--ink-on-media)', background: 'rgba(var(--scrim-rgb),.42)' }}>{t('listenHome.seedDeckFlashSkip', 'Skip')}</div>
           )}
 
           <div style={{ position: 'relative', zIndex: 3, padding: 22 }}>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 11 }}>
               {card.genres.slice(0, 3).map((t) => (
-                <span key={t} style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase', color: '#fff', background: 'var(--line-2)', border: '1px solid var(--hair-280)', borderRadius: 9999, padding: '3px 10px' }}>{t}</span>
+                <span key={t} style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-on-media)', background: 'var(--line-2)', border: '1px solid var(--hair-280)', borderRadius: 9999, padding: '3px 10px' }}>{t}</span>
               ))}
             </div>
-            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 32, letterSpacing: '-.035em', color: '#fff', lineHeight: 0.98, textShadow: '0 2px 18px rgba(0,0,0,.4)' }}>{card.title}</div>
-            <div style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'rgba(255,255,255,.92)', marginTop: 5 }}>{card.artistName} · {card.reason}</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 32, letterSpacing: '-.035em', color: 'var(--ink-on-media)', lineHeight: 0.98, textShadow: '0 2px 18px rgba(var(--scrim-rgb),.4)' }}>{card.title}</div>
+            <div style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'rgba(var(--ink-on-media-rgb),.92)', marginTop: 5 }}>{card.artistName} · {card.reason}</div>
           </div>
         </div>
       </div>
@@ -396,7 +396,7 @@ function SeedDeck({ seeds, onAct }: { seeds: Seed[]; onAct: (seed: Seed, action:
         </button>
         <button onClick={() => commit('add')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer' }} type="button">
           <span style={{ width: 58, height: 58, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(var(--role-venue-rgb),.4)', background: 'rgba(var(--role-venue-rgb),.14)' }}>+</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>{t('listenHome.seedsSaveLabel', 'Save to library')}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>{t('listenHome.seedsSaveLabel', 'Add to Discover')}</span>
         </button>
       </div>
       <div style={{ marginTop: 16, fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-a50)' }}>{idx + 1} / {seeds.length}</div>
@@ -429,7 +429,11 @@ export function ListenHome({
     setGridMode(false);
   }, [validInitialTab]);
   const shellDrivesTabs = useAppShellActive();
-  const visibleTabs = shellDrivesTabs ? TABS.filter((d) => !SHELL_TABS.includes(d.id)) : TABS;
+  // Inside the shell every one of these destinations already exists in the
+  // chrome — the four content tabs on the context strip, search in the header
+  // and as its own /search route — so the local strip renders nothing rather
+  // than a one-item leftover.
+  const visibleTabs = shellDrivesTabs ? [] : TABS;
   const prevResetToken = useRef(resetToken);
   useEffect(() => {
     if (resetToken !== undefined && resetToken !== prevResetToken.current) {
@@ -623,7 +627,7 @@ export function ListenHome({
       <style>{`@keyframes ihype-blink { 0%,100% { opacity: 1 } 50% { opacity: .25 } }`}</style>
 
       {toast && (
-        <div style={{ position: 'fixed', bottom: 90, left: '50%', transform: 'translateX(-50%)', zIndex: 300, background: 'var(--ink)', color: 'var(--bg)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, padding: '12px 22px', borderRadius: 9999, boxShadow: '0 8px 32px rgba(0,0,0,.4)' }}>
+        <div style={{ position: 'fixed', bottom: 90, left: '50%', transform: 'translateX(-50%)', zIndex: 300, background: 'var(--ink)', color: 'var(--bg)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, padding: '12px 22px', borderRadius: 9999, boxShadow: '0 8px 32px rgba(var(--scrim-rgb),.4)' }}>
           {toast}
         </div>
       )}
@@ -645,30 +649,32 @@ export function ListenHome({
         {t('listenHome.backButton', 'Listen')}
       </button>
 
-      <section className="listen-stage-hero">
-        <div>
-          <p className="listen-stage-kicker">{t('listenHome.heroKicker', 'Your scene · free forever')}</p>
-          <h1>{t('listenHome.heroTitle', 'What do you want to hear?')}</h1>
-          <p>{t('listenHome.heroBody', 'Start with a Seed, tune into local radio, or follow the HYPE moving through your scene.')}</p>
-        </div>
-        <Link className="listen-stage-dashboard" href="/me/dashboard">
-          <span>{t('listenHome.heroDashboardLabel', 'Your HYPE')}</span>
-          <strong>{t('listenHome.heroDashboardCta', 'Open dashboard')} →</strong>
-        </Link>
-      </section>
+      {/* The "What do you want to hear?" hero and its dashboard card used to
+          sit here, above every Listen surface. Removed: the seed deck is the
+          point of this page, and a full-height masthead pushed it below the
+          fold on a laptop. "Open dashboard" is not lost — it is a drawer
+          destination in the shell's own nav. */}
 
-      <div className="mqg-tabstrip listen-stage-tabs">
-        {visibleTabs.map((tabDef) => (
-          <button
-            key={tabDef.id}
-            className={tab === tabDef.id ? 'sub-tab active' : 'sub-tab'}
-            onClick={() => setTab(tabDef.id)}
-            type="button"
-          >
-            {t(`listenHome.tab.${tabDef.id}`, tabDef.label)}
-          </button>
-        ))}
-      </div>
+      {/* Inside the app shell the context strip owns Seeds/Radio/Charts/
+          Playlists and the header owns search, so this strip filtered down to
+          a single item and rendered as one full-width "Search" pill under the
+          hero — chrome for a tab the shell already provides twice. Outside the
+          shell (phone widths, where MobileAppShell stands AppShell down) the
+          full strip is still the only way to change tab, so it stays there. */}
+      {visibleTabs.length > 0 && (
+        <div className="mqg-tabstrip listen-stage-tabs">
+          {visibleTabs.map((tabDef) => (
+            <button
+              key={tabDef.id}
+              className={tab === tabDef.id ? 'sub-tab active' : 'sub-tab'}
+              onClick={() => setTab(tabDef.id)}
+              type="button"
+            >
+              {t(`listenHome.tab.${tabDef.id}`, tabDef.label)}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* SEARCH */}
       {tab === 'search' && (
@@ -741,7 +747,7 @@ export function ListenHome({
               ))}
             </div>
           )}
-          <p style={{ fontSize: 13, color: 'var(--ink-a50)', margin: '0 0 18px', textAlign: 'center' }}>{t('listenHome.seedsSwipeHint', 'Swipe right to save · left to skip')}</p>
+          <p style={{ fontSize: 13, color: 'var(--ink-a50)', margin: '0 0 18px', textAlign: 'center' }}>{t('listenHome.seedsSwipeHint', 'Swipe right to add to Discover · left to skip')}</p>
           {seeds === null ? (
             <div style={{ position: 'relative', width: '100%', maxWidth: 440, aspectRatio: '1 / 1', margin: '4px auto 0' }}>
               <div className="ihype-skeleton" style={{ position: 'absolute', inset: 0, borderRadius: 28 }} />
@@ -766,7 +772,7 @@ export function ListenHome({
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
                   <span style={{ width: 58, height: 58, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(var(--role-venue-rgb),.4)', background: 'rgba(var(--role-venue-rgb),.14)' }}>+</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>{t('listenHome.seedsSaveLabel', 'Save to library')}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>{t('listenHome.seedsSaveLabel', 'Add to Discover')}</span>
                 </div>
               </div>
             </div>

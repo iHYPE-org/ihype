@@ -119,7 +119,7 @@ function LiveTicker() {
               <div style={{ fontFamily: 'var(--f-b,DM Sans,sans-serif)', fontSize: 12.5, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
               <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9, letterSpacing: '.08em', color: '#5a5048', textTransform: 'uppercase', marginTop: 2 }}>{item.kind}</div>
             </span>
-            <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.1em', textTransform: 'uppercase', fontWeight: 600, color: item.ok ? '#22e5d4' : '#ff5a5a', display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+            <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.1em', textTransform: 'uppercase', fontWeight: 600, color: item.ok ? 'var(--role-venue)' : '#ff5a5a', display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
               {item.ok ? <CheckIcon /> : <CrossIcon />}
               {item.ok ? t('advertisePage.cleared', 'Cleared') : t('advertisePage.rejected', 'Rejected')}
             </span>
@@ -246,19 +246,19 @@ function CoverageBuilder() {
               {AD_SCOPES.map(s => (
                 <button key={s} onClick={() => setScope(s)} style={{
                   display: 'flex', alignItems: 'center', gap: 14, padding: '14px 15px', borderRadius: 11,
-                  border: `1px solid ${s === scope ? '#ff5029' : 'var(--hair-70)'}`,
-                  background: s === scope ? 'rgba(var(--accent-rgb),.07)' : '#1a1612',
+                  border: `1px solid ${s === scope ? 'var(--accent)' : 'var(--hair-70)'}`,
+                  background: s === scope ? 'rgba(var(--accent-rgb),.07)' : 'var(--bg-3)',
                   cursor: 'pointer', textAlign: 'left', width: '100%', transition: 'border-color .15s, background .15s',
                 }}>
                   <span style={{ width: 34, height: 34, borderRadius: '50%', flexShrink: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {[0, 6, 12].map(o => <span key={o} style={{ position: 'absolute', inset: o, borderRadius: '50%', border: `1.5px solid ${s === scope ? '#ff5029' : '#3a342e'}` }} />)}
+                    {[0, 6, 12].map(o => <span key={o} style={{ position: 'absolute', inset: o, borderRadius: '50%', border: `1.5px solid ${s === scope ? 'var(--accent)' : 'var(--ink-4)'}` }} />)}
                   </span>
                   <span>
                     <div style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 700, fontSize: 15, letterSpacing: '-.01em' }}>{AD_SCOPE_LABELS[s]}</div>
                     <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, color: '#5a5048', letterSpacing: '.04em', marginTop: 3 }}>{AD_SCOPE_DESCRIPTIONS[s]}</div>
                   </span>
                   <span style={{ marginLeft: 'auto', textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 700, fontSize: 16, letterSpacing: '-.01em', color: s === scope ? '#ff5029' : 'inherit' }}>{money(quoteAdCampaign(s, 1, 1).ratePerSpotCents / 100)}</div>
+                    <div style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 700, fontSize: 16, letterSpacing: '-.01em', color: s === scope ? 'var(--accent)' : 'inherit' }}>{money(quoteAdCampaign(s, 1, 1).ratePerSpotCents / 100)}</div>
                     <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 8.5, color: '#5a5048', letterSpacing: '.06em', marginTop: 2 }}>{t('advertisePage.perSpotDay', '/ spot · day')}</div>
                   </span>
                 </button>
@@ -288,10 +288,10 @@ function CoverageBuilder() {
               {AD_RUN_LENGTHS_DAYS.map(d => (
                 <button key={d} onClick={() => setDays(d)} style={{
                   flex: 1, padding: '11px 8px', borderRadius: 9,
-                  border: `1px solid ${days === d ? '#ff5029' : 'var(--hair-70)'}`,
-                  background: days === d ? 'rgba(var(--accent-rgb),.07)' : '#1a1612',
+                  border: `1px solid ${days === d ? 'var(--accent)' : 'var(--hair-70)'}`,
+                  background: days === d ? 'rgba(var(--accent-rgb),.07)' : 'var(--bg-3)',
                   fontFamily: 'var(--f-m,monospace)', fontSize: 11, letterSpacing: '.04em',
-                  color: days === d ? '#ff5029' : '#9e9080', cursor: 'pointer', transition: 'all .15s',
+                  color: days === d ? 'var(--accent)' : 'var(--ink-2)', cursor: 'pointer', transition: 'all .15s',
                 }}>{d} {t('advertisePage.days', 'days')}</button>
               ))}
             </div>
@@ -622,14 +622,14 @@ function ScanDemo() {
     <div style={{ maxWidth: 640, margin: '0 auto', background: 'var(--bg-2)', border: '1px solid var(--hair-100)', borderRadius: 14, overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 18px', borderBottom: '1px solid var(--hair-70)' }}>
         <span style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 700, fontSize: 14, flex: 1 }}>{t('advertisePage.hypeScreenAutomated', 'HYPE Screen · automated ad review')}</span>
-        <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase', color: phase === 'done' ? '#22e5d4' : phase === 'scanning' ? '#ff5029' : '#5a5048' }}>
+        <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase', color: phase === 'done' ? 'var(--role-venue)' : phase === 'scanning' ? 'var(--accent)' : '#5a5048' }}>
           {phase === 'done' ? t('advertisePage.cleared55', 'Cleared · 5/5') : phase === 'scanning' ? t('advertisePage.scanning', 'Scanning…') : t('advertisePage.awaitingAudio', 'Awaiting audio')}
         </span>
       </div>
 
       {phase === 'idle' && (
         <div onClick={runDemo} style={{ margin: 18, border: '2px dashed var(--line-2)', borderRadius: 12, padding: '34px 20px', textAlign: 'center', cursor: 'pointer' }}>
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9e9080" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 10 }}><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--ink-2)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 10 }}><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg>
           <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 5 }}>{t('advertisePage.dropAudioHere', 'Drop your ad audio here')}</div>
           <div style={{ fontSize: 12, color: 'var(--ink-2)' }}>{t('advertisePage.audioFormats', 'MP3 / WAV / AAC · 15–60s · audio only, no video')}</div>
           <div className="adv-btn-solid" style={{ display: 'inline-flex', marginTop: 14 }}>{t('advertisePage.simulateScan', 'Simulate a scan')}</div>
@@ -643,9 +643,9 @@ function ScanDemo() {
             const gateLabel = t(`advertisePage.scanGate${i}`, g);
             return (
               <div key={g} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, background: state === 'pass' ? 'rgba(var(--role-venue-rgb),.1)' : 'var(--hair-30)', border: `1px solid ${state === 'pass' ? 'rgba(var(--role-venue-rgb),.25)' : 'var(--hair-80)'}`, transition: 'all .3s' }}>
-                <span style={{ width: 12, height: 12, borderRadius: '50%', flexShrink: 0, background: state === 'pass' ? '#22e5d4' : 'transparent', border: state === 'pass' ? 'none' : '2px solid var(--hair-180)' }} />
-                <span style={{ flex: 1, fontSize: 12, color: state === 'pass' ? 'var(--ink)' : '#9e9080' }}>{t('advertisePage.gateN', 'Gate')} {i + 1} — {gateLabel}</span>
-                <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9, letterSpacing: '.08em', textTransform: 'uppercase', color: state === 'pass' ? '#22e5d4' : '#5a5048' }}>{state === 'pass' ? t('advertisePage.passUpper', 'PASS') : '…'}</span>
+                <span style={{ width: 12, height: 12, borderRadius: '50%', flexShrink: 0, background: state === 'pass' ? 'var(--role-venue)' : 'transparent', border: state === 'pass' ? 'none' : '2px solid var(--hair-180)' }} />
+                <span style={{ flex: 1, fontSize: 12, color: state === 'pass' ? 'var(--ink)' : 'var(--ink-2)' }}>{t('advertisePage.gateN', 'Gate')} {i + 1} — {gateLabel}</span>
+                <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9, letterSpacing: '.08em', textTransform: 'uppercase', color: state === 'pass' ? 'var(--role-venue)' : '#5a5048' }}>{state === 'pass' ? t('advertisePage.passUpper', 'PASS') : '…'}</span>
               </div>
             );
           })}
@@ -691,7 +691,7 @@ function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
 export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
   const { t } = useI18n();
   const eyebrow = (text: string, accent = true): React.CSSProperties => ({
-    fontFamily: 'var(--f-m,monospace)', fontSize: 10, letterSpacing: '.2em', color: accent ? '#ff5029' : '#5a5048',
+    fontFamily: 'var(--f-m,monospace)', fontSize: 10, letterSpacing: '.2em', color: accent ? 'var(--accent)' : '#5a5048',
     textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: 9,
   });
 
@@ -839,7 +839,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
               <h3 style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 26, letterSpacing: '-.02em', marginTop: 16, lineHeight: 1.05 }}>{t('advertisePage.artistsVenues', 'Artists, venues')}<br />{t('advertisePage.promotersLine', '& promoters')}</h3>
               <p style={{ fontSize: 13.5, color: 'var(--ink-2)', lineHeight: 1.55, marginTop: 12 }}>{t('advertisePage.membersBody', 'Already part of iHYPE? Buy coverage straight from your dashboard. Your role is pre-verified, so the buyer-vetting gate clears instantly — you go right to creative review.')}</p>
               <div style={{ display: 'flex', gap: 8, marginTop: 18, flexWrap: 'wrap' }}>
-                {[{ c: '#b983ff', l: t('advertisePage.roleArtist', 'Artist') }, { c: '#22e5d4', l: t('advertisePage.roleVenue', 'Venue') }, { c: '#ff3e9a', l: t('advertisePage.rolePromoter', 'Promoter') }].map(r => (
+                {[{ c: 'var(--role-fan)', l: t('advertisePage.roleArtist', 'Artist') }, { c: 'var(--role-venue)', l: t('advertisePage.roleVenue', 'Venue') }, { c: 'var(--accent-2)', l: t('advertisePage.rolePromoter', 'Promoter') }].map(r => (
                   <span key={r.l} style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, letterSpacing: '.06em', padding: '7px 12px', borderRadius: 99, border: `1px solid color-mix(in srgb, ${r.c} 40%, transparent)`, display: 'inline-flex', alignItems: 'center', gap: 7, color: r.c }}>
                     <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: r.c }} />{r.l}
                   </span>

@@ -43,10 +43,10 @@ function iconForType(type: string, color: string) {
 
 function colorForType(type: string) {
   const t = type.toUpperCase();
-  if (t.includes('HYPE') || t.includes('EARLY_BELIEVER')) return '#ff5029';
-  if (t.includes('REFERRAL')) return '#ff3e9a';
-  if (t.includes('RADIO') || t.includes('LIVE')) return '#b983ff';
-  if (t.includes('SHOW') || t.includes('RSVP') || t.includes('TICKET') || t.includes('POST-SHOW')) return '#22e5d4';
+  if (t.includes('HYPE') || t.includes('EARLY_BELIEVER')) return 'var(--accent)';
+  if (t.includes('REFERRAL')) return 'var(--accent-2)';
+  if (t.includes('RADIO') || t.includes('LIVE')) return 'var(--role-fan)';
+  if (t.includes('SHOW') || t.includes('RSVP') || t.includes('TICKET') || t.includes('POST-SHOW')) return 'var(--role-venue)';
   return 'var(--ink-a65)';
 }
 

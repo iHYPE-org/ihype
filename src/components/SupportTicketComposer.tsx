@@ -141,8 +141,8 @@ export function SupportTicketComposer() {
               disabled={!canSubmit}
               style={{
                 padding: '9px 16px', borderRadius: 'var(--radius-sm)', border: 'none',
-                background: canSubmit ? '#ff5029' : 'rgba(var(--accent-rgb),.3)',
-                color: canSubmit ? '#fff' : 'var(--ink-a50)', fontSize: 13, fontWeight: 600,
+                background: canSubmit ? 'var(--accent)' : 'rgba(var(--accent-rgb),.3)',
+                color: canSubmit ? 'var(--ink-on-accent)' : 'var(--ink-a50)', fontSize: 13, fontWeight: 600,
                 cursor: canSubmit ? 'pointer' : 'not-allowed',
               }}
             >

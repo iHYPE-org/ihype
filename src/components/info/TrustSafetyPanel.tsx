@@ -62,17 +62,17 @@ export async function TrustSafetyPanel() {
     .reduce((sum, r) => sum + r._count._all, 0);
 
   const ENFORCEMENT_STATS = [
-    { label: t('auditPage.statReportsTotal', 'Reports received (all time)'), val: reportsTotal.toLocaleString(), c: '#ff5029' },
-    { label: t('auditPage.statReportsOpen', 'Open, awaiting review'), val: reportsOpen.toLocaleString(), c: '#b983ff' },
-    { label: t('auditPage.statReportsActioned', 'Actioned'), val: reportsActioned.toLocaleString(), c: '#22e5d4' },
-    { label: t('auditPage.statReportsDismissed', 'Dismissed'), val: reportsDismissed.toLocaleString(), c: '#ff3e9a' },
+    { label: t('auditPage.statReportsTotal', 'Reports received (all time)'), val: reportsTotal.toLocaleString(), c: 'var(--accent)' },
+    { label: t('auditPage.statReportsOpen', 'Open, awaiting review'), val: reportsOpen.toLocaleString(), c: 'var(--role-fan)' },
+    { label: t('auditPage.statReportsActioned', 'Actioned'), val: reportsActioned.toLocaleString(), c: 'var(--role-venue)' },
+    { label: t('auditPage.statReportsDismissed', 'Dismissed'), val: reportsDismissed.toLocaleString(), c: 'var(--accent-2)' },
   ];
 
   const AD_STATS = [
-    { label: t('auditPage.statAdTotal', 'Radio ad campaigns vetted'), val: adTotal.toLocaleString(), c: '#ff5029' },
-    { label: t('auditPage.statAdApproved', 'Approved'), val: adApproved.toLocaleString(), c: '#22e5d4' },
-    { label: t('auditPage.statAdManualReview', 'Sent to manual review'), val: adManualReview.toLocaleString(), c: '#b983ff' },
-    { label: t('auditPage.statAdRejected', 'Rejected'), val: adRejected.toLocaleString(), c: '#ff3e9a' },
+    { label: t('auditPage.statAdTotal', 'Radio ad campaigns vetted'), val: adTotal.toLocaleString(), c: 'var(--accent)' },
+    { label: t('auditPage.statAdApproved', 'Approved'), val: adApproved.toLocaleString(), c: 'var(--role-venue)' },
+    { label: t('auditPage.statAdManualReview', 'Sent to manual review'), val: adManualReview.toLocaleString(), c: 'var(--role-fan)' },
+    { label: t('auditPage.statAdRejected', 'Rejected'), val: adRejected.toLocaleString(), c: 'var(--accent-2)' },
   ];
 
   return (
@@ -164,25 +164,25 @@ export async function TrustSafetyPanel() {
           {[
             {
               icon: '◈',
-              c: '#ff5029',
+              c: 'var(--accent)',
               head: t('auditPage.howAiScreeningHead', 'AI screening on upload'),
               body: t('auditPage.howAiScreeningBody', 'Every track, avatar, hero, and gallery image is screened automatically the moment it\'s uploaded, and every radio ad campaign\'s copy and audio (transcribed, then screened) are AI-vetted against our music-industry-only policy — before any of it can go live.'),
             },
             {
               icon: '⬟',
-              c: '#b983ff',
+              c: 'var(--role-fan)',
               head: t('auditPage.howHumanReviewHead', 'Human review queue'),
               body: t('auditPage.howHumanReviewBody', 'Anything the AI flags, or that a user reports, lands in a queue an admin reviews by hand. Nothing is auto-removed without a report existing.'),
             },
             {
               icon: '◎',
-              c: '#22e5d4',
+              c: 'var(--role-venue)',
               head: t('auditPage.howNoPiiHead', 'No content, no PII'),
               body: t('auditPage.howNoPiiBody', 'This page shows counts only. Categories with fewer than five reports are folded into "Other" so a small number can never identify a specific user or piece of content.'),
             },
             {
               icon: '⚙',
-              c: '#ff3e9a',
+              c: 'var(--accent-2)',
               head: t('auditPage.howFailOpenHead', 'Fail-open by design'),
               body: t('auditPage.howFailOpenBody', 'If the AI screening service is ever unavailable, uploads still go through — they just skip the automated check. Nothing on iHYPE is blocked by an AI outage.'),
             },

@@ -32,9 +32,9 @@ const inputStyle: React.CSSProperties = {
 };
 
 const STATUS_COLOR: Record<string, string> = {
-  planned: '#22e5d4',
-  in_progress: '#b983ff',
-  shipped: '#22e5d4',
+  planned: 'var(--role-venue)',
+  in_progress: 'var(--role-fan)',
+  shipped: 'var(--role-venue)',
   declined: 'var(--ink-a40)',
 };
 

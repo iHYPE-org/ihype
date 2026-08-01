@@ -338,7 +338,7 @@ export function DJOnboardingWizard({
         .djo-btn-solid { background: var(--accent-2); color: var(--ink-on-accent); }
         .djo-btn-outline { background: transparent; color: var(--ink-a55); border: 1px solid var(--line-2); }
         .djo-done { text-align: center; }
-        .djo-icon { width: 56px; height: 56px; border-radius: var(--radius-lg); display: grid; place-items: center; margin: 0 auto 16px; background: rgba(var(--role-venue-rgb),.12); border: 2px solid #22e5d4; }
+        .djo-icon { width: 56px; height: 56px; border-radius: var(--radius-lg); display: grid; place-items: center; margin: 0 auto 16px; background: rgba(var(--role-venue-rgb),.12); border: 2px solid var(--role-venue); }
         .djo-icon-err { background: rgba(var(--accent-rgb),.12); border: 2px solid var(--accent); color: var(--accent); font-family: var(--font-display); font-weight: 800; font-size: 22px; }
         .djo-badge { display: inline-flex; margin: 0 auto 24px; padding: 4px 12px; border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; background: rgba(var(--accent-2-rgb),.12); color: var(--accent-2); }
       `}</style>

@@ -328,7 +328,7 @@ export default function VenueOnboardingWizard({
         .von-sub-center { max-width: 34ch; margin-left: auto; margin-right: auto; }
         .von-proof-hint { font-size: 12.5px; color: var(--ink-a50); line-height: 1.55; margin: -4px 0 16px; }
         .von-label { display: block; font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a50); margin: 0 0 6px; }
-        .von-input { width: 100%; box-sizing: border-box; padding: 14px 16px; border-radius: var(--radius-md); border: 1px solid var(--line-2); background: var(--bg3, rgba(255,255,255,.03)); color: var(--ink); font-size: 15px; margin-bottom: 14px; }
+        .von-input { width: 100%; box-sizing: border-box; padding: 14px 16px; border-radius: var(--radius-md); border: 1px solid var(--line-2); background: var(--bg-3); color: var(--ink); font-size: 15px; margin-bottom: 14px; }
         .von-select { appearance: auto; }
         .von-error { color: var(--accent); font-size: 13px; margin: -6px 0 14px; }
         .von-btn { display: flex; align-items: center; justify-content: center; width: 100%; text-decoration: none; padding: 12px 20px; border-radius: var(--radius-md); font-size: 14px; font-weight: 700; min-height: 44px; border: none; cursor: pointer; margin-top: 20px; box-sizing: border-box; }
@@ -336,7 +336,7 @@ export default function VenueOnboardingWizard({
         .von-btn-solid { background: var(--role-venue); color: #08211f; }
         .von-btn-outline { background: transparent; color: var(--ink-a55); border: 1px solid var(--line-2); margin-top: 8px; }
         .von-btn-link { margin-top: 24px; }
-        .von-card { border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--bg3, rgba(255,255,255,.03)); padding: 20px; margin-top: 12px; }
+        .von-card { border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--bg-3); padding: 20px; margin-top: 12px; }
         .von-card-label { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a50); margin-bottom: 10px; }
         .von-card-label-accent { color: var(--role-venue); }
         .von-split-bar { display: flex; height: 8px; border-radius: var(--radius-pill); overflow: hidden; gap: 2px; margin-bottom: 10px; }
@@ -349,7 +349,7 @@ export default function VenueOnboardingWizard({
         .von-sublabel { margin-top: 20px; margin-bottom: 4px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-a50); }
         .von-empty { border: 1.5px dashed var(--line-2); border-radius: var(--radius-lg); padding: 26px 20px; text-align: center; }
         .von-empty-text { font-size: 13px; color: var(--ink-a55); line-height: 1.5; }
-        .von-done-icon { width: 56px; height: 56px; border-radius: var(--radius-md); display: grid; place-items: center; margin: 0 auto 16px; background: rgba(var(--role-venue-rgb),.12); border: 2px solid #22e5d4; }
+        .von-done-icon { width: 56px; height: 56px; border-radius: var(--radius-md); display: grid; place-items: center; margin: 0 auto 16px; background: rgba(var(--role-venue-rgb),.12); border: 2px solid var(--role-venue); }
         .von-badge { display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; padding: 5px 14px; border-radius: var(--radius-pill); background: rgba(var(--role-venue-rgb),.15); color: var(--role-venue); margin-bottom: 8px; }
       `}</style>
     </div>

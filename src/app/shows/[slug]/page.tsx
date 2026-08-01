@@ -715,7 +715,7 @@ export default async function ShowDetailPage({
                             <td>{formatCurrencyFromCents(order.venuePayoutCents)}</td>
                             <td>{formatCurrencyFromCents(order.artistPayoutCents)}</td>
                             <td>{formatCurrencyFromCents(order.promoterPayoutCents)}</td>
-                            <td style={totalPassed > 0 ? { color: 'var(--accent-3)', fontWeight: 600 } : { color: 'var(--muted)' }}>
+                            <td style={totalPassed > 0 ? { color: 'var(--accent-text)', fontWeight: 600 } : { color: 'var(--muted)' }}>
                               {totalPassed > 0 ? `${totalPassed}×` : '—'}
                             </td>
                           </tr>

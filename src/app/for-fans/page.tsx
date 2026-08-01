@@ -12,7 +12,7 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
   return {
   role: 'FAN',
   tint: 'var(--role-fan)',
-  glow: '#b983ff',
+  glow: 'var(--role-fan)',
   navCta: t('forFansPage.navCta', 'Join free →'),
   eyebrow: t('forFansPage.eyebrow', 'For Fans'),
   headline: <>{t('forFansPage.headlineLine1', 'Your taste.')}<br />{t('forFansPage.headlineLine2', 'Your voice.')}<br /><span style={{ color: 'var(--role-fan)' }}>{t('forFansPage.headlineLine3', 'Your cut.')}</span></>,

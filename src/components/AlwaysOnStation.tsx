@@ -128,7 +128,7 @@ export function AlwaysOnStation({ initial }: { initial: StationState }) {
 const STATION_CSS = `
 .station { background: var(--bg-2); border: 1px solid var(--hair-80); border-radius: 20px; padding: 22px; max-width: 460px; }
 .station-head { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; }
-.station-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px #ff5029; }
+.station-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
 .station-status { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.16em; color: var(--accent); }
 .station-now { display: flex; align-items: center; gap: 14px; }
 .station-art { flex-shrink: 0; width: 64px; height: 64px; border-radius: 14px; background: linear-gradient(135deg, var(--accent), var(--role-fan)); background-size: cover; background-position: center; }

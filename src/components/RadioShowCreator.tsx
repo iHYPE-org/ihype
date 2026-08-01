@@ -829,7 +829,7 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
                   >
                     <PreviewIcon playing={previewingId === sample.sampleId} />
                   </button>
-                  <span className="rsc-sample-swatch" style={{ background: sample.colorHex ?? '#22e5d4' }} />
+                  <span className="rsc-sample-swatch" style={{ background: sample.colorHex ?? 'var(--role-venue)' }} />
                   <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
                     <div style={{ fontWeight: 700, fontSize: 13 }}>{sample.title}</div>
                     <div style={{ fontSize: 11, color: 'var(--ink-a50)' }}>{sample.category ?? 'fx'} · {sample.notes}</div>
@@ -1012,7 +1012,7 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
         .rsc-tl-rm:hover { background: rgba(var(--accent-rgb),.14); color: var(--accent); }
         .rsc-drop-line { height: 2px; background: var(--role-fan); border-radius: 2px; margin: -5px 0 7px; box-shadow: 0 0 8px rgba(var(--accent-2-rgb),.6); }
         .rsc-ad-spots { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
-        .rsc-ad-spot { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; background: rgba(0,0,0,.25); border: 1px solid var(--line); }
+        .rsc-ad-spot { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; background: var(--bg-2); border: 1px solid var(--line); }
         .rsc-as-name { font-size: 12px; font-weight: 600; flex: 1; min-width: 0; }
         .rsc-as-scope { font-family: var(--font-mono); font-size: 9px; color: var(--ink-a50); text-transform: uppercase; flex-shrink: 0; }
         .rsc-as-dur { font-family: var(--font-mono); font-size: 10px; color: var(--ink-a60); flex-shrink: 0; }
@@ -1030,7 +1030,7 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
         .rsc-s-bar-label { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-a50); margin-bottom: 6px; }
         .rsc-s-bar-track { height: 6px; border-radius: 3px; background: var(--hair-80); overflow: hidden; }
         .rsc-s-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; }
-        .rsc-modal-wrap { position: fixed; inset: 0; background: rgba(0,0,0,.65); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .rsc-modal-wrap { position: fixed; inset: 0; background: rgba(var(--scrim-rgb),.65); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
         .rsc-modal { width: 100%; max-width: 420px; background: var(--bg2); border: 1px solid var(--hair-100); border-radius: 16px; overflow: hidden; max-height: 80vh; overflow-y: auto; }
         .rsc-modal-lg { max-width: 520px; }
         .rsc-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--line); font-family: var(--font-display); font-weight: 800; font-size: 15px; }

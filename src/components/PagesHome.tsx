@@ -15,7 +15,7 @@ const TYPE_COLOR: Record<string, string> = {
   ARTIST: 'var(--role-artist)',
   DJ: 'var(--role-dj)',
   VENUE: 'var(--role-venue)',
-  LISTENER: '#b983ff',
+  LISTENER: 'var(--role-fan)',
 };
 
 const TYPE_LABEL: Record<string, string> = {
@@ -350,7 +350,7 @@ export function PagesHome({
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {searchResults.map((r) => {
-                const color = r.type === 'venue' ? '#22e5d4' : r.type === 'promoter' ? '#ff3e9a' : '#ff5029';
+                const color = r.type === 'venue' ? 'var(--role-venue)' : r.type === 'promoter' ? 'var(--accent-2)' : 'var(--accent)';
                 const label = r.type === 'venue' ? t('pagesHome.resultTypeVenue', 'Venue') : r.type === 'promoter' ? t('pagesHome.resultTypePromoter', 'Promoter / DJ') : t('pagesHome.resultTypeArtist', 'Artist');
                 const route = r.type === 'venue' ? `/venues/${r.slug}` : r.type === 'promoter' ? `/promoters/${r.slug}` : `/artists/${r.slug}`;
                 const initials = r.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
@@ -359,7 +359,7 @@ export function PagesHome({
                     <div style={{
                       width: 46, height: 46, borderRadius: 9999, flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, color: '#fff',
+                      fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, color: 'var(--ink-on-accent)',
                       background: `linear-gradient(135deg, ${color}, ${hexA(color, 0.55)})`,
                     }}>
                       {initials}
@@ -407,7 +407,7 @@ export function PagesHome({
             <>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 18 }}>
                 {myProfiles.map((p) => {
-                  const color = TYPE_COLOR[p.type] ?? '#ff5029';
+                  const color = TYPE_COLOR[p.type] ?? 'var(--accent)';
                   const selected = selectedProfile?.id === p.id;
                   return (
                     <div
@@ -424,7 +424,7 @@ export function PagesHome({
                       <div style={{
                         width: 30, height: 30, borderRadius: 9999, flexShrink: 0,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, color: '#fff',
+                        fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, color: 'var(--ink-on-accent)',
                         background: color,
                       }}>
                         {p.name.charAt(0).toUpperCase()}
@@ -455,21 +455,21 @@ export function PagesHome({
                 <div style={{
                   borderRadius: 18, padding: 24, marginBottom: 36,
                   display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap',
-                  border: `1px solid ${hexA(TYPE_COLOR[selectedProfile.type] ?? '#ff5029', 0.3)}`,
-                  background: hexA(TYPE_COLOR[selectedProfile.type] ?? '#ff5029', 0.07),
+                  border: `1px solid ${hexA(TYPE_COLOR[selectedProfile.type] ?? 'var(--accent)', 0.3)}`,
+                  background: hexA(TYPE_COLOR[selectedProfile.type] ?? 'var(--accent)', 0.07),
                 }}>
                   <div style={{
                     width: 72, height: 72, borderRadius: 9999, flexShrink: 0,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 28, color: '#fff',
-                    background: TYPE_COLOR[selectedProfile.type] ?? '#ff5029',
+                    fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 28, color: 'var(--ink-on-accent)',
+                    background: TYPE_COLOR[selectedProfile.type] ?? 'var(--accent)',
                   }}>
                     {selectedProfile.name.charAt(0).toUpperCase()}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{
                       fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase',
-                      marginBottom: 5, color: TYPE_COLOR[selectedProfile.type] ?? '#ff5029',
+                      marginBottom: 5, color: TYPE_COLOR[selectedProfile.type] ?? 'var(--accent)',
                     }}>
                       {typeLabel(selectedProfile.type).toUpperCase()} {t('pagesHome.pageSuffix', 'PAGE')}
                     </div>
@@ -494,7 +494,7 @@ export function PagesHome({
               {selectedProfile && (
                 <PageRoleModules
                   key={selectedProfile.id}
-                  color={TYPE_COLOR[selectedProfile.type] ?? '#ff5029'}
+                  color={TYPE_COLOR[selectedProfile.type] ?? 'var(--accent)'}
                   initialTool={initialTool}
                   profile={selectedProfile}
                 />
@@ -553,14 +553,14 @@ export function PagesHome({
               <div style={{ color: 'var(--ink-a50)', fontSize: 13, padding: '10px 2px' }}>{t('pagesHome.noConnectionsMatch', 'No connections match.')}</div>
             ) : (
               netListShown.map((p) => {
-                const color = TYPE_COLOR[p.type] ?? '#ff5029';
+                const color = TYPE_COLOR[p.type] ?? 'var(--accent)';
                 const initials = p.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
                 return (
                   <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 14, background: 'var(--hair-30)' }}>
                     <Link href={profileRoute(p.type, p.slug)} style={{
                       width: 46, height: 46, borderRadius: 9999, flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, color: '#fff',
+                      fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, color: 'var(--ink-on-accent)',
                       background: `linear-gradient(135deg, ${color}, ${hexA(color, 0.55)})`, textDecoration: 'none',
                     }}>
                       {initials}
@@ -595,14 +595,14 @@ export function PagesHome({
               <div style={{ color: 'var(--ink-a50)', fontSize: 13, padding: '10px 2px' }}>{t('pagesHome.noSuggestionsMatch', 'No suggestions match.')}</div>
             ) : (
               netSuggestShown.map((p) => {
-                const color = TYPE_COLOR[p.type] ?? '#ff5029';
+                const color = TYPE_COLOR[p.type] ?? 'var(--accent)';
                 const initials = p.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
                 return (
                   <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 14, background: 'var(--hair-30)' }}>
                     <Link href={profileRoute(p.type, p.slug)} style={{
                       width: 46, height: 46, borderRadius: 9999, flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, color: '#fff',
+                      fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, color: 'var(--ink-on-accent)',
                       background: `linear-gradient(135deg, ${color}, ${hexA(color, 0.55)})`, textDecoration: 'none',
                     }}>
                       {initials}
@@ -685,7 +685,7 @@ export function PagesHome({
                       <button
                         disabled={creating || !creatingName.trim()}
                         onClick={() => addProfile(card.type)}
-                        style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: card.color, color: '#fff', fontWeight: 700, fontSize: 13, cursor: creating ? 'default' : 'pointer', opacity: creating || !creatingName.trim() ? 0.6 : 1 }}
+                        style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: card.color, color: 'var(--ink-on-accent)', fontWeight: 700, fontSize: 13, cursor: creating ? 'default' : 'pointer', opacity: creating || !creatingName.trim() ? 0.6 : 1 }}
                         type="button"
                       >
                         {creating ? t('pagesHome.creating', 'Creating…') : t('pagesHome.create', 'Create')}

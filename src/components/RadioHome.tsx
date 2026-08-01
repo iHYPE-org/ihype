@@ -37,7 +37,7 @@ type ApiRadioShow = {
   productionPlan?: unknown;
 };
 
-const PALETTE = ['#ff5029', 'var(--role-venue)', 'var(--role-fan)', 'var(--accent-2)'];
+const PALETTE = ['var(--accent)', 'var(--role-venue)', 'var(--role-fan)', 'var(--accent-2)'];
 
 function fmt(s: number) {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
@@ -527,7 +527,7 @@ export function RadioHome() {
                 <span style={{
                   padding: '3px 8px', borderRadius: 4, fontFamily: 'var(--font-mono)', fontSize: 9, textTransform: 'uppercase', letterSpacing: '.14em', flexShrink: 0,
                   background: chip === 'tonight' ? 'rgba(var(--accent-rgb),.14)' : chip === 'tomorrow' ? 'rgba(var(--role-fan-rgb),.12)' : 'var(--hair-50)',
-                  color: chip === 'tonight' ? 'var(--accent)' : chip === 'tomorrow' ? '#b983ff' : 'var(--ink-a38)',
+                  color: chip === 'tonight' ? 'var(--accent)' : chip === 'tomorrow' ? 'var(--role-fan)' : 'var(--ink-a38)',
                 }}>
                   {chip === 'tonight' ? t('radioHome.chipTonight', 'Tonight') : chip === 'tomorrow' ? t('radioHome.chipTomorrow', 'Tomorrow') : t('radioHome.chipThisWeek', 'This Week')}
                 </span>
@@ -543,7 +543,7 @@ export function RadioHome() {
                     padding: '5px 11px', borderRadius: 6, fontSize: 11, flexShrink: 0,
                     border: notifying[s.id] ? '1px solid rgba(var(--role-fan-rgb),.45)' : '1px solid var(--hair-100)',
                     background: notifying[s.id] ? 'rgba(var(--role-fan-rgb),.1)' : 'transparent',
-                    color: notifying[s.id] ? '#b983ff' : 'var(--ink-a55)',
+                    color: notifying[s.id] ? 'var(--role-fan)' : 'var(--ink-a55)',
                     cursor: 'pointer', transition: 'all 150ms',
                   }}
                 >

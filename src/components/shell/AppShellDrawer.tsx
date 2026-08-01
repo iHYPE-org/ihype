@@ -197,8 +197,10 @@ export function AppShellDrawer({
           })}
         </div>
 
-        {/* The charter card. Routes to Legal, per the handoff. */}
-        <Link className="shell-charter-card" href="/legal" onClick={onClose}>
+        {/* The charter card. Goes straight to the Charter tab: /legal with no
+            ?tab= defaults to Terms, so a card headed "THE CHARTER · 70/20/10"
+            was opening the terms of service. */}
+        <Link className="shell-charter-card" href="/info?tab=charter" onClick={onClose}>
           <span className="shell-eyebrow" style={{ color: 'var(--role-venue-text)' }}>
             {t('appShell.charterEyebrow', 'THE CHARTER · 70/20/10')}
           </span>

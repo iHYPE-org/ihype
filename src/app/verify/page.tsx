@@ -14,9 +14,9 @@ export const metadata: Metadata = {
 };
 
 const BADGE_COLOR: Record<string, { bg: string; border: string; text: string }> = {
-  ARTIST: { bg: 'rgba(var(--accent-rgb),.12)', border: 'rgba(var(--accent-rgb),.3)', text: '#ff5029' },
-  DJ: { bg: 'rgba(var(--role-fan-rgb),.12)', border: 'rgba(var(--role-fan-rgb),.3)', text: '#b983ff' },
-  VENUE: { bg: 'rgba(var(--role-venue-rgb),.12)', border: 'rgba(var(--role-venue-rgb),.3)', text: '#22e5d4' },
+  ARTIST: { bg: 'rgba(var(--accent-rgb),.12)', border: 'rgba(var(--accent-rgb),.3)', text: 'var(--accent)' },
+  DJ: { bg: 'rgba(var(--role-fan-rgb),.12)', border: 'rgba(var(--role-fan-rgb),.3)', text: 'var(--role-fan)' },
+  VENUE: { bg: 'rgba(var(--role-venue-rgb),.12)', border: 'rgba(var(--role-venue-rgb),.3)', text: 'var(--role-venue)' },
 };
 
 export default async function VerifyPage() {
@@ -65,7 +65,7 @@ export default async function VerifyPage() {
       <div style={{ maxWidth: 480, margin: '40px auto', padding: '0 24px 100px', textAlign: 'center' }}>
         <div style={{
           width: 56, height: 56, borderRadius: 16, margin: '0 auto 16px',
-          background: 'rgba(var(--role-venue-rgb),.12)', border: '2px solid #22e5d4',
+          background: 'rgba(var(--role-venue-rgb),.12)', border: '2px solid var(--role-venue)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--role-venue)" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
@@ -83,7 +83,7 @@ export default async function VerifyPage() {
       <div style={{ maxWidth: 480, margin: '40px auto', padding: '0 24px 100px', textAlign: 'center' }}>
         <div style={{
           width: 56, height: 56, borderRadius: 16, margin: '0 auto 16px',
-          background: 'rgba(var(--role-venue-rgb),.12)', border: '2px solid #22e5d4',
+          background: 'rgba(var(--role-venue-rgb),.12)', border: '2px solid var(--role-venue)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--role-venue)" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>

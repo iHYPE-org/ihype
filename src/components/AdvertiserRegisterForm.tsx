@@ -183,6 +183,6 @@ const styles = `
   .aar-fineprint { font-size: 12px; color: var(--ink-a55); line-height: 1.6; margin-top: 16px; }
   .aar-fineprint a { color: var(--ink-a70); text-decoration: underline; }
   .aar-done { text-align: center; }
-  .aar-check { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; background: rgba(var(--role-venue-rgb),.12); border: 2px solid #22e5d4; color: var(--role-venue); font-size: 24px; }
+  .aar-check { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; background: rgba(var(--role-venue-rgb),.12); border: 2px solid var(--role-venue); color: var(--role-venue); font-size: 24px; }
   .aar-link { display: inline-block; margin-top: 20px; font-size: 13px; color: var(--ink-a70); text-decoration: underline; }
 `;

@@ -70,14 +70,14 @@ function HypeButton({ initialCount = 0, initiallyHyped = false }: { initialCount
         borderRadius: 'var(--radius-pill)',
         border: hyped ? '1px solid transparent' : '1px solid var(--line-2)',
         background: hyped ? 'var(--accent)' : 'var(--hair-50)',
-        color: hyped ? '#fff' : 'var(--ink)',
+        color: hyped ? 'var(--ink-on-accent)' : 'var(--ink)',
         fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: '0.9rem',
         cursor: 'pointer',
         transform: pop ? 'scale(1.06)' : 'scale(1)',
         transition: 'transform .2s cubic-bezier(.34,1.56,.64,1), background .15s ease',
       }}
     >
-      <Icon name={hyped ? 'check' : 'flame'} size={17} color={hyped ? '#fff' : 'var(--accent)'} strokeWidth={hyped ? 3 : 1.75} />
+      <Icon name={hyped ? 'check' : 'flame'} size={17} color={hyped ? 'var(--ink-on-accent)' : 'var(--accent)'} strokeWidth={hyped ? 3 : 1.75} />
       {hyped ? t('walkthroughDeck.hyped', 'Hyped') : t('walkthroughDeck.hype', 'Hype')} {count.toLocaleString()}
     </button>
   );
@@ -94,7 +94,7 @@ function StatTile({ value, label, color = 'var(--accent)' }: { value: string; la
       minWidth: 190,
     }}>
       <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '2rem', letterSpacing: '-0.03em', color, lineHeight: 1 }}>{value}</div>
-      <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#7a7060', marginTop: 7 }}>{label}</div>
+      <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginTop: 7 }}>{label}</div>
     </div>
   );
 }
@@ -114,7 +114,7 @@ function ListRow({ icon, iconTint = 'var(--accent)', title, subtitle }: {
       {icon && (
         <span style={{
           width: 42, height: 42, borderRadius: 'var(--radius-md)', flexShrink: 0,
-          display: 'grid', placeItems: 'center', color: '#fff',
+          display: 'grid', placeItems: 'center', color: 'var(--ink-on-accent)',
           background: `linear-gradient(135deg, ${iconTint}cc, ${iconTint}44)`,
         }}>
           <Icon name={icon} size={18} />
@@ -122,7 +122,7 @@ function ListRow({ icon, iconTint = 'var(--accent)', title, subtitle }: {
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontFamily: 'var(--f-b)', fontWeight: 700, fontSize: '0.9rem', color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</div>
-        {subtitle && <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.72rem', color: '#7a7060', marginTop: 2 }}>{subtitle}</div>}
+        {subtitle && <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.72rem', color: 'var(--ink-3)', marginTop: 2 }}>{subtitle}</div>}
       </div>
     </div>
   );
@@ -185,14 +185,15 @@ function qrMatrix(seed: string, n = 25): boolean[][] {
 function QRCode({ value = 'IHYPE', size = 176 }: { value?: string; size?: number }) {
   const m = React.useMemo(() => qrMatrix(value), [value]);
   const n = m.length, cell = size / n;
-  // Both colours here are literal on purpose: a QR needs a light quiet zone
-  // and dark modules to scan. Theming either one would break scanning in one
-  // of the two themes.
+  // A QR needs a light quiet zone and dark modules to scan; theming either
+  // one would break scanning in one of the two themes.
+  const QUIET_ZONE = '#fff';     // design-exempt: QR quiet zone
+  const MODULE = '#0a0805';      // design-exempt: QR module
   return (
-    <div style={{ background: '#fff', padding: 12, borderRadius: 'var(--radius-md)', lineHeight: 0 }}>
+    <div style={{ background: QUIET_ZONE, padding: 12, borderRadius: 'var(--radius-md)', lineHeight: 0 }}>
       <svg width={size} height={size} shapeRendering="crispEdges">
         {m.map((row, r) => row.map((on, c) => on
-          ? <rect key={`${r}-${c}`} x={c * cell} y={r * cell} width={cell} height={cell} fill="#0a0805" />
+          ? <rect key={`${r}-${c}`} x={c * cell} y={r * cell} width={cell} height={cell} fill={MODULE} />
           : null
         ))}
       </svg>
@@ -212,11 +213,11 @@ function QRPass({ artist, detail, admits = 1, serial = 'IH-0000-0000' }: {
       boxShadow: '0 32px 80px rgba(0,0,0,.5)',
     }}>
       <div style={{ padding: '1.5rem', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))' }}>
-        <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,.85)' }}>
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(var(--ink-on-media-rgb),.85)' }}>
           iHYPE · {t('walkthroughDeck.admit', 'admit')} {admits}
         </div>
-        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.5rem', color: '#fff', letterSpacing: '-0.02em', marginTop: 6, lineHeight: 1.1 }}>{artist}</div>
-        {detail && <div style={{ fontFamily: 'var(--f-b)', fontSize: '0.85rem', color: 'rgba(255,255,255,.92)', marginTop: 4 }}>{detail}</div>}
+        <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.5rem', color: 'var(--ink-on-accent)', letterSpacing: '-0.02em', marginTop: 6, lineHeight: 1.1 }}>{artist}</div>
+        {detail && <div style={{ fontFamily: 'var(--f-b)', fontSize: '0.85rem', color: 'rgba(var(--ink-on-media-rgb),.92)', marginTop: 4 }}>{detail}</div>}
       </div>
       <div style={{ position: 'relative', height: 0 }}>
         <span style={{ position: 'absolute', left: -10, top: -10, width: 20, height: 20, borderRadius: '50%', background: 'var(--bg)' }} />
@@ -225,7 +226,7 @@ function QRPass({ artist, detail, admits = 1, serial = 'IH-0000-0000' }: {
       <div style={{ padding: '1.75rem 1.5rem 1.5rem', display: 'grid', placeItems: 'center', gap: '1rem', borderTop: '2px dashed var(--hair-100)' }}>
         <QRCode value={serial} />
         <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.8rem', letterSpacing: '0.1em', color: 'var(--ink-2)' }}>{serial}</div>
-        <div style={{ fontFamily: 'var(--f-b)', fontSize: '0.78rem', color: '#7a7060', textAlign: 'center' }}>{t('walkthroughDeck.scanAtDoor', 'Scan at the door · transferable · no app required')}</div>
+        <div style={{ fontFamily: 'var(--f-b)', fontSize: '0.78rem', color: 'var(--ink-3)', textAlign: 'center' }}>{t('walkthroughDeck.scanAtDoor', 'Scan at the door · transferable · no app required')}</div>
       </div>
     </div>
   );
@@ -258,7 +259,7 @@ function StepCard({ children, style }: { children: React.ReactNode; style?: Reac
 }
 
 function Num({ children }: { children: React.ReactNode }) {
-  return <div style={{ fontFamily: 'var(--f-m)', fontSize: 15, letterSpacing: '.14em', color: '#7a7060' }}>{children}</div>;
+  return <div style={{ fontFamily: 'var(--f-m)', fontSize: 15, letterSpacing: '.14em', color: 'var(--ink-3)' }}>{children}</div>;
 }
 
 // ─── Slides ───────────────────────────────────────────────────────────────────
@@ -330,7 +331,7 @@ function Slide03Loop() {
         {roles.map((r, i) => (
           <React.Fragment key={r.key}>
             <span style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 22, color: r.color }}>{r.label}</span>
-            {i < roles.length - 1 && <span style={{ color: '#7a7060', fontSize: 24 }}>→</span>}
+            {i < roles.length - 1 && <span style={{ color: 'var(--ink-3)', fontSize: 24 }}>→</span>}
           </React.Fragment>
         ))}
       </div>
@@ -475,10 +476,10 @@ function Slide11Quote() {
   const { t } = useI18n();
   return (
     <section style={{ ...SLIDE_STYLE, background: 'linear-gradient(135deg,var(--accent),var(--accent-2) 55%,var(--role-fan))', padding: 96, flexDirection: 'column', justifyContent: 'center' }}>
-      <div style={{ fontFamily: 'var(--f-s)', fontSize: 62, lineHeight: 1.18, color: '#fff', maxWidth: '24ch' }}>
+      <div style={{ fontFamily: 'var(--f-s)', fontSize: 62, lineHeight: 1.18, color: 'var(--ink-on-accent)', maxWidth: '24ch' }}>
         &ldquo;{t('walkthroughDeck.slide11Quote', '70% to the artist, 20% to the venue, 10% to whoever brought the fan. iHYPE takes nothing.')}&rdquo;
       </div>
-      <div style={{ fontFamily: 'var(--f-m)', fontSize: 18, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,.8)', marginTop: 40 }}>
+      <div style={{ fontFamily: 'var(--f-m)', fontSize: 18, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(var(--ink-on-media-rgb),.8)', marginTop: 40 }}>
         {t('walkthroughDeck.slide11Caption', 'Locked in the charter')}
       </div>
     </section>
@@ -546,7 +547,7 @@ export function WalkthroughDeck() {
         #wt-nav { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; z-index: 10000; }
         #wt-nav button { width: 40px; height: 40px; border-radius: 999px; border: 1px solid var(--hair-160); background: var(--line); color: var(--ink); font-size: 16px; cursor: pointer; display: grid; place-items: center; }
         #wt-nav button:hover { background: var(--hair-120); }
-        #wt-count { font-family: var(--f-m); font-size: 13px; letter-spacing: .14em; color: #7a7060; min-width: 64px; text-align: center; }
+        #wt-count { font-family: var(--f-m); font-size: 13px; letter-spacing: .14em; color: var(--ink-3); min-width: 64px; text-align: center; }
         @media print {
           @page { size: 1280px 720px; margin: 0; }
           #wt-wrap { position: static; display: block; background: #060504; }

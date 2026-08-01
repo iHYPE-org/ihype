@@ -16,7 +16,7 @@
 .lp-live-dot {
   display: inline-block; width: 7px; height: 7px;
   border-radius: 50%; background: var(--role-venue);
-  box-shadow: 0 0 6px #22e5d4;
+  box-shadow: 0 0 6px var(--role-venue);
 }
 .lp-hero-h {
   font-size: clamp(2.2rem, 6vw, 4.2rem);

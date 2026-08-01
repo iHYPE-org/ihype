@@ -12,7 +12,7 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
   return {
   role: 'VENUE',
   tint: 'var(--role-venue)',
-  glow: '#22e5d4',
+  glow: 'var(--role-venue)',
   navCta: t('forVenuesPage.navCta', 'Apply as a venue →'),
   eyebrow: t('forVenuesPage.eyebrow', 'For Venues'),
   headline: <>{t('forVenuesPage.headlineLine1', 'Your room.')}<br />{t('forVenuesPage.headlineLine2', 'Your booking.')}<br /><span style={{ color: 'var(--role-venue)' }}>{t('forVenuesPage.headlineLine3', 'Your data.')}</span></>,

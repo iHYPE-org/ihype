@@ -1,4 +1,26 @@
-/* ── Admin view (wb-admin) ── */
+/* ── Admin view (wb-admin) ──
+ *
+ * This sheet was written against a `--wb-*` palette that was never defined
+ * anywhere in the codebase. A bare `var(--undefined)` is not an error — CSS
+ * drops the declaration — so every colour here silently fell back to
+ * inherited ink on an inherited background, and the admin console has been
+ * rendering unstyled-ish since it was written.
+ *
+ * Rather than invent a second palette, the names are aliased onto the real
+ * tokens they were clearly standing in for (wb = workbench). Defined on
+ * :root so they follow the theme like everything else, instead of on
+ * .wb-admin where a portal'd overlay would escape them.
+ */
+:root {
+  --wb-ink-1:     var(--ink);
+  --wb-ink-2:     var(--ink-2);
+  --wb-ink-3:     var(--ink-3);
+  --wb-surface-2: var(--bg-2);
+  --wb-surface-3: var(--bg-3);
+  --wb-border:    var(--hair-100);
+  --wb-accent:    var(--accent);
+}
+
 .wb-admin {
   padding: 20px 24px;
   max-width: 1100px;

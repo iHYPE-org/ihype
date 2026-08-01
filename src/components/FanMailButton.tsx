@@ -132,7 +132,7 @@ export function FanMailButton({
       )}
 
       <style>{`
-        .fm-modal-wrap { position: fixed; inset: 0; background: rgba(0,0,0,.65); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .fm-modal-wrap { position: fixed; inset: 0; background: rgba(var(--scrim-rgb),.65); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
         .fm-modal { width: 100%; max-width: 420px; background: var(--bg2); border: 1px solid var(--hair-100); border-radius: 16px; overflow: hidden; max-height: 85vh; overflow-y: auto; }
         .fm-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--line); font-family: var(--font-display); font-weight: 800; font-size: 15px; color: var(--ink); }
         .fm-modal-close { background: none; border: none; color: var(--ink-a65); font-size: 20px; line-height: 1; cursor: pointer; padding: 4px; }

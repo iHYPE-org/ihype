@@ -45,7 +45,7 @@ const fieldStyle: React.CSSProperties = {
 };
 const labelStyle: React.CSSProperties = {
   display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '.12em',
-  textTransform: 'uppercase', color: 'var(--ink-3, #7a7060)', marginBottom: 6,
+  textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 6,
 };
 
 export function VerifyForm({ profileId, type, initialName, initialCity, initialGenres, initialLink }: Props) {
