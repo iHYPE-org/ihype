@@ -13,7 +13,11 @@ vi.mock('@/lib/payments', () => ({ getPaymentProcessingReadiness: vi.fn() }));
 vi.mock('@/lib/rate-limit', () => ({
   consumeRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
   rateLimitKey: vi.fn().mockReturnValue('ticket-purchase:user:user_1'),
+  consumeDualRateLimit: vi.fn().mockResolvedValue({ allowed: true, scope: null, result: { allowed: true } }),
 }));
+// The bot check is exercised on its own in the anti-bot suite below; these
+// tests are about the Stripe/reservation path, so it passes here.
+vi.mock('@/lib/turnstile', () => ({ verifyTurnstileToken: vi.fn().mockResolvedValue(true) }));
 vi.mock('@/lib/mailer', () => ({ sendIssuedTicketEmail: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('@/lib/notify', () => ({ notifyUser: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('@/lib/request-location', () => ({ detectLocationFromHeaders: vi.fn().mockResolvedValue(null) }));
@@ -59,6 +63,7 @@ vi.mock('@/lib/ticket-order-state', () => ({
 
 const dbShowUpdateMany = vi.fn().mockResolvedValue({ count: 1 });
 const dbTicketOrderCreate = vi.fn();
+const dbTicketOrderAggregate = vi.fn().mockResolvedValue({ _sum: { quantity: 0 } });
 const dbTicketOrderUpdate = vi.fn().mockResolvedValue({});
 const dbUserUpdate = vi.fn().mockResolvedValue({});
 const dbUserFindUnique = vi.fn();
@@ -79,7 +84,12 @@ vi.mock('@/lib/db', () => ({
         // mocked ticket-order-state helpers actually need.
         return arg({
           show: { updateMany: dbShowUpdateMany },
-          ticketOrder: { create: (...a: unknown[]) => dbTicketOrderCreate(...a) },
+          ticketOrder: {
+            create: (...a: unknown[]) => dbTicketOrderCreate(...a),
+            // Per-show, per-account cap. Zero held by default so these tests
+            // stay about the payment path.
+            aggregate: (...a: unknown[]) => dbTicketOrderAggregate(...a),
+          },
         });
       }
       throw new Error('unexpected $transaction call shape in test');
@@ -105,6 +115,7 @@ function baseUser(overrides: Partial<Record<string, unknown>> = {}) {
     role: Role.FAN,
     emailVerified: new Date(),
     isEighteenOrOlder: true,
+    createdAt: new Date('2026-01-01T00:00:00Z'),
     storedPaymentTokenRef: 'pm_stored',
     stripeCustomerId: 'cus_existing',
     ...overrides,
@@ -220,6 +231,102 @@ describe('POST /api/shows/[showId]/tickets', () => {
     const res = await POST(makeRequest({ quantity: 1 }), params);
 
     expect(res.status).toBe(403);
+    expect(createTicketPaymentIntent).not.toHaveBeenCalled();
+  });
+});
+
+// ── Anti-bot guards ────────────────────────────────────────────────────────
+// Ticket bots are an economic problem: resale is what makes hoarding pay, so
+// the purchase endpoint is the chokepoint. Each of these asserts a REFUSAL —
+// a guard nothing proves refuses is decoration.
+describe('POST /api/shows/[showId]/tickets — anti-bot guards', () => {
+  it('refuses a purchase that fails the bot check, before touching Stripe', async () => {
+    const { verifyTurnstileToken } = await import('@/lib/turnstile');
+    vi.mocked(verifyTurnstileToken).mockResolvedValueOnce(false);
+
+    const response = await POST(
+      new Request('http://localhost/api/shows/show_1/tickets', {
+        method: 'POST',
+        body: JSON.stringify({ quantity: 2 }),
+      }),
+      { params: Promise.resolve({ showId: 'show_1' }) },
+    );
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).code).toBe('BOT_CHECK_FAILED');
+    // The point of ordering the check first: no customer created, no hold.
+    expect(getOrCreateStripeCustomer).not.toHaveBeenCalled();
+    expect(createTicketPaymentIntent).not.toHaveBeenCalled();
+  });
+
+  it('refuses when either rate-limit bucket is exhausted', async () => {
+    const { consumeDualRateLimit } = await import('@/lib/rate-limit');
+    vi.mocked(consumeDualRateLimit).mockResolvedValueOnce({
+      allowed: false,
+      scope: 'ip',
+      result: { allowed: false, retryAfterSeconds: 900 },
+    } as Awaited<ReturnType<typeof consumeDualRateLimit>>);
+
+    const response = await POST(
+      new Request('http://localhost/api/shows/show_1/tickets', {
+        method: 'POST',
+        body: JSON.stringify({ quantity: 1 }),
+      }),
+      { params: Promise.resolve({ showId: 'show_1' }) },
+    );
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get('Retry-After')).toBe('900');
+    expect(createTicketPaymentIntent).not.toHaveBeenCalled();
+  });
+
+  it('refuses once the account already holds the per-show maximum', async () => {
+    // 8 held, asking for 1 more.
+    dbTicketOrderAggregate.mockResolvedValueOnce({ _sum: { quantity: 8 } });
+
+    const response = await POST(
+      new Request('http://localhost/api/shows/show_1/tickets', {
+        method: 'POST',
+        body: JSON.stringify({ quantity: 1 }),
+      }),
+      { params: Promise.resolve({ showId: 'show_1' }) },
+    );
+
+    const body = await response.json();
+    expect(response.status).toBe(409);
+    expect(body.code).toBe('TICKET_LIMIT_REACHED');
+    // The message has to name the limit, or a real buyer cannot act on it.
+    expect(body.error).toContain('8');
+    // Inventory must not have been consumed by a refused purchase.
+    expect(dbTicketOrderCreate).not.toHaveBeenCalled();
+  });
+
+  it('counts tickets already held rather than only this order', async () => {
+    // 6 held + 3 requested = 9, over the cap, even though 3 alone is fine.
+    dbTicketOrderAggregate.mockResolvedValueOnce({ _sum: { quantity: 6 } });
+
+    const response = await POST(
+      new Request('http://localhost/api/shows/show_1/tickets', {
+        method: 'POST',
+        body: JSON.stringify({ quantity: 3 }),
+      }),
+      { params: Promise.resolve({ showId: 'show_1' }) },
+    );
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).error).toContain('2 more');
+  });
+
+  it('rejects a quantity above the per-order maximum at the schema', async () => {
+    const response = await POST(
+      new Request('http://localhost/api/shows/show_1/tickets', {
+        method: 'POST',
+        body: JSON.stringify({ quantity: 50 }),
+      }),
+      { params: Promise.resolve({ showId: 'show_1' }) },
+    );
+
+    expect(response.status).toBeGreaterThanOrEqual(400);
     expect(createTicketPaymentIntent).not.toHaveBeenCalled();
   });
 });

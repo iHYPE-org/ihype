@@ -5,7 +5,13 @@ import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
-import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
+import { consumeDualRateLimit } from '@/lib/rate-limit';
+import { verifyTurnstileToken } from '@/lib/turnstile';
+import {
+  MAX_TICKETS_PER_SHOW_PER_ACCOUNT,
+  isSuspiciousPurchase,
+  resolvePurchaseAllowance,
+} from '@/lib/ticket-purchase-guard';
 import { sendIssuedTicketEmail } from '@/lib/mailer';
 import { notifyUser } from '@/lib/notify';
 import { getPaymentProcessingReadiness } from '@/lib/payments';
@@ -32,12 +38,15 @@ import {
 } from '@/lib/ticket-order-state';
 
 const schema = z.object({
-  quantity: z.coerce.number().int().min(1).max(8),
+  quantity: z.coerce.number().int().min(1).max(MAX_TICKETS_PER_SHOW_PER_ACCOUNT),
+  turnstileToken: z.string().min(1).optional(),
   affiliatePromoterProfileId: z.string().cuid().optional(),
   stripePaymentMethodId: z.string().startsWith('pm_').optional(),
 });
 
 class TicketAvailabilityError extends Error {}
+/** Per-account, per-show cap — a refusal the buyer can act on, not a fault. */
+class TicketPurchaseLimitError extends Error {}
 class PaymentAuthorizationError extends Error {}
 
 function shouldCaptureTicketsNow(show: { status: string; ticketingOpensAt: Date | null }) {
@@ -65,12 +74,25 @@ export async function POST(
     );
   }
 
-  const rl = await consumeRateLimit(
-    rateLimitKey('ticket-purchase', session.user.id, readClientAddress(request)),
-    { limit: 10, windowMs: 60 * 60 * 1000 },
-  );
+  // Two buckets, both must pass. The per-user limit was the only one before,
+  // and because rateLimitKey() drops the IP whenever a session exists, one
+  // machine running fifty throwaway accounts got fifty independent buckets —
+  // 4,000 tickets an hour entirely within the stated limit.
+  const clientAddress = readClientAddress(request);
+  const rl = await consumeDualRateLimit('ticket-purchase', session.user.id, clientAddress, {
+    user: { limit: 10, windowMs: 60 * 60 * 1000 },
+    ip: { limit: 25, windowMs: 60 * 60 * 1000 },
+  });
   if (!rl.allowed) {
-    return NextResponse.json({ error: 'Too many ticket requests. Try again later.' }, { status: 429 });
+    log.error(
+      '[ticket-purchase]',
+      { userId: session.user.id, scope: rl.scope },
+      'Ticket purchase rate limit exceeded',
+    );
+    return NextResponse.json(
+      { error: 'Too many ticket requests. Try again later.', code: 'RATE_LIMITED' },
+      { status: 429, headers: { 'Retry-After': String(rl.result.retryAfterSeconds ?? 60) } },
+    );
   }
 
   let reservedOrderId: string | null = null;
@@ -80,6 +102,23 @@ export async function POST(
   try {
     const { showId } = await params;
     const body = schema.parse(await request.json());
+
+    // Proof of humanity, before any Stripe customer is created or inventory is
+    // touched. verifyTurnstileToken fails CLOSED in production when
+    // TURNSTILE_SECRET_KEY is set and the token is missing or invalid, and
+    // open in development so local work needs no Cloudflare account.
+    const humanVerified = await verifyTurnstileToken(body.turnstileToken, clientAddress ?? undefined);
+    if (!humanVerified) {
+      log.error(
+        '[ticket-purchase]',
+        { userId: session.user.id, showId },
+        'Ticket purchase failed the bot check',
+      );
+      return NextResponse.json(
+        { error: 'Bot check failed. Refresh the page and try again.', code: 'BOT_CHECK_FAILED' },
+        { status: 400 },
+      );
+    }
 
     const [user, show] = await Promise.all([
       db.user.findUnique({
@@ -92,6 +131,7 @@ export async function POST(
           role: true,
           emailVerified: true,
           isEighteenOrOlder: true,
+          createdAt: true,
           storedPaymentTokenRef: true,
           stripeCustomerId: true,
         },
@@ -223,8 +263,56 @@ export async function POST(
       });
     }
 
+    // Advisory only — never blocks. Refusing a fan who signed up minutes ago
+    // because their favourite band just announced a date would punish the most
+    // common legitimate reason to create an iHYPE account at all. This exists
+    // so an attack in progress is visible in Sentry rather than silent.
+    if (isSuspiciousPurchase({
+      // Null rather than 0 when unknown: 0 would read as "brand new account"
+      // and alert on every purchase.
+      accountAgeMinutes: user.createdAt
+        ? Math.floor((Date.now() - user.createdAt.getTime()) / 60_000)
+        : null,
+      humanVerified,
+    })) {
+      log.error(
+        '[ticket-purchase]',
+        { userId: user.id, showId: show.id, quantity: body.quantity },
+        'Ticket purchase from a very new account — advisory, not blocked',
+      );
+    }
+
     const confirmationCode = randomUUID().split('-')[0].toUpperCase();
     const order = await db.$transaction(async (tx) => {
+      // Per-account cap for this show, counted across every order that still
+      // holds inventory — RESERVED as well as CAPTURED. A bot that opens
+      // reservations and never captures would otherwise sit on an allocation
+      // while counting as zero.
+      //
+      // Residual race, stated rather than hidden: this counts and then
+      // inserts inside one ReadCommitted transaction, so two simultaneous
+      // requests can both observe the same total. It is NOT the primary
+      // defence — the two rate-limit buckets above are atomic (Durable
+      // Object), so a burst is bounded at 10 orders per account and 25 per
+      // address per hour regardless of who wins this race. Closing it
+      // completely needs a per-(buyer, show) aggregate to guard with the same
+      // conditional updateMany the capacity check uses, which is a migration
+      // and belongs in prisma/migrations-pending. Escalating this transaction
+      // to Serializable would be the wrong fix: every buyer for a show writes
+      // the same Show row, so on-sale traffic would abort constantly.
+      const heldAggregate = await tx.ticketOrder.aggregate({
+        where: {
+          showId: show.id,
+          buyerUserId: user.id,
+          status: { not: TicketOrderStatus.VOID },
+        },
+        _sum: { quantity: true },
+      });
+      const allowance = resolvePurchaseAllowance(heldAggregate._sum.quantity ?? 0, body.quantity);
+      if (!allowance.allowed) {
+        throw new TicketPurchaseLimitError(allowance.reason ?? 'Ticket limit reached for this show.');
+      }
+
       const remainingCapacityGuard = show.ticketCapacity === null
         ? {}
         : { ticketsSoldCount: { lte: show.ticketCapacity - body.quantity } };
@@ -397,6 +485,14 @@ export async function POST(
 
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.issues[0]?.message ?? 'Invalid order payload' }, { status: 400 });
+    }
+    if (error instanceof TicketPurchaseLimitError) {
+      // 409, not 500: the buyer asked for something the rules refuse, and the
+      // message names the limit so they can adjust the quantity and retry.
+      return NextResponse.json(
+        { error: error.message, code: 'TICKET_LIMIT_REACHED' },
+        { status: 409 },
+      );
     }
     if (error instanceof TicketAvailabilityError) {
       return NextResponse.json({ error: 'Not enough tickets remain, or ticket availability changed. Please retry.' }, { status: 409 });

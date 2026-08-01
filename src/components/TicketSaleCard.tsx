@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ShareButton } from '@/components/ShareButton';
+import { TurnstileWidget, type TurnstileWidgetHandle } from '@/components/TurnstileWidget';
 import { useI18n } from '@/components/I18nProvider';
 import {
   calculateTicketOrderFinancials,
@@ -85,6 +86,14 @@ export function TicketSaleCard({
   const [message, setMessage] = useState<string | null>(null);
   const [ageGated, setAgeGated] = useState(false);
   const [emailUnverified, setEmailUnverified] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const turnstileRef = useRef<TurnstileWidgetHandle>(null);
+  // TurnstileWidget renders nothing without a site key, so gating the button on
+  // a token would deadlock checkout in any environment that has not configured
+  // one — the same guard AuthRegister uses. The server still fails closed in
+  // production, which is where it matters.
+  const turnstileConfigured = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
+  const awaitingTurnstile = turnstileConfigured && !turnstileToken;
   const [issuedTickets, setIssuedTickets] = useState<IssuedTicket[]>([]);
 
   const remainingTickets = ticketCapacity === null ? null : Math.max(ticketCapacity - ticketsSoldCount, 0);
@@ -143,7 +152,8 @@ export function TicketSaleCard({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         quantity: requestedQuantity,
-        affiliatePromoterProfileId: affiliatePromoterProfileId || undefined
+        affiliatePromoterProfileId: affiliatePromoterProfileId || undefined,
+        turnstileToken: turnstileToken || undefined
       })
     });
 
@@ -165,6 +175,11 @@ export function TicketSaleCard({
       setMessage(data.error ?? t('ticketSaleCard.ticketRequestErrorFallback', 'Could not complete the ticket request.'));
     }
 
+    // Turnstile tokens are single-use — without this, a buyer who hits the
+    // per-show cap or a declined card cannot retry, because the second submit
+    // would replay a spent token and be refused as a bot.
+    setTurnstileToken('');
+    turnstileRef.current?.reset();
     setPending(false);
   }
 
@@ -361,8 +376,17 @@ export function TicketSaleCard({
                 : t('ticketSaleCard.notOpenYetNotice', 'This event is not open yet. Your quantity will be reserved now, then charged to your stored token when the venue opens the event.')}
           </div>
 
+          {/* Bot check. Usually invisible — Turnstile only shows an interactive
+              challenge when it is unsure — and renders nothing at all when no
+              site key is configured. */}
+          <TurnstileWidget
+            onExpire={() => setTurnstileToken('')}
+            onToken={setTurnstileToken}
+            ref={turnstileRef}
+          />
+
           <div className="cta-row">
-            <button className="button" disabled={pending} type="submit">
+            <button className="button" disabled={pending || awaitingTurnstile} type="submit">
               {pending
                 ? ticketingOpen
                   ? t('ticketSaleCard.chargingButton', 'Charging...')

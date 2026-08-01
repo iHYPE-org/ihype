@@ -45,6 +45,19 @@ export function rateLimitHeaders(result: RateLimitResult): Record<string, string
   };
 }
 
+/**
+ * Builds a single bucket key: per-user when signed in, else per-IP.
+ *
+ * NOTE the `ip` argument is IGNORED whenever `userId` is present. That is
+ * intentional for most endpoints — an authenticated action should be counted
+ * against the account, not the coffee shop — but it means this function alone
+ * gives NO protection against one machine driving many throwaway accounts,
+ * because each account gets its own fresh bucket. Thirteen call sites pass an
+ * IP here that is never read.
+ *
+ * When an endpoint needs both (anything with money or scarce inventory behind
+ * it), use `consumeDualRateLimit` instead.
+ */
 export function rateLimitKey(prefix: string, userId: string | undefined, ip: string | null): string {
   return userId ? `${prefix}:user:${userId}` : `${prefix}:ip:${ip ?? 'unknown'}`;
 }
@@ -292,4 +305,37 @@ export async function consumeRateLimit(key: string, options: RateLimitOptions): 
   }
 
   return consumeKvForDevelopment(key, options);
+}
+
+/**
+ * Counts an action against the ACCOUNT and the CLIENT ADDRESS as two
+ * independent buckets, both of which must pass.
+ *
+ * `rateLimitKey` alone cannot stop the attack that matters for ticketing: one
+ * machine, fifty throwaway accounts, fifty fresh per-user buckets. Combining
+ * the two into a single `user+ip` key would be worse than useless — rotating
+ * either half would mint a brand new bucket.
+ *
+ * The IP limit is deliberately looser than the per-user one. A household, a
+ * venue's wifi, a university hall and a corporate NAT all legitimately present
+ * one address for many buyers, so this is sized to stop a script rather than
+ * to police a shared connection. An absent address (`null`) skips the IP
+ * bucket rather than lumping every unknown client into one shared counter,
+ * which would let one unidentifiable client lock out all the others.
+ */
+export async function consumeDualRateLimit(
+  prefix: string,
+  userId: string,
+  ip: string | null,
+  options: { user: RateLimitOptions; ip: RateLimitOptions },
+): Promise<{ allowed: boolean; scope: 'user' | 'ip' | null; result: RateLimitResult }> {
+  const userResult = await consumeRateLimit(`${prefix}:user:${userId}`, options.user);
+  if (!userResult.allowed) return { allowed: false, scope: 'user', result: userResult };
+
+  if (!ip) return { allowed: true, scope: null, result: userResult };
+
+  const ipResult = await consumeRateLimit(`${prefix}:ip:${ip}`, options.ip);
+  if (!ipResult.allowed) return { allowed: false, scope: 'ip', result: ipResult };
+
+  return { allowed: true, scope: null, result: userResult };
 }
