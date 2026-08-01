@@ -92,7 +92,7 @@ for (const [name, owners] of used) {
 }
 
 /** Utilities offered for pages to opt into; not expected in markup yet. */
-const OPT_IN = new Set(['is-delta']);
+const OPT_IN = new Set(['is-delta', 'skeleton', 'ihype-skeleton']);
 const dead = [...covered].filter(
   (name) => !used.has(name) && !name.startsWith('shell-') && !OPT_IN.has(name),
 );

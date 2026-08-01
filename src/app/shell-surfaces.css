@@ -642,3 +642,26 @@
   text-transform: uppercase;
   color: var(--accent);
 }
+
+/* ── Primitive: Skeleton ─────────────────────────────────────────────────
+   Backlog item 5 pairs EmptyState with Skeleton. Both already existed — the
+   empty state under 22 names (converted above) and the skeleton under three:
+   `.skeleton`, `.ihype-skeleton`, and an inline `Shimmer` in
+   src/app/shows/loading.tsx whose hex fallback (#1a1712) is not even the
+   token it claims to fall back from. Same treatment: one definition, every
+   name pointed at it.
+
+   Radius 12px to match the card and row it stands in for — a loading
+   placeholder that is a different shape from the thing it becomes is a
+   layout shift waiting to happen. Animation is gated by the reduce-motion
+   block in shell.css, which covers `.shell-root *`. */
+.shell-content :is(.skeleton, .ihype-skeleton, [data-skeleton]) {
+  background: linear-gradient(
+    90deg,
+    rgba(var(--surface-tint-rgb), 0.04) 25%,
+    rgba(var(--surface-tint-rgb), 0.09) 50%,
+    rgba(var(--surface-tint-rgb), 0.04) 75%
+  );
+  background-size: 200% 100%;
+  border-radius: 12px;
+}

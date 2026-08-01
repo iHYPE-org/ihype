@@ -5401,6 +5401,12 @@ html.high-contrast p {
 /* ── Mobile bottom navigation bar ──────────────────────────────── */
 
 /* ── Site Player Dock ─────────────────────────────────────────── */
+/* The dock's own palette. These were hardcoded #f2ede8 / #090806 — the dark
+   theme's ink and background as literals — so on the light theme the "now
+   playing" title rendered near-white on a near-white surface and read as a
+   ghost. Found by screenshotting the shell against an empty database in light
+   theme, which is also the alpha condition. Rule 8 of the chrome contract:
+   never hardcode a colour. */
 .site-dock {
   position: fixed;
   bottom: 0; left: 0; right: 0;
@@ -5410,7 +5416,7 @@ html.high-contrast p {
   align-items: center;
   gap: 18px;
   padding: 0 24px;
-  background: #090806;
+  background: var(--bg-surface);
   border-top: 1px solid var(--hair-80);
   backdrop-filter: blur(12px);
   font-family: var(--f-m);
@@ -5434,7 +5440,7 @@ html.high-contrast p {
   font-family: var(--f-d, 'Syne', sans-serif);
   font-weight: 700;
   font-size: 13px;
-  color: #f2ede8;
+  color: var(--ink-1);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -5477,13 +5483,13 @@ html.high-contrast p {
   border-radius: 4px;
   transition: color .15s;
 }
-.site-dock-btn:hover { color: #f2ede8; }
+.site-dock-btn:hover { color: var(--ink-1); }
 .site-dock-play {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: #f2ede8;
-  color: #090806;
+  background: var(--ink-1);
+  color: var(--bg-base);
   border: none;
   cursor: pointer;
   display: flex;
@@ -5491,7 +5497,7 @@ html.high-contrast p {
   justify-content: center;
   transition: background .15s;
 }
-.site-dock-play:hover { background: #fff; }
+.site-dock-play:hover { background: var(--ink-1); }
 .site-dock-scrub {
   display: flex;
   align-items: center;
