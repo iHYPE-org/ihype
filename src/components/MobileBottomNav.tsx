@@ -39,7 +39,7 @@ const TABS = [
   },
   {
     id: 'pages',
-    label: 'Pages',
+    label: 'Dashboard',
     href: '/pages',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -82,12 +82,13 @@ export function MobileBottomNav() {
   const [menuOpen, setMenuOpen] = useState(false);
   const shell = useMobileShell();
   const { status: sessionStatus } = useSession();
+  const localDesignPreview = process.env.NODE_ENV === 'development' && pathname === '/ui-preview';
 
   // Index (the marketing/pitch page) and every auth-flow page: no app chrome
   // before someone's actually signed up.
-  // Authenticated navigation now lives behind the compact logo menu in the
-  // top app header, matching the same shell on every viewport.
-  if (sessionStatus !== 'unauthenticated' || pathname === '/' || AUTH_PATHS.some(p => pathname.startsWith(p))) return null;
+  // The three primary destinations remain visible after sign-in on compact
+  // screens. The logo menu still owns secondary tools and settings.
+  if ((!localDesignPreview && sessionStatus !== 'authenticated') || pathname === '/' || AUTH_PATHS.some(p => pathname.startsWith(p))) return null;
 
   // While the shell is active, its own section state is the source of truth
   // for which tab is "active" — window.history.pushState (used to update the

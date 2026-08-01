@@ -8,8 +8,8 @@ This repository contains a production-oriented Next.js app for hosting artist, D
 - Keep the app compatible with Prisma migrations.
 - Preserve the current stack unless a task explicitly requires a replacement.
 - Treat environment variables and secrets as external configuration. Never hardcode secrets.
-- Preserve the newer Claude-derived signed-in visual schema. `/home` is the canonical authenticated workbench and should continue to render `WorkbenchShell`.
-- Keep auth redirects pointed at `/home` for users with profiles. Treat `/workbench` and `/dashboard` as legacy aliases that redirect to `/home`, not as separate authenticated applications.
+- Preserve the full-screen signed-in module deck. `/listen` is the canonical authenticated experience and must render `ModuleDeckMockup` in production mode with live backend adapters.
+- Keep auth redirects pointed at `/listen`. Treat `/home`, `/workbench`, and `/dashboard` as legacy aliases, not separate authenticated applications.
 
 ## Stack expectations
 - Framework: Next.js App Router

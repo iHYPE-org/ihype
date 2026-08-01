@@ -39,8 +39,30 @@ assertIncludes(
 );
 assertIncludes(
   'src/app/listen/page.tsx',
+  '<ModuleDeckMockup production',
+  '/listen is the canonical authenticated module deck and must render the live, backend-wired experience.'
+);
+assertNotIncludes(
+  'src/app/listen/page.tsx',
   'ListenHome',
-  '/listen is the canonical authenticated Listen destination and must render it.'
+  'The retired multi-panel Listen homepage must not replace the full-screen module deck.'
+);
+assertIncludes(
+  'src/app/ui-preview/page.tsx',
+  "process.env.NODE_ENV !== 'development'",
+  'The editable sample-data preview must remain unavailable in production.'
+);
+for (const apiPath of ['/api/discover/seeds', '/api/radio', '/api/shows/nearby', '/api/search']) {
+  assertIncludes(
+    'src/app/ui-preview/preview-api.ts',
+    apiPath,
+    `The production module deck must retain its ${apiPath} backend adapter.`
+  );
+}
+assertIncludes(
+  'src/app/ui-preview/ModuleDeckMockup.tsx',
+  'production={production}',
+  'Preview and production behaviors must remain explicitly separated.'
 );
 assertMissing(
   'src/app/workbench/page.tsx',
@@ -132,4 +154,4 @@ assertIncludes(
   'The authenticated workbench should remain noindex via robots.'
 );
 
-console.log('Design guard passed: /listen is the canonical authenticated destination.');
+console.log('Design guard passed: /listen is the canonical backend-wired module deck.');

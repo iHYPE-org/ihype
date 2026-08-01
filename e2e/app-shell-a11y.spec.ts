@@ -24,8 +24,6 @@ import { canSeedSession, seedSessionCookie, sessionCookieName } from './fixtures
  */
 
 const SHELL_ROUTES = [
-  '/listen?tab=seeds',
-  '/listen?tab=charts',
   '/shows?tab=local',
   '/me/dashboard',
   '/pages?tab=creator',
@@ -107,11 +105,20 @@ test.describe('App shell accessibility (serious/critical only)', () => {
 
     test(`${theme}: the open drawer has no serious or critical axe violations`, async ({ page }) => {
       await useTheme(page, theme);
-      await page.goto('/listen?tab=seeds');
+      await page.goto('/shows?tab=local');
       await expect(page.locator('.shell-content')).toBeVisible({ timeout: 20000 });
       await page.locator('.shell-logo-tile').click();
       await expect(page.locator('.shell-drawer')).toBeVisible();
       await assertNoSeriousViolations(page, `${theme} drawer open`);
+    });
+
+    test(`${theme}: the dedicated Listen module deck has no serious or critical axe violations`, async ({ page }) => {
+      await useTheme(page, theme);
+      await page.goto('/listen');
+      await expect(page.locator('.module-deck-preview')).toBeVisible({ timeout: 20000 });
+      await expect(page.locator('.shell-root')).toHaveCount(0);
+      await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+      await assertNoSeriousViolations(page, `${theme} /listen module deck`);
     });
   }
 });

@@ -26,8 +26,9 @@ function sentryIngestOrigin() {
   return cachedSentryOrigin;
 }
 
-function buildContentSecurityPolicy(nonce: string, allowEmbedding: boolean) {
+function buildContentSecurityPolicy(nonce: string, allowEmbedding: boolean, allowSceneMap: boolean) {
   const developmentEval = process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'";
+  const sceneMapConnect = allowSceneMap ? ' https://tiles.openfreemap.org' : '';
   return [
     "default-src 'self'",
     "base-uri 'self'",
@@ -43,21 +44,23 @@ function buildContentSecurityPolicy(nonce: string, allowEmbedding: boolean) {
     "font-src 'self' data: https:",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     `script-src 'self' 'nonce-${nonce}' 'wasm-unsafe-eval' https://challenges.cloudflare.com https://js.stripe.com${developmentEval}`,
-    `connect-src 'self' https://challenges.cloudflare.com https://api.stripe.com${sentryIngestOrigin()}`,
+    `connect-src 'self' https://challenges.cloudflare.com https://api.stripe.com${sceneMapConnect}${sentryIngestOrigin()}`,
     "frame-src 'self' https://challenges.cloudflare.com https://js.stripe.com",
+    ...(allowSceneMap ? ["worker-src 'self' blob:", "child-src 'self' blob:"] : []),
     'upgrade-insecure-requests',
   ].join('; ');
 }
 
 function applySecurityHeaders(response: NextResponse, nonce: string, pathname: string) {
   const allowEmbedding = pathname.startsWith('/embed/');
+  const allowSceneMap = pathname === '/listen' || (process.env.NODE_ENV !== 'production' && pathname.startsWith('/ui-preview'));
   response.headers.set('x-pathname', pathname);
   if (!allowEmbedding) response.headers.set('X-Frame-Options', 'DENY');
   else response.headers.delete('X-Frame-Options');
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  response.headers.set('Content-Security-Policy', buildContentSecurityPolicy(nonce, allowEmbedding));
+  response.headers.set('Permissions-Policy', `camera=(), microphone=(), geolocation=${allowSceneMap ? '(self)' : '()'}`);
+  response.headers.set('Content-Security-Policy', buildContentSecurityPolicy(nonce, allowEmbedding, allowSceneMap));
   return response;
 }
 

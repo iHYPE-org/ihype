@@ -44,7 +44,9 @@ import {
  * and auth surfaces keep the existing header/footer chrome — the handoff scopes
  * this to "the signed-in iHYPE experience".
  *
- * On phone widths, `/listen`, `/shows` and `/pages` already have a
+ * `/listen` owns the new full-screen module deck at every viewport, including
+ * its own header, navigation, scroll surface and player. It therefore always
+ * stands outside this legacy shell. On phone widths, `/shows` and `/pages` have a
  * purpose-built swipe shell (`MobileAppShell`, which scroll-locks the body and
  * holds all three sections permanently mounted). Two shells cannot both own the
  * scroll container, so this one stands aside while that one is active. That is
@@ -80,7 +82,8 @@ export function AppShell({
 
   const activeSection = resolveSection(pathname);
   const shellEligible = Boolean(account) && sessionStatus === 'authenticated' && isShellRoute(pathname);
-  const active = shellEligible && !mobileShell?.active;
+  const dedicatedModuleDeck = pathname === '/listen';
+  const active = shellEligible && !dedicatedModuleDeck && !mobileShell?.active;
 
   const items = useMemo<ShellNavItem[]>(
     () => (account ? buildShellNav(account) : []),

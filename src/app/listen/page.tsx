@@ -1,8 +1,9 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import type { Metadata } from 'next';
-import { ListenHome } from '@/components/ListenHome';
-import { RouteShellSlot } from '@/components/RouteShellSlot';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import { db } from '@/lib/db';
+import { ModuleDeckMockup, type DeckViewer } from '@/app/ui-preview/ModuleDeckMockup';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -23,6 +24,91 @@ export default async function ListenPage({
     redirect('/login?callbackUrl=/listen');
   }
 
-  const resolvedSearchParams = searchParams ? await searchParams : {};
-  return <RouteShellSlot><ListenHome initialTab={resolvedSearchParams.tab} /></RouteShellSlot>;
+  await searchParams;
+  const userId = session.user.id;
+  const [user, discoveryAdds, showsAttended, songsHeard, showHypes, profileHypes, playlistCount, campaigns] = await Promise.all([
+    db.user.findUnique({
+      where: { id: userId },
+      select: {
+        name: true,
+        email: true,
+        username: true,
+        image: true,
+        role: true,
+        hypeBalance: true,
+        profiles: {
+          orderBy: { createdAt: 'asc' },
+          select: {
+            id: true,
+            type: true,
+            name: true,
+            slug: true,
+            hypeCount: true,
+            _count: { select: { mediaUploads: true, followers: true, hostedShows: true, headlinerShows: true } },
+          },
+        },
+      },
+    }),
+    db.seed.count({ where: { userId, action: 'save' } }),
+    db.showAttendee.count({ where: { userId } }),
+    db.mediaListen.count({ where: { userId } }),
+    db.hypeEvent.count({ where: { userId } }),
+    db.profileHypeEvent.count({ where: { userId } }),
+    db.fanPlaylist.count({ where: { userId } }),
+    db.ad.findMany({ where: { advertiserId: userId }, select: { impressions: true, spentCents: true, status: true } }),
+  ]);
+
+  if (!user) redirect('/login?callbackUrl=/listen');
+  const format = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 });
+  const roles = new Set<DeckViewer['roles'][number]>();
+  const accountRole = user.role.toLowerCase();
+  if (accountRole === 'fan' || accountRole === 'artist' || accountRole === 'dj' || accountRole === 'venue' || accountRole === 'advertiser') roles.add(accountRole);
+  for (const profile of user.profiles) {
+    const profileRole = profile.type.toLowerCase();
+    if (profileRole === 'artist' || profileRole === 'dj' || profileRole === 'venue') roles.add(profileRole);
+  }
+  if (roles.size === 0) roles.add('fan');
+
+  const creatorMetrics = (type: 'ARTIST' | 'DJ' | 'VENUE'): Array<[string, string]> => {
+    const owned = user.profiles.filter((profile) => profile.type === type);
+    const total = (pick: (profile: typeof owned[number]) => number) => owned.reduce((sum, profile) => sum + pick(profile), 0);
+    return [
+      ['HYPES received', format.format(total((profile) => profile.hypeCount))],
+      ['Published tracks', format.format(total((profile) => profile._count.mediaUploads))],
+      ['Followers', format.format(total((profile) => profile._count.followers))],
+      [type === 'VENUE' ? 'Hosted shows' : 'Headliner shows', format.format(total((profile) => type === 'VENUE' ? profile._count.hostedShows : profile._count.headlinerShows))],
+      ['Active pages', String(owned.length)],
+      ['Signal status', owned.length > 0 ? 'LIVE' : 'SET UP'],
+    ];
+  };
+  const metrics: DeckViewer['metrics'] = {
+    fan: [
+      ['HYPE balance', format.format(user.hypeBalance)],
+      ['Discovery adds', format.format(discoveryAdds)],
+      ['Shows attended', format.format(showsAttended)],
+      ['Songs heard', format.format(songsHeard)],
+      ['HYPES sent', format.format(showHypes + profileHypes)],
+      ['Playlists', format.format(playlistCount)],
+    ],
+    artist: creatorMetrics('ARTIST'),
+    dj: creatorMetrics('DJ'),
+    venue: creatorMetrics('VENUE'),
+    advertiser: [
+      ['Campaigns', String(campaigns.length)],
+      ['Active campaigns', String(campaigns.filter((campaign) => campaign.status === 'ACTIVE').length)],
+      ['Qualified listens', format.format(campaigns.reduce((sum, campaign) => sum + campaign.impressions, 0))],
+      ['Spend', `$${(campaigns.reduce((sum, campaign) => sum + campaign.spentCents, 0) / 100).toFixed(2)}`],
+      ['Data sold', 'NEVER'],
+      ['Targeting', 'AGGREGATE'],
+    ],
+  };
+  const viewer: DeckViewer = {
+    name: user.name || user.username || user.email?.split('@')[0] || 'iHYPE fan',
+    role: user.role === 'ADVERTISER' ? 'Advertiser account' : `${user.role.charAt(0)}${user.role.slice(1).toLowerCase()} account`,
+    avatarUrl: user.image,
+    roles: Array.from(roles),
+    metrics,
+  };
+
+  return <ModuleDeckMockup production viewer={viewer} />;
 }

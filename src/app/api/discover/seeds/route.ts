@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     const actionedIds = new Set(actioned.map(s => s.mediaId));
 
     // --- Collaborative filtering (v2) with time-decay scoring --------
-    type SeedMedia = { id: string; title: string; profile: { name: string; genres: string[]; nowPlaying: string | null; journalContent: string | null } | null };
+    type SeedMedia = { id: string; hexId: string; title: string; artworkUrl: string | null; profile: { name: string; slug: string; city: string | null; genres: string[]; avatarImage: string | null; nowPlaying: string | null; journalContent: string | null } | null };
     let cfMedia: SeedMedia[] = [];
     if (genres.length === 0) {
       const [hypedByMe, playlistItems] = await Promise.all([
@@ -95,8 +95,10 @@ export async function GET(request: NextRequest) {
               orderBy: { createdAt: 'desc' },
               select: {
                 id: true,
+                hexId: true,
                 title: true,
-                profile: { select: { name: true, genres: true, nowPlaying: true, journalContent: true } }
+                artworkUrl: true,
+                profile: { select: { name: true, slug: true, city: true, genres: true, avatarImage: true, nowPlaying: true, journalContent: true } }
               }
             });
           }
@@ -116,8 +118,10 @@ export async function GET(request: NextRequest) {
           orderBy: { createdAt: 'desc' },
           select: {
             id: true,
+            hexId: true,
             title: true,
-            profile: { select: { name: true, genres: true, nowPlaying: true, journalContent: true } }
+            artworkUrl: true,
+            profile: { select: { name: true, slug: true, city: true, genres: true, avatarImage: true, nowPlaying: true, journalContent: true } }
           },
         });
     const personalizedIds = new Set(personalizedMedia.map((item) => item.id));
@@ -131,8 +135,10 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
+        hexId: true,
         title: true,
-        profile: { select: { name: true, genres: true, nowPlaying: true, journalContent: true } },
+        artworkUrl: true,
+        profile: { select: { name: true, slug: true, city: true, genres: true, avatarImage: true, nowPlaying: true, journalContent: true } },
       },
     });
     for (let index = randomPool.length - 1; index > 0; index -= 1) {
@@ -166,8 +172,13 @@ export async function GET(request: NextRequest) {
       seeds: media.map(m => ({
         id: m.id,
         trackId: m.id,
+        hexId: m.hexId,
+        url: `/api/media/${m.hexId}`,
         title: m.title,
         artistName: m.profile?.name ?? 'Unknown Artist',
+        artistSlug: m.profile?.slug ?? null,
+        artworkUrl: m.artworkUrl ?? m.profile?.avatarImage ?? null,
+        city: m.profile?.city ?? null,
         genres: m.profile?.genres ?? [],
         hypeCount: hypeCountMap.get(m.id) ?? 0,
         nowPlaying: m.profile?.nowPlaying ?? null,

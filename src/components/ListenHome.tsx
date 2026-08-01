@@ -115,14 +115,23 @@ const PLACEHOLDER_SHOWS = [
   '/brand/alpha-show-4.png',
 ];
 
+const PLACEHOLDER_ARTISTS = [
+  '/brand/alpha-artist-2.png',
+  '/brand/alpha-artist-3.png',
+  '/brand/alpha-artist-4.png',
+  '/brand/alpha-featured.png',
+];
+
 function DiscoveryHome({
   charts,
   shows,
+  onHype,
   onOpen,
   onPlay,
 }: {
   charts: ChartTrack[] | null;
   shows: DiscoveryShow[] | null;
+  onHype: (track: ChartTrack) => void;
   onOpen: (tab: ListenTab) => void;
   onPlay: (track: ChartTrack, queue: ChartTrack[]) => void;
 }) {
@@ -135,72 +144,87 @@ function DiscoveryHome({
 
   return (
     <div className="discovery-home">
-      <section className="discovery-section">
-        <div className="discovery-heading"><div><h1>For you</h1><p>Fresh independent sounds, picked for you.</p></div><button onClick={() => onOpen('charts')} type="button">View all →</button></div>
-        <div className="discovery-feature-grid">
-          <article className="discovery-feature">
-            <Image alt="" fill priority sizes="(max-width: 760px) 100vw, 55vw" src={featured?.artworkUrl ?? '/brand/alpha-featured.png'} />
-            <div><span>NEW MUSIC</span><h2>{featured?.artistName ?? 'Your local scene'}</h2><strong>{featured?.title ?? 'Fresh independent music'}</strong><button disabled={!featured} onClick={() => featured && onPlay(featured, tracks)} type="button">▶ Play now</button></div>
-          </article>
-          <div className="discovery-track-list">
-            {displayTracks.map((track, index) => (
-              <div className="discovery-track-row" key={track?.id ?? index}>
-                <Image alt="" height={54} src={track?.artworkUrl ?? PLACEHOLDER_SHOWS[index]} width={64} />
-                <div><strong>{track?.title ?? 'New local track'}</strong><span>{track?.artistName ?? 'Independent artist'}</span></div>
-                {track ? <><button aria-label={`Play ${track.title}`} onClick={() => onPlay(track, tracks)} type="button">▶</button><span>{Math.floor(track.durationSec / 60)}:{String(track.durationSec % 60).padStart(2, '0')}</span></> : null}
-              </div>
-            ))}
-          </div>
+      <section className="discovery-section discovery-feature-zone">
+        <div className="discovery-heading">
+          <div><h1>For you</h1><p>Independent sounds picked for your scene.</p></div>
+        </div>
+        <article className="discovery-feature">
+          <Image alt={featured ? '' : 'Jayla Reign — City Lights'} fill priority sizes="(max-width: 760px) 100vw, 54vw" src={featured?.artworkUrl ?? '/brand/alpha-featured.png'} />
+          {featured ? <div><span>NEW MUSIC</span><h2>{featured.artistName}</h2><strong>{featured.title}</strong><button onClick={() => onPlay(featured, tracks)} type="button">▶ Play now</button></div> : null}
+        </article>
+      </section>
+
+      <section aria-label="Your local track queue" className="discovery-section discovery-queue-zone">
+        <div className="discovery-track-list">
+          {displayTracks.map((track, index) => (
+            <div className="discovery-track-row" key={track?.id ?? index}>
+              <Image alt="" height={60} src={track?.artworkUrl ?? PLACEHOLDER_ARTISTS[index]} width={72} />
+              <div><strong>{track?.title ?? ['City Lights', 'Pressure', 'Different Plans', 'Sunbreak'][index]}</strong><span>{track?.artistName ?? ['Jayla Reign', 'Milo Coast', 'Rooke', 'Hotel Barrio'][index]}</span></div>
+              {track ? (
+                <>
+                  <span>{Math.floor(track.durationSec / 60)}:{String(track.durationSec % 60).padStart(2, '0')}</span>
+                  <button aria-label={`Play ${track.title}`} onClick={() => onPlay(track, tracks)} type="button">▶</button>
+                  <button className="discovery-track-hype" onClick={() => onHype(track)} type="button">HYPE</button>
+                </>
+              ) : <span className="discovery-track-awaiting">COMING SOON</span>}
+            </div>
+          ))}
         </div>
       </section>
 
-      <section className="discovery-section">
+      <section className="discovery-section discovery-live-zone">
         <div className="discovery-heading"><div><h2>Live near you</h2><p>Upcoming shows from independent artists.</p></div><Link href="/shows">View all →</Link></div>
         <div className="discovery-show-grid">
           {displayShows.map((realShow, index) => {
+            if (!realShow) {
+              return (
+                <Link aria-label={`Explore ${['Jayla Reign', 'Milo Coast', 'Rooke', 'Hotel Barrio'][index]} tickets`} className="discovery-show-card is-placeholder" href="/shows" key={`placeholder-${index}`}>
+                  <Image alt="" height={244} src={PLACEHOLDER_SHOWS[index]} style={{ height: 'auto', width: '100%' }} width={172} />
+                </Link>
+              );
+            }
             const date = realShow?.startsAt ? new Date(realShow.startsAt) : null;
             return (
-              <article className="discovery-show-card" key={realShow?.id ?? index}>
+              <article className="discovery-show-card" key={realShow.id}>
                 <div className="discovery-show-art">
-                  <Image alt="" fill sizes="(max-width: 760px) 46vw, 22vw" src={realShow?.posterImage ?? PLACEHOLDER_SHOWS[index]} />
+                  <Image alt="" fill sizes="(max-width: 760px) 46vw, 15vw" src={realShow.posterImage ?? PLACEHOLDER_SHOWS[index]} />
                   <span>{date ? date.toLocaleDateString('en-US', { month: 'short', day: '2-digit' }) : 'COMING SOON'}</span>
                 </div>
-                <strong>{realShow?.headlinerProfile?.name ?? realShow?.title ?? 'Local artist'}</strong>
-                <small>{[realShow?.venueProfile?.name, realShow?.venueProfile?.city].filter(Boolean).join(' · ') || 'Your local scene'}</small>
-                <Link href={realShow ? `/shows/${realShow.slug}` : '/shows'}>Tickets</Link>
+                <strong>{realShow.headlinerProfile?.name ?? realShow.title}</strong>
+                <small>{[realShow.venueProfile?.name, realShow.venueProfile?.city].filter(Boolean).join(' · ') || 'Your local scene'}</small>
+                <Link href={`/shows/${realShow.slug}`}>Tickets</Link>
               </article>
             );
           })}
         </div>
       </section>
 
-      <section className="discovery-section discovery-artists">
-        <div className="discovery-heading"><div><h2>Because you listen local</h2><p>More independent artists in your orbit.</p></div><button onClick={() => onOpen('seeds')} type="button">More like this →</button></div>
-        <div>{(artistNames.length ? artistNames : ['New artists', 'Local voices', 'Fresh sounds', 'Your scene', 'Next up']).map((name, index) => <button key={name} onClick={() => onOpen('seeds')} type="button"><Image alt="" height={112} src={index < 4 ? `/brand/alpha-artist-${Math.max(2, index + 1)}.png` : '/brand/alpha-show-2.png'} width={112} /><span>{name}</span></button>)}</div>
-      </section>
+      <div className="discovery-side-zone">
+        <section className="discovery-section discovery-artists">
+          <div className="discovery-heading"><div><h2>Because you HYPED local music</h2></div><button onClick={() => onOpen('seeds')} type="button">View all →</button></div>
+          <div>{(artistNames.length ? artistNames : ['Hayden Ellis', 'Juno Vale', 'Avery North', 'Saint Lila', 'Point North']).map((name, index) => <button key={name} onClick={() => onOpen('seeds')} type="button"><Image alt="" height={112} src={index < 4 ? `/brand/alpha-artist-${Math.max(2, index + 1)}.png` : '/brand/alpha-show-2.png'} width={112} /><span>{name}</span></button>)}</div>
+        </section>
 
-      <section className="discovery-section discovery-rising">
-        <div className="discovery-heading"><div><h2>HYPE rising</h2><p>The strongest real signal moving through nearby scenes.</p></div><button onClick={() => onOpen('charts')} type="button">View charts →</button></div>
-        <div className="discovery-rising-grid">
-          {(tracks.length ? tracks.slice(0, 3) : [null, null, null]).map((track, index) => (
-            <button
-              className="discovery-rising-card"
-              disabled={!track}
-              key={track?.id ?? index}
-              onClick={() => track && onPlay(track, tracks)}
-              type="button"
-            >
-              <Image alt="" fill sizes="(max-width: 760px) 80vw, 30vw" src={track?.artworkUrl ?? PLACEHOLDER_SHOWS[index]} />
-              <span className="discovery-rising-rank">0{index + 1}</span>
-              <span className="discovery-rising-copy">
-                <strong>{track?.title ?? 'Your scene is warming up'}</strong>
-                <small>{track?.artistName ?? 'Fresh local HYPE will appear here'}</small>
-              </span>
-              <span className="discovery-rising-hype">{track ? `${track.hypeCount.toLocaleString()} HYPE` : 'LOCAL SIGNAL'}</span>
-            </button>
-          ))}
-        </div>
-      </section>
+        <section className="discovery-section discovery-rising">
+          <div className="discovery-heading"><div><h2>HYPE rising</h2></div><button onClick={() => onOpen('charts')} type="button">View all →</button></div>
+          <div className="discovery-rising-grid">
+            {(tracks.length ? tracks.slice(0, 3) : [null, null, null]).map((track, index) => (
+              <button
+                className="discovery-rising-card"
+                disabled={!track}
+                key={track?.id ?? index}
+                onClick={() => track && onPlay(track, tracks)}
+                type="button"
+              >
+                <Image alt="" fill sizes="(max-width: 760px) 80vw, 14vw" src={track?.artworkUrl ?? PLACEHOLDER_SHOWS[index]} />
+                <span className="discovery-rising-rank">0{index + 1}</span>
+                <span className="discovery-rising-copy"><strong>{track?.title ?? ['City Lights', 'Pressure', 'Different Plans'][index]}</strong><small>{track?.artistName ?? ['Jayla Reign', 'Milo Coast', 'Rooke'][index]}</small></span>
+                <span className="discovery-rising-hype">{track ? `${track.hypeCount.toLocaleString()} HYPE` : 'LOCAL SIGNAL'}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
@@ -598,6 +622,16 @@ export function ListenHome({
     playTrack(toMediaTrack(track), queue.map(toMediaTrack));
   }
 
+  async function hypeChartTrack(track: ChartTrack) {
+    showToast(`HYPED ${track.title}`);
+    try {
+      const response = await fetch(`/api/discover/seeds/${track.id}/hype`, { method: 'POST' });
+      if (!response.ok) showToast('Could not HYPE this track');
+    } catch {
+      showToast('Could not HYPE this track');
+    }
+  }
+
   const genres = useMemo(() => {
     const set = new Set<string>();
     (seeds ?? []).forEach((s) => s.genres.forEach((g) => set.add(g)));
@@ -635,6 +669,7 @@ export function ListenHome({
       {gridMode && isShellForeground ? (
         <DiscoveryHome
           charts={charts?.forYou ?? charts?.local ?? null}
+          onHype={hypeChartTrack}
           onOpen={(nextTab) => { setGridMode(false); setTab(nextTab); }}
           onPlay={playChartTrack}
           shows={discoveryShows}

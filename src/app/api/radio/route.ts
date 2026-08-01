@@ -35,10 +35,11 @@ export async function GET(request: Request) {
           where: {
             profileId: { in: hypedProfileIds },
             hexId: excludeIds.length > 0 ? { notIn: excludeIds } : undefined,
-            profile: getDemoOwnerExclusion()
+            isPublished: true,
+            profile: { ...getDemoOwnerExclusion(), discoverable: true }
           },
           select: {
-            hexId: true, title: true, notes: true,
+            id: true, hexId: true, title: true, notes: true,
             profile: { select: { name: true, slug: true, avatarImage: true, hypeCount: true } }
           },
           take: 10,
@@ -49,10 +50,11 @@ export async function GET(request: Request) {
       where: {
         profileId: hypedProfileIds.length > 0 ? { notIn: hypedProfileIds } : undefined,
         hexId: excludeIds.length > 0 ? { notIn: excludeIds } : undefined,
-        profile: { ...getDemoOwnerExclusion(), type: { in: ['ARTIST', 'DJ'] } }
+        isPublished: true,
+        profile: { ...getDemoOwnerExclusion(), type: { in: ['ARTIST', 'DJ'] }, discoverable: true }
       },
       select: {
-        hexId: true, title: true, notes: true,
+        id: true, hexId: true, title: true, notes: true,
         profile: { select: { name: true, slug: true, avatarImage: true, hypeCount: true } }
       },
       orderBy: { profile: { hypeCount: 'desc' } },
@@ -67,6 +69,7 @@ export async function GET(request: Request) {
     .slice(0, limit)
     .map((t) => ({
       hexId: t.hexId,
+      mediaId: t.id,
       title: t.title,
       notes: t.notes ?? null,
       url: `/api/media/${t.hexId}`,

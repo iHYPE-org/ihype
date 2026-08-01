@@ -35,12 +35,17 @@ export async function POST(
     const media = await db.artistMediaAsset.findUnique({
       where: { id },
       select: {
-        id: true, profileId: true, hexId: true, title: true, artworkUrl: true,
-        profile: { select: { name: true, slug: true } },
+        id: true,
+        profileId: true,
+        hexId: true,
+        title: true,
+        artworkUrl: true,
+        isPublished: true,
+        profile: { select: { name: true, slug: true, discoverable: true } },
       },
     });
 
-    if (!media) {
+    if (!media || !media.isPublished || !media.profile.discoverable) {
       return NextResponse.json({ ok: false, error: 'Seed media was not found.' }, { status: 404 });
     }
 
