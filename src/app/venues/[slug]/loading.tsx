@@ -1,7 +1,7 @@
 export default function Loading() {
   return (
     <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 0 100px' }}>
-      <div style={{ padding: '48px 32px 40px', display: 'flex', gap: 32, alignItems: 'flex-start', flexWrap: 'wrap', borderBottom: '1px solid rgba(34,229,212,.2)' }}>
+      <div style={{ padding: '48px 32px 40px', display: 'flex', gap: 32, alignItems: 'flex-start', flexWrap: 'wrap', borderBottom: '1px solid rgba(var(--role-venue-rgb),.2)' }}>
         <div className="ihype-skeleton" style={{ width: 100, height: 100, borderRadius: 16, flexShrink: 0 }} />
         <div style={{ flex: 1, minWidth: 200, display: 'grid', gap: 10 }}>
           <div className="ihype-skeleton" style={{ width: '50%', height: 32, borderRadius: 6 }} />

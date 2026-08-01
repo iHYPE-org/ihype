@@ -10,7 +10,7 @@ export default async function NotFound() {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'var(--bg, #0a0805)',
+      background: 'var(--bg)',
       color: 'var(--ink)',
       fontFamily: "var(--font-body, 'DM Sans', sans-serif)",
       textAlign: 'center',
@@ -30,7 +30,7 @@ export default async function NotFound() {
         letterSpacing: '-0.03em',
         marginBottom: 24,
       }}>
-        i<span style={{ color: 'var(--accent, #ff5029)' }}>HYPE</span>
+        i<span style={{ color: 'var(--accent)' }}>HYPE</span>
       </div>
       <div style={{
         fontFamily: "var(--font-display, 'Syne', sans-serif)",
@@ -38,7 +38,7 @@ export default async function NotFound() {
         fontSize: '3rem',
         letterSpacing: '-0.05em',
         lineHeight: 0.85,
-        color: 'var(--accent, #ff5029)',
+        color: 'var(--accent)',
         marginBottom: 20,
         animation: 'notFoundGlitch 2.4s infinite',
       }}>
@@ -54,11 +54,11 @@ export default async function NotFound() {
       }}>
         {t('notFound.heading', 'This page skipped soundcheck.')}
       </h1>
-      <p style={{ color: 'var(--ink-2, #9e9080)', marginBottom: 24, maxWidth: 400, lineHeight: 1.7, fontSize: '0.9rem' }}>
+      <p style={{ color: 'var(--ink-2)', marginBottom: 24, maxWidth: 400, lineHeight: 1.7, fontSize: '0.9rem' }}>
         {t('notFound.body', "The page you're looking for doesn't exist, moved, or was never booked in the first place.")}
       </p>
       <Link href="/" style={{
-        background: 'var(--accent, #ff5029)',
+        background: 'var(--accent)',
         color: '#fff',
         padding: '13px 28px',
         borderRadius: 9999,
@@ -67,7 +67,7 @@ export default async function NotFound() {
         textDecoration: 'none',
         fontSize: '0.95rem',
         letterSpacing: '-0.01em',
-        boxShadow: '0 4px 20px rgba(255,80,41,0.3)',
+        boxShadow: '0 4px 20px rgba(var(--accent-rgb),0.3)',
       }}>
         {t('notFound.cta', 'Back to the scene →')}
       </Link>

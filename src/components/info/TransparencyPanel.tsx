@@ -34,14 +34,14 @@ export async function TransparencyPanel() {
   return (
     <div className="lp-wrap">
       <section className="lp-hero" style={{ paddingBottom: '20px' }}>
-        <p className="lp-hype-eyebrow" style={{ color: '#ffb84a' }}>
+        <p className="lp-hype-eyebrow" style={{ color: 'var(--role-promoter)' }}>
           <span
             style={{
               display: 'inline-block',
               width: 7,
               height: 7,
               borderRadius: '50%',
-              background: '#ffb84a',
+              background: 'var(--role-promoter)',
               marginRight: 8,
             }}
           />
@@ -65,7 +65,7 @@ export async function TransparencyPanel() {
 
       {/* How this works */}
       <section className="lp-hype-explainer">
-        <p className="lp-hype-eyebrow" style={{ color: '#ff5029' }}>{t('transparencyPage.howItWorksEyebrow', 'HOW IT WORKS')}</p>
+        <p className="lp-hype-eyebrow" style={{ color: 'var(--accent)' }}>{t('transparencyPage.howItWorksEyebrow', 'HOW IT WORKS')}</p>
         <h2 className="lp-section-head">{t('transparencyPage.fullPictureHeading', 'The full picture')}</h2>
         <div className="lp-reason-grid" style={{ marginTop: '20px' }}>
           {[

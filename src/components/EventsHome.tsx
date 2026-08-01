@@ -69,7 +69,7 @@ function EventList({ shows, emptyTitle, emptyBody }: { shows: Show[]; emptyTitle
       <div>
         {/* Ghost event card — the module keeps its designed shape even with nothing to list */}
         <div aria-hidden="true" className="ev-card" style={{ ...eventCard, border: '1px dashed var(--hair-120)', background: 'var(--hair-15)' }}>
-          <div className="ev-art" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: '1px solid var(--hair-40)', background: 'linear-gradient(135deg, rgba(255,80,41,.07) 0%, transparent 100%)', opacity: 0.35 }}>🎵</div>
+          <div className="ev-art" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: '1px solid var(--hair-40)', background: 'linear-gradient(135deg, rgba(var(--accent-rgb),.07) 0%, transparent 100%)', opacity: 0.35 }}>🎵</div>
           <div className="ev-main" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a25)', marginBottom: 7 }}>{t('eventsHome.ghostDateTime', 'Date · Time')}</div>
             <div className="ev-title" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-.02em', marginBottom: 4, color: 'var(--ink-a30)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('eventsHome.ghostNextShow', 'Your next show')}</div>
@@ -77,10 +77,10 @@ function EventList({ shows, emptyTitle, emptyBody }: { shows: Show[]; emptyTitle
           </div>
           <div className="ev-cta" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, flexShrink: 0 }}>
             <div>
-              <div className="ev-price" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, color: 'rgba(255,80,41,.35)', letterSpacing: '-.02em' }}>—</div>
+              <div className="ev-price" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, color: 'rgba(var(--accent-rgb),.35)', letterSpacing: '-.02em' }}>—</div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a20)' }}>{t('eventsHome.zeroFees', '$0 fees')}</div>
             </div>
-            <span className="ev-pill" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, borderRadius: 8, background: 'rgba(255,80,41,.2)', color: 'rgba(255,255,255,.4)', whiteSpace: 'nowrap' }}>{t('eventsHome.getTicket', 'Get ticket')}</span>
+            <span className="ev-pill" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, borderRadius: 8, background: 'rgba(var(--accent-rgb),.2)', color: 'rgba(255,255,255,.4)', whiteSpace: 'nowrap' }}>{t('eventsHome.getTicket', 'Get ticket')}</span>
           </div>
         </div>
         <div style={{ ...emptyStyle, padding: '28px 24px' }}>
@@ -96,23 +96,23 @@ function EventList({ shows, emptyTitle, emptyBody }: { shows: Show[]; emptyTitle
         const demandLabel = show.hypeCount >= 50 ? `+${Math.min(99, Math.round(show.hypeCount / 5))}% this week` : null;
         return (
           <Link className="ev-card" href={`/shows/${show.slug}`} key={show.id} style={eventCard}>
-            <div className="ev-art" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: '1px solid var(--hair-50)', background: 'linear-gradient(135deg, rgba(255,80,41,.15) 0%, transparent 100%)' }}>🎵</div>
+            <div className="ev-art" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: '1px solid var(--hair-50)', background: 'linear-gradient(135deg, rgba(var(--accent-rgb),.15) 0%, transparent 100%)' }}>🎵</div>
             <div className="ev-main" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 7, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 {show.status === 'LIVE'
                   ? <span style={{ color: 'var(--accent)' }}>{t('eventsHome.liveNow', '● LIVE NOW')}</span>
                   : <span>{fmtDate(show.startsAt)}</span>}
-                {demandLabel && <span style={{ color: '#22e5d4' }}>{demandLabel}</span>}
+                {demandLabel && <span style={{ color: 'var(--role-venue)' }}>{demandLabel}</span>}
               </div>
               <div className="ev-title" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-.02em', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {show.headlinerProfile ? `${show.headlinerProfile.name} @ ${show.venueProfile?.name ?? show.title}` : show.title}
               </div>
               <div style={{ fontSize: 13, color: 'var(--ink-a50)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {show.venueProfile?.name ?? ''}{show.venueProfile?.city ? ` · ${show.venueProfile.city}` : ''}
-                {show.isRegional && <span style={{ color: '#22e5d4' }}> · {t('eventsHome.regionalTag', 'Regional')}</span>}
+                {show.isRegional && <span style={{ color: 'var(--role-venue)' }}> · {t('eventsHome.regionalTag', 'Regional')}</span>}
               </div>
               {show.reason?.text && (
-                <div style={{ fontSize: 11, color: '#ff5029', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>✨ {show.reason.text}</div>
+                <div style={{ fontSize: 11, color: 'var(--accent)', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>✨ {show.reason.text}</div>
               )}
             </div>
             <div className="ev-cta" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, flexShrink: 0 }}>
@@ -122,7 +122,7 @@ function EventList({ shows, emptyTitle, emptyBody }: { shows: Show[]; emptyTitle
                 </div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a35)' }}>{t('eventsHome.zeroFees', '$0 fees')}</div>
               </div>
-              <span className="ev-pill" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, borderRadius: 8, background: 'var(--accent)', color: '#fff', whiteSpace: 'nowrap' }}>{t('eventsHome.getTicket', 'Get ticket')}</span>
+              <span className="ev-pill" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, borderRadius: 8, background: 'var(--accent)', color: 'var(--ink-on-accent)', whiteSpace: 'nowrap' }}>{t('eventsHome.getTicket', 'Get ticket')}</span>
             </div>
           </Link>
         );
@@ -243,20 +243,20 @@ export function EventsHome({
 
   const gridItems: QuickGridItem[] = [
     {
-      id: 'local', label: t('eventsHome.gridLocal', 'Local'), color: '#22e5d4', sublabel: nearCity ? `${nearCity} · ${localShows.length}` : `${localShows.length} ${t('eventsHome.gridShows', 'shows')}`,
-      icon: <svg fill="none" height="30" stroke="#22e5d4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>,
+      id: 'local', label: t('eventsHome.gridLocal', 'Local'), color: 'var(--role-venue)', sublabel: nearCity ? `${nearCity} · ${localShows.length}` : `${localShows.length} ${t('eventsHome.gridShows', 'shows')}`,
+      icon: <svg fill="none" height="30" stroke="var(--role-venue)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>,
     },
     {
-      id: 'foryou', label: t('eventsHome.gridForYou', 'For You'), color: '#ff5029', sublabel: `${forYouShownList.length} ${t('eventsHome.gridMatched', 'matched')}`,
-      icon: <svg fill="none" height="30" stroke="#ff5029" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><path d="M12 21s-7.5-4.6-10-9.3C.5 8.2 2.4 4 6.4 4c2 0 3.6 1 5.6 3 2-2 3.6-3 5.6-3 4 0 5.9 4.2 4.4 7.7C19.5 16.4 12 21 12 21Z" /></svg>,
+      id: 'foryou', label: t('eventsHome.gridForYou', 'For You'), color: 'var(--accent)', sublabel: `${forYouShownList.length} ${t('eventsHome.gridMatched', 'matched')}`,
+      icon: <svg fill="none" height="30" stroke="var(--accent)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><path d="M12 21s-7.5-4.6-10-9.3C.5 8.2 2.4 4 6.4 4c2 0 3.6 1 5.6 3 2-2 3.6-3 5.6-3 4 0 5.9 4.2 4.4 7.7C19.5 16.4 12 21 12 21Z" /></svg>,
     },
     {
-      id: 'tickets', label: t('eventsHome.gridTickets', 'Tickets'), color: '#b983ff', sublabel: loggedIn ? t('eventsHome.gridViewYours', 'View yours') : t('eventsHome.gridLogInToView', 'Log in to view'),
-      icon: <svg fill="none" height="30" stroke="#b983ff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><path d="M3 9a2 2 0 0 0 2-2V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-2a2 2 0 0 0-2-2Z" /></svg>,
+      id: 'tickets', label: t('eventsHome.gridTickets', 'Tickets'), color: 'var(--role-fan)', sublabel: loggedIn ? t('eventsHome.gridViewYours', 'View yours') : t('eventsHome.gridLogInToView', 'Log in to view'),
+      icon: <svg fill="none" height="30" stroke="var(--role-fan)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><path d="M3 9a2 2 0 0 0 2-2V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-2a2 2 0 0 0-2-2Z" /></svg>,
     },
     {
-      id: 'referral', label: t('eventsHome.gridHypeLink', 'HYPE Link'), color: '#ff3e9a', sublabel: t('eventsHome.gridTenPercentShare', '10% share'),
-      icon: <svg fill="none" height="30" stroke="#ff3e9a" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5" /><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5" /></svg>,
+      id: 'referral', label: t('eventsHome.gridHypeLink', 'HYPE Link'), color: 'var(--accent-2)', sublabel: t('eventsHome.gridTenPercentShare', '10% share'),
+      icon: <svg fill="none" height="30" stroke="var(--accent-2)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5" /><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5" /></svg>,
     },
   ];
 
@@ -355,7 +355,7 @@ export function EventsHome({
           {!loggedIn ? (
             <div style={emptyStyle}>
               <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, color: 'var(--ink-a60)', margin: '14px 0 6px' }}>{t('eventsHome.signInHeading', 'Sign in to see your tickets')}</h3>
-              <Link href="/login?callbackUrl=/shows" style={{ display: 'inline-block', marginTop: 16, padding: '11px 20px', fontSize: 13, background: 'var(--accent)', color: '#fff', borderRadius: 8, textDecoration: 'none', fontWeight: 700 }}>{t('eventsHome.logIn', 'Log in')}</Link>
+              <Link href="/login?callbackUrl=/shows" style={{ display: 'inline-block', marginTop: 16, padding: '11px 20px', fontSize: 13, background: 'var(--accent)', color: 'var(--ink-on-accent)', borderRadius: 8, textDecoration: 'none', fontWeight: 700 }}>{t('eventsHome.logIn', 'Log in')}</Link>
             </div>
           ) : (
             <>
@@ -367,7 +367,7 @@ export function EventsHome({
                     style={{
                       flex: 1, textAlign: 'center', padding: 12, borderRadius: 10, cursor: 'pointer',
                       border: `1px solid ${ticketView === v ? 'var(--accent)' : 'var(--hair-120)'}`,
-                      background: ticketView === v ? 'rgba(255,80,41,.08)' : 'transparent',
+                      background: ticketView === v ? 'rgba(var(--accent-rgb),.08)' : 'transparent',
                       fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 800, color: 'var(--ink)',
                     }}
                   >
@@ -385,7 +385,7 @@ export function EventsHome({
                   </h3>
                   <p>{ticketView === 'archive' ? t('eventsHome.archiveEmptyBody', "Shows you've attended or cancelled tickets land here.") : t('eventsHome.activeEmptyBody', 'Tickets you buy show up here with a QR for entry.')}</p>
                   {ticketView === 'active' && (
-                    <button onClick={() => { setTab('local'); }} style={{ display: 'inline-block', marginTop: 16, padding: '11px 20px', fontSize: 13, background: 'var(--accent)', color: '#fff', borderRadius: 8, border: 'none', fontWeight: 700, cursor: 'pointer' }} type="button">{t('eventsHome.browseEvents', 'Browse events')}</button>
+                    <button onClick={() => { setTab('local'); }} style={{ display: 'inline-block', marginTop: 16, padding: '11px 20px', fontSize: 13, background: 'var(--accent)', color: 'var(--ink-on-accent)', borderRadius: 8, border: 'none', fontWeight: 700, cursor: 'pointer' }} type="button">{t('eventsHome.browseEvents', 'Browse events')}</button>
                   )}
                 </div>
               ) : (

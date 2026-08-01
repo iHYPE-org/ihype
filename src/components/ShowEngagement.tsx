@@ -196,7 +196,7 @@ export function ShowEngagement({
               title={a.name ?? t('showEngagement.fanFallbackName', 'Fan')}
               style={{
                 width: 32, height: 32, borderRadius: '50%', position: 'relative',
-                background: 'var(--accent, #ff3e9a)', border: '2px solid var(--bg, #0a0a14)',
+                background: 'var(--accent, var(--accent-2))', border: '2px solid var(--bg, #0a0a14)',
                 marginLeft: i > 0 ? -10 : 0, overflow: 'hidden',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 12, fontWeight: 700, color: '#fff', flexShrink: 0,

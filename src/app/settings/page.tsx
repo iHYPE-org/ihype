@@ -16,7 +16,7 @@ interface Prefs {
   bookingRequests: boolean;
 }
 
-const ROLE_COLOR: Record<string, string> = { ARTIST: '#ff5029', DJ: '#ff3e9a', VENUE: '#22e5d4' };
+const ROLE_COLOR: Record<string, string> = { ARTIST: 'var(--role-artist)', DJ: 'var(--role-dj)', VENUE: 'var(--role-venue)' };
 
 function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
   return (
@@ -291,7 +291,7 @@ export default function SettingsPage() {
   }
 
   const isCreator = role === 'ARTIST' || role === 'DJ' || role === 'VENUE';
-  const roleColor = ROLE_COLOR[role] ?? '#b983ff';
+  const roleColor = ROLE_COLOR[role] ?? 'var(--role-fan)';
 
   return (
     <div className="settings-page">
@@ -327,7 +327,7 @@ export default function SettingsPage() {
               ) : (
                 <div className="settings-row settings-payout-card">
                   <div className="settings-payout-ic">
-                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#b983ff" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--role-fan)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
                   </div>
                   <div style={{ flex: 1 }}>
                     <div className="settings-row-label">{t('settingsPage.noPaymentMethod', 'No payment method on file')}</div>
@@ -363,7 +363,7 @@ export default function SettingsPage() {
               <Row
                 action={
                   isAdult ? (
-                    <span className="settings-row-detail" style={{ color: '#22e5d4' }}>{t('settingsPage.adultConfirmed', '✓ 18+ confirmed')}</span>
+                    <span className="settings-row-detail" style={{ color: 'var(--role-venue)' }}>{t('settingsPage.adultConfirmed', '✓ 18+ confirmed')}</span>
                   ) : (
                     <button className="settings-btn settings-btn-ghost" disabled={attesting} onClick={attestAdult} type="button">
                       {attesting ? t('settingsPage.saving', 'Saving…') : t('settingsPage.imEighteen', "I'm 18 or older")}
@@ -402,7 +402,7 @@ export default function SettingsPage() {
                 }
                 label={t('settingsPage.pushLabel', 'Push notifications (this browser)')}
               />
-              {pushError && <p style={{ color: '#ff5029', fontSize: 12, padding: '0 20px 14px' }}>{pushError}</p>}
+              {pushError && <p style={{ color: 'var(--accent)', fontSize: 12, padding: '0 20px 14px' }}>{pushError}</p>}
             </div>
           </div>
 
@@ -470,8 +470,8 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {error && <p style={{ color: '#ff5029', fontSize: 13 }}>{error}</p>}
-          {saved && <p style={{ color: '#22e5d4', fontSize: 13, fontFamily: 'var(--font-mono)' }}>{t('settingsPage.savedConfirm', '✓ Saved')}</p>}
+          {error && <p style={{ color: 'var(--accent)', fontSize: 13 }}>{error}</p>}
+          {saved && <p style={{ color: 'var(--role-venue)', fontSize: 13, fontFamily: 'var(--font-mono)' }}>{t('settingsPage.savedConfirm', '✓ Saved')}</p>}
 
           <button className="settings-btn settings-btn-accent" disabled={saving} onClick={save} style={{ width: '100%' }} type="button">
             {saving ? t('settingsPage.saving', 'Saving…') : t('settingsPage.saveSettings', 'Save settings')}
@@ -494,14 +494,14 @@ export default function SettingsPage() {
         .settings-toggle input { opacity: 0; width: 0; height: 0; }
         .settings-toggle-track { position: absolute; inset: 0; border-radius: 13px; background: var(--hair-120); cursor: pointer; transition: background 200ms; }
         .settings-toggle input:checked + .settings-toggle-track { background: var(--accent); }
-        .settings-toggle-thumb { position: absolute; width: 20px; height: 20px; top: 3px; left: 3px; border-radius: 50%; background: #fff; transition: transform 200ms cubic-bezier(.2,.7,.3,1); pointer-events: none; }
+        .settings-toggle-thumb { position: absolute; width: 20px; height: 20px; top: 3px; left: 3px; border-radius: 50%; background: var(--ink-on-accent); transition: transform 200ms cubic-bezier(.2,.7,.3,1); pointer-events: none; }
         .settings-toggle input:checked ~ .settings-toggle-thumb { transform: translateX(18px); }
         .settings-btn { padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 150ms; border: none; text-decoration: none; display: inline-block; }
         .settings-btn-ghost { background: var(--line); color: var(--ink); }
         .settings-btn-ghost:hover { background: var(--hair-100); }
         .settings-btn-danger { background: rgba(239,68,68,.12); color: #ef4444; }
         .settings-btn-danger:hover { background: rgba(239,68,68,.22); }
-        .settings-btn-accent { background: var(--accent); color: #fff; }
+        .settings-btn-accent { background: var(--accent); color: var(--ink-on-accent); }
         .settings-btn-accent:hover { opacity: .9; }
         .settings-input-inline { padding: 8px 12px; border: 1px solid var(--hair-100); border-radius: 8px; background: var(--bg); color: var(--ink); font-size: 14px; }
         .settings-input-inline:focus { outline: none; border-color: var(--accent); }

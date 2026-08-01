@@ -14,8 +14,8 @@ export const metadata: Metadata = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  OPEN: 'var(--role-promoter, #ffb84a)',
-  PENDING: '#22e5d4',
+  OPEN: 'var(--role-promoter)',
+  PENDING: 'var(--success)',
   RESOLVED: 'var(--ink-a50)',
   CLOSED: 'var(--ink-a50)',
 };
@@ -67,8 +67,8 @@ export default async function SupportTicketsPage() {
 
       <span style={{
         display: 'inline-block', fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase',
-        letterSpacing: '.14em', color: '#22e5d4', border: '1px solid rgba(34,229,212,.3)',
-        background: 'rgba(34,229,212,.07)', borderRadius: 999, padding: '5px 13px', marginBottom: 14,
+        letterSpacing: '.14em', color: 'var(--role-venue)', border: '1px solid rgba(var(--role-venue-rgb),.3)',
+        background: 'rgba(var(--role-venue-rgb),.07)', borderRadius: 999, padding: '5px 13px', marginBottom: 14,
       }}>
         {tr('supportTicketsPage.badge', 'Support')}
       </span>
@@ -87,7 +87,7 @@ export default async function SupportTicketsPage() {
           padding: '30px 24px', textAlign: 'center', color: 'var(--ink-a65)', fontSize: 13.5,
         }}>
           {tr('supportTicketsPage.emptyState', "You haven't sent us anything yet.")}{' '}
-          <Link href="/support" style={{ color: '#22e5d4' }}>{tr('supportTicketsPage.contactSupport', 'Contact support')}</Link>.
+          <Link href="/support" style={{ color: 'var(--role-venue)' }}>{tr('supportTicketsPage.contactSupport', 'Contact support')}</Link>.
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

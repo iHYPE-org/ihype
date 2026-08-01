@@ -126,7 +126,7 @@ export default async function VenueCalendarPage({ params }: Props) {
                         fontSize: 10,
                         fontFamily: 'var(--f-m)',
                         color: 'var(--ink)',
-                        background: 'rgba(185,131,255,.15)',
+                        background: 'rgba(var(--role-fan-rgb),.15)',
                         borderRadius: 4,
                         padding: '2px 4px',
                         overflow: 'hidden',

@@ -85,7 +85,7 @@ export default async function AdvertiserDashboard() {
         <div className="ad-dash-stats">
           <div className="ad-dash-stat-card">
             <div className="ad-dash-stat-label">{t('advertiseDashboardPage.spend', 'Spend')}</div>
-            <div className="ad-dash-stat-val" style={{ color: 'var(--accent, #ff5029)' }}>${(totalSpentCents / 100).toFixed(2)}</div>
+            <div className="ad-dash-stat-val" style={{ color: 'var(--accent)' }}>${(totalSpentCents / 100).toFixed(2)}</div>
             <div className="ad-dash-stat-sub">{t('advertiseDashboardPage.acrossCampaigns', 'Across')} {campaigns.length} {campaigns.length === 1 ? t('advertiseDashboardPage.campaignSingular', 'campaign') : t('advertiseDashboardPage.campaignPlural', 'campaigns')}</div>
           </div>
           <div className="ad-dash-stat-card">
@@ -116,7 +116,7 @@ export default async function AdvertiserDashboard() {
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 80 }}>
             {dailyRows.map(([day, count]) => (
               <div key={day} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }} title={`${day}: ${count} impressions`}>
-                <div style={{ width: '100%', minHeight: 2, height: `${Math.max(2, (count / maxDaily) * 64)}px`, background: 'var(--accent, #ff5029)', borderRadius: 2 }} />
+                <div style={{ width: '100%', minHeight: 2, height: `${Math.max(2, (count / maxDaily) * 64)}px`, background: 'var(--accent)', borderRadius: 2 }} />
               </div>
             ))}
           </div>

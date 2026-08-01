@@ -36,22 +36,22 @@ export function PayoutFanView({
         <svg style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 150ms' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="1.75" strokeLinecap="round"><polyline points="6 9 12 15 18 9" /></svg>
       </button>
       {expanded && (
-        <div style={{ marginTop: 16, padding: '14px 16px', borderRadius: 12, border: '1px solid var(--line, var(--hair-80))', background: 'var(--bg-3, #0a0805)' }}>
-          <p style={{ fontSize: '0.85rem', color: 'var(--ink-2, #9e9080)', lineHeight: 1.6, marginBottom: 10 }}>
+        <div style={{ marginTop: 16, padding: '14px 16px', borderRadius: 12, border: '1px solid var(--line, var(--hair-80))', background: 'var(--bg-3, var(--bg))' }}>
+          <p style={{ fontSize: '0.85rem', color: 'var(--ink-2)', lineHeight: 1.6, marginBottom: 10 }}>
             {t('payoutFanView.intro', 'Every fan who bought a ticket sees this same breakdown. Their receipt shows:')}
           </p>
           <div style={{ display: 'grid', gap: 8 }}>
             <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--ink-3)', flexShrink: 0, minWidth: 90 }}>{t('payoutFanView.yourLabel', 'Your')} {fmt(priceCents)}</span>
-              <span style={{ fontSize: '0.78rem', color: 'var(--ink-2, #9e9080)', lineHeight: 1.5 }}>{fmt(artistShare)} {t('payoutFanView.artistLabel', 'artist')} · {fmt(venueShare)} {t('payoutFanView.venueLabel', 'venue')} · {fmt(promoterShare)} {t('payoutFanView.promoterLabel', 'promoter')} · $0 {t('payoutFanView.ihypeLabel', 'iHYPE')}</span>
+              <span style={{ fontSize: '0.78rem', color: 'var(--ink-2)', lineHeight: 1.5 }}>{fmt(artistShare)} {t('payoutFanView.artistLabel', 'artist')} · {fmt(venueShare)} {t('payoutFanView.venueLabel', 'venue')} · {fmt(promoterShare)} {t('payoutFanView.promoterLabel', 'promoter')} · $0 {t('payoutFanView.ihypeLabel', 'iHYPE')}</span>
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--ink-3)', flexShrink: 0, minWidth: 90 }}>{t('payoutFanView.ihypeFeeLabel', 'iHYPE fee')}</span>
-              <span style={{ fontSize: '0.78rem', color: '#22e5d4', lineHeight: 1.5 }}>{t('payoutFanView.ihypeFeeValue', '$0.00 — locked in our charter. Forever.')}</span>
+              <span style={{ fontSize: '0.78rem', color: 'var(--role-venue)', lineHeight: 1.5 }}>{t('payoutFanView.ihypeFeeValue', '$0.00 — locked in our charter. Forever.')}</span>
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--ink-3)', flexShrink: 0, minWidth: 90 }}>{t('payoutFanView.paidOutLabel', 'Paid out')}</span>
-              <span style={{ fontSize: '0.78rem', color: 'var(--ink-2, #9e9080)', lineHeight: 1.5 }}>{t('payoutFanView.paidOutValue', 'Automatically. Same night.')}</span>
+              <span style={{ fontSize: '0.78rem', color: 'var(--ink-2)', lineHeight: 1.5 }}>{t('payoutFanView.paidOutValue', 'Automatically. Same night.')}</span>
             </div>
           </div>
         </div>

@@ -74,13 +74,13 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
   }
   if (dashStats.ticketsSoldThisWeek > 0) {
     activity.push({
-      color: 'var(--role-venue, #22e5d4)',
+      color: 'var(--role-venue)',
       text: <><strong>{dashStats.ticketsSoldThisWeek.toLocaleString()}</strong> {dashStats.ticketsSoldThisWeek === 1 ? t('artistsSlugDashboardPage.ticketSoldSingular', 'ticket sold this week') : t('artistsSlugDashboardPage.ticketSoldPlural', 'tickets sold this week')}</>,
     });
   }
   if (bookingPending > 0) {
     activity.push({
-      color: '#b983ff',
+      color: 'var(--role-fan)',
       text: <><strong>{bookingPending.toLocaleString()}</strong> {bookingPending === 1 ? t('artistsSlugDashboardPage.pendingBookingSingular', 'pending booking request awaiting a reply') : t('artistsSlugDashboardPage.pendingBookingPlural', 'pending booking requests awaiting a reply')}</>,
     });
   }
@@ -183,7 +183,7 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
         .ad-title { font-family: var(--font-display); font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin: 0; color: var(--ink); }
         .ad-header-actions { display: flex; gap: 10px; }
         .ad-btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; padding: 10px 20px; border-radius: var(--radius-md); font-size: 13px; font-weight: 700; min-height: 44px; }
-        .ad-btn-solid { background: var(--accent); color: #fff; }
+        .ad-btn-solid { background: var(--accent); color: var(--ink-on-accent); }
         .ad-btn-outline { background: transparent; color: var(--ink); border: 1px solid var(--line-2); }
         .ad-btn-outline:hover { background: var(--line); }
         .ad-btn-full { width: 100%; }
@@ -202,7 +202,7 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
         .ad-event-row:hover { background: var(--bg3); }
         .ad-event-title { font-family: var(--font-display); font-weight: 800; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .ad-event-meta { font-size: 12px; color: var(--ink-a55); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .ad-pill { flex-shrink: 0; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; padding: 5px 10px; border-radius: var(--radius-pill); background: rgba(34,229,212,.15); color: var(--role-venue, #22e5d4); }
+        .ad-pill { flex-shrink: 0; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; padding: 5px 10px; border-radius: var(--radius-pill); background: rgba(var(--role-venue-rgb),.15); color: var(--role-venue); }
         .ad-activity-list { display: flex; flex-direction: column; gap: 2px; margin-top: 12px; }
         .ad-activity-row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--line); }
         .ad-activity-row:last-child { border-bottom: none; }

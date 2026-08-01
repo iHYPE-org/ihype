@@ -8,7 +8,7 @@ import { useI18n } from '@/components/I18nProvider';
 import { useMediaPlayer, type MediaTrack } from '@/components/GlobalMediaPlayer';
 import { useAppShellActive } from '@/components/shell/AppShellContext';
 
-const PALETTE = ['#ff5029', '#b983ff', '#22e5d4', '#ff3e9a', '#ffb84a', '#7fb3ff'];
+const PALETTE = ['#ff5029', 'var(--role-fan)', 'var(--role-venue)', 'var(--accent-2)', 'var(--role-promoter)', '#7fb3ff'];
 
 /**
  * The tab ids the app shell's persistent context strip already carries for
@@ -214,7 +214,7 @@ const b: React.CSSProperties = {
   borderRadius: 9, cursor: 'pointer', border: 'none', transition: 'all 150ms',
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none',
 };
-const bSolid: React.CSSProperties = { ...b, background: 'var(--accent)', color: '#fff' };
+const bSolid: React.CSSProperties = { ...b, background: 'var(--accent)', color: 'var(--ink-on-accent)' };
 const bGhost: React.CSSProperties = { ...b, background: 'transparent', color: 'var(--ink-a60)', boxShadow: 'inset 0 0 0 1px var(--hair-100)' };
 
 const panel: React.CSSProperties = { border: '1px solid var(--line)', borderRadius: 16, background: 'var(--hair-30)', overflow: 'hidden' };
@@ -371,7 +371,7 @@ function SeedDeck({ seeds, onAct }: { seeds: Seed[]; onAct: (seed: Seed, action:
           </button>
 
           {flash === 'add' && (
-            <div style={{ position: 'absolute', top: '50%', right: 24, zIndex: 5, transform: `translateY(-50%) scale(${Math.min(1.15, 0.85 + Math.abs(drag.x) / 320)})`, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 26, letterSpacing: '.04em', textTransform: 'uppercase', color: '#fff', padding: '10px 22px', borderRadius: 14, border: '3px solid #22e5d4', background: 'rgba(34,229,212,.34)', boxShadow: '0 0 30px rgba(34,229,212,.5)' }}>{t('listenHome.seedDeckFlashSeed', 'Seed')}</div>
+            <div style={{ position: 'absolute', top: '50%', right: 24, zIndex: 5, transform: `translateY(-50%) scale(${Math.min(1.15, 0.85 + Math.abs(drag.x) / 320)})`, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 26, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--ink-on-accent)', padding: '10px 22px', borderRadius: 14, border: '3px solid #22e5d4', background: 'rgba(var(--role-venue-rgb),.34)', boxShadow: '0 0 30px rgba(var(--role-venue-rgb),.5)' }}>{t('listenHome.seedDeckFlashSeed', 'Seed')}</div>
           )}
           {flash === 'skip' && (
             <div style={{ position: 'absolute', top: '50%', left: 24, zIndex: 5, transform: `translateY(-50%) scale(${Math.min(1.15, 0.85 + Math.abs(drag.x) / 320)})`, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 26, letterSpacing: '.04em', textTransform: 'uppercase', color: '#fff', padding: '10px 22px', borderRadius: 14, border: '3px solid #fff', background: 'rgba(0,0,0,.42)' }}>{t('listenHome.seedDeckFlashSkip', 'Skip')}</div>
@@ -395,7 +395,7 @@ function SeedDeck({ seeds, onAct }: { seeds: Seed[]; onAct: (seed: Seed, action:
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>{t('listenHome.seedsSkipLabel', 'Skip')}</span>
         </button>
         <button onClick={() => commit('add')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer' }} type="button">
-          <span style={{ width: 58, height: 58, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(34,229,212,.4)', background: 'rgba(34,229,212,.14)' }}>+</span>
+          <span style={{ width: 58, height: 58, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(var(--role-venue-rgb),.4)', background: 'rgba(var(--role-venue-rgb),.14)' }}>+</span>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>{t('listenHome.seedsSaveLabel', 'Save to library')}</span>
         </button>
       </div>
@@ -752,7 +752,7 @@ export function ListenHome({
               <div style={{
                 position: 'relative', width: '100%', maxWidth: 440, aspectRatio: '1 / 1', margin: '4px auto 0',
                 borderRadius: 28, border: '1px dashed var(--hair-160)',
-                background: 'linear-gradient(155deg, rgba(255,80,41,.06), rgba(185,131,255,.05))',
+                background: 'linear-gradient(155deg, rgba(var(--accent-rgb),.06), rgba(var(--role-fan-rgb),.05))',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 24, textAlign: 'center',
               }}>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-a40)', border: '1px solid var(--line-2)', borderRadius: 9999, padding: '5px 11px' }}>{t('listenHome.seedsEmptyBadge', 'No new seeds')}</span>
@@ -765,7 +765,7 @@ export function ListenHome({
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>{t('listenHome.seedsSkipLabel', 'Skip')}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                  <span style={{ width: 58, height: 58, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(34,229,212,.4)', background: 'rgba(34,229,212,.14)' }}>+</span>
+                  <span style={{ width: 58, height: 58, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(var(--role-venue-rgb),.4)', background: 'rgba(var(--role-venue-rgb),.14)' }}>+</span>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>{t('listenHome.seedsSaveLabel', 'Save to library')}</span>
                 </div>
               </div>
@@ -829,7 +829,7 @@ export function ListenHome({
               <div
                 key={s.id}
                 onClick={() => setChartScope(s.id)}
-                style={{ fontSize: 12, padding: '7px 14px', borderRadius: 9999, cursor: 'pointer', border: `1px solid ${chartScope === s.id ? 'rgba(255,80,41,.4)' : 'var(--hair-100)'}`, background: chartScope === s.id ? 'rgba(255,80,41,.12)' : 'var(--hair-30)', color: chartScope === s.id ? 'var(--ink)' : 'var(--ink-a60)' }}
+                style={{ fontSize: 12, padding: '7px 14px', borderRadius: 9999, cursor: 'pointer', border: `1px solid ${chartScope === s.id ? 'rgba(var(--accent-rgb),.4)' : 'var(--hair-100)'}`, background: chartScope === s.id ? 'rgba(var(--accent-rgb),.12)' : 'var(--hair-30)', color: chartScope === s.id ? 'var(--ink)' : 'var(--ink-a60)' }}
               >
                 {s.label}
               </div>
@@ -979,7 +979,7 @@ export function ListenHome({
             <button onClick={() => shareLink(openPlaylist.id)} style={bGhost} type="button">{t('listenHome.playlistDetailShare', 'Share')}</button>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
-            <div style={{ width: 72, height: 72, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, rgba(255,80,41,.3) 0%, transparent 100%)', border: '1px solid var(--line)', fontSize: 28 }}>🎵</div>
+            <div style={{ width: 72, height: 72, borderRadius: 16, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, rgba(var(--accent-rgb),.3) 0%, transparent 100%)', border: '1px solid var(--line)', fontSize: 28 }}>🎵</div>
             <div>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 24, letterSpacing: '-.02em' }}>{openPlaylist.name}</div>
               <div style={{ fontSize: 12, color: 'var(--ink-a50)', marginTop: 2 }}>{openPlaylist.items.length} {openPlaylist.items.length === 1 ? t('listenHome.trackSingular', 'track') : t('listenHome.trackPlural', 'tracks')}</div>

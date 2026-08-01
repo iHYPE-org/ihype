@@ -209,13 +209,13 @@ export default async function DJAnalyticsPage({
         {stats.map((s) => (
           <div className="dja-card" key={s.label}>
             <div className="dja-stat-label">{s.label}</div>
-            <div className="dja-stat-value" style={s.accent ? { color: '#ff3e9a' } : undefined}>{s.value}</div>
-            <div className="dja-stat-sub" style={s.delta ? { color: '#ff3e9a' } : undefined}>{s.delta ?? s.sub ?? ''}</div>
+            <div className="dja-stat-value" style={s.accent ? { color: 'var(--accent-2)' } : undefined}>{s.value}</div>
+            <div className="dja-stat-sub" style={s.delta ? { color: 'var(--accent-2)' } : undefined}>{s.delta ?? s.sub ?? ''}</div>
           </div>
         ))}
       </div>
 
-      <div className="dja-section-eyebrow" style={{ color: '#ff3e9a' }}>{t('promotersSlugAnalyticsPage.listenersOverTime', 'Listeners over time')}</div>
+      <div className="dja-section-eyebrow" style={{ color: 'var(--accent-2)' }}>{t('promotersSlugAnalyticsPage.listenersOverTime', 'Listeners over time')}</div>
       {distinctCurrentListeners > 0 ? (
         <div className="dja-chart">
           {listenerChartBuckets.map((count, i) => (
@@ -271,7 +271,7 @@ export default async function DJAnalyticsPage({
         .dja-btn:hover { background: var(--bg3); }
         .dja-tabs { display: flex; gap: 8px; margin-bottom: 28px; }
         .dja-tab { padding: 8px 16px; border-radius: var(--radius-pill, 999px); font-size: 13px; font-weight: 600; text-decoration: none; color: var(--ink-a60); border: 1px solid var(--hair-100); background: var(--bg2); }
-        .dja-tab.active { color: #fff; background: #ff3e9a; border-color: transparent; }
+        .dja-tab.active { color: var(--ink-on-accent); background: var(--accent-2); border-color: transparent; }
         .dja-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
         .dja-card { border: 1px solid var(--line); border-radius: var(--radius-lg, 18px); background: var(--bg2); padding: 18px 20px; }
         .dja-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a50); margin-bottom: 6px; }
@@ -280,7 +280,7 @@ export default async function DJAnalyticsPage({
         .dja-section-eyebrow { font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .12em; color: var(--ink-a50); }
         .dja-eyebrow-row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 28px; }
         .dja-chart { display: flex; align-items: flex-end; gap: 6px; height: 100px; margin: 14px 0 32px; padding: 0 4px; }
-        .dja-bar { flex: 1; border-radius: 4px 4px 0 0; background: #ff3e9a; }
+        .dja-bar { flex: 1; border-radius: 4px 4px 0 0; background: var(--accent-2); }
         .dja-empty { text-align: center; padding: 40px 24px; color: var(--ink-a50); border: 1px solid var(--line); border-radius: var(--radius-md, 10px); background: var(--bg2); margin: 12px 0 28px; }
         .dja-show-list { border: 1px solid var(--line); border-radius: var(--radius-md, 10px); background: var(--bg2); margin-top: 12px; margin-bottom: 28px; }
         .dja-show-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--line); text-decoration: none; color: inherit; }
@@ -288,7 +288,7 @@ export default async function DJAnalyticsPage({
         .dja-show-row:hover { background: var(--bg3); }
         .dja-show-title { font-family: var(--font-display); font-weight: 800; font-size: 14px; color: var(--ink); }
         .dja-show-meta { font-size: 12px; color: var(--ink-a55); margin-top: 2px; }
-        .dja-show-hypes { font-family: var(--font-mono); font-size: 13px; color: #ff3e9a; font-weight: 700; flex-shrink: 0; }
+        .dja-show-hypes { font-family: var(--font-mono); font-size: 13px; color: var(--accent-2); font-weight: 700; flex-shrink: 0; }
         .dja-note { margin-top: 24px; padding: 14px 16px; border-radius: var(--radius-md, 10px); border: 1px solid var(--hair-100); background: var(--bg2); }
         .dja-note-eyebrow { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a50); margin-bottom: 4px; }
         .dja-note p { font-size: 12.5px; color: var(--ink-a55); line-height: 1.6; margin: 0; }

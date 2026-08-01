@@ -81,11 +81,11 @@ export async function TrustSafetyPanel() {
         @keyframes auditPulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
         .audit-pulse-dot {
           display: inline-block; width: 7px; height: 7px; border-radius: 50%;
-          background: #ffb84a; margin-right: 8px; animation: auditPulse 1.4s infinite;
+          background: var(--role-promoter); margin-right: 8px; animation: auditPulse 1.4s infinite;
         }
       `}</style>
       <section className="lp-hero" style={{ paddingBottom: '20px' }}>
-        <p className="lp-hype-eyebrow" style={{ color: '#ffb84a' }}><span className="audit-pulse-dot" />{t('auditPage.eyebrowLiveStats', 'LIVE STATS · UPDATED IN REAL TIME')}</p>
+        <p className="lp-hype-eyebrow" style={{ color: 'var(--role-promoter)' }}><span className="audit-pulse-dot" />{t('auditPage.eyebrowLiveStats', 'LIVE STATS · UPDATED IN REAL TIME')}</p>
         <h1 className="lp-hero-h" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)' }}>{t('auditPage.heroTitle', 'Trust & safety report')}</h1>
         <p className="lp-hero-sub">
           {t('auditPage.heroSub', 'Every upload is screened by AI before it goes live, and every user report is tracked to a resolution. Here are the aggregate numbers — no usernames, no content IDs, nothing that could identify anyone involved.')}
@@ -103,7 +103,7 @@ export async function TrustSafetyPanel() {
 
       {categoryRows.length > 0 && (
         <section className="lp-hype-explainer">
-          <p className="lp-hype-eyebrow" style={{ color: '#ff5029' }}>{t('auditPage.eyebrowByCategory', 'BY CATEGORY')}</p>
+          <p className="lp-hype-eyebrow" style={{ color: 'var(--accent)' }}>{t('auditPage.eyebrowByCategory', 'BY CATEGORY')}</p>
           <h2 className="lp-section-head">{t('auditPage.byCategoryTitle', 'What gets reported')}</h2>
           <div className="lp-reason-grid" style={{ marginTop: '20px', gridTemplateColumns: 'repeat(3, 1fr)' }}>
             {categoryRows.map((r) => (
@@ -126,7 +126,7 @@ export async function TrustSafetyPanel() {
       )}
 
       <section className="lp-hype-explainer">
-        <p className="lp-hype-eyebrow" style={{ color: '#ff3e9a' }}>{t('auditPage.eyebrowRadioAds', 'RADIO ADS')}</p>
+        <p className="lp-hype-eyebrow" style={{ color: 'var(--accent-2)' }}>{t('auditPage.eyebrowRadioAds', 'RADIO ADS')}</p>
         <h2 className="lp-section-head">{t('auditPage.adVettingTitle', 'Ad vetting')}</h2>
         <p className="lp-hero-sub" style={{ margin: '8px 0 20px' }}>
           {t('auditPage.adVettingBody', 'iHYPE only ever runs radio-style audio ad spots — no banners, no visual placements. Every campaign is screened by AI before it can run.')}
@@ -142,7 +142,7 @@ export async function TrustSafetyPanel() {
       </section>
 
       <section className="lp-hype-explainer">
-        <p className="lp-hype-eyebrow" style={{ color: '#22e5d4' }}>{t('auditPage.eyebrowOwnershipVerification', 'OWNERSHIP VERIFICATION')}</p>
+        <p className="lp-hype-eyebrow" style={{ color: 'var(--role-venue)' }}>{t('auditPage.eyebrowOwnershipVerification', 'OWNERSHIP VERIFICATION')}</p>
         <h2 className="lp-section-head">{t('auditPage.verifiedProfilesTitle', 'Verified profiles')}</h2>
         <div className="lp-reason-grid" style={{ marginTop: '20px' }}>
           <div className="lp-reason-card">
@@ -158,7 +158,7 @@ export async function TrustSafetyPanel() {
 
       {/* How this works */}
       <section className="lp-hype-explainer">
-        <p className="lp-hype-eyebrow" style={{ color: '#ff5029' }}>{t('auditPage.eyebrowHowItWorks', 'HOW IT WORKS')}</p>
+        <p className="lp-hype-eyebrow" style={{ color: 'var(--accent)' }}>{t('auditPage.eyebrowHowItWorks', 'HOW IT WORKS')}</p>
         <h2 className="lp-section-head">{t('auditPage.fullPictureTitle', 'The full picture')}</h2>
         <div className="lp-reason-grid" style={{ marginTop: '20px' }}>
           {[

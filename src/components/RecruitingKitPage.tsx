@@ -27,7 +27,7 @@ export type RecruitingKitConfig = {
   fanFitBody?: React.ReactNode;
 };
 
-const HEAT_COLOR = ['#ff1f3d', 'var(--accent)', '#ffb84a', '#3a4a5a'];
+const HEAT_COLOR = ['var(--heat-fire)', 'var(--heat-hot)', 'var(--heat-warm)', 'var(--heat-cold)'];
 
 /**
  * Shared shell for the 4 recruiting/kit pages (Artist/DJ/Venue/Fan) —

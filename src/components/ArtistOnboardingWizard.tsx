@@ -347,7 +347,7 @@ export function ArtistOnboardingWizard({
         .aow-input:focus { outline: none; border-color: var(--accent); }
         .aow-btn { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 44px; padding: 10px 20px; border-radius: var(--radius-md); font-size: 14px; font-weight: 700; text-decoration: none; border: none; cursor: pointer; box-sizing: border-box; margin-top: 20px; }
         .aow-btn:disabled { opacity: .55; cursor: default; }
-        .aow-btn-solid { background: var(--accent); color: #fff; }
+        .aow-btn-solid { background: var(--accent); color: var(--ink-on-accent); }
         .aow-btn-ghost { background: transparent; color: var(--ink-a50, var(--ink-2)); margin-top: 8px; }
         .aow-btn-ghost:hover { color: var(--ink); }
         .aow-alt-link { text-align: center; margin-top: 14px; font-size: 12px; color: var(--ink-a35, var(--ink-3)); }
@@ -357,7 +357,7 @@ export function ArtistOnboardingWizard({
         .aow-reminder-label { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a35, var(--ink-3)); margin-bottom: 10px; }
         .aow-reminder-text { font-family: var(--font-mono); font-size: 12px; color: var(--ink-a50, var(--ink-2)); line-height: 1.6; }
         .aow-done { text-align: center; }
-        .aow-done-icon { width: 60px; height: 60px; border-radius: var(--radius-lg); background: rgba(255,80,41,.12); border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+        .aow-done-icon { width: 60px; height: 60px; border-radius: var(--radius-lg); background: rgba(var(--accent-rgb),.12); border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
       `}</style>
     </div>
   );

@@ -122,7 +122,7 @@ export default async function DJDashboardPage({ params }: { params: Promise<{ sl
       activity.push({
         key: `hype-${s.title}`,
         text: `${s.hypes.length} ${s.hypes.length === 1 ? t('promotersSlugDashboardPage.hypeSingular', 'hype') : t('promotersSlugDashboardPage.hypePlural', 'hypes')} ${t('promotersSlugDashboardPage.onShow', 'on')} ${s.title}`,
-        color: 'var(--profile-accent, #ff3e9a)',
+        color: 'var(--profile-accent, var(--accent-2))',
         date: latestHype,
       });
     }
@@ -131,7 +131,7 @@ export default async function DJDashboardPage({ params }: { params: Promise<{ sl
     activity.push({
       key: `track-${track.title}-${track.createdAt.toISOString()}`,
       text: `"${track.title}" ${t('promotersSlugDashboardPage.clearedVetting', 'cleared vetting and joined your crate')}`,
-      color: 'var(--role-venue, #22e5d4)',
+      color: 'var(--role-venue)',
       date: track.createdAt,
     });
   }
@@ -141,7 +141,7 @@ export default async function DJDashboardPage({ params }: { params: Promise<{ sl
     activity.push({
       key: 'ticket-sales',
       text: `${totalQty} ${totalQty === 1 ? t('promotersSlugDashboardPage.ticketSingular', 'ticket') : t('promotersSlugDashboardPage.ticketPlural', 'tickets')} ${t('promotersSlugDashboardPage.soldViaHypeLinks', 'sold via your HYPE Links in the last 30 days')}`,
-      color: 'var(--role-fan, #b983ff)',
+      color: 'var(--role-fan)',
       date: latest,
     });
   }
@@ -270,12 +270,12 @@ export default async function DJDashboardPage({ params }: { params: Promise<{ sl
         .djd-btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 18px; border-radius: var(--radius-md, 12px); font-size: 13px; font-weight: 700; text-decoration: none; }
         .djd-btn-outline { background: var(--bg2); color: var(--ink); border: 1px solid var(--hair-100); }
         .djd-btn-outline:hover { background: var(--bg3); }
-        .djd-btn-solid { background: var(--profile-accent, #ff3e9a); color: #fff; border: 1px solid transparent; }
+        .djd-btn-solid { background: var(--profile-accent, var(--accent-2)); color: var(--ink-on-accent); border: 1px solid transparent; }
         .djd-btn-solid:hover { opacity: .9; }
         .djd-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
         .djd-card { border: 1px solid var(--line); border-radius: var(--radius-lg, 18px); background: var(--bg2); padding: 18px 20px; }
         .djd-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a50); margin-bottom: 6px; }
-        .djd-stat-value { font-family: var(--font-display); font-weight: 800; font-size: 24px; color: var(--profile-accent, #ff3e9a); }
+        .djd-stat-value { font-family: var(--font-display); font-weight: 800; font-size: 24px; color: var(--profile-accent, var(--accent-2)); }
         .djd-stat-sub { font-size: 11.5px; color: var(--ink-a50); margin-top: 2px; }
         .djd-columns { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
         @media (max-width: 760px) { .djd-columns { grid-template-columns: 1fr; } }
@@ -288,8 +288,8 @@ export default async function DJDashboardPage({ params }: { params: Promise<{ sl
         .djd-show-row:hover { background: var(--bg3); }
         .djd-show-title { font-family: var(--font-display); font-weight: 800; font-size: 14px; color: var(--ink); }
         .djd-show-meta { font-size: 12px; color: var(--ink-a55); margin-top: 2px; }
-        .djd-live-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: var(--radius-pill, 999px); background: rgba(255,62,154,.15); color: #ff3e9a; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
-        .djd-live-dot { width: 6px; height: 6px; border-radius: 50%; background: #ff3e9a; }
+        .djd-live-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: var(--radius-pill, 999px); background: rgba(var(--accent-2-rgb),.15); color: var(--accent-2); font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
+        .djd-live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-2); }
         .djd-scheduled-pill { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: var(--radius-pill, 999px); border: 1px solid var(--hair-100); color: var(--ink-a55); font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
         .djd-activity-list { display: flex; flex-direction: column; gap: 2px; margin-top: 12px; }
         .djd-activity-row { display: flex; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }

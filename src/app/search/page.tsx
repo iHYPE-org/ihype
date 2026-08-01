@@ -39,10 +39,10 @@ function resultHref(r: ResultItem): string {
 }
 
 function resultColor(r: ResultItem): string {
-  if (r.type === 'venue') return '#22e5d4';
-  if (r.type === 'promoter') return '#ff3e9a';
-  if (r.type === 'song') return '#b983ff';
-  return '#ff5029';
+  if (r.type === 'venue') return 'var(--role-venue)';
+  if (r.type === 'promoter') return 'var(--role-dj)';
+  if (r.type === 'song') return 'var(--role-fan)';
+  return 'var(--role-artist)';
 }
 
 const API_TYPE: Record<Filter, string> = { all: 'all', artists: 'artist', shows: 'show', tracks: 'song' };
@@ -122,7 +122,7 @@ function SearchPageInner() {
               padding: '8px 16px', borderRadius: 9999,
               background: filter === f ? 'var(--accent)' : 'var(--hair-50)',
               border: `1px solid ${filter === f ? 'var(--accent)' : 'var(--hair-100)'}`,
-              color: filter === f ? '#fff' : 'var(--ink-a75)',
+              color: filter === f ? 'var(--ink-on-accent)' : 'var(--ink-a75)',
               fontSize: 13, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms',
             }}
           >

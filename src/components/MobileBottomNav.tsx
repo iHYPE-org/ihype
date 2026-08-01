@@ -125,7 +125,7 @@ export function MobileBottomNav() {
               e.preventDefault();
               shell.goToSectionHome(TAB_TO_SECTION[tabDef.id]);
             }}
-            style={{ ...tabButtonStyle, color: active === tabDef.id ? 'var(--accent, #ff5029)' : 'rgba(240,240,240,0.45)' }}
+            style={{ ...tabButtonStyle, color: active === tabDef.id ? 'var(--accent)' : 'rgba(240,240,240,0.45)' }}
           >
             {tabDef.icon}
             <span>{t(`mobileBottomNav.tab.${tabDef.id}`, tabDef.label)}</span>
@@ -135,7 +135,7 @@ export function MobileBottomNav() {
           aria-expanded={menuOpen}
           aria-label={t('mobileBottomNav.openMenuAriaLabel', 'Open menu')}
           onClick={() => setMenuOpen(true)}
-          style={{ ...tabButtonStyle, background: 'none', border: 'none', cursor: 'pointer', color: menuOpen ? 'var(--accent, #ff5029)' : 'rgba(240,240,240,0.45)' }}
+          style={{ ...tabButtonStyle, background: 'none', border: 'none', cursor: 'pointer', color: menuOpen ? 'var(--accent)' : 'rgba(240,240,240,0.45)' }}
           type="button"
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>

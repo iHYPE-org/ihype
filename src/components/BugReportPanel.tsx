@@ -20,7 +20,7 @@ async function postBugReport(body: unknown) {
 
 const cardStyle: React.CSSProperties = {
   border: '1px solid var(--line)', borderRadius: 10, padding: '18px 20px',
-  background: 'var(--bg-2, #100d09)', cursor: 'pointer',
+  background: 'var(--bg-2)', cursor: 'pointer',
 };
 
 export function BugReportPanel() {
@@ -94,7 +94,7 @@ export function BugReportPanel() {
             </div>
 
             {sent ? (
-              <div style={{ fontSize: 13, color: '#22e5d4', padding: '10px 14px', background: 'rgba(34,229,212,.08)', borderRadius: 8 }}>
+              <div style={{ fontSize: 13, color: 'var(--role-venue)', padding: '10px 14px', background: 'rgba(var(--role-venue-rgb),.08)', borderRadius: 8 }}>
                 ✓ {t('bugReportPanel.sentConfirmation', 'Thanks — we logged it and will take a look.')}
               </div>
             ) : (

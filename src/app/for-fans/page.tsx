@@ -11,11 +11,11 @@ export const metadata: Metadata = {
 function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitConfig {
   return {
   role: 'FAN',
-  tint: 'var(--role-fan, #b983ff)',
+  tint: 'var(--role-fan)',
   glow: '#b983ff',
   navCta: t('forFansPage.navCta', 'Join free →'),
   eyebrow: t('forFansPage.eyebrow', 'For Fans'),
-  headline: <>{t('forFansPage.headlineLine1', 'Your taste.')}<br />{t('forFansPage.headlineLine2', 'Your voice.')}<br /><span style={{ color: 'var(--role-fan, #b983ff)' }}>{t('forFansPage.headlineLine3', 'Your cut.')}</span></>,
+  headline: <>{t('forFansPage.headlineLine1', 'Your taste.')}<br />{t('forFansPage.headlineLine2', 'Your voice.')}<br /><span style={{ color: 'var(--role-fan)' }}>{t('forFansPage.headlineLine3', 'Your cut.')}</span></>,
   heroBody: (
     <>{t('forFansPage.heroBodyLead', 'Hype the artists you love before anyone else catches on, buy tickets')} <strong>{t('forFansPage.heroBodyStrong', 'at face value with zero platform fee')}</strong>{t('forFansPage.heroBodyRest', ', and earn a real cut every time someone buys through your link.')}</>
   ),

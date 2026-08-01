@@ -152,14 +152,14 @@ export default async function VenueDashboardPage({ params }: { params: Promise<{
         .vdash-btn { display: inline-flex; align-items: center; padding: 10px 18px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 700; text-decoration: none; min-height: 44px; }
         .vdash-btn-outline { background: transparent; color: var(--ink); border: 1px solid var(--line-2); }
         .vdash-btn-outline:hover { background: var(--hair-40); }
-        .vdash-btn-solid { background: var(--role-venue, #22e5d4); color: #0a0805; border: 1px solid var(--role-venue, #22e5d4); }
+        .vdash-btn-solid { background: var(--role-venue); color: var(--bg); border: 1px solid var(--role-venue); }
         .vdash-btn-solid:hover { opacity: .9; }
         .vdash-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
         .vdash-card { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg2); padding: 18px 20px; }
         .vdash-card-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a50); margin-bottom: 6px; }
-        .vdash-card-val { font-family: var(--font-display); font-weight: 800; font-size: 24px; color: var(--role-venue, #22e5d4); }
+        .vdash-card-val { font-family: var(--font-display); font-weight: 800; font-size: 24px; color: var(--role-venue); }
         .vdash-card-sub { font-size: 11.5px; color: var(--ink-a50); margin-top: 2px; }
-        .vdash-card-sub-accent { color: var(--role-venue, #22e5d4); }
+        .vdash-card-sub-accent { color: var(--role-venue); }
         .vdash-grid { display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
         .vdash-section-head { display: flex; justify-content: space-between; align-items: baseline; }
         .vdash-eyebrow-sm { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-a50); }
@@ -172,7 +172,7 @@ export default async function VenueDashboardPage({ params }: { params: Promise<{
         .vdash-show-row:hover { background: var(--bg3); }
         .vdash-show-title { font-family: var(--font-display); font-weight: 800; font-size: 14px; color: var(--ink); }
         .vdash-show-meta { font-size: 12px; color: var(--ink-a60); margin-top: 2px; }
-        .vdash-pill { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--role-venue, #22e5d4); background: rgba(34,229,212,.12); border-radius: var(--radius-pill); padding: 5px 10px; flex-shrink: 0; }
+        .vdash-pill { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--role-venue); background: rgba(var(--role-venue-rgb),.12); border-radius: var(--radius-pill); padding: 5px 10px; flex-shrink: 0; }
         .vdash-activity { display: flex; flex-direction: column; gap: 2px; margin-top: 12px; }
         .vdash-activity-row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--ink-a85); }
         .vdash-activity-row:last-child { border-bottom: none; }

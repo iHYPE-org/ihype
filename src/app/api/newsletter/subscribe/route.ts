@@ -32,7 +32,7 @@ function buildConfirmEmail(confirmUrl: string, profileName: string) {
       <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#10182a;">
         <h2 style="margin:0 0 12px;">Confirm your subscription</h2>
         <p>Confirm you'd like updates from <strong>${profileName}</strong> on iHYPE.</p>
-        <p><a href="${confirmUrl}" style="display:inline-block;padding:10px 20px;background:#ff5029;color:#fff;text-decoration:none;border-radius:6px;font-weight:700;">Confirm subscription</a></p>
+        <p><a href="${confirmUrl}" style="display:inline-block;padding:10px 20px;background:var(--accent);color:var(--ink-on-accent);text-decoration:none;border-radius:6px;font-weight:700;">Confirm subscription</a></p>
         <p style="color:#5b657a;font-size:12px;">If you didn't request this, you can ignore this email — you won't be subscribed unless you click the link.</p>
       </div>
     `,

@@ -81,7 +81,7 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
         role="button"
         style={{
           border: '1px solid var(--line)', borderRadius: 10, padding: '18px 20px',
-          background: 'var(--bg-2, #100d09)', cursor: 'pointer',
+          background: 'var(--bg-2)', cursor: 'pointer',
         }}
         tabIndex={0}
       >
@@ -107,7 +107,7 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
             </p>
 
             {done ? (
-              <div style={{ fontSize: 13, color: '#22e5d4', padding: '10px 14px', background: 'rgba(34,229,212,.08)', borderRadius: 8 }}>
+              <div style={{ fontSize: 13, color: 'var(--role-venue)', padding: '10px 14px', background: 'rgba(var(--role-venue-rgb),.08)', borderRadius: 8 }}>
                 ✓ {t(DONE_LABEL_KEY[done], DONE_LABEL[done])}
               </div>
             ) : (
@@ -128,7 +128,7 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
                   onClick={() => submitKind('deletion')}
                   disabled={submitting}
                   className="priv-opt"
-                  style={{ ...privOptStyle, borderColor: 'rgba(255,80,41,.25)' }}
+                  style={{ ...privOptStyle, borderColor: 'rgba(var(--accent-rgb),.25)' }}
                 >
                   <span style={{ fontSize: 20, flexShrink: 0 }} aria-hidden="true">🗑️</span>
                   <span>
@@ -171,7 +171,7 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
                   </span>
                 </Link>
 
-                {error && <p style={{ color: '#ff5029', fontSize: 12, marginTop: 8 }}>{error}</p>}
+                {error && <p style={{ color: 'var(--accent)', fontSize: 12, marginTop: 8 }}>{error}</p>}
               </div>
             )}
           </div>
@@ -184,6 +184,6 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
 const privOptStyle: React.CSSProperties = {
   display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left',
   padding: '14px 16px', border: '1px solid var(--hair-80)', borderRadius: 10,
-  background: 'var(--bg, #0a0805)', color: 'inherit', cursor: 'pointer', marginBottom: 10,
+  background: 'var(--bg)', color: 'inherit', cursor: 'pointer', marginBottom: 10,
   fontFamily: 'var(--font-body)',
 };

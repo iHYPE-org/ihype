@@ -96,10 +96,10 @@ export default async function LineupSplitPage({ params }: { params: Promise<{ sl
 
       <div className="lsp-splitbar">
         {slots.map((s) => (
-          <div key={s.id} className="lsp-splitbar-seg" style={{ flex: s.splitPercent, background: s.isHeadliner ? 'var(--accent, #ff5029)' : '#ff8f5d' }} />
+          <div key={s.id} className="lsp-splitbar-seg" style={{ flex: s.splitPercent, background: s.isHeadliner ? 'var(--accent)' : '#ff8f5d' }} />
         ))}
-        <div className="lsp-splitbar-seg" style={{ flex: venuePercent, background: 'var(--role-venue, #22e5d4)' }} />
-        <div className="lsp-splitbar-seg" style={{ flex: promoterPercent, background: '#b983ff' }} />
+        <div className="lsp-splitbar-seg" style={{ flex: venuePercent, background: 'var(--role-venue)' }} />
+        <div className="lsp-splitbar-seg" style={{ flex: promoterPercent, background: 'var(--role-fan)' }} />
       </div>
       <div className="lsp-splitbar-legend">
         <span>{slots.map((s) => `${s.profile.name} ${s.splitPercent}%`).join(' · ')}</span>
@@ -191,17 +191,17 @@ export default async function LineupSplitPage({ params }: { params: Promise<{ sl
         .lsp-name { font-family: var(--font-display); font-weight: 800; font-size: 15px; color: var(--ink); }
         .lsp-meta { font-size: 12px; color: var(--ink-a55); margin-top: 2px; }
         .lsp-pill { flex-shrink: 0; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; padding: 5px 10px; border-radius: var(--radius-pill); }
-        .lsp-pill-pending { background: rgba(255,184,74,.15); color: #ffb84a; }
-        .lsp-pill-accepted { background: rgba(34,229,212,.15); color: var(--role-venue, #22e5d4); }
-        .lsp-pill-declined { background: rgba(255,80,41,.15); color: var(--accent, #ff5029); }
+        .lsp-pill-pending { background: rgba(var(--role-promoter-rgb),.15); color: var(--role-promoter); }
+        .lsp-pill-accepted { background: rgba(var(--role-venue-rgb),.15); color: var(--role-venue); }
+        .lsp-pill-declined { background: rgba(var(--accent-rgb),.15); color: var(--accent); }
         .lsp-card-actions { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
         .lsp-status-note { margin-top: 20px; padding: 14px 16px; border-radius: var(--radius-md); border: 1px solid var(--line); }
         .lsp-status-note p { font-size: 12.5px; color: var(--ink-a60); line-height: 1.6; margin: 6px 0 0; }
         .lsp-status-label { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; }
-        .lsp-status-note-accepted { border-color: rgba(34,229,212,.25); background: rgba(34,229,212,.06); }
-        .lsp-status-note-accepted .lsp-status-label { color: var(--role-venue, #22e5d4); }
-        .lsp-status-note-declined { border-color: rgba(255,80,41,.25); background: rgba(255,80,41,.06); }
-        .lsp-status-note-declined .lsp-status-label { color: var(--accent, #ff5029); }
+        .lsp-status-note-accepted { border-color: rgba(var(--role-venue-rgb),.25); background: rgba(var(--role-venue-rgb),.06); }
+        .lsp-status-note-accepted .lsp-status-label { color: var(--role-venue); }
+        .lsp-status-note-declined { border-color: rgba(var(--accent-rgb),.25); background: rgba(var(--accent-rgb),.06); }
+        .lsp-status-note-declined .lsp-status-label { color: var(--accent); }
         .lsp-foot { margin-top: 24px; font-size: 13px; }
         .lsp-foot a { color: var(--ink-a60); text-decoration: none; }
         .lsp-foot a:hover { color: var(--ink); text-decoration: underline; }

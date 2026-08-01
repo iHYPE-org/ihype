@@ -305,7 +305,7 @@ export default async function ShowDetailPage({
   });
   const demandLatest = demandSpark[demandSpark.length - 1];
   const demandLabel = demandMax === 0 ? 'Cold' : demandLatest.isFire ? 'Fire' : demandLatest.isHot ? 'Hot' : demandLatest.isWarm ? 'Warm' : 'Cold';
-  const demandLabelColor = demandLabel === 'Fire' ? '#ff1f3d' : demandLabel === 'Hot' ? 'var(--accent)' : demandLabel === 'Warm' ? '#ffb84a' : 'var(--ink-a50)';
+  const demandLabelColor = demandLabel === 'Fire' ? 'var(--heat-fire)' : demandLabel === 'Hot' ? 'var(--heat-hot)' : demandLabel === 'Warm' ? 'var(--heat-warm)' : 'var(--ink-a50)';
 
   // Venue comps — real sibling shows at the same venue, ranked by hype count
   // (no fabricated demand numbers; falls back to an empty list when the venue
@@ -359,7 +359,7 @@ export default async function ShowDetailPage({
         <ReferralClickTracker ref={refHexId} />
 
         {/* HERO */}
-        <div style={{ background: 'linear-gradient(140deg,rgba(255,80,41,.15),rgba(34,229,212,.08))', border: '1px solid rgba(255,80,41,.2)', borderRadius: 16, padding: 36, marginBottom: 40 }}>
+        <div style={{ background: 'linear-gradient(140deg,rgba(var(--accent-rgb),.15),rgba(var(--role-venue-rgb),.08))', border: '1px solid rgba(var(--accent-rgb),.2)', borderRadius: 16, padding: 36, marginBottom: 40 }}>
           <div className="video-shell" style={{ marginBottom: 22, borderRadius: 12, overflow: 'hidden' }}>
             {productionPlan ? (
               <ShowSequencePlayer
@@ -392,7 +392,7 @@ export default async function ShowDetailPage({
 
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center', marginBottom: 20, fontSize: 14, color: 'var(--ink-a75)' }}>
             <span className="badge">{show.status}</span>
-            {show.venueProfile && <span className="badge" style={{ color: 'var(--venue)' }}>{t('showsSlugPage.venueBadge', 'Venue')}</span>}
+            {show.venueProfile && <span className="badge" style={{ color: 'var(--role-venue)' }}>{t('showsSlugPage.venueBadge', 'Venue')}</span>}
             {show.headlinerProfile && <span className="badge" style={{ color: 'var(--accent)' }}>{t('showsSlugPage.artistBadge', 'Artist')}</span>}
             {date && (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -415,7 +415,7 @@ export default async function ShowDetailPage({
               happened. Rendered as plain text — the note is organizer-authored
               free text, normalised server-side, and is never treated as markup. */}
           {show.status === 'CANCELED' && (show.cancellationReason || show.cancellationMessage) && (
-            <div style={{ marginBottom: 20, padding: '14px 16px', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,80,41,.25)', background: 'rgba(255,80,41,.06)' }}>
+            <div style={{ marginBottom: 20, padding: '14px 16px', borderRadius: 'var(--radius-md)', border: '1px solid rgba(var(--accent-rgb),.25)', background: 'rgba(var(--accent-rgb),.06)' }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 6 }}>
                 {t('showsSlugPage.canceledLabel', 'Event cancelled')}
                 {show.cancellationReason ? ` · ${show.cancellationReason}` : ''}
@@ -457,18 +457,18 @@ export default async function ShowDetailPage({
 
           {show.isTicketed && show.venuePayoutPercent !== null && show.artistPayoutPercent !== null && (
             <div style={{ display: 'flex', gap: 0, borderRadius: 10, overflow: 'hidden', marginTop: 24 }}>
-              <div style={{ flex: Math.max(show.artistPayoutPercent, 1), padding: 16, textAlign: 'center', background: 'rgba(255,80,41,.15)' }}>
+              <div style={{ flex: Math.max(show.artistPayoutPercent, 1), padding: 16, textAlign: 'center', background: 'rgba(var(--accent-rgb),.15)' }}>
                 <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent)' }}>${(price * (show.artistPayoutPercent / 100)).toFixed(2)}</div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--accent)' }}>{t('showsSlugPage.artistSplitLabel', 'Artist')} · {show.artistPayoutPercent}%</div>
               </div>
-              <div style={{ flex: Math.max(show.venuePayoutPercent, 1), padding: 16, textAlign: 'center', background: 'rgba(34,229,212,.15)' }}>
-                <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--venue)' }}>${(price * (show.venuePayoutPercent / 100)).toFixed(2)}</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--venue)' }}>{t('showsSlugPage.venueSplitLabel', 'Venue')} · {show.venuePayoutPercent}%</div>
+              <div style={{ flex: Math.max(show.venuePayoutPercent, 1), padding: 16, textAlign: 'center', background: 'rgba(var(--role-venue-rgb),.15)' }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--role-venue)' }}>${(price * (show.venuePayoutPercent / 100)).toFixed(2)}</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--role-venue)' }}>{t('showsSlugPage.venueSplitLabel', 'Venue')} · {show.venuePayoutPercent}%</div>
               </div>
               {show.promoterPayoutPercent > 0 && (
-                <div style={{ flex: Math.max(show.promoterPayoutPercent, 1), padding: 16, textAlign: 'center', background: 'rgba(255,62,154,.15)' }}>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--promoter)' }}>${(price * (show.promoterPayoutPercent / 100)).toFixed(2)}</div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--promoter)' }}>{t('showsSlugPage.promotersSplitLabel', 'Promoters')} · {show.promoterPayoutPercent}%</div>
+                <div style={{ flex: Math.max(show.promoterPayoutPercent, 1), padding: 16, textAlign: 'center', background: 'rgba(var(--accent-2-rgb),.15)' }}>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent-2)' }}>${(price * (show.promoterPayoutPercent / 100)).toFixed(2)}</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--accent-2)' }}>{t('showsSlugPage.promotersSplitLabel', 'Promoters')} · {show.promoterPayoutPercent}%</div>
                 </div>
               )}
             </div>
@@ -482,7 +482,7 @@ export default async function ShowDetailPage({
             style={{
               display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap',
               padding: '0.85rem 1.25rem', margin: '0 0 24px', border: '1px solid var(--accent)',
-              background: 'rgba(255,80,41,0.12)', textDecoration: 'none', color: 'inherit',
+              background: 'rgba(var(--accent-rgb),0.12)', textDecoration: 'none', color: 'inherit',
             }}
           >
             <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -518,9 +518,9 @@ export default async function ShowDetailPage({
                       <div key={vc.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid var(--hair-80)' }}>
                         <span style={{ flex: 1, fontSize: 14, color: 'var(--ink-a85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{vc.title}</span>
                         <div style={{ width: 110, height: 6, borderRadius: 3, background: 'var(--hair-100)', overflow: 'hidden', flexShrink: 0 }}>
-                          {vc.isFire && <div style={{ width: '100%', height: '100%', background: '#ff1f3d' }} />}
+                          {vc.isFire && <div style={{ width: '100%', height: '100%', background: 'var(--heat-fire)' }} />}
                           {vc.isHot && <div style={{ width: '70%', height: '100%', background: 'var(--accent)' }} />}
-                          {vc.isWarm && <div style={{ width: '45%', height: '100%', background: '#ffb84a' }} />}
+                          {vc.isWarm && <div style={{ width: '45%', height: '100%', background: 'var(--role-promoter)' }} />}
                           {vc.isCold && <div style={{ width: '20%', height: '100%', background: 'var(--ink-a35)' }} />}
                         </div>
                       </div>
@@ -691,7 +691,7 @@ export default async function ShowDetailPage({
                     <Link href={`/payout/${show.slug}`} className="meta">{t('showsSlugPage.fullPayoutBreakdown', 'Full payout breakdown →')}</Link>
                     <Link href={`/shows/${show.slug}/scan`} className="meta">{t('showsSlugPage.scanTicketsAtDoor', 'Scan tickets at the door →')}</Link>
                     {(show.status === 'DRAFT' || show.status === 'SCHEDULED') && (
-                      <Link href={`/shows/${show.slug}/cancel`} className="meta" style={{ color: 'var(--accent, #ff5029)' }}>{t('showsSlugPage.cancelEvent', 'Cancel event →')}</Link>
+                      <Link href={`/shows/${show.slug}/cancel`} className="meta" style={{ color: 'var(--accent)' }}>{t('showsSlugPage.cancelEvent', 'Cancel event →')}</Link>
                     )}
                   </div>
                 </div>
@@ -731,6 +731,8 @@ export default async function ShowDetailPage({
                   <img
                     alt={t('showsSlugPage.doorCheckinQrAlt', 'Door check-in QR code for this show')}
                     src={`/api/shows/${show.id}/qr`}
+                    // design-exempt: a QR needs a light quiet zone to scan, in
+                    // both themes — this must NOT follow the theme.
                     style={{ width: 96, height: 96, background: '#fff', borderRadius: 8, padding: 6 }}
                   />
                   <div>
@@ -870,7 +872,7 @@ export default async function ShowDetailPage({
                         flex: 1,
                         borderRadius: 2,
                         height: bar.isFire ? '100%' : bar.isHot ? '70%' : bar.isWarm ? '45%' : '25%',
-                        background: bar.isFire ? '#ff1f3d' : bar.isHot ? 'var(--accent)' : bar.isWarm ? '#ffb84a' : 'var(--ink-a35)',
+                        background: bar.isFire ? 'var(--heat-fire)' : bar.isHot ? 'var(--heat-hot)' : bar.isWarm ? 'var(--heat-warm)' : 'var(--ink-a35)',
                       }}
                     />
                   ))}
@@ -878,8 +880,8 @@ export default async function ShowDetailPage({
               </div>
 
               {!isPaymentProcessingConfigured() ? (
-                <div style={{ border: '1px solid rgba(34,229,212,.3)', borderRadius: 10, padding: 16, background: 'rgba(34,229,212,.06)' }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--venue)', marginBottom: 8 }}>
+                <div style={{ border: '1px solid rgba(var(--role-venue-rgb),.3)', borderRadius: 10, padding: 16, background: 'rgba(var(--role-venue-rgb),.06)' }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--role-venue)', marginBottom: 8 }}>
                     {t('showsSlugPage.paidTicketsComingSoon', 'Paid tickets · Coming soon')}
                   </div>
                   <p style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--ink-a80)', margin: 0 }}>
@@ -934,7 +936,7 @@ export default async function ShowDetailPage({
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}><span>{t('showsSlugPage.faceValue', 'Face value')}</span><span>${price.toFixed(2)}</span></div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6, color: 'var(--ink-a50)' }}><span>{t('showsSlugPage.serviceFees27', 'Service fees (27%)')}</span><span>+${tmFees.toFixed(2)}</span></div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6, color: 'var(--ink-a50)' }}><span>{t('showsSlugPage.tmTotal', 'TM total')}</span><span>${tmTotal.toFixed(2)}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, color: 'var(--venue)' }}><span>{t('showsSlugPage.ihypeTotal', 'iHYPE total')}</span><span>${price.toFixed(2)}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, color: 'var(--role-venue)' }}><span>{t('showsSlugPage.ihypeTotal', 'iHYPE total')}</span><span>${price.toFixed(2)}</span></div>
               </div>
 
               <div style={{ marginTop: 16, fontSize: 11, color: 'var(--ink-a50)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', lineHeight: 1.5 }}>

@@ -48,6 +48,11 @@ export default async function EpkPage({ params }: { params: Promise<{ slug: stri
   const location = [profile.city, profile.stateRegion, profile.country].filter(Boolean).join(', ');
   const pressKit = parsePressKit(profile.pressKitContent);
 
+  // Deliberately outside the design system: this is a press document meant to
+  // be printed or saved as PDF and forwarded to bookers, so it renders as a
+  // serif page in black on white regardless of the reader's theme. Theming it
+  // would make the printed artefact depend on a UI setting. The literal greys
+  // below are print rules, not drift — leave them.
   return (
     <div style={{ maxWidth: 720, margin: '0 auto', padding: '40px 24px', fontFamily: 'serif', color: '#111' }}>
       <style>{`@media print { .no-print { display: none !important; } body { background: white; } }`}</style>

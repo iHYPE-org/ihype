@@ -92,7 +92,7 @@ export default async function CollabBoardPage({
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a30)', flexShrink: 0 }}>{t('collabBoardPage.typeFilterLabel', 'Type')}</span>
           {typeFilter && (
             <Link href={buildUrl(null, roleFilter)} style={{ textDecoration: 'none' }}>
-              <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'var(--font-mono)', background: 'var(--accent)', color: '#fff', cursor: 'pointer' }}>
+              <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'var(--font-mono)', background: 'var(--accent)', color: 'var(--ink-on-accent)', cursor: 'pointer' }}>
                 {typeLabel(typeFilter)} ×
               </span>
             </Link>
@@ -109,7 +109,7 @@ export default async function CollabBoardPage({
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a30)', flexShrink: 0 }}>{t('collabBoardPage.roleFilterLabel', 'Role')}</span>
           {roleFilter && (
             <Link href={buildUrl(typeFilter, null)} style={{ textDecoration: 'none' }}>
-              <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'var(--font-mono)', background: '#ff3e9a', color: '#fff', cursor: 'pointer' }}>
+              <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'var(--font-mono)', background: 'var(--accent-2)', color: 'var(--ink-on-accent)', cursor: 'pointer' }}>
                 {roleLabel(roleFilter)} ×
               </span>
             </Link>
@@ -145,8 +145,8 @@ export default async function CollabBoardPage({
                         fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase',
                         padding: '4px 10px', borderRadius: 999,
                         color: p.type === 'looking-for' ? 'var(--accent)' : '#22e5d4',
-                        background: p.type === 'looking-for' ? 'rgba(255,80,41,.1)' : 'rgba(34,229,212,.1)',
-                        border: `1px solid ${p.type === 'looking-for' ? 'rgba(255,80,41,.3)' : 'rgba(34,229,212,.3)'}`,
+                        background: p.type === 'looking-for' ? 'rgba(var(--accent-rgb),.1)' : 'rgba(var(--role-venue-rgb),.1)',
+                        border: `1px solid ${p.type === 'looking-for' ? 'rgba(var(--accent-rgb),.3)' : 'rgba(var(--role-venue-rgb),.3)'}`,
                       }}
                     >
                       {typeLabel(p.type)}

@@ -149,7 +149,7 @@ export function VenueBookingInboxTabs({ profileId }: { profileId: string }) {
       <style>{`
         .vbi-tabs { display: flex; gap: 4px; border: 1px solid var(--line); border-radius: var(--radius-pill); padding: 3px; margin-bottom: 20px; width: fit-content; }
         .vbi-tab { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; padding: 8px 16px; border-radius: var(--radius-pill); border: none; background: transparent; color: var(--ink-a60); cursor: pointer; }
-        .vbi-tab-active { background: var(--role-venue, #22e5d4); color: #0a0805; }
+        .vbi-tab-active { background: var(--role-venue); color: var(--bg); }
         .vbi-empty, .vbi-empty-card { font-size: 13px; color: var(--ink-a45); margin: 0; }
         .vbi-empty-card { text-align: center; padding: 48px 24px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg2); }
         .vbi-list { display: flex; flex-direction: column; gap: 12px; }
@@ -159,12 +159,12 @@ export function VenueBookingInboxTabs({ profileId }: { profileId: string }) {
         .vbi-meta { font-size: 12px; color: var(--ink-a55); margin-top: 2px; }
         .vbi-message { font-size: 13px; color: var(--ink-a75); line-height: 1.5; margin: 8px 0; }
         .vbi-pill { flex-shrink: 0; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; padding: 5px 10px; border-radius: var(--radius-pill); }
-        .vbi-pill-pending { background: rgba(255,184,74,.15); color: #ffb84a; }
-        .vbi-pill-accepted { background: rgba(34,229,212,.15); color: var(--role-venue, #22e5d4); }
+        .vbi-pill-pending { background: rgba(var(--role-promoter-rgb),.15); color: var(--role-promoter); }
+        .vbi-pill-accepted { background: rgba(var(--role-venue-rgb),.15); color: var(--role-venue); }
         .vbi-pill-declined { background: var(--line); color: var(--ink-a55); }
         .vbi-actions { display: flex; gap: 8px; flex-wrap: wrap; }
         .vbi-btn { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; padding: 9px 16px; border-radius: var(--radius-pill); border: none; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
-        .vbi-btn-accept { background: var(--role-venue, #22e5d4); color: #0a0805; }
+        .vbi-btn-accept { background: var(--role-venue); color: var(--bg); }
         .vbi-btn-decline { background: transparent; color: var(--ink-a60); border: 1px solid var(--line); }
         .vbi-btn-outline { background: transparent; color: var(--ink-a70); border: 1px solid var(--line); }
         .vbi-btn:disabled { opacity: 0.6; cursor: default; }

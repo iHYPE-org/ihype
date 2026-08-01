@@ -45,10 +45,10 @@ let UID = 100;
 const uid = () => `b${++UID}`;
 
 const TYPE_META: Record<Block['kind'], { label: string; color: string }> = {
-  MEDIA: { label: 'Track', color: '#ff3e9a' },
-  VOICE_OVER: { label: 'Voiceover', color: '#b983ff' },
-  SAMPLE: { label: 'Sample', color: '#22e5d4' },
-  AD: { label: 'Ad break', color: '#ff5029' },
+  MEDIA: { label: 'Track', color: 'var(--accent-2)' },
+  VOICE_OVER: { label: 'Voiceover', color: 'var(--role-fan)' },
+  SAMPLE: { label: 'Sample', color: 'var(--role-venue)' },
+  AD: { label: 'Ad break', color: 'var(--accent)' },
 };
 
 const GENRES = MUSIC_GENRES;
@@ -669,7 +669,7 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
                   >
                     <svg fill="currentColor" height="12" viewBox="0 0 24 24" width="12"><circle cx="9" cy="6" r="1.6" /><circle cx="15" cy="6" r="1.6" /><circle cx="9" cy="12" r="1.6" /><circle cx="15" cy="12" r="1.6" /><circle cx="9" cy="18" r="1.6" /><circle cx="15" cy="18" r="1.6" /></svg>
                   </span>
-                  <div className="rsc-crate-art" style={{ background: 'linear-gradient(135deg,#ff3e9a,#b983ff)' }} />
+                  <div className="rsc-crate-art" style={{ background: 'linear-gradient(135deg,var(--accent-2),var(--role-fan))' }} />
                   <div className="rsc-crate-info"><h5>{track.title}</h5><p>{track.artistName}</p></div>
                   <span className="rsc-crate-dur">{fmt(track.durationSecs)}</span>
                   <button className="rsc-crate-add" onClick={() => addTrack(track)} title={t('radioShowCreator.addToShow', 'Add to show')} type="button">
@@ -683,8 +683,8 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
 
             {recorder.phase === 'idle' && (
               <button className="rsc-upload-btn" onClick={startRecording} type="button">
-                <span className="rsc-upload-ico" style={{ background: 'rgba(185,131,255,.14)' }}>
-                  <svg fill="none" height="17" stroke="#b983ff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="17"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4" /></svg>
+                <span className="rsc-upload-ico" style={{ background: 'rgba(var(--role-fan-rgb),.14)' }}>
+                  <svg fill="none" height="17" stroke="var(--role-fan)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="17"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4" /></svg>
                 </span>
                 <div><div className="rsc-upload-t">{t('radioShowCreator.recordVoiceover', 'Record voiceover')}</div><div className="rsc-upload-s">{t('radioShowCreator.realMicRecording', 'Real mic recording, drop between tracks')}</div></div>
               </button>
@@ -707,15 +707,15 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
             )}
 
             <button className="rsc-upload-btn" onClick={() => setSamplePicker(true)} type="button">
-              <span className="rsc-upload-ico" style={{ background: 'rgba(34,229,212,.14)' }}>
-                <svg fill="none" height="17" stroke="#22e5d4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="17"><path d="M2 12h3l2-7 4 14 3-9 2 5h6" /></svg>
+              <span className="rsc-upload-ico" style={{ background: 'rgba(var(--role-venue-rgb),.14)' }}>
+                <svg fill="none" height="17" stroke="var(--role-venue)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="17"><path d="M2 12h3l2-7 4 14 3-9 2 5h6" /></svg>
               </span>
               <div><div className="rsc-upload-t">{t('radioShowCreator.addSample', 'Add sample')}</div><div className="rsc-upload-s">{t('radioShowCreator.royaltyFreeAlreadyCleared', 'Royalty-free · already cleared')}</div></div>
             </button>
 
             <button className="rsc-upload-btn" onClick={openLibraryPicker} type="button">
-              <span className="rsc-upload-ico" style={{ background: 'rgba(255,62,154,.14)' }}>
-                <svg fill="none" height="17" stroke="#ff3e9a" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="17"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+              <span className="rsc-upload-ico" style={{ background: 'rgba(var(--accent-2-rgb),.14)' }}>
+                <svg fill="none" height="17" stroke="var(--accent-2)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="17"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
               </span>
               <div><div className="rsc-upload-t">{t('radioShowCreator.browseFreeUseLibrary', 'Browse free-use library')}</div><div className="rsc-upload-s">{t('radioShowCreator.searchClearedTracks', 'Search cleared tracks from every artist on iHYPE')}</div></div>
             </button>
@@ -880,7 +880,7 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
                   >
                     <PreviewIcon playing={previewingId === track.hexId} />
                   </button>
-                  <div className="rsc-crate-art" style={{ background: 'linear-gradient(135deg,#ff3e9a,#b983ff)' }} />
+                  <div className="rsc-crate-art" style={{ background: 'linear-gradient(135deg,var(--accent-2),var(--role-fan))' }} />
                   <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
                     <div style={{ fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{track.title}</div>
                     <div style={{ fontSize: 11, color: 'var(--ink-a50)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -942,21 +942,21 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
 
       <style>{`
         .rsc-root { max-width: 1200px; margin: 0 auto; padding: 0 0 120px; }
-        .rsc-head { background: linear-gradient(140deg, rgba(255,62,154,.12), rgba(185,131,255,.07)); border-bottom: 1px solid rgba(255,62,154,.18); padding: 34px 32px 26px; }
+        .rsc-head { background: linear-gradient(140deg, rgba(var(--accent-2-rgb),.12), rgba(var(--role-fan-rgb),.07)); border-bottom: 1px solid rgba(var(--accent-2-rgb),.18); padding: 34px 32px 26px; }
         .rsc-eyebrow { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a55); margin-bottom: 10px; }
         .rsc-title-input { font-family: var(--font-display); font-size: 30px; font-weight: 800; letter-spacing: -.02em; color: var(--ink); background: transparent; border: none; border-bottom: 2px solid transparent; padding: 2px 0; width: 100%; max-width: 640px; outline: none; }
-        .rsc-title-input:focus { border-bottom-color: #b983ff; }
+        .rsc-title-input:focus { border-bottom-color: var(--role-fan); }
         .rsc-metarow { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; margin-top: 18px; }
         .rsc-field { display: flex; flex-direction: column; gap: 6px; }
         .rsc-field span { font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a55); }
-        .rsc-field .rsc-ai-hint { text-transform: none; letter-spacing: .04em; color: #22e5d4; cursor: help; }
+        .rsc-field .rsc-ai-hint { text-transform: none; letter-spacing: .04em; color: var(--role-venue); cursor: help; }
         .rsc-select, .rsc-dt { font-family: var(--font-body); font-size: 13px; color: var(--ink); background: var(--bg2); border: 1px solid var(--hair-100); border-radius: 8px; padding: 9px 12px; outline: none; }
         .rsc-actions { display: flex; gap: 10px; margin-left: auto; align-items: flex-end; flex-wrap: wrap; }
         .rsc-btn { padding: 9px 16px; border-radius: 8px; font-family: var(--font-display); font-weight: 700; font-size: 13px; cursor: pointer; border: none; }
         .rsc-btn:disabled { opacity: .6; cursor: default; }
         .rsc-btn-ghost { background: var(--line); color: var(--ink); }
         .rsc-btn-outline { background: transparent; border: 1px solid var(--hair-160); color: var(--ink); }
-        .rsc-btn-solid { background: var(--accent); color: #fff; }
+        .rsc-btn-solid { background: var(--accent); color: var(--ink-on-accent); }
         .rsc-stats { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
         .rsc-stat { border: 1px solid var(--hair-80); border-radius: 10px; padding: 10px 16px; background: var(--hair-20); min-width: 108px; }
         .rsc-stat .v { font-family: var(--font-display); font-weight: 800; font-size: 20px; }
@@ -984,21 +984,21 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
         .rsc-crate-info p { font-size: 11px; color: var(--ink-a55); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .rsc-crate-dur { font-family: var(--font-mono); font-size: 10px; color: var(--ink-a50); flex-shrink: 0; }
         .rsc-crate-add { flex-shrink: 0; width: 26px; height: 26px; border-radius: 7px; border: 1px solid var(--line-2); background: transparent; color: var(--ink); cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .rsc-crate-add:hover { background: rgba(255,62,154,.14); border-color: rgba(255,62,154,.4); color: #ff3e9a; }
+        .rsc-crate-add:hover { background: rgba(var(--accent-2-rgb),.14); border-color: rgba(var(--accent-2-rgb),.4); color: var(--accent-2); }
         .rsc-add-label { margin: 14px 2px 8px; font-family: var(--font-mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-a55); }
         .rsc-upload-btn { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 11px 12px; border: 1px dashed var(--hair-160); border-radius: 10px; background: transparent; color: var(--ink); cursor: pointer; margin-bottom: 8px; }
-        .rsc-upload-btn:hover { border-color: rgba(185,131,255,.5); background: rgba(185,131,255,.05); }
+        .rsc-upload-btn:hover { border-color: rgba(var(--role-fan-rgb),.5); background: rgba(var(--role-fan-rgb),.05); }
         .rsc-upload-ico { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .rsc-upload-t { font-family: var(--font-display); font-weight: 800; font-size: 13px; }
         .rsc-upload-s { font-size: 11px; color: var(--ink-a55); margin-top: 1px; }
-        .rsc-recording-card { padding: 12px; border-radius: 10px; background: rgba(255,80,41,.08); border: 1px solid rgba(255,80,41,.25); margin-bottom: 8px; font-size: 13px; }
+        .rsc-recording-card { padding: 12px; border-radius: 10px; background: rgba(var(--accent-rgb),.08); border: 1px solid rgba(var(--accent-rgb),.25); margin-bottom: 8px; font-size: 13px; }
         .rsc-vo-preview { display: block; width: 100%; margin-top: 8px; }
         .rsc-rec-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-right: 6px; animation: rsc-pulse 1s ease-in-out infinite; }
         @keyframes rsc-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
         .rsc-fineprint { font-size: 11px; color: var(--ink-a50); line-height: 1.55; margin: 6px 4px 0; }
         .rsc-tl-scroll { min-height: 320px; }
         .rsc-tl-item { position: relative; display: flex; gap: 12px; align-items: center; padding: 12px 14px; border: 1px solid var(--hair-70); border-radius: 10px; background: var(--hair-20); margin-bottom: 9px; }
-        .rsc-tl-item-ad { background: rgba(255,80,41,.05); border-color: rgba(255,80,41,.22); align-items: flex-start; }
+        .rsc-tl-item-ad { background: rgba(var(--accent-rgb),.05); border-color: rgba(var(--accent-rgb),.22); align-items: flex-start; }
         .rsc-tl-grip { color: var(--ink-a32); flex-shrink: 0; display: flex; align-self: center; padding: 6px; margin: -6px 0; cursor: grab; touch-action: none; }
         .rsc-tl-grip:active { cursor: grabbing; }
         .rsc-tl-pos { font-family: var(--font-mono); font-size: 10px; color: var(--ink-a55); width: 42px; flex-shrink: 0; text-align: right; }
@@ -1009,8 +1009,8 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
         .rsc-tl-chip { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 8px; text-transform: uppercase; letter-spacing: .12em; padding: 3px 7px; border-radius: 4px; margin-right: 8px; vertical-align: middle; }
         .rsc-tl-dur { font-family: var(--font-mono); font-size: 11px; color: var(--ink-a60); flex-shrink: 0; }
         .rsc-tl-rm { flex-shrink: 0; width: 26px; height: 26px; border-radius: 7px; border: none; background: transparent; color: var(--ink-a50); cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .rsc-tl-rm:hover { background: rgba(255,80,41,.14); color: var(--accent); }
-        .rsc-drop-line { height: 2px; background: #b983ff; border-radius: 2px; margin: -5px 0 7px; box-shadow: 0 0 8px rgba(255,62,154,.6); }
+        .rsc-tl-rm:hover { background: rgba(var(--accent-rgb),.14); color: var(--accent); }
+        .rsc-drop-line { height: 2px; background: var(--role-fan); border-radius: 2px; margin: -5px 0 7px; box-shadow: 0 0 8px rgba(var(--accent-2-rgb),.6); }
         .rsc-ad-spots { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
         .rsc-ad-spot { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; background: rgba(0,0,0,.25); border: 1px solid var(--line); }
         .rsc-as-name { font-size: 12px; font-weight: 600; flex: 1; min-width: 0; }
@@ -1018,10 +1018,10 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
         .rsc-as-dur { font-family: var(--font-mono); font-size: 10px; color: var(--ink-a60); flex-shrink: 0; }
         .rsc-tl-empty { text-align: center; padding: 60px 24px; color: var(--ink-a50); border: 2px dashed var(--hair-100); border-radius: 12px; }
         .rsc-tl-empty-title { font-family: var(--font-display); font-weight: 800; font-size: 16px; color: var(--ink); margin-bottom: 4px; }
-        .rsc-ad-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 8px; border: 1px solid rgba(255,80,41,.4); background: rgba(255,80,41,.08); color: var(--accent); font-family: var(--font-display); font-weight: 800; font-size: 12px; cursor: pointer; }
+        .rsc-ad-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 8px; border: 1px solid rgba(var(--accent-rgb),.4); background: rgba(var(--accent-rgb),.08); color: var(--accent); font-family: var(--font-display); font-weight: 800; font-size: 12px; cursor: pointer; }
         .rsc-ad-types { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
         .rsc-ad-types-label { font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-a55); margin-right: 2px; }
-        .rsc-ad-type-chip { font-family: var(--font-mono); font-size: 9px; letter-spacing: .06em; color: #22e5d4; background: rgba(34,229,212,.12); border-radius: 4px; padding: 3px 8px; }
+        .rsc-ad-type-chip { font-family: var(--font-mono); font-size: 9px; letter-spacing: .06em; color: var(--role-venue); background: rgba(var(--role-venue-rgb),.12); border-radius: 4px; padding: 3px 8px; }
         .rsc-clear-btn { padding: 7px 12px; border-radius: 8px; border: 1px solid var(--hair-120); background: transparent; color: var(--ink-a60); font-size: 12px; font-weight: 600; cursor: pointer; }
         .rsc-summary { display: flex; gap: 22px; flex-wrap: wrap; padding: 16px 18px; margin-top: 14px; border: 1px solid var(--hair-70); border-radius: 12px; background: var(--bg2); }
         .rsc-s-v { font-family: var(--font-display); font-weight: 800; font-size: 18px; }
@@ -1039,9 +1039,9 @@ export function RadioShowCreator({ initialCrate, profile }: { initialCrate: Crat
         .rsc-sample-row:hover { background: var(--bg3); }
         .rsc-sample-swatch { width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0; }
         .rsc-sample-preview, .rsc-sample-add { flex-shrink: 0; width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--line-2); background: transparent; color: var(--ink); cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .rsc-sample-preview:hover { background: rgba(34,229,212,.14); border-color: rgba(34,229,212,.4); color: #22e5d4; }
-        .rsc-sample-add:hover { background: rgba(255,62,154,.14); border-color: rgba(255,62,154,.4); color: #ff3e9a; }
-        .rsc-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--bg3); border: 1px solid rgba(34,229,212,.35); color: var(--ink); padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 1100; box-shadow: 0 8px 30px rgba(0,0,0,.4); }
+        .rsc-sample-preview:hover { background: rgba(var(--role-venue-rgb),.14); border-color: rgba(var(--role-venue-rgb),.4); color: var(--role-venue); }
+        .rsc-sample-add:hover { background: rgba(var(--accent-2-rgb),.14); border-color: rgba(var(--accent-2-rgb),.4); color: var(--accent-2); }
+        .rsc-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--bg3); border: 1px solid rgba(var(--role-venue-rgb),.35); color: var(--ink); padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; z-index: 1100; box-shadow: 0 8px 30px rgba(0,0,0,.4); }
       `}</style>
     </div>
   );

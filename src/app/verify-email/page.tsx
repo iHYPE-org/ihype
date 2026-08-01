@@ -94,7 +94,7 @@ function VerifyEmailForm() {
           {t('verifyEmailPage.body', 'We sent a 6-digit verification code to your email address. Enter it below to verify your account and continue.')}
         </p>
         {status === 'sent' && (
-          <p style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: '#22e5d4', marginBottom: 16 }}>
+          <p style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--role-venue)', marginBottom: 16 }}>
             {t('verifyEmailPage.codeSent', 'Verification code sent! Check your inbox.')}
           </p>
         )}

@@ -76,7 +76,7 @@ export function NewsletterSignup() {
 
   if (sent) {
     return (
-      <div style={{ fontSize: 13, color: '#22e5d4', padding: '12px 16px', background: 'rgba(34,229,212,.08)', borderRadius: 8 }}>
+      <div style={{ fontSize: 13, color: 'var(--role-venue)', padding: '12px 16px', background: 'rgba(var(--role-venue-rgb),.08)', borderRadius: 8 }}>
         ✓ {t('newsletterSignup.confirmPrefix', 'Check')} {email} {t('newsletterSignup.confirmSuffix', "for a confirm link — you're one click from updates on")} {profile?.name}.
       </div>
     );
@@ -87,7 +87,7 @@ export function NewsletterSignup() {
       <div className="field" ref={containerRef} style={{ position: 'relative' }}>
         <span>{t('newsletterSignup.profileFieldLabel', 'Artist, venue, or DJ')}</span>
         {profile ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(255,80,41,.07)', border: '1px solid rgba(255,80,41,.2)', borderRadius: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(var(--accent-rgb),.07)', border: '1px solid rgba(var(--accent-rgb),.2)', borderRadius: 10 }}>
             <div style={{ flex: 1, fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}>{profile.name}</div>
             <button onClick={() => setProfile(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-a50)', fontSize: 18, lineHeight: 1, padding: '0 4px' }} type="button">×</button>
           </div>

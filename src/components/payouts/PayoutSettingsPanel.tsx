@@ -92,10 +92,10 @@ export async function PayoutSettingsPanel({ profiles, stripeReady }: { profiles:
         .pset-role { font-size: 12px; color: var(--ink-a55); margin-top: 2px; }
         .pset-role a { color: var(--ink-a55); }
         .pset-pill { flex-shrink: 0; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; padding: 5px 10px; border-radius: var(--radius-pill); }
-        .pset-pill-on { background: rgba(34,229,212,.15); color: var(--role-venue, #22e5d4); }
+        .pset-pill-on { background: rgba(var(--role-venue-rgb),.15); color: var(--role-venue); }
         .pset-pill-off { background: var(--ink-a10, rgba(120,120,120,.15)); color: var(--ink-a55); }
         .pset-account-row { display: flex; align-items: center; gap: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
-        .pset-account-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(34,229,212,.12); color: var(--role-venue, #22e5d4); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .pset-account-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(var(--role-venue-rgb),.12); color: var(--role-venue); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .pset-account-info { flex: 1; min-width: 0; }
         .pset-account-label { font-size: 14px; font-weight: 500; color: var(--ink); }
         .pset-account-id { font-family: var(--font-mono); font-size: 12px; color: var(--ink-a55); margin-top: 3px; }

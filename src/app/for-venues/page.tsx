@@ -11,11 +11,11 @@ export const metadata: Metadata = {
 function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitConfig {
   return {
   role: 'VENUE',
-  tint: 'var(--role-venue, #22e5d4)',
+  tint: 'var(--role-venue)',
   glow: '#22e5d4',
   navCta: t('forVenuesPage.navCta', 'Apply as a venue →'),
   eyebrow: t('forVenuesPage.eyebrow', 'For Venues'),
-  headline: <>{t('forVenuesPage.headlineLine1', 'Your room.')}<br />{t('forVenuesPage.headlineLine2', 'Your booking.')}<br /><span style={{ color: 'var(--role-venue, #22e5d4)' }}>{t('forVenuesPage.headlineLine3', 'Your data.')}</span></>,
+  headline: <>{t('forVenuesPage.headlineLine1', 'Your room.')}<br />{t('forVenuesPage.headlineLine2', 'Your booking.')}<br /><span style={{ color: 'var(--role-venue)' }}>{t('forVenuesPage.headlineLine3', 'Your data.')}</span></>,
   heroBody: (
     <>{t('forVenuesPage.heroBodyLead', 'iHYPE guarantees you')} <strong>{t('forVenuesPage.heroBodyStrong', '20% of every gate')}</strong>{t('forVenuesPage.heroBodyRest', ', real demand data on who your city wants to see, and a booking inbox that keeps every offer in one place.')}</>
   ),

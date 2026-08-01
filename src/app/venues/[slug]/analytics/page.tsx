@@ -162,21 +162,21 @@ export default async function VenueAnalyticsPage({
         .vaa-head h1 { font-family: var(--font-display); font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin: 0; color: var(--ink); }
         .vaa-tabs { display: flex; gap: 4px; border: 1px solid var(--line); border-radius: var(--radius-pill); padding: 4px; width: fit-content; margin-bottom: 28px; }
         .vaa-tab { padding: 8px 16px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 700; color: var(--ink-a60); text-decoration: none; }
-        .vaa-tab.active { background: var(--role-venue, #22e5d4); color: #0a0805; }
+        .vaa-tab.active { background: var(--role-venue); color: var(--bg); }
         .vaa-tab:not(.active):hover { background: var(--hair-40); }
         .vaa-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
         .vaa-card { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg2); padding: 18px 20px; }
         .vaa-card-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a50); margin-bottom: 6px; }
         .vaa-card-val { font-family: var(--font-display); font-weight: 800; font-size: 24px; color: var(--ink); }
-        .vaa-card-val-accent { color: var(--role-venue, #22e5d4); }
+        .vaa-card-val-accent { color: var(--role-venue); }
         .vaa-card-sub { font-size: 11.5px; color: var(--ink-a50); margin-top: 2px; }
-        .vaa-card-sub-accent { color: var(--role-venue, #22e5d4); }
-        .vaa-eyebrow { font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--role-venue, #22e5d4); margin-bottom: 14px; }
+        .vaa-card-sub-accent { color: var(--role-venue); }
+        .vaa-eyebrow { font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--role-venue); margin-bottom: 14px; }
         .vaa-eyebrow-sm { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-a50); }
         .vaa-section-head { display: flex; justify-content: space-between; align-items: baseline; margin-top: 32px; margin-bottom: 4px; }
         .vaa-chart { display: flex; align-items: flex-end; gap: 6px; height: 120px; margin-bottom: 32px; padding: 0 4px; }
         .vaa-chart-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; gap: 6px; }
-        .vaa-chart-bar { width: 100%; border-radius: 4px 4px 0 0; background: var(--role-venue, #22e5d4); min-height: 4px; }
+        .vaa-chart-bar { width: 100%; border-radius: 4px 4px 0 0; background: var(--role-venue); min-height: 4px; }
         .vaa-chart-label { font-family: var(--font-mono); font-size: 10px; color: var(--ink-a50); }
         .vaa-empty { text-align: center; padding: 40px 24px; color: var(--ink-a50); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg2); margin-top: 12px; margin-bottom: 24px; font-size: 14px; }
         .vaa-events { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg2); margin-top: 12px; overflow: hidden; }
@@ -185,7 +185,7 @@ export default async function VenueAnalyticsPage({
         .vaa-event-row:hover { background: var(--bg3); }
         .vaa-event-title { font-family: var(--font-display); font-weight: 800; font-size: 14px; color: var(--ink); }
         .vaa-event-meta { font-size: 12px; color: var(--ink-a60); margin-top: 2px; }
-        .vaa-event-gross { font-family: var(--font-mono); font-size: 13px; color: var(--role-venue, #22e5d4); font-weight: 700; flex-shrink: 0; }
+        .vaa-event-gross { font-family: var(--font-mono); font-size: 13px; color: var(--role-venue); font-weight: 700; flex-shrink: 0; }
       `}</style>
     </div>
   );

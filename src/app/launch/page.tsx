@@ -240,8 +240,8 @@ export default async function LaunchPage() {
             style={{
               padding: 'clamp(2rem, 5vw, 3.5rem)',
               borderRadius: 24,
-              border: '1px solid rgba(255,80,41,.22)',
-              background: 'linear-gradient(135deg, rgba(255,80,41,.1), rgba(255,62,154,.05), transparent)',
+              border: '1px solid rgba(var(--accent-rgb),.22)',
+              background: 'linear-gradient(135deg, rgba(var(--accent-rgb),.1), rgba(var(--accent-2-rgb),.05), transparent)',
             }}
           >
             <h2

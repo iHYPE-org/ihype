@@ -217,7 +217,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
           .legal-seg { scrollbar-width: none; -webkit-overflow-scrolling: touch; }
           .legal-seg::-webkit-scrollbar { display: none; }
         }
-        .legal-seg-btn.active { background: rgba(255,80,41,.1); color: var(--accent); }
+        .legal-seg-btn.active { background: rgba(var(--accent-rgb),.1); color: var(--accent); }
         .legal-doc { display: none; }
         .legal-doc.active { display: block; }
         .legal-doc h2 { font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; font-size: 1.15rem; letter-spacing: -.02em; margin: 2.5rem 0 .6rem; color: var(--ink); }
@@ -230,7 +230,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
            when it was folded into this tab. */
         .charter-split-bar { display: flex; height: 14px; border-radius: var(--radius-pill, 9999px); overflow: hidden; margin: 1.5rem 0 0; gap: 4px; }
         .charter-split-bar div { border-radius: var(--radius-pill, 9999px); }
-        .charter-callout { background: rgba(255,80,41,.06); border: 1px solid rgba(255,80,41,.15); border-radius: 16px; padding: 20px 24px; margin: 0 0 1rem; }
+        .charter-callout { background: rgba(var(--accent-rgb),.06); border: 1px solid rgba(var(--accent-rgb),.15); border-radius: 16px; padding: 20px 24px; margin: 0 0 1rem; }
         .charter-callout p { margin: 0 !important; color: var(--ink) !important; font-family: var(--f-s, 'Instrument Serif', serif); font-style: italic; font-size: 1.12rem !important; line-height: 1.55 !important; }
         .charter-inline-link { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: .72rem; letter-spacing: .04em; border-bottom: 1px solid currentColor; }
         @media print {

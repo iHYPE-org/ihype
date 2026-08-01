@@ -51,7 +51,7 @@ export async function PayoutsHistoryPanel({ released, pending }: { released: Pay
                   </div>
                   <div className="meta">{entry.payeeLabel} · {entry.paidAt ? new Date(entry.paidAt).toLocaleDateString() : ''}</div>
                 </div>
-                <div style={{ fontWeight: 700, color: '#22e5d4' }}>{fmtCents(entry.amountCents)}</div>
+                <div style={{ fontWeight: 700, color: 'var(--role-venue)' }}>{fmtCents(entry.amountCents)}</div>
               </div>
             ))}
           </div>

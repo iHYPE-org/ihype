@@ -127,8 +127,8 @@ export default async function JournalPost({
         style={{
           marginTop: 40,
           padding: '20px 24px',
-          background: 'rgba(255,80,41,.06)',
-          border: '1px solid rgba(255,80,41,.2)',
+          background: 'rgba(var(--accent-rgb),.06)',
+          border: '1px solid rgba(var(--accent-rgb),.2)',
           borderRadius: 14,
           fontSize: '.88rem',
           color: 'var(--ink-2)',

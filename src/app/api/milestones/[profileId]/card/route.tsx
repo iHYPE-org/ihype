@@ -50,7 +50,7 @@ export async function GET(
           style={{
             fontSize: 96,
             fontWeight: 800,
-            background: 'linear-gradient(135deg, #22e5d4, #b44fff)',
+            background: 'linear-gradient(135deg, var(--role-venue), #b44fff)',
             backgroundClip: 'text',
             color: 'transparent',
             lineHeight: 1,

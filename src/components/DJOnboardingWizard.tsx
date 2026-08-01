@@ -286,7 +286,7 @@ export function DJOnboardingWizard({
           ) : submitState === 'already' ? (
             <>
               <div className="djo-icon">
-                <svg fill="none" height="26" stroke="#22e5d4" strokeLinecap="round" strokeWidth="2.5" viewBox="0 0 24 24" width="26"><polyline points="20 6 9 17 4 12" /></svg>
+                <svg fill="none" height="26" stroke="var(--role-venue)" strokeLinecap="round" strokeWidth="2.5" viewBox="0 0 24 24" width="26"><polyline points="20 6 9 17 4 12" /></svg>
               </div>
               <div className="djo-h1">{t('djOnboardingWizard.alreadyTitle', 'Already verified.')}</div>
               <p className="djo-sub">{name || t('djOnboardingWizard.yourPageSentenceStart', 'Your page')} {t('djOnboardingWizard.alreadySub', 'is already a verified DJ page.')}</p>
@@ -295,7 +295,7 @@ export function DJOnboardingWizard({
           ) : (
             <>
               <div className="djo-icon">
-                <svg fill="none" height="26" stroke="#22e5d4" strokeLinecap="round" strokeWidth="2.5" viewBox="0 0 24 24" width="26"><polyline points="20 6 9 17 4 12" /></svg>
+                <svg fill="none" height="26" stroke="var(--role-venue)" strokeLinecap="round" strokeWidth="2.5" viewBox="0 0 24 24" width="26"><polyline points="20 6 9 17 4 12" /></svg>
               </div>
               <div className="djo-h1">{t('djOnboardingWizard.submittedTitle', 'Submitted.')}</div>
               <p className="djo-sub">{t('djOnboardingWizard.submittedSubPrefix', "We'll review")} {name || t('djOnboardingWizard.yourPage', 'your page')} {t('djOnboardingWizard.submittedSubSuffix', 'within 48 hours and email you. You can start building your crate meanwhile.')}</p>
@@ -310,8 +310,8 @@ export function DJOnboardingWizard({
         .djo-page { font-family: var(--font-body, 'DM Sans', sans-serif); color: var(--ink); max-width: 480px; margin: 0 auto; padding: 48px 24px 60px; }
         .djo-eyebrow { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a50); margin-bottom: 10px; }
         .djo-progress-track { height: 6px; border-radius: var(--radius-pill); background: var(--line); overflow: hidden; }
-        .djo-progress-fill { height: 100%; border-radius: var(--radius-pill); background: var(--accent-2, #ff3e9a); transition: width 200ms ease; }
-        .djo-error { margin-top: 16px; padding: 12px 14px; border-radius: var(--radius-md); background: rgba(255,80,41,.1); border: 1px solid rgba(255,80,41,.3); color: var(--ink); font-size: 13px; }
+        .djo-progress-fill { height: 100%; border-radius: var(--radius-pill); background: var(--accent-2); transition: width 200ms ease; }
+        .djo-error { margin-top: 16px; padding: 12px 14px; border-radius: var(--radius-md); background: rgba(var(--accent-rgb),.1); border: 1px solid rgba(var(--accent-rgb),.3); color: var(--ink); font-size: 13px; }
         .djo-step { margin-top: 28px; }
         .djo-h1 { font-family: var(--font-display); font-weight: 800; font-size: 27px; letter-spacing: -.03em; margin-bottom: 8px; }
         .djo-sub { font-size: 14px; color: var(--ink-a55); line-height: 1.65; margin: 0 0 24px; }
@@ -325,22 +325,22 @@ export function DJOnboardingWizard({
         .djo-crate-empty div { font-size: 13px; line-height: 1.5; }
         .djo-choice { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: var(--radius-md); cursor: pointer; margin-bottom: 8px; border: 1px solid var(--line-2); transition: background 150ms; }
         .djo-choice:hover { background: var(--bg3); }
-        .djo-choice-on { border-color: var(--accent-2, #ff3e9a); background: rgba(255,62,154,.1); }
-        .djo-choice-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-2, #ff3e9a); flex-shrink: 0; }
+        .djo-choice-on { border-color: var(--accent-2); background: rgba(var(--accent-2-rgb),.1); }
+        .djo-choice-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-2); flex-shrink: 0; }
         .djo-choice-title { font-family: var(--font-display); font-weight: 800; font-size: 14px; }
         .djo-choice-sub { font-size: 12px; color: var(--ink-a55); }
         .djo-card { border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--bg2); padding: 20px; }
-        .djo-card-eyebrow { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent-2, #ff3e9a); margin-bottom: 10px; }
+        .djo-card-eyebrow { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent-2); margin-bottom: 10px; }
         .djo-card-body { font-size: 13.5px; color: var(--ink-a55); line-height: 1.8; }
         .djo-actions { margin-top: 20px; display: flex; flex-direction: column; gap: 8px; }
         .djo-btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; width: 100%; box-sizing: border-box; padding: 10px 20px; border-radius: var(--radius-md); font-size: 14px; font-weight: 700; min-height: 44px; border: none; cursor: pointer; font-family: inherit; }
         .djo-btn:disabled { opacity: .6; cursor: not-allowed; }
-        .djo-btn-solid { background: var(--accent-2, #ff3e9a); color: #fff; }
+        .djo-btn-solid { background: var(--accent-2); color: var(--ink-on-accent); }
         .djo-btn-outline { background: transparent; color: var(--ink-a55); border: 1px solid var(--line-2); }
         .djo-done { text-align: center; }
-        .djo-icon { width: 56px; height: 56px; border-radius: var(--radius-lg); display: grid; place-items: center; margin: 0 auto 16px; background: rgba(34,229,212,.12); border: 2px solid #22e5d4; }
-        .djo-icon-err { background: rgba(255,80,41,.12); border: 2px solid var(--accent); color: var(--accent); font-family: var(--font-display); font-weight: 800; font-size: 22px; }
-        .djo-badge { display: inline-flex; margin: 0 auto 24px; padding: 4px 12px; border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; background: rgba(255,62,154,.12); color: var(--accent-2, #ff3e9a); }
+        .djo-icon { width: 56px; height: 56px; border-radius: var(--radius-lg); display: grid; place-items: center; margin: 0 auto 16px; background: rgba(var(--role-venue-rgb),.12); border: 2px solid #22e5d4; }
+        .djo-icon-err { background: rgba(var(--accent-rgb),.12); border: 2px solid var(--accent); color: var(--accent); font-family: var(--font-display); font-weight: 800; font-size: 22px; }
+        .djo-badge { display: inline-flex; margin: 0 auto 24px; padding: 4px 12px; border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; background: rgba(var(--accent-2-rgb),.12); color: var(--accent-2); }
       `}</style>
     </div>
   );

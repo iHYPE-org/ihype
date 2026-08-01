@@ -47,8 +47,8 @@ export function PagesReferralTab() {
 
   if (ageGated) {
     return (
-      <div style={{ background: 'rgba(185,131,255,.06)', border: '1px solid rgba(185,131,255,.18)', borderRadius: 16, padding: 24, textAlign: 'center' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: '#b983ff', marginBottom: 10 }}>
+      <div style={{ background: 'rgba(var(--role-fan-rgb),.06)', border: '1px solid rgba(var(--role-fan-rgb),.18)', borderRadius: 16, padding: 24, textAlign: 'center' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--role-fan)', marginBottom: 10 }}>
           {t('pagesReferralTab.ageGateBadge', 'HYPE Link · 18+')}
         </div>
         <p style={{ fontSize: 14, color: 'var(--ink-a75)', lineHeight: 1.6, margin: '0 0 16px' }}>
@@ -93,8 +93,8 @@ export function PagesReferralTab() {
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>{t('pagesReferralTab.clicks', 'Clicks')}</div>
         </div>
       </div>
-      <div style={{ background: 'rgba(185,131,255,.06)', border: '1px solid rgba(185,131,255,.18)', borderRadius: 16, padding: 20 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: '#b983ff', marginBottom: 12 }}>
+      <div style={{ background: 'rgba(var(--role-fan-rgb),.06)', border: '1px solid rgba(var(--role-fan-rgb),.18)', borderRadius: 16, padding: 20 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--role-fan)', marginBottom: 12 }}>
           {t('pagesReferralTab.linkSectionLabel', 'Your HYPE Link · your unique fan ID — earn on every ticket you drive')}
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 14 }}>

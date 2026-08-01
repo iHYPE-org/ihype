@@ -161,7 +161,7 @@ export function NotificationsList({ initialNotifications }: { initialNotificatio
         .notifications-tab.active { color: var(--ink); border-color: var(--accent); }
         .notifications-item { display: flex; gap: 16px; align-items: flex-start; padding: 18px 0; border-bottom: 1px solid var(--line); cursor: pointer; transition: opacity 150ms; }
         .notifications-item:hover { opacity: .85; }
-        .notifications-item.unread { background: rgba(255,80,41,.03); }
+        .notifications-item.unread { background: rgba(var(--accent-rgb),.03); }
         .notifications-icon { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .notifications-body { flex: 1; min-width: 0; }
         .notifications-text { font-size: 14px; line-height: 1.5; color: var(--ink-a90, var(--ink)); margin-bottom: 4px; }

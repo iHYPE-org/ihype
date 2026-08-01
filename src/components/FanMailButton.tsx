@@ -140,14 +140,14 @@ export function FanMailButton({
         .fm-hint { font-size: 12px; color: var(--ink-a65); margin: 0; }
         .fm-field { display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 700; color: var(--ink-a65); }
         .fm-field input, .fm-field textarea { font: inherit; font-size: 13px; font-weight: 400; color: var(--ink); background: var(--line); border: 1px solid var(--hair-100); border-radius: 9px; padding: 10px 12px; resize: vertical; }
-        .fm-field input:focus, .fm-field textarea:focus { outline: 2px solid var(--accent, #ff5029); outline-offset: 1px; }
+        .fm-field input:focus, .fm-field textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
         .fm-status { font-size: 12px; margin: 0; }
-        .fm-status-error { color: var(--accent, #ff5029); }
+        .fm-status-error { color: var(--accent); }
         .fm-status-ok { color: var(--ink); }
         .fm-modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--line); }
         .fm-btn { padding: 9px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; border: 1px solid var(--hair-100); background: var(--line); color: var(--ink); cursor: pointer; }
         .fm-btn:disabled { opacity: .6; cursor: default; }
-        .fm-btn-primary { background: var(--accent, #ff5029); border-color: var(--accent, #ff5029); color: #fff; }
+        .fm-btn-primary { background: var(--accent); border-color: var(--accent); color: var(--ink-on-accent); }
       `}</style>
     </>
   );

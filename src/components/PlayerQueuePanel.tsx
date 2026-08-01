@@ -53,7 +53,7 @@ export function PlayerQueuePanel({
               ...btnBase, flex: 1, padding: '6px 8px', fontSize: '0.68rem',
               textTransform: 'uppercase', letterSpacing: '0.06em',
               opacity: panel === p ? 1 : 0.4,
-              borderBottom: panel === p ? '2px solid var(--accent, #ff5029)' : '2px solid transparent',
+              borderBottom: panel === p ? '2px solid var(--accent)' : '2px solid transparent',
               fontWeight: panel === p ? 700 : 400,
             }}
             type="button"
@@ -108,7 +108,7 @@ export function PlayerQueuePanel({
           <button
             onClick={toggleAutoplay}
             type="button"
-            style={{ ...btnBase, fontSize: '0.68rem', fontWeight: 700, opacity: isAutoplay ? 1 : 0.4, color: isAutoplay ? 'var(--accent, #ff5029)' : 'inherit' }}
+            style={{ ...btnBase, fontSize: '0.68rem', fontWeight: 700, opacity: isAutoplay ? 1 : 0.4, color: isAutoplay ? 'var(--accent)' : 'inherit' }}
           >
             {isAutoplay ? t('playerQueuePanel.on', 'On') : t('playerQueuePanel.off', 'Off')}
           </button>

@@ -163,26 +163,26 @@ export function AdvertiserRegisterForm() {
 const styles = `
   .aar-page { max-width: 460px; margin: 0 auto; padding: 60px 20px 80px; }
   .aar-card { display: flex; flex-direction: column; }
-  .aar-eyebrow { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent, #ff5029); margin-bottom: 10px; }
+  .aar-eyebrow { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
   .aar-title { font-family: var(--font-display); font-size: 28px; font-weight: 800; letter-spacing: -.03em; margin: 0 0 12px; color: var(--ink); }
   .aar-sub { font-size: 13.5px; color: var(--ink-a65); line-height: 1.6; margin: 0 0 28px; }
   .aar-label { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a55); margin: 14px 0 6px; }
   .aar-label:first-of-type { margin-top: 0; }
   .aar-input { width: 100%; font-size: 14px; color: var(--ink); background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 12px 14px; outline: none; font-family: inherit; box-sizing: border-box; }
-  .aar-input:focus { border-color: var(--accent, #ff5029); }
+  .aar-input:focus { border-color: var(--accent); }
   .aar-textarea { resize: vertical; }
-  .aar-notice { border: 1px solid rgba(255,184,74,.25); background: rgba(255,184,74,.06); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 24px; }
-  .aar-notice-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: #ffb84a; margin-bottom: 4px; }
+  .aar-notice { border: 1px solid rgba(var(--role-promoter-rgb),.25); background: rgba(var(--role-promoter-rgb),.06); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 24px; }
+  .aar-notice-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--role-promoter); margin-bottom: 4px; }
   .aar-notice-body { font-size: 12.5px; color: var(--ink-a65); line-height: 1.6; margin: 0; }
   .aar-cat-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
   .aar-cat { padding: 7px 13px; border-radius: var(--radius-pill); font-size: 12.5px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--ink-a65); font-family: inherit; }
-  .aar-cat.active { border-color: #ffb84a; background: rgba(255,184,74,.13); color: #ffb84a; }
-  .aar-error { color: var(--accent, #ff5029); font-size: 12.5px; margin: 14px 0 0; }
-  .aar-btn { margin-top: 26px; font-family: var(--font-mono); font-size: 13px; text-transform: uppercase; letter-spacing: .06em; padding: 13px 20px; border-radius: var(--radius-pill); border: none; background: var(--accent, #ff5029); color: #fff; cursor: pointer; }
+  .aar-cat.active { border-color: var(--role-promoter); background: rgba(var(--role-promoter-rgb),.13); color: var(--role-promoter); }
+  .aar-error { color: var(--accent); font-size: 12.5px; margin: 14px 0 0; }
+  .aar-btn { margin-top: 26px; font-family: var(--font-mono); font-size: 13px; text-transform: uppercase; letter-spacing: .06em; padding: 13px 20px; border-radius: var(--radius-pill); border: none; background: var(--accent); color: var(--ink-on-accent); cursor: pointer; }
   .aar-btn:disabled { opacity: .6; cursor: default; }
   .aar-fineprint { font-size: 12px; color: var(--ink-a55); line-height: 1.6; margin-top: 16px; }
   .aar-fineprint a { color: var(--ink-a70); text-decoration: underline; }
   .aar-done { text-align: center; }
-  .aar-check { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; background: rgba(34,229,212,.12); border: 2px solid #22e5d4; color: #22e5d4; font-size: 24px; }
+  .aar-check { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; background: rgba(var(--role-venue-rgb),.12); border: 2px solid #22e5d4; color: var(--role-venue); font-size: 24px; }
   .aar-link { display: inline-block; margin-top: 20px; font-size: 13px; color: var(--ink-a70); text-decoration: underline; }
 `;

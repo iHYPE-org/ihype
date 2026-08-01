@@ -177,11 +177,11 @@ export function VenueLineupComposer({
         .vlc-actions { display: flex; justify-content: space-between; align-items: center; margin: 10px 0 16px; }
         .vlc-btn { font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; padding: 10px 18px; border-radius: var(--radius-pill); border: none; cursor: pointer; }
         .vlc-btn-outline { background: transparent; color: var(--ink-a70); border: 1px solid var(--line); }
-        .vlc-btn-solid { background: var(--accent, #ff5029); color: #fff; width: 100%; }
+        .vlc-btn-solid { background: var(--accent); color: var(--ink-on-accent); width: 100%; }
         .vlc-btn:disabled { opacity: 0.6; cursor: default; }
-        .vlc-total { font-family: var(--font-mono); font-size: 12px; color: var(--role-venue, #22e5d4); }
-        .vlc-total-off { color: var(--accent, #ff5029); }
-        .vlc-error { color: var(--accent, #ff5029); font-size: 12.5px; margin: 0 0 12px; }
+        .vlc-total { font-family: var(--font-mono); font-size: 12px; color: var(--role-venue); }
+        .vlc-total-off { color: var(--accent); }
+        .vlc-error { color: var(--accent); font-size: 12.5px; margin: 0 0 12px; }
       `}</style>
     </div>
   );

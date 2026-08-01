@@ -22,10 +22,10 @@ import { useI18n } from '@/components/I18nProvider';
 type PasskeyRegistrationOptions = Parameters<typeof startRegistration>[0]['optionsJSON'];
 
 const ROLE_COLOR: Record<RoleOption, string> = {
-  FAN: '#b983ff',
-  ARTIST: '#ff5029',
-  DJ: '#ff3e9a',
-  VENUE: '#22e5d4'
+  FAN: 'var(--role-fan)',
+  ARTIST: 'var(--role-artist)',
+  DJ: 'var(--role-dj)',
+  VENUE: 'var(--role-venue)'
 };
 
 export function RegisterScreen({

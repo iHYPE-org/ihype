@@ -9,7 +9,7 @@ import { useI18n } from '@/components/I18nProvider';
 
 const TABS = [
   {
-    id: 'listen', labelKey: 'siteNavTabs.listen', label: 'Listen', href: '/listen', color: '#ff5029',
+    id: 'listen', labelKey: 'siteNavTabs.listen', label: 'Listen', href: '/listen', color: 'var(--accent)',
     icon: (
       <svg fill="none" height="17" viewBox="0 0 24 24" width="17" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8">
         <path d="M4 15v-3a8 8 0 0 1 16 0v3" />
@@ -18,7 +18,7 @@ const TABS = [
     ),
   },
   {
-    id: 'events', labelKey: 'siteNavTabs.events', label: 'Events', href: '/shows', color: '#22e5d4',
+    id: 'events', labelKey: 'siteNavTabs.events', label: 'Events', href: '/shows', color: 'var(--role-venue)',
     icon: (
       <svg fill="none" height="17" viewBox="0 0 24 24" width="17" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8">
         <rect height="16" rx="3" width="18" x="3" y="5" />
@@ -28,7 +28,7 @@ const TABS = [
     ),
   },
   {
-    id: 'pages', labelKey: 'siteNavTabs.pages', label: 'Pages', href: '/pages', color: '#b983ff',
+    id: 'pages', labelKey: 'siteNavTabs.pages', label: 'Pages', href: '/pages', color: 'var(--role-fan)',
     icon: (
       <svg fill="none" height="17" viewBox="0 0 24 24" width="17" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8">
         <circle cx="12" cy="8" r="4" />
@@ -119,7 +119,7 @@ export function SiteNavTabs() {
           padding: '8px 16px 8px 8px',
           borderRadius: 999,
           border: `1px solid #ff3e9a${menuOpen ? '59' : '28'}`,
-          background: `#ff3e9a${menuOpen ? '18' : '08'}`,
+          background: `var(--accent-2)${menuOpen ? '18' : '08'}`,
           cursor: 'pointer',
           whiteSpace: 'nowrap',
           transition: 'background 150ms cubic-bezier(0.2,0.7,0.3,1), border-color 150ms cubic-bezier(0.2,0.7,0.3,1)',
@@ -135,8 +135,8 @@ export function SiteNavTabs() {
             height: 34,
             borderRadius: 12,
             flexShrink: 0,
-            background: `#ff3e9a${menuOpen ? '2e' : '16'}`,
-            color: '#ff3e9a',
+            background: `var(--accent-2)${menuOpen ? '2e' : '16'}`,
+            color: 'var(--accent-2)',
           }}
         >
           <svg fill="none" height="17" viewBox="0 0 24 24" width="17" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8">

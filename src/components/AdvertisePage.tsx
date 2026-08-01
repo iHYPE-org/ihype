@@ -19,15 +19,15 @@ export type AdvertisePageStats = {
 };
 
 const QUEUE = [
-  { name: 'Velvet Room — Fri all-ages show', kind: 'Venue', color: '#22e5d4', ok: true },
-  { name: 'Maya Reyes — "Sundown" single', kind: 'Artist', color: '#b983ff', ok: true },
+  { name: 'Velvet Room — Fri all-ages show', kind: 'Venue', color: 'var(--role-venue)', ok: true },
+  { name: 'Maya Reyes — "Sundown" single', kind: 'Artist', color: 'var(--role-fan)', ok: true },
   { name: 'NorthBeat Pedals — summer sale', kind: '3rd-party · Gear', color: '#7fb3ff', ok: true },
   { name: 'Crypto "music NFT" airdrop', kind: 'Flagged · off-topic', color: '#ff5a5a', ok: false },
-  { name: 'Loft Sessions — tour dates', kind: 'Promoter', color: '#ff3e9a', ok: true },
+  { name: 'Loft Sessions — tour dates', kind: 'Promoter', color: 'var(--accent-2)', ok: true },
   { name: 'Ad samples a charting pop hook', kind: 'Flagged · copyright', color: '#ff5a5a', ok: false },
   { name: 'Press & Fold — merch printing', kind: '3rd-party · Merch', color: '#7fb3ff', ok: true },
   { name: 'Energy drink, "as heard on radio"', kind: 'Flagged · non-music', color: '#ff5a5a', ok: false },
-  { name: 'Cobalt Hour — EP release', kind: 'Artist', color: '#b983ff', ok: true },
+  { name: 'Cobalt Hour — EP release', kind: 'Artist', color: 'var(--role-fan)', ok: true },
   { name: 'Eastside Rehearsal Rooms', kind: '3rd-party · Studio', color: '#7fb3ff', ok: true },
 ];
 
@@ -96,13 +96,13 @@ function LiveTicker() {
   }, []);
 
   return (
-    <aside style={{ background: '#100d09', border: '1px solid var(--hair-70)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 30px 70px -20px rgba(0,0,0,.7)' }}>
+    <aside style={{ background: 'var(--bg-2)', border: '1px solid var(--hair-70)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 30px 70px -20px rgba(0,0,0,.7)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', borderBottom: '1px solid var(--hair-70)' }}>
-        <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.12em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 99, display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid rgba(34,229,212,.4)', color: '#22e5d4' }}>
+        <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.12em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 99, display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid rgba(var(--role-venue-rgb),.4)', color: 'var(--role-venue)' }}>
           <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'currentColor', animation: 'adv-pulse 2.4s ease-out infinite', flexShrink: 0 }} />
           {t('advertisePage.live', 'Live')}
         </span>
-        <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: '#9e9080' }}>{t('advertisePage.vettingQueue', 'Vetting queue')}</span>
+        <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-2)' }}>{t('advertisePage.vettingQueue', 'Vetting queue')}</span>
         <span style={{ marginLeft: 'auto', fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, color: '#5a5048', letterSpacing: '.08em' }}>{clock}</span>
       </div>
       <div style={{ padding: '8px 8px 12px', display: 'flex', flexDirection: 'column' }}>
@@ -127,8 +127,8 @@ function LiveTicker() {
         ))}
       </div>
       <div style={{ padding: '11px 18px', borderTop: '1px solid var(--hair-70)', fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, color: '#5a5048', letterSpacing: '.06em', display: 'flex', justifyContent: 'space-between' }}>
-        <span>{t('advertisePage.reviewedByPrefix', 'Reviewed by')} <b style={{ color: '#9e9080' }}>{t('advertisePage.hypeScreen', 'HYPE Screen')}</b> · {t('advertisePage.automated', 'automated')}</span>
-        <span><b style={{ color: '#9e9080' }}>{count.toLocaleString()}</b> {t('advertisePage.today', 'today')}</span>
+        <span>{t('advertisePage.reviewedByPrefix', 'Reviewed by')} <b style={{ color: 'var(--ink-2)' }}>{t('advertisePage.hypeScreen', 'HYPE Screen')}</b> · {t('advertisePage.automated', 'automated')}</span>
+        <span><b style={{ color: 'var(--ink-2)' }}>{count.toLocaleString()}</b> {t('advertisePage.today', 'today')}</span>
       </div>
     </aside>
   );
@@ -193,7 +193,7 @@ function CoverageBuilder() {
   });
 
   const INPUT_S: React.CSSProperties = { fontFamily: 'var(--f-b,DM Sans,sans-serif)', fontSize: 'inherit', color: 'inherit', background: 'none', border: 'none', cursor: 'pointer', padding: 0 };
-  const TEXT_INPUT_S: React.CSSProperties = { width: '100%', fontFamily: 'var(--f-b,DM Sans,sans-serif)', fontSize: 13, color: 'var(--ink)', background: '#1a1612', border: '1px solid var(--line-2)', borderRadius: 9, padding: '11px 13px', outline: 'none' };
+  const TEXT_INPUT_S: React.CSSProperties = { width: '100%', fontFamily: 'var(--f-b,DM Sans,sans-serif)', fontSize: 13, color: 'var(--ink)', background: 'var(--bg-3)', border: '1px solid var(--line-2)', borderRadius: 9, padding: '11px 13px', outline: 'none' };
 
   async function handleSubmit() {
     if (!title.trim()) {
@@ -231,7 +231,7 @@ function CoverageBuilder() {
   return (
     <div className="adv-builder" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, alignItems: 'stretch' }}>
       {/* Controls */}
-      <div style={{ background: '#100d09', border: '1px solid var(--hair-70)', borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ background: 'var(--bg-2)', border: '1px solid var(--hair-70)', borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '15px 20px', borderBottom: '1px solid var(--hair-70)', display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 700, fontSize: 14, letterSpacing: '-.01em' }}>{t('advertisePage.campaign', 'Campaign')}</span>
           <span style={{ marginLeft: 'auto', fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, color: '#5a5048', letterSpacing: '.1em', textTransform: 'uppercase' }}>{t('advertisePage.noContract', 'No contract · cancel anytime')}</span>
@@ -240,14 +240,14 @@ function CoverageBuilder() {
           {/* Coverage area */}
           <div style={{ marginBottom: 26 }}>
             <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.16em', textTransform: 'uppercase', color: '#5a5048', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ color: '#ff5029' }}>A.</span> {t('advertisePage.coverageArea', 'Coverage area')}
+              <span style={{ color: 'var(--accent)' }}>A.</span> {t('advertisePage.coverageArea', 'Coverage area')}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
               {AD_SCOPES.map(s => (
                 <button key={s} onClick={() => setScope(s)} style={{
                   display: 'flex', alignItems: 'center', gap: 14, padding: '14px 15px', borderRadius: 11,
                   border: `1px solid ${s === scope ? '#ff5029' : 'var(--hair-70)'}`,
-                  background: s === scope ? 'rgba(255,80,41,.07)' : '#1a1612',
+                  background: s === scope ? 'rgba(var(--accent-rgb),.07)' : '#1a1612',
                   cursor: 'pointer', textAlign: 'left', width: '100%', transition: 'border-color .15s, background .15s',
                 }}>
                   <span style={{ width: 34, height: 34, borderRadius: '50%', flexShrink: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -269,12 +269,12 @@ function CoverageBuilder() {
           {/* Spots per day */}
           <div style={{ marginBottom: 26 }}>
             <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.16em', textTransform: 'uppercase', color: '#5a5048', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ color: '#ff5029' }}>B.</span> {t('advertisePage.spotsPerDay', 'Spots per day')}
+              <span style={{ color: 'var(--accent)' }}>B.</span> {t('advertisePage.spotsPerDay', 'Spots per day')}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 0, border: '1px solid var(--line-2)', borderRadius: 10, overflow: 'hidden', width: 'fit-content' }}>
-              <button aria-label={t('advertisePage.decreaseSpots', 'Decrease spots per day')} onClick={() => setSpots(s => Math.max(MIN_SPOTS_PER_DAY, s - 1))} style={{ width: 46, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9e9080', cursor: 'pointer', ...INPUT_S, transition: 'background .15s' }}><MinusIcon /></button>
+              <button aria-label={t('advertisePage.decreaseSpots', 'Decrease spots per day')} onClick={() => setSpots(s => Math.max(MIN_SPOTS_PER_DAY, s - 1))} style={{ width: 46, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-2)', cursor: 'pointer', ...INPUT_S, transition: 'background .15s' }}><MinusIcon /></button>
               <div style={{ minWidth: 64, textAlign: 'center', fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', borderLeft: '1px solid var(--hair-70)', borderRight: '1px solid var(--hair-70)', height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{spots}</div>
-              <button aria-label={t('advertisePage.increaseSpots', 'Increase spots per day')} onClick={() => setSpots(s => Math.min(MAX_SPOTS_PER_DAY, s + 1))} style={{ width: 46, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9e9080', cursor: 'pointer', ...INPUT_S, transition: 'background .15s' }}><PlusIcon /></button>
+              <button aria-label={t('advertisePage.increaseSpots', 'Increase spots per day')} onClick={() => setSpots(s => Math.min(MAX_SPOTS_PER_DAY, s + 1))} style={{ width: 46, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-2)', cursor: 'pointer', ...INPUT_S, transition: 'background .15s' }}><PlusIcon /></button>
             </div>
             <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: '#5a5048', letterSpacing: '.04em', marginTop: 10 }}>{spotsNote}</div>
           </div>
@@ -282,14 +282,14 @@ function CoverageBuilder() {
           {/* Run length */}
           <div style={{ marginBottom: 26 }}>
             <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.16em', textTransform: 'uppercase', color: '#5a5048', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ color: '#ff5029' }}>C.</span> {t('advertisePage.runLength', 'Run length')}
+              <span style={{ color: 'var(--accent)' }}>C.</span> {t('advertisePage.runLength', 'Run length')}
             </div>
             <div style={{ display: 'flex', gap: 6 }}>
               {AD_RUN_LENGTHS_DAYS.map(d => (
                 <button key={d} onClick={() => setDays(d)} style={{
                   flex: 1, padding: '11px 8px', borderRadius: 9,
                   border: `1px solid ${days === d ? '#ff5029' : 'var(--hair-70)'}`,
-                  background: days === d ? 'rgba(255,80,41,.07)' : '#1a1612',
+                  background: days === d ? 'rgba(var(--accent-rgb),.07)' : '#1a1612',
                   fontFamily: 'var(--f-m,monospace)', fontSize: 11, letterSpacing: '.04em',
                   color: days === d ? '#ff5029' : '#9e9080', cursor: 'pointer', transition: 'all .15s',
                 }}>{d} {t('advertisePage.days', 'days')}</button>
@@ -300,7 +300,7 @@ function CoverageBuilder() {
           {/* Campaign details (required for the AI screen) */}
           <div>
             <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.16em', textTransform: 'uppercase', color: '#5a5048', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ color: '#ff5029' }}>D.</span> {t('advertisePage.whatsTheAd', "What's the ad")}
+              <span style={{ color: 'var(--accent)' }}>D.</span> {t('advertisePage.whatsTheAd', "What's the ad")}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <input
@@ -398,8 +398,8 @@ function CoverageBuilder() {
             {submit.phase === 'done' && (
               <div style={{
                 marginTop: 12, padding: '12px 14px', borderRadius: 10,
-                background: submit.status === 'AWAITING_PAYMENT' ? 'rgba(34,229,212,.1)' : submit.status === 'REJECTED' ? 'rgba(255,90,90,.1)' : 'rgba(255,184,74,.1)',
-                border: `1px solid ${submit.status === 'AWAITING_PAYMENT' ? 'rgba(34,229,212,.3)' : submit.status === 'REJECTED' ? 'rgba(255,90,90,.3)' : 'rgba(255,184,74,.3)'}`,
+                background: submit.status === 'AWAITING_PAYMENT' ? 'rgba(34,229,212,.1)' : submit.status === 'REJECTED' ? 'rgba(255,90,90,.1)' : 'rgba(var(--role-promoter-rgb),.1)',
+                border: `1px solid ${submit.status === 'AWAITING_PAYMENT' ? 'rgba(34,229,212,.3)' : submit.status === 'REJECTED' ? 'rgba(255,90,90,.3)' : 'rgba(var(--role-promoter-rgb),.3)'}`,
               }}>
                 <div style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 13, color: submit.status === 'AWAITING_PAYMENT' ? '#22e5d4' : submit.status === 'REJECTED' ? '#ff5a5a' : '#ffb84a' }}>
                   {submit.message}
@@ -619,7 +619,7 @@ function ScanDemo() {
   }
 
   return (
-    <div style={{ maxWidth: 640, margin: '0 auto', background: '#100d09', border: '1px solid var(--hair-100)', borderRadius: 14, overflow: 'hidden' }}>
+    <div style={{ maxWidth: 640, margin: '0 auto', background: 'var(--bg-2)', border: '1px solid var(--hair-100)', borderRadius: 14, overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 18px', borderBottom: '1px solid var(--hair-70)' }}>
         <span style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 700, fontSize: 14, flex: 1 }}>{t('advertisePage.hypeScreenAutomated', 'HYPE Screen · automated ad review')}</span>
         <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase', color: phase === 'done' ? '#22e5d4' : phase === 'scanning' ? '#ff5029' : '#5a5048' }}>
@@ -631,7 +631,7 @@ function ScanDemo() {
         <div onClick={runDemo} style={{ margin: 18, border: '2px dashed var(--line-2)', borderRadius: 12, padding: '34px 20px', textAlign: 'center', cursor: 'pointer' }}>
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9e9080" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 10 }}><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg>
           <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 5 }}>{t('advertisePage.dropAudioHere', 'Drop your ad audio here')}</div>
-          <div style={{ fontSize: 12, color: '#9e9080' }}>{t('advertisePage.audioFormats', 'MP3 / WAV / AAC · 15–60s · audio only, no video')}</div>
+          <div style={{ fontSize: 12, color: 'var(--ink-2)' }}>{t('advertisePage.audioFormats', 'MP3 / WAV / AAC · 15–60s · audio only, no video')}</div>
           <div className="adv-btn-solid" style={{ display: 'inline-flex', marginTop: 14 }}>{t('advertisePage.simulateScan', 'Simulate a scan')}</div>
         </div>
       )}
@@ -642,7 +642,7 @@ function ScanDemo() {
             const state = passed >= i ? 'pass' : 'wait';
             const gateLabel = t(`advertisePage.scanGate${i}`, g);
             return (
-              <div key={g} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, background: state === 'pass' ? 'rgba(34,229,212,.1)' : 'var(--hair-30)', border: `1px solid ${state === 'pass' ? 'rgba(34,229,212,.25)' : 'var(--hair-80)'}`, transition: 'all .3s' }}>
+              <div key={g} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, background: state === 'pass' ? 'rgba(var(--role-venue-rgb),.1)' : 'var(--hair-30)', border: `1px solid ${state === 'pass' ? 'rgba(var(--role-venue-rgb),.25)' : 'var(--hair-80)'}`, transition: 'all .3s' }}>
                 <span style={{ width: 12, height: 12, borderRadius: '50%', flexShrink: 0, background: state === 'pass' ? '#22e5d4' : 'transparent', border: state === 'pass' ? 'none' : '2px solid var(--hair-180)' }} />
                 <span style={{ flex: 1, fontSize: 12, color: state === 'pass' ? 'var(--ink)' : '#9e9080' }}>{t('advertisePage.gateN', 'Gate')} {i + 1} — {gateLabel}</span>
                 <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9, letterSpacing: '.08em', textTransform: 'uppercase', color: state === 'pass' ? '#22e5d4' : '#5a5048' }}>{state === 'pass' ? t('advertisePage.passUpper', 'PASS') : '…'}</span>
@@ -651,9 +651,9 @@ function ScanDemo() {
           })}
 
           {phase === 'done' && (
-            <div style={{ marginTop: 6, padding: '13px 16px', borderRadius: 10, background: 'rgba(34,229,212,.1)', border: '1px solid rgba(34,229,212,.3)', textAlign: 'center' }}>
-              <div style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 15, color: '#22e5d4', marginBottom: 3 }}>{t('advertisePage.clearedCheckout', '✓ CLEARED — checkout unlocked')}</div>
-              <div style={{ fontSize: 12, color: '#9e9080' }}>{t('advertisePage.verifiedBuyersNote', 'Verified buyers go straight to payment. Your spot starts running the moment the charge clears.')}</div>
+            <div style={{ marginTop: 6, padding: '13px 16px', borderRadius: 10, background: 'rgba(var(--role-venue-rgb),.1)', border: '1px solid rgba(var(--role-venue-rgb),.3)', textAlign: 'center' }}>
+              <div style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 15, color: 'var(--role-venue)', marginBottom: 3 }}>{t('advertisePage.clearedCheckout', '✓ CLEARED — checkout unlocked')}</div>
+              <div style={{ fontSize: 12, color: 'var(--ink-2)' }}>{t('advertisePage.verifiedBuyersNote', 'Verified buyers go straight to payment. Your spot starts running the moment the charge clears.')}</div>
               <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 12 }}>
                 <a href="#build" className="adv-btn-solid">{t('advertisePage.buyThisCampaign', 'Buy this campaign →')}</a>
                 <button onClick={reset} className="adv-btn-ghost" style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 11, color: '#5a5048', textDecoration: 'underline' }}>{t('advertisePage.runAnotherScan', 'Run another scan')}</button>
@@ -701,10 +701,10 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
         @keyframes adv-pulse { 0%{ box-shadow:0 0 0 0 currentColor } 70%{ box-shadow:0 0 0 6px transparent } 100%{ box-shadow:0 0 0 0 transparent } }
         @keyframes adv-rowIn { from{ opacity:0; transform:translateY(-10px) } to{ opacity:1; transform:none } }
         @keyframes adv-scan { 0%{ opacity:1; top:0 } 100%{ opacity:1; top:100% } }
-        .adv-btn-solid { background:#ff5029; color:#0a0805; display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:var(--f-m,monospace); font-weight:600; font-size:11.5px; letter-spacing:.06em; padding:13px 22px; border-radius:9px; cursor:pointer; transition:filter .15s; text-decoration:none; border:none; white-space:nowrap }
+        .adv-btn-solid { background:var(--accent); color:var(--bg); display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:var(--f-m,monospace); font-weight:600; font-size:11.5px; letter-spacing:.06em; padding:13px 22px; border-radius:9px; cursor:pointer; transition:filter .15s; text-decoration:none; border:none; white-space:nowrap }
         .adv-btn-solid:hover { filter:brightness(1.08) }
         .adv-btn-ghost { border:1px solid var(--line-2); color:var(--ink); display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:var(--f-m,monospace); font-weight:600; font-size:11.5px; letter-spacing:.06em; padding:13px 22px; border-radius:9px; cursor:pointer; transition:background .15s, border-color .15s; text-decoration:none; white-space:nowrap; background:none }
-        .adv-btn-ghost:hover { background:var(--hair-50); border-color:#9e9080 }
+        .adv-btn-ghost:hover { background:var(--hair-50); border-color:var(--ink-2) }
         .adv-btn-sm { padding:9px 15px !important; font-size:10.5px !important }
         @media (max-width:1040px) {
           .adv-hero-grid, .adv-builder, .adv-guard, .adv-paths, .adv-trans { grid-template-columns:1fr !important }
@@ -720,17 +720,17 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
 
       {/* Hero */}
       <header id="top" style={{ position: 'relative', padding: '40px 0 84px', overflow: 'hidden' }}>
-        <div style={{ content: '', position: 'absolute', top: '-30%', left: '50%', transform: 'translateX(-50%)', width: 1100, height: 680, background: 'radial-gradient(ellipse at center, rgba(255,80,41,.10), transparent 62%)', pointerEvents: 'none' }} />
+        <div style={{ content: '', position: 'absolute', top: '-30%', left: '50%', transform: 'translateX(-50%)', width: 1100, height: 680, background: 'radial-gradient(ellipse at center, rgba(var(--accent-rgb),.10), transparent 62%)', pointerEvents: 'none' }} />
         <div className="adv-hero-grid adv-shell" style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px', display: 'grid', gridTemplateColumns: '1.18fr .92fr', gap: 54, alignItems: 'center', position: 'relative' }}>
           <div>
             <span style={{ ...eyebrow(''), display: 'inline-flex', alignItems: 'center', gap: 9 }}>
-              <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: '#ff5029' }} />
+              <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: 'var(--accent)' }} />
               {t('advertisePage.heroEyebrow', 'Advertise on iHYPE')}
             </span>
             <h1 className="adv-hero-title" style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 68, lineHeight: .96, letterSpacing: '-.035em', margin: '20px 0 0' }}>
-              {t('advertisePage.heroTitleLine1', 'Put your music')}<br />{t('advertisePage.heroTitleLine2', 'in front of the')}<br />{t('advertisePage.heroTitleLine3Prefix', 'people who')} <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: '#9e9080', letterSpacing: '-.01em' }}>{t('advertisePage.heroTitleLine3Em', 'dig deepest.')}</em>
+              {t('advertisePage.heroTitleLine1', 'Put your music')}<br />{t('advertisePage.heroTitleLine2', 'in front of the')}<br />{t('advertisePage.heroTitleLine3Prefix', 'people who')} <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: 'var(--ink-2)', letterSpacing: '-.01em' }}>{t('advertisePage.heroTitleLine3Em', 'dig deepest.')}</em>
             </h1>
-            <p style={{ fontSize: 16, color: '#9e9080', lineHeight: 1.6, maxWidth: '46ch', marginTop: 22 }}>
+            <p style={{ fontSize: 16, color: 'var(--ink-2)', lineHeight: 1.6, maxWidth: '46ch', marginTop: 22 }}>
               {t('advertisePage.heroBodyPrefix', 'Buy reach by the spot —')} <b style={{ color: 'var(--ink)', fontWeight: 600 }}>{t('advertisePage.heroBodyLocalGlobal', 'local to global')}</b>{t('advertisePage.heroBodyMid', ', by the day. Every ad is screened by AI before it runs:')} <b style={{ color: 'var(--ink)', fontWeight: 600 }}>{t('advertisePage.heroBodyMusicOnly', 'music only, no copyrighted material, no name-drops.')}</b> {t('advertisePage.heroBodySuffix', 'One operator, one rulebook, zero junk in the feed.')}
             </p>
             <div style={{ display: 'flex', gap: 12, marginTop: 30, flexWrap: 'wrap' }}>
@@ -738,7 +738,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
               <a href="#guard" className="adv-btn-ghost">{t('advertisePage.seeVetting', 'See how vetting works')}</a>
             </div>
             <div style={{ marginTop: 16, fontFamily: 'var(--f-m,monospace)', fontSize: 11, color: '#5a5048', letterSpacing: '.04em' }}>
-              {t('advertisePage.alreadyAdvertising', 'Already advertising?')} <Link href="/advertise/dashboard" style={{ color: '#9e9080', textDecoration: 'underline' }}>{t('advertisePage.goToDashboard', 'Go to your dashboard →')}</Link>
+              {t('advertisePage.alreadyAdvertising', 'Already advertising?')} <Link href="/advertise/dashboard" style={{ color: 'var(--ink-2)', textDecoration: 'underline' }}>{t('advertisePage.goToDashboard', 'Go to your dashboard →')}</Link>
             </div>
             <div style={{ display: 'flex', gap: 26, marginTop: 34, paddingTop: 24, borderTop: '1px solid var(--hair-70)' }}>
               {[
@@ -762,12 +762,12 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
         <div className="adv-shell" style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
           <div style={{ maxWidth: 680, marginBottom: 40 }}>
             <span style={{ ...eyebrow(''), display: 'inline-flex', alignItems: 'center', gap: 9 }}>
-              <span style={{ width: 22, height: 1, background: '#ff5029', opacity: .6 }} />{t('advertisePage.step01Build', 'Step 01 · Build')}
+              <span style={{ width: 22, height: 1, background: 'var(--accent)', opacity: .6 }} />{t('advertisePage.step01Build', 'Step 01 · Build')}
             </span>
             <h2 style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 38, letterSpacing: '-.03em', lineHeight: 1.02, margin: '14px 0 0' }}>
-              {t('advertisePage.buildHeadingPrefix', 'Pick your')} <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: '#ff5029' }}>{t('advertisePage.reachDot', 'reach.')}</em> {t('advertisePage.buildHeadingMid', 'Pick your')} <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: '#ff5029' }}>{t('advertisePage.volumeDot', 'volume.')}</em>
+              {t('advertisePage.buildHeadingPrefix', 'Pick your')} <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent)' }}>{t('advertisePage.reachDot', 'reach.')}</em> {t('advertisePage.buildHeadingMid', 'Pick your')} <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent)' }}>{t('advertisePage.volumeDot', 'volume.')}</em>
             </h2>
-            <p style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontSize: 19, color: '#9e9080', lineHeight: 1.4, marginTop: 14, maxWidth: '58ch' }}>
+            <p style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontSize: 19, color: 'var(--ink-2)', lineHeight: 1.4, marginTop: 14, maxWidth: '58ch' }}>
               {t('advertisePage.buildSub', 'Coverage scales from your block to the whole platform. Spots are audio ad breaks played inside DJ radio shows — priced per day, billed per spot.')}
             </p>
           </div>
@@ -782,12 +782,12 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
         <div className="adv-shell" style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
           <div style={{ maxWidth: 680, marginBottom: 40 }}>
             <span style={{ ...eyebrow(''), display: 'inline-flex', alignItems: 'center', gap: 9 }}>
-              <span style={{ width: 22, height: 1, background: '#ff5029', opacity: .6 }} />{t('advertisePage.step02Screen', 'Step 02 · The screen')}
+              <span style={{ width: 22, height: 1, background: 'var(--accent)', opacity: .6 }} />{t('advertisePage.step02Screen', 'Step 02 · The screen')}
             </span>
             <h2 style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 38, letterSpacing: '-.03em', lineHeight: 1.02, margin: '14px 0 0' }}>
-              {t('advertisePage.guardHeadingPrefix', 'Every ad clears')} <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: '#ff5029' }}>{t('advertisePage.fiveGates', 'five gates')}</em> {t('advertisePage.guardHeadingSuffix', 'before a single listener sees it.')}
+              {t('advertisePage.guardHeadingPrefix', 'Every ad clears')} <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent)' }}>{t('advertisePage.fiveGates', 'five gates')}</em> {t('advertisePage.guardHeadingSuffix', 'before a single listener sees it.')}
             </h2>
-            <p style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontSize: 19, color: '#9e9080', lineHeight: 1.4, marginTop: 14, maxWidth: '58ch' }}>
+            <p style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontSize: 19, color: 'var(--ink-2)', lineHeight: 1.4, marginTop: 14, maxWidth: '58ch' }}>
               {t('advertisePage.guardSub', 'No human review queue. iHYPE runs on one operator — HYPE Screen scans the buyer, the copy, and the submission itself. Approval is instant when every gate passes.')}
             </p>
           </div>
@@ -800,12 +800,12 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
         <div className="adv-shell" style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
           <div style={{ maxWidth: 680, margin: '0 auto 40px', textAlign: 'center' }}>
             <span style={{ ...eyebrow(''), display: 'inline-flex', alignItems: 'center', gap: 9, justifyContent: 'center' }}>
-              <span style={{ width: 22, height: 1, background: '#ff5029', opacity: .6 }} />{t('advertisePage.step03Upload', 'Step 03 · Upload & go live')}
+              <span style={{ width: 22, height: 1, background: 'var(--accent)', opacity: .6 }} />{t('advertisePage.step03Upload', 'Step 03 · Upload & go live')}
             </span>
             <h2 style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 38, letterSpacing: '-.03em', lineHeight: 1.02, margin: '14px 0 0' }}>
-              {t('advertisePage.scanHeadingPrefix', 'Drop your audio.')} <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: '#ff5029' }}>{t('advertisePage.hypeScreen', 'HYPE Screen')}</em> {t('advertisePage.scanHeadingSuffix', 'does the rest.')}
+              {t('advertisePage.scanHeadingPrefix', 'Drop your audio.')} <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent)' }}>{t('advertisePage.hypeScreen', 'HYPE Screen')}</em> {t('advertisePage.scanHeadingSuffix', 'does the rest.')}
             </h2>
-            <p style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontSize: 19, color: '#9e9080', lineHeight: 1.4, marginTop: 14, maxWidth: '58ch', marginLeft: 'auto', marginRight: 'auto' }}>
+            <p style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontSize: 19, color: 'var(--ink-2)', lineHeight: 1.4, marginTop: 14, maxWidth: '58ch', marginLeft: 'auto', marginRight: 'auto' }}>
               {t('advertisePage.scanSub', 'Try the scanner below. When every gate passes, checkout unlocks instantly — no sales call, no review queue.')}
             </p>
           </div>
@@ -821,23 +821,23 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
         <div className="adv-shell" style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
           <div style={{ maxWidth: 680, marginBottom: 40 }}>
             <span style={{ ...eyebrow(''), display: 'inline-flex', alignItems: 'center', gap: 9 }}>
-              <span style={{ width: 22, height: 1, background: '#ff5029', opacity: .6 }} />{t('advertisePage.step04Buying', "Step 04 · Who's buying")}
+              <span style={{ width: 22, height: 1, background: 'var(--accent)', opacity: .6 }} />{t('advertisePage.step04Buying', "Step 04 · Who's buying")}
             </span>
             <h2 style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 38, letterSpacing: '-.03em', lineHeight: 1.02, margin: '14px 0 0' }}>
-              {t('advertisePage.pathsHeadingPrefix', 'Two ways in.')} <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: '#ff5029' }}>{t('advertisePage.sameScreen', 'Same screen')}</em> {t('advertisePage.pathsHeadingSuffix', 'for both.')}
+              {t('advertisePage.pathsHeadingPrefix', 'Two ways in.')} <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent)' }}>{t('advertisePage.sameScreen', 'Same screen')}</em> {t('advertisePage.pathsHeadingSuffix', 'for both.')}
             </h2>
-            <p style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontSize: 19, color: '#9e9080', lineHeight: 1.4, marginTop: 14, maxWidth: '58ch' }}>
+            <p style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontSize: 19, color: 'var(--ink-2)', lineHeight: 1.4, marginTop: 14, maxWidth: '58ch' }}>
               {t('advertisePage.pathsSub', "Whether you're on the platform already or coming from the outside, you buy the same coverage and pass the same gates.")}
             </p>
           </div>
           <div className="adv-paths" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
             {/* Members */}
-            <div style={{ border: '1px solid var(--hair-70)', borderRadius: 16, background: '#100d09', padding: '28px 28px 26px', display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.14em', textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: 8, color: '#ff5029' }}>
-                <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: '#ff5029' }} />{t('advertisePage.members', 'Members')}
+            <div style={{ border: '1px solid var(--hair-70)', borderRadius: 16, background: 'var(--bg-2)', padding: '28px 28px 26px', display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.14em', textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: 8, color: 'var(--accent)' }}>
+                <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: 'var(--accent)' }} />{t('advertisePage.members', 'Members')}
               </span>
               <h3 style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 26, letterSpacing: '-.02em', marginTop: 16, lineHeight: 1.05 }}>{t('advertisePage.artistsVenues', 'Artists, venues')}<br />{t('advertisePage.promotersLine', '& promoters')}</h3>
-              <p style={{ fontSize: 13.5, color: '#9e9080', lineHeight: 1.55, marginTop: 12 }}>{t('advertisePage.membersBody', 'Already part of iHYPE? Buy coverage straight from your dashboard. Your role is pre-verified, so the buyer-vetting gate clears instantly — you go right to creative review.')}</p>
+              <p style={{ fontSize: 13.5, color: 'var(--ink-2)', lineHeight: 1.55, marginTop: 12 }}>{t('advertisePage.membersBody', 'Already part of iHYPE? Buy coverage straight from your dashboard. Your role is pre-verified, so the buyer-vetting gate clears instantly — you go right to creative review.')}</p>
               <div style={{ display: 'flex', gap: 8, marginTop: 18, flexWrap: 'wrap' }}>
                 {[{ c: '#b983ff', l: t('advertisePage.roleArtist', 'Artist') }, { c: '#22e5d4', l: t('advertisePage.roleVenue', 'Venue') }, { c: '#ff3e9a', l: t('advertisePage.rolePromoter', 'Promoter') }].map(r => (
                   <span key={r.l} style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, letterSpacing: '.06em', padding: '7px 12px', borderRadius: 99, border: `1px solid color-mix(in srgb, ${r.c} 40%, transparent)`, display: 'inline-flex', alignItems: 'center', gap: 7, color: r.c }}>
@@ -851,8 +851,8 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
                   [t('advertisePage.memberBenefit2Title', 'Promote your own catalog.'), t('advertisePage.memberBenefit2Body', 'Your releases and shows are pre-cleared for copyright.')],
                   [t('advertisePage.memberBenefit3Title', 'Referral reach.'), t('advertisePage.memberBenefit3Body', 'Fans with a referral link can co-fund coverage for artists they back.')],
                 ].map(([b, body]) => (
-                  <div key={b} style={{ display: 'flex', gap: 11, fontSize: 12.5, color: '#9e9080', lineHeight: 1.45 }}>
-                    <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: '#ff5029', marginTop: 6, flexShrink: 0 }} />
+                  <div key={b} style={{ display: 'flex', gap: 11, fontSize: 12.5, color: 'var(--ink-2)', lineHeight: 1.45 }}>
+                    <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: 'var(--accent)', marginTop: 6, flexShrink: 0 }} />
                     <span><span style={{ color: 'var(--ink)', fontWeight: 600 }}>{b}</span> {body}</span>
                   </div>
                 ))}
@@ -867,15 +867,15 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
             </div>
 
             {/* 3rd party */}
-            <div style={{ border: '1px solid var(--hair-70)', borderRadius: 16, background: '#100d09', padding: '28px 28px 26px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ border: '1px solid var(--hair-70)', borderRadius: 16, background: 'var(--bg-2)', padding: '28px 28px 26px', display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.14em', textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: 8, color: '#7fb3ff' }}>
                 <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: '#7fb3ff' }} />{t('advertisePage.thirdPartyAccounts', '3rd-Party Accounts')}
               </span>
               <h3 style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 26, letterSpacing: '-.02em', marginTop: 16, lineHeight: 1.05 }}>{t('advertisePage.musicBusinesses', 'Music businesses')}<br />{t('advertisePage.suppliersLine', '& suppliers')}</h3>
-              <p style={{ fontSize: 13.5, color: '#9e9080', lineHeight: 1.55, marginTop: 12 }}>{t('advertisePage.thirdPartyBody', 'Not an artist, but you serve them? Music stores, live-production companies, and merch providers open a 3rd-party account to control their own placements — fully self-serve.')}</p>
+              <p style={{ fontSize: 13.5, color: 'var(--ink-2)', lineHeight: 1.55, marginTop: 12 }}>{t('advertisePage.thirdPartyBody', 'Not an artist, but you serve them? Music stores, live-production companies, and merch providers open a 3rd-party account to control their own placements — fully self-serve.')}</p>
               <div style={{ display: 'flex', gap: 8, marginTop: 18, flexWrap: 'wrap' }}>
                 {[t('advertisePage.musicStores', 'Music stores'), t('advertisePage.liveProduction', 'Live production'), t('advertisePage.merchAndPrint', 'Merch & print'), t('advertisePage.instrumentsGear', 'Instruments & gear')].map(l => (
-                  <span key={l} style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, letterSpacing: '.06em', padding: '7px 12px', borderRadius: 99, border: '1px solid var(--line-2)', color: '#9e9080' }}>{l}</span>
+                  <span key={l} style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, letterSpacing: '.06em', padding: '7px 12px', borderRadius: 99, border: '1px solid var(--line-2)', color: 'var(--ink-2)' }}>{l}</span>
                 ))}
               </div>
               <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 11 }}>
@@ -884,7 +884,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
                   [t('advertisePage.thirdPartyBenefit2Title', 'Business verification.'), t('advertisePage.thirdPartyBenefit2Body', "A one-time check confirms you're genuinely music-adjacent."), '#7fb3ff'],
                   [t('advertisePage.thirdPartyBenefit3Title', 'Same firewall applies.'), t('advertisePage.thirdPartyBenefit3Body', 'No borrowed songs, no unlicensed artist names — ever.'), '#7fb3ff'],
                 ].map(([b, body, c]) => (
-                  <div key={b} style={{ display: 'flex', gap: 11, fontSize: 12.5, color: '#9e9080', lineHeight: 1.45 }}>
+                  <div key={b} style={{ display: 'flex', gap: 11, fontSize: 12.5, color: 'var(--ink-2)', lineHeight: 1.45 }}>
                     <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: c, marginTop: 6, flexShrink: 0 }} />
                     <span><span style={{ color: 'var(--ink)', fontWeight: 600 }}>{b}</span> {body}</span>
                   </div>
@@ -894,7 +894,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginTop: 1 }}><circle cx="12" cy="12" r="9" stroke="#ff5a5a" strokeWidth="1.6"/><path d="M9 9l6 6M15 9l-6 6" stroke="#ff5a5a" strokeWidth="1.6" strokeLinecap="round"/></svg>
                 <div>
                   <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: '#ff5a5a' }}>{t('advertisePage.autoRejected', 'Auto-rejected')}</div>
-                  <div style={{ fontSize: 12, color: '#9e9080', lineHeight: 1.5, marginTop: 5 }}>{t('advertisePage.autoRejectedBody', 'Non-musical goods, dropshipping, financial products, and anything unrelated to music never reach a listener.')}</div>
+                  <div style={{ fontSize: 12, color: 'var(--ink-2)', lineHeight: 1.5, marginTop: 5 }}>{t('advertisePage.autoRejectedBody', 'Non-musical goods, dropshipping, financial products, and anything unrelated to music never reach a listener.')}</div>
                 </div>
               </div>
               <div style={{ marginTop: 'auto', paddingTop: 22 }}>
@@ -910,18 +910,18 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
         <div className="adv-shell" style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
           <div style={{ maxWidth: 680, marginBottom: 8 }}>
             <span style={{ ...eyebrow(''), display: 'inline-flex', alignItems: 'center', gap: 9 }}>
-              <span style={{ width: 22, height: 1, background: '#ff5029', opacity: .6 }} />{t('advertisePage.coopPromise', 'The co-op promise')}
+              <span style={{ width: 22, height: 1, background: 'var(--accent)', opacity: .6 }} />{t('advertisePage.coopPromise', 'The co-op promise')}
             </span>
             <h2 style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 38, letterSpacing: '-.03em', lineHeight: 1.02, margin: '14px 0 0' }}>
-              {t('advertisePage.transHeadingPrefix', 'Ad money feeds the')} <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: '#ff5029' }}>{t('advertisePage.artistsEm', 'artists')}</em>{t('advertisePage.transHeadingSuffix', ', not a feed.')}
+              {t('advertisePage.transHeadingPrefix', 'Ad money feeds the')} <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent)' }}>{t('advertisePage.artistsEm', 'artists')}</em>{t('advertisePage.transHeadingSuffix', ', not a feed.')}
             </h2>
           </div>
           <div className="adv-trans" style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 40, alignItems: 'center', marginTop: 8 }}>
-            <p style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontSize: 26, lineHeight: 1.35, color: '#9e9080', maxWidth: '22ch' }}>
-              {t('advertisePage.transBodyPrefix', 'iHYPE is run by one director and a lot of automation — so almost every dollar of ad spend')} <b style={{ fontFamily: 'DM Sans,sans-serif', fontStyle: 'normal', fontWeight: 600, color: '#ff5029' }}>{t('advertisePage.transBodyBold', 'goes back into the music')}</b>{t('advertisePage.transBodySuffix', ', not overhead.')}
+            <p style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontSize: 26, lineHeight: 1.35, color: 'var(--ink-2)', maxWidth: '22ch' }}>
+              {t('advertisePage.transBodyPrefix', 'iHYPE is run by one director and a lot of automation — so almost every dollar of ad spend')} <b style={{ fontFamily: 'DM Sans,sans-serif', fontStyle: 'normal', fontWeight: 600, color: 'var(--accent)' }}>{t('advertisePage.transBodyBold', 'goes back into the music')}</b>{t('advertisePage.transBodySuffix', ', not overhead.')}
             </p>
             <div style={{ borderTop: '1px solid var(--hair-70)' }}>
-              {[{ lb: t('advertisePage.toArtistsPayouts', 'To artists & payouts'), w: '72%', color: '#ff5029', pct: '72%' }, { lb: t('advertisePage.platformHosting', 'Platform & hosting'), w: '18%', color: 'var(--ink)', pct: '18%' }, { lb: t('advertisePage.moderationAi', 'Moderation & AI'), w: '10%', color: '#9e9080', pct: '10%' }].map(r => (
+              {[{ lb: t('advertisePage.toArtistsPayouts', 'To artists & payouts'), w: '72%', color: 'var(--accent)', pct: '72%' }, { lb: t('advertisePage.platformHosting', 'Platform & hosting'), w: '18%', color: 'var(--ink)', pct: '18%' }, { lb: t('advertisePage.moderationAi', 'Moderation & AI'), w: '10%', color: 'var(--ink-2)', pct: '10%' }].map(r => (
                 <div key={r.lb} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--hair-70)' }}>
                   <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: '#5a5048', width: 150 }}>{r.lb}</span>
                   <span style={{ flex: 1, height: 9, borderRadius: 99, background: 'var(--hair-70)', overflow: 'hidden' }}>

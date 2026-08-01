@@ -36,8 +36,8 @@ export function HeaderAuthLinks({ inviteOnly = false }: { inviteOnly?: boolean }
           gap: 8,
           padding: '5px 12px 5px 5px',
           borderRadius: 999,
-          border: '1px solid rgba(34,229,212,.32)',
-          background: 'rgba(34,229,212,.08)',
+          border: '1px solid rgba(var(--role-venue-rgb),.32)',
+          background: 'rgba(var(--role-venue-rgb),.08)',
           textDecoration: 'none',
           whiteSpace: 'nowrap',
           maxWidth: 180,
@@ -53,8 +53,8 @@ export function HeaderAuthLinks({ inviteOnly = false }: { inviteOnly?: boolean }
             height: 26,
             borderRadius: '50%',
             flexShrink: 0,
-            background: session.user.image ? `url(${session.user.image}) center/cover` : 'rgba(34,229,212,.18)',
-            color: '#22e5d4',
+            background: session.user.image ? `url(${session.user.image}) center/cover` : 'rgba(var(--role-venue-rgb),.18)',
+            color: 'var(--role-venue)',
             fontFamily: "var(--font-display, 'Syne', sans-serif)",
             fontSize: 13,
             fontWeight: 800,
@@ -76,7 +76,7 @@ export function HeaderAuthLinks({ inviteOnly = false }: { inviteOnly?: boolean }
               fontSize: 8,
               letterSpacing: '.14em',
               textTransform: 'uppercase',
-              color: '#22e5d4',
+              color: 'var(--role-venue)',
             }}
           >
             {t('headerAuthLinks.signedIn', 'Signed in')}

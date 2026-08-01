@@ -85,7 +85,7 @@ export function SupportTicketComposer() {
           style={{
             fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 13, cursor: 'pointer',
             padding: '10px 18px', borderRadius: 'var(--radius-md)', border: 'none',
-            background: '#ff5029', color: '#fff',
+            background: 'var(--accent)', color: 'var(--ink-on-accent)',
           }}
         >
           {composing ? t('supportTicketComposer.closeButton', 'Close') : t('supportTicketComposer.newTicketButton', 'New ticket')}
@@ -124,7 +124,7 @@ export function SupportTicketComposer() {
               boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit',
             }}
           />
-          {error ? <p style={{ fontSize: 12.5, color: '#ff5029', margin: 0 }}>{error}</p> : null}
+          {error ? <p style={{ fontSize: 12.5, color: 'var(--accent)', margin: 0 }}>{error}</p> : null}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
             <button
               type="button"
@@ -141,7 +141,7 @@ export function SupportTicketComposer() {
               disabled={!canSubmit}
               style={{
                 padding: '9px 16px', borderRadius: 'var(--radius-sm)', border: 'none',
-                background: canSubmit ? '#ff5029' : 'rgba(255,80,41,.3)',
+                background: canSubmit ? '#ff5029' : 'rgba(var(--accent-rgb),.3)',
                 color: canSubmit ? '#fff' : 'var(--ink-a50)', fontSize: 13, fontWeight: 600,
                 cursor: canSubmit ? 'pointer' : 'not-allowed',
               }}

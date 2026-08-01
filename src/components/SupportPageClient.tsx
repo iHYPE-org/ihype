@@ -9,7 +9,7 @@ import { useI18n } from '@/components/I18nProvider';
 
 const quickCardStyle: React.CSSProperties = {
   border: '1px solid var(--line)', borderRadius: 10, padding: '18px 20px',
-  background: 'var(--bg-2, #100d09)', textDecoration: 'none', color: 'inherit', cursor: 'pointer',
+  background: 'var(--bg-2)', textDecoration: 'none', color: 'inherit', cursor: 'pointer',
 };
 
 export function SupportPageClient() {
@@ -55,7 +55,7 @@ export function SupportPageClient() {
 
       <div
         ref={formRef}
-        style={{ border: '1px solid var(--line)', borderRadius: 12, padding: 32, background: 'var(--bg-2, #100d09)' }}
+        style={{ border: '1px solid var(--line)', borderRadius: 12, padding: 32, background: 'var(--bg-2)' }}
       >
         <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 800, marginBottom: 24 }}>{t('supportPageClient.sendMessage', 'Send a Message')}</h2>
         <SupportForm key={formKey} initialType={initialType} initialSubject={initialSubject} />
