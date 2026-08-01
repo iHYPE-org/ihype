@@ -482,7 +482,10 @@ async function run() {
     // `next start` Node server, because the production Prisma configuration is
     // only representative inside workerd.
     if (process.env.SKIP_LIGHTHOUSE_BUDGET !== '1') {
-      const { report, anyFailed } = await runLighthouseBudget({ baseUrl: BASE });
+      const { report, anyFailed } = await runLighthouseBudget({
+        baseUrl: BASE,
+        authenticatedHeaders: { Cookie: creatorCookie },
+      });
       // Name the page and the metric in this line. It is the one line that
       // ends up in the smoke summary, and "see per-page output above" meant
       // scrolling a few hundred KB of wrangler request logs to learn that one

@@ -12,11 +12,11 @@ const quickCardStyle: React.CSSProperties = {
   background: 'var(--bg-2)', textDecoration: 'none', color: 'inherit', cursor: 'pointer',
 };
 
-export function SupportPageClient() {
+export function SupportPageClient({ alphaModule }: { alphaModule?: string }) {
   const { t } = useI18n();
   const [formKey, setFormKey] = useState(0);
-  const [initialType, setInitialType] = useState('');
-  const [initialSubject, setInitialSubject] = useState('');
+  const [initialType, setInitialType] = useState(alphaModule ? 'general' : '');
+  const [initialSubject, setInitialSubject] = useState(alphaModule ? `Alpha feedback · ${alphaModule}` : '');
   const formRef = useRef<HTMLDivElement>(null);
 
   function reportProblem() {
@@ -58,7 +58,8 @@ export function SupportPageClient() {
         style={{ border: '1px solid var(--line)', borderRadius: 12, padding: 32, background: 'var(--bg-2)' }}
       >
         <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 800, marginBottom: 24 }}>{t('supportPageClient.sendMessage', 'Send a Message')}</h2>
-        <SupportForm key={formKey} initialType={initialType} initialSubject={initialSubject} />
+        {alphaModule && <p style={{ color: 'var(--ink-a55)', fontSize: 12, margin: '-12px 0 18px' }}>This report will include the current module, screen size, and online status. It never includes your location or listening history.</p>}
+        <SupportForm alphaModule={alphaModule} key={formKey} initialType={initialType} initialSubject={initialSubject} />
       </div>
     </>
   );

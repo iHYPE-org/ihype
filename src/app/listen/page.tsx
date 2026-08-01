@@ -108,6 +108,12 @@ export default async function ListenPage({
     avatarUrl: user.image,
     roles: Array.from(roles),
     metrics,
+    activation: {
+      played: songsHeard > 0,
+      hyped: showHypes + profileHypes > 0,
+      saved: discoveryAdds > 0,
+      foundEvent: showsAttended > 0,
+    },
   };
 
   return <ModuleDeckMockup production viewer={viewer} />;

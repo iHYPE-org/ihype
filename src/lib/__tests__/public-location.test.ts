@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isPublicVenueCoordinate, sanitizePublicLocation } from '../public-location';
+import { coarsenFanCoordinates, isPublicVenueCoordinate, sanitizePublicLocation } from '../public-location';
 
 describe('public location privacy', () => {
   it('allows a discoverable venue to publish its uploaded physical location', () => {
@@ -61,5 +61,18 @@ describe('public location privacy', () => {
       latitude: null,
       longitude: null,
     });
+  });
+
+  it('reduces a device GPS fix to a county-scale search cell', () => {
+    expect(coarsenFanCoordinates(42.331427, -83.045754)).toEqual({
+      latitude: 42.25,
+      longitude: -83,
+      precision: 'county',
+    });
+  });
+
+  it('rejects invalid device coordinates', () => {
+    expect(coarsenFanCoordinates(Number.NaN, -83)).toBeNull();
+    expect(coarsenFanCoordinates(91, -83)).toBeNull();
   });
 });

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { Map as MapLibreMap, Marker as MapLibreMarker } from 'maplibre-gl';
 import { type CSSProperties, type Dispatch, type PointerEvent, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { coarsenFanCoordinates } from '@/lib/public-location';
 import { usePlatformCapabilities } from '@/lib/usePlatformCapabilities';
 import { loadDiscoveryTracks, loadNearbyShows, loadRadioTracks, recordDiscoveryDecision, searchPreview, updateSceneNotifications, type ExperienceTrack, type NearbyShow, type PreviewDataSource, type PreviewSearchResult } from './preview-api';
 
@@ -19,6 +20,12 @@ export type DeckViewer = {
   avatarUrl?: string | null;
   roles: RoleId[];
   metrics?: Partial<Record<RoleId, Array<[string, string]>>>;
+  activation?: {
+    played: boolean;
+    hyped: boolean;
+    saved: boolean;
+    foundEvent: boolean;
+  };
 };
 
 function usePersistentState<T>(key: string, initialValue: T): [T, Dispatch<SetStateAction<T>>] {
@@ -76,6 +83,15 @@ const discoveryTracks: ExperienceTrack[] = [
   { mediaId: null, title: 'Pressure', artist: 'Milo Coast', scene: 'Ferndale · indie soul', art: '/brand/alpha-artist-2.png', match: '84% scene match' },
   { mediaId: null, title: 'Different Plans', artist: 'Rooke', scene: 'Hamtramck · post punk', art: '/brand/alpha-show-3.png', match: '25% wild card' },
 ];
+
+const emptyDiscoveryTrack: ExperienceTrack = {
+  mediaId: null,
+  title: 'Your next local find',
+  artist: 'Waiting for the first alpha upload',
+  scene: 'Your local scene',
+  art: '/brand/ihype-menu-logo.webp',
+  match: 'Local catalog warming up',
+};
 
 const previewPlayerTracks: ExperienceTrack[] = [
   { mediaId: null, title: 'City Lights', artist: 'Jayla Reign', art: '/brand/alpha-featured.png', scene: 'Detroit', match: 'Alpha placeholder' },
@@ -554,9 +570,15 @@ function SceneMap({ production }: { production: boolean }) {
     setLocationMessage('Waiting for permission…');
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
-        setLocation(`${coords.latitude.toFixed(3)}, ${coords.longitude.toFixed(3)}`);
-        setLocationMessage('Using this device for nearby results');
-        setUserCenter([coords.longitude, coords.latitude]);
+        const approximate = coarsenFanCoordinates(coords.latitude, coords.longitude);
+        if (!approximate) {
+          setLocationMessage('Location could not be read safely');
+          setLocating(false);
+          return;
+        }
+        setLocation('Approximate county area');
+        setLocationMessage('Precise GPS discarded before nearby search');
+        setUserCenter([approximate.longitude, approximate.latitude]);
         setLocating(false);
       },
       () => {
@@ -606,7 +628,7 @@ function SceneMap({ production }: { production: boolean }) {
           <div className="map-scale-context"><span>{zoom.label.toUpperCase()} VIEW</span><strong>{zoom.area}</strong><small>{zoom.detail}</small></div>
           <div aria-label="Map zoom controls" className="map-zoom-controls" role="group"><button aria-label="Zoom in one level" disabled={zoomIndex === 0} onClick={() => changeZoom(zoomIndex - 1)} type="button">+</button><button aria-label="Zoom out one level" disabled={zoomIndex === mapZoomLevels.length - 1} onClick={() => changeZoom(zoomIndex + 1)} type="button">−</button></div>
           <button aria-expanded={privacyKeyOpen} className="map-trust-toggle" onClick={() => setPrivacyKeyOpen((value) => !value)} type="button"><span>●</span> Location privacy</button>
-          {privacyKeyOpen && <div className="map-trust-panel"><span>WHAT THE MAP SHARES</span><p><b>Venues</b> use the public address supplied by that venue.</p><p><b>Artists + DJs</b> appear only as county-level scene signals.</p><p><b>Fans</b> stay private and never appear on this map.</p></div>}
+          {privacyKeyOpen && <div className="map-trust-panel"><span>WHAT THE MAP SHARES</span><p><b>Venues</b> use the public address supplied by that venue.</p><p><b>Artists + DJs</b> appear only as county-level scene signals.</p><p><b>Fans</b> stay private. Device GPS is reduced to a county-scale area before a nearby search and is never shown on the map.</p></div>}
           {noResults && <div className="map-empty-state"><strong>No tour signal at town scale.</strong><span>Move to county view to see routes passing nearby.</span><button onClick={() => changeZoom(1)} type="button">Open county view</button></div>}
           <div aria-hidden="true" className="map-result-loader"><span /><span /><span /></div>
           <div className="map-radius-readout"><span>{zoom.distance}</span><br /><small>drag, pinch, scroll, or use + / −</small></div><div className="map-attribution"><a href="https://openfreemap.org" rel="noreferrer" target="_blank">OpenFreeMap</a> · <a href="https://www.openstreetmap.org/copyright" rel="noreferrer" target="_blank">© OpenStreetMap contributors</a></div>
@@ -641,7 +663,7 @@ function DiscoverModule({ production }: { production: boolean }) {
   const [lastAction, setLastAction] = useState<{ direction: 'skip' | 'save'; trackIndex: number } | null>(null);
   const dragStart = useRef<number | null>(null);
   const pointerSample = useRef({ x: 0, time: 0, velocity: 0 });
-  const availableTracks = liveTracks.length > 0 ? liveTracks : discoveryTracks;
+  const availableTracks = liveTracks.length > 0 ? liveTracks : production ? [emptyDiscoveryTrack] : discoveryTracks;
   const track = availableTracks[trackIndex % availableTracks.length];
   const nextTrack = availableTracks[(trackIndex + 1) % availableTracks.length];
   const canRecordDecision = !production || Boolean(track.mediaId);
@@ -817,13 +839,39 @@ function DashboardModule({ production, viewer }: { production: boolean; viewer?:
   const [role, setRole] = usePersistentState<RoleId>('ihype:preview-dashboard-role', viewerRoles[0]);
   const [assignedRoles, setAssignedRoles] = usePersistentState<RoleId[]>('ihype:preview-dashboard-assigned-roles', production ? viewerRoles : ['fan', 'artist']);
   const [managingRoles, setManagingRoles] = useState(false);
+  const [fanTracks, setFanTracks] = useState<ExperienceTrack[]>([]);
+  const [fanTracksLoading, setFanTracksLoading] = useState(production);
   const data = roleData[role];
+  const fanMix = fanTracks.length <= 3
+    ? fanTracks
+    : [...fanTracks.slice(0, 2), fanTracks.find((track) => /random|wild/i.test(track.match)) ?? fanTracks[2]];
+  const recommendations: Array<[string, string, string, string?]> = production && role === 'fan'
+    ? fanMix.map((track) => [`${track.artist} · ${track.title}`, `${track.scene} · ${track.match}`, /random|wild/i.test(track.match) ? 'WILDCARD' : 'FOR YOU', track.hexId ? `/tracks/${track.hexId}` : '/listen'])
+    : data.recommendations.map(([title, detail, tag]) => [title, detail, tag]);
+  const activation = viewer?.activation;
+  const activationSteps = activation ? [
+    ['Play a local song', activation.played, '/listen'],
+    ['HYPE something you love', activation.hyped, '/listen'],
+    ['Save a discovery', activation.saved, '/listen'],
+    ['Find an event', activation.foundEvent, '/shows'],
+  ] as const : [];
+  const activationComplete = activationSteps.filter(([, complete]) => complete).length;
   useEffect(() => {
     if (!assignedRoles.includes(role)) setRole(assignedRoles[0] ?? 'fan');
   }, [assignedRoles, role, setRole]);
   useEffect(() => {
     if (production) setAssignedRoles(viewerRoles);
   }, [production, setAssignedRoles, viewerRoles.join('|')]);
+  useEffect(() => {
+    if (!production || role !== 'fan') return;
+    const controller = new AbortController();
+    setFanTracksLoading(true);
+    void loadDiscoveryTracks(controller.signal)
+      .then(setFanTracks)
+      .catch(() => setFanTracks([]))
+      .finally(() => { if (!controller.signal.aborted) setFanTracksLoading(false); });
+    return () => controller.abort();
+  }, [production, role]);
   const toggleRole = (id: RoleId) => {
     if (assignedRoles.includes(id)) {
       if (assignedRoles.length === 1) return;
@@ -844,9 +892,10 @@ function DashboardModule({ production, viewer }: { production: boolean; viewer?:
         <article className="dashboard-build"><span>PAGE & WORKSPACE</span><strong>{data.build[0]}</strong><p>{data.build[1]}</p><Link href={role === 'dj' ? '/radio/studio' : role === 'venue' ? '/events/new' : role === 'advertiser' ? '/advertise/dashboard' : '/pages'}>Open editor ↗</Link></article>
       </div>
       <div className="dashboard-signal dashboard-workspace">
+        {role === 'fan' && activation && <section className="dashboard-activation"><div><span>YOUR FIRST LOCAL LOOP</span><strong>{activationComplete}/4 complete</strong></div><div>{activationSteps.map(([label, complete, href]) => <Link className={complete ? 'is-complete' : ''} href={href} key={label}><i>{complete ? '✓' : '○'}</i><span>{label}</span><b>{complete ? 'Done' : 'Try it'} ↗</b></Link>)}</div></section>}
         <div className="dashboard-next"><span>NEXT BEST ACTION</span><strong>{data.actions[0]}</strong><Link href={roleActionHrefs[role][0]}>Start now ↗</Link></div>
         <div className="dashboard-metrics">{(viewer?.metrics?.[role] ?? data.metrics).map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}</div>
-        <section className="dashboard-recommendations"><div><span>{role === 'fan' ? 'MUSIC FOR YOU' : 'RECOMMENDED NEXT MOVES'}</span><small>{role === 'fan' ? 'Location + preferences + a permanent wildcard' : 'Built from aggregate, role-appropriate signal'}</small></div>{data.recommendations.map(([title, detail, tag]) => <button key={title} type="button"><span><strong>{title}</strong><small>{detail}</small></span><i>{tag}</i><b>↗</b></button>)}</section>
+        <section className="dashboard-recommendations"><div><span>{role === 'fan' ? 'MUSIC FOR YOU' : 'RECOMMENDED NEXT MOVES'}</span><small>{role === 'fan' ? 'Preferences plus a permanent wildcard' : 'Built from aggregate, role-appropriate signal'}</small></div>{recommendations.map(([title, detail, tag, href]) => <Link href={href ?? roleActionHrefs[role][0]} key={title}><span><strong>{title}</strong><small>{detail}</small></span><i>{tag}</i><b>↗</b></Link>)}{recommendations.length === 0 && <div className="dashboard-recommendations-empty"><strong>{fanTracksLoading ? 'Tuning your local mix…' : 'Your recommendations are warming up.'}</strong><small>{fanTracksLoading ? 'Reading your HYPES and Discovery saves.' : 'Play, HYPE, and save local music to tune this space.'}</small>{!fanTracksLoading && <Link href="/listen">Start discovering ↗</Link>}</div>}</section>
         <section className="dashboard-insights"><span>WHAT YOUR HYPE SIGNAL SAYS</span>{data.insights.map((insight, index) => <div key={insight}><strong>{String(index + 1).padStart(2, '0')}</strong><p>{insight}</p></div>)}</section>
         <div className="dashboard-actions">{data.actions.map((action, index) => <Link className={index === 0 ? 'primary' : ''} href={roleActionHrefs[role][index] ?? '/pages'} key={action}>{action}<span>↗</span></Link>)}</div>
       </div>
@@ -934,7 +983,7 @@ function SettingsModule({ demoState, onDemoStateChange, onReducedMotionChange, p
       <div className="settings-board" data-api-path={implementationBindings.settingsUpdate.path}>
         <div className="settings-section settings-appearance"><span>LANGUAGE & APPEARANCE</span><label><strong>Language</strong><select onChange={(event) => updateSetting('language', setLanguage, event.target.value)} value={language}><option>English</option><option>Español</option><option>Français</option><option>Português</option><option>العربية</option><option>Deutsch</option><option>日本語</option><option>中文</option><option>Italiano</option><option>한국어</option><option>हिन्दी</option><option>Русский</option></select></label><label><strong>Theme</strong><select onChange={(event) => updateSetting('theme', setTheme, event.target.value)} value={theme}><option>System</option><option>Dark</option><option>Light</option></select></label></div>
         <div className="settings-section settings-accessibility"><span>ACCESSIBILITY</span><label><span><strong>Reduce motion</strong><small>Minimize transitions and animated artwork</small></span><input checked={reducedMotion} onChange={(event) => { onReducedMotionChange(event.target.checked); signalImplementationAction('settingsUpdate', { key: 'reducedMotion', value: event.target.checked }); applyDeviceSetting('reducedMotion', event.target.checked); }} type="checkbox" /></label><label><span><strong>High contrast</strong><small>Increase borders and text separation</small></span><input checked={highContrast} onChange={(event) => updateSetting('highContrast', setHighContrast, event.target.checked)} type="checkbox" /></label><label><span><strong>Larger interface text</strong><small>Increase labels and supporting copy</small></span><input checked={largerText} onChange={(event) => updateSetting('largerText', setLargerText, event.target.checked)} type="checkbox" /></label><label><span><strong>Underline links</strong><small>Make text links easier to identify</small></span><input checked={underlineLinks} onChange={(event) => updateSetting('underlineLinks', setUnderlineLinks, event.target.checked)} type="checkbox" /></label><label><span><strong>Readable font</strong><small>Use a simpler typeface for long reading</small></span><input checked={readableFont} onChange={(event) => updateSetting('readableFont', setReadableFont, event.target.checked)} type="checkbox" /></label><label><span><strong>Captions and transcripts</strong><small>Prefer available text for radio and video</small></span><input checked={captions} onChange={(event) => updateSetting('captions', setCaptions, event.target.checked)} type="checkbox" /></label></div>
-        <div className="settings-section"><span>PRIVACY & DISCOVERY</span><label><span><strong>Use location for nearby music</strong><small>Approximate location only</small></span><input checked={location} onChange={(event) => updateSetting('location', setLocation, event.target.checked)} type="checkbox" /></label><label><span><strong>Private listening</strong><small>Do not use this session for recommendations</small></span><input checked={privateListening} onChange={(event) => updateSetting('privateListening', setPrivateListening, event.target.checked)} type="checkbox" /></label></div>
+        <div className="settings-section"><span>PRIVACY & DISCOVERY</span><label><span><strong>Use location for nearby music</strong><small>County-scale only; precise GPS is discarded</small></span><input checked={location} onChange={(event) => updateSetting('location', setLocation, event.target.checked)} type="checkbox" /></label><label><span><strong>Private listening</strong><small>Do not use this session for recommendations</small></span><input checked={privateListening} onChange={(event) => updateSetting('privateListening', setPrivateListening, event.target.checked)} type="checkbox" /></label></div>
         <div className="settings-section"><span>NOTIFICATIONS</span><label><span><strong>Scene alerts</strong><small>Shows, artists, and radio you HYPE</small></span><input checked={notifications} onChange={(event) => updateSetting('notifications', setNotifications, event.target.checked)} type="checkbox" /></label></div>
         {production && saveStatus && <div aria-live="polite" className="settings-save-status">{saveStatus}</div>}
         {!production && <div className="settings-section settings-alpha-states"><span>ALPHA EXPERIENCE STATES</span><p>Preview the states every module needs before launch.</p><div>{(['normal', 'loading', 'empty', 'offline', 'error', 'playback'] as DemoState[]).map((state) => <button aria-pressed={demoState === state} key={state} onClick={() => onDemoStateChange(state)} type="button">{state}</button>)}</div></div>}
@@ -1443,7 +1492,7 @@ export function ModuleDeckMockup({ production = false, viewer }: { production?: 
         <div className="deck-active-label" key={activeModule.id}><span>{activeModule.eyebrow}</span><strong>{activeModule.label}</strong></div>
         <span className="deck-sample-badge">{production ? 'LIVE ALPHA' : 'ALPHA SAMPLE'}</span>
         <button aria-expanded={accountOpen} aria-label="Open account menu" className="deck-profile" onClick={() => setAccountOpen((value) => !value)} type="button">{viewer?.name?.trim().charAt(0).toUpperCase() || 'F'}</button>
-        {accountOpen && <div className="deck-account-menu"><div><span>SIGNED IN AS</span><strong>{viewer?.name || 'Fan alpha tester'}</strong><small>{viewer?.role || 'Base fan account'}</small></div><Link href="/api/auth/signout">Log out <span>↗</span></Link></div>}
+        {accountOpen && <div className="deck-account-menu"><div><span>SIGNED IN AS</span><strong>{viewer?.name || 'Fan alpha tester'}</strong><small>{viewer?.role || 'Base fan account'}</small></div><button onClick={() => changeModule(modules.findIndex((item) => item.id === 'settings'))} type="button">Settings <span>↗</span></button><Link href={`/support?alpha=1&module=${activeModule.id}`}>Send alpha feedback <span>↗</span></Link><Link href="/api/auth/signout">Log out <span>↗</span></Link></div>}
       </header>
 
       <main aria-busy={demoState === 'loading'} className={`deck-stage transition-${transition}`}>
@@ -1530,7 +1579,7 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
 .scene-signal-toast { position:absolute; z-index:90; top:94px; left:50%; display:flex; align-items:center; gap:9px; padding:10px 15px; border:1px solid rgba(24,222,209,.34); border-radius:999px; color:var(--deck-cream); background:rgba(5,8,9,.92); box-shadow:0 18px 60px rgba(0,0,0,.44),0 0 32px rgba(24,222,209,.12); backdrop-filter:blur(20px); font:800 8px var(--f-m,monospace); letter-spacing:.1em; transform:translateX(-50%); animation:signalToastIn .38s cubic-bezier(.2,.86,.2,1) both; }
 .scene-signal-toast > span { width:7px; height:7px; border-radius:50%; background:var(--deck-cyan); box-shadow:0 0 14px var(--deck-cyan); }
 .deck-icon { width:22px; height:22px; flex:0 0 auto; }
-.deck-topbar { height:calc(76px + var(--deck-safe-top)); position:relative; z-index:40; display:flex; align-items:center; gap:16px; padding:calc(9px + var(--deck-safe-top)) calc(22px + var(--deck-safe-right)) 9px calc(22px + var(--deck-safe-left)); border-bottom:1px solid var(--deck-line); background:rgba(3,4,5,.88); backdrop-filter:blur(20px); }
+.deck-topbar { height:calc(76px + var(--deck-safe-top)); position:absolute; z-index:40; top:0; right:0; left:0; display:flex; align-items:center; gap:16px; padding:calc(9px + var(--deck-safe-top)) calc(22px + var(--deck-safe-right)) 9px calc(22px + var(--deck-safe-left)); border-bottom:1px solid var(--deck-line); background:rgba(3,4,5,.88); backdrop-filter:blur(20px); }
 .deck-logo { width:58px; height:58px; position:relative; flex:0 0 auto; padding:0; overflow:hidden; border:1px solid rgba(243,238,231,.25); border-radius:16px; background:#090807; box-shadow:0 0 26px rgba(255,77,46,.12); cursor:pointer; touch-action:manipulation; transform-origin:center; }
 .deck-logo img { width:100%; height:100%; object-fit:cover; }
 .deck-logo.is-pressed { animation:logoButtonPress .62s cubic-bezier(.18,.8,.2,1); }
@@ -1564,8 +1613,9 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
 .deck-account-menu > div span { color:var(--deck-cyan); font:800 8px var(--f-m,monospace); letter-spacing:.12em; }
 .deck-account-menu > div strong { font-size:13px; }
 .deck-account-menu > div small { color:var(--deck-muted); font-size:9px; }
-.deck-account-menu > a { display:flex; align-items:center; justify-content:space-between; padding:13px 16px; border-top:1px solid var(--deck-line); color:var(--deck-orange); background:rgba(255,77,46,.035); font-size:11px; font-weight:800; text-decoration:none; }
-.deck-stage { height:calc(100dvh - 76px - var(--deck-safe-top)); min-height:564px; }
+.deck-account-menu > a,.deck-account-menu > button { display:flex; align-items:center; justify-content:space-between; padding:13px 16px; border:0; border-top:1px solid var(--deck-line); color:var(--deck-orange); background:rgba(255,77,46,.035); font-size:11px; font-weight:800; text-align:left; text-decoration:none; }
+.deck-account-menu > button { color:var(--deck-cyan); background:rgba(24,222,209,.035); }
+.deck-stage { height:auto; min-height:564px; position:absolute; top:calc(76px + var(--deck-safe-top)); right:0; bottom:0; left:0; }
 .deck-stage > .deck-module { transition:opacity .18s ease,transform .18s ease; }
 .deck-stage.transition-up-out > .deck-module { opacity:0; transform:translateY(-48px); }
 .deck-stage.transition-down-out > .deck-module { opacity:0; transform:translateY(48px); }
@@ -1943,6 +1993,17 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
 .dashboard-build a { width:max-content; padding:7px 0; border:0; color:var(--deck-cyan); background:transparent; font-size:9px; font-weight:800; text-decoration:none; }
 .dashboard-signal { display:grid; gap:12px; }
 .dashboard-workspace { min-height:0; overflow:auto; padding-right:4px; }
+.dashboard-activation { display:grid; overflow:hidden; border:1px solid rgba(255,77,46,.3); border-radius:16px; background:linear-gradient(135deg,rgba(255,77,46,.07),rgba(24,222,209,.035)); }
+.dashboard-activation > div:first-child { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px 9px; }
+.dashboard-activation > div:first-child span { color:var(--deck-orange); font:800 8px var(--f-m,monospace); letter-spacing:.12em; }
+.dashboard-activation > div:first-child strong { color:var(--deck-cream); font-size:10px; }
+.dashboard-activation > div:last-child { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+.dashboard-activation a { min-width:0; display:grid; grid-template-columns:20px minmax(0,1fr) auto; align-items:center; gap:7px; padding:10px 12px; border-top:1px solid rgba(243,238,231,.08); color:var(--deck-cream); font-size:9px; text-decoration:none; }
+.dashboard-activation a:nth-child(odd) { border-right:1px solid rgba(243,238,231,.08); }
+.dashboard-activation a i { color:var(--deck-orange); font-style:normal; }
+.dashboard-activation a b { color:var(--deck-cyan); font-size:8px; white-space:nowrap; }
+.dashboard-activation a.is-complete { color:var(--deck-muted); }
+.dashboard-activation a.is-complete i { color:var(--deck-cyan); }
 .dashboard-next { display:grid; grid-template-columns:1fr auto; align-items:center; column-gap:16px; padding:16px 18px; border:1px solid rgba(24,222,209,.35); border-radius:16px; background:rgba(24,222,209,.055); }
 .dashboard-next > span { grid-column:1/-1; color:var(--deck-cyan); font:800 8px var(--f-m,monospace); letter-spacing:.12em; }
 .dashboard-next strong { font:900 18px var(--f-d,Arial,sans-serif); text-transform:uppercase; }
@@ -1962,9 +2023,13 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
 .dashboard-recommendations > div:first-child { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; padding:12px 14px 9px; }
 .dashboard-recommendations > div:first-child span,.dashboard-insights > span { color:var(--deck-cyan); font:800 8px var(--f-m,monospace); letter-spacing:.12em; }
 .dashboard-recommendations > div:first-child small { color:var(--deck-muted); font-size:8px; text-align:right; }
-.dashboard-recommendations > button { min-width:0; display:grid; grid-template-columns:minmax(0,1fr) auto 16px; align-items:center; gap:12px; padding:11px 14px; border:0; border-top:1px solid rgba(243,238,231,.09); color:var(--deck-cream); background:transparent; text-align:left; }
-.dashboard-recommendations > button:hover { background:rgba(243,238,231,.04); }
-.dashboard-recommendations > button > span { min-width:0; display:grid; }
+.dashboard-recommendations > a { min-width:0; display:grid; grid-template-columns:minmax(0,1fr) auto 16px; align-items:center; gap:12px; padding:11px 14px; border:0; border-top:1px solid rgba(243,238,231,.09); color:var(--deck-cream); background:transparent; text-align:left; text-decoration:none; }
+.dashboard-recommendations > a:hover { background:rgba(243,238,231,.04); }
+.dashboard-recommendations > a > span { min-width:0; display:grid; }
+.dashboard-recommendations-empty { display:grid; gap:5px; padding:18px 14px; border-top:1px solid rgba(243,238,231,.09); }
+.dashboard-recommendations-empty strong { font-size:12px; }
+.dashboard-recommendations-empty small { color:var(--deck-muted); font-size:9px; }
+.dashboard-recommendations-empty a { justify-self:start; margin-top:5px; color:var(--deck-cyan); font:800 8px var(--f-m,monospace); text-decoration:none; }
 .dashboard-recommendations strong,.dashboard-recommendations small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .dashboard-recommendations strong { font-size:11px; }
 .dashboard-recommendations small { color:var(--deck-muted); font-size:8px; }
@@ -2218,7 +2283,7 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
   .deck-sample-badge { display:none; }
   .deck-profile { width:40px; height:40px; margin-left:auto; display:grid; }
   .deck-account-menu { top:62px; right:10px; }
-  .deck-stage { height:calc(100dvh - 68px - var(--deck-safe-top)); min-height:552px; }
+  .deck-stage { height:auto; min-height:552px; top:calc(68px + var(--deck-safe-top)); }
   .deck-module { display:block; overflow-x:hidden; overflow-y:auto; padding:28px 18px 102px; }
   .deck-module h1 { margin:6px 0 10px; font-size:var(--mobile-hero-size); line-height:.96; }
   .deck-module p { font-size:13px; }
@@ -2347,7 +2412,7 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
   .dashboard-metrics div:nth-child(2n) { border-right:0; }
   .dashboard-metrics div:nth-last-child(-n+3) { border-bottom:1px solid var(--deck-line); }
   .dashboard-metrics div:nth-last-child(-n+2) { border-bottom:0; }
-  .dashboard-recommendations > button { grid-template-columns:minmax(0,1fr) 16px; }
+  .dashboard-recommendations > a { grid-template-columns:minmax(0,1fr) 16px; }
   .dashboard-recommendations i { display:none; }
   .community-subnav { grid-template-columns:1fr 1fr; gap:5px; }
   .community-subnav button { min-height:36px; }

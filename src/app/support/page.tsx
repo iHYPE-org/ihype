@@ -8,8 +8,16 @@ export const metadata: Metadata = {
   description: 'We read every message. Usually reply within 24h.'
 };
 
-export default async function SupportPage() {
+export default async function SupportPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ alpha?: string; module?: string }>;
+}) {
   const t = await getServerT();
+  const params = await searchParams;
+  const alphaModule = params?.alpha === '1' && /^(map|discover|radio|dashboard|settings|community)$/.test(params.module ?? '')
+    ? params.module
+    : undefined;
   return (
     <div style={{ maxWidth: 680, margin: '0 auto', padding: '40px 24px 100px' }}>
       <span style={{
@@ -41,7 +49,7 @@ export default async function SupportPage() {
         </svg>
       </Link>
 
-      <SupportPageClient />
+      <SupportPageClient alphaModule={alphaModule} />
     </div>
   );
 }

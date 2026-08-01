@@ -9,11 +9,14 @@ Do not put credentials, customer data, or full webhook payloads in this file.
 1. Run `npm run check`.
 2. Run `npm run build`.
 3. Load production configuration securely and run
-   `node -r dotenv/config scripts/beta-launch-check.mjs`.
+   `npm run check:alpha`. This requires two operational-alert recipients and a
+   successful restore-drill timestamp no more than 35 days old.
 4. Run `npm run smoke:production` with the monitoring bearer configured.
 5. Confirm the authorized health response reports:
    - database `ok`;
    - no launch blockers;
+   - `alphaReadiness.ready: true` (two administrators, fresh restore evidence,
+     invite-only registration, and the minimum real-content cohort);
    - no terminally failed notification jobs;
    - no pending notification job older than 30 minutes.
 
@@ -33,6 +36,8 @@ Do not put credentials, customer data, or full webhook payloads in this file.
 
 - Confirm the database backup retention window.
 - Restore the latest backup into an isolated project.
+- Run `npm run verify:restore` with the isolated and production database URLs;
+  the checker refuses to query a matching production database identity.
 - Verify users, profiles, orders, tickets, scans, payables, and notification jobs.
 - Verify R2 objects independently; database backups do not contain media objects.
 - Record the measured recovery point and recovery time.
@@ -61,3 +66,13 @@ Do not put credentials, customer data, or full webhook payloads in this file.
 - Assign the support and incident contacts for the launch window.
 - Review errors, failed email, abandoned orders, open reports, and queue backlog
   daily throughout alpha.
+- Before inviting testers, publish at least 10 playable tracks, 5 discoverable
+  artists, 2 discoverable venues, 2 upcoming events, and 1 scheduled radio show.
+
+## Native release rehearsal
+
+- Manually run **Native shell build (iOS + Android)** with `publish=false` first.
+  This exercises signing and retains the signed IPA/AAB without contacting a store.
+- Inspect and install the retained artifacts on controlled devices.
+- Only after that rehearsal passes, rerun with `publish=true` to upload to
+  TestFlight and the Play internal-testing track.

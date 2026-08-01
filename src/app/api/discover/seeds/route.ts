@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
+import { releasedMediaWhere } from '@/lib/media-release';
 
 const LAMBDA = 0.05;
 
@@ -88,7 +89,7 @@ export async function GET(request: NextRequest) {
               where: {
                 profileId: { in: rankedProfileIds },
                 id: { notIn: [...actionedIds] },
-                isPublished: true,
+                ...releasedMediaWhere(),
                 profile: { discoverable: true }
               },
               take: 15,
@@ -111,7 +112,7 @@ export async function GET(request: NextRequest) {
       : await db.artistMediaAsset.findMany({
           where: {
             id: { notIn: [...actionedIds] },
-            isPublished: true,
+            ...releasedMediaWhere(),
             profile: genres.length > 0 ? { genres: { hasSome: genres }, discoverable: true } : { discoverable: true }
           },
           take: 15,
@@ -128,7 +129,7 @@ export async function GET(request: NextRequest) {
     const randomPool = await db.artistMediaAsset.findMany({
       where: {
         id: { notIn: [...actionedIds, ...personalizedIds] },
-        isPublished: true,
+        ...releasedMediaWhere(),
         profile: { discoverable: true },
       },
       take: 100,

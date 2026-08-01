@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
-import { isPublicVenueCoordinate } from '@/lib/public-location';
+import { coarsenFanCoordinates, isPublicVenueCoordinate } from '@/lib/public-location';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const lat = parseFloat(searchParams.get('lat') ?? '');
-    const lng = parseFloat(searchParams.get('lng') ?? '');
+    const requestedLat = parseFloat(searchParams.get('lat') ?? '');
+    const requestedLng = parseFloat(searchParams.get('lng') ?? '');
+    const approximateLocation = coarsenFanCoordinates(requestedLat, requestedLng);
     const radiusParam = parseFloat(searchParams.get('radius') ?? '50');
     // Postgres treats NaN as greater than every number, so an unclamped or
     // non-finite radius would match all shows.
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
     // repeat lookups for the same coordinates.
     const cacheHeaders = { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' };
 
-    if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+    if (!approximateLocation) {
       // Fall back to recently added shows
       const shows = await db.show.findMany({
         where: { status: 'SCHEDULED', startsAt: { gte: new Date() } },
@@ -38,6 +39,8 @@ export async function GET(request: NextRequest) {
         })),
       }, { headers: cacheHeaders });
     }
+
+    const { latitude: lat, longitude: lng } = approximateLocation;
 
     // Cheap bounding box so the (latitude, longitude) index prunes rows
     // before the per-row Haversine trig runs. 1° latitude ≈ 111.32 km;

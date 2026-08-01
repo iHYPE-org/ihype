@@ -49,7 +49,25 @@ describe('ui preview API adapters', () => {
     });
 
     expect(response).toEqual({ data: [], source: 'live' });
-    expect(fetchMock).toHaveBeenCalledWith('/api/shows/nearby?lat=42.331&lng=-83.046&radius=500', expect.any(Object));
+    expect(fetchMock).toHaveBeenCalledWith('/api/shows/nearby?lat=42.25&lng=-83&radius=500', expect.any(Object));
+  });
+
+  it('never transmits a device-level GPS fix in a nearby-show URL', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ shows: [] }), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await loadNearbyShows({
+      latitude: 42.331427,
+      longitude: -83.045754,
+      radiusKm: 35,
+      signal: new AbortController().signal,
+    });
+
+    const requestedUrl = fetchMock.mock.calls[0]?.[0] as string;
+    expect(requestedUrl).toContain('lat=42.25');
+    expect(requestedUrl).toContain('lng=-83');
+    expect(requestedUrl).not.toContain('42.331427');
+    expect(requestedUrl).not.toContain('-83.045754');
   });
 
 

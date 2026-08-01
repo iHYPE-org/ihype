@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { serveMediaAsset } from '@/lib/media-response';
 import { parseShowProductionPlan } from '@/lib/show-composer';
 import { canViewerAccessShowMedia } from '@/lib/show-media-access';
+import { releasedMediaWhere } from '@/lib/media-release';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,7 +45,7 @@ export async function GET(
   }
 
   const asset = await db.artistMediaAsset.findFirst({
-    where: { hexId, isPublished: true },
+    where: { hexId, ...releasedMediaWhere() },
     select: {
       originalFileName: true,
       mimeType: true,

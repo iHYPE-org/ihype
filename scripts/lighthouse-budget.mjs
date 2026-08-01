@@ -136,7 +136,12 @@ const PAGES = [
   // carries the data-backed tier's budget, because that is what /info is.
   { path: '/info', budget: { performance: 0.65, lcp: 4800, cls: 0.1, tbt: 550 } },
   { path: '/discover', budget: { performance: 0.65, lcp: 4800, cls: 0.1, tbt: 550 } },
-  { path: '/shows', budget: { performance: 0.65, lcp: 4800, cls: 0.1, tbt: 550 } }
+  { path: '/shows', budget: { performance: 0.65, lcp: 4800, cls: 0.1, tbt: 550 } },
+  // The signed-in module deck is intentionally richer than the public pages.
+  // Its first budget is conservative while collecting a real CI baseline;
+  // it still catches catastrophic regressions and, crucially, measures the
+  // authenticated experience instead of assuming public-page speed covers it.
+  { path: '/listen', authenticated: true, budget: { performance: 0.35, lcp: 8000, cls: 0.15, tbt: 2500 } }
 ];
 
 const METRICS = [
@@ -147,7 +152,7 @@ const METRICS = [
 
 const RUNS_PER_PAGE = 5;
 
-async function auditPageOnce(baseUrl, chromePort, page) {
+async function auditPageOnce(baseUrl, chromePort, page, authenticatedHeaders) {
   const result = await lighthouse(
     `${baseUrl}${page.path}`,
     {
@@ -157,7 +162,8 @@ async function auditPageOnce(baseUrl, chromePort, page) {
       onlyCategories: ['performance'],
       formFactor: 'mobile',
       screenEmulation: { mobile: true, width: 390, height: 844, deviceScaleFactor: 2, disabled: false },
-      throttlingMethod: 'simulate'
+      throttlingMethod: 'simulate',
+      ...(page.authenticated && authenticatedHeaders ? { extraHeaders: authenticatedHeaders } : {})
     }
   );
 
@@ -187,19 +193,19 @@ async function auditPageOnce(baseUrl, chromePort, page) {
 // A single run can also fail outright (e.g. a transient `NO_LCP` trace-engine
 // race under headless Chrome) rather than just score poorly — one retry per
 // attempt absorbs that without masking a page that's genuinely broken.
-async function auditPageWithRetry(baseUrl, chromePort, page) {
+async function auditPageWithRetry(baseUrl, chromePort, page, authenticatedHeaders) {
   try {
-    return await auditPageOnce(baseUrl, chromePort, page);
+    return await auditPageOnce(baseUrl, chromePort, page, authenticatedHeaders);
   } catch (error) {
     console.warn(`[lighthouse-budget] run failed for ${page.path}, retrying once: ${error.message}`);
-    return auditPageOnce(baseUrl, chromePort, page);
+    return auditPageOnce(baseUrl, chromePort, page, authenticatedHeaders);
   }
 }
 
-async function auditPage(baseUrl, chromePort, page) {
+async function auditPage(baseUrl, chromePort, page, authenticatedHeaders) {
   const runs = [];
   for (let i = 0; i < RUNS_PER_PAGE; i += 1) {
-    runs.push(await auditPageWithRetry(baseUrl, chromePort, page));
+    runs.push(await auditPageWithRetry(baseUrl, chromePort, page, authenticatedHeaders));
   }
 
   return {
@@ -246,7 +252,7 @@ function writeJobSummary(report) {
  * scripts/workerd-smoke.mjs, which boots the workerd server this needs) can
  * fold the result into their own pass/fail accounting.
  */
-export async function runLighthouseBudget({ baseUrl, chromePath } = {}) {
+export async function runLighthouseBudget({ baseUrl, chromePath, authenticatedHeaders } = {}) {
   const resolvedBaseUrl = baseUrl || process.env.LHCI_BASE_URL || 'http://localhost:3100';
   const resolvedChromePath = chromePath || process.env.CHROME_PATH || process.env.LHCI_CHROME_PATH;
 
@@ -261,7 +267,11 @@ export async function runLighthouseBudget({ baseUrl, chromePath } = {}) {
   try {
     for (const page of PAGES) {
       process.stdout.write(`[lighthouse-budget] auditing ${page.path} ... `);
-      const first = await auditPage(resolvedBaseUrl, chrome.port, page);
+      if (page.authenticated && !authenticatedHeaders) {
+        console.log(`[lighthouse-budget] skipping ${page.path}: no authenticated headers supplied`);
+        continue;
+      }
+      const first = await auditPage(resolvedBaseUrl, chrome.port, page, authenticatedHeaders);
       const firstFailures = checkBudget(page.budget, first);
 
       // The measured value is always logged, pass or fail. Previously a
@@ -283,7 +293,7 @@ export async function runLighthouseBudget({ baseUrl, chromePath } = {}) {
         // metric, 0.74 against 0.75. Only paid for when something is already
         // over, so a green run costs nothing extra.
         process.stdout.write(`[lighthouse-budget] re-sampling ${page.path} to confirm ... `);
-        resample = await auditPage(resolvedBaseUrl, chrome.port, page);
+        resample = await auditPage(resolvedBaseUrl, chrome.port, page, authenticatedHeaders);
         console.log(describeSample(resample));
 
         const confirmation = confirmFailures(firstFailures, checkBudget(page.budget, resample));

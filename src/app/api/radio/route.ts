@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getDemoOwnerExclusion } from '@/lib/runtime-flags';
 import { log } from '@/lib/logger';
+import { releasedMediaWhere } from '@/lib/media-release';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +36,7 @@ export async function GET(request: Request) {
           where: {
             profileId: { in: hypedProfileIds },
             hexId: excludeIds.length > 0 ? { notIn: excludeIds } : undefined,
-            isPublished: true,
+            ...releasedMediaWhere(),
             profile: { ...getDemoOwnerExclusion(), discoverable: true }
           },
           select: {
@@ -50,7 +51,7 @@ export async function GET(request: Request) {
       where: {
         profileId: hypedProfileIds.length > 0 ? { notIn: hypedProfileIds } : undefined,
         hexId: excludeIds.length > 0 ? { notIn: excludeIds } : undefined,
-        isPublished: true,
+        ...releasedMediaWhere(),
         profile: { ...getDemoOwnerExclusion(), type: { in: ['ARTIST', 'DJ'] }, discoverable: true }
       },
       select: {

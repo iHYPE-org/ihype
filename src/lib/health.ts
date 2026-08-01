@@ -12,10 +12,12 @@ import {
   shouldHideDemoContentRuntime,
 } from '@/lib/runtime-flags';
 import { readRuntimeEnv } from '@/lib/runtime-env';
+import { buildAlphaBlockers, evaluateRestoreDrill } from '@/lib/alpha-readiness';
 
 export async function getHealthSnapshot() {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const startedAt = Date.now();
+  const now = new Date();
   const stripeSecretKey = readRuntimeEnv('STRIPE_SECRET_KEY');
 
   try {
@@ -29,6 +31,12 @@ export async function getHealthSnapshot() {
       pendingNotificationCount,
       failedNotificationCount,
       oldestPendingNotification,
+      administratorCount,
+      playableTrackCount,
+      discoverableArtistCount,
+      discoverableVenueCount,
+      upcomingEventCount,
+      scheduledRadioShowCount,
     ] =
       await Promise.all([
         db.user.count(),
@@ -44,6 +52,18 @@ export async function getHealthSnapshot() {
           orderBy: { createdAt: 'asc' },
           select: { createdAt: true },
         }),
+        db.user.count({ where: { role: 'ADMIN' } }),
+        db.artistMediaAsset.count({
+          where: {
+            isPublished: true,
+            OR: [{ publishAt: null }, { publishAt: { lte: now } }],
+            profile: { discoverable: true },
+          },
+        }),
+        db.profile.count({ where: { type: 'ARTIST', discoverable: true } }),
+        db.profile.count({ where: { type: 'VENUE', discoverable: true } }),
+        db.show.count({ where: { isRadioShow: false, status: 'SCHEDULED', startsAt: { gte: now } } }),
+        db.show.count({ where: { isRadioShow: true, status: { in: ['SCHEDULED', 'LIVE'] } } }),
       ]);
 
     const [
@@ -91,6 +111,18 @@ export async function getHealthSnapshot() {
         ? [`Notification delivery is backlogged; oldest pending job is ${oldestPendingNotificationAgeMinutes} minutes old.`]
         : []),
     ];
+    const restoreDrill = evaluateRestoreDrill(readRuntimeEnv('RESTORE_DRILL_VERIFIED_AT'));
+    const alphaBlockers = buildAlphaBlockers({
+      administrators: administratorCount,
+      playableTracks: playableTrackCount,
+      discoverableArtists: discoverableArtistCount,
+      discoverableVenues: discoverableVenueCount,
+      upcomingEvents: upcomingEventCount,
+      scheduledRadioShows: scheduledRadioShowCount,
+      inviteOnlySignup,
+      restoreDrillReady: restoreDrill.ready,
+      launchBlockers,
+    });
 
     return {
       status: 'ok' as const,
@@ -136,6 +168,19 @@ export async function getHealthSnapshot() {
       launchReadiness: {
         ready: launchBlockers.length === 0,
         blockers: launchBlockers
+      },
+      alphaReadiness: {
+        ready: alphaBlockers.length === 0,
+        blockers: alphaBlockers,
+        administrators: administratorCount,
+        restoreDrill,
+        content: {
+          playableTracks: playableTrackCount,
+          discoverableArtists: discoverableArtistCount,
+          discoverableVenues: discoverableVenueCount,
+          upcomingEvents: upcomingEventCount,
+          scheduledRadioShows: scheduledRadioShowCount,
+        },
       },
       warnings: process.env.NODE_ENV === 'production'
         ? [

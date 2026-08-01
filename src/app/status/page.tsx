@@ -115,7 +115,7 @@ export default async function StatusPage() {
     resendResult.ok &&
     stripePresent &&
     envChecks.every((c) => c.ok);
-  const launchBlockers = health.status === 'ok' ? health.launchReadiness.blockers : ['Health snapshot is degraded.'];
+  const launchBlockers = health.status === 'ok' ? health.alphaReadiness.blockers : ['Health snapshot is degraded.'];
 
   return (
     <div className="container section" style={{ maxWidth: 760 }}>
@@ -222,7 +222,7 @@ export default async function StatusPage() {
       </div>
 
       <h2 className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.68rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'var(--warning)', marginBottom: 14 }}>
-        {t('statusPage.launchReadiness', 'Launch readiness')}
+        {t('statusPage.alphaReadiness', 'Alpha readiness')}
       </h2>
       <div
         style={{
@@ -237,7 +237,7 @@ export default async function StatusPage() {
           <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '9px 0' }}>
             <span style={{ fontFamily: 'var(--f-m)', fontSize: '0.8rem', color: 'var(--success)', flexShrink: 0, marginTop: 1 }}>✓</span>
             <div>
-              <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>{t('statusPage.allLaunchChecksPassing', 'All launch checks passing')}</div>
+              <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>{t('statusPage.allAlphaChecksPassing', 'All alpha checks passing')}</div>
               <div className="meta" style={{ fontSize: '0.8rem', marginTop: 2, lineHeight: 1.5 }}>{t('statusPage.noBlockersShipIt', 'No blockers. Ship it.')}</div>
             </div>
           </div>
