@@ -64,7 +64,7 @@ export default async function WelcomePage() {
     steps: { title: string; desc: string }[];
   }> = {
     FAN: {
-      roleLabel: t('welcomePage.roleFan', 'Fan'), tint: '#b983ff',
+      roleLabel: t('welcomePage.roleFan', 'Fan'), tint: 'var(--role-fan)',
       sub: t('welcomePage.subFan', 'Your account is live. Start hyping the artists you believe in — your listens and hypes shape who gets discovered.'),
       // No fan setup wizard exists, and none is needed — a fan account is
       // complete at signup. Listening is the first thing to do.
@@ -76,7 +76,7 @@ export default async function WelcomePage() {
       ],
     },
     ARTIST: {
-      roleLabel: t('welcomePage.roleArtist', 'Artist'), tint: '#ff5029',
+      roleLabel: t('welcomePage.roleArtist', 'Artist'), tint: 'var(--accent)',
       sub: t('welcomePage.subArtist', 'Welcome to the platform where 70% of every ticket is yours — locked by charter, before a single ticket sells.'),
       cta: t('welcomePage.ctaArtist', 'Set up your page →'), ctaHref: onboardingPath ?? '/pages',
       steps: [
@@ -86,7 +86,7 @@ export default async function WelcomePage() {
       ],
     },
     VENUE: {
-      roleLabel: t('welcomePage.roleVenue', 'Venue'), tint: '#22e5d4',
+      roleLabel: t('welcomePage.roleVenue', 'Venue'), tint: 'var(--role-venue)',
       sub: t('welcomePage.subVenue', 'A guaranteed 20% of every gate, by charter — plus real demand data on who fans actually want to see.'),
       cta: t('welcomePage.ctaVenue', 'List your room →'), ctaHref: onboardingPath ?? '/pages',
       steps: [
@@ -96,7 +96,7 @@ export default async function WelcomePage() {
       ],
     },
     DJ: {
-      roleLabel: t('welcomePage.roleDj', 'DJ'), tint: '#ff3e9a',
+      roleLabel: t('welcomePage.roleDj', 'DJ'), tint: 'var(--accent-2)',
       sub: t('welcomePage.subDj', 'Your studio is waiting. Build radio shows from the free-use library and get paid to promote the shows you play.'),
       cta: t('welcomePage.ctaDj', 'Open the studio →'), ctaHref: onboardingPath ?? '/radio',
       steps: [
@@ -143,7 +143,7 @@ export default async function WelcomePage() {
 
         <div className="welcome-panel">
           <div className="welcome-identity">
-            <div className="welcome-avatar" style={{ background: `linear-gradient(135deg, ${c.tint}, #b983ff)` }}>{initial}</div>
+            <div className="welcome-avatar" style={{ background: `linear-gradient(135deg, ${c.tint}, var(--role-fan))` }}>{initial}</div>
             <div>
               <div className="welcome-name">{displayName}</div>
               <div className="welcome-role" style={{ color: c.tint }}>{c.roleLabel}{pendingNote}</div>
@@ -159,7 +159,7 @@ export default async function WelcomePage() {
       <style>{`
         .welcome-body { background: var(--bg); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
         .welcome-card { max-width: 560px; width: 100%; text-align: center; }
-        .welcome-check { width: 64px; height: 64px; border-radius: 50%; background: rgba(34,229,212,.12); border: 1px solid rgba(34,229,212,.35); display: flex; align-items: center; justify-content: center; margin: 0 auto 22px; font-size: 26px; color: #22e5d4; }
+        .welcome-check { width: 64px; height: 64px; border-radius: 50%; background: rgba(var(--role-venue-rgb),.12); border: 1px solid rgba(var(--role-venue-rgb),.35); display: flex; align-items: center; justify-content: center; margin: 0 auto 22px; font-size: 26px; color: var(--role-venue); }
         .welcome-h1 { font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; font-size: clamp(32px, 7vw, 48px); letter-spacing: -.04em; line-height: 1; color: var(--ink); }
         .welcome-sub { font-size: 16px; color: var(--ink-a70); line-height: 1.65; margin: 14px 0 36px; }
         .welcome-panel { text-align: left; background: var(--bg2); border: 1px solid var(--line); border-radius: 18px; padding: 26px 26px 18px; }
@@ -173,12 +173,12 @@ export default async function WelcomePage() {
         .welcome-ring span { width: 24px; height: 24px; border-radius: 50%; background: var(--bg); display: flex; align-items: center; justify-content: center; font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 8.5px; color: var(--ink-a70); }
         .welcome-steps { display: flex; flex-direction: column; }
         .welcome-step { display: flex; gap: 14px; align-items: flex-start; padding: 11px 0; width: 100%; background: none; border: none; cursor: pointer; text-align: left; font: inherit; }
-        .welcome-step-num { flex-shrink: 0; width: 24px; height: 24px; border-radius: 7px; background: rgba(255,80,41,.12); color: var(--accent); font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; }
-        .welcome-step.done .welcome-step-num { background: rgba(34,229,212,.15); color: var(--role-venue, #22e5d4); }
+        .welcome-step-num { flex-shrink: 0; width: 24px; height: 24px; border-radius: 7px; background: rgba(var(--accent-rgb),.12); color: var(--accent); font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+        .welcome-step.done .welcome-step-num { background: rgba(var(--role-venue-rgb),.15); color: var(--role-venue); }
         .welcome-step-title { font-weight: 700; font-size: 14px; color: var(--ink); }
         .welcome-step.done .welcome-step-title { color: var(--ink-a70); text-decoration: line-through; }
         .welcome-step-desc { font-size: 13px; color: var(--ink-a70); line-height: 1.55; margin-top: 2px; }
-        .welcome-cta { display: inline-block; margin-top: 28px; font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; font-size: 15px; background: var(--accent); color: #fff; padding: 14px 34px; border-radius: 999px; box-shadow: 0 6px 24px rgba(255,80,41,.35); text-decoration: none; transition: opacity 150ms; }
+        .welcome-cta { display: inline-block; margin-top: 28px; font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; font-size: 15px; background: var(--accent); color: var(--ink-on-accent); padding: 14px 34px; border-radius: 999px; box-shadow: 0 6px 24px rgba(var(--accent-rgb),.35); text-decoration: none; transition: opacity 150ms; }
         .welcome-cta:hover { opacity: .9; }
         .welcome-split { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 10px; color: var(--ink-a55); margin-top: 16px; letter-spacing: .06em; }
       `}</style>

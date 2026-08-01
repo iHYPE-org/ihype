@@ -98,7 +98,7 @@ export function AdminSetupClient() {
               padding: '10px 12px',
               borderRadius: 10,
               border: '1px solid var(--hair-150)',
-              background: 'rgba(0,0,0,0.25)',
+              background: 'var(--bg-2)',
               color: 'inherit',
               fontSize: 14
             }}
@@ -113,7 +113,7 @@ export function AdminSetupClient() {
             padding: '11px 16px',
             borderRadius: 12,
             background: '#5b8def',
-            color: '#fff',
+            color: 'var(--ink-on-accent)',
             border: 'none',
             fontWeight: 600,
             cursor: busy ? 'progress' : 'pointer',

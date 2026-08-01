@@ -87,7 +87,7 @@ export default async function FanDashboardPage() {
   const activity: ActivityItem[] = [
     ...recentHypes.map((h) => ({
       id: `hype-${h.id}`,
-      color: 'var(--role-fan, #b983ff)',
+      color: 'var(--role-fan)',
       text: (
         <>
           {t('meDashboardPage.youHyped', 'You hyped')} <strong style={{ color: 'var(--ink)' }}>{h.show.title}</strong>
@@ -100,7 +100,7 @@ export default async function FanDashboardPage() {
       ? [
           {
             id: `ref-${recentReferralOrder.id}`,
-            color: 'var(--role-venue, #22e5d4)',
+            color: 'var(--role-venue)',
             text: (
               <>
                 {t('meDashboardPage.someoneBoughtTicketTo', 'Someone bought a ticket to')} <strong style={{ color: 'var(--ink)' }}>{recentReferralOrder.show.title}</strong> {t('meDashboardPage.viaYourHypeLink', 'via your HYPE Link')} —{' '}
@@ -145,7 +145,7 @@ export default async function FanDashboardPage() {
         </Link>
         <div className="fan-dash-stat-card">
           <div className="fan-dash-stat-label">{t('meDashboardPage.referralEarnedLabel', 'Referral Earned')}</div>
-          <div className="fan-dash-stat-value" style={{ color: 'var(--role-fan, #b983ff)' }}>
+          <div className="fan-dash-stat-value" style={{ color: 'var(--role-fan)' }}>
             {formatCurrencyFromCents(promoterDashboard.earnedCents)}
           </div>
           <div className="fan-dash-stat-sub">{t('meDashboardPage.referralEarnedSub', 'From your HYPE Link (pending settlement)')}</div>
@@ -248,10 +248,10 @@ export default async function FanDashboardPage() {
       <style>{`
         .fan-dash-notifications { margin-top: 54px; padding-top: 28px; border-top: 1px solid var(--line); }
         .fan-dash-container { max-width: 1240px; margin: 0 auto; padding: clamp(42px,6vw,82px) 24px 120px; }
-        .fan-dash-header { min-height: 280px; position: relative; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 28px; margin-bottom: 34px; padding: clamp(30px,5vw,64px); overflow: hidden; border: 1px solid var(--line); border-radius: 28px; background: radial-gradient(circle at 82% 18%,rgba(255,80,41,.34),transparent 30%),radial-gradient(circle at 68% 72%,rgba(34,229,212,.17),transparent 35%),var(--hair-30); }
-        .fan-dash-header::after { content: ""; width: 310px; height: 310px; position: absolute; right: 4%; top: -34%; border: 1px solid rgba(34,229,212,.2); border-radius: 50%; box-shadow: 0 0 0 46px rgba(34,229,212,.035),0 0 0 92px rgba(255,80,41,.025); pointer-events: none; }
+        .fan-dash-header { min-height: 280px; position: relative; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 28px; margin-bottom: 34px; padding: clamp(30px,5vw,64px); overflow: hidden; border: 1px solid var(--line); border-radius: 28px; background: radial-gradient(circle at 82% 18%,rgba(var(--accent-rgb),.34),transparent 30%),radial-gradient(circle at 68% 72%,rgba(var(--role-venue-rgb),.17),transparent 35%),var(--hair-30); }
+        .fan-dash-header::after { content: ""; width: 310px; height: 310px; position: absolute; right: 4%; top: -34%; border: 1px solid rgba(var(--role-venue-rgb),.2); border-radius: 50%; box-shadow: 0 0 0 46px rgba(var(--role-venue-rgb),.035),0 0 0 92px rgba(var(--accent-rgb),.025); pointer-events: none; }
         .fan-dash-header > * { position: relative; z-index: 1; }
-        .fan-dash-eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--accent-3,#22e5d4); margin-bottom: 10px; }
+        .fan-dash-eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--accent-3,var(--role-venue)); margin-bottom: 10px; }
         .fan-dash-header h1 { max-width: 8ch; font-family: var(--font-display); font-size: clamp(3.2rem,7vw,6.8rem); line-height: .86; font-weight: 800; letter-spacing: -.07em; margin: 0; color: var(--ink); }
         .fan-dash-intro { max-width: 48ch; margin: 20px 0 0; color: var(--ink-a60); font-size: 14px; line-height: 1.6; }
         .fan-dash-header-actions { display: flex; gap: 10px; }
@@ -272,7 +272,7 @@ export default async function FanDashboardPage() {
         .fan-dash-show-row:hover { background: var(--bg3); }
         .fan-dash-show-title { font-family: var(--font-display); font-weight: 800; font-size: 14px; color: var(--ink); }
         .fan-dash-show-meta { font-size: 12px; color: var(--ink-a55); margin-top: 2px; }
-        .fan-dash-pill { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: var(--radius-pill, 9999px); background: rgba(185,131,255,.15); color: var(--role-fan, #b983ff); font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; }
+        .fan-dash-pill { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: var(--radius-pill, 9999px); background: rgba(var(--role-fan-rgb),.15); color: var(--role-fan); font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; }
         .fan-dash-activity-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
         .fan-dash-activity-row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--line); }
         .fan-dash-activity-row:last-child { border-bottom: none; }
@@ -281,7 +281,7 @@ export default async function FanDashboardPage() {
         .fan-dash-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; margin-top: 12px; }
         .fan-dash-action { min-height: 76px; display: flex; align-items: flex-end; justify-content: flex-start; padding: 14px; text-align: left; border-radius: 14px; }
         .ihype-btn-outline { display: inline-block; padding: 10px 16px; border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: var(--radius-sm, 8px); cursor: pointer; font-size: 13px; text-decoration: none; transition: background 150ms; }
-        .ihype-btn-outline:hover { background: var(--hair-50, rgba(255,255,255,.05)); }
+        .ihype-btn-outline:hover { background: var(--hair-50); }
       `}</style>
     </div>
   );

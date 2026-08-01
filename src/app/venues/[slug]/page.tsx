@@ -104,7 +104,7 @@ export default async function VenuePage({
             // eslint-disable-next-line @next/next/no-img-element
             <img alt={profile.name} src={profile.avatarImage} fetchPriority="high" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 16 }} />
           ) : (
-            <svg fill="none" height="26" stroke="#fff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" viewBox="0 0 24 24" width="26"><path d="M3 21h18" /><path d="M5 21V7l8-4v18" /><path d="M19 21V11l-6-4" /><path d="M9 9v.01M9 12v.01M9 15v.01" /></svg>
+            <svg fill="none" height="26" stroke="var(--ink-on-accent)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" viewBox="0 0 24 24" width="26"><path d="M3 21h18" /><path d="M5 21V7l8-4v18" /><path d="M19 21V11l-6-4" /><path d="M9 9v.01M9 12v.01M9 15v.01" /></svg>
           )}
         </div>
         <div className="venue-info">
@@ -161,13 +161,13 @@ export default async function VenuePage({
                 {venueAddress}{profile.hoursText ? ` · ${profile.hoursText}` : ''}
               </p>
             )}
-            <PinnedStatTiles accent="var(--profile-accent, var(--role-venue, #22e5d4))" stats={pinnedStats} />
+            <PinnedStatTiles accent="var(--profile-accent, var(--role-venue))" stats={pinnedStats} />
             <div className="venue-split-card">
               <div className="venue-split-title">{t('venuesSlugPage.splitTitle', 'How every ticket is split here')}</div>
               <div className="venue-split-bar">
-                <div className="venue-split-seg venue-artist-seg" style={{ flex: 70 }}><div className="venue-seg-pct" style={{ color: '#ff5029' }}>70%</div><div className="venue-seg-label" style={{ color: '#ff5029' }}>{t('venuesSlugPage.splitArtist', 'Artist')}</div></div>
+                <div className="venue-split-seg venue-artist-seg" style={{ flex: 70 }}><div className="venue-seg-pct" style={{ color: 'var(--accent)' }}>70%</div><div className="venue-seg-label" style={{ color: 'var(--accent)' }}>{t('venuesSlugPage.splitArtist', 'Artist')}</div></div>
                 <div className="venue-split-seg venue-venue-seg" style={{ flex: 20 }}><div className="venue-seg-pct" style={{ color: 'var(--role-venue)' }}>20%</div><div className="venue-seg-label" style={{ color: 'var(--role-venue)' }}>{profile.name}</div></div>
-                <div className="venue-split-seg venue-promoter-seg" style={{ flex: 10 }}><div className="venue-seg-pct" style={{ color: '#ff3e9a' }}>10%</div><div className="venue-seg-label" style={{ color: '#ff3e9a' }}>{t('venuesSlugPage.splitPromoters', 'Promoters')}</div></div>
+                <div className="venue-split-seg venue-promoter-seg" style={{ flex: 10 }}><div className="venue-seg-pct" style={{ color: 'var(--accent-2)' }}>10%</div><div className="venue-seg-label" style={{ color: 'var(--accent-2)' }}>{t('venuesSlugPage.splitPromoters', 'Promoters')}</div></div>
               </div>
               <p style={{ fontSize: 12, color: 'var(--ink-a50)', marginTop: 12 }}>{t('venuesSlugPage.splitFooter', '$0 fees for ticket buyers. iHYPE takes nothing — locked in the charter.')}</p>
             </div>
@@ -243,30 +243,30 @@ export default async function VenuePage({
 
       <style>{`
         .venue-page { max-width: 640px; margin: 0 auto; padding: 32px 0 100px; }
-        .venue-hero { background: var(--profile-hero, linear-gradient(160deg, rgba(34,229,212,.18), rgba(185,131,255,.1))); border-bottom: 1px solid var(--profile-border, rgba(34,229,212,.2)); padding: 48px 32px 40px; display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; }
-        .venue-avatar { width: 100px; height: 100px; border-radius: 16px; background: var(--profile-hero, linear-gradient(135deg,#22e5d4,#b983ff)); flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .venue-hero { background: var(--profile-hero, linear-gradient(160deg, rgba(var(--role-venue-rgb),.18), rgba(var(--role-fan-rgb),.1))); border-bottom: 1px solid var(--profile-border, rgba(var(--role-venue-rgb),.2)); padding: 48px 32px 40px; display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; }
+        .venue-avatar { width: 100px; height: 100px; border-radius: 16px; background: var(--profile-hero, linear-gradient(135deg,var(--role-venue),var(--role-fan))); flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .venue-info h1 { font-family: var(--profile-font-display, var(--font-display)); font-size: 32px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 6px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .venue-info p { font-size: 14px; color: var(--ink-a70); margin-bottom: 16px; }
         .venue-badges { display: flex; gap: 10px; flex-wrap: wrap; }
         .venue-badge { display: inline-block; padding: 5px 12px; border-radius: 4px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; }
-        .venue-badge-venue { background: rgba(34,229,212,.15); color: var(--role-venue, #22e5d4); }
-        .venue-badge-verified { background: rgba(255,80,41,.15); color: var(--accent); }
+        .venue-badge-venue { background: rgba(var(--role-venue-rgb),.15); color: var(--role-venue); }
+        .venue-badge-verified { background: rgba(var(--accent-rgb),.15); color: var(--accent); }
         .venue-stats { display: flex; gap: 32px; margin-top: 20px; }
         .venue-stat { text-align: center; }
-        .venue-stat-val { font-size: 22px; font-weight: 700; color: var(--profile-accent, var(--role-venue, #22e5d4)); }
+        .venue-stat-val { font-size: 22px; font-weight: 700; color: var(--profile-accent, var(--role-venue)); }
         .venue-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a50); }
         .venue-capacity-row { margin-top: 22px; max-width: 320px; }
         .venue-capacity-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; }
-        .venue-capacity-label b { font-family: var(--profile-font-display, var(--font-display)); font-weight: 800; color: var(--profile-accent, var(--role-venue, #22e5d4)); }
+        .venue-capacity-label b { font-family: var(--profile-font-display, var(--font-display)); font-weight: 800; color: var(--profile-accent, var(--role-venue)); }
         .venue-capacity-track { height: 8px; border-radius: 9999px; background: var(--hair-80); overflow: hidden; }
-        .venue-capacity-bar { height: 100%; border-radius: 9999px; background: var(--profile-accent, var(--role-venue, #22e5d4)); }
+        .venue-capacity-bar { height: 100%; border-radius: 9999px; background: var(--profile-accent, var(--role-venue)); }
         .venue-hero-actions { display: flex; gap: 10px; margin-top: 22px; align-items: center; flex-wrap: wrap; }
         .venue-hero-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; background: var(--line); color: var(--ink); border: 1px solid var(--hair-100); }
         .venue-hero-btn:hover { background: var(--hair-100); }
         .venue-content { padding: 0 32px; }
         .venue-tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--line); margin: 32px 0 28px; }
         .venue-tab { padding: 10px 0; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--ink-a60); text-decoration: none; }
-        .venue-tab.active { color: var(--ink); border-color: var(--profile-accent, var(--role-venue, #22e5d4)); }
+        .venue-tab.active { color: var(--ink); border-color: var(--profile-accent, var(--role-venue)); }
         .venue-show-card { border: 1px solid var(--line); border-radius: 10px; padding: 20px; background: var(--bg2); display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; text-decoration: none; color: inherit; }
         .venue-show-card:hover { background: var(--bg3); border-color: var(--line-2); }
         .venue-show-info { min-width: 0; }
@@ -274,13 +274,13 @@ export default async function VenuePage({
         .venue-show-meta { font-size: 13px; color: var(--ink-a60); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .venue-show-price { font-size: 18px; font-weight: 700; color: var(--accent); text-align: right; flex-shrink: 0; }
         .venue-show-price small { font-size: 11px; color: var(--ink-a50); font-weight: 400; display: block; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: .12em; }
-        .venue-split-card { border: 1px solid rgba(34,229,212,.2); border-radius: 10px; padding: 24px; background: rgba(34,229,212,.05); margin-bottom: 24px; }
+        .venue-split-card { border: 1px solid rgba(var(--role-venue-rgb),.2); border-radius: 10px; padding: 24px; background: rgba(var(--role-venue-rgb),.05); margin-bottom: 24px; }
         .venue-split-title { font-family: var(--profile-font-display, var(--font-display)); font-size: 16px; font-weight: 800; margin-bottom: 16px; color: var(--ink); }
         .venue-split-bar { display: flex; gap: 0; border-radius: 8px; overflow: hidden; }
         .venue-split-seg { flex: 1; padding: 14px; text-align: center; }
-        .venue-artist-seg { background: rgba(255,80,41,.15); }
-        .venue-venue-seg { background: rgba(34,229,212,.15); }
-        .venue-promoter-seg { background: rgba(255,62,154,.15); }
+        .venue-artist-seg { background: rgba(var(--accent-rgb),.15); }
+        .venue-venue-seg { background: rgba(var(--role-venue-rgb),.15); }
+        .venue-promoter-seg { background: rgba(var(--accent-2-rgb),.15); }
         .venue-seg-pct { font-size: 18px; font-weight: 700; }
         .venue-seg-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; margin-top: 4px; }
 

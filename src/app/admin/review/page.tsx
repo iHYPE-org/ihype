@@ -33,7 +33,7 @@ async function resolveReport(reportId: string) {
 function ResolveButton({ reportId, label }: { reportId: string; label: string }) {
   return (
     <form action={resolveReport.bind(null, reportId)}>
-      <button type="submit" style={{ background: 'rgba(34,229,212,.12)', color: '#22e5d4', border: '1px solid rgba(34,229,212,.2)', borderRadius: 6, padding: '4px 12px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--f-m)', letterSpacing: '.04em' }}>
+      <button type="submit" style={{ background: 'rgba(var(--role-venue-rgb),.12)', color: 'var(--role-venue)', border: '1px solid rgba(var(--role-venue-rgb),.2)', borderRadius: 6, padding: '4px 12px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--f-m)', letterSpacing: '.04em' }}>
         {label}
       </button>
     </form>
@@ -254,7 +254,7 @@ export default async function AdminReviewPage({
                         </td>
                         <td style={tdStyle}>{r.reporter ? <span title={r.reporter.email ?? ''}>{r.reporter.name ?? r.reporter.email}</span> : <span style={{ color: 'var(--ink-3)' }}>{t('adminReviewPage.anonymous', 'Anonymous')}</span>}</td>
                         <td style={tdStyle}>
-                          <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, letterSpacing: '.08em', background: r.status === 'OPEN' ? 'rgba(255,80,41,.15)' : 'rgba(34,229,212,.1)', color: r.status === 'OPEN' ? 'var(--accent)' : '#22e5d4' }}>{r.status}</span>
+                          <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, letterSpacing: '.08em', background: r.status === 'OPEN' ? 'rgba(var(--accent-rgb),.15)' : 'rgba(var(--role-venue-rgb),.1)', color: r.status === 'OPEN' ? 'var(--accent)' : 'var(--role-venue)' }}>{r.status}</span>
                         </td>
                         <td style={tdStyle}>
                           {entityHref && <Link href={entityHref} target="_blank" style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-2)', textDecoration: 'none', marginRight: 8 }}>{t('adminReviewPage.viewLink', 'View ↗')}</Link>}

@@ -79,7 +79,7 @@ function VerificationCard({ profile }: { profile: VerificationProfile }) {
             >
               {profile.verificationStatus}
             </span>
-            <span className="badge" style={{ borderColor: 'rgba(255,255,255,0.1)', background: 'transparent', color: 'var(--muted)' }}>
+            <span className="badge" style={{ borderColor: 'var(--hair-100)', background: 'transparent', color: 'var(--muted)' }}>
               {profile.type}
             </span>
           </div>
@@ -101,7 +101,7 @@ function VerificationCard({ profile }: { profile: VerificationProfile }) {
 
       <div
         className="panel"
-        style={{ margin: '0.85rem 0', padding: '0.9rem 1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '16px' }}
+        style={{ margin: '0.85rem 0', padding: '0.9rem 1rem', background: 'var(--hair-30)', borderRadius: '16px' }}
       >
         <p className="meta" style={{ margin: '0 0 0.5rem' }}>
           <strong>{t('adminVerificationsAdminVerificationQueue.owner', 'Owner')}:</strong> {profile.owner.username} ({profile.owner.email})

@@ -14,8 +14,8 @@ export default async function SupportPage() {
     <div style={{ maxWidth: 680, margin: '0 auto', padding: '40px 24px 100px' }}>
       <span style={{
         display: 'inline-block', fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase',
-        letterSpacing: '.14em', color: '#22e5d4', border: '1px solid rgba(34,229,212,.3)',
-        background: 'rgba(34,229,212,.07)', borderRadius: 999, padding: '5px 13px', marginBottom: 14,
+        letterSpacing: '.14em', color: 'var(--role-venue)', border: '1px solid rgba(var(--role-venue-rgb),.3)',
+        background: 'rgba(var(--role-venue-rgb),.07)', borderRadius: 999, padding: '5px 13px', marginBottom: 14,
       }}>
         {t('supportPage.badge', 'Support')}
       </span>

@@ -15,8 +15,8 @@
 }
 .lp-live-dot {
   display: inline-block; width: 7px; height: 7px;
-  border-radius: 50%; background: #22e5d4;
-  box-shadow: 0 0 6px #22e5d4;
+  border-radius: 50%; background: var(--role-venue);
+  box-shadow: 0 0 6px var(--role-venue);
 }
 .lp-hero-h {
   font-size: clamp(2.2rem, 6vw, 4.2rem);
@@ -27,7 +27,7 @@
   color: var(--text);
 }
 .lp-hero-gradient {
-  background: linear-gradient(90deg, #ff5029, #ff3e9a 40%, #b983ff);
+  background: linear-gradient(90deg, var(--accent), var(--accent-2) 40%, var(--role-fan));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -43,7 +43,7 @@
 .lp-btn-primary {
   display: inline-flex; align-items: center;
   padding: 12px 22px;
-  background: #ff5029; color: #fff;
+  background: var(--accent); color: #fff;
   border-radius: 8px; font-size: 14px; font-weight: 700;
   text-decoration: none; letter-spacing: .04em;
   border: none; cursor: pointer;
@@ -186,7 +186,7 @@
   font-weight: 700;
 }
 .lp-seed-badge {
-  color: #22e5d4;
+  color: var(--role-venue);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: .12em;
@@ -224,7 +224,7 @@
 .lp-role-card::before {
   content: '';
   position: absolute; top: 0; left: 0; right: 0; height: 2px;
-  background: var(--role-c, #ff5029);
+  background: var(--role-c, var(--accent));
 }
 .lp-role-card:hover { border-color: var(--role-c); transform: translateY(-2px); }
 .lp-role-icon { font-size: 20px; margin-bottom: 4px; }
@@ -239,7 +239,7 @@
   justify-content: center;
   gap: 16px;
   flex-wrap: wrap;
-  background: #22e5d4;
+  background: var(--role-venue);
   color: #0a0a0a;
   padding: 12px 24px;
   border-radius: 10px;
@@ -268,7 +268,7 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: .12em;
-  color: #22e5d4;
+  color: var(--role-venue);
   margin: 0 0 10px;
 }
 .lp-hype-body {
@@ -412,9 +412,9 @@ body:has(.auth-signal-page) .nav-links-primary { display: none !important; }
 
 /* Zero-fee callout */
 .lp-zero-fee {
-  border: 1px solid rgba(34,229,212,.25);
+  border: 1px solid rgba(var(--role-venue-rgb),.25);
   border-radius: 14px;
-  background: rgba(34,229,212,.04);
+  background: rgba(var(--role-venue-rgb),.04);
   padding: 32px 36px;
 }
 .lp-zero-fee-inner {
@@ -423,7 +423,7 @@ body:has(.auth-signal-page) .nav-links-primary { display: none !important; }
 .lp-zero-fee-num {
   font-size: clamp(3.5rem, 8vw, 6rem);
   font-weight: 900; letter-spacing: -.04em;
-  color: #22e5d4; line-height: 1; flex-shrink: 0;
+  color: var(--role-venue); line-height: 1; flex-shrink: 0;
 }
 .lp-zero-fee-text {
   display: flex; flex-direction: column; gap: 6px;
@@ -475,8 +475,8 @@ body:has(.auth-signal-page) .nav-links-primary { display: none !important; }
 }
 .lp-hype-col--bad { background: rgba(255,255,255,.02); }
 .lp-hype-col--good {
-  background: rgba(255,80,41,.05);
-  border-color: rgba(255,80,41,.2);
+  background: rgba(var(--accent-rgb),.05);
+  border-color: rgba(var(--accent-rgb),.2);
 }
 .lp-hype-col-label {
   font-size: 10px; font-weight: 700; letter-spacing: .12em;
@@ -489,7 +489,7 @@ body:has(.auth-signal-page) .nav-links-primary { display: none !important; }
 .lp-hype-col ul li { font-size: 14px; color: var(--muted); line-height: 1.5; }
 .lp-hype-col--good ul li { color: var(--ink-2); }
 .lp-hype-col--bad .lp-hype-col-label { color: var(--muted); }
-.lp-hype-col--good .lp-hype-col-label { color: #ff5029; }
+.lp-hype-col--good .lp-hype-col-label { color: var(--accent); }
 
 /* Role cards v2 */
 .lp-role-grid--v2 { grid-template-columns: repeat(2, 1fr); gap: 14px; }

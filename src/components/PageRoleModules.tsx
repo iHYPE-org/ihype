@@ -116,15 +116,15 @@ function TourRecsBody() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       {data.aiPlan && (
-        <div style={{ borderLeft: '2px solid #ff5029', paddingLeft: 12 }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.14em', textTransform: 'uppercase', color: '#ff5029', marginBottom: 6 }}>
+        <div style={{ borderLeft: '2px solid var(--accent)', paddingLeft: 12 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 6 }}>
             {t('pageRoleModules.aiRouteLabel', 'AI ROUTE')}
           </div>
           <p style={{ fontSize: 13, color: 'var(--ink-a75)', margin: '0 0 10px', lineHeight: 1.5 }}>{data.aiPlan.summary}</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {data.aiPlan.route.map((r) => (
               <div key={`${r.order}-${r.city}`} style={{ display: 'flex', gap: 10 }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#ff5029', flexShrink: 0, width: 18 }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent)', flexShrink: 0, width: 18 }}>
                   {String(r.order).padStart(2, '0')}
                 </span>
                 <div style={{ minWidth: 0 }}>
@@ -185,13 +185,13 @@ function AdRecsBody({ profileId }: { profileId: string }) {
       {recs.map((r, i) => (
         <div key={i} style={{ border: '1px solid var(--hair-70)', borderRadius: 12, padding: '12px 14px', background: 'var(--hair-20)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, color: '#b983ff', background: 'rgba(185,131,255,.14)' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 8, letterSpacing: '.1em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, color: 'var(--role-fan)', background: 'rgba(var(--role-fan-rgb),.14)' }}>
               {r.channel}
             </span>
           </div>
           <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)', marginBottom: 3 }}>{r.headline}</div>
           <div style={{ fontSize: 12, color: 'var(--ink-a55)', lineHeight: 1.5 }}>{r.body}</div>
-          <div style={{ fontSize: 12, fontWeight: 600, color: '#b983ff', marginTop: 6 }}>{r.cta}</div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--role-fan)', marginTop: 6 }}>{r.cta}</div>
         </div>
       ))}
       <Link href="/advertise" style={{ fontSize: 12, color: 'var(--ink-a55)', textDecoration: 'underline', textUnderlineOffset: 3 }}>

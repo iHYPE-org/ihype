@@ -15,8 +15,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  OPEN: 'var(--role-promoter, #ffb84a)',
-  PENDING: '#22e5d4',
+  OPEN: 'var(--role-promoter)',
+  PENDING: 'var(--success)',
   RESOLVED: 'var(--ink-a50)',
   CLOSED: 'var(--ink-a50)',
 };

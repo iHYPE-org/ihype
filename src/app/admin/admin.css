@@ -1,4 +1,26 @@
-/* ── Admin view (wb-admin) ── */
+/* ── Admin view (wb-admin) ──
+ *
+ * This sheet was written against a `--wb-*` palette that was never defined
+ * anywhere in the codebase. A bare `var(--undefined)` is not an error — CSS
+ * drops the declaration — so every colour here silently fell back to
+ * inherited ink on an inherited background, and the admin console has been
+ * rendering unstyled-ish since it was written.
+ *
+ * Rather than invent a second palette, the names are aliased onto the real
+ * tokens they were clearly standing in for (wb = workbench). Defined on
+ * :root so they follow the theme like everything else, instead of on
+ * .wb-admin where a portal'd overlay would escape them.
+ */
+:root {
+  --wb-ink-1:     var(--ink);
+  --wb-ink-2:     var(--ink-2);
+  --wb-ink-3:     var(--ink-3);
+  --wb-surface-2: var(--bg-2);
+  --wb-surface-3: var(--bg-3);
+  --wb-border:    var(--hair-100);
+  --wb-accent:    var(--accent);
+}
+
 .wb-admin {
   padding: 20px 24px;
   max-width: 1100px;
@@ -179,38 +201,38 @@
 }
 
 /* ── iH/OPS Operator Console ─────────────────────────── */
-.ops-shell{position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden;background:#0a0805;color:var(--ink);font-family:var(--f-b)}
-.ops-topbar{height:42px;flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 14px;border-bottom:1px solid var(--line);background:#0a0805}
+.ops-shell{position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--f-b)}
+.ops-topbar{height:42px;flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 14px;border-bottom:1px solid var(--line);background:var(--bg)}
 .ops-wordmark{font-family:var(--f-d,'Syne',sans-serif);font-weight:800;font-size:17px;letter-spacing:-.02em;color:var(--ink);line-height:1}
-.ops-dot{color:#ff5029;margin:0 1px}
-.ops-ops{font-family:var(--f-m,'JetBrains Mono',monospace);font-weight:500;font-size:11px;color:#9e9080;letter-spacing:.12em;margin-left:3px}
+.ops-dot{color:var(--accent);margin:0 1px}
+.ops-ops{font-family:var(--f-m,'JetBrains Mono',monospace);font-weight:500;font-size:11px;color:var(--ink-2);letter-spacing:.12em;margin-left:3px}
 .ops-topbar-mid{flex:1;display:flex;justify-content:center}
 .ops-search-hint{display:flex;align-items:center;gap:6px;font-size:12px;color:#5a5048;cursor:pointer;padding:4px 10px;border:1px solid var(--line);border-radius:6px;transition:border-color .15s}
 .ops-search-hint:hover{border-color:var(--line-2)}
 .ops-search-hint kbd{font-family:var(--f-m,monospace);font-size:10px;background:var(--line);border-radius:3px;padding:1px 4px}
 .ops-topbar-right{display:flex;align-items:center;gap:8px}
-.ops-chip{display:inline-flex;align-items:center;font-family:var(--f-m,monospace);font-size:9px;font-weight:600;letter-spacing:.12em;padding:2px 6px;border-radius:3px;background:rgba(255,80,41,.12);color:#ff5029;border:1px solid rgba(255,80,41,.25)}
+.ops-chip{display:inline-flex;align-items:center;font-family:var(--f-m,monospace);font-size:9px;font-weight:600;letter-spacing:.12em;padding:2px 6px;border-radius:3px;background:rgba(var(--accent-rgb),.12);color:var(--accent);border:1px solid rgba(var(--accent-rgb),.25)}
 .ops-chip-sm{font-size:8px;padding:2px 5px}
-.ops-topbar-avatar{width:26px;height:26px;border-radius:50%;background:rgba(255,80,41,.15);border:1px solid rgba(255,80,41,.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;font-family:var(--f-m,monospace);color:#ff5029;letter-spacing:.04em}
+.ops-topbar-avatar{width:26px;height:26px;border-radius:50%;background:rgba(var(--accent-rgb),.15);border:1px solid rgba(var(--accent-rgb),.3);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;font-family:var(--f-m,monospace);color:var(--accent);letter-spacing:.04em}
 .ops-body{flex:1;display:flex;overflow:hidden;min-height:0}
 .ops-rail{width:56px;flex-shrink:0;border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:8px 0;gap:2px;overflow-y:auto}
 .ops-rail-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0;width:100%;text-decoration:none;color:#5a5048;font-size:9px;font-family:var(--f-m,monospace);letter-spacing:.04em;transition:color .15s;position:relative}
-.ops-rail-item:hover{color:#9e9080}
-.ops-rail-item.ops-rail-active{color:#ff5029}
-.ops-rail-item.ops-rail-active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);height:20px;width:2px;background:#ff5029;border-radius:0 1px 1px 0}
+.ops-rail-item:hover{color:var(--ink-2)}
+.ops-rail-item.ops-rail-active{color:var(--accent)}
+.ops-rail-item.ops-rail-active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);height:20px;width:2px;background:var(--accent);border-radius:0 1px 1px 0}
 .ops-rail-glyph{font-size:16px;line-height:1}
 .ops-rail-label{font-size:8px}
 .ops-main{flex:1;overflow-y:auto;min-width:0}
 .ops-subnav{display:flex;gap:6px;padding:10px 16px;border-bottom:1px solid var(--line);overflow-x:auto}
-.ops-subnav-link{font-family:var(--f-m,monospace);font-size:10px;letter-spacing:.06em;color:#9e9080;text-decoration:none;padding:4px 9px;border-radius:5px;border:1px solid var(--line);white-space:nowrap;transition:color .15s,border-color .15s}
+.ops-subnav-link{font-family:var(--f-m,monospace);font-size:10px;letter-spacing:.06em;color:var(--ink-2);text-decoration:none;padding:4px 9px;border-radius:5px;border:1px solid var(--line);white-space:nowrap;transition:color .15s,border-color .15s}
 .ops-subnav-link:hover{color:var(--ink)}
-.ops-subnav-link.ops-subnav-active{color:#ff5029;border-color:rgba(255,80,41,.35);background:rgba(255,80,41,.08)}
+.ops-subnav-link.ops-subnav-active{color:var(--accent);border-color:rgba(var(--accent-rgb),.35);background:rgba(var(--accent-rgb),.08)}
 .ops-bottom-bar{display:none}
 @media(max-width:700px){
   .ops-rail{display:none}
-  .ops-bottom-bar{display:flex;position:fixed;bottom:0;left:0;right:0;background:#0a0805;border-top:1px solid var(--line);z-index:100}
+  .ops-bottom-bar{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--line);z-index:100}
   .ops-bottom-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 0;font-size:8px;color:#5a5048;text-decoration:none;gap:3px;font-family:var(--f-m,monospace)}
-  .ops-bottom-tab.ops-rail-active{color:#ff5029}
+  .ops-bottom-tab.ops-rail-active{color:var(--accent)}
   .ops-main{padding-bottom:60px}
   .ops-search-hint{display:none}
 }
@@ -218,32 +240,32 @@
 /* ── iH/OPS Login Gate ────────────────────────────────── */
 @keyframes opsFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @keyframes opsSpin{to{transform:rotate(360deg)}}
-.ops-gate{position:fixed;inset:0;background:#0a0805;display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px}
-.ops-login-card,.ops-provisioning-card{width:100%;max-width:360px;background:#100d09;border:1px solid var(--hair-80);border-radius:12px;padding:28px;display:flex;flex-direction:column;gap:20px;animation:opsFade .3s ease}
+.ops-gate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px}
+.ops-login-card,.ops-provisioning-card{width:100%;max-width:360px;background:var(--bg-2);border:1px solid var(--hair-80);border-radius:12px;padding:28px;display:flex;flex-direction:column;gap:20px;animation:opsFade .3s ease}
 .ops-login-top{display:flex;align-items:center;justify-content:space-between}
 .ops-identity{display:flex;align-items:center;gap:12px;padding:14px;background:var(--hair-30);border:1px solid var(--line);border-radius:8px}
-.ops-avatar{width:40px;height:40px;border-radius:50%;background:rgba(255,80,41,.12);border:1px solid rgba(255,80,41,.25);display:flex;align-items:center;justify-content:center;font-family:var(--f-m,monospace);font-weight:700;font-size:13px;color:#ff5029;flex-shrink:0}
+.ops-avatar{width:40px;height:40px;border-radius:50%;background:rgba(var(--accent-rgb),.12);border:1px solid rgba(var(--accent-rgb),.25);display:flex;align-items:center;justify-content:center;font-family:var(--f-m,monospace);font-weight:700;font-size:13px;color:var(--accent);flex-shrink:0}
 .ops-identity-text{display:flex;flex-direction:column;gap:2px;min-width:0}
 .ops-identity-text strong{font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ops-identity-text span{font-size:11px;color:#5a5048;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ops-trust-facts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .ops-trust-fact{display:flex;flex-direction:column;gap:3px;padding:10px;background:var(--hair-20);border:1px solid var(--hair-50);border-radius:6px}
 .ops-trust-label{font-family:var(--f-m,monospace);font-size:9px;color:#5a5048;letter-spacing:.1em;text-transform:uppercase}
-.ops-trust-value{font-size:12px;font-weight:600;color:#9e9080}
-.ops-trust-ok{color:#22e5d4}
+.ops-trust-value{font-size:12px;font-weight:600;color:var(--ink-2)}
+.ops-trust-ok{color:var(--role-venue)}
 .ops-login-sub{font-size:12px;color:#5a5048;line-height:1.5;text-align:center}
-.ops-cta{width:100%;padding:12px;background:#ff5029;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s,transform .1s;letter-spacing:.01em}
+.ops-cta{width:100%;padding:12px;background:var(--accent);color:var(--ink-on-accent);border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s,transform .1s;letter-spacing:.01em}
 .ops-cta:hover{opacity:.9}
 .ops-cta:active{transform:scale(.98)}
-.ops-governance{display:flex;flex-direction:column;align-items:center;gap:3px;font-family:var(--f-m,monospace);font-size:9px;color:#3a342e;letter-spacing:.06em;text-align:center}
-.ops-prov-title{font-size:13px;color:#9e9080;text-align:center;font-family:var(--f-m,monospace);letter-spacing:.04em}
+.ops-governance{display:flex;flex-direction:column;align-items:center;gap:3px;font-family:var(--f-m,monospace);font-size:9px;color:var(--ink-4);letter-spacing:.06em;text-align:center}
+.ops-prov-title{font-size:13px;color:var(--ink-2);text-align:center;font-family:var(--f-m,monospace);letter-spacing:.04em}
 .ops-steps{display:flex;flex-direction:column;gap:10px}
-.ops-step{display:flex;align-items:center;gap:10px;font-size:13px;color:#3a342e;transition:color .2s}
-.ops-step.ops-step-done{color:#9e9080}
+.ops-step{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-4);transition:color .2s}
+.ops-step.ops-step-done{color:var(--ink-2)}
 .ops-step.ops-step-active{color:var(--ink)}
 .ops-step-icon{width:18px;text-align:center;font-family:var(--f-m,monospace);font-size:12px;color:#5a5048;flex-shrink:0}
-.ops-step.ops-step-done .ops-step-icon{color:#22e5d4}
-.ops-step.ops-step-active .ops-step-icon{color:#ff5029}
+.ops-step.ops-step-done .ops-step-icon{color:var(--role-venue)}
+.ops-step.ops-step-active .ops-step-icon{color:var(--accent)}
 .ops-spin{display:inline-block;animation:opsSpin .6s linear infinite}
 
 /* ── Admin console content re-theme ──────────────────────
@@ -266,7 +288,7 @@
 }
 .ops-main .button:hover,
 .ops-main .button:focus-visible {
-  box-shadow: 0 10px 24px rgba(255,80,41,.25);
+  box-shadow: 0 10px 24px rgba(var(--accent-rgb),.25);
 }
 .ops-main .button.secondary {
   background: var(--hair-50);
@@ -279,8 +301,8 @@
   border-color: var(--hair-200);
 }
 .ops-main .badge {
-  background: rgba(255,80,41,.1);
-  border-color: rgba(255,80,41,.3);
+  background: rgba(var(--accent-rgb),.1);
+  border-color: rgba(var(--accent-rgb),.3);
   color: #ffd0c2;
 }
 
@@ -341,11 +363,11 @@
 /* Overdue is the only state that gets colour. If everything is tinted,
    nothing reads as urgent. */
 .admin-workbench-overdue {
-  border-color: rgba(255,80,41,.45);
-  background: rgba(255,80,41,.07);
+  border-color: rgba(var(--accent-rgb),.45);
+  background: rgba(var(--accent-rgb),.07);
 }
 .admin-workbench-overdue .admin-workbench-count,
-.admin-workbench-overdue .admin-workbench-age { color: #ff5029; }
+.admin-workbench-overdue .admin-workbench-age { color: var(--accent); }
 .admin-workbench-clear { opacity: .55; }
 .admin-workbench-clear .admin-workbench-count { color: var(--ink-a50); }
 @media (prefers-reduced-motion: reduce) {

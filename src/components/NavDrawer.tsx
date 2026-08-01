@@ -159,7 +159,7 @@ export function NavDrawer({
       {
         id: 'listen',
         label: 'LISTEN',
-        color: '#ff5029',
+        color: 'var(--accent)',
         items: [
           { href: '/listen?tab=seeds', label: 'Discover', badge: 'Seeds', icon: 'seed', description: 'Swipe into something new' },
           { href: '/listen?tab=radio', label: 'Radio', icon: 'radio', description: 'Scene-run shows and rotation' },
@@ -170,7 +170,7 @@ export function NavDrawer({
       {
         id: 'events',
         label: 'EVENTS',
-        color: '#22e5d4',
+        color: 'var(--role-venue)',
         items: [
           { href: '/shows?tab=local', label: 'Near Me', icon: 'pin', description: 'Shows happening around you' },
           { href: '/shows?tab=foryou', label: 'Recommended', icon: 'spark', description: 'Built from your HYPE' },
@@ -183,7 +183,7 @@ export function NavDrawer({
       {
         id: 'pages',
         label: 'PAGES',
-        color: '#b983ff',
+        color: 'var(--role-fan)',
         items: [
           { href: '/me/dashboard', label: 'My Dashboard', icon: 'dashboard', description: 'Your activity and impact' },
           { href: '/pages?tab=creator', label: 'Page Creator', icon: 'page', description: 'Build an artist, DJ, or venue page' },
@@ -213,7 +213,7 @@ export function NavDrawer({
       {
         id: 'settings',
         label: 'SETTINGS',
-        color: '#ffb84a',
+        color: 'var(--role-promoter)',
         items: [
           { href: '/me/settings', label: 'Settings', icon: 'settings', description: 'Account, privacy, and access' },
           { href: '/community', label: 'Community', icon: 'community', description: 'Vote on what iHYPE becomes' },

@@ -4,6 +4,17 @@ import { db } from '@/lib/db';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { log } from '@/lib/logger';
+import { getArtistMediaApiPath } from '@/lib/media';
+
+/**
+ * The playlist a right-swipe on the seed deck files a track into.
+ *
+ * Saving used to write a `Seed` row with action "save" and nothing else —
+ * which fed the recommender but gave the listener nowhere to actually hear
+ * what they had just kept. The gesture reads as "add this to my music", so
+ * it now lands somewhere playable.
+ */
+const DISCOVER_PLAYLIST_NAME = 'Discover';
 
 export async function POST(
   req: Request,
@@ -23,7 +34,10 @@ export async function POST(
   try {
     const media = await db.artistMediaAsset.findUnique({
       where: { id },
-      select: { id: true, profileId: true },
+      select: {
+        id: true, profileId: true, hexId: true, title: true, artworkUrl: true,
+        profile: { select: { name: true, slug: true } },
+      },
     });
 
     if (!media) {
@@ -35,6 +49,45 @@ export async function POST(
       create: { userId: session.user.id, mediaId: id, action },
       update: { action, createdAt: new Date() },
     });
+
+    if (action === 'save') {
+      // Find-or-create rather than upsert: FanPlaylist has no unique
+      // constraint on (userId, name), so an upsert has no key to target.
+      const playlist =
+        (await db.fanPlaylist.findFirst({
+          where: { userId: session.user.id, name: DISCOVER_PLAYLIST_NAME },
+          select: { id: true },
+        }))
+        ?? (await db.fanPlaylist.create({
+          data: { userId: session.user.id, name: DISCOVER_PLAYLIST_NAME },
+          select: { id: true },
+        }));
+
+      // FanPlaylistItem has no unique constraint on (playlistId, mediaId)
+      // either, so re-saving the same seed would otherwise stack duplicates.
+      // The Seed row above is upserted, so a repeat save is entirely possible.
+      const already = await db.fanPlaylistItem.findFirst({
+        where: { playlistId: playlist.id, mediaId: media.id },
+        select: { id: true },
+      });
+
+      if (!already) {
+        // position is append-at-end, matching POST /api/fan-playlists/[id]/items.
+        const count = await db.fanPlaylistItem.count({ where: { playlistId: playlist.id } });
+        await db.fanPlaylistItem.create({
+          data: {
+            playlistId: playlist.id,
+            mediaId: media.id,
+            title: media.title,
+            artistName: media.profile?.name ?? 'Unknown artist',
+            url: getArtistMediaApiPath(media.hexId),
+            artistProfileSlug: media.profile?.slug ?? null,
+            artworkUrl: media.artworkUrl,
+            position: count,
+          },
+        });
+      }
+    }
 
     if (action === 'hype') {
       // createMany with skipDuplicates returns how many rows were actually inserted.

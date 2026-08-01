@@ -88,7 +88,7 @@ export default async function TicketPage({
                 {t('ticketsSerializedIdPage.scanTime', 'Scan time')}
               </div>
               <div className="stat">
-                <strong style={ticket.reassignCount > 0 ? { color: 'var(--accent-3)' } : {}}>
+                <strong style={ticket.reassignCount > 0 ? { color: 'var(--accent-text)' } : {}}>
                   {ticket.reassignCount === 0 ? t('ticketsSerializedIdPage.never', 'Never') : `${ticket.reassignCount}×`}
                 </strong>
                 {t('ticketsSerializedIdPage.passedOn', 'Passed on')}

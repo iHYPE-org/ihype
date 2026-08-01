@@ -23,25 +23,25 @@ export async function TransparencyPanel() {
   const totalPaidOut = totalTicketCents; // 0% fee means 100% goes to artists
 
   const STATS = [
-    { label: t('transparencyPage.statArtistsOnPlatform', 'Artists on platform'), val: artistCount.toLocaleString(), c: '#ff5029' },
-    { label: t('transparencyPage.statShowsListed', 'Shows listed'), val: showCount.toLocaleString(), c: '#22e5d4' },
-    { label: t('transparencyPage.statTracksUploaded', 'Tracks uploaded'), val: mediaCount.toLocaleString(), c: '#b983ff' },
-    { label: t('transparencyPage.statTicketsSold', 'Tickets sold'), val: ticketCount.toLocaleString(), c: '#ff3e9a' },
-    { label: t('transparencyPage.statPaidOut', 'Paid out to artists/venues'), val: `$${(totalPaidOut / 100).toLocaleString()}`, c: '#22e5d4' },
-    { label: t('transparencyPage.statPlatformFee', 'Platform fee taken'), val: '$0', c: '#ff5029' },
+    { label: t('transparencyPage.statArtistsOnPlatform', 'Artists on platform'), val: artistCount.toLocaleString(), c: 'var(--accent)' },
+    { label: t('transparencyPage.statShowsListed', 'Shows listed'), val: showCount.toLocaleString(), c: 'var(--role-venue)' },
+    { label: t('transparencyPage.statTracksUploaded', 'Tracks uploaded'), val: mediaCount.toLocaleString(), c: 'var(--role-fan)' },
+    { label: t('transparencyPage.statTicketsSold', 'Tickets sold'), val: ticketCount.toLocaleString(), c: 'var(--accent-2)' },
+    { label: t('transparencyPage.statPaidOut', 'Paid out to artists/venues'), val: `$${(totalPaidOut / 100).toLocaleString()}`, c: 'var(--role-venue)' },
+    { label: t('transparencyPage.statPlatformFee', 'Platform fee taken'), val: '$0', c: 'var(--accent)' },
   ];
 
   return (
     <div className="lp-wrap">
       <section className="lp-hero" style={{ paddingBottom: '20px' }}>
-        <p className="lp-hype-eyebrow" style={{ color: '#ffb84a' }}>
+        <p className="lp-hype-eyebrow" style={{ color: 'var(--role-promoter)' }}>
           <span
             style={{
               display: 'inline-block',
               width: 7,
               height: 7,
               borderRadius: '50%',
-              background: '#ffb84a',
+              background: 'var(--role-promoter)',
               marginRight: 8,
             }}
           />
@@ -65,31 +65,31 @@ export async function TransparencyPanel() {
 
       {/* How this works */}
       <section className="lp-hype-explainer">
-        <p className="lp-hype-eyebrow" style={{ color: '#ff5029' }}>{t('transparencyPage.howItWorksEyebrow', 'HOW IT WORKS')}</p>
+        <p className="lp-hype-eyebrow" style={{ color: 'var(--accent)' }}>{t('transparencyPage.howItWorksEyebrow', 'HOW IT WORKS')}</p>
         <h2 className="lp-section-head">{t('transparencyPage.fullPictureHeading', 'The full picture')}</h2>
         <div className="lp-reason-grid" style={{ marginTop: '20px' }}>
           {[
             {
               icon: '◇',
-              c: '#ff5029',
+              c: 'var(--accent)',
               head: t('transparencyPage.reasonTicketsHead', 'Tickets'),
               body: t('transparencyPage.reasonTicketsBody', 'Tickets are sold at face value set by the artist or venue. iHYPE charges 0% on every transaction. Settlement goes directly to the organiser — only the card-processing fee (2.9% + $0.30, at cost) sits above face value.'),
             },
             {
               icon: '◐',
-              c: '#ff3e9a',
+              c: 'var(--accent-2)',
               head: t('transparencyPage.reasonHypeHead', 'Hype'),
               body: t('transparencyPage.reasonHypeBody', 'Listening to a track all the way through, or manually hyping an artist, registers a Hype. It is a demand signal — no money changes hands and iHYPE earns nothing from it.'),
             },
             {
               icon: '◉',
-              c: '#22e5d4',
+              c: 'var(--role-venue)',
               head: t('transparencyPage.reasonRadioHead', 'Radio'),
               body: t('transparencyPage.reasonRadioBody', 'Live and recorded radio shows are free for all hosts on the platform. There is no tier that unlocks hosting; every DJ and promoter gets the same tools.'),
             },
             {
               icon: '♡',
-              c: '#b983ff',
+              c: 'var(--role-fan)',
               head: t('transparencyPage.reasonDataHead', 'Data'),
               body: t('transparencyPage.reasonDataBody', 'iHYPE does not sell, license, or monetise listener data. Analytics are visible only to the artist or venue they belong to.'),
             },

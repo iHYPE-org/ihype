@@ -62,17 +62,17 @@ export async function TrustSafetyPanel() {
     .reduce((sum, r) => sum + r._count._all, 0);
 
   const ENFORCEMENT_STATS = [
-    { label: t('auditPage.statReportsTotal', 'Reports received (all time)'), val: reportsTotal.toLocaleString(), c: '#ff5029' },
-    { label: t('auditPage.statReportsOpen', 'Open, awaiting review'), val: reportsOpen.toLocaleString(), c: '#b983ff' },
-    { label: t('auditPage.statReportsActioned', 'Actioned'), val: reportsActioned.toLocaleString(), c: '#22e5d4' },
-    { label: t('auditPage.statReportsDismissed', 'Dismissed'), val: reportsDismissed.toLocaleString(), c: '#ff3e9a' },
+    { label: t('auditPage.statReportsTotal', 'Reports received (all time)'), val: reportsTotal.toLocaleString(), c: 'var(--accent)' },
+    { label: t('auditPage.statReportsOpen', 'Open, awaiting review'), val: reportsOpen.toLocaleString(), c: 'var(--role-fan)' },
+    { label: t('auditPage.statReportsActioned', 'Actioned'), val: reportsActioned.toLocaleString(), c: 'var(--role-venue)' },
+    { label: t('auditPage.statReportsDismissed', 'Dismissed'), val: reportsDismissed.toLocaleString(), c: 'var(--accent-2)' },
   ];
 
   const AD_STATS = [
-    { label: t('auditPage.statAdTotal', 'Radio ad campaigns vetted'), val: adTotal.toLocaleString(), c: '#ff5029' },
-    { label: t('auditPage.statAdApproved', 'Approved'), val: adApproved.toLocaleString(), c: '#22e5d4' },
-    { label: t('auditPage.statAdManualReview', 'Sent to manual review'), val: adManualReview.toLocaleString(), c: '#b983ff' },
-    { label: t('auditPage.statAdRejected', 'Rejected'), val: adRejected.toLocaleString(), c: '#ff3e9a' },
+    { label: t('auditPage.statAdTotal', 'Radio ad campaigns vetted'), val: adTotal.toLocaleString(), c: 'var(--accent)' },
+    { label: t('auditPage.statAdApproved', 'Approved'), val: adApproved.toLocaleString(), c: 'var(--role-venue)' },
+    { label: t('auditPage.statAdManualReview', 'Sent to manual review'), val: adManualReview.toLocaleString(), c: 'var(--role-fan)' },
+    { label: t('auditPage.statAdRejected', 'Rejected'), val: adRejected.toLocaleString(), c: 'var(--accent-2)' },
   ];
 
   return (
@@ -81,11 +81,11 @@ export async function TrustSafetyPanel() {
         @keyframes auditPulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
         .audit-pulse-dot {
           display: inline-block; width: 7px; height: 7px; border-radius: 50%;
-          background: #ffb84a; margin-right: 8px; animation: auditPulse 1.4s infinite;
+          background: var(--role-promoter); margin-right: 8px; animation: auditPulse 1.4s infinite;
         }
       `}</style>
       <section className="lp-hero" style={{ paddingBottom: '20px' }}>
-        <p className="lp-hype-eyebrow" style={{ color: '#ffb84a' }}><span className="audit-pulse-dot" />{t('auditPage.eyebrowLiveStats', 'LIVE STATS · UPDATED IN REAL TIME')}</p>
+        <p className="lp-hype-eyebrow" style={{ color: 'var(--role-promoter)' }}><span className="audit-pulse-dot" />{t('auditPage.eyebrowLiveStats', 'LIVE STATS · UPDATED IN REAL TIME')}</p>
         <h1 className="lp-hero-h" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)' }}>{t('auditPage.heroTitle', 'Trust & safety report')}</h1>
         <p className="lp-hero-sub">
           {t('auditPage.heroSub', 'Every upload is screened by AI before it goes live, and every user report is tracked to a resolution. Here are the aggregate numbers — no usernames, no content IDs, nothing that could identify anyone involved.')}
@@ -103,7 +103,7 @@ export async function TrustSafetyPanel() {
 
       {categoryRows.length > 0 && (
         <section className="lp-hype-explainer">
-          <p className="lp-hype-eyebrow" style={{ color: '#ff5029' }}>{t('auditPage.eyebrowByCategory', 'BY CATEGORY')}</p>
+          <p className="lp-hype-eyebrow" style={{ color: 'var(--accent)' }}>{t('auditPage.eyebrowByCategory', 'BY CATEGORY')}</p>
           <h2 className="lp-section-head">{t('auditPage.byCategoryTitle', 'What gets reported')}</h2>
           <div className="lp-reason-grid" style={{ marginTop: '20px', gridTemplateColumns: 'repeat(3, 1fr)' }}>
             {categoryRows.map((r) => (
@@ -126,7 +126,7 @@ export async function TrustSafetyPanel() {
       )}
 
       <section className="lp-hype-explainer">
-        <p className="lp-hype-eyebrow" style={{ color: '#ff3e9a' }}>{t('auditPage.eyebrowRadioAds', 'RADIO ADS')}</p>
+        <p className="lp-hype-eyebrow" style={{ color: 'var(--accent-2)' }}>{t('auditPage.eyebrowRadioAds', 'RADIO ADS')}</p>
         <h2 className="lp-section-head">{t('auditPage.adVettingTitle', 'Ad vetting')}</h2>
         <p className="lp-hero-sub" style={{ margin: '8px 0 20px' }}>
           {t('auditPage.adVettingBody', 'iHYPE only ever runs radio-style audio ad spots — no banners, no visual placements. Every campaign is screened by AI before it can run.')}
@@ -142,7 +142,7 @@ export async function TrustSafetyPanel() {
       </section>
 
       <section className="lp-hype-explainer">
-        <p className="lp-hype-eyebrow" style={{ color: '#22e5d4' }}>{t('auditPage.eyebrowOwnershipVerification', 'OWNERSHIP VERIFICATION')}</p>
+        <p className="lp-hype-eyebrow" style={{ color: 'var(--role-venue)' }}>{t('auditPage.eyebrowOwnershipVerification', 'OWNERSHIP VERIFICATION')}</p>
         <h2 className="lp-section-head">{t('auditPage.verifiedProfilesTitle', 'Verified profiles')}</h2>
         <div className="lp-reason-grid" style={{ marginTop: '20px' }}>
           <div className="lp-reason-card">
@@ -158,31 +158,31 @@ export async function TrustSafetyPanel() {
 
       {/* How this works */}
       <section className="lp-hype-explainer">
-        <p className="lp-hype-eyebrow" style={{ color: '#ff5029' }}>{t('auditPage.eyebrowHowItWorks', 'HOW IT WORKS')}</p>
+        <p className="lp-hype-eyebrow" style={{ color: 'var(--accent)' }}>{t('auditPage.eyebrowHowItWorks', 'HOW IT WORKS')}</p>
         <h2 className="lp-section-head">{t('auditPage.fullPictureTitle', 'The full picture')}</h2>
         <div className="lp-reason-grid" style={{ marginTop: '20px' }}>
           {[
             {
               icon: '◈',
-              c: '#ff5029',
+              c: 'var(--accent)',
               head: t('auditPage.howAiScreeningHead', 'AI screening on upload'),
               body: t('auditPage.howAiScreeningBody', 'Every track, avatar, hero, and gallery image is screened automatically the moment it\'s uploaded, and every radio ad campaign\'s copy and audio (transcribed, then screened) are AI-vetted against our music-industry-only policy — before any of it can go live.'),
             },
             {
               icon: '⬟',
-              c: '#b983ff',
+              c: 'var(--role-fan)',
               head: t('auditPage.howHumanReviewHead', 'Human review queue'),
               body: t('auditPage.howHumanReviewBody', 'Anything the AI flags, or that a user reports, lands in a queue an admin reviews by hand. Nothing is auto-removed without a report existing.'),
             },
             {
               icon: '◎',
-              c: '#22e5d4',
+              c: 'var(--role-venue)',
               head: t('auditPage.howNoPiiHead', 'No content, no PII'),
               body: t('auditPage.howNoPiiBody', 'This page shows counts only. Categories with fewer than five reports are folded into "Other" so a small number can never identify a specific user or piece of content.'),
             },
             {
               icon: '⚙',
-              c: '#ff3e9a',
+              c: 'var(--accent-2)',
               head: t('auditPage.howFailOpenHead', 'Fail-open by design'),
               body: t('auditPage.howFailOpenBody', 'If the AI screening service is ever unavailable, uploads still go through — they just skip the automated check. Nothing on iHYPE is blocked by an AI outage.'),
             },

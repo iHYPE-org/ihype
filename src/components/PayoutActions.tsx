@@ -25,7 +25,7 @@ export function PayoutActions({ title }: { title: string }) {
       </button>
       <button
         onClick={share}
-        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, border: 'none', borderRadius: 999, cursor: 'pointer', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.8rem', background: '#ff5029', color: '#fff', padding: '9px 18px', boxShadow: '0 4px 20px rgba(255,80,41,.3)' }}
+        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, border: 'none', borderRadius: 999, cursor: 'pointer', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.8rem', background: 'var(--accent)', color: 'var(--ink-on-accent)', padding: '9px 18px', boxShadow: '0 4px 20px rgba(var(--accent-rgb),.3)' }}
         type="button"
       >
         {t('payoutActions.shareReceipt', 'Share receipt')}

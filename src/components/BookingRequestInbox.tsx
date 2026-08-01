@@ -91,7 +91,7 @@ export function BookingRequestInbox({ profileId }: { profileId: string }) {
                   type="button"
                   disabled={busyId === r.id}
                   onClick={() => act(r.id, 'accepted')}
-                  style={{ ...btnBase, background: '#22e5d4', color: '#0a0805', opacity: busyId === r.id ? 0.6 : 1 }}
+                  style={{ ...btnBase, background: 'var(--role-venue)', color: 'var(--bg)', opacity: busyId === r.id ? 0.6 : 1 }}
                 >
                   {t('bookingRequestInbox.accept', 'Accept')}
                 </button>

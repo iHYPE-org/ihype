@@ -200,7 +200,7 @@ export function ArtistMediaPlaylist({
             onDragOver={canDrag ? (e) => onDragOver(e, index) : undefined}
             onDrop={canDrag ? (e) => onDrop(e, index) : undefined}
             onDragEnd={canDrag ? onDragEnd : undefined}
-            style={isDragTarget ? { outline: '2px dashed var(--accent, #ff5029)', outlineOffset: 2 } : undefined}
+            style={isDragTarget ? { outline: '2px dashed var(--accent)', outlineOffset: 2 } : undefined}
           >
             <div className="artist-media-card-copy">
               {canDrag && (

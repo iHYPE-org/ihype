@@ -204,20 +204,24 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         .legal-updated-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: .85rem; }
         .legal-print-btn { flex-shrink: 0; font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; background: transparent; border: 1px solid var(--line); color: var(--ink-2); padding: 8px 14px; border-radius: 999px; cursor: pointer; }
         .legal-print-btn:hover { color: var(--ink); border-color: var(--ink-2); }
-        .legal-seg { display: flex; gap: 0; border-radius: 12px; border: 1px solid var(--line); max-width: 100%; overflow-x: auto; margin-bottom: 2.5rem; width: fit-content; }
-        .legal-seg-btn { padding: 9px 20px; border: none; background: transparent; color: var(--ink-2); font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; font-size: .82rem; cursor: pointer; transition: all .15s; white-space: nowrap; flex-shrink: 0; }
+        /* Wraps rather than scrolls. This was overflow-x:auto with
+           width:fit-content, written when there were four tabs; at six it
+           overflows inside the shell's content column and the browser draws a
+           native horizontal scrollbar — unthemed, and the only one on the
+           page. The mobile block below already hid that bar, so the defect
+           only ever showed at desktop widths. Wrapping means the strip cannot
+           scroll at any width, so there is nothing to hide. */
+        .legal-seg { display: flex; flex-wrap: wrap; gap: 4px; border-radius: 12px; border: 1px solid var(--line); max-width: 100%; width: 100%; padding: 4px; margin-bottom: 2.5rem; box-sizing: border-box; }
+        .legal-seg-btn { flex: 1 1 auto; padding: 9px 20px; border: none; border-radius: 9px; background: transparent; color: var(--ink-2); font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; font-size: .82rem; cursor: pointer; transition: all .15s; white-space: nowrap; }
         @media (max-width: 480px) {
           .legal-seg { width: 100%; border-radius: 10px; }
-          /* Six tabs, not the four this was written for: flex:1 divided the
-             strip into six ~60px columns and the labels overlapped into an
-             unreadable smear. Keep each tab its natural width and let the
-             strip scroll horizontally — the container already has
-             overflow-x:auto. */
-          .legal-seg-btn { flex: 0 0 auto; padding: 10px 14px; font-size: .7rem; line-height: 1.25; text-align: center; white-space: nowrap; min-height: 44px; display: flex; align-items: center; justify-content: center; }
-          .legal-seg { scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-          .legal-seg::-webkit-scrollbar { display: none; }
+          /* Six tabs at phone width wrap onto two or three rows rather than
+             being squeezed into six ~60px columns, which overlapped the
+             labels into an unreadable smear. The scrollbar-hiding rules that
+             used to live here are gone with the scrolling. */
+          .legal-seg-btn { flex: 1 1 auto; padding: 10px 12px; font-size: .7rem; line-height: 1.25; text-align: center; white-space: nowrap; min-height: 44px; display: flex; align-items: center; justify-content: center; }
         }
-        .legal-seg-btn.active { background: rgba(255,80,41,.1); color: var(--accent); }
+        .legal-seg-btn.active { background: rgba(var(--accent-rgb),.1); color: var(--accent); }
         .legal-doc { display: none; }
         .legal-doc.active { display: block; }
         .legal-doc h2 { font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; font-size: 1.15rem; letter-spacing: -.02em; margin: 2.5rem 0 .6rem; color: var(--ink); }
@@ -230,7 +234,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
            when it was folded into this tab. */
         .charter-split-bar { display: flex; height: 14px; border-radius: var(--radius-pill, 9999px); overflow: hidden; margin: 1.5rem 0 0; gap: 4px; }
         .charter-split-bar div { border-radius: var(--radius-pill, 9999px); }
-        .charter-callout { background: rgba(255,80,41,.06); border: 1px solid rgba(255,80,41,.15); border-radius: 16px; padding: 20px 24px; margin: 0 0 1rem; }
+        .charter-callout { background: rgba(var(--accent-rgb),.06); border: 1px solid rgba(var(--accent-rgb),.15); border-radius: 16px; padding: 20px 24px; margin: 0 0 1rem; }
         .charter-callout p { margin: 0 !important; color: var(--ink) !important; font-family: var(--f-s, 'Instrument Serif', serif); font-style: italic; font-size: 1.12rem !important; line-height: 1.55 !important; }
         .charter-inline-link { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: .72rem; letter-spacing: .04em; border-bottom: 1px solid currentColor; }
         @media print {

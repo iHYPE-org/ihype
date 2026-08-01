@@ -126,7 +126,7 @@ export function ReportButton({ targetType, targetId, entityLabel, className }: R
         <div
           aria-hidden="true"
           onClick={close}
-          style={{ position: 'fixed', inset: 0, zIndex: 949, background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(8px)', display: 'grid', placeItems: 'center', padding: 20 }}
+          style={{ position: 'fixed', inset: 0, zIndex: 949, background: 'rgba(var(--scrim-rgb),.5)', backdropFilter: 'blur(8px)', display: 'grid', placeItems: 'center', padding: 20 }}
         >
           <div
             aria-labelledby={titleId}

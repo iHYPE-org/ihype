@@ -51,7 +51,7 @@ export function ReportPageBulkButtons({ ids }: { ids: string[] }) {
         disabled={loading !== null}
         onClick={() => void run('resolve_reports')}
         type="button"
-        style={{ background: 'rgba(34,229,212,.1)', color: '#22e5d4', border: '1px solid rgba(34,229,212,.25)', borderRadius: 6, padding: '5px 14px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--f-m)' }}
+        style={{ background: 'rgba(var(--role-venue-rgb),.1)', color: 'var(--role-venue)', border: '1px solid rgba(var(--role-venue-rgb),.25)', borderRadius: 6, padding: '5px 14px', fontSize: 11, cursor: 'pointer', fontFamily: 'var(--f-m)' }}
       >
         {loading === 'resolve_reports' ? t('reportPageBulkButtons.resolving', 'Resolving…') : `${t('reportPageBulkButtons.resolveAllOnPage', 'Resolve all on page')} (${ids.length})`}
       </button>

@@ -46,7 +46,7 @@ export async function SimilarArtistsRow({
         .similar-artists-row::-webkit-scrollbar { display: none; }
         .similar-artist-card { flex: 0 0 108px; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 14px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg2); text-decoration: none; color: inherit; }
         .similar-artist-card:hover { background: var(--bg3); }
-        .similar-artist-avatar { width: 56px; height: 56px; border-radius: 50%; background: ${accent}; display: flex; align-items: center; justify-content: center; color: #fff; font-family: var(--font-display); font-weight: 800; font-size: 20px; overflow: hidden; margin-bottom: 10px; }
+        .similar-artist-avatar { width: 56px; height: 56px; border-radius: 50%; background: ${accent}; display: flex; align-items: center; justify-content: center; color: var(--ink-on-accent); font-family: var(--font-display); font-weight: 800; font-size: 20px; overflow: hidden; margin-bottom: 10px; }
         .similar-artist-name { font-family: var(--font-display); font-size: 13px; font-weight: 800; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
         .similar-artist-genre { font-size: 11px; color: var(--ink-a55); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
       `}</style>

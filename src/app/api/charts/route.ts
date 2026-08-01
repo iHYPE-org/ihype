@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
-const PALETTE = ['#ff5029', '#b983ff', '#22e5d4', '#ff3e9a', '#ffb84a', '#7fb3ff'];
+const PALETTE = ['var(--accent)', 'var(--role-fan)', 'var(--role-venue)', 'var(--accent-2)', 'var(--role-promoter)', '#7fb3ff'];
 
 export type ChartTrack = {
   id: string;

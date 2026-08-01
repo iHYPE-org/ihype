@@ -182,7 +182,12 @@ describe('one manifest feeds both the drawer and the strip', () => {
     expect(sectionRows(items, 'EVENTS').map((i) => i.id)).toEqual(['nearme', 'recommended', 'tickets', 'promote']);
     expect(sectionRows(items, 'PAGES').map((i) => i.id))
       .toEqual(['dashboard', 'pagecreator', 'showcreator', 'tourcreator', 'eventcreator', 'adcreator']);
-    expect(sectionRows(items, 'SETTINGS').map((i) => i.id)).toEqual(['community', 'a11y', 'info', 'legal']);
+    // 'legal' was dropped from the drawer: /legal is a thin redirect into
+    // /info's Terms tab, so it sat directly beside Info pointing at a subset
+    // of the page Info already opens. The route still exists — consent copy,
+    // the cookie banner and sent emails link to it — it just is not a second
+    // nav destination for the same page.
+    expect(sectionRows(items, 'SETTINGS').map((i) => i.id)).toEqual(['community', 'a11y', 'info']);
   });
 
   it('never emits an item into a section it does not belong to', () => {

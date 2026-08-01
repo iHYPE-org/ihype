@@ -12,10 +12,10 @@ import { useAppShellActive } from '@/components/shell/AppShellContext';
 import { useI18n } from '@/components/I18nProvider';
 
 const TYPE_COLOR: Record<string, string> = {
-  ARTIST: '#ff5029',
-  DJ: '#ff3e9a',
-  VENUE: '#22e5d4',
-  LISTENER: '#b983ff',
+  ARTIST: 'var(--role-artist)',
+  DJ: 'var(--role-dj)',
+  VENUE: 'var(--role-venue)',
+  LISTENER: 'var(--role-fan)',
 };
 
 const TYPE_LABEL: Record<string, string> = {
@@ -62,10 +62,10 @@ const NET_FILTERS = [
 
 const CREATE_CARDS: { type: string; color: string; bg: string; name: string; desc: string; icon: React.ReactNode }[] = [
   {
-    type: 'ARTIST', color: '#ff5029', bg: 'rgba(255,80,41,.12)', name: 'Artist Page',
+    type: 'ARTIST', color: 'var(--accent)', bg: 'rgba(var(--accent-rgb),.12)', name: 'Artist Page',
     desc: 'Upload tracks, list shows, sell tickets. Keep 70%.',
     icon: (
-      <svg fill="none" height="20" stroke="#ff5029" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="20">
+      <svg fill="none" height="20" stroke="var(--accent)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="20">
         <path d="M9 18V5l12-2v13" />
         <circle cx="6" cy="18" r="3" />
         <circle cx="18" cy="16" r="3" />
@@ -73,10 +73,10 @@ const CREATE_CARDS: { type: string; color: string; bg: string; name: string; des
     ),
   },
   {
-    type: 'VENUE', color: '#22e5d4', bg: 'rgba(34,229,212,.1)', name: 'Venue Page',
+    type: 'VENUE', color: 'var(--role-venue)', bg: 'rgba(var(--role-venue-rgb),.1)', name: 'Venue Page',
     desc: 'Book from the demand radar. Keep 20% of every room.',
     icon: (
-      <svg fill="none" height="20" stroke="#22e5d4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="20">
+      <svg fill="none" height="20" stroke="var(--role-venue)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="20">
         <path d="M3 21h18" />
         <path d="M5 21V7l8-4v18" />
         <path d="M19 21V11l-6-4" />
@@ -84,10 +84,10 @@ const CREATE_CARDS: { type: string; color: string; bg: string; name: string; des
     ),
   },
   {
-    type: 'DJ', color: '#ff3e9a', bg: 'rgba(255,62,154,.1)', name: 'DJ Page',
+    type: 'DJ', color: 'var(--accent-2)', bg: 'rgba(var(--accent-2-rgb),.1)', name: 'DJ Page',
     desc: 'Host radio shows, build a crate, earn promoter cuts.',
     icon: (
-      <svg fill="none" height="20" stroke="#ff3e9a" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="20">
+      <svg fill="none" height="20" stroke="var(--accent-2)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="20">
         <circle cx="12" cy="12" r="2" />
         <path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14" />
       </svg>
@@ -100,7 +100,7 @@ const b: React.CSSProperties = {
   borderRadius: 9, cursor: 'pointer', border: 'none', textDecoration: 'none',
   display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap',
 };
-const bSolid: React.CSSProperties = { ...b, background: 'var(--accent)', color: '#fff' };
+const bSolid: React.CSSProperties = { ...b, background: 'var(--accent)', color: 'var(--ink-on-accent)' };
 const bGhost: React.CSSProperties = { ...b, background: 'transparent', color: 'var(--ink-a70)', boxShadow: 'inset 0 0 0 1px var(--line-2)' };
 
 function hexA(hex: string, a: number) {
@@ -259,21 +259,21 @@ export function PagesHome({
 
   const gridItems: QuickGridItem[] = [
     {
-      id: 'mypage', label: t('pagesHome.gridLabel.mypage', 'My Page'), color: '#ff5029', sublabel: `${myProfiles.length} ${myProfiles.length === 1 ? t('pagesHome.gridSublabel.page', 'page') : t('pagesHome.gridSublabel.pages', 'pages')}`,
-      icon: <svg fill="none" height="30" stroke="#ff5029" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" /></svg>,
+      id: 'mypage', label: t('pagesHome.gridLabel.mypage', 'My Page'), color: 'var(--accent)', sublabel: `${myProfiles.length} ${myProfiles.length === 1 ? t('pagesHome.gridSublabel.page', 'page') : t('pagesHome.gridSublabel.pages', 'pages')}`,
+      icon: <svg fill="none" height="30" stroke="var(--accent)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" /></svg>,
     },
     {
-      id: 'network', label: t('pagesHome.gridLabel.network', 'Network'), color: '#22e5d4', sublabel: `${following.length} ${t('pagesHome.gridSublabel.following', 'following')}`,
-      icon: <svg fill="none" height="30" stroke="#22e5d4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><circle cx="8" cy="8" r="3" /><circle cx="17" cy="9" r="2.5" /><path d="M2 20c0-3.3 2.7-6 6-6s6 2.7 6 6" /><path d="M14.5 14.2c2.5.4 4.5 2.6 4.5 5.3" /></svg>,
+      id: 'network', label: t('pagesHome.gridLabel.network', 'Network'), color: 'var(--role-venue)', sublabel: `${following.length} ${t('pagesHome.gridSublabel.following', 'following')}`,
+      icon: <svg fill="none" height="30" stroke="var(--role-venue)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><circle cx="8" cy="8" r="3" /><circle cx="17" cy="9" r="2.5" /><path d="M2 20c0-3.3 2.7-6 6-6s6 2.7 6 6" /><path d="M14.5 14.2c2.5.4 4.5 2.6 4.5 5.3" /></svg>,
     },
     {
-      id: 'creator', label: t('pagesHome.gridLabel.creator', 'Creator'), color: '#ff3e9a', sublabel: t('pagesHome.gridSublabel.creator', 'Add a page'),
-      icon: <svg fill="none" height="30" stroke="#ff3e9a" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><line x1="12" x2="12" y1="5" y2="19" /><line x1="5" x2="19" y1="12" y2="12" /></svg>,
+      id: 'creator', label: t('pagesHome.gridLabel.creator', 'Creator'), color: 'var(--accent-2)', sublabel: t('pagesHome.gridSublabel.creator', 'Add a page'),
+      icon: <svg fill="none" height="30" stroke="var(--accent-2)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><line x1="12" x2="12" y1="5" y2="19" /><line x1="5" x2="19" y1="12" y2="12" /></svg>,
     },
     {
-      id: 'settings', label: t('pagesHome.gridLabel.settings', 'Settings'), color: '#b983ff', sublabel: t('pagesHome.gridSublabel.settings', 'Account & privacy'), href: '/me/settings',
+      id: 'settings', label: t('pagesHome.gridLabel.settings', 'Settings'), color: 'var(--role-fan)', sublabel: t('pagesHome.gridSublabel.settings', 'Account & privacy'), href: '/me/settings',
       icon: (
-        <svg fill="none" height="30" stroke="#b983ff" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30">
+        <svg fill="none" height="30" stroke="var(--role-fan)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30">
           <circle cx="12" cy="12" r="3" />
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
         </svg>
@@ -350,7 +350,7 @@ export function PagesHome({
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {searchResults.map((r) => {
-                const color = r.type === 'venue' ? '#22e5d4' : r.type === 'promoter' ? '#ff3e9a' : '#ff5029';
+                const color = r.type === 'venue' ? 'var(--role-venue)' : r.type === 'promoter' ? 'var(--accent-2)' : 'var(--accent)';
                 const label = r.type === 'venue' ? t('pagesHome.resultTypeVenue', 'Venue') : r.type === 'promoter' ? t('pagesHome.resultTypePromoter', 'Promoter / DJ') : t('pagesHome.resultTypeArtist', 'Artist');
                 const route = r.type === 'venue' ? `/venues/${r.slug}` : r.type === 'promoter' ? `/promoters/${r.slug}` : `/artists/${r.slug}`;
                 const initials = r.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
@@ -359,7 +359,7 @@ export function PagesHome({
                     <div style={{
                       width: 46, height: 46, borderRadius: 9999, flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, color: '#fff',
+                      fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, color: 'var(--ink-on-accent)',
                       background: `linear-gradient(135deg, ${color}, ${hexA(color, 0.55)})`,
                     }}>
                       {initials}
@@ -399,7 +399,7 @@ export function PagesHome({
               <p style={{ fontSize: 14, color: 'var(--ink-a50)', marginBottom: 24 }}>
                 {t('pagesHome.noPagesYetSub', 'Create an artist, venue, or promoter page to get started.')}
               </p>
-              <button onClick={() => setTab('creator')} style={{ display: 'inline-block', padding: '12px 24px', background: 'var(--accent)', color: '#fff', borderRadius: 8, fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer' }} type="button">
+              <button onClick={() => setTab('creator')} style={{ display: 'inline-block', padding: '12px 24px', background: 'var(--accent)', color: 'var(--ink-on-accent)', borderRadius: 8, fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer' }} type="button">
                 {t('pagesHome.createFirstPage', 'Create your first page →')}
               </button>
             </div>
@@ -407,7 +407,7 @@ export function PagesHome({
             <>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 18 }}>
                 {myProfiles.map((p) => {
-                  const color = TYPE_COLOR[p.type] ?? '#ff5029';
+                  const color = TYPE_COLOR[p.type] ?? 'var(--accent)';
                   const selected = selectedProfile?.id === p.id;
                   return (
                     <div
@@ -424,7 +424,7 @@ export function PagesHome({
                       <div style={{
                         width: 30, height: 30, borderRadius: 9999, flexShrink: 0,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, color: '#fff',
+                        fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, color: 'var(--ink-on-accent)',
                         background: color,
                       }}>
                         {p.name.charAt(0).toUpperCase()}
@@ -455,21 +455,21 @@ export function PagesHome({
                 <div style={{
                   borderRadius: 18, padding: 24, marginBottom: 36,
                   display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap',
-                  border: `1px solid ${hexA(TYPE_COLOR[selectedProfile.type] ?? '#ff5029', 0.3)}`,
-                  background: hexA(TYPE_COLOR[selectedProfile.type] ?? '#ff5029', 0.07),
+                  border: `1px solid ${hexA(TYPE_COLOR[selectedProfile.type] ?? 'var(--accent)', 0.3)}`,
+                  background: hexA(TYPE_COLOR[selectedProfile.type] ?? 'var(--accent)', 0.07),
                 }}>
                   <div style={{
                     width: 72, height: 72, borderRadius: 9999, flexShrink: 0,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 28, color: '#fff',
-                    background: TYPE_COLOR[selectedProfile.type] ?? '#ff5029',
+                    fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 28, color: 'var(--ink-on-accent)',
+                    background: TYPE_COLOR[selectedProfile.type] ?? 'var(--accent)',
                   }}>
                     {selectedProfile.name.charAt(0).toUpperCase()}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{
                       fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase',
-                      marginBottom: 5, color: TYPE_COLOR[selectedProfile.type] ?? '#ff5029',
+                      marginBottom: 5, color: TYPE_COLOR[selectedProfile.type] ?? 'var(--accent)',
                     }}>
                       {typeLabel(selectedProfile.type).toUpperCase()} {t('pagesHome.pageSuffix', 'PAGE')}
                     </div>
@@ -494,7 +494,7 @@ export function PagesHome({
               {selectedProfile && (
                 <PageRoleModules
                   key={selectedProfile.id}
-                  color={TYPE_COLOR[selectedProfile.type] ?? '#ff5029'}
+                  color={TYPE_COLOR[selectedProfile.type] ?? 'var(--accent)'}
                   initialTool={initialTool}
                   profile={selectedProfile}
                 />
@@ -538,8 +538,8 @@ export function PagesHome({
                 onClick={() => setNetFilter(f.id)}
                 style={{
                   fontSize: 12, padding: '7px 14px', borderRadius: 9999, cursor: 'pointer',
-                  background: netFilter === f.id ? 'rgba(255,80,41,.12)' : 'var(--hair-30)',
-                  border: `1px solid ${netFilter === f.id ? 'rgba(255,80,41,.4)' : 'var(--hair-100)'}`,
+                  background: netFilter === f.id ? 'rgba(var(--accent-rgb),.12)' : 'var(--hair-30)',
+                  border: `1px solid ${netFilter === f.id ? 'rgba(var(--accent-rgb),.4)' : 'var(--hair-100)'}`,
                   color: netFilter === f.id ? 'var(--ink)' : 'var(--ink-a60)',
                 }}
               >
@@ -553,14 +553,14 @@ export function PagesHome({
               <div style={{ color: 'var(--ink-a50)', fontSize: 13, padding: '10px 2px' }}>{t('pagesHome.noConnectionsMatch', 'No connections match.')}</div>
             ) : (
               netListShown.map((p) => {
-                const color = TYPE_COLOR[p.type] ?? '#ff5029';
+                const color = TYPE_COLOR[p.type] ?? 'var(--accent)';
                 const initials = p.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
                 return (
                   <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 14, background: 'var(--hair-30)' }}>
                     <Link href={profileRoute(p.type, p.slug)} style={{
                       width: 46, height: 46, borderRadius: 9999, flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, color: '#fff',
+                      fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, color: 'var(--ink-on-accent)',
                       background: `linear-gradient(135deg, ${color}, ${hexA(color, 0.55)})`, textDecoration: 'none',
                     }}>
                       {initials}
@@ -595,14 +595,14 @@ export function PagesHome({
               <div style={{ color: 'var(--ink-a50)', fontSize: 13, padding: '10px 2px' }}>{t('pagesHome.noSuggestionsMatch', 'No suggestions match.')}</div>
             ) : (
               netSuggestShown.map((p) => {
-                const color = TYPE_COLOR[p.type] ?? '#ff5029';
+                const color = TYPE_COLOR[p.type] ?? 'var(--accent)';
                 const initials = p.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
                 return (
                   <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 14, background: 'var(--hair-30)' }}>
                     <Link href={profileRoute(p.type, p.slug)} style={{
                       width: 46, height: 46, borderRadius: 9999, flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, color: '#fff',
+                      fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, color: 'var(--ink-on-accent)',
                       background: `linear-gradient(135deg, ${color}, ${hexA(color, 0.55)})`, textDecoration: 'none',
                     }}>
                       {initials}
@@ -634,8 +634,8 @@ export function PagesHome({
           {justCreatedName && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', marginBottom: 18,
-              borderRadius: 12, border: '1px solid rgba(34,229,212,.3)', background: 'rgba(34,229,212,.08)',
-              color: '#22e5d4', fontSize: 13, fontWeight: 600,
+              borderRadius: 12, border: '1px solid rgba(var(--role-venue-rgb),.3)', background: 'rgba(var(--role-venue-rgb),.08)',
+              color: 'var(--role-venue)', fontSize: 13, fontWeight: 600,
             }}>
               ✓ &ldquo;{justCreatedName}&rdquo; {t('pagesHome.pageCreatedSuffix', 'page created — saved to your account. Edit it below.')}
             </div>
@@ -680,12 +680,12 @@ export function PagesHome({
                       type="text"
                       value={creatingName}
                     />
-                    {createError && <div style={{ fontSize: 12, color: '#ff5029' }}>{createError}</div>}
+                    {createError && <div style={{ fontSize: 12, color: 'var(--accent)' }}>{createError}</div>}
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button
                         disabled={creating || !creatingName.trim()}
                         onClick={() => addProfile(card.type)}
-                        style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: card.color, color: '#fff', fontWeight: 700, fontSize: 13, cursor: creating ? 'default' : 'pointer', opacity: creating || !creatingName.trim() ? 0.6 : 1 }}
+                        style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: card.color, color: 'var(--ink-on-accent)', fontWeight: 700, fontSize: 13, cursor: creating ? 'default' : 'pointer', opacity: creating || !creatingName.trim() ? 0.6 : 1 }}
                         type="button"
                       >
                         {creating ? t('pagesHome.creating', 'Creating…') : t('pagesHome.create', 'Create')}

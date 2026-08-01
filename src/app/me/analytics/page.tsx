@@ -181,7 +181,7 @@ export default async function FanAnalyticsPage({
         <Link className="fa-stat-card" href="/tickets">
           <div className="fa-stat-label">{t('meAnalyticsPage.hypeCastLabel', 'Hype Cast')}</div>
           <div className="fa-stat-val">{hypeCastCurrent.toLocaleString()}</div>
-          <div className="fa-stat-sub" style={{ color: hypeDelta !== 0 ? 'var(--role-fan, #b983ff)' : undefined }}>
+          <div className="fa-stat-sub" style={{ color: hypeDelta !== 0 ? 'var(--role-fan)' : undefined }}>
             {hypeDelta > 0 ? `+${hypeDelta}` : hypeDelta} {t('meAnalyticsPage.thisPeriod', 'this period')}
           </div>
         </Link>
@@ -192,7 +192,7 @@ export default async function FanAnalyticsPage({
         </div>
         <div className="fa-stat-card">
           <div className="fa-stat-label">{t('meAnalyticsPage.referralEarnedLabel', 'Referral Earned')}</div>
-          <div className="fa-stat-val" style={{ color: 'var(--role-fan, #b983ff)' }}>
+          <div className="fa-stat-val" style={{ color: 'var(--role-fan)' }}>
             {formatCurrencyFromCents(promoterDashboard.earnedCents)}
           </div>
           <div className="fa-stat-sub">{t('meAnalyticsPage.referralEarnedSub', 'From your HYPE Link (lifetime, pending settlement)')}</div>
@@ -241,16 +241,16 @@ export default async function FanAnalyticsPage({
         .fa-tabs { display: flex; gap: 4px; border: 1px solid var(--line); border-radius: var(--radius-pill, 9999px); padding: 4px; width: fit-content; margin-bottom: 28px; }
         .fa-tab { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; padding: 8px 16px; border-radius: var(--radius-pill, 9999px); color: var(--ink-a50); text-decoration: none; }
         .fa-tab:hover { color: var(--ink); }
-        .fa-tab-active { background: var(--role-fan, #b983ff); color: #fff; }
+        .fa-tab-active { background: var(--role-fan); color: var(--ink-on-accent); }
         .fa-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
         .fa-stat-card { display: block; text-decoration: none; padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--radius-md, 12px); background: var(--bg2); color: inherit; }
         .fa-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a50); margin-bottom: 6px; }
         .fa-stat-val { font-family: var(--font-display); font-weight: 800; font-size: 24px; color: var(--ink); }
         .fa-stat-sub { font-size: 11.5px; color: var(--ink-a50); margin-top: 2px; }
-        .fa-eyebrow { font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: var(--role-fan, #b983ff); margin-bottom: 4px; }
+        .fa-eyebrow { font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: var(--role-fan); margin-bottom: 4px; }
         .fa-chart { display: flex; align-items: flex-end; gap: 6px; height: 120px; margin: 14px 0 32px; padding: 0 4px; overflow-x: auto; }
         .fa-chart-bar-wrap { flex: 1; min-width: 24px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 6px; }
-        .fa-chart-bar { width: 100%; border-radius: 4px 4px 0 0; background: var(--role-fan, #b983ff); }
+        .fa-chart-bar { width: 100%; border-radius: 4px 4px 0 0; background: var(--role-fan); }
         .fa-chart-bar-label { font-family: var(--font-mono); font-size: 9px; color: var(--ink-a50); white-space: nowrap; }
         .fa-section-head { display: flex; justify-content: space-between; align-items: baseline; }
         .fa-eyebrow-sm { font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-a50); }
@@ -261,7 +261,7 @@ export default async function FanAnalyticsPage({
         .fa-artist-row:hover { background: var(--bg3); }
         .fa-artist-name { font-family: var(--font-display); font-weight: 800; font-size: 14px; color: var(--ink); }
         .fa-artist-meta { font-size: 12px; color: var(--ink-a55); margin-top: 2px; }
-        .fa-artist-count { font-family: var(--font-mono); font-size: 13px; color: var(--role-fan, #b983ff); font-weight: 700; }
+        .fa-artist-count { font-family: var(--font-mono); font-size: 13px; color: var(--role-fan); font-weight: 700; }
       `}</style>
     </div>
   );

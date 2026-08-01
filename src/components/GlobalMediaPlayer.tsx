@@ -820,7 +820,7 @@ export function SitePlayerDock() {
         aria-label={mobileExpanded ? t('globalMediaPlayer.collapsePlayerControls', 'Collapse player controls') : t('globalMediaPlayer.expandPlayerControls', 'Expand player controls')}
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setMobileExpanded(v => !v); } }}
       >
-        <div className="site-dock-art" style={{ position: 'relative', background: currentTrack ? 'linear-gradient(135deg,#ff5029,#ff3e9a80)' : '#161310' }}>
+        <div className="site-dock-art" style={{ position: 'relative', background: currentTrack ? 'linear-gradient(135deg,var(--accent),var(--accent-2)80)' : '#161310' }}>
           {currentTrack?.artworkUrl && <Image src={currentTrack.artworkUrl} alt={currentTrack.title} fill sizes="42px" style={{ objectFit: 'cover', borderRadius: 5 }} />}
         </div>
         <div className="site-dock-meta">
@@ -871,7 +871,7 @@ export function SitePlayerDock() {
       <div className="site-dock-c">
         <div className="site-dock-ctrls">
           <button className="site-dock-btn" onClick={toggleShuffle} aria-label={t('globalMediaPlayer.toggleShuffle', 'Toggle shuffle')} title={t('globalMediaPlayer.shuffle', 'Shuffle')} type="button"
-            style={{ opacity: isShuffle ? 1 : 0.4, color: isShuffle ? 'var(--accent, #ff5029)' : 'inherit' }}>
+            style={{ opacity: isShuffle ? 1 : 0.4, color: isShuffle ? 'var(--accent)' : 'inherit' }}>
             <DkShuffle />
           </button>
           <button className="site-dock-btn" onClick={playPrevious} aria-label={t('globalMediaPlayer.previous', 'Previous')} type="button"><DkSkipP /></button>
@@ -881,7 +881,7 @@ export function SitePlayerDock() {
           <button className="site-dock-btn" onClick={playNext} aria-label={t('globalMediaPlayer.next', 'Next')} type="button"><DkSkipN /></button>
           <button className="site-dock-btn" onClick={cycleRepeat} aria-label={t('globalMediaPlayer.cycleRepeat', 'Cycle repeat')}
             title={t(...repeatTitleKey(repeatMode))} type="button"
-            style={{ opacity: repeatMode !== 'off' ? 1 : 0.4, color: repeatMode !== 'off' ? 'var(--accent, #ff5029)' : 'inherit', position: 'relative' }}>
+            style={{ opacity: repeatMode !== 'off' ? 1 : 0.4, color: repeatMode !== 'off' ? 'var(--accent)' : 'inherit', position: 'relative' }}>
             <DkRepeat />
             {rLabel && <span style={{ position: 'absolute', top: -4, right: -4, fontSize: '0.55rem', fontWeight: 700, lineHeight: 1 }}>{rLabel}</span>}
           </button>
@@ -902,7 +902,7 @@ export function SitePlayerDock() {
                 className="site-dock-wave-bar"
                 style={{
                   height: `${h * 100}%`,
-                  background: i / waveform.length <= progress ? 'var(--accent, #ff5029)' : 'var(--line-2)',
+                  background: i / waveform.length <= progress ? 'var(--accent)' : 'var(--line-2)',
                 }}
               />
             ))}
@@ -924,7 +924,7 @@ export function SitePlayerDock() {
           type="range" min={0} max={1} step={0.05}
           value={isMuted ? 0 : volume}
           onChange={e => setVolume(Number(e.target.value))}
-          style={{ width: 48, accentColor: 'var(--accent, #ff5029)', opacity: 0.6 }}
+          style={{ width: 48, accentColor: 'var(--accent)', opacity: 0.6 }}
         />
 
         {/* Speed */}
@@ -936,23 +936,23 @@ export function SitePlayerDock() {
         {/* Sleep timer */}
         <button className="site-dock-btn" onClick={sleepMinutes !== null ? cancelSleepTimer : cycleSleepTimer}
           aria-label={t('globalMediaPlayer.sleepTimer', 'Sleep timer')} title={sleepMinutes ? `${t('globalMediaPlayer.sleepIn', 'Sleep in')} ${sleepRemainingSeconds !== null ? fmtSleep(sleepRemainingSeconds) : '—'} — ${t('globalMediaPlayer.clickToCancel', 'click to cancel')}` : t('globalMediaPlayer.sleepTimer', 'Sleep timer')} type="button"
-          style={{ fontSize: '0.62rem', opacity: sleepMinutes !== null ? 1 : 0.45, color: sleepMinutes !== null ? 'var(--accent, #ff5029)' : 'inherit', minWidth: 28, fontWeight: sleepMinutes !== null ? 700 : 400 }}>
+          style={{ fontSize: '0.62rem', opacity: sleepMinutes !== null ? 1 : 0.45, color: sleepMinutes !== null ? 'var(--accent)' : 'inherit', minWidth: 28, fontWeight: sleepMinutes !== null ? 700 : 400 }}>
           {sleepMinutes !== null && sleepRemainingSeconds !== null ? fmtSleep(sleepRemainingSeconds) : '💤'}
         </button>
 
         {/* Share */}
         <button className="site-dock-btn" onClick={shareCurrentTrack} aria-label={t('globalMediaPlayer.shareTrack', 'Share track')} title={t('globalMediaPlayer.copyTrackLink', 'Copy track link')} type="button"
-          style={{ opacity: currentTrack ? (copied ? 1 : 0.5) : 0.2, fontSize: '0.7rem', color: copied ? 'var(--accent, #ff5029)' : 'inherit' }}
+          style={{ opacity: currentTrack ? (copied ? 1 : 0.5) : 0.2, fontSize: '0.7rem', color: copied ? 'var(--accent)' : 'inherit' }}
           disabled={!currentTrack}>
           {copied ? '✓' : '⬆'}
         </button>
 
         {/* Queue / History toggle */}
         <button className="site-dock-btn" onClick={() => togglePanel('queue')} aria-label={t('globalMediaPlayer.toggleQueue', 'Toggle queue')} title={t('globalMediaPlayer.queueAndHistory', 'Queue & history')} type="button"
-          style={{ opacity: panel !== null ? 1 : 0.5, color: panel !== null ? 'var(--accent, #ff5029)' : 'inherit', fontSize: '0.85rem', position: 'relative' }}>
+          style={{ opacity: panel !== null ? 1 : 0.5, color: panel !== null ? 'var(--accent)' : 'inherit', fontSize: '0.85rem', position: 'relative' }}>
           ≡
           {upcomingTracks.length > 0 && (
-            <span style={{ position: 'absolute', top: -4, right: -4, fontSize: '0.5rem', background: 'var(--accent, #ff5029)', color: '#fff', borderRadius: 8, padding: '0 3px', lineHeight: 1.4 }}>
+            <span style={{ position: 'absolute', top: -4, right: -4, fontSize: '0.5rem', background: 'var(--accent)', color: 'var(--ink-on-accent)', borderRadius: 8, padding: '0 3px', lineHeight: 1.4 }}>
               {upcomingTracks.length}
             </span>
           )}

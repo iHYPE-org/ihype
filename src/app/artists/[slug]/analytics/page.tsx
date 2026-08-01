@@ -228,21 +228,21 @@ export default async function ArtistAnalyticsPage({
         <div className="aa-stat-card">
           <div className="aa-stat-label">{t('artistsSlugAnalyticsPage.listenersLabel', 'Listeners')}</div>
           <div className="aa-stat-val">{distinctCurrentListeners.toLocaleString()}</div>
-          <div className="aa-stat-sub" style={listenersDelta != null ? { color: 'var(--role-venue, #22e5d4)' } : undefined}>
+          <div className="aa-stat-sub" style={listenersDelta != null ? { color: 'var(--role-venue)' } : undefined}>
             {listenersDelta != null ? `${listenersDelta >= 0 ? '+' : ''}${listenersDelta}% ${t('artistsSlugAnalyticsPage.thisPeriod', 'this period')}` : t('artistsSlugAnalyticsPage.distinctListeners', 'Distinct listeners')}
           </div>
         </div>
         <div className="aa-stat-card">
           <div className="aa-stat-label">{t('artistsSlugAnalyticsPage.ticketsSoldLabel', 'Tickets Sold')}</div>
           <div className="aa-stat-val">{currentTicketsSold.toLocaleString()}</div>
-          <div className="aa-stat-sub" style={ticketsDelta != null ? { color: 'var(--role-venue, #22e5d4)' } : undefined}>
+          <div className="aa-stat-sub" style={ticketsDelta != null ? { color: 'var(--role-venue)' } : undefined}>
             {ticketsDelta != null ? `${ticketsDelta >= 0 ? '+' : ''}${ticketsDelta}% ${t('artistsSlugAnalyticsPage.thisPeriod', 'this period')}` : t('artistsSlugAnalyticsPage.capturedOrders', 'CAPTURED orders')}
           </div>
         </div>
         <div className="aa-stat-card">
           <div className="aa-stat-label">{t('artistsSlugAnalyticsPage.hypeCastLabel', 'Hype Cast')}</div>
           <div className="aa-stat-val">{currentHypeCount.toLocaleString()}</div>
-          <div className="aa-stat-sub" style={hypeDelta != null ? { color: 'var(--role-venue, #22e5d4)' } : undefined}>
+          <div className="aa-stat-sub" style={hypeDelta != null ? { color: 'var(--role-venue)' } : undefined}>
             {hypeDelta != null ? `${hypeDelta >= 0 ? '+' : ''}${hypeDelta}% ${t('artistsSlugAnalyticsPage.thisPeriod', 'this period')}` : t('artistsSlugAnalyticsPage.totalHypes', 'Total hypes')}
           </div>
         </div>
@@ -297,7 +297,7 @@ export default async function ArtistAnalyticsPage({
         .aa-title { font-family: var(--font-display); font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin: 0; color: var(--ink); }
         .aa-tabs { display: flex; gap: 4px; margin-bottom: 28px; border: 1px solid var(--line); border-radius: var(--radius-pill); padding: 4px; width: fit-content; }
         .aa-tab { padding: 8px 18px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 700; color: var(--ink-a60); text-decoration: none; }
-        .aa-tab.active { background: var(--accent); color: #fff; }
+        .aa-tab.active { background: var(--accent); color: var(--ink-on-accent); }
         .aa-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
         .aa-stat-card { padding: 18px 20px; border-radius: var(--radius-lg); border: 1px solid var(--line); background: var(--bg2); }
         .aa-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a50); margin-bottom: 6px; }

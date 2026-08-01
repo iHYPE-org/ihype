@@ -29,7 +29,7 @@ export function OfflineBanner() {
         right: 0,
         zIndex: 500,
         background: '#b91c1c',
-        color: '#fff',
+        color: 'var(--ink-on-accent)',
         textAlign: 'center',
         padding: '8px 16px',
         fontSize: 13,

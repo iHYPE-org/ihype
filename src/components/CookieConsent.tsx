@@ -47,15 +47,15 @@ export function CookieConsent() {
         gap: '0.75rem 1rem',
         padding: '0.75rem 0.875rem',
         borderRadius: 12,
-        background: 'var(--bg-3, #1a1612)',
-        border: '1px solid var(--line-2, var(--line-2))',
+        background: 'var(--bg-3)',
+        border: '1px solid var(--line-2)',
         boxShadow: '0 12px 40px rgba(0,0,0,0.4)',
         fontFamily: "var(--font-body, 'DM Sans', sans-serif)",
       }}
     >
-      <p style={{ flex: '1 1 230px', margin: 0, fontSize: 11, color: 'var(--ink-2, #9e9080)', lineHeight: 1.45 }}>
+      <p style={{ flex: '1 1 230px', margin: 0, fontSize: 11, color: 'var(--ink-2)', lineHeight: 1.45 }}>
         {t('cookieConsent.description', 'We use essential cookies to keep you signed in, and optional analytics cookies to understand usage in aggregate.')}{' '}
-        <Link href="/info?tab=privacy" style={{ color: 'var(--accent-text, #ff5029)', textDecoration: 'underline' }}>{t('cookieConsent.privacyLink', 'Read our privacy policy')}</Link>.
+        <Link href="/info?tab=privacy" style={{ color: 'var(--accent-text, var(--accent))', textDecoration: 'underline' }}>{t('cookieConsent.privacyLink', 'Read our privacy policy')}</Link>.
       </p>
       <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
         <button

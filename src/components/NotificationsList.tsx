@@ -43,10 +43,10 @@ function iconForType(type: string, color: string) {
 
 function colorForType(type: string) {
   const t = type.toUpperCase();
-  if (t.includes('HYPE') || t.includes('EARLY_BELIEVER')) return '#ff5029';
-  if (t.includes('REFERRAL')) return '#ff3e9a';
-  if (t.includes('RADIO') || t.includes('LIVE')) return '#b983ff';
-  if (t.includes('SHOW') || t.includes('RSVP') || t.includes('TICKET') || t.includes('POST-SHOW')) return '#22e5d4';
+  if (t.includes('HYPE') || t.includes('EARLY_BELIEVER')) return 'var(--accent)';
+  if (t.includes('REFERRAL')) return 'var(--accent-2)';
+  if (t.includes('RADIO') || t.includes('LIVE')) return 'var(--role-fan)';
+  if (t.includes('SHOW') || t.includes('RSVP') || t.includes('TICKET') || t.includes('POST-SHOW')) return 'var(--role-venue)';
   return 'var(--ink-a65)';
 }
 
@@ -161,7 +161,7 @@ export function NotificationsList({ initialNotifications }: { initialNotificatio
         .notifications-tab.active { color: var(--ink); border-color: var(--accent); }
         .notifications-item { display: flex; gap: 16px; align-items: flex-start; padding: 18px 0; border-bottom: 1px solid var(--line); cursor: pointer; transition: opacity 150ms; }
         .notifications-item:hover { opacity: .85; }
-        .notifications-item.unread { background: rgba(255,80,41,.03); }
+        .notifications-item.unread { background: rgba(var(--accent-rgb),.03); }
         .notifications-icon { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .notifications-body { flex: 1; min-width: 0; }
         .notifications-text { font-size: 14px; line-height: 1.5; color: var(--ink-a90, var(--ink)); margin-bottom: 4px; }

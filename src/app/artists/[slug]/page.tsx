@@ -127,8 +127,8 @@ export default async function ArtistPage({
             <div className="artist-name">{profile.name}</div>
             <div className="artist-sub">{profile.genres.join(' · ')}{profile.city ? ` · ${profile.city}` : ''}</div>
             <div className="artist-hero-badges">
-              <span className="artist-badge" style={{ background: 'rgba(255,80,41,.15)', color: 'var(--accent)' }}>{t('artistsSlugPage.artistBadge', 'Artist')}</span>
-              {profile.verificationStatus === 'VERIFIED' && <span className="artist-badge" style={{ background: 'rgba(34,229,212,.15)', color: 'var(--role-venue, #22e5d4)' }}>{t('artistsSlugPage.verifiedBadge', '✓ Verified')}</span>}
+              <span className="artist-badge" style={{ background: 'rgba(var(--accent-rgb),.15)', color: 'var(--accent)' }}>{t('artistsSlugPage.artistBadge', 'Artist')}</span>
+              {profile.verificationStatus === 'VERIFIED' && <span className="artist-badge" style={{ background: 'rgba(var(--role-venue-rgb),.15)', color: 'var(--role-venue)' }}>{t('artistsSlugPage.verifiedBadge', '✓ Verified')}</span>}
             </div>
             <div className="artist-hero-actions">
               <HypeButton entityLabel="artist" initialCount={profile.hypeCount} initiallyHyped={!!userHype} targetId={profile.id} targetType="profile" />
@@ -171,22 +171,22 @@ export default async function ArtistPage({
             <div className="artist-split-card">
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>{t('artistsSlugPage.charterSplit', 'Charter Split · Every ticket')}</div>
               <div className="artist-split-bar">
-                <div className="artist-split-seg" style={{ flex: 7, background: 'rgba(255,80,41,.15)' }}>
+                <div className="artist-split-seg" style={{ flex: 7, background: 'rgba(var(--accent-rgb),.15)' }}>
                   <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent)' }}>70%</div>
                   <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: 'var(--accent)', marginTop: 4 }}>{t('artistsSlugPage.splitArtist', 'Artist')}</div>
                 </div>
-                <div className="artist-split-seg" style={{ flex: 2, background: 'rgba(34,229,212,.15)' }}>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--role-venue, #22e5d4)' }}>20%</div>
-                  <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: 'var(--role-venue, #22e5d4)', marginTop: 4 }}>{t('artistsSlugPage.splitVenue', 'Venue')}</div>
+                <div className="artist-split-seg" style={{ flex: 2, background: 'rgba(var(--role-venue-rgb),.15)' }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--role-venue)' }}>20%</div>
+                  <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: 'var(--role-venue)', marginTop: 4 }}>{t('artistsSlugPage.splitVenue', 'Venue')}</div>
                 </div>
-                <div className="artist-split-seg" style={{ flex: 1, background: 'rgba(255,62,154,.15)' }}>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: '#ff3e9a' }}>10%</div>
-                  <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: '#ff3e9a', marginTop: 4 }}>{t('artistsSlugPage.splitPromoters', 'Promoters')}</div>
+                <div className="artist-split-seg" style={{ flex: 1, background: 'rgba(var(--accent-2-rgb),.15)' }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent-2)' }}>10%</div>
+                  <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: 'var(--accent-2)', marginTop: 4 }}>{t('artistsSlugPage.splitPromoters', 'Promoters')}</div>
                 </div>
               </div>
               <p style={{ fontSize: 12, color: 'var(--ink-a55)', marginTop: 12 }}>{t('artistsSlugPage.zeroFeeCharter', 'iHYPE takes 0% · locked in the charter')}</p>
             </div>
-            <SimilarArtistsRow accent="var(--profile-hero, linear-gradient(135deg,#ff5029,#b983ff))" artists={similarArtists} />
+            <SimilarArtistsRow accent="var(--profile-hero, linear-gradient(135deg,var(--accent),var(--role-fan)))" artists={similarArtists} />
           </div>
         )}
 
@@ -253,7 +253,7 @@ export default async function ArtistPage({
         .artist-page { max-width: 640px; margin: 0 auto; padding: 32px 0 100px; }
         .artist-hero { padding: 40px 32px 32px; border-bottom: 1px solid var(--profile-border, var(--line)); background: var(--profile-hero, transparent); }
         .artist-hero-row { display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; }
-        .artist-avatar { width: 96px; height: 96px; border-radius: 50%; background: var(--profile-hero, linear-gradient(135deg,#ff5029,#b983ff)); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; overflow: hidden; }
+        .artist-avatar { width: 96px; height: 96px; border-radius: 50%; background: var(--profile-hero, linear-gradient(135deg,var(--accent),var(--role-fan))); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--ink-on-accent); overflow: hidden; }
         .artist-name { font-family: var(--profile-font-display, var(--font-display)); font-size: 32px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 6px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .artist-sub { font-size: 14px; color: var(--ink-a65); margin-bottom: 14px; }
         .artist-hero-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
@@ -269,7 +269,7 @@ export default async function ArtistPage({
         .artist-tab { padding: 10px 0; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--ink-a60); text-decoration: none; }
         .artist-tab.active { color: var(--ink); border-color: var(--profile-accent, var(--accent)); }
         .artist-about-text { font-size: 15px; line-height: 1.7; color: var(--ink-a85); margin-bottom: 24px; white-space: pre-wrap; }
-        .artist-split-card { border: 1px solid rgba(255,80,41,.2); border-radius: 10px; padding: 20px; background: rgba(255,80,41,.05); }
+        .artist-split-card { border: 1px solid rgba(var(--accent-rgb),.2); border-radius: 10px; padding: 20px; background: rgba(var(--accent-rgb),.05); }
         .artist-split-bar { display: flex; border-radius: 8px; overflow: hidden; margin-top: 14px; }
         .artist-split-seg { flex: 1; padding: 12px; text-align: center; }
         .artist-empty { text-align: center; padding: 48px 24px; color: var(--ink-a50); }

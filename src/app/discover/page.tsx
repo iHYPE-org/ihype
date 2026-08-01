@@ -16,10 +16,10 @@ export const metadata: Metadata = {
 };
 
 const TYPE_COLOR: Record<string, string> = {
-  ARTIST: '#ff5029',
-  DJ: '#ff3e9a',
-  VENUE: '#22e5d4',
-  FAN: '#b983ff',
+  ARTIST: 'var(--role-artist)',
+  DJ: 'var(--role-dj)',
+  VENUE: 'var(--role-venue)',
+  FAN: 'var(--role-fan)',
 };
 
 const TYPE_LABEL: Record<string, string> = {
@@ -178,7 +178,13 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
   }
   const heatTier = (score: number, [fire, hot, warm]: [number, number, number]) =>
     score >= fire ? 'fire' : score >= hot ? 'hot' : score >= warm ? 'warm' : 'cold';
-  const HEAT_TIER_COLOR: Record<string, string> = { fire: '#ff1f3d', hot: 'var(--accent)', warm: '#ffb84a', cold: '#3a4a5a' };
+  const HEAT_TIER_COLOR: Record<string, string> = { fire: 'var(--heat-fire)', hot: 'var(--heat-hot)', warm: 'var(--heat-warm)', cold: 'var(--heat-cold)' };
+  // The triplet form exists because the genre chips below compose a tint from
+  // the tier colour. Appending a hex alpha suffix (`${color}20`) only works
+  // when every tier is a hex literal — the hot tier was already `var(--accent)`,
+  // making `var(--accent)20` invalid, so the hot chip alone rendered untinted
+  // and unbordered. rgba(var(--triplet), a) composes uniformly for all four.
+  const HEAT_TIER_RGB: Record<string, string> = { fire: 'var(--heat-fire-rgb)', hot: 'var(--heat-hot-rgb)', warm: 'var(--heat-warm-rgb)', cold: 'var(--heat-cold-rgb)' };
   const HEAT_TIER_WIDTH: Record<string, string> = { fire: '100%', hot: '70%', warm: '45%', cold: '20%' };
   const cityHeat = cityHeatRaw
     .filter(c => c.city)
@@ -213,7 +219,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
 
       {/* For You entry point */}
       <Link href="/for-you" style={{ textDecoration: 'none', display: 'block', marginBottom: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 18px', borderRadius: 16, background: 'rgba(255,80,41,.08)', border: '1px solid rgba(255,80,41,.3)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 18px', borderRadius: 16, background: 'rgba(var(--accent-rgb),.08)', border: '1px solid rgba(var(--accent-rgb),.3)' }}>
           <div>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--accent)' }}>{t('discoverPage.forYouKicker', 'FOR YOU')}</span>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, letterSpacing: '-.02em', color: 'var(--ink)', marginTop: 2 }}>{t('discoverPage.forYouTitle', 'Artists picked for your taste →')}</div>
@@ -224,9 +230,9 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
 
       {/* This Weekend entry point */}
       <Link href="/this-weekend" style={{ textDecoration: 'none', display: 'block', marginBottom: 32 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 18px', borderRadius: 16, background: 'rgba(34,229,212,.08)', border: '1px solid rgba(34,229,212,.3)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 18px', borderRadius: 16, background: 'rgba(var(--role-venue-rgb),.08)', border: '1px solid rgba(var(--role-venue-rgb),.3)' }}>
           <div>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: '#22e5d4' }}>{t('discoverPage.thisWeekendKicker', 'THIS WEEKEND')}</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--role-venue)' }}>{t('discoverPage.thisWeekendKicker', 'THIS WEEKEND')}</span>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, letterSpacing: '-.02em', color: 'var(--ink)', marginTop: 2 }}>{t('discoverPage.thisWeekendTitle', 'Shows near you →')}</div>
           </div>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-a50)', flexShrink: 0 }}>{t('discoverPage.thisWeekendCta', 'Get tickets')}</span>
@@ -245,7 +251,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
             {rising.map(r => (
               <Link key={r.key} href={r.href} style={{ textDecoration: 'none' }}>
-                <div style={{ background: 'linear-gradient(135deg, rgba(255,80,41,.14), transparent 60%), var(--hair-40)', border: '1px solid rgba(255,80,41,.25)', borderRadius: 12, padding: '14px 16px' }}>
+                <div style={{ background: 'linear-gradient(135deg, rgba(var(--accent-rgb),.14), transparent 60%), var(--hair-40)', border: '1px solid rgba(var(--accent-rgb),.25)', borderRadius: 12, padding: '14px 16px' }}>
                   <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, marginBottom: 3, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</div>
                   <div style={{ fontSize: 11, color: 'var(--ink-a55)', marginBottom: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.meta}</div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
@@ -285,7 +291,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
           {genreHeat.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {genreHeat.map(gh => (
-                <span key={gh.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 11px', borderRadius: 999, fontSize: 11, fontFamily: 'var(--font-mono)', background: `${HEAT_TIER_COLOR[gh.tier]}20`, border: `1px solid ${HEAT_TIER_COLOR[gh.tier]}40`, color: HEAT_TIER_COLOR[gh.tier] }}>
+                <span key={gh.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 11px', borderRadius: 999, fontSize: 11, fontFamily: 'var(--font-mono)', background: `rgba(${HEAT_TIER_RGB[gh.tier]}, .125)`, border: `1px solid rgba(${HEAT_TIER_RGB[gh.tier]}, .25)`, color: HEAT_TIER_COLOR[gh.tier] }}>
                   <span style={{ width: 6, height: 6, borderRadius: '50%', background: HEAT_TIER_COLOR[gh.tier] }} />
                   {gh.label}
                 </span>
@@ -303,7 +309,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a30)', flexShrink: 0 }}>{t('discoverPage.cityFilterLabel', 'City')}</span>
               {cityFilter && (
                 <Link href={buildUrl(null, genreFilter)} style={{ textDecoration: 'none' }}>
-                  <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'var(--font-mono)', background: 'var(--accent)', color: '#fff', cursor: 'pointer' }}>
+                  <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'var(--font-mono)', background: 'var(--accent)', color: 'var(--ink-on-accent)', cursor: 'pointer' }}>
                     {cityFilter} ×
                   </span>
                 </Link>
@@ -322,7 +328,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a30)', flexShrink: 0 }}>{t('discoverPage.genreFilterLabel', 'Genre')}</span>
               {genreFilter && (
                 <Link href={buildUrl(cityFilter, null)} style={{ textDecoration: 'none' }}>
-                  <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'var(--font-mono)', background: '#ff3e9a', color: '#fff', cursor: 'pointer' }}>
+                  <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'var(--font-mono)', background: 'var(--accent-2)', color: 'var(--ink-on-accent)', cursor: 'pointer' }}>
                     {genreFilter} ×
                   </span>
                 </Link>
@@ -365,7 +371,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
                         <span style={{ fontSize: 11, color: 'var(--ink-a50)', fontFamily: 'var(--font-mono)' }}>{date}</span>
                       )}
                       {s.isTicketed && (
-                        <span style={{ fontSize: 11, color: '#22e5d4', fontFamily: 'var(--font-mono)' }}>
+                        <span style={{ fontSize: 11, color: 'var(--role-venue)', fontFamily: 'var(--font-mono)' }}>
                           {s.ticketPriceCents ? `$${(s.ticketPriceCents / 100).toFixed(0)}` : t('discoverPage.free', 'Free')}
                         </span>
                       )}
@@ -403,7 +409,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
                 <Link href={profileRoute(p.type, p.slug)} style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
                   <div style={{
                     width: 44, height: 44, borderRadius: 22, position: 'relative',
-                    background: `linear-gradient(135deg, ${TYPE_COLOR[p.type] ?? '#ff5029'}, #b983ff)`,
+                    background: `linear-gradient(135deg, ${TYPE_COLOR[p.type] ?? 'var(--role-artist)'}, var(--role-fan))`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 20, flexShrink: 0, overflow: 'hidden',
                   }}>
@@ -413,16 +419,16 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
                   </div>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, marginBottom: 2, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-                    <div style={{ fontSize: 11, color: TYPE_COLOR[p.type] ?? '#ff5029', fontFamily: 'var(--font-mono)', letterSpacing: '.06em', textTransform: 'uppercase' }}>
+                    <div style={{ fontSize: 11, color: TYPE_COLOR[p.type] ?? 'var(--role-artist)', fontFamily: 'var(--font-mono)', letterSpacing: '.06em', textTransform: 'uppercase' }}>
                       {t(`discoverPage.typeLabel.${p.type}`, TYPE_LABEL[p.type] ?? p.type)}
                     </div>
                     {p.city && (
                       <div style={{ fontSize: 11, color: 'var(--ink-a50)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.city}</div>
                     )}
                     {p.type === 'DJ' && onAirProfileIds.has(p.id) && (
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 5, padding: '2px 8px', borderRadius: 999, background: 'rgba(255,62,154,.15)', border: '1px solid rgba(255,62,154,.3)' }}>
-                        <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#ff3e9a' }} />
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.06em', textTransform: 'uppercase', color: '#ff3e9a' }}>{t('discoverPage.onAirNow', 'On air now')}</span>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 5, padding: '2px 8px', borderRadius: 999, background: 'rgba(var(--accent-2-rgb),.15)', border: '1px solid rgba(var(--accent-2-rgb),.3)' }}>
+                        <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--accent-2)' }} />
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--accent-2)' }}>{t('discoverPage.onAirNow', 'On air now')}</span>
                       </div>
                     )}
                   </div>
@@ -462,7 +468,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
               <Link key={p.id} href={`/venues/${p.slug}`} style={{ textDecoration: 'none' }}>
                 <div className="ihype-card" style={{ padding: '16px 18px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 4 }}>
-                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 15, color: '#22e5d4', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>🏛️ {p.name}</div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 15, color: 'var(--role-venue)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>🏛️ {p.name}</div>
                     {/* No onClick wrapper (Server Component) — CompactHypeButton
                         stops propagation/navigation itself. */}
                     <div style={{ flexShrink: 0 }}>
@@ -481,12 +487,12 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
 
       {topArtists.length === 0 && upcomingShows.length === 0 && (
         <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--ink-a30)' }}>
-          <div className="icon" style={{ marginBottom: 16 }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 56, height: 56, color: '#ff5029', opacity: 0.7 }}><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3Z"/><path d="M19 10a7 7 0 0 1-14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></div>
+          <div className="icon" style={{ marginBottom: 16 }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 56, height: 56, color: 'var(--accent)', opacity: 0.7 }}><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3Z"/><path d="M19 10a7 7 0 0 1-14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></div>
           <p style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, marginBottom: 8, color: 'var(--ink)' }}>
             {t('discoverPage.emptyTitle', 'No artists yet')}
           </p>
           <p style={{ fontSize: 14 }}>{t('discoverPage.emptySubtitle', 'Be the first to join and claim your page.')}</p>
-          <Link href="/register" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: 44, marginTop: 20, padding: '12px 24px', background: 'var(--accent)', color: '#fff', borderRadius: 8, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
+          <Link href="/register" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: 44, marginTop: 20, padding: '12px 24px', background: 'var(--accent)', color: 'var(--ink-on-accent)', borderRadius: 8, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
             {t('discoverPage.joinCta', 'Join iHYPE →')}
           </Link>
         </div>

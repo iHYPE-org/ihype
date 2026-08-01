@@ -54,10 +54,10 @@ export function LineupSplitResponder({ showId, splitPercent }: { showId: string;
       <style>{`
         .lsr-actions { display: flex; gap: 10px; }
         .lsr-btn { font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; padding: 11px 20px; border-radius: var(--radius-pill); border: none; cursor: pointer; }
-        .lsr-btn-accept { background: var(--accent, #ff5029); color: #fff; }
+        .lsr-btn-accept { background: var(--accent); color: var(--ink-on-accent); }
         .lsr-btn-decline { background: transparent; color: var(--ink-a60); border: 1px solid var(--line); }
         .lsr-btn:disabled { opacity: 0.6; cursor: default; }
-        .lsr-error { color: var(--accent, #ff5029); font-size: 12.5px; margin: 10px 0 0; }
+        .lsr-error { color: var(--accent); font-size: 12.5px; margin: 10px 0 0; }
       `}</style>
     </div>
   );

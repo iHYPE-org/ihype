@@ -264,7 +264,7 @@ export function AccessibilityControls({ inline = false }: { inline?: boolean } =
             onClick={() => setIsOpen(false)}
             type="button"
             style={{
-              background: 'var(--accent, #ff5029)', color: '#fff', border: 'none',
+              background: 'var(--accent)', color: 'var(--ink-on-accent)', border: 'none',
               borderRadius: 999, padding: '8px 16px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer',
             }}
           >

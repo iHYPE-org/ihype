@@ -11,11 +11,11 @@ export const metadata: Metadata = {
 function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitConfig {
   return {
   role: 'DJ',
-  tint: 'var(--role-dj, #ff3e9a)',
-  glow: '#ff3e9a',
+  tint: 'var(--role-dj, var(--accent-2))',
+  glow: 'var(--accent-2)',
   navCta: t('forDjsPage.navCta', 'Apply as a DJ →'),
   eyebrow: t('forDjsPage.eyebrow', 'For DJs'),
-  headline: <>{t('forDjsPage.headlineLine1', 'Your crate.')}<br />{t('forDjsPage.headlineLine2', 'Your show.')}<br /><span style={{ color: 'var(--role-dj, #ff3e9a)' }}>{t('forDjsPage.headlineLine3', 'Your cut.')}</span></>,
+  headline: <>{t('forDjsPage.headlineLine1', 'Your crate.')}<br />{t('forDjsPage.headlineLine2', 'Your show.')}<br /><span style={{ color: 'var(--role-dj, var(--accent-2))' }}>{t('forDjsPage.headlineLine3', 'Your cut.')}</span></>,
   heroBody: (
     <>{t('forDjsPage.heroBodyLead', 'iHYPE gives you a')} <strong>{t('forDjsPage.heroBodyStrong', 'free radio studio')}</strong>{t('forDjsPage.heroBodyRest', ', a crate of tracks artists have opted into radio play, and a referral link that pays you every time a fan you drove buys a ticket.')}</>
   ),

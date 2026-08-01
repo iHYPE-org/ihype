@@ -259,7 +259,7 @@ export default async function AdminFinancePage({
                     <strong>{p.discountType}</strong>
                     <small>{p.discountValue}% {t('adminFinancePage.off', 'off')}</small>
                     <small>{p.useCount}/{p.maxUses ?? '∞'} {t('adminFinancePage.uses', 'uses')}</small>
-                    <small style={{ color: p.expiresAt && p.expiresAt < new Date() ? 'var(--ink3,#666)' : 'var(--teal,#22e5d4)' }}>
+                    <small style={{ color: p.expiresAt && p.expiresAt < new Date() ? 'var(--ink3,#666)' : 'var(--teal,var(--role-venue))' }}>
                       {p.expiresAt && p.expiresAt < new Date() ? t('adminFinancePage.expired', 'EXPIRED') : t('adminFinancePage.active', 'ACTIVE')}
                     </small>
                   </div>

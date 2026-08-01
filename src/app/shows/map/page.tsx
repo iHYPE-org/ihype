@@ -86,7 +86,7 @@ export default async function ShowsMapPage() {
                     href={mapsUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--accent)', textDecoration: 'none', padding: '2px 8px', border: '1px solid rgba(255,80,41,.3)', borderRadius: 4 }}
+                    style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--accent)', textDecoration: 'none', padding: '2px 8px', border: '1px solid rgba(var(--accent-rgb),.3)', borderRadius: 4 }}
                   >
                     {t('showsMapPage.viewOnMap', 'View on map ↗')}
                   </a>

@@ -15,11 +15,11 @@ export async function SiteFooter() {
         gap: '1rem 1.5rem',
         padding: '1.5rem 1.5rem 2.5rem',
         marginTop: '2rem',
-        borderTop: '1px solid var(--line, var(--line))',
+        borderTop: '1px solid var(--line)',
         fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
         fontSize: '0.75rem',
         letterSpacing: '0.04em',
-        color: 'var(--ink-3, #7a7060)',
+        color: 'var(--ink-3)',
       }}
     >
       <Link href="/advertise" style={{ color: 'inherit', textDecoration: 'none' }}>{t('siteFooter.advertise', 'Advertise')}</Link>

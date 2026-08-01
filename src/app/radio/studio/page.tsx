@@ -30,7 +30,7 @@ export default async function RadioStudioPage() {
         <p style={{ color: 'var(--ink-a60)', marginBottom: 20 }}>
           {t('radioStudioPage.needDjPageBody', "Radio Show Creator builds shows from a DJ profile's free-use crate. Set up your DJ page to get started.")}
         </p>
-        <Link href="/pages" style={{ display: 'inline-block', padding: '10px 20px', borderRadius: 8, background: 'var(--accent)', color: '#fff', fontWeight: 700, textDecoration: 'none' }}>
+        <Link href="/pages" style={{ display: 'inline-block', padding: '10px 20px', borderRadius: 8, background: 'var(--accent)', color: 'var(--ink-on-accent)', fontWeight: 700, textDecoration: 'none' }}>
           {t('radioStudioPage.goToPages', 'Go to Pages →')}
         </Link>
       </div>

@@ -51,7 +51,7 @@ export function PlaylistCreateForm() {
       <button className="button small" type="submit" disabled={loading || !title.trim()}>
         {loading ? t('playlistCreateForm.creating', 'Creating…') : t('playlistCreateForm.createPlaylist', 'Create playlist')}
       </button>
-      {error && <span className="meta" style={{ color: 'var(--accent, #ff5029)' }}>{error}</span>}
+      {error && <span className="meta" style={{ color: 'var(--accent)' }}>{error}</span>}
     </form>
   );
 }

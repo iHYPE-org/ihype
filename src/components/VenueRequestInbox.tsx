@@ -108,7 +108,7 @@ export function VenueRequestInbox() {
         .venue-request-actions { display: flex; gap: 10px; margin-top: 16px; }
         .venue-request-btn { padding: 10px 20px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; border: none; }
         .venue-request-btn:disabled { opacity: .6; cursor: default; }
-        .venue-request-approve { background: var(--role-venue, #22e5d4); color: #0a0805; }
+        .venue-request-approve { background: var(--role-venue); color: var(--bg); }
         .venue-request-deny { background: var(--line); color: var(--ink); border: 1px solid var(--hair-100); }
       `}</style>
     </div>

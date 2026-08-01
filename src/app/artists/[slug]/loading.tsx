@@ -1,7 +1,7 @@
 export default function Loading() {
   return (
     <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 0 100px' }}>
-      <div style={{ padding: '40px 32px 32px', borderBottom: '1px solid rgba(255,255,255,.06)' }}>
+      <div style={{ padding: '40px 32px 32px', borderBottom: '1px solid var(--hair-70)' }}>
         <div style={{ display: 'flex', gap: 32, alignItems: 'flex-start', flexWrap: 'wrap' }}>
           <div className="ihype-skeleton" style={{ width: 96, height: 96, borderRadius: '50%', flexShrink: 0 }} />
           <div style={{ flex: 1, minWidth: 200, display: 'grid', gap: 10 }}>
@@ -13,7 +13,7 @@ export default function Loading() {
             </div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 32, marginTop: 24, paddingTop: 24, borderTop: '1px solid rgba(255,255,255,.06)', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 32, marginTop: 24, paddingTop: 24, borderTop: '1px solid var(--hair-70)', flexWrap: 'wrap' }}>
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} style={{ display: 'grid', gap: 6 }}>
               <div className="ihype-skeleton" style={{ width: 48, height: 22, borderRadius: 5 }} />

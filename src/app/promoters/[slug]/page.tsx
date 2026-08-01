@@ -124,8 +124,8 @@ export default async function DJProfilePage({
             <div className="dj-name">{profile.name}</div>
             <div className="dj-handle">{profile.owner?.username ? `@${profile.owner.username}` : profile.hexId}{profile.city ? ` · ${profile.city}` : ''}</div>
             <div className="dj-hero-badges">
-              <span className="dj-badge" style={{ background: 'rgba(255,62,154,.15)', color: '#ff3e9a' }}>{t('promotersSlugPage.djBadge', 'DJ')}</span>
-              {profile.verificationStatus === 'VERIFIED' && <span className="dj-badge" style={{ background: 'rgba(34,229,212,.15)', color: 'var(--role-venue, #22e5d4)' }}>{t('promotersSlugPage.verifiedBadge', '✓ Verified')}</span>}
+              <span className="dj-badge" style={{ background: 'rgba(var(--accent-2-rgb),.15)', color: 'var(--accent-2)' }}>{t('promotersSlugPage.djBadge', 'DJ')}</span>
+              {profile.verificationStatus === 'VERIFIED' && <span className="dj-badge" style={{ background: 'rgba(var(--role-venue-rgb),.15)', color: 'var(--role-venue)' }}>{t('promotersSlugPage.verifiedBadge', '✓ Verified')}</span>}
             </div>
             <div className="dj-hero-actions">
               <FollowButton profileId={profile.id} variant="hero" />
@@ -149,7 +149,7 @@ export default async function DJProfilePage({
           <div><div className="dj-stat-val">{profile.hypeCount.toLocaleString()}</div><div className="dj-stat-label">{t('promotersSlugPage.statHypes', 'Hypes')}</div></div>
           {isOwner && <div><div className="dj-stat-val">${(totalEarnedCents / 100).toFixed(0)}</div><div className="dj-stat-label">{t('promotersSlugPage.statReferralEarned', 'Referral Earned')}</div></div>}
         </div>
-        <PinnedStatTiles accent="#ff3e9a" stats={pinnedStats} />
+        <PinnedStatTiles accent="var(--role-dj)" stats={pinnedStats} />
       </div>
 
       <div className="dj-content">
@@ -178,7 +178,7 @@ export default async function DJProfilePage({
                 </Link>
               ))
             )}
-            <SimilarArtistsRow accent="var(--profile-hero, linear-gradient(135deg,#ff3e9a,#b983ff))" artists={similarArtists} heading={t('promotersSlugPage.similarArtistsHeading', 'Similar DJs & Artists')} />
+            <SimilarArtistsRow accent="var(--profile-hero, linear-gradient(135deg,var(--accent-2),var(--role-fan)))" artists={similarArtists} heading={t('promotersSlugPage.similarArtistsHeading', 'Similar DJs & Artists')} />
           </div>
         )}
 
@@ -239,10 +239,10 @@ export default async function DJProfilePage({
 
       <style>{`
         .dj-page { max-width: 640px; margin: 0 auto; padding: 32px 0 100px; }
-        .dj-hero { background: var(--profile-hero, linear-gradient(140deg, rgba(255,62,154,.12), rgba(185,131,255,.08))); border-bottom: 1px solid var(--profile-border, rgba(255,62,154,.18)); padding: 40px 32px 32px; }
+        .dj-hero { background: var(--profile-hero, linear-gradient(140deg, rgba(var(--accent-2-rgb),.12), rgba(var(--role-fan-rgb),.08))); border-bottom: 1px solid var(--profile-border, rgba(var(--accent-2-rgb),.18)); padding: 40px 32px 32px; }
         .dj-hero-row { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
         @media (max-width: 600px) { .dj-hero { padding: 24px 20px; } .dj-content { padding: 0 20px; } }
-        .dj-avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--profile-hero, linear-gradient(135deg,#ff3e9a,#b983ff)); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; overflow: hidden; }
+        .dj-avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--profile-hero, linear-gradient(135deg,var(--accent-2),var(--role-fan))); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--ink-on-accent); overflow: hidden; }
         .dj-name { font-family: var(--profile-font-display, var(--font-display)); font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 4px; color: var(--ink); }
         .dj-handle { font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a50); margin-bottom: 12px; }
         .dj-hero-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -251,21 +251,21 @@ export default async function DJProfilePage({
         .dj-hero-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; background: var(--line); color: var(--ink); border: 1px solid var(--hair-100); }
         .dj-hero-btn:hover { background: var(--hair-100); }
         .dj-stats { display: flex; gap: 28px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--line); }
-        .dj-stat-val { font-size: 22px; font-weight: 700; color: var(--profile-accent, #ff3e9a); font-family: var(--profile-font-display, var(--font-display)); }
+        .dj-stat-val { font-size: 22px; font-weight: 700; color: var(--profile-accent, var(--accent-2)); font-family: var(--profile-font-display, var(--font-display)); }
         .dj-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a55); margin-top: 2px; }
         .dj-content { padding: 0 32px; }
         .dj-tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--line); margin: 28px 0; }
         .dj-tab { padding: 10px 0; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--ink-a60); text-decoration: none; }
-        .dj-tab.active { color: var(--ink); border-color: var(--profile-accent, #ff3e9a); }
+        .dj-tab.active { color: var(--ink); border-color: var(--profile-accent, var(--accent-2)); }
         .dj-show-card { border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; background: var(--bg2); display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; text-decoration: none; color: inherit; }
         .dj-show-card:hover { background: var(--bg3); }
         .dj-show-title { font-family: var(--profile-font-display, var(--font-display)); font-size: 15px; font-weight: 800; margin-bottom: 3px; color: var(--ink); }
         .dj-show-meta { font-size: 12px; color: var(--ink-a55); }
-        .dj-live-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 9999px; background: rgba(255,62,154,.15); color: #ff3e9a; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
+        .dj-live-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 9999px; background: rgba(var(--accent-2-rgb),.15); color: var(--accent-2); font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
         .dj-earn-list { border: 1px solid var(--line); border-radius: 10px; padding: 0 20px; background: var(--bg2); }
         .dj-earn-row { display: flex; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
         .dj-earn-row:last-child { border-bottom: none; }
-        .dj-earn-val { font-weight: 700; color: #ff3e9a; }
+        .dj-earn-val { font-weight: 700; color: var(--accent-2); }
         .dj-empty { text-align: center; padding: 48px 24px; color: var(--ink-a50); }
       `}</style>
     </div>

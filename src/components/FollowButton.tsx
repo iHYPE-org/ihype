@@ -86,9 +86,9 @@ export function FollowButton({ profileId, variant = 'chip' }: { profileId: strin
       aria-label={following ? t('followButton.unfollow', 'Unfollow') : t('followButton.follow', 'Follow')}
       style={{
         ...(variant === 'hero' ? heroStyle : chipStyle),
-        border: following ? '1px solid rgba(255,80,41,.4)' : variant === 'hero' ? '1px solid var(--hair-100)' : '1px solid var(--hair-120)',
-        background: following ? 'rgba(255,80,41,.1)' : variant === 'hero' ? 'var(--line)' : 'var(--hair-50)',
-        color: following ? 'var(--accent, #ff5029)' : variant === 'hero' ? 'var(--ink)' : 'var(--ink-a65)',
+        border: following ? '1px solid rgba(var(--accent-rgb),.4)' : variant === 'hero' ? '1px solid var(--hair-100)' : '1px solid var(--hair-120)',
+        background: following ? 'rgba(var(--accent-rgb),.1)' : variant === 'hero' ? 'var(--line)' : 'var(--hair-50)',
+        color: following ? 'var(--accent)' : variant === 'hero' ? 'var(--ink)' : 'var(--ink-a65)',
         cursor: busy ? 'default' : 'pointer',
         transition: 'all 150ms ease',
         opacity: busy ? 0.6 : 1,

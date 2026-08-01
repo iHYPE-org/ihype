@@ -257,11 +257,12 @@ export function buildShellNav(account: ShellAccount): ShellNavItem[] {
       labelKey: 'appShell.nav.info', labelFallback: 'Info',
       inDrawer: true, inTabs: true,
     },
-    {
-      id: 'legal', section: 'SETTINGS', href: '/legal',
-      labelKey: 'appShell.nav.legal', labelFallback: 'Legal',
-      inDrawer: true, inTabs: true,
-    },
+    // No 'legal' destination: /legal is a thin redirect into /info's Terms
+    // tab, so it sat beside Info in the same drawer section pointing at a
+    // subset of the page Info already opens. The /legal route stays (it is
+    // referenced by signup consent copy, the cookie banner and emails) and
+    // keeps its entry in SHELL_ROUTES so the shell still resolves a section
+    // while the redirect runs — it just is not offered twice in the nav.
   ];
 
   return items.filter((item) => passesGate(item.gate, account));

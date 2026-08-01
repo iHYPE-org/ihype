@@ -190,11 +190,11 @@ export function TicketCardActions({
           </button>
         )}
         {showCancel && (
-          <button className="btn" onClick={() => setCancelOpen(true)} style={{ color: '#ff5029' }} type="button">{t('ticketCardActions.cancelTicketButton', 'Cancel ticket')}</button>
+          <button className="btn" onClick={() => setCancelOpen(true)} style={{ color: 'var(--accent)' }} type="button">{t('ticketCardActions.cancelTicketButton', 'Cancel ticket')}</button>
         )}
       </div>
       {(resendDone || resendError) && (
-        <p style={{ fontSize: 12, marginTop: 8, color: resendError ? '#ff5029' : '#22e5d4' }}>{resendError ?? resendDone}</p>
+        <p style={{ fontSize: 12, marginTop: 8, color: resendError ? 'var(--accent)' : 'var(--role-venue)' }}>{resendError ?? resendDone}</p>
       )}
 
       {showQr && (
@@ -228,7 +228,7 @@ export function TicketCardActions({
             <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, marginBottom: 16 }}>{t('ticketCardActions.transferModalTitle', 'Transfer tickets')}</h3>
             {done ? (
               <>
-                <p style={{ fontSize: 13, color: '#22e5d4', marginBottom: 16 }}>{done}</p>
+                <p style={{ fontSize: 13, color: 'var(--role-venue)', marginBottom: 16 }}>{done}</p>
                 <button className="btn btn-primary" onClick={closeTransfer} style={{ width: '100%' }} type="button">{t('ticketCardActions.closeButton', 'Close')}</button>
               </>
             ) : (
@@ -242,7 +242,7 @@ export function TicketCardActions({
                   type="email"
                   value={email}
                 />
-                {error && <p style={{ color: '#ff5029', fontSize: 12, marginBottom: 12 }}>{error}</p>}
+                {error && <p style={{ color: 'var(--accent)', fontSize: 12, marginBottom: 12 }}>{error}</p>}
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button className="btn" onClick={closeTransfer} style={{ flex: 1 }} type="button">{t('ticketCardActions.cancelButton', 'Cancel')}</button>
                   <button className="btn btn-primary" disabled={submitting || !email} onClick={transfer} style={{ flex: 1 }} type="button">
@@ -266,7 +266,7 @@ export function TicketCardActions({
             <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, marginBottom: 16 }}>{t('ticketCardActions.resaleModalTitle', 'List for resale')}</h3>
             {resaleDone ? (
               <>
-                <p style={{ fontSize: 13, color: '#22e5d4', marginBottom: 16 }}>{resaleDone}</p>
+                <p style={{ fontSize: 13, color: 'var(--role-venue)', marginBottom: 16 }}>{resaleDone}</p>
                 <button className="btn btn-primary" onClick={closeResale} style={{ width: '100%' }} type="button">{t('ticketCardActions.closeButton', 'Close')}</button>
               </>
             ) : (
@@ -282,7 +282,7 @@ export function TicketCardActions({
                   type="number"
                   value={resalePrice}
                 />
-                {resaleError && <p style={{ color: '#ff5029', fontSize: 12, marginBottom: 12 }}>{resaleError}</p>}
+                {resaleError && <p style={{ color: 'var(--accent)', fontSize: 12, marginBottom: 12 }}>{resaleError}</p>}
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button className="btn" onClick={closeResale} style={{ flex: 1 }} type="button">{t('ticketCardActions.cancelButton', 'Cancel')}</button>
                   <button className="btn btn-primary" disabled={resaleSubmitting || !resalePrice} onClick={listForResale} style={{ flex: 1 }} type="button">
@@ -306,12 +306,12 @@ export function TicketCardActions({
             <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, marginBottom: 16 }}>{t('ticketCardActions.cancelModalTitle', 'Cancel ticket')}</h3>
             {cancelDone ? (
               <>
-                <p style={{ fontSize: 13, color: '#22e5d4', marginBottom: 16 }}>{cancelDone}</p>
+                <p style={{ fontSize: 13, color: 'var(--role-venue)', marginBottom: 16 }}>{cancelDone}</p>
                 <button className="btn btn-primary" onClick={closeCancel} style={{ width: '100%' }} type="button">{t('ticketCardActions.closeButton', 'Close')}</button>
               </>
             ) : tooLateToCancel ? (
               <>
-                <p style={{ fontSize: 13, color: '#ffb84a', marginBottom: 16 }}>
+                <p style={{ fontSize: 13, color: 'var(--role-promoter)', marginBottom: 16 }}>
                   {t('ticketCardActions.tooLateToCancelMessage', 'Cancellations close 48 hours before the show, so this ticket can no longer be cancelled — you can still transfer it to someone else.')}
                 </p>
                 <div style={{ display: 'flex', gap: 10 }}>
@@ -324,7 +324,7 @@ export function TicketCardActions({
                 <p style={{ fontSize: 13, color: 'var(--ink-a60)', marginBottom: 16 }}>
                   {t('ticketCardActions.cancelRefundInfo', 'Your card will be refunded immediately. Cancellation is allowed up to 48 hours before the event.')}
                 </p>
-                {cancelError && <p style={{ color: '#ff5029', fontSize: 12, marginBottom: 12 }}>{cancelError}</p>}
+                {cancelError && <p style={{ color: 'var(--accent)', fontSize: 12, marginBottom: 12 }}>{cancelError}</p>}
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button className="btn" onClick={closeCancel} style={{ flex: 1 }} type="button">{t('ticketCardActions.keepTicketButton', 'Keep ticket')}</button>
                   <button className="btn btn-primary" disabled={cancelSubmitting} onClick={requestCancellation} style={{ flex: 1 }} type="button">

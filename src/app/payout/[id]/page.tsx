@@ -70,9 +70,9 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
   });
 
   const CELLS = [
-    { label: t('payoutIdPage.artist', 'Artist'), pct: artistPct, cents: artistCents, color: '#ff5029', name: show.headlinerProfile?.name, href: show.headlinerProfile ? `/artists/${show.headlinerProfile.slug}` : null },
-    { label: t('payoutIdPage.venue', 'Venue'), pct: venuePct, cents: venueCents, color: '#22e5d4', name: show.venueProfile?.name, href: show.venueProfile ? `/venues/${show.venueProfile.slug}` : null },
-    { label: t('payoutIdPage.promoters', 'Promoters'), pct: promoterPct, cents: promoterCents, color: '#b983ff', name: show.promoterProfile?.name ?? t('payoutIdPage.referrersSharedPool', 'Referrers (shared pool)'), href: show.promoterProfile ? `/promoters/${show.promoterProfile.slug}` : null },
+    { label: t('payoutIdPage.artist', 'Artist'), pct: artistPct, cents: artistCents, color: 'var(--accent)', name: show.headlinerProfile?.name, href: show.headlinerProfile ? `/artists/${show.headlinerProfile.slug}` : null },
+    { label: t('payoutIdPage.venue', 'Venue'), pct: venuePct, cents: venueCents, color: 'var(--role-venue)', name: show.venueProfile?.name, href: show.venueProfile ? `/venues/${show.venueProfile.slug}` : null },
+    { label: t('payoutIdPage.promoters', 'Promoters'), pct: promoterPct, cents: promoterCents, color: 'var(--role-fan)', name: show.promoterProfile?.name ?? t('payoutIdPage.referrersSharedPool', 'Referrers (shared pool)'), href: show.promoterProfile ? `/promoters/${show.promoterProfile.slug}` : null },
   ];
 
   return (
@@ -81,7 +81,7 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
       {/* Hero */}
       <div className="payout-card" style={{
         borderRadius: 24, padding: '2.5rem',
-        background: 'linear-gradient(135deg, rgba(255,80,41,.15), rgba(185,131,255,.06))',
+        background: 'linear-gradient(135deg, rgba(var(--accent-rgb),.15), rgba(var(--role-fan-rgb),.06))',
         border: '1px solid var(--line)', marginBottom: '1.25rem', position: 'relative', overflow: 'hidden',
       }}>
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: '.68rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3, #5a5248)', marginBottom: 16 }}>
@@ -90,7 +90,7 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
         <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 'clamp(1.8rem,5vw,2.8rem)', letterSpacing: '-.04em', lineHeight: .95, marginBottom: 6, color: 'var(--ink)' }}>
           {show.title}
         </h1>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '.9rem', color: 'var(--ink-2, #9e9080)', marginBottom: 28 }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '.9rem', color: 'var(--ink-2)', marginBottom: 28 }}>
           {show.venueProfile?.name ?? t('payoutIdPage.venueTbd', 'Venue TBD')}{show.venueProfile?.city ? ` · ${show.venueProfile.city}` : ''}
         </p>
         <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
@@ -105,7 +105,7 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '.68rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3, #5a5248)', marginTop: 4 }}>{t('payoutIdPage.faceValue', 'Face value')}</div>
           </div>
           <div>
-            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '-.03em', lineHeight: 1, color: '#22e5d4' }}>$0</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '-.03em', lineHeight: 1, color: 'var(--role-venue)' }}>$0</div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '.68rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3, #5a5248)', marginTop: 4 }}>{t('payoutIdPage.ihypeFees', 'iHYPE fees')}</div>
           </div>
           <div>
@@ -118,31 +118,31 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
       {/* Split breakdown */}
       <div className="payout-card" style={{ background: 'var(--bg-2, #0e0b08)', border: '1px solid var(--line, var(--hair-80))', borderRadius: 18, padding: '1.5rem', marginBottom: '1.25rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22e5d4" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--role-venue)" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
           <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: 'var(--ink)' }}>{t('payoutIdPage.whereMoneyWent', 'Where the money went.')}</h2>
         </div>
-        <p style={{ fontSize: '.82rem', color: 'var(--ink-2, #9e9080)', lineHeight: 1.5, marginBottom: 16 }}>
+        <p style={{ fontSize: '.82rem', color: 'var(--ink-2)', lineHeight: 1.5, marginBottom: 16 }}>
           {sold.toLocaleString()} {t('payoutIdPage.tickets', 'tickets')} × {fmtCents(priceCents)} = <strong style={{ color: 'var(--ink)' }}>{fmtCents(grossCents)} {t('payoutIdPage.grossLower', 'gross.')}</strong> {t('payoutIdPage.everyDollarAccounted', "Here's every dollar, accounted for.")}
         </p>
         <div style={{ display: 'flex', height: 10, borderRadius: 999, overflow: 'hidden', gap: 2, marginBottom: 20 }}>
-          <div style={{ flex: 70, background: '#ff5029', borderRadius: '999px 0 0 999px' }} />
-          <div style={{ flex: 20, background: '#22e5d4' }} />
-          <div style={{ flex: 10, background: '#b983ff', borderRadius: '0 999px 999px 0' }} />
+          <div style={{ flex: 70, background: 'var(--accent)', borderRadius: '999px 0 0 999px' }} />
+          <div style={{ flex: 20, background: 'var(--role-venue)' }} />
+          <div style={{ flex: 10, background: 'var(--role-fan)', borderRadius: '0 999px 999px 0' }} />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem' }}>
           {CELLS.map((c) => (
             <div key={c.label} style={{ padding: '1rem', borderRadius: 14, border: `1px solid ${c.color}33`, background: `linear-gradient(135deg, ${c.color}14, transparent)` }}>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '-.03em', color: c.color, lineHeight: 1 }}>{fmtCents(c.cents)}</div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '.68rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3, #5a5248)', marginTop: 5 }}>{c.pct}% · {c.label}</div>
-              <div style={{ fontSize: '.78rem', color: 'var(--ink-2, #9e9080)', marginTop: 4 }}>
+              <div style={{ fontSize: '.78rem', color: 'var(--ink-2)', marginTop: 4 }}>
                 {c.href ? <Link href={c.href} style={{ color: 'inherit', textDecoration: 'none' }}>{c.name}</Link> : c.name}
               </div>
             </div>
           ))}
-          <div style={{ padding: '1rem', borderRadius: 14, border: '1px solid rgba(34,229,212,.15)', background: 'rgba(34,229,212,.04)' }}>
-            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '-.03em', color: '#22e5d4', lineHeight: 1 }}>$0</div>
+          <div style={{ padding: '1rem', borderRadius: 14, border: '1px solid rgba(var(--role-venue-rgb),.15)', background: 'rgba(var(--role-venue-rgb),.04)' }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '-.03em', color: 'var(--role-venue)', lineHeight: 1 }}>$0</div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '.68rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3, #5a5248)', marginTop: 5 }}>0% · {t('payoutIdPage.platform', 'Platform')}</div>
-            <div style={{ fontSize: '.78rem', color: 'var(--ink-2, #9e9080)', marginTop: 4 }}>iHYPE</div>
+            <div style={{ fontSize: '.78rem', color: 'var(--ink-2)', marginTop: 4 }}>iHYPE</div>
           </div>
         </div>
       </div>
@@ -157,7 +157,7 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
           {t('payoutIdPage.ihypeTakesNothing', 'iHYPE takes nothing · locked in the charter')}
         </p>
         <div className="payout-print-actions" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <Link href="/payouts?tab=history" style={{ fontFamily: 'var(--font-mono)', fontSize: '.72rem', color: 'var(--ink-2, #9e9080)' }}>
+          <Link href="/payouts?tab=history" style={{ fontFamily: 'var(--font-mono)', fontSize: '.72rem', color: 'var(--ink-2)' }}>
             {t('payoutIdPage.viewAllPayouts', 'View all payouts →')}
           </Link>
           <PayoutActions title={show.title} />

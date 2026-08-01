@@ -95,11 +95,11 @@ export function ProfileInsights({ profileId, profileType }: { profileId: string;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
       <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
-        <Stat label={t('profileInsights.statHypes', 'Hypes')} value={data.hypeTotal} color="var(--accent, #ff5029)" />
-        <Stat label={t('profileInsights.statFollowers', 'Followers')} value={data.followerCount} color="#b983ff" />
-        {data.listeners && <Stat label={t('profileInsights.statListeners', 'Listeners')} value={data.listeners.distinctListeners} color="#22e5d4" />}
-        {typeof data.ticketsSold === 'number' && <Stat label={t('profileInsights.statTicketsSold', 'Tickets sold')} value={data.ticketsSold} color="#22e5d4" />}
-        {typeof data.trackCompletionRate === 'number' && <PercentStat label={t('profileInsights.statTrackCompletion', 'Track completion')} value={data.trackCompletionRate} color="#ff3e9a" />}
+        <Stat label={t('profileInsights.statHypes', 'Hypes')} value={data.hypeTotal} color="var(--accent)" />
+        <Stat label={t('profileInsights.statFollowers', 'Followers')} value={data.followerCount} color="var(--role-fan)" />
+        {data.listeners && <Stat label={t('profileInsights.statListeners', 'Listeners')} value={data.listeners.distinctListeners} color="var(--role-venue)" />}
+        {typeof data.ticketsSold === 'number' && <Stat label={t('profileInsights.statTicketsSold', 'Tickets sold')} value={data.ticketsSold} color="var(--role-venue)" />}
+        {typeof data.trackCompletionRate === 'number' && <PercentStat label={t('profileInsights.statTrackCompletion', 'Track completion')} value={data.trackCompletionRate} color="var(--accent-2)" />}
       </div>
 
       {typeof data.ticketRevenueCents === 'number' && (
@@ -119,7 +119,7 @@ export function ProfileInsights({ profileId, profileType }: { profileId: string;
                 title={`${d.date}: ${d.count}`}
                 style={{
                   flex: 1, minWidth: 2, height: `${Math.max(4, (d.count / maxDay) * 100)}%`,
-                  background: 'var(--accent, #ff5029)', borderRadius: 2, opacity: d.count > 0 ? 0.85 : 0.15,
+                  background: 'var(--accent)', borderRadius: 2, opacity: d.count > 0 ? 0.85 : 0.15,
                 }}
               />
             ))}
@@ -159,7 +159,7 @@ export function ProfileInsights({ profileId, profileType }: { profileId: string;
                     title={`${Math.round((i / timeline.buckets.length) * 100)}–${Math.round(((i + 1) / timeline.buckets.length) * 100)}% ${t('profileInsights.intoTheShow', 'into the show')}: ${count}`}
                     style={{
                       flex: 1, height: `${Math.max(6, (count / maxTimelineBucket) * 100)}%`,
-                      background: '#ff3e9a', borderRadius: 2, opacity: count > 0 ? 0.85 : 0.15,
+                      background: 'var(--accent-2)', borderRadius: 2, opacity: count > 0 ? 0.85 : 0.15,
                     }}
                   />
                 ))}
@@ -203,8 +203,8 @@ export function ProfileInsights({ profileId, profileType }: { profileId: string;
 
       <Section title={t('profileInsights.sectionBookingRequests', 'Booking requests')}>
         <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
-          <Stat label={t('profileInsights.statPending', 'Pending')} value={data.bookingRequests.pending} color="#ff5029" />
-          <Stat label={t('profileInsights.statAccepted', 'Accepted')} value={data.bookingRequests.accepted} color="#22e5d4" />
+          <Stat label={t('profileInsights.statPending', 'Pending')} value={data.bookingRequests.pending} color="var(--accent)" />
+          <Stat label={t('profileInsights.statAccepted', 'Accepted')} value={data.bookingRequests.accepted} color="var(--role-venue)" />
           <Stat label={t('profileInsights.statDeclined', 'Declined')} value={data.bookingRequests.declined} color="var(--ink-a50)" />
         </div>
       </Section>

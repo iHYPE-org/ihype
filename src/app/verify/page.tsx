@@ -14,9 +14,9 @@ export const metadata: Metadata = {
 };
 
 const BADGE_COLOR: Record<string, { bg: string; border: string; text: string }> = {
-  ARTIST: { bg: 'rgba(255,80,41,.12)', border: 'rgba(255,80,41,.3)', text: '#ff5029' },
-  DJ: { bg: 'rgba(185,131,255,.12)', border: 'rgba(185,131,255,.3)', text: '#b983ff' },
-  VENUE: { bg: 'rgba(34,229,212,.12)', border: 'rgba(34,229,212,.3)', text: '#22e5d4' },
+  ARTIST: { bg: 'rgba(var(--accent-rgb),.12)', border: 'rgba(var(--accent-rgb),.3)', text: 'var(--accent)' },
+  DJ: { bg: 'rgba(var(--role-fan-rgb),.12)', border: 'rgba(var(--role-fan-rgb),.3)', text: 'var(--role-fan)' },
+  VENUE: { bg: 'rgba(var(--role-venue-rgb),.12)', border: 'rgba(var(--role-venue-rgb),.3)', text: 'var(--role-venue)' },
 };
 
 export default async function VerifyPage() {
@@ -65,10 +65,10 @@ export default async function VerifyPage() {
       <div style={{ maxWidth: 480, margin: '40px auto', padding: '0 24px 100px', textAlign: 'center' }}>
         <div style={{
           width: 56, height: 56, borderRadius: 16, margin: '0 auto 16px',
-          background: 'rgba(34,229,212,.12)', border: '2px solid #22e5d4',
+          background: 'rgba(var(--role-venue-rgb),.12)', border: '2px solid var(--role-venue)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#22e5d4" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--role-venue)" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
         </div>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.7rem', fontWeight: 800, marginBottom: 8 }}>{t('verifyPage.verifiedHeading', "You're verified.")}</h1>
         <p style={{ fontSize: 14, color: 'var(--ink-a60)' }}>{profile.name} {t('verifyPage.isVerifiedPrefix', 'is a verified')} {TYPE_LABEL[profile.type]} {t('verifyPage.isVerifiedSuffix', 'on iHYPE.')}</p>
@@ -83,10 +83,10 @@ export default async function VerifyPage() {
       <div style={{ maxWidth: 480, margin: '40px auto', padding: '0 24px 100px', textAlign: 'center' }}>
         <div style={{
           width: 56, height: 56, borderRadius: 16, margin: '0 auto 16px',
-          background: 'rgba(34,229,212,.12)', border: '2px solid #22e5d4',
+          background: 'rgba(var(--role-venue-rgb),.12)', border: '2px solid var(--role-venue)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#22e5d4" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--role-venue)" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
         </div>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.7rem', fontWeight: 800, marginBottom: 8 }}>{t('verifyPage.submittedHeading', 'Submitted.')}</h1>
         <p style={{ fontSize: 14, color: 'var(--ink-a60)', maxWidth: '34ch', margin: '0 auto 24px', lineHeight: 1.65 }}>
@@ -104,7 +104,7 @@ export default async function VerifyPage() {
         <div style={{ textAlign: 'left', background: 'var(--bg-2, #0e0b08)', border: '1px solid var(--line, var(--hair-80))', borderRadius: 18, padding: '1.5rem', marginBottom: 24 }}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '.14em', textTransform: 'uppercase', color: badge.text, marginBottom: 8 }}>{t('verifyPage.whileYouWait', 'While you wait')}</div>
           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.05rem', marginBottom: 6 }}>{nextStep.title}</div>
-          <p style={{ fontSize: '0.85rem', color: 'var(--ink-2, #9e9080)', lineHeight: 1.6, marginBottom: 14 }}>{nextStep.body}</p>
+          <p style={{ fontSize: '0.85rem', color: 'var(--ink-2)', lineHeight: 1.6, marginBottom: 14 }}>{nextStep.body}</p>
           <Link href={nextStep.href} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', fontWeight: 700, color: badge.text, textDecoration: 'none' }}>
             {nextStep.cta} →
           </Link>
