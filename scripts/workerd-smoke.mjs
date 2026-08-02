@@ -9,11 +9,10 @@
  * shipped a sitewide DB outage that only workerd could surface).
  *
  * Also runs the Lighthouse performance budget (scripts/lighthouse-budget.mjs)
- * against this same instance once the functional checks pass. That budget
- * has the identical workerd-only requirement (its DB-backed pages need a real
- * Prisma engine), so it shares this boot rather than starting a second,
- * broken Node server. Set SKIP_LIGHTHOUSE_BUDGET=1 to skip it for a faster
- * functional-only smoke run.
+ * against this same instance. WORKERD_SMOKE_MODE can be `all` (default),
+ * `security`, or `performance`, allowing CI to report the security and
+ * performance gates independently without weakening either one. Set
+ * SKIP_LIGHTHOUSE_BUDGET=1 to skip Lighthouse during an `all` run.
  *
  * Prerequisites (CI provides these; see .github/workflows/ci.yml):
  *   - `npm run cf:build` has already produced `.open-next/`
@@ -39,6 +38,10 @@ const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || AUTH_SECRET;
 const BOOT_TIMEOUT_MS = 120_000;
 const SHUTDOWN_TIMEOUT_MS = 5_000;
 const TMP_CONFIG = '.wrangler-workerd-smoke.toml';
+const SMOKE_MODE = process.env.WORKERD_SMOKE_MODE || 'all';
+const VALID_SMOKE_MODES = new Set(['all', 'security', 'performance']);
+const RUN_SECURITY_CHECKS = SMOKE_MODE !== 'performance';
+const RUN_LIGHTHOUSE_BUDGET = SMOKE_MODE !== 'security';
 const FIXTURE = {
   creatorId: 'workerd-smoke-creator',
   outsiderId: 'workerd-smoke-outsider',
@@ -262,6 +265,12 @@ function check(name, ok, detail) {
 }
 
 async function run() {
+  if (!VALID_SMOKE_MODES.has(SMOKE_MODE)) {
+    throw new Error(
+      `Invalid WORKERD_SMOKE_MODE=${SMOKE_MODE}; expected all, security, or performance`,
+    );
+  }
+
   writeStrippedConfig();
   await seedSecurityFixtures();
   const creatorCookie = await buildSmokeSessionCookie({
@@ -296,6 +305,7 @@ async function run() {
   try {
     await waitForBoot(child);
 
+    if (RUN_SECURITY_CHECKS) {
     // 1. Anonymous health is deliberately a low-information liveness probe.
     // It must stay useful to load balancers without leaking dependency state.
     const liveness = await probe('/api/health', { headers: { accept: 'application/json' } });
@@ -477,11 +487,14 @@ async function run() {
       embedCsp.includes('frame-ancestors *') && !embed.headers.has('x-frame-options'),
       `status=${embed.status} csp=${embedCsp}`,
     );
+    } else {
+      console.log('[workerd-smoke] mode=performance — skipping security checks');
+    }
 
     // 13. Performance budget. It must run against this workerd instance, not a
     // `next start` Node server, because the production Prisma configuration is
     // only representative inside workerd.
-    if (process.env.SKIP_LIGHTHOUSE_BUDGET !== '1') {
+    if (RUN_LIGHTHOUSE_BUDGET && process.env.SKIP_LIGHTHOUSE_BUDGET !== '1') {
       const { report, anyFailed } = await runLighthouseBudget({
         baseUrl: BASE,
         authenticatedHeaders: { Cookie: creatorCookie },
@@ -494,6 +507,8 @@ async function run() {
         .flatMap((entry) => entry.failures.map((failure) => `${entry.path}: ${failure.message}`))
         .join('; ');
       check('Lighthouse performance budget', !anyFailed, over || 'see per-page output above');
+    } else if (!RUN_LIGHTHOUSE_BUDGET) {
+      console.log('[workerd-smoke] mode=security — skipping performance budget');
     } else {
       console.log('[workerd-smoke] SKIP_LIGHTHOUSE_BUDGET=1 — skipping performance budget');
     }
