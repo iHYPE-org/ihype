@@ -4,9 +4,9 @@ import AxeBuilder from '@axe-core/playwright';
 // Automated a11y baseline — there was previously zero signal on this axis
 // anywhere in the repo (no axe/aria/a11y tooling at all).
 //
-// This spec is only actually exercised via scripts/e2e-workerd.mjs (a real
-// Workerd runtime with a real Postgres connection, gated behind
-// vars.E2E_ENABLED) — it is NOT part of the mandatory "public browser
+// This spec is exercised via scripts/e2e-workerd.mjs (a real Workerd runtime
+// with a real Postgres connection) as a mandatory CI stage. It is NOT part of
+// the separate "public browser
 // smoke" CI step, which only runs public-smoke.spec.ts against `next dev`
 // (see the wasm-engine limitation documented at the top of e2e/auth.spec.ts
 // and in src/lib/db.ts). That means DB-backed pages are safe to include

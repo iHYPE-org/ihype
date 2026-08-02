@@ -36,6 +36,7 @@ jobs:
       NEXT_PUBLIC_TURNSTILE_SITE_KEY: "1x00000000000000000000AA"
       FEATURE_REQUIRE_INVITE_CODE: 'false'
       FEATURE_ENABLE_TICKET_PAYMENTS: 'false'
+      NEXT_PUBLIC_APP_VERSION: ${{ github.sha }}
 
     steps:
       - uses: actions/checkout@e8d4307400f9427dba7cb98e488d6ab85f1cec5f
@@ -112,7 +113,7 @@ jobs:
             test-results
           if-no-files-found: ignore
 
-      - name: Extended authenticated E2E suite (Workerd)
+      - name: Mandatory authenticated E2E suite (Workerd)
         # Runs against a real `wrangler dev` (workerd) instance, not `next
         # dev` — src/lib/db.ts intentionally imports the wasm/workerd-only
         # Prisma engine (see the comment at the top of that file), which
@@ -123,7 +124,6 @@ jobs:
         # e2e/auth.spec.ts and scripts/e2e-workerd.mjs for the full story —
         # verified working end to end (real Postgres, real WebAuthn ceremony
         # via Chromium's CDP virtual authenticator) before this was wired in.
-        if: vars.E2E_ENABLED == 'true'
         timeout-minutes: 15
         run: |
           npm run cf:build
@@ -142,8 +142,6 @@ jobs:
           NEXT_PUBLIC_BASE_URL: http://localhost:8787
           NEXT_PUBLIC_APP_URL: http://localhost:8787
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: "1x00000000000000000000AA"
-          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
-          TEST_SESSION_COOKIE: ${{ secrets.TEST_SESSION_COOKIE }}
 
       - name: Cloudflare build
         run: npm run cf:build

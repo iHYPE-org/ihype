@@ -29,10 +29,12 @@
  *   - E2E_WORKERD_DATABASE_URL points at a Postgres with the schema applied
  *     (prisma db push) and pg_trgm/citext extensions created.
  *
- * Usage: node scripts/e2e-workerd.mjs
+ * Usage: node scripts/e2e-workerd.mjs [optional Playwright test files]
+ * Example: node scripts/e2e-workerd.mjs e2e/auth.spec.ts
  */
 import { spawn } from 'node:child_process';
 import { readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
 
 const PORT = Number(process.env.E2E_WORKERD_PORT || 8787);
 // Must be 'localhost', not '127.0.0.1': WebAuthn RP IDs (derived from this
@@ -46,6 +48,16 @@ const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || AUTH_SECRET;
 const BOOT_TIMEOUT_MS = 120_000;
 const SHUTDOWN_TIMEOUT_MS = 5_000;
 const TMP_CONFIG = '.wrangler-e2e-workerd.toml';
+const WRANGLER_CLI = join(process.cwd(), 'node_modules', 'wrangler', 'bin', 'wrangler.js');
+const PLAYWRIGHT_CLI = join(process.cwd(), 'node_modules', 'playwright', 'cli.js');
+const REQUESTED_TESTS = process.argv.slice(2);
+// /ui-preview intentionally 404s in production builds, so its responsive
+// suite belongs to CI's mandatory `next dev` responsive stage. Keep it out of
+// the default Workerd pass while still allowing an explicit file argument for
+// local preview debugging.
+const DEFAULT_FILTER = REQUESTED_TESTS.length === 0
+  ? ['--grep-invert', 'Module deck responsive regression gate']
+  : [];
 
 if (!DB_URL) {
   console.error('[e2e-workerd] E2E_WORKERD_DATABASE_URL is required');
@@ -145,8 +157,8 @@ function runPlaywright() {
     // accessibility — cheap, since the instance is already booted, and it
     // means new specs don't require updating this file to be included.
     const child = spawn(
-      'npx',
-      ['playwright', 'test', '--project=chromium'],
+      process.execPath,
+      [PLAYWRIGHT_CLI, 'test', '--project=chromium', '--workers=1', ...DEFAULT_FILTER, ...REQUESTED_TESTS],
       {
         stdio: 'inherit',
         env: {
@@ -169,12 +181,11 @@ async function run() {
   writeStrippedConfig();
 
   const child = spawn(
-    // 'npx', not 'npx.cmd'. The .cmd shim exists only on Windows, so this
-    // spawn died with ENOENT on any Linux host — including CI, where this
-    // whole step sits behind `vars.E2E_ENABLED == 'true'` and so had evidently
-    // never actually run. The Playwright spawn below always used plain 'npx'.
-    'npx',
-    ['wrangler', 'dev', '--config', TMP_CONFIG, '--port', String(PORT), '--show-interactive-dev-session=false'],
+    // Launch the pinned local CLIs through the current Node executable. This
+    // avoids platform-specific npx/.cmd process handling and guarantees the
+    // runtime suite exercises the dependency versions in package-lock.json.
+    process.execPath,
+    [WRANGLER_CLI, 'dev', '--config', TMP_CONFIG, '--port', String(PORT), '--show-interactive-dev-session=false'],
     {
       stdio: ['ignore', 'inherit', 'inherit'],
       detached: process.platform !== 'win32',

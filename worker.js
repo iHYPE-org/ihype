@@ -115,6 +115,7 @@ export default Sentry.withSentry(
   (env) => env.SENTRY_DSN ? {
     dsn: env.SENTRY_DSN,
     environment: env.NODE_ENV,
+    release: env.CF_VERSION_METADATA?.id,
     tracesSampler(ctx) {
       if (ctx.parentSampled !== undefined) return ctx.parentSampled;
       const name = ctx.name ?? '';

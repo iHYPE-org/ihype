@@ -74,7 +74,7 @@ describe('badges', () => {
       expect(badgeToneVar(tone)).toMatch(/^var\(--[a-z0-9-]+\)$/);
     }
     // Backlog item 3: advertiser has its own token now, not --warn.
-    expect(badgeToneVar('advertiser')).toBe('var(--role-advertiser)');
+    expect(badgeToneVar('advertiser')).toBe('var(--role-advertiser-text)');
   });
 });
 

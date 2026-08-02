@@ -1396,7 +1396,17 @@ function CompactPlayer({ activeModule, onHype, production, radioEnabled }: { act
         <button aria-label={playing ? 'Pause' : 'Play'} className="deck-player-play" disabled={!canPlay} onClick={() => setPlaying((value) => !value)} type="button"><Icon name={playing ? 'pause' : 'play'} /></button>
         <button aria-label="Next song" onClick={() => changeTrack(1)} type="button"><Icon name="next" /></button>
       </div>
-      <div aria-label={`${formatPlayerTime(currentTime)} of ${formatPlayerTime(duration)}`} className="deck-player-progress"><span style={{ width: duration > 0 ? `${Math.min(100, currentTime / duration * 100)}%` : '0%' }} /></div>
+      <div
+        aria-label="Track progress"
+        aria-valuemax={Math.max(1, Math.round(duration))}
+        aria-valuemin={0}
+        aria-valuenow={Math.min(Math.round(currentTime), Math.max(1, Math.round(duration)))}
+        aria-valuetext={`${formatPlayerTime(currentTime)} of ${formatPlayerTime(duration)}`}
+        className="deck-player-progress"
+        role="progressbar"
+      >
+        <span style={{ width: duration > 0 ? `${Math.min(100, currentTime / duration * 100)}%` : '0%' }} />
+      </div>
       <label className="deck-player-volume"><Icon name="volume" /><span className="sr-only">Volume</span><input aria-label="Volume" max="100" min="0" onChange={(event) => setVolume(Number(event.target.value))} type="range" value={volume} /></label>
       <button aria-expanded={queueOpen} aria-label="Open play queue" className="deck-player-queue-button" onClick={() => setQueueOpen((value) => !value)} type="button"><Icon name="queue" /></button>
       <button aria-label={`${liked ? 'Remove HYPE from' : 'HYPE'} ${playerTrack.title}. Press and hold to send a scene wave.`} aria-pressed={liked} className={`deck-player-hype ${liked ? 'is-hyped' : ''}`} disabled={!canHype} onClick={clickHype} onPointerCancel={endHypeHold} onPointerDown={beginHypeHold} onPointerLeave={endHypeHold} onPointerUp={endHypeHold} type="button"><span>{liked ? 'HYPED' : 'HYPE'}</span><small>{hypeCount.toLocaleString()}</small><i aria-hidden="true" className="hype-burst"><b /><b /><b /><b /><b /><b /><b /><b /></i></button>

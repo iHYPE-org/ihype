@@ -1,14 +1,14 @@
 import { test, expect } from '@playwright/test';
+import { canSeedSession, seedSessionCookie, sessionCookieName } from './fixtures/session';
 
 // Passkey registration + discoverable-credential sign-in, using Chromium's
 // built-in CDP WebAuthn virtual authenticator (no real hardware key or
 // platform authenticator needed — this is Chromium's own supported testing
 // mechanism for WebAuthn: https://developer.chrome.com/docs/devtools/webauthn).
 //
-// Reuses TEST_SESSION_COOKIE, the same secret auth.spec.ts's "Authenticated
-// /login redirects to /listen" test already depends on, to reach /settings
-// authenticated without a magic-link/OTP round trip. Requires the seeded
-// test account to have zero passkeys registered at test start (matches
+// Seeds its own signed session to reach /settings without a magic-link/OTP
+// round trip. The seeded test account should have zero passkeys registered at
+// test start (matches
 // scripts/reset-test-logins.mjs's role in CI) — if it already has one from
 // a prior run, the "Add a passkey" step's assertion for the new entry
 // showing up will still pass (it just becomes a 2nd entry), but the
@@ -30,11 +30,11 @@ import { test, expect } from '@playwright/test';
 // specific destination.
 test.describe('Passkey registration and sign-in', () => {
   test('register a passkey in Settings, then sign in with it', async ({ page, context }) => {
-    const sessionCookie = process.env.TEST_SESSION_COOKIE;
-    if (!sessionCookie) {
-      test.skip(true, 'TEST_SESSION_COOKIE not set — skipping (see auth.spec.ts for the same gate)');
+    if (!canSeedSession()) {
+      test.skip(true, 'Needs E2E_WORKERD_DATABASE_URL + AUTH_SECRET to seed a session.');
       return;
     }
+    const { cookie: sessionCookie } = await seedSessionCookie('e2e-passkey@ihype.org');
 
     const cdp = await context.newCDPSession(page);
     await cdp.send('WebAuthn.enable');
@@ -50,7 +50,7 @@ test.describe('Passkey registration and sign-in', () => {
     });
 
     await context.addCookies([{
-      name: process.env.PLAYWRIGHT_AUTH_COOKIE_SECURE === 'true' ? '__Secure-authjs.session-token' : 'authjs.session-token',
+      name: sessionCookieName(),
       value: sessionCookie,
       domain: new URL(process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000').hostname,
       path: '/',

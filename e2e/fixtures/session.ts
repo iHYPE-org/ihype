@@ -4,15 +4,13 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { encode } from 'next-auth/jwt';
 
 /**
- * Mints a real signed session for an e2e test, instead of depending on a
- * hand-minted `TEST_SESSION_COOKIE` secret.
+ * Mints a real signed session for an e2e test instead of depending on a
+ * hand-maintained session-cookie secret.
  *
- * Why this exists: every authenticated spec in this suite is gated on that
- * secret and calls `test.skip()` when it is absent. That is fine for tests
- * whose job is to prove a flow still works — a skip is visible. It is NOT fine
- * for the app-shell contract tests, whose whole purpose is to fail when someone
- * breaks a rule that nothing else enforces. A suite that silently skips is the
- * same failure mode as a check that always passes.
+ * Why this exists: mandatory authenticated coverage cannot depend on a token
+ * copied from another environment. Each spec creates the least-privileged user
+ * state it needs in the scratch database, then signs a short-lived cookie with
+ * the same CI-only secret used by the Worker under test.
  *
  * The token shape is not guesswork: it mirrors `buildAuthSessionCookie`
  * (src/lib/auth-session.ts), which is what the app's own magic-link and passkey

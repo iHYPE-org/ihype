@@ -354,9 +354,9 @@ export function sectionRows(items: ShellNavItem[], section: ShellSectionId): She
 
 /** Token that paints a badge tone. Never a hex literal. */
 export function badgeToneVar(tone: ShellBadgeTone): string {
-  if (tone === 'venue') return 'var(--role-venue)';
-  if (tone === 'dj') return 'var(--role-dj)';
-  if (tone === 'artist') return 'var(--accent)';
-  if (tone === 'advertiser') return 'var(--role-advertiser)';
+  if (tone === 'venue') return 'var(--role-venue-text)';
+  if (tone === 'dj') return 'var(--role-dj-text)';
+  if (tone === 'artist') return 'var(--role-artist-text)';
+  if (tone === 'advertiser') return 'var(--role-advertiser-text)';
   return 'var(--ink-3)';
 }

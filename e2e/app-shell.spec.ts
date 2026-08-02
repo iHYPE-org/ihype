@@ -13,11 +13,11 @@ import { canSeedSession, seedSessionCookie, sessionCookieName } from './fixtures
  * Environment: like every other authenticated spec here, this cannot pass under
  * plain `npm run dev` — src/lib/db.ts imports the wasm/workerd Prisma engine on
  * purpose, so auth()'s jwt callback throws there and every request 401s. Run it
- * via `node scripts/e2e-workerd.mjs` (CI's "Extended authenticated E2E suite").
+ * via `node scripts/e2e-workerd.mjs` (CI's "Mandatory authenticated E2E suite").
  * See the long note at the top of e2e/auth.spec.ts.
  *
  * Unlike the other authenticated specs, this one does NOT depend on the
- * hand-minted TEST_SESSION_COOKIE secret — it seeds its own user and signs its
+ * hand-maintained session-cookie secret — it seeds its own user and signs its
  * own cookie (see e2e/fixtures/session.ts). A contract suite that skips when a
  * secret is missing protects nothing, and its own greenness would be the lie.
  */
