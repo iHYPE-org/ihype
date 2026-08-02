@@ -17,11 +17,13 @@
 - [ ] Confirm the Production GitHub environment requires an operator approval.
 - [ ] Confirm registration, upload, outbound-email, advertising, and payment switches have the intended values.
 - [ ] Confirm the most recent backup verification passed.
+- [ ] `RESTORE_DRILL_VERIFIED_AT` matches that drill and is no more than 35 days old.
 
 ## Immediately after deploying
 
 - [ ] Production smoke passes; a Cloudflare block is a failure, not a waiver.
 - [ ] Authenticated `/api/health` reports `launchReadiness.ready: true`.
+- [ ] Authenticated `/api/health` reports `alphaReadiness.ready: true`.
 - [ ] The external heartbeat receives a successful ping after the next five-minute batch.
 - [ ] No failed notification jobs or overdue notification backlog appears.
 - [ ] Sentry has no new release regression.
@@ -44,6 +46,12 @@
 - [ ] Complete and record the monthly backup restore drill.
 - [ ] Walk through the incident-response runbook together.
 - [ ] Record who is on call and how the other operator is reached.
+
+## Content and native clients
+
+- [ ] Alpha readiness reports at least 10 playable tracks, 5 artists, 2 venues, 2 upcoming events, and 1 radio show.
+- [ ] Run the native workflow with `publish=false`; install and exercise both retained signed artifacts.
+- [ ] Only after signed-device testing passes, explicitly approve a `publish=true` internal-store upload.
 
 ## Expansion rule
 

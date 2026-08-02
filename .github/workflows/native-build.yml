@@ -16,7 +16,13 @@ on:
       - 'capacitor.config.ts'
       - 'capacitor-shell/**'
       - 'package.json'
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Upload successful signed builds to TestFlight and Play internal testing'
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -113,14 +119,20 @@ jobs:
       # Store Connect — create a key with the App Manager role.)
       - name: Check for signing secrets
         id: check
+        env:
+          PUBLISH: ${{ inputs.publish }}
         run: |
           if [ -n "${{ secrets.IOS_DIST_CERTIFICATE_BASE64 }}" ] && \
              [ -n "${{ secrets.IOS_DIST_CERTIFICATE_PASSWORD }}" ] && \
              [ -n "${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}" ] && \
-             [ -n "${{ secrets.IOS_TEAM_ID }}" ] && \
-             [ -n "${{ secrets.APP_STORE_CONNECT_KEY_ID }}" ] && \
-             [ -n "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" ] && \
-             [ -n "${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}" ]; then
+             [ -n "${{ secrets.IOS_TEAM_ID }}" ]; then
+            if [ "$PUBLISH" = "true" ] && { [ -z "${{ secrets.APP_STORE_CONNECT_KEY_ID }}" ] || \
+                 [ -z "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" ] || \
+                 [ -z "${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}" ]; }; then
+              echo "configured=false" >> "$GITHUB_OUTPUT"
+              echo "::error::Publication was requested but App Store Connect upload secrets are incomplete."
+              exit 1
+            fi
             echo "configured=true" >> "$GITHUB_OUTPUT"
           else
             echo "configured=false" >> "$GITHUB_OUTPUT"
@@ -218,7 +230,7 @@ jobs:
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"
 
       - name: Upload to TestFlight
-        if: steps.check.outputs.configured == 'true'
+        if: steps.check.outputs.configured == 'true' && inputs.publish == true
         env:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -239,6 +251,15 @@ jobs:
             -f "$IPA_PATH" -t ios \
             --apiKey "$APP_STORE_CONNECT_KEY_ID" \
             --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID"
+
+      - name: Retain signed iOS artifact
+        if: steps.check.outputs.configured == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
+        with:
+          name: ihype-ios-signed-${{ github.run_number }}
+          path: ${{ runner.temp }}/export/*.ipa
+          if-no-files-found: error
+          retention-days: 14
 
   android-release-build:
     name: Android — signed release build
@@ -272,12 +293,18 @@ jobs:
       #                                       permissions → API access)
       - name: Check for signing secrets
         id: check
+        env:
+          PUBLISH: ${{ inputs.publish }}
         run: |
           if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ] && \
              [ -n "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" ] && \
              [ -n "${{ secrets.ANDROID_KEY_ALIAS }}" ] && \
-             [ -n "${{ secrets.ANDROID_KEY_PASSWORD }}" ] && \
-             [ -n "${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}" ]; then
+             [ -n "${{ secrets.ANDROID_KEY_PASSWORD }}" ]; then
+            if [ "$PUBLISH" = "true" ] && [ -z "${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}" ]; then
+              echo "configured=false" >> "$GITHUB_OUTPUT"
+              echo "::error::Publication was requested but GOOGLE_PLAY_SERVICE_ACCOUNT_JSON is missing."
+              exit 1
+            fi
             echo "configured=true" >> "$GITHUB_OUTPUT"
           else
             echo "configured=false" >> "$GITHUB_OUTPUT"
@@ -335,7 +362,7 @@ jobs:
       # accept uploads. After that first manual upload, this button works for
       # every subsequent release.
       - name: Upload to Play Console
-        if: steps.check.outputs.configured == 'true'
+        if: steps.check.outputs.configured == 'true' && inputs.publish == true
         uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
@@ -343,3 +370,12 @@ jobs:
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
           track: internal
           status: completed
+
+      - name: Retain signed Android artifact
+        if: steps.check.outputs.configured == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
+        with:
+          name: ihype-android-signed-${{ github.run_number }}
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 14

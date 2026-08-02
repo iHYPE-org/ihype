@@ -40,7 +40,7 @@ const CATEGORY_FOR_TYPE: Record<string, string> = {
   safety: 'Other',
 };
 
-export function SupportForm({ initialType = 'general', initialSubject = '' }: { initialType?: string; initialSubject?: string } = {}) {
+export function SupportForm({ alphaModule, initialType = 'general', initialSubject = '' }: { alphaModule?: string; initialType?: string; initialSubject?: string } = {}) {
   const { t } = useI18n();
   const [category, setCategory] = useState(CATEGORY_FOR_TYPE[initialType] ?? '');
   const [email, setEmail] = useState('');
@@ -63,7 +63,10 @@ export function SupportForm({ initialType = 'general', initialSubject = '' }: { 
     setIsSubmitting(true);
     try {
       const type = CATEGORIES.find((c) => c.label === category)?.type ?? 'general';
-      await postSupportRequest({ type, email, subject, details, company });
+      const diagnosticDetails = alphaModule
+        ? `${details}\n\n---\nAlpha diagnostics: module=${alphaModule}; viewport=${window.innerWidth}x${window.innerHeight}; online=${navigator.onLine ? 'yes' : 'no'}`
+        : details;
+      await postSupportRequest({ type, email, subject, details: diagnosticDetails, company });
       setSent(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('supportForm.couldNotSendRequest', 'Could not send request.'));

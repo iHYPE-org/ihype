@@ -18,6 +18,7 @@ const REQUIRED = [
   { key: 'TURNSTILE_SECRET_KEY', hint: 'Required for production signup abuse protection' },
   { key: 'ADMIN_DEVICE_SECRET', hint: 'Protects admin-device registration; generate with: openssl rand -hex 32' },
   { key: 'ADMIN_ALERT_EMAIL', hint: 'Comma-separated operational alert recipients' },
+  { key: 'RESTORE_DRILL_VERIFIED_AT', hint: 'ISO timestamp from a successful isolated backup restore drill' },
   { key: 'VAPID_PUBLIC_KEY', hint: 'Generate with: node scripts/generate-vapid-keys.mjs' },
   { key: 'VAPID_PRIVATE_KEY', hint: 'Generate with: node scripts/generate-vapid-keys.mjs' },
   { key: 'VAPID_SUBJECT', hint: 'e.g. mailto:hello@ihype.org' },
@@ -77,6 +78,23 @@ for (const key of ['AUTH_SECRET', 'CRON_SECRET', 'ADMIN_DEVICE_SECRET']) {
     console.error(`  WEAK     ${key} must contain at least 32 characters.`);
     failed = true;
   }
+}
+
+const alertRecipients = (process.env.ADMIN_ALERT_EMAIL ?? '')
+  .split(',')
+  .map((email) => email.trim())
+  .filter(Boolean);
+if (alertRecipients.length < 2) {
+  console.error('  INVALID  ADMIN_ALERT_EMAIL must contain both operator addresses for alpha.');
+  failed = true;
+}
+
+const restoreVerifiedAt = new Date(process.env.RESTORE_DRILL_VERIFIED_AT ?? '');
+const restoreAgeMs = Date.now() - restoreVerifiedAt.getTime();
+const restoreMaxAgeMs = 35 * 24 * 60 * 60 * 1000;
+if (!Number.isFinite(restoreVerifiedAt.getTime()) || restoreAgeMs < 0 || restoreAgeMs > restoreMaxAgeMs) {
+  console.error('  INVALID  RESTORE_DRILL_VERIFIED_AT must record a successful drill within the last 35 days.');
+  failed = true;
 }
 
 if (paymentEnabled) {

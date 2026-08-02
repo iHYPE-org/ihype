@@ -169,7 +169,8 @@ const THEME_UNSAFE = /#fff(?:fff)?\b|#000(?:000)?\b|rgba?\(\s*255\s*,\s*255\s*,\
 const colourFiles = [...files, ...walkStyled('src/components')];
 const colourHits = [];
 for (const file of colourFiles) {
-  if (COLOUR_EXEMPT.some((x) => file.includes(x))) continue;
+  const portableFile = file.replaceAll('\\', '/');
+  if (COLOUR_EXEMPT.some((x) => portableFile.includes(x))) continue;
   const lines = readFileSync(file, 'utf8').split('\n');
   let inBlock = false;
   let printDepth = -1;   // brace depth at which the @media print block opened

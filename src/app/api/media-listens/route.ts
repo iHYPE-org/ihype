@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
 import { awardHype } from '@/lib/hype-ledger';
 import { consumeRateLimit, rateLimitHeaders, rateLimitKey } from '@/lib/rate-limit';
+import { releasedMediaWhere } from '@/lib/media-release';
 
 const schema = z.object({
   mediaId: z.string().min(1).max(128),
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
     }
     const payload = schema.parse(await request.json());
     const media = await db.artistMediaAsset.findFirst({
-      where: { id: payload.mediaId, isPublished: true },
+      where: { id: payload.mediaId, ...releasedMediaWhere() },
       select: {
         id: true,
         title: true,

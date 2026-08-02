@@ -1,3 +1,5 @@
+import { coarsenFanCoordinates } from '@/lib/public-location';
+
 export type PreviewDataSource = 'live' | 'sample';
 
 export type PreviewSearchResult = {
@@ -99,9 +101,11 @@ export async function loadNearbyShows({ latitude, longitude, radiusKm, signal, a
   signal: AbortSignal;
   allowSamples?: boolean;
 }): Promise<PreviewResponse<NearbyShow[]>> {
+  const approximate = coarsenFanCoordinates(latitude, longitude);
+  if (!approximate) return { data: [], source: 'live' };
   const params = new URLSearchParams({
-    lat: String(latitude),
-    lng: String(longitude),
+    lat: String(approximate.latitude),
+    lng: String(approximate.longitude),
     radius: String(Math.min(500, Math.max(1, radiusKm))),
   });
   try {

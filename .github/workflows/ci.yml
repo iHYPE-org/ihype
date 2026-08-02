@@ -146,12 +146,26 @@ jobs:
           CLOUDFLARE_API_TOKEN: dry-run-placeholder
           CLOUDFLARE_ACCOUNT_ID: dry-run-placeholder
 
-      - name: Mandatory authenticated Workerd security smoke + performance budget
+      - name: Mandatory authenticated Workerd security smoke
         timeout-minutes: 20
         run: |
           set -o pipefail
-          node scripts/workerd-smoke.mjs 2>&1 | tee workerd-smoke.log
+          node scripts/workerd-smoke.mjs 2>&1 | tee workerd-security-smoke.log
         env:
+          WORKERD_SMOKE_MODE: security
+          DATABASE_URL: postgresql://ihype:ihype@localhost:55432/ihype
+          WORKERD_SMOKE_DATABASE_URL: postgresql://ihype:ihype@localhost:55432/ihype
+          WORKERD_SMOKE_CRON_SECRET: ci-only-workerd-health-secret-0123456789
+          AUTH_SECRET: ci-only-auth-secret-change-me-0123456789
+          NEXTAUTH_SECRET: ci-only-auth-secret-change-me-0123456789
+
+      - name: Mandatory authenticated Workerd performance budget
+        timeout-minutes: 20
+        run: |
+          set -o pipefail
+          node scripts/workerd-smoke.mjs 2>&1 | tee workerd-performance-smoke.log
+        env:
+          WORKERD_SMOKE_MODE: performance
           DATABASE_URL: postgresql://ihype:ihype@localhost:55432/ihype
           WORKERD_SMOKE_DATABASE_URL: postgresql://ihype:ihype@localhost:55432/ihype
           WORKERD_SMOKE_CRON_SECRET: ci-only-workerd-health-secret-0123456789
@@ -163,7 +177,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: workerd-smoke-diagnostics
-          path: workerd-smoke.log
+          path: workerd-*-smoke.log
           if-no-files-found: ignore
 
       - name: Upload Lighthouse report

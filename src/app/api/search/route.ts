@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { releasedMediaWhere } from '@/lib/media-release';
 import { consumeRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { log } from '@/lib/logger';
@@ -73,14 +74,18 @@ export async function GET(request: NextRequest) {
       ? db.artistMediaAsset.findMany({
           where: {
             freeUseEnabled: true,
-            isPublished: true,
             profile: { discoverable: true },
-            OR: [
-              { title:   { contains: q, mode: 'insensitive' } },
-              { notes:   { contains: q, mode: 'insensitive' } },
-              { profile: { name: { contains: q, mode: 'insensitive' } } },
-              { profile: { genres: { hasSome: [q.toLowerCase()] } } },
-            ]
+            AND: [
+              releasedMediaWhere(),
+              {
+                OR: [
+                  { title:   { contains: q, mode: 'insensitive' } },
+                  { notes:   { contains: q, mode: 'insensitive' } },
+                  { profile: { name: { contains: q, mode: 'insensitive' } } },
+                  { profile: { genres: { hasSome: [q.toLowerCase()] } } },
+                ],
+              },
+            ],
           },
           orderBy: [{ createdAt: 'desc' }],
           take: limit,

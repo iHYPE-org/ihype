@@ -136,7 +136,12 @@ const PAGES = [
   // carries the data-backed tier's budget, because that is what /info is.
   { path: '/info', budget: { performance: 0.65, lcp: 4800, cls: 0.1, tbt: 550 } },
   { path: '/discover', budget: { performance: 0.65, lcp: 4800, cls: 0.1, tbt: 550 } },
-  { path: '/shows', budget: { performance: 0.65, lcp: 4800, cls: 0.1, tbt: 550 } }
+  { path: '/shows', budget: { performance: 0.65, lcp: 4800, cls: 0.1, tbt: 550 } },
+  // The signed-in module deck is intentionally richer than the public pages.
+  // Its first budget is conservative while collecting a real CI baseline;
+  // it still catches catastrophic regressions and, crucially, measures the
+  // authenticated experience instead of assuming public-page speed covers it.
+  { path: '/listen', authenticated: true, budget: { performance: 0.35, lcp: 8000, cls: 0.15, tbt: 2500 } }
 ];
 
 const METRICS = [
@@ -146,8 +151,13 @@ const METRICS = [
 ];
 
 const RUNS_PER_PAGE = 5;
+const CHROME_FLAGS = ['--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'];
 
-async function auditPageOnce(baseUrl, chromePort, page) {
+function launchAuditChrome(chromePath) {
+  return launch({ chromePath, chromeFlags: CHROME_FLAGS });
+}
+
+async function auditPageOnce(baseUrl, chromePort, page, authenticatedHeaders) {
   const result = await lighthouse(
     `${baseUrl}${page.path}`,
     {
@@ -157,7 +167,8 @@ async function auditPageOnce(baseUrl, chromePort, page) {
       onlyCategories: ['performance'],
       formFactor: 'mobile',
       screenEmulation: { mobile: true, width: 390, height: 844, deviceScaleFactor: 2, disabled: false },
-      throttlingMethod: 'simulate'
+      throttlingMethod: 'simulate',
+      ...(page.authenticated && authenticatedHeaders ? { extraHeaders: authenticatedHeaders } : {})
     }
   );
 
@@ -187,19 +198,20 @@ async function auditPageOnce(baseUrl, chromePort, page) {
 // A single run can also fail outright (e.g. a transient `NO_LCP` trace-engine
 // race under headless Chrome) rather than just score poorly — one retry per
 // attempt absorbs that without masking a page that's genuinely broken.
-async function auditPageWithRetry(baseUrl, chromePort, page) {
+async function auditPageWithRetry(baseUrl, getChromePort, restartChrome, page, authenticatedHeaders) {
   try {
-    return await auditPageOnce(baseUrl, chromePort, page);
+    return await auditPageOnce(baseUrl, getChromePort(), page, authenticatedHeaders);
   } catch (error) {
-    console.warn(`[lighthouse-budget] run failed for ${page.path}, retrying once: ${error.message}`);
-    return auditPageOnce(baseUrl, chromePort, page);
+    console.warn(`[lighthouse-budget] run failed for ${page.path}, restarting Chrome before retry: ${error.message}`);
+    const cleanChromePort = await restartChrome();
+    return auditPageOnce(baseUrl, cleanChromePort, page, authenticatedHeaders);
   }
 }
 
-async function auditPage(baseUrl, chromePort, page) {
+async function auditPage(baseUrl, getChromePort, restartChrome, page, authenticatedHeaders) {
   const runs = [];
   for (let i = 0; i < RUNS_PER_PAGE; i += 1) {
-    runs.push(await auditPageWithRetry(baseUrl, chromePort, page));
+    runs.push(await auditPageWithRetry(baseUrl, getChromePort, restartChrome, page, authenticatedHeaders));
   }
 
   return {
@@ -246,22 +258,35 @@ function writeJobSummary(report) {
  * scripts/workerd-smoke.mjs, which boots the workerd server this needs) can
  * fold the result into their own pass/fail accounting.
  */
-export async function runLighthouseBudget({ baseUrl, chromePath } = {}) {
+export async function runLighthouseBudget({ baseUrl, chromePath, authenticatedHeaders } = {}) {
   const resolvedBaseUrl = baseUrl || process.env.LHCI_BASE_URL || 'http://localhost:3100';
   const resolvedChromePath = chromePath || process.env.CHROME_PATH || process.env.LHCI_CHROME_PATH;
-
-  const chrome = await launch({
-    chromePath: resolvedChromePath,
-    chromeFlags: ['--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']
-  });
-
   const report = [];
   let anyFailed = false;
+  let chrome = null;
+  let infrastructureError = null;
+
+  const restartChrome = async () => {
+    if (chrome) {
+      try {
+        await chrome.kill();
+      } catch (error) {
+        console.warn(`[lighthouse-budget] could not stop unhealthy Chrome cleanly: ${error.message}`);
+      }
+    }
+    chrome = await launchAuditChrome(resolvedChromePath);
+    return chrome.port;
+  };
 
   try {
+    await restartChrome();
     for (const page of PAGES) {
       process.stdout.write(`[lighthouse-budget] auditing ${page.path} ... `);
-      const first = await auditPage(resolvedBaseUrl, chrome.port, page);
+      if (page.authenticated && !authenticatedHeaders) {
+        console.log(`[lighthouse-budget] skipping ${page.path}: no authenticated headers supplied`);
+        continue;
+      }
+      const first = await auditPage(resolvedBaseUrl, () => chrome.port, restartChrome, page, authenticatedHeaders);
       const firstFailures = checkBudget(page.budget, first);
 
       // The measured value is always logged, pass or fail. Previously a
@@ -283,7 +308,7 @@ export async function runLighthouseBudget({ baseUrl, chromePath } = {}) {
         // metric, 0.74 against 0.75. Only paid for when something is already
         // over, so a green run costs nothing extra.
         process.stdout.write(`[lighthouse-budget] re-sampling ${page.path} to confirm ... `);
-        resample = await auditPage(resolvedBaseUrl, chrome.port, page);
+        resample = await auditPage(resolvedBaseUrl, () => chrome.port, restartChrome, page, authenticatedHeaders);
         console.log(describeSample(resample));
 
         const confirmation = confirmFailures(firstFailures, checkBudget(page.budget, resample));
@@ -308,12 +333,32 @@ export async function runLighthouseBudget({ baseUrl, chromePath } = {}) {
 
       if (failures.length) anyFailed = true;
     }
+  } catch (error) {
+    infrastructureError = error;
+    console.error(`[lighthouse-budget] measurement infrastructure failed: ${error.message}`);
   } finally {
-    await chrome.kill();
+    if (chrome) {
+      try {
+        await chrome.kill();
+      } catch (error) {
+        console.warn(`[lighthouse-budget] could not stop Chrome cleanly: ${error.message}`);
+      }
+    }
   }
 
-  writeFileSync('lighthouse-budget-report.json', JSON.stringify(report, null, 2));
+  // Always leave an artifact. Previously the most important failure mode—a
+  // null Lighthouse score—threw before this file was written, so CI uploaded
+  // no diagnostic report at all.
+  writeFileSync('lighthouse-budget-report.json', JSON.stringify({
+    generatedAt: new Date().toISOString(),
+    infrastructureError: infrastructureError
+      ? { message: infrastructureError.message, stack: infrastructureError.stack ?? null }
+      : null,
+    pages: report,
+  }, null, 2));
   writeJobSummary(report);
+
+  if (infrastructureError) throw infrastructureError;
 
   if (anyFailed) {
     console.error('\n[lighthouse-budget] one or more pages exceeded their performance budget');

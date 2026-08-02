@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { serveMediaAsset } from '@/lib/media-response';
+import { releasedMediaWhere } from '@/lib/media-release';
 
 export async function GET(
   request: Request,
@@ -7,7 +8,7 @@ export async function GET(
 ) {
   const { hexId } = await params;
   const asset = await db.artistMediaAsset.findFirst({
-    where: { hexId, isPublished: true },
+    where: { hexId, ...releasedMediaWhere() },
     select: {
       originalFileName: true,
       mimeType: true,

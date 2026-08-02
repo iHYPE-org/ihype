@@ -5,6 +5,7 @@ import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { log } from '@/lib/logger';
 import { getArtistMediaApiPath } from '@/lib/media';
+import { isMediaReleased } from '@/lib/media-release';
 
 /**
  * The playlist a right-swipe on the seed deck files a track into.
@@ -41,11 +42,12 @@ export async function POST(
         title: true,
         artworkUrl: true,
         isPublished: true,
+        publishAt: true,
         profile: { select: { name: true, slug: true, discoverable: true } },
       },
     });
 
-    if (!media || !media.isPublished || !media.profile.discoverable) {
+    if (!media || !isMediaReleased(media) || !media.profile.discoverable) {
       return NextResponse.json({ ok: false, error: 'Seed media was not found.' }, { status: 404 });
     }
 

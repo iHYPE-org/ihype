@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { releasedMediaWhere } from '@/lib/media-release';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
     .map(([id]) => id);
 
   const media = await db.artistMediaAsset.findMany({
-    where: { id: { in: topIds }, isPublished: true },
+    where: { id: { in: topIds }, ...releasedMediaWhere() },
     select: {
       id: true,
       title: true,

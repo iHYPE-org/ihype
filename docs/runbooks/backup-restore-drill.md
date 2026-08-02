@@ -11,7 +11,15 @@ The daily `backup-verify` cron proves the *live* database is up, populated, and 
 ## Drill steps
 1. **Pick a restore point** — Supabase Dashboard → Database → Backups → Point in Time. Choose a timestamp ~24 h ago.
 2. **Restore to a fork, never in place** — use "Restore to new project" (or a database branch on plans that support it). Do not restore over production.
-3. **Verify the fork:**
+3. **Verify the fork with the read-only checker:**
+   ```bash
+   RESTORE_DATABASE_URL='postgresql://...' \
+   PRODUCTION_DATABASE_URL='postgresql://...' \
+   CONFIRM_RESTORE_DRILL='verify isolated restore' \
+   npm run verify:restore
+   ```
+   The checker refuses to run when the restore and production database identities match. Save its JSON output with the drill evidence.
+4. **Independently compare the critical counts:**
    ```sql
    SELECT (SELECT COUNT(*) FROM "User")    AS users,
           (SELECT COUNT(*) FROM "Show")    AS shows,
@@ -19,9 +27,10 @@ The daily `backup-verify` cron proves the *live* database is up, populated, and 
    SELECT COUNT(*), MAX(migration_name) FROM _prisma_migrations WHERE finished_at IS NOT NULL;
    ```
    Compare against the backup-check email from the chosen restore point's day. Counts should match to within a day's organic growth; the migration count/name must match exactly.
-4. **Spot-check application-critical data** on the fork: one recent `TicketOrder` (confirmationCode + stripePaymentIntentId present), one `Profile` with `stripeConnectAccountId`, one `AuditLog` row.
-5. **Tear down** the fork project immediately (it contains production PII — it must not outlive the drill).
-6. **Record the result:** send an email to admin@ihype.org with subject `Restore drill YYYY-MM — PASS/FAIL`, the restore point used, counts observed, and teardown confirmation. Keep these — they are the compliance evidence.
+5. **Spot-check application-critical data** on the fork: one recent `TicketOrder` (confirmationCode + stripePaymentIntentId present), one `Profile` with `stripeConnectAccountId`, one `AuditLog` row.
+6. **Tear down** the fork project immediately (it contains production PII — it must not outlive the drill).
+7. **Record the result:** send an email to admin@ihype.org with subject `Restore drill YYYY-MM — PASS/FAIL`, the restore point used, counts observed, and teardown confirmation. Keep these — they are the compliance evidence.
+8. **Update the alpha gate:** only after every step passes, set the Worker secret `RESTORE_DRILL_VERIFIED_AT` to the UTC timestamp from the checker output. Never set it from a live-database health check.
 
 ## If the drill fails
 - Restore fails to start / PITR unavailable → treat as **P1**: open a Supabase support ticket the same day; the platform is running without proven backups.
