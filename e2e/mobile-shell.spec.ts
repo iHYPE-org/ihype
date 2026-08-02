@@ -1,14 +1,36 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type BrowserContext } from '@playwright/test';
+import { canSeedSession, seedSessionCookie, sessionCookieName } from './fixtures/session';
 
-// Exercises the persistent mobile app shell (Listen/Events/Pages) via /shows,
-// the one shell route that needs no auth — visiting any of the 3 shell
-// routes on a mobile viewport mounts all 3 sections together, so this still
-// covers Listen/Pages' presence in the shell, not just Events.
+// Exercises the private mobile app shell (Listen/Events/Pages) through a real
+// self-seeded fan session. Signed-in navigation must never be rendered for an
+// anonymous visitor, so relying on /shows being public made this suite assert
+// against a security boundary the product intentionally tightened.
 //
 // Explicit mobile viewport/touch overrides (rather than relying on the
 // separate "Mobile Safari" project, which only runs locally) so this suite
 // runs under the same chromium project CI already uses.
 test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+
+const FAN_EMAIL = 'e2e-mobile-shell@ihype.org';
+
+test.skip(!canSeedSession(), 'Needs E2E_WORKERD_DATABASE_URL + AUTH_SECRET to seed a session.');
+
+async function signIn(context: BrowserContext) {
+  const { cookie, user } = await seedSessionCookie(FAN_EMAIL);
+  await context.addCookies([{
+    name: sessionCookieName(),
+    value: cookie,
+    domain: new URL(process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000').hostname,
+    path: '/',
+    secure: process.env.PLAYWRIGHT_AUTH_COOKIE_SECURE === 'true',
+  }]);
+  // Keep shell behavior tests deterministic: the first-sign-in menu demo has
+  // its own visual coverage and otherwise schedules an unrelated close while
+  // a test is intentionally interacting with the drawer.
+  await context.addInitScript((userId) => {
+    window.sessionStorage.setItem('ihype-menu-introduced-this-signin', userId);
+  }, user.id);
+}
 
 async function dispatchTouch(page: import('@playwright/test').Page, selector: string, type: string, x: number, y: number) {
   await page.evaluate(
@@ -25,6 +47,10 @@ async function dispatchTouch(page: import('@playwright/test').Page, selector: st
 }
 
 test.describe('Mobile app shell', () => {
+  test.beforeEach(async ({ context }) => {
+    await signIn(context);
+  });
+
   test('persistent shell activates and shows the grid/home view', async ({ page }) => {
     await page.goto('/shows');
     await expect(page.locator('.mas-root.is-active')).toHaveCount(1);
@@ -127,14 +153,17 @@ test.describe('Mobile app shell', () => {
     test.slow(); // first-hit route compile in dev can be slow
     await page.goto('/shows');
     await expect(page.locator('.mqg-overlay.is-active')).toHaveCount(1);
-    // Warm /about so the dev server's lazy first-compile doesn't eat the
+    // Warm /info so the dev server's lazy first-compile doesn't eat the
     // navigation timeout below (no-op against a production build).
-    await page.request.get('/about');
+    await page.request.get('/info');
 
-    // Menu drawer -> About: a real client-side navigation off the shell routes.
-    await page.locator('.ihype-mobile-nav button', { hasText: 'Menu' }).click();
-    await page.getByRole('link', { name: 'About', exact: true }).click();
-    await page.waitForURL('**/about');
+    // The iHYPE mark is the single menu owner across desktop and mobile.
+    const menuButton = page.getByRole('button', { name: 'Open iHYPE menu' });
+    await menuButton.click();
+    const menu = page.getByLabel('Primary site header').getByRole('navigation', { name: 'iHYPE menu' });
+    await menu.getByRole('button', { name: 'SETTINGS', exact: true }).click();
+    await menu.locator('a[href="/info"]').click();
+    await page.waitForURL('**/info');
 
     // The destination page must actually be visible — no lingering overlay.
     await expect(page.locator('.mqg-overlay.is-active')).toHaveCount(0);
@@ -178,6 +207,10 @@ test.describe('Mobile app shell', () => {
 
 test.describe('AppSplash (installed-PWA launch splash)', () => {
   test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+
+  test.beforeEach(async ({ context }) => {
+    await signIn(context);
+  });
 
   test('renders when display-mode is standalone, then fades on its own', async ({ page }) => {
     await page.addInitScript(() => {

@@ -16,7 +16,7 @@ export default defineConfig({
     // Mobile Safari only runs locally; CI installs chromium only.
     ...(process.env.CI ? [] : [{ name: 'Mobile Safari', use: { ...devices['iPhone 14'] } }]),
   ],
-  webServer: {
+  webServer: process.env.PLAYWRIGHT_EXTERNAL_SERVER === 'true' ? undefined : {
     command: 'npm run dev',
     env: {
       ...process.env,
