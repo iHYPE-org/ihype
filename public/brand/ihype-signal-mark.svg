@@ -1,65 +1,45 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title description">
   <title id="title">iHYPE</title>
-  <desc id="description">iHYPE local music signal mark</desc>
+  <desc id="description">Minimal iHYPE local music monogram</desc>
   <defs>
-    <linearGradient id="surface" x1="22" y1="15" x2="231" y2="240" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#14100d"/>
-      <stop offset="0.5" stop-color="#070809"/>
-      <stop offset="1" stop-color="#071416"/>
+    <linearGradient id="surface" x1="18" y1="12" x2="238" y2="244" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#111214"/>
+      <stop offset="1" stop-color="#050607"/>
     </linearGradient>
-    <linearGradient id="signal" x1="30" y1="0" x2="226" y2="0" gradientUnits="userSpaceOnUse">
+    <linearGradient id="accent" x1="22" y1="0" x2="234" y2="0" gradientUnits="userSpaceOnUse">
       <stop stop-color="#ff4d2e"/>
-      <stop offset="0.46" stop-color="#ff4d2e"/>
-      <stop offset="0.54" stop-color="#18ded1"/>
+      <stop offset=".52" stop-color="#ff4d2e"/>
+      <stop offset=".52" stop-color="#18ded1"/>
       <stop offset="1" stop-color="#18ded1"/>
     </linearGradient>
-    <radialGradient id="orangeGlow" cx="0" cy="0" r="1" gradientTransform="translate(38 62) rotate(46) scale(102)" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#ff4d2e" stop-opacity="0.22"/>
-      <stop offset="1" stop-color="#ff4d2e" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="cyanGlow" cx="0" cy="0" r="1" gradientTransform="translate(214 193) rotate(-136) scale(104)" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#18ded1" stop-opacity="0.18"/>
-      <stop offset="1" stop-color="#18ded1" stop-opacity="0"/>
-    </radialGradient>
   </defs>
 
-  <rect x="3" y="3" width="250" height="250" rx="55" fill="url(#surface)"/>
-  <rect x="3.5" y="3.5" width="249" height="249" rx="54.5" fill="none" stroke="#f3eee7" stroke-opacity="0.18"/>
-  <rect x="4" y="4" width="248" height="248" rx="54" fill="url(#orangeGlow)"/>
-  <rect x="4" y="4" width="248" height="248" rx="54" fill="url(#cyanGlow)"/>
+  <rect x="4" y="4" width="248" height="248" rx="24" fill="url(#surface)"/>
+  <rect x="4.75" y="4.75" width="246.5" height="246.5" rx="23.25" fill="none" stroke="#f3eee7" stroke-opacity=".2" stroke-width="1.5"/>
 
   <g fill="#ff4d2e">
-    <circle cx="31" cy="65" r="12"/>
-    <path d="M22 84h18v80H22z"/>
+    <rect x="30" y="79" width="17" height="103" rx="2"/>
+    <circle cx="38.5" cy="57.5" r="9.5"/>
   </g>
 
   <g fill="#f3eee7">
-    <path d="M55 76h14v31h20V76h14v88H89v-37H69v37H55z"/>
-    <path d="M107 76h16l13 30 13-30h16l-22 48v40h-14v-40z"/>
-    <path fill-rule="evenodd" d="M169 76h27c20 0 32 10 32 27s-12 28-32 28h-13v33h-14zm14 14v27h12c12 0 18-4 18-14 0-9-6-13-18-13z"/>
-    <path d="M232 76h18v14h-18v21h16v14h-16v25h18v14h-32V76z"/>
+    <path d="M67 52h24v52h55V52h24v130h-24v-55H91v55H67z"/>
+    <path d="M188 52h38v22h-14v86h14v22h-38v-22h14V74h-14z" opacity=".28"/>
   </g>
 
-  <g fill="url(#signal)">
-    <rect x="22" y="193" width="20" height="4" rx="2"/>
-    <rect x="47" y="187" width="4" height="16" rx="2"/>
-    <rect x="57" y="180" width="4" height="30" rx="2"/>
-    <rect x="67" y="188" width="4" height="14" rx="2"/>
-    <rect x="77" y="174" width="4" height="42" rx="2"/>
-    <rect x="87" y="184" width="4" height="22" rx="2"/>
-    <rect x="97" y="190" width="4" height="10" rx="2"/>
-    <rect x="107" y="186" width="4" height="18" rx="2"/>
-    <rect x="117" y="177" width="4" height="36" rx="2"/>
-    <rect x="127" y="168" width="4" height="54" rx="2"/>
-    <rect x="137" y="181" width="4" height="28" rx="2"/>
-    <rect x="147" y="189" width="4" height="12" rx="2"/>
-    <rect x="157" y="184" width="4" height="22" rx="2"/>
-    <rect x="167" y="176" width="4" height="38" rx="2"/>
-    <rect x="177" y="187" width="4" height="16" rx="2"/>
-    <rect x="187" y="182" width="4" height="26" rx="2"/>
-    <rect x="197" y="189" width="4" height="12" rx="2"/>
-    <rect x="206" y="193" width="28" height="4" rx="2"/>
+  <path d="M24 209h208" stroke="#f3eee7" stroke-opacity=".16"/>
+  <g fill="url(#accent)">
+    <rect x="30" y="221" width="40" height="5" rx="2.5"/>
+    <rect x="77" y="216" width="5" height="15" rx="2.5"/>
+    <rect x="89" y="211" width="5" height="25" rx="2.5"/>
+    <rect x="101" y="218" width="5" height="11" rx="2.5"/>
+    <rect x="113" y="207" width="5" height="33" rx="2.5"/>
+    <rect x="125.5" y="214" width="5" height="19" rx="2.5"/>
+    <rect x="138" y="217" width="5" height="13" rx="2.5"/>
+    <rect x="150" y="210" width="5" height="27" rx="2.5"/>
+    <rect x="162" y="216" width="5" height="15" rx="2.5"/>
+    <rect x="174" y="212" width="5" height="23" rx="2.5"/>
+    <rect x="186" y="219" width="5" height="9" rx="2.5"/>
+    <rect x="198" y="221" width="34" height="5" rx="2.5"/>
   </g>
-
-  <text x="128" y="237" fill="#f3eee7" fill-opacity="0.7" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" font-weight="700" letter-spacing="3.4" text-anchor="middle">LOCAL SIGNAL</text>
 </svg>
