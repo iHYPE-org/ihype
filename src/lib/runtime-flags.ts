@@ -55,7 +55,9 @@ export const isOutboundEmailEnabledRuntime = () => getRuntimeFlag('outbound_emai
 export const isAdvertisingEnabledRuntime = () => getRuntimeFlag('advertising_enabled', true);
 export const arePaymentsEnabledRuntime = () => getRuntimeFlag(
   'payments_enabled',
-  parseBooleanFlag(readRuntimeEnv('FEATURE_ENABLE_PAYMENTS') ?? readRuntimeEnv('FEATURE_ENABLE_TICKET_PAYMENTS'), true),
+  // This is an independent emergency brake. Payment readiness continues to
+  // fail closed through FEATURE_ENABLE_TICKET_PAYMENTS and Stripe validation.
+  parseBooleanFlag(readRuntimeEnv('FEATURE_ENABLE_PAYMENTS'), true),
 );
 export const isTicketingEnabledRuntime = () => getRuntimeFlag(
   'tickets_enabled',

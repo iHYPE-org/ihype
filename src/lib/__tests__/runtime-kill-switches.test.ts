@@ -19,6 +19,13 @@ afterEach(async () => {
 });
 
 describe('alpha runtime kill switches', () => {
+  it('keeps the emergency payment brake independent from payment readiness', async () => {
+    delete process.env.FEATURE_ENABLE_PAYMENTS;
+    process.env.FEATURE_ENABLE_TICKET_PAYMENTS = 'false';
+
+    expect(await arePaymentsEnabledRuntime()).toBe(true);
+  });
+
   it('uses safe environment fallbacks', async () => {
     process.env.FEATURE_ENABLE_PAYMENTS = 'false';
     process.env.FEATURE_ENABLE_TICKETING = 'true';
