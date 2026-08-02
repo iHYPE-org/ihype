@@ -89,7 +89,7 @@ const emptyDiscoveryTrack: ExperienceTrack = {
   title: 'Your next local find',
   artist: 'Waiting for the first alpha upload',
   scene: 'Your local scene',
-  art: '/brand/ihype-signal-mark.svg',
+  art: '/brand/discover-awaiting.svg',
   match: 'Local catalog warming up',
 };
 
@@ -752,7 +752,7 @@ function DiscoverModule({ production }: { production: boolean }) {
         <div className={`swipe-outcome ${dragX < -35 ? 'is-visible' : ''}`}>SKIP</div>
         <div className={`swipe-outcome swipe-outcome-save ${dragX > 35 ? 'is-visible' : ''}`}>ADD</div>
         <div aria-hidden="true" className="discover-next-card" style={{ position: 'absolute' }}><Image alt="" fill sizes="(max-width: 800px) 72vw, 35vw" src={nextTrack.art} /><span>NEXT SIGNAL</span></div>
-        <div aria-label={`${track.title} by ${track.artist}. Swipe left to skip or right to add.`} className={`discover-card ${dragging ? 'is-dragging' : ''} ${decision ? `is-${decision}` : ''}`} key={track.title} onPointerCancel={cancelDrag} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} role="group" style={{ position: 'relative', transform: `translate3d(${dragX}px,${Math.abs(dragX) * -.025}px,0) rotate(${dragX / 28}deg) scale(${1 - swipeStrength * .018})` }}>
+        <div aria-label={`${track.title} by ${track.artist}. Swipe left to skip or right to add.`} className={`discover-card ${production && !track.mediaId ? 'is-placeholder' : ''} ${dragging ? 'is-dragging' : ''} ${decision ? `is-${decision}` : ''}`} key={track.title} onPointerCancel={cancelDrag} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} role="group" style={{ position: 'relative', transform: `translate3d(${dragX}px,${Math.abs(dragX) * -.025}px,0) rotate(${dragX / 28}deg) scale(${1 - swipeStrength * .018})` }}>
           <Image alt="Placeholder artist portrait" draggable={false} fill priority sizes="(max-width: 800px) 82vw, 40vw" src={track.art} />
           <div className="discover-card-gradient" />
           <div className="discover-card-copy"><span>{tracksLoading ? 'Tuning your scene…' : production && !track.mediaId ? 'Waiting for local uploads' : track.match}</span><h2>{track.title}</h2><p>{track.artist}</p><small>{track.scene}</small><div className="discover-why"><b>WHY THIS SONG</b><i>{production && !track.mediaId ? 'Placeholder artwork leaves the layout ready for the first alpha uploads.' : track.match.toLowerCase().includes('wild') || track.match.toLowerCase().includes('random') ? 'A fresh wildcard outside your usual signal.' : 'Your scene, HYPES, and Discovery saves point here.'}</i></div></div>
@@ -2285,8 +2285,9 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
   .deck-profile { width:40px; height:40px; margin-left:auto; display:grid; }
   .deck-account-menu { top:62px; right:10px; }
   .deck-stage { height:auto; min-height:552px; top:calc(68px + var(--deck-safe-top)); }
-  .deck-module { display:block; overflow-x:hidden; overflow-y:auto; padding:28px 18px 102px; }
-  .deck-module h1 { margin:6px 0 10px; font-size:var(--mobile-hero-size); line-height:.96; }
+  .deck-module { display:block; overflow-x:hidden; overflow-y:auto; padding:28px 18px calc(102px + var(--deck-safe-bottom)); }
+  .deck-module > *,.deck-module-copy,.discover-copy,.radio-heading,.dashboard-heading,.settings-heading,.community-manifesto,.radio-console,.dashboard-workspace,.settings-board,.community-board { min-width:0; max-width:100%; }
+  .deck-module h1 { max-width:100%; margin:6px 0 10px; font-size:var(--mobile-hero-size); line-height:.96; overflow-wrap:anywhere; word-break:normal; }
   .deck-module p { font-size:13px; }
   .deck-kicker { font-size:8px; }
   .deck-player { right:calc(8px + var(--deck-safe-right)); bottom:calc(8px + var(--deck-safe-bottom)); left:calc(8px + var(--deck-safe-left)); height:66px; grid-template-columns:minmax(0,1fr) auto; gap:8px; padding:8px; border-radius:15px; }
@@ -2325,10 +2326,19 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
   .discover-module { display:grid; grid-template-columns:1fr; grid-template-rows:auto 1fr; }
   .discover-copy h1 { font-size:var(--mobile-hero-size); }
   .discover-copy p,.discover-count { display:none; }
-  .discover-stage { height:auto; min-height:480px; }
-  .discover-card,.discover-next-card,.discover-signal-wash,.discover-stage::before,.discover-stage::after { width:min(72vw,300px); }
-  .discover-card-copy h2 { font-size:36px; }
-  .discover-actions { bottom:4px; }
+  .discover-stage { height:auto; min-height:472px; grid-template-rows:minmax(0,1fr) 58px; row-gap:10px; overflow:visible; }
+  .discover-card,.discover-next-card,.discover-signal-wash,.discover-stage::before,.discover-stage::after { width:min(72vw,282px); }
+  .discover-card,.discover-next-card,.discover-stage::before { border-radius:22px; }
+  .discover-card-gradient { background:linear-gradient(180deg,rgba(0,0,0,.06) 10%,rgba(0,0,0,.32) 38%,rgba(0,0,0,.97) 74%); }
+  .discover-card-copy { right:18px; bottom:18px; left:18px; min-width:0; }
+  .discover-card-copy > span { overflow:hidden; font-size:8px; line-height:1.25; text-overflow:ellipsis; white-space:nowrap; }
+  .discover-card-copy h2 { display:-webkit-box; max-height:2.76em; margin-top:7px; overflow:hidden; font-size:clamp(25px,7.2vw,30px); line-height:.92; overflow-wrap:normal; word-break:normal; -webkit-box-orient:vertical; -webkit-line-clamp:3; }
+  .discover-card-copy p { display:-webkit-box; max-height:2.5em; margin:7px 0 0; overflow:hidden; font-size:13px; line-height:1.25; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
+  .discover-card-copy small { margin-top:3px; font-size:9px; }
+  .discover-why { grid-template-columns:1fr; gap:4px; margin-top:9px; padding-top:8px; }
+  .discover-why i { display:-webkit-box; max-height:2.5em; overflow:hidden; line-height:1.25; white-space:normal; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
+  .discover-actions { bottom:0; }
+  .discover-actions button { height:46px; }
   .discover-feedback { top:0; }
   .radio-module,.dashboard-module,.settings-module { display:grid; grid-template-columns:1fr; grid-template-rows:auto 1fr; }
   .radio-heading h1,.dashboard-heading h1,.settings-heading h1,.community-manifesto h1 { font-size:var(--mobile-hero-size); line-height:.96; }
@@ -2355,7 +2365,13 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
   .role-picker button { min-width:66px; height:34px; padding:0 9px; font-size:8px; }
   .dashboard-build { margin-top:12px; }
   .dashboard-signal { margin-top:18px; }
-  .dashboard-next { grid-template-columns:1fr auto; }
+  .dashboard-next { grid-template-columns:minmax(0,1fr) auto; }
+  .dashboard-next strong { min-width:0; overflow-wrap:anywhere; }
+  .dashboard-activation > div:first-child { flex-wrap:wrap; }
+  .dashboard-activation > div:last-child { grid-template-columns:1fr; }
+  .dashboard-activation a:nth-child(odd) { border-right:0; }
+  .dashboard-recommendations > div:first-child { align-items:flex-start; flex-direction:column; gap:4px; }
+  .dashboard-recommendations > div:first-child small { text-align:left; }
   .dashboard-metrics div { padding:12px 8px; }
   .dashboard-metrics strong { font-size:26px; }
   .dashboard-actions { grid-template-columns:1fr; }
@@ -2363,11 +2379,13 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
   .settings-section { padding:16px; }
   .settings-appearance,.settings-accessibility { grid-template-columns:1fr; }
   .settings-appearance > span,.settings-accessibility > span { grid-column:auto; }
+  .settings-section label,.settings-section label > span { min-width:0; }
+  .settings-section label strong,.settings-section label small { overflow-wrap:anywhere; }
   .settings-accessibility label:nth-of-type(n+2) { border-top:1px solid rgba(243,238,231,.07); }
   .settings-foot { flex-wrap:wrap; padding:14px 16px; }
   .settings-foot span { width:100%; }
   .community-module { display:block; overflow:auto; }
-  .community-manifesto p { font-size:12px; }
+  .community-manifesto p { font-size:12px; overflow-wrap:anywhere; }
   .community-board { min-height:470px; margin-top:20px; }
   .community-principles article { min-height:150px; padding:16px; }
   .deck-full-player { display:block; overflow:auto; padding:calc(72px + env(safe-area-inset-top,0px)) calc(20px + env(safe-area-inset-right,0px)) calc(110px + env(safe-area-inset-bottom,0px)) calc(20px + env(safe-area-inset-left,0px)); }
@@ -2390,7 +2408,9 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
   .deck-module { padding-top:20px; }
   .deck-map-module .deck-module-copy h1,.discover-copy h1,.radio-heading h1,.dashboard-heading h1,.settings-heading h1,.community-manifesto h1 { font-size:var(--mobile-hero-size); }
   .scene-map-frame { min-height:390px; }
-  .discover-stage { min-height:440px; }
+  .discover-copy { min-height:54px; }
+  .discover-copy .deck-kicker { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .discover-stage { min-height:438px; }
   .discover-actions { gap:10px; }
   .discover-actions button { min-width:92px; padding:0 15px; }
   .discover-actions button.save { min-width:108px; }
@@ -2415,6 +2435,12 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
   .dashboard-metrics div:nth-last-child(-n+2) { border-bottom:0; }
   .dashboard-recommendations > a { grid-template-columns:minmax(0,1fr) 16px; }
   .dashboard-recommendations i { display:none; }
+  .dashboard-next { grid-template-columns:1fr; gap:8px; }
+  .dashboard-next a { grid-column:1; grid-row:auto; justify-self:start; }
+  .settings-section label { align-items:flex-start; gap:12px; }
+  .settings-section label > span { padding-top:3px; }
+  .settings-appearance label { align-items:center; }
+  .settings-appearance select { width:min(150px,52%); min-width:108px; }
   .community-subnav { grid-template-columns:1fr 1fr; gap:5px; }
   .community-subnav button { min-height:36px; }
   .community-panel { padding:18px; }
