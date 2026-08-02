@@ -22,7 +22,9 @@
  * Usage: node scripts/workerd-smoke.mjs
  */
 import { spawn } from 'node:child_process';
+import { createHmac } from 'node:crypto';
 import { readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
 import { Client } from 'pg';
 import { encode } from 'next-auth/jwt';
 import { runLighthouseBudget } from './lighthouse-budget.mjs';
@@ -35,9 +37,12 @@ const HEALTH_CHECK_TOKEN =
 const AUTH_SECRET =
   process.env.AUTH_SECRET || 'workerd-smoke-auth-secret-0123456789';
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || AUTH_SECRET;
+const RESEND_WEBHOOK_KEY = Buffer.from('ihype-workerd-resend-smoke-key-32b');
+const RESEND_WEBHOOK_SECRET = `whsec_${RESEND_WEBHOOK_KEY.toString('base64')}`;
 const BOOT_TIMEOUT_MS = 120_000;
 const SHUTDOWN_TIMEOUT_MS = 5_000;
 const TMP_CONFIG = '.wrangler-workerd-smoke.toml';
+const WRANGLER_CLI = join(process.cwd(), 'node_modules', 'wrangler', 'bin', 'wrangler.js');
 const SMOKE_MODE = process.env.WORKERD_SMOKE_MODE || 'all';
 const VALID_SMOKE_MODES = new Set(['all', 'security', 'performance']);
 const RUN_SECURITY_CHECKS = SMOKE_MODE !== 'performance';
@@ -67,7 +72,7 @@ function upsertTomlVariable(varsSection, name, value) {
   const assignment = `${name} = "${tomlString(value)}"`;
   const pattern = new RegExp(`^${name}\\s*=.*$`, 'm');
   if (pattern.test(varsSection)) return varsSection.replace(pattern, assignment);
-  return varsSection.replace('\n[vars]\n', `\n[vars]\n${assignment}\n`);
+  return varsSection.replace(/(\r?\n\[vars\]\r?\n)/, (header) => `${header}${assignment}\n`);
 }
 
 // Derive a smoke config from the real wrangler.toml at runtime so bindings
@@ -86,13 +91,13 @@ function writeStrippedConfig() {
   let stripped = source;
   for (const section of ['build', 'ai']) {
     const before = stripped;
-    stripped = stripped.replace(new RegExp(`\\n\\[${section}\\][\\s\\S]*?(?=\\n\\[|$)`), '\n');
+    stripped = stripped.replace(new RegExp(`\\r?\\n\\[${section}\\][\\s\\S]*?(?=\\r?\\n\\[|$)`), '\n');
     if (stripped === before) {
       console.warn(`[workerd-smoke] no [${section}] section found to strip; continuing`);
     }
   }
 
-  const varsPattern = /\n\[vars\]\n[\s\S]*?(?=\n\[|$)/;
+  const varsPattern = /\r?\n\[vars\]\r?\n[\s\S]*?(?=\r?\n\[|$)/;
   let varsSection = stripped.match(varsPattern)?.[0];
   if (!varsSection) {
     throw new Error('wrangler.toml must contain a [vars] section for Workerd smoke configuration');
@@ -103,10 +108,11 @@ function writeStrippedConfig() {
     DATABASE_URL: DB_URL,
     AUTH_SECRET,
     NEXTAUTH_SECRET,
+    RESEND_WEBHOOK_SECRET,
   })) {
     varsSection = upsertTomlVariable(varsSection, name, value);
   }
-  varsSection = varsSection.replace(/\n{3,}/g, '\n\n');
+  varsSection = varsSection.replace(/(?:\r?\n){3,}/g, '\n\n');
   stripped = stripped.replace(varsPattern, varsSection);
 
   writeFileSync(TMP_CONFIG, stripped);
@@ -301,8 +307,8 @@ async function run() {
   });
 
   const child = spawn(
-    'npx',
-    ['wrangler', 'dev', '--config', TMP_CONFIG, '--port', String(PORT), '--show-interactive-dev-session=false'],
+    process.execPath,
+    [WRANGLER_CLI, 'dev', '--config', TMP_CONFIG, '--port', String(PORT), '--show-interactive-dev-session=false'],
     {
       stdio: ['ignore', 'inherit', 'inherit'],
       detached: process.platform !== 'win32',
@@ -348,6 +354,44 @@ async function run() {
       '/api/health reports a working database when authorized',
       health.status === 200 && healthBody?.status === 'ok' && healthBody?.database?.ok === true,
       `status=${health.status} body=${health.text.slice(0, 200)}`,
+    );
+
+    // 2b. Exercise the actual bundled Resend route with Svix's key format,
+    // then replay the same signed event to prove the database idempotency
+    // marker works in Workerd too. This catches both crypto/polyfill drift and
+    // accidental regressions back to hashing with the literal `whsec_` value.
+    const resendId = `msg_workerd_smoke_${Date.now()}`;
+    const resendTimestamp = String(Math.floor(Date.now() / 1000));
+    const resendPayload = JSON.stringify({
+      type: 'email.delivered',
+      data: { to: ['workerd-smoke@example.com'] },
+    });
+    const resendSignature = createHmac('sha256', RESEND_WEBHOOK_KEY)
+      .update(`${resendId}.${resendTimestamp}.${resendPayload}`)
+      .digest('base64');
+    const resendRequest = {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'svix-id': resendId,
+        'svix-timestamp': resendTimestamp,
+        'svix-signature': `v1,${resendSignature}`,
+      },
+      body: resendPayload,
+    };
+    const resendFirst = await probe('/api/webhooks/resend', resendRequest);
+    const resendFirstBody = parseJson(resendFirst.text);
+    check(
+      'Resend webhook accepts a valid Svix signature in Workerd',
+      resendFirst.status === 200 && resendFirstBody?.ok === true && resendFirstBody?.duplicate === false,
+      `status=${resendFirst.status} body=${resendFirst.text.slice(0, 200)}`,
+    );
+    const resendReplay = await probe('/api/webhooks/resend', resendRequest);
+    const resendReplayBody = parseJson(resendReplay.text);
+    check(
+      'Resend webhook deduplicates a replay in Workerd',
+      resendReplay.status === 200 && resendReplayBody?.ok === true && resendReplayBody?.duplicate === true,
+      `status=${resendReplay.status} body=${resendReplay.text.slice(0, 200)}`,
     );
 
     // 3. Auth.js must have its runtime secret inside the Worker isolate. A

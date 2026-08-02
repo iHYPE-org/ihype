@@ -96,14 +96,9 @@
   --accent-grad-warm: linear-gradient(135deg, var(--accent), #ff3e6e);
 
   /* Ink ON a brand fill — the inverse of --accent-text, which is the accent
-     used AS copy over a page background. Buttons that fill with the accent
-     and set white label text were writing `color: #fff` inline, ~20 sites.
-     NOTE: white on --accent measures 3.27:1, below AA for text under
-     18.66px bold — the same failure axe already reports on
-     .nav-join-button. This token deliberately keeps today's white so the
-     conversion is visual-no-op; changing it here is now the ONE edit that
-     fixes every accent button at once. Needs a design decision. */
-  --ink-on-accent: #fff;
+     used AS copy over a page background. The dark neutral keeps the orange
+     unchanged while clearing WCAG AA in both themes (white was only 3.27:1). */
+  --ink-on-accent: #090b0f;
 
   /* Ink and scrim for content sitting ON media — a photo, or one of the seed
      deck's saturated gradient cards. These are white and black in BOTH
@@ -145,6 +140,12 @@
      page — the colour and its background converge. Fills keep --role-venue. */
   --role-venue-text: var(--role-venue);
   --role-promoter: #ffb84a;
+  /* Role fills stay vivid; these aliases are the same hues calibrated for
+     readable text. Light mode overrides the aliases without dulling artwork,
+     charts, chips, or other brand fills. */
+  --role-dj-text: var(--role-dj);
+  --role-artist-text: var(--role-artist);
+  --role-advertiser-text: var(--role-promoter);
   /* Backlog item 3 of the app-shell handoff: "Add --role-advertiser to the
      design system instead of borrowing --warn, and document which surfaces
      tint by role." Advertiser is the 5th account type (Role.ADVERTISER +
@@ -389,6 +390,9 @@
   /* See --accent-text above: the brand orange is unreadable as copy here. */
   --accent-text: #9c2707;
   --role-venue-text: #0b6f67;
+  --role-dj-text: #920044;
+  --role-artist-text: var(--accent-text);
+  --role-advertiser-text: #735000;
 }
 
 /* The default `body` rule hardcodes a dark gradient (see far below), which
@@ -1057,7 +1061,7 @@ body:has(.standalone-page) .site-shell { padding-top: 0; }
    is off-brand for the marketing nav. */
 .nav-join-button.button {
   background: var(--accent);
-  color: #fff;
+  color: var(--ink-on-accent);
   font-family: var(--font-display, 'Syne', sans-serif);
   font-weight: 800;
   font-size: 0.88rem;
@@ -6446,7 +6450,7 @@ a .ihype-card, a.ihype-card {
      to a light cream in [data-theme="light"] and would leave the same
      failure there since --accent doesn't change between themes) hits 6.1:1
      while keeping the exact brand orange background unchanged. */
-  color: var(--bg);
+  color: var(--ink-on-accent);
   border: none;
   border-radius: 8px;
   font-weight: 700;
@@ -6812,7 +6816,10 @@ h1, h2 {
     display: flex;
     flex-direction: column;
     position: fixed;
-    top: 0; left: 0; right: 0;
+    /* The authenticated header remains visible above every mobile module.
+       Start the fixed quick grid below it so its search and controls cannot
+       render beneath (or be intercepted by) the header. */
+    top: 62px; left: 0; right: 0;
     bottom: calc(60px + env(safe-area-inset-bottom, 0px));
     z-index: 40;
     background: var(--bg);
@@ -6914,7 +6921,8 @@ h1, h2 {
   .mas-root.is-active {
     display: block;
     position: fixed;
-    top: 0; left: 0; right: 0;
+    /* Keep the module viewport below the persistent 62px mobile header. */
+    top: 62px; left: 0; right: 0;
     bottom: calc(60px + env(safe-area-inset-bottom, 0px));
     z-index: 35;
     overflow: hidden;

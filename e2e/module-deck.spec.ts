@@ -16,6 +16,12 @@ async function signIn(context: BrowserContext) {
   }]);
 }
 
+async function expectSingleVisibleDeck(page: import('@playwright/test').Page) {
+  const visibleDeck = page.locator('.module-deck-preview').filter({ visible: true });
+  await expect(visibleDeck).toHaveCount(1, { timeout: 20_000 });
+  await expect(visibleDeck).toBeVisible();
+}
+
 test.describe('Signed-in module deck interactions', () => {
   test.beforeEach(async ({ context, page }) => {
     await signIn(context);
@@ -24,7 +30,7 @@ test.describe('Signed-in module deck interactions', () => {
 
   test('navigates every primary module and exposes queue and alpha feedback', async ({ page }) => {
     await page.goto('/listen');
-    await expect(page.locator('.module-deck-preview')).toBeVisible({ timeout: 20_000 });
+    await expectSingleVisibleDeck(page);
 
     for (const [label, selector] of [
       ['Discover', '.discover-module'],
@@ -43,13 +49,13 @@ test.describe('Signed-in module deck interactions', () => {
     await expect(page.locator('.deck-player-queue')).toBeVisible();
 
     await page.getByRole('button', { name: 'Open account menu' }).click();
-    await expect(page.getByRole('link', { name: /Send alpha feedback/ })).toHaveAttribute('href', /alpha=1&module=map/);
+    await expect(page.getByRole('link', { name: /Detailed feedback/ })).toHaveAttribute('href', /alpha=1&module=map/);
   });
 
   test('keeps the navigator, global search, account menu, and player usable on a phone', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/listen');
-    await expect(page.locator('.module-deck-preview')).toBeVisible({ timeout: 20_000 });
+    await expectSingleVisibleDeck(page);
     await expect(page.getByRole('textbox', { name: 'Search iHYPE' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Previous song' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Next song' })).toBeVisible();
@@ -58,6 +64,6 @@ test.describe('Signed-in module deck interactions', () => {
     await page.locator('.deck-navigator').getByRole('button', { name: /Settings/i }).click();
     await expect(page.locator('.settings-module')).toBeVisible({ timeout: 5_000 });
     await page.getByRole('button', { name: 'Open account menu' }).click();
-    await expect(page.getByRole('link', { name: /Send alpha feedback/ })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Detailed feedback/ })).toBeVisible();
   });
 });

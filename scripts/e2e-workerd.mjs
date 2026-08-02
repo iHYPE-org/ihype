@@ -29,10 +29,12 @@
  *   - E2E_WORKERD_DATABASE_URL points at a Postgres with the schema applied
  *     (prisma db push) and pg_trgm/citext extensions created.
  *
- * Usage: node scripts/e2e-workerd.mjs
+ * Usage: node scripts/e2e-workerd.mjs [optional Playwright test files]
+ * Example: node scripts/e2e-workerd.mjs e2e/auth.spec.ts
  */
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
 
 const PORT = Number(process.env.E2E_WORKERD_PORT || 8787);
 // Must be 'localhost', not '127.0.0.1': WebAuthn RP IDs (derived from this
@@ -46,6 +48,29 @@ const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || AUTH_SECRET;
 const BOOT_TIMEOUT_MS = 120_000;
 const SHUTDOWN_TIMEOUT_MS = 5_000;
 const TMP_CONFIG = '.wrangler-e2e-workerd.toml';
+const WRANGLER_CLI = join(process.cwd(), 'node_modules', 'wrangler', 'bin', 'wrangler.js');
+const PLAYWRIGHT_CLI = join(process.cwd(), 'node_modules', 'playwright', 'cli.js');
+const REQUESTED_TESTS = process.argv.slice(2);
+// /ui-preview intentionally 404s in production builds, so its responsive
+// suite belongs to CI's mandatory `next dev` responsive stage. Keep it out of
+// the default Workerd pass while still allowing an explicit file argument for
+// local preview debugging. Each default shard gets a fresh workerd process:
+// the production bundle is intentionally large and a single long-lived local
+// isolate can retain compiled route modules until it reaches workerd's V8 heap
+// ceiling. Fresh isolates mirror separate production requests more closely
+// and keep a real runtime failure from being hidden behind a larger heap.
+const DEFAULT_TEST_SHARDS = [
+  ['e2e/accessibility.spec.ts'],
+  ['e2e/app-shell-a11y.spec.ts'],
+  ['e2e/app-shell.spec.ts'],
+  ['e2e/auth.spec.ts', 'e2e/passkey.spec.ts'],
+  ['e2e/mobile-shell.spec.ts'],
+  ['e2e/module-deck.spec.ts'],
+  ['e2e/public-smoke.spec.ts'],
+];
+const TEST_SHARDS = REQUESTED_TESTS.length > 0
+  ? [REQUESTED_TESTS]
+  : DEFAULT_TEST_SHARDS;
 
 if (!DB_URL) {
   console.error('[e2e-workerd] E2E_WORKERD_DATABASE_URL is required');
@@ -119,10 +144,24 @@ async function waitForBoot(child) {
 function signalProcessTree(child, signal) {
   if (!child.pid || child.exitCode !== null) return;
   try {
-    if (process.platform !== 'win32') process.kill(-child.pid, signal);
-    else child.kill(signal);
+    if (process.platform !== 'win32') {
+      process.kill(-child.pid, signal);
+      return;
+    }
+
+    // Node's child.kill() only signals the immediate Wrangler process on
+    // Windows; the workerd grandchild can keep the port and heap alive. CI is
+    // Linux, but local Windows verification must be truthful too, so terminate
+    // the exact spawned process tree. /F is required because Windows has no
+    // portable SIGTERM equivalent for console process trees.
+    const result = spawnSync(
+      'taskkill.exe',
+      ['/pid', String(child.pid), '/t', '/f'],
+      { stdio: 'ignore', windowsHide: true },
+    );
+    if (result.error) throw result.error;
   } catch (error) {
-    if (error?.code !== 'ESRCH') throw error;
+    if (error?.code !== 'ESRCH' && error?.code !== 'ENOENT') throw error;
   }
 }
 
@@ -138,20 +177,17 @@ async function stopProcessTree(child) {
   child.unref();
 }
 
-function runPlaywright() {
+function runPlaywright(tests) {
   return new Promise((resolve) => {
-    // Runs the whole e2e/ suite (not just the auth-dependent specs) so this
-    // one real-runtime pass also re-covers public-smoke/mobile-shell/
-    // accessibility — cheap, since the instance is already booted, and it
-    // means new specs don't require updating this file to be included.
     const child = spawn(
-      'npx',
-      ['playwright', 'test', '--project=chromium'],
+      process.execPath,
+      [PLAYWRIGHT_CLI, 'test', '--project=chromium', '--workers=1', ...tests],
       {
         stdio: 'inherit',
         env: {
           ...process.env,
           PLAYWRIGHT_BASE_URL: BASE,
+          PLAYWRIGHT_EXTERNAL_SERVER: 'true',
           // The built worker always runs with production semantics
           // (useSecureAuthCookies() in src/lib/auth-cookie.ts checks
           // NODE_ENV === 'production'), so the session cookie NextAuth
@@ -165,16 +201,13 @@ function runPlaywright() {
   });
 }
 
-async function run() {
-  writeStrippedConfig();
-
+async function runShard(tests, index) {
   const child = spawn(
-    // 'npx', not 'npx.cmd'. The .cmd shim exists only on Windows, so this
-    // spawn died with ENOENT on any Linux host — including CI, where this
-    // whole step sits behind `vars.E2E_ENABLED == 'true'` and so had evidently
-    // never actually run. The Playwright spawn below always used plain 'npx'.
-    'npx',
-    ['wrangler', 'dev', '--config', TMP_CONFIG, '--port', String(PORT), '--show-interactive-dev-session=false'],
+    // Launch the pinned local CLIs through the current Node executable. This
+    // avoids platform-specific npx/.cmd process handling and guarantees the
+    // runtime suite exercises the dependency versions in package-lock.json.
+    process.execPath,
+    [WRANGLER_CLI, 'dev', '--config', TMP_CONFIG, '--port', String(PORT), '--show-interactive-dev-session=false'],
     {
       stdio: ['ignore', 'inherit', 'inherit'],
       detached: process.platform !== 'win32',
@@ -191,13 +224,31 @@ async function run() {
   let exitCode = 1;
   try {
     await waitForBoot(child);
-    console.log(`[e2e-workerd] Ready on ${BASE}, running authenticated e2e suite...`);
-    exitCode = await runPlaywright();
+    console.log(`[e2e-workerd] Ready on ${BASE}; shard ${index + 1}/${TEST_SHARDS.length}: ${tests.join(', ')}`);
+    exitCode = await runPlaywright(tests);
   } catch (error) {
     console.error('[e2e-workerd]', error);
     exitCode = 1;
   } finally {
     await stopProcessTree(child);
+  }
+
+  return exitCode;
+}
+
+async function run() {
+  writeStrippedConfig();
+
+  let exitCode = 0;
+  try {
+    for (const [index, tests] of TEST_SHARDS.entries()) {
+      exitCode = await runShard(tests, index);
+      if (exitCode !== 0) break;
+      // Give the operating system a moment to release the listening socket
+      // before the next fresh workerd process binds the same port.
+      await delay(500);
+    }
+  } finally {
     rmSync(TMP_CONFIG, { force: true });
   }
 

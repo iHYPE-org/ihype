@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { canSeedSession, seedSessionCookie, sessionCookieName } from './fixtures/session';
 
 // Smoke test: magic-link send flow reaches its confirmation screen.
 // Requires TEST_USER_EMAIL (set via .env.test or CI secrets); falls back to
@@ -16,7 +17,7 @@ import { test, expect } from '@playwright/test';
 // throws, and every authenticated request 401s.
 //
 // Run this suite via `node scripts/e2e-workerd.mjs` instead (a real
-// `wrangler dev` instance) — verified working end to end. CI's "Extended
+// `wrangler dev` instance) — verified working end to end. CI's "Mandatory
 // authenticated E2E suite" step uses that script for exactly this reason.
 //
 // PLAYWRIGHT_AUTH_COOKIE_SECURE=true (set by scripts/e2e-workerd.mjs) picks
@@ -25,9 +26,6 @@ import { test, expect } from '@playwright/test';
 // is under the built worker (production semantics), unlike plain `next dev`.
 
 const EMAIL = process.env.TEST_USER_EMAIL ?? 'test@ihype.org';
-const SESSION_COOKIE_NAME = process.env.PLAYWRIGHT_AUTH_COOKIE_SECURE === 'true'
-  ? '__Secure-authjs.session-token'
-  : 'authjs.session-token';
 
 test.describe('Authentication', () => {
   test('magic-link send reaches its confirmation screen', async ({ page }) => {
@@ -37,7 +35,7 @@ test.describe('Authentication', () => {
     // way to complete sign-in from here without reading a real inbox, so
     // this test only verifies the send path reaches that confirmation, not
     // a full login — full session establishment is covered separately by
-    // the TEST_SESSION_COOKIE-based test below and by passkey.spec.ts.
+    // the self-seeded session test below and by passkey.spec.ts.
 
     // 1. Navigate to login page
     await page.goto('/login');
@@ -80,14 +78,13 @@ test.describe('Authentication', () => {
   });
 
   test('Authenticated /login redirects to /listen', async ({ page, context }) => {
-    // Seed a session cookie if available, else skip
-    const sessionCookie = process.env.TEST_SESSION_COOKIE;
-    if (!sessionCookie) {
-      test.skip(true, 'TEST_SESSION_COOKIE not set');
+    if (!canSeedSession()) {
+      test.skip(true, 'Needs E2E_WORKERD_DATABASE_URL + AUTH_SECRET to seed a session.');
       return;
     }
+    const { cookie: sessionCookie } = await seedSessionCookie('e2e-auth-redirect@ihype.org');
     await context.addCookies([{
-      name: SESSION_COOKIE_NAME,
+      name: sessionCookieName(),
       value: sessionCookie,
       domain: new URL(process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000').hostname,
       path: '/',

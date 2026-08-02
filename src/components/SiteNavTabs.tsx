@@ -1,10 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { NavDrawer } from '@/components/NavDrawer';
 import { useI18n } from '@/components/I18nProvider';
 
 const TABS = [
@@ -50,7 +48,6 @@ export function SiteNavTabs() {
   const pathname = usePathname();
   const active = matchTab(pathname);
   const { data: session, status } = useSession();
-  const [menuOpen, setMenuOpen] = useState(false);
 
   // Listen/Events/Pages are the signed-in app shell's own destinations — a
   // logged-out desktop visitor sees the marketing site (Sign in / Join free,
@@ -107,57 +104,6 @@ export function SiteNavTabs() {
           </Link>
         );
       })}
-      <button
-        aria-expanded={menuOpen}
-        aria-label={t('siteNavTabs.openMenuAriaLabel', 'Open menu')}
-        className="nav-menu-trigger"
-        onClick={() => setMenuOpen(true)}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          padding: '8px 16px 8px 8px',
-          borderRadius: 999,
-          border: `1px solid var(--accent-2)${menuOpen ? '59' : '28'}`,
-          background: `var(--accent-2)${menuOpen ? '18' : '08'}`,
-          cursor: 'pointer',
-          whiteSpace: 'nowrap',
-          transition: 'background 150ms cubic-bezier(0.2,0.7,0.3,1), border-color 150ms cubic-bezier(0.2,0.7,0.3,1)',
-        }}
-        type="button"
-      >
-        <span
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 34,
-            height: 34,
-            borderRadius: 12,
-            flexShrink: 0,
-            background: `var(--accent-2)${menuOpen ? '2e' : '16'}`,
-            color: 'var(--accent-2)',
-          }}
-        >
-          <svg fill="none" height="17" viewBox="0 0 24 24" width="17" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8">
-            <line x1="4" y1="7" x2="20" y2="7" />
-            <line x1="4" y1="12" x2="20" y2="12" />
-            <line x1="4" y1="17" x2="20" y2="17" />
-          </svg>
-        </span>
-        <span
-          style={{
-            fontFamily: "var(--font-display, 'Syne', sans-serif)",
-            fontSize: 14,
-            fontWeight: 800,
-            letterSpacing: '-0.01em',
-            color: menuOpen ? 'var(--ink)' : 'var(--ink-a75)',
-          }}
-        >
-          {t('siteNavTabs.menu', 'Menu')}
-        </span>
-      </button>
-      <NavDrawer open={menuOpen} onOpenChange={setMenuOpen} showTrigger={false} />
     </nav>
   );
 }

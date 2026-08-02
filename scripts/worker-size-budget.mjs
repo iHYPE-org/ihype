@@ -43,14 +43,15 @@ const MIB = 1024 * 1024;
 // Cloudflare's hard limit is 10 MiB gzip. Budget sits below that so CI goes
 // red with real headroom to spare, not the instant the true ceiling is hit.
 const BUDGET_BYTES = 9 * MIB;
+const WRANGLER_CLI = join(process.cwd(), 'node_modules', 'wrangler', 'bin', 'wrangler.js');
 
 function main() {
   const outdir = mkdtempSync(join(tmpdir(), 'worker-size-budget-'));
   let stdout;
   try {
     stdout = execFileSync(
-      'npx',
-      ['wrangler', 'deploy', 'worker.js', '--autoconfig=false', '--dry-run', `--outdir=${outdir}`],
+      process.execPath,
+      [WRANGLER_CLI, 'deploy', 'worker.js', '--autoconfig=false', '--dry-run', `--outdir=${outdir}`],
       {
         encoding: 'utf8',
         env: {

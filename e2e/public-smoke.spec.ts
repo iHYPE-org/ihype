@@ -2,12 +2,21 @@ import { expect, test } from '@playwright/test';
 
 test.describe('Public application smoke', () => {
   test('landing and login pages render without server errors', async ({ page }) => {
+    const hydrationErrors: string[] = [];
+    page.on('console', (message) => {
+      if (message.type() === 'error' && /hydrated|hydration mismatch/i.test(message.text())) {
+        hydrationErrors.push(message.text());
+      }
+    });
+
     for (const path of ['/', '/login']) {
       const response = await page.goto(path);
       expect(response?.status(), `${path} should return a successful response`).toBeLessThan(400);
       await expect(page).toHaveTitle(/iHYPE/i);
       await expect(page.locator('body')).not.toContainText('Internal Server Error');
     }
+
+    expect(hydrationErrors, 'public auth surfaces should hydrate without React mismatches').toEqual([]);
   });
 
   test('protected home redirects anonymous visitors to login', async ({ page }) => {

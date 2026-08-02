@@ -36,10 +36,10 @@ export async function POST(request: NextRequest) {
       if (existing) return true;
 
       if (event.type === 'email.bounced' || event.type === 'email.complained') {
-        const emails = [...new Set(event.data?.to ?? [])];
+        const emails = [...new Set((event.data?.to ?? []).map((email) => email.trim().toLowerCase()).filter(Boolean))];
         for (const email of emails) {
           await tx.user.updateMany({
-            where: { email: email.trim().toLowerCase() },
+            where: { email },
             data: { emailBounced: true },
           });
         }

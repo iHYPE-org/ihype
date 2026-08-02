@@ -1,10 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { NavDrawer } from '@/components/NavDrawer';
 import { useMobileShell } from '@/lib/MobileShellContext';
 import type { ShellSection } from '@/lib/mobileShell';
 import { useI18n } from '@/components/I18nProvider';
@@ -79,7 +77,6 @@ const tabButtonStyle = {
 export function MobileBottomNav() {
   const { t } = useI18n();
   const pathname = usePathname();
-  const [menuOpen, setMenuOpen] = useState(false);
   const shell = useMobileShell();
   const { status: sessionStatus } = useSession();
   const localDesignPreview = process.env.NODE_ENV === 'development' && pathname === '/ui-preview';
@@ -98,7 +95,6 @@ export function MobileBottomNav() {
     : matchTab(pathname);
 
   return (
-    <>
       <nav
         aria-label="Mobile navigation"
         className="ihype-mobile-nav"
@@ -132,18 +128,6 @@ export function MobileBottomNav() {
             <span>{t(`mobileBottomNav.tab.${tabDef.id}`, tabDef.label)}</span>
           </Link>
         ))}
-        <button
-          aria-expanded={menuOpen}
-          aria-label={t('mobileBottomNav.openMenuAriaLabel', 'Open menu')}
-          onClick={() => setMenuOpen(true)}
-          style={{ ...tabButtonStyle, background: 'none', border: 'none', cursor: 'pointer', color: menuOpen ? 'var(--accent)' : 'rgba(240,240,240,0.45)' }}
-          type="button"
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
-          <span>{t('mobileBottomNav.menuLabel', 'Menu')}</span>
-        </button>
       </nav>
-      <NavDrawer onOpenChange={setMenuOpen} open={menuOpen} showTrigger={false} />
-    </>
   );
 }

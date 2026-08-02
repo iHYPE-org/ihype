@@ -79,7 +79,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning className={`${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} ${forum.variable}`}>
       <head>
-        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
+        <script
+          nonce={nonce}
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{ __html: themeBootstrap }}
+        />
       </head>
       <body>
         <AppProviders>
