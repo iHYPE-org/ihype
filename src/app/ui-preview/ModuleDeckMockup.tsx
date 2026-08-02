@@ -7,9 +7,14 @@ import { type CSSProperties, type Dispatch, type PointerEvent, type SetStateActi
 import { createPortal } from 'react-dom';
 import { coarsenFanCoordinates } from '@/lib/public-location';
 import { usePlatformCapabilities } from '@/lib/usePlatformCapabilities';
+import { resolvePlaybackFailure, sanitizePlaybackCheckpoint } from '@/lib/player-recovery';
+import { track } from '@/lib/analytics';
+import { telemetryPlatform } from '@/lib/telemetry';
 import { loadDiscoveryTracks, loadNearbyShows, loadRadioTracks, recordDiscoveryDecision, searchPreview, updateSceneNotifications, type ExperienceTrack, type NearbyShow, type PreviewDataSource, type PreviewSearchResult } from './preview-api';
+import { AlphaQuickFeedback } from './AlphaQuickFeedback';
+import { PrivacySafeTelemetry } from './PrivacySafeTelemetry';
+import { ModuleIntro, ModuleNavigator, modules, type ModuleId } from './ModuleDeckChrome';
 
-type ModuleId = 'map' | 'discover' | 'radio' | 'dashboard' | 'settings' | 'community';
 type RoleId = 'fan' | 'artist' | 'dj' | 'venue' | 'promoter' | 'advertiser';
 type DemoState = 'normal' | 'loading' | 'empty' | 'offline' | 'error' | 'playback';
 type CommunitySection = 'voting' | 'info' | 'legal' | 'dmca';
@@ -26,6 +31,11 @@ export type DeckViewer = {
     saved: boolean;
     foundEvent: boolean;
   };
+};
+
+export type DeckFeatures = {
+  maps: boolean;
+  radio: boolean;
 };
 
 function usePersistentState<T>(key: string, initialValue: T): [T, Dispatch<SetStateAction<T>>] {
@@ -68,15 +78,6 @@ function signalImplementationAction(action: ImplementationAction, payload: Recor
   if (typeof window === 'undefined') return;
   window.dispatchEvent(new CustomEvent('ihype:implementation-action', { detail: { action, ...implementationBindings[action], payload } }));
 }
-
-const modules: Array<{ id: ModuleId; label: string; eyebrow: string; detail: string }> = [
-  { id: 'map', label: 'Around you', eyebrow: '01 / Scene map', detail: 'Venues, artists, and events in reach' },
-  { id: 'discover', label: 'Discover', eyebrow: '02 / Discovery', detail: 'Swipe through music outside your orbit' },
-  { id: 'radio', label: 'Radio', eyebrow: '03 / Live radio', detail: 'Shows by sound, scene, and subject' },
-  { id: 'dashboard', label: 'Dashboard', eyebrow: '04 / Your signal', detail: 'The view that fits your role' },
-  { id: 'settings', label: 'Settings', eyebrow: '05 / Control room', detail: 'Privacy, playback, and notifications' },
-  { id: 'community', label: 'Community', eyebrow: '06 / Open book', detail: 'Voting, transparency, legal, and DMCA' },
-];
 
 const discoveryTracks: ExperienceTrack[] = [
   { mediaId: null, title: 'City Lights', artist: 'Jayla Reign', scene: 'Detroit · alternative R&B', art: '/brand/alpha-featured.png', match: '92% scene match' },
@@ -436,7 +437,7 @@ function OpenSceneMap({
   </div>;
 }
 
-function SceneMap({ production }: { production: boolean }) {
+function SceneMap({ enabled, production }: { enabled: boolean; production: boolean }) {
   const [mapMenuOpen, setMapMenuOpen] = useState(false);
   const [privacyKeyOpen, setPrivacyKeyOpen] = useState(false);
   const [filter, setFilter] = usePersistentState<MapFilterId>('ihype:preview-map-filter', 'tonight');
@@ -458,6 +459,7 @@ function SceneMap({ production }: { production: boolean }) {
   const refreshTimer = useRef<number | null>(null);
   const zoom = mapZoomLevels[Math.max(0, Math.min(mapZoomLevels.length - 1, zoomIndex))];
   const noResults = filter === 'tour' && zoom.id === 'town';
+
   const sampleResultCount = Math.max(2, (filter === 'venues' ? 18 : filter === 'tour' ? 6 : 12) - (hypeOnly ? 7 : 0) - (genre === 'All genres' ? 0 : 3));
   const resultCount = nearbySource === 'live' && nearbyCount !== null && zoomIndex <= 3 ? nearbyCount : production ? 0 : sampleResultCount;
   const publicVenueShows = useMemo(() => nearbyShows
@@ -589,15 +591,16 @@ function SceneMap({ production }: { production: boolean }) {
     );
   };
 
+  if (!enabled) {
+    return <section aria-labelledby="map-title" className="deck-module deck-map-module"><div className="deck-module-copy"><span className="deck-kicker">SCENE MAP · TEMPORARILY PAUSED</span><h1 id="map-title">Your scene,<br />kept safe.</h1><p>Map lookups are paused by an operations switch. No location is being requested or transmitted.</p></div><div className="feature-paused"><strong>Map connection paused</strong><span>Music, tickets, and your saved Discovery playlist remain available.</span></div></section>;
+  }
+
   return (
     <section aria-labelledby="map-title" className="deck-module deck-map-module">
-      <div className="deck-module-copy">
-        <span className="deck-kicker">LIVE SCENE SIGNAL · {zoom.label.toUpperCase()} VIEW</span>
-        <h1 id="map-title">Your scene,<br />right here.</h1>
-        <p>Move from your town to the whole world without losing the local rooms, events, and HYPE signals that make each scene real.</p>
+      <ModuleIntro className="deck-module-copy" description="Move from your town to the whole world without losing the local rooms, events, and HYPE signals that make each scene real." kicker={<>LIVE SCENE SIGNAL · {zoom.label.toUpperCase()} VIEW</>} title={<>Your scene,<br />right here.</>} titleId="map-title">
         <div className="deck-location-line"><Icon name="location" /><span><strong>{location}</strong><small>{locationMessage}</small></span></div>
         <button className="deck-button deck-button-primary" disabled={locating} onClick={locate} type="button">{locating ? 'Locating…' : 'Use my location'}</button>
-      </div>
+      </ModuleIntro>
 
       <div className="scene-map-frame">
         <button aria-expanded={mapMenuOpen} aria-label={mapMenuOpen ? 'Close map filters' : 'Open map filters'} className="map-menu-button" onClick={() => setMapMenuOpen((value) => !value)} type="button"><Icon name={mapMenuOpen ? 'close' : 'menu'} /></button>
@@ -741,12 +744,9 @@ function DiscoverModule({ production }: { production: boolean }) {
 
   return (
     <section aria-labelledby="discover-title" className="deck-module discover-module">
-      <div className="discover-copy">
-        <span className="deck-kicker">DISCOVER · 75% YOUR SIGNAL / 25% WILD CARD</span>
-        <h1 id="discover-title">One song.<br />One decision.</h1>
-        <p>Swipe right when it belongs in your Discovery playlist. Swipe left when it does not. Your choices reshape what comes next.</p>
+      <ModuleIntro className="discover-copy" description="Swipe right when it belongs in your Discovery playlist. Swipe left when it does not. Your choices reshape what comes next." kicker="DISCOVER · 75% YOUR SIGNAL / 25% WILD CARD" title={<>One song.<br />One decision.</>} titleId="discover-title">
         <div className="discover-count"><strong>{saved}</strong><span>songs saved<br />{production ? 'this session' : 'to Discovery'}</span></div>
-      </div>
+      </ModuleIntro>
       <div className={`discover-stage ${dragX > 10 ? 'intent-save' : dragX < -10 ? 'intent-skip' : ''}`} style={{ '--swipe-strength': swipeStrength } as CSSProperties}>
         <div aria-hidden="true" className="discover-signal-wash" />
         <div className={`swipe-outcome ${dragX < -35 ? 'is-visible' : ''}`}>SKIP</div>
@@ -768,7 +768,7 @@ function DiscoverModule({ production }: { production: boolean }) {
   );
 }
 
-function RadioModule({ production }: { production: boolean }) {
+function RadioModule({ enabled, production }: { enabled: boolean; production: boolean }) {
   const [genre, setGenre] = usePersistentState('ihype:preview-radio-genre', 'All sounds');
   const [location, setLocation] = usePersistentState('ihype:preview-radio-location', 'Near Detroit');
   const [topic, setTopic] = usePersistentState('ihype:preview-radio-topic', 'New releases');
@@ -779,14 +779,14 @@ function RadioModule({ production }: { production: boolean }) {
   const [liveTracks, setLiveTracks] = useState<ExperienceTrack[]>([]);
   const [radioLoading, setRadioLoading] = useState(production);
   useEffect(() => {
-    if (!production) return;
+    if (!production || !enabled) return;
     const controller = new AbortController();
     setRadioLoading(true);
     void loadRadioTracks(controller.signal).then(setLiveTracks).catch(() => setLiveTracks([])).finally(() => {
       if (!controller.signal.aborted) setRadioLoading(false);
     });
     return () => controller.abort();
-  }, [production]);
+  }, [enabled, production]);
   const liveRecommendations = scope === 'local' ? liveTracks.slice(0, 8).map((track) => ({ id: track.mediaId ?? track.title, title: track.title, meta: `${track.artist} · ${track.scene}`, signal: 'Live catalog', time: 'PLAY' })) : [];
   const recommendationPool = production ? liveRecommendations : radioRecommendations[scope];
   const recommendations = recommendationPool.filter((station) => !favoritesOnly || favorites.includes(station.id));
@@ -802,16 +802,14 @@ function RadioModule({ production }: { production: boolean }) {
     else if (playing) window.dispatchEvent(new Event('ihype:player-toggle'));
     setPlaying((value) => !value);
   };
+  if (!enabled) return <section aria-labelledby="radio-title" className="deck-module radio-module"><div className="radio-heading"><span className="deck-kicker">RADIO · TEMPORARILY PAUSED</span><h1 id="radio-title">The signal<br />will return.</h1><p>Radio delivery is paused by an operations switch while the rest of iHYPE stays available.</p></div><div className="feature-paused"><strong>Radio is safely paused</strong><span>Open Discover to keep exploring published local music.</span></div></section>;
   return (
     <section aria-labelledby="radio-title" className="deck-module radio-module">
-      <div className="radio-heading">
-        <span className="deck-kicker">RADIO · HUMAN-CURATED · MUSIC-ONLY SUPPORT</span>
-        <h1 id="radio-title">Every scene<br />has a signal</h1>
-        <p>Start close to home, then move through regional, national, and global independent radio without losing your favorites.</p>
+      <ModuleIntro className="radio-heading" description="Start close to home, then move through regional, national, and global independent radio without losing your favorites." kicker="RADIO · HUMAN-CURATED · MUSIC-ONLY SUPPORT" title={<>Every scene<br />has a signal</>} titleId="radio-title">
         <div aria-label="Radio recommendation distance" className="radio-scope" role="group">
           {(Object.keys(radioRecommendations) as RadioScope[]).map((id) => <button aria-pressed={scope === id} key={id} onClick={() => { setScope(id); setFavoritesOnly(false); }} type="button">{id}</button>)}
         </div>
-      </div>
+      </ModuleIntro>
       <div className="radio-console">
         <div className="radio-topline">
           <div className="radio-live-art"><div className="radio-rings"><span /><span /><span /><span /></div><button aria-label={playing ? 'Pause radio' : 'Play radio'} disabled={production && !heroTrack} onClick={toggleHero} type="button"><Icon name={playing ? 'pause' : 'play'} /></button></div>
@@ -880,17 +878,14 @@ function DashboardModule({ production, viewer }: { production: boolean; viewer?:
   };
   return (
     <section aria-labelledby="dashboard-title" className="deck-module dashboard-module">
-      <div className="dashboard-heading">
-        <span className="deck-kicker">DASHBOARD · ONLY YOUR ACTIVE ROLES</span>
-        <h1 id="dashboard-title">{data.headline}</h1>
-        <p>{data.description}</p>
+      <ModuleIntro className="dashboard-heading" description={data.description} kicker="DASHBOARD · ONLY YOUR ACTIVE ROLES" title={data.headline} titleId="dashboard-title">
         <div aria-label="Choose dashboard role" className="role-picker" role="group">
           {assignedRoles.map((id) => <button aria-pressed={role === id} key={id} onClick={() => setRole(id)} type="button">{id}</button>)}
           {!production && <button aria-expanded={managingRoles} className="role-manage-button" onClick={() => setManagingRoles((value) => !value)} type="button">Manage roles</button>}
         </div>
         {!production && managingRoles && <div className="role-manager"><span>Alpha role preview</span><p>The live dashboard will derive these from verified account roles.</p><div>{(Object.keys(roleData) as RoleId[]).map((id) => <button aria-pressed={assignedRoles.includes(id)} key={id} onClick={() => toggleRole(id)} type="button"><span>{assignedRoles.includes(id) ? '✓' : '+'}</span>{id}</button>)}</div></div>}
         <article className="dashboard-build"><span>PAGE & WORKSPACE</span><strong>{data.build[0]}</strong><p>{data.build[1]}</p><Link href={role === 'dj' ? '/radio/studio' : role === 'venue' ? '/events/new' : role === 'advertiser' ? '/advertise/dashboard' : '/pages'}>Open editor ↗</Link></article>
-      </div>
+      </ModuleIntro>
       <div className="dashboard-signal dashboard-workspace">
         {role === 'fan' && activation && <section className="dashboard-activation"><div><span>YOUR FIRST LOCAL LOOP</span><strong>{activationComplete}/4 complete</strong></div><div>{activationSteps.map(([label, complete, href]) => <Link className={complete ? 'is-complete' : ''} href={href} key={label}><i>{complete ? '✓' : '○'}</i><span>{label}</span><b>{complete ? 'Done' : 'Try it'} ↗</b></Link>)}</div></section>}
         <div className="dashboard-next"><span>NEXT BEST ACTION</span><strong>{data.actions[0]}</strong><Link href={roleActionHrefs[role][0]}>Start now ↗</Link></div>
@@ -967,7 +962,7 @@ function SettingsModule({ demoState, onDemoStateChange, onReducedMotionChange, p
     setCaptions(window.localStorage.getItem('ihype-captions') !== 'false');
     setPrivateListening(window.localStorage.getItem('ihype-private-listening') === 'true');
     setLocation(window.localStorage.getItem('ihype-location-personalization') !== 'false');
-  }, [production]);
+  }, [onReducedMotionChange, production]);
   const updateSetting = <T,>(key: string, setter: Dispatch<SetStateAction<T>>, value: T) => {
     setter(value);
     signalImplementationAction('settingsUpdate', { key, value });
@@ -979,7 +974,7 @@ function SettingsModule({ demoState, onDemoStateChange, onReducedMotionChange, p
   };
   return (
     <section aria-labelledby="settings-title" className="deck-module settings-module">
-      <div className="settings-heading"><span className="deck-kicker">SETTINGS · YOU ARE IN CONTROL</span><h1 id="settings-title">Your app.<br />Your rules.</h1><p>Everything important is visible, understandable, and reversible.</p></div>
+      <ModuleIntro className="settings-heading" description="Everything important is visible, understandable, and reversible." kicker="SETTINGS · YOU ARE IN CONTROL" title={<>Your app.<br />Your rules.</>} titleId="settings-title" />
       <div className="settings-board" data-api-path={implementationBindings.settingsUpdate.path}>
         <div className="settings-section settings-appearance"><span>LANGUAGE & APPEARANCE</span><label><strong>Language</strong><select onChange={(event) => updateSetting('language', setLanguage, event.target.value)} value={language}><option>English</option><option>Español</option><option>Français</option><option>Português</option><option>العربية</option><option>Deutsch</option><option>日本語</option><option>中文</option><option>Italiano</option><option>한국어</option><option>हिन्दी</option><option>Русский</option></select></label><label><strong>Theme</strong><select onChange={(event) => updateSetting('theme', setTheme, event.target.value)} value={theme}><option>System</option><option>Dark</option><option>Light</option></select></label></div>
         <div className="settings-section settings-accessibility"><span>ACCESSIBILITY</span><label><span><strong>Reduce motion</strong><small>Minimize transitions and animated artwork</small></span><input checked={reducedMotion} onChange={(event) => { onReducedMotionChange(event.target.checked); signalImplementationAction('settingsUpdate', { key: 'reducedMotion', value: event.target.checked }); applyDeviceSetting('reducedMotion', event.target.checked); }} type="checkbox" /></label><label><span><strong>High contrast</strong><small>Increase borders and text separation</small></span><input checked={highContrast} onChange={(event) => updateSetting('highContrast', setHighContrast, event.target.checked)} type="checkbox" /></label><label><span><strong>Larger interface text</strong><small>Increase labels and supporting copy</small></span><input checked={largerText} onChange={(event) => updateSetting('largerText', setLargerText, event.target.checked)} type="checkbox" /></label><label><span><strong>Underline links</strong><small>Make text links easier to identify</small></span><input checked={underlineLinks} onChange={(event) => updateSetting('underlineLinks', setUnderlineLinks, event.target.checked)} type="checkbox" /></label><label><span><strong>Readable font</strong><small>Use a simpler typeface for long reading</small></span><input checked={readableFont} onChange={(event) => updateSetting('readableFont', setReadableFont, event.target.checked)} type="checkbox" /></label><label><span><strong>Captions and transcripts</strong><small>Prefer available text for radio and video</small></span><input checked={captions} onChange={(event) => updateSetting('captions', setCaptions, event.target.checked)} type="checkbox" /></label></div>
@@ -1013,7 +1008,7 @@ function CommunityModule({ production }: { production: boolean }) {
   };
   return (
     <section aria-labelledby="community-title" className="deck-module community-module">
-      <div className="community-manifesto"><span className="deck-kicker">{copy.kicker}</span><h1 id="community-title">{copy.title}</h1><p>{copy.description}</p></div>
+      <ModuleIntro className="community-manifesto" description={copy.description} kicker={copy.kicker} title={copy.title} titleId="community-title" />
       <div className="community-board">
         <nav aria-label="Community sections" className="community-subnav">
           {([['voting', 'Voting'], ['info', 'Info'], ['legal', 'Legal & privacy'], ['dmca', 'DMCA']] as Array<[CommunitySection, string]>).map(([id, label]) => <button aria-current={section === id ? 'page' : undefined} key={id} onClick={() => setSection(id)} type="button">{label}</button>)}
@@ -1103,7 +1098,7 @@ function formatPlayerTime(value: number) {
   return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
-function CompactPlayer({ activeModule, onHype, production }: { activeModule: ModuleId; onHype: (intensity: HypeIntensity) => void; production: boolean }) {
+function CompactPlayer({ activeModule, onHype, production, radioEnabled }: { activeModule: ModuleId; onHype: (intensity: HypeIntensity) => void; production: boolean; radioEnabled: boolean }) {
   const [mounted, setMounted] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [volume, setVolume] = useState(72);
@@ -1120,6 +1115,9 @@ function CompactPlayer({ activeModule, onHype, production }: { activeModule: Mod
   const hypeHoldTimer = useRef<number | null>(null);
   const hypeHoldTriggered = useRef(false);
   const venueContextTimer = useRef<number | null>(null);
+  const resumeAfterNetwork = useRef(false);
+  const lastCheckpointSecond = useRef(-1);
+  const consecutivePlaybackErrors = useRef(0);
   const [playerIndex, setPlayerIndex] = usePersistentState('ihype:preview-player-track', 0);
   const [queue, setQueue] = usePersistentState(production ? 'ihype:play-queue' : 'ihype:preview-queue', production ? [] : [
     { id: 'pressure', title: 'Pressure', artist: 'Milo Coast', duration: '3:21', type: 'track' },
@@ -1130,7 +1128,7 @@ function CompactPlayer({ activeModule, onHype, production }: { activeModule: Mod
 
   useEffect(() => setMounted(true), []);
   useEffect(() => {
-    if (!production) return;
+    if (!production || !radioEnabled) return;
     const controller = new AbortController();
     void loadRadioTracks(controller.signal).then((tracks) => {
       if (tracks[0]) setExternalTrack(tracks[0]);
@@ -1138,7 +1136,7 @@ function CompactPlayer({ activeModule, onHype, production }: { activeModule: Mod
       // The neutral player remains ready while the catalog is unavailable.
     });
     return () => controller.abort();
-  }, [production]);
+  }, [production, radioEnabled]);
 
   const baseTrack = production
     ? { mediaId: null, title: 'Choose a local track', artist: 'Open Discover or Radio to begin', art: '/brand/ihype-signal-mark.svg', scene: 'Your scene', match: 'Ready for a real local signal' }
@@ -1149,6 +1147,7 @@ function CompactPlayer({ activeModule, onHype, production }: { activeModule: Mod
   const artworkPalette = useArtworkPalette(playerTrack.art);
   const canPlay = !production || Boolean(playerTrack.url);
   const canHype = !production || Boolean(playerTrack.mediaId);
+  const trackKey = (playerTrack.hexId ?? playerTrack.mediaId ?? `preview-${playerIndex}`).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 80);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -1161,6 +1160,63 @@ function CompactPlayer({ activeModule, onHype, production }: { activeModule: Mod
       });
     } else audio.pause();
   }, [playerTrack.url, playing]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    try {
+      const checkpoint = sanitizePlaybackCheckpoint(JSON.parse(window.sessionStorage.getItem('ihype:player-checkpoint') ?? 'null'));
+      if (checkpoint?.trackKey === trackKey) {
+        setCurrentTime(checkpoint.currentTime);
+        setVolume(checkpoint.volume);
+      }
+    } catch {
+      // A malformed or unavailable local checkpoint never blocks playback.
+    }
+  }, [mounted, trackKey]);
+
+  useEffect(() => {
+    const onOffline = () => {
+      resumeAfterNetwork.current = playing;
+      setPlaying(false);
+      setPlaybackError('You are offline. Your queue and position are saved on this device.');
+      track('player_failure', { module: activeModule, online: false, platform: telemetryPlatform(navigator.userAgent), reason: 'offline' });
+    };
+    const onOnline = () => {
+      setPlaybackError(resumeAfterNetwork.current ? 'Connection restored. Resuming your local signal…' : 'Connection restored.');
+      if (resumeAfterNetwork.current && playerTrack.url) setPlaying(true);
+      resumeAfterNetwork.current = false;
+    };
+    const onDeviceChange = () => {
+      if (playing) setPlaybackError('Audio output changed. Playback position is preserved.');
+    };
+    window.addEventListener('offline', onOffline);
+    window.addEventListener('online', onOnline);
+    navigator.mediaDevices?.addEventListener?.('devicechange', onDeviceChange);
+    return () => {
+      window.removeEventListener('offline', onOffline);
+      window.removeEventListener('online', onOnline);
+      navigator.mediaDevices?.removeEventListener?.('devicechange', onDeviceChange);
+    };
+  }, [activeModule, playerTrack.url, playing]);
+
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: playerTrack.title,
+      artist: playerTrack.artist,
+      artwork: [{ src: new URL(playerTrack.art, window.location.origin).href }],
+    });
+    navigator.mediaSession.setActionHandler('play', () => setPlaying(true));
+    navigator.mediaSession.setActionHandler('pause', () => setPlaying(false));
+    navigator.mediaSession.setActionHandler('previoustrack', () => changeTrack(-1));
+    navigator.mediaSession.setActionHandler('nexttrack', () => changeTrack(1));
+    return () => {
+      navigator.mediaSession.setActionHandler('play', null);
+      navigator.mediaSession.setActionHandler('pause', null);
+      navigator.mediaSession.setActionHandler('previoustrack', null);
+      navigator.mediaSession.setActionHandler('nexttrack', null);
+    };
+  }, [playerTrack.artist, playerTrack.art, playerTrack.title]);
 
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume / 100;
@@ -1185,6 +1241,11 @@ function CompactPlayer({ activeModule, onHype, production }: { activeModule: Mod
   const removeQueueItem = (id: string) => setQueue((items) => items.filter((item) => item.id !== id));
   const changeTrack = (direction: -1 | 1) => {
     if (production) {
+      if (!radioEnabled) {
+        setPlaying(false);
+        setPlaybackError('Radio is temporarily paused. Your queue is preserved.');
+        return;
+      }
       const controller = new AbortController();
       void loadRadioTracks(controller.signal).then((tracks) => {
         const candidates = tracks.filter((track) => track.mediaId !== playerTrack.mediaId);
@@ -1285,7 +1346,48 @@ function CompactPlayer({ activeModule, onHype, production }: { activeModule: Mod
 
   return (<>
     <div aria-label="Persistent music player" className={`deck-player context-${activeModule} ${activeModule === 'discover' || activeModule === 'radio' ? 'is-featured' : ''} ${playing ? 'is-playing' : ''}`} role="region" style={{ '--art-rgb': artworkPalette } as CSSProperties}>
-      <audio onEnded={() => changeTrack(1)} onError={() => { if (playerTrack.url) setPlaybackError('This track is temporarily unavailable.'); }} onLoadedMetadata={(event) => setDuration(event.currentTarget.duration || 0)} onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)} preload="metadata" ref={audioRef} src={playerTrack.url ?? undefined} />
+      <audio
+        onEnded={() => changeTrack(1)}
+        onError={() => {
+          if (!playerTrack.url) return;
+          setPlaying(false);
+          const reason = navigator.onLine ? 'decode' : 'offline';
+          setPlaybackError(navigator.onLine ? 'This track is temporarily unavailable. Try the next local signal.' : 'You are offline. Your queue and position are saved.');
+          track('player_failure', { module: activeModule, online: navigator.onLine, platform: telemetryPlatform(navigator.userAgent), reason });
+          if (!navigator.onLine) return;
+          consecutivePlaybackErrors.current += 1;
+          const decision = resolvePlaybackFailure({
+            consecutiveErrors: consecutivePlaybackErrors.current,
+            index: Math.max(0, playerIndex),
+            queueLength: Math.max(queue.length, production ? 2 : previewPlayerTracks.length),
+            repeatMode: 'all',
+          });
+          if (decision.action === 'skip') window.setTimeout(() => changeTrack(1), 500);
+        }}
+        onCanPlay={() => { consecutivePlaybackErrors.current = 0; }}
+        onLoadedMetadata={(event) => {
+          setDuration(event.currentTarget.duration || 0);
+          if (currentTime > 0 && currentTime < event.currentTarget.duration) event.currentTarget.currentTime = currentTime;
+        }}
+        onPause={() => setPlaying(false)}
+        onPlay={() => setPlaying(true)}
+        onTimeUpdate={(event) => {
+          const nextTime = event.currentTarget.currentTime;
+          setCurrentTime(nextTime);
+          const second = Math.floor(nextTime);
+          if (second === lastCheckpointSecond.current) return;
+          lastCheckpointSecond.current = second;
+          try {
+            window.sessionStorage.setItem('ihype:player-checkpoint', JSON.stringify({ currentTime: nextTime, trackKey, volume }));
+          } catch {
+            // Queue persistence remains optional in privacy-restricted browsers.
+          }
+        }}
+        playsInline
+        preload="metadata"
+        ref={audioRef}
+        src={playerTrack.url ?? undefined}
+      />
       <div aria-hidden="true" className="deck-player-aura" />
       {venueContext && <div aria-live="polite" className="deck-player-context-card"><span>HAPPENING NEAR YOU</span><strong>{venueContext.name}</strong><small>{venueContext.event} · {venueContext.time}</small><button aria-label="Dismiss nearby event" onClick={() => setVenueContext(null)} type="button">×</button></div>}
       <button aria-label="Open full player" className="deck-player-track-button" onClick={() => setExpanded(true)} type="button"><span className="deck-player-art" key={playerTrack.art}><Image alt="" height={52} src={playerTrack.art} width={52} /><PlayerWaveform playing={playing} /></span><span aria-live="polite" className="deck-player-copy" key={`${playerTrack.title}-${playerTrack.artist}`}><span>{activeModule === 'radio' ? 'RADIO' : playing ? 'NOW PLAYING' : 'READY'}</span><PlayerMarquee artist={playerTrack.artist} title={playerTrack.title} /></span></button>
@@ -1324,7 +1426,7 @@ function DemoStateOverlay({ copy, onRecover, state }: { copy: [string, string]; 
   </div>;
 }
 
-export function ModuleDeckMockup({ production = false, viewer }: { production?: boolean; viewer?: DeckViewer } = {}) {
+export function ModuleDeckMockup({ features = { maps: true, radio: true }, production = false, viewer }: { features?: DeckFeatures; production?: boolean; viewer?: DeckViewer } = {}) {
   const [activeIndex, setActiveIndex] = usePersistentState('ihype:preview-active-module', 0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -1461,8 +1563,9 @@ export function ModuleDeckMockup({ production = false, viewer }: { production?: 
   }, [toggleNavigator]);
 
   return (
-    <div className={`module-deck-preview module-${activeModule.id} platform-${platform.platform} input-${platform.input} ${signalToast ? 'scene-hype-active' : ''} ${platform.isNative ? 'is-native-shell' : ''} ${platform.isStandalone ? 'is-standalone' : ''} ${reducedMotion ? 'reduce-motion' : ''} ${pageVisible ? '' : 'is-page-hidden'}`} data-hype-pulse={hypePulse} data-platform={platform.platform}>
+    <div className={`module-deck-preview module-${activeModule.id} platform-${platform.platform} input-${platform.input} ${signalToast ? 'scene-hype-active' : ''} ${platform.isNative ? 'is-native-shell' : ''} ${platform.isStandalone ? 'is-standalone' : ''} ${reducedMotion ? 'reduce-motion' : ''} ${pageVisible ? '' : 'is-page-hidden'}`} data-active-module={activeModule.id} data-hype-pulse={hypePulse} data-platform={platform.platform}>
       <style>{styles}</style>
+      <PrivacySafeTelemetry module={activeModule.id} />
       <div aria-hidden="true" className="scene-atmosphere"><span className="scene-hype-wave" key={hypePulse} /></div>
       {signalToast && <div aria-live="polite" className="scene-signal-toast"><span />{signalToast}</div>}
       <header className="deck-topbar">
@@ -1479,27 +1582,23 @@ export function ModuleDeckMockup({ production = false, viewer }: { production?: 
         <div className="deck-active-label" key={activeModule.id}><span>{activeModule.eyebrow}</span><strong>{activeModule.label}</strong></div>
         <span className="deck-sample-badge">{production ? 'LIVE ALPHA' : 'ALPHA SAMPLE'}</span>
         <button aria-expanded={accountOpen} aria-label="Open account menu" className="deck-profile" onClick={() => setAccountOpen((value) => !value)} type="button">{viewer?.name?.trim().charAt(0).toUpperCase() || 'F'}</button>
-        {accountOpen && <div className="deck-account-menu"><div><span>SIGNED IN AS</span><strong>{viewer?.name || 'Fan alpha tester'}</strong><small>{viewer?.role || 'Base fan account'}</small></div><button onClick={() => changeModule(modules.findIndex((item) => item.id === 'settings'))} type="button">Settings <span>↗</span></button><Link href={`/support?alpha=1&module=${activeModule.id}`}>Send alpha feedback <span>↗</span></Link><Link href="/api/auth/signout">Log out <span>↗</span></Link></div>}
+        {accountOpen && <div className="deck-account-menu"><div><span>SIGNED IN AS</span><strong>{viewer?.name || 'Fan alpha tester'}</strong><small>{viewer?.role || 'Base fan account'}</small></div><button onClick={() => changeModule(modules.findIndex((item) => item.id === 'settings'))} type="button">Settings <span>↗</span></button><AlphaQuickFeedback module={activeModule.id} /><Link href={`/support?alpha=1&module=${activeModule.id}`}>Detailed feedback <span>↗</span></Link><Link href="/api/auth/signout">Log out <span>↗</span></Link></div>}
       </header>
 
       <main aria-busy={demoState === 'loading'} className="deck-stage">
-        {activeModule.id === 'map' && <SceneMap key="map" production={production} />}
+        {activeModule.id === 'map' && <SceneMap enabled={features.maps} key="map" production={production} />}
         {activeModule.id === 'discover' && <DiscoverModule key="discover" production={production} />}
-        {activeModule.id === 'radio' && <RadioModule key="radio" production={production} />}
+        {activeModule.id === 'radio' && <RadioModule enabled={features.radio} key="radio" production={production} />}
         {activeModule.id === 'dashboard' && <DashboardModule key="dashboard" production={production} viewer={viewer} />}
         {activeModule.id === 'settings' && <SettingsModule demoState={demoState} key="settings" onDemoStateChange={setDemoState} onReducedMotionChange={setReducedMotion} production={production} reducedMotion={reducedMotion} />}
         {activeModule.id === 'community' && <CommunityModule key="community" production={production} />}
         {!production && demoState !== 'normal' && <DemoStateOverlay copy={demoCopy[demoState]} onRecover={() => setDemoState('normal')} state={demoState} />}
       </main>
 
-      <CompactPlayer activeModule={activeModule.id} onHype={handlePlayerHype} production={production} />
+      <CompactPlayer activeModule={activeModule.id} onHype={handlePlayerHype} production={production} radioEnabled={features.radio} />
 
       <button aria-label="Close module navigator" className={`deck-scrim ${menuOpen ? 'is-open' : ''}`} onClick={() => setMenuOpen(false)} type="button" />
-      <aside aria-hidden={!menuOpen} className={`deck-navigator ${menuOpen ? 'is-open' : ''}`}>
-        <div className="deck-nav-heading"><span>MOVE THROUGH iHYPE</span><small>Choose a module</small></div>
-        <nav aria-label="iHYPE modules">{modules.map((item, index) => <button aria-current={activeIndex === index ? 'page' : undefined} key={item.id} onClick={() => changeModule(index)} style={{ '--nav-index': index } as CSSProperties} type="button"><span>0{index + 1}</span><strong>{item.label}</strong><small>{item.detail}</small><i>↗</i></button>)}</nav>
-        <div className="deck-nav-footer"><span>Discover Local Music</span><b>|</b><span>Support The Scene</span><b>|</b><span>Be The Signal</span><small><kbd>/</kbd> Search <kbd>Space</kbd> Play <kbd>H</kbd> HYPE</small></div>
-      </aside>
+      <ModuleNavigator activeIndex={activeIndex} menuOpen={menuOpen} onChange={changeModule} />
     </div>
   );
 }
@@ -1606,6 +1705,9 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
 .deck-module p { max-width:580px; margin:0; color:var(--deck-muted); font:500 clamp(14px,1.25vw,18px)/1.55 var(--f-b,Arial,sans-serif); }
 .deck-button { min-height:46px; padding:0 22px; border:1px solid rgba(243,238,231,.22); border-radius:14px; color:var(--deck-cream); background:linear-gradient(180deg,rgba(243,238,231,.075),rgba(243,238,231,.025)); box-shadow:inset 0 1px rgba(255,255,255,.07),0 10px 30px rgba(0,0,0,.14); font:800 12px var(--f-b,Arial,sans-serif); transition:border-color .2s ease,box-shadow .2s ease,transform .2s ease; }
 .deck-button:hover { border-color:rgba(24,222,209,.5); box-shadow:inset 0 1px rgba(255,255,255,.1),0 12px 36px rgba(0,0,0,.22); transform:translateY(-1px); }
+.feature-paused { align-self:stretch; display:flex; min-width:0; align-items:center; justify-content:center; flex-direction:column; gap:10px; padding:32px; border:1px solid var(--deck-line); border-radius:28px; color:var(--deck-muted); text-align:center; background:rgba(243,238,231,.025); }
+.feature-paused strong { color:var(--deck-cream); font:900 clamp(24px,3vw,42px)/1 var(--f-d,Arial,sans-serif); text-transform:uppercase; }
+.feature-paused span { max-width:42ch; line-height:1.5; }
 .deck-button-primary { border-color:transparent; color:#03100f; background:linear-gradient(135deg,#31eee1,var(--deck-cyan)); box-shadow:0 10px 34px rgba(24,222,209,.22); }
 .deck-player { position:absolute; z-index:18; left:calc(18px + var(--deck-safe-left)); right:calc(18px + var(--deck-safe-right)); bottom:calc(12px + var(--deck-safe-bottom)); height:78px; display:grid; grid-template-columns:minmax(250px,.9fr) auto minmax(100px,1.2fr) minmax(110px,.45fr) 44px auto; align-items:center; gap:14px; padding:10px 15px; border:1px solid rgba(243,238,231,.2); border-radius:18px; background:radial-gradient(circle at 10% 50%,rgba(var(--art-rgb,255,77,46),.16),transparent 32%),rgba(8,9,10,.88); box-shadow:0 -15px 60px rgba(0,0,0,.34); backdrop-filter:blur(26px); }
 .deck-player.context-map { border-color:rgba(24,222,209,.22); }
@@ -2242,12 +2344,13 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
   .deck-search input { height:44px; font-size:12px; }
   .deck-active-label { display:none; }
   .deck-sample-badge { display:none; }
-  .deck-profile { width:40px; height:40px; margin-left:auto; display:grid; }
+  .deck-profile { width:44px; height:44px; margin-left:auto; display:grid; }
   .deck-account-menu { top:62px; right:10px; }
   .deck-stage { height:auto; min-height:552px; top:calc(68px + var(--deck-safe-top)); }
   .deck-module { display:block; overflow-x:hidden; overflow-y:auto; padding:28px 18px calc(102px + var(--deck-safe-bottom)); }
   .deck-module > *,.deck-module-copy,.discover-copy,.radio-heading,.dashboard-heading,.settings-heading,.community-manifesto,.radio-console,.dashboard-workspace,.settings-board,.community-board { min-width:0; max-width:100%; }
   .deck-module h1 { max-width:100%; margin:6px 0 10px; font-size:var(--mobile-hero-size); line-height:.96; overflow-wrap:anywhere; word-break:normal; }
+  .module-intro > h1 { display:-webkit-box; max-height:min(15dvh,1.92em); overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
   .deck-module p { font-size:13px; }
   .deck-kicker { font-size:8px; }
   .deck-player { right:calc(8px + var(--deck-safe-right)); bottom:calc(8px + var(--deck-safe-bottom)); left:calc(8px + var(--deck-safe-left)); height:66px; grid-template-columns:minmax(0,1fr) auto; gap:8px; padding:8px; border-radius:15px; }
@@ -2255,8 +2358,8 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
   .deck-player-art { width:44px; height:44px; }
   .deck-player-progress,.deck-player-volume,.deck-player-queue-button,.deck-player-hype { display:none; }
   .deck-player-controls { gap:0; }
-  .deck-player-controls button { width:30px; height:34px; }
-  .deck-player-controls .deck-player-play { width:40px; height:40px; }
+  .deck-player-controls button { width:34px; height:44px; }
+  .deck-player-controls .deck-player-play { width:44px; height:44px; }
   .deck-player-copy strong { font-size:14px; }
   .deck-player-copy small { font-size:10px; }
   .deck-player-context-card { min-width:0; right:0; bottom:76px; left:0; }
@@ -2416,12 +2519,25 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
 }
 @media (max-height:560px) and (orientation:landscape) {
   .deck-module { padding-top:16px; padding-bottom:82px; }
-  .deck-module h1,.deck-map-module .deck-module-copy h1,.discover-copy h1,.radio-heading h1,.dashboard-heading h1,.settings-heading h1,.community-manifesto h1 { margin:4px 0 8px; font-size:24px; line-height:1; }
-  .deck-map-module { grid-template-columns:.7fr 1.3fr; grid-template-rows:1fr; }
+  .deck-module h1,.deck-map-module .deck-module-copy h1,.discover-copy h1,.radio-heading h1,.dashboard-heading h1,.settings-heading h1,.community-manifesto h1 { margin:4px 0 8px; font-size:21px; line-height:1; }
+  .module-intro > h1 { display:-webkit-box; max-height:2em; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
+  .deck-map-module { grid-template-columns:.85fr 1.15fr; grid-template-rows:1fr; }
   .deck-map-module .deck-module-copy { display:block; }
   .scene-map-frame { min-height:320px; }
   .deck-player { height:58px; }
+  .deck-profile { width:44px; height:44px; }
+  .deck-player-controls button,.deck-player-controls .deck-player-play { width:44px; height:44px; }
   .deck-navigator nav button { min-height:42px; }
+  .discover-stage { height:calc(100dvh - 166px); min-height:0; grid-template-columns:minmax(0,1fr) 116px; grid-template-rows:1fr; column-gap:10px; row-gap:0; }
+  .discover-card,.discover-next-card,.discover-signal-wash { width:min(23vw,210px); max-height:100%; grid-column:1; grid-row:1; }
+  .discover-actions { grid-column:2; grid-row:1; flex-direction:column; gap:8px; }
+  .discover-actions button,.discover-actions button.save { width:116px; min-width:116px; padding:0 10px; }
+  .discover-action-full { display:none; }
+  .discover-action-short { display:inline; }
+  .discover-card-copy { right:14px; bottom:14px; left:14px; }
+  .discover-card-copy h2 { font-size:22px; -webkit-line-clamp:2; }
+  .discover-card-copy p { -webkit-line-clamp:1; }
+  .discover-why { display:none; }
 }
 @media (prefers-reduced-motion:reduce) {
   .module-deck-preview * { scroll-behavior:auto!important; animation:none!important; transition:none!important; }

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { trackEvent } from '@/lib/analytics';
+import { sanitizeTelemetryEvent } from '@/lib/telemetry';
 
 // Generic product-event ingest — Seeds swipes, checkout steps, referral
 // clicks, etc. Writes to Cloudflare Analytics Engine via trackEvent().
@@ -40,7 +41,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  trackEvent(body.event, body.props);
+  const safe = sanitizeTelemetryEvent(body.event, body.props);
+  if (safe) trackEvent(safe.event, safe.props);
 
   return NextResponse.json({ ok: true });
 }

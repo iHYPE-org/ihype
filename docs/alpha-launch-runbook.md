@@ -19,6 +19,9 @@ Do not put credentials, customer data, or full webhook payloads in this file.
      invite-only registration, and the minimum real-content cohort);
    - no terminally failed notification jobs;
    - no pending notification job older than 30 minutes.
+6. Run `npm run test:e2e:responsive`. It checks every module at 320, 375,
+   390, and 430 CSS pixels, phone landscape, light mode, reduced motion, and
+   200% text; review its screenshot artifacts when CI reports a regression.
 
 ## Payment and ticket rehearsal
 
@@ -52,12 +55,32 @@ Do not put credentials, customer data, or full webhook payloads in this file.
 
 ## Emergency controls
 
-- Confirm two operators can disable paid ticketing and uploads.
+- Confirm two operators can independently disable uploads, new payments, new
+  ticket sales, radio, and map lookups from the audited admin flag panel.
+- Confirm the switches return a retryable 503 and that issued-ticket reads,
+  scanning, refunds, and Stripe webhook reconciliation continue to work.
 - Confirm two operators can roll back the Worker deployment.
 - Document database migration recovery for the release.
 - Confirm the rotation procedure for Auth, cron, Stripe, Resend, Turnstile, and
   admin-device secrets.
 - Confirm issued tickets remain verifiable while new sales are disabled.
+
+Runtime overrides are stored as `flags:<name>` in Cloudflare KV and take
+effect without a Worker deploy. Environment values are fallbacks only:
+`FEATURE_ENABLE_PAYMENTS`, `FEATURE_ENABLE_TICKETING`,
+`FEATURE_ENABLE_RADIO`, and `FEATURE_ENABLE_MAPS`. Do not disable webhook or
+refund handling during an incident; those are recovery paths, not new risk.
+
+## Privacy and alpha feedback rehearsal
+
+- Confirm one-tap alpha feedback includes only module, coarse viewport class,
+  coarse platform, app version, and an error reference.
+- Confirm analytics ingest drops query text, paths, content IDs, listening
+  history, free-form errors, and coordinates.
+- Confirm exact profile addresses are accepted only for venues; artists and
+  DJs retain broad scene labels, and fans have no stored profile location.
+- Confirm the player restores its local queue and position after reload and
+  resumes cleanly after a controlled offline/online transition.
 
 ## Alpha containment
 

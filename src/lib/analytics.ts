@@ -1,3 +1,5 @@
+import { sanitizeTelemetryEvent } from '@/lib/telemetry';
+
 // Emits data points to Cloudflare Analytics Engine.
 // Binding: AE (AnalyticsEngineDataset) from getCloudflareContext()
 // Falls back silently if binding not available (local dev).
@@ -11,29 +13,29 @@ type AEDataset = {
 };
 
 async function getAEDataset(): Promise<AEDataset | undefined> {
-  const { getCloudflareContext } = await import('@opennextjs/cloudflare');
-  return (getCloudflareContext().env as Record<string, unknown>).AE as AEDataset | undefined;
+  try {
+    const { getCloudflareContext } = await import('@opennextjs/cloudflare');
+    return (getCloudflareContext().env as Record<string, unknown>).AE as AEDataset | undefined;
+  } catch {
+    // Plain Next development and unit tests do not initialize a Workerd
+    // context. Telemetry is optional there and must never reject globally.
+    return undefined;
+  }
 }
 
-// Client-side: queues locally, then best-effort forwards to
-// /api/analytics/track so the event actually reaches Analytics Engine
-// (see trackEvent below) instead of only ever living in localStorage.
+// Client-side: best-effort, aggregate-only telemetry. The sanitizer removes
+// arbitrary caller data before it leaves the browser. Events are deliberately
+// not retained in localStorage: a device should not accumulate a readable
+// history of searches, playback, or navigation merely to support metrics.
 export function track(event: string, props?: Record<string, unknown>): void {
   if (typeof window === 'undefined') return;
-  try {
-    const key = 'ihype_events';
-    const stored = JSON.parse(localStorage.getItem(key) ?? '[]') as unknown[];
-    stored.push({ event, props, ts: Date.now() });
-    if (stored.length > 200) stored.splice(0, stored.length - 200);
-    localStorage.setItem(key, JSON.stringify(stored));
-  } catch {
-    // best-effort
-  }
+  const safe = sanitizeTelemetryEvent(event, props);
+  if (!safe) return;
   try {
     void fetch('/api/analytics/track', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ event, props }),
+      body: JSON.stringify(safe),
       keepalive: true,
     }).catch(() => {});
   } catch {
@@ -53,7 +55,7 @@ export function trackEvent(event: string, props?: Record<string, unknown>): void
         blobs: [event, propsJson],
         indexes: [event],
       });
-    })();
+    })().catch(() => {});
   } catch {
     // Never throw — analytics is best-effort
   }
@@ -73,7 +75,7 @@ export function trackRequest(
         doubles: [status, durationMs],
         indexes: [pathname],
       });
-    })();
+    })().catch(() => {});
   } catch {
     // Never throw — analytics is best-effort
   }

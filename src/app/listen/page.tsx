@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { db } from '@/lib/db';
 import { ModuleDeckMockup, type DeckViewer } from '@/app/ui-preview/ModuleDeckMockup';
+import { areMapsEnabledRuntime, isRadioEnabledRuntime } from '@/lib/runtime-flags';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -116,5 +117,7 @@ export default async function ListenPage({
     },
   };
 
-  return <ModuleDeckMockup production viewer={viewer} />;
+  const [maps, radio] = await Promise.all([areMapsEnabledRuntime(), isRadioEnabledRuntime()]);
+
+  return <ModuleDeckMockup production features={{ maps, radio }} viewer={viewer} />;
 }

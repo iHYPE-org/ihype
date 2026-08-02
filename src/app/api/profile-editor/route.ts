@@ -5,6 +5,7 @@ import { db, withDbRetry } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { editorSchema } from '@/lib/profile-editor-schema';
 import { statOptionsForRole } from '@/lib/profile-stats-catalog';
+import { sanitizeStoredProfileLocation } from '@/lib/public-location';
 
 export const dynamic = 'force-dynamic';
 
@@ -84,7 +85,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
   }
 
-  return NextResponse.json({ profile });
+  return NextResponse.json({ profile: sanitizeStoredProfileLocation(profile) });
 }
 
 export async function PATCH(request: Request) {
@@ -121,6 +122,14 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
   }
 
+  const privateLocation = sanitizeStoredProfileLocation({
+    type: profile.type,
+    addressLine1: emptyToNull(body.addressLine1),
+    postalCode: emptyToNull(body.postalCode),
+    city: emptyToNull(body.city),
+    stateRegion: emptyToNull(body.stateRegion),
+    country: emptyToNull(body.country),
+  });
   const data = {
     name: body.name || undefined,
     headline: emptyToNull(body.headline),
@@ -137,11 +146,11 @@ export async function PATCH(request: Request) {
     pressKitContent: emptyToNull(body.pressKitContent),
     upcomingContent: emptyToNull(body.upcomingContent),
     previousShowHighlights: emptyToNull(body.previousShowHighlights),
-    addressLine1: emptyToNull(body.addressLine1),
-    city: emptyToNull(body.city),
-    stateRegion: emptyToNull(body.stateRegion),
-    postalCode: emptyToNull(body.postalCode),
-    country: emptyToNull(body.country),
+    addressLine1: privateLocation.addressLine1,
+    city: privateLocation.city,
+    stateRegion: privateLocation.stateRegion,
+    postalCode: privateLocation.postalCode,
+    country: privateLocation.country,
     hoursText: emptyToNull(body.hoursText),
     parkingDetails: emptyToNull(body.parkingDetails),
     stayRecommendations: emptyToNull(body.stayRecommendations),

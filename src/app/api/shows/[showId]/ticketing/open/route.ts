@@ -14,6 +14,7 @@ import {
   buildTicketVerificationUrl,
   formatTicketStatus,
 } from '@/lib/tickets';
+import { arePaymentsEnabledRuntime, isTicketingEnabledRuntime } from '@/lib/runtime-flags';
 
 function canOpenEvent(
   sessionUserId: string | undefined,
@@ -39,6 +40,17 @@ export async function POST(
 ) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Login required' }, { status: 401 });
+
+  const [ticketingEnabled, paymentsEnabled] = await Promise.all([
+    isTicketingEnabledRuntime(),
+    arePaymentsEnabledRuntime(),
+  ]);
+  if (!ticketingEnabled || !paymentsEnabled) {
+    return NextResponse.json(
+      { error: 'Opening new ticketing is temporarily paused.', code: !ticketingEnabled ? 'TICKETING_PAUSED' : 'PAYMENTS_PAUSED' },
+      { status: 503, headers: { 'Retry-After': '300' } },
+    );
+  }
 
   const { showId } = await params;
   const show = await db.show.findUnique({

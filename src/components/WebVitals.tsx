@@ -2,6 +2,7 @@
 
 import { useReportWebVitals } from 'next/web-vitals';
 import { track } from '@/lib/analytics';
+import { telemetryModule, telemetryViewport } from '@/lib/telemetry';
 
 // Core Web Vitals (LCP, INP, CLS) plus FCP/TTFB, reported once per metric
 // per page load. Forwarded to Sentry (as measurements on the active
@@ -22,8 +23,8 @@ export function WebVitals() {
       name: metric.name,
       value: metric.value,
       rating: metric.rating,
-      id: metric.id,
-      path: window.location.pathname,
+      module: telemetryModule(window.location.pathname),
+      viewport: telemetryViewport(window.innerWidth),
     });
   });
 

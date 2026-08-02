@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { getDemoOwnerExclusion } from '@/lib/runtime-flags';
+import { getDemoOwnerExclusion, isRadioEnabledRuntime } from '@/lib/runtime-flags';
 import { log } from '@/lib/logger';
 import { releasedMediaWhere } from '@/lib/media-release';
 
@@ -12,6 +12,9 @@ export const dynamic = 'force-dynamic';
 // Excludes track IDs passed in the `exclude` query param (comma-separated hexIds).
 export async function GET(request: Request) {
   try {
+    if (!(await isRadioEnabledRuntime())) {
+      return NextResponse.json({ error: 'Radio is temporarily paused.', code: 'RADIO_PAUSED' }, { status: 503, headers: { 'Retry-After': '300' } });
+    }
     const session = await auth().catch(() => null);
     const { searchParams } = new URL(request.url);
   const excludeParam = searchParams.get('exclude') ?? '';

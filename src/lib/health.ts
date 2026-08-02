@@ -7,6 +7,10 @@ import {
   areRegistrationsEnabledRuntime,
   areUploadsEnabledRuntime,
   isAdvertisingEnabledRuntime,
+  arePaymentsEnabledRuntime,
+  isTicketingEnabledRuntime,
+  isRadioEnabledRuntime,
+  areMapsEnabledRuntime,
   isInviteCodeRequiredRuntime,
   isOutboundEmailEnabledRuntime,
   shouldHideDemoContentRuntime,
@@ -74,6 +78,10 @@ export async function getHealthSnapshot() {
       uploadsEnabled,
       outboundEmailEnabled,
       advertisingEnabled,
+      paymentsEnabled,
+      ticketsEnabled,
+      radioEnabled,
+      mapsEnabled,
     ] = await Promise.all([
       areDemoLoginsEnabledRuntime(),
       isInviteCodeRequiredRuntime(),
@@ -82,6 +90,10 @@ export async function getHealthSnapshot() {
       areUploadsEnabledRuntime(),
       isOutboundEmailEnabledRuntime(),
       isAdvertisingEnabledRuntime(),
+      arePaymentsEnabledRuntime(),
+      isTicketingEnabledRuntime(),
+      isRadioEnabledRuntime(),
+      areMapsEnabledRuntime(),
     ]);
 
     const emailReadiness = getEmailDeliveryReadiness();
@@ -104,6 +116,10 @@ export async function getHealthSnapshot() {
       ...(!registrationsEnabled ? ['New registrations are paused by the runtime safety switch.'] : []),
       ...(!uploadsEnabled ? ['Media uploads are paused by the runtime safety switch.'] : []),
       ...(!outboundEmailEnabled ? ['Outbound email is paused by the runtime safety switch.'] : []),
+      ...(!paymentsEnabled ? ['New payment operations are paused by the runtime safety switch.'] : []),
+      ...(!ticketsEnabled ? ['New ticket sales are paused by the runtime safety switch.'] : []),
+      ...(!radioEnabled ? ['Radio delivery is paused by the runtime safety switch.'] : []),
+      ...(!mapsEnabled ? ['Location map lookups are paused by the runtime safety switch.'] : []),
       ...(failedNotificationCount > 0
         ? [`Resolve ${failedNotificationCount} permanently failed notification job(s).`]
         : []),
@@ -158,6 +174,10 @@ export async function getHealthSnapshot() {
         uploadsEnabled,
         outboundEmailEnabled,
         advertisingEnabled,
+        paymentsEnabled,
+        ticketsEnabled,
+        radioEnabled,
+        mapsEnabled,
       },
       sentryConfigured: Boolean(readRuntimeEnv('SENTRY_DSN') ?? readRuntimeEnv('NEXT_PUBLIC_SENTRY_DSN')),
       stripeMode: stripeSecretKey?.startsWith('sk_live_')

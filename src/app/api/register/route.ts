@@ -285,7 +285,7 @@ export async function POST(request: Request) {
           contactInfo: body.contactInfo || null,
           hometown: body.hometown || null,
           city: body.city || body.hometown || null,
-          postalCode: body.postalCode || null,
+          postalCode: profileType === 'VENUE' ? body.postalCode || null : null,
           verificationStatus: getVerificationStatusForType(profileType),
           // Not stamped at signup. This field records when a real submission
           // arrived; POST /api/verify sets it. Filling it in here claimed a

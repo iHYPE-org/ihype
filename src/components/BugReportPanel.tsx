@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
+import { createAlphaDiagnostics } from '@/lib/alpha-diagnostics';
 
 async function postBugReport(body: unknown) {
   const response = await fetch('/api/bug-report', {
@@ -55,8 +56,7 @@ export function BugReportPanel() {
     try {
       await postBugReport({
         description,
-        url: typeof window !== 'undefined' ? window.location.href : undefined,
-        viewport: typeof window !== 'undefined' ? `${window.innerWidth}x${window.innerHeight}` : undefined,
+        diagnostics: createAlphaDiagnostics(),
       });
       setSent(true);
     } catch (err) {
@@ -100,7 +100,7 @@ export function BugReportPanel() {
             ) : (
               <form className="form" onSubmit={submit}>
                 <p style={{ fontSize: 13, color: 'var(--ink-a55)', margin: '0 0 6px' }}>
-                  {t('bugReportPanel.dialogBody', "What happened? We'll attach the current page and viewport automatically.")}
+                  {t('bugReportPanel.dialogBody', "What happened? We'll attach only the app version, module, and coarse device category.")}
                 </p>
                 <label className="field">
                   <span>{t('bugReportPanel.descriptionLabel', 'Description')}</span>

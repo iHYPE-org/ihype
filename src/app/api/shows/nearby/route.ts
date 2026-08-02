@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
 import { coarsenFanCoordinates, isPublicVenueCoordinate } from '@/lib/public-location';
+import { areMapsEnabledRuntime } from '@/lib/runtime-flags';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
+    if (!(await areMapsEnabledRuntime())) {
+      return NextResponse.json({ error: 'Map lookups are temporarily paused.', code: 'MAPS_PAUSED' }, { status: 503, headers: { 'Retry-After': '300' } });
+    }
     const { searchParams } = new URL(request.url);
     const requestedLat = parseFloat(searchParams.get('lat') ?? '');
     const requestedLng = parseFloat(searchParams.get('lng') ?? '');

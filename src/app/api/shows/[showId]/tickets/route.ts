@@ -36,6 +36,7 @@ import {
   finalizeCapturedTicketOrder,
   voidReservedTicketOrder,
 } from '@/lib/ticket-order-state';
+import { arePaymentsEnabledRuntime, isTicketingEnabledRuntime } from '@/lib/runtime-flags';
 
 const schema = z.object({
   quantity: z.coerce.number().int().min(1).max(MAX_TICKETS_PER_SHOW_PER_ACCOUNT),
@@ -61,6 +62,17 @@ export async function POST(
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Fan login required' }, { status: 401 });
+  }
+
+  const [ticketingEnabled, paymentsEnabled] = await Promise.all([
+    isTicketingEnabledRuntime(),
+    arePaymentsEnabledRuntime(),
+  ]);
+  if (!ticketingEnabled || !paymentsEnabled) {
+    return NextResponse.json(
+      { error: 'New ticket purchases are temporarily paused.', code: !ticketingEnabled ? 'TICKETING_PAUSED' : 'PAYMENTS_PAUSED' },
+      { status: 503, headers: { 'Retry-After': '300' } },
+    );
   }
 
   const readiness = getPaymentProcessingReadiness();
