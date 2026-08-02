@@ -12,6 +12,7 @@ export function FanFirstLanding({ stats }: { stats: LandingStat[] }) {
     <div className="scene-landing">
       <header aria-label="iHYPE" className="scene-landing-header">
         <div aria-label="iHYPE" className="scene-landing-logo" role="img">
+          <Image alt="" height={44} priority src="/brand/ihype-signal-mark.svg" width={44} />
           <span>i</span><strong>HYPE</strong>
         </div>
         <nav aria-label="Account" className="scene-landing-nav">
@@ -22,19 +23,8 @@ export function FanFirstLanding({ stats }: { stats: LandingStat[] }) {
       </header>
 
       <section className="scene-landing-hero">
-        <Image
-          alt=""
-          className="scene-landing-art"
-          fill
-          priority
-          sizes="100vw"
-          src="/brand/local-scene-signal-v2.webp"
-          unoptimized
-        />
-        <div aria-hidden="true" className="scene-landing-scrim" />
-
         <div className="scene-landing-copy">
-          <p className="scene-landing-kicker">Your scene. Your signal.</p>
+          <p className="scene-landing-kicker">Discover local music · Support the scene</p>
           <h1><span>Free</span><span>local</span><span>music.</span></h1>
           <p className="scene-landing-lead">
             Hear the artists playing around you. HYPE what you love.
@@ -48,10 +38,21 @@ export function FanFirstLanding({ stats }: { stats: LandingStat[] }) {
           </p>
         </div>
 
-        <p className="scene-landing-signal" aria-hidden="true">
-          <span />
-          Local sound matters
-        </p>
+        <div className="scene-landing-visual" aria-hidden="true">
+          <Image
+            alt=""
+            className="scene-landing-art"
+            fill
+            priority
+            sizes="(max-width: 900px) 100vw, 55vw"
+            src="/brand/local-scene-signal-v2.webp"
+            unoptimized
+          />
+          <div className="scene-landing-scrim" />
+          <p className="scene-landing-visual-label"><span /> Live scene signal</p>
+          <div className="scene-landing-visual-tags"><span>LOCAL</span><span>FREE</span><span>HUMAN</span></div>
+          <p className="scene-landing-signal"><span /> Local sound matters</p>
+        </div>
       </section>
 
       <section aria-label="Live iHYPE platform statistics" className="scene-landing-stats">

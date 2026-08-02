@@ -89,7 +89,7 @@ const emptyDiscoveryTrack: ExperienceTrack = {
   title: 'Your next local find',
   artist: 'Waiting for the first alpha upload',
   scene: 'Your local scene',
-  art: '/brand/ihype-menu-logo.webp',
+  art: '/brand/ihype-signal-mark.svg',
   match: 'Local catalog warming up',
 };
 
@@ -1143,7 +1143,7 @@ function CompactPlayer({ activeModule, onHype, onPlayingChange, production }: { 
   }, [production]);
 
   const baseTrack = production
-    ? { mediaId: null, title: 'Choose a local track', artist: 'Open Discover or Radio to begin', art: '/brand/ihype-menu-logo.webp', scene: 'Your scene', match: 'Ready for a real local signal' }
+    ? { mediaId: null, title: 'Choose a local track', artist: 'Open Discover or Radio to begin', art: '/brand/ihype-signal-mark.svg', scene: 'Your scene', match: 'Ready for a real local signal' }
     : previewPlayerTracks[playerIndex % previewPlayerTracks.length];
   const playerTrack = externalTrack ?? (activeModule === 'radio' && !production
     ? { mediaId: null, title: 'Motor City After Dark', artist: 'Laila Stone', art: '/brand/alpha-show-4.png', scene: 'Detroit radio', match: 'Alpha radio placeholder' }
@@ -1479,7 +1479,7 @@ export function ModuleDeckMockup({ production = false, viewer }: { production?: 
       <div aria-hidden="true" className="scene-atmosphere"><span className="scene-orbit orbit-one" /><span className="scene-orbit orbit-two" /><span className="scene-frequency">{Array.from({ length: 22 }, (_, index) => <i key={index} style={{ '--frequency-index': index } as CSSProperties} />)}</span><span className="scene-hype-wave" key={hypePulse} /></div>
       {signalToast && <div aria-live="polite" className="scene-signal-toast"><span />{signalToast}</div>}
       <header className="deck-topbar">
-        <button aria-expanded={menuOpen} aria-label={menuOpen ? 'Close iHYPE module navigator' : 'Open iHYPE module navigator'} className={`deck-logo ${logoAnimating ? 'is-pressed' : ''}`} onClick={toggleNavigator} type="button"><Image alt="iHYPE" height={58} priority src="/brand/ihype-menu-logo.webp" width={58} /></button>
+        <button aria-expanded={menuOpen} aria-label={menuOpen ? 'Close iHYPE module navigator' : 'Open iHYPE module navigator'} className={`deck-logo ${logoAnimating ? 'is-pressed' : ''}`} onClick={toggleNavigator} type="button"><Image alt="iHYPE" height={58} priority src="/brand/ihype-signal-mark.svg" width={58} /></button>
         <div className="deck-search is-open">
           <Icon name="search" /><label className="sr-only" htmlFor="deck-global-search">Search iHYPE</label><input autoComplete="off" data-api-path={implementationBindings.globalSearch.path} id="deck-global-search" onChange={(event) => { const value = event.target.value; setQuery(value); if (value.trim().length >= 2) signalImplementationAction('globalSearch', { query: value.trim() }); }} placeholder="Search artists, tracks, radio, venues, and scenes" value={query} />
           {(searchLoading || searchMatches.length > 0 || query.trim().length >= 2) && <div aria-busy={searchLoading} className="deck-search-results">
@@ -1580,8 +1580,9 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
 .scene-signal-toast > span { width:7px; height:7px; border-radius:50%; background:var(--deck-cyan); box-shadow:0 0 14px var(--deck-cyan); }
 .deck-icon { width:22px; height:22px; flex:0 0 auto; }
 .deck-topbar { height:calc(76px + var(--deck-safe-top)); position:absolute; z-index:40; top:0; right:0; left:0; display:flex; align-items:center; gap:16px; padding:calc(9px + var(--deck-safe-top)) calc(22px + var(--deck-safe-right)) 9px calc(22px + var(--deck-safe-left)); border-bottom:1px solid var(--deck-line); background:rgba(3,4,5,.88); backdrop-filter:blur(20px); }
-.deck-logo { width:58px; height:58px; position:relative; flex:0 0 auto; padding:0; overflow:hidden; border:1px solid rgba(243,238,231,.25); border-radius:16px; background:#090807; box-shadow:0 0 26px rgba(255,77,46,.12); cursor:pointer; touch-action:manipulation; transform-origin:center; }
+.deck-logo { width:58px; height:58px; position:relative; flex:0 0 auto; padding:0; overflow:hidden; border:1px solid rgba(243,238,231,.25); border-radius:16px; background:#090807; box-shadow:0 0 26px rgba(255,77,46,.12); cursor:pointer; touch-action:manipulation; transform-origin:center; transition:border-color .22s ease,box-shadow .22s ease,transform .22s ease; }
 .deck-logo img { width:100%; height:100%; object-fit:cover; }
+.deck-logo:hover,.deck-logo:focus-visible { border-color:rgba(24,222,209,.72); outline:none; box-shadow:0 0 0 3px rgba(24,222,209,.1),0 0 34px rgba(255,77,46,.18); transform:translateY(-1px); }
 .deck-logo.is-pressed { animation:logoButtonPress .62s cubic-bezier(.18,.8,.2,1); }
 .deck-logo.is-pressed img { animation:logoImagePulse .62s cubic-bezier(.18,.8,.2,1); }
 .deck-search { width:min(48vw,650px); max-width:650px; position:relative; display:flex; align-items:center; gap:12px; overflow:visible; opacity:1; transform:none; transition:width .35s ease,opacity .25s ease,transform .35s ease; pointer-events:auto; }

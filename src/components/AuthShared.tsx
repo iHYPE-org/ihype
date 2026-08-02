@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { postJson } from '@/lib/api-client';
@@ -48,35 +49,62 @@ export function AuthCardShell({
   children: ReactNode;
 }) {
   const { t } = useI18n();
+  const sceneTitle = mode === 'signin' ? 'Your scene is waiting.' : 'Free local music. Built around you.';
+  const sceneBody = mode === 'signin'
+    ? 'Pick up where you left off—your HYPEs, discovery playlist, radio, and local shows are ready.'
+    : 'Hear what is happening nearby, HYPE what deserves attention, and help real local music reach real people.';
   return (
-    <section className="authcard-page">
-      <div className="authcard-wrap">
-        <p className="authcard-eyebrow">{eyebrow}</p>
-        <h1 className="authcard-title">{title}</h1>
-        <p className="authcard-sub">{subtitle}</p>
+    <section className={`authcard-page authcard-page-${mode}`}>
+      <header className="authcard-header">
+        <Link aria-label="iHYPE home" className="authcard-brand" href="/">
+          <Image alt="" height={46} priority src="/brand/ihype-signal-mark.svg" width={46} />
+          <span><b>iHYPE</b><small>LOCAL SIGNAL</small></span>
+        </Link>
+        <Link className="authcard-home-link" href="/">Free local music <span aria-hidden="true">↗</span></Link>
+      </header>
 
-        <div className="authcard-tabs" role="tablist" aria-label="Sign in or create an account">
-          <Link
-            aria-selected={mode === 'signin'}
-            className={mode === 'signin' ? 'authcard-tab active' : 'authcard-tab'}
-            href="/login"
-            role="tab"
-          >
-            {t('authShared.signInTab', 'Sign In')}
-          </Link>
-          <Link
-            aria-selected={mode === 'signup'}
-            className={mode === 'signup' ? 'authcard-tab active' : 'authcard-tab'}
-            href="/register"
-            role="tab"
-          >
-            {t('authShared.createAccountTab', 'Create Account')}
-          </Link>
+      <div aria-hidden="true" className="authcard-atmosphere"><span /><span /><i /><i /><i /><i /><i /><i /><i /></div>
+
+      <div className="authcard-layout">
+        <aside className="authcard-scene">
+          <p>YOUR MUSIC · YOUR SCENE · YOUR SIGNAL</p>
+          <h2>{sceneTitle}</h2>
+          <p>{sceneBody}</p>
+          <div className="authcard-scene-points">
+            <span><i /> Listen free</span>
+            <span><i /> HYPE what matters</span>
+            <span><i /> We never sell your data</span>
+          </div>
+        </aside>
+
+        <div className="authcard-wrap">
+          <p className="authcard-eyebrow">{eyebrow}</p>
+          <h1 className="authcard-title">{title}</h1>
+          <p className="authcard-sub">{subtitle}</p>
+
+          <div className="authcard-tabs" role="tablist" aria-label="Sign in or create an account">
+            <Link
+              aria-selected={mode === 'signin'}
+              className={mode === 'signin' ? 'authcard-tab active' : 'authcard-tab'}
+              href="/login"
+              role="tab"
+            >
+              {t('authShared.signInTab', 'Sign In')}
+            </Link>
+            <Link
+              aria-selected={mode === 'signup'}
+              className={mode === 'signup' ? 'authcard-tab active' : 'authcard-tab'}
+              href="/register"
+              role="tab"
+            >
+              {t('authShared.createAccountTab', 'Create Account')}
+            </Link>
+          </div>
+
+          <div className="authcard-box">{children}</div>
+
+          <p className="authcard-charter">{t('authShared.charterLine', 'iHYPE takes nothing · locked in the charter')}</p>
         </div>
-
-        <div className="authcard-box">{children}</div>
-
-        <p className="authcard-charter">{t('authShared.charterLine', 'iHYPE takes nothing · locked in the charter')}</p>
       </div>
     </section>
   );
