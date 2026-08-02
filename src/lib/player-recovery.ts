@@ -34,6 +34,31 @@ export type PlaybackFailureDecision =
  */
 export const MAX_CONSECUTIVE_SKIPS = 5;
 
+export type PlaybackCheckpoint = {
+  currentTime: number;
+  trackKey: string;
+  volume: number;
+};
+
+export function sanitizePlaybackCheckpoint(value: unknown): PlaybackCheckpoint | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const candidate = value as Partial<PlaybackCheckpoint>;
+  if (
+    typeof candidate.trackKey !== 'string'
+    || !/^[a-zA-Z0-9_-]{1,80}$/.test(candidate.trackKey)
+    || typeof candidate.currentTime !== 'number'
+    || !Number.isFinite(candidate.currentTime)
+    || candidate.currentTime < 0
+    || typeof candidate.volume !== 'number'
+    || !Number.isFinite(candidate.volume)
+  ) return null;
+  return {
+    trackKey: candidate.trackKey,
+    currentTime: Math.min(candidate.currentTime, 24 * 60 * 60),
+    volume: Math.min(100, Math.max(0, Math.round(candidate.volume))),
+  };
+}
+
 export function resolvePlaybackFailure({
   consecutiveErrors,
   queueLength,

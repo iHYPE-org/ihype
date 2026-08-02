@@ -1,4 +1,5 @@
 import { coarsenFanCoordinates } from '@/lib/public-location';
+import { track } from '@/lib/analytics';
 
 export type PreviewDataSource = 'live' | 'sample';
 
@@ -68,21 +69,29 @@ const sampleNearbyShows: NearbyShow[] = [
   { id: 'sample-after-hours', title: 'After Hours Radio', startsAt: '2026-08-07T23:30:00-04:00', hypeCount: 876, venueName: 'Marble Bar', venueCity: 'Detroit', latitude: 42.357, longitude: -83.066, locationPrecision: 'exact-venue' },
 ];
 
-async function fetchJson<T>(url: string, signal: AbortSignal): Promise<T> {
+async function fetchJson<T>(url: string, signal: AbortSignal, endpoint: string): Promise<T> {
+  const startedAt = typeof performance === 'undefined' ? Date.now() : performance.now();
+  let status = 0;
+  try {
   const response = await fetch(url, {
     credentials: 'same-origin',
     headers: { Accept: 'application/json' },
     signal,
   });
+  status = response.status;
   if (!response.ok) throw new Error(`Request failed with ${response.status}`);
   return response.json() as Promise<T>;
+  } finally {
+    const endedAt = typeof performance === 'undefined' ? Date.now() : performance.now();
+    track('api_latency', { endpoint, durationMs: endedAt - startedAt, ok: status >= 200 && status < 400, status });
+  }
 }
 
 export async function searchPreview(query: string, signal: AbortSignal, allowSamples = true): Promise<PreviewResponse<PreviewSearchResult[]>> {
   const normalized = query.trim();
   if (normalized.length < 2) return { data: [], source: 'live' };
   try {
-    const payload = await fetchJson<{ results?: PreviewSearchResult[] }>(`/api/search?q=${encodeURIComponent(normalized)}&type=all&limit=8`, signal);
+    const payload = await fetchJson<{ results?: PreviewSearchResult[] }>(`/api/search?q=${encodeURIComponent(normalized)}&type=all&limit=8`, signal, 'search');
     return { data: Array.isArray(payload.results) ? payload.results.slice(0, 8) : [], source: 'live' };
   } catch (error) {
     if (signal.aborted) throw error;
@@ -109,7 +118,7 @@ export async function loadNearbyShows({ latitude, longitude, radiusKm, signal, a
     radius: String(Math.min(500, Math.max(1, radiusKm))),
   });
   try {
-    const payload = await fetchJson<{ shows?: NearbyShow[] }>(`/api/shows/nearby?${params}`, signal);
+    const payload = await fetchJson<{ shows?: NearbyShow[] }>(`/api/shows/nearby?${params}`, signal, 'nearby-shows');
     return { data: Array.isArray(payload.shows) ? payload.shows : [], source: 'live' };
   } catch (error) {
     if (signal.aborted) throw error;
@@ -118,16 +127,25 @@ export async function loadNearbyShows({ latitude, longitude, radiusKm, signal, a
 }
 
 async function fetchExperienceJson<T>(url: string, init?: RequestInit): Promise<T> {
+  const endpoint = url.startsWith('/api/discover') ? 'discover' : url.startsWith('/api/radio') ? 'radio' : url.startsWith('/api/me') ? 'settings' : 'other';
+  const startedAt = typeof performance === 'undefined' ? Date.now() : performance.now();
+  let status = 0;
+  try {
   const response = await fetch(url, {
     credentials: 'same-origin',
     headers: { Accept: 'application/json', ...(init?.body ? { 'Content-Type': 'application/json' } : {}), ...init?.headers },
     ...init,
   });
+  status = response.status;
   if (!response.ok) {
     const payload = await response.json().catch(() => null) as { error?: string } | null;
     throw new Error(payload?.error ?? `Request failed with ${response.status}`);
   }
   return response.json() as Promise<T>;
+  } finally {
+    const endedAt = typeof performance === 'undefined' ? Date.now() : performance.now();
+    track('api_latency', { endpoint, durationMs: endedAt - startedAt, ok: status >= 200 && status < 400, status });
+  }
 }
 
 export async function loadDiscoveryTracks(signal: AbortSignal): Promise<ExperienceTrack[]> {

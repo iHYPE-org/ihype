@@ -7,9 +7,14 @@ import { type CSSProperties, type Dispatch, type PointerEvent, type SetStateActi
 import { createPortal } from 'react-dom';
 import { coarsenFanCoordinates } from '@/lib/public-location';
 import { usePlatformCapabilities } from '@/lib/usePlatformCapabilities';
+import { resolvePlaybackFailure, sanitizePlaybackCheckpoint } from '@/lib/player-recovery';
+import { track } from '@/lib/analytics';
+import { telemetryPlatform } from '@/lib/telemetry';
 import { loadDiscoveryTracks, loadNearbyShows, loadRadioTracks, recordDiscoveryDecision, searchPreview, updateSceneNotifications, type ExperienceTrack, type NearbyShow, type PreviewDataSource, type PreviewSearchResult } from './preview-api';
+import { AlphaQuickFeedback } from './AlphaQuickFeedback';
+import { PrivacySafeTelemetry } from './PrivacySafeTelemetry';
+import { ModuleIntro, ModuleNavigator, modules, type ModuleId } from './ModuleDeckChrome';
 
-type ModuleId = 'map' | 'discover' | 'radio' | 'dashboard' | 'settings' | 'community';
 type RoleId = 'fan' | 'artist' | 'dj' | 'venue' | 'promoter' | 'advertiser';
 type DemoState = 'normal' | 'loading' | 'empty' | 'offline' | 'error' | 'playback';
 type CommunitySection = 'voting' | 'info' | 'legal' | 'dmca';
@@ -26,6 +31,11 @@ export type DeckViewer = {
     saved: boolean;
     foundEvent: boolean;
   };
+};
+
+export type DeckFeatures = {
+  maps: boolean;
+  radio: boolean;
 };
 
 function usePersistentState<T>(key: string, initialValue: T): [T, Dispatch<SetStateAction<T>>] {
@@ -69,15 +79,6 @@ function signalImplementationAction(action: ImplementationAction, payload: Recor
   window.dispatchEvent(new CustomEvent('ihype:implementation-action', { detail: { action, ...implementationBindings[action], payload } }));
 }
 
-const modules: Array<{ id: ModuleId; label: string; eyebrow: string; detail: string }> = [
-  { id: 'map', label: 'Around you', eyebrow: '01 / Scene map', detail: 'Venues, artists, and events in reach' },
-  { id: 'discover', label: 'Discover', eyebrow: '02 / Discovery', detail: 'Swipe through music outside your orbit' },
-  { id: 'radio', label: 'Radio', eyebrow: '03 / Live radio', detail: 'Shows by sound, scene, and subject' },
-  { id: 'dashboard', label: 'Dashboard', eyebrow: '04 / Your signal', detail: 'The view that fits your role' },
-  { id: 'settings', label: 'Settings', eyebrow: '05 / Control room', detail: 'Privacy, playback, and notifications' },
-  { id: 'community', label: 'Community', eyebrow: '06 / Open book', detail: 'Voting, transparency, legal, and DMCA' },
-];
-
 const discoveryTracks: ExperienceTrack[] = [
   { mediaId: null, title: 'City Lights', artist: 'Jayla Reign', scene: 'Detroit · alternative R&B', art: '/brand/alpha-featured.png', match: '92% scene match' },
   { mediaId: null, title: 'Pressure', artist: 'Milo Coast', scene: 'Ferndale · indie soul', art: '/brand/alpha-artist-2.png', match: '84% scene match' },
@@ -89,7 +90,7 @@ const emptyDiscoveryTrack: ExperienceTrack = {
   title: 'Your next local find',
   artist: 'Waiting for the first alpha upload',
   scene: 'Your local scene',
-  art: '/brand/ihype-signal-mark.svg',
+  art: '/brand/discover-awaiting.svg',
   match: 'Local catalog warming up',
 };
 
@@ -436,7 +437,7 @@ function OpenSceneMap({
   </div>;
 }
 
-function SceneMap({ production }: { production: boolean }) {
+function SceneMap({ enabled, production }: { enabled: boolean; production: boolean }) {
   const [mapMenuOpen, setMapMenuOpen] = useState(false);
   const [privacyKeyOpen, setPrivacyKeyOpen] = useState(false);
   const [filter, setFilter] = usePersistentState<MapFilterId>('ihype:preview-map-filter', 'tonight');
@@ -458,6 +459,7 @@ function SceneMap({ production }: { production: boolean }) {
   const refreshTimer = useRef<number | null>(null);
   const zoom = mapZoomLevels[Math.max(0, Math.min(mapZoomLevels.length - 1, zoomIndex))];
   const noResults = filter === 'tour' && zoom.id === 'town';
+
   const sampleResultCount = Math.max(2, (filter === 'venues' ? 18 : filter === 'tour' ? 6 : 12) - (hypeOnly ? 7 : 0) - (genre === 'All genres' ? 0 : 3));
   const resultCount = nearbySource === 'live' && nearbyCount !== null && zoomIndex <= 3 ? nearbyCount : production ? 0 : sampleResultCount;
   const publicVenueShows = useMemo(() => nearbyShows
@@ -589,15 +591,16 @@ function SceneMap({ production }: { production: boolean }) {
     );
   };
 
+  if (!enabled) {
+    return <section aria-labelledby="map-title" className="deck-module deck-map-module"><div className="deck-module-copy"><span className="deck-kicker">SCENE MAP · TEMPORARILY PAUSED</span><h1 id="map-title">Your scene,<br />kept safe.</h1><p>Map lookups are paused by an operations switch. No location is being requested or transmitted.</p></div><div className="feature-paused"><strong>Map connection paused</strong><span>Music, tickets, and your saved Discovery playlist remain available.</span></div></section>;
+  }
+
   return (
     <section aria-labelledby="map-title" className="deck-module deck-map-module">
-      <div className="deck-module-copy">
-        <span className="deck-kicker">LIVE SCENE SIGNAL · {zoom.label.toUpperCase()} VIEW</span>
-        <h1 id="map-title">Your scene,<br />right here.</h1>
-        <p>Move from your town to the whole world without losing the local rooms, events, and HYPE signals that make each scene real.</p>
+      <ModuleIntro className="deck-module-copy" description="Move from your town to the whole world without losing the local rooms, events, and HYPE signals that make each scene real." kicker={<>LIVE SCENE SIGNAL · {zoom.label.toUpperCase()} VIEW</>} title={<>Your scene,<br />right here.</>} titleId="map-title">
         <div className="deck-location-line"><Icon name="location" /><span><strong>{location}</strong><small>{locationMessage}</small></span></div>
         <button className="deck-button deck-button-primary" disabled={locating} onClick={locate} type="button">{locating ? 'Locating…' : 'Use my location'}</button>
-      </div>
+      </ModuleIntro>
 
       <div className="scene-map-frame">
         <button aria-expanded={mapMenuOpen} aria-label={mapMenuOpen ? 'Close map filters' : 'Open map filters'} className="map-menu-button" onClick={() => setMapMenuOpen((value) => !value)} type="button"><Icon name={mapMenuOpen ? 'close' : 'menu'} /></button>
@@ -741,18 +744,15 @@ function DiscoverModule({ production }: { production: boolean }) {
 
   return (
     <section aria-labelledby="discover-title" className="deck-module discover-module">
-      <div className="discover-copy">
-        <span className="deck-kicker">DISCOVER · 75% YOUR SIGNAL / 25% WILD CARD</span>
-        <h1 id="discover-title">One song.<br />One decision.</h1>
-        <p>Swipe right when it belongs in your Discovery playlist. Swipe left when it does not. Your choices reshape what comes next.</p>
+      <ModuleIntro className="discover-copy" description="Swipe right when it belongs in your Discovery playlist. Swipe left when it does not. Your choices reshape what comes next." kicker="DISCOVER · 75% YOUR SIGNAL / 25% WILD CARD" title={<>One song.<br />One decision.</>} titleId="discover-title">
         <div className="discover-count"><strong>{saved}</strong><span>songs saved<br />{production ? 'this session' : 'to Discovery'}</span></div>
-      </div>
+      </ModuleIntro>
       <div className={`discover-stage ${dragX > 10 ? 'intent-save' : dragX < -10 ? 'intent-skip' : ''}`} style={{ '--swipe-strength': swipeStrength } as CSSProperties}>
         <div aria-hidden="true" className="discover-signal-wash" />
         <div className={`swipe-outcome ${dragX < -35 ? 'is-visible' : ''}`}>SKIP</div>
         <div className={`swipe-outcome swipe-outcome-save ${dragX > 35 ? 'is-visible' : ''}`}>ADD</div>
         <div aria-hidden="true" className="discover-next-card" style={{ position: 'absolute' }}><Image alt="" fill sizes="(max-width: 800px) 72vw, 35vw" src={nextTrack.art} /><span>NEXT SIGNAL</span></div>
-        <div aria-label={`${track.title} by ${track.artist}. Swipe left to skip or right to add.`} className={`discover-card ${dragging ? 'is-dragging' : ''} ${decision ? `is-${decision}` : ''}`} key={track.title} onPointerCancel={cancelDrag} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} role="group" style={{ position: 'relative', transform: `translate3d(${dragX}px,${Math.abs(dragX) * -.025}px,0) rotate(${dragX / 28}deg) scale(${1 - swipeStrength * .018})` }}>
+        <div aria-label={`${track.title} by ${track.artist}. Swipe left to skip or right to add.`} className={`discover-card ${production && !track.mediaId ? 'is-placeholder' : ''} ${dragging ? 'is-dragging' : ''} ${decision ? `is-${decision}` : ''}`} key={track.title} onPointerCancel={cancelDrag} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} role="group" style={{ position: 'relative', transform: `translate3d(${dragX}px,${Math.abs(dragX) * -.025}px,0) rotate(${dragX / 28}deg) scale(${1 - swipeStrength * .018})` }}>
           <Image alt="Placeholder artist portrait" draggable={false} fill priority sizes="(max-width: 800px) 82vw, 40vw" src={track.art} />
           <div className="discover-card-gradient" />
           <div className="discover-card-copy"><span>{tracksLoading ? 'Tuning your scene…' : production && !track.mediaId ? 'Waiting for local uploads' : track.match}</span><h2>{track.title}</h2><p>{track.artist}</p><small>{track.scene}</small><div className="discover-why"><b>WHY THIS SONG</b><i>{production && !track.mediaId ? 'Placeholder artwork leaves the layout ready for the first alpha uploads.' : track.match.toLowerCase().includes('wild') || track.match.toLowerCase().includes('random') ? 'A fresh wildcard outside your usual signal.' : 'Your scene, HYPES, and Discovery saves point here.'}</i></div></div>
@@ -768,7 +768,7 @@ function DiscoverModule({ production }: { production: boolean }) {
   );
 }
 
-function RadioModule({ production }: { production: boolean }) {
+function RadioModule({ enabled, production }: { enabled: boolean; production: boolean }) {
   const [genre, setGenre] = usePersistentState('ihype:preview-radio-genre', 'All sounds');
   const [location, setLocation] = usePersistentState('ihype:preview-radio-location', 'Near Detroit');
   const [topic, setTopic] = usePersistentState('ihype:preview-radio-topic', 'New releases');
@@ -779,14 +779,14 @@ function RadioModule({ production }: { production: boolean }) {
   const [liveTracks, setLiveTracks] = useState<ExperienceTrack[]>([]);
   const [radioLoading, setRadioLoading] = useState(production);
   useEffect(() => {
-    if (!production) return;
+    if (!production || !enabled) return;
     const controller = new AbortController();
     setRadioLoading(true);
     void loadRadioTracks(controller.signal).then(setLiveTracks).catch(() => setLiveTracks([])).finally(() => {
       if (!controller.signal.aborted) setRadioLoading(false);
     });
     return () => controller.abort();
-  }, [production]);
+  }, [enabled, production]);
   const liveRecommendations = scope === 'local' ? liveTracks.slice(0, 8).map((track) => ({ id: track.mediaId ?? track.title, title: track.title, meta: `${track.artist} · ${track.scene}`, signal: 'Live catalog', time: 'PLAY' })) : [];
   const recommendationPool = production ? liveRecommendations : radioRecommendations[scope];
   const recommendations = recommendationPool.filter((station) => !favoritesOnly || favorites.includes(station.id));
@@ -802,16 +802,14 @@ function RadioModule({ production }: { production: boolean }) {
     else if (playing) window.dispatchEvent(new Event('ihype:player-toggle'));
     setPlaying((value) => !value);
   };
+  if (!enabled) return <section aria-labelledby="radio-title" className="deck-module radio-module"><div className="radio-heading"><span className="deck-kicker">RADIO · TEMPORARILY PAUSED</span><h1 id="radio-title">The signal<br />will return.</h1><p>Radio delivery is paused by an operations switch while the rest of iHYPE stays available.</p></div><div className="feature-paused"><strong>Radio is safely paused</strong><span>Open Discover to keep exploring published local music.</span></div></section>;
   return (
     <section aria-labelledby="radio-title" className="deck-module radio-module">
-      <div className="radio-heading">
-        <span className="deck-kicker">RADIO · HUMAN-CURATED · MUSIC-ONLY SUPPORT</span>
-        <h1 id="radio-title">Every scene<br />has a signal</h1>
-        <p>Start close to home, then move through regional, national, and global independent radio without losing your favorites.</p>
+      <ModuleIntro className="radio-heading" description="Start close to home, then move through regional, national, and global independent radio without losing your favorites." kicker="RADIO · HUMAN-CURATED · MUSIC-ONLY SUPPORT" title={<>Every scene<br />has a signal</>} titleId="radio-title">
         <div aria-label="Radio recommendation distance" className="radio-scope" role="group">
           {(Object.keys(radioRecommendations) as RadioScope[]).map((id) => <button aria-pressed={scope === id} key={id} onClick={() => { setScope(id); setFavoritesOnly(false); }} type="button">{id}</button>)}
         </div>
-      </div>
+      </ModuleIntro>
       <div className="radio-console">
         <div className="radio-topline">
           <div className="radio-live-art"><div className="radio-rings"><span /><span /><span /><span /></div><button aria-label={playing ? 'Pause radio' : 'Play radio'} disabled={production && !heroTrack} onClick={toggleHero} type="button"><Icon name={playing ? 'pause' : 'play'} /></button></div>
@@ -880,17 +878,14 @@ function DashboardModule({ production, viewer }: { production: boolean; viewer?:
   };
   return (
     <section aria-labelledby="dashboard-title" className="deck-module dashboard-module">
-      <div className="dashboard-heading">
-        <span className="deck-kicker">DASHBOARD · ONLY YOUR ACTIVE ROLES</span>
-        <h1 id="dashboard-title">{data.headline}</h1>
-        <p>{data.description}</p>
+      <ModuleIntro className="dashboard-heading" description={data.description} kicker="DASHBOARD · ONLY YOUR ACTIVE ROLES" title={data.headline} titleId="dashboard-title">
         <div aria-label="Choose dashboard role" className="role-picker" role="group">
           {assignedRoles.map((id) => <button aria-pressed={role === id} key={id} onClick={() => setRole(id)} type="button">{id}</button>)}
           {!production && <button aria-expanded={managingRoles} className="role-manage-button" onClick={() => setManagingRoles((value) => !value)} type="button">Manage roles</button>}
         </div>
         {!production && managingRoles && <div className="role-manager"><span>Alpha role preview</span><p>The live dashboard will derive these from verified account roles.</p><div>{(Object.keys(roleData) as RoleId[]).map((id) => <button aria-pressed={assignedRoles.includes(id)} key={id} onClick={() => toggleRole(id)} type="button"><span>{assignedRoles.includes(id) ? '✓' : '+'}</span>{id}</button>)}</div></div>}
         <article className="dashboard-build"><span>PAGE & WORKSPACE</span><strong>{data.build[0]}</strong><p>{data.build[1]}</p><Link href={role === 'dj' ? '/radio/studio' : role === 'venue' ? '/events/new' : role === 'advertiser' ? '/advertise/dashboard' : '/pages'}>Open editor ↗</Link></article>
-      </div>
+      </ModuleIntro>
       <div className="dashboard-signal dashboard-workspace">
         {role === 'fan' && activation && <section className="dashboard-activation"><div><span>YOUR FIRST LOCAL LOOP</span><strong>{activationComplete}/4 complete</strong></div><div>{activationSteps.map(([label, complete, href]) => <Link className={complete ? 'is-complete' : ''} href={href} key={label}><i>{complete ? '✓' : '○'}</i><span>{label}</span><b>{complete ? 'Done' : 'Try it'} ↗</b></Link>)}</div></section>}
         <div className="dashboard-next"><span>NEXT BEST ACTION</span><strong>{data.actions[0]}</strong><Link href={roleActionHrefs[role][0]}>Start now ↗</Link></div>
@@ -967,7 +962,7 @@ function SettingsModule({ demoState, onDemoStateChange, onReducedMotionChange, p
     setCaptions(window.localStorage.getItem('ihype-captions') !== 'false');
     setPrivateListening(window.localStorage.getItem('ihype-private-listening') === 'true');
     setLocation(window.localStorage.getItem('ihype-location-personalization') !== 'false');
-  }, [production]);
+  }, [onReducedMotionChange, production]);
   const updateSetting = <T,>(key: string, setter: Dispatch<SetStateAction<T>>, value: T) => {
     setter(value);
     signalImplementationAction('settingsUpdate', { key, value });
@@ -979,7 +974,7 @@ function SettingsModule({ demoState, onDemoStateChange, onReducedMotionChange, p
   };
   return (
     <section aria-labelledby="settings-title" className="deck-module settings-module">
-      <div className="settings-heading"><span className="deck-kicker">SETTINGS · YOU ARE IN CONTROL</span><h1 id="settings-title">Your app.<br />Your rules.</h1><p>Everything important is visible, understandable, and reversible.</p></div>
+      <ModuleIntro className="settings-heading" description="Everything important is visible, understandable, and reversible." kicker="SETTINGS · YOU ARE IN CONTROL" title={<>Your app.<br />Your rules.</>} titleId="settings-title" />
       <div className="settings-board" data-api-path={implementationBindings.settingsUpdate.path}>
         <div className="settings-section settings-appearance"><span>LANGUAGE & APPEARANCE</span><label><strong>Language</strong><select onChange={(event) => updateSetting('language', setLanguage, event.target.value)} value={language}><option>English</option><option>Español</option><option>Français</option><option>Português</option><option>العربية</option><option>Deutsch</option><option>日本語</option><option>中文</option><option>Italiano</option><option>한국어</option><option>हिन्दी</option><option>Русский</option></select></label><label><strong>Theme</strong><select onChange={(event) => updateSetting('theme', setTheme, event.target.value)} value={theme}><option>System</option><option>Dark</option><option>Light</option></select></label></div>
         <div className="settings-section settings-accessibility"><span>ACCESSIBILITY</span><label><span><strong>Reduce motion</strong><small>Minimize transitions and animated artwork</small></span><input checked={reducedMotion} onChange={(event) => { onReducedMotionChange(event.target.checked); signalImplementationAction('settingsUpdate', { key: 'reducedMotion', value: event.target.checked }); applyDeviceSetting('reducedMotion', event.target.checked); }} type="checkbox" /></label><label><span><strong>High contrast</strong><small>Increase borders and text separation</small></span><input checked={highContrast} onChange={(event) => updateSetting('highContrast', setHighContrast, event.target.checked)} type="checkbox" /></label><label><span><strong>Larger interface text</strong><small>Increase labels and supporting copy</small></span><input checked={largerText} onChange={(event) => updateSetting('largerText', setLargerText, event.target.checked)} type="checkbox" /></label><label><span><strong>Underline links</strong><small>Make text links easier to identify</small></span><input checked={underlineLinks} onChange={(event) => updateSetting('underlineLinks', setUnderlineLinks, event.target.checked)} type="checkbox" /></label><label><span><strong>Readable font</strong><small>Use a simpler typeface for long reading</small></span><input checked={readableFont} onChange={(event) => updateSetting('readableFont', setReadableFont, event.target.checked)} type="checkbox" /></label><label><span><strong>Captions and transcripts</strong><small>Prefer available text for radio and video</small></span><input checked={captions} onChange={(event) => updateSetting('captions', setCaptions, event.target.checked)} type="checkbox" /></label></div>
@@ -1013,7 +1008,7 @@ function CommunityModule({ production }: { production: boolean }) {
   };
   return (
     <section aria-labelledby="community-title" className="deck-module community-module">
-      <div className="community-manifesto"><span className="deck-kicker">{copy.kicker}</span><h1 id="community-title">{copy.title}</h1><p>{copy.description}</p></div>
+      <ModuleIntro className="community-manifesto" description={copy.description} kicker={copy.kicker} title={copy.title} titleId="community-title" />
       <div className="community-board">
         <nav aria-label="Community sections" className="community-subnav">
           {([['voting', 'Voting'], ['info', 'Info'], ['legal', 'Legal & privacy'], ['dmca', 'DMCA']] as Array<[CommunitySection, string]>).map(([id, label]) => <button aria-current={section === id ? 'page' : undefined} key={id} onClick={() => setSection(id)} type="button">{label}</button>)}
@@ -1103,7 +1098,7 @@ function formatPlayerTime(value: number) {
   return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
-function CompactPlayer({ activeModule, onHype, onPlayingChange, production }: { activeModule: ModuleId; onHype: (intensity: HypeIntensity) => void; onPlayingChange: (playing: boolean) => void; production: boolean }) {
+function CompactPlayer({ activeModule, onHype, production, radioEnabled }: { activeModule: ModuleId; onHype: (intensity: HypeIntensity) => void; production: boolean; radioEnabled: boolean }) {
   const [mounted, setMounted] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [volume, setVolume] = useState(72);
@@ -1120,6 +1115,9 @@ function CompactPlayer({ activeModule, onHype, onPlayingChange, production }: { 
   const hypeHoldTimer = useRef<number | null>(null);
   const hypeHoldTriggered = useRef(false);
   const venueContextTimer = useRef<number | null>(null);
+  const resumeAfterNetwork = useRef(false);
+  const lastCheckpointSecond = useRef(-1);
+  const consecutivePlaybackErrors = useRef(0);
   const [playerIndex, setPlayerIndex] = usePersistentState('ihype:preview-player-track', 0);
   const [queue, setQueue] = usePersistentState(production ? 'ihype:play-queue' : 'ihype:preview-queue', production ? [] : [
     { id: 'pressure', title: 'Pressure', artist: 'Milo Coast', duration: '3:21', type: 'track' },
@@ -1129,10 +1127,8 @@ function CompactPlayer({ activeModule, onHype, onPlayingChange, production }: { 
   ]);
 
   useEffect(() => setMounted(true), []);
-  useEffect(() => onPlayingChange(playing), [onPlayingChange, playing]);
-
   useEffect(() => {
-    if (!production) return;
+    if (!production || !radioEnabled) return;
     const controller = new AbortController();
     void loadRadioTracks(controller.signal).then((tracks) => {
       if (tracks[0]) setExternalTrack(tracks[0]);
@@ -1140,7 +1136,7 @@ function CompactPlayer({ activeModule, onHype, onPlayingChange, production }: { 
       // The neutral player remains ready while the catalog is unavailable.
     });
     return () => controller.abort();
-  }, [production]);
+  }, [production, radioEnabled]);
 
   const baseTrack = production
     ? { mediaId: null, title: 'Choose a local track', artist: 'Open Discover or Radio to begin', art: '/brand/ihype-signal-mark.svg', scene: 'Your scene', match: 'Ready for a real local signal' }
@@ -1151,6 +1147,7 @@ function CompactPlayer({ activeModule, onHype, onPlayingChange, production }: { 
   const artworkPalette = useArtworkPalette(playerTrack.art);
   const canPlay = !production || Boolean(playerTrack.url);
   const canHype = !production || Boolean(playerTrack.mediaId);
+  const trackKey = (playerTrack.hexId ?? playerTrack.mediaId ?? `preview-${playerIndex}`).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 80);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -1163,6 +1160,63 @@ function CompactPlayer({ activeModule, onHype, onPlayingChange, production }: { 
       });
     } else audio.pause();
   }, [playerTrack.url, playing]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    try {
+      const checkpoint = sanitizePlaybackCheckpoint(JSON.parse(window.sessionStorage.getItem('ihype:player-checkpoint') ?? 'null'));
+      if (checkpoint?.trackKey === trackKey) {
+        setCurrentTime(checkpoint.currentTime);
+        setVolume(checkpoint.volume);
+      }
+    } catch {
+      // A malformed or unavailable local checkpoint never blocks playback.
+    }
+  }, [mounted, trackKey]);
+
+  useEffect(() => {
+    const onOffline = () => {
+      resumeAfterNetwork.current = playing;
+      setPlaying(false);
+      setPlaybackError('You are offline. Your queue and position are saved on this device.');
+      track('player_failure', { module: activeModule, online: false, platform: telemetryPlatform(navigator.userAgent), reason: 'offline' });
+    };
+    const onOnline = () => {
+      setPlaybackError(resumeAfterNetwork.current ? 'Connection restored. Resuming your local signal…' : 'Connection restored.');
+      if (resumeAfterNetwork.current && playerTrack.url) setPlaying(true);
+      resumeAfterNetwork.current = false;
+    };
+    const onDeviceChange = () => {
+      if (playing) setPlaybackError('Audio output changed. Playback position is preserved.');
+    };
+    window.addEventListener('offline', onOffline);
+    window.addEventListener('online', onOnline);
+    navigator.mediaDevices?.addEventListener?.('devicechange', onDeviceChange);
+    return () => {
+      window.removeEventListener('offline', onOffline);
+      window.removeEventListener('online', onOnline);
+      navigator.mediaDevices?.removeEventListener?.('devicechange', onDeviceChange);
+    };
+  }, [activeModule, playerTrack.url, playing]);
+
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: playerTrack.title,
+      artist: playerTrack.artist,
+      artwork: [{ src: new URL(playerTrack.art, window.location.origin).href }],
+    });
+    navigator.mediaSession.setActionHandler('play', () => setPlaying(true));
+    navigator.mediaSession.setActionHandler('pause', () => setPlaying(false));
+    navigator.mediaSession.setActionHandler('previoustrack', () => changeTrack(-1));
+    navigator.mediaSession.setActionHandler('nexttrack', () => changeTrack(1));
+    return () => {
+      navigator.mediaSession.setActionHandler('play', null);
+      navigator.mediaSession.setActionHandler('pause', null);
+      navigator.mediaSession.setActionHandler('previoustrack', null);
+      navigator.mediaSession.setActionHandler('nexttrack', null);
+    };
+  }, [playerTrack.artist, playerTrack.art, playerTrack.title]);
 
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume / 100;
@@ -1187,6 +1241,11 @@ function CompactPlayer({ activeModule, onHype, onPlayingChange, production }: { 
   const removeQueueItem = (id: string) => setQueue((items) => items.filter((item) => item.id !== id));
   const changeTrack = (direction: -1 | 1) => {
     if (production) {
+      if (!radioEnabled) {
+        setPlaying(false);
+        setPlaybackError('Radio is temporarily paused. Your queue is preserved.');
+        return;
+      }
       const controller = new AbortController();
       void loadRadioTracks(controller.signal).then((tracks) => {
         const candidates = tracks.filter((track) => track.mediaId !== playerTrack.mediaId);
@@ -1287,7 +1346,48 @@ function CompactPlayer({ activeModule, onHype, onPlayingChange, production }: { 
 
   return (<>
     <div aria-label="Persistent music player" className={`deck-player context-${activeModule} ${activeModule === 'discover' || activeModule === 'radio' ? 'is-featured' : ''} ${playing ? 'is-playing' : ''}`} role="region" style={{ '--art-rgb': artworkPalette } as CSSProperties}>
-      <audio onEnded={() => changeTrack(1)} onError={() => { if (playerTrack.url) setPlaybackError('This track is temporarily unavailable.'); }} onLoadedMetadata={(event) => setDuration(event.currentTarget.duration || 0)} onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)} preload="metadata" ref={audioRef} src={playerTrack.url ?? undefined} />
+      <audio
+        onEnded={() => changeTrack(1)}
+        onError={() => {
+          if (!playerTrack.url) return;
+          setPlaying(false);
+          const reason = navigator.onLine ? 'decode' : 'offline';
+          setPlaybackError(navigator.onLine ? 'This track is temporarily unavailable. Try the next local signal.' : 'You are offline. Your queue and position are saved.');
+          track('player_failure', { module: activeModule, online: navigator.onLine, platform: telemetryPlatform(navigator.userAgent), reason });
+          if (!navigator.onLine) return;
+          consecutivePlaybackErrors.current += 1;
+          const decision = resolvePlaybackFailure({
+            consecutiveErrors: consecutivePlaybackErrors.current,
+            index: Math.max(0, playerIndex),
+            queueLength: Math.max(queue.length, production ? 2 : previewPlayerTracks.length),
+            repeatMode: 'all',
+          });
+          if (decision.action === 'skip') window.setTimeout(() => changeTrack(1), 500);
+        }}
+        onCanPlay={() => { consecutivePlaybackErrors.current = 0; }}
+        onLoadedMetadata={(event) => {
+          setDuration(event.currentTarget.duration || 0);
+          if (currentTime > 0 && currentTime < event.currentTarget.duration) event.currentTarget.currentTime = currentTime;
+        }}
+        onPause={() => setPlaying(false)}
+        onPlay={() => setPlaying(true)}
+        onTimeUpdate={(event) => {
+          const nextTime = event.currentTarget.currentTime;
+          setCurrentTime(nextTime);
+          const second = Math.floor(nextTime);
+          if (second === lastCheckpointSecond.current) return;
+          lastCheckpointSecond.current = second;
+          try {
+            window.sessionStorage.setItem('ihype:player-checkpoint', JSON.stringify({ currentTime: nextTime, trackKey, volume }));
+          } catch {
+            // Queue persistence remains optional in privacy-restricted browsers.
+          }
+        }}
+        playsInline
+        preload="metadata"
+        ref={audioRef}
+        src={playerTrack.url ?? undefined}
+      />
       <div aria-hidden="true" className="deck-player-aura" />
       {venueContext && <div aria-live="polite" className="deck-player-context-card"><span>HAPPENING NEAR YOU</span><strong>{venueContext.name}</strong><small>{venueContext.event} · {venueContext.time}</small><button aria-label="Dismiss nearby event" onClick={() => setVenueContext(null)} type="button">×</button></div>}
       <button aria-label="Open full player" className="deck-player-track-button" onClick={() => setExpanded(true)} type="button"><span className="deck-player-art" key={playerTrack.art}><Image alt="" height={52} src={playerTrack.art} width={52} /><PlayerWaveform playing={playing} /></span><span aria-live="polite" className="deck-player-copy" key={`${playerTrack.title}-${playerTrack.artist}`}><span>{activeModule === 'radio' ? 'RADIO' : playing ? 'NOW PLAYING' : 'READY'}</span><PlayerMarquee artist={playerTrack.artist} title={playerTrack.title} /></span></button>
@@ -1326,12 +1426,11 @@ function DemoStateOverlay({ copy, onRecover, state }: { copy: [string, string]; 
   </div>;
 }
 
-export function ModuleDeckMockup({ production = false, viewer }: { production?: boolean; viewer?: DeckViewer } = {}) {
+export function ModuleDeckMockup({ features = { maps: true, radio: true }, production = false, viewer }: { features?: DeckFeatures; production?: boolean; viewer?: DeckViewer } = {}) {
   const [activeIndex, setActiveIndex] = usePersistentState('ihype:preview-active-module', 0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const [transition, setTransition] = useState<'idle' | 'up-out' | 'up-in' | 'down-out' | 'down-in'>('idle');
   const [logoAnimating, setLogoAnimating] = useState(false);
   const [demoState, setDemoState] = useState<DemoState>('normal');
   const [reducedMotion, setReducedMotion] = usePersistentState('ihype:preview-settings-reduced-motion', false);
@@ -1339,10 +1438,8 @@ export function ModuleDeckMockup({ production = false, viewer }: { production?: 
   const [searchMatches, setSearchMatches] = useState<PreviewSearchResult[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchSource, setSearchSource] = useState<PreviewDataSource>('live');
-  const [scenePlaying, setScenePlaying] = useState(false);
   const [hypePulse, setHypePulse] = useState(0);
   const [signalToast, setSignalToast] = useState('');
-  const transitionTimer = useRef<number | null>(null);
   const logoAnimationTimer = useRef<number | null>(null);
   const hypePulseTimer = useRef<number | null>(null);
   const activeModule = modules[activeIndex];
@@ -1365,7 +1462,6 @@ export function ModuleDeckMockup({ production = false, viewer }: { production?: 
       window.removeEventListener('keydown', closeMenus);
       document.removeEventListener('visibilitychange', updateVisibility);
       if (logoAnimationTimer.current !== null) window.clearTimeout(logoAnimationTimer.current);
-      if (transitionTimer.current !== null) window.clearTimeout(transitionTimer.current);
       if (hypePulseTimer.current !== null) window.clearTimeout(hypePulseTimer.current);
     };
   }, []);
@@ -1421,14 +1517,7 @@ export function ModuleDeckMockup({ production = false, viewer }: { production?: 
       setMenuOpen(false);
       return;
     }
-    const direction = normalized > activeIndex || (activeIndex === modules.length - 1 && normalized === 0) ? 'up' : 'down';
-    setTransition(`${direction}-out`);
-    if (transitionTimer.current !== null) window.clearTimeout(transitionTimer.current);
-    transitionTimer.current = window.setTimeout(() => {
-      setActiveIndex(normalized);
-      setTransition(`${direction}-in`);
-      transitionTimer.current = window.setTimeout(() => setTransition('idle'), 360);
-    }, 180);
+    setActiveIndex(normalized);
     setMenuOpen(false);
     setAccountOpen(false);
     setQuery('');
@@ -1474,9 +1563,10 @@ export function ModuleDeckMockup({ production = false, viewer }: { production?: 
   }, [toggleNavigator]);
 
   return (
-    <div className={`module-deck-preview module-${activeModule.id} platform-${platform.platform} input-${platform.input} ${scenePlaying ? 'scene-is-playing' : ''} ${signalToast ? 'scene-hype-active' : ''} ${platform.isNative ? 'is-native-shell' : ''} ${platform.isStandalone ? 'is-standalone' : ''} ${reducedMotion ? 'reduce-motion' : ''} ${pageVisible ? '' : 'is-page-hidden'}`} data-hype-pulse={hypePulse} data-platform={platform.platform}>
+    <div className={`module-deck-preview module-${activeModule.id} platform-${platform.platform} input-${platform.input} ${signalToast ? 'scene-hype-active' : ''} ${platform.isNative ? 'is-native-shell' : ''} ${platform.isStandalone ? 'is-standalone' : ''} ${reducedMotion ? 'reduce-motion' : ''} ${pageVisible ? '' : 'is-page-hidden'}`} data-active-module={activeModule.id} data-hype-pulse={hypePulse} data-platform={platform.platform}>
       <style>{styles}</style>
-      <div aria-hidden="true" className="scene-atmosphere"><span className="scene-orbit orbit-one" /><span className="scene-orbit orbit-two" /><span className="scene-frequency">{Array.from({ length: 22 }, (_, index) => <i key={index} style={{ '--frequency-index': index } as CSSProperties} />)}</span><span className="scene-hype-wave" key={hypePulse} /></div>
+      <PrivacySafeTelemetry module={activeModule.id} />
+      <div aria-hidden="true" className="scene-atmosphere"><span className="scene-hype-wave" key={hypePulse} /></div>
       {signalToast && <div aria-live="polite" className="scene-signal-toast"><span />{signalToast}</div>}
       <header className="deck-topbar">
         <button aria-expanded={menuOpen} aria-label={menuOpen ? 'Close iHYPE module navigator' : 'Open iHYPE module navigator'} className={`deck-logo ${logoAnimating ? 'is-pressed' : ''}`} onClick={toggleNavigator} type="button"><Image alt="iHYPE" height={58} priority src="/brand/ihype-signal-mark.svg" width={58} /></button>
@@ -1492,27 +1582,23 @@ export function ModuleDeckMockup({ production = false, viewer }: { production?: 
         <div className="deck-active-label" key={activeModule.id}><span>{activeModule.eyebrow}</span><strong>{activeModule.label}</strong></div>
         <span className="deck-sample-badge">{production ? 'LIVE ALPHA' : 'ALPHA SAMPLE'}</span>
         <button aria-expanded={accountOpen} aria-label="Open account menu" className="deck-profile" onClick={() => setAccountOpen((value) => !value)} type="button">{viewer?.name?.trim().charAt(0).toUpperCase() || 'F'}</button>
-        {accountOpen && <div className="deck-account-menu"><div><span>SIGNED IN AS</span><strong>{viewer?.name || 'Fan alpha tester'}</strong><small>{viewer?.role || 'Base fan account'}</small></div><button onClick={() => changeModule(modules.findIndex((item) => item.id === 'settings'))} type="button">Settings <span>↗</span></button><Link href={`/support?alpha=1&module=${activeModule.id}`}>Send alpha feedback <span>↗</span></Link><Link href="/api/auth/signout">Log out <span>↗</span></Link></div>}
+        {accountOpen && <div className="deck-account-menu"><div><span>SIGNED IN AS</span><strong>{viewer?.name || 'Fan alpha tester'}</strong><small>{viewer?.role || 'Base fan account'}</small></div><button onClick={() => changeModule(modules.findIndex((item) => item.id === 'settings'))} type="button">Settings <span>↗</span></button><AlphaQuickFeedback module={activeModule.id} /><Link href={`/support?alpha=1&module=${activeModule.id}`}>Detailed feedback <span>↗</span></Link><Link href="/api/auth/signout">Log out <span>↗</span></Link></div>}
       </header>
 
-      <main aria-busy={demoState === 'loading'} className={`deck-stage transition-${transition}`}>
-        {activeModule.id === 'map' && <SceneMap production={production} />}
-        {activeModule.id === 'discover' && <DiscoverModule production={production} />}
-        {activeModule.id === 'radio' && <RadioModule production={production} />}
-        {activeModule.id === 'dashboard' && <DashboardModule production={production} viewer={viewer} />}
-        {activeModule.id === 'settings' && <SettingsModule demoState={demoState} onDemoStateChange={setDemoState} onReducedMotionChange={setReducedMotion} production={production} reducedMotion={reducedMotion} />}
-        {activeModule.id === 'community' && <CommunityModule production={production} />}
+      <main aria-busy={demoState === 'loading'} className="deck-stage">
+        {activeModule.id === 'map' && <SceneMap enabled={features.maps} key="map" production={production} />}
+        {activeModule.id === 'discover' && <DiscoverModule key="discover" production={production} />}
+        {activeModule.id === 'radio' && <RadioModule enabled={features.radio} key="radio" production={production} />}
+        {activeModule.id === 'dashboard' && <DashboardModule key="dashboard" production={production} viewer={viewer} />}
+        {activeModule.id === 'settings' && <SettingsModule demoState={demoState} key="settings" onDemoStateChange={setDemoState} onReducedMotionChange={setReducedMotion} production={production} reducedMotion={reducedMotion} />}
+        {activeModule.id === 'community' && <CommunityModule key="community" production={production} />}
         {!production && demoState !== 'normal' && <DemoStateOverlay copy={demoCopy[demoState]} onRecover={() => setDemoState('normal')} state={demoState} />}
       </main>
 
-      <CompactPlayer activeModule={activeModule.id} onHype={handlePlayerHype} onPlayingChange={setScenePlaying} production={production} />
+      <CompactPlayer activeModule={activeModule.id} onHype={handlePlayerHype} production={production} radioEnabled={features.radio} />
 
       <button aria-label="Close module navigator" className={`deck-scrim ${menuOpen ? 'is-open' : ''}`} onClick={() => setMenuOpen(false)} type="button" />
-      <aside aria-hidden={!menuOpen} className={`deck-navigator ${menuOpen ? 'is-open' : ''}`}>
-        <div className="deck-nav-heading"><span>MOVE THROUGH iHYPE</span><small>Choose a module</small></div>
-        <nav aria-label="iHYPE modules">{modules.map((item, index) => <button aria-current={activeIndex === index ? 'page' : undefined} key={item.id} onClick={() => changeModule(index)} style={{ '--nav-index': index } as CSSProperties} type="button"><span>0{index + 1}</span><strong>{item.label}</strong><small>{item.detail}</small><i>↗</i></button>)}</nav>
-        <div className="deck-nav-footer"><span>Discover Local Music</span><b>|</b><span>Support The Scene</span><b>|</b><span>Be The Signal</span><small><kbd>/</kbd> Search <kbd>Space</kbd> Play <kbd>H</kbd> HYPE</small></div>
-      </aside>
+      <ModuleNavigator activeIndex={activeIndex} menuOpen={menuOpen} onChange={changeModule} />
     </div>
   );
 }
@@ -1561,28 +1647,18 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
 .module-deck-preview.module-dashboard { --scene-a:244,151,63; --scene-b:24,222,209; --scene-focus-x:74%; --scene-focus-y:28%; }
 .module-deck-preview.module-settings { --scene-a:88,126,255; --scene-b:24,222,209; --scene-focus-x:68%; --scene-focus-y:40%; }
 .module-deck-preview.module-community { --scene-a:255,77,46; --scene-b:246,188,82; --scene-focus-x:62%; --scene-focus-y:42%; }
-.module-deck-preview::before { content:""; position:absolute; inset:-20%; z-index:-2; background:radial-gradient(circle at 16% 44%,rgba(var(--scene-a),.14),transparent 28%),radial-gradient(circle at var(--scene-focus-x) var(--scene-focus-y),rgba(var(--scene-b),.13),transparent 34%),linear-gradient(120deg,#050506 0%,#070811 48%,#031115 100%); transition:background .7s ease; }
+.module-deck-preview::before { content:""; position:absolute; inset:-20%; z-index:-2; background:radial-gradient(circle at 16% 44%,rgba(var(--scene-a),.1),transparent 26%),radial-gradient(circle at var(--scene-focus-x) var(--scene-focus-y),rgba(var(--scene-b),.08),transparent 30%),linear-gradient(120deg,#050506 0%,#070811 48%,#031115 100%); }
 .module-deck-preview::after { content:""; position:absolute; inset:0; z-index:-1; opacity:.24; pointer-events:none; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.24'/%3E%3C/svg%3E"); mix-blend-mode:soft-light; }
 .scene-atmosphere { position:absolute; z-index:0; inset:76px 0 0; overflow:hidden; pointer-events:none; contain:strict; }
-.scene-orbit { width:min(68vw,920px); aspect-ratio:1; position:absolute; top:var(--scene-focus-y); left:var(--scene-focus-x); border:1px solid rgba(var(--scene-b),.075); border-radius:50%; opacity:.7; transform:translate(-50%,-50%); transition:top .7s ease,left .7s ease,border-color .7s ease; }
-.scene-orbit::before,.scene-orbit::after { content:""; position:absolute; border:1px solid rgba(var(--scene-a),.065); border-radius:inherit; }
-.scene-orbit::before { inset:12%; }
-.scene-orbit::after { inset:25%; }
-.scene-orbit.orbit-two { width:min(45vw,620px); border-style:dashed; opacity:.34; transform:translate(-50%,-50%) rotate(22deg); }
-.scene-frequency { height:82px; position:absolute; right:7%; bottom:96px; left:38%; display:flex; align-items:center; justify-content:center; gap:clamp(4px,.65vw,11px); opacity:.13; mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent); }
-.scene-frequency i { width:2px; height:calc(12px + (var(--frequency-index) % 7) * 8px); display:block; border-radius:99px; background:linear-gradient(to top,rgba(var(--scene-a),.9),rgba(var(--scene-b),.9)); transform:scaleY(.35); transform-origin:center; }
-.scene-is-playing .scene-frequency { opacity:.3; }
-.scene-is-playing .scene-frequency i { animation:sceneFrequency 1.05s ease-in-out calc(var(--frequency-index) * -57ms) infinite alternate; }
-.scene-is-playing .scene-orbit.orbit-one { animation:sceneOrbit 16s linear infinite; }
 .scene-hype-wave { width:120px; aspect-ratio:1; position:absolute; right:48px; bottom:72px; border:2px solid rgba(var(--scene-b),.7); border-radius:50%; opacity:0; }
 .scene-hype-active .scene-hype-wave { animation:sceneHypeWave 1.25s cubic-bezier(.12,.72,.18,1) both; }
 .scene-signal-toast { position:absolute; z-index:90; top:94px; left:50%; display:flex; align-items:center; gap:9px; padding:10px 15px; border:1px solid rgba(24,222,209,.34); border-radius:999px; color:var(--deck-cream); background:rgba(5,8,9,.92); box-shadow:0 18px 60px rgba(0,0,0,.44),0 0 32px rgba(24,222,209,.12); backdrop-filter:blur(20px); font:800 8px var(--f-m,monospace); letter-spacing:.1em; transform:translateX(-50%); animation:signalToastIn .38s cubic-bezier(.2,.86,.2,1) both; }
 .scene-signal-toast > span { width:7px; height:7px; border-radius:50%; background:var(--deck-cyan); box-shadow:0 0 14px var(--deck-cyan); }
 .deck-icon { width:22px; height:22px; flex:0 0 auto; }
 .deck-topbar { height:calc(76px + var(--deck-safe-top)); position:absolute; z-index:40; top:0; right:0; left:0; display:flex; align-items:center; gap:16px; padding:calc(9px + var(--deck-safe-top)) calc(22px + var(--deck-safe-right)) 9px calc(22px + var(--deck-safe-left)); border-bottom:1px solid var(--deck-line); background:rgba(3,4,5,.88); backdrop-filter:blur(20px); }
-.deck-logo { width:58px; height:58px; position:relative; flex:0 0 auto; padding:0; overflow:hidden; border:1px solid rgba(243,238,231,.25); border-radius:16px; background:#090807; box-shadow:0 0 26px rgba(255,77,46,.12); cursor:pointer; touch-action:manipulation; transform-origin:center; transition:border-color .22s ease,box-shadow .22s ease,transform .22s ease; }
+.deck-logo { width:58px; height:58px; position:relative; flex:0 0 auto; padding:0; overflow:hidden; border:1px solid rgba(243,238,231,.2); border-radius:9px; background:#090807; box-shadow:0 8px 24px rgba(0,0,0,.22); cursor:pointer; touch-action:manipulation; transform-origin:center; transition:border-color .22s ease,box-shadow .22s ease,transform .22s ease; }
 .deck-logo img { width:100%; height:100%; object-fit:cover; }
-.deck-logo:hover,.deck-logo:focus-visible { border-color:rgba(24,222,209,.72); outline:none; box-shadow:0 0 0 3px rgba(24,222,209,.1),0 0 34px rgba(255,77,46,.18); transform:translateY(-1px); }
+.deck-logo:hover,.deck-logo:focus-visible { border-color:rgba(24,222,209,.64); outline:none; box-shadow:0 0 0 2px rgba(24,222,209,.1),0 10px 28px rgba(0,0,0,.28); transform:translateY(-1px); }
 .deck-logo.is-pressed { animation:logoButtonPress .62s cubic-bezier(.18,.8,.2,1); }
 .deck-logo.is-pressed img { animation:logoImagePulse .62s cubic-bezier(.18,.8,.2,1); }
 .deck-search { width:min(48vw,650px); max-width:650px; position:relative; display:flex; align-items:center; gap:12px; overflow:visible; opacity:1; transform:none; transition:width .35s ease,opacity .25s ease,transform .35s ease; pointer-events:auto; }
@@ -1617,22 +1693,21 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
 .deck-account-menu > a,.deck-account-menu > button { display:flex; align-items:center; justify-content:space-between; padding:13px 16px; border:0; border-top:1px solid var(--deck-line); color:var(--deck-orange); background:rgba(255,77,46,.035); font-size:11px; font-weight:800; text-align:left; text-decoration:none; }
 .deck-account-menu > button { color:var(--deck-cyan); background:rgba(24,222,209,.035); }
 .deck-stage { height:auto; min-height:564px; position:absolute; top:calc(76px + var(--deck-safe-top)); right:0; bottom:0; left:0; }
-.deck-stage > .deck-module { transition:opacity .18s ease,transform .18s ease; }
-.deck-stage.transition-up-out > .deck-module { opacity:0; transform:translateY(-48px); }
-.deck-stage.transition-down-out > .deck-module { opacity:0; transform:translateY(48px); }
-.deck-stage.transition-up-in > .deck-module { animation:stageInUp .36s cubic-bezier(.2,.78,.2,1) forwards; }
-.deck-stage.transition-down-in > .deck-module { animation:stageInDown .36s cubic-bezier(.2,.78,.2,1) forwards; }
-.deck-module { height:100%; display:grid; align-items:center; gap:clamp(30px,4vw,68px); padding:clamp(28px,5vh,64px) clamp(26px,5vw,82px) 114px; animation:moduleIn .5s cubic-bezier(.2,.75,.2,1); }
+.deck-stage > .deck-module { isolation:isolate; }
+.deck-module { height:100%; display:grid; align-items:center; gap:clamp(26px,3vw,52px); padding:clamp(24px,4vh,52px) clamp(26px,5vw,82px) 114px; animation:moduleIn .28s cubic-bezier(.2,.75,.2,1); }
 .deck-module > * { min-width:0; }
 .module-deck-preview button,.module-deck-preview a,.module-deck-preview input,.module-deck-preview select { font-family:var(--f-b,Arial,sans-serif); }
 .module-deck-preview button:not(:disabled),.module-deck-preview a { cursor:pointer; }
 .module-deck-preview button,.module-deck-preview a { transition:border-color .2s ease,background-color .2s ease,color .2s ease,box-shadow .2s ease,opacity .2s ease,transform .2s ease; }
 .module-deck-preview button:focus-visible,.module-deck-preview a:focus-visible,.module-deck-preview input:focus-visible,.module-deck-preview select:focus-visible { outline:2px solid var(--deck-cyan); outline-offset:3px; }
 .deck-kicker { display:block; color:var(--deck-cyan); font:800 10px var(--f-m,monospace); letter-spacing:.18em; text-transform:uppercase; }
-.deck-module h1 { width:100%; max-width:100%; margin:14px 0 18px; color:var(--deck-cream); font:900 clamp(48px,5.7vw,88px)/.94 var(--f-d,Arial,sans-serif); letter-spacing:-.05em; text-transform:uppercase; overflow-wrap:normal; word-break:normal; }
+.deck-module h1 { width:100%; max-width:100%; margin:10px 0 12px; color:var(--deck-cream); font:900 clamp(34px,3.5vw,56px)/.98 var(--f-d,Arial,sans-serif); letter-spacing:-.04em; text-transform:uppercase; overflow-wrap:normal; word-break:normal; }
 .deck-module p { max-width:580px; margin:0; color:var(--deck-muted); font:500 clamp(14px,1.25vw,18px)/1.55 var(--f-b,Arial,sans-serif); }
 .deck-button { min-height:46px; padding:0 22px; border:1px solid rgba(243,238,231,.22); border-radius:14px; color:var(--deck-cream); background:linear-gradient(180deg,rgba(243,238,231,.075),rgba(243,238,231,.025)); box-shadow:inset 0 1px rgba(255,255,255,.07),0 10px 30px rgba(0,0,0,.14); font:800 12px var(--f-b,Arial,sans-serif); transition:border-color .2s ease,box-shadow .2s ease,transform .2s ease; }
 .deck-button:hover { border-color:rgba(24,222,209,.5); box-shadow:inset 0 1px rgba(255,255,255,.1),0 12px 36px rgba(0,0,0,.22); transform:translateY(-1px); }
+.feature-paused { align-self:stretch; display:flex; min-width:0; align-items:center; justify-content:center; flex-direction:column; gap:10px; padding:32px; border:1px solid var(--deck-line); border-radius:28px; color:var(--deck-muted); text-align:center; background:rgba(243,238,231,.025); }
+.feature-paused strong { color:var(--deck-cream); font:900 clamp(24px,3vw,42px)/1 var(--f-d,Arial,sans-serif); text-transform:uppercase; }
+.feature-paused span { max-width:42ch; line-height:1.5; }
 .deck-button-primary { border-color:transparent; color:#03100f; background:linear-gradient(135deg,#31eee1,var(--deck-cyan)); box-shadow:0 10px 34px rgba(24,222,209,.22); }
 .deck-player { position:absolute; z-index:18; left:calc(18px + var(--deck-safe-left)); right:calc(18px + var(--deck-safe-right)); bottom:calc(12px + var(--deck-safe-bottom)); height:78px; display:grid; grid-template-columns:minmax(250px,.9fr) auto minmax(100px,1.2fr) minmax(110px,.45fr) 44px auto; align-items:center; gap:14px; padding:10px 15px; border:1px solid rgba(243,238,231,.2); border-radius:18px; background:radial-gradient(circle at 10% 50%,rgba(var(--art-rgb,255,77,46),.16),transparent 32%),rgba(8,9,10,.88); box-shadow:0 -15px 60px rgba(0,0,0,.34); backdrop-filter:blur(26px); }
 .deck-player.context-map { border-color:rgba(24,222,209,.22); }
@@ -1900,13 +1975,11 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
 
 /* Discover */
 .discover-module { grid-template-columns:minmax(360px,.84fr) minmax(400px,1.16fr); }
-.discover-copy h1 { max-width:100%; font-size:clamp(50px,5.1vw,78px); }
+.discover-copy h1 { max-width:100%; font-size:clamp(34px,3.5vw,54px); }
 .discover-count { display:flex; align-items:center; gap:16px; margin-top:32px; }
 .discover-count strong { color:var(--deck-cyan); font:900 54px var(--f-d,Arial,sans-serif); }
 .discover-count span { color:var(--deck-muted); font:700 9px/1.45 var(--f-m,monospace); letter-spacing:.1em; text-transform:uppercase; }
 .discover-stage { height:min(69vh,650px); position:relative; display:grid; grid-template-rows:minmax(0,1fr) 64px; place-items:center; row-gap:12px; }
-.discover-stage::before,.discover-stage::after { content:""; width:min(35vw,400px); aspect-ratio:.75; position:absolute; border:1px solid rgba(243,238,231,.11); border-radius:28px; background:rgba(243,238,231,.025); transform:translate(44px,-30px) rotate(7deg); }
-.discover-stage::after { transform:translate(78px,14px) rotate(13deg); }
 .discover-card { width:min(35vw,400px); aspect-ratio:.75; position:relative; z-index:2; grid-row:1; overflow:hidden; border:1px solid rgba(243,238,231,.22); border-radius:28px; background:#08090a; box-shadow:0 40px 100px rgba(0,0,0,.52); cursor:grab; touch-action:pan-y; transition:transform .18s ease; }
 .discover-card:active { cursor:grabbing; transition:none; }
 .discover-card img { object-fit:cover; }
@@ -1934,7 +2007,7 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
 
 /* Radio */
 .radio-module { grid-template-columns:minmax(300px,.68fr) minmax(620px,1.32fr); }
-.radio-heading h1 { font-size:clamp(44px,4.8vw,72px); line-height:.92; }
+.radio-heading h1 { font-size:clamp(34px,3.5vw,54px); line-height:.98; }
 .radio-scope { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:26px; }
 .radio-scope button { min-height:42px; padding:0 14px; border:1px solid var(--deck-line); border-radius:12px; color:var(--deck-muted); background:linear-gradient(180deg,rgba(243,238,231,.05),rgba(243,238,231,.015)); font:800 9px var(--f-m,monospace); letter-spacing:.08em; text-transform:uppercase; transition:.2s ease; }
 .radio-scope button:hover,.radio-scope button[aria-pressed="true"] { border-color:rgba(24,222,209,.55); color:var(--deck-cyan); background:rgba(24,222,209,.08); transform:translateY(-1px); }
@@ -1975,7 +2048,7 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
 /* Dashboard */
 .dashboard-module { grid-template-columns:minmax(330px,.72fr) minmax(620px,1.28fr); align-items:stretch; padding-top:clamp(22px,3.5vh,42px); }
 .dashboard-heading { min-height:0; overflow:auto; padding-right:4px; }
-.dashboard-heading h1 { font-size:clamp(39px,3.7vw,56px); line-height:.94; overflow-wrap:normal; word-break:normal; }
+.dashboard-heading h1 { font-size:clamp(32px,3.1vw,48px); line-height:.98; overflow-wrap:normal; word-break:normal; }
 .role-picker { display:flex; flex-wrap:wrap; gap:8px; margin-top:30px; }
 .role-picker button { min-width:84px; height:40px; padding:0 13px; border:1px solid var(--deck-line); border-radius:12px; color:var(--deck-muted); background:linear-gradient(180deg,rgba(243,238,231,.05),rgba(243,238,231,.012)); font:800 9px var(--f-m,monospace); text-transform:uppercase; transition:.2s ease; }
 .role-picker button:hover { border-color:rgba(24,222,209,.4); color:var(--deck-cream); transform:translateY(-1px); }
@@ -2047,7 +2120,7 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
 
 /* Settings */
 .settings-module { grid-template-columns:minmax(360px,.82fr) minmax(560px,1.18fr); }
-.settings-heading h1 { font-size:clamp(44px,3.85vw,58px); line-height:.96; }
+.settings-heading h1 { font-size:clamp(32px,3.1vw,48px); line-height:.98; }
 .settings-board { max-height:min(72vh,700px); overflow-x:hidden; overflow-y:auto; border:1px solid var(--deck-line); border-radius:28px; background:rgba(5,6,7,.65); scrollbar-color:rgba(24,222,209,.52) rgba(243,238,231,.04); scrollbar-width:thin; }
 .settings-section { display:grid; padding:24px 28px; border-bottom:1px solid var(--deck-line); }
 .settings-section > span { margin-bottom:8px; color:var(--deck-cyan); font:800 9px var(--f-m,monospace); letter-spacing:.14em; }
@@ -2075,7 +2148,7 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
 /* Community */
 .community-module { grid-template-columns:minmax(360px,.78fr) minmax(600px,1.22fr); align-items:stretch; padding-top:clamp(24px,4vh,48px); }
 .community-manifesto { min-width:0; display:grid; align-content:center; }
-.community-manifesto h1 { font-size:clamp(40px,3.8vw,58px); line-height:.96; }
+.community-manifesto h1 { font-size:clamp(32px,3.1vw,48px); line-height:.98; }
 .community-manifesto p { max-width:500px; }
 .community-board { min-height:0; display:grid; grid-template-rows:auto 1fr; overflow:hidden; border:1px solid var(--deck-line); border-radius:24px; background:rgba(5,6,7,.68); box-shadow:0 38px 90px rgba(0,0,0,.28); }
 .community-subnav { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); padding:8px; border-bottom:1px solid var(--deck-line); background:rgba(243,238,231,.018); }
@@ -2123,14 +2196,10 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
 .module-deck-preview.module-dashboard { --module-accent:#d7ff59; --module-glow:rgba(215,255,89,.09); }
 .module-deck-preview.module-settings { --module-accent:#a786ff; --module-glow:rgba(167,134,255,.1); }
 .module-deck-preview.module-community { --module-accent:#ffb451; --module-glow:rgba(255,180,81,.1); }
-.module-deck-preview::before { background:radial-gradient(circle at 17% 44%,rgba(255,77,46,.14),transparent 27%),radial-gradient(circle at 78% 39%,var(--module-glow),transparent 31%),linear-gradient(120deg,#050506 0%,#070811 48%,#031115 100%); animation:ambientDrift 16s ease-in-out infinite alternate; will-change:transform; }
+.module-deck-preview::before { background:radial-gradient(circle at 17% 44%,rgba(255,77,46,.08),transparent 25%),radial-gradient(circle at 78% 39%,var(--module-glow),transparent 28%),linear-gradient(120deg,#050506 0%,#070811 48%,#031115 100%); }
 .module-deck-preview.is-page-hidden * { animation-play-state:paused!important; }
 .deck-stage { contain:layout paint style; }
-.deck-stage > .deck-module { transition:opacity var(--motion-base) ease,transform var(--motion-base) var(--motion-ease); will-change:opacity,transform; }
-.deck-stage.transition-up-out > .deck-module { opacity:0; transform:translate3d(0,-34px,0) scale(.988); }
-.deck-stage.transition-down-out > .deck-module { opacity:0; transform:translate3d(0,34px,0) scale(.988); }
-.deck-stage.transition-up-in > .deck-module { animation:stageInUp .48s var(--motion-spring) forwards; }
-.deck-stage.transition-down-in > .deck-module { animation:stageInDown .48s var(--motion-spring) forwards; }
+.deck-stage > .deck-module { will-change:opacity,transform; }
 .deck-module { transform:translateZ(0); }
 .deck-active-label { animation:deckMetaIn .34s var(--motion-ease) both; }
 .deck-button:active,.deck-player-controls button:active,.deck-player-queue-button:active,.deck-player-hype:active,.map-zoom-controls button:active,.discover-actions button:active,.radio-result-play:active,.radio-favorite:active { transform:translateY(1px) scale(.965); }
@@ -2164,8 +2233,6 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
 .map-pin.is-selected span { animation:pinPulse 1.35s ease-out infinite; }
 .map-filter-panel,.map-empty-state { animation:panelReveal .32s var(--motion-spring) both; }
 
-.discover-stage::before { transform:translate(44px,-24px) rotate(6deg); }
-.discover-stage::after { display:none; }
 .discover-signal-wash { width:min(38vw,440px); aspect-ratio:.75; position:absolute; z-index:1; grid-row:1; border-radius:34px; opacity:calc(var(--swipe-strength) * .82); background:radial-gradient(circle at 50% 70%,rgba(24,222,209,.58),transparent 68%); filter:blur(22px); pointer-events:none; transform:scale(calc(.96 + var(--swipe-strength) * .08)); transition:opacity var(--motion-fast) ease,transform var(--motion-fast) ease; }
 .discover-stage.intent-skip .discover-signal-wash { background:radial-gradient(circle at 50% 70%,rgba(255,77,46,.56),transparent 68%); }
 .discover-next-card { width:min(35vw,400px); aspect-ratio:.75; position:absolute; z-index:0; grid-row:1; overflow:hidden; border:1px solid rgba(243,238,231,.12); border-radius:28px; background:#08090a; transform:translate3d(42px,-18px,0) rotate(6deg) scale(.965); }
@@ -2231,7 +2298,6 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
 .state-error .demo-state-visual i { border-color:rgba(255,77,46,.38); transform:rotate(8deg); }
 .state-offline .demo-state-visual i { border-style:dashed; }
 
-@keyframes ambientDrift { from{transform:translate3d(-1.5%,-1%,0) scale(1.01)} to{transform:translate3d(1.5%,1%,0) scale(1.035)} }
 @keyframes navItemIn { from{opacity:0;transform:translate3d(-18px,0,0)} to{opacity:1;transform:none} }
 @keyframes panelReveal { from{opacity:0;transform:translate3d(0,-8px,0) scale(.98)} to{opacity:1;transform:none} }
 @keyframes pinEnter { from{opacity:0;transform:translate3d(0,12px,0) scale(.72)} to{opacity:1;transform:none} }
@@ -2250,43 +2316,41 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
 @keyframes fullCopyIn { from{opacity:0;transform:translate3d(24px,0,0)} to{opacity:1;transform:none} }
 @keyframes stateReveal { from{opacity:0} to{opacity:1} }
 @keyframes stateBars { from{transform:scaleY(.45);opacity:.35} to{transform:scaleY(1);opacity:1} }
-@keyframes sceneFrequency { 0%{transform:scaleY(.24);filter:brightness(.8)} 55%{transform:scaleY(1);filter:brightness(1.35)} 100%{transform:scaleY(.52);filter:brightness(1)} }
-@keyframes sceneOrbit { from{transform:translate(-50%,-50%) rotate(0)} to{transform:translate(-50%,-50%) rotate(360deg)} }
 @keyframes sceneHypeWave { 0%{opacity:.85;transform:scale(.25)} 70%{opacity:.22} 100%{opacity:0;transform:scale(8)} }
 @keyframes signalToastIn { from{opacity:0;transform:translate(-50%,-12px) scale(.94)} to{opacity:1;transform:translate(-50%,0) scale(1)} }
 @keyframes venueContextIn { from{opacity:0;transform:translate3d(0,12px,0) scale(.96)} to{opacity:1;transform:none} }
 @keyframes hypeButtonSet { 0%{transform:scale(.9)} 58%{transform:scale(1.08)} 100%{transform:scale(1)} }
 @keyframes searchShimmer { from{background-position:200% 0} to{background-position:-20% 0} }
 
-@keyframes moduleIn { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:none} }
+@keyframes moduleIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
 @keyframes playerMarquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
-@keyframes logoButtonPress { 0%{transform:scale(1) rotate(0);box-shadow:0 0 26px rgba(255,77,46,.12)} 28%{transform:scale(.86) rotate(-5deg);box-shadow:0 0 0 4px rgba(24,222,209,.16),0 0 38px rgba(255,77,46,.38)} 62%{transform:scale(1.06) rotate(2deg)} 100%{transform:scale(1) rotate(0)} }
-@keyframes logoImagePulse { 0%{filter:saturate(1) brightness(1)} 32%{filter:saturate(1.7) brightness(1.28)} 100%{filter:saturate(1) brightness(1)} }
-@keyframes stageInUp { from{opacity:0;transform:translate3d(0,34px,0) scale(.988)} to{opacity:1;transform:none} }
-@keyframes stageInDown { from{opacity:0;transform:translate3d(0,-34px,0) scale(.988)} to{opacity:1;transform:none} }
+@keyframes logoButtonPress { 0%{transform:scale(1)} 36%{transform:scale(.92)} 68%{transform:scale(1.025)} 100%{transform:scale(1)} }
+@keyframes logoImagePulse { 0%{filter:brightness(1)} 40%{filter:brightness(1.16)} 100%{filter:brightness(1)} }
 @keyframes loadingPulse { from{opacity:.3} to{opacity:1} }
 @media (max-width:1050px) {
   .deck-module { gap:30px; padding-inline:34px; }
   .deck-map-module,.discover-module,.radio-module,.dashboard-module,.settings-module,.community-module { grid-template-columns:minmax(280px,.75fr) minmax(440px,1.25fr); }
-  .deck-module h1 { font-size:clamp(46px,6vw,68px); }
+  .deck-module h1 { font-size:clamp(32px,4.4vw,48px); }
   .scene-map-frame { min-height:450px; }
   .deck-player { grid-template-columns:minmax(210px,.8fr) auto minmax(80px,1fr) minmax(90px,.4fr) 42px auto; gap:9px; }
   .deck-full-player { grid-template-columns:minmax(270px,.72fr) minmax(330px,1fr); }
   .full-player-queue { display:none; }
 }
 @media (max-width:800px) {
-  .module-deck-preview { --mobile-hero-size:clamp(32px,9.2vw,40px); min-height:620px; }
+  .module-deck-preview { --mobile-hero-size:clamp(24px,6.8vw,30px); min-height:620px; }
   .deck-topbar { height:calc(68px + var(--deck-safe-top)); gap:10px; padding:calc(7px + var(--deck-safe-top)) calc(12px + var(--deck-safe-right)) 7px calc(12px + var(--deck-safe-left)); }
-  .deck-logo { width:52px; height:52px; border-radius:14px; }
+  .deck-logo { width:52px; height:52px; border-radius:8px; }
   .deck-search,.deck-search.is-open { width:calc(100vw - 150px); max-width:none; }
   .deck-search input { height:44px; font-size:12px; }
   .deck-active-label { display:none; }
   .deck-sample-badge { display:none; }
-  .deck-profile { width:40px; height:40px; margin-left:auto; display:grid; }
+  .deck-profile { width:44px; height:44px; margin-left:auto; display:grid; }
   .deck-account-menu { top:62px; right:10px; }
   .deck-stage { height:auto; min-height:552px; top:calc(68px + var(--deck-safe-top)); }
-  .deck-module { display:block; overflow-x:hidden; overflow-y:auto; padding:28px 18px 102px; }
-  .deck-module h1 { margin:6px 0 10px; font-size:var(--mobile-hero-size); line-height:.96; }
+  .deck-module { display:block; overflow-x:hidden; overflow-y:auto; padding:28px 18px calc(102px + var(--deck-safe-bottom)); }
+  .deck-module > *,.deck-module-copy,.discover-copy,.radio-heading,.dashboard-heading,.settings-heading,.community-manifesto,.radio-console,.dashboard-workspace,.settings-board,.community-board { min-width:0; max-width:100%; }
+  .deck-module h1 { max-width:100%; margin:6px 0 10px; font-size:var(--mobile-hero-size); line-height:.96; overflow-wrap:anywhere; word-break:normal; }
+  .module-intro > h1 { display:-webkit-box; max-height:min(15dvh,1.92em); overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
   .deck-module p { font-size:13px; }
   .deck-kicker { font-size:8px; }
   .deck-player { right:calc(8px + var(--deck-safe-right)); bottom:calc(8px + var(--deck-safe-bottom)); left:calc(8px + var(--deck-safe-left)); height:66px; grid-template-columns:minmax(0,1fr) auto; gap:8px; padding:8px; border-radius:15px; }
@@ -2294,8 +2358,8 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
   .deck-player-art { width:44px; height:44px; }
   .deck-player-progress,.deck-player-volume,.deck-player-queue-button,.deck-player-hype { display:none; }
   .deck-player-controls { gap:0; }
-  .deck-player-controls button { width:30px; height:34px; }
-  .deck-player-controls .deck-player-play { width:40px; height:40px; }
+  .deck-player-controls button { width:34px; height:44px; }
+  .deck-player-controls .deck-player-play { width:44px; height:44px; }
   .deck-player-copy strong { font-size:14px; }
   .deck-player-copy small { font-size:10px; }
   .deck-player-context-card { min-width:0; right:0; bottom:76px; left:0; }
@@ -2325,10 +2389,19 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
   .discover-module { display:grid; grid-template-columns:1fr; grid-template-rows:auto 1fr; }
   .discover-copy h1 { font-size:var(--mobile-hero-size); }
   .discover-copy p,.discover-count { display:none; }
-  .discover-stage { height:auto; min-height:480px; }
-  .discover-card,.discover-next-card,.discover-signal-wash,.discover-stage::before,.discover-stage::after { width:min(72vw,300px); }
-  .discover-card-copy h2 { font-size:36px; }
-  .discover-actions { bottom:4px; }
+  .discover-stage { height:auto; min-height:472px; grid-template-rows:minmax(0,1fr) 58px; row-gap:10px; overflow:visible; }
+  .discover-card,.discover-next-card,.discover-signal-wash { width:min(72vw,282px); }
+  .discover-card,.discover-next-card { border-radius:22px; }
+  .discover-card-gradient { background:linear-gradient(180deg,rgba(0,0,0,.06) 10%,rgba(0,0,0,.32) 38%,rgba(0,0,0,.97) 74%); }
+  .discover-card-copy { right:18px; bottom:18px; left:18px; min-width:0; }
+  .discover-card-copy > span { overflow:hidden; font-size:8px; line-height:1.25; text-overflow:ellipsis; white-space:nowrap; }
+  .discover-card-copy h2 { display:-webkit-box; max-height:2.76em; margin-top:7px; overflow:hidden; font-size:clamp(25px,7.2vw,30px); line-height:.92; overflow-wrap:normal; word-break:normal; -webkit-box-orient:vertical; -webkit-line-clamp:3; }
+  .discover-card-copy p { display:-webkit-box; max-height:2.5em; margin:7px 0 0; overflow:hidden; font-size:13px; line-height:1.25; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
+  .discover-card-copy small { margin-top:3px; font-size:9px; }
+  .discover-why { grid-template-columns:1fr; gap:4px; margin-top:9px; padding-top:8px; }
+  .discover-why i { display:-webkit-box; max-height:2.5em; overflow:hidden; line-height:1.25; white-space:normal; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
+  .discover-actions { bottom:0; }
+  .discover-actions button { height:46px; }
   .discover-feedback { top:0; }
   .radio-module,.dashboard-module,.settings-module { display:grid; grid-template-columns:1fr; grid-template-rows:auto 1fr; }
   .radio-heading h1,.dashboard-heading h1,.settings-heading h1,.community-manifesto h1 { font-size:var(--mobile-hero-size); line-height:.96; }
@@ -2355,7 +2428,13 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
   .role-picker button { min-width:66px; height:34px; padding:0 9px; font-size:8px; }
   .dashboard-build { margin-top:12px; }
   .dashboard-signal { margin-top:18px; }
-  .dashboard-next { grid-template-columns:1fr auto; }
+  .dashboard-next { grid-template-columns:minmax(0,1fr) auto; }
+  .dashboard-next strong { min-width:0; overflow-wrap:anywhere; }
+  .dashboard-activation > div:first-child { flex-wrap:wrap; }
+  .dashboard-activation > div:last-child { grid-template-columns:1fr; }
+  .dashboard-activation a:nth-child(odd) { border-right:0; }
+  .dashboard-recommendations > div:first-child { align-items:flex-start; flex-direction:column; gap:4px; }
+  .dashboard-recommendations > div:first-child small { text-align:left; }
   .dashboard-metrics div { padding:12px 8px; }
   .dashboard-metrics strong { font-size:26px; }
   .dashboard-actions { grid-template-columns:1fr; }
@@ -2363,11 +2442,13 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
   .settings-section { padding:16px; }
   .settings-appearance,.settings-accessibility { grid-template-columns:1fr; }
   .settings-appearance > span,.settings-accessibility > span { grid-column:auto; }
+  .settings-section label,.settings-section label > span { min-width:0; }
+  .settings-section label strong,.settings-section label small { overflow-wrap:anywhere; }
   .settings-accessibility label:nth-of-type(n+2) { border-top:1px solid rgba(243,238,231,.07); }
   .settings-foot { flex-wrap:wrap; padding:14px 16px; }
   .settings-foot span { width:100%; }
   .community-module { display:block; overflow:auto; }
-  .community-manifesto p { font-size:12px; }
+  .community-manifesto p { font-size:12px; overflow-wrap:anywhere; }
   .community-board { min-height:470px; margin-top:20px; }
   .community-principles article { min-height:150px; padding:16px; }
   .deck-full-player { display:block; overflow:auto; padding:calc(72px + env(safe-area-inset-top,0px)) calc(20px + env(safe-area-inset-right,0px)) calc(110px + env(safe-area-inset-bottom,0px)) calc(20px + env(safe-area-inset-left,0px)); }
@@ -2383,14 +2464,16 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
   .deck-nav-footer small { display:none; }
 }
 @media (max-width:480px) {
-  .module-deck-preview { --mobile-hero-size:clamp(30px,8.8vw,34px); }
+  .module-deck-preview { --mobile-hero-size:clamp(22px,6.4vw,27px); }
   .deck-search,.deck-search.is-open { width:calc(100vw - 144px); }
   .deck-navigator nav button { grid-template-columns:24px minmax(0,1fr) 14px; column-gap:7px; }
   .deck-navigator nav button > strong { font-size:16px; }
   .deck-module { padding-top:20px; }
   .deck-map-module .deck-module-copy h1,.discover-copy h1,.radio-heading h1,.dashboard-heading h1,.settings-heading h1,.community-manifesto h1 { font-size:var(--mobile-hero-size); }
   .scene-map-frame { min-height:390px; }
-  .discover-stage { min-height:440px; }
+  .discover-copy { min-height:54px; }
+  .discover-copy .deck-kicker { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .discover-stage { min-height:438px; }
   .discover-actions { gap:10px; }
   .discover-actions button { min-width:92px; padding:0 15px; }
   .discover-actions button.save { min-width:108px; }
@@ -2415,6 +2498,12 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
   .dashboard-metrics div:nth-last-child(-n+2) { border-bottom:0; }
   .dashboard-recommendations > a { grid-template-columns:minmax(0,1fr) 16px; }
   .dashboard-recommendations i { display:none; }
+  .dashboard-next { grid-template-columns:1fr; gap:8px; }
+  .dashboard-next a { grid-column:1; grid-row:auto; justify-self:start; }
+  .settings-section label { align-items:flex-start; gap:12px; }
+  .settings-section label > span { padding-top:3px; }
+  .settings-appearance label { align-items:center; }
+  .settings-appearance select { width:min(150px,52%); min-width:108px; }
   .community-subnav { grid-template-columns:1fr 1fr; gap:5px; }
   .community-subnav button { min-height:36px; }
   .community-panel { padding:18px; }
@@ -2430,12 +2519,25 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
 }
 @media (max-height:560px) and (orientation:landscape) {
   .deck-module { padding-top:16px; padding-bottom:82px; }
-  .deck-module h1,.deck-map-module .deck-module-copy h1,.discover-copy h1,.radio-heading h1,.dashboard-heading h1,.settings-heading h1,.community-manifesto h1 { margin:4px 0 8px; font-size:32px; line-height:.96; }
-  .deck-map-module { grid-template-columns:.7fr 1.3fr; grid-template-rows:1fr; }
+  .deck-module h1,.deck-map-module .deck-module-copy h1,.discover-copy h1,.radio-heading h1,.dashboard-heading h1,.settings-heading h1,.community-manifesto h1 { margin:4px 0 8px; font-size:21px; line-height:1; }
+  .module-intro > h1 { display:-webkit-box; max-height:2em; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
+  .deck-map-module { grid-template-columns:.85fr 1.15fr; grid-template-rows:1fr; }
   .deck-map-module .deck-module-copy { display:block; }
   .scene-map-frame { min-height:320px; }
   .deck-player { height:58px; }
+  .deck-profile { width:44px; height:44px; }
+  .deck-player-controls button,.deck-player-controls .deck-player-play { width:44px; height:44px; }
   .deck-navigator nav button { min-height:42px; }
+  .discover-stage { height:calc(100dvh - 166px); min-height:0; grid-template-columns:minmax(0,1fr) 116px; grid-template-rows:1fr; column-gap:10px; row-gap:0; }
+  .discover-card,.discover-next-card,.discover-signal-wash { width:min(23vw,210px); max-height:100%; grid-column:1; grid-row:1; }
+  .discover-actions { grid-column:2; grid-row:1; flex-direction:column; gap:8px; }
+  .discover-actions button,.discover-actions button.save { width:116px; min-width:116px; padding:0 10px; }
+  .discover-action-full { display:none; }
+  .discover-action-short { display:inline; }
+  .discover-card-copy { right:14px; bottom:14px; left:14px; }
+  .discover-card-copy h2 { font-size:22px; -webkit-line-clamp:2; }
+  .discover-card-copy p { -webkit-line-clamp:1; }
+  .discover-why { display:none; }
 }
 @media (prefers-reduced-motion:reduce) {
   .module-deck-preview * { scroll-behavior:auto!important; animation:none!important; transition:none!important; }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_CONSECUTIVE_SKIPS, resolvePlaybackFailure } from '@/lib/player-recovery';
+import { MAX_CONSECUTIVE_SKIPS, resolvePlaybackFailure, sanitizePlaybackCheckpoint } from '@/lib/player-recovery';
 
 const base = { consecutiveErrors: 1, queueLength: 5, index: 0, repeatMode: 'off' as const };
 
@@ -52,5 +52,17 @@ describe('resolvePlaybackFailure', () => {
       expect(resolvePlaybackFailure({ ...base, consecutiveErrors: errors, index: 1 }))
         .toEqual({ action: 'skip', nextIndex: 2 });
     }
+  });
+});
+
+describe('sanitizePlaybackCheckpoint', () => {
+  it('restores only bounded local playback state', () => {
+    expect(sanitizePlaybackCheckpoint({ trackKey: 'abc_123', currentTime: 82.4, volume: 125, extra: 'ignored' }))
+      .toEqual({ trackKey: 'abc_123', currentTime: 82.4, volume: 100 });
+  });
+
+  it('rejects malformed or identifying free-form track keys', () => {
+    expect(sanitizePlaybackCheckpoint({ trackKey: 'private title with spaces', currentTime: 2, volume: 50 })).toBeNull();
+    expect(sanitizePlaybackCheckpoint({ trackKey: 'abc', currentTime: Number.NaN, volume: 50 })).toBeNull();
   });
 });

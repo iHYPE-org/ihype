@@ -8,14 +8,16 @@
 - [ ] Pull-request CI passes, including Workerd security smoke and performance budgets.
 - [ ] The database migration has been reviewed for destructive operations.
 - [ ] Production dependencies report no high or critical vulnerabilities.
-- [ ] No landing-page, player, search, or theme regression is visible on mobile.
+- [ ] `npm run test:e2e:responsive` passes its phone, landscape, light,
+      reduced-motion, 200%-text, overflow, hero-budget, and touch-target gates.
 
 ## Before deploying
 
 - [ ] Run `npm run check:alpha` with the production configuration available locally.
 - [ ] Confirm the Cloudflare `ihype-cron` Worker contains both `CRON_SECRET` and `HEARTBEAT_URL`.
 - [ ] Confirm the Production GitHub environment requires an operator approval.
-- [ ] Confirm registration, upload, outbound-email, advertising, and payment switches have the intended values.
+- [ ] Confirm registration, upload, outbound-email, advertising, payment,
+      ticketing, radio, and map switches have the intended values.
 - [ ] Confirm the most recent backup verification passed.
 - [ ] `RESTORE_DRILL_VERIFIED_AT` matches that drill and is no more than 35 days old.
 

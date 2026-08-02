@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getOrCreateStripeCustomer, getStripe, isStripeConfigured } from '@/lib/stripe';
 import { log } from '@/lib/logger';
+import { arePaymentsEnabledRuntime } from '@/lib/runtime-flags';
 
 /**
  * POST /api/stripe/setup-intent
@@ -12,6 +13,9 @@ import { log } from '@/lib/logger';
  */
 export async function POST() {
   try {
+    if (!(await arePaymentsEnabledRuntime())) {
+      return NextResponse.json({ error: 'New payment operations are temporarily paused.', code: 'PAYMENTS_PAUSED' }, { status: 503, headers: { 'Retry-After': '300' } });
+    }
     if (!isStripeConfigured()) {
       return NextResponse.json({ error: 'Payments are not configured on this server.' }, { status: 503 });
     }

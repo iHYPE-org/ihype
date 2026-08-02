@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
+import { createAlphaDiagnostics } from '@/lib/alpha-diagnostics';
 
 async function postSupportRequest(body: unknown) {
   const response = await fetch('/api/support', {
@@ -63,8 +64,9 @@ export function SupportForm({ alphaModule, initialType = 'general', initialSubje
     setIsSubmitting(true);
     try {
       const type = CATEGORIES.find((c) => c.label === category)?.type ?? 'general';
-      const diagnosticDetails = alphaModule
-        ? `${details}\n\n---\nAlpha diagnostics: module=${alphaModule}; viewport=${window.innerWidth}x${window.innerHeight}; online=${navigator.onLine ? 'yes' : 'no'}`
+      const diagnostic = alphaModule ? createAlphaDiagnostics(alphaModule) : null;
+      const diagnosticDetails = diagnostic
+        ? `${details}\n\n---\nAlpha diagnostics: module=${diagnostic.module}; viewport=${diagnostic.viewport}; platform=${diagnostic.platform}; app=${diagnostic.appVersion}; ref=${diagnostic.errorId}`
         : details;
       await postSupportRequest({ type, email, subject, details: diagnosticDetails, company });
       setSent(true);

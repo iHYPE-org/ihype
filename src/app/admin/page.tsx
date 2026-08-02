@@ -24,6 +24,10 @@ import {
   areUploadsEnabledRuntime,
   getRuntimeFlag,
   isAdvertisingEnabledRuntime,
+  arePaymentsEnabledRuntime,
+  isTicketingEnabledRuntime,
+  isRadioEnabledRuntime,
+  areMapsEnabledRuntime,
   isInviteCodeRequiredRuntime,
   isOutboundEmailEnabledRuntime,
   shouldHideDemoContentRuntime
@@ -242,6 +246,10 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
     uploadsEnabled,
     outboundEmailEnabled,
     advertisingEnabled,
+    paymentsEnabled,
+    ticketsEnabled,
+    radioEnabled,
+    mapsEnabled,
   ] = await Promise.all([
     areDemoLoginsEnabledRuntime(),
     isInviteCodeRequiredRuntime(),
@@ -252,6 +260,10 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
     areUploadsEnabledRuntime(),
     isOutboundEmailEnabledRuntime(),
     isAdvertisingEnabledRuntime(),
+    arePaymentsEnabledRuntime(),
+    isTicketingEnabledRuntime(),
+    isRadioEnabledRuntime(),
+    areMapsEnabledRuntime(),
   ]);
   const featureFlags = [
     { key: 'demo_logins', label: 'Demo logins', enabled: demoLoginsEnabled },
@@ -263,6 +275,10 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
     { key: 'uploads_enabled', label: 'Media uploads', enabled: uploadsEnabled },
     { key: 'outbound_email_enabled', label: 'Outbound email', enabled: outboundEmailEnabled },
     { key: 'advertising_enabled', label: 'Advertising', enabled: advertisingEnabled },
+    { key: 'payments_enabled', label: 'New payment operations', enabled: paymentsEnabled },
+    { key: 'tickets_enabled', label: 'New ticket sales and ticketing setup', enabled: ticketsEnabled },
+    { key: 'radio_enabled', label: 'Radio delivery and creation', enabled: radioEnabled },
+    { key: 'maps_enabled', label: 'Location map lookups', enabled: mapsEnabled },
   ];
   const rateLimitMetrics = await getRateLimitMetrics(10);
   const betaMetrics = await getBetaMetrics().catch(() => null);

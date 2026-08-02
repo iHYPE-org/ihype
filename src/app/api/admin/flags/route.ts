@@ -16,6 +16,10 @@ const ALLOWED_FLAGS = new Set([
   'uploads_enabled',
   'outbound_email_enabled',
   'advertising_enabled',
+  'payments_enabled',
+  'tickets_enabled',
+  'radio_enabled',
+  'maps_enabled',
 ]);
 
 export async function POST(request: Request) {

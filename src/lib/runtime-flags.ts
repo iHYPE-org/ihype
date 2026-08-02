@@ -1,5 +1,6 @@
 import { kvGet } from '@/lib/kv';
 import { log } from '@/lib/logger';
+import { readRuntimeEnv } from '@/lib/runtime-env';
 
 function parseBooleanFlag(value: unknown, defaultValue: boolean) {
   if (value == null) return defaultValue;
@@ -17,7 +18,7 @@ function parseBooleanFlag(value: unknown, defaultValue: boolean) {
   return defaultValue;
 }
 
-type RuntimeFlagKey =
+export type RuntimeFlagKey =
   | 'demo_logins'
   | 'invite_only_signup'
   | 'hide_demo_content'
@@ -26,7 +27,11 @@ type RuntimeFlagKey =
   | 'registrations_enabled'
   | 'uploads_enabled'
   | 'outbound_email_enabled'
-  | 'advertising_enabled';
+  | 'advertising_enabled'
+  | 'payments_enabled'
+  | 'tickets_enabled'
+  | 'radio_enabled'
+  | 'maps_enabled';
 
 async function readRuntimeOverride(key: RuntimeFlagKey) {
   try {
@@ -48,6 +53,24 @@ export const areRegistrationsEnabledRuntime = () => getRuntimeFlag('registration
 export const areUploadsEnabledRuntime = () => getRuntimeFlag('uploads_enabled', true);
 export const isOutboundEmailEnabledRuntime = () => getRuntimeFlag('outbound_email_enabled', true);
 export const isAdvertisingEnabledRuntime = () => getRuntimeFlag('advertising_enabled', true);
+export const arePaymentsEnabledRuntime = () => getRuntimeFlag(
+  'payments_enabled',
+  // This is an independent emergency brake. Payment readiness continues to
+  // fail closed through FEATURE_ENABLE_TICKET_PAYMENTS and Stripe validation.
+  parseBooleanFlag(readRuntimeEnv('FEATURE_ENABLE_PAYMENTS'), true),
+);
+export const isTicketingEnabledRuntime = () => getRuntimeFlag(
+  'tickets_enabled',
+  parseBooleanFlag(readRuntimeEnv('FEATURE_ENABLE_TICKETING'), true),
+);
+export const isRadioEnabledRuntime = () => getRuntimeFlag(
+  'radio_enabled',
+  parseBooleanFlag(readRuntimeEnv('FEATURE_ENABLE_RADIO'), true),
+);
+export const areMapsEnabledRuntime = () => getRuntimeFlag(
+  'maps_enabled',
+  parseBooleanFlag(readRuntimeEnv('FEATURE_ENABLE_MAPS'), true),
+);
 
 const demoIdentifiers = new Set([
   'fan',

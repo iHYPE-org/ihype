@@ -76,3 +76,37 @@ export function isPublicVenueCoordinate(profile: {
     && Number.isFinite(profile.latitude)
     && Number.isFinite(profile.longitude);
 }
+
+export function sanitizeStoredProfileLocation<T extends {
+  type: string;
+  addressLine1?: string | null;
+  postalCode?: string | null;
+  city?: string | null;
+  stateRegion?: string | null;
+  country?: string | null;
+  hometown?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+}>(profile: T): T {
+  if (profile.type === 'VENUE') return profile;
+  if (profile.type === 'LISTENER') {
+    return {
+      ...profile,
+      addressLine1: null,
+      postalCode: null,
+      city: null,
+      stateRegion: null,
+      country: null,
+      hometown: null,
+      latitude: null,
+      longitude: null,
+    };
+  }
+  return {
+    ...profile,
+    addressLine1: null,
+    postalCode: null,
+    latitude: null,
+    longitude: null,
+  };
+}

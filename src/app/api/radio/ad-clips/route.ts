@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { resolveAdBreakClips } from '@/lib/ad-clip-selection';
 import type { AdvertisingScope } from '@/lib/show-composer';
+import { isRadioEnabledRuntime } from '@/lib/runtime-flags';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,7 @@ export const dynamic = 'force-dynamic';
  * it got, so the preview modal's copy stays honest either way.
  */
 export async function GET(request: NextRequest) {
+  if (!(await isRadioEnabledRuntime())) return NextResponse.json({ error: 'Radio is temporarily paused.', code: 'RADIO_PAUSED' }, { status: 503, headers: { 'Retry-After': '300' } });
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Login required' }, { status: 401 });
 

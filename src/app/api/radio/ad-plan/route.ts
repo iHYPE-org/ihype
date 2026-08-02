@@ -2,12 +2,14 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getDjAdPlan } from '@/lib/ai-dj-ads';
+import { isRadioEnabledRuntime } from '@/lib/runtime-flags';
 
 export const dynamic = 'force-dynamic';
 
 // Advertising recommendation for the signed-in DJ's radio shows, consumed by
 // the Radio Show Creator to pre-set ad scope and size ad breaks.
 export async function GET() {
+  if (!(await isRadioEnabledRuntime())) return NextResponse.json({ error: 'Radio is temporarily paused.', code: 'RADIO_PAUSED' }, { status: 503, headers: { 'Retry-After': '300' } });
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 

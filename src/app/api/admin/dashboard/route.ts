@@ -9,10 +9,14 @@ import {
   areDemoLoginsEnabledRuntime,
   areRegistrationsEnabledRuntime,
   areUploadsEnabledRuntime,
+  arePaymentsEnabledRuntime,
+  areMapsEnabledRuntime,
   getRuntimeFlag,
   isAdvertisingEnabledRuntime,
   isInviteCodeRequiredRuntime,
   isOutboundEmailEnabledRuntime,
+  isRadioEnabledRuntime,
+  isTicketingEnabledRuntime,
   shouldHideDemoContentRuntime,
 } from '@/lib/runtime-flags';
 import { isBlobMediaStorageConfigured } from '@/lib/media-storage';
@@ -123,6 +127,10 @@ export async function GET() {
       uploadsEnabled,
       outboundEmailEnabled,
       advertisingEnabled,
+      paymentsEnabled,
+      ticketsEnabled,
+      radioEnabled,
+      mapsEnabled,
     ] = await Promise.all([
       areDemoLoginsEnabledRuntime(),
       isInviteCodeRequiredRuntime(),
@@ -133,6 +141,10 @@ export async function GET() {
       areUploadsEnabledRuntime(),
       isOutboundEmailEnabledRuntime(),
       isAdvertisingEnabledRuntime(),
+      arePaymentsEnabledRuntime(),
+      isTicketingEnabledRuntime(),
+      isRadioEnabledRuntime(),
+      areMapsEnabledRuntime(),
     ]);
 
     const rateLimitMetrics = await getRateLimitMetrics(10);
@@ -170,6 +182,10 @@ export async function GET() {
         { key: 'uploads_enabled', label: 'Media uploads', enabled: uploadsEnabled },
         { key: 'outbound_email_enabled', label: 'Outbound email', enabled: outboundEmailEnabled },
         { key: 'advertising_enabled', label: 'Advertising', enabled: advertisingEnabled },
+        { key: 'payments_enabled', label: 'New payment operations', enabled: paymentsEnabled },
+        { key: 'tickets_enabled', label: 'New ticket sales and ticketing setup', enabled: ticketsEnabled },
+        { key: 'radio_enabled', label: 'Radio delivery and creation', enabled: radioEnabled },
+        { key: 'maps_enabled', label: 'Location map lookups', enabled: mapsEnabled },
       ],
       rateLimitMetrics,
     });
