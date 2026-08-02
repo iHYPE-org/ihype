@@ -150,6 +150,18 @@ async function seedSecurityFixtures() {
   };
 
   try {
+    // Security and performance run as separate mandatory CI steps against the
+    // same scratch database. Re-seeding must therefore be deterministic. Only
+    // remove the fixed smoke records we own, in foreign-key order; never clear
+    // or truncate shared tables.
+    await client.query('BEGIN');
+    await client.query(`DELETE FROM "BookingRequest" WHERE "id" = 'workerd-smoke-booking'`);
+    await client.query(`DELETE FROM "Follow" WHERE "id" = 'workerd-smoke-follow'`);
+    await client.query(`DELETE FROM "Show" WHERE "id" = $1`, [FIXTURE.showId]);
+    await client.query(`DELETE FROM "ArtistMediaAsset" WHERE "id" = 'workerd-smoke-asset'`);
+    await client.query(`DELETE FROM "Profile" WHERE "id" = $1`, [FIXTURE.profileId]);
+    await client.query(`DELETE FROM "User" WHERE "id" = ANY($1::text[])`, [[FIXTURE.creatorId, FIXTURE.outsiderId]]);
+
     await client.query(
       `INSERT INTO "User" ("id", "name", "email", "username", "role", "isThirteenOrOlder", "emailVerified", "userSecurityVersion", "createdAt", "updatedAt")
        VALUES ($1, 'Smoke Creator', 'creator-smoke@example.com', 'smokecreator', 'ARTIST'::"Role", true, $3, 0, $3, $3),
@@ -181,6 +193,10 @@ async function seedSecurityFixtures() {
        VALUES ('workerd-smoke-booking', $1, $2, $3, 'pending', $4, $4)`,
       [FIXTURE.outsiderId, FIXTURE.profileId, FIXTURE.privateMessage, now],
     );
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
   } finally {
     await client.end();
   }
