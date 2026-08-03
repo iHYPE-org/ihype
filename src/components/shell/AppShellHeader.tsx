@@ -62,7 +62,7 @@ export function AppShellHeader({
         title={t('appShell.menuAriaLabel', 'Menu')}
         type="button"
       >
-        <Image alt="" height={48} priority src="/brand/ihype-signal-mark.svg" width={48} />
+        <Image alt="" height={48} priority src="/brand/ihype-menu-logo.webp" width={48} />
       </button>
 
       <form

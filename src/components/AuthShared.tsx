@@ -57,7 +57,7 @@ export function AuthCardShell({
     <section className={`authcard-page authcard-page-${mode}`}>
       <header className="authcard-header">
         <Link aria-label="iHYPE home" className="authcard-brand" href="/">
-          <Image alt="" height={46} priority src="/brand/ihype-signal-mark.svg" width={46} />
+          <Image alt="" height={46} priority src="/brand/ihype-menu-logo.webp" width={46} />
           <span><b>iHYPE</b><small>LOCAL SIGNAL</small></span>
         </Link>
         <Link className="authcard-home-link" href="/">Free local music <span aria-hidden="true">↗</span></Link>

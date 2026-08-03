@@ -34,20 +34,26 @@ export function NativePushRegistration() {
     if (!Capacitor.isNativePlatform()) return;
 
     let cancelled = false;
+    let appLinkListener: { remove: () => Promise<void> } | undefined;
 
     import('@capacitor/app')
       .then(({ App }) => {
         if (cancelled) return undefined;
-        const listener = App.addListener('appUrlOpen', ({ url }) => {
+        return App.addListener('appUrlOpen', ({ url }) => {
           const path = resolveInternalPath(url);
           if (path) router.push(path);
         });
-        return listener;
+      })
+      .then((listener) => {
+        if (!listener) return;
+        if (cancelled) void listener.remove();
+        else appLinkListener = listener;
       })
       .catch(() => undefined);
 
     return () => {
       cancelled = true;
+      void appLinkListener?.remove();
     };
   }, [router]);
 
@@ -84,7 +90,9 @@ export function NativePushRegistration() {
         listenerHandles.push(
           PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
             const link = action.notification.data?.link;
-            if (typeof link === 'string' && link.startsWith('/')) router.push(link);
+            if (typeof link !== 'string') return;
+            const path = resolveInternalPath(link);
+            if (path) router.push(path);
           })
         );
 

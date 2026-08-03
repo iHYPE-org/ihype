@@ -6,8 +6,8 @@ import { getBaseUrl } from '@/lib/utils';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { getTransparencySnapshot } from '@/lib/transparency';
 
-const TITLE = 'iHYPE — Your local music scene, completely free';
-const DESCRIPTION = 'Discover independent artists and live shows near you, hype the moments you love, and grab tickets with zero fees.';
+const TITLE = 'iHYPE — Listen. Engage. HYPE local.';
+const DESCRIPTION = 'Listen to free local music, discover artists and live events around you, and HYPE what deserves to be heard.';
 
 export const metadata: Metadata = {
   title: TITLE,

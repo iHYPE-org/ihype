@@ -22,12 +22,25 @@ describe('resolveInternalPath', () => {
     expect(resolveInternalPath('https://ihype.org')).toBe('/');
   });
 
+  it('accepts a safe internal path from push notification data', () => {
+    expect(resolveInternalPath('/shows/my-show?from=push')).toBe('/shows/my-show?from=push');
+  });
+
   it('rejects a different domain', () => {
     expect(resolveInternalPath('https://evil.example.com/phishing')).toBeNull();
   });
 
   it('rejects a domain that merely contains ihype.org as a suffix trick', () => {
     expect(resolveInternalPath('https://ihype.org.evil.example.com/x')).toBeNull();
+  });
+
+  it('rejects protocol-relative and backslash-prefixed paths', () => {
+    expect(resolveInternalPath('//evil.example.com/x')).toBeNull();
+    expect(resolveInternalPath('/\\evil.example.com/x')).toBeNull();
+  });
+
+  it('rejects insecure links even for the correct host', () => {
+    expect(resolveInternalPath('http://ihype.org/radio')).toBeNull();
   });
 
   it('rejects a malformed URL', () => {

@@ -775,6 +775,7 @@ function RadioModule({ enabled, production }: { enabled: boolean; production: bo
   const [scope, setScope] = usePersistentState<RadioScope>('ihype:preview-radio-scope', 'local');
   const [favorites, setFavorites] = usePersistentState<string[]>('ihype:preview-radio-favorites', ['after-hours']);
   const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [liveTracks, setLiveTracks] = useState<ExperienceTrack[]>([]);
   const [radioLoading, setRadioLoading] = useState(production);
@@ -816,7 +817,8 @@ function RadioModule({ enabled, production }: { enabled: boolean; production: bo
           <div className="radio-now"><span>{playing ? 'LIVE NOW' : radioLoading ? 'TUNING' : 'READY TO PLAY'}</span><strong>{heroTrack?.title ?? (production ? 'Your local catalog' : 'Motor City After Dark')}</strong><small>{heroTrack ? `${heroTrack.artist} · ${heroTrack.scene}` : production ? 'Tracks appear as local artists publish them' : 'with Laila Stone · Detroit'}</small></div>
           <button aria-pressed={favoritesOnly} className="radio-favorites-toggle" onClick={() => setFavoritesOnly((value) => !value)} type="button">♥ <span>{favorites.length} {favorites.length === 1 ? 'favorite' : 'favorites'}</span></button>
         </div>
-        <div className="radio-filters">
+        <button aria-expanded={filtersOpen} className="radio-filter-toggle" onClick={() => setFiltersOpen((value) => !value)} type="button"><span>Filter stations</span><small>{genre} · {location}</small><b>{filtersOpen ? '−' : '+'}</b></button>
+        <div className={`radio-filters ${filtersOpen ? 'is-open' : ''}`}>
           <label><span>Genre</span><select onChange={(event) => setGenre(event.target.value)} value={genre}><option>All sounds</option><option>Indie</option><option>Hip-hop</option><option>Electronic</option><option>Punk</option><option>Jazz</option></select></label>
           <label><span>Location</span><select onChange={(event) => setLocation(event.target.value)} value={location}><option>Near Detroit</option><option>Michigan</option><option>Great Lakes</option><option>Anywhere</option></select></label>
           <label><span>Topic</span><select onChange={(event) => setTopic(event.target.value)} value={topic}><option>New releases</option><option>Scene history</option><option>Live sessions</option><option>Artist interviews</option></select></label>
@@ -879,7 +881,7 @@ function DashboardModule({ production, viewer }: { production: boolean; viewer?:
   return (
     <section aria-labelledby="dashboard-title" className="deck-module dashboard-module">
       <ModuleIntro className="dashboard-heading" description={data.description} kicker="DASHBOARD · ONLY YOUR ACTIVE ROLES" title={data.headline} titleId="dashboard-title">
-        <div aria-label="Choose dashboard role" className="role-picker" role="group">
+        <div aria-label="Choose dashboard role" className={`role-picker ${assignedRoles.length === 1 ? 'is-single-role' : ''}`} role="group">
           {assignedRoles.map((id) => <button aria-pressed={role === id} key={id} onClick={() => setRole(id)} type="button">{id}</button>)}
           {!production && <button aria-expanded={managingRoles} className="role-manage-button" onClick={() => setManagingRoles((value) => !value)} type="button">Manage roles</button>}
         </div>
@@ -1111,6 +1113,8 @@ function CompactPlayer({ activeModule, onHype, production, radioEnabled }: { act
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const fullPlayerCloseRef = useRef<HTMLButtonElement | null>(null);
+  const compactPlayerRef = useRef<HTMLButtonElement | null>(null);
   const [venueContext, setVenueContext] = useState<{ event: string; name: string; time: string } | null>(null);
   const hypeHoldTimer = useRef<number | null>(null);
   const hypeHoldTriggered = useRef(false);
@@ -1139,7 +1143,7 @@ function CompactPlayer({ activeModule, onHype, production, radioEnabled }: { act
   }, [production, radioEnabled]);
 
   const baseTrack = production
-    ? { mediaId: null, title: 'Choose a local track', artist: 'Open Discover or Radio to begin', art: '/brand/ihype-signal-mark.svg', scene: 'Your scene', match: 'Ready for a real local signal' }
+    ? { mediaId: null, title: 'Choose a local track', artist: 'Open Discover or Radio to begin', art: '/brand/ihype-menu-logo.webp', scene: 'Your scene', match: 'Ready for a real local signal' }
     : previewPlayerTracks[playerIndex % previewPlayerTracks.length];
   const playerTrack = externalTrack ?? (activeModule === 'radio' && !production
     ? { mediaId: null, title: 'Motor City After Dark', artist: 'Laila Stone', art: '/brand/alpha-show-4.png', scene: 'Detroit radio', match: 'Alpha radio placeholder' }
@@ -1224,9 +1228,34 @@ function CompactPlayer({ activeModule, onHype, production, radioEnabled }: { act
 
   useEffect(() => {
     if (!expanded) return;
-    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') setExpanded(false); };
-    window.addEventListener('keydown', closeOnEscape);
-    return () => window.removeEventListener('keydown', closeOnEscape);
+    const keepFocusInPlayer = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setExpanded(false);
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const dialog = fullPlayerCloseRef.current?.closest('[role="dialog"]');
+      const controls = dialog ? Array.from(dialog.querySelectorAll<HTMLElement>('button:not(:disabled),a[href],input:not(:disabled)')) : [];
+      if (controls.length === 0) return;
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.requestAnimationFrame(() => fullPlayerCloseRef.current?.focus());
+    window.addEventListener('keydown', keepFocusInPlayer);
+    return () => {
+      window.removeEventListener('keydown', keepFocusInPlayer);
+      document.body.style.overflow = previousOverflow;
+      compactPlayerRef.current?.focus();
+    };
   }, [expanded]);
 
   const moveQueueItem = (index: number, direction: -1 | 1) => {
@@ -1390,7 +1419,7 @@ function CompactPlayer({ activeModule, onHype, production, radioEnabled }: { act
       />
       <div aria-hidden="true" className="deck-player-aura" />
       {venueContext && <div aria-live="polite" className="deck-player-context-card"><span>HAPPENING NEAR YOU</span><strong>{venueContext.name}</strong><small>{venueContext.event} · {venueContext.time}</small><button aria-label="Dismiss nearby event" onClick={() => setVenueContext(null)} type="button">×</button></div>}
-      <button aria-label="Open full player" className="deck-player-track-button" onClick={() => setExpanded(true)} type="button"><span className="deck-player-art" key={playerTrack.art}><Image alt="" height={52} src={playerTrack.art} width={52} /><PlayerWaveform playing={playing} /></span><span aria-live="polite" className="deck-player-copy" key={`${playerTrack.title}-${playerTrack.artist}`}><span>{activeModule === 'radio' ? 'RADIO' : playing ? 'NOW PLAYING' : 'READY'}</span><PlayerMarquee artist={playerTrack.artist} title={playerTrack.title} /></span></button>
+      <button aria-label="Open full player" className="deck-player-track-button" onClick={() => setExpanded(true)} ref={compactPlayerRef} type="button"><span className="deck-player-art" key={playerTrack.art}><Image alt="" height={52} src={playerTrack.art} width={52} /><PlayerWaveform playing={playing} /></span><span aria-live="polite" className="deck-player-copy" key={`${playerTrack.title}-${playerTrack.artist}`}><span>{activeModule === 'radio' ? 'RADIO' : playing ? 'NOW PLAYING' : 'READY'}</span><PlayerMarquee artist={playerTrack.artist} title={playerTrack.title} /></span><i aria-hidden="true" className="deck-player-expand-cue">⌃</i></button>
       <div className="deck-player-controls">
         <button aria-label="Previous song" onClick={() => changeTrack(-1)} type="button"><Icon name="previous" /></button>
         <button aria-label={playing ? 'Pause' : 'Play'} className="deck-player-play" disabled={!canPlay} onClick={() => setPlaying((value) => !value)} type="button"><Icon name={playing ? 'pause' : 'play'} /></button>
@@ -1414,7 +1443,7 @@ function CompactPlayer({ activeModule, onHype, production, radioEnabled }: { act
       {playbackError && <div aria-live="polite" className="deck-player-error">{playbackError}</div>}
     </div>
       {mounted && expanded ? createPortal(<div aria-label="Full music player" aria-modal="true" className={`deck-full-player ${playing ? 'is-playing' : ''}`} role="dialog" style={{ '--art-rgb': artworkPalette } as CSSProperties}>
-        <button aria-label="Close full player" className="full-player-close" onClick={() => setExpanded(false)} type="button"><Icon name="close" /></button>
+        <button aria-label="Close full player" className="full-player-close" onClick={() => setExpanded(false)} ref={fullPlayerCloseRef} type="button"><Icon name="close" /></button>
         <div className="full-player-art" key={playerTrack.art} style={{ position: 'relative' }}><Image alt={`Sample artwork for ${playerTrack.title}`} fill priority sizes="(max-width: 800px) 78vw, 36vw" src={playerTrack.art} /><PlayerWaveform playing={playing} /></div>
         <div className="full-player-main" key={`${playerTrack.title}-${playerTrack.artist}`}><span className="deck-kicker">{production ? 'LOCAL TRACK' : 'SAMPLE ALPHA TRACK'} · {playerTrack.scene.toUpperCase()}</span><h2>{playerTrack.title}</h2><Link href={playerTrack.artistSlug ? `/artists/${playerTrack.artistSlug}` : '/pages'}>{playerTrack.artist} ↗</Link><p>“Local sound, carried by a real scene.”</p><div className="full-player-progress"><span>{formatPlayerTime(currentTime)}</span><div><i style={{ width: duration > 0 ? `${Math.min(100, currentTime / duration * 100)}%` : '0%' }} /></div><span>{formatPlayerTime(duration)}</span></div><div className="full-player-controls"><button aria-label="Previous song" onClick={() => changeTrack(-1)} type="button"><Icon name="previous" /></button><button aria-label={playing ? 'Pause' : 'Play'} disabled={!canPlay} onClick={() => setPlaying((value) => !value)} type="button"><Icon name={playing ? 'pause' : 'play'} /></button><button aria-label="Next song" onClick={() => changeTrack(1)} type="button"><Icon name="next" /></button></div><div className="full-player-actions"><button aria-pressed={liked} disabled={!canHype} onClick={clickHype} type="button">{liked ? `HYPED · ${hypeCount.toLocaleString()}` : 'HYPE'}</button><button disabled={!playerTrack.mediaId} onClick={() => { if (playerTrack.mediaId) void recordDiscoveryDecision(playerTrack.mediaId, 'save'); }} type="button">Add to Discovery</button><button onClick={() => void shareTrack()} type="button">Share</button></div><div className="full-player-notes"><span>WHY THIS TRACK</span><p>{production ? playerTrack.match : '75% from your Detroit scene, alternative R&B HYPES, and Discovery saves · 25% wildcard keeps the signal open.'}</p></div></div>
         <aside className="full-player-queue"><div className="queue-heading"><span>PLAY QUEUE</span><button onClick={() => setQueue([])} type="button">Clear</button></div>{queue.map((item, index) => <div className={`queue-row ${item.type}`} key={item.id}><span><strong>{item.title}</strong><small>{item.artist} · {item.duration}</small></span>{item.type === 'track' && <span className="queue-row-actions"><button aria-label={`Move ${item.title} up`} disabled={index === 0} onClick={() => moveQueueItem(index, -1)} type="button">↑</button><button aria-label={`Move ${item.title} down`} disabled={index === queue.length - 1} onClick={() => moveQueueItem(index, 1)} type="button">↓</button><button aria-label={`Remove ${item.title}`} onClick={() => removeQueueItem(item.id)} type="button">×</button></span>}</div>)}</aside>
@@ -1451,6 +1480,7 @@ export function ModuleDeckMockup({ features = { maps: true, radio: true }, produ
   const [hypePulse, setHypePulse] = useState(0);
   const [signalToast, setSignalToast] = useState('');
   const logoAnimationTimer = useRef<number | null>(null);
+  const logoButtonRef = useRef<HTMLButtonElement | null>(null);
   const hypePulseTimer = useRef<number | null>(null);
   const activeModule = modules[activeIndex];
   const platform = usePlatformCapabilities();
@@ -1531,6 +1561,15 @@ export function ModuleDeckMockup({ features = { maps: true, radio: true }, produ
     setMenuOpen(false);
     setAccountOpen(false);
     setQuery('');
+    const resetViewportOrigin = () => {
+      document.documentElement.scrollLeft = 0;
+      document.body.scrollLeft = 0;
+      const deck = logoButtonRef.current?.closest('.module-deck-preview') as HTMLElement | null;
+      if (deck) deck.scrollLeft = 0;
+      logoButtonRef.current?.focus({ preventScroll: true });
+    };
+    resetViewportOrigin();
+    window.requestAnimationFrame(resetViewportOrigin);
   };
   const animateLogo = useCallback(() => {
     if (logoAnimationTimer.current !== null) window.clearTimeout(logoAnimationTimer.current);
@@ -1548,6 +1587,27 @@ export function ModuleDeckMockup({ features = { maps: true, radio: true }, produ
     setSignalToast(intensity === 'scene-wave' ? 'SCENE WAVE SENT · your signal carries farther' : 'HYPE SENT · local signal strengthened');
     if (hypePulseTimer.current !== null) window.clearTimeout(hypePulseTimer.current);
     hypePulseTimer.current = window.setTimeout(() => setSignalToast(''), intensity === 'scene-wave' ? 3200 : 2200);
+  }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const body = document.body;
+    const previousRootOverflow = root.style.overflow;
+    const previousBodyOverflow = body.style.overflow;
+    const previousRootOverscroll = root.style.overscrollBehavior;
+    const previousBodyOverscroll = body.style.overscrollBehavior;
+    root.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    root.style.overscrollBehavior = 'none';
+    body.style.overscrollBehavior = 'none';
+    root.scrollLeft = 0;
+    body.scrollLeft = 0;
+    return () => {
+      root.style.overflow = previousRootOverflow;
+      body.style.overflow = previousBodyOverflow;
+      root.style.overscrollBehavior = previousRootOverscroll;
+      body.style.overscrollBehavior = previousBodyOverscroll;
+    };
   }, []);
 
   useEffect(() => {
@@ -1579,9 +1639,9 @@ export function ModuleDeckMockup({ features = { maps: true, radio: true }, produ
       <div aria-hidden="true" className="scene-atmosphere"><span className="scene-hype-wave" key={hypePulse} /></div>
       {signalToast && <div aria-live="polite" className="scene-signal-toast"><span />{signalToast}</div>}
       <header className="deck-topbar">
-        <button aria-expanded={menuOpen} aria-label={menuOpen ? 'Close iHYPE module navigator' : 'Open iHYPE module navigator'} className={`deck-logo ${logoAnimating ? 'is-pressed' : ''}`} onClick={toggleNavigator} type="button"><Image alt="iHYPE" height={58} priority src="/brand/ihype-signal-mark.svg" width={58} /></button>
+        <button aria-expanded={menuOpen} aria-label={menuOpen ? 'Close iHYPE module navigator' : 'Open iHYPE module navigator'} className={`deck-logo ${logoAnimating ? 'is-pressed' : ''}`} onClick={toggleNavigator} ref={logoButtonRef} type="button"><Image alt="iHYPE" height={58} priority src="/brand/ihype-menu-logo.webp" width={58} /></button>
         <div className="deck-search is-open">
-          <Icon name="search" /><label className="sr-only" htmlFor="deck-global-search">Search iHYPE</label><input autoComplete="off" data-api-path={implementationBindings.globalSearch.path} id="deck-global-search" onChange={(event) => { const value = event.target.value; setQuery(value); if (value.trim().length >= 2) signalImplementationAction('globalSearch', { query: value.trim() }); }} placeholder="Search artists, tracks, radio, venues, and scenes" value={query} />
+          <Icon name="search" /><label className="sr-only" htmlFor="deck-global-search">Search iHYPE</label><input autoComplete="off" data-api-path={implementationBindings.globalSearch.path} id="deck-global-search" onChange={(event) => { const value = event.target.value; setQuery(value); if (value.trim().length >= 2) signalImplementationAction('globalSearch', { query: value.trim() }); }} placeholder="Search iHYPE" value={query} />
           {(searchLoading || searchMatches.length > 0 || query.trim().length >= 2) && <div aria-busy={searchLoading} className="deck-search-results">
             <small>{searchLoading ? 'Searching the scene…' : searchSource === 'live' ? 'LIVE SEARCH' : 'ALPHA SAMPLE'}</small>
             {searchLoading && <span aria-hidden="true" className="deck-search-loading"><i /><i /><i /></span>}
@@ -1592,7 +1652,7 @@ export function ModuleDeckMockup({ features = { maps: true, radio: true }, produ
         <div className="deck-active-label" key={activeModule.id}><span>{activeModule.eyebrow}</span><strong>{activeModule.label}</strong></div>
         <span className="deck-sample-badge">{production ? 'LIVE ALPHA' : 'ALPHA SAMPLE'}</span>
         <button aria-expanded={accountOpen} aria-label="Open account menu" className="deck-profile" onClick={() => setAccountOpen((value) => !value)} type="button">{viewer?.name?.trim().charAt(0).toUpperCase() || 'F'}</button>
-        {accountOpen && <div className="deck-account-menu"><div><span>SIGNED IN AS</span><strong>{viewer?.name || 'Fan alpha tester'}</strong><small>{viewer?.role || 'Base fan account'}</small></div><button onClick={() => changeModule(modules.findIndex((item) => item.id === 'settings'))} type="button">Settings <span>↗</span></button><AlphaQuickFeedback module={activeModule.id} /><Link href={`/support?alpha=1&module=${activeModule.id}`}>Detailed feedback <span>↗</span></Link><Link href="/api/auth/signout">Log out <span>↗</span></Link></div>}
+        {accountOpen && <div className="deck-account-menu"><div><span>SIGNED IN AS</span><strong>{viewer?.name || 'Fan alpha tester'}</strong><small>{viewer?.role || 'Base fan account'}</small></div><button onClick={() => changeModule(modules.findIndex((item) => item.id === 'community'))} type="button">Community <span>↗</span></button><button onClick={() => changeModule(modules.findIndex((item) => item.id === 'settings'))} type="button">Settings <span>↗</span></button><AlphaQuickFeedback module={activeModule.id} /><Link href={`/support?alpha=1&module=${activeModule.id}`}>Help & detailed feedback <span>↗</span></Link><Link href="/api/auth/signout">Log out <span>↗</span></Link></div>}
       </header>
 
       <main aria-busy={demoState === 'loading'} className="deck-stage">
@@ -1625,7 +1685,7 @@ body:has(.module-deck-preview) .mas-root,
 body:has(.module-deck-preview) nextjs-portal { display:none!important; }
 body:has(.module-deck-preview) .site-shell { padding:0!important; }
 body:has(.module-deck-preview) #main-content { transform:none!important; padding:0!important; }
-.module-deck-preview { --deck-orange:#ff4d2e; --deck-cyan:#18ded1; --deck-cream:#f3eee7; --deck-muted:#a69d93; --deck-line:rgba(243,238,231,.14); --scene-a:255,77,46; --scene-b:24,222,209; --scene-focus-x:72%; --scene-focus-y:38%; --deck-safe-top:env(safe-area-inset-top,0px); --deck-safe-right:env(safe-area-inset-right,0px); --deck-safe-bottom:env(safe-area-inset-bottom,0px); --deck-safe-left:env(safe-area-inset-left,0px); position:relative; width:100%; height:100dvh; min-height:640px; overflow:hidden; color:var(--deck-cream); background:#050607; isolation:isolate; overscroll-behavior:none; }
+.module-deck-preview { --deck-orange:#ff4d2e; --deck-cyan:#18ded1; --deck-cream:#f3eee7; --deck-muted:#a69d93; --deck-line:rgba(243,238,231,.14); --scene-a:255,77,46; --scene-b:24,222,209; --scene-focus-x:72%; --scene-focus-y:38%; --deck-safe-top:env(safe-area-inset-top,0px); --deck-safe-right:env(safe-area-inset-right,0px); --deck-safe-bottom:env(safe-area-inset-bottom,0px); --deck-safe-left:env(safe-area-inset-left,0px); position:fixed; inset:0; width:auto; height:100dvh; min-height:640px; overflow:hidden; overflow:clip; color:var(--deck-cream); background:#050607; isolation:isolate; overscroll-behavior:none; }
 html[data-theme="light"] body:has(.module-deck-preview) { background:#f3efe8!important; }
 html[data-theme="light"] .module-deck-preview { --deck-cream:#17130f; --deck-muted:#746b61; --deck-line:rgba(23,19,15,.16); color-scheme:light; background:#f3efe8; }
 html[data-theme="light"] .module-deck-preview::before { background:radial-gradient(circle at 17% 44%,rgba(var(--scene-a),.09),transparent 28%),radial-gradient(circle at var(--scene-focus-x) var(--scene-focus-y),rgba(var(--scene-b),.1),transparent 34%),linear-gradient(120deg,#faf7f1 0%,#f1ece5 48%,#e9f2f0 100%); }
@@ -1737,6 +1797,7 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
 .deck-player-copy strong { font:800 17px var(--f-d,Arial,sans-serif); }
 .deck-player-copy small,.deck-player-copy i { color:var(--deck-muted); font-style:normal; }
 .deck-player-track-button { min-width:0; display:grid; grid-template-columns:52px minmax(0,1fr); align-items:center; gap:14px; padding:0; border:0; color:var(--deck-cream); background:transparent; text-align:left; }
+.deck-player-expand-cue { display:none; color:var(--deck-cyan); font-style:normal; }
 .deck-player-track-button > img { width:52px; height:52px; border-radius:10px; object-fit:cover; }
 .deck-player-copy > span:first-child { color:var(--deck-orange); font:800 8px var(--f-m,monospace); letter-spacing:.16em; }
 .deck-player-marquee { min-width:0; display:block; overflow:hidden; white-space:nowrap; }
@@ -1807,6 +1868,7 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
 .deck-navigator nav button { display:grid; grid-template-columns:34px minmax(0,1fr) 20px; grid-template-rows:auto auto; align-items:center; column-gap:12px; min-height:66px; padding:8px 12px; border:0; border-bottom:1px solid rgba(243,238,231,.09); color:var(--deck-cream); background:transparent; text-align:left; }
 .deck-navigator nav button > span { color:var(--deck-muted); font:700 9px var(--f-m,monospace); }
 .deck-navigator nav button > strong { min-width:0; grid-column:2; grid-row:1; overflow:hidden; font:900 22px var(--f-d,Arial,sans-serif); text-overflow:ellipsis; text-transform:uppercase; white-space:nowrap; }
+.deck-nav-label-mobile { display:none; }
 .deck-navigator nav button > small { min-width:0; grid-column:2; grid-row:2; overflow:hidden; color:var(--deck-muted); text-overflow:ellipsis; white-space:nowrap; }
 .deck-navigator nav button > i { grid-column:3; grid-row:1/3; color:var(--deck-cyan); font-style:normal; }
 .deck-navigator nav button[aria-current="page"] { color:#050607; background:var(--deck-cream); }
@@ -2034,6 +2096,7 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
 .radio-now small { color:var(--deck-muted); }
 .radio-favorites-toggle { min-height:42px; display:flex; align-items:center; gap:8px; padding:0 14px; border:1px solid rgba(255,77,46,.32); border-radius:12px; color:var(--deck-orange); background:rgba(255,77,46,.045); font-weight:800; }
 .radio-favorites-toggle[aria-pressed="true"] { color:#160a07; background:var(--deck-orange); }
+.radio-filter-toggle { display:none; }
 .radio-filters { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); align-items:end; gap:10px; padding:14px 18px; border-bottom:1px solid var(--deck-line); }
 .radio-filters label { display:grid; gap:6px; color:var(--deck-muted); font:700 9px var(--f-m,monospace); letter-spacing:.1em; text-transform:uppercase; }
 .radio-filters select,.settings-board select { width:100%; height:43px; padding:0 12px; border:1px solid var(--deck-line); border-radius:11px; color:var(--deck-cream); color-scheme:dark; background:linear-gradient(180deg,#141617,#0e0f10); box-shadow:inset 0 1px rgba(255,255,255,.04); }
@@ -2347,11 +2410,12 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
   .full-player-queue { display:none; }
 }
 @media (max-width:800px) {
-  .module-deck-preview { --mobile-hero-size:clamp(24px,6.8vw,30px); min-height:620px; }
+  .module-deck-preview { --mobile-hero-size:clamp(21px,5.8vw,25px); min-height:620px; }
   .deck-topbar { height:calc(68px + var(--deck-safe-top)); gap:10px; padding:calc(7px + var(--deck-safe-top)) calc(12px + var(--deck-safe-right)) 7px calc(12px + var(--deck-safe-left)); }
   .deck-logo { width:52px; height:52px; border-radius:8px; }
   .deck-search,.deck-search.is-open { width:calc(100vw - 150px); max-width:none; }
-  .deck-search input { height:44px; font-size:12px; }
+  .deck-search input { height:44px; padding-left:43px; font-size:12px; }
+  .deck-search > .deck-icon { left:14px; }
   .deck-active-label { display:none; }
   .deck-sample-badge { display:none; }
   .deck-profile { width:44px; height:44px; margin-left:auto; display:grid; }
@@ -2364,7 +2428,8 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
   .deck-module p { font-size:13px; }
   .deck-kicker { font-size:8px; }
   .deck-player { right:calc(8px + var(--deck-safe-right)); bottom:calc(8px + var(--deck-safe-bottom)); left:calc(8px + var(--deck-safe-left)); height:66px; grid-template-columns:minmax(0,1fr) auto; gap:8px; padding:8px; border-radius:15px; }
-  .deck-player-track-button { grid-template-columns:44px minmax(0,1fr); gap:9px; }
+  .deck-player-track-button { grid-template-columns:44px minmax(0,1fr) 12px; gap:8px; }
+  .deck-player-expand-cue { display:block; align-self:start; padding-top:1px; font-size:12px; }
   .deck-player-art { width:44px; height:44px; }
   .deck-player-progress,.deck-player-volume,.deck-player-queue-button,.deck-player-hype { display:none; }
   .deck-player-controls { gap:0; }
@@ -2375,10 +2440,18 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
   .deck-player-context-card { min-width:0; right:0; bottom:76px; left:0; }
   .scene-signal-toast { top:calc(76px + var(--deck-safe-top)); max-width:calc(100% - 28px); font-size:7px; text-align:center; }
   .deck-scrim { inset:calc(68px + var(--deck-safe-top)) 0 0; }
-  .deck-navigator { top:calc(68px + var(--deck-safe-top)); width:100%; padding:18px calc(12px + var(--deck-safe-right)) calc(14px + var(--deck-safe-bottom)) calc(12px + var(--deck-safe-left)); }
-  .deck-navigator nav button { min-height:58px; grid-template-columns:28px minmax(0,1fr) 16px; }
-  .deck-navigator nav button > strong { font-size:18px; }
-  .deck-navigator nav button > small { font-size:9px; }
+  .deck-navigator { top:auto; width:100%; max-height:calc(100dvh - 82px - var(--deck-safe-top)); padding:18px calc(12px + var(--deck-safe-right)) calc(14px + var(--deck-safe-bottom)) calc(12px + var(--deck-safe-left)); border-top:1px solid var(--deck-line); border-right:0; border-radius:24px 24px 0 0; transform:translateY(105%); }
+  .deck-navigator.is-open { transform:none; }
+  .deck-navigator nav { grid-template-columns:repeat(2,minmax(0,1fr)); align-content:center; gap:8px; padding:14px 0; }
+  .deck-navigator nav button { min-height:74px; grid-template-columns:24px minmax(0,1fr) 14px; border:1px solid rgba(243,238,231,.1); border-radius:15px; background:rgba(243,238,231,.025); }
+  .deck-navigator nav button.is-utility-module { display:none; }
+  .deck-navigator nav button > strong { font-size:17px; }
+  .deck-navigator nav button > small { display:none; }
+  .deck-nav-label-desktop { display:none; }
+  .deck-nav-label-mobile { display:inline; }
+  .deck-nav-heading { padding-bottom:12px; }
+  .deck-nav-heading span { font-size:9px; }
+  .deck-nav-heading small { font-size:10px; }
   .deck-map-module { display:grid; grid-template-columns:1fr; grid-template-rows:auto minmax(420px,1fr); }
   .deck-map-module .deck-module-copy h1 { font-size:var(--mobile-hero-size); }
   .deck-map-module .deck-module-copy p,.deck-location-line,.deck-map-module .deck-button { display:none; }
@@ -2392,6 +2465,7 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
   .map-place-detail { min-width:0; }
   .map-detail-sheet { top:70px; right:10px; width:calc(100% - 20px); }
   .map-detail-sheet { bottom:10px; height:auto; overflow:auto; }
+  .map-filter-panel { width:auto; max-height:min(68dvh,560px); top:auto; right:10px; bottom:10px; left:10px; border-radius:22px; }
   .map-bottom-controls > label { display:none; }
   .map-level-rail { margin-bottom:8px; }
   .map-place-detail { width:100%; }
@@ -2418,15 +2492,20 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
   .radio-heading p,.dashboard-heading p,.settings-heading p { display:none; }
   .radio-scope { grid-template-columns:repeat(4,minmax(0,1fr)); gap:5px; margin-top:12px; }
   .radio-scope button { min-height:34px; padding:0 5px; font-size:7px; }
-  .radio-console { min-height:520px; margin-top:14px; grid-template-rows:auto auto 1fr; }
+  .radio-console { min-height:520px; margin-top:14px; grid-template-rows:auto auto auto 1fr; }
   .radio-topline { min-height:104px; grid-template-columns:76px minmax(0,1fr) auto; gap:12px; padding:12px; }
   .radio-live-art { width:72px; }
   .radio-live-art > button { width:38px; height:38px; }
   .radio-now strong { font-size:18px; }
   .radio-favorites-toggle { width:38px; padding:0; justify-content:center; }
   .radio-favorites-toggle span { display:none; }
-  .radio-filters { grid-template-columns:1fr 1fr; gap:8px; padding:10px 12px; }
-  .radio-filters label:nth-child(3) { display:none; }
+  .radio-filter-toggle { min-height:48px; display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:2px 12px; padding:8px 14px; border:0; border-bottom:1px solid var(--deck-line); color:var(--deck-cream); background:rgba(243,238,231,.025); text-align:left; }
+  .radio-filter-toggle span { font-size:11px; font-weight:800; }
+  .radio-filter-toggle small { min-width:0; grid-column:1; overflow:hidden; color:var(--deck-muted); font-size:8px; text-overflow:ellipsis; white-space:nowrap; }
+  .radio-filter-toggle b { grid-column:2; grid-row:1/3; color:var(--deck-cyan); font-size:20px; font-weight:400; }
+  .radio-filters { max-height:0; grid-template-columns:1fr; gap:8px; overflow:hidden; padding:0 12px; border-bottom:0; opacity:0; transition:max-height .26s ease,padding .26s ease,opacity .2s ease; }
+  .radio-filters.is-open { max-height:260px; padding:10px 12px; border-bottom:1px solid var(--deck-line); opacity:1; }
+  .radio-filters label:nth-child(3) { display:grid; }
   .radio-filters select { height:38px; font-size:10px; }
   .radio-results { padding:8px 10px 14px; }
   .radio-results article { grid-template-columns:34px minmax(0,1fr) auto 32px; gap:8px; min-height:56px; }
@@ -2435,6 +2514,7 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
   .radio-results-heading small { display:none; }
   .dashboard-module { overflow:auto; }
   .role-picker { margin-top:16px; }
+  .role-picker.is-single-role { display:none; }
   .role-picker button { min-width:66px; height:34px; padding:0 9px; font-size:8px; }
   .dashboard-build { margin-top:12px; }
   .dashboard-signal { margin-top:18px; }
@@ -2445,7 +2525,9 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
   .dashboard-activation a:nth-child(odd) { border-right:0; }
   .dashboard-recommendations > div:first-child { align-items:flex-start; flex-direction:column; gap:4px; }
   .dashboard-recommendations > div:first-child small { text-align:left; }
-  .dashboard-metrics div { padding:12px 8px; }
+  .dashboard-metrics { display:flex; gap:8px; overflow-x:auto; padding:2px 0 8px; border:0; scroll-snap-type:x proximity; scrollbar-width:none; }
+  .dashboard-metrics::-webkit-scrollbar { display:none; }
+  .dashboard-metrics div { min-width:min(42vw,170px); padding:12px; border:1px solid var(--deck-line)!important; border-radius:13px; scroll-snap-align:start; background:rgba(243,238,231,.02); }
   .dashboard-metrics strong { font-size:26px; }
   .dashboard-actions { grid-template-columns:1fr; }
   .settings-board { max-height:none; margin-top:22px; border-radius:20px; overflow:visible; }
@@ -2474,9 +2556,9 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
   .deck-nav-footer small { display:none; }
 }
 @media (max-width:480px) {
-  .module-deck-preview { --mobile-hero-size:clamp(22px,6.4vw,27px); }
+  .module-deck-preview { --mobile-hero-size:clamp(20px,5.8vw,23px); }
   .deck-search,.deck-search.is-open { width:calc(100vw - 144px); }
-  .deck-navigator nav button { grid-template-columns:24px minmax(0,1fr) 14px; column-gap:7px; }
+  .deck-navigator nav button { grid-template-columns:22px minmax(0,1fr) 12px; column-gap:7px; }
   .deck-navigator nav button > strong { font-size:16px; }
   .deck-module { padding-top:20px; }
   .deck-map-module .deck-module-copy h1,.discover-copy h1,.radio-heading h1,.dashboard-heading h1,.settings-heading h1,.community-manifesto h1 { font-size:var(--mobile-hero-size); }
@@ -2501,11 +2583,6 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
   .radio-scope button { font-size:6px; }
   .radio-results article b { display:none; }
   .radio-results article { grid-template-columns:32px minmax(0,1fr) 30px; }
-  .dashboard-metrics { grid-template-columns:repeat(2,1fr); }
-  .dashboard-metrics div:nth-child(3n) { border-right:1px solid var(--deck-line); }
-  .dashboard-metrics div:nth-child(2n) { border-right:0; }
-  .dashboard-metrics div:nth-last-child(-n+3) { border-bottom:1px solid var(--deck-line); }
-  .dashboard-metrics div:nth-last-child(-n+2) { border-bottom:0; }
   .dashboard-recommendations > a { grid-template-columns:minmax(0,1fr) 16px; }
   .dashboard-recommendations i { display:none; }
   .dashboard-next { grid-template-columns:1fr; gap:8px; }
