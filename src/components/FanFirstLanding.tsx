@@ -9,60 +9,68 @@ type LandingStat = {
 
 export function FanFirstLanding({ stats }: { stats: LandingStat[] }) {
   return (
-    <div className="scene-landing">
-      <header aria-label="iHYPE" className="scene-landing-header">
-        <div aria-label="iHYPE" className="scene-landing-logo" role="img">
-          <Image alt="" height={44} priority src="/brand/ihype-signal-mark.svg" width={44} />
-          <span>i</span><strong>HYPE</strong>
-        </div>
-        <nav aria-label="Account" className="scene-landing-nav">
+    <div className="fan-entry">
+      <header aria-label="iHYPE" className="fan-entry-header">
+        <Link aria-label="iHYPE home" className="fan-entry-logo" href="/">
+          <Image alt="" height={54} priority src="/brand/ihype-menu-logo.webp" width={54} />
+        </Link>
+        <nav aria-label="Account" className="fan-entry-nav">
           <ThemeToggle />
-          <Link className="scene-landing-signin" href="/login">Sign in</Link>
-          <Link className="scene-landing-join" href="/register">Join free</Link>
+          <Link className="fan-entry-signin" href="/login">Sign in</Link>
+          <Link className="fan-entry-join" href="/register">Join free</Link>
         </nav>
       </header>
 
-      <section className="scene-landing-hero">
-        <div className="scene-landing-copy">
-          <p className="scene-landing-kicker">Discover local music · Support the scene</p>
-          <h1><span>Free</span><span>local</span><span>music.</span></h1>
-          <p className="scene-landing-lead">
-            Hear the artists playing around you. HYPE what you love.
-            Help your scene get heard.
-          </p>
-          <Link className="scene-landing-primary" href="/register">
-            Join free <span aria-hidden="true">—</span> start listening
-          </Link>
-          <p className="scene-landing-assurance">
-            No subscription <i aria-hidden="true">·</i> No paywall <i aria-hidden="true">·</i> We never sell your data
-          </p>
-        </div>
-
-        <div className="scene-landing-visual" aria-hidden="true">
-          <Image
-            alt=""
-            className="scene-landing-art"
-            fill
-            priority
-            sizes="(max-width: 900px) 100vw, 55vw"
-            src="/brand/local-scene-signal-v2.webp"
-            unoptimized
-          />
-          <div className="scene-landing-scrim" />
-          <p className="scene-landing-visual-label"><span /> Live scene signal</p>
-          <div className="scene-landing-visual-tags"><span>LOCAL</span><span>FREE</span><span>HUMAN</span></div>
-          <p className="scene-landing-signal"><span /> Local sound matters</p>
-        </div>
-      </section>
-
-      <section aria-label="Live iHYPE platform statistics" className="scene-landing-stats">
-        {stats.map((stat) => (
-          <div key={stat.label}>
-            <strong>{stat.value}</strong>
-            <span>{stat.label}</span>
+      <main className="fan-entry-main">
+        <section className="fan-entry-hero">
+          <div className="fan-entry-copy">
+            <p className="fan-entry-kicker">Your scene is playing · Always free</p>
+            <h1>Listen. Engage.<br /><span>HYPE local.</span></h1>
+            <p className="fan-entry-lead">
+              Hear free music from artists around you, discover shows worth leaving home for,
+              and turn every HYPE into real support for the music you love.
+            </p>
+            <div className="fan-entry-actions">
+              <Link className="fan-entry-primary" href="/register">
+                Join free <span aria-hidden="true">—</span> start listening
+              </Link>
+              <Link className="fan-entry-secondary" href="/login">Already a member? Sign in</Link>
+            </div>
+            <p className="fan-entry-assurance">
+              Always free <i aria-hidden="true">·</i> Music-only support <i aria-hidden="true">·</i> We never sell your data
+            </p>
           </div>
-        ))}
-      </section>
+
+          <div className="fan-entry-visual">
+            <div aria-hidden="true" className="fan-entry-stage-light" />
+            <Image
+              alt="iHYPE.org — local music"
+              className="fan-entry-art"
+              height={1024}
+              priority
+              sizes="(max-width: 900px) 82vw, 42vw"
+              src="/brand/ihype-icon-master-2026.png"
+              width={1024}
+            />
+            <p className="fan-entry-signal"><span /> Support the scene. Be the signal.</p>
+          </div>
+        </section>
+
+        <section aria-label="How iHYPE works for fans" className="fan-entry-steps">
+          <article><span>01</span><div><strong>Listen</strong><p>Free music from artists in and beyond your scene.</p></div></article>
+          <article><span>02</span><div><strong>Engage</strong><p>Discover songs, radio, artists, and live events.</p></div></article>
+          <article><span>03</span><div><strong>HYPE</strong><p>Turn what you love into a real local signal.</p></div></article>
+        </section>
+
+        <section aria-label="Live iHYPE platform statistics" className="fan-entry-stats">
+          {stats.map((stat) => (
+            <div key={stat.label}>
+              <strong>{stat.value}</strong>
+              <span>{stat.label}</span>
+            </div>
+          ))}
+        </section>
+      </main>
     </div>
   );
 }

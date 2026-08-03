@@ -1,12 +1,12 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 
 const modules = [
-  ['Around you', '.deck-map-module'],
-  ['Discover', '.discover-module'],
-  ['Radio', '.radio-module'],
-  ['Dashboard', '.dashboard-module'],
-  ['Settings', '.settings-module'],
-  ['Community', '.community-module'],
+  [/Around you/i, '.deck-map-module'],
+  [/Discover/i, '.discover-module'],
+  [/Radio/i, '.radio-module'],
+  [/(Dashboard|Me)/i, '.dashboard-module'],
+  [/Settings/i, '.settings-module'],
+  [/Community/i, '.community-module'],
 ] as const;
 
 const states = [
@@ -17,15 +17,22 @@ const states = [
   { name: 'landscape', width: 844, height: 390 },
 ] as const;
 
-async function openModule(page: Page, label: string, selector: string) {
+async function openModule(page: Page, label: RegExp, selector: string) {
   const current = await page.locator('.module-deck-preview').getAttribute('data-active-module');
   const expected = selector.replace(/^\./, '').replace(/-module$/, '').replace('deck-map', 'map');
   if (current !== expected) {
-    await page.getByRole('button', { name: /iHYPE module navigator/ }).click();
-    await page.locator('.deck-navigator').getByRole('button', { name: new RegExp(label, 'i') }).click();
+    if (expected === 'settings' || expected === 'community') {
+      await page.getByRole('button', { name: 'Open account menu' }).click();
+      await page.locator('.deck-account-menu').getByRole('button', { name: label }).click();
+    } else {
+      await page.getByRole('button', { name: /iHYPE module navigator/ }).click();
+      await page.locator('.deck-navigator').getByRole('button', { name: label }).click();
+    }
   }
   await expect(page.locator(selector)).toBeVisible();
-  await page.waitForTimeout(80);
+  // Measure the settled module, not an intermediate frame from the intentional
+  // scene transition or a late font/layout pass on a busy parallel run.
+  await expect.poll(() => page.locator(selector).evaluate((element) => Math.round(element.getBoundingClientRect().left)), { timeout: 2_000 }).toBeGreaterThanOrEqual(-1);
 }
 
 async function assertLayoutBudget(page: Page, selector: string) {
@@ -105,7 +112,7 @@ test.describe('Module deck responsive regression gate', () => {
       for (const [label, selector] of modules) {
         await openModule(page, label, selector);
         await assertLayoutBudget(page, selector);
-        if (state.name === 'phone-390') await attachEvidence(page, testInfo, `${state.name}-${label.toLowerCase().replaceAll(' ', '-')}`);
+        if (state.name === 'phone-390') await attachEvidence(page, testInfo, `${state.name}-${selector.replaceAll('.', '').replaceAll('-', '_')}`);
       }
     });
   }
@@ -123,5 +130,36 @@ test.describe('Module deck responsive regression gate', () => {
       await assertLayoutBudget(page, selector);
     }
     await attachEvidence(page, testInfo, 'phone-390-light-reduced-motion-200-text');
+  });
+
+  test('mobile keeps four primary destinations and moves utilities into the account menu', async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/ui-preview');
+
+    await page.getByRole('button', { name: /Open iHYPE module navigator/i }).click();
+    await expect(page.locator('.deck-navigator .is-primary-module:visible')).toHaveCount(4);
+    await expect(page.locator('.deck-navigator .is-utility-module:visible')).toHaveCount(0);
+    await expect(page.locator('.deck-navigator')).toContainText('Me');
+    await attachEvidence(page, testInfo, 'phone-390-four-destination-menu');
+    await page.getByRole('button', { name: /Close iHYPE module navigator/i }).click();
+
+    await page.getByRole('button', { name: 'Open account menu' }).click();
+    await expect(page.locator('.deck-account-menu').getByRole('button', { name: /Community/i })).toBeVisible();
+    await expect(page.locator('.deck-account-menu').getByRole('button', { name: /Settings/i })).toBeVisible();
+    await expect(page.locator('.deck-account-menu').getByRole('link', { name: /Log out/i })).toBeVisible();
+  });
+
+  test('mobile compact player exposes transport controls and an accessible full player', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/ui-preview');
+
+    await expect(page.getByRole('button', { name: 'Previous song' })).toBeVisible();
+    await expect(page.getByRole('button', { exact: true, name: 'Play' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Next song' })).toBeVisible();
+    await page.getByRole('button', { name: 'Open full player' }).click();
+    await expect(page.getByRole('dialog', { name: 'Full music player' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Close full player' })).toBeFocused();
+    await expect(page.getByRole('dialog', { name: 'Full music player' })).toContainText('PLAY QUEUE');
+    await expect(page.getByRole('dialog', { name: 'Full music player' }).getByRole('button', { name: 'HYPE' })).toBeVisible();
   });
 });

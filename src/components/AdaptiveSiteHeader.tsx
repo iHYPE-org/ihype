@@ -84,7 +84,7 @@ export function AdaptiveSiteHeader({
                 onClick={() => setMenuOpen((current) => !current)}
                 type="button"
               >
-                <Image alt="" height={54} priority src="/brand/ihype-signal-mark.svg" width={54} />
+                <Image alt="" height={54} priority src="/brand/ihype-menu-logo.webp" width={54} />
                 <span className="app-menu-logo-signal" aria-hidden="true" />
               </button>
               {menuDemo ? <span className="app-menu-demo-label" role="status">Everything lives here</span> : null}
