@@ -10,10 +10,10 @@ import { usePlatformCapabilities } from '@/lib/usePlatformCapabilities';
 import { resolvePlaybackFailure, sanitizePlaybackCheckpoint } from '@/lib/player-recovery';
 import { track } from '@/lib/analytics';
 import { telemetryPlatform } from '@/lib/telemetry';
-import { loadDiscoveryTracks, loadNearbyShows, loadRadioTracks, recordDiscoveryDecision, searchPreview, updateSceneNotifications, type ExperienceTrack, type NearbyShow, type PreviewDataSource, type PreviewSearchResult } from './preview-api';
+import { castCommunityVote, loadCommunity, loadDashboardData, loadDiscoveryTracks, loadNearbyShows, loadRadioStations, loadRadioTracks, loadUserSettings, recordDiscoveryDecision, searchPreview, toggleProfileFollow, updateSceneNotifications, type CommunityPayload, type DashboardLiveData, type ExperienceTrack, type NearbyShow, type PreviewDataSource, type PreviewSearchResult, type RadioStation } from './preview-api';
 import { AlphaQuickFeedback } from './AlphaQuickFeedback';
 import { PrivacySafeTelemetry } from './PrivacySafeTelemetry';
-import { ModuleIntro, ModuleNavigator, modules, type ModuleId } from './ModuleDeckChrome';
+import { ModuleNavigator, modules, type ModuleId } from './ModuleDeckChrome';
 
 type RoleId = 'fan' | 'artist' | 'dj' | 'venue' | 'promoter' | 'advertiser';
 type DemoState = 'normal' | 'loading' | 'empty' | 'offline' | 'error' | 'playback';
@@ -456,6 +456,7 @@ function SceneMap({ enabled, production }: { enabled: boolean; production: boole
   const [nearbyShows, setNearbyShows] = useState<NearbyShow[]>([]);
   const [nearbySource, setNearbySource] = useState<PreviewDataSource>('sample');
   const [nearbyLoading, setNearbyLoading] = useState(false);
+  const [mapSearch, setMapSearch] = useState('');
   const refreshTimer = useRef<number | null>(null);
   const zoom = mapZoomLevels[Math.max(0, Math.min(mapZoomLevels.length - 1, zoomIndex))];
   const noResults = filter === 'tour' && zoom.id === 'town';
@@ -508,6 +509,11 @@ function SceneMap({ enabled, production }: { enabled: boolean; production: boole
         radiusKm: zoom.radius * 1.60934,
         signal: controller.signal,
         allowSamples: !production,
+        query: mapSearch,
+        filter,
+        genre,
+        date,
+        hypeOnly,
       }).then((response) => {
         setNearbyCount(response.data.length);
         setNearbyShows(response.data);
@@ -522,7 +528,7 @@ function SceneMap({ enabled, production }: { enabled: boolean; production: boole
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [production, userCenter, zoom.radius]);
+  }, [date, filter, genre, hypeOnly, mapSearch, production, userCenter, zoom.radius]);
 
   const refreshMap = () => {
     setMapRefreshing(true);
@@ -597,12 +603,12 @@ function SceneMap({ enabled, production }: { enabled: boolean; production: boole
 
   return (
     <section aria-labelledby="map-title" className="deck-module deck-map-module">
-      <ModuleIntro className="deck-module-copy" description="Move from your town to the whole world without losing the local rooms, events, and HYPE signals that make each scene real." kicker={<>LIVE SCENE SIGNAL · {zoom.label.toUpperCase()} VIEW</>} title={<>Your scene,<br />right here.</>} titleId="map-title">
-        <div className="deck-location-line"><Icon name="location" /><span><strong>{location}</strong><small>{locationMessage}</small></span></div>
-        <button className="deck-button deck-button-primary" disabled={locating} onClick={locate} type="button">{locating ? 'Locating…' : 'Use my location'}</button>
-      </ModuleIntro>
-
       <div className="scene-map-frame">
+        <div className="map-search-dock">
+          <div className="map-search-copy"><span>AROUND YOU</span><strong id="map-title">Explore the local scene</strong></div>
+          <label><Icon name="search" /><span className="sr-only">Search the map</span><input onChange={(event) => { setMapSearch(event.target.value); signalImplementationAction('mapQuery', { query: event.target.value, zoom: zoom.id, filter, genre, date }); }} placeholder="Artist, venue, event, genre, date, or location" value={mapSearch} /></label>
+          <button className="map-locate-button" disabled={locating} onClick={locate} type="button"><Icon name="location" /><span>{locating ? 'Locating…' : location}</span><small>{locationMessage}</small></button>
+        </div>
         <button aria-expanded={mapMenuOpen} aria-label={mapMenuOpen ? 'Close map filters' : 'Open map filters'} className="map-menu-button" onClick={() => setMapMenuOpen((value) => !value)} type="button"><Icon name={mapMenuOpen ? 'close' : 'menu'} /></button>
         {mapMenuOpen && (
           <div className="map-filter-panel">
@@ -646,8 +652,8 @@ function SceneMap({ enabled, production }: { enabled: boolean; production: boole
           <Image alt="Sample event artwork" height={92} src={selectedPlace.art} width={92} />
           <div className="map-detail-title"><span>SAMPLE ALPHA VENUE · {selectedPlace.distance}</span><h2>{selectedPlace.name}</h2><strong>{genre === 'All genres' ? 'Independent local music' : genre}</strong><small>{hypeOnly ? 'You HYPE this venue' : 'Recommended from your scene'}</small></div>
           <div className="map-detail-signal"><span>{selectedPlace.hypes}</span><small>{selectedPlace.lineup}</small></div>
-          <div className="map-upcoming-events"><span>UPCOMING EVENTS</span><button type="button"><strong>{selectedPlace.event}</strong><small>{filter === 'date' ? date : selectedPlace.time} · Tickets available</small><i>↗</i></button><button type="button"><strong>{genre === 'All genres' ? 'Local discovery night' : `${genre} showcase`}</strong><small>Next Friday · Fan requests open</small><i>↗</i></button></div>
-          <div className="map-detail-actions"><Link href="/pages">Venue page</Link><button type="button">Directions</button><button className="primary" type="button">Tickets</button></div>
+          <div className="map-upcoming-events"><span>UPCOMING EVENTS</span><Link href={selectedVenueShow?.slug ? `/shows/${selectedVenueShow.slug}` : '/shows'}><strong>{selectedPlace.event}</strong><small>{filter === 'date' ? date : selectedPlace.time} · Tickets available</small><i>↗</i></Link>{!production && <button type="button"><strong>{genre === 'All genres' ? 'Local discovery night' : `${genre} showcase`}</strong><small>Next Friday · Fan requests open</small><i>↗</i></button>}</div>
+          <div className="map-detail-actions"><Link href={selectedVenueShow?.venueSlug ? `/venues/${selectedVenueShow.venueSlug}` : '/pages'}>Venue page</Link><a href={selectedVenueShow?.latitude && selectedVenueShow?.longitude ? `https://www.openstreetmap.org/directions?to=${selectedVenueShow.latitude},${selectedVenueShow.longitude}` : '#'} rel="noreferrer" target="_blank">Directions</a><Link className="primary" href={selectedVenueShow?.slug ? `/shows/${selectedVenueShow.slug}` : '/shows'}>Tickets</Link></div>
         </aside>}
       </div>
     </section>
@@ -744,15 +750,13 @@ function DiscoverModule({ production }: { production: boolean }) {
 
   return (
     <section aria-labelledby="discover-title" className="deck-module discover-module">
-      <ModuleIntro className="discover-copy" description="Swipe right when it belongs in your Discovery playlist. Swipe left when it does not. Your choices reshape what comes next." kicker="DISCOVER · 75% YOUR SIGNAL / 25% WILD CARD" title={<>One song.<br />One decision.</>} titleId="discover-title">
-        <div className="discover-count"><strong>{saved}</strong><span>songs saved<br />{production ? 'this session' : 'to Discovery'}</span></div>
-      </ModuleIntro>
       <div className={`discover-stage ${dragX > 10 ? 'intent-save' : dragX < -10 ? 'intent-skip' : ''}`} style={{ '--swipe-strength': swipeStrength } as CSSProperties}>
+        <div className="discover-topline"><span><b>DISCOVER</b><strong id="discover-title">One local song. Your call.</strong></span><p><i>←</i> drag to skip <em>·</em> drag to add <i>→</i></p><small><b>{saved}</b> saved {production ? 'this session' : 'to Discovery'}</small></div>
         <div aria-hidden="true" className="discover-signal-wash" />
         <div className={`swipe-outcome ${dragX < -35 ? 'is-visible' : ''}`}>SKIP</div>
         <div className={`swipe-outcome swipe-outcome-save ${dragX > 35 ? 'is-visible' : ''}`}>ADD</div>
         <div aria-hidden="true" className="discover-next-card" style={{ position: 'absolute' }}><Image alt="" fill sizes="(max-width: 800px) 72vw, 35vw" src={nextTrack.art} /><span>NEXT SIGNAL</span></div>
-        <div aria-label={`${track.title} by ${track.artist}. Swipe left to skip or right to add.`} className={`discover-card ${production && !track.mediaId ? 'is-placeholder' : ''} ${dragging ? 'is-dragging' : ''} ${decision ? `is-${decision}` : ''}`} key={track.title} onPointerCancel={cancelDrag} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} role="group" style={{ position: 'relative', transform: `translate3d(${dragX}px,${Math.abs(dragX) * -.025}px,0) rotate(${dragX / 28}deg) scale(${1 - swipeStrength * .018})` }}>
+        <div aria-label={`${track.title} by ${track.artist}. Swipe left to skip or right to add.`} className={`discover-card ${production && !track.mediaId ? 'is-placeholder' : ''} ${dragging ? 'is-dragging' : ''} ${decision ? `is-${decision}` : ''}`} key={track.title} onKeyDown={(event) => { if (event.key === 'ArrowLeft') advance('skip'); if (event.key === 'ArrowRight') advance('save'); }} onPointerCancel={cancelDrag} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} role="group" style={{ position: 'relative', transform: `translate3d(${dragX}px,${Math.abs(dragX) * -.025}px,0) rotate(${dragX / 28}deg) scale(${1 - swipeStrength * .018})` }} tabIndex={0}>
           <Image alt="Placeholder artist portrait" draggable={false} fill priority sizes="(max-width: 800px) 82vw, 40vw" src={track.art} />
           <div className="discover-card-gradient" />
           <div className="discover-card-copy"><span>{tracksLoading ? 'Tuning your scene…' : production && !track.mediaId ? 'Waiting for local uploads' : track.match}</span><h2>{track.title}</h2><p>{track.artist}</p><small>{track.scene}</small><div className="discover-why"><b>WHY THIS SONG</b><i>{production && !track.mediaId ? 'Placeholder artwork leaves the layout ready for the first alpha uploads.' : track.match.toLowerCase().includes('wild') || track.match.toLowerCase().includes('random') ? 'A fresh wildcard outside your usual signal.' : 'Your scene, HYPES, and Discovery saves point here.'}</i></div></div>
@@ -772,30 +776,43 @@ function RadioModule({ enabled, production }: { enabled: boolean; production: bo
   const [genre, setGenre] = usePersistentState('ihype:preview-radio-genre', 'All sounds');
   const [location, setLocation] = usePersistentState('ihype:preview-radio-location', 'Near Detroit');
   const [topic, setTopic] = usePersistentState('ihype:preview-radio-topic', 'New releases');
+  const [ranking, setRanking] = usePersistentState('ihype:preview-radio-ranking', 'Recommended for you');
   const [scope, setScope] = usePersistentState<RadioScope>('ihype:preview-radio-scope', 'local');
   const [favorites, setFavorites] = usePersistentState<string[]>('ihype:preview-radio-favorites', ['after-hours']);
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [liveTracks, setLiveTracks] = useState<ExperienceTrack[]>([]);
+  const [liveStations, setLiveStations] = useState<RadioStation[]>([]);
   const [radioLoading, setRadioLoading] = useState(production);
   useEffect(() => {
     if (!production || !enabled) return;
     const controller = new AbortController();
     setRadioLoading(true);
-    void loadRadioTracks(controller.signal).then(setLiveTracks).catch(() => setLiveTracks([])).finally(() => {
+    void loadRadioStations({ scope, genre, location, topic, ranking, signal: controller.signal }).then(({ tracks, stations }) => {
+      setLiveTracks(tracks);
+      setLiveStations(stations);
+      setFavorites(stations.filter((station) => station.following).map((station) => station.id));
+    }).catch(() => { setLiveTracks([]); setLiveStations([]); }).finally(() => {
       if (!controller.signal.aborted) setRadioLoading(false);
     });
     return () => controller.abort();
-  }, [enabled, production]);
-  const liveRecommendations = scope === 'local' ? liveTracks.slice(0, 8).map((track) => ({ id: track.mediaId ?? track.title, title: track.title, meta: `${track.artist} · ${track.scene}`, signal: 'Live catalog', time: 'PLAY' })) : [];
-  const recommendationPool = production ? liveRecommendations : radioRecommendations[scope];
+  }, [enabled, genre, location, production, ranking, scope, setFavorites, topic]);
+  const recommendationPool = production ? liveStations : radioRecommendations[scope];
   const recommendations = recommendationPool.filter((station) => !favoritesOnly || favorites.includes(station.id));
-  const heroTrack = production ? liveTracks[0] : null;
-  const toggleFavorite = (id: string) => setFavorites((current) => current.includes(id) ? current.filter((favorite) => favorite !== id) : [...current, id]);
+  const heroTrack = production ? liveStations.find((station) => station.track)?.track ?? liveTracks[0] : null;
+  const toggleFavorite = (id: string) => {
+    const station = liveStations.find((item) => item.id === id);
+    const updateLocal = () => setFavorites((current) => current.includes(id) ? current.filter((favorite) => favorite !== id) : [...current, id]);
+    if (!production || !station?.profileId) { updateLocal(); return; }
+    void toggleProfileFollow(station.profileId).then(({ following }) => {
+      setFavorites((current) => following ? [...new Set([...current, id])] : current.filter((favorite) => favorite !== id));
+      setLiveStations((current) => current.map((item) => item.id === id ? { ...item, following } : item));
+    }).catch(() => {});
+  };
   const playStation = (id: string) => {
     setPlaying(true);
-    const track = liveTracks.find((item) => (item.mediaId ?? item.title) === id);
+    const track = liveStations.find((item) => item.id === id)?.track ?? liveTracks[0];
     if (track) window.dispatchEvent(new CustomEvent('ihype:play-track', { detail: track }));
   };
   const toggleHero = () => {
@@ -806,11 +823,11 @@ function RadioModule({ enabled, production }: { enabled: boolean; production: bo
   if (!enabled) return <section aria-labelledby="radio-title" className="deck-module radio-module"><div className="radio-heading"><span className="deck-kicker">RADIO · TEMPORARILY PAUSED</span><h1 id="radio-title">The signal<br />will return.</h1><p>Radio delivery is paused by an operations switch while the rest of iHYPE stays available.</p></div><div className="feature-paused"><strong>Radio is safely paused</strong><span>Open Discover to keep exploring published local music.</span></div></section>;
   return (
     <section aria-labelledby="radio-title" className="deck-module radio-module">
-      <ModuleIntro className="radio-heading" description="Start close to home, then move through regional, national, and global independent radio without losing your favorites." kicker="RADIO · HUMAN-CURATED · MUSIC-ONLY SUPPORT" title={<>Every scene<br />has a signal</>} titleId="radio-title">
+      <div className="module-toolbar radio-toolbar"><span><b>RADIO</b><strong id="radio-title">Find your next favorite local DJ</strong><small>Live and scheduled shows, tuned by scene and sound.</small></span>
         <div aria-label="Radio recommendation distance" className="radio-scope" role="group">
           {(Object.keys(radioRecommendations) as RadioScope[]).map((id) => <button aria-pressed={scope === id} key={id} onClick={() => { setScope(id); setFavoritesOnly(false); }} type="button">{id}</button>)}
         </div>
-      </ModuleIntro>
+      </div>
       <div className="radio-console">
         <div className="radio-topline">
           <div className="radio-live-art"><div className="radio-rings"><span /><span /><span /><span /></div><button aria-label={playing ? 'Pause radio' : 'Play radio'} disabled={production && !heroTrack} onClick={toggleHero} type="button"><Icon name={playing ? 'pause' : 'play'} /></button></div>
@@ -822,11 +839,12 @@ function RadioModule({ enabled, production }: { enabled: boolean; production: bo
           <label><span>Genre</span><select onChange={(event) => setGenre(event.target.value)} value={genre}><option>All sounds</option><option>Indie</option><option>Hip-hop</option><option>Electronic</option><option>Punk</option><option>Jazz</option></select></label>
           <label><span>Location</span><select onChange={(event) => setLocation(event.target.value)} value={location}><option>Near Detroit</option><option>Michigan</option><option>Great Lakes</option><option>Anywhere</option></select></label>
           <label><span>Topic</span><select onChange={(event) => setTopic(event.target.value)} value={topic}><option>New releases</option><option>Scene history</option><option>Live sessions</option><option>Artist interviews</option></select></label>
+          <label><span>Sort</span><select onChange={(event) => setRanking(event.target.value)} value={ranking}><option>Recommended for you</option><option>Most HYPED</option><option>Live now</option><option>New DJs</option></select></label>
         </div>
         <div className="radio-results">
-          <div className="radio-results-heading"><span>{favoritesOnly ? 'YOUR FAVORITES' : `${scope.toUpperCase()} RECOMMENDATIONS`}</span><small>{genre} · {location} · {topic}</small></div>
+          <div className="radio-results-heading"><span>{favoritesOnly ? 'YOUR FAVORITE DJS' : `${scope.toUpperCase()} DJ RECOMMENDATIONS`}</span><small>{genre} · {location} · {topic} · {ranking}</small></div>
           {radioLoading && <div className="radio-empty"><strong>Tuning the local catalog…</strong></div>}
-          {!radioLoading && recommendations.map((station) => <article key={station.id}><button aria-label={`Play ${station.title}`} className="radio-result-play" onClick={() => playStation(station.id)} type="button"><Icon name="play" /></button><span><strong>{station.title}</strong><small>{station.meta}</small></span><i>{station.signal}</i><b>{station.time}</b><button aria-label={`${favorites.includes(station.id) ? 'Remove' : 'Add'} ${station.title} ${favorites.includes(station.id) ? 'from' : 'to'} favorites`} aria-pressed={favorites.includes(station.id)} className="radio-favorite" onClick={() => toggleFavorite(station.id)} type="button">♥</button></article>)}
+          {!radioLoading && recommendations.map((station) => <article key={station.id}><button aria-label={`Play ${station.title}`} className="radio-result-play" disabled={production && !('track' in station && station.track)} onClick={() => playStation(station.id)} type="button"><Icon name="play" /></button><span><strong>{station.title}</strong><small>{station.meta}</small></span><i>{station.signal}</i><b>{station.time}</b><button aria-label={`${favorites.includes(station.id) ? 'Remove' : 'Add'} ${station.title} ${favorites.includes(station.id) ? 'from' : 'to'} favorites`} aria-pressed={favorites.includes(station.id)} className="radio-favorite" onClick={() => toggleFavorite(station.id)} type="button">♥</button></article>)}
           {!radioLoading && recommendations.length === 0 && <div className="radio-empty"><strong>{production ? scope === 'local' ? 'No published local tracks are ready yet.' : `${scope} exchange recommendations arrive as alpha scenes connect.` : `No favorites in ${scope} yet.`}</strong>{favoritesOnly && <button onClick={() => setFavoritesOnly(false)} type="button">Show recommendations</button>}</div>}
         </div>
       </div>
@@ -841,13 +859,16 @@ function DashboardModule({ production, viewer }: { production: boolean; viewer?:
   const [managingRoles, setManagingRoles] = useState(false);
   const [fanTracks, setFanTracks] = useState<ExperienceTrack[]>([]);
   const [fanTracksLoading, setFanTracksLoading] = useState(production);
+  const [liveData, setLiveData] = useState<DashboardLiveData | null>(null);
   const data = roleData[role];
   const fanMix = fanTracks.length <= 3
     ? fanTracks
     : [...fanTracks.slice(0, 2), fanTracks.find((track) => /random|wild/i.test(track.match)) ?? fanTracks[2]];
   const recommendations: Array<[string, string, string, string?]> = production && role === 'fan'
     ? fanMix.map((track) => [`${track.artist} · ${track.title}`, `${track.scene} · ${track.match}`, /random|wild/i.test(track.match) ? 'WILDCARD' : 'FOR YOU', track.hexId ? `/tracks/${track.hexId}` : '/listen'])
-    : data.recommendations.map(([title, detail, tag]) => [title, detail, tag]);
+    : production && liveData ? liveData.recommendations.map(({ title, detail, tag, href }) => [title, detail, tag, href]) : data.recommendations.map(([title, detail, tag]) => [title, detail, tag]);
+  const activeActions = production && liveData ? liveData.actions : data.actions.map((title, index) => ({ title, href: roleActionHrefs[role][index] ?? '/pages' }));
+  const activeInsights = production && liveData ? liveData.insights : data.insights;
   const activation = viewer?.activation;
   const activationSteps = activation ? [
     ['Play a local song', activation.played, '/listen'],
@@ -872,6 +893,13 @@ function DashboardModule({ production, viewer }: { production: boolean; viewer?:
       .finally(() => { if (!controller.signal.aborted) setFanTracksLoading(false); });
     return () => controller.abort();
   }, [production, role]);
+  useEffect(() => {
+    if (!production) return;
+    const controller = new AbortController();
+    setLiveData(null);
+    void loadDashboardData(role, controller.signal).then(setLiveData).catch(() => setLiveData(null));
+    return () => controller.abort();
+  }, [production, role]);
   const toggleRole = (id: RoleId) => {
     if (assignedRoles.includes(id)) {
       if (assignedRoles.length === 1) return;
@@ -880,21 +908,26 @@ function DashboardModule({ production, viewer }: { production: boolean; viewer?:
   };
   return (
     <section aria-labelledby="dashboard-title" className="deck-module dashboard-module">
-      <ModuleIntro className="dashboard-heading" description={data.description} kicker="DASHBOARD · ONLY YOUR ACTIVE ROLES" title={data.headline} titleId="dashboard-title">
+      <div className="module-toolbar dashboard-toolbar">
+        <span><b>DASHBOARD</b><strong id="dashboard-title">Your scene at a glance</strong><small>{data.description}</small></span>
         <div aria-label="Choose dashboard role" className={`role-picker ${assignedRoles.length === 1 ? 'is-single-role' : ''}`} role="group">
           {assignedRoles.map((id) => <button aria-pressed={role === id} key={id} onClick={() => setRole(id)} type="button">{id}</button>)}
           {!production && <button aria-expanded={managingRoles} className="role-manage-button" onClick={() => setManagingRoles((value) => !value)} type="button">Manage roles</button>}
         </div>
-        {!production && managingRoles && <div className="role-manager"><span>Alpha role preview</span><p>The live dashboard will derive these from verified account roles.</p><div>{(Object.keys(roleData) as RoleId[]).map((id) => <button aria-pressed={assignedRoles.includes(id)} key={id} onClick={() => toggleRole(id)} type="button"><span>{assignedRoles.includes(id) ? '✓' : '+'}</span>{id}</button>)}</div></div>}
-        <article className="dashboard-build"><span>PAGE & WORKSPACE</span><strong>{data.build[0]}</strong><p>{data.build[1]}</p><Link href={role === 'dj' ? '/radio/studio' : role === 'venue' ? '/events/new' : role === 'advertiser' ? '/advertise/dashboard' : '/pages'}>Open editor ↗</Link></article>
-      </ModuleIntro>
+      </div>
+      {!production && managingRoles && <div className="role-manager dashboard-role-manager"><span>Alpha role preview</span><p>The live dashboard derives these from verified account roles.</p><div>{(Object.keys(roleData) as RoleId[]).map((id) => <button aria-pressed={assignedRoles.includes(id)} key={id} onClick={() => toggleRole(id)} type="button"><span>{assignedRoles.includes(id) ? '✓' : '+'}</span>{id}</button>)}</div></div>}
       <div className="dashboard-signal dashboard-workspace">
+        <div className="dashboard-glance">
+          <article className="dashboard-build"><span>WORKSPACE</span><strong>{liveData?.build.title ?? data.build[0]}</strong><p>{liveData?.build.detail ?? data.build[1]}</p><Link href={liveData?.build.href ?? (role === 'dj' ? '/radio/studio' : role === 'venue' ? '/events/new' : role === 'advertiser' ? '/advertise/dashboard' : '/pages')}>Open workspace ↗</Link></article>
+          <article className="dashboard-notifications"><span>NOTIFICATIONS</span>{production && liveData?.notifications.length === 0 && <Link href="/me/dashboard"><b>✓</b><strong>All caught up</strong><small>No unread scene signals need you.</small><i>↗</i></Link>}{(production && liveData ? liveData.notifications : [{ id: 'signals', label: '3', title: 'New scene signals', detail: 'Artists you HYPE, voting, and ticket activity', href: '/me/dashboard' }, { id: 'action', label: '1', title: 'Action needs you', detail: data.actions[0], href: '/me/dashboard' }]).map((item) => <Link href={item.href} key={item.id}><b>{item.label}</b><strong>{item.title}</strong><small>{item.detail}</small><i>↗</i></Link>)}</article>
+          <article className="dashboard-upcoming"><span>UPCOMING</span>{production && liveData?.upcoming.length === 0 && <Link href="/shows"><b>OPEN</b><strong>Find a local event</strong><small>Your next show can start on the scene map.</small><i>View ↗</i></Link>}{(production && liveData ? liveData.upcoming : [{ id: 'tonight', label: 'TONIGHT', title: 'Local discovery night', detail: 'Near your saved scene · doors 7:00 PM', href: '/shows', action: 'Tickets' }, { id: 'friday', label: 'FRI', title: 'Three new nearby events', detail: 'Matched from HYPES and saved artists', href: '/shows', action: 'View' }]).map((item) => <Link href={item.href} key={item.id}><b>{item.label}</b><strong>{item.title}</strong><small>{item.detail}</small><i>{item.action ?? 'View'} ↗</i></Link>)}</article>
+        </div>
         {role === 'fan' && activation && <section className="dashboard-activation"><div><span>YOUR FIRST LOCAL LOOP</span><strong>{activationComplete}/4 complete</strong></div><div>{activationSteps.map(([label, complete, href]) => <Link className={complete ? 'is-complete' : ''} href={href} key={label}><i>{complete ? '✓' : '○'}</i><span>{label}</span><b>{complete ? 'Done' : 'Try it'} ↗</b></Link>)}</div></section>}
-        <div className="dashboard-next"><span>NEXT BEST ACTION</span><strong>{data.actions[0]}</strong><Link href={roleActionHrefs[role][0]}>Start now ↗</Link></div>
+        <div className="dashboard-next"><span>NEXT BEST ACTION</span><strong>{liveData?.nextAction.title ?? activeActions[0]?.title}</strong><Link href={liveData?.nextAction.href ?? activeActions[0]?.href ?? '/listen'}>Start now ↗</Link></div>
         <div className="dashboard-metrics">{(viewer?.metrics?.[role] ?? data.metrics).map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}</div>
         <section className="dashboard-recommendations"><div><span>{role === 'fan' ? 'MUSIC FOR YOU' : 'RECOMMENDED NEXT MOVES'}</span><small>{role === 'fan' ? 'Preferences plus a permanent wildcard' : 'Built from aggregate, role-appropriate signal'}</small></div>{recommendations.map(([title, detail, tag, href]) => <Link href={href ?? roleActionHrefs[role][0]} key={title}><span><strong>{title}</strong><small>{detail}</small></span><i>{tag}</i><b>↗</b></Link>)}{recommendations.length === 0 && <div className="dashboard-recommendations-empty"><strong>{fanTracksLoading ? 'Tuning your local mix…' : 'Your recommendations are warming up.'}</strong><small>{fanTracksLoading ? 'Reading your HYPES and Discovery saves.' : 'Play, HYPE, and save local music to tune this space.'}</small>{!fanTracksLoading && <Link href="/listen">Start discovering ↗</Link>}</div>}</section>
-        <section className="dashboard-insights"><span>WHAT YOUR HYPE SIGNAL SAYS</span>{data.insights.map((insight, index) => <div key={insight}><strong>{String(index + 1).padStart(2, '0')}</strong><p>{insight}</p></div>)}</section>
-        <div className="dashboard-actions">{data.actions.map((action, index) => <Link className={index === 0 ? 'primary' : ''} href={roleActionHrefs[role][index] ?? '/pages'} key={action}>{action}<span>↗</span></Link>)}</div>
+        <section className="dashboard-insights"><span>WHAT YOUR HYPE SIGNAL SAYS</span>{activeInsights.map((insight, index) => <div key={insight}><strong>{String(index + 1).padStart(2, '0')}</strong><p>{insight}</p></div>)}</section>
+        <div className="dashboard-actions">{activeActions.map((action, index) => <Link className={index === 0 ? 'primary' : ''} href={action.href} key={action.title}>{action.title}<span>↗</span></Link>)}</div>
       </div>
     </section>
   );
@@ -964,6 +997,11 @@ function SettingsModule({ demoState, onDemoStateChange, onReducedMotionChange, p
     setCaptions(window.localStorage.getItem('ihype-captions') !== 'false');
     setPrivateListening(window.localStorage.getItem('ihype-private-listening') === 'true');
     setLocation(window.localStorage.getItem('ihype-location-personalization') !== 'false');
+    const controller = new AbortController();
+    void loadUserSettings(controller.signal).then((settings) => {
+      if (typeof settings.notificationPreference?.newShows === 'boolean') setNotifications(settings.notificationPreference.newShows);
+    }).catch(() => {});
+    return () => controller.abort();
   }, [onReducedMotionChange, production]);
   const updateSetting = <T,>(key: string, setter: Dispatch<SetStateAction<T>>, value: T) => {
     setter(value);
@@ -976,7 +1014,7 @@ function SettingsModule({ demoState, onDemoStateChange, onReducedMotionChange, p
   };
   return (
     <section aria-labelledby="settings-title" className="deck-module settings-module">
-      <ModuleIntro className="settings-heading" description="Everything important is visible, understandable, and reversible." kicker="SETTINGS · YOU ARE IN CONTROL" title={<>Your app.<br />Your rules.</>} titleId="settings-title" />
+      <div className="module-toolbar"><span><b>SETTINGS</b><strong id="settings-title">Your app. Your rules.</strong><small>Visible, understandable, and reversible controls.</small></span></div>
       <div className="settings-board" data-api-path={implementationBindings.settingsUpdate.path}>
         <div className="settings-section settings-appearance"><span>LANGUAGE & APPEARANCE</span><label><strong>Language</strong><select onChange={(event) => updateSetting('language', setLanguage, event.target.value)} value={language}><option>English</option><option>Español</option><option>Français</option><option>Português</option><option>العربية</option><option>Deutsch</option><option>日本語</option><option>中文</option><option>Italiano</option><option>한국어</option><option>हिन्दी</option><option>Русский</option></select></label><label><strong>Theme</strong><select onChange={(event) => updateSetting('theme', setTheme, event.target.value)} value={theme}><option>System</option><option>Dark</option><option>Light</option></select></label></div>
         <div className="settings-section settings-accessibility"><span>ACCESSIBILITY</span><label><span><strong>Reduce motion</strong><small>Minimize transitions and animated artwork</small></span><input checked={reducedMotion} onChange={(event) => { onReducedMotionChange(event.target.checked); signalImplementationAction('settingsUpdate', { key: 'reducedMotion', value: event.target.checked }); applyDeviceSetting('reducedMotion', event.target.checked); }} type="checkbox" /></label><label><span><strong>High contrast</strong><small>Increase borders and text separation</small></span><input checked={highContrast} onChange={(event) => updateSetting('highContrast', setHighContrast, event.target.checked)} type="checkbox" /></label><label><span><strong>Larger interface text</strong><small>Increase labels and supporting copy</small></span><input checked={largerText} onChange={(event) => updateSetting('largerText', setLargerText, event.target.checked)} type="checkbox" /></label><label><span><strong>Underline links</strong><small>Make text links easier to identify</small></span><input checked={underlineLinks} onChange={(event) => updateSetting('underlineLinks', setUnderlineLinks, event.target.checked)} type="checkbox" /></label><label><span><strong>Readable font</strong><small>Use a simpler typeface for long reading</small></span><input checked={readableFont} onChange={(event) => updateSetting('readableFont', setReadableFont, event.target.checked)} type="checkbox" /></label><label><span><strong>Captions and transcripts</strong><small>Prefer available text for radio and video</small></span><input checked={captions} onChange={(event) => updateSetting('captions', setCaptions, event.target.checked)} type="checkbox" /></label></div>
@@ -993,6 +1031,8 @@ function SettingsModule({ demoState, onDemoStateChange, onReducedMotionChange, p
 function CommunityModule({ production }: { production: boolean }) {
   const [section, setSection] = usePersistentState<CommunitySection>('ihype:preview-community-section', 'voting');
   const [vote, setVote] = useState<'support' | 'oppose' | null>(null);
+  const [communityData, setCommunityData] = useState<CommunityPayload | null>(null);
+  const [communityStatus, setCommunityStatus] = useState(production ? 'Loading community proposals…' : '');
   const sectionCopy: Record<CommunitySection, { kicker: string; title: string; description: string }> = {
     voting: { kicker: 'COMMUNITY VOTING · EVERY FAN GETS A VOICE', title: 'The scene helps choose what comes next.', description: 'Proposals remain public, discussion stays attached, and every eligible fan account gets one transparent vote.' },
     info: { kicker: '501(C)(3) · SCENE-FOCUSED · SCENE-RUN', title: 'The platform does not own the signal. You do.', description: 'iHYPE exists to renew local music by turning trusted community signal into discovery, attendance, and fair opportunity.' },
@@ -1000,9 +1040,21 @@ function CommunityModule({ production }: { production: boolean }) {
     dmca: { kicker: 'DMCA · RIGHTS-HOLDER RESPONSE', title: 'Protect the music and the people who made it.', description: 'Rights holders can report material, artists can respond, and every action follows a documented review path.' },
   };
   const copy = sectionCopy[section];
+  const proposal = communityData?.requests.find((request) => request.votingOpen) ?? communityData?.requests[0];
+  useEffect(() => {
+    if (!production) return;
+    const controller = new AbortController();
+    void loadCommunity(controller.signal).then((payload) => { setCommunityData(payload); setCommunityStatus(''); }).catch(() => setCommunityStatus('Community voting is temporarily unavailable.'));
+    return () => controller.abort();
+  }, [production]);
   const castVote = (choice: 'support' | 'oppose') => {
-    if (production) {
-      window.location.href = '/community';
+    if (production && proposal) {
+      setCommunityStatus('Recording your vote…');
+      void castCommunityVote(proposal.id).then((result) => {
+        setCommunityData((current) => current ? { ...current, requests: current.requests.map((request) => request.id === proposal.id ? { ...request, votes: result.votes, quorumMet: result.quorumMet, hasVoted: true } : request) } : current);
+        setVote('support');
+        setCommunityStatus('Your verified fan vote is recorded.');
+      }).catch((error: unknown) => setCommunityStatus(error instanceof Error ? error.message : 'Your vote could not be recorded.'));
       return;
     }
     setVote(choice);
@@ -1010,12 +1062,12 @@ function CommunityModule({ production }: { production: boolean }) {
   };
   return (
     <section aria-labelledby="community-title" className="deck-module community-module">
-      <ModuleIntro className="community-manifesto" description={copy.description} kicker={copy.kicker} title={copy.title} titleId="community-title" />
       <div className="community-board">
+        <div className="module-toolbar community-toolbar"><span><b>{copy.kicker}</b><strong id="community-title">Community</strong><small>{copy.description}</small></span></div>
         <nav aria-label="Community sections" className="community-subnav">
           {([['voting', 'Voting'], ['info', 'Info'], ['legal', 'Legal & privacy'], ['dmca', 'DMCA']] as Array<[CommunitySection, string]>).map(([id, label]) => <button aria-current={section === id ? 'page' : undefined} key={id} onClick={() => setSection(id)} type="button">{label}</button>)}
         </nav>
-        {section === 'voting' && <div className="community-panel community-vote-panel"><span>{production ? 'COMMUNITY VOTING · VERIFIED FAN ACCOUNTS' : 'OPEN COMMUNITY PROPOSAL · 12 DAYS LEFT'}</span><h2>Should Discovery add a local-only listening mode?</h2><p>When enabled, the feed would temporarily use music within the listener’s selected radius while leaving the permanent wildcard system unchanged elsewhere.</p><div className="community-vote-tally"><strong>{production ? '1' : '72%'}</strong><span><i style={{ width: production ? '100%' : '72%' }} />{production ? 'voice per verified fan' : '1,842 verified fan votes'}</span></div><div className="community-vote-actions"><button aria-pressed={vote === 'support'} data-api-path={implementationBindings.communityVote.path} onClick={() => castVote('support')} type="button">{production ? 'Open community voting' : 'Support proposal'}</button>{!production && <button aria-pressed={vote === 'oppose'} data-api-path={implementationBindings.communityVote.path} onClick={() => castVote('oppose')} type="button">Keep current mix</button>}</div>{vote && !production && <small aria-live="polite">Your sample vote is recorded locally for this editable preview.</small>}</div>}
+        {section === 'voting' && <div className="community-panel community-vote-panel"><span>{production ? proposal?.votingOpen ? 'OPEN COMMUNITY PROPOSAL · VERIFIED FAN ACCOUNTS' : 'COMMUNITY VOTING · VERIFIED FAN ACCOUNTS' : 'OPEN COMMUNITY PROPOSAL · 12 DAYS LEFT'}</span><h2>{production ? proposal?.title ?? 'No open proposal right now.' : 'Should Discovery add a local-only listening mode?'}</h2><p>{production ? proposal?.description ?? 'New proposals and their complete voting record will appear here.' : 'When enabled, the feed would temporarily use music within the listener’s selected radius while leaving the permanent wildcard system unchanged elsewhere.'}</p><div className="community-vote-tally"><strong>{production ? (proposal?.votes ?? 0).toLocaleString() : '72%'}</strong><span><i style={{ width: production ? proposal?.quorumMet ? '100%' : '35%' : '72%' }} />{production ? `${proposal?.votes ?? 0} verified fan vote${proposal?.votes === 1 ? '' : 's'}` : '1,842 verified fan votes'}</span></div><div className="community-vote-actions"><button aria-pressed={production ? proposal?.hasVoted : vote === 'support'} data-api-path={implementationBindings.communityVote.path} disabled={production && (!proposal?.votingOpen || !communityData?.eligible || proposal.hasVoted)} onClick={() => castVote('support')} type="button">{production ? proposal?.hasVoted ? 'Vote recorded' : communityData?.eligible ? 'Support proposal' : 'Fan account required' : 'Support proposal'}</button>{!production && <button aria-pressed={vote === 'oppose'} data-api-path={implementationBindings.communityVote.path} onClick={() => castVote('oppose')} type="button">Keep current mix</button>}</div>{communityStatus && <small aria-live="polite">{communityStatus}</small>}{vote && !production && <small aria-live="polite">Your sample vote is recorded locally for this editable preview.</small>}</div>}
         {section === 'info' && <div className="community-panel community-principles"><article><strong>01</strong><h2>No data sales. Ever.</h2><p>Activity improves local recommendations—not a profile sold to somebody else.</p></article><article><strong>02</strong><h2>Music supports music.</h2><p>Music-only radio ads fund infrastructure, transparent wages, and the scene.</p></article><article><strong>03</strong><h2>Signal becomes opportunity.</h2><p>HYPES can become attendance, ticket sales, and fair payouts.</p></article><article><strong>04</strong><h2>Community has a vote.</h2><p>Feature changes remain accountable to the fans who use the platform.</p></article></div>}
         {section === 'legal' && <div className="community-panel community-policy-list"><article><span>PRIVACY</span><strong>Minimum data, clear purpose</strong><p>Approximate location, transparent controls, accessible exports, and no data sales.</p><Link href="/privacy">Read privacy policy ↗</Link></article><article><span>TERMS</span><strong>Plain-language participation rules</strong><p>Clear expectations for accounts, uploads, tickets, promotions, and community conduct.</p><Link href="/terms">Read terms ↗</Link></article><article><span>TRANSPARENCY</span><strong>Public nonprofit accountability</strong><p>Governance, major policy changes, and community decisions should be easy to inspect.</p><Link href="/info">Transparency center ↗</Link></article></div>}
         {section === 'dmca' && <div className="community-panel community-dmca"><span>RIGHTS PROTECTION WORKFLOW</span><ol><li><strong>Submit a notice</strong><p>Identify the work, the reported material, and your authority to act.</p></li><li><strong>Human review</strong><p>iHYPE records the request, checks required details, and limits access when appropriate.</p></li><li><strong>Artist response</strong><p>The uploader receives notice and a documented counter-notice path.</p></li></ol><div><Link href="/dmca">Read the DMCA policy</Link><Link href="/dmca">Start a report</Link></div></div>}
@@ -1562,8 +1614,11 @@ export function ModuleDeckMockup({ features = { maps: true, radio: true }, produ
     setAccountOpen(false);
     setQuery('');
     const resetViewportOrigin = () => {
+      window.scrollTo(0, 0);
       document.documentElement.scrollLeft = 0;
+      document.documentElement.scrollTop = 0;
       document.body.scrollLeft = 0;
+      document.body.scrollTop = 0;
       const deck = logoButtonRef.current?.closest('.module-deck-preview') as HTMLElement | null;
       if (deck) deck.scrollLeft = 0;
       logoButtonRef.current?.focus({ preventScroll: true });
@@ -1600,8 +1655,11 @@ export function ModuleDeckMockup({ features = { maps: true, radio: true }, produ
     body.style.overflow = 'hidden';
     root.style.overscrollBehavior = 'none';
     body.style.overscrollBehavior = 'none';
+    window.scrollTo(0, 0);
     root.scrollLeft = 0;
+    root.scrollTop = 0;
     body.scrollLeft = 0;
+    body.scrollTop = 0;
     return () => {
       root.style.overflow = previousRootOverflow;
       body.style.overflow = previousBodyOverflow;
@@ -2636,4 +2694,225 @@ html[data-theme="light"] .map-trust-panel { --deck-cream:#f3eee7; --deck-muted:#
 .module-deck-preview.reduce-motion .deck-player-marquee-track.is-scrolling { width:100%; }
 .module-deck-preview.reduce-motion .deck-player-marquee-track.is-scrolling .deck-player-marquee-copy:first-child { min-width:0; overflow:hidden; text-overflow:ellipsis; }
 .module-deck-preview.reduce-motion .deck-player-marquee-track.is-scrolling .deck-player-marquee-copy[aria-hidden="true"] { display:none; }
+
+/* Content-first six-module layout. Keep controls and live data in view; no marketing heroes. */
+.deck-module { display:flex; align-items:stretch; flex-direction:column; gap:14px; padding:18px clamp(18px,2.4vw,38px) 108px; }
+.module-toolbar { min-height:64px; display:flex; align-items:center; justify-content:space-between; gap:24px; flex:0 0 auto; padding:10px 14px; border:1px solid var(--deck-line); border-radius:18px; background:linear-gradient(100deg,rgba(var(--scene-a),.08),rgba(7,10,12,.78) 40%,rgba(var(--scene-b),.07)); backdrop-filter:blur(18px); }
+.module-toolbar > span { min-width:0; display:grid; grid-template-columns:auto minmax(0,1fr); align-items:baseline; gap:2px 12px; }
+.module-toolbar > span > b { grid-column:1; grid-row:1; color:var(--deck-cyan); font:900 12px/1 var(--f-m,monospace); letter-spacing:.14em; }
+.module-toolbar > span > strong { grid-column:2; grid-row:1; min-width:0; font:800 clamp(20px,2vw,29px)/1 var(--f-d,sans-serif); letter-spacing:-.03em; }
+.module-toolbar > span > small { grid-column:2; grid-row:2; margin-top:3px; color:var(--deck-muted); font-size:13px; line-height:1.35; }
+.module-deck-preview button,.module-deck-preview input,.module-deck-preview select,.module-deck-preview a { font-size:max(12px,1em); }
+.deck-kicker { font-size:10px; }
+
+/* Dashboard is a dense, scannable board, not an explainer page. */
+.dashboard-module { display:flex; padding-top:14px; }
+.dashboard-toolbar { flex-direction:row; }
+.dashboard-toolbar .role-picker { width:auto; flex:0 0 auto; margin:0; }
+.dashboard-toolbar .role-picker button { height:40px; min-width:76px; padding:0 14px; font-size:12px; }
+.dashboard-role-manager { z-index:5; position:absolute; top:86px; right:36px; width:min(560px,calc(100% - 72px)); margin:0; box-shadow:0 22px 60px rgba(0,0,0,.5); }
+.dashboard-workspace { min-height:0; height:100%; display:block; overflow:auto; overscroll-behavior:contain; padding:0 4px 18px 0; }
+.dashboard-glance { display:grid; grid-template-columns:1.1fr 1fr 1fr; gap:10px; margin-bottom:10px; }
+.dashboard-glance > article { min-height:132px; margin:0; overflow:hidden; padding:14px; border:1px solid var(--deck-line); border-radius:16px; background:rgba(7,9,11,.74); }
+.dashboard-glance > article > span { display:block; margin-bottom:8px; color:var(--deck-cyan); font:900 10px/1 var(--f-m,monospace); letter-spacing:.13em; }
+.dashboard-glance .dashboard-build strong { font-size:17px; line-height:1.12; }
+.dashboard-glance .dashboard-build p { display:-webkit-box; margin:5px 0 7px; overflow:hidden; color:var(--deck-muted); font-size:12px; line-height:1.35; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
+.dashboard-glance .dashboard-build a { font-size:12px; }
+.dashboard-notifications,.dashboard-upcoming { display:grid; grid-template-columns:1fr; align-content:start; }
+.dashboard-notifications > a,.dashboard-upcoming > a { min-width:0; display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:1px 9px; align-items:center; padding:8px 0; border-top:1px solid rgba(243,238,231,.09); color:var(--deck-cream); text-decoration:none; }
+.dashboard-notifications > a:first-of-type,.dashboard-upcoming > a:first-of-type { border-top:0; }
+.dashboard-notifications a > b,.dashboard-upcoming a > b { grid-row:1/3; min-width:40px; color:var(--deck-orange); font:900 11px var(--f-m,monospace); }
+.dashboard-notifications a > strong,.dashboard-upcoming a > strong { min-width:0; overflow:hidden; font-size:13px; text-overflow:ellipsis; white-space:nowrap; }
+.dashboard-notifications a > small,.dashboard-upcoming a > small { min-width:0; overflow:hidden; color:var(--deck-muted); font-size:11px; text-overflow:ellipsis; white-space:nowrap; }
+.dashboard-notifications a > i,.dashboard-upcoming a > i { grid-column:3; grid-row:1/3; color:var(--deck-cyan); font-size:11px; font-style:normal; }
+.dashboard-next { min-height:74px; }
+.dashboard-metrics div { min-height:78px; padding:12px 14px; }
+.dashboard-metrics span,.dashboard-next > span,.dashboard-recommendations > div:first-child span,.dashboard-insights > span { font-size:10px; }
+.dashboard-metrics strong { font-size:clamp(24px,2.4vw,36px); }
+.dashboard-recommendations > a { min-height:56px; }
+.dashboard-recommendations strong { font-size:13px; }
+.dashboard-recommendations small { font-size:11px; }
+
+/* Around You is the map. Search, privacy and filters float over the map itself. */
+.deck-map-module { display:block; padding:14px 18px 106px; }
+.scene-map-frame { width:100%; height:100%; min-height:0; border-radius:22px; }
+.map-search-dock { z-index:9; position:absolute; top:12px; right:66px; left:66px; display:grid; grid-template-columns:auto minmax(260px,1fr) auto; gap:10px; align-items:center; pointer-events:none; }
+.map-search-dock > * { pointer-events:auto; }
+.map-search-copy { display:grid; padding:7px 12px; border:1px solid rgba(243,238,231,.15); border-radius:13px; background:rgba(4,7,9,.88); backdrop-filter:blur(16px); }
+.map-search-copy span { color:var(--deck-cyan); font:900 9px var(--f-m,monospace); letter-spacing:.13em; }
+.map-search-copy strong { font-size:15px; white-space:nowrap; }
+.map-search-dock > label { height:48px; position:relative; display:flex; align-items:center; }
+.map-search-dock > label .deck-icon { z-index:1; position:absolute; left:15px; width:19px; }
+.map-search-dock input { width:100%; height:48px; padding:0 16px 0 44px; border:1px solid rgba(243,238,231,.22); border-radius:15px; color:var(--deck-cream); background:rgba(4,7,9,.9); outline:none; backdrop-filter:blur(18px); }
+.map-search-dock input:focus { border-color:var(--deck-cyan); box-shadow:0 0 0 3px rgba(24,222,209,.15); }
+.map-locate-button { min-width:190px; height:48px; display:grid; grid-template-columns:22px 1fr; grid-template-rows:1fr 1fr; align-items:center; padding:6px 12px; border:1px solid rgba(243,238,231,.18); border-radius:15px; color:var(--deck-cream); background:rgba(4,7,9,.9); text-align:left; }
+.map-locate-button .deck-icon { grid-row:1/3; width:18px; color:var(--deck-cyan); }
+.map-locate-button span { overflow:hidden; font-size:12px; font-weight:800; text-overflow:ellipsis; white-space:nowrap; }
+.map-locate-button small { overflow:hidden; color:var(--deck-muted); font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
+.map-menu-button { top:14px; left:14px; width:42px; height:42px; }
+.map-filter-panel { top:66px; left:14px; width:320px; font-size:13px; }
+.map-filter-panel > button,.map-filter-panel select,.map-filter-panel input { font-size:12px; }
+.map-scale-context,.map-radius-readout { display:none; }
+.map-scale-context span,.map-scale-context small,.map-radius-readout small,.map-result-count,.map-data-source { font-size:10px; }
+.map-scale-context strong { font-size:18px; }
+.map-trust-toggle { top:82px; font-size:11px; }
+.map-level-rail button { font-size:10px; }
+.map-place-detail strong { font-size:13px; }
+.map-place-detail small { font-size:11px; }
+
+/* Discover centers the seed and makes the physical decision obvious. */
+.discover-module { display:block; padding:12px 18px 106px; }
+.discover-stage { width:100%; height:100%; min-height:0; grid-template-rows:58px minmax(0,1fr) 62px; row-gap:8px; overflow:hidden; }
+.discover-topline { width:100%; display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:24px; align-items:center; grid-row:1; padding:8px 14px; border:1px solid var(--deck-line); border-radius:16px; background:rgba(5,7,9,.76); }
+.discover-topline > span { display:grid; grid-template-columns:auto minmax(0,1fr); gap:10px; align-items:baseline; }
+.discover-topline > span b { color:var(--deck-cyan); font:900 10px var(--f-m,monospace); letter-spacing:.14em; }
+.discover-topline > span strong { font-size:20px; }
+.discover-topline p { margin:0; color:var(--deck-muted); font-size:12px; }
+.discover-topline p i { color:var(--deck-orange); font-style:normal; font-weight:900; }
+.discover-topline p i:last-child { color:var(--deck-cyan); }
+.discover-topline small { font-size:12px; }
+.discover-topline small b { color:var(--deck-cyan); font-size:17px; }
+.discover-signal-wash,.discover-next-card,.discover-card { grid-row:2; }
+.discover-card,.discover-next-card,.discover-signal-wash { width:min(43vh,420px); max-width:min(76vw,420px); }
+.discover-card { cursor:grab; touch-action:pan-y; box-shadow:0 28px 78px rgba(0,0,0,.55),0 0 0 1px rgba(243,238,231,.12); will-change:transform; }
+.discover-card:active,.discover-card.is-dragging { cursor:grabbing; }
+.discover-card:focus-visible { outline:3px solid var(--deck-cyan); outline-offset:4px; }
+.discover-card-copy > span { font-size:10px; }
+.discover-card-copy h2 { font-size:clamp(22px,2.8vh,29px); line-height:.94; letter-spacing:-.04em; overflow-wrap:normal; word-break:normal; }
+.discover-card-copy p { font-size:16px; }
+.discover-card-copy small,.discover-why i { font-size:11px; }
+.discover-actions { position:static; grid-row:3; }
+.discover-actions button { min-width:160px; height:52px; font-size:13px; }
+.swipe-outcome { top:50%; font-size:18px; }
+
+/* Radio is a DJ finder with one compact control strip. */
+.radio-module { display:flex; padding-top:14px; }
+.radio-toolbar { min-height:66px; }
+.radio-toolbar .radio-scope { width:auto; min-width:min(500px,48vw); grid-template-columns:repeat(4,1fr); margin:0; }
+.radio-scope button { min-height:40px; padding:0 16px; font-size:11px; }
+.radio-console { min-height:0; height:100%; grid-template-rows:auto auto auto 1fr; border-radius:20px; }
+.radio-topline { min-height:96px; }
+.radio-now strong { font-size:clamp(18px,2vw,27px); }
+.radio-now small { font-size:12px; }
+.radio-filter-toggle { display:none; }
+.radio-filters { grid-template-columns:repeat(4,minmax(0,1fr)); padding:10px 14px; }
+.radio-filters label span { font-size:10px; }
+.radio-filters select { height:42px; font-size:12px; }
+.radio-results { min-height:0; overflow:auto; }
+.radio-results article { min-height:66px; }
+.radio-results article strong { font-size:14px; }
+.radio-results article small,.radio-results article i,.radio-results article b { font-size:11px; }
+.radio-results-heading span { font-size:10px; }
+.radio-results-heading small { font-size:11px; }
+
+/* Community and Settings use their board space immediately. */
+.community-module,.settings-module { display:flex; padding-top:14px; }
+.community-board,.settings-board { width:100%; height:100%; min-height:0; margin:0; border-radius:20px; }
+.community-board { grid-template-rows:auto auto 1fr; }
+.community-toolbar { margin:10px 10px 0; border:0; border-bottom:1px solid var(--deck-line); border-radius:0; background:transparent; }
+.community-subnav { padding:10px; }
+.community-subnav button { min-height:42px; font-size:12px; }
+.community-panel { min-height:0; overflow:auto; }
+.community-panel p { font-size:13px; line-height:1.5; }
+.community-vote-panel h2 { max-width:800px; font-size:clamp(28px,3.2vw,48px); }
+.community-principles h2 { font-size:20px; }
+.settings-board { overflow:auto; }
+.settings-section { padding:16px 20px; }
+.settings-section > span { font-size:10px; }
+.settings-section label strong { font-size:13px; }
+.settings-section label small { font-size:11px; }
+
+@media (max-width:800px) {
+  .module-deck-preview { --mobile-hero-size:24px; }
+  .deck-module { height:100%; display:flex; gap:10px; overflow:hidden; padding:10px 10px calc(86px + var(--deck-safe-bottom)); }
+  .module-toolbar { min-height:58px; padding:8px 10px; border-radius:14px; }
+  .module-toolbar > span { display:block; }
+  .module-toolbar > span > b { display:block; margin-bottom:3px; font-size:9px; }
+  .module-toolbar > span > strong { display:-webkit-box; max-height:2.08em; overflow:hidden; font-size:19px; line-height:1.04; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
+  .module-toolbar > span > small { display:none; }
+  .deck-navigator nav { grid-template-columns:1fr; gap:6px; overflow:auto; }
+  .deck-navigator nav button,.deck-navigator nav button.is-utility-module { min-height:58px; display:grid; }
+  .deck-navigator nav button > small { display:block; overflow:hidden; font-size:11px; text-overflow:ellipsis; white-space:nowrap; }
+  .deck-navigator nav button > strong { font-size:16px; }
+  .deck-nav-heading span { font-size:11px; }
+  .deck-nav-heading small { font-size:12px; }
+
+  .dashboard-toolbar { align-items:flex-start; }
+  .dashboard-toolbar > span small { display:none; }
+  .dashboard-toolbar .role-picker { display:flex; max-width:48%; gap:4px; overflow-x:auto; }
+  .dashboard-toolbar .role-picker button { min-width:58px; height:38px; padding:0 9px; font-size:10px; }
+  .dashboard-role-manager { top:72px; right:10px; width:calc(100% - 20px); }
+  .dashboard-glance { grid-template-columns:1fr 1fr; }
+  .dashboard-glance > article { min-height:118px; }
+  .dashboard-glance .dashboard-build { grid-column:1/-1; min-height:104px; }
+  .dashboard-glance .dashboard-build p { -webkit-line-clamp:1; }
+  .dashboard-notifications a > small,.dashboard-upcoming a > small { display:none; }
+  .dashboard-metrics div { min-width:min(48vw,190px); }
+
+  .deck-map-module { padding:8px 8px calc(84px + var(--deck-safe-bottom)); }
+  .scene-map-frame { min-height:0; height:100%; border-radius:18px; }
+  .map-search-dock { top:8px; right:52px; left:52px; display:block; }
+  .map-search-copy,.map-locate-button { display:none; }
+  .map-search-dock > label,.map-search-dock input { height:44px; }
+  .map-menu-button { top:9px; left:8px; width:42px; height:42px; }
+  .map-filter-panel { top:58px; right:8px; bottom:8px; left:8px; width:auto; max-height:none; }
+  .map-trust-toggle { top:62px; right:8px; bottom:auto; font-size:9px; }
+  .map-attribution { right:8px; bottom:112px; max-width:210px; padding:3px 5px; border-radius:6px; background:rgba(3,6,8,.72); font-size:7px; }
+  .map-bottom-controls { right:8px; bottom:8px; left:8px; }
+  .map-level-rail { overflow-x:auto; }
+  .map-level-rail button { min-width:58px; font-size:9px; }
+  .map-radius-readout { display:none; }
+
+  .discover-module { padding:8px 8px calc(84px + var(--deck-safe-bottom)); }
+  .discover-stage { min-height:0; height:100%; grid-template-rows:52px minmax(0,1fr) 56px; overflow:hidden; }
+  .discover-topline { grid-template-columns:minmax(0,1fr) auto; gap:8px; padding:7px 10px; }
+  .discover-topline > span { display:block; }
+  .discover-topline > span b { display:block; font-size:8px; }
+  .discover-topline > span strong { display:block; overflow:hidden; font-size:17px; text-overflow:ellipsis; white-space:nowrap; }
+  .discover-topline p { display:none; }
+  .discover-topline small { font-size:11px; }
+  .discover-card,.discover-next-card,.discover-signal-wash { width:min(58dvh,78vw,340px); max-height:100%; }
+  .discover-card-copy h2 { font-size:clamp(26px,8vw,38px); }
+  .discover-card-copy p { display:block; font-size:15px; }
+  .discover-actions { gap:10px; }
+  .discover-actions button,.discover-actions button.save { min-width:0; width:min(42vw,180px); height:48px; font-size:12px; }
+
+  .radio-module { overflow:hidden; }
+  .radio-toolbar { display:block; min-height:96px; }
+  .radio-toolbar > span { display:block; }
+  .radio-toolbar .radio-scope { width:100%; min-width:0; margin-top:8px; }
+  .radio-scope button { min-height:38px; font-size:9px; }
+  .radio-console { min-height:0; height:calc(100% - 106px); margin:0; }
+  .radio-topline { min-height:82px; grid-template-columns:58px minmax(0,1fr) 40px; }
+  .radio-live-art { width:56px; }
+  .radio-now strong { font-size:16px; }
+  .radio-now small { font-size:11px; }
+  .radio-filter-toggle { display:grid; }
+  .radio-filters { max-height:0; grid-template-columns:1fr 1fr; padding:0 10px; opacity:0; }
+  .radio-filters.is-open { max-height:210px; padding:9px 10px; opacity:1; }
+  .radio-filters select { height:38px; }
+  .radio-results { padding:8px; }
+  .radio-results article { min-height:60px; }
+
+  .community-module,.settings-module { overflow:hidden; }
+  .community-board,.settings-board { min-height:0; height:100%; margin:0; }
+  .community-toolbar { min-height:58px; margin:6px 6px 0; }
+  .community-subnav { grid-template-columns:repeat(4,minmax(0,1fr)); overflow-x:auto; }
+  .community-subnav button { min-width:86px; }
+  .community-panel { padding:14px; }
+  .community-vote-panel h2 { font-size:26px; }
+  .settings-board > .module-toolbar { position:sticky; top:0; z-index:2; }
+}
+
+@media (max-width:480px) {
+  .deck-search input { font-size:14px; }
+  .deck-module { padding-right:8px; padding-left:8px; }
+  .dashboard-glance { display:block; }
+  .dashboard-glance > article { min-height:0; margin-bottom:8px; }
+  .dashboard-glance .dashboard-notifications,.dashboard-glance .dashboard-upcoming { min-height:106px; }
+  .dashboard-toolbar .role-picker button { min-width:52px; }
+  .discover-why i,.discover-card-copy small { font-size:10px; }
+  .community-subnav { grid-template-columns:repeat(2,1fr); }
+  .community-subnav button { min-width:0; }
+}
 `;

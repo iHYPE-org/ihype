@@ -4,7 +4,7 @@ const modules = [
   [/Around you/i, '.deck-map-module'],
   [/Discover/i, '.discover-module'],
   [/Radio/i, '.radio-module'],
-  [/(Dashboard|Me)/i, '.dashboard-module'],
+  [/Dashboard/i, '.dashboard-module'],
   [/Settings/i, '.settings-module'],
   [/Community/i, '.community-module'],
 ] as const;
@@ -21,13 +21,8 @@ async function openModule(page: Page, label: RegExp, selector: string) {
   const current = await page.locator('.module-deck-preview').getAttribute('data-active-module');
   const expected = selector.replace(/^\./, '').replace(/-module$/, '').replace('deck-map', 'map');
   if (current !== expected) {
-    if (expected === 'settings' || expected === 'community') {
-      await page.getByRole('button', { name: 'Open account menu' }).click();
-      await page.locator('.deck-account-menu').getByRole('button', { name: label }).click();
-    } else {
-      await page.getByRole('button', { name: /iHYPE module navigator/ }).click();
-      await page.locator('.deck-navigator').getByRole('button', { name: label }).click();
-    }
+    await page.getByRole('button', { name: /iHYPE module navigator/ }).click();
+    await page.locator('.deck-navigator').getByRole('button', { name: label }).click();
   }
   await expect(page.locator(selector)).toBeVisible();
   // Measure the settled module, not an intermediate frame from the intentional
@@ -39,7 +34,7 @@ async function assertLayoutBudget(page: Page, selector: string) {
   const result = await page.evaluate((moduleSelector) => {
     const root = document.querySelector('.module-deck-preview') as HTMLElement | null;
     const module = document.querySelector(moduleSelector) as HTMLElement | null;
-    const heading = module?.querySelector('h1') as HTMLElement | null;
+    const heading = module?.querySelector('h1,[id$="-title"]') as HTMLElement | null;
     const player = document.querySelector('.deck-player') as HTMLElement | null;
     if (!root || !module || !heading || !player) return { missing: true };
     const moduleRect = module.getBoundingClientRect();
@@ -132,15 +127,19 @@ test.describe('Module deck responsive regression gate', () => {
     await attachEvidence(page, testInfo, 'phone-390-light-reduced-motion-200-text');
   });
 
-  test('mobile keeps four primary destinations and moves utilities into the account menu', async ({ page }, testInfo) => {
+  test('mobile keeps all six destinations in the logo menu', async ({ page }, testInfo) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/ui-preview');
 
     await page.getByRole('button', { name: /Open iHYPE module navigator/i }).click();
-    await expect(page.locator('.deck-navigator .is-primary-module:visible')).toHaveCount(4);
-    await expect(page.locator('.deck-navigator .is-utility-module:visible')).toHaveCount(0);
-    await expect(page.locator('.deck-navigator')).toContainText('Me');
-    await attachEvidence(page, testInfo, 'phone-390-four-destination-menu');
+    await expect(page.locator('.deck-navigator .is-primary-module:visible')).toHaveCount(6);
+    await expect(page.locator('.deck-navigator')).toContainText('Dashboard');
+    await expect(page.locator('.deck-navigator')).toContainText('Around you');
+    await expect(page.locator('.deck-navigator')).toContainText('Discover');
+    await expect(page.locator('.deck-navigator')).toContainText('Radio');
+    await expect(page.locator('.deck-navigator')).toContainText('Community');
+    await expect(page.locator('.deck-navigator')).toContainText('Settings');
+    await attachEvidence(page, testInfo, 'phone-390-six-destination-menu');
     await page.getByRole('button', { name: /Close iHYPE module navigator/i }).click();
 
     await page.getByRole('button', { name: 'Open account menu' }).click();

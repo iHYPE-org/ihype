@@ -13,15 +13,65 @@ export type PreviewSearchResult = {
 
 export type NearbyShow = {
   id: string;
+  slug?: string;
   title: string;
   startsAt: string;
   hypeCount: number;
   venueName?: string | null;
   venueCity?: string | null;
+  venueSlug?: string | null;
   venueProfile?: { name?: string | null; city?: string | null } | null;
   latitude?: number | null;
   longitude?: number | null;
   locationPrecision?: 'exact-venue' | 'none';
+};
+
+export type DashboardCard = {
+  id: string;
+  label: string;
+  title: string;
+  detail: string;
+  href: string;
+  action?: string;
+};
+
+export type DashboardLiveData = {
+  build: { title: string; detail: string; href: string };
+  nextAction: { title: string; href: string };
+  notifications: DashboardCard[];
+  upcoming: DashboardCard[];
+  recommendations: Array<{ title: string; detail: string; tag: string; href: string }>;
+  insights: string[];
+  actions: Array<{ title: string; href: string }>;
+};
+
+export type CommunityProposal = {
+  id: string;
+  title: string;
+  description: string;
+  votes: number;
+  status: string;
+  quorumMet: boolean;
+  hasVoted: boolean;
+  votingOpen: boolean;
+  votingClosesAt?: string | null;
+};
+
+export type CommunityPayload = {
+  eligible: boolean;
+  requests: CommunityProposal[];
+};
+
+export type RadioStation = {
+  id: string;
+  title: string;
+  meta: string;
+  signal: string;
+  time: string;
+  href: string;
+  profileId?: string | null;
+  following?: boolean;
+  track?: ExperienceTrack | null;
 };
 
 export type PreviewResponse<T> = {
@@ -103,12 +153,17 @@ export async function searchPreview(query: string, signal: AbortSignal, allowSam
   }
 }
 
-export async function loadNearbyShows({ latitude, longitude, radiusKm, signal, allowSamples = true }: {
+export async function loadNearbyShows({ latitude, longitude, radiusKm, signal, allowSamples = true, query, filter, genre, date, hypeOnly }: {
   latitude: number;
   longitude: number;
   radiusKm: number;
   signal: AbortSignal;
   allowSamples?: boolean;
+  query?: string;
+  filter?: string;
+  genre?: string;
+  date?: string;
+  hypeOnly?: boolean;
 }): Promise<PreviewResponse<NearbyShow[]>> {
   const approximate = coarsenFanCoordinates(latitude, longitude);
   if (!approximate) return { data: [], source: 'live' };
@@ -117,6 +172,11 @@ export async function loadNearbyShows({ latitude, longitude, radiusKm, signal, a
     lng: String(approximate.longitude),
     radius: String(Math.min(500, Math.max(1, radiusKm))),
   });
+  if (query?.trim()) params.set('q', query.trim().slice(0, 80));
+  if (filter) params.set('filter', filter);
+  if (genre && genre !== 'All genres') params.set('genre', genre);
+  if (date) params.set('date', date);
+  if (hypeOnly) params.set('hypeOnly', '1');
   try {
     const payload = await fetchJson<{ shows?: NearbyShow[] }>(`/api/shows/nearby?${params}`, signal, 'nearby-shows');
     return { data: Array.isArray(payload.shows) ? payload.shows : [], source: 'live' };
@@ -184,6 +244,59 @@ export async function loadRadioTracks(signal: AbortSignal): Promise<ExperienceTr
     scene: 'Independent radio',
     match: 'Live from your scene',
   }));
+}
+
+export async function loadRadioStations({ scope, genre, location, topic, ranking, signal }: {
+  scope: string;
+  genre: string;
+  location: string;
+  topic: string;
+  ranking: string;
+  signal: AbortSignal;
+}): Promise<{ tracks: ExperienceTrack[]; stations: RadioStation[] }> {
+  const params = new URLSearchParams({ scope, genre, location, topic, ranking });
+  const payload = await fetchExperienceJson<{
+    tracks?: Array<{ mediaId?: string; hexId: string; title: string; artistName: string; artistSlug?: string | null; artworkUrl?: string | null; url?: string }>;
+    stations?: RadioStation[];
+  }>(`/api/radio?${params}`, { signal });
+  const tracks = (payload.tracks ?? []).map((track) => ({
+    mediaId: track.mediaId ?? track.hexId,
+    hexId: track.hexId,
+    title: track.title,
+    artist: track.artistName,
+    artistSlug: track.artistSlug ?? null,
+    art: track.artworkUrl || '/brand/ihype-menu-logo.webp',
+    url: track.url || `/api/media/${track.hexId}`,
+    scene: 'Independent radio',
+    match: 'Live from your scene',
+  }));
+  return { tracks, stations: payload.stations ?? [] };
+}
+
+export async function toggleProfileFollow(profileId: string) {
+  return fetchExperienceJson<{ following: boolean; count: number }>('/api/follow', {
+    method: 'POST',
+    body: JSON.stringify({ profileId }),
+  });
+}
+
+export async function loadDashboardData(role: string, signal: AbortSignal) {
+  return fetchExperienceJson<DashboardLiveData>(`/api/me/dashboard?role=${encodeURIComponent(role)}`, { signal });
+}
+
+export async function loadCommunity(signal: AbortSignal) {
+  return fetchExperienceJson<CommunityPayload>('/api/feedback', { signal });
+}
+
+export async function castCommunityVote(id: string) {
+  return fetchExperienceJson<{ ok: boolean; votes: number; quorumMet: boolean; hasVoted: boolean }>('/api/feedback', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'vote', id }),
+  });
+}
+
+export async function loadUserSettings(signal: AbortSignal) {
+  return fetchExperienceJson<{ notificationPreference?: { newShows?: boolean } | null }>('/api/me', { signal });
 }
 
 export async function updateSceneNotifications(enabled: boolean) {

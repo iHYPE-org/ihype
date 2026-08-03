@@ -40,13 +40,8 @@ test.describe('Signed-in module deck interactions', () => {
       ['Community', '.community-module'],
       ['Around you', '.deck-map-module'],
     ] as const) {
-      if (label === 'Settings' || label === 'Community') {
-        await page.getByRole('button', { name: 'Open account menu' }).click();
-        await page.locator('.deck-account-menu').getByRole('button', { name: new RegExp(label, 'i') }).click();
-      } else {
-        await page.getByRole('button', { name: /iHYPE module navigator/ }).click();
-        await page.locator('.deck-navigator').getByRole('button', { name: new RegExp(label, 'i') }).click();
-      }
+      await page.getByRole('button', { name: /iHYPE module navigator/ }).click();
+      await page.locator('.deck-navigator').getByRole('button', { name: new RegExp(label, 'i') }).click();
       await expect(page.locator(selector)).toBeVisible({ timeout: 5_000 });
     }
 
@@ -65,8 +60,8 @@ test.describe('Signed-in module deck interactions', () => {
     await expect(page.getByRole('button', { name: 'Previous song' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Next song' })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Open account menu' }).click();
-    await page.locator('.deck-account-menu').getByRole('button', { name: /Settings/i }).click();
+    await page.getByRole('button', { name: /iHYPE module navigator/ }).click();
+    await page.locator('.deck-navigator').getByRole('button', { name: /Settings/i }).click();
     await expect(page.locator('.settings-module')).toBeVisible({ timeout: 5_000 });
     await page.getByRole('button', { name: 'Open account menu' }).click();
     await expect(page.getByRole('link', { name: /detailed feedback/i })).toBeVisible();
