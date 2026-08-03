@@ -1561,7 +1561,15 @@ export function ModuleDeckMockup({ features = { maps: true, radio: true }, produ
     setMenuOpen(false);
     setAccountOpen(false);
     setQuery('');
-    window.requestAnimationFrame(() => logoButtonRef.current?.focus({ preventScroll: true }));
+    const resetViewportOrigin = () => {
+      document.documentElement.scrollLeft = 0;
+      document.body.scrollLeft = 0;
+      const deck = logoButtonRef.current?.closest('.module-deck-preview') as HTMLElement | null;
+      if (deck) deck.scrollLeft = 0;
+      logoButtonRef.current?.focus({ preventScroll: true });
+    };
+    resetViewportOrigin();
+    window.requestAnimationFrame(resetViewportOrigin);
   };
   const animateLogo = useCallback(() => {
     if (logoAnimationTimer.current !== null) window.clearTimeout(logoAnimationTimer.current);
@@ -1579,6 +1587,27 @@ export function ModuleDeckMockup({ features = { maps: true, radio: true }, produ
     setSignalToast(intensity === 'scene-wave' ? 'SCENE WAVE SENT · your signal carries farther' : 'HYPE SENT · local signal strengthened');
     if (hypePulseTimer.current !== null) window.clearTimeout(hypePulseTimer.current);
     hypePulseTimer.current = window.setTimeout(() => setSignalToast(''), intensity === 'scene-wave' ? 3200 : 2200);
+  }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const body = document.body;
+    const previousRootOverflow = root.style.overflow;
+    const previousBodyOverflow = body.style.overflow;
+    const previousRootOverscroll = root.style.overscrollBehavior;
+    const previousBodyOverscroll = body.style.overscrollBehavior;
+    root.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    root.style.overscrollBehavior = 'none';
+    body.style.overscrollBehavior = 'none';
+    root.scrollLeft = 0;
+    body.scrollLeft = 0;
+    return () => {
+      root.style.overflow = previousRootOverflow;
+      body.style.overflow = previousBodyOverflow;
+      root.style.overscrollBehavior = previousRootOverscroll;
+      body.style.overscrollBehavior = previousBodyOverscroll;
+    };
   }, []);
 
   useEffect(() => {
@@ -1656,7 +1685,7 @@ body:has(.module-deck-preview) .mas-root,
 body:has(.module-deck-preview) nextjs-portal { display:none!important; }
 body:has(.module-deck-preview) .site-shell { padding:0!important; }
 body:has(.module-deck-preview) #main-content { transform:none!important; padding:0!important; }
-.module-deck-preview { --deck-orange:#ff4d2e; --deck-cyan:#18ded1; --deck-cream:#f3eee7; --deck-muted:#a69d93; --deck-line:rgba(243,238,231,.14); --scene-a:255,77,46; --scene-b:24,222,209; --scene-focus-x:72%; --scene-focus-y:38%; --deck-safe-top:env(safe-area-inset-top,0px); --deck-safe-right:env(safe-area-inset-right,0px); --deck-safe-bottom:env(safe-area-inset-bottom,0px); --deck-safe-left:env(safe-area-inset-left,0px); position:relative; width:100%; height:100dvh; min-height:640px; overflow:hidden; color:var(--deck-cream); background:#050607; isolation:isolate; overscroll-behavior:none; }
+.module-deck-preview { --deck-orange:#ff4d2e; --deck-cyan:#18ded1; --deck-cream:#f3eee7; --deck-muted:#a69d93; --deck-line:rgba(243,238,231,.14); --scene-a:255,77,46; --scene-b:24,222,209; --scene-focus-x:72%; --scene-focus-y:38%; --deck-safe-top:env(safe-area-inset-top,0px); --deck-safe-right:env(safe-area-inset-right,0px); --deck-safe-bottom:env(safe-area-inset-bottom,0px); --deck-safe-left:env(safe-area-inset-left,0px); position:fixed; inset:0; width:auto; height:100dvh; min-height:640px; overflow:hidden; overflow:clip; color:var(--deck-cream); background:#050607; isolation:isolate; overscroll-behavior:none; }
 html[data-theme="light"] body:has(.module-deck-preview) { background:#f3efe8!important; }
 html[data-theme="light"] .module-deck-preview { --deck-cream:#17130f; --deck-muted:#746b61; --deck-line:rgba(23,19,15,.16); color-scheme:light; background:#f3efe8; }
 html[data-theme="light"] .module-deck-preview::before { background:radial-gradient(circle at 17% 44%,rgba(var(--scene-a),.09),transparent 28%),radial-gradient(circle at var(--scene-focus-x) var(--scene-focus-y),rgba(var(--scene-b),.1),transparent 34%),linear-gradient(120deg,#faf7f1 0%,#f1ece5 48%,#e9f2f0 100%); }
