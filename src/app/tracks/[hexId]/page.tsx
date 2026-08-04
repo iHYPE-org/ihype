@@ -239,7 +239,7 @@ export default async function TrackDetailPage({ params }: { params: Promise<{ he
         .track-radio-status { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg3, var(--bg2)); padding: 14px 18px; margin-bottom: 28px; }
         .track-radio-status-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
         .track-radio-status-eligible { color: var(--ink-a55); }
-        .track-radio-status-not-eligible { color: var(--role-promoter); }
+        .track-radio-status-not-eligible { color: var(--warning-text); }
         .track-radio-status-body { font-size: 12.5px; color: var(--ink-a55); line-height: 1.6; margin: 0; }
         .track-section-head { display: flex; justify-content: space-between; align-items: baseline; margin-top: 8px; }
         .track-empty { text-align: center; padding: 30px 24px; color: var(--ink-a50); }

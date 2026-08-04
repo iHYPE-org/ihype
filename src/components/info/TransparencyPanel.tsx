@@ -34,14 +34,14 @@ export async function TransparencyPanel() {
   return (
     <div className="lp-wrap">
       <section className="lp-hero" style={{ paddingBottom: '20px' }}>
-        <p className="lp-hype-eyebrow" style={{ color: 'var(--role-promoter)' }}>
+        <p className="lp-hype-eyebrow" style={{ color: 'var(--warning-text)' }}>
           <span
             style={{
               display: 'inline-block',
               width: 7,
               height: 7,
               borderRadius: '50%',
-              background: 'var(--role-promoter)',
+              background: 'var(--warning)',
               marginRight: 8,
             }}
           />

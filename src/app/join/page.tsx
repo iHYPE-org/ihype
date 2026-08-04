@@ -13,7 +13,7 @@ const ROLES = [
   { label: 'Artist', color: 'var(--accent)', icon: '🎤', href: '/for-artists', help: '70% of every ticket, your own page and shows.' },
   { label: 'DJ', color: 'var(--role-dj, var(--accent-2))', icon: '🎛️', href: '/for-djs', help: 'A free radio studio and HYPE Link promotion.' },
   { label: 'Venue', color: 'var(--role-venue)', icon: '🏛️', href: '/for-venues', help: '20% of every gate and real demand data.' },
-  { label: 'Advertiser', color: 'var(--role-advertiser, var(--role-promoter))', icon: '📻', href: '/advertise/register', help: 'Music-only campaigns with no access to personal user data.' },
+  { label: 'Advertiser', color: 'var(--role-advertiser)', icon: '📻', href: '/advertise/register', help: 'Music-only campaigns with no access to personal user data.' },
 ];
 
 export default async function JoinChooserPage() {

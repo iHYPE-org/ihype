@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script src="../../lib/i18n.js"></script>
+</head>
+<body>
+<x-dc>
+
+<!-- @template name="iHYPE Role Settings" description="Account settings per role — profile, notifications, payouts link, danger zone" -->
+<helmet>
+  <script src="./ds-base.js"></script>
+<script src="../../lib/theme.js"></script>
+<script src="../../lib/theme-toggle.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>html,body{margin:0;background:radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),var(--bg-base)}*{box-sizing:border-box}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--bg-base);color:var(--ink-1);font-family:'DM Sans',sans-serif;padding:44px 24px 100px;max-width:640px;margin:0 auto">
+  <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px;letter-spacing:-.02em;margin:0 0 4px">{{ settingsTitle }}</h1>
+  <div style="display:flex;gap:6px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:12px;padding:4px;width:fit-content;margin:18px 0 28px">
+    <sc-for list="{{ roles }}" as="r" hint-placeholder-count="5">
+      <sc-if value="{{ r.active }}"><button onClick="{{ r.pick }}" style="padding:7px 13px;border-radius:9px;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:rgba(var(--surface-tint-rgb),.08);color:var(--ink-1)">{{ r.label }}</button></sc-if>
+      <sc-if value="{{ r.inactive }}"><button onClick="{{ r.pick }}" style="padding:7px 13px;border-radius:9px;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:transparent;color:var(--ink-3)">{{ r.label }}</button></sc-if>
+    </sc-for>
+  </div>
+
+  <div style="border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:16px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);padding:22px;margin-bottom:16px">
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;margin-bottom:16px">{{ profileLabel }} {{ profileWord }}</div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px">{{ displayNameLabel }}</div>
+        <input value="{{ name }}" onChange="{{ setName }}" style="width:100%;height:42px;background:var(--bg-base);border:1px solid rgba(var(--surface-tint-rgb),.14);border-radius:9px;padding:0 14px;color:var(--ink-1);font-family:'DM Sans',sans-serif;font-size:14px;box-sizing:border-box"></div>
+      <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px">{{ bioLabel }}</div>
+        <textarea rows="3" value="{{ bio }}" onChange="{{ setBio }}" style="width:100%;background:var(--bg-base);border:1px solid rgba(var(--surface-tint-rgb),.14);border-radius:9px;padding:10px 14px;color:var(--ink-1);font-family:'DM Sans',sans-serif;font-size:14px;box-sizing:border-box;resize:vertical"></textarea></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:16px">
+      <button onClick="{{ saveProfile }}" style="font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;padding:9px 18px;border-radius:9px;border:none;cursor:pointer;background:var(--accent);color:#fff">{{ saveChanges }}</button>
+      <sc-if value="{{ saved }}"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--role-venue)">✓ {{ savedLabel }}</span></sc-if>
+    </div>
+  </div>
+
+  <div style="border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:16px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);padding:22px;margin-bottom:16px">
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;margin-bottom:14px">{{ notificationsTitle }}</div>
+    <sc-for list="{{ toggles }}" as="t" hint-placeholder-count="3">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid rgba(var(--surface-tint-rgb),.13)">
+        <div><div style="font-size:14px;font-weight:500">{{ t.label }}</div><div style="font-size:12px;color:var(--ink-2);margin-top:2px">{{ t.detail }}</div></div>
+        <sc-if value="{{ t.on }}"><button onClick="{{ t.toggle }}" style="width:42px;height:24px;border-radius:12px;border:none;cursor:pointer;background:var(--role-venue);position:relative"><span style="position:absolute;top:2px;left:20px;width:20px;height:20px;border-radius:50%;background:var(--bg-base)"></span></button></sc-if>
+        <sc-if value="{{ t.off }}"><button onClick="{{ t.toggle }}" style="width:42px;height:24px;border-radius:12px;border:none;cursor:pointer;background:rgba(var(--surface-tint-rgb),.14);position:relative"><span style="position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--ink-1)"></span></button></sc-if>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:16px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);padding:22px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:16px">
+    <div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px">{{ payoutsTitle }}</div><div style="font-size:13px;color:var(--ink-2);margin-top:4px">{{ payoutsDetail }}</div></div>
+    <sc-if value="{{ isArtist }}"><a href="../payouts/Payouts.dc.html" style="flex-shrink:0;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;color:var(--accent);text-decoration:none">{{ openLabel }}</a></sc-if>
+    <sc-if value="{{ neverDj }}"><a href="../payouts/Payouts.dc.html" style="flex-shrink:0;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;color:var(--accent);text-decoration:none">{{ openLabel }}</a></sc-if>
+    <sc-if value="{{ isVenue }}"><a href="../payouts/Payouts.dc.html" style="flex-shrink:0;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;color:var(--role-venue);text-decoration:none">{{ openLabel }}</a></sc-if>
+    <sc-if value="{{ isFan }}"><a href="../payouts/Payouts.dc.html" style="flex-shrink:0;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;color:var(--role-fan);text-decoration:none">{{ openLabel }}</a></sc-if>
+    <sc-if value="{{ isPromoter }}"><a href="../payouts/Payouts.dc.html" style="flex-shrink:0;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;color:#ffb84a;text-decoration:none">{{ openLabel }}</a></sc-if>
+  </div>
+
+  <div style="border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:16px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);padding:18px 22px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:16px">
+    <div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:14px">{{ refreshOn }}</div><div style="font-size:12.5px;color:var(--ink-2);margin-top:3px">{{ refreshDetail }}</div></div>
+    <sc-if value="{{ isArtist }}"><a href="../artist-kit/ArtistKit.dc.html" style="flex-shrink:0;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;color:var(--accent);text-decoration:none">{{ viewLabel }}</a></sc-if>
+    <sc-if value="{{ neverDj }}"><a href="../artist-kit/ArtistKit.dc.html" style="flex-shrink:0;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;color:var(--accent);text-decoration:none">{{ viewLabel }}</a></sc-if>
+    <sc-if value="{{ isVenue }}"><a href="../venue-kit/VenueKit.dc.html" style="flex-shrink:0;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;color:var(--role-venue);text-decoration:none">{{ viewLabel }}</a></sc-if>
+    <sc-if value="{{ isFan }}"><a href="../fan-kit/FanKit.dc.html" style="flex-shrink:0;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;color:var(--role-fan);text-decoration:none">{{ viewLabel }}</a></sc-if>
+    <sc-if value="{{ isPromoter }}"><a href="../fan-kit/FanKit.dc.html" style="flex-shrink:0;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;color:#ffb84a;text-decoration:none">{{ viewLabel }}</a></sc-if>
+  </div>
+
+  <div style="border:1px solid rgba(255,80,41,.25);border-radius:16px;background:rgba(255,80,41,.05);padding:22px">
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:var(--accent);margin-bottom:10px">{{ dangerZoneTitle }}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:16px">
+      <div style="font-size:13px;color:var(--ink-2)">{{ deactivateProfile }}</div>
+      <sc-if value="{{ confirmingDeactivate }}"><button onClick="{{ deactivate }}" style="flex-shrink:0;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;padding:8px 16px;border-radius:9px;border:none;background:var(--accent);color:#fff;cursor:pointer">{{ confirmDeactivate }}</button></sc-if>
+      <sc-if value="{{ notConfirmingDeactivate }}"><button onClick="{{ askDeactivate }}" style="flex-shrink:0;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;padding:8px 16px;border-radius:9px;border:1px solid rgba(255,80,41,.4);background:transparent;color:var(--accent);cursor:pointer">{{ deactivateLabel }}</button></sc-if>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;440px&quot;,&quot;height&quot;:&quot;860px&quot;},&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;artist&quot;,&quot;tsType&quot;:&quot;'artist'|'venue'|'fan'&quot;,&quot;options&quot;:[&quot;artist&quot;,&quot;venue&quot;,&quot;fan&quot;],&quot;section&quot;:&quot;Role&quot;}}">
+class Component extends DCLogic {
+  state = { role: 'artist', toggles: { hype: true, payout: true, events: false }, overrides: {}, saved: false, confirmingDeactivate: false };
+  renderVals() {
+    const { role, toggles, overrides } = this.state;
+    const t = window.ihypeT || (k => k);
+    const DATA = {
+      artist: { label: t('rsRoleArtist'), accent: 'var(--accent)', name: 'Nyla', bio: 'Dream-pop from Portland, ME. New EP out now.' },
+      venue: { label: t('rsRoleVenue'), accent: 'var(--role-venue)', name: 'Empty Bottle', bio: 'All-ages venue, Chicago. Booking indie and shoegaze.' },
+      fan: { label: t('rsRoleFan'), accent: 'var(--role-fan)', name: 'Jordan Lee', bio: 'Bedroom pop and indie. Portland, ME.' },
+    };
+    const d = DATA[role];
+    const ov = overrides[role] || {};
+    const name = ov.name ?? d.name, bio = ov.bio ?? d.bio;
+    const TOGGLES = [
+      ['hype', t('rsHypeMoments'), t('rsHypeMomentsDetail')],
+      ['payout', t('rsPayoutReceived'), t('rsPayoutReceivedDetail')],
+      ['events', t('rsNewShowsNearby'), t('rsNewShowsNearbyDetail')],
+    ];
+    return {
+      isArtist: role === 'artist', neverDj: false, isVenue: role === 'venue', isFan: role === 'fan', isPromoter: false,
+      profileLabel: d.label, profileLabelLower: d.label.toLowerCase(), name, bio,
+      settingsTitle: t('rsSettingsTitle'), profileWord: t('rsProfileWord'), displayNameLabel: t('rsDisplayNameLabel'), bioLabel: t('rsBioLabel'),
+      saveChanges: t('rsSaveChanges'), savedLabel: t('rsSavedLabel'), notificationsTitle: t('rsNotificationsTitle'),
+      payoutsTitle: t('rsPayoutsTitle'), payoutsDetail: t('rsPayoutsDetail'), openLabel: t('rsOpenLabel'),
+      refreshOn: t('rsRefreshOn').replace('{role}', d.label.toLowerCase()), refreshDetail: t('rsRefreshDetail'), viewLabel: t('rsViewLabel'),
+      dangerZoneTitle: t('rsDangerZoneTitle'), deactivateProfile: t('rsDeactivateProfile').replace('{role}', d.label.toLowerCase()),
+      confirmDeactivate: t('rsConfirmDeactivate'), deactivateLabel: t('rsDeactivateLabel'),
+      setName: (e) => this.setState(s => ({ overrides: { ...s.overrides, [role]: { ...s.overrides[role], name: e.target.value } }, saved: false })),
+      setBio: (e) => this.setState(s => ({ overrides: { ...s.overrides, [role]: { ...s.overrides[role], bio: e.target.value } }, saved: false })),
+      saved: this.state.saved,
+      saveProfile: () => { this.setState({ saved: true }); setTimeout(() => this.setState({ saved: false }), 2000); },
+      confirmingDeactivate: this.state.confirmingDeactivate, notConfirmingDeactivate: !this.state.confirmingDeactivate,
+      askDeactivate: () => this.setState({ confirmingDeactivate: true }),
+      deactivate: () => this.setState({ confirmingDeactivate: false }),
+      roles: [['artist',t('rsRoleArtist')],['venue',t('rsRoleVenue')],['fan',t('rsRoleFan')]].map(([id, label]) => ({ label, active: role === id, inactive: role !== id, pick: () => this.setState({ role: id, confirmingDeactivate: false }) })),
+      toggles: TOGGLES.map(([key, label, detail]) => ({ label, detail, on: toggles[key], off: !toggles[key], toggle: () => this.setState(s => ({ toggles: { ...s.toggles, [key]: !s.toggles[key] } })) })),
+    };
+  }
+  componentDidMount() { this._h = () => this.forceUpdate(); window.addEventListener('ihype-i18n-change', this._h); }
+  componentWillUnmount() { window.removeEventListener('ihype-i18n-change', this._h); }
+}
+
+</script>
+</body>
+</html>

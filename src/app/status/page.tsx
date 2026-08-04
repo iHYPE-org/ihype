@@ -137,8 +137,8 @@ export default async function StatusPage() {
           letterSpacing: '.14em',
           textTransform: 'uppercase',
           color: allOk ? 'var(--success)' : 'var(--warning)',
-          border: `1px solid ${allOk ? 'rgba(var(--role-venue-rgb),.35)' : 'rgba(var(--role-promoter-rgb),.35)'}`,
-          background: allOk ? 'rgba(var(--role-venue-rgb),.07)' : 'rgba(var(--role-promoter-rgb),.07)',
+          border: `1px solid ${allOk ? 'rgba(var(--role-venue-rgb),.35)' : 'rgba(var(--warning-rgb),.35)'}`,
+          background: allOk ? 'rgba(var(--role-venue-rgb),.07)' : 'rgba(var(--warning-rgb),.07)',
           borderRadius: 999,
           padding: '7px 16px',
         }}
@@ -226,8 +226,8 @@ export default async function StatusPage() {
       </h2>
       <div
         style={{
-          background: 'rgba(var(--role-promoter-rgb),.05)',
-          border: '1px solid rgba(var(--role-promoter-rgb),.22)',
+          background: 'rgba(var(--warning-rgb),.05)',
+          border: '1px solid rgba(var(--warning-rgb),.22)',
           borderRadius: 14,
           padding: '20px 22px',
           marginBottom: 44,

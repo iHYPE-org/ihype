@@ -398,8 +398,8 @@ function CoverageBuilder() {
             {submit.phase === 'done' && (
               <div style={{
                 marginTop: 12, padding: '12px 14px', borderRadius: 10,
-                background: submit.status === 'AWAITING_PAYMENT' ? 'rgba(34,229,212,.1)' : submit.status === 'REJECTED' ? 'rgba(255,90,90,.1)' : 'rgba(var(--role-promoter-rgb),.1)',
-                border: `1px solid ${submit.status === 'AWAITING_PAYMENT' ? 'rgba(34,229,212,.3)' : submit.status === 'REJECTED' ? 'rgba(255,90,90,.3)' : 'rgba(var(--role-promoter-rgb),.3)'}`,
+                background: submit.status === 'AWAITING_PAYMENT' ? 'rgba(34,229,212,.1)' : submit.status === 'REJECTED' ? 'rgba(255,90,90,.1)' : 'rgba(var(--warning-rgb),.1)',
+                border: `1px solid ${submit.status === 'AWAITING_PAYMENT' ? 'rgba(34,229,212,.3)' : submit.status === 'REJECTED' ? 'rgba(255,90,90,.3)' : 'rgba(var(--warning-rgb),.3)'}`,
               }}>
                 <div style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 13, color: submit.status === 'AWAITING_PAYMENT' ? '#22e5d4' : submit.status === 'REJECTED' ? '#ff5a5a' : '#ffb84a' }}>
                   {submit.message}
