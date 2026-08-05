@@ -1676,6 +1676,21 @@ fieldset.authcard-field { border: 0; padding: 0; }
   color: var(--ink-3);
   margin-top: 14px;
 }
+/* Shown in place of the email field on the passkey signup path — the point
+   is that nothing is being asked for, so it needs to read as a statement
+   rather than as a disabled input. */
+.authcard-nothing-asked {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: 1px dashed var(--line-2);
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-2);
+  background: var(--hair-30);
+}
+/* Magic-link fallback inside the passkey step. */
+.authcard-passkey-fallback { margin-top: 18px; }
 .authcard-charter a { color: var(--ink-3); text-decoration: none; }
 .authcard-charter a:hover { text-decoration: underline; }
 

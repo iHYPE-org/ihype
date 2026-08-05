@@ -41,7 +41,6 @@ export function RegisterScreen({
   const [signupVariant, setSignupVariant] = useState<SignupVariant>('email_first');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
   const [acceptedAge, setAcceptedAge] = useState(false);
   const [acceptedAdult, setAcceptedAdult] = useState(false);
   const [acceptedPolicy, setAcceptedPolicy] = useState(false);
@@ -76,35 +75,50 @@ export function RegisterScreen({
     trackSignupFunnel('view', { role: initialRole, method: variant === 'passkey_first' ? 'passkey' : 'email', step: 'form', variant });
   }, [initialRole]);
 
-  function validateAccountForm() {
-    if (!email.trim()) {
-      throw new Error(t('authRegister.emailRequired', 'Email is required so you can sign in with a magic link.'));
+  /**
+   * A fan account asks for nothing it does not need.
+   *
+   * The passkey path needs no address at all — WebAuthn identifies the account
+   * by credential, and /api/register's `passkeyFlow` has always accepted a
+   * signup with neither email nor phone (User.email is nullable). The magic
+   * link path needs the address because the address IS the delivery target;
+   * there is no way to send a link to nobody. So the field follows the method
+   * rather than being asked unconditionally.
+   */
+  function validateAccountForm(method: AuthMethod) {
+    if (method === 'email' && !email.trim()) {
+      throw new Error(t('authRegister.emailRequired', 'Enter an email so we can send your sign-in link.'));
     }
   }
 
-  async function createAccountOnce() {
-    validateAccountForm();
+  // `method` is passed rather than read from state because the magic-link
+  // recovery below switches method and registers in the same tick, and a
+  // setState has not landed by then. `forceNew` re-registers instead of
+  // reusing the account from a failed passkey attempt.
+  async function createAccountOnce(method: AuthMethod, forceNew = false) {
+    validateAccountForm(method);
 
-    if (createdAccountId) {
+    if (createdAccountId && !forceNew) {
       return { id: createdAccountId };
     }
 
     const result = await postJson<{ id: string }>('/api/register', {
-      name,
-      email: email.trim(),
-      phone: phone.trim() || undefined,
+      // Both omitted rather than sent empty: a fan supplies neither, and the
+      // route treats absent and blank differently.
+      name: needsPublicName ? name : undefined,
+      email: email.trim() || undefined,
       role,
       isThirteenOrOlder: acceptedAge,
       isEighteenOrOlder: acceptedAdult,
       acceptedArtistUploadPolicy: needsUploadPolicy ? acceptedPolicy : true,
       inviteCode: inviteOnly ? inviteCode : undefined,
       company,
-      passkeyFlow: authMethod === 'passkey',
+      passkeyFlow: method === 'passkey',
       turnstileToken: turnstileToken || undefined,
     });
 
     setCreatedAccountId(result.id);
-    trackSignupFunnel('account_created', { role, method: authMethod, step: 'register', variant: signupVariant });
+    trackSignupFunnel('account_created', { role, method, step: 'register', variant: signupVariant });
     return result;
   }
 
@@ -195,7 +209,7 @@ export function RegisterScreen({
       }
 
       trackSignupFunnel('submit', { role, method: authMethod, step: 'form', variant: signupVariant });
-      const result = await createAccountOnce();
+      const result = await createAccountOnce(authMethod);
       accountCreated = true;
       accountId = result.id;
 
@@ -265,6 +279,21 @@ export function RegisterScreen({
     setError('');
     setIsSubmitting(true);
     try {
+      if (!email.trim()) {
+        throw new Error(t('authRegister.recoveryEmailRequired', 'Enter an email and we will send your sign-in link there.'));
+      }
+      // A passkey signup supplies no address, so the account created before
+      // the failed ceremony has none — and /api/auth/magic-link answers
+      // ok:true for an address it cannot find (correct: it must not reveal
+      // whether an account exists) while sending nothing. Reusing it would
+      // park the user on "check your inbox" for a mail that never comes.
+      // Register properly on the email path instead. What is left behind is a
+      // row with no address, no name and no credential, which nobody can sign
+      // into and which holds nothing about anyone.
+      if (authMethod === 'passkey') {
+        await createAccountOnce('email', true);
+        setAuthMethod('email');
+      }
       await sendSignupMagicLink();
     } catch (err) {
       const reason = getErrorMessage(err, t('authRegister.magicLinkSendError', 'Could not send a magic link.'));
@@ -330,8 +359,41 @@ export function RegisterScreen({
             <button className="authcard-btn-primary" disabled={isSubmitting} onClick={retryPasskey} type="button">
               {isSubmitting ? t('authRegister.openingPrompt', 'Opening prompt...') : t('authRegister.tryPasskeyAgain', 'Try passkey again')}
             </button>
-            <button className="authcard-btn-ghost" disabled={isSubmitting} onClick={useMagicLinkInstead} type="button">
-              {t('authRegister.useMagicLinkInstead', 'Use a magic link instead')}
+          </div>
+
+          {/* The passkey path asked for no address, so the magic-link fallback
+              collects one HERE — at the only moment it is actually needed, and
+              only if the device prompt did not work. Turnstile is re-rendered
+              because its token is single-use and the one from the first
+              submit is already spent. */}
+          <div className="authcard-passkey-fallback">
+            <div className="authcard-divider">{t('authRegister.or', 'or')}</div>
+            <div className="authcard-field">
+              <label htmlFor="authcard-recovery-email">{t('authRegister.recoveryEmailLabel', 'Finish with a magic link')}</label>
+              <input
+                autoComplete="email"
+                id="authcard-recovery-email"
+                inputMode="email"
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder={t('authRegister.emailPlaceholder', 'you@example.com')}
+                type="email"
+                value={email}
+              />
+            </div>
+            {authMethod === 'passkey' ? (
+              <TurnstileWidget
+                ref={turnstileRef}
+                onToken={setTurnstileToken}
+                onExpire={() => setTurnstileToken('')}
+              />
+            ) : null}
+            <button
+              className="authcard-btn-ghost"
+              disabled={isSubmitting || !email.trim()}
+              onClick={useMagicLinkInstead}
+              type="button"
+            >
+              {t('authRegister.useMagicLinkInstead', 'Email me a link instead')}
             </button>
           </div>
           <p className="meta">{t('authRegister.addPasskeyLater', 'You can add a passkey later from Settings after signing in.')}</p>
@@ -410,40 +472,45 @@ export function RegisterScreen({
             </button>
           </div>
 
-          <div className="authcard-field">
-            <label>{needsPublicName ? (selectedRole?.label ?? t('authRegister.profileLabel', 'Profile')) + ' ' + t('authRegister.nameSuffix', 'name') : t('authRegister.displayNameLabel', 'Display name')}</label>
-            <input
-              onChange={(event) => setName(event.target.value)}
-              placeholder={needsPublicName ? t('authRegister.publicNamePlaceholder', 'Your public artist/venue name') : t('authRegister.displayNamePlaceholder', 'Optional - shown on your profile')}
-              required={needsPublicName}
-              type="text"
-              value={name}
-            />
-          </div>
+          {/* A public name is the profile's identity for an artist, DJ or
+              venue, so those roles still supply one. A fan has no public page
+              to name and is not asked — a display name is set later in
+              Settings if they ever want one. The phone field is gone
+              outright: nothing in the app has ever read User.phone. */}
+          {needsPublicName ? (
+            <div className="authcard-field">
+              <label>{(selectedRole?.label ?? t('authRegister.profileLabel', 'Profile')) + ' ' + t('authRegister.nameSuffix', 'name')}</label>
+              <input
+                onChange={(event) => setName(event.target.value)}
+                placeholder={t('authRegister.publicNamePlaceholder', 'Your public artist/venue name')}
+                required
+                type="text"
+                value={name}
+              />
+            </div>
+          ) : null}
 
-          <div className="authcard-field">
-            <label>{t('authRegister.emailLabel', 'Email')} <span className="authcard-field-optional">— {t('authRegister.emailOptionalHint', 'required so passkey setup can fall back safely')}</span></label>
-            <input
-              autoComplete="email"
-              inputMode="email"
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder={t('authRegister.emailPlaceholder', 'you@example.com')}
-              required
-              type="email"
-              value={email}
-            />
-          </div>
-
-          <div className="authcard-field">
-            <label>{t('authRegister.phoneLabel', 'Phone')}</label>
-            <input
-              autoComplete="tel"
-              onChange={(event) => setPhone(event.target.value)}
-              placeholder={t('authRegister.phonePlaceholder', 'Optional')}
-              type="tel"
-              value={phone}
-            />
-          </div>
+          {/* Only the magic-link method needs an address, because the address
+              is where the link goes. The passkey method asks for nothing. */}
+          {authMethod === 'email' ? (
+            <div className="authcard-field">
+              <label htmlFor="authcard-email">{t('authRegister.emailLabel', 'Email')}</label>
+              <input
+                autoComplete="email"
+                id="authcard-email"
+                inputMode="email"
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder={t('authRegister.emailPlaceholder', 'you@example.com')}
+                required
+                type="email"
+                value={email}
+              />
+            </div>
+          ) : (
+            <p className="authcard-nothing-asked">
+              {t('authRegister.passkeyNoDetails', 'No email, no name, no phone number. Your device creates the key and that is your account.')}
+            </p>
+          )}
 
           <label className="authcard-check-row">
             <input checked={acceptedAge} onChange={(event) => setAcceptedAge(event.target.checked)} required type="checkbox" />
