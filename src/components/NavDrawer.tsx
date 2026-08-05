@@ -187,13 +187,6 @@ export function NavDrawer({
         items: [
           { href: '/me/dashboard', label: 'My Dashboard', icon: 'dashboard', description: 'Your activity and impact' },
           { href: '/pages?tab=creator', label: 'Page Creator', icon: 'page', description: 'Build an artist, DJ, or venue page' },
-          ...(dj ? [{
-            href: '/radio/studio',
-            label: 'Show Creator',
-            badge: 'DJs',
-            icon: 'show' as const,
-            description: `Build a radio show as ${dj.name}`,
-          }] : []),
           ...(artist ? [{
             href: `/pages?tab=mypage&profile=${encodeURIComponent(artist.id)}&tool=tour`,
             label: 'Tour Creator',

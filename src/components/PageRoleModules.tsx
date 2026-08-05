@@ -351,15 +351,6 @@ export function PageRoleModules({ profile, color, initialTool }: { profile: Modu
           />
         )}
 
-        {isDj && (
-          <LinkModule
-            color={color}
-            href="/radio/studio"
-            icon={icons.radio(color)}
-            sub={t('pageRoleModules.radioShowSub', 'Go live or schedule a show')}
-            title={t('pageRoleModules.radioShowTitle', 'Radio show')}
-          />
-        )}
 
         {isArtist && (
           <ExpandModule

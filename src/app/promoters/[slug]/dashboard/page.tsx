@@ -180,7 +180,6 @@ export default async function DJDashboardPage({ params }: { params: Promise<{ sl
         </div>
         <div className="djd-header-actions">
           <Link className="djd-btn djd-btn-outline" href={`/promoters/${profile.slug}?section=crate`}>{t('promotersSlugDashboardPage.myCrateLink', 'My Crate')}</Link>
-          <Link className="djd-btn djd-btn-solid" href="/radio/studio">{t('promotersSlugDashboardPage.scheduleShowLink', '+ Schedule a Show')}</Link>
         </div>
       </div>
 
@@ -256,7 +255,6 @@ export default async function DJDashboardPage({ params }: { params: Promise<{ sl
             <Link className="djd-action-btn" href="/radio">{t('promotersSlugDashboardPage.showArchiveLink', 'Show archive')}</Link>
             <Link className="djd-action-btn" href={`/promoters/${profile.slug}/analytics`}>{t('promotersSlugDashboardPage.viewInsightsLink', 'View insights')}</Link>
             <Link className="djd-action-btn" href={`/promoters/${profile.slug}`}>{t('promotersSlugDashboardPage.editMyPageLink', 'Edit my page')}</Link>
-            <Link className="djd-action-btn" href="/radio/studio">{t('promotersSlugDashboardPage.radioShowCreatorLink', 'Radio Show Creator')}</Link>
           </div>
         </div>
       </div>

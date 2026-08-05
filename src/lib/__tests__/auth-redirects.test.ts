@@ -21,7 +21,7 @@ describe('auth redirects', () => {
   });
 
   it('preserves safe in-app callback destinations', () => {
-    expect(resolvePostAuthRedirect('/radio/studio')).toBe('/radio/studio');
+    expect(resolvePostAuthRedirect('/radio')).toBe('/radio');
     expect(resolvePostAuthRedirect('/shows/my-show')).toBe('/shows/my-show');
   });
 

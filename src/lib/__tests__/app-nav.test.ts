@@ -33,9 +33,12 @@ describe('role gating', () => {
     expect(ids).toEqual(expect.arrayContaining(['discover', 'radio', 'charts', 'playlists', 'nearme', 'dashboard', 'account', 'a11y']));
   });
 
-  it('gives a member holding every type all four creators', () => {
+  it('gives a member holding every type every remaining creator', () => {
     const ids = buildShellNav(EVERYTHING).map((item) => item.id);
-    expect(ids).toEqual(expect.arrayContaining(['showcreator', 'tourcreator', 'eventcreator', 'adcreator', 'promote']));
+    expect(ids).toEqual(expect.arrayContaining(['tourcreator', 'eventcreator', 'adcreator', 'promote']));
+    // Show Creator went with the DJ role — radio is computed per listener now
+    // (src/lib/stations.ts), so there is no show for anyone to author.
+    expect(ids).not.toContain('showcreator');
   });
 
   it('gates each creator on its own account type only', () => {
@@ -181,7 +184,7 @@ describe('one manifest feeds both the drawer and the strip', () => {
     expect(sectionRows(items, 'LISTEN').map((i) => i.id)).toEqual(['discover', 'radio', 'charts', 'playlists']);
     expect(sectionRows(items, 'EVENTS').map((i) => i.id)).toEqual(['nearme', 'recommended', 'tickets', 'promote']);
     expect(sectionRows(items, 'PAGES').map((i) => i.id))
-      .toEqual(['dashboard', 'pagecreator', 'showcreator', 'tourcreator', 'eventcreator', 'adcreator']);
+      .toEqual(['dashboard', 'pagecreator', 'tourcreator', 'eventcreator', 'adcreator']);
     // 'legal' was dropped from the drawer: /legal is a thin redirect into
     // /info's Terms tab, so it sat directly beside Info pointing at a subset
     // of the page Info already opens. The route still exists — consent copy,

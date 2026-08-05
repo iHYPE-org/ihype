@@ -35,8 +35,15 @@ Steps 2–4 remain.**
 > that, and self-serve campaigns — which hold **real pre-authorised Stripe
 > funds** — have nowhere to run. A computed station is also just a sequence of
 > tracks, so the engine ports to it; but that is a build, not a deletion, and it
-> must land before the DJ radio path is torn out. **Do not delete
-> `RadioShowCreator` or `show-composer` until ads have somewhere else to air.**
+> must land before the DJ radio path is torn out.
+>
+> **DONE 2026-08-05 — ads air on the always-on station now**
+> (`src/lib/station-breaks.ts`), and `RadioShowCreator` has been retired on the
+> back of it. `show-composer` and `ad-clip-selection` stay: they are no longer
+> DJ-only, since the station imports `ShowAdClip` and calls
+> `resolveAdBreakClips()`, and `show-composer` is the production-plan engine
+> behind `ShowSequencePlayer` and `/shows/[slug]` as well. Deleting them would
+> break show playback, not DJ authoring. See step 2a/2b in Sequencing.
 >
 > **A privacy rule falls out of this and is now binding:** the per-listener
 > algorithm is private. `for_you` and any future personalisation must never be
@@ -203,9 +210,31 @@ The order matters, because the enum rewrite is the irreversible step:
 2. Land the rest of the *code* changes, while both enum values still exist —
    reads tolerant of both, DJ-only routes redirected, `--role-dj` alias removed
    (it exists today precisely so the DJ surface doesn't repaint early).
-   **Blocked on the advertising port** described in the decision box above:
-   `RadioShowCreator` and `show-composer` cannot be removed until ad breaks
-   have a computed station to air in.
+
+   **Step 2a — DONE: the advertising port.** Ad breaks now air on the
+   always-on station (`src/lib/station-breaks.ts`, `radioStation.ts`), and
+   `AlwaysOnStation` reports the impression that spends a budget. This was the
+   blocker: advertising is the platform's only revenue and it could previously
+   air in exactly one place, inside a DJ's show.
+
+   **Step 2b — DONE: the Radio Show Creator is retired.** `RadioShowCreator`
+   (1048 lines), `/radio/studio` and `/api/radio/ad-clips` (its only consumer)
+   are deleted; `/radio/studio` 307s to `/radio`. Every entry point went with
+   it — the app shell's DJ-gated "Show Creator" destination, the drawer entry,
+   the `/radio` tile, the Pages role module, the fan dashboard's `dj`
+   workspace, and both links on the DJ dashboard.
+
+   **`show-composer` and `ad-clip-selection` deliberately STAY.** They are no
+   longer DJ-only: `station-breaks.ts` imports `ShowAdClip` and the station
+   calls `resolveAdBreakClips()`, and `show-composer` is also the production
+   plan engine behind `ShowSequencePlayer`, `/shows/[slug]` and the show CRUD
+   routes. Removing them would break show playback, not just DJ authoring.
+
+   **Still to do in step 2:** the DJ profile surfaces — `/promoters/[slug]`
+   and its `dashboard`/`analytics`/`onboarding` subpages, the `/djs/[slug]`
+   alias — plus the remaining role pickers and the `--role-dj` token. Those
+   are better done alongside step 3, because until the three rows are
+   reassigned those pages are the only thing serving them.
 3. Migrate data (`UPDATE` rows to their new type) as its own deploy, verified.
 4. Only then rewrite the enums, gated through `prisma/migrations-pending/`
    per the repo's own workflow — never applied blind.
