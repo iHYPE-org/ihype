@@ -8,7 +8,20 @@ import { MmmPlayer } from '@/components/mmm/MmmPlayer';
 import { MmmSheet } from '@/components/mmm/MmmSheet';
 import { itemForPath, moduleForPath, navHint, type MmmModuleId } from '@/lib/mmm-nav';
 
-export type MmmNowPlaying = { title: string; artist: string; initial: string } | null;
+export type MmmNowPlaying = {
+  title: string;
+  artist: string;
+  initial: string;
+  /**
+   * The artist's profile id, or null when the artist cannot be hyped from here
+   * — no linked profile, a non-discoverable one, or the viewer's own. The
+   * layout resolves this server-side so the heart is never a control that is
+   * guaranteed to fail.
+   */
+  artistProfileId: string | null;
+  /** Whether the viewer has already hyped that profile. */
+  hyped: boolean;
+} | null;
 
 /**
  * The Music · Map · Me frame.
@@ -41,7 +54,8 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
   const [navSection, setNavSection] = useState<MmmModuleId | 'root'>('root');
   const [sheet, setSheet] = useState<MapSheetTarget | null>(null);
   const [playing, setPlaying] = useState(false);
-  const [hyped, setHyped] = useState(false);
+  const [hyped, setHyped] = useState(nowPlaying?.hyped ?? false);
+  const [hypePending, setHypePending] = useState(false);
 
   // Navigation closes the nav and resets it to level 1, per the interaction
   // table ("Tap submenu item → navigates, closes nav, resets section to root").
@@ -67,6 +81,41 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
     setNavSection('root');
   }, []);
 
+  // The heart writes through to /api/hype — the same toggle endpoint the artist
+  // page's HypeButton posts to, so a hype tapped here counts once, in the same
+  // place, and spends from the same balance.
+  //
+  // Optimistic, then reverted on failure: the endpoint is a real toggle with a
+  // hype-balance spend behind it, and leaving the heart filled after a refusal
+  // would tell the viewer they spent a hype they still have. The server's own
+  // `action` is what the final state comes from, not the optimistic guess.
+  const toggleHype = useCallback(async () => {
+    const profileId = nowPlaying?.artistProfileId;
+    if (!profileId || hypePending) return;
+    const previous = hyped;
+    setHyped(!previous);
+    setHypePending(true);
+    try {
+      const res = await fetch('/api/hype', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetType: 'profile', targetId: profileId }),
+      });
+      if (!res.ok) {
+        setHyped(previous);
+        return;
+      }
+      const data = (await res.json()) as { action?: string };
+      if (data.action === 'hyped' || data.action === 'unhyped') {
+        setHyped(data.action === 'hyped');
+      }
+    } catch {
+      setHyped(previous);
+    } finally {
+      setHypePending(false);
+    }
+  }, [hyped, hypePending, nowPlaying?.artistProfileId]);
+
   const toggleNav = useCallback(() => {
     setSheet(null);
     setNavSection('root');
@@ -87,8 +136,9 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
             still dims it completely, which was the explicit requirement. */}
         <MmmPlayer
           hidden={navOpen}
+          canHype={Boolean(nowPlaying?.artistProfileId)}
           hyped={hyped}
-          onToggleHype={() => setHyped((value) => !value)}
+          onToggleHype={() => void toggleHype()}
           onTogglePlay={() => setPlaying((value) => !value)}
           playing={playing}
           track={nowPlaying}

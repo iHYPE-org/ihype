@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { readRuntimeEnv } from '@/lib/runtime-env';
 
 type NativePushPayload = {
   title: string;
@@ -84,9 +85,16 @@ async function getFcmAccessToken(clientEmail: string, privateKeyPem: string): Pr
  * devices — this is always a side effect of notifyUser(), never load-bearing.
  */
 export async function sendNativePushNotification(userId: string, payload: NativePushPayload): Promise<void> {
-  const projectId = process.env.FCM_PROJECT_ID;
-  const clientEmail = process.env.FCM_CLIENT_EMAIL;
-  const privateKey = process.env.FCM_PRIVATE_KEY?.replace(/\\n/g, '\n');
+  // Read through readRuntimeEnv, NOT process.env: these three are Worker
+  // *secrets*, and on workerd secrets never appear on process.env — they are
+  // only reachable via the Cloudflare env binding (see src/lib/runtime-env.ts).
+  // Read the old way, every one of them is undefined in production, so the
+  // guard below no-ops native push permanently no matter how correctly the
+  // secrets are set. Same latent fault that had transactional email dead for
+  // 36 days and that reportToSentry() was migrated off.
+  const projectId = readRuntimeEnv('FCM_PROJECT_ID');
+  const clientEmail = readRuntimeEnv('FCM_CLIENT_EMAIL');
+  const privateKey = readRuntimeEnv('FCM_PRIVATE_KEY')?.replace(/\\n/g, '\n');
 
   if (!projectId || !clientEmail || !privateKey) {
     console.warn('[native-push] FCM service account not configured — skipping native push for user', userId);
