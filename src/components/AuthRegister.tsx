@@ -65,7 +65,9 @@ export function RegisterScreen({
   const turnstileConfigured = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
   const awaitingTurnstile = turnstileConfigured && !turnstileToken;
   const needsPublicName = role !== 'FAN';
-  const needsUploadPolicy = role === 'ARTIST' || role === 'DJ';
+  // DJ can no longer be chosen (roleOptions dropped it, and /api/register
+  // rejects it) — the upload policy is an artist-only gate now.
+  const needsUploadPolicy = role === 'ARTIST';
   const selectedRole = useMemo(() => roleOptions.find((option) => option.value === role), [role]);
 
   useEffect(() => {

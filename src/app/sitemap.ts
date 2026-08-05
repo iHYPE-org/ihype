@@ -29,7 +29,6 @@ const STATIC: MetadataRoute.Sitemap = [
   { url: `${base}/login`,          changeFrequency: 'monthly', priority: 0.5 },
   { url: `${base}/join`,           changeFrequency: 'monthly', priority: 0.6 },
   { url: `${base}/for-artists`,    changeFrequency: 'monthly', priority: 0.6 },
-  { url: `${base}/for-djs`,        changeFrequency: 'monthly', priority: 0.6 },
   { url: `${base}/for-venues`,     changeFrequency: 'monthly', priority: 0.6 },
   { url: `${base}/for-fans`,       changeFrequency: 'monthly', priority: 0.6 },
 ];

@@ -1,6 +1,49 @@
 # Dropping the DJ role — scope and open decisions
 
-**Status: SCOPED, NOT STARTED. Needs operator sign-off before any code is written.**
+**Status: SIGNED OFF 2026-08-05. Step 1 (close the signup door) is LANDED.
+Steps 2–4 remain.**
+
+> ## Operator decision, 2026-08-05 — all four answered
+>
+> **"Delete the DJ role altogether. It is too complicated."** Radio is instead
+> generated per listener from their own listening history, locality, favourites
+> and playlists, with deliberate reach into genres outside their taste. Their
+> discovery builds their personal algorithm, **which is never shared with
+> anyone**. Playlists — and only playlists — are shareable, with friends, via a
+> HYPE code.
+>
+> | Decision | Answer |
+> |---|---|
+> | 1. How many accounts? | 3 DJ profiles, all internal. Cleanup, not migration. |
+> | 2. DJ → ARTIST or LISTENER? | Whichever is simpler; the counts defused this. |
+> | 3. **Who owns radio after DJs?** | **Nobody. Radio is computed, not authored.** |
+> | 4. DJ-only URLs? | Redirect. `/for-djs` → `/for-artists` is done. |
+>
+> **Decision 3 was the blocker and it is now answered — and most of it was
+> already built.** `src/lib/stations.ts` computes stations at request time with
+> no DJ anywhere in the path; its own opening line calls it "the replacement for
+> DJ-hosted radio shows". Its five kinds are the operator's description almost
+> exactly: `for_you` (history and hypes), `local` (40 miles), `new` (fresh
+> uploads *across every genre* — the reach outside taste), `friends` (shared by
+> accounts you follow), and `genre`. Served by `GET /api/stations`.
+>
+> **The one thing decision 3 does NOT answer, and the real remaining work:
+> where advertising airs.** Ad interjection is DJ-shaped end to end —
+> `show-composer`'s `buildResolvedSequence()` injects AD breaks into a DJ's
+> `productionPlan`, and `ShowSequencePlayer` firing `POST /api/ads/impression`
+> is what actually spends an advertiser's budget. Remove DJs without moving
+> that, and self-serve campaigns — which hold **real pre-authorised Stripe
+> funds** — have nowhere to run. A computed station is also just a sequence of
+> tracks, so the engine ports to it; but that is a build, not a deletion, and it
+> must land before the DJ radio path is torn out. **Do not delete
+> `RadioShowCreator` or `show-composer` until ads have somewhere else to air.**
+>
+> **A privacy rule falls out of this and is now binding:** the per-listener
+> algorithm is private. `for_you` and any future personalisation must never be
+> exposed as another user's view, never be published on a profile, and never be
+> shared through a HYPE code. The HYPE code shares **playlists**, which are
+> explicit user-authored objects. The `friends` station is compatible with this
+> — it surfaces tracks *other people chose to share*, not a model of them.
 
 > **Update 2026-08-05 — three of the four operator decisions are now cheap.**
 > Production row counts were taken (decision 1) and show 3 DJ profiles, all
@@ -141,14 +184,28 @@ These are the ones that make this a product change rather than a rename:
    links to speak of. A redirect is the cheap, safe default; this does not
    need to be litigated.
 
-## Sequencing, if it goes ahead
+## Sequencing
 
 The order matters, because the enum rewrite is the irreversible step:
 
-1. Take the counts above. Get sign-off on decisions 2–4 in writing.
-2. Land the *code* changes first, while both enum values still exist — reads
-   tolerant of both, DJ-only routes redirected, `--role-dj` alias removed
+1. ~~Take the counts above. Get sign-off on decisions 2–4 in writing.~~
+   **DONE 2026-08-05.** Counts taken; all four decisions answered above.
+
+   **Step 1a — LANDED: the signup door is closed.** `roleOptions` no longer
+   offers DJ, `/api/register`'s zod enum rejects `role: 'DJ'` outright, `/join`
+   drops the DJ card, and `/for-djs` redirects to `/for-artists`. `RoleOption`
+   and both Prisma enums still carry DJ on purpose, so the three existing
+   profiles keep resolving. This was done first and separately because it is
+   the only part that stops the problem growing: the whole "cleanup, not
+   migration" finding expires the moment a real DJ signs up, and now one
+   cannot.
+
+2. Land the rest of the *code* changes, while both enum values still exist —
+   reads tolerant of both, DJ-only routes redirected, `--role-dj` alias removed
    (it exists today precisely so the DJ surface doesn't repaint early).
+   **Blocked on the advertising port** described in the decision box above:
+   `RadioShowCreator` and `show-composer` cannot be removed until ad breaks
+   have a computed station to air in.
 3. Migrate data (`UPDATE` rows to their new type) as its own deploy, verified.
 4. Only then rewrite the enums, gated through `prisma/migrations-pending/`
    per the repo's own workflow — never applied blind.

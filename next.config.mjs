@@ -121,6 +121,21 @@ const nextConfig = {
         permanent: false
       },
       {
+        // The DJ recruiting kit. The role is being removed
+        // (docs/dj-role-removal-scope.md, signed off 2026-08-05) and there is
+        // no DJ option left at /join or /register, so this recruits for
+        // something that cannot be joined.
+        //
+        // Here rather than as a `redirect()` in the page, for the same reason
+        // as /app above: a server-component redirect streams as a 200 with a
+        // NEXT_REDIRECT marker, which a browser follows but a crawler does not.
+        // This is a public, indexable marketing URL, so it needs a real 308.
+        // Permanent because the role is not coming back.
+        source: '/for-djs',
+        destination: '/for-artists',
+        permanent: true
+      },
+      {
         source: '/auth',
         destination: '/login',
         permanent: false
