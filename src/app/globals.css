@@ -1315,15 +1315,49 @@ body:has(.standalone-page) .site-shell { padding-top: 0; }
 }
 
 /* ─── Auth card (Sign in / Create account) ─────────────────────────
-   Single centered card, matches Auth.dc.html. Shares the sitewide header
-   (this page adds no header of its own) — min-height accounts for it. */
+   Single centered 400px card on a radial wash, per Auth.dc.html — which
+   both design bundles specify identically, so there is no authority
+   conflict to resolve here.
+
+   This block is THE definition. The page carries its own logo and charter
+   footer and hides the sitewide chrome (see the auth-page-chrome layer
+   below), so it is full-viewport and centered rather than sitting under a
+   70px header as it did when it was written. */
 .authcard-page {
-  min-height: calc(100vh - 70px);
-  padding: clamp(2rem, 6vw, 4.5rem) 24px 5rem;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  /* Opaque on purpose. The .dc.html's wash ends at var(--bg-base); leaving it
+     transparent lets the sitewide body gradient show through and the page
+     picks up a stray teal cast on the right in dark mode. */
+  background: radial-gradient(circle at 50% 0%, rgba(var(--accent-rgb), .1), transparent 62%), var(--bg);
 }
 .authcard-wrap {
-  width: min(440px, 100%);
+  width: min(400px, 100%);
   margin: 0 auto;
+}
+/* Logo + tagline above the card. */
+.authcard-mark {
+  display: block;
+  text-align: center;
+  margin-bottom: 30px;
+  text-decoration: none;
+}
+.authcard-mark b {
+  display: block;
+  font: 800 2rem/1 var(--font-display);
+  letter-spacing: -.05em;
+  color: var(--accent-text);
+}
+.authcard-mark small {
+  display: block;
+  margin-top: 6px;
+  font: 400 .62rem/1 var(--font-mono);
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--ink-3);
 }
 .authcard-eyebrow {
   font-family: var(--font-mono);
@@ -1390,9 +1424,12 @@ body:has(.standalone-page) .site-shell { padding-top: 0; }
   font-weight: 700;
 }
 
+/* Glass card, per Auth.dc.html. The tint is composed alpha, so it reads
+   correctly in both themes off --surface-tint-rgb rather than a fixed fill. */
 .authcard-box {
-  background: var(--bg2);
-  border: 1px solid var(--hair-90);
+  background: rgba(var(--surface-tint-rgb), .04);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(var(--surface-tint-rgb), .16);
   border-radius: 18px;
   padding: 30px 28px;
 }
@@ -1628,8 +1665,34 @@ fieldset.authcard-field { border: 0; padding: 0; }
   letter-spacing: .12em;
   text-transform: uppercase;
   color: var(--ink-4);
-  margin-top: 32px;
+  margin-top: 24px;
 }
+/* "No passwords. Ever." — the .dc.html's reassurance under the CTA. */
+.authcard-nopasswords {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .04em;
+  text-align: center;
+  color: var(--ink-3);
+  margin-top: 14px;
+}
+/* Shown in place of the email field on the passkey signup path — the point
+   is that nothing is being asked for, so it needs to read as a statement
+   rather than as a disabled input. */
+.authcard-nothing-asked {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: 1px dashed var(--line-2);
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-2);
+  background: var(--hair-30);
+}
+/* Magic-link fallback inside the passkey step. */
+.authcard-passkey-fallback { margin-top: 18px; }
+.authcard-charter a { color: var(--ink-3); text-decoration: none; }
+.authcard-charter a:hover { text-decoration: underline; }
 
 .authcard-status {
   margin-bottom: 16px;
@@ -1700,10 +1763,20 @@ fieldset.authcard-field { border: 0; padding: 0; }
   .authcard-method-grid { grid-template-columns: 1fr; }
 }
 
-/* ─── Scene-signal auth journey ─────────────────────────────────────
-   The security and form components above remain unchanged; this layer gives
-   login and registration the same editorial system as the signed-in deck. */
-body:has(.authcard-page) { background: #f3efe8; }
+/* ─── Auth page chrome ──────────────────────────────────────────────
+   Auth.dc.html is a standalone full-screen page: it carries its own iHYPE
+   logo and charter footer, so the sitewide header/dock/footer are hidden
+   rather than stacked above a second logo.
+
+   THIS LAYER DELIBERATELY DOES NOT RESTATE .authcard-page / .authcard-wrap /
+   .authcard-box / .authcard-btn-* / .authcard-field. Those are defined once,
+   on tokens, further up this file. A previous "Scene-signal auth journey"
+   layer sat here and re-declared all of them — a light-cream two-column
+   editorial layout with hardcoded #ff4d2e/#18ded1/#17130f — which won purely
+   on source order and was what /login and /register actually rendered for
+   months while the canonical single-card block above sat dead. Two
+   definitions of one component is the bug; do not add a third. If auth needs
+   a different value, change it above. */
 body:has(.authcard-page) .adaptive-site-header,
 body:has(.authcard-page) .site-background,
 body:has(.authcard-page) .mobile-bottom-nav,
@@ -1711,151 +1784,35 @@ body:has(.authcard-page) .site-dock,
 body:has(.authcard-page) .site-shell > footer { display: none !important; }
 body:has(.authcard-page) .site-shell { padding: 0 !important; }
 body:has(.authcard-page) #main-content { width: 100%; }
-.authcard-page {
-  --auth-orange: #ff4d2e;
-  --auth-cyan: #18ded1;
-  min-height: 100svh;
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  padding: 0;
-  color: #17130f;
-  background:
-    radial-gradient(circle at 14% 42%, rgba(255,77,46,.11), transparent 28%),
-    radial-gradient(circle at 76% 35%, rgba(24,222,209,.1), transparent 32%),
-    linear-gradient(120deg,#faf7f1 0%,#f1ece5 48%,#e8f1ef 100%);
-}
-.authcard-page::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -2;
-  opacity: .12;
-  pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.24'/%3E%3C/svg%3E");
-  mix-blend-mode: multiply;
-}
-.authcard-header {
-  height: 76px;
-  position: relative;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  padding: 9px clamp(18px,3.5vw,48px);
-  border-bottom: 1px solid rgba(23,19,15,.12);
-  background: rgba(249,246,240,.78);
-  backdrop-filter: blur(18px);
-}
-.authcard-brand { display: flex; align-items: center; gap: 11px; color: #17130f; text-decoration: none; }
-.authcard-brand > img { border-radius: 13px; box-shadow: 0 8px 25px rgba(255,77,46,.12); }
-.authcard-brand > span { display: grid; gap: 3px; }
-.authcard-brand b { font: 800 1rem/1 var(--font-display); letter-spacing: .1em; }
-.authcard-brand small { color: #786f66; font: 700 .45rem/1 var(--font-mono); letter-spacing: .2em; }
-.authcard-home-link { color: #17130f; font: 800 .8rem/1 var(--font-display); text-decoration: none; }
-.authcard-home-link span { color: var(--auth-orange); }
-.authcard-atmosphere { position: absolute; z-index: -1; inset: 76px 0 0; overflow: hidden; pointer-events: none; }
-.authcard-atmosphere > span { width: min(68vw,880px); aspect-ratio: 1; position: absolute; top: 46%; left: 26%; border: 1px solid rgba(24,222,209,.11); border-radius: 50%; transform: translate(-50%,-50%); }
-.authcard-atmosphere > span:nth-child(2) { width: min(47vw,620px); border-color: rgba(255,77,46,.1); border-style: dashed; }
-.authcard-atmosphere > i { width: 2px; height: 72px; position: absolute; top: 47%; left: calc(40% + var(--auth-wave, 0) * 2.2%); border-radius: 99px; background: linear-gradient(to bottom,var(--auth-orange),var(--auth-cyan)); opacity: .15; transform: translateY(-50%) scaleY(calc(.3 + var(--auth-wave, 0) * .08)); }
-.authcard-atmosphere > i:nth-of-type(1) { --auth-wave: 1; }
-.authcard-atmosphere > i:nth-of-type(2) { --auth-wave: 2; }
-.authcard-atmosphere > i:nth-of-type(3) { --auth-wave: 3; }
-.authcard-atmosphere > i:nth-of-type(4) { --auth-wave: 4; }
-.authcard-atmosphere > i:nth-of-type(5) { --auth-wave: 5; }
-.authcard-atmosphere > i:nth-of-type(6) { --auth-wave: 6; }
-.authcard-atmosphere > i:nth-of-type(7) { --auth-wave: 7; }
-.authcard-layout {
-  width: min(1180px,calc(100% - 48px));
-  min-height: calc(100svh - 76px);
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: minmax(0,1fr) minmax(390px,480px);
-  align-items: center;
-  gap: clamp(48px,7vw,112px);
-  padding: clamp(54px,7vh,92px) 0;
-}
-.authcard-scene > p:first-child { margin: 0 0 22px; color: #0faea5; font: 800 .58rem/1 var(--font-mono); letter-spacing: .22em; }
-.authcard-scene h2 { max-width: 8ch; margin: 0; color: #17130f; font: 800 clamp(4.4rem,7.3vw,8rem)/.82 var(--font-display); letter-spacing: -.075em; text-transform: uppercase; }
-.authcard-scene > p:nth-of-type(2) { max-width: 49ch; margin: 28px 0 0; color: #6f665d; font-size: 1rem; line-height: 1.65; }
-.authcard-scene-points { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 30px; }
-.authcard-scene-points span { display: flex; align-items: center; gap: 7px; color: #5e564e; font: 700 .58rem/1.2 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
-.authcard-scene-points i { width: 7px; height: 7px; border-radius: 50%; background: var(--auth-cyan); box-shadow: 0 0 12px rgba(24,222,209,.5); }
-.authcard-scene-points span:nth-child(2) i { background: var(--auth-orange); box-shadow: 0 0 12px rgba(255,77,46,.4); }
-.authcard-wrap {
-  --ink: #f3eee7;
-  --ink-2: #d4ccc4;
-  --ink-3: #a69d93;
-  --ink-4: #716a63;
-  --bg2: transparent;
-  --hair-30: rgba(243,238,231,.045);
-  --hair-40: rgba(243,238,231,.07);
-  --hair-90: rgba(243,238,231,.14);
-  --line-2: rgba(243,238,231,.16);
+
+/* Invite-code panel (RequestBetaAccessForm) on /register. These five rules
+   are the only styling those class names have anywhere, so they are kept
+   here rather than dropped with the layer that used to hold them — retoned
+   from the dead --auth-cyan onto --accent. */
+.authcard-wrap .beta-access-toggle {
   width: 100%;
-  margin: 0;
-  padding: clamp(28px,4vw,42px);
-  border: 1px solid rgba(243,238,231,.17);
-  border-radius: 28px;
-  color: var(--ink);
-  background:
-    radial-gradient(circle at 100% 0,rgba(24,222,209,.09),transparent 32%),
-    radial-gradient(circle at 0 100%,rgba(255,77,46,.08),transparent 34%),
-    rgba(7,8,9,.96);
-  box-shadow: 0 32px 90px rgba(17,13,9,.22), inset 0 1px rgba(255,255,255,.03);
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid rgba(var(--accent-rgb), .34);
+  border-radius: 999px;
+  color: var(--accent-text);
+  background: rgba(var(--accent-rgb), .055);
+  font: 700 .68rem/1 var(--font-mono);
+  letter-spacing: .04em;
+  text-decoration: none;
+  transition: border-color var(--duration-fast) var(--ease), background var(--duration-fast) var(--ease);
 }
-.authcard-eyebrow { color: var(--auth-cyan); text-align: left; }
-.authcard-title { color: var(--ink); font-size: clamp(2.8rem,5vw,4.4rem); letter-spacing: -.065em; text-align: left; }
-.authcard-sub { max-width: 38ch; margin: 12px 0 26px; color: var(--ink-3); line-height: 1.55; text-align: left; }
-.authcard-box { padding: 0; border: 0; border-radius: 0; background: transparent; }
-.authcard-tabs { margin-bottom: 26px; border-radius: 999px; background: rgba(243,238,231,.045); }
-.authcard-tab { color: var(--ink-3); border-radius: 999px; }
-.authcard-tab.active { color: var(--ink); background: rgba(255,77,46,.16); box-shadow: inset 0 0 0 1px rgba(255,77,46,.38),0 0 22px rgba(255,77,46,.08); }
-.authcard-field input { min-height: 50px; color: var(--ink); background: rgba(243,238,231,.055); }
-.authcard-field input:focus { border-color: var(--auth-cyan); box-shadow: 0 0 0 3px rgba(24,222,209,.1); }
-.authcard-method-choice,.authcard-role-opt,.authcard-check-row { color: var(--ink); background: rgba(243,238,231,.045); }
-.authcard-method-choice.active { border-color: rgba(24,222,209,.48); background: rgba(24,222,209,.09); }
-.authcard-btn-primary { min-height: 52px; color: #06100f; background: var(--auth-cyan); box-shadow: 0 13px 38px rgba(24,222,209,.17); transition: transform .18s ease,box-shadow .18s ease,opacity .18s ease; }
-.authcard-btn-primary:hover { opacity: 1; transform: translateY(-2px); box-shadow: 0 17px 42px rgba(24,222,209,.25); }
-.authcard-btn-ghost { min-height: 48px; color: var(--ink-2); border-radius: 999px; }
-.authcard-fine a,.authcard-trust-row a { color: var(--auth-cyan); }
-.authcard-charter { color: var(--ink-4); }
-.authcard-wrap .beta-access-toggle { width: 100%; min-height: 44px; padding: 0 16px; border: 1px solid rgba(24,222,209,.34); border-radius: 999px; color: var(--auth-cyan); background: rgba(24,222,209,.055); font: 700 .68rem/1 var(--font-mono); letter-spacing: .04em; text-decoration: none; transition: border-color .18s ease,background .18s ease,transform .18s ease; }
-.authcard-wrap .beta-access-toggle:hover { border-color: rgba(24,222,209,.65); background: rgba(24,222,209,.1); transform: translateY(-1px); }
-.authcard-wrap .beta-access-panel { border-color: var(--line-2); border-radius: 14px; background: rgba(243,238,231,.045); }
-.authcard-wrap .beta-access-row input { color: var(--ink); background: rgba(243,238,231,.055); }
-.authcard-wrap .beta-access-row button { color: #06100f; background: var(--auth-cyan); }
-
-html[data-theme="dark"] body:has(.authcard-page) { background: #050607; }
-html[data-theme="dark"] .authcard-page { color: #f3eee7; background: radial-gradient(circle at 14% 42%,rgba(255,77,46,.13),transparent 28%),radial-gradient(circle at 76% 35%,rgba(24,222,209,.1),transparent 32%),linear-gradient(120deg,#050506 0%,#070811 48%,#031115 100%); }
-html[data-theme="dark"] .authcard-page::after { opacity: .2; mix-blend-mode: soft-light; }
-html[data-theme="dark"] .authcard-header { border-color: rgba(243,238,231,.12); background: rgba(3,4,5,.82); }
-html[data-theme="dark"] .authcard-brand,html[data-theme="dark"] .authcard-home-link,html[data-theme="dark"] .authcard-scene h2 { color: #f3eee7; }
-html[data-theme="dark"] .authcard-brand small,html[data-theme="dark"] .authcard-scene > p:nth-of-type(2),html[data-theme="dark"] .authcard-scene-points span { color: #a69d93; }
-
-@media (max-width: 920px) {
-  .authcard-layout { width: min(680px,calc(100% - 36px)); grid-template-columns: 1fr; gap: 34px; padding: 42px 0 64px; }
-  .authcard-scene h2 { max-width: 10ch; font-size: clamp(3rem,11vw,5.4rem); }
-  .authcard-scene > p:nth-of-type(2) { margin-top: 20px; }
-  .authcard-atmosphere > span { left: 50%; }
+.authcard-wrap .beta-access-toggle:hover {
+  border-color: rgba(var(--accent-rgb), .65);
+  background: rgba(var(--accent-rgb), .1);
 }
-@media (max-width: 560px) {
-  .authcard-header { height: 66px; padding: 8px 14px; }
-  .authcard-brand > img { width: 42px; height: 42px; }
-  .authcard-brand small { display: none; }
-  .authcard-home-link { font-size: .68rem; }
-  .authcard-atmosphere { top: 66px; }
-  .authcard-layout { width: min(100% - 24px,520px); min-height: calc(100svh - 66px); gap: 26px; padding: 30px 0 44px; }
-  .authcard-scene > p:first-child { margin-bottom: 13px; font-size: .48rem; }
-  .authcard-scene h2 { max-width: 11ch; font-size: clamp(2.45rem,11vw,3.25rem); }
-  .authcard-scene > p:nth-of-type(2) { font-size: .9rem; line-height: 1.55; }
-  .authcard-scene-points { gap: 9px 13px; margin-top: 20px; }
-  .authcard-scene-points span { font-size: .48rem; }
-  .authcard-wrap { padding: 25px 18px; border-radius: 22px; }
-  .authcard-title { font-size: 2.7rem; }
-  .authcard-sub { font-size: .82rem; }
+.authcard-wrap .beta-access-panel {
+  border-color: var(--line-2);
+  border-radius: 14px;
+  background: var(--hair-30);
 }
+.authcard-wrap .beta-access-row input { color: var(--ink); background: var(--hair-40); }
+.authcard-wrap .beta-access-row button { color: var(--ink-on-accent); background: var(--accent); }
 
 .bot-field {
   position: absolute;
