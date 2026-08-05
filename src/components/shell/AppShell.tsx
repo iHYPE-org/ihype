@@ -16,6 +16,7 @@ import {
   buildShellNav, isShellRoute, resolveActiveItemId, resolveSection,
   type ShellAccount, type ShellNavItem, type ShellSectionId,
 } from '@/lib/app-nav';
+import { isMmmRoute } from '@/lib/mmm-nav';
 
 /**
  * The signed-in app shell — one screen, chrome that never remounts.
@@ -46,7 +47,9 @@ import {
  *
  * `/listen` owns the new full-screen module deck at every viewport, including
  * its own header, navigation, scroll surface and player. It therefore always
- * stands outside this legacy shell. On phone widths, `/shows` and `/pages` have a
+ * stands outside this legacy shell. So does `/app/*` — the Music · Map · Me
+ * shell (DESIGN_SYNC row 267), which has no header or tab bar at all and locks
+ * document scroll itself. On phone widths, `/shows` and `/pages` have a
  * purpose-built swipe shell (`MobileAppShell`, which scroll-locks the body and
  * holds all three sections permanently mounted). Two shells cannot both own the
  * scroll container, so this one stands aside while that one is active. That is
@@ -82,7 +85,11 @@ export function AppShell({
 
   const activeSection = resolveSection(pathname);
   const shellEligible = Boolean(account) && sessionStatus === 'authenticated' && isShellRoute(pathname);
-  const dedicatedModuleDeck = pathname === '/listen';
+  // Two surfaces own their own full-screen chrome and must not be wrapped:
+  // `/listen` (the module deck) and `/app/*` (the Music/Map/Me shell, which
+  // scroll-locks the document itself — two shells cannot both own the scroll
+  // container). See the note above and DESIGN_SYNC row 267.
+  const dedicatedModuleDeck = pathname === '/listen' || isMmmRoute(pathname);
   const active = shellEligible && !dedicatedModuleDeck && !mobileShell?.active;
 
   const items = useMemo<ShellNavItem[]>(

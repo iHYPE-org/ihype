@@ -1,0 +1,829 @@
+/*
+ * The Music · Map · Me shell — DESIGN_SYNC row 267.
+ *
+ * TWO design sources, and the newer one wins where they disagree:
+ *   - `design/design-system-app-shell/templates/simple-app/SimpleApp.dc.html`
+ *     (the app-shell redesign) — authoritative for the CHROME: the radial arc
+ *     nav, the 76px solid-accent logo, the pill player, the vignette.
+ *   - `design/handoff-music-map-me/SimplifiedApp.dc.html` (Design System 6) —
+ *     authoritative for the MAP module's pins, chips, sheet and result line,
+ *     which the redesign did not restate.
+ * Where the redesign restates something, it supersedes: its nav is an arc, not
+ * the pill column DS6 drew, and its ME module has no fan-out submenu at all.
+ *
+ * ## The shape, and why it is this shape
+ *
+ * One full-height frame, `overflow: hidden`, everything absolutely positioned
+ * inside it. There is no top bar and no bottom tab bar — the handoff removed
+ * both deliberately, to reclaim vertical space. The only persistent chrome is
+ * the logo trigger and the music player, both pinned bottom-left.
+ *
+ * The map is the base layer and stays mounted for the whole session. Music and
+ * Me render as full-bleed panes *over* it, exactly as the prototype does, which
+ * is why returning to MAP keeps your pan and zoom. In this codebase that means
+ * the map lives in the `/app` LAYOUT and the module panes are its route
+ * children — a layout is the only place the App Router guarantees a subtree
+ * survives navigation, the same reason `AppShell` sits in the root layout.
+ *
+ * ## Divergences from the handoff, all deliberate
+ *
+ * 1. **Colour comes from tokens, never the handoff's literals.** The bundle
+ *    contradicts itself on the base surfaces — its README table says base
+ *    `#0d0b0a` / surface `#16120f`, its own `tokens/colors.css` says `#0a0805` /
+ *    `#100d09`, and globals.css matches the latter. Painting from `--bg`/`--bg-3`
+ *    picks the token file over the prose and gets light-theme support free.
+ * 2. **The faintest labels use `--ink-3`, not the handoff's `#6f6660`.** That
+ *    literal behind a 10px eyebrow is precisely the contrast failure axe caught
+ *    in DESIGN_SYNC row 262; `--ink-3` is the value measured to clear 4.5:1 on
+ *    every surface. Reintroducing #6f6660 would re-break it.
+ * 3. **Geometry is literal px**, from the handoff's own tables. Those numbers
+ *    are the design, not a scale to tokenise — and `--radius-lg` means 18px
+ *    here versus 10px in the handoff, so a token name would silently disagree.
+ * 4. **`max-height: 880px` is dropped.** It is the prototype's phone-frame
+ *    preview box, not a product constraint; capping the real app at 880px would
+ *    letterbox every laptop.
+ */
+
+/* ── Frame ─────────────────────────────────────────────────────────────── */
+
+/* Locks document scroll while a module is mounted. The content that scrolls is
+   the module pane, never the page — the same single-scroll-container rule the
+   app shell has. Applied to <html> by MmmShell so the marketing chrome and the
+   legacy shell can stand down without knowing this file exists. */
+html.mmm-locked, html.mmm-locked body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* Stand the site chrome down. All of this renders from the ROOT layout, outside
+   AppShell, so `AppShell` declining to wrap `/app/*` does not remove it — it was
+   still in the DOM behind this frame: the marketing header, the mobile tab bar,
+   the global player dock and the footer.
+   `display: none` rather than opacity or z-index, because the frame is opaque:
+   the problem was never that they were visible, it was that they were focusable
+   and present in the accessibility tree. A keyboard user could tab into a tab
+   bar the design deliberately removed, and a screen reader saw two players.
+   Note this list differs from shell.css's on purpose: the legacy shell KEEPS
+   `.ihype-mobile-nav` (its backlog wanted bottom tabs at phone width). This
+   design has no tab bar at any width — the logo fan replaced it. */
+html.mmm-locked .adaptive-site-header,
+html.mmm-locked .site-background,
+html.mmm-locked .site-shell > footer,
+html.mmm-locked .ihype-mobile-nav,
+html.mmm-locked .site-dock {
+  display: none !important;
+}
+html.mmm-locked .site-shell { padding-top: 0; padding-bottom: 0; min-height: 0; }
+
+/* THE ONE THAT MATTERS: kill the page-enter animation on the wrapper.
+ *
+ * globals.css gives `.site-shell > main` `animation: page-enter .4s … both`.
+ * `fill-mode: both` holds the final keyframe forever, so the computed transform
+ * stays `matrix(1,0,0,1,0,0)` — non-`none` — for the life of the page. A
+ * transformed ancestor is the containing block for `position: fixed`
+ * descendants, so `.mmm-frame`'s `inset: 0` resolved against `#main-content`
+ * instead of the viewport. `#main-content` wraps only this frame, whose own
+ * children are all absolutely positioned, so it measures ZERO height — and the
+ * whole shell collapsed to a 1280×0 box.
+ *
+ * Nothing looked broken in the build, the CSS chunk loaded 200 OK, and the
+ * markup was correct; the frame was simply invisible. `/app` would have shipped
+ * blank. Found by e2e (`.mmm-frame` resolved but "hidden") and pinned down by
+ * walking the ancestor chain for transform/filter/contain in a browser.
+ *
+ * `transform: none` is what restores the viewport as the containing block;
+ * `animation: none` stops it being re-applied. Scoped to `html.mmm-locked`, so
+ * every other route keeps its page-enter transition. */
+html.mmm-locked .site-shell > main {
+  animation: none !important;
+  transform: none !important;
+}
+
+.mmm-frame {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  overflow: hidden;
+  /* Below a modal but above ordinary page content. */
+  z-index: var(--z-sticky);
+}
+
+/* ── Map layer ─────────────────────────────────────────────────────────── */
+
+.mmm-map-layer { position: absolute; inset: 0; background: var(--map-void); }
+.mmm-map-canvas { position: absolute; inset: 0; }
+.mmm-map-canvas .maplibregl-ctrl-attrib,
+.mmm-map-canvas .maplibregl-ctrl-logo { display: none; }
+.mmm-map-canvas .maplibregl-canvas { outline: none; }
+
+/* Attribution is required by CARTO/OSM terms and is therefore not optional
+   chrome — it renders whenever the map does. */
+.mmm-map-attrib {
+  position: absolute;
+  right: 6px;
+  bottom: 4px;
+  z-index: 15;
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  color: var(--ink-3);
+  pointer-events: none;
+}
+
+.mmm-map-controls {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  /* The rows are interactive; the gap between them must not eat map drags. */
+  pointer-events: none;
+}
+.mmm-control-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  pointer-events: auto;
+  padding: 2px 12px 0;
+}
+.mmm-control-row + .mmm-control-row { padding: 0 12px 10px; }
+.mmm-control-divider {
+  flex-shrink: 0;
+  width: 1px;
+  background: var(--line-2);
+  margin: 5px 3px;
+}
+
+.mmm-chip {
+  flex-shrink: 0;
+  padding: 7px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--hair-160);
+  background: rgba(var(--bg-base-rgb), 0.62);
+  color: var(--ink-3);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.76rem;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  white-space: nowrap;
+}
+.mmm-chip[aria-pressed='true'] {
+  border-color: rgba(var(--accent-rgb), 0.5);
+  background: rgba(var(--accent-rgb), 0.16);
+  color: var(--accent-text);
+  font-weight: 700;
+}
+.mmm-chip-genre {
+  padding: 5px 11px;
+  font-family: var(--font-mono);
+  font-size: 0.63rem;
+  letter-spacing: 0.04em;
+}
+
+.mmm-result-line {
+  position: absolute;
+  /* Clears the player pill (bottom: 26px, ~60px tall). On the narrow
+     breakpoint the player moves to bottom: 112px and this follows it. */
+  bottom: 100px;
+  left: 26px;
+  right: 26px;
+  z-index: 20;
+  padding: 6px 11px;
+  border-radius: 9px;
+  background: rgba(var(--bg-base-rgb), 0.72);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--hair-100);
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Pins ──────────────────────────────────────────────────────────────── */
+
+.mmm-pin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+.mmm-pin-pill {
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--bg-3);
+  color: var(--ink);
+  border: 1.5px solid rgba(var(--accent-rgb), 0.75);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  box-shadow: 0 3px 12px rgba(var(--scrim-rgb), 0.55);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+/* A show over 75% sold inverts to a solid accent fill. */
+.mmm-pin[data-hot='true'] .mmm-pin-pill {
+  background: var(--accent);
+  color: var(--ink-on-accent);
+  border-color: var(--ink-a85);
+  box-shadow: 0 3px 14px rgba(var(--accent-rgb), 0.5);
+}
+.mmm-pin-venue .mmm-pin-pill { border-radius: 8px; border-color: rgba(var(--role-venue-rgb), 0.8); }
+.mmm-pin-artist .mmm-pin-pill { border-color: rgba(var(--role-fan-rgb), 0.8); padding-left: 3px; }
+.mmm-pin-avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--role-fan), var(--accent));
+  color: var(--ink-on-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 800;
+}
+/* Leader line. A de-collided pin gets a longer one so its true location stays
+   readable — see placePins()'s `offset`. */
+.mmm-pin-leader { width: 2px; height: 7px; background: rgba(var(--accent-rgb), 0.75); }
+.mmm-pin[data-offset='true'] .mmm-pin-leader { height: 12px; }
+.mmm-pin[data-hot='true'] .mmm-pin-leader { background: var(--accent); }
+.mmm-pin-venue .mmm-pin-leader { background: rgba(var(--role-venue-rgb), 0.8); }
+.mmm-pin-artist .mmm-pin-leader { background: rgba(var(--role-fan-rgb), 0.8); }
+
+.mmm-bubble {
+  border-radius: 50%;
+  background: rgba(var(--accent-rgb), 0.92);
+  border: 2px solid var(--ink-a85);
+  color: var(--ink-on-accent);
+  font-family: var(--font-body);
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 3px 14px rgba(var(--accent-rgb), 0.5);
+  font-size: 0.8rem;
+}
+
+/* ── Module panes ──────────────────────────────────────────────────────── */
+
+.mmm-pane {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  background: var(--bg);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* 96px clears the player and the logo trigger, per the handoff. */
+  padding: 14px 16px 96px;
+}
+
+.mmm-tabs { display: flex; gap: 8px; padding: 2px 0 14px; }
+.mmm-tab {
+  flex: 1;
+  padding: 9px 0;
+  border-radius: 10px;
+  border: 1px solid var(--hair-120);
+  background: transparent;
+  color: var(--ink-3);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.mmm-tab[aria-current='page'] {
+  border-color: rgba(var(--accent-rgb), 0.45);
+  background: rgba(var(--accent-rgb), 0.14);
+  color: var(--accent-text);
+  font-weight: 700;
+}
+
+.mmm-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.mmm-eyebrow-accent { color: var(--accent-text); }
+
+.mmm-card {
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid var(--hair-100);
+  background: var(--hair-20);
+}
+.mmm-card-accent {
+  border-color: rgba(var(--accent-rgb), 0.22);
+  background: rgba(var(--accent-rgb), 0.05);
+}
+
+.mmm-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 3px;
+  border-bottom: 1px solid var(--hair-70);
+  width: 100%;
+  text-align: left;
+  background: none;
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  color: inherit;
+  cursor: pointer;
+}
+.mmm-row-title { font-family: var(--font-body); font-weight: 600; font-size: 0.88rem; color: var(--ink); }
+.mmm-row-sub { font-size: 0.74rem; color: var(--ink-3); margin-top: 1px; }
+.mmm-row-meta { font-family: var(--font-mono); font-size: 0.76rem; color: var(--accent-text); white-space: nowrap; }
+
+.mmm-station-art {
+  width: 44px;
+  height: 44px;
+  border-radius: 9px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  background: linear-gradient(140deg, var(--bg-4), var(--bg-3));
+  color: var(--ink-3);
+}
+.mmm-station[data-playing='true'] .mmm-station-art {
+  background: linear-gradient(140deg, var(--accent), var(--accent-deep));
+  color: var(--ink-on-accent);
+}
+
+.mmm-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.mmm-stat-value {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.5rem;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  line-height: 1;
+}
+.mmm-stat-label {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-top: 6px;
+}
+
+.mmm-btn-primary {
+  padding: 10px 0;
+  border-radius: 9px;
+  border: 0;
+  background: var(--accent);
+  color: var(--ink-on-accent);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.82rem;
+  text-align: center;
+  cursor: pointer;
+}
+.mmm-btn-ghost {
+  padding: 10px 14px;
+  border-radius: 9px;
+  border: 1px solid var(--hair-160);
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.mmm-link-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 11px;
+  border-radius: 9px;
+  background: var(--bg-3);
+  border: 1px solid var(--hair-100);
+  margin-bottom: 9px;
+}
+.mmm-link-value {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mmm-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.3rem;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+}
+
+/* ── Bottom sheet ──────────────────────────────────────────────────────── */
+
+.mmm-sheet-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background: rgba(var(--scrim-rgb), 0.55);
+  backdrop-filter: blur(2px);
+  border: 0;
+  width: 100%;
+  cursor: pointer;
+}
+.mmm-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 51;
+  max-height: 86%;
+  overflow-y: auto;
+  background: var(--bg-3);
+  border-top: 1px solid var(--line-2);
+  border-radius: 18px 18px 0 0;
+  padding: 18px 18px 22px;
+  animation: mmmSheetUp var(--sheet-enter-dur) var(--ease-out);
+}
+@keyframes mmmSheetUp {
+  from { transform: translateY(18px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.mmm-sheet-handle {
+  width: 34px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--ink-a20);
+  margin: 0 auto 15px;
+}
+.mmm-sheet-avatar {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--role-fan));
+  color: var(--ink-on-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.3rem;
+}
+.mmm-sheet-avatar-venue { border-radius: 11px; background: linear-gradient(135deg, var(--role-venue), var(--accent)); }
+.mmm-sheet-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.32rem;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  line-height: 1.1;
+}
+.mmm-verified {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--ink-on-accent);
+  font-size: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+}
+.mmm-sheet-stats {
+  display: flex;
+  gap: 16px;
+  margin: 15px 0 4px;
+  padding: 12px 0;
+  border-top: 1px solid var(--hair-80);
+  border-bottom: 1px solid var(--hair-80);
+}
+.mmm-sheet-actions { display: flex; gap: 8px; margin-top: 13px; }
+.mmm-sheet-cta {
+  flex: 1;
+  padding: 13px 0;
+  border-radius: 11px;
+  border: 0;
+  background: var(--accent);
+  color: var(--ink-on-accent);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-align: center;
+  cursor: pointer;
+}
+.mmm-sheet-cta-2 {
+  padding: 13px 15px;
+  border-radius: 11px;
+  border: 1px solid rgba(var(--accent-rgb), 0.4);
+  background: transparent;
+  color: var(--accent-text);
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.mmm-sheet-dismiss {
+  padding: 13px 14px;
+  border-radius: 11px;
+  border: 1px solid var(--hair-160);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+/* ── Chrome: logo trigger, player, radial arc nav ─────────────────────────
+ *
+ * From the app-shell redesign (design-system-app-shell/templates/simple-app).
+ * The nav is a zero-size fixed anchor at the frame's lower left; the logo and
+ * every fan item are absolutely positioned at its origin and moved into place
+ * by transform. That is what makes the fan-out a pure compositor animation
+ * with no layout, and what lets a closed item tuck *behind* the logo.
+ */
+
+.mmm-chrome { position: absolute; inset: 0; z-index: 45; pointer-events: none; }
+
+/* Vignette and film grain over the whole frame. Decorative, non-interactive,
+   and above the modules but below the chrome. */
+.mmm-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 0%, transparent 58%, rgba(var(--scrim-rgb), 0.26) 100%);
+}
+
+.mmm-nav-anchor {
+  position: absolute;
+  left: 26px;
+  bottom: 26px;
+  z-index: 30;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.mmm-logo {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 76px;
+  height: 76px;
+  border-radius: 9999px;
+  border: 1px solid var(--hair-120);
+  background: var(--accent);
+  color: var(--ink-on-accent);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+  box-shadow: 0 10px 40px rgba(var(--accent-rgb), 0.28);
+  transition: transform 0.3s var(--ease-default);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  pointer-events: auto;
+}
+.mmm-logo:hover { opacity: 0.92; }
+/* Open state tips the logo, so the trigger reads as "engaged". */
+.mmm-nav-anchor[data-open='true'] .mmm-logo { transform: scale(0.86) rotate(-6deg); }
+
+.mmm-eq { display: flex; align-items: flex-end; gap: 1.5px; height: 7px; }
+.mmm-eq span { width: 2px; background: var(--ink-on-accent); animation: mmmEq 0.9s ease-in-out infinite; }
+.mmm-eq span:nth-child(2) { animation-delay: 0.15s; }
+.mmm-eq span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes mmmEq { 0%, 100% { height: 2px; } 50% { height: 7px; } }
+
+/* Fan items. Closed: tucked behind the logo, scaled down, not tabbable and not
+   hit-testable. Open: translated onto the arc. The transform and delay are
+   computed per index from the ARC table in mmm-nav.ts and passed inline — the
+   handoff's guidance, and the fix for FRONTEND_GOTCHAS §5, where the prototype
+   routed the delay through an `--nd` custom property that was never declared
+   and silently invalidated the whole declaration. */
+.mmm-ray {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  white-space: nowrap;
+  cursor: pointer;
+  transform: translate(14px, -6px) scale(0.55);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.42s var(--ease-default), opacity 0.26s var(--ease-default);
+}
+.mmm-nav-anchor[data-open='true'] .mmm-ray { opacity: 1; pointer-events: auto; }
+
+.mmm-nav-pill {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 19px;
+  letter-spacing: -0.01em;
+  padding: 13px 22px;
+  border-radius: 9999px;
+  border: 1px solid var(--hair-150);
+  background: var(--bg-2);
+  color: var(--ink);
+}
+.mmm-nav-pill:hover,
+.mmm-nav-pill[aria-current='page'] {
+  background: var(--accent);
+  color: var(--ink-on-accent);
+  border-color: var(--accent);
+}
+
+.mmm-nav-item {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 11px 18px;
+  border-radius: 9999px;
+  border: 1px solid var(--hair-120);
+  background: var(--bg-2);
+  color: var(--ink-a85);
+}
+.mmm-nav-item:hover,
+.mmm-nav-item[aria-current='page'] {
+  background: var(--accent);
+  color: var(--ink-on-accent);
+  border-color: var(--accent);
+}
+
+.mmm-nav-hint {
+  position: absolute;
+  left: 26px;
+  bottom: 108px;
+  z-index: 29;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(var(--bg-base-rgb), 0.8);
+  border: 1px solid var(--hair-100);
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.09em;
+  color: var(--ink-2);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* The player is a pill to the right of the logo. Opening the nav dims
+   everything including the player — it fades and drops rather than being
+   unmounted, so its transition can play out. */
+.mmm-player {
+  position: absolute;
+  left: 118px;
+  right: auto;
+  max-width: min(820px, calc(100vw - 150px));
+  bottom: 26px;
+  z-index: 28;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--hair-100);
+  border-radius: 9999px;
+  padding: 9px 16px 9px 10px;
+  box-shadow: var(--shadow-raised);
+  pointer-events: auto;
+  transition: opacity 0.24s var(--ease-default), transform 0.3s var(--ease-default);
+}
+.mmm-player[data-hidden='true'] {
+  opacity: 0;
+  transform: translateY(14px);
+  pointer-events: none;
+}
+.mmm-player-art {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 0.88rem;
+  color: var(--ink-on-accent);
+}
+.mmm-player-track {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.86rem;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mmm-player-artist {
+  font-family: var(--font-mono);
+  font-size: 0.57rem;
+  letter-spacing: 0.05em;
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+.mmm-player-icon {
+  flex-shrink: 0;
+  font-size: 0.88rem;
+  cursor: pointer;
+  line-height: 1;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--ink-2);
+}
+.mmm-player-play {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 9999px;
+  border: 0;
+  background: var(--accent);
+  color: var(--ink-on-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+/* The scrim dims the frame under the fan. */
+.mmm-nav-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 29;
+  pointer-events: auto;
+  border: 0;
+  width: 100%;
+  background: var(--scrim);
+  backdrop-filter: blur(3px);
+  animation: mmmScrim var(--duration-default) var(--ease-default) forwards;
+  cursor: pointer;
+}
+@keyframes mmmScrim { from { opacity: 0; } to { opacity: 1; } }
+
+/* Reduced motion: the fan snaps into place and the equalizer holds still.
+   Complements the token-level duration zeroing in globals.css, which cannot
+   disable a keyframe. */
+@media (prefers-reduced-motion: reduce) {
+  .mmm-ray, .mmm-logo, .mmm-player { transition: none; }
+  .mmm-eq span { animation: none; height: 5px; }
+  .mmm-sheet { animation: none; }
+  .mmm-nav-scrim { animation: none; }
+}
+
+/* The design's own narrow breakpoint. The arc coordinates themselves come from
+   the ARC table in mmm-nav.ts, which the component picks per viewport — only
+   the anchor and the player move here. */
+@media (max-width: 720px) {
+  .mmm-nav-anchor { left: 18px; bottom: 22px; }
+  .mmm-result-line { left: 18px; right: 18px; bottom: 186px; }
+  .mmm-nav-hint { left: 18px; bottom: 104px; }
+  .mmm-player {
+    left: 18px;
+    right: 18px;
+    max-width: none;
+    bottom: 112px;
+    padding: 8px 14px 8px 8px;
+  }
+}
+
+/* ── Wide viewports ────────────────────────────────────────────────────── */
+
+/* The handoff is drawn at 430px. The module panes are the only thing that
+   needs a wide-screen opinion: a 1400px-wide list of 44px rows reads as
+   nothing. The chrome stays bottom-left, which is where a thumb is on a phone
+   and where the eye has learned to look on a desktop after one use. */
+@media (min-width: 900px) {
+  .mmm-pane { padding: 20px calc(50% - 340px) 96px; }
+  .mmm-sheet { left: 50%; right: auto; width: 720px; transform: translateX(-50%); border-radius: 18px 18px 0 0; }
+  @keyframes mmmSheetUpWide {
+    from { transform: translate(-50%, 18px); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+  }
+  .mmm-sheet { animation-name: mmmSheetUpWide; }
+}

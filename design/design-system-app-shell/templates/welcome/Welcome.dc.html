@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script src="../../lib/i18n.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Welcome" description="Post-signup 'You're in' page — role-based next steps + profile preview. Pick role via tweak. Grounded in src/app/welcome/page.tsx (stale 45% copy corrected to 70/20)." -->
+<helmet>
+<script src="./ds-base.js"></script>
+<script src="../../lib/theme.js"></script>
+<script src="../../lib/theme-toggle.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}body{background:radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),var(--bg-base);color:var(--ink-1);font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}a{color:inherit;text-decoration:none}
+@keyframes wUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+@keyframes wPop{from{transform:scale(0) rotate(-30deg)}60%{transform:scale(1.25)}to{transform:scale(1)}}</style>
+</helmet>
+
+<div style="max-width:560px;margin:0 auto;padding:80px 28px 100px;text-align:center">
+  <div style="width:64px;height:64px;border-radius:50%;background:rgba(34,229,212,.12);border:1px solid rgba(34,229,212,.35);display:grid;place-items:center;margin:0 auto 22px;font-size:1.6rem;color:var(--role-venue);animation:wPop .6s cubic-bezier(.34,1.56,.64,1) both .15s">✓</div>
+  <h1 style="font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2rem,7vw,3rem);letter-spacing:-.04em;line-height:1;animation:wUp .7s cubic-bezier(.16,1,.3,1) both .1s">You're in.</h1>
+  <p style="font-size:1rem;color:var(--ink-2);line-height:1.65;margin:14px 0 36px;animation:wUp .7s cubic-bezier(.16,1,.3,1) both .2s">{{ sub }}</p>
+
+  <div style="text-align:left;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:18px;padding:26px 26px 18px;animation:wUp .7s cubic-bezier(.16,1,.3,1) both .3s">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid rgba(var(--surface-tint-rgb),.15)">
+      <sc-if value="{{ isFan }}"><div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--role-fan),var(--role-fan));display:grid;place-items:center;color:#fff;font-family:'Syne',sans-serif;font-weight:800">{{ initial }}</div></sc-if>
+      <sc-if value="{{ isArtist }}"><div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--role-fan));display:grid;place-items:center;color:#fff;font-family:'Syne',sans-serif;font-weight:800">{{ initial }}</div></sc-if>
+      <sc-if value="{{ isDj }}"><div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--role-dj),var(--role-fan));display:grid;place-items:center;color:#fff;font-family:'Syne',sans-serif;font-weight:800">{{ initial }}</div></sc-if>
+      <sc-if value="{{ isVenue }}"><div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--role-venue),var(--role-fan));display:grid;place-items:center;color:#fff;font-family:'Syne',sans-serif;font-weight:800">{{ initial }}</div></sc-if>
+      <div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1rem">{{ name }}</div>
+        <sc-if value="{{ isFan }}"><div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:var(--role-fan);margin-top:2px">{{ roleLabel }}{{ pendingNote }}</div></sc-if>
+        <sc-if value="{{ isArtist }}"><div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-top:2px">{{ roleLabel }}{{ pendingNote }}</div></sc-if>
+        <sc-if value="{{ isDj }}"><div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:var(--role-dj);margin-top:2px">{{ roleLabel }}{{ pendingNote }}</div></sc-if>
+        <sc-if value="{{ isVenue }}"><div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:var(--role-venue);margin-top:2px">{{ roleLabel }}{{ pendingNote }}</div></sc-if>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
+      <sc-if value="{{ prog0 }}"><div style="width:46px;height:46px;border-radius:50%;background:conic-gradient(var(--accent) 0deg,rgba(var(--surface-tint-rgb),.09) 0deg);display:grid;place-items:center;flex-shrink:0"><div style="width:36px;height:36px;border-radius:50%;background:#0f0c08;display:grid;place-items:center;font-family:'Syne',sans-serif;font-weight:800;font-size:.72rem">{{ progLabel }}</div></div></sc-if>
+      <sc-if value="{{ prog1 }}"><div style="width:46px;height:46px;border-radius:50%;background:conic-gradient(var(--accent) 120deg,rgba(var(--surface-tint-rgb),.09) 0deg);display:grid;place-items:center;flex-shrink:0"><div style="width:36px;height:36px;border-radius:50%;background:#0f0c08;display:grid;place-items:center;font-family:'Syne',sans-serif;font-weight:800;font-size:.72rem">{{ progLabel }}</div></div></sc-if>
+      <sc-if value="{{ prog2 }}"><div style="width:46px;height:46px;border-radius:50%;background:conic-gradient(var(--accent) 240deg,rgba(var(--surface-tint-rgb),.09) 0deg);display:grid;place-items:center;flex-shrink:0"><div style="width:36px;height:36px;border-radius:50%;background:#0f0c08;display:grid;place-items:center;font-family:'Syne',sans-serif;font-weight:800;font-size:.72rem">{{ progLabel }}</div></div></sc-if>
+      <sc-if value="{{ prog3 }}"><div style="width:46px;height:46px;border-radius:50%;background:conic-gradient(var(--role-venue) 360deg,rgba(var(--surface-tint-rgb),.09) 0deg);display:grid;place-items:center;flex-shrink:0"><div style="width:36px;height:36px;border-radius:50%;background:#0f0c08;display:grid;place-items:center;font-family:'Syne',sans-serif;font-weight:800;font-size:.72rem;color:var(--role-venue)">{{ progLabel }}</div></div></sc-if>
+      <div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1rem">{{ yourFirstMoves }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-top:3px">{{ completeSetup }}</div></div>
+    </div>
+    <sc-for list="{{ steps }}" as="s" hint-placeholder-count="3">
+      <div onClick="{{ s.toggle }}" style="display:flex;gap:14px;align-items:center;padding:12px 0;border-top:1px solid rgba(var(--surface-tint-rgb),.07);cursor:pointer">
+        <sc-if value="{{ s.done }}"><span style="flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--role-venue);color:var(--bg-base);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800">✓</span></sc-if>
+        <sc-if value="{{ s.notDone }}"><span style="flex-shrink:0;width:26px;height:26px;border-radius:50%;border:2px solid rgba(var(--surface-tint-rgb),.18)"></span></sc-if>
+        <div><div style="font-weight:700;font-size:.9rem">{{ s.head }}</div><div style="font-size:.8rem;color:var(--ink-2);line-height:1.5;margin-top:1px">{{ s.body }}</div></div>
+      </div>
+    </sc-for>
+  </div>
+
+  <a href="../fan-app/FanApp.dc.html" style="display:inline-block;margin-top:28px;font-family:'Syne',sans-serif;font-weight:800;font-size:.95rem;background:var(--accent);color:#fff;padding:14px 34px;border-radius:999px;box-shadow:0 6px 24px rgba(255,80,41,.35);animation:wUp .7s cubic-bezier(.16,1,.3,1) both .4s">{{ cta }}</a>
+  <div style="font-family:'JetBrains Mono',monospace;font-size:.64rem;color:var(--ink-3);margin-top:16px;letter-spacing:.06em">{{ splitFooter }}</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;640px&quot;,&quot;height&quot;:&quot;820px&quot;},&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;fan&quot;,&quot;tsType&quot;:&quot;'fan'|'artist'|'dj'|'venue'&quot;,&quot;options&quot;:[&quot;fan&quot;,&quot;artist&quot;,&quot;dj&quot;,&quot;venue&quot;],&quot;section&quot;:&quot;Role&quot;}}">
+class Component extends DCLogic {
+  state = { done: {} };
+  renderVals() {
+    const role = this.props.role ?? 'fan';
+    const t = window.ihypeT || (k => k);
+    const R = {
+      fan: { name: 'Jess R.', roleLabel: t('wcRoleFan'), tint: 'var(--role-fan)', pendingNote: t('wcActiveNote'),
+        sub: t('wcFanSub'),
+        cta: t('wcFanCta'),
+        steps: [
+          { head: t('wcFanStep1H'), body: t('wcFanStep1B') },
+          { head: t('wcFanStep2H'), body: t('wcFanStep2B') },
+          { head: t('wcFanStep3H'), body: t('wcFanStep3B') },
+        ]},
+      artist: { name: 'Nyla', roleLabel: t('wcRoleArtist'), tint: 'var(--accent)', pendingNote: t('wcPendingNote'),
+        sub: t('wcArtistSub'),
+        cta: t('wcArtistCta'),
+        steps: [
+          { head: t('wcArtistStep1H'), body: t('wcArtistStep1B') },
+          { head: t('wcArtistStep2H'), body: t('wcArtistStep2B') },
+          { head: t('wcArtistStep3H'), body: t('wcArtistStep3B') },
+        ]},
+      dj: { name: 'DJ Caro', roleLabel: t('wcRoleDj'), tint: 'var(--role-dj)', pendingNote: t('wcPendingNote'),
+        sub: t('wcDjSub'),
+        cta: t('wcDjCta'),
+        steps: [
+          { head: t('wcDjStep1H'), body: t('wcDjStep1B') },
+          { head: t('wcDjStep2H'), body: t('wcDjStep2B') },
+          { head: t('wcDjStep3H'), body: t('wcDjStep3B') },
+        ]},
+      venue: { name: 'Port City Music Hall', roleLabel: t('wcRoleVenue'), tint: 'var(--role-venue)', pendingNote: t('wcPendingNote'),
+        sub: t('wcVenueSub'),
+        cta: t('wcVenueCta'),
+        steps: [
+          { head: t('wcVenueStep1H'), body: t('wcVenueStep1B') },
+          { head: t('wcVenueStep2H'), body: t('wcVenueStep2B') },
+          { head: t('wcVenueStep3H'), body: t('wcVenueStep3B') },
+        ]},
+    }[role];
+    const done = this.state.done;
+    const doneCount = R.steps.filter((_, i) => done[i]).length;
+    return {
+      ...R, isFan: role === 'fan', isArtist: role === 'artist', isDj: role === 'dj', isVenue: role === 'venue', initial: R.name.charAt(0),
+      steps: R.steps.map((s, i) => ({ ...s, n: i + 1, done: !!done[i], notDone: !done[i], toggle: () => this.setState(st => ({ done: { ...st.done, [i]: !st.done[i] } })) })),
+      progLabel: doneCount + '/' + R.steps.length,
+      prog0: doneCount === 0, prog1: doneCount === 1, prog2: doneCount === 2, prog3: doneCount === 3,
+      yourFirstMoves: t('wcYourFirstMoves'), completeSetup: t('wcCompleteSetup'), splitFooter: t('wcSplitFooter'),
+    };
+  }
+  componentDidMount() {
+    this._h = () => this.forceUpdate();
+    window.addEventListener('ihype-i18n-change', this._h);
+  }
+  componentWillUnmount() { window.removeEventListener('ihype-i18n-change', this._h); }
+}
+</script>
+</body>
+</html>

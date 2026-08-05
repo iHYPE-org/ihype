@@ -378,7 +378,7 @@ export default function EventsNewPage() {
                 {fmt$(gross * .7)} {t('eventsNewPage.artistWord', 'artist')} · {fmt$(gross * .2)} {t('eventsNewPage.venueWord', 'venue')} · {fmt$(gross * .1)} {t('eventsNewPage.promotersWord', 'promoters')} · $0 iHYPE
               </div>
             </div>
-            <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(var(--role-promoter-rgb),.25)', background: 'rgba(var(--role-promoter-rgb),.06)', marginBottom: 14 }}>
+            <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(var(--warning-rgb),.25)', background: 'rgba(var(--warning-rgb),.06)', marginBottom: 14 }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '.68rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--warning)', marginBottom: 8 }}>
                 ⚠ {t('eventsNewPage.reviewWarningTitle', 'Review before you lock')}
               </div>

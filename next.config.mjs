@@ -107,6 +107,20 @@ const nextConfig = {
         permanent: true
       },
       {
+        // The Music/Map/Me shell's default surface. Done here rather than with a
+        // `redirect()` in src/app/app/page.tsx: that page's layout renders the
+        // shell (an async server component that awaits auth plus a DB read), and
+        // in the Workerd build `/app` answered 200 with the shell already
+        // flushed instead of redirecting — the thrown redirect never reached the
+        // client. A config redirect is emitted before any rendering happens, so
+        // it cannot depend on render or streaming order. If this entry is ever
+        // removed, `/app` 404s loudly rather than rendering a shell with no
+        // module in it.
+        source: '/app',
+        destination: '/app/map',
+        permanent: false
+      },
+      {
         source: '/auth',
         destination: '/login',
         permanent: false

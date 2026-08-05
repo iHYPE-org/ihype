@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script src="../../lib/i18n.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Discover" description="Discover page — For You + This Weekend entry banners, city/genre filter chips, upcoming show cards with hype counts, trending artists & DJs grid, venues. Grounded in src/app/discover/page.tsx." -->
+<helmet>
+<script src="./ds-base.js"></script>
+<script src="../../lib/theme.js"></script>
+<script src="../../lib/theme-toggle.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}body{background:radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),var(--bg-base);color:var(--ink-1);font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}a{color:inherit;text-decoration:none}</style>
+</helmet>
+
+<div style="max-width:1000px;margin:0 auto;padding:32px 24px 100px">
+  <div style="margin-bottom:32px">
+    <p style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:8px" data-i18n="dcEyebrow">Discover</p>
+    <h1 style="font-family:'Syne',sans-serif;font-size:clamp(1.8rem,4vw,2.6rem);font-weight:800;letter-spacing:-.03em;margin:0 0 8px" data-i18n="dcHeading">Find your next favourite artist</h1>
+    <p style="color:rgba(var(--ink-1-rgb),.55);font-size:14px" data-i18n="dcSub">Everything below is ranked by real fan hypes — yours included. No paid promotion, no algorithm boost. Cast a hype and you're part of why something rises.</p>
+  </div>
+
+  <a href="../fan-app/FanApp.dc.html" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-radius:16px;background:rgba(255,80,41,.08);border:1px solid rgba(255,80,41,.3);margin-bottom:12px">
+    <div><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)" data-i18n="dcForYou">For You</span><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;letter-spacing:-.02em;margin-top:2px" data-i18n="dcForYouTitle">Artists picked for your taste →</div></div>
+    <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(var(--ink-1-rgb),.5);flex-shrink:0" data-i18n="dcSeeWhy">See why</span>
+  </a>
+  <a href="../fan-app/FanApp.dc.html" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-radius:16px;background:rgba(34,229,212,.08);border:1px solid rgba(34,229,212,.3);margin-bottom:32px">
+    <div><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--role-venue)" data-i18n="dcThisWeekend">This Weekend</span><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;letter-spacing:-.02em;margin-top:2px" data-i18n="dcShowsNearYou">Shows near you →</div></div>
+    <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(var(--ink-1-rgb),.5);flex-shrink:0" data-i18n="dcGetTickets">Get tickets</span>
+  </a>
+
+  <div style="margin-bottom:32px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px">
+      <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;margin:0">🔥 <span data-i18n="dcRisingNearYou">Rising near you</span></h2>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:rgba(var(--ink-1-rgb),.35)" data-i18n="dcSortedByVelocity">Sorted by hype velocity, not date</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px">
+      <sc-for list="{{ rising }}" as="r" hint-placeholder-count="3">
+        <div style="background:linear-gradient(135deg,var(--heat-hot,var(--accent))14,transparent 60%),rgba(var(--surface-tint-rgb),.04);border:1px solid rgba(255,80,41,.25);border-radius:12px;padding:14px 16px">
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:14px;margin-bottom:3px">{{ r.title }}</div>
+          <div style="font-size:11px;color:rgba(var(--ink-1-rgb),.55);margin-bottom:10px">{{ r.meta }}</div>
+          <x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.HypeButton" active="{{ true }}" count="{{ r.hypes }}" trend="{{ r.trend }}" on-toggle="{{ r.hype }}" size="sm" hint-size="100,30"></x-import>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="margin-bottom:32px;border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:16px;background:rgba(var(--surface-tint-rgb),.03);padding:20px 22px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px">
+      <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;margin:0">🌡️ <span data-i18n="dcHeatMap">Heat map</span></h2>
+      <a href="../discover/DiscoverMap.html" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)" data-i18n="dcMapView">Map view →</a>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:18px">
+      <sc-for list="{{ cityHeat }}" as="ch" hint-placeholder-count="4">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="width:92px;flex-shrink:0;font-size:12px;color:rgba(var(--ink-1-rgb),.7)">{{ ch.label }}</span>
+          <div style="flex:1;height:8px;border-radius:4px;background:rgba(var(--surface-tint-rgb),.07);overflow:hidden" role="img" aria-label="{{ ch.label }}: {{ ch.scoreLabel }}">
+            <sc-if value="{{ ch.isFire }}"><div style="width:100%;height:100%;border-radius:4px;background:var(--heat-fire,#ff1f3d)"></div></sc-if>
+            <sc-if value="{{ ch.isHot }}"><div style="width:70%;height:100%;border-radius:4px;background:var(--heat-hot,var(--accent))"></div></sc-if>
+            <sc-if value="{{ ch.isWarm }}"><div style="width:45%;height:100%;border-radius:4px;background:var(--heat-warm,#ffb84a)"></div></sc-if>
+            <sc-if value="{{ ch.isCold }}"><div style="width:20%;height:100%;border-radius:4px;background:var(--heat-cold,#3a4a5a)"></div></sc-if>
+          </div>
+          <span style="width:64px;flex-shrink:0;text-align:right;font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(var(--ink-1-rgb),.45)">{{ ch.scoreLabel }}</span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <sc-for list="{{ genreHeat }}" as="gh" hint-placeholder-count="6">
+        <sc-if value="{{ gh.isFire }}"><span style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:999px;font-size:11px;font-family:'JetBrains Mono',monospace;background:rgba(255,31,61,.12);border:1px solid rgba(255,31,61,.25);color:#ff1f3d"><span style="width:6px;height:6px;border-radius:50%;background:#ff1f3d"></span>{{ gh.label }}</span></sc-if>
+        <sc-if value="{{ gh.isHot }}"><span style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:999px;font-size:11px;font-family:'JetBrains Mono',monospace;background:rgba(255,80,41,.12);border:1px solid rgba(255,80,41,.25);color:var(--accent)"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent)"></span>{{ gh.label }}</span></sc-if>
+        <sc-if value="{{ gh.isWarm }}"><span style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:999px;font-size:11px;font-family:'JetBrains Mono',monospace;background:rgba(255,184,74,.12);border:1px solid rgba(255,184,74,.25);color:#ffb84a"><span style="width:6px;height:6px;border-radius:50%;background:#ffb84a"></span>{{ gh.label }}</span></sc-if>
+        <sc-if value="{{ gh.isCold }}"><span style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:999px;font-size:11px;font-family:'JetBrains Mono',monospace;background:rgba(var(--surface-tint-rgb),.05);border:1px solid rgba(var(--surface-tint-rgb),.14);color:rgba(var(--ink-1-rgb),.5)"><span style="width:6px;height:6px;border-radius:50%;background:#3a4a5a"></span>{{ gh.label }}</span></sc-if>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:32px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:rgba(var(--ink-1-rgb),.3);flex-shrink:0" data-i18n="dcCity">City</span>
+      <sc-for list="{{ cities }}" as="c" hint-placeholder-count="4">
+        <sc-if value="{{ c.active }}"><button onClick="{{ c.pick }}" style="padding:5px 12px;border-radius:20px;font-size:12px;font-family:'JetBrains Mono',monospace;background:var(--accent);color:#fff;border:1px solid rgba(var(--surface-tint-rgb),.12);cursor:pointer">{{ c.label }}</button></sc-if>
+        <sc-if value="{{ c.inactive }}"><button onClick="{{ c.pick }}" style="padding:5px 12px;border-radius:20px;font-size:12px;font-family:'JetBrains Mono',monospace;background:rgba(var(--surface-tint-rgb),.05);color:rgba(var(--ink-1-rgb),.6);border:1px solid rgba(var(--surface-tint-rgb),.12);cursor:pointer">{{ c.label }}</button></sc-if>
+      </sc-for>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:rgba(var(--ink-1-rgb),.3);flex-shrink:0" data-i18n="dcGenre">Genre</span>
+      <sc-for list="{{ genres }}" as="g" hint-placeholder-count="5">
+        <sc-if value="{{ g.active }}"><button onClick="{{ g.pick }}" style="padding:5px 12px;border-radius:20px;font-size:12px;font-family:'JetBrains Mono',monospace;background:var(--role-dj);color:#fff;border:1px solid rgba(var(--surface-tint-rgb),.12);cursor:pointer">{{ g.label }}</button></sc-if>
+        <sc-if value="{{ g.inactive }}"><button onClick="{{ g.pick }}" style="padding:5px 12px;border-radius:20px;font-size:12px;font-family:'JetBrains Mono',monospace;background:rgba(var(--surface-tint-rgb),.05);color:rgba(var(--ink-1-rgb),.6);border:1px solid rgba(var(--surface-tint-rgb),.12);cursor:pointer">{{ g.label }}</button></sc-if>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px">
+    <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;margin:0" data-i18n="dcUpcomingShows">Upcoming shows</h2>
+    <a href="../fan-app/FanApp.dc.html" style="font-size:12px;color:var(--accent);font-family:'JetBrains Mono',monospace;letter-spacing:.06em" data-i18n="dcViewAll">VIEW ALL →</a>
+  </div>
+  <div id="dsc-shows" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:48px">
+    <sc-if value="{{ noShows }}"><x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.EmptyState" icon="🎤" title="{{ noShowsTitle }}" detail="{{ noShowsDetail }}" hint-size="100%,220px"></x-import></sc-if>
+    <sc-for list="{{ shows }}" as="s" hint-placeholder-count="4">
+<div style="background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:12px;padding:16px 18px;cursor:pointer" style-hover="border-color:rgba(255,80,41,.35)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:6px">
+        <sc-if value="{{ s.isFire }}"><span role="img" aria-label="Hottest right now" title="Hottest right now" style="width:7px;height:7px;border-radius:50%;background:var(--heat-fire,#ff1f3d);flex-shrink:0"></span></sc-if>
+            <sc-if value="{{ s.isHot }}"><span role="img" aria-label="Hot" title="Hot" style="width:7px;height:7px;border-radius:50%;background:var(--heat-hot,var(--accent));flex-shrink:0"></span></sc-if>
+            <sc-if value="{{ s.isWarm }}"><span role="img" aria-label="Warming up" title="Warming up" style="width:7px;height:7px;border-radius:50%;background:var(--heat-warm,#ffb84a);flex-shrink:0"></span></sc-if>
+            <sc-if value="{{ s.isCold }}"><span role="img" aria-label="Just getting started" title="Just getting started" style="width:7px;height:7px;border-radius:50%;background:var(--heat-cold,#3a4a5a);flex-shrink:0"></span></sc-if>
+            <sc-if value="{{ s.isLive }}"><span style="font-size:11px;color:var(--accent);font-family:'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase">{{ s.date }}</span></sc-if>
+            <sc-if value="{{ s.notLive }}"><span style="font-size:11px;color:rgba(var(--ink-1-rgb),.5);font-family:'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase">{{ s.date }}</span></sc-if>
+          </div>
+          <span style="font-size:11px;color:var(--role-venue);font-family:'JetBrains Mono',monospace">{{ s.price }}</span>
+        </div>
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:15px;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.title }}</div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px">
+          <div style="font-size:12px;color:rgba(var(--ink-1-rgb),.55);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">{{ s.meta }}</div>
+          <sc-if value="{{ s.hyped }}"><x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.HypeButton" active="{{ true }}" count="{{ s.hypes }}" on-toggle="{{ s.hype }}" size="sm" hint-size="70,30"></x-import></sc-if>
+          <sc-if value="{{ s.notHyped }}"><x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.HypeButton" active="{{ false }}" count="{{ s.hypes }}" on-toggle="{{ s.hype }}" size="sm" hint-size="70,30"></x-import></sc-if>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;margin:0 0 16px" data-i18n="dcTrendingArtists">Trending artists &amp; DJs</h2>
+  <div id="dsc-artists" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:48px">
+    <sc-if value="{{ noArtists }}"><x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.EmptyState" icon="👥" title="{{ noArtistsTitle }}" detail="{{ noArtistsDetail }}" hint-size="100%,220px"></x-import></sc-if>
+    <sc-for list="{{ artists }}" as="a" hint-placeholder-count="6">
+      <div style="background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px">
+        <sc-if value="{{ a.isArtist }}"><div style="width:44px;height:44px;border-radius:22px;background:linear-gradient(135deg,var(--accent),#b983ff);display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="11" rx="3"></rect><path d="M5 10v1a7 7 0 0 0 14 0v-1"></path><line x1="12" y1="18" x2="12" y2="22"></line><line x1="9" y1="22" x2="15" y2="22"></line></svg></div></sc-if>
+        <sc-if value="{{ a.isPromoter }}"><div style="width:44px;height:44px;border-radius:22px;background:linear-gradient(135deg,var(--role-dj),#b983ff);display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"></line><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"></line></svg></div></sc-if>
+        <div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:14px;margin-bottom:2px">{{ a.name }}</div>
+        <div style="font-size:11px;color:rgba(var(--ink-1-rgb),.5)">{{ a.city }}</div>
+        <sc-if value="{{ a.onAir }}"><div style="display:inline-flex;align-items:center;gap:4px;margin-top:5px;padding:2px 8px;border-radius:999px;background:rgba(255,62,154,.15);border:1px solid rgba(255,62,154,.3)"><span style="width:5px;height:5px;border-radius:50%;background:var(--role-dj)"></span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--role-dj)" data-i18n="dcOnAirNow">On air now</span></div></sc-if></div>
+        <sc-if value="{{ a.hyped }}"><x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.HypeButton" active="{{ true }}" count="{{ a.hypes }}" on-toggle="{{ a.hype }}" size="sm" hint-size="70,30"></x-import></sc-if>
+        <sc-if value="{{ a.notHyped }}"><x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.HypeButton" active="{{ false }}" count="{{ a.hypes }}" on-toggle="{{ a.hype }}" size="sm" hint-size="70,30"></x-import></sc-if>
+      </div>
+    </sc-for>
+  </div>
+
+  <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;margin:0 0 16px" data-i18n="dcVenues">Venues</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
+    <sc-if value="{{ noVenues }}"><x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.EmptyState" icon="🏛️" title="{{ noVenuesTitle }}" detail="{{ noVenuesDetail }}" hint-size="100%,220px"></x-import></sc-if>
+    <sc-for list="{{ venues }}" as="v" hint-placeholder-count="3">
+      <div style="background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:12px;padding:16px 18px;cursor:pointer">
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:var(--role-venue);margin-bottom:4px;display:flex;align-items:center;gap:7px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--role-venue)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M5 21V7l8-4v18"></path><path d="M19 21V11l-6-4"></path></svg>{{ v.name }}</div>
+        <div style="font-size:12px;color:rgba(var(--ink-1-rgb),.55)">{{ v.city }}</div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script>function dcApplyI18n(){if(!window.ihypeT)return;document.querySelectorAll('[data-i18n]').forEach(function(el){el.innerHTML=window.ihypeT(el.getAttribute('data-i18n'))})}document.addEventListener('DOMContentLoaded',dcApplyI18n);window.addEventListener('ihype-i18n-change',dcApplyI18n);if(window.ihypeT)dcApplyI18n();</script>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { city: null, genre: null, hyped: {} };
+  componentDidMount() { this._stagger(); }
+  componentDidUpdate() { this._stagger(); }
+  _stagger() {
+    requestAnimationFrame(() => {
+      ['dsc-shows', 'dsc-artists'].forEach(id => {
+        const grid = document.getElementById(id);
+        if (!grid) return;
+        Array.from(grid.children).forEach((el, i) => {
+          el.style.animation = 'none';
+          void el.offsetWidth;
+          el.style.animation = 'ihFadeUp .5s cubic-bezier(.16,1,.3,1) both';
+          el.style.animationDelay = (i * 55) + 'ms';
+        });
+      });
+    });
+  }
+  hypeBtn(key, base) {
+    const on = this.state.hyped[key];
+    return {
+      hypes: (base + (on ? 1 : 0)).toLocaleString(),
+      hyped: on, notHyped: !on,
+      hype: () => this.setState(s => ({ hyped: { ...s.hyped, [key]: !s.hyped[key] } })),
+    };
+  }
+  heatTier(base) {
+    if (base >= 1500) return { isFire: true, isHot: false, isWarm: false, isCold: false };
+    if (base >= 700) return { isFire: false, isHot: true, isWarm: false, isCold: false };
+    if (base >= 400) return { isFire: false, isHot: false, isWarm: true, isCold: false };
+    return { isFire: false, isHot: false, isWarm: false, isCold: true };
+  }
+  aggTier(score, [fire, hot, warm]) {
+    if (score >= fire) return { isFire: true, isHot: false, isWarm: false, isCold: false };
+    if (score >= hot) return { isFire: false, isHot: true, isWarm: false, isCold: false };
+    if (score >= warm) return { isFire: false, isHot: false, isWarm: true, isCold: false };
+    return { isFire: false, isHot: false, isWarm: false, isCold: true };
+  }
+  renderVals() {
+    const t = window.ihypeT || (k => k);
+    const { city, genre } = this.state;
+    const chip = (list, cur, key) => list.map(label => ({
+      label: cur === label ? label + ' ×' : label,
+      active: cur === label, inactive: cur !== label,
+      pick: () => this.setState({ [key]: cur === label ? null : label }),
+    }));
+    const SHOWS = [
+      { title: 'Nyla — Glasslight Tour', meta: 'Nyla · Portland', date: 'LIVE NOW', isLive: true, notLive: false, price: '$28', base: 1977, city: 'Portland' },
+      { title: 'Late Coast — Live Session', meta: 'DJ Caro · New York', date: 'Fri, Jul 24', isLive: false, notLive: true, price: 'Free', base: 412, city: 'New York' },
+      { title: 'Wax Tropic — Drift Coast', meta: 'Wax Tropic · Austin', date: 'Sat, Jul 25', isLive: false, notLive: true, price: '$25', base: 866, city: 'Austin' },
+      { title: 'Harborside Sessions', meta: 'Various · Portland', date: 'Sun, Aug 2', isLive: false, notLive: true, price: '$15', base: 301, city: 'Portland' },
+    ];
+    const ARTISTS = [
+      { name: 'Nyla', role: 'Artist', isArtist: true, isPromoter: false, emoji: '🎤', city: 'Portland, ME', base: 4821, genre: 'dream-pop' },
+      { name: 'DJ Caro', role: 'Promoter', isArtist: false, isPromoter: true, emoji: '🎤', city: 'New York, NY', base: 2214, genre: 'electronic', onAir: true },
+      { name: 'Midnight Echo', role: 'Artist', isArtist: true, isPromoter: false, emoji: '🎤', city: 'New York, NY', base: 1902, genre: 'shoegaze' },
+      { name: 'Wax Tropic', role: 'Artist', isArtist: true, isPromoter: false, emoji: '🎤', city: 'Austin, TX', base: 1540, genre: 'jazz' },
+      { name: 'Cold Harbor', role: 'Artist', isArtist: true, isPromoter: false, emoji: '🎤', city: 'Portland, ME', base: 988, genre: 'punk' },
+      { name: 'Mars.fm', role: 'Promoter', isArtist: false, isPromoter: true, emoji: '🎤', city: 'Los Angeles, CA', base: 640, genre: 'lo-fi', onAir: false },
+    ];
+    const RISING = [
+      { title: 'Nyla — Glasslight Tour', meta: 'Portland, ME · Live now', trend: '▲ 340/hr', base: 1977 },
+      { title: 'Wax Tropic', meta: 'Austin, TX · Drift Coast', trend: '▲ 118/hr', base: 866 },
+      { title: 'Midnight Echo', meta: 'New York, NY · Shoegaze', trend: '▲ 64/hr', base: 1902 },
+    ];
+    const cityTotals = {};
+    [...SHOWS, ...ARTISTS].forEach(x => { cityTotals[x.city] = (cityTotals[x.city] || 0) + x.base; });
+    const genreTotals = {};
+    ARTISTS.forEach(a => { genreTotals[a.genre] = (genreTotals[a.genre] || 0) + a.base; });
+    return {
+      noShowsTitle: t('dcNoShowsTitle'), noShowsDetail: t('dcNoShowsDetail'),
+      noArtistsTitle: t('dcNoArtistsTitle'), noArtistsDetail: t('dcNoArtistsDetail'),
+      noVenuesTitle: t('dcNoVenuesTitle'), noVenuesDetail: t('dcNoVenuesDetail'),
+      cityHeat: Object.entries(cityTotals).map(([label, score]) => ({
+        label, scoreLabel: score.toLocaleString() + ' hypes', ...this.aggTier(score, [6000, 2500, 1000]),
+      })),
+      genreHeat: Object.entries(genreTotals).map(([label, score]) => ({
+        label, ...this.aggTier(score, [4000, 1800, 800]),
+      })),
+      rising: RISING.map((r, i) => ({ ...r, ...this.hypeBtn('rising' + i, r.base), hypes: (r.base + (this.state.hyped['rising'+i] ? 1 : 0)).toLocaleString() })),
+      cities: chip(['Portland', 'New York', 'Austin', 'Los Angeles'], city, 'city'),
+      genres: chip(['dream-pop', 'electronic', 'shoegaze', 'jazz', 'punk', 'lo-fi'], genre, 'genre'),
+      shows: SHOWS.filter(s => !city || s.city === city).map((s, i) => ({ ...s, ...this.hypeBtn('s' + i, s.base), ...this.heatTier(s.base) })),
+      noShows: SHOWS.filter(s => !city || s.city === city).length === 0,
+      artists: ARTISTS.filter(a => (!city || a.city.startsWith(city)) && (!genre || a.genre === genre)).map((a, i) => ({ ...a, onAir: !!a.onAir, ...this.hypeBtn('a' + i, a.base) })),
+      noArtists: ARTISTS.filter(a => (!city || a.city.startsWith(city)) && (!genre || a.genre === genre)).length === 0,
+      venues: [
+        { name: 'Port City Music Hall', city: 'Portland, ME' },
+        { name: 'The Sinclair', city: 'Cambridge, MA' },
+        { name: 'Mohawk', city: 'Austin, TX' },
+      ].filter(v => !city || v.city.startsWith(city)),
+      noVenues: [
+        { name: 'Port City Music Hall', city: 'Portland, ME' },
+        { name: 'The Sinclair', city: 'Cambridge, MA' },
+        { name: 'Mohawk', city: 'Austin, TX' },
+      ].filter(v => !city || v.city.startsWith(city)).length === 0,
+    };
+  }
+}
+</script>
+</body>
+</html>

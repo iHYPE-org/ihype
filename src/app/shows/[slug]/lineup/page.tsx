@@ -191,7 +191,7 @@ export default async function LineupSplitPage({ params }: { params: Promise<{ sl
         .lsp-name { font-family: var(--font-display); font-weight: 800; font-size: 15px; color: var(--ink); }
         .lsp-meta { font-size: 12px; color: var(--ink-a55); margin-top: 2px; }
         .lsp-pill { flex-shrink: 0; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; padding: 5px 10px; border-radius: var(--radius-pill); }
-        .lsp-pill-pending { background: rgba(var(--role-promoter-rgb),.15); color: var(--role-promoter); }
+        .lsp-pill-pending { background: rgba(var(--warning-rgb),.15); color: var(--warning-text); }
         .lsp-pill-accepted { background: rgba(var(--role-venue-rgb),.15); color: var(--role-venue); }
         .lsp-pill-declined { background: rgba(var(--accent-rgb),.15); color: var(--accent); }
         .lsp-card-actions { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }

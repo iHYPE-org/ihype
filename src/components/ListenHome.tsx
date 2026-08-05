@@ -8,7 +8,7 @@ import { useI18n } from '@/components/I18nProvider';
 import { useMediaPlayer, type MediaTrack } from '@/components/GlobalMediaPlayer';
 import { useAppShellActive } from '@/components/shell/AppShellContext';
 
-const PALETTE = ['var(--accent)', 'var(--role-fan)', 'var(--role-venue)', 'var(--accent-2)', 'var(--role-promoter)', '#7fb3ff'];
+const PALETTE = ['var(--accent)', 'var(--role-fan)', 'var(--role-venue)', 'var(--accent-2)', 'var(--warning)', 'var(--blue)'];
 
 /**
  * The tab ids the app shell's persistent context strip already carries for

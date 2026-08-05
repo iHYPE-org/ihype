@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+import { readRuntimeEnv } from '@/lib/runtime-env';
+
 /**
  * Android App Links association file, served at exactly this path
  * (literal .json extension) over HTTPS. Android verifies this against the
@@ -14,7 +16,9 @@ import { NextResponse } from 'next/server';
  * both the Play "app signing" cert and a local upload cert) once available.
  */
 export async function GET() {
-  const fingerprints = (process.env.ANDROID_CERT_SHA256_FINGERPRINTS ?? '')
+  // Via readRuntimeEnv, same reason as the Apple association route: this
+  // arrives as a Worker secret and is invisible to process.env on workerd.
+  const fingerprints = (readRuntimeEnv('ANDROID_CERT_SHA256_FINGERPRINTS') ?? '')
     .split(',')
     .map((fp) => fp.trim())
     .filter(Boolean);

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<!-- @template name="iHYPE My Support Tickets" description="User-facing support ticket list + new-ticket composer" -->
+<helmet>
+  <script src="./ds-base.js"></script>
+<script src="../../lib/theme.js"></script>
+<script src="../../lib/theme-toggle.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>html,body{margin:0;background:radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),var(--bg-base)}*{box-sizing:border-box}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--bg-base);color:var(--ink-1);font-family:'DM Sans',sans-serif;padding:44px 24px 100px;max-width:640px;margin:0 auto">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:24px">
+    <h1 data-i18n="stTitle" style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px;letter-spacing:-.02em;margin:0">My Support Tickets</h1>
+    <button data-i18n="stNewTicket" onClick="{{ openNew }}" style="flex-shrink:0;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;padding:10px 18px;border-radius:9px;border:none;cursor:pointer;background:var(--accent);color:#fff">New ticket</button>
+  </div>
+
+  <sc-if value="{{ composing }}">
+    <div style="border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:16px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);padding:20px;margin-bottom:24px">
+      <div data-i18n="stNewTicket" style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;margin-bottom:14px">New ticket</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <input value="{{ newSubject }}" onChange="{{ setNewSubject }}" data-i18n-ph="stSubject" placeholder="Subject" style="width:100%;height:42px;background:var(--bg-base);border:1px solid rgba(var(--surface-tint-rgb),.14);border-radius:9px;padding:0 14px;color:var(--ink-1);font-family:'DM Sans',sans-serif;font-size:14px;box-sizing:border-box">
+        <textarea value="{{ newBody }}" onChange="{{ setNewBody }}" rows="4" data-i18n-ph="stDescribe" placeholder="Describe your issue" style="width:100%;background:var(--bg-base);border:1px solid rgba(var(--surface-tint-rgb),.14);border-radius:9px;padding:10px 14px;color:var(--ink-1);font-family:'DM Sans',sans-serif;font-size:14px;box-sizing:border-box;resize:vertical"></textarea>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button data-i18n="stCancel" onClick="{{ cancelNew }}" style="padding:9px 16px;border-radius:9px;border:1px solid rgba(var(--surface-tint-rgb),.14);background:transparent;color:var(--ink-1);font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
+          <sc-if value="{{ canSubmit }}"><button data-i18n="stSubmitBtn" onClick="{{ submitNew }}" style="padding:9px 16px;border-radius:9px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer">Submit</button></sc-if>
+          <sc-if value="{{ cantSubmit }}"><button data-i18n="stSubmitBtn" style="padding:9px 16px;border-radius:9px;border:none;background:rgba(255,80,41,.3);color:rgba(var(--surface-tint-rgb),.5);font-size:13px;font-weight:600;cursor:not-allowed">Submit</button></sc-if>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ hasTickets }}">
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <sc-for list="{{ tickets }}" as="t" hint-placeholder-count="4">
+        <div style="border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:12px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);padding:16px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:6px">
+            <div style="font-weight:600;font-size:14px">{{ t.subject }}</div>
+            <sc-if value="{{ t.isOpen }}"><span data-i18n="stOpen" style="flex-shrink:0;font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;padding:5px 10px;border-radius:999px;background:rgba(255,184,74,.15);color:#ffb84a">Open</span></sc-if>
+            <sc-if value="{{ t.isAnswered }}"><span data-i18n="stAnswered" style="flex-shrink:0;font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;padding:5px 10px;border-radius:999px;background:rgba(34,229,212,.15);color:var(--role-venue)">Answered</span></sc-if>
+            <sc-if value="{{ t.isClosed }}"><span data-i18n="stClosed" style="flex-shrink:0;font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;padding:5px 10px;border-radius:999px;background:rgba(120,120,120,.15);color:var(--ink-2)">Closed</span></sc-if>
+          </div>
+          <div style="font-size:12px;color:var(--ink-2);margin-bottom:8px">#{{ t.id }} · {{ t.date }}</div>
+          <p style="font-size:13px;color:var(--ink-2);line-height:1.5;margin:0">{{ t.preview }}</p>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+  <sc-if value="{{ noTickets }}">
+    <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:56px 24px;border:1px dashed rgba(var(--surface-tint-rgb),.08);border-radius:16px">
+      <div style="font-size:28px;opacity:.5">🎫</div>
+      <div data-i18n="stNoTickets" style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px">No support tickets</div>
+      <div data-i18n="stNoTicketsBody" style="font-size:13px;color:var(--ink-2);max-width:300px;line-height:1.5">Questions about tickets, payouts, or your account? Open a new ticket above.</div>
+    </div>
+  </sc-if>
+</div>
+<script>function stApplyI18n(){if(!window.ihypeT)return;document.querySelectorAll('[data-i18n]').forEach(function(el){el.innerHTML=window.ihypeT(el.getAttribute('data-i18n'))});document.querySelectorAll('[data-i18n-ph]').forEach(function(el){el.placeholder=window.ihypeT(el.getAttribute('data-i18n-ph'))})}document.addEventListener('DOMContentLoaded',stApplyI18n);window.addEventListener('ihype-i18n-change',stApplyI18n);if(window.ihypeT)stApplyI18n();</script>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    composing: false, newSubject: '', newBody: '',
+    tickets: [
+      { id: '2044', subject: 'Payout hasn\u2019t arrived yet', date: 'Jul 21, 2026', preview: 'Show ended 3 days ago and my transfer still shows pending in payout history.', status: 'answered' },
+      { id: '2011', subject: 'Wrong split shown on show page', date: 'Jul 15, 2026', preview: 'The lineup page shows my split as 65% instead of 70%.', status: 'closed' },
+      { id: '1988', subject: 'Can\u2019t connect Stripe account', date: 'Jul 9, 2026', preview: 'Onboarding link redirects to an error page after I submit my details.', status: 'open' },
+    ],
+  };
+  renderVals() {
+    const canSubmit = this.state.newSubject.trim().length > 0;
+    const tickets = this.state.tickets.map(t => ({ ...t, isOpen: t.status === 'open', isAnswered: t.status === 'answered', isClosed: t.status === 'closed' }));
+    return {
+      composing: this.state.composing,
+      newSubject: this.state.newSubject, newBody: this.state.newBody,
+      setNewSubject: (e) => this.setState({ newSubject: e.target.value }),
+      setNewBody: (e) => this.setState({ newBody: e.target.value }),
+      canSubmit, cantSubmit: !canSubmit,
+      openNew: () => this.setState({ composing: true }),
+      cancelNew: () => this.setState({ composing: false, newSubject: '', newBody: '' }),
+      submitNew: () => {
+        if (!this.state.newSubject.trim()) return;
+        const id = String(1000 + Math.floor(Math.random() * 9000));
+        const date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        this.setState(s => ({
+          composing: false, newSubject: '', newBody: '',
+          tickets: [{ id, subject: s.newSubject.trim(), date, preview: s.newBody.trim() || 'No additional details provided.', status: 'open' }, ...s.tickets],
+        }));
+      },
+      tickets, hasTickets: tickets.length > 0, noTickets: tickets.length === 0,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -81,11 +81,11 @@ export async function TrustSafetyPanel() {
         @keyframes auditPulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
         .audit-pulse-dot {
           display: inline-block; width: 7px; height: 7px; border-radius: 50%;
-          background: var(--role-promoter); margin-right: 8px; animation: auditPulse 1.4s infinite;
+          background: var(--warning); margin-right: 8px; animation: auditPulse 1.4s infinite;
         }
       `}</style>
       <section className="lp-hero" style={{ paddingBottom: '20px' }}>
-        <p className="lp-hype-eyebrow" style={{ color: 'var(--role-promoter)' }}><span className="audit-pulse-dot" />{t('auditPage.eyebrowLiveStats', 'LIVE STATS · UPDATED IN REAL TIME')}</p>
+        <p className="lp-hype-eyebrow" style={{ color: 'var(--warning-text)' }}><span className="audit-pulse-dot" />{t('auditPage.eyebrowLiveStats', 'LIVE STATS · UPDATED IN REAL TIME')}</p>
         <h1 className="lp-hero-h" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)' }}>{t('auditPage.heroTitle', 'Trust & safety report')}</h1>
         <p className="lp-hero-sub">
           {t('auditPage.heroSub', 'Every upload is screened by AI before it goes live, and every user report is tracked to a resolution. Here are the aggregate numbers — no usernames, no content IDs, nothing that could identify anyone involved.')}

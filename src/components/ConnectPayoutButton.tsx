@@ -71,7 +71,7 @@ export function ConnectPayoutButton({ profileId, connected, hasStarted }: Props)
         .connect-payout-panel { padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--hair-30); display: flex; flex-direction: column; gap: 10px; }
         .connect-payout-badge { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; }
         .connect-payout-badge-ok { color: var(--success, var(--role-venue)); }
-        .connect-payout-badge-pending { color: var(--warning, var(--role-promoter)); }
+        .connect-payout-badge-pending { color: var(--warning-text); }
         .connect-payout-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
         .connect-payout-copy { font-size: .85rem; color: var(--ink-2); line-height: 1.5; margin: 8px 0 0; }
         .connect-payout-btn { align-self: flex-start; background: var(--accent); color: var(--ink-on-accent); border: none; border-radius: 8px; padding: 10px 20px; font-family: var(--font-display); font-weight: 700; font-size: .85rem; cursor: pointer; }

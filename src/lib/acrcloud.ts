@@ -28,6 +28,8 @@
  * response shape on the first real upload.
  */
 
+import { readRuntimeEnv } from '@/lib/runtime-env';
+
 // ACRCloud's identify endpoint fingerprints a short sample, not a whole
 // track. Cap what we send so a large upload doesn't exceed the API's sample
 // size limit — the first ~1 MB of a compressed track is well over the
@@ -63,9 +65,14 @@ export function isAcrCloudConfigured(): boolean {
 }
 
 function readCreds() {
-  const host = process.env.ACRCLOUD_HOST?.trim();
-  const accessKey = process.env.ACRCLOUD_ACCESS_KEY?.trim();
-  const accessSecret = process.env.ACRCLOUD_ACCESS_SECRET?.trim();
+  // Worker secrets, so process.env alone never sees them in production —
+  // readRuntimeEnv falls back to the Cloudflare env binding. Read the old
+  // way, isAcrCloudConfigured() answers false on every deploy and BOTH
+  // fingerprint layers (track-upload scan layer 1, ad-audio vetting layer 1)
+  // silently report "not configured" no matter what is set.
+  const host = readRuntimeEnv('ACRCLOUD_HOST');
+  const accessKey = readRuntimeEnv('ACRCLOUD_ACCESS_KEY');
+  const accessSecret = readRuntimeEnv('ACRCLOUD_ACCESS_SECRET');
   if (!host || !accessKey || !accessSecret) return null;
   return { host, accessKey, accessSecret };
 }
