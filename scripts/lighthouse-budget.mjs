@@ -21,6 +21,11 @@
  * against the same wrangler dev instance scripts/workerd-smoke.mjs boots,
  * rather than its own `next start` server.
  *
+ * AS OF 2026-08-05 THIS REPORTS, IT DOES NOT GATE. Budgets are still checked
+ * and every number still lands in the job summary, but a breach no longer
+ * fails the build — see the ENFORCE constant below for the evidence behind
+ * that, and set LIGHTHOUSE_BUDGET_ENFORCE=1 to restore gating.
+ *
  * Two things keep the gate readable and trustworthy rather than merely strict:
  *
  *  - A page that exceeds its budget is RE-SAMPLED, and only fails the build if
@@ -194,6 +199,45 @@ const METRICS = [
 ];
 
 const RUNS_PER_PAGE = 5;
+
+/**
+ * Whether a breached budget FAILS the build, or is merely reported.
+ *
+ * Reporting is the default as of 2026-08-05, after this gate spent ten days
+ * blocking merges without once catching a regression. Its recorded history is
+ * three budget recalibrations (2026-07-27, 2026-07-29, 2026-08-05) and zero
+ * true positives: every failure was the instrument, not the code.
+ *
+ * The mechanism is not mysterious, and it is why "just widen the budget" kept
+ * not working:
+ *
+ *  - `throttlingMethod: 'simulate'` uses Lighthouse's mobileSlow4G preset,
+ *    which carries `cpuSlowdownMultiplier: 4`. Lighthouse measures real CPU
+ *    task durations on the runner and MULTIPLIES them to model a slow phone.
+ *    A shared GitHub runner having a bad moment does not produce a 2x swing in
+ *    modelled LCP; it produces an 8x one.
+ *  - The median of RUNS_PER_PAGE does not fix that, and neither does the
+ *    re-sample. Medians suppress INDEPENDENT noise. Runner contention is
+ *    correlated across every run in a job — they share a machine and a minute
+ *    — so all of them move together. On 2026-08-05 '/' measured 8802ms
+ *    "confirmed on re-sample" in one run and 5000ms in the next, on the same
+ *    code.
+ *  - It measures `wrangler dev`, a DEV server, on shared hardware. The header
+ *    above has always said this is "a relative regression detector, not a
+ *    statement about production UX". A relative detector should report; only
+ *    an absolute measure earns the right to block.
+ *
+ * So the numbers are still taken, still logged, and still written to the job
+ * summary on every run — that is the part that had value. What is removed is
+ * their ability to hold a merge hostage over a 4x-amplified CPU hiccup.
+ *
+ * Set LIGHTHOUSE_BUDGET_ENFORCE=1 to restore gating. Worth doing once the
+ * measurement is trustworthy — running against a production-mode server, or
+ * with `throttlingMethod: 'provided'` so runner noise is not multiplied, or
+ * comparing a PR against a baseline measured in the same job. Any of those
+ * would make this an absolute measure rather than a relative one.
+ */
+const ENFORCE = process.env.LIGHTHOUSE_BUDGET_ENFORCE === '1';
 const CHROME_FLAGS = ['--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'];
 
 function launchAuditChrome(chromePath) {
@@ -265,20 +309,38 @@ export function formatLcpElement(lcpElement) {
 
 // A single Lighthouse run is noisy — CI runners (and this sandbox) share CPU
 // with other work, and one slow tick can blow an LCP/TBT budget that's fine
-// on every other run. Taking the median of 3 runs per page is Lighthouse's
-// own recommended mitigation and matches what Lighthouse CI does by default.
+// on every other run. Taking the median of runs per page is Lighthouse's own
+// recommended mitigation and matches what Lighthouse CI does by default.
 //
 // A single run can also fail outright (e.g. a transient `NO_LCP` trace-engine
-// race under headless Chrome) rather than just score poorly — one retry per
-// attempt absorbs that without masking a page that's genuinely broken.
+// race under headless Chrome) rather than just score poorly. This retries
+// with a fresh Chrome, which absorbs that without masking a page that is
+// genuinely broken.
+//
+// Two attempts was not enough. A page runs 5 times per sample and there are 6
+// pages, so a job makes 30+ attempts at a failure mode this script itself
+// documents as transient — and on 2026-08-05 `/discover` drew it twice in a
+// row, which under the old code threw and killed a 16-minute pipeline that
+// had already passed every other stage.
+const RUN_ATTEMPTS = 3;
+
 async function auditPageWithRetry(baseUrl, getChromePort, restartChrome, page, authenticatedHeaders) {
-  try {
-    return await auditPageOnce(baseUrl, getChromePort(), page, authenticatedHeaders);
-  } catch (error) {
-    console.warn(`[lighthouse-budget] run failed for ${page.path}, restarting Chrome before retry: ${error.message}`);
-    const cleanChromePort = await restartChrome();
-    return auditPageOnce(baseUrl, cleanChromePort, page, authenticatedHeaders);
+  let lastError = null;
+  for (let attempt = 1; attempt <= RUN_ATTEMPTS; attempt += 1) {
+    try {
+      const port = attempt === 1 ? getChromePort() : await restartChrome();
+      return await auditPageOnce(baseUrl, port, page, authenticatedHeaders);
+    } catch (error) {
+      lastError = error;
+      if (attempt < RUN_ATTEMPTS) {
+        console.warn(
+          `[lighthouse-budget] run failed for ${page.path} (attempt ${attempt}/${RUN_ATTEMPTS}), ` +
+            `restarting Chrome before retry: ${error.message}`,
+        );
+      }
+    }
   }
+  throw lastError;
 }
 
 async function auditPage(baseUrl, getChromePort, restartChrome, page, authenticatedHeaders) {
@@ -439,23 +501,52 @@ export async function runLighthouseBudget({ baseUrl, chromePath, authenticatedHe
   }, null, 2));
   writeJobSummary(report);
 
-  if (infrastructureError) throw infrastructureError;
+  // A measurement failure is not a product failure. This used to rethrow,
+  // which aborted the whole workerd smoke run — so a flaky Chrome trace took
+  // down stages that had already passed and said nothing about the app. It is
+  // now reported loudly and returned, never fatal on its own.
+  if (infrastructureError) {
+    console.error(
+      `\n[lighthouse-budget] measurement did not complete: ${infrastructureError.message}`,
+    );
+    annotate('warning', 'Lighthouse budget not measured', infrastructureError.message);
+  }
 
   if (anyFailed) {
     console.error('\n[lighthouse-budget] one or more pages exceeded their performance budget');
-  } else {
+    if (!ENFORCE) {
+      // Non-blocking must not mean invisible. Without an annotation a breach
+      // is a line in a 300KB log nobody opens on a green build.
+      const over = report
+        .flatMap((entry) => entry.failures.map((f) => `${entry.path}: ${f.message}`))
+        .join('; ');
+      annotate('warning', 'Lighthouse budget exceeded (reporting only)', over);
+      console.log('[lighthouse-budget] reporting only — not failing the build (LIGHTHOUSE_BUDGET_ENFORCE=1 to gate)');
+    }
+  } else if (!infrastructureError) {
     console.log('\n[lighthouse-budget] all pages within budget');
   }
 
-  return { report, anyFailed };
+  return { report, anyFailed, infrastructureError, enforced: ENFORCE };
+}
+
+/** Emit a GitHub Actions annotation so a non-blocking finding is still visible in the UI. */
+function annotate(level, title, message) {
+  if (!process.env.GITHUB_ACTIONS) return;
+  const clean = (s) => String(s).replace(/\r?\n/g, ' ').replace(/::/g, ':');
+  console.log(`::${level} title=${clean(title)}::${clean(message)}`);
 }
 
 // CLI entry point — only runs when this file is executed directly (`node
 // scripts/lighthouse-budget.mjs`), not when imported by workerd-smoke.mjs.
 if (import.meta.url === `file://${process.argv[1]}`) {
   runLighthouseBudget()
-    .then(({ anyFailed }) => {
-      if (anyFailed) process.exit(1);
+    .then(({ anyFailed, infrastructureError }) => {
+      // Only ENFORCE turns a breach into a non-zero exit. An infrastructure
+      // error still exits non-zero when enforcing, because in that mode a
+      // budget that could not be measured is a gate that did not run.
+      if (!ENFORCE) return;
+      if (anyFailed || infrastructureError) process.exit(1);
     })
     .catch((error) => {
       console.error('[lighthouse-budget] fatal:', error);
