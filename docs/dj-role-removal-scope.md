@@ -2,6 +2,19 @@
 
 **Status: SCOPED, NOT STARTED. Needs operator sign-off before any code is written.**
 
+> **Update 2026-08-05 — three of the four operator decisions are now cheap.**
+> Production row counts were taken (decision 1) and show 3 DJ profiles, all
+> internal, none verified, none with uploads, none with a Connect account, and
+> zero lineup slots or payable entries anywhere. This is a cleanup, not a
+> migration. Decisions 2 and 4 lose their sting as a result — see the notes
+> under each. **Decision 3 (who owns radio after DJs) is unchanged and is the
+> only genuinely open one**, because it is a question about the future rather
+> than about existing rows: advertiser spots need somebody able to build a
+> radio show, and `RadioShowCreator` / `show-composer`'s ad-interjection engine
+> is DJ-shaped end to end.
+>
+> The window for the easy version closes when real DJs sign up.
+
 `design/handoff-music-map-me/BACKEND_REWRITE.md` §1 specifies dropping the DJ
 role, and §1 itself says "**Audit first.** Count affected accounts and confirm
 the reassignment with the operator before running." This document is that audit,
@@ -66,17 +79,38 @@ These are the ones that make this a product change rather than a rename:
 
 ## Decisions only an operator can make
 
-1. **How many accounts are actually affected?** Unanswerable from here — the
-   Supabase MCP connector is unauthorized in this environment, so no row counts
-   were taken. Run before anything else:
-   ```sql
-   SELECT count(*) FROM "User"    WHERE role = 'DJ';
-   SELECT count(*) FROM "Profile" WHERE type = 'DJ';
-   SELECT count(*) FROM "Profile" WHERE type = 'DJ' AND "stripeConnectOnboarded";
-   SELECT count(*) FROM "Profile" WHERE type = 'DJ' AND "verificationStatus" = 'VERIFIED';
-   ```
-   If these are near zero, this is a cleanup. If they are not, it is a
-   migration with users on the other end of it.
+1. **How many accounts are actually affected?** ~~Unanswerable from here.~~
+   **ANSWERED 2026-08-05** — the Supabase connector was authorized and the
+   counts were taken against production:
+
+   | Query | Count |
+   |---|---|
+   | `User WHERE role = 'DJ'` | **2** |
+   | `Profile WHERE type = 'DJ'` | **3** |
+   | …`AND "stripeConnectOnboarded"` | **0** |
+   | …`AND "verificationStatus" = 'VERIFIED'` | **0** |
+   | …`AND "songUploadCount" > 0` | **0** |
+   | `ShowLineupSlot` (all rows) | **0** |
+   | `AccountsPayableEntry` (all rows) | **0** |
+
+   Against 10 users total. And none of the three is an outside user:
+
+   | slug | name | created | account |
+   |---|---|---|---|
+   | `south-loop-signal` | South Loop Signal | 2026-06-23 | `@ihype.org` — the June 23 launch seed |
+   | `suzike` | Test DJ | 2026-07-11 | gmail, named "Test DJ" |
+   | `buruka` | Brynn Atwood | 2026-07-17 | icloud, shares the operator's surname |
+
+   **So this is a cleanup, not a migration.** Per this section's own test —
+   "if these are near zero, this is a cleanup" — nothing is on the other end
+   of it. That collapses the stakes of decisions 2 and 4 below, and it means
+   the "real money attached to a row whose type changed underneath it" risk in
+   §3 above is currently hypothetical: zero DJ profiles hold a Connect account,
+   and there are no lineup slots or payable entries in the database at all.
+
+   Re-run these counts immediately before acting. They are true as of
+   2026-08-05, pre-alpha, and the whole point is that they stop being true once
+   real users arrive.
 
 2. **DJ → ARTIST, or DJ → LISTENER?** §1 says artist, to preserve upload
    rights. But it also warns that "a DJ who never uploaded a track shouldn't
@@ -88,12 +122,24 @@ These are the ones that make this a product change rather than a rename:
    DJs their standing and makes them re-apply. Both options harm someone; pick
    deliberately.
 
+   **Defused by the counts above (2026-08-05).** "Both options harm someone"
+   was written assuming real DJs existed. None of the three is verified, none
+   has uploads, none has a Connect account, and none is an outside user — so
+   neither branch harms anyone today. Pick whichever is simpler to implement
+   and move on. This reasoning expires the moment a real DJ signs up, which is
+   an argument for doing it before alpha rather than after.
+
 3. **Who owns radio after DJs?** See system 1 above. Nothing in the handoff
    answers this, and advertiser revenue depends on the answer.
 
 4. **What happens to the DJ-only URLs?** `/promoters/[slug]` is linked from
    real profiles and possibly from outside the site. Redirect to an artist
    profile, or 410?
+
+   **Low stakes as of 2026-08-05:** three slugs exist, all internal (see the
+   table in decision 1), and the site is pre-launch with no external inbound
+   links to speak of. A redirect is the cheap, safe default; this does not
+   need to be litigated.
 
 ## Sequencing, if it goes ahead
 

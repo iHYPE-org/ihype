@@ -1,13 +1,13 @@
+import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
-type LandingStat = {
-  label: string;
-  value: string;
-};
-
-export function FanFirstLanding({ stats }: { stats: LandingStat[] }) {
+/**
+ * `stats` is a slot, not data: the caller passes a Suspense boundary so the
+ * hero can paint before the counters' query resolves. See LandingStats.tsx.
+ */
+export function FanFirstLanding({ stats }: { stats: ReactNode }) {
   return (
     <div className="fan-entry">
       <header aria-label="iHYPE" className="fan-entry-header">
@@ -63,12 +63,7 @@ export function FanFirstLanding({ stats }: { stats: LandingStat[] }) {
         </section>
 
         <section aria-label="Live iHYPE platform statistics" className="fan-entry-stats">
-          {stats.map((stat) => (
-            <div key={stat.label}>
-              <strong>{stat.value}</strong>
-              <span>{stat.label}</span>
-            </div>
-          ))}
+          {stats}
         </section>
       </main>
     </div>

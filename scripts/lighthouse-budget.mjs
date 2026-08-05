@@ -142,6 +142,24 @@ import {
 // breaching 6200 twice in a run, that is a real regression — investigate the
 // LCP element rather than raising this again.
 //
+// 2026-08-05, later the same day — the cause of that swing was found, and it
+// was not the runner. '/' awaited an 18-query `$transaction` (the transparency
+// snapshot) before emitting a single byte, to render four counters that sit
+// two sections BELOW the LCP element. So every sample paid a full Postgres
+// round-trip in front of first paint, and the 4218-8782ms spread was that
+// round-trip's variance, not rendering. It was meant to be absorbed by
+// `unstable_cache(..., { revalidate: 60 })`, but that cache never stored
+// anything: `open-next.config.ts` leaves OpenNext's `incrementalCache` at its
+// "dummy" default, whose get/set both throw.
+//
+// Two fixes landed: the counters now stream behind their own <Suspense>
+// boundary (off the critical path entirely), and the 18 round-trips collapsed
+// to one query. The budget below is deliberately NOT re-tightened yet — let
+// real CI samples accumulate against the new shape first, then calibrate from
+// them. The remaining root cause is the unconfigured incremental cache, which
+// also silently no-ops `unstable_cache` at 3 other sites and `revalidate` on
+// 8 routes; that needs an operator decision about a KV/R2 binding.
+//
 // These are workerd DEV-server numbers on a shared runner, so this gate is a
 // relative regression detector, not a statement about production user
 // experience. If a change pushes a page past these, that is worth
@@ -212,7 +230,37 @@ async function auditPageOnce(baseUrl, chromePort, page, authenticatedHeaders) {
     metrics[m.label] = lhr.audits[m.key]?.numericValue ?? null;
   }
 
-  return { performance, metrics };
+  return { performance, metrics, lcpElement: readLcpElement(lhr) };
+}
+
+/**
+ * Which element Lighthouse actually timed as the LCP.
+ *
+ * The job summary added in July answered "what broke" but not "what is slow",
+ * and that gap cost real time: '/' was diagnosed as blocked on its database
+ * (true, and worth fixing on its own) but removing that from the critical path
+ * did not move LCP at all, because nobody had checked which element LCP was
+ * measuring. Two rounds of plausible-sounding inference, no measurement.
+ *
+ * Lighthouse already computes this. Surfacing it turns the next such failure
+ * into a lookup instead of an argument.
+ */
+function readLcpElement(lhr) {
+  const node = lhr.audits['largest-contentful-paint-element']
+    ?.details?.items?.[0]?.items?.[0]?.node;
+  if (!node) return null;
+  // `snippet` is the element's opening tag, `selector` its CSS path. The tag
+  // alone is usually enough to recognise it; the selector disambiguates when
+  // several elements share a tag.
+  return { snippet: node.snippet ?? null, selector: node.selector ?? null };
+}
+
+export function formatLcpElement(lcpElement) {
+  if (!lcpElement) return 'unknown (no LCP element reported)';
+  const snippet = (lcpElement.snippet ?? '').replace(/\s+/g, ' ').trim();
+  const selector = (lcpElement.selector ?? '').trim();
+  if (snippet && selector) return `${snippet}  [${selector}]`;
+  return snippet || selector || 'unknown';
 }
 
 // A single Lighthouse run is noisy — CI runners (and this sandbox) share CPU
@@ -341,6 +389,13 @@ export async function runLighthouseBudget({ baseUrl, chromePath, authenticatedHe
         unconfirmed = confirmation.unconfirmed;
 
         for (const f of failures) console.log(`  FAIL ${f.message} (confirmed on re-sample)`);
+        // Name the LCP element on any confirmed LCP failure. Without this the
+        // log says how slow the page was but not what was slow, which is the
+        // question the next person actually has.
+        if (failures.some((f) => f.metric === 'lcp')) {
+          console.log(`  LCP element (first sample):  ${formatLcpElement(first.lcpElement)}`);
+          console.log(`  LCP element (re-sample):     ${formatLcpElement(resample.lcpElement)}`);
+        }
         for (const f of unconfirmed) {
           console.log(`  WARN ${f.message} on first sample, within budget on re-sample — not failing`);
         }
@@ -351,6 +406,7 @@ export async function runLighthouseBudget({ baseUrl, chromePath, authenticatedHe
         budget: page.budget,
         performance: first.performance,
         metrics: first.metrics,
+        lcpElement: first.lcpElement,
         resample,
         failures,
         unconfirmed

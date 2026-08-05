@@ -180,6 +180,33 @@ export function renderSummaryMarkdown(report) {
     lines.push('');
   }
 
+  // Which element LCP actually timed, for any page that failed on LCP. The
+  // measured-vs-budget table says how slow a page was; this says what was
+  // slow. Only rendered on an LCP failure, so a green run stays terse.
+  const lcpFailures = report.filter((entry) =>
+    (entry.failures ?? []).some((f) => f.metric === 'lcp'),
+  );
+  if (lcpFailures.length) {
+    lines.push('### LCP element');
+    lines.push('');
+    lines.push('| Page | Element Lighthouse timed as LCP |');
+    lines.push('| --- | --- |');
+    for (const entry of lcpFailures) {
+      const el = entry.lcpElement;
+      const text = el
+        ? `\`${((el.snippet ?? el.selector ?? '').replace(/\s+/g, ' ').trim() || 'unknown').replace(/\|/g, '\\|')}\``
+        : '_not reported_';
+      lines.push(`| \`${entry.path}\` | ${text} |`);
+    }
+    lines.push('');
+    lines.push(
+      'Fix the element named here, not the budget. If it is an image, check its ' +
+        'served bytes at the emulated viewport (390px wide, DPR 2) rather than the ' +
+        'source asset size.',
+    );
+    lines.push('');
+  }
+
   lines.push(
     'Median of 5 Lighthouse runs per page, mobile emulation, against the `wrangler dev` ' +
       '(workerd) server this job boots — not production. These are relative regression ' +
