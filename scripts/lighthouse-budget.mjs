@@ -142,6 +142,24 @@ import {
 // breaching 6200 twice in a run, that is a real regression — investigate the
 // LCP element rather than raising this again.
 //
+// 2026-08-05, later the same day — the cause of that swing was found, and it
+// was not the runner. '/' awaited an 18-query `$transaction` (the transparency
+// snapshot) before emitting a single byte, to render four counters that sit
+// two sections BELOW the LCP element. So every sample paid a full Postgres
+// round-trip in front of first paint, and the 4218-8782ms spread was that
+// round-trip's variance, not rendering. It was meant to be absorbed by
+// `unstable_cache(..., { revalidate: 60 })`, but that cache never stored
+// anything: `open-next.config.ts` leaves OpenNext's `incrementalCache` at its
+// "dummy" default, whose get/set both throw.
+//
+// Two fixes landed: the counters now stream behind their own <Suspense>
+// boundary (off the critical path entirely), and the 18 round-trips collapsed
+// to one query. The budget below is deliberately NOT re-tightened yet — let
+// real CI samples accumulate against the new shape first, then calibrate from
+// them. The remaining root cause is the unconfigured incremental cache, which
+// also silently no-ops `unstable_cache` at 3 other sites and `revalidate` on
+// 8 routes; that needs an operator decision about a KV/R2 binding.
+//
 // These are workerd DEV-server numbers on a shared runner, so this gate is a
 // relative regression detector, not a statement about production user
 // experience. If a change pushes a page past these, that is worth

@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { FanFirstLanding } from '@/components/FanFirstLanding';
+import { LandingStats, LandingStatsFallback } from '@/components/LandingStats';
 import { getBaseUrl } from '@/lib/utils';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
-import { getTransparencySnapshot } from '@/lib/transparency';
 
 const TITLE = 'iHYPE — Listen. Engage. HYPE local.';
 const DESCRIPTION = 'Listen to free local music, discover artists and live events around you, and HYPE what deserves to be heard.';
@@ -27,14 +28,15 @@ export default async function RootPage() {
   const session = await auth();
   if (session?.user?.id) redirect(WORKBENCH_PATH);
 
-  const { counters } = await getTransparencySnapshot();
-  const formatCount = (value: number) => value.toLocaleString('en-US');
-  const stats = [
-    { value: formatCount(counters.totalArtists), label: 'local artists' },
-    { value: formatCount(counters.totalListeners), label: 'music fans' },
-    { value: formatCount(counters.profileHypes + counters.showHypes), label: 'HYPEs sent' },
-    { value: formatCount(counters.upcomingShows), label: 'upcoming shows' },
-  ];
-
-  return <FanFirstLanding stats={stats} />;
+  // The counters stream in behind their own boundary — nothing above the fold
+  // depends on them, so they must not delay the hero. See LandingStats.tsx.
+  return (
+    <FanFirstLanding
+      stats={
+        <Suspense fallback={<LandingStatsFallback />}>
+          <LandingStats />
+        </Suspense>
+      }
+    />
+  );
 }
