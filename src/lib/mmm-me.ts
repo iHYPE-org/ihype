@@ -77,12 +77,18 @@ export async function loadMmmMe(userId: string, requestedRole: string | undefine
   // what /api/me already returns as `inviteHexId`.
   const linkProfile = profiles[0] ?? null;
 
-  if (role === 'fan') return loadFan(userId, linkProfile, now);
+  // `availableRoles` is stamped here, once, for every branch. The per-role
+  // loaders used to each return their own value and two of them returned an
+  // empty array — which hid the switcher as soon as you switched to a creator
+  // role, so there was no way back to Fan without editing the URL.
+  const withRoles = (data: MmmMeData): MmmMeData => ({ ...data, availableRoles });
+
+  if (role === 'fan') return withRoles(await loadFan(userId, linkProfile, now));
   const profile = profiles.find((entry) => entry.type === (role === 'artist' ? 'ARTIST' : 'VENUE'));
-  if (!profile) return loadFan(userId, linkProfile, now);
-  return role === 'artist'
-    ? loadArtist(profile, linkProfile, now)
-    : loadVenue(profile, linkProfile, now);
+  if (!profile) return withRoles(await loadFan(userId, linkProfile, now));
+  return withRoles(role === 'artist'
+    ? await loadArtist(profile, linkProfile, now)
+    : await loadVenue(profile, linkProfile, now));
 }
 
 async function hypeLinkFor(
@@ -140,6 +146,7 @@ async function loadFan(userId: string, linkProfile: { id: string; hexId: string 
 
   return {
     role: 'fan',
+    // Overwritten by loadMmmMe — see withRoles().
     availableRoles: ['fan'],
     stats,
     activityLabel: 'Recent tickets',
@@ -188,7 +195,7 @@ async function loadArtist(
 
   return {
     role: 'artist',
-    availableRoles: [],
+    availableRoles: [],  // Overwritten by loadMmmMe — see withRoles().
     stats,
     activityLabel: 'Recent payouts',
     activity: releases.map((entry) => ({
@@ -253,7 +260,7 @@ async function loadVenue(
 
   return {
     role: 'venue',
-    availableRoles: [],
+    availableRoles: [],  // Overwritten by loadMmmMe — see withRoles().
     stats,
     activityLabel: 'Recent settlements',
     activity: settlements.map((entry) => ({

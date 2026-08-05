@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import type { BrowserContext } from '@playwright/test';
 import { PrismaClient, type Role } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { encode } from 'next-auth/jwt';
@@ -125,6 +126,38 @@ export async function seedSessionCookie(
   } finally {
     await prisma.$disconnect();
   }
+}
+
+/**
+ * Seeds a session AND installs the cookie on a browser context.
+ *
+ * Every authenticated spec was hand-rolling this five-field object, and the
+ * fields are not independent: when `PLAYWRIGHT_AUTH_COOKIE_SECURE` is true —
+ * which `scripts/e2e-workerd.mjs` always sets — `sessionCookieName()` returns
+ * the `__Secure-` prefixed name, and the prefix is only legal on a cookie that
+ * actually carries `secure: true`. Omit the flag and Chromium rejects the whole
+ * call with a bare "Protocol error (Storage.setCookies): Invalid cookie fields",
+ * which names neither the field nor the reason. That cost a full CI run, so the
+ * pairing now lives in one place instead of in each spec's private helper.
+ *
+ * `domain` is derived from the base URL rather than hardcoded to 'localhost',
+ * so a spec cannot silently install a cookie the browser will never send.
+ */
+export async function applySessionCookie(
+  context: BrowserContext,
+  email: string,
+  options: ShellFixtureOptions = {},
+) {
+  const seeded = await seedSessionCookie(email, options);
+  const secure = process.env.PLAYWRIGHT_AUTH_COOKIE_SECURE === 'true';
+  await context.addCookies([{
+    name: sessionCookieName(),
+    value: seeded.cookie,
+    domain: new URL(process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000').hostname,
+    path: '/',
+    secure,
+  }]);
+  return seeded;
 }
 
 /** True when this environment can seed its own session. */

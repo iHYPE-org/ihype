@@ -1,5 +1,5 @@
 import { test, expect, type BrowserContext } from '@playwright/test';
-import { canSeedSession, seedSessionCookie, sessionCookieName } from './fixtures/session';
+import { applySessionCookie, canSeedSession } from './fixtures/session';
 
 /**
  * The Music · Map · Me shell contract, as executable assertions.
@@ -30,15 +30,7 @@ test.skip(!canSeedSession(), 'Needs E2E_WORKERD_DATABASE_URL + AUTH_SECRET to se
  * profile-bearing paths get their own describe block below.
  */
 async function signIn(context: BrowserContext, email = EMAIL, profiles: { type: 'ARTIST' | 'DJ' | 'VENUE'; name: string }[] = []) {
-  const { cookie } = await seedSessionCookie(email, { profiles });
-  await context.addCookies([{
-    name: sessionCookieName(),
-    value: cookie,
-    domain: 'localhost',
-    path: '/',
-    httpOnly: true,
-    sameSite: 'Lax',
-  }]);
+  await applySessionCookie(context, email, { profiles });
 }
 
 test.describe('Music · Map · Me shell', () => {
