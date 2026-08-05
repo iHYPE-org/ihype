@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { validateAudioMagicBytes } from '@/lib/validate-upload';
 import { parseAudioDuration } from '@/lib/audio-duration';
+import { checkAdSpotDuration } from '@/lib/ad-spot';
 import { storeMediaFile, isObjectStorageConfigured } from '@/lib/object-storage';
 import { areUploadsEnabledRuntime, isAdvertisingEnabledRuntime } from '@/lib/runtime-flags';
 import { exceedsDeclaredRequestSize } from '@/lib/request-size';
@@ -54,7 +55,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Ad audio storage is not configured.' }, { status: 503 });
   }
 
+  // Length is checked BEFORE the file is stored, so an unsellable spot never
+  // occupies object storage and the advertiser is told immediately rather than
+  // at campaign-create time, after they thought the upload had worked.
+  // Measured server-side; a client-declared duration is not evidence.
   const durationSecs = parseAudioDuration(fileBytes);
+  const lengthCheck = checkAdSpotDuration(durationSecs);
+  if (!lengthCheck.ok) {
+    return NextResponse.json({ error: lengthCheck.message }, { status: 400 });
+  }
+
   const ext = file.type.split('/')[1]?.replace('x-', '') ?? 'audio';
   const key = `ads/audio/${crypto.randomUUID()}.${ext}`;
   const base64 = Buffer.from(fileBytes).toString('base64');

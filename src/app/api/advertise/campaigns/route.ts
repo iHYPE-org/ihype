@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { vetAdvertisement, vetAdAudioContent, adCampaignStatusFromVetting, type AdAudioVettingResult } from '@/lib/ad-vetting';
 import { isTrustedStorageUrl } from '@/lib/object-storage';
+import { checkAdSpotDuration } from '@/lib/ad-spot';
 import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { recordAuditEvent } from '@/lib/audit';
@@ -77,6 +78,20 @@ export async function POST(request: NextRequest) {
   // — never fetch an arbitrary client-submitted URL server-side (SSRF).
   if (!isTrustedStorageUrl(audioUrl)) {
     return NextResponse.json({ error: 'audioUrl must come from /api/advertise/audio-upload.' }, { status: 400 });
+  }
+
+  // Defence in depth. The authoritative length check is at upload, where the
+  // file itself is measured; this only validates the duration the client then
+  // declares. A spoofed value cannot smuggle a long spot past the upload gate,
+  // but it could otherwise be STORED as a plausible-looking 20s on a campaign
+  // whose audio is ninety — and `Ad.audioDurationSecs` is what the station
+  // uses to size the break.
+  const declaredDuration = typeof body.audioDurationSecs === 'number' ? body.audioDurationSecs : null;
+  if (declaredDuration !== null) {
+    const lengthCheck = checkAdSpotDuration(declaredDuration);
+    if (!lengthCheck.ok) {
+      return NextResponse.json({ error: lengthCheck.message }, { status: 400 });
+    }
   }
 
   if (!isAdScope(body.scope)) {

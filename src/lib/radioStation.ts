@@ -1,6 +1,9 @@
 import { db } from '@/lib/db';
 import { getDemoOwnerExclusion } from '@/lib/runtime-flags';
 import { stationPositionAt } from '@/lib/growth-util';
+import { resolveAdBreakClips } from '@/lib/ad-clip-selection';
+import { interleaveStationAds } from '@/lib/station-breaks';
+import { releasedMediaWhere } from '@/lib/media-release';
 
 export type StationTrack = {
   hexId: string;
@@ -10,6 +13,12 @@ export type StationTrack = {
   artistSlug: string;
   artworkUrl: string | null;
   durationSecs: number;
+  /**
+   * Set only on ad slots. `mkt_<Ad.id>` is a purchased marketplace spot and
+   * reports an impression when it plays; `0x…` is house filler from
+   * `builtInAdClips` and bills nobody. Absent on music.
+   */
+  adClipId?: string;
 };
 
 export type StationState = {
@@ -40,6 +49,19 @@ export async function getStationState(now: Date = new Date()): Promise<StationSt
     }).catch(() => null),
     db.artistMediaAsset.findMany({
       where: {
+        // `freeUseEnabled` alone is not an eligibility rule, it is a consent
+        // flag. Uploads are vetted (`runTrackScanPipeline`) and a flagged one
+        // never reaches the crate — `/api/artist-media` sets
+        // `effectiveFreeUse = freeUseEnabled && vetting.cleared` — but consent
+        // and clearance say nothing about whether the artist has RELEASED the
+        // track.
+        //
+        // Without `releasedMediaWhere()` this station aired unpublished drafts
+        // and, worse, tracks scheduled for a future `publishAt` — putting a
+        // record on the radio before its release date. The computed stations
+        // (`src/lib/stations.ts`) have always applied this rule; the always-on
+        // station predates them and never did.
+        ...releasedMediaWhere(now),
         freeUseEnabled: true,
         profile: { ...getDemoOwnerExclusion(), type: { in: ['ARTIST', 'DJ'] } },
       },
@@ -79,19 +101,37 @@ export async function getStationState(now: Date = new Date()): Promise<StationSt
     };
   }
 
+  // Advertising. Until now the only place a purchased spot could air was
+  // inside a DJ's show, and the DJ role is going away
+  // (docs/dj-role-removal-scope.md) — so without this, self-serve campaigns
+  // holding real pre-authorised Stripe funds would have nowhere left to run.
+  //
+  // Scope is 'national': this station is one rotation shared by every
+  // listener, with no geography in it, so a 'local' spot would be aired to
+  // people it was never sold for. Per-region stations are what would justify
+  // finer scopes, and they do not exist here.
+  //
+  // Fails open on purpose. A break that cannot be resolved must never take the
+  // music down with it — the station being silent is a worse outcome than the
+  // station being unmonetised for one request.
+  const adClips = await resolveAdBreakClips('national').catch(() => []);
+  const sequence = interleaveStationAds(rotation, adClips);
+
   const { index, offset } = stationPositionAt(
-    rotation.map((t) => t.durationSecs),
+    sequence.map((t) => t.durationSecs),
     Math.floor(now.getTime() / 1000),
   );
 
-  const upNext = [1, 2, 3].map((n) => rotation[(index + n) % rotation.length]);
+  const upNext = [1, 2, 3].map((n) => sequence[(index + n) % sequence.length]);
 
   return {
     live: !!liveShow,
     liveShow: liveShow ?? null,
-    nowPlaying: rotation[index],
+    nowPlaying: sequence[index],
     positionSecs: offset,
     upNext,
+    // The music count, not the sequence length — this is surfaced as "N
+    // tracks in rotation" and counting ad breaks in it would be a lie.
     rotationLength: rotation.length,
   };
 }
