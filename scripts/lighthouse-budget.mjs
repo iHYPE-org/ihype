@@ -230,7 +230,37 @@ async function auditPageOnce(baseUrl, chromePort, page, authenticatedHeaders) {
     metrics[m.label] = lhr.audits[m.key]?.numericValue ?? null;
   }
 
-  return { performance, metrics };
+  return { performance, metrics, lcpElement: readLcpElement(lhr) };
+}
+
+/**
+ * Which element Lighthouse actually timed as the LCP.
+ *
+ * The job summary added in July answered "what broke" but not "what is slow",
+ * and that gap cost real time: '/' was diagnosed as blocked on its database
+ * (true, and worth fixing on its own) but removing that from the critical path
+ * did not move LCP at all, because nobody had checked which element LCP was
+ * measuring. Two rounds of plausible-sounding inference, no measurement.
+ *
+ * Lighthouse already computes this. Surfacing it turns the next such failure
+ * into a lookup instead of an argument.
+ */
+function readLcpElement(lhr) {
+  const node = lhr.audits['largest-contentful-paint-element']
+    ?.details?.items?.[0]?.items?.[0]?.node;
+  if (!node) return null;
+  // `snippet` is the element's opening tag, `selector` its CSS path. The tag
+  // alone is usually enough to recognise it; the selector disambiguates when
+  // several elements share a tag.
+  return { snippet: node.snippet ?? null, selector: node.selector ?? null };
+}
+
+export function formatLcpElement(lcpElement) {
+  if (!lcpElement) return 'unknown (no LCP element reported)';
+  const snippet = (lcpElement.snippet ?? '').replace(/\s+/g, ' ').trim();
+  const selector = (lcpElement.selector ?? '').trim();
+  if (snippet && selector) return `${snippet}  [${selector}]`;
+  return snippet || selector || 'unknown';
 }
 
 // A single Lighthouse run is noisy — CI runners (and this sandbox) share CPU
@@ -359,6 +389,13 @@ export async function runLighthouseBudget({ baseUrl, chromePath, authenticatedHe
         unconfirmed = confirmation.unconfirmed;
 
         for (const f of failures) console.log(`  FAIL ${f.message} (confirmed on re-sample)`);
+        // Name the LCP element on any confirmed LCP failure. Without this the
+        // log says how slow the page was but not what was slow, which is the
+        // question the next person actually has.
+        if (failures.some((f) => f.metric === 'lcp')) {
+          console.log(`  LCP element (first sample):  ${formatLcpElement(first.lcpElement)}`);
+          console.log(`  LCP element (re-sample):     ${formatLcpElement(resample.lcpElement)}`);
+        }
         for (const f of unconfirmed) {
           console.log(`  WARN ${f.message} on first sample, within budget on re-sample — not failing`);
         }
@@ -369,6 +406,7 @@ export async function runLighthouseBudget({ baseUrl, chromePath, authenticatedHe
         budget: page.budget,
         performance: first.performance,
         metrics: first.metrics,
+        lcpElement: first.lcpElement,
         resample,
         failures,
         unconfirmed
