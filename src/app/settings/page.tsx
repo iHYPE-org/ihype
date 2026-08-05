@@ -87,7 +87,7 @@ function AddRecoveryEmail({ onAdded }: { onAdded: (email: string) => void }) {
   }
 
   return (
-    <div className="settings-row settings-recovery-row">
+    <div className="settings-row settings-recovery">
       <div>
         <div className="settings-row-label">{t('settingsPage.recoveryEmailLabel', 'Recovery email')}</div>
         <div className="settings-row-detail">
@@ -623,7 +623,7 @@ export default function SettingsPage() {
         .settings-btn-accent { background: var(--accent); color: var(--ink-on-accent); }
         .settings-btn-accent:hover { opacity: .9; }
         .settings-input-inline { padding: 8px 12px; border: 1px solid var(--hair-100); border-radius: 8px; background: var(--bg); color: var(--ink); font-size: 14px; }
-        .settings-recovery-row { align-items: flex-start; }
+        .settings-recovery { align-items: flex-start; }
         .settings-recovery-controls { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
         .settings-recovery-controls .settings-input-inline { width: 190px; max-width: 100%; }
         .settings-recovery-error { margin-top: 6px; font-size: 12px; color: var(--warning-text); }
