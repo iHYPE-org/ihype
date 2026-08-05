@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+import { readRuntimeEnv } from '@/lib/runtime-env';
+
 /**
  * iOS Universal Links association file. Served with no file extension, at
  * exactly this path, over HTTPS with no redirect — iOS fetches this once
@@ -14,7 +16,9 @@ import { NextResponse } from 'next/server';
  * added by hand-editing the Xcode project file safely from here.
  */
 export async function GET() {
-  const teamId = process.env.APPLE_TEAM_ID;
+  // Via readRuntimeEnv: APPLE_TEAM_ID is not in wrangler.toml's [vars], so it
+  // will arrive as a Worker secret, which never lands on process.env.
+  const teamId = readRuntimeEnv('APPLE_TEAM_ID');
   const bundleId = 'com.ihype.app';
 
   const body = {
