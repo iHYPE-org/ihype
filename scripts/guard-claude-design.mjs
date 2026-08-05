@@ -29,40 +29,45 @@ function assertMissing(relativePath, reason) {
   }
 }
 
-// /home is retired as a rendered page — the Workbench (WorkbenchShellV2/
-// WorkbenchMobile) has been superseded by the Listen/Events/Pages design.
-// /home now exists only to forward legacy links/bookmarks onward.
+// The canonical authenticated experience is the Music · Map · Me shell at
+// /app (operator decision, 2026-08-05). Everything this guard used to protect
+// about /listen's six-module deck now applies to /app instead — the deck, the
+// legacy app shell and the phone swipe shell are all retired, and the point of
+// these assertions is that none of them creeps back as a second signed-in app.
+// That is the "ghost popping through" the operator reported.
+for (const [legacy, destination] of [
+  ['src/app/home/page.tsx', "redirect('/listen')"],
+  ['src/app/listen/page.tsx', "redirect('/app/music/discover')"],
+  ['src/app/shows/page.tsx', "redirect('/app/map')"],
+  ['src/app/pages/page.tsx', "redirect('/app/me')"],
+]) {
+  assertIncludes(
+    legacy,
+    destination,
+    `${legacy} must be a redirect only — it must not render a second authenticated app.`
+  );
+}
+// The shell must stay in the /app LAYOUT. In a page it re-mounts on every module
+// change, which loses the map's pan and zoom — the map is the base layer.
 assertIncludes(
-  'src/app/home/page.tsx',
-  "redirect('/listen')",
-  '/home is a legacy alias only and must forward to the canonical /listen route.'
+  'src/app/app/layout.tsx',
+  '<MmmShell',
+  'The Music/Map/Me shell must be mounted by the /app layout so the map survives navigation.'
 );
-assertIncludes(
-  'src/app/listen/page.tsx',
-  '<ModuleDeckMockup production',
-  '/listen is the canonical authenticated module deck and must render the live, backend-wired experience.'
-);
-assertNotIncludes(
-  'src/app/listen/page.tsx',
-  'ListenHome',
-  'The retired multi-panel Listen homepage must not replace the full-screen module deck.'
-);
+// No header, anywhere: the lower-left logo trigger is the only navigation.
+for (const [component, reason] of [
+  ['AdaptiveSiteHeader', 'There is no header on any page — the logo trigger is the only nav.'],
+  ['MobileBottomNav', 'The bottom tab bar is retired; the logo fan replaced it.'],
+  ['AppShell', 'The 82px-header app shell is retired. Two shells cannot both own the scroll container.'],
+  ['MobileAppShellLoader', 'The phone swipe shell is retired.'],
+  ['CookieConsent', 'Consent is asked during onboarding, not globally — and the banner sat where the logo fan opens.'],
+]) {
+  assertNotIncludes('src/app/layout.tsx', `<${component}`, reason);
+}
 assertIncludes(
   'src/app/ui-preview/page.tsx',
   "process.env.NODE_ENV !== 'development'",
   'The editable sample-data preview must remain unavailable in production.'
-);
-for (const apiPath of ['/api/discover/seeds', '/api/radio', '/api/shows/nearby', '/api/search']) {
-  assertIncludes(
-    'src/app/ui-preview/preview-api.ts',
-    apiPath,
-    `The production module deck must retain its ${apiPath} backend adapter.`
-  );
-}
-assertIncludes(
-  'src/app/ui-preview/ModuleDeckMockup.tsx',
-  'production={production}',
-  'Preview and production behaviors must remain explicitly separated.'
 );
 assertMissing(
   'src/app/workbench/page.tsx',
@@ -70,8 +75,8 @@ assertMissing(
 );
 assertIncludes(
   'src/lib/auth-redirects.ts',
-  "WORKBENCH_PATH = '/listen'",
-  'All successful auth paths should resolve to the canonical Listen route.'
+  "WORKBENCH_PATH = '/app/music/discover'",
+  'All successful auth paths should resolve into the canonical /app shell.'
 );
 assertIncludes(
   'src/components/AuthLogin.tsx',
@@ -154,4 +159,4 @@ assertIncludes(
   'The authenticated workbench should remain noindex via robots.'
 );
 
-console.log('Design guard passed: /listen is the canonical backend-wired module deck.');
+console.log('Design guard passed: /app is the canonical shell, with no header and no second signed-in app.');

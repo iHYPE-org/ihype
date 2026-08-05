@@ -1,4 +1,8 @@
-export const WORKBENCH_PATH = '/listen';
+// The canonical post-auth destination. Moved from '/listen' to the
+// Music · Map · Me shell (operator decision, 2026-08-05). '/listen' still
+// exists as a redirect because this value is baked into `?callbackUrl=` in
+// magic-link emails already sent.
+export const WORKBENCH_PATH = '/app/music/discover';
 // Generic (no-specific-destination) sign-ins land on Welcome first, which then
 // routes on to WORKBENCH_PATH — matches the Auth → Welcome → Listen flow used
 // for sign-up. A real deep-link callbackUrl (e.g. a show or ticket page the

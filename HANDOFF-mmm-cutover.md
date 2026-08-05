@@ -39,12 +39,35 @@ operator.** Current state of this branch: see "Status" below.
 
 | # | Task | State |
 |---|---|---|
-| 1 | Remove global header | see git log |
-| 2 | Cookie consent → onboarding only | see git log |
-| 3 | Remove old frontend chrome (ghost) | see git log |
-| 4 | Route the signed-in app at `/app` only | see git log |
-| 5 | DJ role removal — code | see git log |
-| 6 | DJ role removal — schema migration | **gated, see below** |
+| 1 | Remove global header | **DONE** — `AdaptiveSiteHeader`/`MobileBottomNav` unmounted from the root layout |
+| 2 | Cookie consent → onboarding only | **PARTLY** — no longer rendered globally; still needs an onboarding prompt (see Task 2) |
+| 3 | Remove old frontend chrome (ghost) | **DONE** — `AppShell`, `MobileAppShellLoader` unmounted; their e2e specs deleted with them |
+| 4 | Route the signed-in app at `/app` only | **DONE** — `/listen`, `/shows`, `/pages` are redirects; `WORKBENCH_PATH` moved |
+| 5 | DJ role removal — code | **NOT STARTED** — 91 files, see Task 5/6 |
+| 6 | DJ role removal — schema migration | **NOT STARTED**, must be gated |
+
+### Done in detail
+
+- Root layout no longer renders `AdaptiveSiteHeader`, `MobileBottomNav`,
+  `AppShell`, `MobileAppShellLoader` or `CookieConsent`. It renders the plain
+  `.site-shell > main` wrapper plus the footer and player dock.
+- Two per-request calls went with the header: `isInviteCodeRequiredRuntime()` (a
+  KV read) and `getShellViewer()` (several DB queries for drawer badges). Both
+  functions still exist for other callers; only the unconditional call is gone.
+- `scripts/guard-claude-design.mjs` **rewritten** — it used to assert `/listen`
+  was the canonical deck, which would have failed the build. It now asserts the
+  opposite: the legacy routes are redirects, the shell is mounted by the `/app`
+  layout, and none of the five retired chrome components is in the root layout.
+- Deleted `e2e/app-shell.spec.ts` (16 tests), `app-shell-a11y.spec.ts` (14),
+  `mobile-shell.spec.ts`, `module-deck.spec.ts`, `module-deck-responsive.spec.ts`,
+  and removed them from `scripts/e2e-workerd.mjs`'s allowlist plus the
+  `test:e2e:responsive` script and its CI step.
+  **This is a real coverage loss worth knowing about:** `app-shell-a11y.spec.ts`
+  was the only axe run over the signed-in experience, in both themes. The new
+  shell has no axe coverage at all. That should be replaced.
+- `scripts/lighthouse-budget.mjs`: `/shows` dropped (a redirect now), `/listen`
+  replaced by `/app/music/discover` with the budget unchanged. MUSIC not MAP,
+  because MAP pulls remote tiles and would make the gate a measure of CARTO's CDN.
 
 `git log --oneline main..HEAD` is the authoritative record. Each commit message
 states what it did and why.

@@ -1,23 +1,6 @@
-import type { Metadata } from 'next';
-import { EventsHome } from '@/components/EventsHome';
-import { RouteShellSlot } from '@/components/RouteShellSlot';
+import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = {
-  title: 'Events · iHYPE',
-  description: "Face value, zero fees. Every ticket — 70% artist, 20% venue, 10% promoters.",
-  openGraph: { title: 'Events · iHYPE', description: 'Face value, zero fees. Every ticket — 70% artist, 20% venue, 10% promoters.' },
-  twitter: { card: 'summary_large_image', title: 'Events · iHYPE', description: 'Face value, zero fees.' },
-};
-
-export default async function ShowsIndexPage({
-  searchParams,
-}: {
-  searchParams?: Promise<{ tab?: string; ticketView?: string }>;
-}) {
-  const resolvedParams = searchParams ? await searchParams : {};
-  return (
-    <RouteShellSlot>
-      <EventsHome initialTab={resolvedParams.tab} initialTicketView={resolvedParams.ticketView} />
-    </RouteShellSlot>
-  );
+/** Retired — the events surface is the MAP module now. See /app. */
+export default function ShowsPage() {
+  redirect('/app/map');
 }

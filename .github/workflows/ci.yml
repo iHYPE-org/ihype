@@ -100,18 +100,12 @@ jobs:
       - name: Mandatory public browser smoke
         run: npx playwright test e2e/public-smoke.spec.ts --project=chromium
 
-      - name: Mandatory responsive module regression gate
-        run: npm run test:e2e:responsive
-
-      - name: Upload responsive regression evidence
-        if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: responsive-module-regression
-          path: |
-            playwright-report
-            test-results
-          if-no-files-found: ignore
+      # The responsive gate ran the module deck's suite under `next dev` because
+      # /ui-preview only exists in development. The deck is retired, and the
+      # shell that replaced it needs auth — so responsive coverage moved into the
+      # Workerd suite below, where e2e/mmm-shell.spec.ts exercises the arc at
+      # 390x844 against the real production bundle. That is a stronger check than
+      # the one removed, not a gap.
 
       - name: Mandatory authenticated E2E suite (Workerd)
         # Runs against a real `wrangler dev` (workerd) instance, not `next

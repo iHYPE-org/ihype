@@ -5,23 +5,16 @@ import type { Metadata, Viewport } from 'next';
 import { ReactNode } from 'react';
 import { Syne, DM_Sans, JetBrains_Mono, Instrument_Serif, Forum } from 'next/font/google';
 import { AppProviders } from '@/components/AppProviders';
-import { AdaptiveSiteHeader } from '@/components/AdaptiveSiteHeader';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
-import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { SitePlayerDock } from '@/components/GlobalMediaPlayer';
 import { WebVitals } from '@/components/WebVitals';
 import { SiteFooter } from '@/components/SiteFooter';
-import { CookieConsent } from '@/components/CookieConsent';
 import { AnalyticsBeacon } from '@/components/AnalyticsBeacon';
 import { getCspNonce } from '@/lib/csp-nonce';
 import { MobileShellProvider } from '@/lib/MobileShellContext';
-import { MobileAppShellLoader } from '@/components/MobileAppShellLoader';
 import { AppSplash } from '@/components/AppSplash';
 import { getServerT } from '@/lib/i18n/server';
-import { isInviteCodeRequiredRuntime } from '@/lib/runtime-flags';
-import { AppShell } from '@/components/shell/AppShell';
-import { getShellViewer } from '@/lib/shell-account';
 
 const syne = Syne({ subsets: ['latin'], weight: ['700', '800'], variable: '--font-syne', display: 'swap' });
 const dmSans = DM_Sans({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-dm', display: 'swap' });
@@ -65,16 +58,12 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const nonce = await getCspNonce();
   const t = await getServerT();
-  // Drives the header join CTA's "Join Beta" vs "Join free" copy. Read here
-  // rather than in HeaderAuthLinks because that is a client component and this
-  // flag lives in KV. One extra KV read per render, alongside the nonce and
-  // dictionary reads this layout already does.
-  const inviteOnly = await isInviteCodeRequiredRuntime();
-  // The signed-in app shell's chrome renders here, in the ROOT layout, because
-  // the handoff's first chrome-contract rule is that the top bar and the player
-  // never re-render on navigation — only the content region may be replaced.
-  // A layout is the only place in the App Router that guarantees that.
-  const { account: shellAccount, unreadCount } = await getShellViewer();
+  // Two reads that used to happen on EVERY page render are gone with the
+  // header: `isInviteCodeRequiredRuntime()` (a KV read, for the header join
+  // CTA's copy) and `getShellViewer()` (several DB queries, for the drawer's
+  // badge counts). Neither has a consumer now. `getShellViewer` is still
+  // exported and still used by anything that needs those counts — it is only
+  // the unconditional per-request call that goes.
   const themeBootstrap = `(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}document.documentElement.setAttribute('data-theme',t)}catch(e){}})();`;
   return (
     <html lang="en" suppressHydrationWarning className={`${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} ${forum.variable}`}>
@@ -97,26 +86,29 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               <span className="site-background-orb site-background-orb-b" />
               <span className="site-background-grid" />
             </div>
-            {/* Marketing nav. On shell routes the signed-in app shell replaces
-                it outright — hidden by `html.ihype-shell-locked` in shell.css.
-                (The old comment here named `.wb-shell`, a class that no longer
-                exists anywhere in the codebase.) */}
-            <AdaptiveSiteHeader
-              inviteOnly={inviteOnly}
-              label={t('layout.primarySiteHeader', 'Primary site header')}
-            />
-            <MobileBottomNav />
-            <MobileAppShellLoader />
-            {/* Off shell routes (marketing, auth, and the phone swipe shell)
-                AppShell renders exactly what this layout rendered before —
-                site-shell + footer — so nothing about the signed-out
-                experience changes. The footer crosses as a slot, not a render
-                prop: a function cannot be serialized to a client component. */}
-            <AppShell account={shellAccount} footer={<SiteFooter />} unreadCount={unreadCount}>
-              {children}
-            </AppShell>
+            {/* No header, anywhere. The operator's call (2026-08-05): the
+                lower-left logo trigger is the only navigation, and reclaiming
+                the vertical space a header costs is the point of the redesign.
+                `AdaptiveSiteHeader` and `MobileBottomNav` are gone from the
+                tree rather than hidden by CSS — hidden chrome is still
+                focusable and still in the accessibility tree, which is exactly
+                the defect that shipped on /app before mmm.css stood it down.
+
+                `AppShell` is gone with them. It was the 82px-header shell that
+                the Music/Map/Me redesign replaces; leaving it mounted is the
+                "ghost popping through" the operator reported. What remains is
+                the plain page wrapper it used to render on non-shell routes, so
+                marketing and auth are unchanged apart from the missing header.
+
+                CookieConsent is no longer rendered globally: consent is asked
+                during onboarding, once someone actually signs up. It also used
+                to sit exactly where the logo fan opens and swallowed every tap
+                on the nav at phone width. */}
+            <div className="site-shell">
+              <main id="main-content">{children}</main>
+              <SiteFooter />
+            </div>
             <SitePlayerDock />
-            <CookieConsent />
             <ServiceWorkerRegister />
           </MobileShellProvider>
         </AppProviders>

@@ -136,12 +136,18 @@ const PAGES = [
   // carries the data-backed tier's budget, because that is what /info is.
   { path: '/info', budget: { performance: 0.65, lcp: 4800, cls: 0.1, tbt: 550 } },
   { path: '/discover', budget: { performance: 0.65, lcp: 4800, cls: 0.1, tbt: 550 } },
-  { path: '/shows', budget: { performance: 0.65, lcp: 4800, cls: 0.1, tbt: 550 } },
-  // The signed-in module deck is intentionally richer than the public pages.
-  // Its first budget is conservative while collecting a real CI baseline;
-  // it still catches catastrophic regressions and, crucially, measures the
-  // authenticated experience instead of assuming public-page speed covers it.
-  { path: '/listen', authenticated: true, budget: { performance: 0.35, lcp: 8000, cls: 0.15, tbt: 2500 } }
+  // '/shows' was removed here, not re-budgeted: it is a redirect into /app/map
+  // now, and auditing a redirect measures the destination while reporting the
+  // source's budget. '/discover' still covers public event browsing.
+  // The signed-in shell is intentionally richer than the public pages. Budget
+  // deliberately unchanged from the module deck it replaces: it still catches
+  // catastrophic regressions and, crucially, measures the authenticated
+  // experience instead of assuming public-page speed covers it. Points at
+  // /app/music/discover rather than /app or /listen — both of those are
+  // redirects, and Lighthouse would report the destination's numbers under the
+  // source's budget. MUSIC rather than MAP because MAP pulls remote map tiles,
+  // which would make this a measure of CARTO's CDN.
+  { path: '/app/music/discover', authenticated: true, budget: { performance: 0.35, lcp: 8000, cls: 0.15, tbt: 2500 } }
 ];
 
 const METRICS = [
