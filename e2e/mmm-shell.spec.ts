@@ -18,11 +18,19 @@ import { canSeedSession, seedSessionCookie, sessionCookieName } from './fixtures
  */
 
 const EMAIL = 'e2e-mmm-fan@ihype.org';
+const ARTIST_EMAIL = 'e2e-mmm-artist@ihype.org';
 
 test.skip(!canSeedSession(), 'Needs E2E_WORKERD_DATABASE_URL + AUTH_SECRET to seed a session.');
 
-async function signIn(context: BrowserContext) {
-  const { cookie } = await seedSessionCookie(EMAIL, { profiles: [] });
+/**
+ * Signs in a seeded account. Defaults to NO Profile row, which is a real state
+ * worth defaulting to: the HYPE link is keyed on the member's first profile's
+ * hexId (the value `/api/me` returns as `inviteHexId`), so a profile-less
+ * account has no link and the card must be absent rather than blank. The
+ * profile-bearing paths get their own describe block below.
+ */
+async function signIn(context: BrowserContext, email = EMAIL, profiles: { type: 'ARTIST' | 'DJ' | 'VENUE'; name: string }[] = []) {
+  const { cookie } = await seedSessionCookie(email, { profiles });
   await context.addCookies([{
     name: sessionCookieName(),
     value: cookie,
@@ -216,9 +224,40 @@ test.describe('Music · Map · Me shell', () => {
     await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'false');
   });
 
-  test('the HYPE link card states that promoting needs no role', async ({ page }) => {
+  // An account with no Profile row has no hexId and therefore no HYPE link. The
+  // card must be absent, not present-and-blank — and the surface must still
+  // render, which is the actual risk.
+  test('a profile-less account still renders ME, without a HYPE link card', async ({ page }) => {
     await page.goto('/app/me');
+    await expect(page.getByRole('link', { name: /Settings/ }).first()).toBeVisible();
+    await expect(page.getByText(/Your HYPE link/i)).toHaveCount(0);
+  });
+});
+
+test.describe('ME with a real profile', () => {
+  test.beforeEach(async ({ context }) => {
+    await signIn(context, ARTIST_EMAIL, [{ type: 'ARTIST', name: 'E2E MMM Artist' }]);
+  });
+
+  test('the HYPE link card renders and states that promoting needs no role', async ({ page }) => {
+    await page.goto('/app/me');
+    await expect(page.getByText(/Your HYPE link/i)).toBeVisible();
     await expect(page.getByText(/Promoting needs no role and no signup/i)).toBeVisible();
+  });
+
+  // The fan page creator was removed; Artist and Venue keep theirs. The role
+  // switcher only appears once an account holds more than the implicit Fan role.
+  test('an artist account gets a page card and a role switcher', async ({ page }) => {
+    await page.goto('/app/me?role=artist');
+    await expect(page.getByText(/Your page/i)).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Fan', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Artist', exact: true })).toBeVisible();
+  });
+
+  test('the fan role has no page card — the fan page creator was removed', async ({ page }) => {
+    await page.goto('/app/me?role=fan');
+    await expect(page.getByText(/Your HYPE link/i)).toBeVisible();
+    await expect(page.getByText(/Your page/i)).toHaveCount(0);
   });
 });
 
