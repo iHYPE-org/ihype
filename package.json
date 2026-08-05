@@ -13,6 +13,7 @@
     "lint": "node scripts/lint-source.mjs",
     "guard:migrations": "node scripts/check-gated-migrations.mjs",
     "audit:shell": "node scripts/audit-shell-classes.mjs",
+    "audit:css": "node scripts/audit-css.mjs",
     "check:alpha": "node --import dotenv/config scripts/beta-launch-check.mjs",
     "verify:restore": "node --import dotenv/config scripts/verify-restored-backup.mjs",
     "check": "npm run typecheck && npm run lint && npm test",

@@ -455,20 +455,6 @@ html.ihype-shell-locked .mqg-tabstrip:empty { display: none; }
   letter-spacing: -0.02em;
   color: var(--ink-1);
 }
-.shell-back-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-  padding: 8px 14px 8px 10px;
-  border: 1px solid var(--line-2);
-  border-radius: 9999px;
-  background: transparent;
-  color: var(--ink-2);
-  font: 400 13.5px var(--f-b);
-  cursor: pointer;
-}
-.shell-back-pill:hover { color: var(--ink-1); background: rgba(var(--surface-tint-rgb), 0.05); }
 
 .shell-card-stack { display: flex; flex-direction: column; gap: 14px; }
 .shell-card {

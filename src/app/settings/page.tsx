@@ -18,10 +18,20 @@ interface Prefs {
 
 const ROLE_COLOR: Record<string, string> = { ARTIST: 'var(--role-artist)', DJ: 'var(--role-dj)', VENUE: 'var(--role-venue)' };
 
-function Toggle({ checked, onChange, disabled }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
+/**
+ * `label` is required, not optional, and it is the whole point.
+ *
+ * The wrapping <label> holds only the track and thumb divs — no text — so it
+ * gives the checkbox no accessible name. The visible text lives in the sibling
+ * <Row>, which a screen reader does not associate with this control. Every
+ * toggle on this page therefore announced as an unnamed checkbox: seven of
+ * them, all reading "checkbox, checked" and nothing else. Making the prop
+ * required means a new toggle cannot repeat that silently.
+ */
+function Toggle({ checked, onChange, disabled, label }: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean; label: string }) {
   return (
     <label className="settings-toggle" style={disabled ? { opacity: 0.5, pointerEvents: 'none' } : undefined}>
-      <input checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} type="checkbox" />
+      <input aria-label={label} checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} type="checkbox" />
       <div className="settings-toggle-track" />
       <div className="settings-toggle-thumb" />
     </label>
@@ -344,7 +354,7 @@ export default function SettingsPage() {
             <div className="settings-section-title">{t('settingsPage.profile', 'Profile')}</div>
             <div className="settings-group">
               <Row
-                action={<input className="settings-input-inline" onChange={(e) => setName(e.target.value)} value={name} />}
+                action={<input aria-label={t('settingsPage.displayName', 'Display name')} className="settings-input-inline" onChange={(e) => setName(e.target.value)} value={name} />}
                 detail={t('settingsPage.shownOnProfile', 'Shown on your profile')}
                 label={t('settingsPage.displayName', 'Display name')}
               />
@@ -380,19 +390,19 @@ export default function SettingsPage() {
           <div className="settings-section">
             <div className="settings-section-title">{t('settingsPage.notifications', 'Notifications')}</div>
             <div className="settings-group">
-              <Row action={<Toggle checked={prefs.newShows} onChange={(v) => setPrefs((p) => ({ ...p, newShows: v }))} />} detail={t('settingsPage.ticketDropsDetail', 'When artists you follow announce shows')} label={t('settingsPage.ticketDrops', 'Ticket drops')} />
-              <Row action={<Toggle checked={prefs.milestones} onChange={(v) => setPrefs((p) => ({ ...p, milestones: v }))} />} detail={t('settingsPage.hypeMilestonesDetail', 'When your tracks hit hype thresholds')} label={t('settingsPage.hypeMilestones', 'Hype milestones')} />
-              <Row action={<Toggle checked={prefs.journalPosts} onChange={(v) => setPrefs((p) => ({ ...p, journalPosts: v }))} />} detail={t('settingsPage.journalPostsDetail', 'New posts from creators you follow')} label={t('settingsPage.journalPosts', 'Journal posts')} />
-              <Row action={<Toggle checked={prefs.weeklyDigest} onChange={(v) => setPrefs((p) => ({ ...p, weeklyDigest: v }))} />} detail={t('settingsPage.weeklyDigestDetail', 'A weekly summary of upcoming shows and activity')} label={t('settingsPage.weeklyDigest', 'Weekly digest')} />
-              <Row action={<Toggle checked={prefs.radioLive} onChange={(v) => setPrefs((p) => ({ ...p, radioLive: v }))} />} detail={t('settingsPage.radioShowsDetail', 'When DJs you follow go live')} label={t('settingsPage.radioShows', 'Radio shows')} />
+              <Row action={<Toggle checked={prefs.newShows} label={t('settingsPage.ticketDrops', 'Ticket drops')} onChange={(v) => setPrefs((p) => ({ ...p, newShows: v }))} />} detail={t('settingsPage.ticketDropsDetail', 'When artists you follow announce shows')} label={t('settingsPage.ticketDrops', 'Ticket drops')} />
+              <Row action={<Toggle checked={prefs.milestones} label={t('settingsPage.hypeMilestones', 'Hype milestones')} onChange={(v) => setPrefs((p) => ({ ...p, milestones: v }))} />} detail={t('settingsPage.hypeMilestonesDetail', 'When your tracks hit hype thresholds')} label={t('settingsPage.hypeMilestones', 'Hype milestones')} />
+              <Row action={<Toggle checked={prefs.journalPosts} label={t('settingsPage.journalPosts', 'Journal posts')} onChange={(v) => setPrefs((p) => ({ ...p, journalPosts: v }))} />} detail={t('settingsPage.journalPostsDetail', 'New posts from creators you follow')} label={t('settingsPage.journalPosts', 'Journal posts')} />
+              <Row action={<Toggle checked={prefs.weeklyDigest} label={t('settingsPage.weeklyDigest', 'Weekly digest')} onChange={(v) => setPrefs((p) => ({ ...p, weeklyDigest: v }))} />} detail={t('settingsPage.weeklyDigestDetail', 'A weekly summary of upcoming shows and activity')} label={t('settingsPage.weeklyDigest', 'Weekly digest')} />
+              <Row action={<Toggle checked={prefs.radioLive} label={t('settingsPage.radioShows', 'Radio shows')} onChange={(v) => setPrefs((p) => ({ ...p, radioLive: v }))} />} detail={t('settingsPage.radioShowsDetail', 'When DJs you follow go live')} label={t('settingsPage.radioShows', 'Radio shows')} />
               {(role === 'ARTIST' || role === 'DJ') && (
-                <Row action={<Toggle checked={prefs.crateUploads} onChange={(v) => setPrefs((p) => ({ ...p, crateUploads: v }))} />} detail={t('settingsPage.crateUploadsDetail', 'When your upload clears screening')} label={role === 'DJ' ? t('settingsPage.crateUploads', 'Crate uploads') : t('settingsPage.trackUploads', 'Track uploads')} />
+                <Row action={<Toggle checked={prefs.crateUploads} label={role === 'DJ' ? t('settingsPage.crateUploads', 'Crate uploads') : t('settingsPage.trackUploads', 'Track uploads')} onChange={(v) => setPrefs((p) => ({ ...p, crateUploads: v }))} />} detail={t('settingsPage.crateUploadsDetail', 'When your upload clears screening')} label={role === 'DJ' ? t('settingsPage.crateUploads', 'Crate uploads') : t('settingsPage.trackUploads', 'Track uploads')} />
               )}
               {role === 'VENUE' && (
-                <Row action={<Toggle checked={prefs.bookingRequests} onChange={(v) => setPrefs((p) => ({ ...p, bookingRequests: v }))} />} detail={t('settingsPage.bookingRequestsDetail', 'When an artist or DJ requests a slot')} label={t('settingsPage.bookingRequests', 'Booking requests')} />
+                <Row action={<Toggle checked={prefs.bookingRequests} label={t('settingsPage.bookingRequests', 'Booking requests')} onChange={(v) => setPrefs((p) => ({ ...p, bookingRequests: v }))} />} detail={t('settingsPage.bookingRequestsDetail', 'When an artist or DJ requests a slot')} label={t('settingsPage.bookingRequests', 'Booking requests')} />
               )}
               <Row
-                action={<Toggle checked={pushSubscribed} disabled={!pushSupported || pushBusy} onChange={(v) => void togglePush(v)} />}
+                action={<Toggle checked={pushSubscribed} disabled={!pushSupported || pushBusy} label={t('settingsPage.pushLabel', 'Push notifications (this browser)')} onChange={(v) => void togglePush(v)} />}
                 detail={
                   !pushSupported
                     ? t('settingsPage.pushNotSupported', 'Not supported in this browser')
@@ -420,7 +430,7 @@ export default function SettingsPage() {
             <div className="settings-group">
               {isCreator && (
                 <Row
-                  action={<Toggle checked={discoverable} disabled={savingDiscoverable} onChange={toggleDiscoverable} />}
+                  action={<Toggle checked={discoverable} disabled={savingDiscoverable} label={role === 'VENUE' ? t('settingsPage.demandRadarLabel', 'Show me in demand radar') : t('settingsPage.discoveryLabel', 'Show me in discovery')} onChange={toggleDiscoverable} />}
                   detail={role === 'VENUE' ? t('settingsPage.demandRadarDetail', 'Artists can see your room in the demand radar and request a slot') : t('settingsPage.discoveryDetail', 'Fans can find your profile in Discover and search')}
                   label={role === 'VENUE' ? t('settingsPage.demandRadarLabel', 'Show me in demand radar') : t('settingsPage.discoveryLabel', 'Show me in discovery')}
                 />

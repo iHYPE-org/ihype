@@ -86,6 +86,18 @@ jobs:
         # Strict is safe to enable because the drift set is currently zero.
         run: npm run audit:shell -- --strict
 
+      - name: CSS override audit
+        # Catches the failure audit:shell structurally cannot see: a selector
+        # defined twice, where a later block silently wins. That is why /login
+        # and /register rendered a retired design for months while the correct
+        # block sat dead directly above it, with every other check green.
+        #
+        # --max is a RATCHET, not a target. 145 such pairs already existed when
+        # this landed; they render correctly today only because the right rule
+        # happens to come last. Existing debt passes, a NEW duplicate fails.
+        # Lower this number as they get fixed. Never raise it.
+        run: npm run audit:css -- --max=145
+
       - name: Unit tests
         run: npm test
 
