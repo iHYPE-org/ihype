@@ -56,9 +56,14 @@ test.describe('Music · Map · Me shell', () => {
   test('renders no top bar and no bottom tab bar', async ({ page }) => {
     await page.goto('/app/map');
     await expect(page.locator('.mmm-frame')).toBeVisible();
+    // These are the REAL class names — AppShellHeader renders `.shell-header`,
+    // AppShellContextStrip renders `.shell-context-strip`, and MobileBottomNav
+    // renders `.ihype-mobile-nav`. A guessed class name here would make the
+    // assertion pass whether or not the chrome rendered, which is worse than no
+    // assertion at all.
     await expect(page.locator('.shell-header')).toHaveCount(0);
     await expect(page.locator('.shell-context-strip')).toHaveCount(0);
-    await expect(page.locator('.mobile-bottom-nav')).toHaveCount(0);
+    await expect(page.locator('.ihype-mobile-nav')).toHaveCount(0);
   });
 
   test('the logo trigger and the player are the only persistent chrome', async ({ page }) => {
