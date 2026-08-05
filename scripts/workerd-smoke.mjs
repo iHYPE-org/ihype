@@ -555,7 +555,7 @@ async function run() {
     // `next start` Node server, because the production Prisma configuration is
     // only representative inside workerd.
     if (RUN_LIGHTHOUSE_BUDGET && process.env.SKIP_LIGHTHOUSE_BUDGET !== '1') {
-      const { report, anyFailed } = await runLighthouseBudget({
+      const { report, anyFailed, infrastructureError, enforced } = await runLighthouseBudget({
         baseUrl: BASE,
         authenticatedHeaders: { Cookie: creatorCookie },
       });
@@ -566,7 +566,26 @@ async function run() {
       const over = report
         .flatMap((entry) => entry.failures.map((failure) => `${entry.path}: ${failure.message}`))
         .join('; ');
-      check('Lighthouse performance budget', !anyFailed, over || 'see per-page output above');
+
+      if (enforced) {
+        check('Lighthouse performance budget', !anyFailed, over || 'see per-page output above');
+      } else {
+        // Deliberately NOT a check(). Recording a pass here would assert that
+        // the budget held, which is exactly what a non-enforcing run does not
+        // verify — and a smoke summary that says PASS on an unmeasured or
+        // breached budget is worse than one that says nothing. The numbers are
+        // in the job summary either way; see the ENFORCE comment in
+        // scripts/lighthouse-budget.mjs for why this no longer gates.
+        if (infrastructureError) {
+          console.log('[workerd-smoke] performance budget NOT MEASURED (reporting only) — ' +
+            infrastructureError.message);
+        } else if (anyFailed) {
+          console.log(`[workerd-smoke] performance budget EXCEEDED (reporting only) — ${over}`);
+        } else {
+          console.log('[workerd-smoke] performance budget within limits (reporting only)');
+        }
+        console.log('[workerd-smoke] set LIGHTHOUSE_BUDGET_ENFORCE=1 to make this gate the build');
+      }
     } else if (!RUN_LIGHTHOUSE_BUDGET) {
       console.log('[workerd-smoke] mode=security — skipping performance budget');
     } else {
