@@ -56,6 +56,26 @@ html.mmm-locked, html.mmm-locked body {
   overscroll-behavior: none;
 }
 
+/* Stand the site chrome down. All of this renders from the ROOT layout, outside
+   AppShell, so `AppShell` declining to wrap `/app/*` does not remove it — it was
+   still in the DOM behind this frame: the marketing header, the mobile tab bar,
+   the global player dock and the footer.
+   `display: none` rather than opacity or z-index, because the frame is opaque:
+   the problem was never that they were visible, it was that they were focusable
+   and present in the accessibility tree. A keyboard user could tab into a tab
+   bar the design deliberately removed, and a screen reader saw two players.
+   Note this list differs from shell.css's on purpose: the legacy shell KEEPS
+   `.ihype-mobile-nav` (its backlog wanted bottom tabs at phone width). This
+   design has no tab bar at any width — the logo fan replaced it. */
+html.mmm-locked .adaptive-site-header,
+html.mmm-locked .site-background,
+html.mmm-locked .site-shell > footer,
+html.mmm-locked .ihype-mobile-nav,
+html.mmm-locked .site-dock {
+  display: none !important;
+}
+html.mmm-locked .site-shell { padding-top: 0; padding-bottom: 0; min-height: 0; }
+
 .mmm-frame {
   position: fixed;
   inset: 0;

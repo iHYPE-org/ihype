@@ -48,14 +48,19 @@ test.describe('Music · Map · Me shell', () => {
   test('renders no top bar and no bottom tab bar', async ({ page }) => {
     await page.goto('/app/map');
     await expect(page.locator('.mmm-frame')).toBeVisible();
-    // These are the REAL class names — AppShellHeader renders `.shell-header`,
-    // AppShellContextStrip renders `.shell-context-strip`, and MobileBottomNav
-    // renders `.ihype-mobile-nav`. A guessed class name here would make the
-    // assertion pass whether or not the chrome rendered, which is worse than no
-    // assertion at all.
-    await expect(page.locator('.shell-header')).toHaveCount(0);
-    await expect(page.locator('.shell-context-strip')).toHaveCount(0);
-    await expect(page.locator('.ihype-mobile-nav')).toHaveCount(0);
+    // Real class names, checked against the components: AppShellHeader renders
+    // `.shell-header`, AppShellContextStrip `.shell-context-strip`,
+    // MobileBottomNav `.ihype-mobile-nav`, GlobalMediaPlayer `.site-dock`. A
+    // guessed name would make this pass whether or not the chrome rendered.
+    //
+    // `toBeHidden`, not `toHaveCount(0)`: the last two render from the ROOT
+    // layout and are therefore always in the DOM on this route — mmm.css stands
+    // them down with `display: none`. What matters is that none of it is
+    // presented or focusable, and toBeHidden covers absent AND hidden.
+    await expect(page.locator('.shell-header')).toBeHidden();
+    await expect(page.locator('.shell-context-strip')).toBeHidden();
+    await expect(page.locator('.ihype-mobile-nav')).toBeHidden();
+    await expect(page.locator('.site-dock')).toBeHidden();
   });
 
   test('the logo trigger and the player are the only persistent chrome', async ({ page }) => {
