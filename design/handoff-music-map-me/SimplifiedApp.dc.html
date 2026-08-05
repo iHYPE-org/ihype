@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Simplified App" description="Four-tab concept — real OpenFreeMap events map, Listen, Dashboard, Settings. Logo menu top right." -->
+<helmet>
+<script src="./ds-base.js"></script>
+<link rel="preconnect" href="https://basemaps.cartocdn.com">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}body{background:#0d0b0a;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}a{color:#ff5029}#ihypeThemeToggle{top:auto!important;left:auto!important;bottom:14px!important;right:12px!important;z-index:30!important}
+@keyframes rayOut{from{opacity:0;transform:translate(0,0) scale(.4)}60%{opacity:1}to{opacity:1;transform:translate(var(--rx),var(--ry)) scale(1)}}
+.ray{opacity:0;animation:rayOut .38s cubic-bezier(.22,1.16,.36,1) forwards;animation-delay:var(--fd,0s);transform-origin:0 100%}
+@keyframes navScrim{from{opacity:0}to{opacity:1}}
+.navcol>*,.navwrap>*{--nd:0s}
+.navcol>*:nth-child(1){--nd:0s}.navcol>*:nth-child(2){--nd:.07s}.navcol>*:nth-child(3){--nd:.14s}
+.navwrap>*:nth-child(1){--nd:0s}.navwrap>*:nth-child(2){--nd:.05s}.navwrap>*:nth-child(3){--nd:.1s}.navwrap>*:nth-child(4){--nd:.15s}.navwrap>*:nth-child(5){--nd:.2s}.navwrap>*:nth-child(6){--nd:.25s}.navwrap>*:nth-child(7){--nd:.3s}
+@keyframes eq{0%,100%{height:2px}50%{height:7px}}
+.mapwrap{touch-action:none;cursor:grab;background:#12100e}.mapwrap:active{cursor:grabbing}.mtile{position:absolute;width:256px;height:256px;user-select:none;-webkit-user-drag:none;pointer-events:none}.mpin{position:absolute;transform:translate(-50%,-100%);cursor:pointer;display:flex;flex-direction:column;align-items:center}.mbub{position:absolute;transform:translate(-50%,-50%);cursor:pointer;border-radius:50%;background:rgba(255,80,41,.92);border:2px solid rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;color:#140f0d;font-family:'DM Sans',sans-serif;font-weight:800;box-shadow:0 3px 14px rgba(255,80,41,.5)}@keyframes pulseRing{0%{transform:scale(.7);opacity:.85}100%{transform:scale(2.1);opacity:0}}@keyframes sheetUp{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}</style>
+</helmet>
+
+<div style="position:relative;width:100%;height:100vh;max-height:880px;background:#0d0b0a;overflow:hidden;display:flex;flex-direction:column">
+
+<div style="position:relative;flex:1;min-height:0">
+
+  <div ref="{{ mapRef }}" class="mapwrap" style="position:absolute;inset:0;overflow:hidden"></div>
+  <div style="position:absolute;right:6px;bottom:4px;z-index:15;font-family:'JetBrains Mono',monospace;font-size:.5rem;color:rgba(240,235,229,.42);pointer-events:none">© OpenStreetMap · CARTO</div>
+
+  <sc-if value="{{ isEvents }}">
+  <div style="position:absolute;top:10px;left:0;right:0;z-index:20;display:flex;flex-direction:column;gap:7px;pointer-events:none">
+  <div style="padding:2px 12px 0;display:flex;gap:6px;overflow-x:auto;pointer-events:auto">
+    <sc-for list="{{ layers }}" as="ly" hint-placeholder-count="3">
+      <sc-if value="{{ ly.on }}"><button onClick="{{ ly.pick }}" style="flex-shrink:0;padding:7px 13px;border-radius:999px;border:1px solid rgba(255,80,41,.5);background:rgba(255,80,41,.16);color:#ff5029;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.76rem;cursor:pointer">{{ ly.label }}</button></sc-if>
+      <sc-if value="{{ ly.off }}"><button onClick="{{ ly.pick }}" style="flex-shrink:0;padding:7px 13px;border-radius:999px;border:1px solid rgba(240,235,229,.16);background:rgba(13,11,10,.62);color:#8a807a;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.76rem;cursor:pointer">{{ ly.label }}</button></sc-if>
+    </sc-for>
+    <div style="flex-shrink:0;width:1px;background:rgba(240,235,229,.14);margin:5px 3px"></div>
+    <sc-for list="{{ scopes }}" as="s" hint-placeholder-count="4">
+      <sc-if value="{{ s.on }}"><button onClick="{{ s.pick }}" style="flex-shrink:0;padding:7px 14px;border-radius:999px;border:1px solid rgba(255,80,41,.5);background:rgba(255,80,41,.16);color:#ff5029;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.76rem;cursor:pointer;backdrop-filter:blur(8px)">{{ s.label }}</button></sc-if>
+      <sc-if value="{{ s.off }}"><button onClick="{{ s.pick }}" style="flex-shrink:0;padding:7px 14px;border-radius:999px;border:1px solid rgba(240,235,229,.16);background:rgba(13,11,10,.62);color:#c9c1ba;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.76rem;cursor:pointer;backdrop-filter:blur(8px)">{{ s.label }}</button></sc-if>
+    </sc-for>
+  </div>
+
+  <div style="padding:0 12px 10px;display:flex;gap:6px;overflow-x:auto;pointer-events:auto">
+    <sc-for list="{{ genreChips }}" as="g" hint-placeholder-count="6">
+      <sc-if value="{{ g.on }}"><button onClick="{{ g.pick }}" style="flex-shrink:0;padding:5px 11px;border-radius:999px;border:1px solid rgba(255,80,41,.4);background:rgba(255,80,41,.12);color:#ff5029;font-family:'JetBrains Mono',monospace;font-size:.63rem;letter-spacing:.04em;cursor:pointer;backdrop-filter:blur(8px)">{{ g.label }}</button></sc-if>
+      <sc-if value="{{ g.off }}"><button onClick="{{ g.pick }}" style="flex-shrink:0;padding:5px 11px;border-radius:999px;border:1px solid rgba(240,235,229,.13);background:rgba(13,11,10,.62);color:#8a807a;font-family:'JetBrains Mono',monospace;font-size:.63rem;letter-spacing:.04em;cursor:pointer;backdrop-filter:blur(8px)">{{ g.label }}</button></sc-if>
+    </sc-for>
+  </div>
+  </div>
+
+  <sc-if value="{{ navClosed }}">
+  <div style="position:absolute;bottom:74px;left:14px;right:12px;z-index:20;padding:6px 11px;border-radius:9px;background:rgba(13,11,10,.72);backdrop-filter:blur(10px);border:1px solid rgba(240,235,229,.1)">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.08em;color:#8a807a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ resultLine }}</div>
+  </div>
+  </sc-if>
+  </sc-if>
+
+  <sc-if value="{{ isListen }}">
+  <div style="position:absolute;inset:0;z-index:25;background:#0d0b0a;overflow-y:auto;padding:14px 16px 96px">
+    <div style="display:flex;gap:8px;padding:2px 0 14px">
+      <sc-for list="{{ listenTabs }}" as="lt" hint-placeholder-count="3">
+        <sc-if value="{{ lt.on }}"><button onClick="{{ lt.pick }}" style="flex:1;padding:9px 0;border-radius:10px;border:1px solid rgba(255,80,41,.45);background:rgba(255,80,41,.14);color:#ff5029;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer">{{ lt.label }}</button></sc-if>
+        <sc-if value="{{ lt.off }}"><button onClick="{{ lt.pick }}" style="flex:1;padding:9px 0;border-radius:10px;border:1px solid rgba(240,235,229,.12);background:transparent;color:#8a807a;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.82rem;cursor:pointer">{{ lt.label }}</button></sc-if>
+      </sc-for>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:9px;padding:10px 13px;border-radius:11px;border:1px solid rgba(240,235,229,.12);background:rgba(240,235,229,.03);margin-bottom:10px">
+      <span style="color:#8a807a;font-size:.86rem">⌕</span>
+      <span style="color:#6f6660;font-size:.84rem">Search genre · location · hype</span>
+    </div>
+    <sc-if value="{{ isSearch }}">
+      <sc-for list="{{ searchFacets }}" as="fc" hint-placeholder-count="3">
+        <div style="margin-bottom:12px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:.57rem;letter-spacing:.12em;text-transform:uppercase;color:#6f6660;margin-bottom:7px">{{ fc.title }}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <sc-for list="{{ fc.chips }}" as="ch" hint-placeholder-count="5">
+              <div style="padding:6px 12px;border-radius:999px;border:1px solid rgba(240,235,229,.13);color:#c9c1ba;font-family:'DM Sans',sans-serif;font-size:.76rem;cursor:pointer">{{ ch }}</div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.57rem;letter-spacing:.12em;text-transform:uppercase;color:#6f6660;margin:16px 0 8px">Results</div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <sc-for list="{{ searchResults }}" as="sr" hint-placeholder-count="5">
+          <div onClick="{{ sr.open }}" style="display:flex;align-items:center;gap:11px;padding:11px 3px;border-bottom:1px solid rgba(240,235,229,.06);cursor:pointer">
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;font-size:.88rem;color:#f0ebe5">{{ sr.name }}</div>
+              <div style="font-size:.74rem;color:#8a807a;margin-top:1px">{{ sr.meta }}</div>
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:.76rem;color:#ff5029">{{ sr.hypes }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{ notSearch }}">
+    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:16px">
+      <sc-for list="{{ listenFilters }}" as="f" hint-placeholder-count="4">
+        <div style="flex-shrink:0;padding:5px 11px;border-radius:999px;border:1px solid rgba(240,235,229,.13);color:#8a807a;font-family:'JetBrains Mono',monospace;font-size:.63rem">{{ f.label }}</div>
+      </sc-for>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isSeeds }}">
+      <div style="position:relative;height:340px;margin-bottom:14px">
+        <div style="position:absolute;inset:0;border-radius:18px;border:1px solid rgba(240,235,229,.09);background:linear-gradient(160deg,#241c2e,#141018);transform:rotate(-3deg) scale(.95);opacity:.4"></div>
+        <div style="position:absolute;inset:0;border-radius:18px;border:1px solid rgba(240,235,229,.12);background:linear-gradient(160deg,#2b1d24,#171015);transform:rotate(2deg) scale(.975);opacity:.7"></div>
+        <div style="position:absolute;inset:0;border-radius:18px;overflow:hidden;border:1px solid rgba(240,235,229,.16);background:linear-gradient(155deg,#3a2230,#1b1218);display:flex;flex-direction:column;justify-content:flex-end;padding:20px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:#ff5029;margin-bottom:7px">Seed · 24s</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.7rem;letter-spacing:-.04em;color:#f0ebe5;line-height:1.05">Glasslight</div>
+          <div style="font-size:.88rem;color:#c9c1ba;margin-top:3px">Nyla · dream-pop · Portland, ME</div>
+          <div style="display:flex;gap:8px;margin-top:16px">
+            <div style="flex:1;padding:11px 0;border-radius:10px;background:#ff5029;color:#140f0d;font-weight:700;font-size:.85rem;text-align:center">🔥 Hype</div>
+            <div style="padding:11px 15px;border-radius:10px;border:1px solid rgba(240,235,229,.18);color:#c9c1ba;font-size:.85rem">Skip</div>
+          </div>
+        </div>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.1em;color:#6f6660;text-align:center">Swipe up to hype · left to skip · right to save</div>
+    </sc-if>
+
+    <sc-if value="{{ isRadio }}">
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <sc-for list="{{ radioStations }}" as="r" hint-placeholder-count="5">
+          <div style="display:flex;align-items:center;gap:12px;padding:13px;border-radius:12px;border:1px solid rgba(240,235,229,.1);background:rgba(240,235,229,.02);cursor:pointer">
+            <sc-if value="{{ r.playing }}"><div style="width:44px;height:44px;border-radius:9px;background:linear-gradient(140deg,#ff5029,#7a2412);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#140f0d;font-size:1rem">▶</div></sc-if>
+            <sc-if value="{{ r.idle }}"><div style="width:44px;height:44px;border-radius:9px;background:linear-gradient(140deg,#3a2230,#1b1218);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#8a807a;font-size:1rem">▶</div></sc-if>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;font-size:.9rem;color:#f0ebe5">{{ r.title }}</div>
+              <div style="font-size:.76rem;color:#8a807a;margin-top:2px">{{ r.sub }}</div>
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.06em;color:#6f6660;white-space:nowrap">{{ r.count }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isCharts }}">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <sc-for list="{{ chartRows }}" as="c" hint-placeholder-count="6">
+          <div style="display:flex;align-items:center;gap:13px;padding:11px 4px;border-bottom:1px solid rgba(240,235,229,.06)">
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;color:#6f6660;width:22px">{{ c.rank }}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;font-size:.88rem;color:#f0ebe5">{{ c.track }}</div>
+              <div style="font-size:.75rem;color:#8a807a">{{ c.artist }}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:#ff5029">{{ c.hypes }}</div>
+              <sc-if value="{{ c.up }}"><div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:#4ade80">{{ c.delta }}</div></sc-if>
+              <sc-if value="{{ c.down }}"><div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:#f87171">{{ c.delta }}</div></sc-if>
+              <sc-if value="{{ c.flat }}"><div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:#6f6660">{{ c.delta }}</div></sc-if>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isDash }}">
+  <div style="position:absolute;inset:0;z-index:25;background:#0d0b0a;overflow-y:auto;padding:14px 16px 96px">
+    <div style="display:flex;gap:6px;padding:2px 0 16px;overflow-x:auto">
+      <sc-for list="{{ roles }}" as="r" hint-placeholder-count="3">
+        <sc-if value="{{ r.on }}"><button onClick="{{ r.pick }}" style="flex-shrink:0;padding:7px 14px;border-radius:999px;border:1px solid rgba(255,80,41,.45);background:rgba(255,80,41,.14);color:#ff5029;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.78rem;cursor:pointer">{{ r.label }}</button></sc-if>
+        <sc-if value="{{ r.off }}"><button onClick="{{ r.pick }}" style="flex-shrink:0;padding:7px 14px;border-radius:999px;border:1px solid rgba(240,235,229,.13);background:transparent;color:#8a807a;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.78rem;cursor:pointer">{{ r.label }}</button></sc-if>
+      </sc-for>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+      <sc-for list="{{ stats }}" as="st" hint-placeholder-count="4">
+        <div style="padding:14px;border-radius:12px;border:1px solid rgba(240,235,229,.1);background:rgba(240,235,229,.02)">
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;letter-spacing:-.04em;color:#f0ebe5;line-height:1">{{ st.value }}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.09em;text-transform:uppercase;color:#8a807a;margin-top:6px">{{ st.label }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{ hasPageEditor }}">
+    <div style="padding:15px;border-radius:12px;border:1px solid rgba(255,80,41,.22);background:rgba(255,80,41,.05);margin-bottom:16px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:#ff5029;margin-bottom:6px">Your page</div>
+      <div style="font-weight:600;font-size:.95rem;color:#f0ebe5;margin-bottom:3px">{{ pageName }}</div>
+      <div style="font-size:.78rem;color:#8a807a;line-height:1.5;margin-bottom:12px">{{ pageStatus }}</div>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1;padding:10px 0;border-radius:9px;background:#ff5029;color:#140f0d;font-weight:700;font-size:.82rem;text-align:center;cursor:pointer">Edit page</div>
+        <div style="padding:10px 14px;border-radius:9px;border:1px solid rgba(240,235,229,.16);color:#c9c1ba;font-size:.82rem;cursor:pointer">Preview</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <div style="padding:15px;border-radius:12px;border:1px solid rgba(240,235,229,.12);background:rgba(240,235,229,.02);margin-bottom:16px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:#ff5029;margin-bottom:7px">Your HYPE link</div>
+      <sc-if value="{{ fanLinkOnly }}"><div style="font-size:.78rem;color:#8a807a;line-height:1.5;margin-bottom:9px">{{ pageStatus }}</div></sc-if>
+      <div style="display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:9px;background:#16120f;border:1px solid rgba(240,235,229,.1);margin-bottom:9px">
+        <div style="flex:1;min-width:0;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#c9c1ba;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ hypeLink }}</div>
+        <div onClick="{{ copyLink }}" style="flex-shrink:0;padding:5px 11px;border-radius:7px;background:#ff5029;color:#140f0d;font-weight:700;font-size:.72rem;cursor:pointer">{{ copyLabel }}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:9px">
+        <sc-for list="{{ linkStats }}" as="ls" hint-placeholder-count="3">
+          <div style="padding:9px;border-radius:9px;background:rgba(240,235,229,.03);text-align:center">
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;color:#f0ebe5;line-height:1">{{ ls.value }}</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:.53rem;letter-spacing:.08em;text-transform:uppercase;color:#8a807a;margin-top:4px">{{ ls.label }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="font-size:.74rem;color:#8a807a;line-height:1.5">Share any show with this link. Every ticket it sells earns your proportional cut of the 10% promoter pool — never the artist's 70%.</div>
+    </div>
+
+    <div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#6f6660;margin-bottom:9px">{{ activityLabel }}</div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <sc-for list="{{ activity }}" as="a" hint-placeholder-count="4">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 2px;border-bottom:1px solid rgba(240,235,229,.06)">
+          <div>
+            <div style="font-size:.86rem;color:#f0ebe5">{{ a.title }}</div>
+            <div style="font-size:.73rem;color:#8a807a;margin-top:1px">{{ a.sub }}</div>
+          </div>
+          <sc-if value="{{ a.pos }}"><div style="font-family:'JetBrains Mono',monospace;font-size:.8rem;color:#4ade80">{{ a.amount }}</div></sc-if>
+          <sc-if value="{{ a.hot }}"><div style="font-family:'JetBrains Mono',monospace;font-size:.8rem;color:#ff5029">{{ a.amount }}</div></sc-if>
+          <sc-if value="{{ a.neutral }}"><div style="font-family:'JetBrains Mono',monospace;font-size:.8rem;color:#8a807a">{{ a.amount }}</div></sc-if>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:#6f6660;margin:20px 0 9px">About iHYPE</div>
+    <div style="display:flex;flex-direction:column;gap:2px;margin-bottom:14px">
+      <sc-for list="{{ siteInfo }}" as="si" hint-placeholder-count="5">
+        <div style="display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid rgba(240,235,229,.06);cursor:pointer">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:.86rem;color:#f0ebe5">{{ si.label }}</div>
+            <div style="font-size:.73rem;color:#8a807a;margin-top:1px">{{ si.sub }}</div>
+          </div>
+          <div style="color:#6f6660;font-size:.9rem">›</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div onClick="{{ goSettings }}" style="display:flex;align-items:center;gap:10px;padding:13px 15px;border-radius:12px;border:1px solid rgba(240,235,229,.12);background:rgba(240,235,229,.02);cursor:pointer">
+      <span style="font-size:1rem">⚙</span>
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:.88rem;color:#f0ebe5">Settings</div>
+        <div style="font-size:.73rem;color:#8a807a;margin-top:1px">Account · notifications · community · accessibility</div>
+      </div>
+      <div style="color:#6f6660;font-size:.9rem">›</div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isRoles }}">
+  <div style="position:absolute;inset:0;z-index:25;background:#0d0b0a;overflow-y:auto;padding:14px 16px 96px">
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:-.035em;color:#f0ebe5;margin-bottom:5px">Add a role</div>
+    <div style="font-size:.84rem;color:#8a807a;line-height:1.6;margin-bottom:18px">Every account is a Fan already — that never goes away. Add a role to unlock the tools that come with it.</div>
+
+    <div style="display:flex;align-items:center;gap:10px;padding:13px 14px;border-radius:12px;border:1px solid rgba(185,131,255,.32);background:rgba(185,131,255,.07);margin-bottom:16px">
+      <div style="width:34px;height:34px;border-radius:50%;background:rgba(185,131,255,.18);display:flex;align-items:center;justify-content:center;font-size:1rem">🎶</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:.9rem;color:#f0ebe5">Fan</div>
+        <div style="font-size:.76rem;color:#8a807a;margin-top:1px">Active on every account · hype, tickets, HYPE link</div>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.56rem;letter-spacing:.1em;color:#b983ff">ALWAYS ON</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <sc-for list="{{ addRoles }}" as="ar" hint-placeholder-count="3">
+        <div style="padding:14px;border-radius:12px;border:1px solid rgba(240,235,229,.1);background:rgba(240,235,229,.02)">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+            <div style="width:34px;height:34px;border-radius:9px;background:rgba(240,235,229,.05);display:flex;align-items:center;justify-content:center;font-size:1rem">{{ ar.icon }}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:700;font-size:.92rem;color:#f0ebe5">{{ ar.label }}</div>
+              <div style="font-size:.74rem;color:#8a807a;margin-top:1px">{{ ar.split }}</div>
+            </div>
+            <sc-if value="{{ ar.active }}"><div style="font-family:'JetBrains Mono',monospace;font-size:.56rem;letter-spacing:.1em;color:#ff5029">ACTIVE</div></sc-if>
+          </div>
+          <div style="font-size:.8rem;color:#8a807a;line-height:1.55;margin-bottom:11px">{{ ar.desc }}</div>
+          <sc-if value="{{ ar.active }}"><div style="padding:9px 0;border-radius:9px;border:1px solid rgba(240,235,229,.14);color:#c9c1ba;font-size:.82rem;text-align:center">Manage this role</div></sc-if>
+          <sc-if value="{{ ar.addable }}"><div style="padding:9px 0;border-radius:9px;background:#ff5029;color:#140f0d;font-weight:700;font-size:.82rem;text-align:center;cursor:pointer">{{ ar.cta }}</div></sc-if>
+        </div>
+      </sc-for>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:.58rem;color:#6f6660;line-height:1.7;margin-top:16px">Artist and Venue roles need verification (~48h). Advertiser needs a music-industry check. Promoting needs no role at all — share your HYPE link.</div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isSettings }}">
+  <div style="position:absolute;inset:0;z-index:25;background:#0d0b0a;overflow-y:auto;padding:14px 16px 96px">
+    <sc-for list="{{ settingGroups }}" as="sg" hint-placeholder-count="4">
+      <div style="margin-bottom:20px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:#6f6660;margin-bottom:8px">{{ sg.title }}</div>
+        <div style="border:1px solid rgba(240,235,229,.1);border-radius:12px;overflow:hidden">
+          <sc-for list="{{ sg.items }}" as="it" hint-placeholder-count="4">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 14px;border-bottom:1px solid rgba(240,235,229,.06)">
+              <div style="font-size:.88rem;color:#f0ebe5">{{ it.label }}</div>
+              <div style="font-size:.8rem;color:#8a807a">{{ it.value }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ sheetOpen }}">
+  <div onClick="{{ closeSheet }}" style="position:absolute;inset:0;z-index:50;background:rgba(8,6,5,.55);backdrop-filter:blur(2px)"></div>
+  <div style="position:absolute;left:0;right:0;bottom:0;z-index:51;background:#16120f;border-top:1px solid rgba(240,235,229,.13);border-radius:18px 18px 0 0;padding:18px 18px 22px;animation:sheetUp .22s ease">
+    <div style="width:34px;height:3px;border-radius:2px;background:rgba(240,235,229,.2);margin:0 auto 15px"></div>
+    <div style="display:flex;gap:12px;align-items:flex-start">
+      <sc-if value="{{ sheetIsVenue }}"><div style="flex-shrink:0;width:52px;height:52px;border-radius:11px;background:linear-gradient(135deg,#60a5fa,#3b82f6);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;color:#140f0d">{{ sheetInitial }}</div></sc-if>
+      <sc-if value="{{ sheetIsArtist }}"><div style="flex-shrink:0;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#a78bfa,#ff5029);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;color:#140f0d">{{ sheetInitial }}</div></sc-if>
+      <sc-if value="{{ sheetIsEvent }}"><div style="flex-shrink:0;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#ff5029,#ff8a5c);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;color:#140f0d">{{ sheetInitial }}</div></sc-if>
+      <div style="flex:1;min-width:0">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:#ff5029;margin-bottom:5px">{{ sheetKind }}</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.32rem;letter-spacing:-.04em;color:#f0ebe5;line-height:1.1">{{ sheetTitle }}</div>
+          <sc-if value="{{ sheetVerified }}"><span title="Verified" style="flex-shrink:0;width:15px;height:15px;border-radius:50%;background:#ff5029;color:#140f0d;font-size:.6rem;display:flex;align-items:center;justify-content:center;font-weight:800">✓</span></sc-if>
+        </div>
+        <div style="font-size:.82rem;color:#c9c1ba;margin-top:4px;line-height:1.5">{{ sheetSub }}</div>
+      </div>
+    </div>
+    <div style="font-size:.83rem;color:#8a807a;margin-top:11px;line-height:1.6">{{ sheetAbout }}</div>
+    <div style="display:flex;gap:16px;margin:15px 0 4px;padding:12px 0;border-top:1px solid rgba(240,235,229,.08);border-bottom:1px solid rgba(240,235,229,.08)">
+      <sc-for list="{{ sheetStats }}" as="ss" hint-placeholder-count="3">
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.05rem;color:#f0ebe5">{{ ss.value }}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:.56rem;letter-spacing:.08em;text-transform:uppercase;color:#8a807a;margin-top:2px">{{ ss.label }}</div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:.55rem;letter-spacing:.11em;text-transform:uppercase;color:#8a807a;margin:13px 0 7px">{{ sheetListTitle }}</div>
+    <div style="display:flex;flex-direction:column;gap:1px;margin-bottom:4px">
+      <sc-for list="{{ sheetList }}" as="li" hint-placeholder-count="3">
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(240,235,229,.06)">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:.84rem;color:#f0ebe5">{{ li.a }}</div>
+            <div style="font-size:.72rem;color:#8a807a">{{ li.b }}</div>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:.74rem;color:#ff5029">{{ li.c }}</div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:#6f6660;margin:11px 0 13px">{{ sheetSplit }}</div>
+    <div style="display:flex;gap:8px">
+      <div style="flex:1;padding:13px 0;border-radius:11px;background:#ff5029;color:#140f0d;font-weight:700;font-size:.9rem;text-align:center;cursor:pointer">{{ sheetCta }}</div>
+      <div style="padding:13px 15px;border-radius:11px;border:1px solid rgba(255,80,41,.4);color:#ff5029;font-weight:600;font-size:.88rem;cursor:pointer;white-space:nowrap">{{ sheetCta2 }}</div>
+      <div onClick="{{ closeSheet }}" style="padding:13px 14px;border-radius:11px;border:1px solid rgba(240,235,229,.16);color:#c9c1ba;font-size:.9rem;cursor:pointer">✕</div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ menuOpen }}">
+  <div onClick="{{ toggleMenu }}" style="position:absolute;inset:0;z-index:60;background:rgba(8,6,5,.6);backdrop-filter:blur(3px)"></div>
+  <div style="position:absolute;left:14px;bottom:80px;z-index:61;width:224px;background:#16120f;border:1px solid rgba(240,235,229,.14);border-radius:14px;overflow:hidden;animation:sheetUp .18s ease">
+    <div onClick="{{ goSettings }}" style="padding:12px 15px;border-bottom:1px solid rgba(240,235,229,.06);font-size:.88rem;font-weight:600;color:#ff5029;cursor:pointer">⚙ Settings</div>
+    <sc-for list="{{ menuItems }}" as="m" hint-placeholder-count="6">
+      <div style="padding:12px 15px;border-bottom:1px solid rgba(240,235,229,.06);font-size:.88rem;color:#f0ebe5;cursor:pointer">{{ m.label }}</div>
+    </sc-for>
+  </div>
+  </sc-if>
+
+</div>
+
+<div style="position:absolute;inset:0;z-index:45;pointer-events:none">
+  <sc-if value="{{ navOpen }}">
+  <div onClick="{{ toggleNav }}" style="position:fixed;inset:0;z-index:1;pointer-events:auto;background:rgba(8,6,5,.62);backdrop-filter:blur(3px);animation:navScrim .2s ease forwards"></div>
+  <div style="position:absolute;left:0;bottom:0;right:0;top:0;z-index:2;pointer-events:none">
+    <sc-if value="{{ navRoot }}">
+    <div style="position:absolute;left:16px;bottom:84px;display:flex;flex-direction:column-reverse;gap:9px;pointer-events:auto" class="navcol">
+      <sc-for list="{{ navPrimary }}" as="np" hint-placeholder-count="3">
+        <sc-if value="{{ np.on }}"><div onClick="{{ np.go }}" class="ray" style="--fd:var(--nd);--rx:0px;--ry:-16px;display:flex;align-items:center;gap:8px;padding:8px 15px 8px 13px;border-radius:999px;background:rgba(255,80,41,.16);border:1px solid rgba(255,80,41,.5);cursor:pointer;backdrop-filter:blur(8px);width:max-content">
+          <span style="font-family:'Syne',sans-serif;font-size:.92rem;font-weight:800;letter-spacing:.06em;color:#ff5029">{{ np.label }}</span>
+          <sc-if value="{{ np.hasKids }}"><span style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:rgba(255,80,41,.7)">▸</span></sc-if>
+        </div></sc-if>
+        <sc-if value="{{ np.off }}"><div onClick="{{ np.go }}" class="ray" style="--fd:var(--nd);--rx:0px;--ry:-16px;display:flex;align-items:center;gap:8px;padding:8px 15px 8px 13px;border-radius:999px;background:rgba(13,11,10,.86);border:1px solid rgba(240,235,229,.16);cursor:pointer;backdrop-filter:blur(8px);width:max-content">
+          <span style="font-family:'Syne',sans-serif;font-size:.92rem;font-weight:800;letter-spacing:.06em;color:#f0ebe5">{{ np.label }}</span>
+          <sc-if value="{{ np.hasKids }}"><span style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:#6f6660">▸</span></sc-if>
+        </div></sc-if>
+      </sc-for>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ navSub }}">
+    <div style="position:absolute;left:16px;bottom:84px;right:14px;pointer-events:auto">
+      <div onClick="{{ navBack }}" class="ray" style="--fd:0s;--rx:0px;--ry:-12px;display:inline-flex;align-items:center;gap:7px;margin-bottom:10px;padding:6px 13px;border-radius:999px;background:rgba(13,11,10,.9);border:1px solid rgba(240,235,229,.16);cursor:pointer">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:#8a807a">◂</span>
+        <span style="font-family:'Syne',sans-serif;font-size:.86rem;font-weight:800;letter-spacing:.06em;color:#ff5029">{{ navSubTitle }}</span>
+      </div>
+      <div class="navwrap" style="display:flex;flex-wrap:wrap;gap:7px">
+        <sc-for list="{{ navSubItems }}" as="ni" hint-placeholder-count="5">
+          <sc-if value="{{ ni.on }}"><div onClick="{{ ni.go }}" class="ray" style="--fd:var(--nd);--rx:-14px;--ry:0px;padding:9px 14px;border-radius:10px;background:rgba(255,80,41,.16);border:1px solid rgba(255,80,41,.5);color:#ff5029;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.84rem;cursor:pointer;backdrop-filter:blur(8px);white-space:nowrap">{{ ni.label }}</div></sc-if>
+          <sc-if value="{{ ni.off }}"><div onClick="{{ ni.go }}" class="ray" style="--fd:var(--nd);--rx:-14px;--ry:0px;padding:9px 14px;border-radius:10px;background:rgba(13,11,10,.88);border:1px solid rgba(240,235,229,.14);color:#f0ebe5;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.84rem;cursor:pointer;backdrop-filter:blur(8px);white-space:nowrap">{{ ni.label }}</div></sc-if>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ navClosed }}">
+  <div style="position:absolute;left:80px;right:12px;bottom:16px;z-index:3;display:flex;align-items:center;gap:9px;padding:7px 11px 7px 8px;border-radius:12px;background:rgba(13,11,10,.84);backdrop-filter:blur(12px);border:1px solid rgba(240,235,229,.12);pointer-events:auto">
+    <div style="flex-shrink:0;width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#ff5029,#7a2412);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:.88rem;color:#140f0d">{{ playerInitial }}</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-family:'DM Sans',sans-serif;font-weight:600;font-size:.79rem;color:#f0ebe5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ playerTrack }}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.57rem;letter-spacing:.05em;color:#8a807a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px">{{ playerArtist }}</div>
+    </div>
+    <div onClick="{{ toggleHype }}" style="flex-shrink:0;font-size:.88rem;cursor:pointer;line-height:1">{{ playerHypeIcon }}</div>
+    <div onClick="{{ togglePlay }}" style="flex-shrink:0;width:29px;height:29px;border-radius:50%;background:#ff5029;color:#140f0d;display:flex;align-items:center;justify-content:center;font-size:.68rem;cursor:pointer">{{ playerIcon }}</div>
+  </div>
+  </sc-if>
+
+  <button onClick="{{ toggleNav }}" style="position:absolute;left:14px;bottom:14px;z-index:3;width:58px;height:58px;border-radius:50%;background:#0d0b0a;border:2px solid #ff5029;box-shadow:0 0 22px rgba(255,80,41,.42);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer;pointer-events:auto">
+    <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:.66rem;letter-spacing:-.02em;color:#f0ebe5">iHYPE</span>
+    <sc-if value="{{ nowPlaying }}"><span style="display:flex;align-items:flex-end;gap:1.5px;height:7px">
+      <span class="eqb" style="width:2px;background:#ff5029;animation:eq .9s ease-in-out infinite"></span>
+      <span class="eqb" style="width:2px;background:#ff5029;animation:eq .9s ease-in-out .15s infinite"></span>
+      <span class="eqb" style="width:2px;background:#ff5029;animation:eq .9s ease-in-out .3s infinite"></span>
+    </span></sc-if>
+  </button>
+  <sc-if value="{{ navClosed }}">
+  <div style="position:absolute;left:16px;bottom:74px;z-index:3;padding:2px 7px;border-radius:6px;background:rgba(13,11,10,.8);border:1px solid rgba(240,235,229,.1);font-family:'JetBrains Mono',monospace;font-size:.5rem;letter-spacing:.09em;color:#c9c1ba;white-space:nowrap;pointer-events:none">{{ navHint }}</div>
+  </sc-if>
+</div>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:430,&quot;height&quot;:880}}">
+class Component extends DCLogic {
+  state = {
+    tab: 'events', scope: 'county', genre: 'All', listen: 'seeds', layer: 'events',
+    role: 'artist', sheet: null, menuOpen: false, navOpen: false, copied: false,
+    navSection: 'root', meView: 'stats', playing: true, hyped: false
+  };
+
+  SCOPES = {
+    county: { label: 'County', center: [-70.2568, 43.6565], z: 13.6 },
+    state: { label: 'State', center: [-69.4, 45.2], z: 7 },
+    country: { label: 'Country', center: [-96.5, 39.5], z: 4 },
+    global: { label: 'Global', center: [8, 26], z: 2 }
+  };
+
+  EVENTS = [
+    { t: 'Nyla · Glasslight Tour', v: 'Port City Music Hall', g: 'Dream-pop', p: 28, d: 'Fri Jul 10', ll: [-70.2553, 43.6570], sold: 412, cap: 550 },
+    { t: 'Collision', v: 'Empty Bottle', g: 'Punk', p: 18, d: 'Sat Jul 11', ll: [-70.2610, 43.6605], sold: 244, cap: 300 },
+    { t: 'Low Tide', v: 'Oxbow Blending', g: 'Electronic', p: 22, d: 'Thu Jul 16', ll: [-70.2495, 43.6528], sold: 118, cap: 200 },
+    { t: 'Harbor Sessions', v: 'One Longfellow', g: 'Jazz', p: 25, d: 'Fri Jul 17', ll: [-70.2640, 43.6560], sold: 190, cap: 250 },
+    { t: 'Static Bloom', v: 'SPACE Gallery', g: 'Indie', p: 20, d: 'Sat Jul 18', ll: [-70.2588, 43.6538], sold: 305, cap: 400 },
+    { t: 'Northbound', v: 'State Theatre', g: 'Hip-hop', p: 32, d: 'Sun Jul 19', ll: [-70.2622, 43.6516], sold: 780, cap: 1400 },
+    { t: 'Bangor Bloom Fest', v: 'Waterfront Pavilion', g: 'Indie', p: 35, d: 'Sat Jul 25', ll: [-68.7712, 44.7862], sold: 1420, cap: 3000 },
+    { t: 'Camden Folk Night', v: 'Camden Opera House', g: 'Jazz', p: 24, d: 'Fri Jul 24', ll: [-69.0648, 44.2098], sold: 210, cap: 400 },
+    { t: 'Brooklyn Warehouse', v: 'Elsewhere', g: 'Electronic', p: 30, d: 'Sat Aug 1', ll: [-73.9235, 40.7069], sold: 890, cap: 1200 },
+    { t: 'Chicago Basement', v: 'Empty Bottle CHI', g: 'Punk', p: 19, d: 'Fri Aug 7', ll: [-87.6867, 41.9004], sold: 260, cap: 300 },
+    { t: 'LA Rooftop', v: 'The Echo', g: 'Dream-pop', p: 27, d: 'Sat Aug 8', ll: [-118.2608, 34.0781], sold: 340, cap: 400 },
+    { t: 'Austin Late Set', v: 'Mohawk', g: 'Indie', p: 23, d: 'Thu Aug 13', ll: [-97.7370, 30.2685], sold: 410, cap: 600 },
+    { t: 'London Basement', v: 'Corsica Studios', g: 'Electronic', p: 26, d: 'Sat Aug 15', ll: [-0.0983, 51.4930], sold: 380, cap: 500 },
+    { t: 'Berlin Night', v: 'Berghain Kantine', g: 'Electronic', p: 24, d: 'Fri Aug 21', ll: [13.4432, 52.5110], sold: 290, cap: 350 },
+    { t: 'Tokyo Indie', v: 'Shibuya WWW', g: 'Indie', p: 31, d: 'Sat Aug 22', ll: [139.6980, 35.6595], sold: 440, cap: 500 }
+  ];
+
+  VENUES = [
+    { n: 'Port City Music Hall', ll: [-70.2553, 43.6570], cap: 550, city: 'Portland, ME', addr: '504 Congress St, Portland, ME 04101', bk: 'Dream-pop · Indie · Hip-hop', up: 6, about: 'Independent room in the heart of Old Port. 20% of every gate, guaranteed by charter — no rent games, no fee splits.', ver: true },
+    { n: 'Empty Bottle', ll: [-70.2610, 43.6605], cap: 300, city: 'Portland, ME', addr: '21 Preble St, Portland, ME 04101', bk: 'Punk · Garage · Noise', up: 4, about: 'Small, loud, and booked by people who go to shows. Sound check at 6, doors at 8.', ver: true },
+    { n: 'State Theatre', ll: [-70.2622, 43.6516], cap: 1400, city: 'Portland, ME', addr: '609 Congress St, Portland, ME 04101', bk: 'Hip-hop · Touring · Festival', up: 9, about: 'Historic 1929 theatre. The biggest independent stage north of Boston.', ver: true },
+    { n: 'SPACE Gallery', ll: [-70.2588, 43.6538], cap: 400, city: 'Portland, ME', addr: '538 Congress St, Portland, ME 04101', bk: 'Indie · Experimental', up: 5, about: 'Nonprofit art space and venue. Every show doubles as a gallery night.', ver: false },
+    { n: 'Elsewhere', ll: [-73.9235, 40.7069], cap: 1200, city: 'Brooklyn, NY', addr: '599 Johnson Ave, Brooklyn, NY 11237', bk: 'Electronic · Club', up: 12, about: 'Three rooms, one roof. Late sets until 4am on the Zone floor.', ver: true },
+    { n: 'The Echo', ll: [-118.2608, 34.0781], cap: 400, city: 'Los Angeles, CA', addr: '1822 Sunset Blvd, Los Angeles, CA 90026', bk: 'Dream-pop · Indie', up: 8, about: 'Echo Park mainstay. Where LA finds out who is next.', ver: true },
+    { n: 'Mohawk', ll: [-97.7370, 30.2685], cap: 600, city: 'Austin, TX', addr: '912 Red River St, Austin, TX 78701', bk: 'Indie · Rock', up: 7, about: 'Indoor and outdoor stages on Red River. Patio shows all summer.', ver: true },
+    { n: 'Corsica Studios', ll: [-0.0983, 51.4930], cap: 500, city: 'London, UK', addr: '4/5 Elephant Rd, London SE17 1LB', bk: 'Electronic · Techno', up: 10, about: 'Two railway arches in Elephant & Castle. Sound system worth the trip.', ver: true }
+  ];
+
+  ARTISTS = [
+    { n: 'Nyla', ll: [-70.2560, 43.6580], g: 'Dream-pop', city: 'Portland, ME', hy: '12.4k', pl: '84k', up: 3, about: 'Dream-pop from the coast of Maine. Glasslight (2026) out now — every ticket splits 70/20/10, locked by charter.', ver: true },
+    { n: 'Collision', ll: [-70.2600, 43.6598], g: 'Punk', city: 'Portland, ME', hy: '8.1k', pl: '41k', up: 2, about: 'Four-piece punk band. Loud, fast, and always at face value.', ver: true },
+    { n: 'Static Bloom', ll: [-70.2575, 43.6545], g: 'Indie', city: 'Portland, ME', hy: '6.7k', pl: '33k', up: 4, about: 'Shoegaze-leaning indie. Records in a garage, sells out rooms anyway.', ver: false },
+    { n: 'Low Tide', ll: [-70.2630, 43.6525], g: 'Electronic', city: 'Portland, ME', hy: '5.2k', pl: '96k', up: 5, about: 'Ambient electronic built from field recordings along the working waterfront.', ver: true },
+    { n: 'Northbound', ll: [-68.7712, 44.7862], g: 'Hip-hop', city: 'Bangor, ME', hy: '9.9k', pl: '58k', up: 3, about: 'Bangor hip-hop collective. Six members, one mic policy.', ver: true },
+    { n: 'Harbor Sessions', ll: [-69.0648, 44.2098], g: 'Jazz', city: 'Camden, ME', hy: '3.4k', pl: '19k', up: 2, about: 'Rotating jazz ensemble playing standards and originals on the water.', ver: false },
+    { n: 'Warehouse Kid', ll: [-73.9250, 40.7080], g: 'Electronic', city: 'Brooklyn, NY', hy: '14.8k', pl: '210k', up: 6, about: 'Brooklyn techno producer. Live hardware sets only.', ver: true },
+    { n: 'Mohave', ll: [-118.2620, 34.0790], g: 'Dream-pop', city: 'Los Angeles, CA', hy: '11.2k', pl: '132k', up: 4, about: 'Desert-tinted dream-pop out of Echo Park.', ver: true }
+  ];
+
+  _setEl = (el) => {
+    if (!el || el === this._el) return;
+    this._el = el;
+    const s = this.SCOPES[this.state.scope];
+    this._view = { lng: s.center[0], lat: s.center[1], z: s.z };
+    this._bindDrag(el);
+    this._paint();
+    if (!this._ro && window.ResizeObserver) {
+      this._ro = new ResizeObserver(() => this._paint());
+      this._ro.observe(el);
+    }
+  };
+
+  _bindDrag(el) {
+    let dragging = false, sx = 0, sy = 0, moved = 0;
+    el.addEventListener('pointerdown', (e) => {
+      dragging = true; moved = 0; sx = e.clientX; sy = e.clientY;
+      el.setPointerCapture && el.setPointerCapture(e.pointerId);
+    });
+    el.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - sx, dy = e.clientY - sy;
+      moved += Math.abs(dx) + Math.abs(dy);
+      sx = e.clientX; sy = e.clientY;
+      const w = this._world();
+      const p = this._project(this._view.lng, this._view.lat);
+      const np = this._unproject(p.x - dx, p.y - dy, w);
+      this._view.lng = np.lng; this._view.lat = Math.max(-82, Math.min(82, np.lat));
+      this._paint();
+    });
+    const end = () => { dragging = false; };
+    el.addEventListener('pointerup', end);
+    el.addEventListener('pointercancel', end);
+    el.addEventListener('pointerleave', end);
+
+    // Two-finger pinch zoom, anchored on the midpoint between the fingers.
+    let pinch = null;
+    el.addEventListener('touchstart', (e) => {
+      if (e.touches.length !== 2) return;
+      dragging = false;
+      const r = el.getBoundingClientRect();
+      const [a, b] = [e.touches[0], e.touches[1]];
+      pinch = {
+        dist: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY),
+        z: this._view.z,
+        mx: (a.clientX + b.clientX) / 2 - r.left,
+        my: (a.clientY + b.clientY) / 2 - r.top,
+        w: r.width, h: r.height
+      };
+      pinch.before = this._unprojectAt(pinch.mx, pinch.my, pinch.w, pinch.h);
+    }, { passive: false });
+    el.addEventListener('touchmove', (e) => {
+      if (!pinch || e.touches.length !== 2) return;
+      e.preventDefault();
+      const [a, b] = [e.touches[0], e.touches[1]];
+      const d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+      if (d < 8) return;
+      this._view.z = Math.max(3, Math.min(17, pinch.z + Math.log2(d / pinch.dist)));
+      const after = this._unprojectAt(pinch.mx, pinch.my, pinch.w, pinch.h);
+      this._view.lng += pinch.before.lng - after.lng;
+      this._view.lat = Math.max(-82, Math.min(82, this._view.lat + (pinch.before.lat - after.lat)));
+      this._paint();
+    }, { passive: false });
+    const endPinch = (e) => { if (!e.touches || e.touches.length < 2) pinch = null; };
+    el.addEventListener('touchend', endPinch);
+    el.addEventListener('touchcancel', endPinch);
+
+    el.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const r = el.getBoundingClientRect();
+      const mx = e.clientX - r.left, my = e.clientY - r.top;
+      const before = this._unprojectAt(mx, my, r.width, r.height);
+      const nz = Math.max(1.2, Math.min(17, this._view.z - e.deltaY * 0.0022));
+      this._view.z = nz;
+      const after = this._unprojectAt(mx, my, r.width, r.height);
+      this._view.lng += before.lng - after.lng;
+      this._view.lat = Math.max(-82, Math.min(82, this._view.lat + before.lat - after.lat));
+      this._paint();
+    }, { passive: false });
+  }
+
+  _unprojectAt(mx, my, W, H) {
+    const w = this._world();
+    const c = this._project(this._view.lng, this._view.lat);
+    return this._unproject(c.x - W / 2 + mx, c.y - H / 2 + my, w);
+  }
+
+  _world() { return 256 * Math.pow(2, this._view.z); }
+
+  _project(lng, lat) {
+    const w = this._world();
+    const x = (lng + 180) / 360 * w;
+    const s = Math.sin(lat * Math.PI / 180);
+    const y = (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * w;
+    return { x, y };
+  }
+
+  _unproject(x, y, w) {
+    const lng = x / w * 360 - 180;
+    const n = Math.PI - 2 * Math.PI * y / w;
+    const lat = 180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+    return { lng, lat };
+  }
+
+  _paint() {
+    if (this._painting) return;
+    this._painting = true;
+    try { this._paintInner(); } catch (err) { console.error('map paint failed', err); }
+    finally { this._painting = false; }
+  }
+
+  _paintInner() {
+    const el = this._el;
+    if (!el || !this._view) return;
+    const W = el.clientWidth, H = el.clientHeight;
+    if (!W || !H) return;
+    const z = Math.round(this._view.z), w = this._world(), n = Math.pow(2, z);
+    const scale = Math.pow(2, this._view.z - z), ts = 256 * scale;
+    const c = this._project(this._view.lng, this._view.lat);
+    const originX = c.x - W / 2, originY = c.y - H / 2;
+
+    let html = '';
+    const x0 = Math.floor(originX / ts), x1 = Math.floor((originX + W) / ts);
+    const y0 = Math.max(0, Math.floor(originY / ts)), y1 = Math.min(n - 1, Math.floor((originY + H) / ts));
+    const subs = ['a', 'b', 'c', 'd'];
+    for (let ty = y0; ty <= y1; ty++) {
+      for (let tx = x0; tx <= x1; tx++) {
+        const wx = ((tx % n) + n) % n;
+        const left = tx * ts - originX, top = ty * ts - originY;
+        const url = 'https://' + subs[(wx + ty) % 4] + '.basemaps.cartocdn.com/dark_all/' + z + '/' + wx + '/' + ty + '@2x.png';
+        html += '<img class="mtile" alt="" src="' + url + '" style="left:' + left + 'px;top:' + top + 'px;width:' + ts + 'px;height:' + ts + 'px">';
+      }
+    }
+
+    const list = this._visible();
+    const pins = [];
+    if (this._view.z <= 5.5) {
+      const groups = {};
+      list.forEach(e => {
+        const k = Math.round(e.ll[0] / 6) + ',' + Math.round(e.ll[1] / 6);
+        if (!groups[k]) groups[k] = { ll: e.ll, n: 0, sample: e };
+        groups[k].n++;
+      });
+      Object.keys(groups).forEach((k, i) => {
+        const g = groups[k], p = this._project(g.ll[0], g.ll[1]);
+        const size = 30 + Math.min(g.n, 5) * 5;
+        pins.push('<div class="mbub" data-i="' + i + '" data-kind="city" style="left:' + Math.round(p.x - originX) + 'px;top:' + Math.round(p.y - originY) + 'px;width:' + size + 'px;height:' + size + 'px;font-size:.8rem">' + g.n + '</div>');
+      });
+      this._hit = Object.keys(groups).map(k => ({ type: 'city', e: groups[k].sample, n: groups[k].n }));
+    } else {
+      // Place in screen space, culling offscreen and de-colliding overlaps by
+      // fanning tied pins onto a small arc so each stays readable and tappable.
+      const kind = this._kind();
+      const PAD = 80, CW = kind === 'event' ? 46 : 120, CH = 26;
+      const placed = [];
+      list.forEach(e => {
+        const p = this._project(e.ll[0], e.ll[1]);
+        let x = p.x - originX, y = p.y - originY;
+        if (x < -PAD || x > W + PAD || y < -PAD || y > H + PAD) return;
+        placed.push({ e, x, y, ax: x, ay: y });
+      });
+      placed.forEach((cur, idx) => {
+        let ring = 0, slot = 0, tries = 0;
+        const clash = () => placed.some((o, j) => j < idx &&
+          Math.abs(o.ax - cur.ax) < CW && Math.abs(o.ay - cur.ay) < CH);
+        while (clash() && tries++ < 24) {
+          if (slot === 0) { ring++; slot = ring * 6; }
+          const count = ring * 6, k = count - slot;
+          const ang = (k / count) * Math.PI * 2 - Math.PI / 2;
+          const r = ring * 30;
+          cur.ax = cur.x + Math.cos(ang) * r;
+          cur.ay = cur.y + Math.sin(ang) * r * 0.72;
+          slot--;
+        }
+      });
+      placed.forEach((it, i) => {
+        const e = it.e, off = (Math.abs(it.ax - it.x) > 1 || Math.abs(it.ay - it.y) > 1);
+        if (kind === 'venue') {
+          pins.push('<div class="mpin" data-i="' + i + '" style="left:' + Math.round(it.ax) + 'px;top:' + Math.round(it.ay) + 'px">' +
+            '<div style="display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:8px;background:#16120f;color:#f0ebe5;border:1.5px solid rgba(96,165,250,.8);font-family:DM Sans,sans-serif;font-weight:700;font-size:.7rem;white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,.55)"><span style="color:#60a5fa">◆</span>' + e.n + '</div>' +
+            '<div style="width:2px;height:' + (off ? 12 : 7) + 'px;background:rgba(96,165,250,.8)"></div></div>');
+          return;
+        }
+        if (kind === 'artist') {
+          pins.push('<div class="mpin" data-i="' + i + '" style="left:' + Math.round(it.ax) + 'px;top:' + Math.round(it.ay) + 'px">' +
+            '<div style="display:flex;align-items:center;gap:6px;padding:3px 9px 3px 3px;border-radius:999px;background:#16120f;color:#f0ebe5;border:1.5px solid rgba(167,139,250,.8);font-family:DM Sans,sans-serif;font-weight:700;font-size:.7rem;white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,.55)">' +
+            '<span style="width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#a78bfa,#ff5029);color:#140f0d;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:800">' + e.n.charAt(0) + '</span>' + e.n + '</div>' +
+            '<div style="width:2px;height:' + (off ? 12 : 7) + 'px;background:rgba(167,139,250,.8)"></div></div>');
+          return;
+        }
+        const hot = e.sold / e.cap > 0.75;
+        pins.push('<div class="mpin" data-i="' + i + '" data-kind="event" style="left:' + Math.round(it.ax) + 'px;top:' + Math.round(it.ay) + 'px">' +
+          '<div style="padding:4px 9px;border-radius:999px;background:' + (hot ? '#ff5029' : '#16120f') + ';color:' + (hot ? '#140f0d' : '#f0ebe5') + ';border:1.5px solid ' + (hot ? 'rgba(255,255,255,.85)' : 'rgba(255,80,41,.75)') + ';font-family:DM Sans,sans-serif;font-weight:700;font-size:.72rem;white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,.55)">$' + e.p + '</div>' +
+          '<div style="width:2px;height:' + (off ? 12 : 7) + 'px;background:' + (hot ? '#ff5029' : 'rgba(255,80,41,.75)') + '"></div></div>');
+      });
+      this._hit = placed.map(it => ({ type: kind, e: it.e }));
+    }
+
+    el.innerHTML = html + pins.join('') +
+      '<div id="mhover" style="position:absolute;z-index:30;display:none;pointer-events:none;max-width:230px;padding:9px 11px;border-radius:10px;background:rgba(13,11,10,.95);border:1px solid rgba(240,235,229,.14);box-shadow:0 6px 22px rgba(0,0,0,.6)"></div>';
+
+    const tip = el.querySelector('#mhover');
+    const showTip = (h, node) => {
+      if (!h || !tip) return;
+      const e = h.e;
+      let body;
+      if (h.type === 'venue') {
+        body = '<div style="font-family:Syne,sans-serif;font-weight:800;font-size:.86rem;color:#f0ebe5;letter-spacing:-.02em">' + e.n + '</div>' +
+          '<div style="font-size:.7rem;color:#c9c1ba;margin-top:3px;line-height:1.45">' + (e.addr || e.city) + '</div>' +
+          '<div style="font-family:JetBrains Mono,monospace;font-size:.62rem;color:#8a807a;margin-top:5px">Cap ' + e.cap + ' · ' + e.up + ' upcoming</div>' +
+          '<div style="font-size:.66rem;color:#8a807a;margin-top:2px">' + (e.hrs || '') + '</div>' +
+          '<div style="font-family:JetBrains Mono,monospace;font-size:.58rem;letter-spacing:.09em;color:#ff5029;margin-top:6px">TAP FOR VENUE PAGE</div>';
+      } else if (h.type === 'artist') {
+        body = '<div style="font-family:Syne,sans-serif;font-weight:800;font-size:.86rem;color:#f0ebe5;letter-spacing:-.02em">' + e.n + '</div>' +
+          '<div style="font-size:.7rem;color:#c9c1ba;margin-top:3px">' + e.g + ' · ' + e.city + '</div>' +
+          '<div style="font-family:JetBrains Mono,monospace;font-size:.62rem;color:#8a807a;margin-top:5px">' + e.hy + ' hypes · ' + e.up + ' upcoming</div>' +
+          '<div style="font-family:JetBrains Mono,monospace;font-size:.58rem;letter-spacing:.09em;color:#ff5029;margin-top:6px">TAP FOR ARTIST PAGE</div>';
+      } else {
+        body = '<div style="font-family:Syne,sans-serif;font-weight:800;font-size:.86rem;color:#f0ebe5;letter-spacing:-.02em">' + e.t + '</div>' +
+          '<div style="font-size:.7rem;color:#c9c1ba;margin-top:3px">' + e.v + ' · ' + e.d + '</div>' +
+          '<div style="font-family:JetBrains Mono,monospace;font-size:.62rem;color:#8a807a;margin-top:5px">$' + e.p + ' face · ' + e.sold + '/' + e.cap + ' sold</div>' +
+          '<div style="font-family:JetBrains Mono,monospace;font-size:.58rem;letter-spacing:.09em;color:#ff5029;margin-top:6px">TAP TO GET TICKET</div>';
+      }
+      tip.innerHTML = body;
+      tip.style.display = 'block';
+      const nx = parseFloat(node.style.left) || 0, ny = parseFloat(node.style.top) || 0;
+      const tw = tip.offsetWidth, th = tip.offsetHeight;
+      let x = nx + 14, y = ny - th - 12;
+      if (x + tw > el.clientWidth - 8) x = Math.max(8, nx - tw - 14);
+      if (y < 8) y = ny + 18;
+      tip.style.left = Math.round(x) + 'px';
+      tip.style.top = Math.round(y) + 'px';
+    };
+    const hideTip = () => { if (tip) tip.style.display = 'none'; };
+
+    el.querySelectorAll('[data-i]').forEach(node => {
+      const h = this._hit[parseInt(node.getAttribute('data-i'), 10)];
+      node.addEventListener('mouseenter', () => showTip(h, node));
+      node.addEventListener('mouseleave', hideTip);
+      node.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        hideTip();
+        if (h) this.setState({ sheet: h });
+      });
+    });
+  }
+
+  componentWillUnmount() { if (this._ro) this._ro.disconnect(); }
+
+  _kind() {
+    const l = this.state.layer;
+    return l === 'venues' ? 'venue' : l === 'artists' ? 'artist' : 'event';
+  }
+
+  _visible() {
+    const g = this.state.genre, k = this._kind();
+    if (k === 'venue') return this.VENUES.filter(v => g === 'All' || v.bk.indexOf(g) !== -1);
+    if (k === 'artist') return this.ARTISTS.filter(a => g === 'All' || a.g === g);
+    return this.EVENTS.filter(e => g === 'All' || e.g === g);
+  }
+
+  componentDidUpdate() {
+    if (!this._el || !this._view) return;
+    const st = this.state;
+    const sig = st.scope + '|' + st.genre + '|' + st.tab + '|' + st.layer;
+    if (this._paintedSig === sig) return;
+    if (this._paintedScope !== st.scope) {
+      const s = this.SCOPES[st.scope];
+      this._view = { lng: s.center[0], lat: s.center[1], z: s.z };
+      this._paintedScope = st.scope;
+    }
+    this._paintedSig = sig;
+    this._paint();
+  }
+
+  renderVals() {
+    const st = this.state;
+    const list = this._visible();
+    const sh = st.sheet;
+
+    const TOP = {
+      events: ['Live now · 34 shows nearby', 'Map'],
+      listen: ['Discover · radio · charts · search', 'Music'],
+      dash: ['Your stats · HYPE link', 'Me'],
+      settings: ['Account · community · info', 'Me · Settings']
+    }[st.tab];
+
+    const ROLE_DATA = {
+      artist: {
+        stats: [['4.2k', 'Total hypes'], ['$3,180', 'Paid out 30d'], ['6', 'Upcoming shows'], ['892', 'Followers']],
+        page: ['Nyla', 'Live · verified · dream-pop, Portland ME'],
+        actLabel: 'Recent payouts',
+        act: [['Port City Music Hall', 'Jul 10 · 412 tickets', '+$8,075', '#4ade80'],
+              ['SPACE Gallery', 'Jun 28 · 305 tickets', '+$4,270', '#4ade80'],
+              ['One Longfellow', 'Jun 14 · 190 tickets', '+$3,325', '#4ade80']]
+      },
+      fan: {
+        stats: [['312', 'Hypes cast'], ['18', 'Shows attended'], ['$184', 'Promoter earnings'], ['41', 'Following']],
+        page: ['Your HYPE link', 'Share it — friends see what you hype, and shows you can go to together'],
+        actLabel: 'Recent activity',
+        act: [['Referral · Collision', '3 tickets sold', '+$5.40', '#4ade80'],
+              ['Hyped Static Bloom', 'before 2,104 others', '🔥', '#ff5029'],
+              ['Ticket · Northbound', 'Sun Jul 19', '-$32', '#8a807a']]
+      },
+      venue: {
+        stats: [['82%', 'Avg fill rate'], ['$12,440', 'Gate 30d'], ['11', 'Shows booked'], ['550', 'Capacity']],
+        page: ['Port City Music Hall', 'Verified · Portland, ME · 550 cap'],
+        actLabel: 'Recent settlements',
+        act: [['Nyla · Glasslight', 'Jul 10 · 412 sold', '+$2,307', '#4ade80'],
+              ['Collision', 'Jul 11 · 244 sold', '+$878', '#4ade80'],
+              ['Harbor Sessions', 'Jul 17 · 190 sold', '+$950', '#4ade80']]
+      }
+    }[st.role];
+
+    return {
+      topEyebrow: TOP[0], topTitle: TOP[1],
+      isEvents: st.tab === 'events', isListen: st.tab === 'listen',
+      isDash: st.tab === 'dash', isSettings: st.tab === 'settings',
+      mapRef: this._setEl,
+
+      scopes: Object.keys(this.SCOPES).map(k => ({
+        label: this.SCOPES[k].label, on: st.scope === k, off: st.scope !== k,
+        pick: () => this.setState({ scope: k, sheet: null })
+      })),
+
+      layers: [['events', 'Events'], ['venues', 'Venues'], ['artists', 'Artists']].map(([k, l]) => ({
+        label: l, on: st.layer === k, off: st.layer !== k,
+        pick: () => this.setState({ layer: k, sheet: null })
+      })),
+
+      genreChips: ['All', 'Dream-pop', 'Indie', 'Electronic', 'Punk', 'Jazz', 'Hip-hop'].map(g => ({
+        label: g, on: st.genre === g, off: st.genre !== g,
+        pick: () => this.setState({ genre: g, sheet: null })
+      })),
+
+      resultLine: list.length + ' ' + (st.layer === 'venues' ? 'venues' : st.layer === 'artists' ? 'artists' : 'events') + ' · ' + st.genre.toLowerCase() + ' · tap a pin for their page',
+
+      listenTabs: [['seeds', 'Discover'], ['radio', 'Radio'], ['charts', 'Charts'], ['playlists', 'Playlists'], ['search', 'Search']].map(([k, l]) => ({
+        label: l, on: st.listen === k, off: st.listen !== k, pick: () => this.setState({ listen: k })
+      })),
+      isSearch: st.listen === 'search',
+      notSearch: st.listen !== 'search',
+      searchFacets: [
+        { title: 'Genre', chips: ['Dream-pop', 'Indie', 'Electronic', 'Punk', 'Jazz', 'Hip-hop'] },
+        { title: 'Location', chips: ['Portland, ME', 'Brooklyn, NY', 'Austin, TX', 'Los Angeles, CA', 'London, UK'] },
+        { title: 'Hype', chips: ['Rising fast', '1k+ hypes', '5k+ hypes', '10k+ hypes', 'Charting'] }
+      ],
+      searchResults: this.ARTISTS.slice(0, 5).map(a => ({
+        name: a.n, meta: a.g + ' · ' + a.city, hypes: a.hy,
+        open: () => this.setState({ tab: 'events', sheet: { type: 'artist', e: a } })
+      })),
+      isSeeds: st.listen === 'seeds', isRadio: st.listen === 'radio', isCharts: st.listen === 'charts',
+      listenFilters: [{ label: 'genre ▾' }, { label: 'location ▾' }, { label: 'hype ▾' }, { label: 'this week ▾' }],
+
+      radioStations: [
+        ['For you', 'Built from what you hype and replay', '142 tracks', true],
+        ['Local · Portland', 'Everything within 40 miles of you', '96 tracks', false],
+        ['New this week', 'Fresh uploads across every genre', '61 tracks', false],
+        ['Recommended by friends', 'Nyla, Maya + 4 others shared these', '38 tracks', false],
+        ['Dream-pop', 'Genre station', '210 tracks', false],
+        ['Punk', 'Genre station', '174 tracks', false],
+        ['Hip-hop', 'Genre station', '188 tracks', false],
+        ['Electronic', 'Genre station', '229 tracks', false]
+      ].map(([title, sub, count, playing]) => ({ title, sub, count, playing, idle: !playing })),
+
+      chartRows: [
+        ['01', 'Glasslight', 'Nyla', '4.2k', '↑ 12%'],
+        ['02', 'Collision', 'Static Bloom', '3.8k', '↑ 8%'],
+        ['03', 'Northbound', 'Kase', '3.1k', '↓ 3%'],
+        ['04', 'Harbor', 'Mira Vale', '2.7k', '↑ 21%'],
+        ['05', 'Dusk EP', 'Nyla', '2.2k', '↑ 4%'],
+        ['06', 'Low Season', 'Thalia', '1.9k', '—']
+      ].map(([rank, track, artist, hypes, delta]) => ({
+        rank, track, artist, hypes, delta,
+        up: delta.indexOf('↑') === 0, down: delta.indexOf('↓') === 0, flat: delta === '—'
+      })),
+
+      roles: [['artist', 'Artist'], ['fan', 'Fan'], ['venue', 'Venue']].map(([k, l]) => ({
+        label: l, on: st.role === k, off: st.role !== k, pick: () => this.setState({ role: k })
+      })),
+      stats: ROLE_DATA.stats.map(([value, label]) => ({ value, label })),
+      pageName: ROLE_DATA.page[0], pageStatus: ROLE_DATA.page[1],
+      hasPageEditor: st.role !== 'fan', fanLinkOnly: st.role === 'fan',
+      pageCardLabel: st.role === 'fan' ? 'Your HYPE link' : 'Your page',
+      activityLabel: ROLE_DATA.actLabel,
+      activity: ROLE_DATA.act.map(([title, sub, amount, amtColor]) => ({
+        title, sub, amount,
+        pos: amtColor === '#4ade80', hot: amtColor === '#ff5029', neutral: amtColor === '#8a807a'
+      })),
+
+      settingGroups: [
+        { title: 'Account', items: [{ label: 'Profile', value: 'Nyla' }, { label: 'Roles', value: 'Artist, Fan' }, { label: 'Payouts', value: 'Stripe ✓' }, { label: 'Notifications', value: 'On' }] },
+        { title: 'Accessibility', items: [{ label: 'Language', value: 'English' }, { label: 'Text size', value: 'Default' }, { label: 'Reduce motion', value: 'Off' }, { label: 'High contrast', value: 'Off' }] },
+        { title: 'Community', items: [{ label: 'Governance votes', value: '2 open' }, { label: 'Report a problem', value: '' }, { label: 'Trust & safety', value: '' }] },
+        { title: 'Info', items: [{ label: 'The Charter', value: '70/20/10' }, { label: 'Transparency', value: '' }, { label: 'Legal', value: '' }, { label: 'Support', value: '' }] }
+      ],
+
+      sheetOpen: !!sh,
+      sheetKind: sh ? (
+        sh.type === 'city' ? 'City · ' + sh.n + ' listings' :
+        sh.type === 'venue' ? 'Venue page · ' + sh.e.city :
+        sh.type === 'artist' ? 'Artist page · ' + sh.e.g :
+        'Event page · ' + sh.e.g
+      ) : '',
+      sheetTitle: sh ? (sh.type === 'venue' || sh.type === 'artist' ? sh.e.n : sh.e.t) : '',
+      sheetVerified: sh ? !!sh.e.ver : false,
+      sheetInitial: sh ? ((sh.type === 'venue' || sh.type === 'artist' ? sh.e.n : sh.e.t) || '?').charAt(0) : '',
+      sheetIsVenue: !!sh && sh.type === 'venue',
+      sheetIsArtist: !!sh && sh.type === 'artist',
+      sheetIsEvent: !!sh && sh.type !== 'venue' && sh.type !== 'artist',
+      sheetSub: sh ? (
+        sh.type === 'venue' ? 'Capacity ' + sh.e.cap + ' · ' + sh.e.up + ' upcoming shows' :
+        sh.type === 'artist' ? sh.e.city + ' · ' + sh.e.hy + ' hypes · ' + sh.e.up + ' upcoming' :
+        sh.e.v + ' · ' + sh.e.d + ' · doors 8:00 PM'
+      ) : '',
+      sheetAbout: sh ? (sh.e.about || 'Presented through iHYPE — face-value pricing, every split locked by charter before a single ticket sells.') : '',
+      sheetStats: sh ? (
+        sh.type === 'venue' ? [
+          { value: sh.e.cap, label: 'Capacity' },
+          { value: sh.e.up, label: 'Upcoming' },
+          { value: '20%', label: 'Gate share' }
+        ] : sh.type === 'artist' ? [
+          { value: sh.e.hy, label: 'Hypes' },
+          { value: sh.e.pl, label: 'Plays' },
+          { value: '70%', label: 'Ticket share' }
+        ] : [
+          { value: '$' + sh.e.p, label: 'Face value' },
+          { value: sh.e.sold + '/' + sh.e.cap, label: 'Sold' },
+          { value: Math.round(sh.e.sold / sh.e.cap * 100) + '%', label: 'Full' }
+        ]
+      ) : [],
+      sheetListTitle: sh ? (
+        sh.type === 'venue' ? 'Upcoming at this venue' :
+        sh.type === 'artist' ? 'Upcoming shows' :
+        'Lineup'
+      ) : '',
+      sheetList: sh ? (
+        sh.type === 'venue' ? this.EVENTS.filter(e => e.v === sh.e.n).slice(0, 3).map(e => ({ a: e.t, b: e.g + ' · ' + e.d, c: '$' + e.p }))
+        : sh.type === 'artist' ? this.EVENTS.filter(e => e.t.indexOf(sh.e.n) !== -1 || e.g === sh.e.g).slice(0, 3).map(e => ({ a: e.v, b: e.d + ' · ' + e.g, c: '$' + e.p }))
+        : [
+          { a: sh.e.t.split('·')[0].trim(), b: 'Headliner · 45 min', c: '9:30 PM' },
+          { a: 'Static Bloom', b: 'Support · 30 min', c: '8:40 PM' },
+          { a: 'Harbor Sessions', b: 'Opening set', c: '8:00 PM' }
+        ]
+      ) : [],
+      sheetSplit: '70% artist · 20% venue · 10% promoters · $0 iHYPE fee',
+      sheetCta: sh ? (
+        sh.type === 'venue' ? 'Request a booking' :
+        sh.type === 'artist' ? '🔥 Hype ' + sh.e.n :
+        'Get ticket — $' + sh.e.p + '.00'
+      ) : '',
+      sheetCta2: sh ? (sh.type === 'city' ? 'Zoom in' : 'Full page →') : '',
+      closeSheet: () => this.setState({ sheet: null }),
+
+      hypeLink: 'ihype.org/h/' + (st.role === 'artist' ? 'nyla' : st.role === 'venue' ? 'portcity' : 'maya'),
+      copyLabel: st.copied ? 'Copied' : 'Copy',
+      copyLink: () => { this.setState({ copied: true }); setTimeout(() => this.setState({ copied: false }), 1400); },
+      linkStats: [
+        { value: '412', label: 'Clicks' },
+        { value: '38', label: 'Tickets' },
+        { value: '$247', label: 'Earned' }
+      ],
+      siteInfo: [
+        { label: 'The charter — 70/20/10, locked', sub: 'Why iHYPE can never take a cut' },
+        { label: 'Transparency report', sub: 'Live platform numbers, audited' },
+        { label: 'Trust & safety', sub: 'Reporting, moderation, appeals' },
+        { label: 'Press kit', sub: 'Logos, boilerplate, fact sheet' },
+        { label: 'Support', sub: 'Tickets, payouts, verification' }
+      ],
+      menuOpen: st.menuOpen,
+      goSettings: () => this.setState({ tab: 'settings', menuOpen: false, navOpen: false, sheet: null }),
+      toggleMenu: () => this.setState({ menuOpen: !st.menuOpen }),
+      menuItems: [
+        { label: 'Switch role' }, { label: 'Your pages' }, { label: 'Tickets & wallet' },
+        { label: 'Promoter link' }, { label: 'Advertise' }, { label: 'About iHYPE' }, { label: 'Sign out' }
+      ],
+
+      navOpen: st.navOpen,
+      navClosed: !st.navOpen,
+      nowPlaying: st.playing,
+      navHint: st.tab === 'listen' ? 'MUSIC' : (st.tab === 'dash' || st.tab === 'settings' || st.tab === 'roles') ? 'ME' : 'MAP',
+      toggleNav: () => this.setState({ navOpen: !st.navOpen, navSection: 'root', sheet: null }),
+
+      navRoot: st.navOpen && st.navSection === 'root',
+      navSub: st.navOpen && st.navSection !== 'root',
+      navSubTitle: st.navSection === 'music' ? 'MUSIC' : 'ME',
+      navBack: () => this.setState({ navSection: 'root' }),
+      navPrimary: [
+        ['MAP', 'events', false, '0s'],
+        ['MUSIC', 'listen', true, '.07s'],
+        ['ME', 'dash', true, '.14s']
+      ].map(([label, tab, hasKids, delay]) => ({
+        label, delay, hasKids,
+        on: tab === 'events' ? st.tab === 'events'
+          : tab === 'listen' ? st.tab === 'listen'
+          : (st.tab === 'dash' || st.tab === 'settings' || st.tab === 'roles'),
+        off: !(tab === 'events' ? st.tab === 'events'
+          : tab === 'listen' ? st.tab === 'listen'
+          : (st.tab === 'dash' || st.tab === 'settings' || st.tab === 'roles')),
+        go: () => hasKids
+          ? this.setState({ navSection: label.toLowerCase() })
+          : this.setState({ tab, navOpen: false, navSection: 'root', sheet: null })
+      })),
+      navSubItems: (st.navSection === 'music'
+        ? [['Discover', 'seeds'], ['Radio', 'radio'], ['Charts', 'charts'], ['Playlists', 'playlists'], ['Search', 'search']]
+            .map(([label, k], i) => ({
+              label, delay: (i * 0.05) + 's', on: st.tab === 'listen' && st.listen === k, off: !(st.tab === 'listen' && st.listen === k),
+              go: () => this.setState({ tab: 'listen', listen: k, navOpen: false, navSection: 'root', sheet: null })
+            }))
+        : [['Stats', 'dash', 'stats'], ['Add roles', 'roles', 'roles'], ['Settings', 'settings', 'account'],
+           ['Accessibility', 'settings', 'access'], ['Community', 'settings', 'community'],
+           ['Info', 'settings', 'info'], ['Legal', 'settings', 'legal']]
+            .map(([label, tab, view], i) => ({
+              label, delay: (i * 0.05) + 's', on: st.tab === tab && st.meView === view, off: !(st.tab === tab && st.meView === view),
+              go: () => this.setState({ tab, meView: view, navOpen: false, navSection: 'root', sheet: null })
+            }))
+      ),
+
+      playerTrack: 'Glasslight', playerArtist: 'Nyla · dream-pop',
+      playerInitial: 'N',
+      playerIcon: st.playing ? '❚❚' : '▶',
+      playerHypeIcon: st.hyped ? '🔥' : '♡',
+      togglePlay: () => this.setState({ playing: !st.playing }),
+      toggleHype: () => this.setState({ hyped: !st.hyped }),
+
+      isRoles: st.tab === 'roles',
+      meView: st.meView,
+      addRoles: [
+        ['Artist', '🎤', '70% of every ticket', 'Upload tracks, publish shows, run your own tour. Keeps 70% of face value, locked by charter.', 'Apply as artist →'],
+        ['Venue', '🏛', '20% of every ticket', 'List your room, book from the demand radar, scan tickets at the door. 20% guaranteed.', 'Apply as venue →'],
+        ['Advertiser', '📣', 'Music-industry only', 'Buy radio and map placement. Labels, gear, ticketing, merch and tour support only — screened before it runs.', 'Apply as advertiser →']
+      ].map(([label, icon, split, desc, cta]) => ({
+        label, icon, split, desc, cta,
+        active: st.role === label.toLowerCase(),
+        addable: st.role !== label.toLowerCase()
+      })),
+
+      musicOn: st.tab === 'listen', musicOff: st.tab !== 'listen',
+      mapOn: st.tab === 'events', mapOff: st.tab !== 'events',
+      meOn: st.tab === 'dash' || st.tab === 'settings', meOff: !(st.tab === 'dash' || st.tab === 'settings'),
+
+      goMusic: () => this.setState({ tab: 'listen', navOpen: false, sheet: null, menuOpen: false }),
+      goMap: () => this.setState({ tab: 'events', navOpen: false, sheet: null, menuOpen: false }),
+      goMe: () => this.setState({ tab: 'dash', navOpen: false, sheet: null, menuOpen: false })
+    };
+  }
+}
+
+</script>
+</body>
+</html>

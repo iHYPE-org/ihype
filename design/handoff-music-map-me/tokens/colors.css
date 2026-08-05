@@ -1,0 +1,95 @@
+/* iHYPE Color Tokens */
+:root {
+  /* ── Backgrounds ── */
+  --bg-base:    #0a0805;
+  --bg-surface: #100d09;
+  --bg-raised:  #1a1612;
+  --bg-overlay: #221c16;
+
+  /* ── Ink ── */
+  --ink-1: #f0ebe5;
+  --ink-2: #9e9080;
+  --ink-3: #5a5048;
+  --ink-4: #3a342e;
+
+  /* ── Lines ── */
+  --line:   rgba(255, 255, 255, 0.06);
+  --line-2: rgba(255, 255, 255, 0.14);
+
+  /* ── Accent ── */
+  --accent: #ff5029;
+
+  /* ── Role Colors ── */
+  /* Fan | Artist | Venue — any account can promote by sharing its HYPE link */
+  --role-fan:    #b983ff;
+  --role-venue:  #22e5d4;
+  --role-promoter: #ff3e9a;
+  /* --role-artist maps to --accent (#ff5029) */
+
+  /* ── Utility ── */
+  --warn: #ffb84a;
+  --blue: #7fb3ff;
+
+  /* ── HYPE heat scale — data-viz language for demand intensity, not brand accent reuse ── */
+  --heat-cold:  #3a4a5a;
+  --heat-warm:  #ffb84a;
+  --heat-hot:   #ff5029;
+  --heat-fire:  #ff1f3d;
+
+  /* ── Semantic aliases ── */
+  --color-success:     #22e5d4;
+  --color-success-bg:  rgba(34, 229, 212, 0.1);
+  --color-error:       #ff4545;
+  --color-error-bg:    rgba(255, 69, 69, 0.1);
+  --color-warning:     #ffb84a;
+  --color-warning-bg:  rgba(255, 184, 74, 0.1);
+  --color-info:        #7fb3ff;
+  --color-info-bg:     rgba(127, 179, 255, 0.1);
+
+  /* ── RGB triplets for rgba() composition at arbitrary opacity ── */
+  --ink-1-rgb:      240, 235, 229; /* @kind color */
+  --surface-tint-rgb: 255, 255, 255; /* @kind color */
+  --bg-base-rgb:    10, 8, 5; /* @kind color */
+}
+
+/* ── Light theme override — Phase 1 pilot ── */
+[data-theme="light"] {
+  --bg-base:    #faf7f3;
+  --bg-surface: #ffffff;
+  --bg-raised:  #f1ece4;
+  --bg-overlay: #e8e0d4;
+
+  --ink-1: #1c1510;
+  --ink-2: #6b5f52;
+  --ink-3: #9a8f80;
+  --ink-4: #c2b8ab;
+
+  --line:   rgba(28, 21, 16, 0.08);
+  --line-2: rgba(28, 21, 16, 0.16);
+
+  /* Accent/role colors stay brand-consistent; darkened slightly where needed for AA contrast on white */
+  --accent: #e8461f;
+  --role-fan:   #9a5fe0;
+  --role-venue: #0fae9f;
+  --role-promoter: #e0257e;
+  --warn: #c98a1f;
+  --blue: #3d7fd6;
+
+  --heat-cold:  #7a8a9a;
+  --heat-warm:  #c98a1f;
+  --heat-hot:   #e8461f;
+  --heat-fire:  #d41030;
+
+  --color-success:     #0fae9f;
+  --color-success-bg:  rgba(15, 174, 159, 0.1);
+  --color-error:       #d32f2f;
+  --color-error-bg:    rgba(211, 47, 47, 0.08);
+  --color-warning:     #c98a1f;
+  --color-warning-bg:  rgba(201, 138, 31, 0.1);
+  --color-info:        #3d7fd6;
+  --color-info-bg:     rgba(61, 127, 214, 0.1);
+
+  --ink-1-rgb:      28, 21, 16; /* @kind color */
+  --surface-tint-rgb: 28, 21, 16; /* @kind color */
+  --bg-base-rgb:    250, 247, 243; /* @kind color */
+}

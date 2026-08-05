@@ -520,7 +520,7 @@ export default async function ShowDetailPage({
                         <div style={{ width: 110, height: 6, borderRadius: 3, background: 'var(--hair-100)', overflow: 'hidden', flexShrink: 0 }}>
                           {vc.isFire && <div style={{ width: '100%', height: '100%', background: 'var(--heat-fire)' }} />}
                           {vc.isHot && <div style={{ width: '70%', height: '100%', background: 'var(--accent)' }} />}
-                          {vc.isWarm && <div style={{ width: '45%', height: '100%', background: 'var(--role-promoter)' }} />}
+                          {vc.isWarm && <div style={{ width: '45%', height: '100%', background: 'var(--heat-warm)' }} />}
                           {vc.isCold && <div style={{ width: '20%', height: '100%', background: 'var(--ink-a35)' }} />}
                         </div>
                       </div>

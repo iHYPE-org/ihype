@@ -123,7 +123,9 @@
   --accent-2-rgb:    255, 62, 154;  /* #ff3e9a */
   --role-fan-rgb:    185, 131, 255; /* #b983ff */
   --role-venue-rgb:  34, 229, 212;  /* #22e5d4 */
-  --role-promoter-rgb: 255, 184, 74; /* #ffb84a */
+  --role-promoter-rgb: 255, 62, 154; /* #ff3e9a — see --role-promoter below */
+  --role-advertiser-rgb: 255, 184, 74; /* #ffb84a */
+  --warning-rgb:     255, 184, 74;  /* #ffb84a */
 
   /* ── Role colors ─────────────────────────────────────────────────── */
   --role-fan:      #b983ff;
@@ -131,21 +133,35 @@
      /settings, /pages and /register each hardcoded #ff3e9a, and /join and
      /for-djs wrote `var(--role-dj, #ff3e9a)` — a fallback contradicting the
      token it falls back from, so they rendered azure against their author's
-     intent. Resolved to the pink the product mostly already showed. */
-  --role-dj:       #ff3e9a;
+     intent. Resolved to the pink the product mostly already showed.
+     DEPRECATED as of the Music/Map/Me handoff (DESIGN_SYNC row 267): the
+     design system renamed this token to --role-promoter and states there is
+     no DJ role. Kept as an alias — same value, so nothing repaints — until
+     the DJ-removal work in that row actually lands and its ~7 call sites go
+     away with it. Do not add new uses. */
+  --role-dj:       var(--role-promoter);
   --role-artist:   #ff5029;
   --role-venue:    #22e5d4;
   /* The venue teal as TEXT. It is 10.6:1 on the dark charter card but 1.26:1
      on the light one, whose surface is that same teal at 10% over a light
      page — the colour and its background converge. Fills keep --role-venue. */
   --role-venue-text: var(--role-venue);
-  --role-promoter: #ffb84a;
+  /* The 10% promoter slice in every split bar. Was #ffb84a, which is the same
+     amber as --warning and --role-advertiser — so this token was doing three
+     unrelated jobs and ~20 of its ~28 call sites were "pending"/"warning"
+     badges that had nothing to do with promoters. The design system's colour
+     table settles it: promoter is #ff3e9a, renamed from --role-dj (see above),
+     used only for the 10% slice. The amber call sites moved to --warning /
+     --role-advertiser in the same commit, so none of them changed colour;
+     what does change colour is the split bar itself, which is the intent. */
+  --role-promoter: #ff3e9a;
   /* Role fills stay vivid; these aliases are the same hues calibrated for
      readable text. Light mode overrides the aliases without dulling artwork,
      charts, chips, or other brand fills. */
-  --role-dj-text: var(--role-dj);
+  --role-promoter-text: var(--role-promoter);
+  --role-dj-text: var(--role-promoter-text);
   --role-artist-text: var(--role-artist);
-  --role-advertiser-text: var(--role-promoter);
+  --role-advertiser-text: var(--warning-text);
   /* Backlog item 3 of the app-shell handoff: "Add --role-advertiser to the
      design system instead of borrowing --warn, and document which surfaces
      tint by role." Advertiser is the 5th account type (Role.ADVERTISER +
@@ -167,7 +183,10 @@
      Triplets make alpha composition work the same way for every tier. */
   --heat-fire: #ff1f3d;
   --heat-hot:  var(--accent);
-  --heat-warm: var(--role-promoter);
+  /* Was var(--role-promoter) back when that token held the amber #ffb84a. It
+     now holds the promoter pink, and a "warm" demand tier is not a promoter —
+     pointed at the amber it always rendered as, via the token that means it. */
+  --heat-warm: var(--warning);
   --heat-cold: #3a4a5a;
   --heat-fire-rgb: 255, 31, 61;
   --heat-hot-rgb:  var(--accent-rgb);
@@ -179,6 +198,10 @@
   --success: #22e5d4;
   --warning: #ffb84a;
   --danger:  #ff5029;
+  /* Informational blue. It existed as the literal #7fb3ff in two categorical
+     palettes (/listen's seed cards and /api/charts) and nowhere else, which is
+     how a six-hue palette ends up with one hue that a theme cannot reach. */
+  --blue:    #7fb3ff;
 
   /* ── Semantic aliases ────────────────────────────────────────────── */
   --surface-page:   var(--bg);
@@ -219,9 +242,35 @@
   --surface-tint-rgb: 255, 255, 255; /* the tint that lifts a surface on hover */
 
   /* Semantic success surface — the charter card and the player's transport
-     hover both paint from it. */
+     hover both paint from it. The design system ships four such pairs; the
+     other three are here so a status surface has a fill token to reach for
+     instead of hand-composing rgba() from a hex, which is what every
+     pending/rejected badge in the app currently does. */
   --color-success:    var(--success);
-  --color-success-bg: rgba(34, 229, 212, .10);
+  --color-success-bg: rgba(var(--role-venue-rgb), .10);
+  --color-error:      #ff4545;
+  --color-error-rgb:  255, 69, 69;
+  --color-error-bg:   rgba(var(--color-error-rgb), .10);
+  /* Amber as copy. #ffb84a is a fill: on the light theme's cream surfaces it
+     measures 2.85:1, so every amber *label* needs a darker value, which is
+     what --role-advertiser-text already discovered independently. One token
+     now, so the next amber label does not rediscover it. */
+  --warning-text:     var(--warning);
+  --color-warning:    var(--warning-text);
+  --color-warning-bg: rgba(var(--warning-rgb), .10);
+  --color-info:       var(--blue);
+  --color-info-rgb:   127, 179, 255;
+  --color-info-bg:    rgba(var(--color-info-rgb), .10);
+
+  /* ── Music/Map/Me chrome (DESIGN_SYNC row 267) ────────────────────
+     Named here because the handoff's shell reuses them across the map pane,
+     the nav scrim and the radial menu, and a literal repeated in three files
+     is how the last shell drifted. The shell's *geometry* deliberately does
+     not live here — see shell.css, which owns that table. */
+  --accent-deep: #7a2412;               /* gradient partner for --accent */
+  --map-void:    #12100e;               /* behind the map tiles */
+  --scrim:       rgba(8, 6, 5, .62);    /* nav overlay */
+  --hairline:    var(--ink-a10);        /* the design system's borders/dividers name */
 
   /* ── Font families ───────────────────────────────────────────────── */
   --f-d: var(--font-syne,  'Syne', sans-serif);
@@ -261,16 +310,31 @@
   --tracking-tight:   -0.02em;
   --tracking-mono:    0.08em;
   --tracking-caps:    0.2em;
+  /* The design system's own names for the same ramp. --tracking-wide is
+     byte-identical to --tracking-mono; the other two are new rungs. */
+  --tracking-normal:  0;
+  --tracking-wide:    0.08em;
+  --tracking-wider:   0.14em;
+  --tracking-widest:  0.18em;
 
   /* ── Spacing ─────────────────────────────────────────────────────── */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.5rem;
-  --space-6: 2rem;
-  --space-7: 3rem;
-  --space-8: 4rem;
+  /* Restated in the design system's px scale (4px base). The previous rem
+     values disagreed with it above rung 4 — --space-5 was 24px against the
+     system's 20px, --space-8 was 64px against 32px — and rungs 10/12/16 were
+     missing entirely. Safe to align rather than alias because nothing in
+     src/ or lib/ referenced any --space-* rung: they were declared and never
+     used, so this changes no rendered pixel and gives the Music/Map/Me work
+     the scale its handoff is written against. */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
 
   /* ── Radii ───────────────────────────────────────────────────────── */
   --radius-sm:   8px;
@@ -279,6 +343,13 @@
   --radius-xl:   22px;
   --radius-2xl:  28px;
   --radius-pill: 999px;
+  /* The design system's name for --radius-pill. NOTE: its radius *scale* is
+     otherwise finer than this one (its --radius-lg is 10px against this
+     codebase's 18px) and cannot be reconciled by aliasing, because 19 live
+     call sites depend on the 18px. Write the Music/Map/Me surfaces with the
+     literal px from the handoff's radius table rather than assuming a
+     --radius-* name means the same thing in both places. */
+  --radius-full: var(--radius-pill);
 
   /* ── Shadows ─────────────────────────────────────────────────────── */
   --shadow-sm:     0 4px 24px rgba(0,0,0,.25);
@@ -286,6 +357,14 @@
   --shadow-lg:     0 12px 40px rgba(0,0,0,.3), 0 0 0 1px rgba(255,255,255,.04);
   --shadow-glow:   0 18px 34px rgba(255,80,41,.22);
   --shadow-accent: 0 8px 48px rgba(255,80,41,.10);
+  /* Design-system additions. --shadow-card/-raised are neutral elevation;
+     --shadow-play/-album belong to the player and its artwork. */
+  --shadow-card:   0 1px 3px rgba(0,0,0,.16), 0 4px 16px rgba(0,0,0,.12);
+  --shadow-raised: 0 4px 16px rgba(0,0,0,.24), 0 1px 4px rgba(0,0,0,.12);
+  --shadow-play:   0 14px 36px rgba(0,0,0,.5);
+  --shadow-album:  0 30px 80px rgba(var(--accent-rgb),.27);
+  /* The logo trigger's glow in the Music/Map/Me shell. */
+  --shadow-logo:   0 0 22px rgba(var(--accent-rgb),.42);
 
   /* ── Focus ring ──────────────────────────────────────────────────── */
   --focus-border: var(--accent);
@@ -312,6 +391,49 @@
   --ease:     cubic-bezier(.4, 0, .2, 1);
   --ease-out: cubic-bezier(.16, 1, .3, 1);
   --ease-pop: cubic-bezier(.34, 1.56, .64, 1);
+
+  /* The design system's motion names. Its --ease-default and --ease-spring are
+     byte-identical to --ease and --ease-pop above, so those are aliases; the
+     rest are new. Deliberately NOT aliased: the system's own spacing.css
+     redefines --ease as cubic-bezier(0.2,.7,.3,1) and --duration-slow as
+     300ms, contradicting its motion.css (480ms) — the bundle is internally
+     inconsistent on those two, and --ease in particular is live on hundreds of
+     transitions here, so motion.css wins and --ease keeps its value.
+     --duration-* is a separate namespace from --dur-*; both stay. */
+  --ease-default: var(--ease);
+  --ease-spring:  var(--ease-pop);
+  --ease-in:      cubic-bezier(.4, 0, 1, 1);
+  --ease-in-out:  cubic-bezier(.4, 0, .2, 1);
+  --ease-sharp:   cubic-bezier(.4, 0, .6, 1);
+  --duration-instant: 50ms;
+  --duration-fast:    120ms;
+  --duration-default: 200ms;
+  --duration-medium:  320ms;
+  --duration-slow:    480ms;
+  --duration-xslow:   700ms;
+  --transition-transform: transform var(--duration-default) var(--ease-spring);
+  --transition-all:       all var(--duration-default) var(--ease-default);
+  --sheet-enter-dur: 320ms;
+  --sheet-exit-dur:  120ms;
+}
+
+/* The design system ships a reduced-motion block that zeroes its durations.
+   Doing it on the tokens means a surface that animates through them needs no
+   media query of its own. --duration-instant is left alone: it is already
+   below the perceptual threshold, and zeroing it would collapse transitions
+   that exist to prevent a flash rather than to animate. Note this complements
+   rather than replaces the existing `prefers-reduced-motion` rules further
+   down this file, which disable keyframe animations outright. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast:    0ms;
+    --duration-default: 0ms;
+    --duration-medium:  0ms;
+    --duration-slow:    0ms;
+    --duration-xslow:   0ms;
+    --sheet-enter-dur:  0ms;
+    --sheet-exit-dur:   0ms;
+  }
 }
 
 /* Opt-in light theme. Dark is canonical. */
@@ -390,9 +512,42 @@
   /* See --accent-text above: the brand orange is unreadable as copy here. */
   --accent-text: #9c2707;
   --role-venue-text: #0b6f67;
-  --role-dj-text: #920044;
+  --role-promoter-text: #920044;
   --role-artist-text: var(--accent-text);
-  --role-advertiser-text: #735000;
+  --warning-text: #735000;
+
+  /* Utility and semantic colours calibrated for a light background. Unlike
+     --accent/--role-* these are not brand fills — a #7fb3ff series line or a
+     #ff4545 error label on cream is barely there — so they do get restated.
+     Values are the design system's light-pilot hues darkened until they clear
+     4.5:1 on every light surface this theme defines, including --bg-4
+     #d8d0c6: the pilot's own #d32f2f measures 4.46:1 on --bg and only 3.26:1
+     on --bg-4, and #3d7fd6 measures 2.64:1 there. Same method rows 262 and
+     266 used. Both tokens are new and currently unreferenced, so this sets
+     the value before there is a surface to regress.
+     What is deliberately NOT restated here: the brand fills and their RGB
+     triplets. The pilot darkens --accent to #e8461f, --role-fan to #9a5fe0,
+     --role-venue to #0fae9f and --role-promoter to #e0257e. That is a real
+     design change, not a contrast fix — measured, dark --ink-on-accent goes
+     from 6.03:1 on #ff5029 to 5.0:1 on #e8461f, so both pass AA and the
+     pilot slightly reduces the margin. Adopting it means also restating
+     --accent-rgb and the --role-*-rgb triplets in this block, which reverses
+     a deliberate architecture decision (brand fills identical in both
+     themes) across roughly 60 composed-alpha surfaces; omitting them would
+     split every alpha tint from the solid fill beside it. So the pilot goes
+     back to design as an open question — DESIGN_SYNC row 267 — and light-mode
+     brand fills stay canonical, with the accessible-copy variants above
+     carrying the theme. */
+  --color-error:     #ac2424;
+  --color-error-rgb: 172, 36, 36;
+  --color-error-bg:  rgba(var(--color-error-rgb), .08);
+  --color-info:      #2259a1;
+  --color-info-rgb:  34, 89, 161;
+  /* --blue itself is NOT restated: its only uses are the two categorical
+     palettes (/listen's seed cards, /api/charts), whose other five hues are
+     brand fills that hold across themes. Flipping one entry of a six-hue
+     categorical set per theme makes that entry the odd one out. Copy and
+     status surfaces take --color-info instead, which is restated above. */
 }
 
 /* The default `body` rule hardcodes a dark gradient (see far below), which

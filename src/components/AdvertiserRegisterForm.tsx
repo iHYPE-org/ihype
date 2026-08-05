@@ -171,12 +171,12 @@ const styles = `
   .aar-input { width: 100%; font-size: 14px; color: var(--ink); background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 12px 14px; outline: none; font-family: inherit; box-sizing: border-box; }
   .aar-input:focus { border-color: var(--accent); }
   .aar-textarea { resize: vertical; }
-  .aar-notice { border: 1px solid rgba(var(--role-promoter-rgb),.25); background: rgba(var(--role-promoter-rgb),.06); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 24px; }
-  .aar-notice-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--role-promoter); margin-bottom: 4px; }
+  .aar-notice { border: 1px solid rgba(var(--role-advertiser-rgb),.25); background: rgba(var(--role-advertiser-rgb),.06); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 24px; }
+  .aar-notice-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--role-advertiser-text); margin-bottom: 4px; }
   .aar-notice-body { font-size: 12.5px; color: var(--ink-a65); line-height: 1.6; margin: 0; }
   .aar-cat-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
   .aar-cat { padding: 7px 13px; border-radius: var(--radius-pill); font-size: 12.5px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--ink-a65); font-family: inherit; }
-  .aar-cat.active { border-color: var(--role-promoter); background: rgba(var(--role-promoter-rgb),.13); color: var(--role-promoter); }
+  .aar-cat.active { border-color: var(--role-advertiser); background: rgba(var(--role-advertiser-rgb),.13); color: var(--role-advertiser-text); }
   .aar-error { color: var(--accent); font-size: 12.5px; margin: 14px 0 0; }
   .aar-btn { margin-top: 26px; font-family: var(--font-mono); font-size: 13px; text-transform: uppercase; letter-spacing: .06em; padding: 13px 20px; border-radius: var(--radius-pill); border: none; background: var(--accent); color: var(--ink-on-accent); cursor: pointer; }
   .aar-btn:disabled { opacity: .6; cursor: default; }

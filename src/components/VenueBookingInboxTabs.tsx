@@ -159,7 +159,7 @@ export function VenueBookingInboxTabs({ profileId }: { profileId: string }) {
         .vbi-meta { font-size: 12px; color: var(--ink-a55); margin-top: 2px; }
         .vbi-message { font-size: 13px; color: var(--ink-a75); line-height: 1.5; margin: 8px 0; }
         .vbi-pill { flex-shrink: 0; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; padding: 5px 10px; border-radius: var(--radius-pill); }
-        .vbi-pill-pending { background: rgba(var(--role-promoter-rgb),.15); color: var(--role-promoter); }
+        .vbi-pill-pending { background: rgba(var(--warning-rgb),.15); color: var(--warning-text); }
         .vbi-pill-accepted { background: rgba(var(--role-venue-rgb),.15); color: var(--role-venue); }
         .vbi-pill-declined { background: var(--line); color: var(--ink-a55); }
         .vbi-actions { display: flex; gap: 8px; flex-wrap: wrap; }

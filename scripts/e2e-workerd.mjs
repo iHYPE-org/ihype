@@ -59,11 +59,16 @@ const REQUESTED_TESTS = process.argv.slice(2);
 // isolate can retain compiled route modules until it reaches workerd's V8 heap
 // ceiling. Fresh isolates mirror separate production requests more closely
 // and keep a real runtime failure from being hidden behind a larger heap.
+// NOTE: this list is an ALLOWLIST, not a glob — a new spec file added to e2e/
+// does not run in CI until its name appears here. A contract suite that never
+// executes protects nothing while looking green, so add the file in the same
+// commit that adds the spec.
 const DEFAULT_TEST_SHARDS = [
   ['e2e/accessibility.spec.ts'],
   ['e2e/app-shell-a11y.spec.ts'],
   ['e2e/app-shell.spec.ts'],
   ['e2e/auth.spec.ts', 'e2e/passkey.spec.ts'],
+  ['e2e/mmm-shell.spec.ts'],
   ['e2e/mobile-shell.spec.ts'],
   ['e2e/module-deck.spec.ts'],
   ['e2e/public-smoke.spec.ts'],

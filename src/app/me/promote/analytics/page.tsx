@@ -173,7 +173,7 @@ export default async function PromoterAnalyticsPage({
         .pa-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr)); gap: 16px; margin-bottom: 24px; }
         .pa-stat-card { border: 1px solid var(--line); border-radius: var(--radius-md); padding: 20px; background: var(--bg2); }
         .pa-stat-label { font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a50); margin-bottom: 8px; }
-        .pa-stat-value { font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--role-promoter, var(--accent-2)); }
+        .pa-stat-value { font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--role-promoter-text); }
         .pa-stat-sub { font-size: 12px; color: var(--ink-a50); margin-top: 4px; }
 
         .pa-chart-card { border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 24px; background: var(--bg2); margin-bottom: 24px; }
@@ -182,10 +182,10 @@ export default async function PromoterAnalyticsPage({
         .pa-chart-sub { font-size: 12px; color: var(--ink-a50); margin-top: 2px; }
         .pa-range-tabs { display: flex; gap: 4px; border: 1px solid var(--line); border-radius: var(--radius-pill); padding: 3px; }
         .pa-range-tab { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; padding: 6px 12px; border-radius: var(--radius-pill); text-decoration: none; color: var(--ink-a60); }
-        .pa-range-tab-active { background: var(--role-promoter, var(--accent-2)); color: var(--ink-on-accent); }
+        .pa-range-tab-active { background: var(--role-promoter); color: var(--ink-on-accent); }
         .pa-chart-bars { display: flex; align-items: flex-end; gap: 10px; height: 140px; }
         .pa-chart-bar-col { flex: 1; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-end; height: 100%; }
-        .pa-chart-bar { width: 100%; background: linear-gradient(180deg, var(--role-promoter, var(--accent-2)), rgba(var(--accent-2-rgb),.25)); border-radius: 6px 6px 0 0; min-height: 4px; }
+        .pa-chart-bar { width: 100%; background: linear-gradient(180deg, var(--role-promoter), rgba(var(--role-promoter-rgb),.25)); border-radius: 6px 6px 0 0; min-height: 4px; }
         .pa-chart-bar-label { font-family: var(--font-mono); font-size: 10px; color: var(--ink-a50); text-align: center; margin-top: 6px; }
         .pa-chart-empty { text-align: center; padding: 30px 0; color: var(--ink-a50); font-size: 13px; }
 
@@ -196,7 +196,7 @@ export default async function PromoterAnalyticsPage({
         .pa-link-url { font-family: var(--font-mono); font-size: 12px; color: var(--ink); word-break: break-all; }
         .pa-link-stats { display: flex; gap: 20px; flex-shrink: 0; }
         .pa-link-clicks { font-size: 12px; color: var(--ink-a50); }
-        .pa-link-earned { font-size: 12px; font-weight: 700; color: var(--role-promoter, var(--accent-2)); }
+        .pa-link-earned { font-size: 12px; font-weight: 700; color: var(--role-promoter-text); }
         .pa-links-empty { text-align: center; padding: 40px 24px; color: var(--ink-a50); }
         .pa-links-empty p { margin: 0; }
 

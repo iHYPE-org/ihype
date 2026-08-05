@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  OPEN: 'var(--role-promoter)',
+  OPEN: 'var(--warning-text)',
   PENDING: 'var(--success)',
   RESOLVED: 'var(--ink-a50)',
   CLOSED: 'var(--ink-a50)',

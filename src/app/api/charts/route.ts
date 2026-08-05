@@ -5,7 +5,7 @@ import { releasedMediaWhere } from '@/lib/media-release';
 
 export const dynamic = 'force-dynamic';
 
-const PALETTE = ['var(--accent)', 'var(--role-fan)', 'var(--role-venue)', 'var(--accent-2)', 'var(--role-promoter)', '#7fb3ff'];
+const PALETTE = ['var(--accent)', 'var(--role-fan)', 'var(--role-venue)', 'var(--accent-2)', 'var(--warning)', 'var(--blue)'];
 
 export type ChartTrack = {
   id: string;

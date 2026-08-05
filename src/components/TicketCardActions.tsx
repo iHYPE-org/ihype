@@ -311,7 +311,7 @@ export function TicketCardActions({
               </>
             ) : tooLateToCancel ? (
               <>
-                <p style={{ fontSize: 13, color: 'var(--role-promoter)', marginBottom: 16 }}>
+                <p style={{ fontSize: 13, color: 'var(--warning-text)', marginBottom: 16 }}>
                   {t('ticketCardActions.tooLateToCancelMessage', 'Cancellations close 48 hours before the show, so this ticket can no longer be cancelled — you can still transfer it to someone else.')}
                 </p>
                 <div style={{ display: 'flex', gap: 10 }}>

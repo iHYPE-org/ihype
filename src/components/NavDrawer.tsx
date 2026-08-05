@@ -213,7 +213,7 @@ export function NavDrawer({
       {
         id: 'settings',
         label: 'SETTINGS',
-        color: 'var(--role-promoter)',
+        color: 'var(--warning-text)',
         items: [
           { href: '/me/settings', label: 'Settings', icon: 'settings', description: 'Account, privacy, and access' },
           { href: '/community', label: 'Community', icon: 'community', description: 'Vote on what iHYPE becomes' },

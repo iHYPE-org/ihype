@@ -1,0 +1,51 @@
+<!-- @dsCard group="Colors" viewport="700x160" name="Accent & Roles" subtitle="iHYPE orange-red + four role identities" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { margin: 0; padding: 16px 20px; background: var(--bg-base); font-family: var(--font-mono); }
+  .row { display: flex; gap: 10px; }
+  .swatch { flex: 1; border-radius: 8px; padding: 14px 14px 10px; border: 1px solid var(--line); }
+  .dot { width: 36px; height: 36px; border-radius: 10px; margin-bottom: 10px; }
+  .name { font-size: 9px; letter-spacing: .14em; color: var(--ink-3); text-transform: uppercase; }
+  .val  { font-size: 10px; color: var(--ink-2); margin-top: 3px; }
+  .label { font-size: 9px; letter-spacing: .08em; text-transform: uppercase; margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="row">
+  <div class="swatch" style="background:var(--bg-surface)">
+    <div class="dot" style="background:var(--accent)"></div>
+    <div class="name">--accent</div>
+    <div class="val">#ff5029</div>
+    <div class="label" style="color:var(--accent)">iHYPE · Artist</div>
+  </div>
+  <div class="swatch" style="background:var(--bg-surface)">
+    <div class="dot" style="background:var(--role-fan)"></div>
+    <div class="name">--role-fan</div>
+    <div class="val">#b983ff</div>
+    <div class="label" style="color:var(--role-fan)">Fan</div>
+  </div>
+  <div class="swatch" style="background:var(--bg-surface)">
+    <div class="dot" style="background:var(--role-venue)"></div>
+    <div class="name">--role-venue</div>
+    <div class="val">#22e5d4</div>
+    <div class="label" style="color:var(--role-venue)">Venue</div>
+  </div>
+  <div class="swatch" style="background:var(--bg-surface)">
+    <div class="dot" style="background:var(--role-promoter)"></div>
+    <div class="name">--role-promoter</div>
+    <div class="val">#ff3e9a</div>
+    <div class="label" style="color:var(--role-promoter)">Promoter</div>
+  </div>
+  <div class="swatch" style="background:var(--bg-surface)">
+    <div class="dot" style="background:var(--warn)"></div>
+    <div class="name">--warn</div>
+    <div class="val">#ffb84a</div>
+    <div class="label" style="color:var(--warn)">Warning</div>
+  </div>
+</div>
+</body>
+</html>
