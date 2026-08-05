@@ -265,15 +265,17 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
         </section>
       )}
 
-      {/* Heat map — real city/genre hype aggregates. Map view links to the
-          companion DiscoverMap design; no Next.js route exists for it yet
-          (not in CLAUDE.md's page map), so it's rendered as a label rather
-          than a broken link. */}
+      {/* Heat map — real city/genre hype aggregates. The "map view" here was a
+          dead "(coming soon)" label because no map route existed when this was
+          written. One does now: MmmMap is built and live at /app/map (Design
+          System 6's map module), so this links to it. */}
       {(cityHeat.length > 0 || genreHeat.length > 0) && (
         <section style={{ marginBottom: 32, border: '1px solid var(--hair-80)', borderRadius: 16, background: 'var(--hair-40)', padding: '20px 22px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, margin: 0 }}>🌡️ {t('discoverPage.heatMapTitle', 'Heat map')}</h2>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a30)' }}>{t('discoverPage.heatMapComingSoon', 'Map view (coming soon)')}</span>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, margin: 0 }}>{t('discoverPage.heatMapTitle', 'Heat map')}</h2>
+            <Link href="/app/map" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--accent-text)', textDecoration: 'none' }}>
+              {t('discoverPage.heatMapOpenMap', 'Open map view')} <span aria-hidden="true">›</span>
+            </Link>
           </div>
           {cityHeat.length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginBottom: genreHeat.length > 0 ? 18 : 0 }}>

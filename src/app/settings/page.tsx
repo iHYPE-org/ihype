@@ -49,6 +49,107 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return outputArray;
 }
 
+/**
+ * Shown only when the account has no email at all — which is now the normal
+ * state for a fan who signed up with a passkey, since signup stopped asking.
+ *
+ * Without this the account has no recovery path whatsoever: lose the passkey,
+ * lose the account, with nothing support can do. The address is written only
+ * after a code sent TO IT comes back, so a typo cannot park recovery on an
+ * inbox the user does not own.
+ */
+function AddRecoveryEmail({ onAdded }: { onAdded: (email: string) => void }) {
+  const { t } = useI18n();
+  const [value, setValue] = useState('');
+  const [code, setCode] = useState('');
+  const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function post(payload: Record<string, string>) {
+    setBusy(true);
+    setErr(null);
+    try {
+      const res = await fetch('/api/me/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? t('settingsPage.somethingWentWrong', 'Something went wrong.'));
+      return data;
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : t('settingsPage.somethingWentWrong', 'Something went wrong.'));
+      return null;
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="settings-row settings-recovery">
+      <div>
+        <div className="settings-row-label">{t('settingsPage.recoveryEmailLabel', 'Recovery email')}</div>
+        <div className="settings-row-detail">
+          {sent
+            ? t('settingsPage.recoveryCodeSent', 'Enter the 6-digit code we sent to that address.')
+            : t('settingsPage.recoveryEmailDetail', 'Your account has no email. Add one so you can get back in if you lose your passkey.')}
+        </div>
+        {err ? <div className="settings-recovery-error">{err}</div> : null}
+      </div>
+      <div className="settings-recovery-controls">
+        {sent ? (
+          <>
+            <input
+              aria-label={t('settingsPage.recoveryCodeAria', 'Six-digit verification code')}
+              className="settings-input-inline"
+              inputMode="numeric"
+              maxLength={6}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+              placeholder="000000"
+              value={code}
+            />
+            <button
+              className="settings-btn settings-btn-accent"
+              disabled={busy || code.length !== 6}
+              onClick={async () => {
+                const data = await post({ action: 'confirm', email: value.trim().toLowerCase(), code });
+                if (data?.verified) onAdded(data.email);
+              }}
+              type="button"
+            >
+              {busy ? t('settingsPage.verifying', 'Verifying…') : t('settingsPage.confirm', 'Confirm')}
+            </button>
+          </>
+        ) : (
+          <>
+            <input
+              aria-label={t('settingsPage.recoveryEmailLabel', 'Recovery email')}
+              className="settings-input-inline"
+              inputMode="email"
+              onChange={(e) => setValue(e.target.value)}
+              placeholder="you@example.com"
+              type="email"
+              value={value}
+            />
+            <button
+              className="settings-btn settings-btn-accent"
+              disabled={busy || !value.trim()}
+              onClick={async () => {
+                const data = await post({ action: 'send', email: value.trim().toLowerCase() });
+                if (data?.sent) setSent(true);
+              }}
+              type="button"
+            >
+              {busy ? t('settingsPage.sending', 'Sending…') : t('settingsPage.sendCode', 'Send code')}
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function Row({ label, detail, action }: { label: string; detail: string; action?: React.ReactNode }) {
   return (
     <div className="settings-row">
@@ -358,13 +459,21 @@ export default function SettingsPage() {
                 detail={t('settingsPage.shownOnProfile', 'Shown on your profile')}
                 label={t('settingsPage.displayName', 'Display name')}
               />
-              <Row
-                action={emailVerified
-                  ? <span className="settings-row-detail">{t('settingsPage.contactToChange', 'Contact admin@ihype.org to change')}</span>
-                  : <Link className="settings-btn settings-btn-ghost" href="/verify-email">{t('settingsPage.verify', 'Verify')}</Link>}
-                detail={emailVerified ? email : `${email} · ${t('settingsPage.notVerified', 'not verified')}`}
-                label={t('settingsPage.email', 'Email')}
-              />
+              {/* An account with no email is now normal (passkey signup asks
+                  for nothing), and it is the one with no way back in. The old
+                  row rendered an empty address beside a "Verify" button that
+                  had nothing to verify. */}
+              {email ? (
+                <Row
+                  action={emailVerified
+                    ? <span className="settings-row-detail">{t('settingsPage.contactToChange', 'Contact admin@ihype.org to change')}</span>
+                    : <Link className="settings-btn settings-btn-ghost" href="/verify-email">{t('settingsPage.verify', 'Verify')}</Link>}
+                  detail={emailVerified ? email : `${email} · ${t('settingsPage.notVerified', 'not verified')}`}
+                  label={t('settingsPage.email', 'Email')}
+                />
+              ) : (
+                <AddRecoveryEmail onAdded={(added) => { setEmail(added); setEmailVerified(true); }} />
+              )}
               <Row
                 action={<Link className="settings-btn settings-btn-ghost" href="/verify">{t('settingsPage.manage', 'Manage')}</Link>}
                 detail={role.charAt(0) + role.slice(1).toLowerCase()}
@@ -514,6 +623,10 @@ export default function SettingsPage() {
         .settings-btn-accent { background: var(--accent); color: var(--ink-on-accent); }
         .settings-btn-accent:hover { opacity: .9; }
         .settings-input-inline { padding: 8px 12px; border: 1px solid var(--hair-100); border-radius: 8px; background: var(--bg); color: var(--ink); font-size: 14px; }
+        .settings-recovery { align-items: flex-start; }
+        .settings-recovery-controls { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+        .settings-recovery-controls .settings-input-inline { width: 190px; max-width: 100%; }
+        .settings-recovery-error { margin-top: 6px; font-size: 12px; color: var(--warning-text); }
         .settings-input-inline:focus { outline: none; border-color: var(--accent); }
         .settings-danger-zone { border: 1px solid rgba(239,68,68,.2); }
         .settings-danger-zone .settings-row { border-color: rgba(239,68,68,.1); }

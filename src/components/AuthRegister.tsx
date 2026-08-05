@@ -553,11 +553,18 @@ export function RegisterScreen({
               ? t('authRegister.createAccountPasskey', 'Create account with passkey')
               : t('authRegister.createAccountMagicLink', 'Create account with magic link')}
           </button>
-          <div className="authcard-trust-row" aria-label="Signup trust links">
-            <Link href="/info?tab=privacy">{t('authRegister.privacyLink', 'Privacy')}</Link>
-            <Link href="/info?tab=terms">{t('authRegister.termsLink', 'Terms')}</Link>
-            <Link href="/community-rules">{t('authRegister.communityRulesLink', 'Community rules')}</Link>
-          </div>
+          {/* This used to be three bare links with no statement of agreement,
+              while User.tosAcceptedAt sat in the schema written by nothing —
+              the terms were shown but never actually accepted. The sentence is
+              what makes creating the account an act of assent; the timestamp
+              is recorded server-side in POST /api/register. */}
+          <p className="authcard-consent">
+            {t('authRegister.consentPrefix', 'By creating an account you agree to our')}{' '}
+            <Link href="/info?tab=terms">{t('authRegister.termsLink', 'Terms')}</Link>{', '}
+            <Link href="/info?tab=privacy">{t('authRegister.privacyLink', 'Privacy Policy')}</Link>{' '}
+            {t('authRegister.consentAnd', 'and')}{' '}
+            <Link href="/community-rules">{t('authRegister.communityRulesLink', 'Community rules')}</Link>.
+          </p>
           <label className="bot-field" aria-hidden="true">
             <span>Company</span>
             <input
