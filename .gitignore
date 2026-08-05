@@ -7,6 +7,12 @@ node_modules
 .env.local
 .env.production
 .env.preview
+# Wrangler's local-secrets file — the documented place to put real ACRCloud /
+# Stripe / FCM keys for `wrangler dev`. It was never listed here, so anyone
+# following the standard Cloudflare workflow would have staged live
+# credentials on their next `git add -A`.
+.dev.vars
+.dev.vars.*
 coverage
 .DS_Store
 prisma/dev.db
