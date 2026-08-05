@@ -1463,16 +1463,17 @@ fieldset.authcard-field { border: 0; padding: 0; }
 }
 .authcard-divider::before, .authcard-divider::after { content: ''; flex: 1; height: 1px; background: var(--line-2); }
 
-.authcard-trust-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-  justify-content: center;
+/* Replaced .authcard-trust-row (three bare links, no statement of agreement)
+   — see the comment at its render site in AuthRegister. */
+.authcard-consent {
   margin-top: 14px;
+  text-align: center;
   font-size: 12px;
+  line-height: 1.55;
+  color: var(--ink-3);
 }
-.authcard-trust-row a { color: var(--ink-3); text-decoration: none; }
-.authcard-trust-row a:hover { color: var(--ink); text-decoration: underline; }
+.authcard-consent a { color: var(--accent-text); text-decoration: none; }
+.authcard-consent a:hover { text-decoration: underline; }
 .authcard-privacy-promise {
   margin: 4px 0 14px;
   color: var(--success);

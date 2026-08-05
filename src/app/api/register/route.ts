@@ -270,6 +270,19 @@ export async function POST(request: Request) {
           passwordHash,
           isThirteenOrOlder: body.isThirteenOrOlder,
           isEighteenOrOlder: body.isEighteenOrOlder,
+          // The Terms are what the account is created under, so the moment of
+          // creation IS the moment of acceptance — the submit button now says
+          // so explicitly (AuthRegister's trust row used to be three bare
+          // links with no statement of agreement anywhere).
+          //
+          // This column and its migration have existed since
+          // 20260602000000_add_user_security_fields and were written by
+          // nothing, so every account on the platform has a null here and
+          // there is no record of anyone accepting anything. Backfilling old
+          // rows would be inventing consent that was never given; they stay
+          // null, and null now means "signed up before this was recorded"
+          // rather than "unknown".
+          tosAcceptedAt: new Date(),
           role: body.role,
         },
         select: { id: true, email: true, username: true, role: true },
