@@ -4,25 +4,13 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { track } from '@/lib/analytics';
 import { useI18n } from '@/components/I18nProvider';
+import { adIdFromClipId, isBillableAd } from '@/lib/station-breaks';
 
-type StationTrack = {
-  hexId: string;
-  title: string;
-  url: string;
-  artistName: string;
-  artistSlug: string;
-  artworkUrl: string | null;
-  durationSecs: number;
-};
-
-type StationState = {
-  live: boolean;
-  liveShow: { slug: string; title: string } | null;
-  nowPlaying: StationTrack | null;
-  positionSecs: number;
-  upNext: StationTrack[];
-  rotationLength: number;
-};
+// Type-only import: erased at compile time, so `@/lib/radioStation`'s server
+// imports (Prisma) never reach the client bundle. These used to be re-declared
+// here by hand, which is how the component came to be missing `adClipId` and
+// silently could not tell an ad slot from a track.
+import type { StationState } from '@/lib/radioStation';
 
 // The always-on auto-DJ player. Loads the shared station state, starts the
 // current track at the server-synced offset, and advances to whatever the
@@ -33,6 +21,8 @@ export function AlwaysOnStation({ initial }: { initial: StationState }) {
   const [playing, setPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentHex = useRef<string | null>(null);
+  // Which ad slot has already been billed, so a re-render cannot double-charge.
+  const reportedClip = useRef<string | null>(null);
 
   // Refetch the station when the current track is expected to end, so we stay
   // in sync with the shared rotation rather than drifting.
@@ -51,7 +41,7 @@ export function AlwaysOnStation({ initial }: { initial: StationState }) {
     return () => window.clearTimeout(timer);
   }, [state]);
 
-  // When the now-playing track changes, load it and seek to the shared offset.
+  // When the now-playing item changes, load it and seek to the shared offset.
   useEffect(() => {
     const audio = audioRef.current;
     const np = state.nowPlaying;
@@ -61,6 +51,42 @@ export function AlwaysOnStation({ initial }: { initial: StationState }) {
     audio.src = np.url;
     audio.currentTime = Math.min(state.positionSecs, Math.max(0, np.durationSecs - 1));
     if (playing) audio.play().catch(() => setPlaying(false));
+  }, [state, playing]);
+
+  /**
+   * Report the impression when a purchased spot comes up.
+   *
+   * This is the call that actually spends an advertiser's budget — the same
+   * one `ShowSequencePlayer` made for DJ shows, which was the only place ads
+   * could air before. Ad revenue is the platform's only revenue, so this is
+   * the load-bearing line of the whole station.
+   *
+   * Only `mkt_` clips bill: `builtInAdClips` placeholders are house filler
+   * with no campaign behind them, and `isBillableAd` is what tells them apart.
+   *
+   * Gated on `playing`, because an impression means somebody heard it. The
+   * station holds a server-synced position whether or not audio is running, so
+   * reporting on state change alone would bill every campaign continuously to
+   * a paused tab. The server also de-duplicates per user over a window, but
+   * that is a backstop, not a licence to over-report from here.
+   */
+  useEffect(() => {
+    const np = state.nowPlaying;
+    if (!playing || !np || !isBillableAd(np)) return;
+    if (reportedClip.current === np.hexId) return;
+    reportedClip.current = np.hexId;
+
+    const adId = adIdFromClipId(np.adClipId);
+    if (!adId) return;
+    void fetch('/api/ads/impression', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adId }),
+      keepalive: true,
+    }).catch(() => {
+      // Never let ad accounting interrupt playback. A dropped impression
+      // under-bills by one; a thrown error would stop the music.
+    });
   }, [state, playing]);
 
   function toggle() {
