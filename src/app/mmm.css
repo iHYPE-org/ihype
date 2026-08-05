@@ -241,18 +241,6 @@ html.mmm-locked .site-shell > main {
 }
 .mmm-pin-venue .mmm-pin-pill { border-radius: 8px; border-color: rgba(var(--role-venue-rgb), 0.8); }
 .mmm-pin-artist .mmm-pin-pill { border-color: rgba(var(--role-fan-rgb), 0.8); padding-left: 3px; }
-.mmm-pin-avatar {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--role-fan), var(--accent));
-  color: var(--ink-on-accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.6rem;
-  font-weight: 800;
-}
 /* Leader line. A de-collided pin gets a longer one so its true location stays
    readable — see placePins()'s `offset`. */
 .mmm-pin-leader { width: 2px; height: 7px; background: rgba(var(--accent-rgb), 0.75); }

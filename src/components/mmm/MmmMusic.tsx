@@ -314,10 +314,15 @@ function PlaylistsTab() {
     return <Empty>No playlists yet. A right-swipe in Discover files a track into your Discover playlist and it will appear here.</Empty>;
   }
 
+  // Each row links to its own playlist. /playlists never existed, so every
+  // row used to point at the same dead URL. The real route is
+  // /playlist/[slug], where the "slug" is the FanPlaylist id — page.tsx looks
+  // it up with findUnique({ id }), and that id is exactly what
+  // /api/fan-playlists returns.
   return (
     <div>
       {lists.map((list) => (
-        <Link className="mmm-row" href="/playlists" key={list.id} style={{ display: 'flex' }}>
+        <Link className="mmm-row" href={`/playlist/${list.id}`} key={list.id} style={{ display: 'flex' }}>
           <span style={{ flex: 1, minWidth: 0 }}>
             <span className="mmm-row-title" style={{ display: 'block' }}>{list.name}</span>
             <span className="mmm-row-sub" style={{ display: 'block' }}>{list.count} track{list.count === 1 ? '' : 's'}</span>
