@@ -9,11 +9,18 @@
  * it cannot be reached by pointer or keyboard behind the scrim.
  *
  * This is presentation over the shared playback state; it owns no audio element
- * of its own. The hype toggle writes through to the real profile-hype endpoint
- * the rest of the app uses, so a heart tapped here counts the same as one
- * tapped on an artist page.
+ * of its own — play/pause is still local state, and wiring it to real playback
+ * is open item (d) on DESIGN_SYNC row 268.
+ *
+ * The hype toggle IS real: it writes through to `/api/hype`, the same endpoint
+ * an artist page's HypeButton posts to, so a heart tapped here counts once and
+ * spends from the same balance. The heart renders only when the artist is
+ * actually hypeable (`canHype`) — the layout resolves "no linked profile",
+ * "not discoverable" and "your own profile" server-side, so this is never a
+ * control whose every press is refused.
  */
 export function MmmPlayer({
+  canHype,
   hidden,
   hyped,
   onToggleHype,
@@ -21,6 +28,7 @@ export function MmmPlayer({
   playing,
   track,
 }: {
+  canHype: boolean;
   hidden: boolean;
   hyped: boolean;
   onToggleHype: () => void;
@@ -36,16 +44,18 @@ export function MmmPlayer({
         <div className="mmm-player-track">{track.title}</div>
         <div className="mmm-player-artist">{track.artist}</div>
       </div>
-      <button
-        aria-label={hyped ? `Remove hype from ${track.artist}` : `Hype ${track.artist}`}
-        aria-pressed={hyped}
-        className="mmm-player-icon"
-        onClick={onToggleHype}
-        tabIndex={hidden ? -1 : 0}
-        type="button"
-      >
-        <span aria-hidden="true">{hyped ? '\u2665' : '\u2661'}</span>
-      </button>
+      {canHype && (
+        <button
+          aria-label={hyped ? `Remove hype from ${track.artist}` : `Hype ${track.artist}`}
+          aria-pressed={hyped}
+          className="mmm-player-icon"
+          onClick={onToggleHype}
+          tabIndex={hidden ? -1 : 0}
+          type="button"
+        >
+          <span aria-hidden="true">{hyped ? '\u2665' : '\u2661'}</span>
+        </button>
+      )}
       <button
         aria-label={playing ? 'Pause' : 'Play'}
         className="mmm-player-play"

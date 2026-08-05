@@ -35,16 +35,47 @@ export default async function MmmLayout({ children }: { children: React.ReactNod
       where: { userId: session.user.id },
       orderBy: { createdAt: 'desc' },
       // MediaListen denormalizes the title and artist onto the row itself, so
-      // this needs no join.
-      select: { title: true, artistName: true },
+      // the track copy needs no join. The artist's PROFILE does need one: the
+      // row carries a slug, and /api/hype takes a profile id.
+      select: { title: true, artistName: true, artistProfileSlug: true },
     })
     .catch(() => null);
+
+  // Resolve the artist's profile so the player's heart can write through to the
+  // same endpoint an artist page uses. Everything the hype route itself refuses
+  // is resolved HERE instead of on click: a non-discoverable profile (404) and
+  // the viewer's own profile (409) both yield a null id, which renders the
+  // heart as absent rather than as a control that always fails. Independently
+  // .catch()'d — a failed lookup costs the heart, never the player.
+  const artistProfile = listen?.artistProfileSlug
+    ? await db.profile
+        .findFirst({
+          where: { slug: listen.artistProfileSlug, discoverable: true },
+          select: { id: true, ownerId: true },
+        })
+        .catch(() => null)
+    : null;
+  const hypeableProfileId =
+    artistProfile && artistProfile.ownerId !== session.user.id ? artistProfile.id : null;
+
+  // Whether the viewer has already hyped this artist, so the heart opens filled
+  // instead of resetting to empty on every navigation.
+  const existingHype = hypeableProfileId
+    ? await db.profileHypeEvent
+        .findUnique({
+          where: { userId_profileId: { userId: session.user.id, profileId: hypeableProfileId } },
+          select: { id: true },
+        })
+        .catch(() => null)
+    : null;
 
   const nowPlaying: MmmNowPlaying = listen
     ? {
         title: listen.title,
         artist: listen.artistName,
         initial: (listen.artistName || listen.title).charAt(0).toUpperCase(),
+        artistProfileId: hypeableProfileId,
+        hyped: existingHype !== null,
       }
     : null;
 
