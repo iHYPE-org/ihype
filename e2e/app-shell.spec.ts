@@ -295,7 +295,13 @@ test.describe('App shell — navigation manifest', () => {
     await expect(drawer.getByText('Event Creator')).toHaveCount(0);
   });
 
-  test('an account holding Artist and DJ sees exactly those creators', async ({ page, context }) => {
+  test('an account holding Artist sees exactly that creator', async ({ page, context }) => {
+    // Was "Artist and DJ". Show Creator went with the DJ role — radio is
+    // computed per listener now (src/lib/stations.ts) and there is nothing for
+    // a person to author, so the destination no longer exists in the manifest.
+    // The DJ profile is still seeded here on purpose: three such rows survive
+    // until the data migration, and holding one must not resurrect a creator
+    // or break the gates around it.
     await signIn(context, CREATOR_EMAIL, [
       { type: 'ARTIST', name: 'E2E Artist' },
       { type: 'DJ', name: 'E2E DJ' },
@@ -306,7 +312,7 @@ test.describe('App shell — navigation manifest', () => {
 
     const drawer = page.locator('.shell-drawer');
     await expect(drawer.getByText('Tour Creator')).toBeVisible();
-    await expect(drawer.getByText('Show Creator')).toBeVisible();
+    await expect(drawer.getByText('Show Creator')).toHaveCount(0);
     // Not a venue — this gate must stay closed.
     await expect(drawer.getByText('Event Creator')).toHaveCount(0);
   });
