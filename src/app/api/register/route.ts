@@ -35,13 +35,15 @@ const schema = z.object({
   phone: z.string().trim().max(30).optional(),
   username: z.string().min(3).max(30).optional(),
   password: z.string().min(8).regex(/[A-Za-z]/).regex(/[0-9]/).optional(),
-  // 'DJ' is gone from what can be REGISTERED — the role is being removed
-  // (docs/dj-role-removal-scope.md, signed off 2026-08-05) and radio is now
-  // computed per listener by src/lib/stations.ts rather than authored by a DJ.
-  // The Prisma enums still carry DJ so the three existing profiles keep
-  // resolving; this closes the door on new ones. A client posting role:'DJ'
-  // now fails validation rather than silently creating one.
-  role: z.enum(['FAN', 'ARTIST', 'VENUE']).default('FAN'),
+  // Every account starts as a fan. An artist, venue or promoter page is ADDED
+  // afterwards from /pages (POST /api/profiles), which is where the role
+  // actually gets decided now — so signup has no role to accept.
+  //
+  // Still parsed rather than dropped: recruiting kits link to
+  // /register?role=ARTIST and old clients may post one. Coercing to FAN is
+  // quieter than 400ing a signup over a parameter the user never saw, and it
+  // cannot be used to mint a privileged account.
+  role: z.literal('FAN').catch('FAN').default('FAN'),
   isThirteenOrOlder: z.boolean().optional().default(false),
   isEighteenOrOlder: z.boolean().optional().default(false),
   acceptedArtistUploadPolicy: z.boolean().optional().default(false),
@@ -158,13 +160,6 @@ export async function POST(request: Request) {
 
     if (!isValidUsername(normalizedUsername)) {
       return NextResponse.json({ error: getUsernameValidationMessage() }, { status: 400 });
-    }
-
-    if (body.role === 'ARTIST' && !body.acceptedArtistUploadPolicy) {
-      return NextResponse.json(
-        { error: 'Artists must accept the iHYPE artist upload and limited use license policy.' },
-        { status: 400 },
-      );
     }
 
     if (!body.isThirteenOrOlder) {

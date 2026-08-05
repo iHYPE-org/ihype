@@ -23,31 +23,12 @@ export type SignupFunnelMetadata = {
 };
 
 /**
- * DJ is deliberately absent — step 1 of the DJ-role removal
- * (`docs/dj-role-removal-scope.md`), operator sign-off given 2026-08-05.
- *
- * This list is what a NEW account can choose. `RoleOption` still includes 'DJ'
- * on purpose: three DJ profiles exist and every read has to keep working until
- * the data migration and the enum rewrite land as their own deploys, which the
- * scope doc requires be kept separate. Closing the signup door first is what
- * stops the problem growing while the rest is done — the doc's own warning is
- * that "the window for the easy version closes when real DJs sign up".
- *
- * Radio does not need DJs any more: `src/lib/stations.ts` computes stations per
- * listener at request time from their history, locality, follows and genre —
- * "the replacement for DJ-hosted radio shows", in its own words.
+ * There is no role picker any more. Every account starts as a fan and adds an
+ * artist, venue or promoter page afterwards from /pages (POST /api/profiles),
+ * so `roleOptions` — which existed only to populate the signup radios — is
+ * gone. `RoleOption` stays: it still types the role a Profile can have.
  */
-export const roleOptions: Array<{ value: RoleOption; label: string; help: string }> = [
-  { value: 'FAN', label: 'Fan', help: 'Discover, hype, playlist, and track your music life.' },
-  { value: 'ARTIST', label: 'Artist', help: 'Publish your page, media, shows, and growth signals.' },
-  { value: 'VENUE', label: 'Venue', help: 'Manage events, ticketing, and demand signals.' }
-];
 
-/**
- * Single centered auth card — matches the Auth.dc.html redesign. Replaces
- * the old two-column AuthSignalShell (marketing copy + glass card); the
- * sitewide header already carries the pitch, so this page is just the form.
- */
 export function AuthCardShell({
   mode,
   eyebrow,

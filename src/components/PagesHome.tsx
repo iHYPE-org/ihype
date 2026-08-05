@@ -83,16 +83,10 @@ const CREATE_CARDS: { type: string; color: string; bg: string; name: string; des
       </svg>
     ),
   },
-  {
-    type: 'DJ', color: 'var(--accent-2)', bg: 'rgba(var(--accent-2-rgb),.1)', name: 'DJ Page',
-    desc: 'Host radio shows, build a crate, earn promoter cuts.',
-    icon: (
-      <svg fill="none" height="20" stroke="var(--accent-2)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="20">
-        <circle cx="12" cy="12" r="2" />
-        <path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14" />
-      </svg>
-    ),
-  },
+  // No DJ card. The role is being removed (docs/dj-role-removal-scope.md) and
+  // POST /api/profiles rejects it — radio is computed per listener now, and
+  // "earn promoter cuts" is something every fan account already does through
+  // HYPE links, with no page required.
 ];
 
 const b: React.CSSProperties = {
@@ -164,6 +158,10 @@ export function PagesHome({
   const [q, setQ] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[] | null>(null);
   const [creatingType, setCreatingType] = useState<string | null>(null);
+  // The artist upload-policy attestation, collected here because this is where
+  // upload rights are granted. It must be a real tick: sending `true` because
+  // the role happens to be ARTIST would be a rubber stamp, not consent.
+  const [acceptedUploadPolicy, setAcceptedUploadPolicy] = useState(false);
   const [creatingName, setCreatingName] = useState('');
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -208,7 +206,10 @@ export function PagesHome({
       const res = await fetch('/api/profiles', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: type, name }),
+        // The artist upload-policy attestation moved here from signup, where
+        // it was asked of every fan whether or not they would ever upload.
+        // The confirm dialog below is what collects it.
+        body: JSON.stringify({ role: type, name, acceptedArtistUploadPolicy: acceptedUploadPolicy }),
       });
       const created = await res.json();
       if (!res.ok) {
@@ -224,6 +225,7 @@ export function PagesHome({
       void refreshAll();
       setCreatingType(null);
       setCreatingName('');
+      setAcceptedUploadPolicy(false);
       setJustCreatedName(created.name ?? name);
       contentTopRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
       setTimeout(() => setJustCreatedName(null), 6000);
@@ -680,10 +682,22 @@ export function PagesHome({
                       type="text"
                       value={creatingName}
                     />
+                    {card.type === 'ARTIST' && (
+                      <label style={{ display: 'flex', gap: 9, alignItems: 'flex-start', fontSize: 12, lineHeight: 1.5, color: 'var(--ink-a70)' }}>
+                        <input
+                          checked={acceptedUploadPolicy}
+                          disabled={creating}
+                          onChange={(e) => setAcceptedUploadPolicy(e.target.checked)}
+                          style={{ marginTop: 2 }}
+                          type="checkbox"
+                        />
+                        <span>{t('pagesHome.uploadPolicyAttestation', 'I confirm I am authorized to upload or use the music/media I add to iHYPE.')}</span>
+                      </label>
+                    )}
                     {createError && <div style={{ fontSize: 12, color: 'var(--accent)' }}>{createError}</div>}
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button
-                        disabled={creating || !creatingName.trim()}
+                        disabled={creating || !creatingName.trim() || (card.type === 'ARTIST' && !acceptedUploadPolicy)}
                         onClick={() => addProfile(card.type)}
                         style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: card.color, color: 'var(--ink-on-accent)', fontWeight: 700, fontSize: 13, cursor: creating ? 'default' : 'pointer', opacity: creating || !creatingName.trim() ? 0.6 : 1 }}
                         type="button"
@@ -692,7 +706,7 @@ export function PagesHome({
                       </button>
                       <button
                         disabled={creating}
-                        onClick={() => { setCreatingType(null); setCreatingName(''); setCreateError(null); }}
+                        onClick={() => { setCreatingType(null); setCreatingName(''); setCreateError(null); setAcceptedUploadPolicy(false); }}
                         style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid var(--hair-100)', background: 'transparent', color: 'var(--ink-a70)', fontSize: 13, cursor: 'pointer' }}
                         type="button"
                       >

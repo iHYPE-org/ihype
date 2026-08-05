@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import type { FormEvent } from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { startRegistration } from '@simplewebauthn/browser';
 import { postJson } from '@/lib/api-client';
 import { resolvePostAuthRedirect } from '@/lib/auth-redirects';
@@ -11,7 +11,6 @@ import {
   getErrorMessage,
   getPasskeyDiagnostics,
   getStoredSignupVariant,
-  roleOptions,
   trackSignupFunnel,
 } from '@/components/AuthShared';
 import type { AuthMethod, RegisterStep, RoleOption, SignupVariant } from '@/components/AuthShared';
@@ -21,29 +20,28 @@ import { useI18n } from '@/components/I18nProvider';
 
 type PasskeyRegistrationOptions = Parameters<typeof startRegistration>[0]['optionsJSON'];
 
-const ROLE_COLOR: Record<RoleOption, string> = {
-  FAN: 'var(--role-fan)',
-  ARTIST: 'var(--role-artist)',
-  DJ: 'var(--role-dj)',
-  VENUE: 'var(--role-venue)'
-};
-
+/**
+ * `initialRole` is accepted and deliberately IGNORED.
+ *
+ * Recruiting kits still link to /register?role=ARTIST, and those links live in
+ * external places this codebase does not control. Every account now starts as
+ * a fan regardless — an artist, venue or promoter page is added afterwards
+ * from /pages — so honouring the parameter would create the exact
+ * pick-your-identity-first step this removed. The prop stays in the signature
+ * so those callers keep type-checking rather than being silently rewritten.
+ */
 export function RegisterScreen({
-  initialRole = 'FAN',
   inviteOnly = false
 }: {
   initialRole?: RoleOption;
   inviteOnly?: boolean;
 }) {
   const { t } = useI18n();
-  const [role, setRole] = useState<RoleOption>(initialRole);
   const [authMethod, setAuthMethod] = useState<AuthMethod>('email');
   const [signupVariant, setSignupVariant] = useState<SignupVariant>('email_first');
-  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [acceptedAge, setAcceptedAge] = useState(false);
   const [acceptedAdult, setAcceptedAdult] = useState(false);
-  const [acceptedPolicy, setAcceptedPolicy] = useState(false);
   const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
@@ -64,18 +62,21 @@ export function RegisterScreen({
   // can actually produce one, or signup would deadlock in those environments.
   const turnstileConfigured = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
   const awaitingTurnstile = turnstileConfigured && !turnstileToken;
-  const needsPublicName = role !== 'FAN';
-  // DJ can no longer be chosen (roleOptions dropped it, and /api/register
-  // rejects it) — the upload policy is an artist-only gate now.
-  const needsUploadPolicy = role === 'ARTIST';
-  const selectedRole = useMemo(() => roleOptions.find((option) => option.value === role), [role]);
+  // Every account starts here. Kept as a named constant rather than inlined
+  // because the signup funnel reports it on every event, and a literal at each
+  // of those call sites would be the thing that drifts if this ever changes.
+  const role: RoleOption = 'FAN';
+  // The public-name and upload-policy fields were driven by the role picker.
+  // A fan page has no public name to set and nothing to upload, so neither
+  // applies at signup any more. The artist upload policy is gated where an
+  // artist page is actually created — see POST /api/profiles.
 
   useEffect(() => {
     const variant = getStoredSignupVariant();
     setSignupVariant(variant);
     setAuthMethod(variant === 'passkey_first' ? 'passkey' : 'email');
-    trackSignupFunnel('view', { role: initialRole, method: variant === 'passkey_first' ? 'passkey' : 'email', step: 'form', variant });
-  }, [initialRole]);
+    trackSignupFunnel('view', { role, method: variant === 'passkey_first' ? 'passkey' : 'email', step: 'form', variant });
+  }, []);
 
   /**
    * A fan account asks for nothing it does not need.
@@ -107,12 +108,10 @@ export function RegisterScreen({
     const result = await postJson<{ id: string }>('/api/register', {
       // Both omitted rather than sent empty: a fan supplies neither, and the
       // route treats absent and blank differently.
-      name: needsPublicName ? name : undefined,
       email: email.trim() || undefined,
       role,
       isThirteenOrOlder: acceptedAge,
       isEighteenOrOlder: acceptedAdult,
-      acceptedArtistUploadPolicy: needsUploadPolicy ? acceptedPolicy : true,
       inviteCode: inviteOnly ? inviteCode : undefined,
       company,
       passkeyFlow: method === 'passkey',
@@ -416,35 +415,11 @@ export function RegisterScreen({
               <span aria-hidden="true">✓</span> {t('authRegister.gateAccepted', 'HYPE code accepted — finish creating your account below.')}
             </div>
           ) : null}
-          <fieldset className="authcard-field">
-            <legend>{t('authRegister.joiningAsLegend', "I'm joining as")}</legend>
-            <div className="authcard-role-grid">
-              {roleOptions.map((option) => (
-                <label
-                  className={option.value === role ? 'authcard-role-opt active' : 'authcard-role-opt'}
-                  key={option.value}
-                  style={option.value === role
-                    ? ({ '--role-c': ROLE_COLOR[option.value], '--role-bg': `${ROLE_COLOR[option.value]}1a` } as React.CSSProperties)
-                    : undefined}
-                >
-                  <input
-                    checked={option.value === role}
-                    className="authcard-role-radio"
-                    name="role"
-                    onChange={() => {
-                      setRole(option.value);
-                      trackSignupFunnel('role_selected', { role: option.value, method: authMethod, step: 'form', variant: signupVariant });
-                    }}
-                    type="radio"
-                    value={option.value}
-                  />
-                  <div className="authcard-role-dot" style={{ background: ROLE_COLOR[option.value] }} />
-                  <div className="authcard-role-name">{t(`authRegister.roleLabel.${option.value}`, option.label)}</div>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-
+          {/* No role picker. Every account starts as a fan; an artist, venue
+              or promoter page is ADDED afterwards from /pages, which is a real
+              working path (POST /api/profiles). Asking at signup made people
+              choose an identity before they had seen anything, and made the
+              form longer for the one answer that is always the same. */}
           <div className="authcard-method-grid" role="tablist" aria-label="Signup method">
             <button
               aria-selected={authMethod === 'email'}
@@ -473,24 +448,6 @@ export function RegisterScreen({
               <span>{t('authRegister.passkeyDesc', 'Use your device prompt now, with a magic link as backup.')}</span>
             </button>
           </div>
-
-          {/* A public name is the profile's identity for an artist, DJ or
-              venue, so those roles still supply one. A fan has no public page
-              to name and is not asked — a display name is set later in
-              Settings if they ever want one. The phone field is gone
-              outright: nothing in the app has ever read User.phone. */}
-          {needsPublicName ? (
-            <div className="authcard-field">
-              <label>{(selectedRole?.label ?? t('authRegister.profileLabel', 'Profile')) + ' ' + t('authRegister.nameSuffix', 'name')}</label>
-              <input
-                onChange={(event) => setName(event.target.value)}
-                placeholder={t('authRegister.publicNamePlaceholder', 'Your public artist/venue name')}
-                required
-                type="text"
-                value={name}
-              />
-            </div>
-          ) : null}
 
           {/* Only the magic-link method needs an address, because the address
               is where the link goes. The passkey method asks for nothing. */}
@@ -527,18 +484,6 @@ export function RegisterScreen({
               {t('authRegister.adultAttestation', 'I am 18 or older')} <span className="authcard-field-optional">— {t('authRegister.adultAttestationHint', 'optional now, but required to buy tickets or share referral links. You can confirm later in Settings.')}</span>
             </span>
           </label>
-
-          {needsUploadPolicy ? (
-            <label className="authcard-check-row">
-              <input
-                checked={acceptedPolicy}
-                onChange={(event) => setAcceptedPolicy(event.target.checked)}
-                required
-                type="checkbox"
-              />
-              <span>{t('authRegister.uploadPolicyAttestation', 'I confirm I am authorized to upload or use the music/media I add to iHYPE.')}</span>
-            </label>
-          ) : null}
 
           <TurnstileWidget
             ref={turnstileRef}

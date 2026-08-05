@@ -16,8 +16,26 @@ import { readClientAddress } from '@/lib/request-meta';
 import { log } from '@/lib/logger';
 
 const schema = z.object({
-  role: z.enum(['ARTIST', 'DJ', 'VENUE']),
+  // No DJ. The role is being removed (docs/dj-role-removal-scope.md) and radio
+  // is computed per listener now, so there is nothing a DJ page would do that
+  // a fan account does not already do.
+  role: z.enum(['ARTIST', 'VENUE']),
   name: z.string().trim().min(2).max(120),
+  /**
+   * The artist upload and limited-use licence attestation.
+   *
+   * This gate used to live at signup, because that was the only moment a role
+   * was chosen. Roles are added here now, so the gate moved with them — an
+   * artist page must not come into existence without it, and asking every fan
+   * at signup was asking almost everyone to accept a policy about uploading
+   * that they would never use.
+   *
+   * Note it is checked and not stored, exactly as it was at signup: no column
+   * has ever recorded it. Persisting it needs a migration, which the repo's
+   * workflow keeps to its own deploy, so it is recorded in the audit log here
+   * instead of being silently dropped.
+   */
+  acceptedArtistUploadPolicy: z.boolean().optional().default(false),
 });
 
 /**
@@ -51,6 +69,16 @@ export async function POST(request: Request) {
     const body = schema.parse(await request.json());
     const trimmedName = body.name.trim();
     const profileType = getProfileType(body.role);
+
+    // The gate that used to sit at signup. An artist page is the thing that
+    // grants upload rights, so this is the moment the attestation actually
+    // means something.
+    if (body.role === 'ARTIST' && !body.acceptedArtistUploadPolicy) {
+      return NextResponse.json(
+        { error: 'Artists must accept the iHYPE artist upload and limited use license policy.' },
+        { status: 400 },
+      );
+    }
 
     // Double-submit guard: retrying after a flaky error created duplicate
     // pages (same owner, same type, same name) in the wild. Treat an exact
@@ -92,7 +120,12 @@ export async function POST(request: Request) {
       entityType: 'profile',
       entityId: profile.id,
       ipAddress: clientAddress,
-      metadata: { role: body.role },
+      // The upload-policy acceptance rides along here because no column
+      // records it — it was never persisted at signup either. The audit log is
+      // the only durable trace of the attestation until a migration adds one.
+      metadata: body.role === 'ARTIST'
+        ? { role: body.role, acceptedArtistUploadPolicy: true }
+        : { role: body.role },
     });
 
     return NextResponse.json(profile, { status: 201 });
