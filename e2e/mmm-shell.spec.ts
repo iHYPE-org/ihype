@@ -116,6 +116,12 @@ test.describe('Music · Map · Me shell', () => {
   // §9: "All 5 MUSIC items are visible and reachable, no clipping." §4 is the
   // bug this guards — three of seven items were off-screen and unreachable
   // because an ancestor's overflow clipped the transform.
+  //
+  // Measured only once the fan has SETTLED. The items transition out from behind
+  // the logo over .42s with a per-index delay, and `toBeVisible()` resolves the
+  // moment opacity lifts — so reading boundingBox() straight after it samples a
+  // pill still in flight, near the logo, and the hit test then returns the logo.
+  // That is the test measuring an animation, not the layout being wrong.
   test('every MUSIC item is on screen and hit-testable', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/app/map');
@@ -124,23 +130,29 @@ test.describe('Music · Map · Me shell', () => {
 
     const labels = ['Discover', 'Radio', 'Charts', 'Recommended', 'Playlists'];
     for (const label of labels) {
-      const item = page.getByRole('button', { name: label, exact: true });
-      await expect(item).toBeVisible();
-      const box = await item.boundingBox();
-      expect(box, `${label} has no box`).not.toBeNull();
-      // Fully inside the viewport on both axes — a clipped item still reports
-      // "visible" while sitting half off-screen.
-      expect(box!.x, `${label} is off the left edge`).toBeGreaterThanOrEqual(0);
-      expect(box!.y, `${label} is off the top edge`).toBeGreaterThanOrEqual(0);
-      expect(box!.x + box!.width, `${label} overflows the right edge`).toBeLessThanOrEqual(390);
-      expect(box!.y + box!.height, `${label} overflows the bottom edge`).toBeLessThanOrEqual(844);
-      // And the point at its centre must actually hit it, not something above it.
-      const hit = await page.evaluate(([x, y]) => {
-        const node = document.elementFromPoint(x, y);
-        return node?.textContent?.trim() ?? '';
-      }, [box!.x + box!.width / 2, box!.y + box!.height / 2] as [number, number]);
-      expect(hit, `${label} is covered by something else`).toContain(label);
+      await expect(page.getByRole('button', { name: label, exact: true })).toBeVisible();
     }
+
+    // One poll over the whole set: each pill fully inside the viewport, and the
+    // point at its own centre hitting itself rather than something above it.
+    await expect.poll(async () => page.evaluate((names) => {
+      const problems: string[] = [];
+      for (const name of names) {
+        const node = [...document.querySelectorAll('.mmm-nav-item')]
+          .find((candidate) => candidate.textContent?.trim() === name);
+        if (!node) { problems.push(`${name}: not rendered`); continue; }
+        const box = node.getBoundingClientRect();
+        if (box.width === 0 || box.height === 0) { problems.push(`${name}: zero box`); continue; }
+        if (box.left < 0) problems.push(`${name}: off the left edge (${Math.round(box.left)})`);
+        if (box.top < 0) problems.push(`${name}: off the top edge (${Math.round(box.top)})`);
+        if (box.right > window.innerWidth) problems.push(`${name}: overflows right (${Math.round(box.right)} > ${window.innerWidth})`);
+        if (box.bottom > window.innerHeight) problems.push(`${name}: overflows bottom (${Math.round(box.bottom)} > ${window.innerHeight})`);
+        const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+        const hitText = hit?.textContent?.trim() ?? '';
+        if (hitText !== name) problems.push(`${name}: centre hits "${hitText}"`);
+      }
+      return problems;
+    }, labels), { timeout: 10_000 }).toEqual([]);
   });
 
   // §9: "Items fan out with a visible stagger, not all at once." §5's bug made
