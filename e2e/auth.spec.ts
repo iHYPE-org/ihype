@@ -41,17 +41,17 @@ test.describe('Authentication', () => {
     await page.goto('/login');
     await expect(page).toHaveTitle(/iHYPE/i);
 
-    // 2. AuthLogin.tsx defaults to the passkey tab whenever
-    // window.PublicKeyCredential exists (true in a real Chromium browser
-    // even with no authenticator registered) — the email field only renders
-    // after switching to the magic-link tab.
-    await page.getByRole('button', { name: /email me a magic link/i }).click();
-
-    // 3. Submit email — AuthLogin.tsx's email field has no <label>/aria-label
-    // association (just a placeholder), so its accessible name doesn't
-    // contain "email" and getByRole(..., {name: /email/i}) can't find it.
-    await page.getByPlaceholder('you@example.com').fill(EMAIL);
-    await page.getByRole('button', { name: /send sign-in link/i }).click();
+    // 2. Sign-in is single-step as of the Auth.dc.html sync: one email field
+    // and one Continue button, no passkey/magic-link tab strip to switch
+    // between. The passkey path runs as a WebAuthn conditional ceremony
+    // armed on the same field (autocomplete="username webauthn"), which is
+    // invisible to this test — with no authenticator registered the browser
+    // simply offers nothing, and typing an address is the email path.
+    //
+    // 3. The field now has a real <label for>, so it can be addressed by
+    // accessible name rather than by placeholder.
+    await page.getByLabel(/email/i).fill(EMAIL);
+    await page.getByRole('button', { name: /^continue$/i }).click();
 
     // 4. "Check your email" confirmation appears
     await expect(page.getByRole('heading', { name: /check your email/i })).toBeVisible({ timeout: 8000 });

@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { postJson } from '@/lib/api-client';
@@ -49,35 +48,15 @@ export function AuthCardShell({
   children: ReactNode;
 }) {
   const { t } = useI18n();
-  const sceneTitle = mode === 'signin' ? 'Your scene is waiting.' : 'Free local music. Built around you.';
-  const sceneBody = mode === 'signin'
-    ? 'Pick up where you left off—your HYPEs, discovery playlist, radio, and local shows are ready.'
-    : 'Hear what is happening nearby, HYPE what deserves attention, and help real local music reach real people.';
   return (
     <section className={`authcard-page authcard-page-${mode}`}>
-      <header className="authcard-header">
-        <Link aria-label="iHYPE home" className="authcard-brand" href="/">
-          <Image alt="" height={46} priority src="/brand/ihype-menu-logo.webp" width={46} />
-          <span><b>iHYPE</b><small>LOCAL SIGNAL</small></span>
+      <div className="authcard-wrap">
+        <Link aria-label="iHYPE home" className="authcard-mark" href="/">
+          <b>iHYPE</b>
+          <small>{t('authShared.tagline', 'Local signal')}</small>
         </Link>
-        <Link className="authcard-home-link" href="/">Free local music <span aria-hidden="true">↗</span></Link>
-      </header>
 
-      <div aria-hidden="true" className="authcard-atmosphere"><span /><span /><i /><i /><i /><i /><i /><i /><i /></div>
-
-      <div className="authcard-layout">
-        <aside className="authcard-scene">
-          <p>YOUR MUSIC · YOUR SCENE · YOUR SIGNAL</p>
-          <h2>{sceneTitle}</h2>
-          <p>{sceneBody}</p>
-          <div className="authcard-scene-points">
-            <span><i /> Listen free</span>
-            <span><i /> HYPE what matters</span>
-            <span><i /> We never sell your data</span>
-          </div>
-        </aside>
-
-        <div className="authcard-wrap">
+        <div className="authcard-box">
           <p className="authcard-eyebrow">{eyebrow}</p>
           <h1 className="authcard-title">{title}</h1>
           <p className="authcard-sub">{subtitle}</p>
@@ -101,10 +80,12 @@ export function AuthCardShell({
             </Link>
           </div>
 
-          <div className="authcard-box">{children}</div>
-
-          <p className="authcard-charter">{t('authShared.charterLine', 'iHYPE takes nothing · locked in the charter')}</p>
+          {children}
         </div>
+
+        <p className="authcard-charter">
+          {t('authShared.charterLine', '70/20/10 · iHYPE fee $0')} · <Link href="/info?tab=charter">{t('authShared.charterLink', 'The charter')}</Link>
+        </p>
       </div>
     </section>
   );
