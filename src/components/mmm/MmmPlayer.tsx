@@ -9,8 +9,14 @@
  * it cannot be reached by pointer or keyboard behind the scrim.
  *
  * This is presentation over the shared playback state; it owns no audio element
- * of its own — play/pause is still local state, and wiring it to real playback
- * is open item (d) on DESIGN_SYNC row 268.
+ * of its own. Play/pause now drives the real `MediaPlayerProvider` the rest of
+ * the site uses — it used to be local state that toggled an icon and nothing
+ * else, which was open item (d) on DESIGN_SYNC row 268.
+ *
+ * `canTogglePlay` is false when the pill is showing the server-resolved "your
+ * most recent listen" rather than a track the audio element actually holds.
+ * That record carries no URL, so there is nothing to start; the control is
+ * omitted instead of rendered as a button that cannot work.
  *
  * The hype toggle IS real: it writes through to `/api/hype`, the same endpoint
  * an artist page's HypeButton posts to, so a heart tapped here counts once and
@@ -21,6 +27,7 @@
  */
 export function MmmPlayer({
   canHype,
+  canTogglePlay,
   hidden,
   hyped,
   onToggleHype,
@@ -29,6 +36,7 @@ export function MmmPlayer({
   track,
 }: {
   canHype: boolean;
+  canTogglePlay: boolean;
   hidden: boolean;
   hyped: boolean;
   onToggleHype: () => void;
@@ -56,15 +64,17 @@ export function MmmPlayer({
           <span aria-hidden="true">{hyped ? '\u2665' : '\u2661'}</span>
         </button>
       )}
-      <button
-        aria-label={playing ? 'Pause' : 'Play'}
-        className="mmm-player-play"
-        onClick={onTogglePlay}
-        tabIndex={hidden ? -1 : 0}
-        type="button"
-      >
-        <span aria-hidden="true">{playing ? '❚❚' : '▶'}</span>
-      </button>
+      {canTogglePlay && (
+        <button
+          aria-label={playing ? 'Pause' : 'Play'}
+          className="mmm-player-play"
+          onClick={onTogglePlay}
+          tabIndex={hidden ? -1 : 0}
+          type="button"
+        >
+          <span aria-hidden="true">{playing ? '\u275a\u275a' : '\u25b6'}</span>
+        </button>
+      )}
     </div>
   );
 }

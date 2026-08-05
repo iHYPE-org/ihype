@@ -6,6 +6,7 @@ import { MmmMap, type MapSheetTarget } from '@/components/mmm/MmmMap';
 import { MmmNav } from '@/components/mmm/MmmNav';
 import { MmmPlayer } from '@/components/mmm/MmmPlayer';
 import { MmmSheet } from '@/components/mmm/MmmSheet';
+import { useMediaPlayer } from '@/components/GlobalMediaPlayer';
 import { itemForPath, moduleForPath, navHint, type MmmModuleId } from '@/lib/mmm-nav';
 
 export type MmmNowPlaying = {
@@ -53,9 +54,32 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
   const [navOpen, setNavOpen] = useState(false);
   const [navSection, setNavSection] = useState<MmmModuleId | 'root'>('root');
   const [sheet, setSheet] = useState<MapSheetTarget | null>(null);
-  const [playing, setPlaying] = useState(false);
   const [hyped, setHyped] = useState(nowPlaying?.hyped ?? false);
   const [hypePending, setHypePending] = useState(false);
+
+  // Real playback, not local state. The pill used to own a `playing` boolean
+  // that toggled nothing — DESIGN_SYNC row 268 open item (d). /app sits inside
+  // AppProviders, so the same MediaPlayerProvider the rest of the site uses is
+  // already overhead; the pill just was not reading it.
+  const { currentTrack, isPlaying, togglePlayback } = useMediaPlayer();
+
+  // Two different things can be shown here, and they are not interchangeable.
+  // `currentTrack` is what the audio element actually holds. `nowPlaying` is a
+  // server-resolved "your most recent listen" with no URL attached, so it can
+  // be displayed but cannot be started. Prefer the real one whenever it exists.
+  const displayTrack = currentTrack
+    ? {
+        title: currentTrack.title,
+        artist: currentTrack.artistName,
+        initial: (currentTrack.artistName || currentTrack.title).charAt(0).toUpperCase(),
+      }
+    : nowPlaying;
+
+  // The hype heart resolves its target server-side, against `nowPlaying`. If
+  // the audio element has since moved to a different track, that target is no
+  // longer the artist on screen — so the heart is hidden rather than left
+  // pointing at the wrong profile.
+  const canHype = !currentTrack && Boolean(nowPlaying?.artistProfileId);
 
   // Navigation closes the nav and resets it to level 1, per the interaction
   // table ("Tap submenu item → navigates, closes nav, resets section to root").
@@ -136,12 +160,13 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
             still dims it completely, which was the explicit requirement. */}
         <MmmPlayer
           hidden={navOpen}
-          canHype={Boolean(nowPlaying?.artistProfileId)}
+          canHype={canHype}
+          canTogglePlay={Boolean(currentTrack)}
           hyped={hyped}
           onToggleHype={() => void toggleHype()}
-          onTogglePlay={() => setPlaying((value) => !value)}
-          playing={playing}
-          track={nowPlaying}
+          onTogglePlay={togglePlayback}
+          playing={Boolean(currentTrack) && isPlaying}
+          track={displayTrack}
         />
 
         {/* Always mounted: the arc animates between states, and unmounting it
@@ -164,7 +189,7 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
           type="button"
         >
           <span>iHYPE</span>
-          {playing && nowPlaying && (
+          {isPlaying && currentTrack && (
             <span aria-hidden="true" className="mmm-eq"><span /><span /><span /></span>
           )}
         </button>

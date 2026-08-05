@@ -23,13 +23,6 @@ const cohorts = [
     cta: 'Join as a venue',
   },
   {
-    title: 'DJs & promoters',
-    target: '10 scene builders',
-    copy: 'Curate shows, share referral links, host radio, and help independent artists reach audiences beyond an algorithm.',
-    href: '/for-djs',
-    cta: 'Join as a promoter',
-  },
-  {
     title: 'Partners & media',
     target: '5 distribution partners',
     copy: 'Contribute a newsletter placement, calendar listing, interview, showcase slot, artist introduction, or sponsorship.',
