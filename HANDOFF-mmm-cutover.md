@@ -263,6 +263,44 @@ crate goes away, decide deliberately what `freeUseEnabled` now means.
 
 ---
 
+## Suggested order for whoever picks this up
+
+1. **Answer the marketing-nav question** at the top of this file. Everything else
+   is mechanical; that one changes what you build.
+2. **Cookie consent at onboarding** (Task 2) — small, self-contained, finishes an
+   operator ask that is currently only half done. The banner no longer renders;
+   nothing asks yet.
+3. **Replace the axe coverage.** `e2e/app-shell-a11y.spec.ts` was deleted with the
+   shell it audited, and it was the only accessibility audit over the signed-in
+   experience — in both themes, which is what caught a whole set of light-theme
+   contrast failures. The new shell has none. A copy of that spec pointed at
+   `/app/map`, `/app/music/radio` and `/app/me` would restore it cheaply.
+4. **DJ code sweep** (Task 5) — the table above, largest first. Do NOT start with
+   the ad-interjection engine; decide where audio ads play before touching it.
+5. **The DJ migration** (Task 6) — last, after the audit in its header, in its own
+   commit, together with dropping DJ from `schema.prisma`.
+
+## What has NOT been verified
+
+Being explicit, because several things in this branch were verified and several
+were not, and the difference matters:
+
+- **Verified:** typecheck, lint, 586 unit tests, `audit:shell --strict`, the design
+  guard, `guard:migrations`, and a production build. The chrome removal was
+  verified by the design guard asserting the components are absent from the root
+  layout.
+- **NOT verified:** nothing in this branch has been loaded in a browser since the
+  header/shell removal. The full CI suite (authenticated Workerd e2e + Lighthouse)
+  has NOT run on it. `e2e/mmm-shell.spec.ts` has 26 tests that passed on the
+  previous commit, but the layout has changed underneath them since — in
+  particular `.mmm-frame` now renders inside a `.site-shell > main` that no longer
+  has `AppShell` between them, and `mmm.css`'s `transform: none` override is the
+  only thing keeping the frame from collapsing. **Push and let CI run before
+  assuming any of this works.**
+- **The gated migration has never been executed** against any database.
+
+---
+
 ## Verification the work must pass
 
 ```
