@@ -43,8 +43,8 @@ operator.** Current state of this branch: see "Status" below.
 | 2 | Cookie consent → onboarding only | **PARTLY** — no longer rendered globally; still needs an onboarding prompt (see Task 2) |
 | 3 | Remove old frontend chrome (ghost) | **DONE** — `AppShell`, `MobileAppShellLoader` unmounted; their e2e specs deleted with them |
 | 4 | Route the signed-in app at `/app` only | **DONE** — `/listen`, `/shows`, `/pages` are redirects; `WORKBENCH_PATH` moved |
-| 5 | DJ role removal — code | **NOT STARTED** — 91 files, see Task 5/6 |
-| 6 | DJ role removal — schema migration | **NOT STARTED**, must be gated |
+| 5 | DJ role removal — code | **STARTED** — no new DJs can be created; ~85 files of existing DJ surface remain |
+| 6 | DJ role removal — schema migration | **WRITTEN, GATED** — `prisma/migrations-pending/20260805030000_drop_dj_role/` |
 
 ### Done in detail
 
@@ -68,6 +68,44 @@ operator.** Current state of this branch: see "Status" below.
 - `scripts/lighthouse-budget.mjs`: `/shows` dropped (a redirect now), `/listen`
   replaced by `/app/music/discover` with the budget unchanged. MUSIC not MAP,
   because MAP pulls remote tiles and would make the gate a measure of CARTO's CDN.
+- **No new DJ accounts can be created.** `RoleOption` lost `'DJ'` (removing it
+  from the union rather than hiding it makes every remaining call site a type
+  error, which is the point), `roleOptions` lost its DJ card, `/join` lost its DJ
+  tile, and `POST /api/register` rejects `role: 'DJ'` rather than silently mapping
+  it — an old client gets an error it can act on instead of an account it did not
+  ask for. `/register?role=dj` and `?role=promoter` still arrive from links in the
+  wild (the `/for-djs` kit, old emails) and land on ARTIST.
+- **The schema migration is written and GATED** at
+  `prisma/migrations-pending/20260805030000_drop_dj_role/migration.sql`. It
+  reassigns rather than deletes (Profile rows cascade to media, shows, payouts and
+  tickets), rebuilds both enums in one migration (a half-migrated state breaks
+  every profile query), preserves enum value ORDER (Postgres sorts by definition
+  order, so reordering silently changes every ORDER BY on the column), and resets
+  verification only for converted profiles with no uploads — per
+  `BACKEND_REWRITE.md` §1. It carries its own required audit queries in a header
+  comment. **Read that header before moving it.**
+
+### What is left of the DJ surface
+
+Run `grep -rln "'DJ'\|\"DJ\"\|role-dj\|/djs/" src` for the live list. The
+substantial pieces, in rough order of size:
+
+| Surface | Files |
+|---|---|
+| DJ profile routes | `src/app/promoters/[slug]/` + `dashboard`/`analytics`/`onboarding`, `src/app/djs/[slug]` (alias) |
+| DJ radio studio | `src/app/radio/`, `src/components/RadioShowCreator.tsx`, `src/lib/show-composer.ts`, `src/lib/ad-clip-selection.ts`, `src/app/api/radio/ad-clips/` |
+| Recruiting | `src/app/for-djs/`, `DJKit` template |
+| Nav / role gates | `src/lib/app-nav.ts` (`'DJ'` gate), `src/components/NavDrawer.tsx`, `PageRoleModules.tsx` |
+| Tokens | `--role-dj` / `--role-dj-text` in `globals.css` (already deprecated aliases of `--role-promoter`) |
+| Schema comments | `prisma/schema.prisma` lines ~205, ~977, ~981, ~1165 mention DJ in prose |
+
+**The ad-interjection engine is the one to be careful with.**
+`src/lib/show-composer.ts`'s `buildResolvedSequence()` and
+`src/lib/ad-clip-selection.ts` are what actually spend an advertiser's budget
+(via `POST /api/ads/impression` from `ShowSequencePlayer`). They were built for
+DJ shows. If DJ shows go, decide deliberately where audio ads now play — deleting
+this silently turns off the only place self-serve ad campaigns are ever served,
+which is a revenue path, not dead code.
 
 `git log --oneline main..HEAD` is the authoritative record. Each commit message
 states what it did and why.

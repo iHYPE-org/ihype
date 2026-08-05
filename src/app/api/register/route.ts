@@ -35,7 +35,13 @@ const schema = z.object({
   phone: z.string().trim().max(30).optional(),
   username: z.string().min(3).max(30).optional(),
   password: z.string().min(8).regex(/[A-Za-z]/).regex(/[0-9]/).optional(),
-  role: z.enum(['FAN', 'ARTIST', 'DJ', 'VENUE']).default('FAN'),
+  // DJ removed (operator decision, 2026-08-05: "delete DJ role, it's too
+  // complicated"). Radio is premade stations now, so a DJ account has nothing
+  // to do that an artist account cannot. Rejecting it here — rather than
+  // silently mapping DJ to ARTIST — means an old client sending role: 'DJ'
+  // gets a validation error it can act on instead of an account it did not ask
+  // for. Existing DJ profiles are reassigned by a gated migration, not by this.
+  role: z.enum(['FAN', 'ARTIST', 'VENUE']).default('FAN'),
   isThirteenOrOlder: z.boolean().optional().default(false),
   isEighteenOrOlder: z.boolean().optional().default(false),
   acceptedArtistUploadPolicy: z.boolean().optional().default(false),
@@ -154,9 +160,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: getUsernameValidationMessage() }, { status: 400 });
     }
 
-    if ((body.role === 'ARTIST' || body.role === 'DJ') && !body.acceptedArtistUploadPolicy) {
+    if (body.role === 'ARTIST' && !body.acceptedArtistUploadPolicy) {
       return NextResponse.json(
-        { error: 'Artists and DJs must accept the iHYPE artist upload and limited use license policy.' },
+        { error: 'Artists must accept the iHYPE artist upload and limited use license policy.' },
         { status: 400 },
       );
     }

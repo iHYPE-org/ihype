@@ -24,7 +24,6 @@ type PasskeyRegistrationOptions = Parameters<typeof startRegistration>[0]['optio
 const ROLE_COLOR: Record<RoleOption, string> = {
   FAN: 'var(--role-fan)',
   ARTIST: 'var(--role-artist)',
-  DJ: 'var(--role-dj)',
   VENUE: 'var(--role-venue)'
 };
 
@@ -66,7 +65,7 @@ export function RegisterScreen({
   const turnstileConfigured = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
   const awaitingTurnstile = turnstileConfigured && !turnstileToken;
   const needsPublicName = role !== 'FAN';
-  const needsUploadPolicy = role === 'ARTIST' || role === 'DJ';
+  const needsUploadPolicy = role === 'ARTIST';
   const selectedRole = useMemo(() => roleOptions.find((option) => option.value === role), [role]);
 
   useEffect(() => {

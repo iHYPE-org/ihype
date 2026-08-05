@@ -6,7 +6,11 @@ import type { ReactNode } from 'react';
 import { postJson } from '@/lib/api-client';
 import { useI18n } from '@/components/I18nProvider';
 
-export type RoleOption = 'FAN' | 'ARTIST' | 'DJ' | 'VENUE';
+// DJ removed 2026-08-05 (operator decision). Radio is premade stations now, so
+// the role had nothing an artist account cannot do. Removing it from the union
+// rather than leaving it unselectable makes every remaining call site a type
+// error until it is dealt with — which is the point.
+export type RoleOption = 'FAN' | 'ARTIST' | 'VENUE';
 export type AuthMethod = 'email' | 'passkey';
 export type RegisterStep = 'gate' | 'form' | 'passkey' | 'magic-link-sent';
 export type SignupVariant = 'email_first' | 'passkey_first';
@@ -26,7 +30,6 @@ export type SignupFunnelMetadata = {
 export const roleOptions: Array<{ value: RoleOption; label: string; help: string }> = [
   { value: 'FAN', label: 'Fan', help: 'Discover, hype, playlist, and track your music life.' },
   { value: 'ARTIST', label: 'Artist', help: 'Publish your page, media, shows, and growth signals.' },
-  { value: 'DJ', label: 'DJ', help: 'Create radio-style shows, connect scenes, and promote with HYPE Links.' },
   { value: 'VENUE', label: 'Venue', help: 'Manage events, ticketing, and demand signals.' }
 ];
 

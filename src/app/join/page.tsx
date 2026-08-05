@@ -5,13 +5,12 @@ import { getServerT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'Join iHYPE',
-  description: 'Join iHYPE as a Fan, Artist, DJ, Venue, or music-only Advertiser.',
+  description: 'Join iHYPE as a Fan, Artist, Venue, or music-only Advertiser.',
 };
 
 const ROLES = [
   { label: 'Fan', color: 'var(--role-fan)', icon: '🎧', href: '/for-fans', help: 'Discover, hype, and buy tickets fee-free.' },
   { label: 'Artist', color: 'var(--accent)', icon: '🎤', href: '/for-artists', help: '70% of every ticket, your own page and shows.' },
-  { label: 'DJ', color: 'var(--role-dj, var(--accent-2))', icon: '🎛️', href: '/for-djs', help: 'A free radio studio and HYPE Link promotion.' },
   { label: 'Venue', color: 'var(--role-venue)', icon: '🏛️', href: '/for-venues', help: '20% of every gate and real demand data.' },
   { label: 'Advertiser', color: 'var(--role-advertiser)', icon: '📻', href: '/advertise/register', help: 'Music-only campaigns with no access to personal user data.' },
 ];
@@ -24,7 +23,7 @@ export default async function JoinChooserPage() {
       <div className="join-eyebrow">{inviteOnly ? t('joinPage.requestBeta', 'Request Beta') : t('joinPage.joinIhype', 'Join iHYPE')}</div>
       <h1 className="join-h1">{t('joinPage.heading', 'Choose how you join the scene.')}</h1>
       <p className="join-sub">
-        {t('joinPage.subheading', "Fans, Artists, DJs, and Venues build the scene. Music-only Advertisers use a private campaign account. Pick the role that fits you.")}
+        {t('joinPage.subheading', "Fans, Artists, and Venues build the scene. Music-only Advertisers use a private campaign account. Pick the role that fits you.")}
       </p>
       <div className="join-grid">
         {ROLES.map((r, i) => (
