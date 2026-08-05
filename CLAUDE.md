@@ -110,7 +110,29 @@ The workflow is:
 
 If a UI detail is unclear → ask Claude Design to clarify in the .dc.html. Never guess.
 
-**Some design source now lives in the repo: `design/handoff-music-map-me/`.** That is
+**TWO design bundles now live in the repo and they overlap — read
+`design/design-system-app-shell/HANDOFF_NOTES.md` FIRST.** It carries the
+source-of-truth table: which bundle wins on which topic, and the two places both
+bundles contradict themselves (base surfaces, light mode). The short version —
+`design-system-app-shell/` (the app-shell redesign, 48 templates + UI-kit
+contracts + guidelines) owns the **chrome**: the radial arc nav, the 76px
+solid-accent logo, the pill player, MUSIC's tab list, the five radio categories,
+and the four roles. `handoff-music-map-me/` (Design System 6) owns the **map
+module** and the **backend migration spec**, which the redesign does not restate.
+Two rules from the redesign that the code follows and you must not undo: **no
+emoji anywhere** (Unicode glyphs only), and **promoter is not a role** — never
+put it in a role picker.
+
+**The Music · Map · Me shell is built and live at `/app`** (DESIGN_SYNC row 268):
+`/app/map`, `/app/music/[tab]`, `/app/me`, `/app/me/[panel]`. `MmmShell` is
+mounted in the **`/app` layout** on purpose — the map is the base layer and must
+survive navigation between modules, and a layout is the only place the App Router
+guarantees that. `AppShell` stands aside for `/app/*` the same way it does for
+`/listen`. **It is deliberately not cut over**: `/listen`'s six-module deck still
+exists, and choosing between them is an operator decision, as is the DJ-role
+removal. Row 268 lists all five open items.
+
+**Also in the repo: `design/handoff-music-map-me/`.** That is
 iHYPE Design System 6 ("Music · Map · Me", 2026-08-04) vendored verbatim — the first
 `.dc.html` files this checkout has tracked, which is why every cold session's audit
 used to report "0 tracked". Read `design/handoff-music-map-me/HANDOFF_NOTES.md` first:

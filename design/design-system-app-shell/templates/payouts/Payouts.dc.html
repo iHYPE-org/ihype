@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script src="../../lib/i18n.js"></script>
+</head>
+<body>
+<x-dc>
+
+<!-- @template name="iHYPE Payouts" description="Unified payouts hub — History (real Stripe transfers) / Settings (Connect status) / This show (per-event 70/20/10 projection). Merges the former three payout templates into one tabbed screen." -->
+<helmet>
+  <script src="./ds-base.js"></script>
+<script src="../../lib/theme.js"></script>
+<script src="../../lib/theme-toggle.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>html,body{margin:0;background:radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),var(--bg-base)}*{box-sizing:border-box}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--bg-base);color:var(--ink-1);font-family:'DM Sans',sans-serif;padding:48px 24px 100px;max-width:660px;margin:0 auto">
+  <h1 data-i18n="poTitle" style="font-family:'Syne',sans-serif;font-weight:800;font-size:28px;letter-spacing:-.02em;margin:0 0 8px">Payouts</h1>
+  <p data-i18n="poSub" style="font-size:14px;color:rgba(var(--ink-1-rgb),.55);margin:0 0 22px">Every share settles automatically once a show ends.</p>
+
+  <div style="display:flex;gap:6px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:12px;padding:4px;width:fit-content;margin-bottom:28px">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+      <sc-if value="{{ t.active }}"><button onClick="{{ t.select }}" style="padding:8px 16px;border-radius:9px;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:rgba(var(--surface-tint-rgb),.08);color:var(--ink-1)">{{ t.label }}</button></sc-if>
+      <sc-if value="{{ t.inactive }}"><button onClick="{{ t.select }}" style="padding:8px 16px;border-radius:9px;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:transparent;color:var(--ink-3)">{{ t.label }}</button></sc-if>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{ isHistory }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;gap:24px;border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:14px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);padding:18px 22px;margin-bottom:26px">
+      <div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;color:var(--role-venue)">{{ totalReceived }}</div><div data-i18n="poTotalReceived" style="font-size:12px;color:rgba(var(--ink-1-rgb),.55);margin-top:4px">Total received</div></div>
+      <div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px">{{ receivedCount }}</div><div data-i18n="poPayouts" style="font-size:12px;color:rgba(var(--ink-1-rgb),.55);margin-top:4px">Payouts</div></div>
+    </div>
+    <h2 data-i18n="poReceived" style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;margin:0 0 12px">Received</h2>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:26px">
+      <sc-if value="{{ noReceived }}"><x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.EmptyState" icon="💰" title="{{ noReceivedTitle }}" detail="{{ noReceivedDetail }}" hint-size="100%,180px"></x-import></sc-if>
+      <sc-for list="{{ received }}" as="r" hint-placeholder-count="3">
+        <div style="border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:12px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);padding:16px;display:flex;justify-content:space-between;align-items:center;gap:12px">
+          <div><div style="font-weight:600;font-size:14px">{{ r.title }}</div><div style="font-size:12px;color:rgba(var(--ink-1-rgb),.55);margin-top:3px">{{ r.payee }} · {{ r.date }}</div></div>
+          <div style="font-weight:700;color:var(--role-venue);flex-shrink:0">{{ r.amount }}</div>
+        </div>
+      </sc-for>
+    </div>
+    <h2 data-i18n="poPending" style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;margin:0 0 8px">Pending</h2>
+    <p data-i18n="poReleasedAuto" style="font-size:12.5px;color:rgba(var(--ink-1-rgb),.5);margin:0 0 12px">Released automatically once the show ends.</p>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <sc-if value="{{ noPending }}"><x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.EmptyState" icon="⏳" title="{{ noPendingTitle }}" detail="{{ noPendingDetail }}" hint-size="100%,160px"></x-import></sc-if>
+      <sc-for list="{{ pending }}" as="pd" hint-placeholder-count="2">
+        <div style="border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:12px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);padding:16px;display:flex;justify-content:space-between;align-items:center;gap:12px">
+          <div><div style="font-weight:600;font-size:14px">{{ pd.title }}</div><div style="font-size:12px;color:rgba(var(--ink-1-rgb),.55);margin-top:3px">{{ pd.payee }} · {{ pd.status }}</div></div>
+          <div style="font-weight:700;flex-shrink:0">{{ pd.amount }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:24px">
+      <sc-for list="{{ profiles }}" as="p" hint-placeholder-count="3">
+        <div style="border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:16px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);padding:18px 20px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px">
+            <div><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:15px">{{ p.name }}</div><div style="font-size:12px;color:rgba(var(--ink-1-rgb),.55);margin-top:2px">{{ p.roleLabel }}</div></div>
+            <sc-if value="{{ p.onboarded }}"><span style="flex-shrink:0;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;padding:5px 10px;border-radius:999px;background:rgba(34,229,212,.15);color:var(--role-venue)" data-i18n="poVerified">Verified</span></sc-if>
+            <sc-if value="{{ p.notOnboarded }}"><span style="flex-shrink:0;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;padding:5px 10px;border-radius:999px;background:rgba(120,120,120,.15);color:rgba(var(--ink-1-rgb),.55)" data-i18n="poNotConnected">Not connected</span></sc-if>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;padding-top:14px;border-top:1px solid rgba(var(--surface-tint-rgb),.15)">
+            <div style="width:40px;height:40px;border-radius:10px;background:rgba(34,229,212,.12);color:var(--role-venue);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg fill="none" height="19" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" viewBox="0 0 24 24" width="19"><rect height="14" rx="2" width="20" x="2" y="5"></rect><line x1="2" x2="22" y1="10" y2="10"></line></svg></div>
+            <div style="flex:1;min-width:0">
+              <sc-if value="{{ p.hasAccount }}"><div data-i18n="poConnectedStripe" style="font-size:14px;font-weight:500">Connected via Stripe Connect</div><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:rgba(var(--ink-1-rgb),.55);margin-top:3px">{{ p.acctMasked }}</div></sc-if>
+              <sc-if value="{{ p.noAccount }}"><div data-i18n="poNoAccount" style="font-size:14px;font-weight:500">No payout account connected yet</div></sc-if>
+              <sc-if value="{{ p.connectError }}"><div style="font-size:12px;color:#ff8080;margin-top:3px">{{ p.connectErrorMsg }}</div></sc-if>
+            </div>
+            <sc-if value="{{ p.connecting }}"><button disabled style="flex-shrink:0;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;padding:9px 16px;border-radius:9px;border:none;cursor:default;background:var(--role-venue);color:var(--bg-base);opacity:.6">{{ p.btnLabel }}</button></sc-if>
+            <sc-if value="{{ p.notConnecting }}"><button onClick="{{ p.connect }}" style="flex-shrink:0;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;padding:9px 16px;border-radius:9px;border:none;cursor:pointer;background:var(--role-venue);color:var(--bg-base)">{{ p.btnLabel }}</button></sc-if>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:12px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);padding:14px 16px">
+      <div data-i18n="poPaymentProcessing" style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:rgba(var(--ink-1-rgb),.5);margin-bottom:4px">Payment processing (Stripe) — iHYPE's only fee</div>
+      <p data-i18n="poStripeFeeDesc" style="font-size:12.5px;color:rgba(var(--ink-1-rgb),.6);line-height:1.6;margin:0">2.9% + $0.30 per ticket (3.5% + $0.30 for Amex), charged by Stripe — not by iHYPE. iHYPE still takes 0% of the ticket price itself.</p>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isShow }}" hint-placeholder-val="{{ false }}">
+    <div style="border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:18px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);padding:24px;margin-bottom:16px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(var(--ink-1-rgb),.5);margin-bottom:6px">Nyla — Glasslight Tour · Jul 10</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><span style="display:inline-flex;align-items:center;gap:7px;font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:#ffb84a;border:1px solid rgba(255,184,74,.35);background:rgba(255,184,74,.07);border-radius:999px;padding:6px 12px" data-i18n="poSettlementPending">● Settlement pending — releases at show end</span></div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);margin-bottom:8px">Gross · 412 tickets · $28.00 each</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:2rem;letter-spacing:-.03em;margin-bottom:18px">$11,536.00</div>
+      <div style="margin-bottom:18px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:rgba(var(--ink-1-rgb),.4)">Sales velocity — last 7 days</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#ff1f3d">🔥 Selling fast</span>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:3px;height:24px" role="img" aria-label="Sales velocity over the last 7 days, selling fast">
+          <sc-for list="{{ salesHeat }}" as="bar" hint-placeholder-count="7">
+            <sc-if value="{{ bar.isCold }}"><div style="flex:1;height:25%;border-radius:2px;background:var(--heat-cold,#3a4a5a)"></div></sc-if>
+            <sc-if value="{{ bar.isWarm }}"><div style="flex:1;height:45%;border-radius:2px;background:var(--heat-warm,#ffb84a)"></div></sc-if>
+            <sc-if value="{{ bar.isHot }}"><div style="flex:1;height:70%;border-radius:2px;background:var(--heat-hot,var(--accent))"></div></sc-if>
+            <sc-if value="{{ bar.isFire }}"><div style="flex:1;height:100%;border-radius:2px;background:var(--heat-fire,#ff1f3d)"></div></sc-if>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex;border-radius:10px;overflow:hidden">
+        <div style="flex:7;padding:15px;text-align:center;background:rgba(255,80,41,.15)"><div style="font-size:18px;font-weight:700;color:var(--accent)">$8,075.20</div><div style="font-size:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);margin-top:4px">Artist · 70%</div></div>
+        <div style="flex:2;padding:15px;text-align:center;background:rgba(34,229,212,.15)"><div style="font-size:18px;font-weight:700;color:var(--role-venue)">$2,307.20</div><div style="font-size:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.12em;color:var(--role-venue);margin-top:4px">Venue · 20%</div></div>
+        <div style="flex:1;padding:15px;text-align:center;background:rgba(255,62,154,.15)"><div style="font-size:18px;font-weight:700;color:var(--role-dj)">$1,153.60</div><div style="font-size:10px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.12em;color:var(--role-dj);margin-top:4px">Promoters · 10%</div></div>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--ink-3);margin-top:14px;line-height:1.7" data-i18n="poIhypeFeeNote">iHYPE · 0% — $0.00. Card-processing fees (2.9% + $0.30) were paid by the buyer above face value and never touch this split.</div>
+    </div>
+  </sc-if>
+</div>
+<script>function poApplyI18n(){if(!window.ihypeT)return;document.querySelectorAll('[data-i18n]').forEach(function(el){el.innerHTML=window.ihypeT(el.getAttribute('data-i18n'))})}document.addEventListener('DOMContentLoaded',poApplyI18n);window.addEventListener('ihype-i18n-change',poApplyI18n);if(window.ihypeT)poApplyI18n();</script>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;720px&quot;,&quot;height&quot;:&quot;860px&quot;}}">
+class Component extends DCLogic {
+  state = {
+    tab: 'history',
+    accounts: { artist: { onboarded: true, id: 'acct_1PZk8jFxHy2029' }, dj: { onboarded: false, id: 'acct_1PZm2rFxHy2044' }, venue: { onboarded: false, id: null } },
+    connecting: {}, connectErrors: {},
+  };
+  connectAccount(key, a) {
+    this.setState(s => ({ connecting: { ...s.connecting, [key]: true }, connectErrors: { ...s.connectErrors, [key]: false } }));
+    setTimeout(() => {
+      const failed = false; // real integration: surfaces Stripe onboarding errors here
+      if (failed) {
+        this.setState(s => ({ connecting: { ...s.connecting, [key]: false }, connectErrors: { ...s.connectErrors, [key]: true } }));
+      } else {
+        this.setState(s => ({
+          connecting: { ...s.connecting, [key]: false },
+          accounts: { ...s.accounts, [key]: { onboarded: true, id: a.id || 'acct_1PZnew' + Math.random().toString(36).slice(2, 8) } },
+        }));
+      }
+    }, 900);
+  }
+  renderVals() {
+    const { tab, accounts: A } = this.state;
+    const received = [
+      { title: 'Nyla — Glasslight Tour', payee: 'Artist payout', date: 'Jul 20, 2026', amount: '$1,248.60' },
+      { title: 'Empty Bottle — Sundown Session', payee: 'Venue payout', date: 'Jul 18, 2026', amount: '$392.00' },
+      { title: 'Neon District Release Show', payee: 'Promoter affiliate', date: 'Jul 12, 2026', amount: '$46.20' },
+    ];
+    const pending = [
+      { title: 'Wax Tropic — Drift Coast', payee: 'Artist payout', status: 'Show scheduled', amount: '$980.00' },
+      { title: 'Schuba\u2019s — Reina Sol\u00eds', payee: 'Venue payout', status: 'Show scheduled', amount: '$210.00' },
+    ];
+    const totalCents = received.reduce((s, r) => s + Math.round(parseFloat(r.amount.replace(/[$,]/g, '')) * 100), 0);
+    const t = window.ihypeT || function(k,d){return d};
+    const PROFILES = [
+      { key: 'artist', name: 'Nyla', roleLabel: t('poRoleArtist','Artist') },
+      { key: 'dj', name: 'DJ Caro', roleLabel: t('poRoleDj','DJ') },
+      { key: 'venue', name: 'Empty Bottle', roleLabel: t('poRoleVenue','Venue') },
+    ];
+    return {
+      salesHeat: [3, 4, 5, 6, 7, 8, 9].map(v => ({
+        isCold: v < 3, isWarm: v >= 3 && v < 6, isHot: v >= 6 && v < 8, isFire: v >= 8,
+      })),
+      tabs: [['history','History'],['settings','Settings'],['show','This show']].map(([id, label]) => ({ label, active: tab === id, inactive: tab !== id, select: () => this.setState({ tab: id }) })),
+      isHistory: tab === 'history', isSettings: tab === 'settings', isShow: tab === 'show',
+      received, pending, receivedCount: received.length,
+      noReceived: received.length === 0, noReceivedTitle: t('poNoReceivedTitle','No payouts yet'), noReceivedDetail: t('poNoReceivedDetail','Completed payouts will show up here once a show wraps.'),
+      noPending: pending.length === 0, noPendingTitle: t('poNoPendingTitle','Nothing pending'), noPendingDetail: t('poNoPendingDetail','Upcoming payouts will appear here once a show is scheduled.'),
+      totalReceived: '$' + (totalCents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      profiles: PROFILES.map(p => {
+        const a = A[p.key], hasAccount = !!a.id;
+        const connecting = !!this.state.connecting[p.key], connectError = !!this.state.connectErrors[p.key];
+        return {
+          ...p, onboarded: a.onboarded, notOnboarded: !a.onboarded, hasAccount, noAccount: !hasAccount,
+          acctMasked: hasAccount ? a.id.slice(0, 9) + '···' + a.id.slice(-4) : '',
+          btnLabel: connecting ? t('poConnecting','Connecting…') : a.onboarded ? t('poReconnect','Reconnect') : hasAccount ? t('poFinishSetup','Finish setup') : t('poConnect','Connect'),
+          connecting, connectError, notConnecting: !connecting,
+          connectErrorMsg: t('poConnectFailed','Connection failed — try again.'),
+          connect: () => this.connectAccount(p.key, a),
+        };
+      }),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

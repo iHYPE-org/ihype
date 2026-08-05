@@ -142,7 +142,11 @@ const COLOUR_EXEMPT = [
 /** Brand/ink values that have a token — a literal here is always convertible. */
 const TOKENED = new Map(Object.entries({
   '#ff5029': '--accent', '#ff3e9a': '--accent-2', '#b983ff': '--role-fan',
-  '#22e5d4': '--role-venue', '#ffb84a': '--role-promoter', '#5b8cff': '--role-dj',
+  // #ffb84a is --warning, NOT --role-promoter: that token moved to the design
+  // system's #ff3e9a in row 267 and now means the 10% split slice only. The
+  // amber it used to hold is the warning/advertiser fill. Pointing an amber
+  // literal at --role-promoter would repaint it pink.
+  '#22e5d4': '--role-venue', '#ffb84a': '--warning',
   '#9e9080': '--ink-2', '#918779': '--ink-3', '#3a342e': '--ink-4',
   '#100d09': '--bg-2', '#1a1612': '--bg-3', '#221c16': '--bg-4', '#0a0805': '--bg',
   '#ff1f3d': '--heat-fire', '#3a4a5a': '--heat-cold',
@@ -152,7 +156,9 @@ const TOKENED = new Map(Object.entries({
   '#7a7060': '--ink-3', '#7a6e64': '--ink-3',
   '255,80,41': '--accent-rgb', '255,62,154': '--accent-2-rgb',
   '185,131,255': '--role-fan-rgb', '34,229,212': '--role-venue-rgb',
-  '255,184,74': '--role-promoter-rgb',
+  '255,184,74': '--warning-rgb',
+  // Music/Map/Me shell values that now have tokens of their own.
+  '#7a2412': '--accent-deep', '#12100e': '--map-void',
 }));
 /** Theme-inverting literals: correct on one theme, wrong on the other. */
 const THEME_UNSAFE = /#fff(?:fff)?\b|#000(?:000)?\b|rgba?\(\s*255\s*,\s*255\s*,\s*255|rgba?\(\s*0\s*,\s*0\s*,\s*0/i;

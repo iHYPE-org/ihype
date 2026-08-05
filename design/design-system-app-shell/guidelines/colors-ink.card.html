@@ -1,0 +1,40 @@
+<!-- @dsCard group="Colors" viewport="700x160" name="Ink / Text" subtitle="Warm foreground scale from primary to disabled" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { margin: 0; padding: 16px 20px; background: var(--bg-base); font-family: var(--font-mono); }
+  .row { display: flex; gap: 10px; }
+  .swatch { flex: 1; border-radius: 8px; padding: 14px 14px 10px; background: var(--bg-surface); border: 1px solid var(--line); }
+  .preview { font-family: var(--font-display); font-weight: 800; font-size: 26px; line-height: 1; margin-bottom: 10px; }
+  .name { font-size: 9px; letter-spacing: .14em; color: var(--ink-3); text-transform: uppercase; }
+  .val  { font-size: 10px; color: var(--ink-3); margin-top: 3px; }
+</style>
+</head>
+<body>
+<div class="row">
+  <div class="swatch">
+    <div class="preview" style="color:var(--ink-1)">Aa</div>
+    <div class="name">--ink-1</div>
+    <div class="val">#f0ebe5</div>
+  </div>
+  <div class="swatch">
+    <div class="preview" style="color:var(--ink-2)">Aa</div>
+    <div class="name">--ink-2</div>
+    <div class="val">#9e9080</div>
+  </div>
+  <div class="swatch">
+    <div class="preview" style="color:var(--ink-3)">Aa</div>
+    <div class="name">--ink-3</div>
+    <div class="val">#5a5048</div>
+  </div>
+  <div class="swatch">
+    <div class="preview" style="color:var(--ink-4)">Aa</div>
+    <div class="name">--ink-4</div>
+    <div class="val">#3a342e</div>
+  </div>
+</div>
+</body>
+</html>

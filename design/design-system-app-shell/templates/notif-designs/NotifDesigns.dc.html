@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script src="../../lib/i18n.js"></script>
+</head>
+<body>
+<x-dc>
+
+<!-- @template name="iHYPE Notification Designs" description="iOS lock-screen notification mockups — ticket drop, hype earned, radio live, payout, verification." -->
+<helmet>
+<script src="./ds-base.js"></script>
+<script src="../../lib/theme.js"></script>
+<script src="../../lib/theme-toggle.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}body{-webkit-font-smoothing:antialiased}</style>
+</helmet>
+
+<div style="width:390px;height:844px;position:relative;overflow:hidden;background:linear-gradient(160deg,var(--bg-overlay),var(--bg-base) 60%);font-family:'DM Sans',sans-serif;border-radius:52px">
+  <div style="position:absolute;inset:0;background:radial-gradient(circle at 70% 15%,rgba(var(--surface-tint-rgb),.12),transparent 55%)"></div>
+  <div style="position:relative;height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 26px">
+    <span style="font-size:15px;font-weight:600;color:#fff">9:41</span>
+    <div style="position:absolute;left:50%;top:10px;transform:translateX(-50%);width:100px;height:30px;border-radius:20px;background:#000"></div>
+    <div style="display:flex;align-items:center;gap:5px">
+      <svg fill="#fff" height="11" viewBox="0 0 15 11" width="15"><rect height="7" rx="1" width="2.5" x="0" y="4"></rect><rect height="8.5" rx="1" width="2.5" x="3.5" y="2.5"></rect><rect height="11" rx="1" width="2.5" x="7" y="0"></rect><rect fill-opacity=".4" height="4" rx="1" width="2.5" x="10.5" y="7"></rect></svg>
+      <svg fill="none" height="11" viewBox="0 0 16 11" width="16"><rect height="10" rx="2.5" stroke="#fff" stroke-opacity=".35" width="13" x=".5" y=".5"></rect><rect fill="#fff" fill-opacity=".4" height="4" rx=".75" width="1.5" x="14" y="3.5"></rect><rect fill="#fff" height="7" rx="1.5" width="9" x="2" y="2"></rect></svg>
+    </div>
+  </div>
+  <div style="position:relative;text-align:center;padding-top:26px">
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:76px;color:#fff;letter-spacing:-.02em">9:41</div>
+    <div style="font-size:17px;color:rgba(var(--surface-tint-rgb),.85);margin-top:4px" data-i18n="ndFridayJuly24">Friday, July 24</div>
+  </div>
+  <div style="position:relative;padding:36px 14px 0;display:flex;flex-direction:column;gap:8px" id="nd-list">
+    <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="6">
+      <div style="display:flex;gap:12px;align-items:flex-start;padding:13px 14px;border-radius:18px;background:rgba(var(--surface-tint-rgb),.14);backdrop-filter:blur(20px)">
+        <sc-if value="{{ n.isAccent }}"><div style="width:34px;height:34px;border-radius:9px;background:var(--accent);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px">{{ n.icon }}</div></sc-if>
+        <sc-if value="{{ n.isPink }}"><div style="width:34px;height:34px;border-radius:9px;background:var(--role-dj);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px">{{ n.icon }}</div></sc-if>
+        <sc-if value="{{ n.isBlue }}"><div style="width:34px;height:34px;border-radius:9px;background:#5b8cff;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px">{{ n.icon }}</div></sc-if>
+        <sc-if value="{{ n.isTeal }}"><div style="width:34px;height:34px;border-radius:9px;background:var(--role-venue);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px">{{ n.icon }}</div></sc-if>
+        <sc-if value="{{ n.isPurple }}"><div style="width:34px;height:34px;border-radius:9px;background:var(--role-fan);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px">{{ n.icon }}</div></sc-if>
+        <sc-if value="{{ n.isFire }}"><div style="width:34px;height:34px;border-radius:9px;background:var(--heat-fire,#ff1f3d);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px">{{ n.icon }}</div></sc-if>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-weight:700;font-size:13px;color:#fff">iHYPE</span><span style="font-size:11px;color:rgba(var(--surface-tint-rgb),.55)">{{ n.when }}</span></div>
+          <div style="font-weight:600;font-size:13px;color:#fff;margin-top:2px">{{ n.title }}</div>
+          <div style="font-size:12px;color:rgba(var(--surface-tint-rgb),.75);margin-top:1px;line-height:1.4">{{ n.body }}</div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  <div style="position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:rgba(var(--surface-tint-rgb),.5)"></div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;390px&quot;,&quot;height&quot;:&quot;844px&quot;}}">
+class Component extends DCLogic {
+  applyI18n() { if (!window.ihypeT) return; document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = window.ihypeT(el.getAttribute('data-i18n')); }); }
+  componentDidMount() {
+    this._h = () => this.forceUpdate();
+    window.addEventListener('ihype-i18n-change', this._h);
+    this.applyI18n();
+    requestAnimationFrame(() => {
+      this.applyI18n();
+      const list = document.getElementById('nd-list');
+      if (!list) return;
+      Array.from(list.children).forEach((el, i) => {
+        el.style.animation = 'none';
+        void el.offsetWidth;
+        el.style.animation = 'ihFadeUp .5s cubic-bezier(.16,1,.3,1) both';
+        el.style.animationDelay = (i * 80) + 'ms';
+      });
+    });
+  }
+  componentWillUnmount() { window.removeEventListener('ihype-i18n-change', this._h); }
+  renderVals() {
+    const t = window.ihypeT || (k => k);
+    return {
+      notifs: [
+        { icon: '🎟️', isAccent: true, when: t('ndNow'), title: t('ndTicketsDropped'), body: t('ndTicketsDroppedBody') },
+        { icon: '🔥', isPink: true, when: '2m', title: t('ndYouEarned'), body: t('ndYouEarnedBody') },
+        { icon: '📻', isBlue: true, when: '18m', title: t('ndNylaOnAir'), body: t('ndNylaOnAirBody') },
+        { icon: '✓', isTeal: true, when: '1h', title: t('ndYoureVerified'), body: t('ndYoureVerifiedBody') },
+        { icon: '💸', isPurple: true, when: '3h', title: t('ndPayoutSent'), body: t('ndPayoutSentBody') },
+        { icon: '🔥', isFire: true, when: '5h', title: t('ndHeatingUp'), body: t('ndHeatingUpBody') },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!-- @dsCard group="Spacing" viewport="700x160" name="Radius Scale" subtitle="Corner radii from tight chips to album art" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { margin: 0; padding: 16px 20px; background: var(--bg-base); font-family: var(--font-mono); }
+  .row { display: flex; gap: 12px; align-items: flex-end; }
+  .item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .box { background: var(--bg-raised); border: 1px solid var(--line-2); }
+  .name { font-size: 8px; letter-spacing: .12em; color: var(--ink-3); text-transform: uppercase; text-align: center; }
+  .val  { font-size: 8px; color: var(--accent); text-align: center; }
+</style>
+</head>
+<body>
+<div class="row">
+  <div class="item">
+    <div class="box" style="width:28px;height:28px;border-radius:var(--radius-sm)"></div>
+    <div class="name">sm</div><div class="val">4px</div>
+  </div>
+  <div class="item">
+    <div class="box" style="width:34px;height:34px;border-radius:var(--radius-md)"></div>
+    <div class="name">md</div><div class="val">8px</div>
+  </div>
+  <div class="item">
+    <div class="box" style="width:40px;height:40px;border-radius:var(--radius-lg)"></div>
+    <div class="name">lg</div><div class="val">10px</div>
+  </div>
+  <div class="item">
+    <div class="box" style="width:48px;height:48px;border-radius:var(--radius-xl)"></div>
+    <div class="name">xl</div><div class="val">16px</div>
+  </div>
+  <div class="item">
+    <div class="box" style="width:56px;height:56px;border-radius:var(--radius-2xl)"></div>
+    <div class="name">2xl</div><div class="val">24px</div>
+  </div>
+  <div class="item">
+    <div class="box" style="width:64px;height:64px;border-radius:var(--radius-3xl)"></div>
+    <div class="name">3xl</div><div class="val">32px</div>
+  </div>
+  <div class="item">
+    <div class="box" style="width:48px;height:48px;border-radius:var(--radius-full)"></div>
+    <div class="name">full</div><div class="val">9999px</div>
+  </div>
+</div>
+</body>
+</html>
