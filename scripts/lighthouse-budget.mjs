@@ -117,6 +117,31 @@ import {
 // longer fails the build anyway, since a page over budget is now re-sampled
 // and must exceed the same metric twice.
 //
+// 2026-08-05 — '/' LCP relaxed 5200 → 6200. The note above says "two data
+// points is thin for a recalibration", and it was: five more samples arrived
+// in one morning, from four unrelated commits (a Worker-secret refactor, a
+// docs-only change, and two dependency bumps — nothing that touches how '/'
+// renders), and they put the old limit UNDER the page's median:
+//
+//     '/' LCP:  4218   5372   5417   5854   8507      budget was 5200
+//
+// So it failed about half the time on changes that could not have affected
+// it, and each failure cost a full 16-minute pipeline re-run. That is the
+// exact '/info' mistake one row up — a budget sitting on a page's median —
+// and the re-sample rule cannot help, because re-sampling a distribution
+// centred above the line just draws two numbers above the line.
+//
+// What did NOT move is the performance SCORE: 0.67, 0.70, 0.71, 0.71 against
+// a 0.62 budget, across every one of those runs. LCP is a weighted input to
+// that score, so the page is still guarded on this axis — by the stable
+// measure rather than the one that swings 4.3 seconds between samples of the
+// same commit. Only the LCP line moves here; every other axis is untouched.
+//
+// 6200 clears the 5372-5854 cluster with headroom while staying under the
+// 8507 outlier, which now has to repeat to fail a build. If '/' starts
+// breaching 6200 twice in a run, that is a real regression — investigate the
+// LCP element rather than raising this again.
+//
 // These are workerd DEV-server numbers on a shared runner, so this gate is a
 // relative regression detector, not a statement about production user
 // experience. If a change pushes a page past these, that is worth
@@ -128,7 +153,7 @@ const PAGES = [
   // boundary — to tolerate a timing-dependent shift in that page's early
   // render. The shift left with the page, so this is back on 0.1 like
   // everything else.
-  { path: '/', budget: { performance: 0.62, lcp: 5200, cls: 0.1, tbt: 800 } },
+  { path: '/', budget: { performance: 0.62, lcp: 6200, cls: 0.1, tbt: 800 } },
   { path: '/login', budget: { performance: 0.7, lcp: 4800, cls: 0.1, tbt: 550 } },
   // Was '/about' until that page was retired into /info. Measuring a redirect
   // would score the destination while attributing it to the wrong URL, so this
