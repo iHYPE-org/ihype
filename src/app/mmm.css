@@ -76,6 +76,30 @@ html.mmm-locked .site-dock {
 }
 html.mmm-locked .site-shell { padding-top: 0; padding-bottom: 0; min-height: 0; }
 
+/* THE ONE THAT MATTERS: kill the page-enter animation on the wrapper.
+ *
+ * globals.css gives `.site-shell > main` `animation: page-enter .4s … both`.
+ * `fill-mode: both` holds the final keyframe forever, so the computed transform
+ * stays `matrix(1,0,0,1,0,0)` — non-`none` — for the life of the page. A
+ * transformed ancestor is the containing block for `position: fixed`
+ * descendants, so `.mmm-frame`'s `inset: 0` resolved against `#main-content`
+ * instead of the viewport. `#main-content` wraps only this frame, whose own
+ * children are all absolutely positioned, so it measures ZERO height — and the
+ * whole shell collapsed to a 1280×0 box.
+ *
+ * Nothing looked broken in the build, the CSS chunk loaded 200 OK, and the
+ * markup was correct; the frame was simply invisible. `/app` would have shipped
+ * blank. Found by e2e (`.mmm-frame` resolved but "hidden") and pinned down by
+ * walking the ancestor chain for transform/filter/contain in a browser.
+ *
+ * `transform: none` is what restores the viewport as the containing block;
+ * `animation: none` stops it being re-applied. Scoped to `html.mmm-locked`, so
+ * every other route keeps its page-enter transition. */
+html.mmm-locked .site-shell > main {
+  animation: none !important;
+  transform: none !important;
+}
+
 .mmm-frame {
   position: fixed;
   inset: 0;
