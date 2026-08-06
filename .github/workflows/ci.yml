@@ -4,6 +4,23 @@ on:
   pull_request:
     branches:
       - main
+    # `labeled` is load-bearing, not tidiness. The expensive stages below gate
+    # on `github.event.pull_request.labels`, which is a SNAPSHOT of the event
+    # payload — and the default type list is [opened, synchronize, reopened].
+    # A label added after the PR is opened therefore fired no new run, and the
+    # run from `opened` carried an empty label list, so every gated stage
+    # skipped and the check went green anyway.
+    #
+    # Since a PR cannot be labelled before it exists, that made the documented
+    # procedure ("add `full-ci` to any PR touching the shell, auth, routing,
+    # the service worker or anything Workerd-specific") a no-op through the
+    # normal flow: the label was applied, nothing re-ran, and the PR reported
+    # success with none of the coverage it was asked for. Found on #652, whose
+    # 12 gated steps all skipped despite carrying the label.
+    #
+    # `unlabeled` is deliberately absent — removing a label should not spend
+    # 15 minutes of runner time re-proving a smaller suite.
+    types: [opened, synchronize, reopened, labeled]
 
 permissions:
   contents: read
