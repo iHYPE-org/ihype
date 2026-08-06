@@ -1,0 +1,74 @@
+# On-demand Cloudflare cache purge.
+#
+# The deploy workflow already purges after every push to main, but that step is
+# reachable only by shipping a commit — and during the 2026-07-27 P3009 incident
+# it was one of the steps skipped for a day because an earlier step failed. When
+# the live site is serving something stale and there is nothing to deploy, there
+# was no way to clear it short of the Cloudflare dashboard. This is that way.
+#
+# workflow_dispatch only, never on push: the deploy workflow owns the automatic
+# purge, and a second automatic trigger would just double the API calls.
+#
+# Purging everything makes the next request for every asset a miss, so expect a
+# brief origin load spike. Prefer the `files` input when only a few URLs are
+# actually stale.
+name: Purge Cloudflare cache
+
+on:
+  workflow_dispatch:
+    inputs:
+      files:
+        description: 'Optional comma-separated full URLs to purge (e.g. https://ihype.org/,https://ihype.org/listen). Leave blank to purge everything.'
+        required: false
+        type: string
+
+jobs:
+  purge:
+    name: Purge
+    runs-on: ubuntu-latest
+    # The purge token and zone id are environment secrets, same as the deploy
+    # workflow reads them from.
+    environment: Production – ihype
+    steps:
+      - name: Purge
+        env:
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_CACHE_PURGE_TOKEN: ${{ secrets.CLOUDFLARE_CACHE_PURGE_TOKEN }}
+          FILES: ${{ inputs.files }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CLOUDFLARE_ZONE_ID}" ] || [ -z "${CLOUDFLARE_CACHE_PURGE_TOKEN}" ]; then
+            echo "::error::CLOUDFLARE_ZONE_ID or CLOUDFLARE_CACHE_PURGE_TOKEN is not configured for this environment."
+            exit 1
+          fi
+
+          if [ -n "${FILES// /}" ]; then
+            # Cloudflare caps a single files purge at 30 URLs; fail loudly
+            # rather than silently purging only part of what was asked for.
+            body=$(FILES="$FILES" node -e '
+              const urls = process.env.FILES.split(",").map((u) => u.trim()).filter(Boolean);
+              if (urls.length > 30) { console.error("Too many URLs: " + urls.length + " (max 30)."); process.exit(1); }
+              for (const u of urls) {
+                if (!/^https:\/\//.test(u)) { console.error("Not an absolute https URL: " + u); process.exit(1); }
+              }
+              process.stdout.write(JSON.stringify({ files: urls }));
+            ')
+            echo "Purging ${FILES}"
+          else
+            body='{"purge_everything":true}'
+            echo "Purging everything."
+          fi
+
+          curl -s -X POST \
+            "https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/purge_cache" \
+            -H "Authorization: Bearer ${CLOUDFLARE_CACHE_PURGE_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data "${body}" | tee /tmp/purge-result.json
+
+          echo
+          if ! grep -q '"success":true' /tmp/purge-result.json; then
+            echo "::error::Cache purge failed. See the response above."
+            exit 1
+          fi
+          echo "Cache purged successfully."

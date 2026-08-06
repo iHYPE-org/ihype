@@ -337,9 +337,13 @@ test.describe('App shell — scope', () => {
     await signIn(context, FAN_EMAIL);
     await page.goto('/');
     // `/` redirects an authenticated member to WORKBENCH_PATH, so a signed-in
-    // visitor never sees the marketing landing page at all.
-    await expect(page).toHaveURL(/\/listen/, { timeout: 15000 });
-    await expect(page.locator('.module-deck-preview')).toBeVisible({ timeout: 20000 });
+    // visitor never sees the marketing landing page at all. That path is now
+    // the Music · Map · Me shell rather than `/listen`'s module deck — the
+    // cutover recorded in DESIGN_SYNC row 268.
+    await expect(page).toHaveURL(/\/app\/map/, { timeout: 15000 });
+    await expect(page.locator('.mmm-frame')).toBeVisible({ timeout: 20000 });
+    // AppShell must stand aside for /app exactly as it does for /listen —
+    // mounting both would put an 82px header back over the map.
     await expect(page.locator('.shell-root')).toHaveCount(0);
     await expect(page.locator('.mas-root.is-active')).toHaveCount(0);
     await expect(page.locator('.site-dock')).toBeHidden();

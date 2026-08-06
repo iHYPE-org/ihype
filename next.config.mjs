@@ -121,6 +121,18 @@ const nextConfig = {
         permanent: false
       },
       {
+        // /radio/live was a six-line page whose only body was
+        // `redirect('/radio')` — the live player and saved shows are both
+        // there. Moved here and the page deleted, for the same reason as the
+        // `/app` entry above: a redirect thrown from a page can be streamed
+        // after the response has begun, whereas a config redirect is emitted
+        // before any rendering happens. Nothing in the app links here, so this
+        // exists purely for URLs already in the wild.
+        source: '/radio/live',
+        destination: '/radio',
+        permanent: false
+      },
+      {
         // The Radio Show Creator. Radio is computed per listener now
         // (src/lib/stations.ts) and advertising airs on the always-on station
         // (src/lib/station-breaks.ts), so there is nothing left for a person

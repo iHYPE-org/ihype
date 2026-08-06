@@ -77,7 +77,7 @@ test.describe('Authentication', () => {
     await expect(page).toHaveURL(/\/login/, { timeout: 8000 });
   });
 
-  test('Authenticated /login redirects to /listen', async ({ page, context }) => {
+  test('Authenticated /login redirects to the app surface', async ({ page, context }) => {
     if (!canSeedSession()) {
       test.skip(true, 'Needs E2E_WORKERD_DATABASE_URL + AUTH_SECRET to seed a session.');
       return;
@@ -91,6 +91,9 @@ test.describe('Authentication', () => {
       secure: process.env.PLAYWRIGHT_AUTH_COOKIE_SECURE === 'true',
     }]);
     await page.goto('/login');
-    await expect(page).toHaveURL(/\/listen/, { timeout: 8000 });
+    // WORKBENCH_PATH, which is now /app/map (DESIGN_SYNC row 269) rather than
+    // /listen. Middleware sends an already-signed-in visitor there instead of
+    // rendering the sign-in form again.
+    await expect(page).toHaveURL(/\/app\/map/, { timeout: 8000 });
   });
 });

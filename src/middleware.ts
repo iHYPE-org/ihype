@@ -1,7 +1,7 @@
 import NextAuth from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { authConfig } from '@/lib/auth.config';
-import { WORKBENCH_PATH } from '@/lib/auth-redirects';
+import { WORKBENCH_PATH, isProtectedPath } from '@/lib/auth-redirects';
 
 const { auth } = NextAuth(authConfig);
 
@@ -82,7 +82,7 @@ const authMiddleware = auth((request) => {
   }
 
   if (
-    (pathname === WORKBENCH_PATH || pathname.startsWith('/dashboard') || pathname.startsWith('/admin')) &&
+    isProtectedPath(pathname) &&
     !request.auth
   ) {
     const loginUrl = new URL('/login', request.url);

@@ -68,10 +68,15 @@ assertMissing(
   'src/app/workbench/page.tsx',
   '/workbench is a legacy alias only; do not recreate it as a second authenticated app.'
 );
+// The canonical post-auth surface is now the Music · Map · Me shell rather
+// than /listen's module deck — the cutover recorded in DESIGN_SYNC row 268,
+// made as the operator decision that row said it needed. The guard is kept
+// (not dropped) because its purpose is unchanged: there must be exactly one
+// landing surface, and it must not drift silently.
 assertIncludes(
   'src/lib/auth-redirects.ts',
-  "WORKBENCH_PATH = '/listen'",
-  'All successful auth paths should resolve to the canonical Listen route.'
+  "WORKBENCH_PATH = '/app/map'",
+  'All successful auth paths should resolve to the canonical app surface.'
 );
 assertIncludes(
   'src/components/AuthLogin.tsx',
