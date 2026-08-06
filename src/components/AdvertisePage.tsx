@@ -416,7 +416,7 @@ function CoverageBuilder() {
               </div>
             )}
 
-            <p style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontSize: 14, color: 'var(--ink-a60)', marginTop: 14, lineHeight: 1.45 }}>
+            <p style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontSize: 14, color: 'var(--ink-2)', marginTop: 14, lineHeight: 1.45 }}>
               {t('advertisePage.nothingChargesNote', 'Nothing charges until your creative clears the AI screen.')}
               <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: '#ff5029', marginLeft: 3, verticalAlign: 'middle' }} />
             </p>
