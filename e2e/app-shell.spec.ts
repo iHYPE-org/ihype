@@ -299,9 +299,12 @@ test.describe('App shell — navigation manifest', () => {
     // Was "Artist and DJ". Show Creator went with the DJ role — radio is
     // computed per listener now (src/lib/stations.ts) and there is nothing for
     // a person to author, so the destination no longer exists in the manifest.
-    // The DJ profile is still seeded here on purpose: three such rows survive
-    // until the data migration, and holding one must not resurrect a creator
-    // or break the gates around it.
+    // The DJ profile is still seeded here on purpose. The three real rows have
+    // now been reassigned to ARTIST, but the enum value itself survives until
+    // step 4 of the removal — so a DJ-typed row remains constructible, and one
+    // must not resurrect a creator or break the gates around it. This is the
+    // only coverage of that tolerance; drop the seed and step 4 loses its
+    // safety net.
     await signIn(context, CREATOR_EMAIL, [
       { type: 'ARTIST', name: 'E2E Artist' },
       { type: 'DJ', name: 'E2E DJ' },

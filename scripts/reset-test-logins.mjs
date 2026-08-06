@@ -24,14 +24,20 @@ const users = [
   { email: 'admin@ihype.org', username: 'admin', name: 'iHYPE Admin', role: 'ADMIN' },
   { email: 'artist@ihype.org', username: 'artist', name: 'Nova Pulse', role: 'ARTIST' },
   { email: 'venue@ihype.org', username: 'venue', name: 'Venue Owner', role: 'VENUE' },
-  { email: 'promoter@ihype.org', username: 'promoter', name: 'DJ Echo', role: 'DJ' },
+  // ARTIST, not DJ. The role is being removed (docs/dj-role-removal-scope.md)
+  // and the three real DJ rows were reassigned in migration
+  // 20260806130000_reassign_dj_profiles. This script runs from a workflow, so
+  // leaving DJ here meant one operator click would recreate exactly the rows
+  // that migration deletes — and step 4 rewrites the enum, at which point a
+  // reseeded DJ row is a value the schema no longer has.
+  { email: 'promoter@ihype.org', username: 'promoter', name: 'Echo', role: 'ARTIST' },
   { email: 'fan@ihype.org', username: 'fan', name: 'Night Owl', role: 'FAN' }
 ];
 
 const profiles = [
   { username: 'artist', slug: 'artist', hexId: '0xreset000000000000000000000000000001', type: 'ARTIST', name: 'Nova Pulse' },
   { username: 'venue', slug: 'venue', hexId: '0xreset000000000000000000000000000002', type: 'VENUE', name: 'Venue Owner' },
-  { username: 'promoter', slug: 'promoter', hexId: '0xreset000000000000000000000000000003', type: 'DJ', name: 'DJ Echo' },
+  { username: 'promoter', slug: 'promoter', hexId: '0xreset000000000000000000000000000003', type: 'ARTIST', name: 'Echo' },
   { username: 'fan', slug: 'fan', hexId: '0xreset000000000000000000000000000004', type: 'LISTENER', name: 'Night Owl' }
 ];
 
