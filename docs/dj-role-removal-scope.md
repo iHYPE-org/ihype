@@ -230,12 +230,39 @@ The order matters, because the enum rewrite is the irreversible step:
    plan engine behind `ShowSequencePlayer`, `/shows/[slug]` and the show CRUD
    routes. Removing them would break show playback, not just DJ authoring.
 
-   **Still to do in step 2:** the DJ profile surfaces — `/promoters/[slug]`
-   and its `dashboard`/`analytics`/`onboarding` subpages, the `/djs/[slug]`
-   alias — plus the remaining role pickers and the `--role-dj` token. Those
-   are better done alongside step 3, because until the three rows are
-   reassigned those pages are the only thing serving them.
-3. Migrate data (`UPDATE` rows to their new type) as its own deploy, verified.
+   **Step 2c — DONE: the DJ profile surfaces are gone.** `/promoters/[slug]`
+   and its `dashboard`/`analytics`/`onboarding` subpages and the `/djs/[slug]`
+   alias are deleted; both now redirect to `/artists/*` from
+   `next.config.mjs` (a catch-all, and config-level so the redirect is a real
+   status code rather than one streamed after the response begins — these are
+   public indexable profile URLs). `getProfilePathForType` no longer emits
+   `/promoters`, and the eleven inline `type === 'DJ' ? … : …` link ternaries
+   were collapsed rather than left pointing at a redirect.
+   `DJOnboardingWizard.tsx` went with the onboarding route that was its only
+   mount point.
+
+   Done in the SAME deploy as step 3 on purpose: every one of those pages
+   gated on `profile.type !== 'DJ' -> notFound()`, so the moment the data
+   migration runs they serve nothing. Splitting them would have 404'd three
+   live URLs in between.
+
+   **Still to do in step 2:** the `--role-dj` token (a deprecated alias for
+   `--role-promoter`) and the remaining role pickers and `'DJ'` string
+   branches — ~90 files, none of them load-bearing now that no row has the
+   type. Deliberately NOT bundled here: this deploy carries a production data
+   migration, and a 90-file cosmetic sweep alongside it would make a bisect
+   meaningless if anything went wrong.
+3. ~~Migrate data (`UPDATE` rows to their new type) as its own deploy, verified.~~
+   **DONE — `prisma/migrations/20260806130000_reassign_dj_profiles`.** Counts
+   re-taken against production immediately beforehand and unchanged from the
+   2026-08-05 audit: 3 profiles, 2 users, and zero of everything that would
+   have made this a migration rather than a cleanup (verified, uploads,
+   Connect accounts, lineup slots, payable entries, shows headlined,
+   followers, hypes, listens — all 0). Reassigned to **ARTIST**, settling
+   decision 2: all three are music acts with public pages, and ARTIST keeps
+   those pages resolving. Checked first that neither table carries a trigger
+   or check constraint that the update could trip. Both enums keep their `DJ`
+   value here, so this step is reversible on its own.
 4. Only then rewrite the enums, gated through `prisma/migrations-pending/`
    per the repo's own workflow — never applied blind.
 

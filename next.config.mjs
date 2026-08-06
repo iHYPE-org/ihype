@@ -148,6 +148,36 @@ const nextConfig = {
         permanent: false
       },
       {
+        // The DJ profile surfaces. Every one of these gated on
+        // `profile.type !== 'DJ' -> notFound()`, so the data migration in this
+        // same deploy (20260806130000_reassign_dj_profiles) turns all of them
+        // into 404s the moment it runs — there is no longer a DJ-typed row for
+        // them to serve. The three profiles now live at /artists/[slug], which
+        // already has the dashboard/analytics/onboarding equivalents.
+        //
+        // A catch-all so the subpages come along without four entries. Here
+        // rather than as page-level `redirect()`s for the reason /app and
+        // /for-djs are: a server-component redirect streams as a 200 carrying a
+        // NEXT_REDIRECT marker, which browsers follow but crawlers do not, and
+        // these are public indexable profile URLs.
+        //
+        // `permanent: false` deliberately, despite the role not coming back:
+        // the destination is a *slug* mapping, and a 308 is cached by browsers
+        // effectively forever — if any of these three slugs is ever reassigned,
+        // a permanent redirect would be unrecallable.
+        source: '/promoters/:path*',
+        destination: '/artists/:path*',
+        permanent: false
+      },
+      {
+        // Was already an alias — it redirected to /promoters/[slug], which now
+        // redirects onward. Pointed straight at the destination instead, so
+        // this is one hop rather than two.
+        source: '/djs/:path*',
+        destination: '/artists/:path*',
+        permanent: false
+      },
+      {
         // The DJ recruiting kit. The role is being removed
         // (docs/dj-role-removal-scope.md, signed off 2026-08-05) and there is
         // no DJ option left at /join or /register, so this recruits for

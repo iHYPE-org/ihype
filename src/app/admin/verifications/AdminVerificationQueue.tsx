@@ -16,7 +16,7 @@ function formatDate(value: Date | string | null) {
 
 function profileTypePath(type: string, slug: string) {
   if (type === 'ARTIST') return `/artists/${slug}`;
-  if (type === 'DJ') return `/promoters/${slug}`;
+  if (type === 'DJ') return `/artists/${slug}`;
   if (type === 'VENUE') return `/venues/${slug}`;
   return `/fans/${slug}`;
 }

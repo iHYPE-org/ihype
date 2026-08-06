@@ -230,7 +230,7 @@ function DiscoveryHome({
 }
 
 function profileHref(type: string, slug: string) {
-  return type === 'VENUE' ? `/venues/${slug}` : type === 'DJ' ? `/promoters/${slug}` : `/artists/${slug}`;
+  return type === 'VENUE' ? `/venues/${slug}` : `/artists/${slug}`;
 }
 
 const b: React.CSSProperties = {
@@ -732,7 +732,7 @@ export function ListenHome({
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 12 }}>{t('listenHome.searchArtistsHeading', 'Artists')}</div>
               <div style={panel}>
                 {searchArtists.map((r, i) => (
-                  <Link key={r.id} href={r.type === 'venue' ? `/venues/${r.slug}` : r.type === 'promoter' ? `/promoters/${r.slug}` : `/artists/${r.slug}`} style={{ ...chartRow, textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
+                  <Link key={r.id} href={r.type === 'venue' ? `/venues/${r.slug}` : r.type === 'promoter' ? `/artists/${r.slug}` : `/artists/${r.slug}`} style={{ ...chartRow, textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}>
                     <div style={{ width: 5, height: 36, borderRadius: 3, flexShrink: 0, background: PALETTE[i % PALETTE.length] }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={rowTitle}>{r.name}</div>

@@ -64,7 +64,7 @@ export default async function TrackDetailPage({ params }: { params: Promise<{ he
   const asset = await getTrack(hexId);
   if (!asset) return notFound();
 
-  const artistHref = asset.profile.type === 'DJ' ? `/promoters/${asset.profile.slug}` : `/artists/${asset.profile.slug}`;
+  const artistHref = `/artists/${asset.profile.slug}`;
   const genre = asset.profile.genre || asset.profile.genres[0] || null;
 
   const [playCount, latestReport, hypedByMe, moreAssets] = await Promise.all([

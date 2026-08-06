@@ -47,7 +47,7 @@ export default async function CancelEventPage({ params }: { params: Promise<{ sl
     ? `/venues/${show.venueProfile.slug}/dashboard`
     : isHeadlinerOwner && show.headlinerProfile
       ? show.headlinerProfile.type === 'DJ'
-        ? `/promoters/${show.headlinerProfile.slug}/dashboard`
+        ? `/artists/${show.headlinerProfile.slug}/dashboard`
         : `/artists/${show.headlinerProfile.slug}/dashboard`
       : `/shows/${show.slug}`;
 

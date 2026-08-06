@@ -23,7 +23,7 @@ export async function SimilarArtistsRow({
         {artists.map((a) => (
           <Link
             className="similar-artist-card"
-            href={a.type === 'DJ' ? `/promoters/${a.slug}` : `/artists/${a.slug}`}
+            href={`/artists/${a.slug}`}
             key={a.slug}
           >
             <div className="similar-artist-avatar">

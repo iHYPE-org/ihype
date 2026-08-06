@@ -26,7 +26,7 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 const profileRoute = (type: string, slug: string) =>
-  type === 'VENUE' ? `/venues/${slug}` : type === 'DJ' ? `/promoters/${slug}` : `/artists/${slug}`;
+  type === 'VENUE' ? `/venues/${slug}` : `/artists/${slug}`;
 
 /**
  * Tab ids the app shell's context strip already carries for PAGES ('mypage' via
@@ -354,7 +354,7 @@ export function PagesHome({
               {searchResults.map((r) => {
                 const color = r.type === 'venue' ? 'var(--role-venue)' : r.type === 'promoter' ? 'var(--accent-2)' : 'var(--accent)';
                 const label = r.type === 'venue' ? t('pagesHome.resultTypeVenue', 'Venue') : r.type === 'promoter' ? t('pagesHome.resultTypePromoter', 'Promoter / DJ') : t('pagesHome.resultTypeArtist', 'Artist');
-                const route = r.type === 'venue' ? `/venues/${r.slug}` : r.type === 'promoter' ? `/promoters/${r.slug}` : `/artists/${r.slug}`;
+                const route = r.type === 'venue' ? `/venues/${r.slug}` : r.type === 'promoter' ? `/artists/${r.slug}` : `/artists/${r.slug}`;
                 const initials = r.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
                 return (
                   <Link key={r.id} href={route} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 14, background: 'var(--hair-30)', textDecoration: 'none', color: 'inherit' }}>

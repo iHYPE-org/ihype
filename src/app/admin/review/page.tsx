@@ -241,7 +241,7 @@ export default async function AdminReviewPage({
                     const show = r.targetType === 'show' ? showMap.get(r.targetId) : null;
                     const comment = r.targetType === 'comment' ? commentMap.get(r.targetId) : null;
                     const entityHref = profile
-                      ? (profile.type === 'VENUE' ? `/venues/${profile.slug}` : profile.type === 'DJ' ? `/promoters/${profile.slug}` : `/artists/${profile.slug}`)
+                      ? (profile.type === 'VENUE' ? `/venues/${profile.slug}` : `/artists/${profile.slug}`)
                       : show ? `/shows/${show.slug}` : null;
                     const entityLabel = profile?.name ?? show?.title ?? (comment ? comment.content.slice(0, 60) + (comment.content.length > 60 ? '…' : '') : r.targetId);
                     return (
