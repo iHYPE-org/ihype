@@ -1,6 +1,10 @@
 import './globals.css';
 import './shell.css';
 import './shell-surfaces.css';
+// Last, on purpose: the phone-fit floors are minimums that must survive the
+// three files above, and source order is what gives an equal-specificity rule
+// the win. It touches nothing at `pointer: fine`.
+import './mobile-fit.css';
 import type { Metadata, Viewport } from 'next';
 import { ReactNode } from 'react';
 import { Syne, DM_Sans, JetBrains_Mono, Instrument_Serif, Forum } from 'next/font/google';

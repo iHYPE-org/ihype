@@ -111,22 +111,31 @@ export function CookieConsent() {
         <Link href="/info?tab=privacy" style={{ color: 'var(--accent-text, var(--accent))', textDecoration: 'underline' }}>{t('cookieConsent.privacyLink', 'Read our privacy policy')}</Link>.
       </p>
       <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+        {/* No inline `minHeight` here: an inline style outranks every
+            stylesheet, so a hardcoded 36px would defeat mobile-fit.css's 44px
+            touch floor on the one dialog every first-time visitor must dismiss
+            before they can use the app. The CSS min-height applies on a coarse
+            pointer and the 36px design height holds everywhere else. */}
         <button
           onClick={() => choose('essential')}
-          className="ihype-btn-ghost"
-          style={{ minHeight: 36, fontSize: 11 }}
+          className="ihype-btn-ghost ihype-consent-btn"
+          style={{ fontSize: 11 }}
         >
           {t('cookieConsent.essentialOnly', 'Essential only')}
         </button>
         <button
           onClick={() => choose('all')}
-          className="ihype-btn-primary"
-          style={{ minHeight: 36, fontSize: 11, padding: '8px 14px' }}
+          className="ihype-btn-primary ihype-consent-btn"
+          style={{ fontSize: 11, padding: '8px 14px' }}
         >
           {t('cookieConsent.acceptAll', 'Accept all')}
         </button>
       </div>
       <style>{`
+        /* The design's own 36px, restored for a mouse. mobile-fit.css raises
+           both buttons to 44px on a coarse pointer; this only supplies the
+           resting height the inline style used to. */
+        .ihype-consent-btn { min-height: 36px; }
         /* Clear the fixed mobile bottom nav (60px + safe-area) instead of
            sitting underneath it — the nav has a higher z-index and a solid
            background, so without this the accept/decline buttons are

@@ -1,0 +1,173 @@
+#!/usr/bin/env node
+/**
+ * Measures how the app actually fits a phone.
+ *
+ * WHY A BROWSER AND NOT A GREP. `audit:shell` checks that a class is named
+ * right; `audit:css` checks that a selector is not silently overridden.
+ * Neither can see the thing a phone user actually complains about — a control
+ * too small to hit, type too small to read, a page that rubber-bands sideways.
+ * Those are properties of the RENDERED box, and the only instrument that knows
+ * a box's size is a layout engine.
+ *
+ * WHY IT CAN POINT AT PRODUCTION. iOS and Android are a Capacitor WebView
+ * pointed at https://ihype.org (capacitor.config.ts), so measuring the live
+ * site at a phone viewport is not an approximation of the native apps — it is
+ * the native apps.
+ *
+ *   node scripts/audit-mobile.mjs                     # against production
+ *   node scripts/audit-mobile.mjs --base=http://…     # against a local build
+ *   node scripts/audit-mobile.mjs --strict            # non-zero on regression
+ *
+ * The three budgets below are RATCHETS, in the same spirit as audit:css's
+ * `--max=145`: they record the debt that already exists so a NEW offender
+ * fails while the standing set does not block every merge. Lower them as the
+ * type-ramp work lands. Never raise one to make a build green.
+ *
+ * Known limit: this measures signed-OUT pages. The signed-in shells (AppShell,
+ * MmmShell) carry the fixed chrome where the safe-area insets matter most, and
+ * reaching them needs the e2e session fixture — see e2e/fixtures/session.ts.
+ * Those are covered by the geometry assertions in e2e/app-shell.spec.ts
+ * instead.
+ */
+
+import { chromium, devices } from 'playwright';
+
+const arg = (name, dflt) => {
+  const hit = process.argv.find((a) => a.startsWith(`--${name}=`));
+  return hit ? hit.slice(name.length + 3) : dflt;
+};
+const STRICT = process.argv.includes('--strict');
+const BASE = arg('base', 'https://ihype.org');
+
+// The budgets. Measured 2026-08-06 at 393x852, AFTER src/app/mobile-fit.css
+// landed. The pre-fix baseline was smallTaps 158 / tinyText 282, so the touch
+// floor removed 60 of the 158.
+//
+// `tinyText` carries a little slack because /discover and /shows render live
+// rows: the same code measures 283-285 depending on what is in the database
+// that minute. The other two are exact.
+//
+// `overflowingPages: 1` is /launch, and it is NOT understood. Its layout
+// viewport opens to 488px (window.innerWidth 488 against a clientWidth of 393)
+// with no content element wider than the viewport — the only 488px box is the
+// fixed decorative background, which is sizing to the widened viewport rather
+// than causing it. Reproduced in Chromium mobile emulation; not yet confirmed
+// on a real device, which is the next step before spending more on it.
+const BUDGET = {
+  smallTaps: 98,
+  tinyText: 285,
+  overflowingPages: 1,
+};
+
+const PAGES = [
+  '/', '/info', '/login', '/register', '/join', '/discover', '/shows',
+  '/for-artists', '/for-venues', '/advertise', '/walkthrough', '/community',
+  '/journal', '/status', '/launch', '/this-weekend',
+];
+
+// iPhone 15-class logical viewport. Chosen because it is the narrowest of the
+// current iPhones once the Dynamic Island is accounted for, so a layout that
+// fits here fits the rest.
+const VIEWPORT = { width: 393, height: 852 };
+const TAP_MIN = 44; // Apple HIG minimum. Material asks 48dp.
+const TEXT_MIN = 12;
+
+function probe([tapMin, textMin]) {
+  const doc = document.documentElement;
+  const vw = doc.clientWidth;
+  const out = { scrollW: doc.scrollWidth, clientW: vw, offenders: [], smallTaps: [], tinyText: [] };
+  const seen = new Set();
+
+  for (const el of document.querySelectorAll('body *')) {
+    const r = el.getBoundingClientRect();
+    if (!r.width && !r.height) continue;
+    const cs = getComputedStyle(el);
+    if (cs.visibility === 'hidden' || cs.display === 'none' || cs.opacity === '0') continue;
+
+    if (r.right > vw + 1 || r.left < -1) {
+      const key = el.tagName + '.' + (el.className?.toString?.().slice(0, 40) || '');
+      if (!seen.has(key)) {
+        seen.add(key);
+        out.offenders.push({ sel: key, right: Math.round(r.right), w: Math.round(r.width) });
+      }
+    }
+
+    if (el.matches('a,button,[role="button"],input,select,summary') && (r.height < tapMin || r.width < 30)) {
+      out.smallTaps.push({
+        sel: el.tagName + '.' + (el.className?.toString?.().slice(0, 34) || ''),
+        h: Math.round(r.height), w: Math.round(r.width),
+        text: (el.textContent || '').trim().slice(0, 28),
+      });
+    }
+
+    // Only elements with their own text node — otherwise a wrapper is counted
+    // once per level of nesting and the number means nothing.
+    const fs = parseFloat(cs.fontSize);
+    const ownText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
+    if (ownText && fs < textMin) {
+      out.tinyText.push({
+        sel: el.tagName + '.' + (el.className?.toString?.().slice(0, 34) || ''),
+        px: fs, text: (el.textContent || '').trim().slice(0, 28),
+      });
+    }
+  }
+  return out;
+}
+
+const browser = await chromium.launch(
+  process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}
+);
+const ctx = await browser.newContext({
+  ...devices['iPhone 13'],
+  viewport: VIEWPORT,
+  isMobile: true,
+  hasTouch: true,
+});
+const page = await ctx.newPage();
+
+const results = [];
+console.log(`Measuring ${PAGES.length} pages at ${VIEWPORT.width}x${VIEWPORT.height} against ${BASE}\n`);
+
+for (const path of PAGES) {
+  try {
+    const resp = await page.goto(BASE + path, { waitUntil: 'domcontentloaded', timeout: 45000 });
+    await page.waitForTimeout(1200);
+    const r = await page.evaluate(probe, [TAP_MIN, TEXT_MIN]);
+    results.push({ path, ...r });
+    const over = r.scrollW - r.clientW;
+    console.log(
+      `  ${path.padEnd(15)} overflow:${String(over).padStart(4)}px  ` +
+      `taps<${TAP_MIN}:${String(r.smallTaps.length).padStart(3)}  ` +
+      `text<${TEXT_MIN}px:${String(r.tinyText.length).padStart(3)}`
+    );
+  } catch (e) {
+    console.log(`  ${path.padEnd(15)} ERROR ${e.message.slice(0, 60)}`);
+  }
+}
+await browser.close();
+
+const sum = (k) => results.reduce((n, r) => n + (r[k]?.length || 0), 0);
+const actual = {
+  smallTaps: sum('smallTaps'),
+  tinyText: sum('tinyText'),
+  overflowingPages: results.filter((r) => r.scrollW > r.clientW).length,
+};
+
+console.log('\n─────────────────────────────────────────────');
+let failed = false;
+for (const [key, budget] of Object.entries(BUDGET)) {
+  const got = actual[key];
+  const verdict = got > budget ? 'OVER' : got < budget ? 'improved' : 'at budget';
+  if (got > budget) failed = true;
+  console.log(`  ${key.padEnd(18)} ${String(got).padStart(4)} / ${String(budget).padEnd(4)}  ${verdict}`);
+}
+console.log('─────────────────────────────────────────────');
+
+if (failed && STRICT) {
+  console.error('\nA mobile budget regressed. Fix the new offender — do not raise the budget.');
+  process.exit(1);
+}
+if (!failed) {
+  const better = Object.entries(BUDGET).filter(([k, v]) => actual[k] < v);
+  if (better.length) console.log('\nBudgets beaten — lower them in this file to lock the gain in.');
+}

@@ -107,6 +107,26 @@ html.mmm-locked .site-shell > main {
   overflow: hidden;
   /* Below a modal but above ordinary page content. */
   z-index: var(--z-sticky);
+
+  /* ── Safe areas ────────────────────────────────────────────────────────
+     The handoff is drawn at 430px on a rectangle with no notch. The real
+     target is a Capacitor WebView with `viewport-fit=cover`, where the bottom
+     ~34px is the home indicator and the top ~59px is the Dynamic Island. This
+     shell's ONLY persistent controls — the logo trigger that opens the arc nav
+     and the player — live in exactly that bottom band, so without this the one
+     control that navigates the whole app sits inside the iOS system swipe
+     zone and competes with it for the touch.
+
+     `--mmm-bottom` is the single origin for everything anchored to the bottom
+     edge. The file already warns (see the narrow breakpoint) that the anchor,
+     the logo and the player must not drift apart; one token is how that stops
+     being a thing to remember. The `max()` keeps the consent-banner lift the
+     original rule established — the inset is added to the RESTING value only,
+     because `--consent-inset` is measured from the viewport edge and already
+     includes it. */
+  --mmm-safe-top: env(safe-area-inset-top, 0px);
+  --mmm-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --mmm-bottom: max(calc(26px + var(--mmm-safe-bottom)), calc(var(--consent-inset, 0px) + 12px));
 }
 
 /* ── Map layer ─────────────────────────────────────────────────────────── */
@@ -188,7 +208,7 @@ html.mmm-locked .site-shell > main {
   position: absolute;
   /* Clears the player pill (bottom: 26px, ~60px tall). On the narrow
      breakpoint the player moves to bottom: 112px and this follows it. */
-  bottom: 100px;
+  bottom: calc(100px + var(--mmm-safe-bottom));
   left: 26px;
   right: 26px;
   z-index: 20;
@@ -273,8 +293,10 @@ html.mmm-locked .site-shell > main {
   background: var(--bg);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  /* 96px clears the player and the logo trigger, per the handoff. */
-  padding: 14px 16px 96px;
+  /* 96px clears the player and the logo trigger, per the handoff; the insets
+     clear the Dynamic Island at the top and the home indicator at the bottom,
+     which the handoff's 430px rectangle has neither of. */
+  padding: calc(14px + var(--mmm-safe-top)) 16px calc(96px + var(--mmm-safe-bottom));
 }
 
 .mmm-tabs { display: flex; gap: 8px; padding: 2px 0 14px; }
@@ -575,7 +597,7 @@ html.mmm-locked .site-shell > main {
 .mmm-nav-anchor {
   position: absolute;
   left: 26px;
-  bottom: max(26px, calc(var(--consent-inset, 0px) + 12px));
+  bottom: var(--mmm-bottom);
   z-index: 30;
   width: 0;
   height: 0;
@@ -588,7 +610,7 @@ html.mmm-locked .site-shell > main {
 .mmm-logo {
   position: absolute;
   left: 26px;
-  bottom: max(26px, calc(var(--consent-inset, 0px) + 12px));
+  bottom: var(--mmm-bottom);
   z-index: 31;
   width: 76px;
   height: 76px;
@@ -681,7 +703,7 @@ html.mmm-locked .site-shell > main {
 .mmm-nav-hint {
   position: absolute;
   left: 26px;
-  bottom: 108px;
+  bottom: calc(108px + var(--mmm-safe-bottom));
   z-index: 29;
   padding: 2px 7px;
   border-radius: 6px;
@@ -703,7 +725,7 @@ html.mmm-locked .site-shell > main {
   left: 118px;
   right: auto;
   max-width: min(820px, calc(100vw - 150px));
-  bottom: 26px;
+  bottom: calc(26px + var(--mmm-safe-bottom));
   z-index: 28;
   display: flex;
   align-items: center;
@@ -808,21 +830,24 @@ html.mmm-locked .site-shell > main {
    the ARC table in mmm-nav.ts, which the component picks per viewport — only
    the anchor and the player move here. */
 @media (max-width: 720px) {
-  /* Keeps the consent lift from the base rule. Restating plain `bottom: 22px`
-     here silently disabled it at exactly the width where the banner is
-     `100vw - 32px` wide and actually covers the trigger — the only width that
-     needed it. Whenever the resting value changes, the max() has to come with
-     it. */
-  .mmm-nav-anchor { left: 18px; bottom: max(22px, calc(var(--consent-inset, 0px) + 12px)); }
+  /* The resting value drops 26px → 22px here. It is re-stated through the same
+     token as the base rule rather than as a literal `max()`, which is what
+     keeps the consent lift AND the home-indicator inset attached to it: the
+     earlier version of this block restated a plain `bottom: 22px` and silently
+     disabled the lift at exactly the width that needed it. Redefining the
+     token is now the only edit a new resting value needs, and both properties
+     below follow automatically. */
+  .mmm-frame { --mmm-bottom: max(calc(22px + var(--mmm-safe-bottom)), calc(var(--consent-inset, 0px) + 12px)); }
+  .mmm-nav-anchor { left: 18px; }
   /* Same offsets as the anchor: the two are one control and must not drift. */
-  .mmm-logo { left: 18px; bottom: max(22px, calc(var(--consent-inset, 0px) + 12px)); }
-  .mmm-result-line { left: 18px; right: 18px; bottom: 186px; }
-  .mmm-nav-hint { left: 18px; bottom: 104px; }
+  .mmm-logo { left: 18px; }
+  .mmm-result-line { left: 18px; right: 18px; bottom: calc(186px + var(--mmm-safe-bottom)); }
+  .mmm-nav-hint { left: 18px; bottom: calc(104px + var(--mmm-safe-bottom)); }
   .mmm-player {
     left: 18px;
     right: 18px;
     max-width: none;
-    bottom: 112px;
+    bottom: calc(112px + var(--mmm-safe-bottom));
     padding: 8px 14px 8px 8px;
   }
 }
