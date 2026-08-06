@@ -388,7 +388,12 @@ export default async function ShowDetailPage({
             )}
           </div>
 
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 800, letterSpacing: '-.02em', marginBottom: 12 }}>{show.title}</h1>
+          {/* The design system's top step: Syne 800, 54px. This was 32px -- smaller
+              than the ticket price in the sidebar, so the page had no dominant
+              element and read as a form. clamp() keeps it from wrapping badly on a
+              phone; -.03em and 0.98 line-height are what large Syne needs to stop
+              looking loose at display size. */}
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2.375rem, 6vw, 3.375rem)', fontWeight: 800, letterSpacing: '-.03em', lineHeight: 0.98, marginBottom: 14, textWrap: 'balance' }}>{show.title}</h1>
 
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center', marginBottom: 20, fontSize: 14, color: 'var(--ink-a75)' }}>
             <span className="badge">{show.status}</span>
@@ -499,7 +504,7 @@ export default async function ShowDetailPage({
             venueTab={
               <div>
                 <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a35)', marginBottom: 8 }}>{t('showsSlugPage.venueTabLabel', 'Venue')}</p>
-                <p style={{ fontSize: 18, fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 8 }}>{show.venueProfile?.name ?? t('showsSlugPage.tba', 'TBA')}</p>
+                <p style={{ fontSize: 22, fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-.02em', marginBottom: 8 }}>{show.venueProfile?.name ?? t('showsSlugPage.tba', 'TBA')}</p>
                 {show.venueProfile && (
                   <p style={{ fontSize: 14, color: 'var(--ink-a70)' }}>
                     {t('showsSlugPage.capacityLabel', 'Capacity')}: {(show.ticketCapacity ?? t('showsSlugPage.openCapacity', 'Open')).toLocaleString?.() ?? show.ticketCapacity ?? t('showsSlugPage.openCapacity', 'Open')} · {show.venueProfile.city}
@@ -512,7 +517,7 @@ export default async function ShowDetailPage({
                 )}
                 {venueComps.length > 0 && (
                   <div style={{ marginTop: 24 }}>
-                    <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 17, marginBottom: 4 }}>{t('showsSlugPage.howThisShowComps', 'How this show comps')}</h2>
+                    <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 24, letterSpacing: '-.02em', marginBottom: 6 }}>{t('showsSlugPage.howThisShowComps', 'How this show comps')}</h2>
                     <p className="meta" style={{ marginBottom: 14 }}>{t('showsSlugPage.demandVsOtherShows', 'Demand vs. other shows at')} {show.venueProfile?.name ?? t('showsSlugPage.thisVenue', 'this venue')} {t('showsSlugPage.thisSeason', 'this season.')}</p>
                     {venueComps.map((vc) => (
                       <div key={vc.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid var(--hair-80)' }}>
@@ -532,14 +537,22 @@ export default async function ShowDetailPage({
             lineupTab={
               <div>
                 <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a35)', marginBottom: 8 }}>{t('showsSlugPage.headlinerLabel', 'Headliner')}</p>
-                <p style={{ fontSize: 18, fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 16 }}>{show.headlinerProfile?.name ?? t('showsSlugPage.tba', 'TBA')}</p>
+                <p style={{ fontSize: 22, fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-.02em', marginBottom: 16 }}>{show.headlinerProfile?.name ?? t('showsSlugPage.tba', 'TBA')}</p>
                 <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a35)', marginBottom: 8 }}>{t('showsSlugPage.promoterLabel', 'Promoter')}</p>
                 <p style={{ fontSize: 14 }}>{show.promoterProfile?.name ?? t('showsSlugPage.promoterPoolUnassigned', 'Promoter pool unassigned')}</p>
               </div>
             }
           >
             {/* ABOUT tab content */}
-            <p style={{ fontSize: 15, lineHeight: 1.7, color: 'var(--ink-a85)' }}>
+            {/* The description is the one genuinely editorial block on this page,
+                so it takes the design system's serif -- Instrument Serif italic,
+                which its own type card marks "editorial only". Set larger and
+                looser than body copy because that contrast is the point: an
+                italic serif at 15px next to 15px sans just looks like a mistake.
+                Uses var(--font-serif-accent), NOT the literal family name --
+                next/font generates a hashed family, so 'Instrument Serif' does
+                not match it and silently falls back to a system serif. */}
+            <p style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(1.125rem, 2.2vw, 1.375rem)', lineHeight: 1.45, letterSpacing: '-.01em', color: 'var(--ink-a85)', maxWidth: '46ch' }}>
               {show.description || t('showsSlugPage.defaultDescription', 'Presented through iHYPE — face value pricing, zero fees, and every split locked by charter before a single ticket is sold.')}
             </p>
 
