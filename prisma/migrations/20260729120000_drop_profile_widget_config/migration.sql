@@ -1,4 +1,5 @@
--- @gated
+-- Ungated 2026-08-06: production row count verified 0 immediately before the
+-- move, which is the condition this file was parked on.
 --
 -- Drops Profile.widgetConfig, the last remnant of a profile-widgets feature
 -- that was never finished.

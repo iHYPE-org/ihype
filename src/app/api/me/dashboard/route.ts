@@ -5,7 +5,7 @@ import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
-type DashboardRole = 'fan' | 'artist' | 'dj' | 'venue' | 'promoter' | 'advertiser';
+type DashboardRole = 'fan' | 'artist' | 'venue' | 'promoter' | 'advertiser';
 
 const roleWorkspace: Record<DashboardRole, { title: string; href: string; next: string; actions: Array<{ title: string; href: string }> }> = {
   fan: { title: 'Your listening profile', href: '/me/dashboard', next: 'Open your next local discovery', actions: [{ title: 'Open my Discovery playlist', href: '/playlists' }, { title: 'Share my HYPE link', href: '/me/promote' }, { title: 'See nearby events', href: '/shows' }] },
@@ -14,7 +14,6 @@ const roleWorkspace: Record<DashboardRole, { title: string; href: string; next: 
   // computed per listener now. Kept keyed as `dj` only because three profiles
   // still carry that type until the data migration; it points at what a DJ
   // account can actually still do.
-  dj: { title: 'Your page', href: '/pages', next: 'Keep your page current', actions: [{ title: 'Edit my page', href: '/pages' }, { title: 'Review song insights', href: '/profile-insights' }, { title: 'See nearby events', href: '/shows' }] },
   venue: { title: 'Venue page and event workspace', href: '/pages', next: 'Create your next event', actions: [{ title: 'Create an event', href: '/events/new' }, { title: 'Edit venue page', href: '/pages' }, { title: 'Review booking interest', href: '/tour-planner' }] },
   promoter: { title: 'HYPE link promotion workspace', href: '/me/promote', next: 'Find an event your network will love', actions: [{ title: 'Open HYPE link analytics', href: '/me/promote' }, { title: 'Find events to promote', href: '/shows' }, { title: 'Review ticket assists', href: '/tickets' }] },
   advertiser: { title: 'Music-only advertising workspace', href: '/advertise/dashboard', next: 'Review your aggregate scene matches', actions: [{ title: 'Open advertiser dashboard', href: '/advertise/dashboard' }, { title: 'Review aggregate heat map', href: '/shows' }, { title: 'Update advertiser profile', href: '/advertise' }] },
@@ -49,9 +48,8 @@ export async function GET(request: Request) {
     if (!user) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     const allowed = new Set<DashboardRole>(['fan']);
-    if (user.role === 'ADMIN') ['artist', 'dj', 'venue', 'promoter', 'advertiser'].forEach((role) => allowed.add(role as DashboardRole));
+    if (user.role === 'ADMIN') ['artist', 'venue', 'promoter', 'advertiser'].forEach((role) => allowed.add(role as DashboardRole));
     if (user.role === 'ARTIST' || profiles.some((profile) => profile.type === 'ARTIST')) allowed.add('artist');
-    if (user.role === 'DJ' || profiles.some((profile) => profile.type === 'DJ')) { allowed.add('dj'); allowed.add('promoter'); }
     if (user.role === 'VENUE' || profiles.some((profile) => profile.type === 'VENUE')) allowed.add('venue');
     if (user.role === 'FAN') allowed.add('promoter');
     if (user.role === 'ADVERTISER' || advertiser) allowed.add('advertiser');
@@ -62,14 +60,14 @@ export async function GET(request: Request) {
     const completeness = creatorProfile ? Math.round((filledFields / 5) * 100) : role === 'fan' || role === 'promoter' ? Math.min(100, 35 + follows * 5 + hypes * 5) : 0;
 
     const recommendations = role === 'fan' ? [] : (await db.profile.findMany({
-      where: { discoverable: true, ownerId: { not: userId }, type: role === 'venue' ? 'ARTIST' : role === 'artist' ? 'VENUE' : { in: ['ARTIST', 'DJ'] } },
+      where: { discoverable: true, ownerId: { not: userId }, type: role === 'venue' ? 'ARTIST' : role === 'artist' ? 'VENUE' : 'ARTIST' },
       orderBy: { hypeCount: 'desc' }, take: 3,
       select: { id: true, name: true, slug: true, type: true, city: true, stateRegion: true, genres: true, hypeCount: true },
     })).map((profile) => ({
       title: profile.name,
       detail: [profile.city, profile.stateRegion, profile.genres.slice(0, 2).join(' · ')].filter(Boolean).join(' · ') || 'Independent local scene',
       tag: `${profile.hypeCount.toLocaleString()} HYPES`,
-      href: profile.type === 'VENUE' ? `/venues/${profile.slug}` : profile.type === 'DJ' ? `/djs/${profile.slug}` : `/artists/${profile.slug}`,
+      href: profile.type === 'VENUE' ? `/venues/${profile.slug}` : `/artists/${profile.slug}`,
     }));
 
     const response = {

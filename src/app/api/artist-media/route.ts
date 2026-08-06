@@ -46,7 +46,7 @@ export async function GET(request: Request) {
     }),
   );
 
-  if (!profile || !['ARTIST', 'DJ'].includes(profile.type)) {
+  if (!profile || !['ARTIST'].includes(profile.type)) {
     return NextResponse.json({ error: 'Artist profile not found.' }, { status: 404 });
   }
   if (!canManageOwnedResource(session, profile.ownerId)) {
@@ -170,7 +170,7 @@ export async function POST(request: Request) {
       }),
     );
 
-    if (!profile || !['ARTIST', 'DJ'].includes(profile.type)) {
+    if (!profile || !['ARTIST'].includes(profile.type)) {
       return NextResponse.json({ error: 'Artist or DJ profile not found.' }, { status: 404 });
     }
     if (!canManageOwnedResource(session, profile.ownerId)) {

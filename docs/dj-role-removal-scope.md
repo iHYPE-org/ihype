@@ -246,12 +246,20 @@ The order matters, because the enum rewrite is the irreversible step:
    migration runs they serve nothing. Splitting them would have 404'd three
    live URLs in between.
 
-   **Still to do in step 2:** the `--role-dj` token (a deprecated alias for
-   `--role-promoter`) and the remaining role pickers and `'DJ'` string
-   branches — ~90 files, none of them load-bearing now that no row has the
-   type. Deliberately NOT bundled here: this deploy carries a production data
-   migration, and a 90-file cosmetic sweep alongside it would make a bisect
-   meaningless if anything went wrong.
+   **Step 2d — DONE: the sweep.** `--role-dj` and `--role-dj-text` are gone
+   (they were same-value aliases of `--role-promoter`, kept only so the DJ
+   surface would not repaint early); the `dj` badge tone is renamed
+   `promoter`, which is what it always described — the 10% pool. Every
+   remaining `'DJ'` branch went with them across ~40 files. Three were not
+   cosmetic: `/api/radio` was querying DJ-authored radio shows (production
+   holds **zero** `isRadioShow` rows and none can be created, and its
+   `stations` output had no consumer, so the query and its DJ-shaped joins are
+   deleted); `/api/radio/ad-plan` and `src/lib/ai-dj-ads.ts` are deleted
+   outright, orphaned when the Show Creator that was their only caller went;
+   and `POST /api/shows` no longer requires a promoter profile to be DJ-typed
+   — ownership, checked immediately after, is the constraint that actually
+   matters. `/api/discover` and `/api/referral` dropped `djs` and `djLink`,
+   response fields that could only ever be empty and that nothing read.
 3. ~~Migrate data (`UPDATE` rows to their new type) as its own deploy, verified.~~
    **DONE — `prisma/migrations/20260806130000_reassign_dj_profiles`.** Counts
    re-taken against production immediately beforehand and unchanged from the
@@ -263,8 +271,23 @@ The order matters, because the enum rewrite is the irreversible step:
    those pages resolving. Checked first that neither table carries a trigger
    or check constraint that the update could trip. Both enums keep their `DJ`
    value here, so this step is reversible on its own.
-4. Only then rewrite the enums, gated through `prisma/migrations-pending/`
-   per the repo's own workflow — never applied blind.
+4. ~~Only then rewrite the enums, gated through `prisma/migrations-pending/`
+   per the repo's own workflow — never applied blind.~~
+   **Code half DONE; the migration is WRITTEN AND PARKED, not applied.**
+   `DJ` is out of both enums in `schema.prisma`, so nothing can construct one.
+   The DDL sits at `prisma/migrations-pending/20260806160000_drop_dj_enum_values`
+   marked `@gated`; `npm run guard:migrations` fails the build if it reaches
+   `prisma/migrations/`, and applying it is a deliberate `git mv` in its own
+   commit. **Verify the two counts are still 0 immediately before moving it.**
+
+   It was executed against a throwaway Postgres 16 before being parked, both
+   ways: on a clean fixture it rebuilds both types, restores `User.role`'s
+   `'FAN'` default (a default is bound to the old type and is silently lost
+   otherwise) and leaves rows intact; on a fixture holding one straggler DJ
+   row it raises a named exception and leaves the enum **untouched**, rather
+   than failing halfway through a type rebuild. That distinction is the whole
+   point — a partially applied enum swap is exactly the P3009 shape that
+   blocks every subsequent production deploy.
 
 Steps 3 and 4 must not share a deploy with step 2. A failed migration blocks
 *every* production deploy (see CLAUDE.md's P3009 incident: production shipped

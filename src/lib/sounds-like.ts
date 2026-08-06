@@ -28,7 +28,7 @@ export async function getSimilarArtists(slug: string, limit = 3): Promise<Simila
   if (!profile) return [];
 
   const candidates = await db.profile.findMany({
-    where: { type: { in: ['ARTIST', 'DJ'] }, slug: { not: slug }, genres: { hasSome: profile.genres as string[] } },
+    where: { type: 'ARTIST', slug: { not: slug }, genres: { hasSome: profile.genres as string[] } },
     select: { name: true, slug: true, genres: true, bio: true, avatarImage: true, type: true },
     take: 20,
     orderBy: { hypeCount: 'desc' },

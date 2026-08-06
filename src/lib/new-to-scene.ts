@@ -5,7 +5,7 @@ import { getBaseUrl } from '@/lib/utils';
 export async function sendNewToSceneEmail(): Promise<{ sent: number }> {
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const newProfiles = await db.profile.findMany({
-    where: { type: { in: ['ARTIST', 'DJ'] }, createdAt: { gte: since } },
+    where: { type: 'ARTIST', createdAt: { gte: since } },
     orderBy: { hypeCount: 'desc' },
     take: 5,
     select: { name: true, slug: true, genres: true, bio: true, hypeCount: true }

@@ -723,7 +723,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
               pendingVerifications.map((profile) => (
                 <div className="admin-list-row" key={profile.id}>
                   <span>{profile.name}</span>
-                  <strong>{profile.type === 'DJ' ? 'PROMOTER' : profile.type}</strong>
+                  <strong>{profile.type}</strong>
                   <small>{profile.contactInfo || profile.verificationNotes || t('adminPage.noDetailsProvided', 'No details provided')}</small>
                   <AdminVerificationActions profileId={profile.id} />
                 </div>

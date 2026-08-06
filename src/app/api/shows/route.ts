@@ -182,8 +182,11 @@ export async function POST(request: NextRequest) {
       }
 
       const promoterProfile = await db.profile.findUnique({ where: { id: body.promoterProfileId } });
-      if (!promoterProfile || promoterProfile.type !== 'DJ') {
-        return NextResponse.json({ error: 'Promoter must be a promoter profile' }, { status: 400 });
+      // No type constraint: promoter is not a profile type (the DJ type it
+      // used to require is gone). Ownership is still enforced immediately
+      // below, which is the check that actually matters here.
+      if (!promoterProfile) {
+        return NextResponse.json({ error: 'Promoter profile not found' }, { status: 400 });
       }
 
       if (!isAdmin && promoterProfile.ownerId !== session.user.id) {
@@ -225,7 +228,7 @@ export async function POST(request: NextRequest) {
         ? await db.profile.findUnique({ where: { id: body.promoterProfileId } })
         : null;
 
-      if (body.promoterProfileId && (!promoterProfile || promoterProfile.type !== 'DJ')) {
+      if (body.promoterProfileId && !promoterProfile) {
         return NextResponse.json({ error: 'Promoter must be a promoter profile' }, { status: 400 });
       }
 
@@ -324,11 +327,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (body.headlinerProfileId && (!headlinerProfile || !['ARTIST', 'DJ'].includes(headlinerProfile.type))) {
+    if (body.headlinerProfileId && (!headlinerProfile || !['ARTIST'].includes(headlinerProfile.type))) {
       return NextResponse.json({ error: 'Headliner must be an artist or promoter profile' }, { status: 400 });
     }
 
-    if (body.promoterProfileId && (!promoterProfile || promoterProfile.type !== 'DJ')) {
+    if (body.promoterProfileId && !promoterProfile) {
       return NextResponse.json({ error: 'Promoter must be a promoter profile' }, { status: 400 });
     }
 

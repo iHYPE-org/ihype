@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   // Artist/DJ profiles with pending payouts whose owner hasn't received a summary this month
   const profiles = await db.profile.findMany({
     where: {
-      type: { in: ['ARTIST', 'DJ'] },
+      type: 'ARTIST',
       owner: {
         email: { not: null },
         emailBounced: false,

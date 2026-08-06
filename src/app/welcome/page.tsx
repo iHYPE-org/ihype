@@ -38,7 +38,7 @@ export default async function WelcomePage() {
   // the type -> URL-prefix mapping (ARTIST -> /artists, DJ -> /promoters,
   // VENUE -> /venues), so there is no second copy of it here to drift.
   const profileRole: Role | null =
-    profile?.type === 'ARTIST' || profile?.type === 'VENUE' || profile?.type === 'DJ'
+    profile?.type === 'ARTIST' || profile?.type === 'VENUE'
       ? profile.type
       : profile
         ? 'FAN'

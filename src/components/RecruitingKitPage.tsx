@@ -6,7 +6,7 @@ type Feature = { emoji: string; title: string; body: string };
 type CityHeat = { label: string; score: number };
 
 export type RecruitingKitConfig = {
-  role: 'ARTIST' | 'DJ' | 'VENUE' | 'FAN';
+  role: 'ARTIST' | 'VENUE' | 'FAN';
   tint: string;
   glow: string;
   navCta: string;

@@ -31,7 +31,7 @@ export type ShellSectionId = (typeof SHELL_SECTIONS)[number];
 export type ShellRoleGate = 'ARTIST' | 'DJ' | 'VENUE' | 'ADVERTISER' | 'PROMOTER';
 
 /** Badge tone → the design token that paints it (never a hex literal). */
-export type ShellBadgeTone = 'muted' | 'venue' | 'dj' | 'artist' | 'advertiser';
+export type ShellBadgeTone = 'muted' | 'venue' | 'promoter' | 'artist' | 'advertiser';
 
 export type ShellBadge = { text: string; tone: ShellBadgeTone };
 
@@ -187,7 +187,7 @@ export function buildShellNav(account: ShellAccount): ShellNavItem[] {
     {
       id: 'promote', section: 'EVENTS', href: '/me/promote',
       labelKey: 'appShell.nav.promote', labelFallback: 'Promote',
-      badge: { text: '10% POOL', tone: 'dj' }, gate: 'PROMOTER',
+      badge: { text: '10% POOL', tone: 'promoter' }, gate: 'PROMOTER',
       inDrawer: true, inTabs: true,
     },
 
@@ -348,7 +348,7 @@ export function sectionRows(items: ShellNavItem[], section: ShellSectionId): She
 /** Token that paints a badge tone. Never a hex literal. */
 export function badgeToneVar(tone: ShellBadgeTone): string {
   if (tone === 'venue') return 'var(--role-venue-text)';
-  if (tone === 'dj') return 'var(--role-dj-text)';
+  if (tone === 'promoter') return 'var(--role-promoter-text)';
   if (tone === 'artist') return 'var(--role-artist-text)';
   if (tone === 'advertiser') return 'var(--role-advertiser-text)';
   return 'var(--ink-3)';

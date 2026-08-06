@@ -11,11 +11,6 @@ const PROOF: Record<string, string[]> = {
     'A screenshot of a past show booking or contract',
     'Social media profile showing your music',
   ],
-  DJ: [
-    'A SoundCloud or Mixcloud profile with at least one public mix',
-    'A past event poster or booking confirmation',
-    'Social media profile showing DJ work',
-  ],
   VENUE: [
     'Business license or permits for the venue',
     'Official venue website or Google Maps listing',
@@ -25,13 +20,12 @@ const PROOF: Record<string, string[]> = {
 
 const LINK_LABEL: Record<string, string> = {
   ARTIST: 'Website, Bandcamp, or SoundCloud',
-  DJ: 'SoundCloud, Mixcloud, or website',
   VENUE: 'Venue website or Google Maps URL',
 };
 
 interface Props {
   profileId: string;
-  type: 'ARTIST' | 'DJ' | 'VENUE';
+  type: 'ARTIST' | 'VENUE';
   initialName: string;
   initialCity: string;
   initialGenres: string;
@@ -113,7 +107,6 @@ export function VerifyForm({ profileId, type, initialName, initialCity, initialG
 
         <label style={labelStyle} htmlFor="verify-link">
           {type === 'ARTIST' ? t('verifyForm.linkLabelArtist', 'Website, Bandcamp, or SoundCloud')
-            : type === 'DJ' ? t('verifyForm.linkLabelDj', 'SoundCloud, Mixcloud, or website')
             : t('verifyForm.linkLabelVenue', 'Venue website or Google Maps URL')}
         </label>
         <input id="verify-link" style={fieldStyle} value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://" type="url" />

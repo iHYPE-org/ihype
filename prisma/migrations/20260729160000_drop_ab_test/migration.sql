@@ -1,4 +1,5 @@
--- @gated
+-- Ungated 2026-08-06: production row count verified 0 immediately before the
+-- move, which is the condition this file was parked on.
 --
 -- Drops the ABTest table. The A/B testing feature was never finished: an
 -- admin could create rows, and nothing in the application ever read one.

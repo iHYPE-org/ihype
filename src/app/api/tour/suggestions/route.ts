@@ -53,7 +53,7 @@ export async function GET() {
 
   // Top trending artists/DJs for venue booking
   const artists = await db.profile.findMany({
-    where: { type: { in: ['ARTIST', 'DJ'] }, hypeCount: { gt: 0 }, fanShareEnabled: true },
+    where: { type: 'ARTIST', hypeCount: { gt: 0 }, fanShareEnabled: true },
     orderBy: { hypeCount: 'desc' },
     take: 12,
     select: { id: true, name: true, city: true, genres: true, hypeCount: true, slug: true, type: true },
@@ -62,7 +62,7 @@ export async function GET() {
   // AI routing layer: order the demand-ranked stops into an itinerary for the
   // requesting artist. Null when no artist profile or the AI binding is down.
   const ownProfile = await db.profile.findFirst({
-    where: { ownerId: session.user.id, type: { in: ['ARTIST', 'DJ'] } },
+    where: { ownerId: session.user.id, type: 'ARTIST' },
     select: { name: true, genres: true, city: true, stateRegion: true, hypeCount: true },
   }).catch(() => null);
 

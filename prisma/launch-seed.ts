@@ -69,7 +69,7 @@ async function main() {
   await user('launch-fan@ihype.org', 'launch-fan', 'Launch Fan', Role.FAN);
   const artistOwner = await user('launch-artist@ihype.org', 'launch-artist', 'Launch Artist', Role.ARTIST);
   const venueOwner = await user('launch-venue@ihype.org', 'launch-venue', 'Launch Venue', Role.VENUE);
-  const promoterOwner = await user('launch-promoter@ihype.org', 'launch-promoter', 'Launch Promoter', Role.DJ);
+  const promoterOwner = await user('launch-promoter@ihype.org', 'launch-promoter', 'Launch Promoter', Role.ARTIST);
 
   const artist = await profile({
     slug: 'static-bloom',
@@ -101,7 +101,7 @@ async function main() {
     slug: 'south-loop-signal',
     hexId: '0xlaunch000000000000000000000000000003',
     ownerId: promoterOwner.id,
-    type: ProfileType.DJ,
+    type: ProfileType.ARTIST,
     name: 'South Loop Signal',
     headline: 'Community bills, radio nights, and first-listen showcases.',
     city: 'Chicago',

@@ -247,21 +247,18 @@ const icons = {
 
 const dashboardHref = (profile: ModuleProfile): string | null => {
   if (profile.type === 'ARTIST') return `/artists/${profile.slug}/dashboard`;
-  if (profile.type === 'DJ') return `/artists/${profile.slug}/dashboard`;
   if (profile.type === 'VENUE') return `/venues/${profile.slug}/dashboard`;
   return null;
 };
 
 const analyticsHref = (profile: ModuleProfile): string | null => {
   if (profile.type === 'ARTIST') return `/artists/${profile.slug}/analytics`;
-  if (profile.type === 'DJ') return `/artists/${profile.slug}/analytics`;
   if (profile.type === 'VENUE') return `/venues/${profile.slug}/analytics`;
   return null;
 };
 
 const onboardingHref = (profile: ModuleProfile): string | null => {
   if (profile.type === 'ARTIST') return `/artists/${profile.slug}/onboarding`;
-  if (profile.type === 'DJ') return `/artists/${profile.slug}/onboarding`;
   if (profile.type === 'VENUE') return `/venues/${profile.slug}/onboarding`;
   return null;
 };
@@ -270,14 +267,12 @@ const onboardingHref = (profile: ModuleProfile): string | null => {
  * Role-specific toolkit rendered under the selected page on Pages → My Page.
  * Every page type gets real stats (ProfileInsights aggregates); creator roles
  * additionally get their working tools — Artist: event creator, tour + ad
- * recommendations; Venue: event creation + ad recommendations; DJ: radio show
- * creator + ad recommendations.
+ * recommendations; Venue: event creation + ad recommendations.
  */
 export function PageRoleModules({ profile, color, initialTool }: { profile: ModuleProfile; color: string; initialTool?: string }) {
   const { t } = useI18n();
   const isArtist = profile.type === 'ARTIST';
   const isVenue = profile.type === 'VENUE';
-  const isDj = profile.type === 'DJ';
   const dashHref = dashboardHref(profile);
   const analyticsUrl = analyticsHref(profile);
   // Only while the wizard has never reported finishing. Profiles that predate
@@ -364,7 +359,7 @@ export function PageRoleModules({ profile, color, initialTool }: { profile: Modu
           </ExpandModule>
         )}
 
-        {(isArtist || isVenue || isDj) && (
+        {(isArtist || isVenue) && (
           <ExpandModule
             color={color}
             icon={icons.ads(color)}

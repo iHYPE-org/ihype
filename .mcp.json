@@ -1,14 +1,5 @@
 {
   "mcpServers": {
-    "prisma": {
-      "type": "stdio",
-      "command": "npx",
-      "args": [
-        "-y",
-        "prisma",
-        "mcp"
-      ]
-    },
     "supabase": {
       "type": "http",
       "url": "https://mcp.supabase.com/mcp?project_ref=bjkabtzvgfshsrmjhrkx&read_only=true&features=database%2Cdebugging%2Cdevelopment%2Cdocs"

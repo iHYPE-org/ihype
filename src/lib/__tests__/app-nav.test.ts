@@ -73,7 +73,7 @@ describe('badges', () => {
   });
 
   it('maps every tone to a token, never a hex literal', () => {
-    for (const tone of ['muted', 'venue', 'dj', 'artist', 'advertiser'] as const) {
+    for (const tone of ['muted', 'venue', 'promoter', 'artist', 'advertiser'] as const) {
       expect(badgeToneVar(tone)).toMatch(/^var\(--[a-z0-9-]+\)$/);
     }
     // Backlog item 3: advertiser has its own token now, not --warn.

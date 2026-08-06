@@ -49,7 +49,7 @@ export async function getEarlyBelievers(
     select: { id: true, name: true, slug: true, avatarImage: true, type: true },
   }).catch(() => null);
 
-  if (!artist || (artist.type !== 'ARTIST' && artist.type !== 'DJ')) return null;
+  if (!artist || artist.type !== 'ARTIST') return null;
 
   const [rows, total, viewerEvent] = await Promise.all([
     db.profileHypeEvent.findMany({

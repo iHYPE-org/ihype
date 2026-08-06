@@ -27,6 +27,24 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
+      # Expensive stages (browser suites, Cloudflare build, Workerd smokes,
+      # Lighthouse) run only when a PR carries the `full-ci` label. They are
+      # ~11 of this job's ~15 minutes, and the org's Actions allowance cannot
+      # currently pay for them on every push -- jobs were being cancelled
+      # mid-run, so NOTHING was being verified. A 4-minute job that finishes
+      # beats a 15-minute job that gets killed at minute 14.
+      #
+      # This moves the safety net, it does not remove it:
+      # deploy-production.yml independently re-runs the tests, the Cloudflare
+      # build, the Worker bundle budget AND a pre-deploy Workerd smoke before
+      # it deploys, and skips every remaining step if any of them fail. So a
+      # broken change still cannot reach production; it just gets caught at
+      # deploy time rather than at merge time.
+      #
+      # Add the `full-ci` label to a PR that touches the shell, auth, routing,
+      # the service worker or anything Workerd-specific -- those are exactly
+      # what the trimmed stages cover.
+      FULL_CI: ${{ contains(github.event.pull_request.labels.*.name, 'full-ci') }}
       DATABASE_URL: postgresql://ihype:ihype@localhost:55432/ihype
       AUTH_SECRET: ci-only-auth-secret-change-me-0123456789
       NEXTAUTH_SECRET: ci-only-auth-secret-change-me-0123456789
@@ -102,21 +120,25 @@ jobs:
         run: npm test
 
       - name: Prepare scratch database
+        if: env.FULL_CI == 'true'
         run: |
           psql "$DATABASE_URL" -c 'CREATE EXTENSION IF NOT EXISTS pg_trgm; CREATE EXTENSION IF NOT EXISTS citext;'
           npx prisma db push --accept-data-loss
 
       - name: Install Playwright browser
+        if: env.FULL_CI == 'true'
         run: npx playwright install chromium --with-deps
 
       - name: Mandatory public browser smoke
+        if: env.FULL_CI == 'true'
         run: npx playwright test e2e/public-smoke.spec.ts --project=chromium
 
       - name: Mandatory responsive module regression gate
+        if: env.FULL_CI == 'true'
         run: npm run test:e2e:responsive
 
       - name: Upload responsive regression evidence
-        if: always()
+        if: always() && env.FULL_CI == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: responsive-module-regression
@@ -126,6 +148,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Mandatory authenticated E2E suite (Workerd)
+        if: env.FULL_CI == 'true'
         # Runs against a real `wrangler dev` (workerd) instance, not `next
         # dev` — src/lib/db.ts intentionally imports the wasm/workerd-only
         # Prisma engine (see the comment at the top of that file), which
@@ -156,6 +179,7 @@ jobs:
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: "1x00000000000000000000AA"
 
       - name: Cloudflare build
+        if: env.FULL_CI == 'true'
         run: npm run cf:build
         env:
           DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
@@ -164,12 +188,14 @@ jobs:
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4AAAAAADSF8WNxaeBIRmR7"
 
       - name: Worker bundle size budget
+        if: env.FULL_CI == 'true'
         run: node scripts/worker-size-budget.mjs
         env:
           CLOUDFLARE_API_TOKEN: dry-run-placeholder
           CLOUDFLARE_ACCOUNT_ID: dry-run-placeholder
 
       - name: Mandatory authenticated Workerd security smoke
+        if: env.FULL_CI == 'true'
         timeout-minutes: 20
         run: |
           set -o pipefail
@@ -183,6 +209,7 @@ jobs:
           NEXTAUTH_SECRET: ci-only-auth-secret-change-me-0123456789
 
       - name: Mandatory authenticated Workerd performance budget
+        if: env.FULL_CI == 'true'
         timeout-minutes: 20
         run: |
           set -o pipefail
@@ -196,7 +223,7 @@ jobs:
           NEXTAUTH_SECRET: ci-only-auth-secret-change-me-0123456789
 
       - name: Upload Workerd diagnostics
-        if: always()
+        if: always() && env.FULL_CI == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: workerd-smoke-diagnostics
@@ -204,7 +231,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload Lighthouse report
-        if: always()
+        if: always() && env.FULL_CI == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: lighthouse-budget-report

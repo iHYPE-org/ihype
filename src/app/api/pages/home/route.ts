@@ -42,7 +42,7 @@ export async function GET() {
       : Promise.resolve(0),
     db.profile.findMany({
       where: {
-        type: { in: ['ARTIST', 'DJ', 'VENUE', 'LISTENER'] },
+        type: { in: ['ARTIST', 'VENUE', 'LISTENER'] },
         ownerId: { not: session.user.id },
         ...getDemoOwnerExclusion(),
       },

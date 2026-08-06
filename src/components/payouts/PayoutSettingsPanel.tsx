@@ -13,7 +13,6 @@ type SettingsProfile = {
 };
 
 function roleLabel(type: string, t: Awaited<ReturnType<typeof getServerT>>) {
-  if (type === 'DJ') return t('payoutSettingsPanel.rolePromoterDj', 'Promoter/DJ');
   if (type === 'VENUE') return t('payoutSettingsPanel.roleVenue', 'Venue');
   return t('payoutSettingsPanel.roleArtist', 'Artist');
 }

@@ -243,7 +243,7 @@ export default function EventsNewPage() {
               </div>
             </div>
             <ProfilePicker label={t('eventsNewPage.venueLabel', 'Venue')} onChange={setVenueProfile} types={['VENUE']} value={venueProfile} />
-            <ProfilePicker label={t('eventsNewPage.artistsLabel', 'Artist(s)')} onChange={setHeadliner} types={['ARTIST', 'DJ']} value={headliner} />
+            <ProfilePicker label={t('eventsNewPage.artistsLabel', 'Artist(s)')} onChange={setHeadliner} types={['ARTIST']} value={headliner} />
             <button className="btn-primary" disabled={!s0Valid} onClick={() => setStep(1)} type="button">{t('eventsNewPage.continueCta', 'Continue →')}</button>
           </>
         )}

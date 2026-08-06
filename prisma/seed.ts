@@ -187,7 +187,7 @@ async function main() {
     username: 'promoter',
     name: 'DJ Echo',
     passwordHash,
-    role: Role.DJ
+    role: Role.ARTIST
   });
 
   const artistOwner = await upsertDemoUser({
@@ -279,7 +279,7 @@ async function main() {
     where: { slug: 'dj-echo' },
     update: {
       hexId: profileHexIds.djEcho,
-      type: ProfileType.DJ,
+      type: ProfileType.ARTIST,
       name: 'DJ Echo',
       headline: 'Promoting the kind of nights that linger after the lights come up.',
       bio: 'Late-night selector with a thing for analog drums and low ceilings.',
@@ -300,7 +300,7 @@ async function main() {
     create: {
       slug: 'dj-echo',
       hexId: profileHexIds.djEcho,
-      type: ProfileType.DJ,
+      type: ProfileType.ARTIST,
       name: 'DJ Echo',
       headline: 'Promoting the kind of nights that linger after the lights come up.',
       bio: 'Late-night selector with a thing for analog drums and low ceilings.',
@@ -920,7 +920,7 @@ async function main() {
     where: { slug: 'riverwest-echo' },
     update: {
       hexId: profileHexIds.riverwestEcho,
-      type: ProfileType.DJ,
+      type: ProfileType.ARTIST,
       name: 'Riverwest Echo',
       headline: 'Milwaukee promoter energy with enough reach to move a Midwest weekend.',
       bio: 'Midwest promoter profile connecting warehouse shows, regional listeners, and city-to-city momentum.',
@@ -941,7 +941,7 @@ async function main() {
     create: {
       slug: 'riverwest-echo',
       hexId: profileHexIds.riverwestEcho,
-      type: ProfileType.DJ,
+      type: ProfileType.ARTIST,
       name: 'Riverwest Echo',
       headline: 'Milwaukee promoter energy with enough reach to move a Midwest weekend.',
       bio: 'Midwest promoter profile connecting warehouse shows, regional listeners, and city-to-city momentum.',

@@ -84,7 +84,7 @@ export default async function PayoutsHubPage({
   ]);
 
   const stripeReady = isStripeConfigured();
-  const settingsProfiles = profiles.filter((p) => p.type === 'ARTIST' || p.type === 'DJ' || p.type === 'VENUE');
+  const settingsProfiles = profiles.filter((p) => p.type === 'ARTIST' || p.type === 'VENUE');
 
   return (
     <div className="container" style={{ paddingTop: 24, paddingBottom: 60, maxWidth: 640 }}>

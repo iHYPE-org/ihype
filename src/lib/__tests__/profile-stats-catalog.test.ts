@@ -20,12 +20,14 @@ describe('profile-stats STAT_CATALOG', () => {
 });
 
 describe('statOptionsForRole', () => {
-  it('gives Artist and DJ the same creator-facing options', () => {
+  it('gives Artist the creator-facing options', () => {
+    // Was "Artist and DJ". DJ is not a profile type any more
+    // (docs/dj-role-removal-scope.md step 4), so there is no second role to
+    // compare against — what still matters is that Artist keeps the full set.
     const artistKeys = statOptionsForRole('ARTIST').map((s) => s.key).sort();
-    const djKeys = statOptionsForRole('DJ').map((s) => s.key).sort();
-    expect(artistKeys).toEqual(djKeys);
     expect(artistKeys).toContain('hypeTotal');
     expect(artistKeys).toContain('monthlyListeners');
+    expect(statOptionsForRole('DJ')).toEqual([]);
   });
 
   it('gives Venue ticket stats but not fan-only stats', () => {

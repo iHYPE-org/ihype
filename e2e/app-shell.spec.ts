@@ -33,7 +33,7 @@ const CHROME_H = HEADER_H + STRIP_H; // 134
 
 test.skip(!canSeedSession(), 'Needs E2E_WORKERD_DATABASE_URL + AUTH_SECRET to seed a session.');
 
-async function signIn(context: BrowserContext, email: string, profiles: { type: 'ARTIST' | 'DJ' | 'VENUE'; name: string }[] = []) {
+async function signIn(context: BrowserContext, email: string, profiles: { type: 'ARTIST' | 'VENUE'; name: string }[] = []) {
   const { cookie } = await seedSessionCookie(email, { profiles });
   await context.addCookies([{
     name: sessionCookieName(),
@@ -299,15 +299,15 @@ test.describe('App shell — navigation manifest', () => {
     // Was "Artist and DJ". Show Creator went with the DJ role — radio is
     // computed per listener now (src/lib/stations.ts) and there is nothing for
     // a person to author, so the destination no longer exists in the manifest.
-    // The DJ profile is still seeded here on purpose. The three real rows have
-    // now been reassigned to ARTIST, but the enum value itself survives until
-    // step 4 of the removal — so a DJ-typed row remains constructible, and one
-    // must not resurrect a creator or break the gates around it. This is the
-    // only coverage of that tolerance; drop the seed and step 4 loses its
-    // safety net.
+    //
+    // The DJ profile that used to be seeded alongside the artist is gone with
+    // it. Step 4 removed DJ from ProfileType, so a DJ-typed row is no longer
+    // constructible and there is nothing left to be tolerant of — the earlier
+    // note here called that seed step 4's safety net, which was true right up
+    // until step 4 landed. What this test still guards is the gate itself:
+    // holding Artist grants Tour Creator and nothing else.
     await signIn(context, CREATOR_EMAIL, [
       { type: 'ARTIST', name: 'E2E Artist' },
-      { type: 'DJ', name: 'E2E DJ' },
     ]);
     await page.goto('/pages?tab=creator');
     await waitForShell(page);

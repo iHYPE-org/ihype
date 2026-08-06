@@ -17,14 +17,12 @@ export const metadata: Metadata = {
 
 const TYPE_COLOR: Record<string, string> = {
   ARTIST: 'var(--role-artist)',
-  DJ: 'var(--role-dj)',
   VENUE: 'var(--role-venue)',
   FAN: 'var(--role-fan)',
 };
 
 const TYPE_LABEL: Record<string, string> = {
   ARTIST: 'Artist',
-  DJ: 'DJ',
   VENUE: 'Venue',
   FAN: 'Fan',
 };
@@ -39,8 +37,8 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
 
   // Collect distinct cities and genres for filter chips
   const [allCities, allGenres] = await Promise.all([
-    db.profile.findMany({ where: { type: { in: ['ARTIST', 'DJ', 'VENUE'] }, city: { not: null } }, select: { city: true }, distinct: ['city'], orderBy: { city: 'asc' }, take: 30 }),
-    db.profile.findMany({ where: { type: { in: ['ARTIST', 'DJ'] }, genres: { isEmpty: false } }, select: { genres: true }, take: 200 }),
+    db.profile.findMany({ where: { type: { in: ['ARTIST', 'VENUE'] }, city: { not: null } }, select: { city: true }, distinct: ['city'], orderBy: { city: 'asc' }, take: 30 }),
+    db.profile.findMany({ where: { type: 'ARTIST', genres: { isEmpty: false } }, select: { genres: true }, take: 200 }),
   ]);
   const cities = allCities.map(p => p.city).filter(Boolean) as string[];
   const genres = [...new Set(allGenres.flatMap(p => p.genres))].sort().slice(0, 20);
@@ -48,7 +46,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
   const [topArtists, topVenues, upcomingShows] = await Promise.all([
     db.profile.findMany({
       where: {
-        type: { in: ['ARTIST', 'DJ'] },
+        type: 'ARTIST',
         discoverable: true,
         ...getDemoOwnerExclusion(),
         ...(cityFilter ? { city: { contains: cityFilter, mode: 'insensitive' as const } } : {}),
@@ -88,18 +86,6 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
 
   const profileRoute = (type: string, slug: string) =>
     type === 'VENUE' ? `/venues/${slug}` : `/artists/${slug}`;
-
-  // "On air now" — real live radio shows, keyed by DJ headliner profile id,
-  // so the trending-DJ cards below can show a genuine on-air badge instead
-  // of a fabricated status.
-  const trendingDjIds = topArtists.filter(p => p.type === 'DJ').map(p => p.id);
-  const onAirShows = trendingDjIds.length
-    ? await db.show.findMany({
-        where: { isRadioShow: true, status: 'LIVE', headlinerProfileId: { in: trendingDjIds } },
-        select: { headlinerProfileId: true },
-      })
-    : [];
-  const onAirProfileIds = new Set(onAirShows.map(s => s.headlinerProfileId).filter(Boolean));
 
   // "Rising near you" — ranked by real hype velocity (recent HypeEvent/
   // ProfileHypeEvent rows in a trailing window), not by date. Both models
@@ -161,13 +147,13 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
   const [cityHeatRaw, genreHeatProfiles] = await Promise.all([
     db.profile.groupBy({
       by: ['city'],
-      where: { type: { in: ['ARTIST', 'DJ', 'VENUE'] }, discoverable: true, city: { not: null }, ...getDemoOwnerExclusion() },
+      where: { type: { in: ['ARTIST', 'VENUE'] }, discoverable: true, city: { not: null }, ...getDemoOwnerExclusion() },
       _sum: { hypeCount: true },
       orderBy: { _sum: { hypeCount: 'desc' } },
       take: 6,
     }),
     db.profile.findMany({
-      where: { type: { in: ['ARTIST', 'DJ'] }, discoverable: true, genres: { isEmpty: false }, ...getDemoOwnerExclusion() },
+      where: { type: 'ARTIST', discoverable: true, genres: { isEmpty: false }, ...getDemoOwnerExclusion() },
       select: { genres: true, hypeCount: true },
       take: 300,
     }),
@@ -403,7 +389,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
       {topArtists.length > 0 && (
         <section style={{ marginBottom: 48 }}>
           <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, margin: '0 0 16px' }}>
-            {t('discoverPage.trendingArtistsTitle', 'Trending artists & DJs')}
+            {t('discoverPage.trendingArtistsTitle', 'Trending artists')}
           </h2>
           <div className="ihype-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
             {topArtists.map(p => (
@@ -426,12 +412,6 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
                     </div>
                     {p.city && (
                       <div style={{ fontSize: 11, color: 'var(--ink-a50)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.city}</div>
-                    )}
-                    {p.type === 'DJ' && onAirProfileIds.has(p.id) && (
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 5, padding: '2px 8px', borderRadius: 999, background: 'rgba(var(--accent-2-rgb),.15)', border: '1px solid rgba(var(--accent-2-rgb),.3)' }}>
-                        <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--accent-2)' }} />
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--accent-2)' }}>{t('discoverPage.onAirNow', 'On air now')}</span>
-                      </div>
                     )}
                   </div>
                 </Link>

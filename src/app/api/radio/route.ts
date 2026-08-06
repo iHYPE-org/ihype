@@ -36,8 +36,13 @@ export async function GET(request: Request) {
       hypedProfileIds = hyped.map((h) => h.profileId);
     }
 
-    // Fetch playable tracks and actual DJ-authored radio shows together.
-    const [hypedTracks, trendingTracks, radioShows] = await Promise.all([
+    // Playable tracks only. The DJ-authored radio-show query that used to sit
+    // alongside this is gone: shows are created by nobody now (the Show Creator
+    // was retired with the DJ role) and production holds zero isRadioShow rows,
+    // so it could only ever return []. Its `stations` output had no consumer --
+    // /radio reads /api/radio/station and the Music shell reads /api/stations,
+    // both of which compute a station per listener instead.
+    const [hypedTracks, trendingTracks] = await Promise.all([
     hypedProfileIds.length > 0
       ? db.artistMediaAsset.findMany({
           where: {
@@ -59,7 +64,7 @@ export async function GET(request: Request) {
         profileId: hypedProfileIds.length > 0 ? { notIn: hypedProfileIds } : undefined,
         hexId: excludeIds.length > 0 ? { notIn: excludeIds } : undefined,
         ...releasedMediaWhere(),
-        profile: { ...getDemoOwnerExclusion(), type: { in: ['ARTIST', 'DJ'] }, discoverable: true }
+        profile: { ...getDemoOwnerExclusion(), type: 'ARTIST', discoverable: true }
       },
       select: {
         id: true, hexId: true, title: true, notes: true,
@@ -67,30 +72,6 @@ export async function GET(request: Request) {
       },
       orderBy: { profile: { hypeCount: 'desc' } },
       take: limit
-      }),
-      db.show.findMany({
-        where: {
-          isRadioShow: true,
-          status: { in: ['LIVE', 'SCHEDULED'] },
-          moderationStatus: 'APPROVED',
-          ...(genre !== 'All sounds' ? { tags: { has: genre } } : {}),
-          ...(topic && topic !== 'New releases' ? { tags: { has: topic } } : {}),
-          ...(location && location !== 'Anywhere' && location !== 'Michigan' && location !== 'Great Lakes' ? {
-            OR: [
-              { headlinerProfile: { city: { contains: location, mode: 'insensitive' }, discoverable: true } },
-              { venueProfile: { city: { contains: location, mode: 'insensitive' }, discoverable: true } },
-              { creator: { profiles: { some: { type: 'DJ', city: { contains: location, mode: 'insensitive' }, discoverable: true } } } },
-            ],
-          } : {}),
-        },
-        orderBy: ranking === 'Most HYPED' ? [{ hypeCount: 'desc' }, { startsAt: 'asc' }] : [{ startsAt: 'asc' }, { hypeCount: 'desc' }],
-        take: 20,
-        select: {
-          id: true, slug: true, title: true, status: true, startsAt: true, hypeCount: true, tags: true,
-          headlinerProfile: { select: { id: true, name: true, slug: true, type: true, city: true, stateRegion: true, avatarImage: true } },
-          creator: { select: { profiles: { where: { type: 'DJ', discoverable: true }, take: 1, select: { id: true, name: true, slug: true, city: true, stateRegion: true, avatarImage: true } } } },
-          radioTracks: { orderBy: { position: 'asc' }, take: 1, select: { title: true, artistName: true, mediaAsset: { select: { id: true, hexId: true, title: true, profile: { select: { name: true, slug: true, avatarImage: true } } } } } },
-        },
       }),
     ]);
 
@@ -110,39 +91,7 @@ export async function GET(request: Request) {
       artworkUrl: t.profile.avatarImage ?? null
       }));
 
-    const stationProfiles = radioShows.map((show) => show.headlinerProfile?.type === 'DJ' ? show.headlinerProfile : show.creator.profiles[0]).filter(Boolean);
-    const followedIds = session?.user?.id && stationProfiles.length
-      ? new Set((await db.follow.findMany({ where: { followerId: session.user.id, followeeProfileId: { in: stationProfiles.map((profile) => profile!.id) } }, select: { followeeProfileId: true } })).map((follow) => follow.followeeProfileId))
-      : new Set<string>();
-    const stations = radioShows.map((show) => {
-      const profile = show.headlinerProfile?.type === 'DJ' ? show.headlinerProfile : show.creator.profiles[0];
-      const queued = show.radioTracks[0];
-      const media = queued?.mediaAsset;
-      return {
-        id: show.id,
-        title: show.title,
-        meta: [profile?.name, profile?.city, profile?.stateRegion, show.tags.slice(0, 2).join(' · ')].filter(Boolean).join(' · ') || 'Independent radio',
-        signal: `${show.hypeCount.toLocaleString()} HYPES`,
-        time: show.status === 'LIVE' ? 'LIVE' : new Intl.DateTimeFormat('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'UTC' }).format(show.startsAt),
-        href: `/shows/${show.slug}`,
-        profileId: profile?.id ?? null,
-        following: profile ? followedIds.has(profile.id) : false,
-        track: media ? {
-          mediaId: media.id,
-          hexId: media.hexId,
-          title: media.title || queued.title,
-          artist: media.profile.name || queued.artistName || 'Independent artist',
-          artistSlug: media.profile.slug,
-          art: media.profile.avatarImage || profile?.avatarImage || '/brand/ihype-menu-logo.webp',
-          url: `/api/media/${media.hexId}`,
-          scene: [profile?.city, profile?.stateRegion].filter(Boolean).join(' · ') || 'Independent radio',
-          match: show.title,
-          hypeCount: show.hypeCount,
-        } : null,
-      };
-    });
-
-    return NextResponse.json({ tracks, stations }, { headers: { 'Cache-Control': session?.user?.id ? 'private, no-store' : 'public, s-maxage=30, stale-while-revalidate=120' } });
+    return NextResponse.json({ tracks }, { headers: { 'Cache-Control': session?.user?.id ? 'private, no-store' : 'public, s-maxage=30, stale-while-revalidate=120' } });
   } catch (err) {
     log.error('[api/radio]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

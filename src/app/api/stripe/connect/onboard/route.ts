@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
   }
 
-  if (!['ARTIST', 'DJ', 'VENUE'].includes(profile.type)) {
+  if (!['ARTIST', 'VENUE'].includes(profile.type)) {
     return NextResponse.json({ error: 'Only artist, promoter, and venue profiles can connect payouts.' }, { status: 400 });
   }
 

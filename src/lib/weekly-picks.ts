@@ -5,7 +5,7 @@ import { getBaseUrl } from '@/lib/utils';
 
 export async function sendWeeklyPicksEmails(): Promise<{ sent: number; skipped: number }> {
   const topProfiles = await db.profile.findMany({
-    where: { type: { in: ['ARTIST', 'DJ'] } },
+    where: { type: 'ARTIST' },
     select: { id: true, name: true, slug: true, bio: true, genres: true, hypeCount: true },
     orderBy: { hypeCount: 'desc' },
     take: 5
