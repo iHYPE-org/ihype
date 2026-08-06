@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { WelcomeStepsChecklist } from '@/components/WelcomeStepsChecklist';
 import { getProfilePathForType } from '@/lib/profile-paths';
+import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { getServerT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
@@ -68,7 +69,7 @@ export default async function WelcomePage() {
       sub: t('welcomePage.subFan', 'Your account is live. Start hyping the artists you believe in — your listens and hypes shape who gets discovered.'),
       // No fan setup wizard exists, and none is needed — a fan account is
       // complete at signup. Listening is the first thing to do.
-      cta: t('welcomePage.ctaFan', 'Start listening →'), ctaHref: '/listen',
+      cta: t('welcomePage.ctaFan', 'Start listening →'), ctaHref: WORKBENCH_PATH,
       steps: [
         { title: t('welcomePage.fanStep1Title', 'Hype your first artist'), desc: t('welcomePage.fanStep1Desc', 'Listen to a track all the way through or tap the flame — every hype is a demand signal venues can see.') },
         { title: t('welcomePage.fanStep2Title', 'Follow your scene'), desc: t('welcomePage.fanStep2Desc', 'Pick your city and genres so Local shows and For You surface the right nights out.') },

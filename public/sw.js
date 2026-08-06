@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'ihype-6a8b41d0';
+const CACHE_VERSION = 'ihype-25987081';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const PAGE_CACHE = `${CACHE_VERSION}-pages`;
 
@@ -22,7 +22,20 @@ const CORE_PAGES = [
   '/tickets'
 ];
 
+// Never cached. These are the signed-in surfaces: their HTML is personalized,
+// so a cached copy is both a staleness source and a copy of one account's page
+// sitting in the Cache API after they sign out — which on a shared device the
+// next person can be served.
+//
+// Keep this in step with PROTECTED_PREFIXES in src/lib/auth-redirects.ts. It
+// cannot import from src (this file is served verbatim from /public), so the
+// two lists are aligned by hand and this comment is the only thing linking
+// them. `/app` and `/admin` were both missing: `/app` because it only became
+// the landing surface in DESIGN_SYNC row 269, and `/admin` since the service
+// worker was written.
 const NETWORK_ONLY_PATHS = [
+  '/app',
+  '/admin',
   '/home',
   '/listen',
   '/workbench',

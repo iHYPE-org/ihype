@@ -560,10 +560,22 @@ html.mmm-locked .site-shell > main {
   background: radial-gradient(120% 90% at 50% 0%, transparent 58%, rgba(var(--scrim-rgb), 0.26) 100%);
 }
 
+/* The nav trigger and the cookie-consent dialog both want the bottom of the
+   viewport, and at phone width the banner is `100vw - 32px` wide — so it lands
+   squarely on top of this 76px logo and swallows every pointer event aimed at
+   it. A first-time visitor could not open the navigation at all until they
+   dismissed consent.
+
+   Consent is a compliance surface, so it is not the thing that moves: it
+   publishes how much of the bottom edge it occupies as `--consent-inset` (see
+   `CookieConsent.tsx`) and the shell lifts its own chrome by that much, for
+   exactly as long as the dialog is on screen. `max()` means the ordinary 26px
+   resting position is unchanged once consent is answered, and the fallback of
+   0px keeps this inert on every page that never shows the banner. */
 .mmm-nav-anchor {
   position: absolute;
   left: 26px;
-  bottom: 26px;
+  bottom: max(26px, calc(var(--consent-inset, 0px) + 12px));
   z-index: 30;
   width: 0;
   height: 0;

@@ -353,3 +353,74 @@ test.describe('computed stations', () => {
     expect([404, 503]).toContain(response.status());
   });
 });
+
+/**
+ * The cookie-consent collision (DESIGN_SYNC row 268, item f).
+ *
+ * Every other test in this file pre-accepts consent so it can be about the
+ * shell. That is exactly why this one must exist: the dialog is pinned to the
+ * bottom of the viewport and, at phone width, is `100vw - 32px` wide — the same
+ * corner the 76px logo trigger occupies. It swallowed every pointer event aimed
+ * at the nav, so a first-time visitor could not open the navigation at all
+ * until they dismissed the banner. Playwright burned 55 click retries on
+ * "subtree intercepts pointer events" before timing out.
+ *
+ * The fix does not move, restyle or hide consent — it is a compliance surface.
+ * The dialog publishes how much of the bottom edge it occupies as
+ * `--consent-inset` and the shell lifts its own chrome by that much. So this
+ * signs in WITHOUT pre-accepting, and asserts both halves: consent is really on
+ * screen, and the trigger is really clickable anyway.
+ */
+test.describe('Music · Map · Me shell — first visit, consent pending', () => {
+  test('the nav trigger is clickable with the consent dialog on screen', async ({ page, context }) => {
+    // Note the absence of the consent-seeding init script the `signIn` helper
+    // adds. A first visit is the state under test.
+    await applySessionCookie(context, EMAIL, { profiles: [] });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/app/map');
+
+    // Guard the test itself: if consent stopped rendering, everything below
+    // would pass while proving nothing.
+    const consent = page.getByRole('dialog', { name: /cookie preferences/i });
+    await expect(consent).toBeVisible();
+
+    const trigger = page.getByRole('button', { name: /Open iHYPE navigation/i });
+    await expect(trigger).toBeVisible();
+
+    // The real assertion is hit-testing, not visibility: the failure mode was
+    // a fully visible trigger sitting underneath a higher z-index dialog.
+    await expect.poll(async () => page.evaluate(() => {
+      const logo = document.querySelector('.mmm-logo');
+      if (!logo) return 'trigger not rendered';
+      const box = logo.getBoundingClientRect();
+      const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+      if (!hit) return 'nothing at the trigger centre';
+      return logo.contains(hit) || hit === logo ? 'ok' : `covered by ${hit.className || hit.tagName}`;
+    }), { timeout: 10000 }).toBe('ok');
+
+    // And it actually opens, with consent still up.
+    await trigger.click();
+    await expect(page.getByRole('button', { name: 'MUSIC' })).toBeVisible();
+    await expect(consent).toBeVisible();
+  });
+
+  test('the trigger returns to its resting position once consent is answered', async ({ page, context }) => {
+    // The lift must be tied to the dialog being present, not latched — a stale
+    // inset would hold the nav up the page with nothing there to avoid.
+    await applySessionCookie(context, EMAIL, { profiles: [] });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/app/map');
+
+    const raised = await page.evaluate(() => document.querySelector('.mmm-logo')!.getBoundingClientRect().bottom);
+    await page.getByRole('button', { name: /Essential only/i }).click();
+    await expect(page.getByRole('dialog', { name: /cookie preferences/i })).toHaveCount(0);
+
+    await expect.poll(async () => page.evaluate(() => {
+      const box = document.querySelector('.mmm-logo')!.getBoundingClientRect();
+      return Math.round(window.innerHeight - box.bottom);
+    })).toBe(26);
+
+    // Sanity: it really had been lifted, so the check above is not vacuous.
+    expect(raised).toBeLessThan(844 - 26);
+  });
+});
